@@ -108,7 +108,10 @@
     const rows = (Array.isArray(customers) ? customers : []).filter(item => item && !item.deleted);
     const wsExternalId = text(profile.wsExternalId);
     if (wsExternalId) {
-      const candidates = rows.filter(item => text(item.wsExternalId) === wsExternalId);
+      const candidates = rows.filter(item => {
+        const ids = Array.isArray(item.wsExternalIds) ? item.wsExternalIds.map(text) : [];
+        return text(item.wsExternalId) === wsExternalId || ids.includes(wsExternalId);
+      });
       if (candidates.length === 1) return { kind: 'ws-id', customer: candidates[0], candidates };
       if (candidates.length > 1) return { kind: 'ambiguous', customer: null, candidates };
     }
@@ -118,15 +121,21 @@
       if (candidates.length === 1) return { kind: 'phone', customer: candidates[0], candidates };
       if (candidates.length > 1) return { kind: 'ambiguous', customer: null, candidates };
     }
-    const account = text(profile.account || profile.wsAccountId);
+    const account = text(profile.wsAccountId || profile.account);
     if (account) {
-      const candidates = rows.filter(item => text(item.wsAccountId || item.account) === account);
+      const candidates = rows.filter(item => {
+        const ids = Array.isArray(item.wsAccountIds) ? item.wsAccountIds.map(text) : [];
+        return text(item.wsAccountId || item.account) === account || ids.includes(account);
+      });
       if (candidates.length === 1) return { kind: 'account', customer: candidates[0], candidates };
       if (candidates.length > 1) return { kind: 'ambiguous', customer: null, candidates };
     }
     const conversationId = text(profile.conversationId);
     if (conversationId) {
-      const candidates = rows.filter(item => text(item.wsConversationId) === conversationId);
+      const candidates = rows.filter(item => {
+        const ids = Array.isArray(item.wsConversationIds) ? item.wsConversationIds.map(text) : [];
+        return text(item.wsConversationId) === conversationId || ids.includes(conversationId);
+      });
       if (candidates.length === 1) return { kind: 'conversation', customer: candidates[0], candidates };
       if (candidates.length > 1) return { kind: 'ambiguous', customer: null, candidates };
     }

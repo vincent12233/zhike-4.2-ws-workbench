@@ -1028,6 +1028,7 @@
       aiSummary: state.analysis?.summary || '',
       intentScore: state.analysis?.intentScore ?? '',
       emotion: state.analysis?.emotion || '',
+      wsAccountId: String(state.activeAccountId || 'default'),
       account: state.analysis?.contact?.account || '',
       source: 'WhatsApp',
       channel: 'WhatsApp',
@@ -1035,13 +1036,22 @@
     };
   }
   function applyProfileToCustomer(customer, profile) {
+    const accountId = text(profile.wsAccountId || profile.account);
+    const externalId = text(profile.wsExternalId);
+    const conversationId = text(profile.conversationId);
+    const accountIds = new Set(Array.isArray(customer.wsAccountIds) ? customer.wsAccountIds.map(text).filter(Boolean) : []);
+    const externalIds = new Set(Array.isArray(customer.wsExternalIds) ? customer.wsExternalIds.map(text).filter(Boolean) : []);
+    const conversationIds = new Set(Array.isArray(customer.wsConversationIds) ? customer.wsConversationIds.map(text).filter(Boolean) : []);
+    if (accountId) accountIds.add(accountId);
+    if (externalId) externalIds.add(externalId);
+    if (conversationId) conversationIds.add(conversationId);
     const patch = {
       name: profile.name,
       rawPhone: profile.phone,
       phone: profile.phone ? core.normalizePhone(profile.phone) : '',
-      wsExternalId: profile.wsExternalId,
-      wsConversationId: profile.conversationId,
-      wsAccountId: profile.account,
+      wsExternalId: customer.wsExternalId || externalId,
+      wsConversationId: customer.wsConversationId || conversationId,
+      wsAccountId: customer.wsAccountId || accountId,
       country: profile.country,
       language: profile.language,
       productInterest: profile.productInterest,
@@ -1054,6 +1064,9 @@
       note: profile.note,
     };
     for (const [key, value] of Object.entries(patch)) if (value !== '' && value != null) customer[key] = value;
+    if (accountIds.size) customer.wsAccountIds = [...accountIds].slice(0, 100);
+    if (externalIds.size) customer.wsExternalIds = [...externalIds].slice(0, 100);
+    if (conversationIds.size) customer.wsConversationIds = [...conversationIds].slice(0, 100);
     if (profile.tags.length) customer.tags = [...new Set([...(Array.isArray(customer.tags) ? customer.tags : []), ...profile.tags])];
     customer.touched = true;
   }

@@ -52,6 +52,10 @@ function runWs() {
   run('WS API and SQLite', [path.join(repo, 'tests', 'ws-workbench-api.test.cjs')]);
   run('WS SQLite v6 migration', [path.join(repo, 'tests', 'ws-workbench-migration-v6.test.cjs')]);
   run('WS security contract', [path.join(repo, 'tests', 'ws-workbench-security.test.cjs')]);
+  run('WS multi-account database isolation', [path.join(repo, 'tests', 'ws-multi-account.test.cjs')]);
+  run('WS multi-account BrowserView contract', [path.join(repo, 'tests', 'ws-multi-account-main.test.cjs')]);
+  run('WS ChatKnow UI contract', [path.join(repo, 'tests', 'ws-workbench-ui.test.cjs')]);
+  run('WS collection and CRM sync contract', [path.join(repo, 'tests', 'ws-workbench-sync.test.cjs')]);
 }
 
 function runAll() {
