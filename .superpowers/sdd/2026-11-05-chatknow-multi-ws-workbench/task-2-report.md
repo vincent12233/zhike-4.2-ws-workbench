@@ -45,3 +45,14 @@ Validation:
 
 - `node tests/ws-multi-account-main.test.cjs` — pass
 - `node scripts/run-tests.cjs all` — 31 checks passed
+
+## Fix round 4
+
+Main-process account switching is now transactional. Open/login/reload/reconnect capture the previous active account and restore it, including BrowserView visibility and bounds, if navigation or reload rejects. This keeps main and preload account routing aligned after failed switches.
+
+Validation:
+
+- `node tests/ws-multi-account-main.test.cjs` — pass
+- `node scripts/run-tests.cjs all` — 31 checks passed
+
+Post-amend verification (status rollback included): `node scripts/run-tests.cjs all` — 31 checks passed.

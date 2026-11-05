@@ -334,6 +334,14 @@ function switchWsAccount(accountId, record) {
   if (record?.view && mainWindow && !mainWindow.isDestroyed()) { try { if (typeof mainWindow.addBrowserView === 'function') mainWindow.addBrowserView(record.view); else mainWindow.setBrowserView(record.view); } catch { try { mainWindow.setBrowserView(record.view); } catch {} } record.hidden = false; resizeWsView(id, record.lastBounds || { hidden: true }); }
   syncLegacyWsAlias(record); return record;
 }
+function restoreWsAccount(accountId, record, previousStatus = record?.status) {
+  const id = normalizeWsAccountId(accountId), failed = wsViews.get(activeWsAccountId);
+  if (failed && failed !== record) hideWsView(failed);
+  activeWsAccountId = id;
+  if (record?.view && mainWindow && !mainWindow.isDestroyed()) { try { if (typeof mainWindow.addBrowserView === 'function') mainWindow.addBrowserView(record.view); else mainWindow.setBrowserView(record.view); } catch { try { mainWindow.setBrowserView(record.view); } catch {} } record.hidden = false; if (record.lastBounds && !record.lastBounds.hidden) resizeWsView(id, record.lastBounds); else hideWsView(record); }
+  if (record) record.status = previousStatus || record.status;
+  syncLegacyWsAlias(record);
+}
 async function clearWsSession(accountId = activeWsAccountId) {
   const id = normalizeWsAccountId(accountId), record = wsViews.get(id) || await (async () => { const account = await resolveWsAccount({ accountId: id }); return { id, partitionKey: account.partitionKey, status: '未连接', hidden: true, sessionHardened: false }; })();
   wsViews.set(id, record); destroyWsView(id); const value = wsSession(record);
@@ -348,17 +356,23 @@ ipcMain.handle('zhike-ws', async (event, value = {}) => {
   const account = await resolveWsAccount(value), accountId = account.id;
   if (action === 'status' || action === 'probe') return probeWsStatus(accountId);
   if (action === 'open' || action === 'login') {
+    const previousActiveWsAccountId = activeWsAccountId, previousRecord = wsViews.get(previousActiveWsAccountId), previousStatus = previousRecord?.status;
     const record = ensureWsView(account); switchWsAccount(accountId, record); const view = record.view;
-    if (view.webContents.getURL() !== wsEntryUrl && !wsAllowedUrl(view.webContents.getURL())) await view.webContents.loadURL(wsEntryUrl);
-    else if (!view.webContents.getURL()) await view.webContents.loadURL(wsEntryUrl);
+    try {
+      if (view.webContents.getURL() !== wsEntryUrl && !wsAllowedUrl(view.webContents.getURL())) await view.webContents.loadURL(wsEntryUrl);
+      else if (!view.webContents.getURL()) await view.webContents.loadURL(wsEntryUrl);
+    } catch (error) { restoreWsAccount(previousActiveWsAccountId, previousRecord, previousStatus); throw error; }
     setWsStatus(accountId, action === 'login' ? '登录中' : '等待登录'); resizeWsView(accountId, value.bounds);
     return { ok: true, accountId, status: record.status, partitionKey: record.partitionKey };
   }
   if (action === 'reload' || action === 'reconnect') {
+    const previousActiveWsAccountId = activeWsAccountId, previousRecord = wsViews.get(previousActiveWsAccountId), previousStatus = previousRecord?.status;
     const record = ensureWsView(account); switchWsAccount(accountId, record); const view = record.view;
     setWsStatus(accountId, action === 'reconnect' ? '正在重连' : '登录中');
-    if (view.webContents.getURL() && wsAllowedUrl(view.webContents.getURL())) view.webContents.reload();
-    else await view.webContents.loadURL(wsEntryUrl);
+    try {
+      if (view.webContents.getURL() && wsAllowedUrl(view.webContents.getURL())) await view.webContents.reload();
+      else await view.webContents.loadURL(wsEntryUrl);
+    } catch (error) { restoreWsAccount(previousActiveWsAccountId, previousRecord, previousStatus); throw error; }
     resizeWsView(accountId, value.bounds); return { ok: true, accountId, status: record.status, partitionKey: record.partitionKey };
   }
   if (action === 'mark-connected' || action === 'mark-expired' || action === 'mark-reconnecting') {
