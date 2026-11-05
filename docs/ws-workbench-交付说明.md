@@ -1,12 +1,12 @@
-# 知客 4.2.3 多账号 WS 工作台交付说明
+# 知客 4.2.4 多账号 WS 工作台交付说明
 
 ## 安装包
 
-- 文件：`知客-4.2.3-WS工作台完善版.exe`
-- SHA-256：`9C2937A3A2341FBF6C959214E3F14E1ADFDC40BED2BCB8BC7FFB92544A26C2E1`
-- 文件大小：173,916,757 字节
-- Git LFS 路径：`releases/知客-4.2.3-WS工作台完善版.exe`
-- 用户输出副本：`C:\Users\酷酷\Documents\Codex\2026-11-04\c-users-documents-codex-2026-11\outputs\知客-4.2.3-WS工作台完善版.exe`
+- 文件：`知客-4.2.4-WS工作台完善版.exe`
+- SHA-256：`4BB6A1C11D62A7886294BCC80367D31880F175EB0D0B20E05F1119B0F20CE32E`
+- 文件大小：173,918,202 字节
+- Git LFS 路径：`releases/知客-4.2.4-WS工作台完善版.exe`
+- 用户输出副本：`C:\Users\酷酷\Documents\Codex\2026-11-04\c-users-documents-codex-2026-11\outputs\知客-4.2.4-WS工作台完善版.exe`
 
 安装器已使用 Electron 45.2.1、Node.js 24.22.1 和 Inno Setup 6.7.3 编译。构建脚本先生成隔离 staging，再拒绝打包真实数据库、BrowserView 分区、日志、凭据和密钥。
 
@@ -22,11 +22,20 @@
 - 账号切换时丢弃过期响应，客户和跟进保存失败时恢复原资料。
 - 保留原知客客户中心、跟票、入金、统计、数据中心、设置和 GPT 助手业务逻辑。
 
+## 4.2.4 稳定性与性能修复
+
+- 修复添加 WS 账号时 IPC 请求误落到 `/api/ws/accounts/`，不再出现“文件不存在”。
+- 首页报名待跟进查找、客户排序和数据治理扫描减少全量重复计算。
+- 快速录入输入防抖；报名记录先筛选后分页，只生成当前页 DOM。
+- WS 可见会话使用内容指纹增量入队；未变化轮询不再重复写入。
+- BrowserView 相同尺寸跳过原生重排，隐藏视图同步清除旧尺寸缓存，账号切换仍可恢复窗口。
+- 50,000 客户/报名合成基准：首页待跟进查找由约 22,497.88 ms 降至 17.53 ms（约 1,283.1 倍）；该基准不读取真实业务数据。
+
 ## 验证结果
 
 - 源码与完整回归：`node scripts/run-tests.cjs all`，35/35 通过。
 - staging：`scripts/build-installer.ps1 -StageOnly` 通过，142 个源文件进入干净 staging，未包含 `resources/app/data`。
-- 安装 QA：`ZHIKE_EXPECTED_VERSION=4.2.3 node tests/ws-installer-qa.cjs` 通过，覆盖隔离安装、覆盖升级、WS 资产、卸载和安装目录用户文件保留。
+- 安装 QA：`ZHIKE_EXPECTED_VERSION=4.2.4 node tests/ws-installer-qa.cjs` 通过，覆盖隔离安装、覆盖升级、WS 资产、卸载和安装目录用户文件保留。
 - 安装器模式：`node scripts/run-tests.cjs installer`，2/2 通过；4.1.3 旧安装包不存在，升级项按脚本约定显示 SKIP，不误报通过。
 
 完整测试表见 `docs/ws-workbench-测试报告.md`；多账号使用和限制见 `docs/ws-workbench-multi-account.md`。
