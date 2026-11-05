@@ -131,7 +131,7 @@
     state.collectionRefreshing = false;
     state.autoCaptureSignature = '';
     clearTimeout(settingsSaveTimer); settingsSaveTimer = undefined; ++settingsSaveSequence;
-    state.busy.import = false; state.busy.customer = false; state.busy.followup = false; state.aiBusy = false;
+    state.busy.import = false; state.busy.customer = false; state.busy.followup = false; state.busy.connection = false; state.aiBusy = false;
     state.activeAccountId = id;
     state.currentConversationId = '';
     state.conversations = []; state.messages = []; state.analysis = null; state.analysisMeta = null; state.replies = [];
@@ -153,6 +153,7 @@
   function toast(message, icon = 'check') { getHost()?.toast?.(message, icon); }
   function activeConversation() { return state.conversations.find(item => String(item.id) === String(state.currentConversationId)) || null; }
   function stableHash(value) { return core.stableHash(value); }
+  function translationBusyKey(messageId, context = captureContext()) { return `${context.accountId}:${context.conversationId || state.currentConversationId}:${String(messageId)}`; }
   function blankDraft() {
     return {
       captureText: '',
@@ -231,9 +232,9 @@
     const hidden = !state.active || style.display === 'none' || style.visibility === 'hidden' || rect.width < 40 || rect.height < 40;
     return { hidden, x: Math.round(rect.left), y: Math.round(rect.top), width: Math.round(rect.width), height: Math.round(rect.height) };
   }
-  async function wsBridge(action) {
+  async function wsBridge(action, context = null) {
     if (!window.zhikeDesktop?.ws) throw new Error('当前页面没有桌面 WS 视图能力，请从知客安装版打开。');
-    return window.zhikeDesktop.ws({ action, accountId: state.activeAccountId || 'default', bounds: boundsForBrowserView() });
+    return window.zhikeDesktop.ws({ action, accountId: context?.accountId || state.activeAccountId || 'default', bounds: boundsForBrowserView() });
   }
   function updateStatusDom() {
     const badge = $('#wsStatusBadge');
@@ -254,20 +255,20 @@
   async function connectionAction(action) {
     if (state.busy.connection) return;
     if (action === 'clear-session' && !confirm('清除本机 WS 会话后需要重新扫码或登录。客户资料、翻译、AI 分析和跟进记录不会删除。确认继续？')) return;
+    const context = captureContext();
     state.busy.connection = true;
     try {
-      const result = await wsBridge(action);
+      const result = await wsBridge(action, context);
+      assertContext(context);
       setStatus(result.status || (action === 'reconnect' ? '正在重连' : action === 'close' || action === 'clear-session' ? '未连接' : '等待登录'), result.detail || '');
       if (action === 'clear-session') toast('WS 隔离登录会话已清除，本地业务记录仍保留');
       else if (action === 'close') toast('WS 页面已关闭，本地业务记录仍保留');
       else if (action === 'probe') toast('WS 登录状态已重新检测');
       else toast('WS 页面已打开，请自行扫码或登录');
     } catch (error) {
-      setStatus('连接失败', error.message);
-      toast(error.message, 'x');
+      if (contextCurrent(context)) { setStatus('连接失败', error.message); toast(error.message, 'x'); }
     } finally {
-      state.busy.connection = false;
-      render();
+      if (contextCurrent(context)) { state.busy.connection = false; render(); }
     }
   }
 
@@ -289,7 +290,7 @@
       if (alertResult) { assertContext(context); state.followupAlerts = alertResult.alerts || []; }
       state.conversations = Array.isArray(result.conversations) ? result.conversations : [];
       if (!state.currentConversationId && state.conversations[0]) state.currentConversationId = state.conversations[0].id;
-      if (state.currentConversationId) await loadConversationData(state.currentConversationId, false);
+      if (state.currentConversationId) await loadConversationData(state.currentConversationId, false, { ...context, conversationId: String(state.currentConversationId) });
       assertContext(context);
       state.lastLoadedAt = nowIso();
     } catch (error) {
@@ -428,9 +429,11 @@
     const controls = run.status === 'paused' ? '<button class="btn small" data-ws-action="resume-collection">继续</button>' : ['created','running','discovering'].includes(run.status) ? '<button class="btn small" data-ws-action="pause-collection">暂停</button><button class="btn small danger" data-ws-action="stop-collection">停止</button>' : '';
     return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>采集与跟进</strong><span>${esc(run.status)} · 更新于 ${esc(displayTime(run.updatedAt))}</span></div><div>${controls}<button class="btn small" data-ws-action="create-collection-run">新建任务</button></div></div><div class="ws-collection-stats"><b>${run.completed}/${run.total || run.discovered}</b><span>已采集</span><b>${run.analyzed}</b><span>已分析</span><b>${run.retryable}</b><span>待重试</span><b>${pending}</b><span>待处理</span></div>${run.lastError ? `<p class="ws-error-line">${esc(run.lastError)}</p>` : ''}${alertHtml}</section>`;
   }
-  async function loadConversationData(id, redraw = true) {
-    const accountId = String(state.activeAccountId || 'default');
-    state.currentConversationId = String(id || '');
+  async function loadConversationData(id, redraw = true, parentContext = null) {
+    const conversationId = String(id || '');
+    const context = { ...(parentContext || captureContext(conversationId)), conversationId };
+    if (context.sequence !== Number(state.accountLoadSequence || 0) || context.accountId !== String(state.activeAccountId || 'default')) return;
+    state.currentConversationId = conversationId;
     state.analysis = null;
     state.analysisMeta = null;
     state.replies = [];
@@ -446,12 +449,12 @@
     try {
       const encoded = encodeURIComponent(state.currentConversationId);
       const [settings, messages, analyses, replies] = await Promise.all([
-        api(`/api/ws/settings?conversationId=${encoded}`),
-        api(`/api/ws/messages?conversationId=${encoded}&limit=500`),
-        api(`/api/ws/analyses?conversationId=${encoded}&limit=1`),
-        api(`/api/ws/replies?conversationId=${encoded}&limit=10`),
+        api(`/api/ws/settings?conversationId=${encoded}`, {}, context),
+        api(`/api/ws/messages?conversationId=${encoded}&limit=500`, {}, context),
+        api(`/api/ws/analyses?conversationId=${encoded}&limit=1`, {}, context),
+        api(`/api/ws/replies?conversationId=${encoded}&limit=10`, {}, context),
       ]);
-      if (accountId !== String(state.activeAccountId || 'default')) return;
+      assertContext(context);
       state.settings = core.normalizeTranslationSettings(settings);
       state.aiEnabled = settings.aiEnabled !== false;
       state.messages = core.dedupeMessages(messages.messages || []);
@@ -462,9 +465,9 @@
       state.translationStatus = state.settings.enabled ? `${core.translationMode(state.settings)} · 可按方向关闭` : '翻译已关闭 · 手动翻译仍可用';
       state.lastLoadedAt = nowIso();
     } catch (error) {
-      if (accountId === String(state.activeAccountId || 'default')) state.error = error.message;
+      if (contextCurrent(context)) state.error = error.message;
     } finally {
-      if (accountId === String(state.activeAccountId || 'default')) { state.loading = false; if (redraw) render(); }
+      if (contextCurrent(context)) { state.loading = false; if (redraw) render(); }
     }
   }
   async function createConversation() {
@@ -483,7 +486,7 @@
       state.createExternalId = '';
       state.createTitle = '';
       state.mobilePanel = 'center';
-      await loadConversationData(item.id, false);
+      await loadConversationData(item.id, false, { ...context, conversationId: String(item.id) });
       if (contextCurrent(context)) toast(existing ? '已打开现有 WS 会话' : '已建立本机会话记录');
     } catch (error) {
       if (contextCurrent(context)) { state.error = error.message; toast(error.message, 'x'); }
@@ -519,7 +522,7 @@
   function renderMessageRows() {
     if (!state.messages.length) return '<div class="ws-empty ws-message-empty">导入当前可见聊天后，原文和译文会显示在这里。</div>';
     return state.messages.map(message => {
-      const busy = state.translationBusy.has(String(message.id));
+      const busy = state.translationBusy.has(translationBusyKey(message.id));
       const failed = message.translationStatus === 'failed' || Boolean(message.translationError);
       const showOriginal = state.settings.showOriginal || !message.translatedText || failed;
       const stamp = message.data?.timestamp || message.createdAt || '';
@@ -728,17 +731,20 @@
     if (!language) throw new Error('尚未识别客户语言，请在“发送译为”中选择语言，或先运行 AI 分析。');
     return language;
   }
-  async function translationServiceStatus() {
+  async function translationServiceStatus(context = captureContext()) {
+    assertContext(context);
     if (!window.zhikeAI?.request || !window.zhikeAI?.status) throw new Error('当前没有可用的 AI 翻译服务。');
     const status = await window.zhikeAI.status().catch(() => ({ configured: false }));
+    assertContext(context);
     if (!status.configured) throw new Error('请先在 GPT 运营助手中配置 AI 服务；原文已保留。');
     state.translationStatus = `翻译服务正常 · ${status.providerName || status.provider || 'AI'}`;
     return status;
   }
-  async function translateText(originalText, direction) {
+  async function translateText(originalText, direction, context = captureContext()) {
     const source = text(originalText);
     if (!source) throw new Error('原文为空，无法翻译。');
-    await translationServiceStatus();
+    assertContext(context);
+    await translationServiceStatus(context);
     const destination = translationDestination(direction);
     const prompt = `请把下面${direction === 'receive' ? '客户发来的' : '准备发送给客户的'}内容翻译成${destination}。只返回译文，不要解释，不要添加引号，不要改变数字、网址或联系方式：\n${source.slice(0, 9600)}`;
     const result = await window.zhikeAI.request({
@@ -747,8 +753,10 @@
       input: prompt,
       context: { feature: 'ws-translation', direction, targetLanguage: destination },
     });
+    assertContext(context);
     const translated = text(result?.text);
     if (!translated) throw new Error('翻译服务没有返回译文。');
+    assertContext(context);
     state.translationStatus = `翻译服务正常 · ${result.providerName || 'AI'}`;
     return { translated, destination };
   }
@@ -774,14 +782,17 @@
       }, context);
     } catch { return message; }
   }
-  async function translateMessage(id) {
-    const context = captureContext();
+  async function translateMessage(id, parentContext = null) {
     const message = state.messages.find(item => String(item.id) === String(id));
-    if (!message || state.translationBusy.has(String(id))) return;
-    state.translationBusy.add(String(id));
+    if (!message) return;
+    const context = parentContext || captureContext(message.conversationId);
+    const busyKey = translationBusyKey(id, context);
+    if (!contextCurrent(context) || state.translationBusy.has(busyKey)) return;
+    state.translationBusy.add(busyKey);
     render();
     try {
-      const result = await translateText(message.originalText, message.direction);
+      const result = await translateText(message.originalText, message.direction, context);
+      assertContext(context);
       await persistMessage({
         ...message,
         id: message.id,
@@ -792,20 +803,20 @@
         translationStatus: 'translated',
         translationError: '',
       }, context);
-      toast('单条消息翻译已保存');
+      if (contextCurrent(context)) toast('单条消息翻译已保存');
     } catch (error) {
       if (contextCurrent(context)) await markTranslationFailure(message, error, context);
-      toast(error.message + ' 原文仍保留。', 'x');
+      if (contextCurrent(context)) toast(error.message + ' 原文仍保留。', 'x');
     } finally {
-      state.translationBusy.delete(String(id));
-      render();
+      state.translationBusy.delete(busyKey);
+      if (contextCurrent(context)) render();
     }
   }
   async function translateMessagesInBatches(messages, context = captureContext()) {
     assertContext(context);
     const pending = messages.filter(message => !message.translatedText && core.shouldTranslate(state.settings, message.direction));
     if (!pending.length) return { translated: 0, failed: 0 };
-    try { await translationServiceStatus(); }
+    try { await translationServiceStatus(context); }
     catch (error) {
       for (const message of pending) if (contextCurrent(context)) await markTranslationFailure(message, error, context);
       return { translated: 0, failed: pending.length };
@@ -854,6 +865,7 @@
               failed++;
               continue;
             }
+            assertContext(context);
             await persistMessage({ ...message, translatedText: value, targetLanguage: group.destination, translationStatus: 'translated', translationError: '' }, context);
             translated++;
           }
@@ -1200,7 +1212,7 @@
     render();
     try {
       assertContext(context);
-      const result = await translateText(input, 'send');
+      const result = await translateText(input, 'send', context);
       assertContext(context);
       draft.replyPreview = result.translated;
       draft.replyPreviewSource = input;
@@ -1232,7 +1244,7 @@
           output = draft.replyPreview;
           language = draft.replyPreviewLanguage || sendLanguage();
         } else {
-          const result = await translateText(input, 'send');
+          const result = await translateText(input, 'send', context);
           assertContext(context);
           output = result.translated;
           language = result.destination;

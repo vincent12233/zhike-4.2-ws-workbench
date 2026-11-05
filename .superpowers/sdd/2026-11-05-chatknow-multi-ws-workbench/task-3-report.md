@@ -10,6 +10,7 @@
 - Added compact account card styling and maintained no-scroll outer WS workbench behavior.
 - Added round-one async fencing: stale account operations are discarded before UI or data writes, and every mutation can retain its originating account explicitly.
 - Activation opens the persisted account before status/data loading; early restore signals are queued until the account list is available.
+- Round-three fencing covers conversation detail reads, connection actions, single-message translation, reply translation and translation service status updates. Late results are discarded after account or conversation changes.
 
 ## Verification
 

@@ -31,6 +31,10 @@ assert.match(ui, /copyReply[\s\S]*api\('\/api\/ws\/replies'[\s\S]*context/, 'rep
 assert.match(ui, /createCollectionRun[\s\S]*api\('\/api\/ws\/collection-runs'[\s\S]*context/, 'collection controls keep account context');
 assert.match(ui, /pendingRestoreAccountId/, 'restore signals are queued before account list loading');
 assert.match(ui, /loadAccounts\(\)[\s\S]*wsBridge\('open'\)[\s\S]*loadConversations/, 'activation opens persisted account before loading data');
+assert.match(ui, /loadConversationData\(id, redraw = true, parentContext = null\)[\s\S]*api\([^\n]*context\)[\s\S]*assertContext\(context\)/, 'conversation detail reads use immutable account context');
+assert.match(ui, /connectionAction\(action\)[\s\S]*captureContext\(\)[\s\S]*wsBridge\(action, context\)[\s\S]*contextCurrent\(context\)/, 'connection actions ignore stale account results');
+assert.match(ui, /translationServiceStatus\(context = captureContext\(\)\)[\s\S]*assertContext\(context\)[\s\S]*translateText\(originalText, direction, context = captureContext\(\)\)/, 'translation service status is account fenced');
+assert.match(ui, /translateMessage\(id, parentContext = null\)[\s\S]*translateText\(message\.originalText, message\.direction, context\)/, 'single-message translation carries immutable context');
 assert.match(ui, /leftCollapsed|rightCollapsed/, 'left and right panels remain independently collapsible');
 assert.match(css, /ws-account-list|ws-account-row/, 'account cards have dedicated layout styles');
 assert.match(css, /ws-workbench-page\{[^}]*overflow:hidden/, 'outer workbench does not chase page scroll');
