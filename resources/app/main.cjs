@@ -329,7 +329,7 @@ function switchWsAccount(accountId, record) {
   const id = normalizeWsAccountId(accountId), previous = wsViews.get(activeWsAccountId);
   if (previous && previous !== record) hideWsView(previous);
   activeWsAccountId = id;
-  if (record?.view && mainWindow && !mainWindow.isDestroyed()) { try { mainWindow.addBrowserView?.(record.view); } catch { try { mainWindow.setBrowserView(record.view); } catch {} } record.hidden = false; resizeWsView(id, record.lastBounds || { hidden: true }); }
+  if (record?.view && mainWindow && !mainWindow.isDestroyed()) { try { if (typeof mainWindow.addBrowserView === 'function') mainWindow.addBrowserView(record.view); else mainWindow.setBrowserView(record.view); } catch { try { mainWindow.setBrowserView(record.view); } catch {} } record.hidden = false; resizeWsView(id, record.lastBounds || { hidden: true }); }
   syncLegacyWsAlias(record); return record;
 }
 async function clearWsSession(accountId = activeWsAccountId) {
