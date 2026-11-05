@@ -131,7 +131,7 @@
     state.collectionRefreshing = false;
     state.autoCaptureSignature = '';
     clearTimeout(settingsSaveTimer); settingsSaveTimer = undefined; ++settingsSaveSequence;
-    state.busy.import = false; state.busy.customer = false; state.busy.followup = false; state.busy.connection = false; state.aiBusy = false;
+    state.busy.import = false; state.busy.customer = false; state.busy.followup = false; state.busy.connection = false; state.busy.reply = false; state.busy.capture = false; state.aiBusy = false; state.translationBusy.clear();
     state.activeAccountId = id;
     state.currentConversationId = '';
     state.conversations = []; state.messages = []; state.analysis = null; state.analysisMeta = null; state.replies = [];
@@ -255,7 +255,7 @@
   async function connectionAction(action) {
     if (state.busy.connection) return;
     if (action === 'clear-session' && !confirm('清除本机 WS 会话后需要重新扫码或登录。客户资料、翻译、AI 分析和跟进记录不会删除。确认继续？')) return;
-    const context = captureContext();
+    const context = captureContext('');
     state.busy.connection = true;
     try {
       const result = await wsBridge(action, context);
