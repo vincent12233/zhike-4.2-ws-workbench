@@ -14,3 +14,16 @@ Validation:
 
 - `node tests/ws-multi-account-main.test.cjs`
 - `node scripts/run-tests.cjs all` (31 checks passed)
+
+## Fix round 1
+
+Reviewer findings addressed:
+
+- `destroyWsView` now removes the account record from `wsViews`; recreating an account or changing its partition creates a fresh record with `sessionHardened: false`, so permission, device and display-media handlers are installed again.
+- Account IDs now accept `:` to match server-side account validation; partition-key validation also permits the same safe character set.
+- Focused test assertions cover colon IDs, registry cleanup and fresh session hardening.
+
+Validation:
+
+- `node tests/ws-multi-account-main.test.cjs` — pass
+- `node scripts/run-tests.cjs all` — 31 checks passed

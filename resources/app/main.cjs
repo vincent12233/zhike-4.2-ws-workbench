@@ -192,12 +192,12 @@ function wsAllowedUrl(value) {
 }
 function normalizeWsAccountId(value) {
   const id = String(value || 'default').trim() || 'default';
-  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/.test(id)) throw new Error('WS 账号标识无效。');
+  if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,119}$/.test(id)) throw new Error('WS 账号标识无效。');
   return id;
 }
 function normalizeWsPartition(value, accountId) {
   const supplied = String(value || '').trim();
-  if (supplied && /^persist:[A-Za-z0-9._-]{1,180}$/.test(supplied)) return supplied;
+  if (supplied && /^persist:[A-Za-z0-9._:-]{1,180}$/.test(supplied)) return supplied;
   return `persist:ws-workbench-${accountId}`;
 }
 function syncLegacyWsAlias(record) {
@@ -300,12 +300,14 @@ function destroyWsView(accountId) {
   hideWsView(record);
   try { if (record.view && !record.view.webContents.isDestroyed()) record.view.webContents.close(); } catch {}
   record.view = null; record.hidden = true; record.lastBounds = null;
+  wsViews.delete(id);
   setWsStatus(id, '未连接');
   if (id === activeWsAccountId) syncLegacyWsAlias(record);
 }
 function ensureWsView(account) {
   const id = account.id;
   let record = wsViews.get(id);
+  if (record?.partitionKey !== account.partitionKey) { if (record) destroyWsView(id); record = null; }
   if (record?.view && !record.view.webContents.isDestroyed()) return record;
   if (!mainWindow || mainWindow.isDestroyed()) throw new Error('知客主窗口尚未准备好。');
   record ||= { id, partitionKey: account.partitionKey, status: '未连接', hidden: true, sessionHardened: false, view: null, session: null, probeTimer: null, lastBounds: null };

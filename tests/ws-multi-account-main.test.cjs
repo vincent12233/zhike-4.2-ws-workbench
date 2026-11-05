@@ -9,6 +9,9 @@ const preload = fs.readFileSync(preloadPath, 'utf8');
 
 assert.match(main, /wsViews\s*=\s*new Map\(\)/, 'main process keeps an account keyed BrowserView registry');
 assert.match(main, /activeWsAccountId/, 'main process tracks active account id');
+assert.match(main, /A-Za-z0-9._:-/, 'account ids accept colon as allowed by the account API');
+assert.match(main, /wsViews\.delete\(id\)/, 'destroying a view removes its registry record');
+assert.match(main, /sessionHardened:\s*false/, 'recreated views start with fresh session hardening');
 assert.match(main, /persist:ws-workbench-/, 'views use account-isolated persistent partitions');
 assert.match(main, /accountId/, 'WS IPC accepts account ids');
 assert.match(main, /addBrowserView|setBrowserView/, 'views attach to the main window');
@@ -23,4 +26,3 @@ assert.match(preload, /accountId/, 'desktop preload forwards account context');
 assert.match(preload, /onWsStatus/, 'desktop preload keeps status listener');
 assert.doesNotMatch(main, /session\.cookies|document\.cookie/, 'main source does not expose session secrets');
 console.log('ws-multi-account-main: expected registry, isolation, switching, bounds and legacy IPC contracts');
-
