@@ -1,0 +1,24 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const ui = fs.readFileSync(path.join(__dirname, '..', 'resources', 'app', 'modules', 'ws-workbench.js'), 'utf8');
+const css = fs.readFileSync(path.join(__dirname, '..', 'resources', 'app', 'modules', 'ws-workbench.css'), 'utf8');
+const preload = fs.readFileSync(path.join(__dirname, '..', 'resources', 'app', 'preload.cjs'), 'utf8');
+const main = fs.readFileSync(path.join(__dirname, '..', 'resources', 'app', 'main.cjs'), 'utf8');
+
+assert.match(ui, /accounts:\s*\[\]/, 'renderer keeps WS account list state');
+assert.match(ui, /activeAccountId:\s*['"]default['"]/, 'renderer tracks active account');
+assert.match(ui, /renderAccountList|ws-account-row/, 'left panel renders account cards and active marker');
+assert.match(ui, /create-account|添加账号/, 'new account action exists');
+assert.match(ui, /switch-account|switchAccount/, 'account switching action exists');
+assert.match(ui, /wsTopAccount/, 'compact toolbar keeps account switching accessible when the left panel is collapsed');
+assert.match(ui, /wsAccounts/, 'renderer uses account IPC');
+assert.match(ui, /accountId.*state\.activeAccountId|state\.activeAccountId.*accountId/, 'WS bridge carries active account id');
+assert.match(ui, /accountId.*url\.searchParams|url\.searchParams.*accountId/, 'API calls are scoped to active account');
+assert.match(ui, /leftCollapsed|rightCollapsed/, 'left and right panels remain independently collapsible');
+assert.match(css, /ws-account-list|ws-account-row/, 'account cards have dedicated layout styles');
+assert.match(css, /ws-workbench-page\{[^}]*overflow:hidden/, 'outer workbench does not chase page scroll');
+assert.match(preload, /restoreAccountId|restored/, 'preload accepts restore-account status events');
+assert.match(main, /restoreAccountId[\s\S]*restoredFrom|restoredFrom[\s\S]*restoreAccountId/, 'main emits explicit restored account context');
+console.log('ws-workbench-ui: account cards, scoped context, collapse and restore synchronization contracts pass');

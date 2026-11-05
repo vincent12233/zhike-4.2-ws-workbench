@@ -340,12 +340,13 @@ function switchWsAccount(accountId, record) {
   syncLegacyWsAlias(record); return record;
 }
 function restoreWsAccount(accountId, record, previousStatus = record?.status) {
-  const id = normalizeWsAccountId(accountId), failed = wsViews.get(activeWsAccountId);
+  const id = normalizeWsAccountId(accountId), failedId = activeWsAccountId, failed = wsViews.get(failedId);
   if (failed && failed !== record) hideWsView(failed);
   activeWsAccountId = id;
   if (record?.view && mainWindow && !mainWindow.isDestroyed()) { try { if (typeof mainWindow.addBrowserView === 'function') mainWindow.addBrowserView(record.view); else mainWindow.setBrowserView(record.view); } catch { try { mainWindow.setBrowserView(record.view); } catch {} } record.hidden = false; if (record.lastBounds && !record.lastBounds.hidden) resizeWsView(id, record.lastBounds); else hideWsView(record); }
   if (record) record.status = previousStatus || record.status;
   syncLegacyWsAlias(record);
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('zhike-ws-status', { accountId: id, status: record?.status || previousStatus || '未连接', detail: 'WS 页面加载失败，已恢复到上一个账号。', restoreAccountId: id, restoredFrom: failedId });
 }
 async function clearWsSession(accountId = activeWsAccountId) {
   const id = normalizeWsAccountId(accountId), record = wsViews.get(id) || await (async () => { const account = await resolveWsAccount({ accountId: id }); return { id, partitionKey: account.partitionKey, status: '未连接', hidden: true, sessionHardened: false }; })();

@@ -8,6 +8,10 @@
   const text = value => String(value == null ? '' : value).trim();
   const state = {
     active: false,
+    accounts: [],
+    activeAccountId: 'default',
+    accountBusy: false,
+    accountLoadSequence: 0,
     currentConversationId: '',
     conversations: [],
     messages: [],
@@ -48,6 +52,86 @@
   let autoCaptureTimer;
   let loadSequence = 0;
 
+  function activeAccount() {
+    return state.accounts.find(item => String(item.id) === String(state.activeAccountId)) || null;
+  }
+  function accountStatusLabel(account) {
+    return account?.status || (String(account?.id) === 'default' ? '未连接' : '未连接');
+  }
+  function accountDisplayName(account) {
+    return text(account?.displayName || account?.id || 'WS 账号');
+  }
+  function accountStorageKey() { return 'zhike.ws.activeAccountId'; }
+  function readStoredAccountId() {
+    try { return text(localStorage.getItem(accountStorageKey())) || 'default'; } catch { return 'default'; }
+  }
+  function writeStoredAccountId(id) { try { localStorage.setItem(accountStorageKey(), String(id || 'default')); } catch {} }
+  async function loadAccounts() {
+    const sequence = ++state.accountLoadSequence;
+    try {
+      const result = await window.zhikeDesktop?.wsAccounts?.({ action: 'list' });
+      if (sequence !== state.accountLoadSequence) return;
+      state.accounts = Array.isArray(result?.accounts) ? result.accounts : [];
+      const stored = readStoredAccountId();
+      if (state.accounts.some(item => String(item.id) === stored)) state.activeAccountId = stored;
+      else if (state.accounts.some(item => String(item.id) === 'default')) state.activeAccountId = 'default';
+      writeStoredAccountId(state.activeAccountId);
+      const active = activeAccount();
+      if (active) {
+        try {
+          const status = await window.zhikeDesktop.ws({ action: 'status', accountId: active.id });
+          updateAccountStatus(status);
+        } catch {}
+      }
+    } catch (error) {
+      state.error = error.message || 'WS 账号列表加载失败。';
+    }
+  }
+  function updateAccountStatus(payload) {
+    const id = text(payload?.accountId);
+    if (!id) return;
+    state.accounts = state.accounts.map(item => String(item.id) === id ? { ...item, status: payload.status || item.status, statusDetail: payload.detail || item.statusDetail } : item);
+    if (id === String(state.activeAccountId) && payload.status) setStatus(payload.status, payload.detail || '');
+  }
+  async function createAccount() {
+    if (state.accountBusy) return;
+    const displayName = text(prompt('请输入本机显示名称（例如：个人号、工作号）：'));
+    if (!displayName) return;
+    state.accountBusy = true; render();
+    try {
+      const id = `ws-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+      const result = await window.zhikeDesktop.wsAccounts({ action: 'create', account: { id, displayName, provider: 'WhatsApp Web', origin: 'https://web.whatsapp.com', status: '未连接' } });
+      if (result?.account) state.accounts = [...state.accounts, result.account];
+      await switchAccount(result?.account?.id || id);
+      toast('已添加 WS 账号，请在中栏完成扫码或登录。');
+    } catch (error) { state.error = error.message || 'WS 账号创建失败。'; toast(state.error, 'x'); }
+    finally { state.accountBusy = false; render(); }
+  }
+  async function switchAccount(accountId) {
+    const id = text(accountId) || 'default';
+    if (id === String(state.activeAccountId)) return;
+    if (!state.accounts.some(item => String(item.id) === id)) return;
+    const previous = state.activeAccountId;
+    const sequence = ++state.accountLoadSequence;
+    state.accountBusy = true;
+    state.activeAccountId = id;
+    state.currentConversationId = '';
+    state.conversations = []; state.messages = []; state.analysis = null; state.analysisMeta = null; state.replies = [];
+    writeStoredAccountId(id); render();
+    try {
+      await window.zhikeDesktop.ws({ action: 'open', accountId: id, bounds: boundsForBrowserView() });
+      if (sequence !== state.accountLoadSequence) return;
+      await loadConversations();
+      state.error = '';
+    } catch (error) {
+      state.activeAccountId = previous;
+      writeStoredAccountId(previous);
+      state.error = error.message || 'WS 账号切换失败，已恢复原账号。';
+      try { await window.zhikeDesktop.ws({ action: 'open', accountId: previous, bounds: boundsForBrowserView() }); } catch {}
+      await loadConversations();
+    } finally { state.accountBusy = false; render(); }
+  }
+
   function toast(message, icon = 'check') { getHost()?.toast?.(message, icon); }
   function activeConversation() { return state.conversations.find(item => String(item.id) === String(state.currentConversationId)) || null; }
   function stableHash(value) { return core.stableHash(value); }
@@ -75,7 +159,7 @@
     };
   }
   function currentDraft() {
-    const key = String(state.currentConversationId || '__new__');
+    const key = `${state.activeAccountId || 'default'}:${String(state.currentConversationId || '__new__')}`;
     if (!state.drafts.has(key)) state.drafts.set(key, blankDraft());
     return state.drafts.get(key);
   }
@@ -100,11 +184,18 @@
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), Number(init.timeout) || 20000);
     try {
-      const response = await fetch(pathname, {
+      const accountId = String(state.activeAccountId || 'default');
+      const url = new URL(pathname, window.location.origin);
+      if (url.pathname.startsWith('/api/ws/') && !url.searchParams.has('accountId')) url.searchParams.set('accountId', accountId);
+      const nextInit = { ...init };
+      if (nextInit.body && typeof nextInit.body === 'string' && /^\s*\{/.test(nextInit.body)) {
+        try { nextInit.body = JSON.stringify({ ...JSON.parse(nextInit.body), accountId }); } catch {}
+      }
+      const response = await fetch(url.pathname + url.search + url.hash, {
         cache: 'no-store',
-        ...init,
+        ...nextInit,
         signal: controller.signal,
-        headers: { 'Content-Type': 'application/json', ...(init.headers || {}) },
+        headers: { 'Content-Type': 'application/json', ...(nextInit.headers || {}) },
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || 'WS 本机数据服务暂不可用。');
@@ -124,7 +215,7 @@
   }
   async function wsBridge(action) {
     if (!window.zhikeDesktop?.ws) throw new Error('当前页面没有桌面 WS 视图能力，请从知客安装版打开。');
-    return window.zhikeDesktop.ws({ action, bounds: boundsForBrowserView() });
+    return window.zhikeDesktop.ws({ action, accountId: state.activeAccountId || 'default', bounds: boundsForBrowserView() });
   }
   function updateStatusDom() {
     const badge = $('#wsStatusBadge');
@@ -164,12 +255,13 @@
 
   async function loadConversations() {
     const sequence = ++loadSequence;
+    const accountId = String(state.activeAccountId || 'default');
     state.loading = true;
     state.error = '';
     render();
     try {
       const result = await api('/api/ws/conversations?limit=200');
-      if (sequence !== loadSequence) return;
+      if (sequence !== loadSequence || accountId !== String(state.activeAccountId || 'default')) return;
       try { state.collectionRun = (await api('/api/ws/collection-runs')).run || null; } catch {}
       try { state.followupAlerts = (await api('/api/ws/followup-alerts?limit=8')).alerts || []; } catch {}
       state.conversations = Array.isArray(result.conversations) ? result.conversations : [];
@@ -177,9 +269,9 @@
       if (state.currentConversationId) await loadConversationData(state.currentConversationId, false);
       state.lastLoadedAt = nowIso();
     } catch (error) {
-      if (sequence === loadSequence) state.error = error.message;
+      if (sequence === loadSequence && accountId === String(state.activeAccountId || 'default')) state.error = error.message;
     } finally {
-      if (sequence === loadSequence) { state.loading = false; render(); }
+      if (sequence === loadSequence && accountId === String(state.activeAccountId || 'default')) { state.loading = false; render(); }
     }
   }
   async function refreshCollectionSummary() {
@@ -278,6 +370,7 @@
     return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>采集与跟进</strong><span>${esc(run.status)} · 更新于 ${esc(displayTime(run.updatedAt))}</span></div><div>${controls}<button class="btn small" data-ws-action="create-collection-run">新建任务</button></div></div><div class="ws-collection-stats"><b>${run.completed}/${run.total || run.discovered}</b><span>已采集</span><b>${run.analyzed}</b><span>已分析</span><b>${run.retryable}</b><span>待重试</span><b>${pending}</b><span>待处理</span></div>${run.lastError ? `<p class="ws-error-line">${esc(run.lastError)}</p>` : ''}${alertHtml}</section>`;
   }
   async function loadConversationData(id, redraw = true) {
+    const accountId = String(state.activeAccountId || 'default');
     state.currentConversationId = String(id || '');
     state.analysis = null;
     state.analysisMeta = null;
@@ -299,6 +392,7 @@
         api(`/api/ws/analyses?conversationId=${encoded}&limit=1`),
         api(`/api/ws/replies?conversationId=${encoded}&limit=10`),
       ]);
+      if (accountId !== String(state.activeAccountId || 'default')) return;
       state.settings = core.normalizeTranslationSettings(settings);
       state.aiEnabled = settings.aiEnabled !== false;
       state.messages = core.dedupeMessages(messages.messages || []);
@@ -309,10 +403,9 @@
       state.translationStatus = state.settings.enabled ? `${core.translationMode(state.settings)} · 可按方向关闭` : '翻译已关闭 · 手动翻译仍可用';
       state.lastLoadedAt = nowIso();
     } catch (error) {
-      state.error = error.message;
+      if (accountId === String(state.activeAccountId || 'default')) state.error = error.message;
     } finally {
-      state.loading = false;
-      if (redraw) render();
+      if (accountId === String(state.activeAccountId || 'default')) { state.loading = false; if (redraw) render(); }
     }
   }
   async function createConversation() {
@@ -352,6 +445,17 @@
     }).join('');
     if (rows) return rows;
     return `<div class="ws-empty">${state.conversations.length ? '没有匹配的会话。' : '还没有本机会话。输入会话标识后建立记录，不会预置演示数据。'}</div>`;
+  }
+  function renderAccountList() {
+    if (!state.accounts.length) return '<div class="ws-empty">暂无 WS 账号。点击“添加账号”创建本机登录页。</div>';
+    return state.accounts.map(account => {
+      const active = String(account.id) === String(state.activeAccountId);
+      const status = accountStatusLabel(account);
+      const initial = esc(accountDisplayName(account).slice(0, 1).toUpperCase());
+      return `<button class="ws-account-row ${active ? 'active' : ''}" data-ws-action="switch-account" data-account-id="${esc(account.id)}" aria-current="${active ? 'true' : 'false'}">
+        <span class="ws-account-avatar">${initial}</span><span class="ws-account-copy"><strong>${esc(accountDisplayName(account))}</strong><small>${esc(account.id)}</small></span><span class="ws-account-status" data-status="${esc(status)}">${esc(status)}</span>
+      </button>`;
+    }).join('');
   }
   function renderMessageRows() {
     if (!state.messages.length) return '<div class="ws-empty ws-message-empty">导入当前可见聊天后，原文和译文会显示在这里。</div>';
@@ -405,6 +509,7 @@
           <div><h1 class="page-title">WS 工作台</h1><p class="page-subtitle">个人 WS 登录、可见聊天翻译与客户运营辅助 · 不保存密码、Cookie、二维码或秘密 Token</p></div>
           <div class="heading-actions">
             <span id="wsStatusBadge" class="ws-status-badge" data-status="${esc(state.wsStatus)}">${esc(state.wsStatus)}</span>
+            <select id="wsTopAccount" class="ws-top-account" title="切换 WS 账号">${state.accounts.map(account => `<option value="${esc(account.id)}" ${String(account.id) === String(state.activeAccountId) ? 'selected' : ''}>${esc(accountDisplayName(account))}</option>`).join('')}</select>
             <label class="ws-top-switch"><input id="wsTopTranslateEnabled" type="checkbox" ${state.settings.enabled ? 'checked' : ''}>翻译</label>
             <select id="wsTopTranslationMode" title="翻译模式">
               <option value="both" ${translationModeValue() === 'both' ? 'selected' : ''}>双向翻译</option>
@@ -425,7 +530,9 @@
         </div>
         <div class="ws-layout ${state.leftCollapsed ? 'left-collapsed' : ''} ${state.rightCollapsed ? 'right-collapsed' : ''} mobile-${state.mobilePanel}">
           <aside class="ws-sessions-panel">
-            <div class="ws-panel-heading"><div><strong>会话</strong><span>${state.conversations.length} 个本地记录</span></div><button class="icon-button" data-ws-action="new-conversation" title="建立会话">＋</button></div>
+            <div class="ws-panel-heading"><div><strong>WS 账号</strong><span>${state.accounts.length} 个本机隔离会话</span></div><button class="btn small" data-ws-action="create-account" ${state.accountBusy ? 'disabled' : ''}>＋ 添加账号</button></div>
+            <div class="ws-account-list">${renderAccountList()}</div>
+            <div class="ws-panel-heading ws-conversation-heading"><div><strong>会话</strong><span>${state.conversations.length} 个本地记录 · ${esc(accountDisplayName(activeAccount()))}</span></div><button class="icon-button" data-ws-action="new-conversation" title="建立会话">＋</button></div>
             <input id="wsConversationSearch" class="ws-search-input" placeholder="搜索客户、标识或消息" value="${esc(state.conversationQuery)}">
             <div class="ws-create-session">
               <input id="wsConversationExternalId" placeholder="会话标识（由你输入）" maxlength="160" value="${esc(state.createExternalId)}">
@@ -436,7 +543,7 @@
           </aside>
           <section class="ws-center-panel">
             <div class="ws-login-toolbar">
-              <div><strong>WS 登录入口</strong><span id="wsStatusDetail">${esc(state.wsDetail || '请在中栏自行完成扫码或登录。')}</span></div>
+              <div><strong>${esc(accountDisplayName(activeAccount()) || 'WS 登录入口')}</strong><span id="wsStatusDetail">${esc(state.wsDetail || '请在中栏自行完成扫码或登录。')}</span></div>
               <div class="ws-toolbar-actions">
                 <button class="btn small primary" data-ws-action="open" ${state.busy.connection ? 'disabled' : ''}>${state.wsStatus === '已连接' ? '已打开 WS' : '打开 WS'}</button>
                 <button class="btn small" data-ws-action="probe">检测状态</button>
@@ -1083,6 +1190,8 @@
   }
   async function handleAction(action, element) {
     if (['open', 'login', 'reload', 'reconnect', 'close', 'clear-session', 'probe'].includes(action)) return connectionAction(action);
+    if (action === 'create-account') return createAccount();
+    if (action === 'switch-account') return switchAccount(element?.dataset?.accountId);
     if (action === 'capture-selection') return captureSelection();
     if (action === 'toggle-left') { state.leftCollapsed = !state.leftCollapsed; render(); return; }
     if (action === 'toggle-right') { state.rightCollapsed = !state.rightCollapsed; render(); return; }
@@ -1118,6 +1227,7 @@
     }
   }
   function applyControlChange(target) {
+    if (target.matches('#wsTopAccount')) { void switchAccount(target.value); return; }
     if (target.matches('#wsCaptureDirection')) { state.captureDirection = target.value === 'send' ? 'send' : 'receive'; render(); return; }
     if (target.matches('#wsTopTranslationMode')) applyTranslationMode(target.value);
     if (target.matches('#wsTopTranslateEnabled, #wsTranslateEnabled')) state.settings.enabled = target.checked;
@@ -1191,8 +1301,10 @@
     $$('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.view === 'ws-workbench'));
     document.body.classList.add('ws-mode');
     render();
-    loadConversations();
-    wsBridge('status').then(result => setStatus(result.status, result.detail || '')).catch(error => setStatus('连接失败', error.message));
+    loadAccounts().then(() => {
+      render();
+      return loadConversations();
+    }).then(() => wsBridge('status')).then(result => { updateAccountStatus(result); setStatus(result.status, result.detail || ''); render(); }).catch(error => setStatus('连接失败', error.message));
   }
   function deactivate() {
     if (!state.active) return;
@@ -1254,6 +1366,19 @@
     // disabled in ws-mode, so it must not chase nested scroll containers.
     window.zhikeDesktop?.onWsStatus?.(payload => {
       if (!payload) return;
+      if (payload.restoreAccountId && state.accounts.some(item => String(item.id) === String(payload.restoreAccountId))) {
+        ++state.accountLoadSequence;
+        state.activeAccountId = String(payload.restoreAccountId);
+        writeStoredAccountId(state.activeAccountId);
+        state.accountBusy = false;
+        state.currentConversationId = '';
+        state.conversations = [];
+        updateAccountStatus({ ...payload, accountId: state.activeAccountId, status: payload.status || '连接失败' });
+        void loadConversations();
+        render();
+        return;
+      }
+      updateAccountStatus(payload);
       setStatus(payload.status || '未连接', payload.detail || '');
       if (state.active && payload.status === '已连接') void refreshCollectionSummary();
     });
