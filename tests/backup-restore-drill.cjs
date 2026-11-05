@@ -17,7 +17,7 @@ const token = 'restore-drill-token';
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function start(dir, port) {
-  const child = spawn(path.join(dir, 'node.exe'), ['server.mjs'], {
+  const child = spawn(process.execPath, ['server.mjs'], {
     cwd: dir,
     windowsHide: true,
     env: { ...process.env, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token, ZHIKE_DATA_DIR: path.join(dir, 'isolated-data') },

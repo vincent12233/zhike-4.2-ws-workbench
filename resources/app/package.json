@@ -1,7 +1,20 @@
 {
   "name": "zhike-offline-desktop",
-  "version": "4.2.0",
+  "version": "4.2.1",
   "description": "知客 4.1 本机客户运营与 GPT 助手桌面版",
   "main": "main.cjs",
-  "private": true
+  "private": true,
+  "engines": {
+    "node": ">=24"
+  },
+  "zhikeRuntime": {
+    "electron": "45.2.1",
+    "node": "24.22.1"
+  },
+  "scripts": {
+    "test:ws": "node ../../scripts/run-tests.cjs ws",
+    "test:all": "node ../../scripts/run-tests.cjs all",
+    "test:installer": "node ../../scripts/run-tests.cjs installer",
+    "build:installer": "powershell -NoProfile -ExecutionPolicy Bypass -File ../../scripts/build-installer.ps1"
+  }
 }

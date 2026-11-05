@@ -6,7 +6,7 @@ if(!app) throw new Error('app path required');
 const dir=mkdtempSync(path.join(os.tmpdir(),'zhike-upgrade-http-'));
 cpSync(app,dir,{recursive:true});
 const port='4399',token='upgrade-http';
-const child=spawn(path.join(dir,'node.exe'),['server.mjs'],{cwd:dir,windowsHide:true,env:{...process.env,ZHIKE_PORT:port,ZHIKE_API_TOKEN:token,ZHIKE_SHUTDOWN_TOKEN:token},stdio:'ignore'});
+const child=spawn(process.execPath,['server.mjs'],{cwd:dir,windowsHide:true,env:{...process.env,ZHIKE_PORT:port,ZHIKE_API_TOKEN:token,ZHIKE_SHUTDOWN_TOKEN:token,ZHIKE_DATA_DIR:path.join(dir,'isolated-data')},stdio:'ignore'});
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 (async()=>{
   try {

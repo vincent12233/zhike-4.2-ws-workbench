@@ -26,37 +26,126 @@ async function request(pathname, init = {}) {
 async function json(response) { return response.json(); }
 (async () => {
   try {
-    const settings = await request('/api/ws/settings?conversationId=conv-1', { method: 'PUT', body: JSON.stringify({ enabled: true, receive: true, send: false, targetLanguage: '中文' }) });
-    assert.equal(settings.status, 200);
-    const settingsBody = await json(settings);
-    assert.equal(settingsBody.conversationId, 'conv-1');
+    const orphanSettings = await request('/api/ws/settings?conversationId=missing', { method: 'PUT', body: JSON.stringify({ enabled: true }) });
+    assert.equal(orphanSettings.status, 400);
 
-    const conversation = await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-001', title: '张三', customerId: '' }) });
+    const conversation = await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-001', title: '张三', customerId: '', language: 'English', unreadCount: 2 }) });
     assert.equal(conversation.status, 200);
     const conversationBody = await json(conversation);
     assert.ok(conversationBody.id);
+    assert.equal(conversationBody.language, 'English');
+    assert.equal(conversationBody.unreadCount, 2);
 
-    const first = await request('/api/ws/messages', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, externalId: 'msg-1', direction: 'receive', originalText: 'Hello', translatedText: '你好', order: 1 }) });
-    const second = await request('/api/ws/messages', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, externalId: 'msg-1', direction: 'receive', originalText: 'Hello', translatedText: '你好', order: 1 }) });
+    const settings = await request(`/api/ws/settings?conversationId=${encodeURIComponent(conversationBody.id)}`, { method: 'PUT', body: JSON.stringify({ enabled: false, receive: true, send: false, targetLanguage: '中文', sendLanguage: 'English', aiEnabled: false }) });
+    assert.equal(settings.status, 200);
+    const settingsBody = await json(settings);
+    assert.equal(settingsBody.conversationId, conversationBody.id);
+    assert.equal(settingsBody.enabled, false);
+    assert.equal(settingsBody.receive, true, '关闭总开关不能抹掉接收方向偏好');
+    assert.equal(settingsBody.send, false);
+    assert.equal(settingsBody.sendLanguage, 'English');
+    assert.equal(settingsBody.aiEnabled, false);
+
+    const partialUpdate = await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-001', customerId: 'C-1' }) });
+    const partialBody = await json(partialUpdate);
+    assert.equal(partialBody.title, '张三', '未提供标题时不得覆盖已有标题');
+    assert.equal(partialBody.customerId, 'C-1');
+    assert.equal(partialBody.language, 'English');
+
+    const first = await request('/api/ws/messages', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, externalId: 'msg-1', direction: 'receive', originalText: 'Hello', translationStatus: 'pending', translationAttempts: 1, lastAttemptAt: '2026-11-05T08:00:00Z', order: 1 }) });
     assert.equal(first.status, 200);
-    assert.equal(second.status, 200);
-    assert.equal((await json(first)).id, (await json(second)).id);
+    const firstBody = await json(first);
+    assert.equal(firstBody.translationStatus, 'pending');
+    assert.equal(firstBody.translationAttempts, 1);
+
+    const translated = await request('/api/ws/messages', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, externalId: 'msg-1', direction: 'receive', originalText: 'Hello', translatedText: '你好', targetLanguage: '中文', translationStatus: 'translated', translationAttempts: 2, translationError: '', lastAttemptAt: '2026-11-05T08:01:00Z', order: 1 }) });
+    const translatedBody = await json(translated);
+    assert.equal(translatedBody.id, firstBody.id);
+    assert.equal(translatedBody.existed, true);
+    assert.equal(translatedBody.translatedText, '你好');
+    assert.equal(translatedBody.translationAttempts, 2);
+
+    const batchPayload = {
+      conversationId: conversationBody.id,
+      fingerprint: 'visible-batch-001',
+      messages: [
+        { externalId: 'msg-2', direction: 'receive', originalText: 'Need price', order: 2, translationStatus: 'pending' },
+        { externalId: 'msg-3', direction: 'send', originalText: 'I will check', order: 3, translationStatus: 'none' },
+      ],
+    };
+    const batch = await request('/api/ws/messages/batch', { method: 'POST', body: JSON.stringify(batchPayload) });
+    assert.equal(batch.status, 200);
+    const batchBody = await json(batch);
+    assert.equal(batchBody.inserted, 2);
+    assert.equal(batchBody.existed, 0);
+    assert.equal(batchBody.messages.length, 2);
+    const repeatedBatch = await request('/api/ws/messages/batch', { method: 'POST', body: JSON.stringify(batchPayload) });
+    const repeatedBody = await json(repeatedBatch);
+    assert.equal(repeatedBody.inserted, 0);
+    assert.equal(repeatedBody.existed, 2);
+    assert.equal(repeatedBody.repeated, true);
 
     const messages = await request(`/api/ws/messages?conversationId=${encodeURIComponent(conversationBody.id)}`);
-    assert.equal((await json(messages)).messages.length, 1);
+    const messageRows = (await json(messages)).messages;
+    assert.equal(messageRows.length, 3);
+    assert.equal(messageRows.find(item => item.externalId === 'msg-2').translationStatus, 'pending');
 
-    const analysis = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, result: { summary: '咨询产品', confidence: 0.8 } }) });
+    const analysis = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, result: { summary: '咨询产品', intent: '高意向', language: 'English', confidence: 0.8 }, providerName: 'test', model: 'test-model' }) });
     assert.equal(analysis.status, 200);
-    const reply = await request('/api/ws/replies', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, originalText: 'Thank you', translatedText: '谢谢', status: 'draft' }) });
-    assert.equal(reply.status, 200);
-    const diagnostics = await request('/api/ws/diagnostics');
-    assert.equal((await json(diagnostics)).counts.messages, 1);
-    const exported = await request('/api/ws/export');
-    const exportedBody = await json(exported);
-    assert.equal(exportedBody.messages.length, 1);
+    const analysisList = await json(await request(`/api/ws/analyses?conversationId=${encodeURIComponent(conversationBody.id)}&limit=1&offset=0`));
+    assert.equal(analysisList.total, 1);
+    assert.equal(analysisList.analysis.result.summary, '咨询产品');
+    const conversations = await json(await request('/api/ws/conversations'));
+    const refreshedConversation = conversations.conversations.find(item => item.id === conversationBody.id);
+    assert.equal(refreshedConversation.intentLevel, '高意向');
+    assert.equal(refreshedConversation.language, 'English');
+    assert.ok(refreshedConversation.lastMessageAt);
+    assert.equal(refreshedConversation.unreadCount, 4);
+
+    const replyPayload = { conversationId: conversationBody.id, originalText: 'Thank you', translatedText: '谢谢', status: 'copied', idempotencyKey: 'reply-copy-001' };
+    const reply = await json(await request('/api/ws/replies', { method: 'POST', body: JSON.stringify(replyPayload) }));
+    const repeatedReply = await json(await request('/api/ws/replies', { method: 'POST', body: JSON.stringify(replyPayload) }));
+    assert.equal(repeatedReply.id, reply.id);
+    assert.equal(repeatedReply.existed, true);
+    const replies = await json(await request(`/api/ws/replies?conversationId=${encodeURIComponent(conversationBody.id)}`));
+    assert.equal(replies.total, 1);
+    assert.equal(replies.replies[0].idempotencyKey, 'reply-copy-001');
+
+    const diagnostics = await json(await request('/api/ws/diagnostics'));
+    assert.equal(diagnostics.schemaVersion, 6);
+    assert.equal(diagnostics.counts.messages, 3);
+    assert.equal(diagnostics.counts.batches, 1);
+
+    const exportedBody = await json(await request('/api/ws/export'));
+    assert.equal(exportedBody.schemaVersion, 6);
+    assert.equal(exportedBody.messages.length, 3);
+    assert.equal(exportedBody.batches.length, 1);
+    assert.equal(exportedBody.settings[0].sendLanguage, 'English');
+
     const imported = await request('/api/ws/import', { method: 'POST', body: JSON.stringify(exportedBody) });
     assert.equal(imported.status, 200);
-    assert.equal((await json(await request('/api/ws/diagnostics'))).counts.messages, 1);
+    const importResult = await json(imported);
+    assert.equal(importResult.schemaVersion, 6);
+    assert.deepEqual(importResult.counts, { settings: 1, conversations: 1, messages: 3, analyses: 1, replies: 1, batches: 1 });
+
+    const v5 = JSON.parse(JSON.stringify(exportedBody));
+    v5.schemaVersion = 5;
+    delete v5.batches;
+    for (const item of v5.settings) delete item.sendLanguage;
+    for (const item of v5.conversations) { delete item.lastMessageAt; delete item.unreadCount; delete item.language; }
+    for (const item of v5.messages) { delete item.translationStatus; delete item.translationError; delete item.translationAttempts; delete item.lastAttemptAt; }
+    for (const item of v5.replies) delete item.idempotencyKey;
+    const v5Imported = await request('/api/ws/import', { method: 'POST', body: JSON.stringify(v5) });
+    assert.equal(v5Imported.status, 200);
+    const afterV5 = await json(await request('/api/ws/diagnostics'));
+    assert.equal(afterV5.counts.messages, 3);
+    assert.equal(afterV5.counts.batches, 0);
+
+    const invalidShape = await request('/api/ws/import', { method: 'POST', body: JSON.stringify({ schemaVersion: 6, conversations: {} }) });
+    assert.equal(invalidShape.status, 400);
+    const tooMany = await request('/api/ws/import', { method: 'POST', body: JSON.stringify({ schemaVersion: 6, settings: Array.from({ length: 5001 }, () => ({})), conversations: [] }) });
+    assert.equal(tooMany.status, 413);
+
     console.log('ws-workbench-api: pass');
   } finally {
     try { await fetch(`http://127.0.0.1:${port}/api/shutdown`, { method: 'POST', headers: { ...headers, 'x-zhike-shutdown-token': token } }); } catch {}

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, BrowserView, dialog, ipcMain, safeStorage, Notification, clipboard, screen } = require('electron');
+const { app, BrowserWindow, BrowserView, dialog, ipcMain, safeStorage, Notification, clipboard, screen, session } = require('electron');
 const { spawn, execFileSync } = require('node:child_process');
 const { randomBytes } = require('node:crypto');
 const { copyFileSync, existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync, readdirSync, statSync, renameSync } = require('node:fs');
@@ -17,8 +17,11 @@ let ownsService = false;
 let mainWindow = null;
 let wsView = null;
 let wsViewState = '未连接';
+let wsViewHidden = false;
 const wsAllowedOrigins = new Set(['https://web.whatsapp.com', 'https://www.whatsapp.com']);
 const wsEntryUrl = 'https://web.whatsapp.com/';
+const wsPartition = 'ws-workbench-isolated';
+let wsSessionHardened = false;
 let quitting = false;
 let flushingClose = false;
 const activeAiRequests = new Map();
@@ -53,7 +56,11 @@ async function automaticBackup(force=false){
 ipcMain.handle('zhike-desktop-tools',async(event,value={})=>{
   if(!trustedSender(event))throw Error('不受信任的请求来源');
   const config=desktopTools();
-  if(value.action==='copy'){clipboard.writeText(String(value.text||'').slice(0,200));return {ok:true};}
+  if(value.action==='copy'){
+    const source=String(value.text||''),text=source.slice(0,12000);
+    clipboard.writeText(text);
+    return {ok:true,length:text.length,truncated:source.length>text.length};
+  }
   if(value.action==='notify'){
     if(!Notification.isSupported())return {supported:false};
     const notification=new Notification({title:'知客 · 跟进提醒',body:String(value.body||'').slice(0,200)});
@@ -137,8 +144,18 @@ function publicStatus(provider) {
   const credential = readCredential(provider), payload = readCredentialFile();
   return { configured: Boolean(credential.apiKey), provider: credential.provider, providerName: credential.name, model: credential.model, keyTail: credential.keyTail, defaultIncludePhone: credential.defaultIncludePhone, secureStorage: safeStorage.isEncryptionAvailable(), configuredProviders: Object.fromEntries(Object.keys(PROVIDERS).map(key => [key, Boolean(payload.providers[key]?.encryptedKey)])) };
 }
+function safeErrorMessage(value, maxLength = 320) {
+  return String(value || '')
+    .replace(/\bBearer\s+[^\s,;]+/gi, 'Bearer [已隐藏]')
+    .replace(/\bsk-[A-Za-z0-9_-]{8,}\b/g, '[已隐藏密钥]')
+    .replace(/\b(authorization|api[-_ ]?key|access[-_ ]?token|refresh[-_ ]?token|secret|password)\b\s*[:=]\s*[^\s,;]+/gi, '$1=[已隐藏]')
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+    .slice(0, Math.max(40, Math.min(1000, Number(maxLength) || 320)));
+}
 function friendlyApiError(provider, status, result) {
-  const message = String(result?.error?.message || result?.message || '');
+  const message = safeErrorMessage(result?.error?.message || result?.message || '');
   if (status === 401 || status === 403) return provider === 'teamorouter' ? 'API Key 无效或已被删除' : 'OpenAI API Key 无效或已被删除';
   if (status === 402 || /balance|quota|余额|credit|billing/i.test(message)) return provider === 'teamorouter' ? 'TeamoRouter 余额不足，请前往控制台充值' : 'OpenAI API 额度不足，请检查 API 账户余额';
   if (status === 404 || /model|responses api|unsupported/i.test(message)) return provider === 'teamorouter' ? '当前模型不支持 Responses API，请更换 GPT 系列模型' : '当前模型不可用或不兼容 Responses API';
@@ -170,55 +187,114 @@ function setWsStatus(status, detail = '') {
   wsViewState = ['未连接', '等待登录', '登录中', '已连接', '会话过期', '连接失败', '正在重连'].includes(status) ? status : '未连接';
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('zhike-ws-status', { status: wsViewState, detail: String(detail || '').slice(0, 200) });
 }
+function wsSession() {
+  const value = session.fromPartition(wsPartition);
+  if (!wsSessionHardened) {
+    value.setPermissionCheckHandler(() => false);
+    value.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false));
+    value.setDevicePermissionHandler?.(() => false);
+    value.setDisplayMediaRequestHandler?.((_request, callback) => callback({}));
+    wsSessionHardened = true;
+  }
+  return value;
+}
+async function probeWsStatus(view = wsView) {
+  if (!view || view !== wsView || view.webContents.isDestroyed()) {
+    setWsStatus('未连接');
+    return { status: wsViewState, open: false };
+  }
+  if (view.webContents.isLoadingMainFrame?.() || view.webContents.isLoading()) {
+    if (wsViewState !== '正在重连') setWsStatus('登录中');
+    return { status: wsViewState, open: true };
+  }
+  try {
+    const probe = await view.webContents.executeJavaScript('window.zhikeWsPage?.probeStatus?.() ?? null', true);
+    if (!probe || typeof probe !== 'object') {
+      setWsStatus('等待登录', 'WS 页面已打开，等待用户自行登录。');
+    } else if (probe.online === false) {
+      setWsStatus('正在重连', '网络已断开，WS 页面等待恢复连接。');
+    } else if (probe.hasExpiredMarker) {
+      setWsStatus('会话过期', 'WS 会话已过期，请重新登录。');
+    } else if (probe.hasChatShell) {
+      setWsStatus('已连接', '已检测到 WS 聊天界面。');
+    } else if (probe.hasQrMarker || probe.hasLoginMarker || probe.readyState === 'complete') {
+      setWsStatus('等待登录', '请在 WS 页面自行扫码或登录。');
+    } else {
+      setWsStatus('登录中', 'WS 页面正在加载。');
+    }
+  } catch {
+    setWsStatus('连接失败', '无法检查 WS 页面状态，请刷新后重试。');
+  }
+  return { status: wsViewState, open: true };
+}
 function resizeWsView(bounds = null) {
   if (!wsView || wsView.webContents.isDestroyed() || !mainWindow || mainWindow.isDestroyed()) return;
   const content = mainWindow.getContentBounds();
   const input = bounds && typeof bounds === 'object' ? bounds : {};
+  const requestedWidth = Number(input.width), requestedHeight = Number(input.height);
+  if (input.hidden === true || (bounds && (requestedWidth < 40 || requestedHeight < 40))) {
+    wsView.setBounds({ x: 0, y: 0, width: 0, height: 0 });
+    wsViewHidden = true;
+    return;
+  }
   const x = Math.max(0, Math.round(Number(input.x) || 0));
   const y = Math.max(0, Math.round(Number(input.y) || 0));
   const width = Math.max(260, Math.round(Number(input.width) || Math.max(260, content.width - x)));
   const height = Math.max(240, Math.round(Number(input.height) || Math.max(240, content.height - y)));
   wsView.setBounds({ x, y, width, height });
+  wsViewHidden = false;
 }
 function destroyWsView() {
   if (!wsView) { setWsStatus('未连接'); return; }
   try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.removeBrowserView(wsView); } catch {}
   try { if (!wsView.webContents.isDestroyed()) wsView.webContents.close(); } catch {}
   wsView = null;
+  wsViewHidden = false;
   setWsStatus('未连接');
 }
 function ensureWsView() {
   if (wsView && !wsView.webContents.isDestroyed()) return wsView;
   if (!mainWindow || mainWindow.isDestroyed()) throw new Error('知客主窗口尚未准备好。');
+  wsSession();
   wsView = new BrowserView({
     webPreferences: {
       preload: path.join(appRoot, 'ws-preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      partition: 'ws-workbench-isolated',
+      partition: wsPartition,
       webSecurity: true,
     },
   });
-  mainWindow.setBrowserView(wsView);
-  wsView.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
-  wsView.webContents.on('will-navigate', (event, target) => {
+  const view = wsView;
+  mainWindow.setBrowserView(view);
+  view.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  view.webContents.on('will-navigate', (event, target) => {
     if (!wsAllowedUrl(target)) { event.preventDefault(); setWsStatus('连接失败', 'WS 页面跳转被安全策略拦截。'); }
   });
-  wsView.webContents.on('did-start-loading', () => setWsStatus('登录中'));
-  wsView.webContents.on('did-finish-load', () => setWsStatus('等待登录'));
-  wsView.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
+  view.webContents.on('did-start-loading', () => { if (view === wsView && wsViewState !== '正在重连') setWsStatus('登录中'); });
+  view.webContents.on('did-finish-load', () => { void probeWsStatus(view); });
+  view.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
     if (errorCode !== -3) setWsStatus('连接失败', errorDescription || 'WS 页面加载失败。');
   });
-  wsView.webContents.on('render-process-gone', () => setWsStatus('连接失败', 'WS 页面进程已结束。'));
-  wsView.webContents.on('destroyed', () => { if (wsView?.webContents.isDestroyed()) wsView = null; });
-  resizeWsView();
+  view.webContents.on('render-process-gone', () => { if (view === wsView) setWsStatus('连接失败', 'WS 页面进程已结束。'); });
+  view.webContents.on('destroyed', () => { if (view === wsView) wsView = null; });
+  resizeWsView({ hidden: true });
   return wsView;
+}
+async function clearWsSession() {
+  destroyWsView();
+  const value = wsSession();
+  await value.serviceWorkers?.stopAllRunning?.();
+  await value.clearStorageData({ storages: ['appcache', 'cookies', 'filesystem', 'indexdb', 'localstorage', 'shadercache', 'websql', 'serviceworkers', 'cachestorage'] });
+  await value.clearCache();
+  setWsStatus('未连接', 'WS 本地会话、缓存和站点存储已清除。');
+  return { ok: true, status: wsViewState, cleared: true };
 }
 ipcMain.handle('zhike-ws', async (event, value = {}) => {
   if (!trustedSender(event)) throw new Error('不受信任的请求来源。');
   const action = String(value.action || '');
-  if (action === 'status') return { status: wsViewState, open: Boolean(wsView && !wsView.webContents.isDestroyed()) };
+  if (action === 'status' || action === 'probe') return probeWsStatus();
   if (action === 'open' || action === 'login') {
     const view = ensureWsView();
     if (view.webContents.getURL() !== wsEntryUrl && !wsAllowedUrl(view.webContents.getURL())) await view.webContents.loadURL(wsEntryUrl);
@@ -240,8 +316,17 @@ ipcMain.handle('zhike-ws', async (event, value = {}) => {
     setWsStatus(next);
     return { ok: true, status: wsViewState };
   }
-  if (action === 'resize') { resizeWsView(value.bounds); return { ok: true }; }
-  if (action === 'close' || action === 'clear-session' || action === 'logout') { destroyWsView(); return { ok: true, status: wsViewState }; }
+  if (action === 'capture-selection') {
+    const view = wsView;
+    if (!view || view.webContents.isDestroyed()) throw new Error('请先打开 WS 页面并选择聊天文字。');
+    const captured = await view.webContents.executeJavaScript('window.zhikeWsPage?.captureSelection?.() ?? null', true);
+    const source = String(captured?.text || ''), text = source.slice(0, 120000);
+    return { ok: true, text, length: text.length, truncated: Boolean(captured?.truncated) || source.length > text.length };
+  }
+  if (action === 'hide') { resizeWsView({ hidden: true }); return { ok: true, hidden: wsViewHidden }; }
+  if (action === 'resize') { resizeWsView(value.bounds); return { ok: true, hidden: wsViewHidden }; }
+  if (action === 'clear-session') return clearWsSession();
+  if (action === 'close' || action === 'logout') { destroyWsView(); return { ok: true, status: wsViewState, cleared: false }; }
   throw new Error('不支持的 WS 操作。');
 });
 

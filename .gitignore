@@ -33,6 +33,7 @@ Thumbs.db
 .idea/
 /dist/
 /build/
+/work/
 tmp/
 *.tmp
 *.bak

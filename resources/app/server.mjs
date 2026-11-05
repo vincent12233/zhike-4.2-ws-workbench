@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { basename, dirname, extname, join, normalize, resolve, sep } from 'node:path';
 import { hostname, tmpdir, uptime } from 'node:os';
-import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 
 const require = createRequire(import.meta.url);
 const { applyDelta } = require('./state-delta.cjs');
@@ -109,6 +109,17 @@ if (Number(db.prepare('PRAGMA user_version').get().user_version || 0) < 5) {
     db.exec('PRAGMA user_version = 5; COMMIT');
   } catch (error) { db.exec('ROLLBACK'); throw error; }
 }
+if (Number(db.prepare('PRAGMA user_version').get().user_version || 0) < 6) {
+  const migrationPath = join(root, 'migrations', '006-ws-workbench-hardening.sql');
+  if (!existsSync(migrationPath)) throw new Error('缺少 WS 工作台 v6 数据库迁移文件。');
+  const migration = readFileSync(migrationPath, 'utf8');
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    db.exec(migration);
+    db.prepare('INSERT OR IGNORE INTO schema_migrations(version,applied_at,description) VALUES(?,?,?)').run(6, new Date().toISOString(), '4.2 WS 工作台消息批次、翻译恢复与幂等强化');
+    db.exec('PRAGMA user_version = 6; COMMIT');
+  } catch (error) { db.exec('ROLLBACK'); throw error; }
+}
 
 function databaseDiagnostics() {
   const integrity = db.prepare('PRAGMA integrity_check').all().map(row => Object.values(row)[0]);
@@ -127,6 +138,7 @@ function databaseDiagnostics() {
     messages: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_messages').get().count || 0),
     analyses: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_ai_analyses').get().count || 0),
     replies: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_replies').get().count || 0),
+    batches: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_ingest_batches').get().count || 0),
   };
   return { ok: integrity.length === 1 && integrity[0] === 'ok' && !foreignKeys.length, checkedAt: new Date().toISOString(), schemaVersion: Number(db.prepare('PRAGMA user_version').get().user_version || 0), integrity, quickCheck, foreignKeyErrors: foreignKeys.length, databaseBytes: pageCount * pageSize, journalMode: db.prepare('PRAGMA journal_mode').get().journal_mode, counts: { customers: activeCustomers.length, registrations: state?.registrations?.length || 0, phoneRegistry: state?.phoneRegistry?.length || 0, followups: state?.followups?.length || 0, tickets: state?.tickets?.length || 0, deposits: state?.deposits?.length || 0, snapshots: Number(db.prepare('SELECT COUNT(*) AS count FROM state_snapshots').get().count || 0), ws: wsCounts }, anomalies: { duplicatePhones, orphaned } };
 }
@@ -331,6 +343,7 @@ function convertLegacy(path) {
 const WS_STATUSES = new Set(['未连接', '等待登录', '登录中', '已连接', '会话过期', '连接失败', '正在重连']);
 const WS_DIRECTIONS = new Set(['receive', 'send']);
 const WS_REPLY_STATUSES = new Set(['draft', 'copied', 'confirmed']);
+const WS_TRANSLATION_STATUSES = new Set(['none', 'pending', 'translated', 'failed', 'skipped']);
 function wsText(value, max = 12000) { return String(value ?? '').trim().slice(0, max); }
 function wsObject(value, maxBytes = 64 * 1024) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
@@ -340,17 +353,33 @@ function wsObject(value, maxBytes = 64 * 1024) {
 }
 function wsIso(value) { const date = value ? new Date(value) : new Date(); return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString(); }
 function wsSettingsPayload(row) {
-  if (!row) return { conversationId: '', enabled: true, receive: true, send: true, targetLanguage: '中文', showOriginal: true, aiEnabled: true, status: '未连接', createdAt: '', updatedAt: '' };
-  return { conversationId: row.conversation_id, enabled: Boolean(row.enabled), receive: Boolean(row.receive_enabled), send: Boolean(row.send_enabled), targetLanguage: row.target_language || '中文', showOriginal: Boolean(row.show_original), aiEnabled: Boolean(row.ai_enabled), status: row.status, createdAt: row.created_at, updatedAt: row.updated_at };
+  if (!row) return { conversationId: '', enabled: true, receive: true, send: true, targetLanguage: '中文', sendLanguage: '', showOriginal: true, aiEnabled: true, status: '未连接', createdAt: '', updatedAt: '' };
+  return { conversationId: row.conversation_id, enabled: Boolean(row.enabled), receive: Boolean(row.receive_enabled), send: Boolean(row.send_enabled), targetLanguage: row.target_language || '中文', sendLanguage: row.send_language || '', showOriginal: Boolean(row.show_original), aiEnabled: Boolean(row.ai_enabled), status: row.status, createdAt: row.created_at, updatedAt: row.updated_at };
 }
 function wsJson(value, fallback = {}) { try { return JSON.parse(value || '{}'); } catch { return fallback; } }
-function wsConversationPayload(row) { return { id: row.id, externalId: row.external_id, title: row.title, customerId: row.customer_id, lastMessageText: row.last_message_text, intentLevel: row.intent_level, data: wsJson(row.data_json), createdAt: row.created_at, updatedAt: row.updated_at }; }
-function wsMessagePayload(row) { return { id: row.id, conversationId: row.conversation_id, externalId: row.external_id, direction: row.direction, originalText: row.original_text, translatedText: row.translated_text, sourceLanguage: row.source_language, targetLanguage: row.target_language, order: row.order_no, data: wsJson(row.data_json), createdAt: row.created_at, updatedAt: row.updated_at }; }
+function wsConversationPayload(row) { return { id: row.id, externalId: row.external_id, title: row.title, customerId: row.customer_id, lastMessageText: row.last_message_text, lastMessageAt: row.last_message_at, unreadCount: Number(row.unread_count || 0), language: row.language, intentLevel: row.intent_level, data: wsJson(row.data_json), createdAt: row.created_at, updatedAt: row.updated_at }; }
+function wsMessagePayload(row) { return { id: row.id, conversationId: row.conversation_id, externalId: row.external_id, direction: row.direction, originalText: row.original_text, translatedText: row.translated_text, sourceLanguage: row.source_language, targetLanguage: row.target_language, order: row.order_no, translationStatus: row.translation_status || (row.translated_text ? 'translated' : 'none'), translationError: row.translation_error || '', translationAttempts: Number(row.translation_attempts || 0), lastAttemptAt: row.last_attempt_at || '', data: wsJson(row.data_json), createdAt: row.created_at, updatedAt: row.updated_at }; }
 function wsAnalysisPayload(row) { return { id: row.id, conversationId: row.conversation_id, result: wsJson(row.result_json), confidence: Number(row.confidence || 0), providerName: row.provider_name, model: row.model, errorMessage: row.error_message, createdAt: row.created_at, updatedAt: row.updated_at }; }
-function wsReplyPayload(row) { return { id: row.id, conversationId: row.conversation_id, originalText: row.original_text, translatedText: row.translated_text, status: row.status, createdAt: row.created_at, updatedAt: row.updated_at }; }
+function wsReplyPayload(row) { return { id: row.id, conversationId: row.conversation_id, originalText: row.original_text, translatedText: row.translated_text, status: row.status, idempotencyKey: row.idempotency_key || '', createdAt: row.created_at, updatedAt: row.updated_at }; }
+function wsBatchPayload(row) { return { id: row.id, conversationId: row.conversation_id, fingerprint: row.fingerprint, messageCount: Number(row.message_count || 0), insertedCount: Number(row.inserted_count || 0), messageIds: wsJson(row.message_ids_json, []), createdAt: row.created_at, updatedAt: row.updated_at }; }
 function wsConversationRow(id) { return db.prepare('SELECT * FROM ws_conversations WHERE id=?').get(String(id || '')); }
 function wsRequireConversation(id) { const row = wsConversationRow(id); if (!row) throw new Error('WS 会话不存在或已被清理。'); return row; }
 function wsCreateId(prefix) { return `${prefix}-${Date.now().toString(36)}-${randomBytes(5).toString('hex')}`; }
+function wsTranslationFields(body, existing = null) {
+  const translatedText = Object.hasOwn(body, 'translatedText') ? wsText(body.translatedText, 12000) : (existing?.translated_text || '');
+  let translationStatus = Object.hasOwn(body, 'translationStatus') && WS_TRANSLATION_STATUSES.has(wsText(body.translationStatus, 24)) ? wsText(body.translationStatus, 24) : (existing?.translation_status || (translatedText ? 'translated' : 'none'));
+  if (translatedText && !Object.hasOwn(body, 'translationStatus')) translationStatus = 'translated';
+  const translationError = Object.hasOwn(body, 'translationError') ? wsText(body.translationError, 1000) : (existing?.translation_error || '');
+  const translationAttempts = Object.hasOwn(body, 'translationAttempts') ? Math.max(0, Math.floor(Number(body.translationAttempts) || 0)) : Number(existing?.translation_attempts || 0);
+  const lastAttemptAt = Object.hasOwn(body, 'lastAttemptAt') ? (body.lastAttemptAt ? wsIso(body.lastAttemptAt) : '') : (existing?.last_attempt_at || '');
+  return { translatedText, translationStatus, translationError, translationAttempts, lastAttemptAt };
+}
+function wsBatchFingerprint(conversationId, messages, value) {
+  const supplied = wsText(value, 160);
+  if (supplied) return supplied;
+  const canonical = messages.map(item => ({ externalId: wsText(item?.externalId, 200), direction: wsText(item?.direction, 16), originalText: wsText(item?.originalText, 12000), order: Number.isFinite(Number(item?.order)) ? Number(item.order) : 0 }));
+  return createHash('sha256').update(JSON.stringify([conversationId, canonical])).digest('hex');
+}
 
 let pendingImport = null;
 let pendingImportTimer = null;
@@ -378,14 +407,19 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/ws/settings') {
       const conversationId = wsText(url.searchParams.get('conversationId'), 160);
       if (!conversationId) return json(res, 400, { error: 'WS 设置缺少会话编号。' });
-      if (req.method === 'GET') return json(res, 200, wsSettingsPayload(db.prepare('SELECT * FROM ws_settings WHERE conversation_id=?').get(conversationId)));
+      if (req.method === 'GET') {
+        const payload = wsSettingsPayload(db.prepare('SELECT * FROM ws_settings WHERE conversation_id=?').get(conversationId));
+        if (!payload.conversationId) payload.conversationId = conversationId;
+        return json(res, 200, payload);
+      }
       if (req.method === 'PUT' || req.method === 'POST') {
+        wsRequireConversation(conversationId);
         const body = JSON.parse((await readBody(req, 256 * 1024)).toString('utf8'));
         const now = new Date().toISOString();
         const status = WS_STATUSES.has(wsText(body.status, 32)) ? wsText(body.status, 32) : '未连接';
-        db.prepare(`INSERT INTO ws_settings(conversation_id,enabled,receive_enabled,send_enabled,target_language,show_original,ai_enabled,status,created_at,updated_at)
-          VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(conversation_id) DO UPDATE SET enabled=excluded.enabled,receive_enabled=excluded.receive_enabled,send_enabled=excluded.send_enabled,target_language=excluded.target_language,show_original=excluded.show_original,ai_enabled=excluded.ai_enabled,status=excluded.status,updated_at=excluded.updated_at`)
-          .run(conversationId, body.enabled === false ? 0 : 1, body.receive === false || body.enabled === false ? 0 : 1, body.send === false || body.enabled === false ? 0 : 1, wsText(body.targetLanguage, 40) || '中文', body.showOriginal === false ? 0 : 1, body.aiEnabled === false ? 0 : 1, status, now, now);
+        db.prepare(`INSERT INTO ws_settings(conversation_id,enabled,receive_enabled,send_enabled,target_language,send_language,show_original,ai_enabled,status,created_at,updated_at)
+          VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(conversation_id) DO UPDATE SET enabled=excluded.enabled,receive_enabled=excluded.receive_enabled,send_enabled=excluded.send_enabled,target_language=excluded.target_language,send_language=excluded.send_language,show_original=excluded.show_original,ai_enabled=excluded.ai_enabled,status=excluded.status,updated_at=excluded.updated_at`)
+          .run(conversationId, body.enabled === false ? 0 : 1, body.receive === false ? 0 : 1, body.send === false ? 0 : 1, wsText(body.targetLanguage, 40) || '中文', wsText(body.sendLanguage, 40), body.showOriginal === false ? 0 : 1, body.aiEnabled === false ? 0 : 1, status, now, now);
         return json(res, 200, wsSettingsPayload(db.prepare('SELECT * FROM ws_settings WHERE conversation_id=?').get(conversationId)));
       }
       return json(res, 405, { error: 'WS 设置只支持 GET/PUT。' });
@@ -400,16 +434,83 @@ const server = createServer(async (req, res) => {
         const body = JSON.parse((await readBody(req, 512 * 1024)).toString('utf8'));
         const externalId = wsText(body.externalId, 160);
         if (!externalId) return json(res, 400, { error: 'WS 会话缺少外部会话标识。' });
-        const id = wsText(body.id, 160) || wsCreateId('wsc');
         const now = new Date().toISOString();
-        const data = wsObject(body.data, 32 * 1024);
-        db.prepare(`INSERT INTO ws_conversations(id,external_id,title,customer_id,last_message_text,intent_level,data_json,created_at,updated_at)
-          VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(external_id) DO UPDATE SET title=excluded.title,customer_id=excluded.customer_id,last_message_text=excluded.last_message_text,intent_level=excluded.intent_level,data_json=excluded.data_json,updated_at=excluded.updated_at`)
-          .run(id, externalId, wsText(body.title, 200), wsText(body.customerId, 128), wsText(body.lastMessageText, 4000), wsText(body.intentLevel, 40), JSON.stringify(data), now, now);
+        const existing = db.prepare('SELECT * FROM ws_conversations WHERE external_id=?').get(externalId);
+        if (existing) {
+          const title = Object.hasOwn(body, 'title') ? wsText(body.title, 200) : existing.title;
+          const customerId = Object.hasOwn(body, 'customerId') ? wsText(body.customerId, 128) : existing.customer_id;
+          const lastMessageText = Object.hasOwn(body, 'lastMessageText') ? wsText(body.lastMessageText, 4000) : existing.last_message_text;
+          const lastMessageAt = Object.hasOwn(body, 'lastMessageAt') ? wsIso(body.lastMessageAt) : existing.last_message_at;
+          const unreadCount = Object.hasOwn(body, 'unreadCount') ? Math.max(0, Math.floor(Number(body.unreadCount) || 0)) : Number(existing.unread_count || 0);
+          const language = Object.hasOwn(body, 'language') ? wsText(body.language, 40) : existing.language;
+          const intentLevel = Object.hasOwn(body, 'intentLevel') ? wsText(body.intentLevel, 40) : existing.intent_level;
+          const data = Object.hasOwn(body, 'data') ? wsObject(body.data, 32 * 1024) : wsJson(existing.data_json);
+          db.prepare('UPDATE ws_conversations SET title=?,customer_id=?,last_message_text=?,last_message_at=?,unread_count=?,language=?,intent_level=?,data_json=?,updated_at=? WHERE id=?')
+            .run(title, customerId, lastMessageText, lastMessageAt, unreadCount, language, intentLevel, JSON.stringify(data), now, existing.id);
+        } else {
+          const id = wsText(body.id, 160) || wsCreateId('wsc');
+          const lastMessageText = wsText(body.lastMessageText, 4000);
+          const lastMessageAt = Object.hasOwn(body, 'lastMessageAt') ? wsIso(body.lastMessageAt) : (lastMessageText ? now : '');
+          db.prepare(`INSERT INTO ws_conversations(id,external_id,title,customer_id,last_message_text,intent_level,data_json,created_at,updated_at,last_message_at,unread_count,language)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`)
+            .run(id, externalId, wsText(body.title, 200), wsText(body.customerId, 128), lastMessageText, wsText(body.intentLevel, 40), JSON.stringify(wsObject(body.data, 32 * 1024)), now, now, lastMessageAt, Math.max(0, Math.floor(Number(body.unreadCount) || 0)), wsText(body.language, 40));
+        }
         const row = db.prepare('SELECT * FROM ws_conversations WHERE external_id=?').get(externalId);
         return json(res, 200, wsConversationPayload(row));
       }
       return json(res, 405, { error: 'WS 会话只支持 GET/POST。' });
+    }
+    if (url.pathname === '/api/ws/messages/batch' && req.method === 'POST') {
+      const body = JSON.parse((await readBody(req, 12 * 1024 * 1024)).toString('utf8'));
+      const conversationId = wsText(body.conversationId, 160);
+      wsRequireConversation(conversationId);
+      if (!Array.isArray(body.messages) || !body.messages.length) return json(res, 400, { error: 'WS 批次没有可保存的消息。' });
+      if (body.messages.length > 500) return json(res, 413, { error: '单次最多保存 500 条 WS 消息，请拆分批次。' });
+      const messages = body.messages;
+      for (const item of messages) {
+        if (!item || typeof item !== 'object' || !WS_DIRECTIONS.has(wsText(item.direction, 16)) || !wsText(item.originalText, 12000)) return json(res, 400, { error: 'WS 批次包含无效的消息方向或空原文。' });
+      }
+      const fingerprint = wsBatchFingerprint(conversationId, messages, body.fingerprint || body.batchFingerprint || body.idempotencyKey);
+      const previous = db.prepare('SELECT * FROM ws_ingest_batches WHERE conversation_id=? AND fingerprint=?').get(conversationId, fingerprint);
+      if (previous) {
+        if (Number(previous.message_count) !== messages.length) return json(res, 409, { error: '该批次指纹已用于不同数量的消息，请生成新的批次指纹。' });
+        const ids = wsJson(previous.message_ids_json, []);
+        const rows = ids.map(id => db.prepare('SELECT * FROM ws_messages WHERE id=?').get(String(id))).filter(Boolean).map(wsMessagePayload);
+        return json(res, 200, { batch: wsBatchPayload(previous), inserted: 0, existed: rows.length, messages: rows, repeated: true });
+      }
+      const now = new Date().toISOString(), batchId = wsCreateId('wsb'), messageIds = [], resultRows = [];
+      let inserted = 0, existed = 0, unreadAdded = 0;
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        db.prepare('INSERT INTO ws_ingest_batches(id,conversation_id,fingerprint,message_count,inserted_count,message_ids_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)')
+          .run(batchId, conversationId, fingerprint, messages.length, 0, '[]', now, now);
+        for (let index = 0; index < messages.length; index++) {
+          const item = messages[index], externalId = wsText(item.externalId, 200);
+          let row = externalId ? db.prepare('SELECT * FROM ws_messages WHERE conversation_id=? AND external_id=?').get(conversationId, externalId) : null;
+          if (row) {
+            existed += 1;
+          } else {
+            const id = wsText(item.id, 160) || wsCreateId('wsm');
+            const originalText = wsText(item.originalText, 12000), direction = wsText(item.direction, 16);
+            const translation = wsTranslationFields(item);
+            const createdAt = item.createdAt ? wsIso(item.createdAt) : now;
+            const data = { ...wsObject(item.data, 32 * 1024), ingestBatchId: batchId };
+            db.prepare(`INSERT INTO ws_messages(id,conversation_id,external_id,direction,original_text,translated_text,source_language,target_language,order_no,data_json,created_at,updated_at,translation_status,translation_error,translation_attempts,last_attempt_at)
+              VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(id, conversationId, externalId, direction, originalText, translation.translatedText, wsText(item.sourceLanguage, 40), wsText(item.targetLanguage, 40), Number.isFinite(Number(item.order)) ? Number(item.order) : index + 1, JSON.stringify(data), createdAt, now, translation.translationStatus, translation.translationError, translation.translationAttempts, translation.lastAttemptAt);
+            row = db.prepare('SELECT * FROM ws_messages WHERE id=?').get(id);
+            inserted += 1;
+            if (direction === 'receive') unreadAdded += 1;
+          }
+          messageIds.push(row.id);
+          resultRows.push(wsMessagePayload(row));
+        }
+        const last = resultRows.at(-1);
+        if (last) db.prepare('UPDATE ws_conversations SET last_message_text=?,last_message_at=?,unread_count=unread_count+?,updated_at=? WHERE id=?').run(last.originalText.slice(0, 4000), last.createdAt || now, unreadAdded, now, conversationId);
+        db.prepare('UPDATE ws_ingest_batches SET inserted_count=?,message_ids_json=?,updated_at=? WHERE id=?').run(inserted, JSON.stringify(messageIds), now, batchId);
+        db.exec('COMMIT');
+      } catch (error) { db.exec('ROLLBACK'); throw error; }
+      const batch = db.prepare('SELECT * FROM ws_ingest_batches WHERE id=?').get(batchId);
+      return json(res, 200, { batch: wsBatchPayload(batch), inserted, existed, messages: resultRows, repeated: false });
     }
     if (url.pathname === '/api/ws/messages') {
       if (req.method === 'GET') {
@@ -432,9 +533,11 @@ const server = createServer(async (req, res) => {
         if (externalId) {
           const existing = db.prepare('SELECT * FROM ws_messages WHERE conversation_id=? AND external_id=?').get(conversationId, externalId);
           if (existing) {
-            const translatedText = wsText(body.translatedText, 12000);
-            if (translatedText && translatedText !== existing.translated_text) {
-              db.prepare('UPDATE ws_messages SET translated_text=?,target_language=?,updated_at=? WHERE id=?').run(translatedText, wsText(body.targetLanguage, 40), new Date().toISOString(), existing.id);
+            const hasTranslationUpdate = ['translatedText','targetLanguage','sourceLanguage','translationStatus','translationError','translationAttempts','lastAttemptAt'].some(key => Object.hasOwn(body, key));
+            if (hasTranslationUpdate) {
+              const translation = wsTranslationFields(body, existing), updatedAt = new Date().toISOString();
+              db.prepare('UPDATE ws_messages SET translated_text=?,source_language=?,target_language=?,translation_status=?,translation_error=?,translation_attempts=?,last_attempt_at=?,updated_at=? WHERE id=?')
+                .run(translation.translatedText, Object.hasOwn(body, 'sourceLanguage') ? wsText(body.sourceLanguage, 40) : existing.source_language, Object.hasOwn(body, 'targetLanguage') ? wsText(body.targetLanguage, 40) : existing.target_language, translation.translationStatus, translation.translationError, translation.translationAttempts, translation.lastAttemptAt, updatedAt, existing.id);
               return json(res, 200, { ...wsMessagePayload(db.prepare('SELECT * FROM ws_messages WHERE id=?').get(existing.id)), existed: true, updated: true });
             }
             return json(res, 200, { ...wsMessagePayload(existing), existed: true });
@@ -442,38 +545,77 @@ const server = createServer(async (req, res) => {
         }
         const now = new Date().toISOString();
         const data = wsObject(body.data, 32 * 1024);
+        const translation = wsTranslationFields(body);
         db.exec('BEGIN IMMEDIATE');
         try {
-          db.prepare(`INSERT INTO ws_messages(id,conversation_id,external_id,direction,original_text,translated_text,source_language,target_language,order_no,data_json,created_at,updated_at)
-            VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`).run(id, conversationId, externalId, direction, originalText, wsText(body.translatedText, 12000), wsText(body.sourceLanguage, 40), wsText(body.targetLanguage, 40), Number.isFinite(Number(body.order)) ? Number(body.order) : 0, JSON.stringify(data), now, now);
-          db.prepare('UPDATE ws_conversations SET last_message_text=?,updated_at=? WHERE id=?').run(originalText.slice(0, 4000), now, conversationId);
+          db.prepare(`INSERT INTO ws_messages(id,conversation_id,external_id,direction,original_text,translated_text,source_language,target_language,order_no,data_json,created_at,updated_at,translation_status,translation_error,translation_attempts,last_attempt_at)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(id, conversationId, externalId, direction, originalText, translation.translatedText, wsText(body.sourceLanguage, 40), wsText(body.targetLanguage, 40), Number.isFinite(Number(body.order)) ? Number(body.order) : 0, JSON.stringify(data), now, now, translation.translationStatus, translation.translationError, translation.translationAttempts, translation.lastAttemptAt);
+          db.prepare('UPDATE ws_conversations SET last_message_text=?,last_message_at=?,unread_count=unread_count+?,updated_at=? WHERE id=?').run(originalText.slice(0, 4000), now, direction === 'receive' ? 1 : 0, now, conversationId);
           db.exec('COMMIT');
         } catch (error) { db.exec('ROLLBACK'); throw error; }
         return json(res, 200, { ...wsMessagePayload(db.prepare('SELECT * FROM ws_messages WHERE id=?').get(id)), existed: false });
       }
       return json(res, 405, { error: 'WS 消息只支持 GET/POST。' });
     }
-    if (url.pathname === '/api/ws/analyses' && (req.method === 'POST' || req.method === 'PUT')) {
-      const body = JSON.parse((await readBody(req, 1024 * 1024)).toString('utf8'));
-      const conversationId = wsText(body.conversationId, 160);
-      wsRequireConversation(conversationId);
-      const result = wsObject(body.result, 128 * 1024);
-      const confidence = Math.min(1, Math.max(0, Number(body.confidence) || 0));
-      const now = new Date().toISOString(), id = wsCreateId('wsa');
-      db.prepare('INSERT INTO ws_ai_analyses(id,conversation_id,result_json,confidence,provider_name,model,error_message,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)').run(id, conversationId, JSON.stringify(result), confidence, wsText(body.providerName, 120), wsText(body.model, 120), wsText(body.errorMessage, 1000), now, now);
-      return json(res, 200, wsAnalysisPayload(db.prepare('SELECT * FROM ws_ai_analyses WHERE id=?').get(id)));
+    if (url.pathname === '/api/ws/analyses') {
+      if (req.method === 'GET') {
+        const conversationId = wsText(url.searchParams.get('conversationId'), 160);
+        if (!conversationId) return json(res, 400, { error: '读取 WS 分析缺少会话编号。' });
+        wsRequireConversation(conversationId);
+        const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit')) || 20));
+        const offset = Math.max(0, Math.floor(Number(url.searchParams.get('offset')) || 0));
+        const rows = db.prepare(`SELECT * FROM ws_ai_analyses WHERE conversation_id=? ORDER BY created_at DESC,id DESC LIMIT ${limit} OFFSET ${offset}`).all(conversationId).map(wsAnalysisPayload);
+        const total = Number(db.prepare('SELECT COUNT(*) AS count FROM ws_ai_analyses WHERE conversation_id=?').get(conversationId).count || 0);
+        return json(res, 200, { analysis: rows[0] || null, analyses: rows, total, limit, offset });
+      }
+      if (req.method === 'POST' || req.method === 'PUT') {
+        const body = JSON.parse((await readBody(req, 1024 * 1024)).toString('utf8'));
+        const conversationId = wsText(body.conversationId, 160);
+        wsRequireConversation(conversationId);
+        const result = wsObject(body.result, 128 * 1024);
+        const confidence = Math.min(1, Math.max(0, Number(body.confidence ?? result.confidence) || 0));
+        const now = new Date().toISOString(), id = wsCreateId('wsa');
+        const intentLevel = wsText(body.intentLevel ?? result.intentLevel ?? result.intent, 40);
+        const language = wsText(body.language ?? result.language, 40);
+        db.exec('BEGIN IMMEDIATE');
+        try {
+          db.prepare('INSERT INTO ws_ai_analyses(id,conversation_id,result_json,confidence,provider_name,model,error_message,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)').run(id, conversationId, JSON.stringify(result), confidence, wsText(body.providerName, 120), wsText(body.model, 120), wsText(body.errorMessage, 1000), now, now);
+          db.prepare(`UPDATE ws_conversations SET intent_level=CASE WHEN ?<>'' THEN ? ELSE intent_level END,language=CASE WHEN ?<>'' THEN ? ELSE language END,updated_at=? WHERE id=?`).run(intentLevel, intentLevel, language, language, now, conversationId);
+          db.exec('COMMIT');
+        } catch (error) { db.exec('ROLLBACK'); throw error; }
+        return json(res, 200, wsAnalysisPayload(db.prepare('SELECT * FROM ws_ai_analyses WHERE id=?').get(id)));
+      }
+      return json(res, 405, { error: 'WS 分析只支持 GET/POST/PUT。' });
     }
-    if (url.pathname === '/api/ws/replies' && (req.method === 'POST' || req.method === 'PUT')) {
-      const body = JSON.parse((await readBody(req, 512 * 1024)).toString('utf8'));
-      const conversationId = wsText(body.conversationId, 160);
-      wsRequireConversation(conversationId);
-      const status = WS_REPLY_STATUSES.has(wsText(body.status, 16)) ? wsText(body.status, 16) : 'draft';
-      const now = new Date().toISOString(), id = wsCreateId('wsr');
-      db.prepare('INSERT INTO ws_replies(id,conversation_id,original_text,translated_text,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?)').run(id, conversationId, wsText(body.originalText, 12000), wsText(body.translatedText, 12000), status, now, now);
-      return json(res, 200, wsReplyPayload(db.prepare('SELECT * FROM ws_replies WHERE id=?').get(id)));
+    if (url.pathname === '/api/ws/replies') {
+      if (req.method === 'GET') {
+        const conversationId = wsText(url.searchParams.get('conversationId'), 160);
+        if (!conversationId) return json(res, 400, { error: '读取 WS 回复缺少会话编号。' });
+        wsRequireConversation(conversationId);
+        const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit')) || 20));
+        const offset = Math.max(0, Math.floor(Number(url.searchParams.get('offset')) || 0));
+        const rows = db.prepare(`SELECT * FROM ws_replies WHERE conversation_id=? ORDER BY created_at DESC,id DESC LIMIT ${limit} OFFSET ${offset}`).all(conversationId).map(wsReplyPayload);
+        const total = Number(db.prepare('SELECT COUNT(*) AS count FROM ws_replies WHERE conversation_id=?').get(conversationId).count || 0);
+        return json(res, 200, { replies: rows, total, limit, offset });
+      }
+      if (req.method === 'POST' || req.method === 'PUT') {
+        const body = JSON.parse((await readBody(req, 512 * 1024)).toString('utf8'));
+        const conversationId = wsText(body.conversationId, 160);
+        wsRequireConversation(conversationId);
+        const idempotencyKey = wsText(body.idempotencyKey, 160);
+        if (idempotencyKey) {
+          const existing = db.prepare('SELECT * FROM ws_replies WHERE conversation_id=? AND idempotency_key=?').get(conversationId, idempotencyKey);
+          if (existing) return json(res, 200, { ...wsReplyPayload(existing), existed: true });
+        }
+        const status = WS_REPLY_STATUSES.has(wsText(body.status, 16)) ? wsText(body.status, 16) : 'draft';
+        const now = new Date().toISOString(), id = wsCreateId('wsr');
+        db.prepare('INSERT INTO ws_replies(id,conversation_id,original_text,translated_text,status,created_at,updated_at,idempotency_key) VALUES(?,?,?,?,?,?,?,?)').run(id, conversationId, wsText(body.originalText, 12000), wsText(body.translatedText, 12000), status, now, now, idempotencyKey);
+        return json(res, 200, { ...wsReplyPayload(db.prepare('SELECT * FROM ws_replies WHERE id=?').get(id)), existed: false });
+      }
+      return json(res, 405, { error: 'WS 回复只支持 GET/POST/PUT。' });
     }
     if (req.method === 'GET' && url.pathname === '/api/ws/diagnostics') {
-      return json(res, 200, { schemaVersion: Number(db.prepare('PRAGMA user_version').get().user_version || 0), counts: { settings: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_settings').get().count || 0), conversations: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_conversations').get().count || 0), messages: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_messages').get().count || 0), analyses: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_ai_analyses').get().count || 0), replies: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_replies').get().count || 0) } });
+      return json(res, 200, { schemaVersion: Number(db.prepare('PRAGMA user_version').get().user_version || 0), counts: { settings: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_settings').get().count || 0), conversations: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_conversations').get().count || 0), messages: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_messages').get().count || 0), analyses: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_ai_analyses').get().count || 0), replies: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_replies').get().count || 0), batches: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_ingest_batches').get().count || 0) } });
     }
     if (req.method === 'GET' && url.pathname === '/api/ws/export') {
       const conversations = db.prepare('SELECT * FROM ws_conversations ORDER BY updated_at DESC').all().map(wsConversationPayload);
@@ -481,37 +623,63 @@ const server = createServer(async (req, res) => {
       const messages = db.prepare('SELECT * FROM ws_messages ORDER BY conversation_id,order_no,created_at').all().map(wsMessagePayload);
       const analyses = db.prepare('SELECT * FROM ws_ai_analyses ORDER BY created_at').all().map(wsAnalysisPayload);
       const replies = db.prepare('SELECT * FROM ws_replies ORDER BY created_at').all().map(wsReplyPayload);
-      return json(res, 200, { schemaVersion: 5, createdAt: new Date().toISOString(), settings, conversations, messages, analyses, replies });
+      const batches = db.prepare('SELECT * FROM ws_ingest_batches ORDER BY created_at').all().map(wsBatchPayload);
+      return json(res, 200, { schemaVersion: 6, createdAt: new Date().toISOString(), settings, conversations, messages, analyses, replies, batches });
     }
     if (req.method === 'POST' && url.pathname === '/api/ws/import') {
       const body = JSON.parse((await readBody(req, 50 * 1024 * 1024)).toString('utf8'));
-      const settings = Array.isArray(body.settings) ? body.settings.slice(0, 200) : [];
-      const conversations = Array.isArray(body.conversations) ? body.conversations.slice(0, 5000) : [];
-      const messages = Array.isArray(body.messages) ? body.messages.slice(0, 100000) : [];
-      const analyses = Array.isArray(body.analyses) ? body.analyses.slice(0, 20000) : [];
-      const replies = Array.isArray(body.replies) ? body.replies.slice(0, 20000) : [];
+      const schemaVersion = Number(body.schemaVersion || 5);
+      if (!Number.isInteger(schemaVersion) || schemaVersion < 5 || schemaVersion > 6) return json(res, 400, { error: 'WS 备份版本不受支持，只能恢复 v5 或 v6 数据。' });
+      for (const key of ['settings','conversations','messages','analyses','replies','batches']) if (Object.hasOwn(body, key) && !Array.isArray(body[key])) return json(res, 400, { error: `WS 备份中的 ${key} 不是有效数组。` });
+      const settings = body.settings || [];
+      const conversations = body.conversations || [];
+      const messages = body.messages || [];
+      const analyses = body.analyses || [];
+      const replies = body.replies || [];
+      const batches = body.batches || [];
+      const limits = { settings: 5000, conversations: 5000, messages: 100000, analyses: 20000, replies: 20000, batches: 20000 };
+      for (const [key, limit] of Object.entries(limits)) if ({ settings, conversations, messages, analyses, replies, batches }[key].length > limit) return json(res, 413, { error: `WS 备份中的 ${key} 超过 ${limit} 条上限，未执行恢复。` });
       const conversationIds = new Set(conversations.map(item => wsText(item.id, 160)).filter(Boolean));
-      if (conversations.some(item => !wsText(item.id, 160) || !wsText(item.externalId, 160))) return json(res, 400, { error: 'WS 备份中的会话编号或外部标识无效。' });
+      const externalIds = new Set(conversations.map(item => wsText(item.externalId, 160)).filter(Boolean));
+      if (conversations.some(item => !wsText(item.id, 160) || !wsText(item.externalId, 160)) || conversationIds.size !== conversations.length || externalIds.size !== conversations.length) return json(res, 400, { error: 'WS 备份中的会话编号或外部标识缺失或重复。' });
+      if (settings.some(item => !conversationIds.has(wsText(item.conversationId, 160)))) return json(res, 400, { error: 'WS 备份中的设置关联了不存在的会话。' });
+      if (new Set(settings.map(item => wsText(item.conversationId, 160))).size !== settings.length) return json(res, 400, { error: 'WS 备份中同一会话存在重复设置。' });
       if (messages.some(item => !conversationIds.has(wsText(item.conversationId, 160)) || !WS_DIRECTIONS.has(wsText(item.direction, 16)) || !wsText(item.originalText, 12000))) return json(res, 400, { error: 'WS 备份中的消息格式无效。' });
       if (analyses.some(item => !conversationIds.has(wsText(item.conversationId, 160)))) return json(res, 400, { error: 'WS 备份中的 AI 分析关联无效。' });
       if (replies.some(item => !conversationIds.has(wsText(item.conversationId, 160)))) return json(res, 400, { error: 'WS 备份中的回复关联无效。' });
+      if (batches.some(item => !conversationIds.has(wsText(item.conversationId, 160)) || !wsText(item.fingerprint, 160))) return json(res, 400, { error: 'WS 备份中的消息批次关联或指纹无效。' });
+      const messageIds = new Set(messages.map(item => wsText(item.id, 160)).filter(Boolean));
+      if (messageIds.size !== messages.filter(item => wsText(item.id, 160)).length) return json(res, 400, { error: 'WS 备份中存在重复消息编号。' });
+      const messageExternalKeys = messages.map(item => { const externalId = wsText(item.externalId, 200); return externalId ? `${wsText(item.conversationId, 160)}\u0000${externalId}` : ''; }).filter(Boolean);
+      if (new Set(messageExternalKeys).size !== messageExternalKeys.length) return json(res, 400, { error: 'WS 备份中同一会话存在重复外部消息标识。' });
+      const replyIds = new Set(replies.map(item => wsText(item.id, 160)).filter(Boolean));
+      if (replyIds.size !== replies.filter(item => wsText(item.id, 160)).length) return json(res, 400, { error: 'WS 备份中存在重复回复编号。' });
+      const replyIdempotencyKeys = replies.map(item => { const key = wsText(item.idempotencyKey, 160); return key ? `${wsText(item.conversationId, 160)}\u0000${key}` : ''; }).filter(Boolean);
+      if (new Set(replyIdempotencyKeys).size !== replyIdempotencyKeys.length) return json(res, 400, { error: 'WS 备份中同一会话存在重复回复幂等键。' });
+      const batchIds = new Set(batches.map(item => wsText(item.id, 160)).filter(Boolean));
+      if (batchIds.size !== batches.filter(item => wsText(item.id, 160)).length) return json(res, 400, { error: 'WS 备份中存在重复批次编号。' });
+      const batchKeys = batches.map(item => `${wsText(item.conversationId, 160)}\u0000${wsText(item.fingerprint, 160)}`);
+      if (new Set(batchKeys).size !== batchKeys.length) return json(res, 400, { error: 'WS 备份中同一会话存在重复批次指纹。' });
+      if (batches.some(item => Object.hasOwn(item, 'messageIds') && (!Array.isArray(item.messageIds) || item.messageIds.some(id => !messageIds.has(wsText(id, 160)))))) return json(res, 400, { error: 'WS 备份中的消息批次引用了不存在的消息。' });
       db.exec('BEGIN IMMEDIATE');
       try {
-        db.exec('DELETE FROM ws_messages; DELETE FROM ws_ai_analyses; DELETE FROM ws_replies; DELETE FROM ws_settings; DELETE FROM ws_conversations;');
+        db.exec('DELETE FROM ws_ingest_batches; DELETE FROM ws_messages; DELETE FROM ws_ai_analyses; DELETE FROM ws_replies; DELETE FROM ws_settings; DELETE FROM ws_conversations;');
         const now = new Date().toISOString();
-        const addConversation = db.prepare('INSERT INTO ws_conversations(id,external_id,title,customer_id,last_message_text,intent_level,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)');
-        for (const item of conversations) addConversation.run(wsText(item.id, 160), wsText(item.externalId, 160), wsText(item.title, 200), wsText(item.customerId, 128), wsText(item.lastMessageText, 4000), wsText(item.intentLevel, 40), JSON.stringify(wsObject(item.data, 32 * 1024)), wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
-        const addSetting = db.prepare('INSERT INTO ws_settings(conversation_id,enabled,receive_enabled,send_enabled,target_language,show_original,ai_enabled,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)');
-        for (const item of settings) { const conversationId = wsText(item.conversationId, 160); if (!conversationIds.has(conversationId)) continue; addSetting.run(conversationId, item.enabled === false ? 0 : 1, item.receive === false || item.enabled === false ? 0 : 1, item.send === false || item.enabled === false ? 0 : 1, wsText(item.targetLanguage, 40) || '中文', item.showOriginal === false ? 0 : 1, item.aiEnabled === false ? 0 : 1, WS_STATUSES.has(wsText(item.status, 32)) ? wsText(item.status, 32) : '未连接', wsIso(item.createdAt || now), wsIso(item.updatedAt || now)); }
-        const addMessage = db.prepare('INSERT INTO ws_messages(id,conversation_id,external_id,direction,original_text,translated_text,source_language,target_language,order_no,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)');
-        for (const item of messages) addMessage.run(wsText(item.id, 160) || wsCreateId('wsm'), wsText(item.conversationId, 160), wsText(item.externalId, 200), wsText(item.direction, 16), wsText(item.originalText, 12000), wsText(item.translatedText, 12000), wsText(item.sourceLanguage, 40), wsText(item.targetLanguage, 40), Number.isFinite(Number(item.order)) ? Number(item.order) : 0, JSON.stringify(wsObject(item.data, 32 * 1024)), wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
+        const addConversation = db.prepare('INSERT INTO ws_conversations(id,external_id,title,customer_id,last_message_text,intent_level,data_json,created_at,updated_at,last_message_at,unread_count,language) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)');
+        for (const item of conversations) { const lastMessage = wsText(item.lastMessageText, 4000); addConversation.run(wsText(item.id, 160), wsText(item.externalId, 160), wsText(item.title, 200), wsText(item.customerId, 128), lastMessage, wsText(item.intentLevel, 40), JSON.stringify(wsObject(item.data, 32 * 1024)), wsIso(item.createdAt || now), wsIso(item.updatedAt || now), item.lastMessageAt ? wsIso(item.lastMessageAt) : (lastMessage ? wsIso(item.updatedAt || now) : ''), Math.max(0, Math.floor(Number(item.unreadCount) || 0)), wsText(item.language, 40)); }
+        const addSetting = db.prepare('INSERT INTO ws_settings(conversation_id,enabled,receive_enabled,send_enabled,target_language,send_language,show_original,ai_enabled,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)');
+        for (const item of settings) addSetting.run(wsText(item.conversationId, 160), item.enabled === false ? 0 : 1, item.receive === false ? 0 : 1, item.send === false ? 0 : 1, wsText(item.targetLanguage, 40) || '中文', wsText(item.sendLanguage, 40), item.showOriginal === false ? 0 : 1, item.aiEnabled === false ? 0 : 1, WS_STATUSES.has(wsText(item.status, 32)) ? wsText(item.status, 32) : '未连接', wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
+        const addMessage = db.prepare('INSERT INTO ws_messages(id,conversation_id,external_id,direction,original_text,translated_text,source_language,target_language,order_no,data_json,created_at,updated_at,translation_status,translation_error,translation_attempts,last_attempt_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+        for (const item of messages) { const translation = wsTranslationFields(item); addMessage.run(wsText(item.id, 160) || wsCreateId('wsm'), wsText(item.conversationId, 160), wsText(item.externalId, 200), wsText(item.direction, 16), wsText(item.originalText, 12000), translation.translatedText, wsText(item.sourceLanguage, 40), wsText(item.targetLanguage, 40), Number.isFinite(Number(item.order)) ? Number(item.order) : 0, JSON.stringify(wsObject(item.data, 32 * 1024)), wsIso(item.createdAt || now), wsIso(item.updatedAt || now), translation.translationStatus, translation.translationError, translation.translationAttempts, translation.lastAttemptAt); }
         const addAnalysis = db.prepare('INSERT INTO ws_ai_analyses(id,conversation_id,result_json,confidence,provider_name,model,error_message,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)');
         for (const item of analyses) addAnalysis.run(wsText(item.id, 160) || wsCreateId('wsa'), wsText(item.conversationId, 160), JSON.stringify(wsObject(item.result, 128 * 1024)), Math.min(1, Math.max(0, Number(item.confidence) || 0)), wsText(item.providerName, 120), wsText(item.model, 120), wsText(item.errorMessage, 1000), wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
-        const addReply = db.prepare('INSERT INTO ws_replies(id,conversation_id,original_text,translated_text,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?)');
-        for (const item of replies) addReply.run(wsText(item.id, 160) || wsCreateId('wsr'), wsText(item.conversationId, 160), wsText(item.originalText, 12000), wsText(item.translatedText, 12000), WS_REPLY_STATUSES.has(wsText(item.status, 16)) ? wsText(item.status, 16) : 'draft', wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
+        const addReply = db.prepare('INSERT INTO ws_replies(id,conversation_id,original_text,translated_text,status,created_at,updated_at,idempotency_key) VALUES(?,?,?,?,?,?,?,?)');
+        for (const item of replies) addReply.run(wsText(item.id, 160) || wsCreateId('wsr'), wsText(item.conversationId, 160), wsText(item.originalText, 12000), wsText(item.translatedText, 12000), WS_REPLY_STATUSES.has(wsText(item.status, 16)) ? wsText(item.status, 16) : 'draft', wsIso(item.createdAt || now), wsIso(item.updatedAt || now), wsText(item.idempotencyKey, 160));
+        const addBatch = db.prepare('INSERT INTO ws_ingest_batches(id,conversation_id,fingerprint,message_count,inserted_count,message_ids_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)');
+        for (const item of batches) { const ids = Array.isArray(item.messageIds) ? item.messageIds.map(id => wsText(id, 160)).filter(id => messageIds.has(id)) : []; addBatch.run(wsText(item.id, 160) || wsCreateId('wsb'), wsText(item.conversationId, 160), wsText(item.fingerprint, 160), Math.max(0, Math.floor(Number(item.messageCount) || ids.length)), Math.max(0, Math.floor(Number(item.insertedCount) || 0)), JSON.stringify(ids), wsIso(item.createdAt || now), wsIso(item.updatedAt || now)); }
         db.exec('COMMIT');
       } catch (error) { db.exec('ROLLBACK'); throw error; }
-      return json(res, 200, { ok: true, counts: { settings: settings.length, conversations: conversations.length, messages: messages.length, analyses: analyses.length, replies: replies.length } });
+      return json(res, 200, { ok: true, schemaVersion: 6, counts: { settings: settings.length, conversations: conversations.length, messages: messages.length, analyses: analyses.length, replies: replies.length, batches: batches.length } });
     }
     if (req.method === 'GET' && url.pathname === '/api/state/version') {
       const row = db.prepare('SELECT revision FROM app_state WHERE id=1').get();

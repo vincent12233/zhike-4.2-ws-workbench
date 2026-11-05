@@ -4,11 +4,14 @@ const core = require(corePath);
 
 assert.deepEqual(core.normalizeTranslationSettings({ enabled: false, receive: true, send: true }), {
   enabled: false,
-  receive: false,
-  send: false,
+  receive: true,
+  send: true,
   targetLanguage: '中文',
+  sendLanguage: '自动识别',
   showOriginal: true,
 });
+assert.equal(core.shouldTranslate({ enabled: false, receive: true, send: true }, 'receive'), false);
+assert.equal(core.translationMode({ enabled: false, receive: true, send: true }), '全部关闭');
 assert.equal(core.shouldTranslate({ enabled: true, receive: true, send: false }, 'receive'), true);
 assert.equal(core.shouldTranslate({ enabled: true, receive: true, send: false }, 'send'), false);
 assert.equal(core.shouldTranslate({ enabled: true, receive: false, send: true }, 'send'), true);
@@ -31,5 +34,16 @@ const deduped = core.dedupeMessages([
   { id: 'm2b', externalId: 'x2', order: 2, translatedText: '已翻译' },
 ]);
 assert.deepEqual(deduped.map(item => item.id), ['m1', 'm2b']);
+
+const visible = core.parseVisibleChat('[2026/11/05 10:20] 客户：Hello\n我：你好\n客户：预算 1000', 'receive');
+assert.equal(visible.length, 3);
+assert.deepEqual(visible.map(item => item.direction), ['receive', 'send', 'receive']);
+assert.equal(core.visibleChatFingerprint(visible), core.visibleChatFingerprint(visible));
+const transcript = core.buildTranscript(visible.map((item, index) => ({ direction: item.direction, originalText: item.text.repeat(500), order: index })), { maxChars: 1000 });
+assert(transcript.text.length <= 1000);
+const tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+assert.equal(core.suggestedDate('请明天跟进'), new Date(tomorrow.getTime() - tomorrow.getTimezoneOffset() * 60000).toISOString().slice(0, 10));
+assert.equal(core.parseTranslationBatch('{"translations":[{"id":"m1","translation":"你好"}]}')[0].translation, '你好');
 
 console.log('ws-workbench-core: pass');
