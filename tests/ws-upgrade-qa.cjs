@@ -6,7 +6,7 @@ const path = require('node:path');
 
 const oldInstaller = process.env.ZHIKE_OLD_INSTALLER || path.resolve(__dirname, '..', 'releases', '知客-4.1-全面增强版.exe');
 const newInstaller = process.env.ZHIKE_INSTALLER
-  || ['知客-4.2.4-WS工作台完善版.exe', '知客-4.2.3-WS工作台完善版.exe', '知客-4.2.2-WS工作台完善版.exe', '知客-4.2.1-WS工作台完善版.exe', '知客-4.2-WS工作台版.exe']
+  || ['知客-4.2.5-WS工作台完善版.exe', '知客-4.2.4-WS工作台完善版.exe', '知客-4.2.3-WS工作台完善版.exe', '知客-4.2.2-WS工作台完善版.exe', '知客-4.2.1-WS工作台完善版.exe', '知客-4.2-WS工作台版.exe']
     .map(name => path.resolve(__dirname, '..', 'releases', name))
     .find(existsSync);
 assert(existsSync(newInstaller), `new installer not found: ${newInstaller}`);

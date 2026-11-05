@@ -6,7 +6,7 @@ const path = require('node:path');
 
 const releaseDir = path.resolve(__dirname, '..', 'releases');
 const installer = process.env.ZHIKE_INSTALLER
-  || ['知客-4.2.4-WS工作台完善版.exe', '知客-4.2.3-WS工作台完善版.exe', '知客-4.2.2-WS工作台完善版.exe', '知客-4.2.1-WS工作台完善版.exe', '知客-4.2-WS工作台版.exe']
+  || ['知客-4.2.5-WS工作台完善版.exe', '知客-4.2.4-WS工作台完善版.exe', '知客-4.2.3-WS工作台完善版.exe', '知客-4.2.2-WS工作台完善版.exe', '知客-4.2.1-WS工作台完善版.exe', '知客-4.2-WS工作台版.exe']
     .map(name => path.join(releaseDir, name))
     .find(existsSync);
 assert(existsSync(installer), `installer not found: ${installer}`);

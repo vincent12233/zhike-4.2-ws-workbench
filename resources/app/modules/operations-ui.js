@@ -22,6 +22,7 @@
     host.closeModal();host.showCustomer(customer);
   });
   function render(force=false){if(!host)return;const v=document.querySelector('#viewContainer');if(!v)return;const view=host.state.view;const renderedForView=view==='operations'?Boolean(v.querySelector('.ops-task-list')):view==='stage-board'?Boolean(v.querySelector('.ops-board')):true;if(!force&&view===lastView&&lastRevision===(host.state.dataRevision||0)&&v.dataset.opsRendered==='1'&&renderedForView)return;lastView=view;lastRevision=host.state.dataRevision||0;if(view==='operations'){v.dataset.opsRendered='1';taskPage(v)}else if(view==='stage-board'){v.dataset.opsRendered='1';boardPage(v)}else v.dataset.opsRendered='0';}
+  window.ZhikeOperationsUI=Object.freeze({render});
   function boot(){host=window.__zhikeRegistryHost;core=window.ZhikeOperationsCore;if(host&&core){host.showCustomer=host.showCustomer||window.showCustomer;render();}}
   boot();
   if(!host)window.addEventListener('load',boot,{once:true});
