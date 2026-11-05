@@ -42,6 +42,7 @@
   let observer;
   let settingsSaveTimer;
   let settingsSaveSequence = 0;
+  let collectionRefreshTimer;
 
   function toast(message, icon = 'check') { getHost()?.toast?.(message, icon); }
   function activeConversation() { return state.conversations.find(item => String(item.id) === String(state.currentConversationId)) || null; }
@@ -1114,6 +1115,8 @@
     const host = getHost();
     if (!host) return;
     state.active = true;
+    clearInterval(collectionRefreshTimer);
+    collectionRefreshTimer = setInterval(() => { if (state.active && !state.loading) loadConversations(); }, 30000);
     host.state.view = 'ws-workbench';
     state.error = '';
     $('#crumbCurrent').textContent = 'WS 工作台';
@@ -1126,6 +1129,8 @@
   function deactivate() {
     if (!state.active) return;
     state.active = false;
+    clearInterval(collectionRefreshTimer);
+    collectionRefreshTimer = undefined;
     document.body.classList.remove('ws-mode');
     wsBridge('hide').catch(() => {});
   }
