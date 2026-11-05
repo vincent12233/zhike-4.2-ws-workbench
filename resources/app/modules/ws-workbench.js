@@ -186,7 +186,18 @@
     catch (error) { state.error = error.message; render(); }
   }
   async function discoverConversations() {
-    try { const result = await wsBridge('discover-conversations'); if (!result?.supported) throw new Error(result?.error || '当前页面结构未识别'); state.discoveredConversations = result.conversations || []; toast(`已发现 ${state.discoveredConversations.length} 个当前可见会话`); render(); }
+    try {
+      const result = await wsBridge('discover-conversations'); if (!result?.supported) throw new Error(result?.error || '当前页面结构未识别'); state.discoveredConversations = result.conversations || [];
+      if (!state.collectionRun) state.collectionRun = (await api('/api/ws/collection-runs', { method: 'POST', body: JSON.stringify({}) })).run;
+      let queued = 0;
+      for (const item of state.discoveredConversations) {
+        const externalId = text(item.externalId || `visible-${item.index}`); const title = text(item.title || externalId);
+        const conversation = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId, title, data: { discovery: 'visible-page' } }) });
+        await api('/api/ws/collection-items', { method: 'POST', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: conversation.id, status: 'queued' }) }); queued += 1;
+      }
+      state.collectionRun = (await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', discovered: state.discoveredConversations.length, total: state.discoveredConversations.length }) })).run;
+      toast(`已发现 ${state.discoveredConversations.length} 个会话，入队 ${queued} 个`); render();
+    }
     catch (error) { state.error = error.message; render(); }
   }
   function renderCollectionCard() {
