@@ -23,7 +23,7 @@ const wsEntryUrl = 'https://web.whatsapp.com/';
 // WhatsApp Web rejects Electron's default UA because it contains an Electron token.
 // Keep the browser engine version aligned with Electron 45's Chromium 134 build.
 const wsUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36';
-const wsPartition = 'ws-workbench-isolated';
+const wsPartition = 'persist:ws-workbench-isolated';
 let wsSessionHardened = false;
 let quitting = false;
 let flushingClose = false;
@@ -219,7 +219,7 @@ async function probeWsStatus(view = wsView) {
     } else if (probe.hasExpiredMarker) {
       setWsStatus('会话过期', 'WS 会话已过期，请重新登录。');
     } else if (probe.hasChatShell || (probe.hasAppShell && !probe.hasQrMarker && !probe.hasLoginMarker)) {
-      setWsStatus('已连接', '已检测到 WS 聊天界面。');
+      setWsStatus('已连接', '已检测到 WS 聊天界面（HTTPS 443）。');
     } else if (probe.hasQrMarker || probe.hasLoginMarker || probe.readyState === 'complete') {
       setWsStatus('等待登录', '请在 WS 页面自行扫码或登录。');
     } else {
@@ -267,6 +267,7 @@ function ensureWsView() {
       sandbox: true,
       partition: wsPartition,
       webSecurity: true,
+      backgroundThrottling: false,
     },
   });
   const view = wsView;
