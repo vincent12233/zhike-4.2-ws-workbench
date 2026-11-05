@@ -99,6 +99,10 @@
     if (/^91\d{10}$/.test(digits)) digits = digits.slice(2);
     return digits;
   }
+  function extractPhone(text) {
+    const matches = String(text || '').match(/(?:\+?\d[\d\s().-]{7,}\d)/g) || [];
+    return matches.map(normalizePhone).find(value => value.length >= 8 && value.length <= 15) || '';
+  }
 
   function matchCustomer(customers, profile = {}) {
     const rows = (Array.isArray(customers) ? customers : []).filter(item => item && !item.deleted);
@@ -222,6 +226,7 @@
     parseAiResult,
     parseTranslationBatch,
     normalizePhone,
+    extractPhone,
     matchCustomer,
     dedupeMessages,
     parseVisibleChat,

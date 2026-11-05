@@ -640,6 +640,8 @@
     const rows = core.parseVisibleChat(draft.captureText, state.captureDirection);
     if (!current) { toast('请先建立或选择本机会话。', 'x'); return; }
     if (!rows.length) { toast('请先选择或粘贴当前可见聊天文本。', 'x'); return; }
+    if (!draft.customerPhone) draft.customerPhone = core.extractPhone(rows.map(row => row.text).join('\n'));
+    if (draft.customerPhone) state.matchCandidates = core.matchCustomer(getHost()?.state?.customers || [], { phone: draft.customerPhone }).candidates || [];
     state.busy.import = true;
     state.error = '';
     render();
