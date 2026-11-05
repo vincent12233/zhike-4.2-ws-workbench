@@ -319,9 +319,14 @@ function ensureWsView(account) {
   view.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   view.webContents.on('will-navigate', (event, target) => { if (!wsAllowedUrl(target)) { event.preventDefault(); setWsStatus(id, '连接失败', 'WS 页面跳转被安全策略拦截。'); } });
   view.webContents.on('did-start-loading', () => { if (record.status !== '正在重连') setWsStatus(id, '登录中'); });
-  view.webContents.on('did-finish-load', () => { void probeWsStatus(id); });
+  view.webContents.on('did-finish-load', () => { record.reloadContext = null; void probeWsStatus(id); });
   view.webContents.on('did-navigate', () => { void probeWsStatus(id); });
-  view.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => { if (errorCode !== -3) setWsStatus(id, '连接失败', errorDescription || 'WS 页面加载失败。'); });
+  view.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
+    const rollback = record.reloadContext;
+    record.reloadContext = null;
+    if (rollback) { setWsStatus(id, '连接失败', errorDescription || 'WS 页面加载失败。'); restoreWsAccount(rollback.accountId, rollback.record, rollback.status); }
+    else if (errorCode !== -3) setWsStatus(id, '连接失败', errorDescription || 'WS 页面加载失败。');
+  });
   view.webContents.on('render-process-gone', () => setWsStatus(id, '连接失败', 'WS 页面进程已结束。'));
   view.webContents.on('destroyed', () => { if (record.view === view) record.view = null; if (id === activeWsAccountId) syncLegacyWsAlias(record); });
   record.probeTimer = setInterval(() => { if (record.view === view && !view.webContents.isDestroyed()) void probeWsStatus(id); }, 15000); record.probeTimer.unref?.();
@@ -368,11 +373,12 @@ ipcMain.handle('zhike-ws', async (event, value = {}) => {
   if (action === 'reload' || action === 'reconnect') {
     const previousActiveWsAccountId = activeWsAccountId, previousRecord = wsViews.get(previousActiveWsAccountId), previousStatus = previousRecord?.status;
     const record = ensureWsView(account); switchWsAccount(accountId, record); const view = record.view;
+    record.reloadContext = { accountId: previousActiveWsAccountId, record: previousRecord, status: previousStatus };
     setWsStatus(accountId, action === 'reconnect' ? '正在重连' : '登录中');
     try {
       if (view.webContents.getURL() && wsAllowedUrl(view.webContents.getURL())) await view.webContents.reload();
       else await view.webContents.loadURL(wsEntryUrl);
-    } catch (error) { restoreWsAccount(previousActiveWsAccountId, previousRecord, previousStatus); throw error; }
+    } catch (error) { record.reloadContext = null; restoreWsAccount(previousActiveWsAccountId, previousRecord, previousStatus); throw error; }
     resizeWsView(accountId, value.bounds); return { ok: true, accountId, status: record.status, partitionKey: record.partitionKey };
   }
   if (action === 'mark-connected' || action === 'mark-expired' || action === 'mark-reconnecting') {

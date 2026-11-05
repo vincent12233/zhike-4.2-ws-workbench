@@ -17,6 +17,8 @@ assert.match(preload, /accountId.*wsActiveAccountId|wsActiveAccountId.*accountId
 assert.match(preload, /previousWsAccountId|previous.*wsActiveAccountId/, 'failed account switches retain the previous active account');
 assert.match(preload, /invoke\('zhike-ws',[\s\S]*?then\(/, 'active account commits only after IPC succeeds');
 assert.match(main, /restoreWsAccount|previousActiveWsAccountId/, 'failed BrowserView loads restore main active account');
+assert.match(main, /reloadContext/, 'reload failures keep a per-view rollback context');
+assert.match(main, /did-fail-load[\s\S]*?restoreWsAccount/, 'did-fail-load restores the previous active view');
 assert.match(main, /catch \(error\).*restoreWsAccount|restoreWsAccount\([\s\S]*?throw error/, 'load failures roll back BrowserView switching');
 assert.match(main, /persist:ws-workbench-/, 'views use account-isolated persistent partitions');
 assert.match(main, /accountId/, 'WS IPC accepts account ids');

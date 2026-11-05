@@ -56,3 +56,12 @@ Validation:
 - `node scripts/run-tests.cjs all` — 31 checks passed
 
 Post-amend verification (status rollback included): `node scripts/run-tests.cjs all` — 31 checks passed.
+
+## Fix round 5 (final)
+
+Reload/reconnect operations now keep per-view rollback context until `did-finish-load`. If `did-fail-load` fires after a fire-and-forget Electron reload, the previous active account, BrowserView visibility, bounds and status are restored and the context is cleared. Awaited load failures continue to use the same rollback path.
+
+Validation:
+
+- `node tests/ws-multi-account-main.test.cjs` — pass
+- `node scripts/run-tests.cjs all` — 31 checks passed
