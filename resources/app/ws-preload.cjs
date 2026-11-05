@@ -8,7 +8,7 @@ const exists = selectors => selectors.some(selector => {
 function probeStatus() {
   return {
     readyState: String(document.readyState || 'loading').slice(0, 20),
-    url: String(location.href || '').slice(0, 300),
+    url: String(globalThis.location?.href || '').slice(0, 300),
     title: String(document.title || '').slice(0, 120),
     online: navigator.onLine !== false,
     hasChatShell: exists(['#pane-side', '#side', '[data-testid="chat-list"]', '[data-testid="chatlist"]', '[aria-label="Chat list"]', '[aria-label="Conversation list"]', '[aria-label*="Chats"]', 'main[role="main"]', '[role="grid"]']),
