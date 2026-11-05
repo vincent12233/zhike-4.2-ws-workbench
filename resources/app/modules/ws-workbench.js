@@ -190,8 +190,26 @@
       state.conversations = Array.isArray(result.conversations) ? result.conversations : state.conversations;
       state.collectionRun = run.run || null;
       state.followupAlerts = alerts.alerts || [];
+      if (state.wsStatus === '已连接') {
+        const visible = await wsBridge('discover-conversations').catch(() => null);
+        if (visible?.supported && visible.conversations?.length) await enqueueDiscoveredConversations(visible.conversations, false);
+      }
       render();
     } catch {}
+  }
+  async function enqueueDiscoveredConversations(items, announce = true) {
+    if (!Array.isArray(items) || !items.length) return 0;
+    if (!state.collectionRun) state.collectionRun = (await api('/api/ws/collection-runs', { method: 'POST', body: JSON.stringify({}) })).run;
+    let queued = 0;
+    for (const item of items) {
+      const externalId = text(item.externalId || `visible-${item.index}`); const title = text(item.title || externalId);
+      const conversation = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId, title, lastMessageText: text(item.preview).slice(0, 4000), unreadCount: Number(item.unreadCount || 0), data: { discovery: 'visible-page', previewOnly: true, historyLoaded: false } }) });
+      await api('/api/ws/collection-items', { method: 'POST', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: conversation.id, status: 'queued' }) });
+      queued += 1;
+    }
+    state.conversations = (await api('/api/ws/conversations?limit=200')).conversations || state.conversations;
+    if (announce) toast(`已发现 ${items.length} 个会话，入队 ${queued} 个`);
+    return queued;
   }
   async function createCollectionRun() {
     try { state.collectionRun = (await api('/api/ws/collection-runs', { method: 'POST', body: JSON.stringify({}) })).run; toast('已创建采集任务，请开始读取 WhatsApp Web 会话'); render(); }
@@ -205,13 +223,7 @@
   async function discoverConversations() {
     try {
       const result = await wsBridge('discover-conversations'); if (!result?.supported) throw new Error(result?.error || '当前页面结构未识别'); state.discoveredConversations = result.conversations || [];
-      if (!state.collectionRun) state.collectionRun = (await api('/api/ws/collection-runs', { method: 'POST', body: JSON.stringify({}) })).run;
-      let queued = 0;
-      for (const item of state.discoveredConversations) {
-        const externalId = text(item.externalId || `visible-${item.index}`); const title = text(item.title || externalId);
-        const conversation = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId, title, lastMessageText: text(item.preview).slice(0, 4000), unreadCount: Number(item.unreadCount || 0), data: { discovery: 'visible-page', previewOnly: true, historyLoaded: false } }) });
-        await api('/api/ws/collection-items', { method: 'POST', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: conversation.id, status: 'queued' }) }); queued += 1;
-      }
+      const queued = await enqueueDiscoveredConversations(state.discoveredConversations, false);
       state.collectionRun = (await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', discovered: state.discoveredConversations.length, total: state.discoveredConversations.length }) })).run;
       toast(`已发现 ${state.discoveredConversations.length} 个会话，入队 ${queued} 个`); render();
     }
