@@ -22,7 +22,7 @@ function captureSelection() {
 }
 function discoverVisibleConversations() {
   const nodes = [...document.querySelectorAll('#pane-side [role="listitem"], [data-testid="chat-list"] [role="listitem"], [aria-label="Chat list"] [role="listitem"]')].slice(0, 500);
-  return { supported: nodes.length > 0, conversations: nodes.map((node, index) => ({ index, title: String(node.getAttribute('aria-label') || node.getAttribute('title') || '').slice(0, 200), externalId: String(node.getAttribute('data-id') || node.getAttribute('data-testid') || '').slice(0, 200) })).filter(item => item.title || item.externalId) };
+  return { supported: nodes.length > 0, conversations: nodes.map((node, index) => { const label = String(node.getAttribute('aria-label') || node.getAttribute('title') || '').slice(0, 1000); const badge = node.querySelector?.('[aria-label*="unread"], [data-testid*="unread"]'); return { index, title: label.slice(0, 200), externalId: String(node.getAttribute('data-id') || node.getAttribute('data-testid') || '').slice(0, 200), preview: label.slice(0, 1000), unreadCount: Number(String(badge?.getAttribute?.('aria-label') || '').match(/\d+/)?.[0] || 0) }; }).filter(item => item.title || item.externalId) };
 }
 function captureVisibleMessages() {
   const nodes = [...document.querySelectorAll('[data-pre-plain-text], [data-testid="msg-container"]')].slice(-500);

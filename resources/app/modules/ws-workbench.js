@@ -192,7 +192,7 @@
       let queued = 0;
       for (const item of state.discoveredConversations) {
         const externalId = text(item.externalId || `visible-${item.index}`); const title = text(item.title || externalId);
-        const conversation = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId, title, data: { discovery: 'visible-page' } }) });
+        const conversation = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId, title, lastMessageText: text(item.preview).slice(0, 4000), unreadCount: Number(item.unreadCount || 0), data: { discovery: 'visible-page', previewOnly: true, historyLoaded: false } }) });
         await api('/api/ws/collection-items', { method: 'POST', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: conversation.id, status: 'queued' }) }); queued += 1;
       }
       state.collectionRun = (await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', discovered: state.discoveredConversations.length, total: state.discoveredConversations.length }) })).run;
@@ -385,7 +385,7 @@
               <div class="ws-toolbar-actions">
                 <button class="btn small primary" data-ws-action="open" ${state.busy.connection ? 'disabled' : ''}>打开 WS</button>
                 <button class="btn small" data-ws-action="probe">检测状态</button>
-                <button class="btn small" data-ws-action="discover-conversations">发现会话</button>
+                <button class="btn small" data-ws-action="discover-conversations">采集列表预览</button>
                 <button class="btn small" data-ws-action="reconnect">重新连接</button>
                 <button class="btn small" data-ws-action="reload">刷新页面</button>
                 <button class="btn small danger" data-ws-action="close">关闭 WS</button>
