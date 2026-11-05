@@ -641,7 +641,17 @@
     if (!current) { toast('请先建立或选择本机会话。', 'x'); return; }
     if (!rows.length) { toast('请先选择或粘贴当前可见聊天文本。', 'x'); return; }
     if (!draft.customerPhone) draft.customerPhone = core.extractPhone(rows.map(row => row.text).join('\n'));
-    if (draft.customerPhone) state.matchCandidates = core.matchCustomer(getHost()?.state?.customers || [], { phone: draft.customerPhone }).candidates || [];
+    if (draft.customerPhone) {
+      const match = core.matchCustomer(getHost()?.state?.customers || [], { phone: draft.customerPhone });
+      state.matchCandidates = match.candidates || [];
+      if (match.kind === 'phone' && match.customer) {
+        const conversation = state.conversations.find(item => String(item.id) === String(current.id));
+        if (conversation) { conversation.customerId = String(match.customer.id); await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: conversation.externalId, customerId: String(match.customer.id) }) }); }
+        draft.customerName = draft.customerName || match.customer.name || '';
+        draft.customerCountry = draft.customerCountry || match.customer.country || '';
+        toast(`已按号码匹配客户：${match.customer.name || match.customer.id}`);
+      }
+    }
     state.busy.import = true;
     state.error = '';
     render();
