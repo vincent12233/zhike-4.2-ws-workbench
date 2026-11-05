@@ -4,8 +4,8 @@ const { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync 
 const os = require('node:os');
 const path = require('node:path');
 
-const oldInstaller = path.resolve(__dirname, '..', 'outputs', '知客-4.1-全面增强版.exe');
-const newInstaller = path.resolve(__dirname, '..', 'outputs', '知客-4.2-WS工作台版.exe');
+const oldInstaller = process.env.ZHIKE_OLD_INSTALLER || path.resolve(__dirname, '..', 'releases', '知客-4.1-全面增强版.exe');
+const newInstaller = path.resolve(__dirname, '..', 'releases', '知客-4.2-WS工作台版.exe');
 assert(existsSync(oldInstaller) && existsSync(newInstaller));
 const root = mkdtempSync(path.join(os.tmpdir(), 'zhike-ws-upgrade-'));
 const target = path.join(root, 'installed');

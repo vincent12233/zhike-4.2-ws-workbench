@@ -4,11 +4,11 @@ const { mkdtempSync, rmSync } = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const app = path.join(__dirname, 'project-review', '知客 4.1 运营增强版', 'resources', 'app');
+const app = path.join(__dirname, '..', 'resources', 'app');
 const dataDir = mkdtempSync(path.join(os.tmpdir(), 'zhike-ws-api-'));
 const port = 4471;
 const token = 'ws-api-test-token';
-const child = spawn(path.join(app, 'node.exe'), ['server.mjs'], {
+const child = spawn(process.execPath, ['server.mjs'], {
   cwd: app,
   windowsHide: true,
   env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token },

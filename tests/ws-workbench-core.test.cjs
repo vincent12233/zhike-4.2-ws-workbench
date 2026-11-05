@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const corePath = require('node:path').join(__dirname, 'project-review', '知客 4.1 运营增强版', 'resources', 'app', 'modules', 'ws-workbench-core.js');
+const corePath = require('node:path').join(__dirname, '..', 'resources', 'app', 'modules', 'ws-workbench-core.js');
 const core = require(corePath);
 
 assert.deepEqual(core.normalizeTranslationSettings({ enabled: false, receive: true, send: true }), {

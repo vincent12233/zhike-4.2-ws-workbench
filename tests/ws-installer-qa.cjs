@@ -4,7 +4,7 @@ const { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync 
 const os = require('node:os');
 const path = require('node:path');
 
-const installer = path.resolve(__dirname, '..', 'outputs', '知客-4.2-WS工作台版.exe');
+const installer = path.resolve(__dirname, '..', 'releases', '知客-4.2-WS工作台版.exe');
 assert(existsSync(installer), `installer not found: ${installer}`);
 const root = mkdtempSync(path.join(os.tmpdir(), 'zhike-ws-installer-'));
 const target = path.join(root, 'installed');

@@ -13,6 +13,8 @@ outputs/
 
 # Packaged/runtime binaries are built separately from this source repository
 *.exe
+!releases/
+!releases/*.exe
 *.dll
 *.pak
 *.bin
@@ -29,8 +31,8 @@ locales/
 Thumbs.db
 .vscode/
 .idea/
-dist/
-build/
+/dist/
+/build/
 tmp/
 *.tmp
 *.bak

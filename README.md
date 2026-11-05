@@ -8,7 +8,14 @@
 - `resources/app/migrations/005-ws-workbench.sql`：WS 工作台独立数据迁移。
 - `tests/`：WS、备份、HTTP、安装和项目回归测试。
 - `docs/`：项目检查、使用、故障排查、回滚和测试说明。
+- `releases/知客-4.2-WS工作台版.exe`：Windows 安装包，通过 Git LFS 保存。
 - `zhike-setup.iss`：Windows Inno Setup 安装脚本。
+
+## 安装包
+
+安装包版本为 4.2.0，SHA-256：`2633E0B1DAE754E7B84135C88BC27E7BAA6A77E67CEE76504D4872741D6658FD`。
+
+克隆仓库前请安装 Git LFS；执行 `git lfs pull` 可下载完整安装包。安装包已经包含 Electron 和本机 Node 运行时，因此这些打包二进制不重复放入源码目录。
 
 ## 安全边界
 
