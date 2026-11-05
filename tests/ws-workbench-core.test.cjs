@@ -26,6 +26,7 @@ assert.equal(parsed.lowConfidence, true);
 const customer = { id: 'C1', name: '张三', wsExternalId: 'wa-001', phone: '13800138000' };
 assert.equal(core.matchCustomer([customer], { wsExternalId: 'wa-001' }).kind, 'ws-id');
 assert.equal(core.matchCustomer([customer], { phone: '13800138000' }).kind, 'phone');
+assert.equal(core.extractPhone('请联系 +91 13800 138000 或备用 13800138000'), '13800138000');
 assert.equal(core.matchCustomer([customer], { conversationId: 'conv-1' }).kind, 'new');
 
 const deduped = core.dedupeMessages([
