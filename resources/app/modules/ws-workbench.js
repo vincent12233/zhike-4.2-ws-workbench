@@ -36,6 +36,7 @@
     error: '',
     collectionRun: null,
     followupAlerts: [],
+    discoveredConversations: [],
   };
   let rendering = false;
   let observer;
@@ -182,6 +183,10 @@
   async function updateCollectionRun(status) {
     if (!state.collectionRun?.id) return;
     try { state.collectionRun = (await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status }) })).run; toast(status === 'paused' ? '采集已暂停' : status === 'stopped' ? '采集已停止' : '采集已继续'); render(); }
+    catch (error) { state.error = error.message; render(); }
+  }
+  async function discoverConversations() {
+    try { const result = await wsBridge('discover-conversations'); if (!result?.supported) throw new Error(result?.error || '当前页面结构未识别'); state.discoveredConversations = result.conversations || []; toast(`已发现 ${state.discoveredConversations.length} 个当前可见会话`); render(); }
     catch (error) { state.error = error.message; render(); }
   }
   function renderCollectionCard() {
@@ -356,6 +361,7 @@
               <div class="ws-toolbar-actions">
                 <button class="btn small primary" data-ws-action="open" ${state.busy.connection ? 'disabled' : ''}>打开 WS</button>
                 <button class="btn small" data-ws-action="probe">检测状态</button>
+                <button class="btn small" data-ws-action="discover-conversations">发现会话</button>
                 <button class="btn small" data-ws-action="reconnect">重新连接</button>
                 <button class="btn small" data-ws-action="reload">刷新页面</button>
                 <button class="btn small danger" data-ws-action="close">关闭 WS</button>
@@ -995,6 +1001,7 @@
     if (action === 'pause-collection') return updateCollectionRun('paused');
     if (action === 'resume-collection') return updateCollectionRun('running');
     if (action === 'stop-collection') return updateCollectionRun('stopped');
+    if (action === 'discover-conversations') return discoverConversations();
     if (action === 'select-conversation') { state.mobilePanel = 'center'; return loadConversationData(element.dataset.id); }
     if (action === 'clear-capture') { currentDraft().captureText = ''; render(); return; }
     if (action === 'import-visible') return importVisible();

@@ -20,4 +20,12 @@ function captureSelection() {
   const text = source.slice(0, 120000);
   return { text, length: text.length, truncated: source.length > text.length };
 }
-contextBridge.exposeInMainWorld('zhikeWsPage', Object.freeze({ version: '2', purpose: 'visible-page-only', probeStatus, captureSelection }));
+function discoverVisibleConversations() {
+  const nodes = [...document.querySelectorAll('#pane-side [role="listitem"], [data-testid="chat-list"] [role="listitem"], [aria-label="Chat list"] [role="listitem"]')].slice(0, 500);
+  return { supported: nodes.length > 0, conversations: nodes.map((node, index) => ({ index, title: String(node.getAttribute('aria-label') || node.getAttribute('title') || '').slice(0, 200), externalId: String(node.getAttribute('data-id') || node.getAttribute('data-testid') || '').slice(0, 200) })).filter(item => item.title || item.externalId) };
+}
+function captureVisibleMessages() {
+  const nodes = [...document.querySelectorAll('[data-pre-plain-text], [data-testid="msg-container"]')].slice(-500);
+  return { supported: nodes.length > 0, messages: nodes.map((node, index) => ({ index, text: String(node.getAttribute('aria-label') || node.getAttribute('data-pre-plain-text') || '').slice(0, 12000), marker: String(node.getAttribute('data-id') || '').slice(0, 200) })).filter(item => item.text) };
+}
+contextBridge.exposeInMainWorld('zhikeWsPage', Object.freeze({ version: '3', purpose: 'visible-page-only', probeStatus, captureSelection, discoverVisibleConversations, captureVisibleMessages }));

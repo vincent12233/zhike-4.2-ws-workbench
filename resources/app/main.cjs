@@ -323,6 +323,14 @@ ipcMain.handle('zhike-ws', async (event, value = {}) => {
     const source = String(captured?.text || ''), text = source.slice(0, 120000);
     return { ok: true, text, length: text.length, truncated: Boolean(captured?.truncated) || source.length > text.length };
   }
+  if (action === 'discover-conversations' || action === 'capture-visible-messages') {
+    const view = wsView;
+    if (!view || view.webContents.isDestroyed()) throw new Error('请先打开 WS 页面并完成登录。');
+    const method = action === 'discover-conversations' ? 'discoverVisibleConversations' : 'captureVisibleMessages';
+    const captured = await view.webContents.executeJavaScript(`window.zhikeWsPage?.${method}?.() ?? null`, true);
+    if (!captured?.supported) return { ok: false, supported: false, error: '当前页面结构未识别，未读取任何内容。' };
+    return { ok: true, ...captured };
+  }
   if (action === 'hide') { resizeWsView({ hidden: true }); return { ok: true, hidden: wsViewHidden }; }
   if (action === 'resize') { resizeWsView(value.bounds); return { ok: true, hidden: wsViewHidden }; }
   if (action === 'clear-session') return clearWsSession();
