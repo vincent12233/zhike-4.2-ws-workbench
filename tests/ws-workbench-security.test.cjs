@@ -1,0 +1,18 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const app = path.join(__dirname, 'project-review', '知客 4.1 运营增强版', 'resources', 'app');
+const main = fs.readFileSync(path.join(app, 'main.cjs'), 'utf8');
+const preload = fs.readFileSync(path.join(app, 'preload.cjs'), 'utf8');
+const server = fs.readFileSync(path.join(app, 'server.mjs'), 'utf8');
+assert.match(main, /BrowserView/);
+assert.match(main, /web\.whatsapp\.com/);
+assert.match(main, /partition/);
+assert.match(main, /wsAllowedUrl/);
+assert.match(main, /\/api\/ws\/export/);
+assert.match(main, /\bws\b/);
+assert.match(preload, /ws/);
+assert.match(server, /ws_messages/);
+assert.doesNotMatch(preload, /session\.cookies/);
+assert.doesNotMatch(main, /session\.cookies/);
+console.log('ws-workbench-security: pass');

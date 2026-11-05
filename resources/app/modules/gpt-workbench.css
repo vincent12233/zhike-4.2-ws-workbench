@@ -1,0 +1,9 @@
+.gpt-chat-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line)}
+.gpt-chat-head>div{display:grid;gap:3px}.gpt-chat-head strong{font-size:12px}.gpt-chat-head span{font-size:9px;color:var(--muted)}
+.gpt-dropzone{display:grid!important;gap:3px;padding:10px 12px;margin:0 0 8px!important;border:1px dashed #75bdb2;border-radius:9px;background:#f3fbf9;color:#356e67;outline:none;transition:.16s}
+.gpt-dropzone:hover,.gpt-dropzone:focus,.gpt-dropzone.dragging{border-color:#0aa68f;background:#e6f8f4;box-shadow:0 0 0 3px rgba(10,166,143,.1)}
+.gpt-dropzone strong{font-size:10px}.gpt-dropzone span{font-size:8px}.gpt-attachments{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.gpt-file-chip{display:flex;align-items:center;gap:6px;max-width:100%;padding:6px 7px;border:1px solid var(--line);border-radius:8px;background:var(--soft);font-size:9px}
+.gpt-file-chip b{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gpt-file-chip small{color:var(--muted)}.gpt-file-chip button{border:0;background:transparent;color:var(--muted);font-size:15px;line-height:1;padding:0 2px}.gpt-gateway{margin:0 16px 12px}
+[data-theme="dark"] .gpt-dropzone{background:#173a3b;color:#a7ddd5;border-color:#39756d}[data-theme="dark"] .gpt-dropzone:hover,[data-theme="dark"] .gpt-dropzone.dragging{background:#1c4747}
+@media(max-width:600px){.gpt-chat-head{align-items:flex-start;gap:8px}.gpt-file-chip b{max-width:140px}}

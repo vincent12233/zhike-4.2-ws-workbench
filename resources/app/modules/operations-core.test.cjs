@@ -1,0 +1,10 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {validDate,createTask,selectTasks,stageColumns}=require('./operations-core.cjs');
+assert.equal(validDate('2026-11-03'),true);assert.equal(validDate('2026-02-30'),false);
+const customers=[{id:'C1',phase:'新客户',deleted:false},{id:'C2',phase:'高意向',deleted:false},{id:'C3',phase:'新客户',deleted:true}];
+assert.throws(()=>createTask({title:'回访',due:'2026-02-30'},customers),/日期无效/);
+const tasks=[createTask({title:'今日回访',due:'2026-11-03',customerId:'C1',priority:'high'},customers,{now:'2026-11-03T10:00:00Z'}),createTask({title:'已完成',due:'2026-11-01',done:true},customers,{now:'2026-11-03T10:00:00Z'})];
+assert.equal(selectTasks(tasks,{bucket:'today'},'2026-11-03').length,1);assert.equal(selectTasks(tasks,{status:'done'},'2026-11-03').length,1);
+assert.deepEqual(stageColumns(customers,['新客户','高意向']).map(x=>[x.name,x.customers.length]),[['新客户',1],['高意向',1]]);
+console.log('operations-core: 5 assertions passed');

@@ -1,0 +1,36 @@
+# User data and local credentials
+resources/app/data/*
+!resources/app/data/.gitkeep
+**/ai-credentials.json
+**/workspace.sqlite
+**/workspace.sqlite-*
+**/*.sqlite
+**/*.sqlite-*
+**/*.db
+**/*.log
+backups/
+outputs/
+
+# Packaged/runtime binaries are built separately from this source repository
+*.exe
+*.dll
+*.pak
+*.bin
+*.dat
+*.asar
+resources/app/node.exe
+locales/
+/LICENSES.chromium.html
+/version
+/vk_swiftshader_icd.json
+
+# Local/editor/build files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+dist/
+build/
+tmp/
+*.tmp
+*.bak
