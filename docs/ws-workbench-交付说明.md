@@ -3,7 +3,7 @@
 ## 安装包
 
 - 文件：`知客-4.2.2-WS工作台完善版.exe`
-- SHA-256：`3B4267FC76857390EE9C71F2B5BF497337539762030334FC3A412BD438A2A0AF`
+- SHA-256：`11408056AE239637020F91ECBC89A505F77CCE74C09CDC088590DFCE9AE4A62C`
 - 文件大小：173,915,466 字节
 - Git LFS 路径：`releases/知客-4.2.2-WS工作台完善版.exe`
 - 用户输出副本：`C:\Users\酷酷\Documents\Codex\2026-11-04\c-users-documents-codex-2026-11\outputs\知客-4.2.2-WS工作台完善版.exe`
