@@ -43,6 +43,7 @@
   let settingsSaveTimer;
   let settingsSaveSequence = 0;
   let collectionRefreshTimer;
+  let loadSequence = 0;
 
   function toast(message, icon = 'check') { getHost()?.toast?.(message, icon); }
   function activeConversation() { return state.conversations.find(item => String(item.id) === String(state.currentConversationId)) || null; }
@@ -159,11 +160,13 @@
   }
 
   async function loadConversations() {
+    const sequence = ++loadSequence;
     state.loading = true;
     state.error = '';
     render();
     try {
       const result = await api('/api/ws/conversations?limit=200');
+      if (sequence !== loadSequence) return;
       try { state.collectionRun = (await api('/api/ws/collection-runs')).run || null; } catch {}
       try { state.followupAlerts = (await api('/api/ws/followup-alerts?limit=8')).alerts || []; } catch {}
       state.conversations = Array.isArray(result.conversations) ? result.conversations : [];
@@ -171,11 +174,24 @@
       if (state.currentConversationId) await loadConversationData(state.currentConversationId, false);
       state.lastLoadedAt = nowIso();
     } catch (error) {
-      state.error = error.message;
+      if (sequence === loadSequence) state.error = error.message;
     } finally {
-      state.loading = false;
-      render();
+      if (sequence === loadSequence) { state.loading = false; render(); }
     }
+  }
+  async function refreshCollectionSummary() {
+    if (!state.active || state.loading) return;
+    try {
+      const [result, run, alerts] = await Promise.all([
+        api('/api/ws/conversations?limit=200'),
+        api('/api/ws/collection-runs'),
+        api('/api/ws/followup-alerts?limit=8'),
+      ]);
+      state.conversations = Array.isArray(result.conversations) ? result.conversations : state.conversations;
+      state.collectionRun = run.run || null;
+      state.followupAlerts = alerts.alerts || [];
+      render();
+    } catch {}
   }
   async function createCollectionRun() {
     try { state.collectionRun = (await api('/api/ws/collection-runs', { method: 'POST', body: JSON.stringify({}) })).run; toast('已创建采集任务，请开始读取 WhatsApp Web 会话'); render(); }
@@ -1128,7 +1144,7 @@
     if (!host) return;
     state.active = true;
     clearInterval(collectionRefreshTimer);
-    collectionRefreshTimer = setInterval(() => { if (state.active && !state.loading) loadConversations(); }, 30000);
+    collectionRefreshTimer = setInterval(() => { void refreshCollectionSummary(); }, 30000);
     host.state.view = 'ws-workbench';
     state.error = '';
     $('#crumbCurrent').textContent = 'WS 工作台';
