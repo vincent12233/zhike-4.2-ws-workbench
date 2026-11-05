@@ -8,6 +8,8 @@
 - Kept the existing left/right collapse controls, fixed WS viewport, manual import, automatic capture, translation, AI, CRM and follow-up cards.
 - Added explicit restore-account status propagation from main process through preload after asynchronous reload failure; renderer cancels stale account work and reloads the restored account context.
 - Added compact account card styling and maintained no-scroll outer WS workbench behavior.
+- Added round-one async fencing: stale account operations are discarded before UI or data writes, and every mutation can retain its originating account explicitly.
+- Activation opens the persisted account before status/data loading; early restore signals are queued until the account list is available.
 
 ## Verification
 

@@ -12,6 +12,7 @@
     activeAccountId: 'default',
     accountBusy: false,
     accountLoadSequence: 0,
+    pendingRestoreAccountId: '',
     currentConversationId: '',
     conversations: [],
     messages: [],
@@ -66,15 +67,24 @@
     try { return text(localStorage.getItem(accountStorageKey())) || 'default'; } catch { return 'default'; }
   }
   function writeStoredAccountId(id) { try { localStorage.setItem(accountStorageKey(), String(id || 'default')); } catch {} }
+  function captureContext(conversationId = state.currentConversationId) {
+    return { accountId: String(state.activeAccountId || 'default'), conversationId: String(conversationId || ''), sequence: Number(state.accountLoadSequence || 0) };
+  }
+  function contextCurrent(context) {
+    return Boolean(context) && context.sequence === Number(state.accountLoadSequence || 0) && context.accountId === String(state.activeAccountId || 'default') && (!context.conversationId || context.conversationId === String(state.currentConversationId || ''));
+  }
+  function assertContext(context) { if (!contextCurrent(context)) throw new Error('WS 账号已切换，已丢弃过期操作。'); }
   async function loadAccounts() {
     const sequence = ++state.accountLoadSequence;
     try {
       const result = await window.zhikeDesktop?.wsAccounts?.({ action: 'list' });
-      if (sequence !== state.accountLoadSequence) return;
+      if (sequence !== state.accountLoadSequence && !state.pendingRestoreAccountId) return;
       state.accounts = Array.isArray(result?.accounts) ? result.accounts : [];
       const stored = readStoredAccountId();
-      if (state.accounts.some(item => String(item.id) === stored)) state.activeAccountId = stored;
+      const preferred = state.pendingRestoreAccountId || stored;
+      if (state.accounts.some(item => String(item.id) === preferred)) state.activeAccountId = preferred;
       else if (state.accounts.some(item => String(item.id) === 'default')) state.activeAccountId = 'default';
+      state.pendingRestoreAccountId = '';
       writeStoredAccountId(state.activeAccountId);
       const active = activeAccount();
       if (active) {
@@ -114,6 +124,9 @@
     const previous = state.activeAccountId;
     const sequence = ++state.accountLoadSequence;
     state.accountBusy = true;
+    state.collectionRefreshing = false;
+    state.autoCaptureSignature = '';
+    state.busy.import = false; state.busy.customer = false; state.busy.followup = false; state.aiBusy = false;
     state.activeAccountId = id;
     state.currentConversationId = '';
     state.conversations = []; state.messages = []; state.analysis = null; state.analysisMeta = null; state.replies = [];
@@ -180,11 +193,11 @@
     if (!draft.customerNote) draft.customerNote = analysis.summary || '';
     if (!draft.nextFollow) draft.nextFollow = core.suggestedDate(analysis.followupTime);
   }
-  async function api(pathname, init = {}) {
+  async function api(pathname, init = {}, context = null) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), Number(init.timeout) || 20000);
     try {
-      const accountId = String(state.activeAccountId || 'default');
+      const accountId = String(context?.accountId || state.activeAccountId || 'default');
       const url = new URL(pathname, window.location.origin);
       if (url.pathname.startsWith('/api/ws/') && !url.searchParams.has('accountId')) url.searchParams.set('accountId', accountId);
       const nextInit = { ...init };
@@ -276,39 +289,45 @@
   }
   async function refreshCollectionSummary() {
     if (!state.active || state.loading || state.collectionRefreshing) return;
+    const context = captureContext();
     state.collectionRefreshing = true;
     try {
       const [result, run, alerts] = await Promise.all([
-        api('/api/ws/conversations?limit=200'),
-        api('/api/ws/collection-runs'),
-        api('/api/ws/followup-alerts?limit=8'),
+        api('/api/ws/conversations?limit=200', {}, context),
+        api('/api/ws/collection-runs', {}, context),
+        api('/api/ws/followup-alerts?limit=8', {}, context),
       ]);
+      assertContext(context);
       state.conversations = Array.isArray(result.conversations) ? result.conversations : state.conversations;
       state.collectionRun = run.run || null;
       state.followupAlerts = alerts.alerts || [];
       if (state.wsStatus === '已连接') {
         const visible = await wsBridge('discover-conversations').catch(() => null);
-        if (visible?.supported && visible.conversations?.length) await enqueueDiscoveredConversations(visible.conversations, false);
+        if (visible?.supported && visible.conversations?.length) await enqueueDiscoveredConversations(visible.conversations, false, context);
       }
       render();
-    } catch {} finally {
-      state.collectionRefreshing = false;
+    } catch (error) { if (contextCurrent(context) && error?.message && !/过期操作/.test(error.message)) state.error = error.message; } finally {
+      if (contextCurrent(context)) state.collectionRefreshing = false;
     }
   }
-  async function enqueueDiscoveredConversations(items, announce = true) {
+  async function enqueueDiscoveredConversations(items, announce = true, context = captureContext()) {
     if (!Array.isArray(items) || !items.length) return 0;
-    if (!state.collectionRun) state.collectionRun = (await api('/api/ws/collection-runs', { method: 'POST', body: JSON.stringify({}) })).run;
+    assertContext(context);
+    if (!state.collectionRun) state.collectionRun = (await api('/api/ws/collection-runs', { method: 'POST', body: JSON.stringify({}) }, context)).run;
     let queued = 0;
     for (const item of items) {
       const externalId = text(item.externalId || `visible-${item.index}`); const title = text(item.title || externalId);
       const preview = text(item.preview).slice(0, 4000);
       const match = core.matchCustomer(getHost()?.state?.customers || [], { phone: core.extractPhone(`${externalId} ${title} ${preview}`) });
       const matchedCustomerId = match?.kind === 'phone' || match?.kind === 'ws-id' || match?.kind === 'account' ? String(match.customer?.id || '') : '';
-      const conversation = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId, title, customerId: matchedCustomerId, lastMessageText: preview, unreadCount: Number(item.unreadCount || 0), data: { discovery: 'visible-page', previewOnly: true, historyLoaded: false, customerMatch: matchedCustomerId ? 'automatic' : 'pending' } }) });
-      await api('/api/ws/collection-items', { method: 'POST', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: conversation.id, status: 'queued' }) });
+      assertContext(context);
+      const conversation = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId, title, customerId: matchedCustomerId, lastMessageText: preview, unreadCount: Number(item.unreadCount || 0), data: { discovery: 'visible-page', previewOnly: true, historyLoaded: false, customerMatch: matchedCustomerId ? 'automatic' : 'pending' } }) }, context);
+      assertContext(context);
+      await api('/api/ws/collection-items', { method: 'POST', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: conversation.id, status: 'queued' }) }, context);
       queued += 1;
     }
-    state.conversations = (await api('/api/ws/conversations?limit=200')).conversations || state.conversations;
+    assertContext(context);
+    state.conversations = (await api('/api/ws/conversations?limit=200', {}, context)).conversations || state.conversations;
     if (announce) toast(`已发现 ${items.length} 个会话，入队 ${queued} 个`);
     return queued;
   }
@@ -322,33 +341,39 @@
     catch (error) { state.error = error.message; render(); }
   }
   async function discoverConversations() {
+    const context = captureContext();
     try {
-      const result = await wsBridge('discover-conversations'); if (!result?.supported) throw new Error(result?.error || '当前页面结构未识别'); state.discoveredConversations = result.conversations || [];
-      const queued = await enqueueDiscoveredConversations(state.discoveredConversations, false);
-      state.collectionRun = (await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', discovered: state.discoveredConversations.length, total: state.discoveredConversations.length }) })).run;
+      const result = await wsBridge('discover-conversations'); assertContext(context); if (!result?.supported) throw new Error(result?.error || '当前页面结构未识别'); state.discoveredConversations = result.conversations || [];
+      const queued = await enqueueDiscoveredConversations(state.discoveredConversations, false, context);
+      assertContext(context);
+      state.collectionRun = (await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', discovered: state.discoveredConversations.length, total: state.discoveredConversations.length }) }, context)).run;
       toast(`已发现 ${state.discoveredConversations.length} 个会话，入队 ${queued} 个`); render();
     }
     catch (error) { state.error = error.message; render(); }
   }
   async function captureVisibleMessages() {
     const current = activeConversation(); if (!current) { toast('请先选择一个本机会话', 'x'); return; }
+    const context = captureContext(current.id);
     try {
-      const result = await wsBridge('capture-visible-messages'); if (!result?.supported || !result.messages?.length) throw new Error(result?.error || '当前页面没有可识别的可见消息');
+      const result = await wsBridge('capture-visible-messages'); assertContext(context); if (!result?.supported || !result.messages?.length) throw new Error(result?.error || '当前页面没有可识别的可见消息');
       const draft = currentDraft(); draft.captureText = result.messages.map(item => item.text).join('\n'); state.captureDirection = 'receive'; render();
-      await importVisible();
-      if (state.aiEnabled && state.messages.length) await analyzeConversation();
-      if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: 'pending', checkpoint: String(result.messages.length) }) });
+      await importVisible(context);
+      assertContext(context);
+      if (state.aiEnabled && state.messages.length) await analyzeConversation(context);
+      if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: 'pending', checkpoint: String(result.messages.length) }) }, context);
       toast(`已采集当前会话 ${result.messages.length} 条可见消息`);
     } catch (error) {
-      if (state.collectionRun?.id) { try { await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'failed', attempts: 1, lastError: error.message }) }); } catch {} }
-      state.error = error.message; render();
+      if (contextCurrent(context) && state.collectionRun?.id) { try { await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'failed', attempts: 1, lastError: error.message }) }, context); } catch {} }
+      if (contextCurrent(context)) { state.error = error.message; render(); }
     }
   }
   async function autoCaptureCurrentConversation() {
     if (!state.active || state.wsStatus !== '已连接' || state.loading || state.busy.import || state.aiBusy) return;
     const current = activeConversation();
     if (!current || ['paused', 'stopped', 'completed'].includes(state.collectionRun?.status)) return;
+    const context = captureContext(current.id);
     const result = await wsBridge('capture-visible-messages').catch(() => null);
+    if (!contextCurrent(context)) return;
     if (!result?.supported || !result.messages?.length) return;
     const text = result.messages.map(item => item.text).join('\n').trim();
     if (!text || text === state.autoCaptureSignature) return;
@@ -356,9 +381,10 @@
     const draft = currentDraft();
     draft.captureText = text;
     state.captureDirection = 'receive';
-    await importVisible();
-    if (state.aiEnabled && state.messages.length) await analyzeConversation();
-    if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: state.aiEnabled ? 'completed' : 'pending', checkpoint: String(result.messages.length) }) }).catch(() => {});
+    await importVisible(context);
+    if (!contextCurrent(context)) return;
+    if (state.aiEnabled && state.messages.length) await analyzeConversation(context);
+    if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: state.aiEnabled ? 'completed' : 'pending', checkpoint: String(result.messages.length) }) }, context).catch(() => {});
   }
   function renderCollectionCard() {
     const run = state.collectionRun;
@@ -687,15 +713,17 @@
     state.translationStatus = `翻译服务正常 · ${result.providerName || 'AI'}`;
     return { translated, destination };
   }
-  async function persistMessage(message) {
-    const saved = await api('/api/ws/messages', { method: 'POST', body: JSON.stringify(message) });
+  async function persistMessage(message, context = captureContext(message?.conversationId)) {
+    assertContext(context);
+    const saved = await api('/api/ws/messages', { method: 'POST', body: JSON.stringify(message) }, context);
+    assertContext(context);
     const index = state.messages.findIndex(item => String(item.id) === String(saved.id) || (message.externalId && item.externalId === message.externalId));
     if (index >= 0) state.messages[index] = saved;
     else state.messages.push(saved);
     state.messages = core.dedupeMessages(state.messages);
     return saved;
   }
-  async function markTranslationFailure(message, error) {
+  async function markTranslationFailure(message, error, context = captureContext(message?.conversationId)) {
     try {
       return await persistMessage({
         ...message,
@@ -704,10 +732,11 @@
         externalId: message.externalId,
         translationStatus: 'failed',
         translationError: String(error?.message || error || '翻译失败').slice(0, 500),
-      });
+      }, context);
     } catch { return message; }
   }
   async function translateMessage(id) {
+    const context = captureContext();
     const message = state.messages.find(item => String(item.id) === String(id));
     if (!message || state.translationBusy.has(String(id))) return;
     state.translationBusy.add(String(id));
@@ -723,22 +752,23 @@
         targetLanguage: result.destination,
         translationStatus: 'translated',
         translationError: '',
-      });
+      }, context);
       toast('单条消息翻译已保存');
     } catch (error) {
-      await markTranslationFailure(message, error);
+      if (contextCurrent(context)) await markTranslationFailure(message, error, context);
       toast(error.message + ' 原文仍保留。', 'x');
     } finally {
       state.translationBusy.delete(String(id));
       render();
     }
   }
-  async function translateMessagesInBatches(messages) {
+  async function translateMessagesInBatches(messages, context = captureContext()) {
+    assertContext(context);
     const pending = messages.filter(message => !message.translatedText && core.shouldTranslate(state.settings, message.direction));
     if (!pending.length) return { translated: 0, failed: 0 };
     try { await translationServiceStatus(); }
     catch (error) {
-      for (const message of pending) await markTranslationFailure(message, error);
+      for (const message of pending) if (contextCurrent(context)) await markTranslationFailure(message, error, context);
       return { translated: 0, failed: pending.length };
     }
     let translated = 0;
@@ -751,7 +781,7 @@
         if (!groups.has(key)) groups.set(key, { destination, direction: message.direction, messages: [] });
         groups.get(key).messages.push(message);
       } catch (error) {
-        await markTranslationFailure(message, error);
+        if (contextCurrent(context)) await markTranslationFailure(message, error, context);
         failed++;
       }
     }
@@ -769,6 +799,7 @@
         }
         const payload = chunk.map(item => ({ id: item.id, text: String(item.originalText || '').slice(0, 2500) }));
         try {
+          assertContext(context);
           const result = await window.zhikeAI.request({
             assistantMode: 'general',
             analysisDepth: 'standard',
@@ -777,25 +808,27 @@
           });
           const parsed = new Map(core.parseTranslationBatch(result?.text || '').map(item => [item.id, item.translation]));
           for (const message of chunk) {
+            assertContext(context);
             const value = parsed.get(String(message.id));
             if (!value) {
-              await markTranslationFailure(message, new Error('批量翻译结果缺少该消息。'));
+              await markTranslationFailure(message, new Error('批量翻译结果缺少该消息。'), context);
               failed++;
               continue;
             }
-            await persistMessage({ ...message, translatedText: value, targetLanguage: group.destination, translationStatus: 'translated', translationError: '' });
+            await persistMessage({ ...message, translatedText: value, targetLanguage: group.destination, translationStatus: 'translated', translationError: '' }, context);
             translated++;
           }
         } catch (error) {
-          for (const message of chunk) await markTranslationFailure(message, error);
+          for (const message of chunk) if (contextCurrent(context)) await markTranslationFailure(message, error, context);
           failed += chunk.length;
         }
       }
     }
     return { translated, failed };
   }
-  async function importVisible() {
+  async function importVisible(context = captureContext()) {
     if (state.busy.import) return;
+    assertContext(context);
     const current = activeConversation();
     const draft = currentDraft();
     const rows = core.parseVisibleChat(draft.captureText, state.captureDirection);
@@ -807,7 +840,7 @@
       state.matchCandidates = match.candidates || [];
       if (match.kind === 'phone' && match.customer) {
         const conversation = state.conversations.find(item => String(item.id) === String(current.id));
-        if (conversation) { conversation.customerId = String(match.customer.id); await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: conversation.externalId, customerId: String(match.customer.id) }) }); }
+        if (conversation) { assertContext(context); conversation.customerId = String(match.customer.id); await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: conversation.externalId, customerId: String(match.customer.id) }) }, context); assertContext(context); }
         draft.customerName = draft.customerName || match.customer.name || '';
         draft.customerCountry = draft.customerCountry || match.customer.country || '';
         toast(`已按号码匹配客户：${match.customer.name || match.customer.id}`);
@@ -833,7 +866,8 @@
         method: 'POST',
         timeout: 30000,
         body: JSON.stringify({ conversationId: current.id, fingerprint, messages }),
-      });
+      }, context);
+      assertContext(context);
       const stored = Array.isArray(result.messages) ? result.messages : [];
       state.messages = core.dedupeMessages([...state.messages, ...stored]);
       draft.captureText = '';
@@ -844,16 +878,15 @@
         conversation.updatedAt = conversation.lastMessageAt;
       }
       render();
-      const translation = await translateMessagesInBatches(stored);
+      const translation = contextCurrent(context) ? await translateMessagesInBatches(stored, context) : { translated: 0, failed: 0 };
       const inserted = Number(result.inserted ?? stored.filter(item => !item.existed).length);
       const existed = Number(result.existed || 0);
       toast(`原文已保存 ${inserted} 条${existed ? `，跳过重复 ${existed} 条` : ''}${translation.translated ? `，翻译 ${translation.translated} 条` : ''}${translation.failed ? `，${translation.failed} 条翻译待重试` : ''}`, translation.failed ? 'x' : 'check');
     } catch (error) {
-      state.error = '导入失败，输入内容已保留：' + error.message;
-      toast(state.error, 'x');
+      if (contextCurrent(context)) { state.error = '导入失败，输入内容已保留：' + error.message; toast(state.error, 'x'); }
     } finally {
       state.busy.import = false;
-      render();
+      if (contextCurrent(context)) render();
     }
   }
   async function captureSelection() {
@@ -875,8 +908,10 @@
     }
   }
 
-  async function analyzeConversation() {
+  async function analyzeConversation(context = captureContext()) {
     const current = activeConversation();
+    if (context.conversationId && context.conversationId !== String(current?.id || '')) return;
+    assertContext(context);
     if (state.aiBusy) return;
     if (!current || !state.messages.length) { toast('请先建立会话并导入可见聊天。', 'x'); return; }
     if (!state.aiEnabled) { toast('当前会话的 AI 分析已关闭。', 'x'); return; }
@@ -894,6 +929,7 @@
         input: '只分析下面当前用户选择的 WS 会话文本。只返回一个 JSON 对象，不要 Markdown，不要编造未出现的资料。字段必须包含 summary、intent、intentScore、emotion、urgency、language、needs（数组）、productInterest（数组）、budget、contact（对象，含 name/phone/country/account）、tags（数组）、customerStage、nextStep、followupTime、replySuggestion、confidence（0 到 1）。\n' + transcript.text,
         context: { feature: 'ws-analysis', conversationId: current.id, title: current.title || '', includedMessages: transcript.included, truncated: transcript.truncated },
       });
+      assertContext(context);
       state.analysis = core.parseAiResult(result?.text || '');
       state.analysis.providerName = result.providerName || '';
       state.analysis.model = result.model || '';
@@ -901,7 +937,8 @@
       const saved = await api('/api/ws/analyses', {
         method: 'POST',
         body: JSON.stringify({ conversationId: current.id, result: state.analysis, confidence: state.analysis.confidence, providerName: state.analysis.providerName, model: state.analysis.model }),
-      });
+      }, context);
+      assertContext(context);
       state.analysisMeta = saved;
       seedDraftFromAnalysis();
       const conversation = state.conversations.find(item => String(item.id) === String(current.id));
@@ -912,14 +949,13 @@
       }
       toast(state.analysis.lowConfidence ? '分析完成，但需要人工确认' : `分析完成：已使用最近 ${transcript.included} 条消息`, state.analysis.lowConfidence ? 'x' : 'check');
     } catch (error) {
-      state.analysis = { summary: '', lowConfidence: true, confidence: 0, error: error.message, warning: 'AI 判断置信度较低，请人工确认。' };
-      try {
-        state.analysisMeta = await api('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: current.id, result: state.analysis, confidence: 0, errorMessage: error.message }) });
-      } catch {}
-      toast(error.message, 'x');
+      if (contextCurrent(context)) {
+        state.analysis = { summary: '', lowConfidence: true, confidence: 0, error: error.message, warning: 'AI 判断置信度较低，请人工确认。' };
+        try { state.analysisMeta = await api('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: current.id, result: state.analysis, confidence: 0, errorMessage: error.message }) }, context); } catch {}
+        toast(error.message, 'x');
+      }
     } finally {
-      state.aiBusy = false;
-      render();
+      if (contextCurrent(context)) { state.aiBusy = false; render(); }
     }
   }
 
@@ -975,6 +1011,7 @@
     const host = getHost();
     if (state.busy.customer) return;
     if (!current || !host) { toast('请先建立或选择本机会话。', 'x'); return; }
+    const context = captureContext(current.id);
     const profile = customerProfileFromDraft(current);
     let customer = explicitId ? host.state.customers.find(item => String(item.id) === String(explicitId) && !item.deleted) : null;
     let match = customer ? { kind: 'confirmed', customer, candidates: [customer] } : core.matchCustomer(host.state.customers, profile);
@@ -990,7 +1027,8 @@
     state.matchCandidates = [];
     render();
     const snapshotReady = await host.snapshotBeforeWrite?.('WS 客户保存前自动快照');
-    if (snapshotReady === false) { state.busy.customer = false; render(); return; }
+    if (snapshotReady === false) { if (contextCurrent(context)) { state.busy.customer = false; render(); } return; }
+    assertContext(context);
     const created = !customer;
     const beforeCustomers = host.state.customers.slice();
     const before = customer ? JSON.parse(JSON.stringify(customer)) : null;
@@ -1025,22 +1063,23 @@
     host.persist();
     try {
       await host.flushStateWrites();
+      assertContext(context);
       const linked = await api('/api/ws/conversations', {
         method: 'POST',
         body: JSON.stringify({ id: current.id, externalId: current.externalId, customerId: customer.id, language: profile.language }),
-      });
+      }, context);
+      assertContext(context);
       current.customerId = customer.id;
       if (linked) Object.assign(current, linked);
-      toast(created ? 'WS 客户已保存到客户中心' : '客户档案已更新并关联当前会话');
+      if (contextCurrent(context)) toast(created ? 'WS 客户已保存到客户中心' : '客户档案已更新并关联当前会话');
     } catch (error) {
       if (created) host.state.customers = beforeCustomers;
       else Object.assign(customer, before);
       host.persist();
       await host.flushStateWrites().catch(() => {});
-      toast('客户保存失败，原资料已恢复：' + error.message, 'x');
+      if (contextCurrent(context)) toast('客户保存失败，原资料已恢复：' + error.message, 'x');
     } finally {
-      state.busy.customer = false;
-      render();
+      if (contextCurrent(context)) { state.busy.customer = false; render(); }
     }
   }
   async function saveFollowup() {
@@ -1049,6 +1088,7 @@
     const draft = currentDraft();
     if (state.busy.followup) return;
     if (!current || !host) { toast('请先建立会话。', 'x'); return; }
+    const context = captureContext(current.id);
     const customer = host.state.customers.find(item => String(item.id) === String(current.customerId) && !item.deleted);
     if (!customer) { toast('请先确认并保存客户资料，再登记跟进。', 'x'); return; }
     const note = text(draft.followupNote);
@@ -1058,7 +1098,8 @@
     state.busy.followup = true;
     render();
     const snapshotReady = await host.snapshotBeforeWrite?.('WS 跟进保存前自动快照');
-    if (snapshotReady === false) { state.busy.followup = false; render(); return; }
+    if (snapshotReady === false) { if (contextCurrent(context)) { state.busy.followup = false; render(); } return; }
+    assertContext(context);
     const operationId = 'ws-follow-' + Date.now().toString(36) + '-' + stableHash(current.id + note + draft.nextFollow);
     const record = {
       id: 'FWS-' + Date.now().toString(36) + '-' + stableHash(operationId),
@@ -1081,21 +1122,21 @@
     host.persist();
     try {
       await host.flushStateWrites();
+      assertContext(context);
       host.activity('WS 工作台登记跟进：' + customer.name);
       await host.flushStateWrites();
       draft.followupNote = '';
       draft.nextFollow = '';
-      toast('跟进记录已保存到任务中心');
+      if (contextCurrent(context)) toast('跟进记录已保存到任务中心');
     } catch (error) {
       host.state.followups = before.followups;
       customer.lastFollow = before.lastFollow;
       customer.due = before.due;
       host.persist();
       await host.flushStateWrites().catch(() => {});
-      toast('跟进保存失败，原资料已恢复：' + error.message, 'x');
+      if (contextCurrent(context)) toast('跟进保存失败，原资料已恢复：' + error.message, 'x');
     } finally {
-      state.busy.followup = false;
-      render();
+      if (contextCurrent(context)) { state.busy.followup = false; render(); }
     }
   }
 
@@ -1303,7 +1344,7 @@
     render();
     loadAccounts().then(() => {
       render();
-      return loadConversations();
+      return wsBridge('open').catch(error => { state.error = error.message || 'WS 账号页面打开失败。'; }).then(() => loadConversations());
     }).then(() => wsBridge('status')).then(result => { updateAccountStatus(result); setStatus(result.status, result.detail || ''); render(); }).catch(error => setStatus('连接失败', error.message));
   }
   function deactivate() {
@@ -1366,15 +1407,17 @@
     // disabled in ws-mode, so it must not chase nested scroll containers.
     window.zhikeDesktop?.onWsStatus?.(payload => {
       if (!payload) return;
-      if (payload.restoreAccountId && state.accounts.some(item => String(item.id) === String(payload.restoreAccountId))) {
+      if (payload.restoreAccountId) {
         ++state.accountLoadSequence;
+        state.pendingRestoreAccountId = String(payload.restoreAccountId);
         state.activeAccountId = String(payload.restoreAccountId);
         writeStoredAccountId(state.activeAccountId);
         state.accountBusy = false;
+        state.busy.import = false; state.busy.customer = false; state.busy.followup = false; state.busy.reply = false; state.busy.capture = false; state.aiBusy = false; state.translationBusy.clear();
         state.currentConversationId = '';
         state.conversations = [];
         updateAccountStatus({ ...payload, accountId: state.activeAccountId, status: payload.status || '连接失败' });
-        void loadConversations();
+        if (state.accounts.some(item => String(item.id) === state.activeAccountId)) void loadConversations();
         render();
         return;
       }

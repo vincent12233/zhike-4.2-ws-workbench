@@ -16,6 +16,16 @@ assert.match(ui, /wsTopAccount/, 'compact toolbar keeps account switching access
 assert.match(ui, /wsAccounts/, 'renderer uses account IPC');
 assert.match(ui, /accountId.*state\.activeAccountId|state\.activeAccountId.*accountId/, 'WS bridge carries active account id');
 assert.match(ui, /accountId.*url\.searchParams|url\.searchParams.*accountId/, 'API calls are scoped to active account');
+assert.match(ui, /function captureContext[\s\S]*sequence/, 'async work captures immutable account and sequence context');
+assert.match(ui, /function assertContext[\s\S]*contextCurrent/, 'stale async work is fenced before writes');
+assert.match(ui, /api\([^\n]*context\)|api\([^\n]*, context\)/, 'mutations can pass an explicit account context');
+assert.match(ui, /refreshCollectionSummary[\s\S]*captureContext[\s\S]*assertContext/, 'collection refresh is account fenced');
+assert.match(ui, /importVisible\(context[\s\S]*messages\/batch[\s\S]*context/, 'chat import writes use immutable account context');
+assert.match(ui, /analyzeConversation\(context[\s\S]*api\('\/api\/ws\/analyses'[\s\S]*context/, 'AI analysis writes use immutable account context');
+assert.match(ui, /saveCustomerTo[\s\S]*captureContext[\s\S]*api\('\/api\/ws\/conversations'[\s\S]*context/, 'customer sync is account fenced');
+assert.match(ui, /saveFollowup[\s\S]*captureContext[\s\S]*assertContext/, 'follow-up writes are account fenced');
+assert.match(ui, /pendingRestoreAccountId/, 'restore signals are queued before account list loading');
+assert.match(ui, /loadAccounts\(\)[\s\S]*wsBridge\('open'\)[\s\S]*loadConversations/, 'activation opens persisted account before loading data');
 assert.match(ui, /leftCollapsed|rightCollapsed/, 'left and right panels remain independently collapsible');
 assert.match(css, /ws-account-list|ws-account-row/, 'account cards have dedicated layout styles');
 assert.match(css, /ws-workbench-page\{[^}]*overflow:hidden/, 'outer workbench does not chase page scroll');
