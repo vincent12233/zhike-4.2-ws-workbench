@@ -11,6 +11,9 @@
     accounts: [],
     activeAccountId: 'default',
     accountBusy: false,
+    accountFormOpen: false,
+    accountFormName: '',
+    accountFormError: '',
     accountLoadSequence: 0,
     pendingRestoreAccountId: '',
     currentConversationId: '',
@@ -107,18 +110,52 @@
     state.accounts = state.accounts.map(item => String(item.id) === id ? { ...item, status: payload.status || item.status, statusDetail: payload.detail || item.statusDetail } : item);
     if (id === String(state.activeAccountId) && payload.status) setStatus(payload.status, payload.detail || '');
   }
+  function openAccountForm() {
+    if (state.accountBusy) return;
+    state.accountFormOpen = true;
+    state.accountFormName = '';
+    state.accountFormError = '';
+    state.error = '';
+    render();
+    requestAnimationFrame(() => $('#wsAccountDisplayName')?.focus());
+  }
+  function cancelAccountForm() {
+    if (state.accountBusy) return;
+    state.accountFormOpen = false;
+    state.accountFormName = '';
+    state.accountFormError = '';
+    render();
+  }
   async function createAccount() {
     if (state.accountBusy) return;
-    const displayName = text(prompt('请输入本机显示名称（例如：个人号、工作号）：'));
-    if (!displayName) return;
+    const displayName = text(state.accountFormName || $('#wsAccountDisplayName')?.value);
+    if (!displayName) {
+      state.accountFormError = '请输入本机显示名称。';
+      render();
+      requestAnimationFrame(() => $('#wsAccountDisplayName')?.focus());
+      return;
+    }
+    if (displayName.length > 80) {
+      state.accountFormError = '显示名称最多 80 个字符。';
+      render();
+      requestAnimationFrame(() => $('#wsAccountDisplayName')?.focus());
+      return;
+    }
     state.accountBusy = true; render();
     try {
       const id = `ws-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
       const result = await window.zhikeDesktop.wsAccounts({ action: 'create', account: { id, displayName, provider: 'WhatsApp Web', origin: 'https://web.whatsapp.com', status: '未连接' } });
-      if (result?.account) state.accounts = [...state.accounts, result.account];
-      await switchAccount(result?.account?.id || id);
+      if (!result?.account?.id) throw new Error('WS 账号创建没有返回有效账号。');
+      state.accounts = [...state.accounts, result.account];
+      state.accountFormOpen = false;
+      state.accountFormName = '';
+      state.accountFormError = '';
+      await switchAccount(result.account.id);
       toast('已添加 WS 账号，请在中栏完成扫码或登录。');
-    } catch (error) { state.error = error.message || 'WS 账号创建失败。'; toast(state.error, 'x'); }
+    } catch (error) {
+      state.accountFormError = error.message || 'WS 账号创建失败。';
+      toast(state.accountFormError, 'x');
+    }
     finally { state.accountBusy = false; render(); }
   }
   async function switchAccount(accountId) {
@@ -523,6 +560,10 @@
       </button>`;
     }).join('');
   }
+  function renderAccountForm() {
+    if (!state.accountFormOpen) return '';
+    return `<div class="ws-account-form" role="dialog" aria-label="添加 WS 账号"><label for="wsAccountDisplayName">本机显示名称</label><input id="wsAccountDisplayName" maxlength="80" autocomplete="off" placeholder="例如：个人号、工作号" value="${esc(state.accountFormName)}"><div class="ws-account-form-actions"><button class="btn small primary" data-ws-action="submit-account" ${state.accountBusy ? 'disabled' : ''}>${state.accountBusy ? '创建中…' : '创建并登录'}</button><button class="btn small" data-ws-action="cancel-account" ${state.accountBusy ? 'disabled' : ''}>取消</button></div>${state.accountFormError ? `<p class="ws-account-form-error">${esc(state.accountFormError)}</p>` : ''}</div>`;
+  }
   function renderMessageRows() {
     if (!state.messages.length) return '<div class="ws-empty ws-message-empty">导入当前可见聊天后，原文和译文会显示在这里。</div>';
     return state.messages.map(message => {
@@ -597,7 +638,7 @@
         <div class="ws-layout ${state.leftCollapsed ? 'left-collapsed' : ''} ${state.rightCollapsed ? 'right-collapsed' : ''} mobile-${state.mobilePanel}">
           <aside class="ws-sessions-panel">
             <div class="ws-panel-heading"><div><strong>WS 账号</strong><span>${state.accounts.length} 个本机隔离会话</span></div><button class="btn small" data-ws-action="create-account" ${state.accountBusy ? 'disabled' : ''}>＋ 添加账号</button></div>
-            <div class="ws-account-list">${renderAccountList()}</div>
+            ${renderAccountForm()}<div class="ws-account-list">${renderAccountList()}</div>
             <div class="ws-panel-heading ws-conversation-heading"><div><strong>会话</strong><span>${state.conversations.length} 个本地记录 · ${esc(accountDisplayName(activeAccount()))}</span></div><button class="icon-button" data-ws-action="new-conversation" title="建立会话">＋</button></div>
             <input id="wsConversationSearch" class="ws-search-input" placeholder="搜索客户、标识或消息" value="${esc(state.conversationQuery)}">
             <div class="ws-create-session">
@@ -1269,7 +1310,9 @@
   }
   async function handleAction(action, element) {
     if (['open', 'login', 'reload', 'reconnect', 'close', 'clear-session', 'probe'].includes(action)) return connectionAction(action);
-    if (action === 'create-account') return createAccount();
+    if (action === 'create-account') return openAccountForm();
+    if (action === 'submit-account') return createAccount();
+    if (action === 'cancel-account') return cancelAccountForm();
     if (action === 'switch-account') return switchAccount(element?.dataset?.accountId);
     if (action === 'capture-selection') return captureSelection();
     if (action === 'toggle-left') { state.leftCollapsed = !state.leftCollapsed; render(); return; }
@@ -1332,6 +1375,7 @@
     }
     if (target.matches('#wsConversationExternalId')) { state.createExternalId = target.value; return; }
     if (target.matches('#wsConversationTitle')) { state.createTitle = target.value; return; }
+    if (target.matches('#wsAccountDisplayName')) { state.accountFormName = target.value; state.accountFormError = ''; return; }
     const draft = currentDraft();
     const fields = {
       wsVisibleChat: 'captureText',
@@ -1436,6 +1480,10 @@
       applyInput(event.target);
     }, true);
     view?.addEventListener('keydown', event => {
+      if (event.target.id === 'wsAccountDisplayName') {
+        if (event.key === 'Escape') { event.preventDefault(); cancelAccountForm(); return; }
+        if (event.key === 'Enter') { event.preventDefault(); void createAccount(); return; }
+      }
       if (event.target.id === 'wsVisibleChat' && event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
         event.preventDefault();
         importVisible();

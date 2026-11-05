@@ -16,6 +16,7 @@ body.ws-mode{min-width:0;height:100vh;overflow:hidden}
 .ws-panel-heading strong,.ws-card-heading strong,.ws-login-toolbar strong,.ws-capture-heading strong{display:block;font-size:14px}
 .ws-panel-heading span,.ws-card-heading span,.ws-login-toolbar span,.ws-capture-heading span{display:block;color:var(--muted,#77839a);font-size:11px;margin-top:3px}
 .ws-create-session{display:grid;gap:6px}
+.ws-account-form{display:grid;gap:6px;padding:8px;border:1px solid #b8ddda;border-radius:9px;background:#f5fbfb}.ws-account-form label{font-size:10px;color:#516074}.ws-account-form input{width:100%;box-sizing:border-box;border:1px solid var(--line,#dfe5ee);border-radius:7px;padding:7px 8px;background:var(--input,#fff);color:var(--text,#172033);font:inherit;font-size:11px}.ws-account-form-actions{display:flex;justify-content:flex-end;gap:5px}.ws-account-form-error{margin:0;color:#a3332e;font-size:10px;line-height:1.4}
 .ws-create-session input,.ws-capture-panel textarea,.ws-customer-fields input,.ws-customer-fields textarea,.ws-card textarea,.ws-follow-date input{width:100%;border:1px solid var(--line,#dfe5ee);border-radius:8px;padding:8px 9px;background:var(--input,#fff);color:var(--text,#172033);font:inherit;font-size:12px;box-sizing:border-box}
 .ws-session-list{overflow:auto;display:flex;flex-direction:column;gap:5px;padding-right:2px}
 .ws-session-row{display:grid;grid-template-columns:30px 1fr auto;gap:7px;align-items:center;text-align:left;border:1px solid transparent;border-radius:9px;background:transparent;padding:8px;cursor:pointer;color:inherit}
