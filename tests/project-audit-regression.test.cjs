@@ -39,6 +39,9 @@ assert.match(app, /intakeRenderTimer/, 'quick intake coalesces repeated input re
 assert.match(app, /intakeRenderTimer[\s\S]{0,700}setTimeout/, 'quick intake parsing is debounced instead of rendering on every keystroke');
 assert.match(app, /smartIntakeTable/, 'quick intake maps tabular paste by field content rather than column order');
 assert.match(app, /line\.includes\('\\t'\)\?line\.split\('\\t'\)/, 'quick intake preserves tabular columns during live text normalization');
+assert.match(app, /if\(!phone&&parts\.length===1\)parts\.push/, 'tabular rows without a phone stay in the review queue');
+assert.match(app, /if\(!phone&&!row\.some\(value=>String\(value\?\?''\)\.trim\(\)\)\)continue/, 'file import only skips fully empty rows');
+assert.doesNotMatch(app, /function smartIntakeTable[\s\S]{0,2200}if\(!phone\)continue/, 'smart table import does not silently drop invalid rows');
 assert.match(app, /organize-intake/, 'quick intake exposes one-click smart organization');
 assert.match(app, /apply-intake-smart-defaults/, 'quick intake exposes automatic batch defaults');
 assert.match(app, /detectHeaderRow/, 'imports detect title rows before the table header');

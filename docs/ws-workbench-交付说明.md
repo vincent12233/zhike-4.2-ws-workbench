@@ -3,8 +3,8 @@
 ## 安装包
 
 - 文件：[知客-4.2.6-WS工作台智能录入版.exe](../releases/知客-4.2.6-WS工作台智能录入版.exe)
-- SHA-256：`DF62550E424302D84BB22B6B79C23A46A10F2302F660FC95F432334C6B5D11AA`
-- 文件大小：`173,926,111` 字节
+- SHA-256：`D86B9D7C2D0AD0D7F91667D7B40D34443F7090CA49FD3DDA8FB42C3604BCBC9C`
+- 文件大小：`173,926,464` 字节
 - Git LFS 路径：`releases/知客-4.2.6-WS工作台智能录入版.exe`
 - 用户输出副本：`C:\Users\酷酷\Documents\Codex\2026-11-04\c-users-documents-codex-2026-11\outputs\知客-4.2.6-WS工作台智能录入版.exe`
 
