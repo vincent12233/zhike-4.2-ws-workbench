@@ -200,6 +200,19 @@
     }
     catch (error) { state.error = error.message; render(); }
   }
+  async function captureVisibleMessages() {
+    const current = activeConversation(); if (!current) { toast('请先选择一个本机会话', 'x'); return; }
+    try {
+      const result = await wsBridge('capture-visible-messages'); if (!result?.supported || !result.messages?.length) throw new Error(result?.error || '当前页面没有可识别的可见消息');
+      const draft = currentDraft(); draft.captureText = result.messages.map(item => item.text).join('\n'); state.captureDirection = 'receive'; render();
+      await importVisible();
+      if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: 'pending', checkpoint: String(result.messages.length) }) });
+      toast(`已采集当前会话 ${result.messages.length} 条可见消息`);
+    } catch (error) {
+      if (state.collectionRun?.id) { try { await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'failed', attempts: 1, lastError: error.message }) }); } catch {} }
+      state.error = error.message; render();
+    }
+  }
   function renderCollectionCard() {
     const run = state.collectionRun;
     if (!run) return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>采集与跟进</strong><span>尚未创建采集任务</span></div></div><p class="ws-muted">采集会话后再由 AI 分析，并把需要跟进的客户写入跟进记录。</p><button class="btn small primary ws-full-button" data-ws-action="create-collection-run">创建采集任务</button></section>`;
@@ -390,6 +403,7 @@
               <div class="ws-capture-actions">
                 <span class="ws-muted">${current ? `当前会话：${esc(current.title || current.externalId)}` : '请先建立或选择本机会话'}</span>
                 <button class="btn small" data-ws-action="capture-selection" ${state.busy.capture ? 'disabled' : ''}>${state.busy.capture ? '读取中…' : '读取选中文字'}</button>
+                <button class="btn small" data-ws-action="capture-visible-messages" ${state.busy.import ? 'disabled' : ''}>采集当前消息</button>
                 <button class="btn small" data-ws-action="clear-capture">清空</button>
                 <button class="btn small primary" data-ws-action="import-visible" ${!current || !captureRows.length || state.busy.import ? 'disabled' : ''}>${state.busy.import ? '保存处理中…' : '保存并处理'}</button>
               </div>
@@ -1013,6 +1027,7 @@
     if (action === 'resume-collection') return updateCollectionRun('running');
     if (action === 'stop-collection') return updateCollectionRun('stopped');
     if (action === 'discover-conversations') return discoverConversations();
+    if (action === 'capture-visible-messages') return captureVisibleMessages();
     if (action === 'select-conversation') { state.mobilePanel = 'center'; return loadConversationData(element.dataset.id); }
     if (action === 'clear-capture') { currentDraft().captureText = ''; render(); return; }
     if (action === 'import-visible') return importVisible();
