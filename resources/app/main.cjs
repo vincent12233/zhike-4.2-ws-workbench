@@ -20,6 +20,9 @@ let wsViewState = '未连接';
 let wsViewHidden = false;
 const wsAllowedOrigins = new Set(['https://web.whatsapp.com', 'https://www.whatsapp.com']);
 const wsEntryUrl = 'https://web.whatsapp.com/';
+// WhatsApp Web rejects Electron's default UA because it contains an Electron token.
+// Keep the browser engine version aligned with Electron 45's Chromium 134 build.
+const wsUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36';
 const wsPartition = 'ws-workbench-isolated';
 let wsSessionHardened = false;
 let quitting = false;
@@ -267,6 +270,7 @@ function ensureWsView() {
     },
   });
   const view = wsView;
+  view.webContents.setUserAgent(wsUserAgent);
   mainWindow.setBrowserView(view);
   view.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   view.webContents.on('will-navigate', (event, target) => {
