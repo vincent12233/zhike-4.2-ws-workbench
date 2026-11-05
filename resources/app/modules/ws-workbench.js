@@ -209,7 +209,10 @@
     let queued = 0;
     for (const item of items) {
       const externalId = text(item.externalId || `visible-${item.index}`); const title = text(item.title || externalId);
-      const conversation = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId, title, lastMessageText: text(item.preview).slice(0, 4000), unreadCount: Number(item.unreadCount || 0), data: { discovery: 'visible-page', previewOnly: true, historyLoaded: false } }) });
+      const preview = text(item.preview).slice(0, 4000);
+      const match = core.matchCustomer(getHost()?.state?.customers || [], { phone: core.extractPhone(`${externalId} ${title} ${preview}`) });
+      const matchedCustomerId = match?.kind === 'phone' || match?.kind === 'ws-id' || match?.kind === 'account' ? String(match.customer?.id || '') : '';
+      const conversation = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId, title, customerId: matchedCustomerId, lastMessageText: preview, unreadCount: Number(item.unreadCount || 0), data: { discovery: 'visible-page', previewOnly: true, historyLoaded: false, customerMatch: matchedCustomerId ? 'automatic' : 'pending' } }) });
       await api('/api/ws/collection-items', { method: 'POST', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: conversation.id, status: 'queued' }) });
       queued += 1;
     }
