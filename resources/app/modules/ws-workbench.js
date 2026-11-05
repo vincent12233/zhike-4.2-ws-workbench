@@ -412,7 +412,7 @@
             <div class="ws-login-toolbar">
               <div><strong>WS 登录入口</strong><span id="wsStatusDetail">${esc(state.wsDetail || '请在中栏自行完成扫码或登录。')}</span></div>
               <div class="ws-toolbar-actions">
-                <button class="btn small primary" data-ws-action="open" ${state.busy.connection ? 'disabled' : ''}>打开 WS</button>
+                <button class="btn small primary" data-ws-action="open" ${state.busy.connection ? 'disabled' : ''}>${state.wsStatus === '已连接' ? '已打开 WS' : '打开 WS'}</button>
                 <button class="btn small" data-ws-action="probe">检测状态</button>
                 <button class="btn small" data-ws-action="discover-conversations">采集列表预览</button>
                 <button class="btn small" data-ws-action="reconnect">重新连接</button>
