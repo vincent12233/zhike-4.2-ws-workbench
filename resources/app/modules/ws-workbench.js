@@ -1225,10 +1225,20 @@
       }
     }, true);
     view?.addEventListener('scroll', () => { if (state.active) requestAnimationFrame(resizeWsView); }, true);
-    window.zhikeDesktop?.onWsStatus?.(payload => { if (payload) setStatus(payload.status || '未连接', payload.detail || ''); });
+    window.zhikeDesktop?.onWsStatus?.(payload => {
+      if (!payload) return;
+      setStatus(payload.status || '未连接', payload.detail || '');
+      if (state.active && payload.status === '已连接') void refreshCollectionSummary();
+    });
     window.addEventListener('resize', () => { if (state.active) requestAnimationFrame(resizeWsView); });
     window.addEventListener('offline', () => setStatus('连接失败', '网络已断开；知客本地客户功能仍可使用。'));
-    window.addEventListener('online', () => { if (state.active) wsBridge('probe').then(result => setStatus(result.status, result.detail || '')).catch(() => {}); });
+    window.addEventListener('online', () => {
+      if (!state.active) return;
+      wsBridge('probe').then(result => {
+        setStatus(result.status, result.detail || '');
+        if (result.status === '已连接') void refreshCollectionSummary();
+      }).catch(() => {});
+    });
     observer = new MutationObserver(() => {
       if (!rendering && state.active && host.state.view === 'ws-workbench' && !$('#viewContainer .ws-workbench-page')) render();
     });
