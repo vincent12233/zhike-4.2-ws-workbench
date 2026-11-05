@@ -28,7 +28,7 @@ $NodeVersion = [string]$Package.zhikeRuntime.node
 $ZhikeName = ([string][char]0x77E5) + [char]0x5BA2
 $WorkbenchName = ([string][char]0x5DE5) + [char]0x4F5C + [char]0x53F0
 $AppExeName = $ZhikeName + [char]0x79BB + [char]0x7EBF + $WorkbenchName + '.exe'
-$InstallerName = $ZhikeName + "-$AppVersion-WS" + $WorkbenchName + [char]0x5B8C + [char]0x5584 + [char]0x7248 + '.exe'
+$InstallerName = $ZhikeName + "-$AppVersion-WS" + $WorkbenchName + [char]0x667A + [char]0x80FD + [char]0x5F55 + [char]0x5165 + [char]0x7248 + '.exe'
 
 function Assert-ChildPath([string]$Path, [string]$Parent, [string]$Label) {
   $fullPath = [IO.Path]::GetFullPath($Path).TrimEnd('\')

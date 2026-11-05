@@ -1,12 +1,12 @@
-# 知客 4.2.5 分类与工作流稳定版交付说明
+# 知客 4.2.6 分类与工作流稳定版交付说明
 
 ## 安装包
 
-- 文件：[知客-4.2.5-WS工作台完善版.exe](../releases/知客-4.2.5-WS工作台完善版.exe)
-- SHA-256：`89D6E5D7A6E7CFD4DBB1A5FFD7EE3CFBA86F9F7C64A4599A546193F02B091870`
-- 文件大小：`173,919,581` 字节
-- Git LFS 路径：`releases/知客-4.2.5-WS工作台完善版.exe`
-- 用户输出副本：`C:\Users\酷酷\Documents\Codex\2026-11-04\c-users-documents-codex-2026-11\outputs\知客-4.2.5-WS工作台完善版.exe`
+- 文件：[知客-4.2.6-WS工作台智能录入版.exe](../releases/知客-4.2.6-WS工作台智能录入版.exe)
+- SHA-256：`DF62550E424302D84BB22B6B79C23A46A10F2302F660FC95F432334C6B5D11AA`
+- 文件大小：`173,926,111` 字节
+- Git LFS 路径：`releases/知客-4.2.6-WS工作台智能录入版.exe`
+- 用户输出副本：`C:\Users\酷酷\Documents\Codex\2026-11-04\c-users-documents-codex-2026-11\outputs\知客-4.2.6-WS工作台智能录入版.exe`
 
 安装器使用 Electron 45.2.1、Node.js 24.22.1 和 Inno Setup 6.7.3 构建。构建脚本先生成隔离 staging，并拒绝打包 `resources/app/data`、BrowserView 分区、日志、凭据和密钥。
 
@@ -37,7 +37,7 @@
 
 - 完整回归：`node scripts/run-tests.cjs all`，`36/36` 通过。
 - 干净 staging：`scripts/build-installer.ps1 -StageOnly`，`142` 个源文件进入 staging，未包含真实数据目录。
-- 安装器 QA：`ZHIKE_EXPECTED_VERSION=4.2.5 node scripts/run-tests.cjs installer`，`2/2` 通过；隔离安装、覆盖安装、WS 资源、卸载和安装根目录用户文件保留均通过。
+- 安装器 QA：`ZHIKE_EXPECTED_VERSION=4.2.6 node scripts/run-tests.cjs installer`，`2/2` 通过；隔离安装、覆盖安装、WS 资源、卸载和安装根目录用户文件保留均通过。
 - 4.1.3 旧安装包当前仓库不存在，升级项按测试脚本明确 `SKIP`，没有把缺失旧构件当作通过。
 - 4.2.4 已验证的 10,000/50,000 合成规模索引性能优化随本次版本保留；本轮新增筛选和归一化没有改变原有数据写入路径。
 
@@ -53,3 +53,10 @@
 - 用户现场真实 WS 扫码登录、多个真实账号同时保持登录和页面结构变化。
 - 用户屏幕上的 820×540、小窗口、最大化和不同 Windows 缩放比例下的截图级视觉验收。
 - WhatsApp Web 不可见历史消息、关闭电脑后的后台同步和官方个人后台授权接口；当前版本按页面可见边界工作。
+
+## 4.2.6 智能导入与快速录入升级
+
+- 版本：4.2.6
+- 重点：任意字段顺序识别、前置标题行识别、中文/Excel 日期识别、渠道与状态自动推断、快速录入一键整理。
+- 保存失败保护：快速录入、混合 CSV 导入、跟票导入均增加内存回滚保护。
+- 真实业务数据：未读取、未修改。
