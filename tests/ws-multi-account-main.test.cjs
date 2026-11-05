@@ -1,0 +1,26 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const mainPath = path.join(__dirname, '..', 'resources', 'app', 'main.cjs');
+const preloadPath = path.join(__dirname, '..', 'resources', 'app', 'preload.cjs');
+const main = fs.readFileSync(mainPath, 'utf8');
+const preload = fs.readFileSync(preloadPath, 'utf8');
+
+assert.match(main, /wsViews\s*=\s*new Map\(\)/, 'main process keeps an account keyed BrowserView registry');
+assert.match(main, /activeWsAccountId/, 'main process tracks active account id');
+assert.match(main, /persist:ws-workbench-/, 'views use account-isolated persistent partitions');
+assert.match(main, /accountId/, 'WS IPC accepts account ids');
+assert.match(main, /addBrowserView|setBrowserView/, 'views attach to the main window');
+assert.match(main, /removeBrowserView/, 'switching or clearing removes only the selected view');
+assert.match(main, /setBounds\(\{ x: 0, y: 0, width: 0, height: 0 \}\)/, 'inactive views are hidden without destroying them');
+assert.match(main, /getContentBounds/, 'bounds are clamped to window content');
+assert.match(main, /y[^\n]*180|toolbar/i, 'view bounds stay below the workbench toolbar');
+assert.match(main, /zhike-ws-status[^\n]*accountId|accountId[^\n]*zhike-ws-status/, 'status events include the account id');
+assert.match(main, /action === ['"]clear-session['"][\s\S]*?accountId/, 'clear-session is account scoped');
+assert.match(main, /action === ['"]open['"][\s\S]*?default/, 'legacy open action still defaults to default account');
+assert.match(preload, /accountId/, 'desktop preload forwards account context');
+assert.match(preload, /onWsStatus/, 'desktop preload keeps status listener');
+assert.doesNotMatch(main, /session\.cookies|document\.cookie/, 'main source does not expose session secrets');
+console.log('ws-multi-account-main: expected registry, isolation, switching, bounds and legacy IPC contracts');
+

@@ -1,0 +1,16 @@
+# Task 2 report
+
+Implemented per-account WS BrowserView isolation in `resources/app/main.cjs` and account-aware preload IPC in `resources/app/preload.cjs`.
+
+- Added account keyed BrowserView/session registry and active account tracking.
+- Added validated account IDs and persistent `persist:ws-workbench-<accountId>` fallback partitions, while accepting account API `partitionKey` values.
+- Switching hides the previous view and retains its BrowserView/session; clearing only destroys and clears the selected account.
+- Preserved sandbox/context isolation/node integration/web security/background throttling/UA/navigation/permission hardening for every view.
+- Status events and responses include `accountId` and omit secrets.
+- Bounds are clamped to content dimensions with a 180px toolbar floor; inactive resize/capture requests are rejected or ignored.
+- Kept legacy `zhike-ws` requests defaulting to the `default` account and exposed `wsAccounts` through preload.
+
+Validation:
+
+- `node tests/ws-multi-account-main.test.cjs`
+- `node scripts/run-tests.cjs all` (31 checks passed)

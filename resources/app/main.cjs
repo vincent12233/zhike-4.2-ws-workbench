@@ -15,17 +15,20 @@ let serviceProcess = null;
 let servicePort = null;
 let ownsService = false;
 let mainWindow = null;
-let wsView = null;
+// WS views are kept alive per account so switching accounts never leaks a
+// session into another account or destroys the previous account's partition.
+const wsViews = new Map();
+const wsAccounts = new Map();
+let activeWsAccountId = 'default';
+let wsView = null; // legacy alias for the active account's view
 let wsViewState = '未连接';
 let wsViewHidden = false;
-let wsProbeTimer = null;
 const wsAllowedOrigins = new Set(['https://web.whatsapp.com', 'https://www.whatsapp.com']);
 const wsEntryUrl = 'https://web.whatsapp.com/';
 // WhatsApp Web rejects Electron's default UA because it contains an Electron token.
 // Keep the browser engine version aligned with Electron 45's Chromium 134 build.
 const wsUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36';
-const wsPartition = 'persist:ws-workbench-isolated';
-let wsSessionHardened = false;
+const wsPartition = 'persist:ws-workbench-isolated'; // legacy name retained for source compatibility
 let quitting = false;
 let flushingClose = false;
 const activeAiRequests = new Map();
@@ -187,172 +190,212 @@ function wsAllowedUrl(value) {
     return url.protocol === 'https:' && wsAllowedOrigins.has(url.origin);
   } catch { return false; }
 }
-function setWsStatus(status, detail = '') {
-  wsViewState = ['未连接', '等待登录', '登录中', '已连接', '会话过期', '连接失败', '正在重连'].includes(status) ? status : '未连接';
-  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('zhike-ws-status', { status: wsViewState, detail: String(detail || '').slice(0, 200) });
+function normalizeWsAccountId(value) {
+  const id = String(value || 'default').trim() || 'default';
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/.test(id)) throw new Error('WS 账号标识无效。');
+  return id;
 }
-function wsSession() {
-  const value = session.fromPartition(wsPartition);
-  if (!wsSessionHardened) {
+function normalizeWsPartition(value, accountId) {
+  const supplied = String(value || '').trim();
+  if (supplied && /^persist:[A-Za-z0-9._-]{1,180}$/.test(supplied)) return supplied;
+  return `persist:ws-workbench-${accountId}`;
+}
+function syncLegacyWsAlias(record) {
+  wsView = record?.view || null;
+  wsViewState = record?.status || '未连接';
+  wsViewHidden = record?.hidden !== false;
+}
+async function resolveWsAccount(value = {}) {
+  const accountId = normalizeWsAccountId(value.accountId);
+  const supplied = value.account && typeof value.account === 'object' ? value.account : value;
+  let account = wsAccounts.get(accountId);
+  if (!account && servicePort && !supplied.partitionKey) {
+    try {
+      const response = await fetch(`http://127.0.0.1:${servicePort}/api/ws/accounts/${encodeURIComponent(accountId)}`, { headers: { 'X-Zhike-Api-Token': apiToken }, signal: AbortSignal.timeout(3000) });
+      if (response.ok) account = (await response.json()).account;
+    } catch {}
+  }
+  account = { ...(account || {}), ...(supplied || {}), id: accountId };
+  account.partitionKey = normalizeWsPartition(account.partitionKey, accountId);
+  for (const [knownId, known] of wsAccounts) {
+    if (knownId !== accountId && known.partitionKey === account.partitionKey) throw new Error('WS account partition must be unique.');
+  }
+  wsAccounts.set(accountId, account);
+  return account;
+}
+function setWsStatus(accountId, status, detail = '') {
+  const id = normalizeWsAccountId(accountId);
+  const record = wsViews.get(id);
+  const next = ['未连接', '等待登录', '登录中', '已连接', '会话过期', '连接失败', '正在重连'].includes(status) ? status : '未连接';
+  if (record) record.status = next;
+  if (id === activeWsAccountId || !record) { wsViewState = next; if (id === activeWsAccountId) wsViewHidden = record?.hidden !== false; }
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('zhike-ws-status', { accountId: id, status: next, detail: String(detail || '').slice(0, 200) });
+}
+function wsSession(record) {
+  const value = session.fromPartition(record.partitionKey);
+  if (!record.sessionHardened) {
     value.setPermissionCheckHandler(() => false);
     value.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false));
     value.setDevicePermissionHandler?.(() => false);
     value.setDisplayMediaRequestHandler?.((_request, callback) => callback({}));
-    wsSessionHardened = true;
+    record.sessionHardened = true;
   }
+  record.session = value;
   return value;
 }
-async function probeWsStatus(view = wsView) {
-  if (!view || view !== wsView || view.webContents.isDestroyed()) {
-    setWsStatus('未连接');
-    return { status: wsViewState, open: false };
+async function probeWsStatus(accountId = activeWsAccountId) {
+  const id = normalizeWsAccountId(accountId), record = wsViews.get(id), view = record?.view;
+  if (!record || !view || view.webContents.isDestroyed()) {
+    setWsStatus(id, '未连接');
+    return { accountId: id, status: record?.status || '未连接', open: false };
   }
   if (view.webContents.isLoadingMainFrame?.() || view.webContents.isLoading()) {
-    if (wsViewState !== '正在重连') setWsStatus('登录中');
-    return { status: wsViewState, open: true };
+    if (record.status !== '正在重连') setWsStatus(id, '登录中');
+    return { accountId: id, status: record.status, open: true };
   }
   try {
     const probe = await view.webContents.executeJavaScript('window.zhikeWsPage?.probeStatus?.() ?? null', true);
-    if (!probe || typeof probe !== 'object') {
-      setWsStatus('等待登录', 'WS 页面已打开，等待用户自行登录。');
-    } else if (probe.online === false) {
-      setWsStatus('正在重连', '网络已断开，WS 页面等待恢复连接。');
-    } else if (probe.hasExpiredMarker) {
-      setWsStatus('会话过期', 'WS 会话已过期，请重新登录。');
-    } else if (probe.hasChatShell || (probe.hasAppShell && !probe.hasQrMarker && !probe.hasLoginMarker)) {
-      setWsStatus('已连接', '已检测到 WS 聊天界面（HTTPS 443）。');
-    } else if (probe.hasQrMarker || probe.hasLoginMarker || probe.readyState === 'complete') {
-      setWsStatus('等待登录', '请在 WS 页面自行扫码或登录。');
-    } else {
-      setWsStatus('登录中', 'WS 页面正在加载。');
-    }
-  } catch {
-    setWsStatus('连接失败', '无法检查 WS 页面状态，请刷新后重试。');
-  }
-  return { status: wsViewState, open: true };
+    if (!probe || typeof probe !== 'object') setWsStatus(id, '等待登录', 'WS 页面已打开，等待用户自行登录。');
+    else if (probe.online === false) setWsStatus(id, '正在重连', '网络已断开，WS 页面等待恢复连接。');
+    else if (probe.hasExpiredMarker) setWsStatus(id, '会话过期', 'WS 会话已过期，请重新登录。');
+    else if (probe.hasChatShell || (probe.hasAppShell && !probe.hasQrMarker && !probe.hasLoginMarker)) setWsStatus(id, '已连接', '已检测到 WS 聊天界面（HTTPS 443）。');
+    else if (probe.hasQrMarker || probe.hasLoginMarker || probe.readyState === 'complete') setWsStatus(id, '等待登录', '请在 WS 页面自行扫码或登录。');
+    else setWsStatus(id, '登录中', 'WS 页面正在加载。');
+  } catch { setWsStatus(id, '连接失败', '无法检查 WS 页面状态，请刷新后重试。'); }
+  return { accountId: id, status: record.status, open: true };
 }
-function resizeWsView(bounds = null) {
-  if (!wsView || wsView.webContents.isDestroyed() || !mainWindow || mainWindow.isDestroyed()) return;
+function resizeWsView(accountId, bounds = null) {
+  const id = normalizeWsAccountId(accountId), record = wsViews.get(id);
+  if (!record || !record.view || record.view.webContents.isDestroyed() || !mainWindow || mainWindow.isDestroyed()) return false;
+  if (id !== activeWsAccountId) return false;
   const content = mainWindow.getContentBounds();
   const input = bounds && typeof bounds === 'object' ? bounds : {};
   const requestedWidth = Number(input.width), requestedHeight = Number(input.height);
   if (input.hidden === true || (bounds && (requestedWidth < 40 || requestedHeight < 40))) {
-    wsView.setBounds({ x: 0, y: 0, width: 0, height: 0 });
-    wsViewHidden = true;
-    return;
+    record.view.setBounds({ x: 0, y: 0, width: 0, height: 0 }); record.hidden = true; record.lastBounds = { hidden: true }; syncLegacyWsAlias(record); return true;
   }
+  const toolbarHeight = 180;
+  const minWidth = Math.min(260, Math.max(1, content.width));
+  const minHeight = Math.min(240, Math.max(1, content.height - toolbarHeight));
   const rawX = Math.max(0, Math.round(Number(input.x) || 0));
-  // Keep the embedded page below the Zhike heading/login toolbar even when
-  // the renderer is temporarily reflowing or its scroll position changes.
-  const rawY = Math.max(180, Math.round(Number(input.y) || 0));
-  const x = Math.min(rawX, Math.max(0, content.width - 260));
-  const y = Math.min(rawY, Math.max(0, content.height - 240));
+  const rawY = Math.max(toolbarHeight, Math.round(Number(input.y) || 0));
+  const x = Math.min(rawX, Math.max(0, content.width - minWidth));
+  const y = Math.min(rawY, Math.max(toolbarHeight, content.height - minHeight));
   const boundedWidth = Math.round(Number(input.width) || content.width - x);
   const boundedHeight = Math.round(Number(input.height) || content.height - y);
-  const width = Math.max(260, Math.min(boundedWidth, content.width - x));
-  const height = Math.max(240, Math.min(boundedHeight, content.height - y));
-  wsView.setBounds({ x, y, width, height });
-  wsViewHidden = false;
+  const width = Math.max(minWidth, Math.min(boundedWidth, content.width - x));
+  const height = Math.max(minHeight, Math.min(boundedHeight, content.height - y));
+  const next = { x, y, width, height }; record.view.setBounds(next); record.lastBounds = next; record.hidden = false; syncLegacyWsAlias(record); return true;
 }
-function destroyWsView() {
-  if (wsProbeTimer) { clearInterval(wsProbeTimer); wsProbeTimer = null; }
-  if (!wsView) { setWsStatus('未连接'); return; }
-  try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.removeBrowserView(wsView); } catch {}
-  try { if (!wsView.webContents.isDestroyed()) wsView.webContents.close(); } catch {}
-  wsView = null;
-  wsViewHidden = false;
-  setWsStatus('未连接');
+function hideWsView(record) {
+  if (!record?.view || record.view.webContents.isDestroyed()) return;
+  try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.removeBrowserView(record.view); } catch {}
+  try { record.view.setBounds({ x: 0, y: 0, width: 0, height: 0 }); } catch {}
+  record.hidden = true;
 }
-function ensureWsView() {
-  if (wsView && !wsView.webContents.isDestroyed()) return wsView;
+function destroyWsView(accountId) {
+  const id = normalizeWsAccountId(accountId), record = wsViews.get(id);
+  if (!record) { if (id === activeWsAccountId) syncLegacyWsAlias(null); return; }
+  if (record.probeTimer) { clearInterval(record.probeTimer); record.probeTimer = null; }
+  hideWsView(record);
+  try { if (record.view && !record.view.webContents.isDestroyed()) record.view.webContents.close(); } catch {}
+  record.view = null; record.hidden = true; record.lastBounds = null;
+  setWsStatus(id, '未连接');
+  if (id === activeWsAccountId) syncLegacyWsAlias(record);
+}
+function ensureWsView(account) {
+  const id = account.id;
+  let record = wsViews.get(id);
+  if (record?.view && !record.view.webContents.isDestroyed()) return record;
   if (!mainWindow || mainWindow.isDestroyed()) throw new Error('知客主窗口尚未准备好。');
-  wsSession();
-  wsView = new BrowserView({
-    webPreferences: {
-      preload: path.join(appRoot, 'ws-preload.cjs'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-      partition: wsPartition,
-      webSecurity: true,
-      backgroundThrottling: false,
-    },
-  });
-  const view = wsView;
-  view.webContents.setUserAgent(wsUserAgent);
-  // Keep the full WhatsApp Web shell usable inside the three-column workbench.
-  view.webContents.setZoomFactor(0.9);
-  mainWindow.setBrowserView(view);
+  record ||= { id, partitionKey: account.partitionKey, status: '未连接', hidden: true, sessionHardened: false, view: null, session: null, probeTimer: null, lastBounds: null };
+  record.partitionKey = account.partitionKey;
+  wsSession(record);
+  const view = new BrowserView({ webPreferences: { preload: path.join(appRoot, 'ws-preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, partition: record.partitionKey, webSecurity: true, backgroundThrottling: false } });
+  record.view = view; wsViews.set(id, record);
+  view.webContents.setUserAgent(wsUserAgent); view.webContents.setZoomFactor(0.9);
   view.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
-  view.webContents.on('will-navigate', (event, target) => {
-    if (!wsAllowedUrl(target)) { event.preventDefault(); setWsStatus('连接失败', 'WS 页面跳转被安全策略拦截。'); }
-  });
-  view.webContents.on('did-start-loading', () => { if (view === wsView && wsViewState !== '正在重连') setWsStatus('登录中'); });
-  view.webContents.on('did-finish-load', () => { void probeWsStatus(view); });
-  view.webContents.on('did-navigate', () => { void probeWsStatus(view); });
-  view.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
-    if (errorCode !== -3) setWsStatus('连接失败', errorDescription || 'WS 页面加载失败。');
-  });
-  view.webContents.on('render-process-gone', () => { if (view === wsView) setWsStatus('连接失败', 'WS 页面进程已结束。'); });
-  view.webContents.on('destroyed', () => { if (view === wsView) wsView = null; });
-  wsProbeTimer = setInterval(() => { if (wsView === view && !view.webContents.isDestroyed()) void probeWsStatus(view); }, 15000);
-  resizeWsView({ hidden: true });
-  return wsView;
+  view.webContents.on('will-navigate', (event, target) => { if (!wsAllowedUrl(target)) { event.preventDefault(); setWsStatus(id, '连接失败', 'WS 页面跳转被安全策略拦截。'); } });
+  view.webContents.on('did-start-loading', () => { if (record.status !== '正在重连') setWsStatus(id, '登录中'); });
+  view.webContents.on('did-finish-load', () => { void probeWsStatus(id); });
+  view.webContents.on('did-navigate', () => { void probeWsStatus(id); });
+  view.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => { if (errorCode !== -3) setWsStatus(id, '连接失败', errorDescription || 'WS 页面加载失败。'); });
+  view.webContents.on('render-process-gone', () => setWsStatus(id, '连接失败', 'WS 页面进程已结束。'));
+  view.webContents.on('destroyed', () => { if (record.view === view) record.view = null; if (id === activeWsAccountId) syncLegacyWsAlias(record); });
+  record.probeTimer = setInterval(() => { if (record.view === view && !view.webContents.isDestroyed()) void probeWsStatus(id); }, 15000); record.probeTimer.unref?.();
+  return record;
 }
-async function clearWsSession() {
-  destroyWsView();
-  const value = wsSession();
+function switchWsAccount(accountId, record) {
+  const id = normalizeWsAccountId(accountId), previous = wsViews.get(activeWsAccountId);
+  if (previous && previous !== record) hideWsView(previous);
+  activeWsAccountId = id;
+  if (record?.view && mainWindow && !mainWindow.isDestroyed()) { try { mainWindow.addBrowserView?.(record.view); } catch { try { mainWindow.setBrowserView(record.view); } catch {} } record.hidden = false; resizeWsView(id, record.lastBounds || { hidden: true }); }
+  syncLegacyWsAlias(record); return record;
+}
+async function clearWsSession(accountId = activeWsAccountId) {
+  const id = normalizeWsAccountId(accountId), record = wsViews.get(id) || await (async () => { const account = await resolveWsAccount({ accountId: id }); return { id, partitionKey: account.partitionKey, status: '未连接', hidden: true, sessionHardened: false }; })();
+  wsViews.set(id, record); destroyWsView(id); const value = wsSession(record);
   await value.serviceWorkers?.stopAllRunning?.();
   await value.clearStorageData({ storages: ['appcache', 'cookies', 'filesystem', 'indexdb', 'localstorage', 'shadercache', 'websql', 'serviceworkers', 'cachestorage'] });
-  await value.clearCache();
-  setWsStatus('未连接', 'WS 本地会话、缓存和站点存储已清除。');
-  return { ok: true, status: wsViewState, cleared: true };
+  await value.clearCache(); setWsStatus(id, '未连接', 'WS 本地会话、缓存和站点存储已清除。');
+  return { ok: true, accountId: id, status: record.status, cleared: true };
 }
 ipcMain.handle('zhike-ws', async (event, value = {}) => {
   if (!trustedSender(event)) throw new Error('不受信任的请求来源。');
   const action = String(value.action || '');
-  if (action === 'status' || action === 'probe') return probeWsStatus();
+  const account = await resolveWsAccount(value), accountId = account.id;
+  if (action === 'status' || action === 'probe') return probeWsStatus(accountId);
   if (action === 'open' || action === 'login') {
-    const view = ensureWsView();
+    const record = ensureWsView(account); switchWsAccount(accountId, record); const view = record.view;
     if (view.webContents.getURL() !== wsEntryUrl && !wsAllowedUrl(view.webContents.getURL())) await view.webContents.loadURL(wsEntryUrl);
     else if (!view.webContents.getURL()) await view.webContents.loadURL(wsEntryUrl);
-    setWsStatus(action === 'login' ? '登录中' : '等待登录');
-    resizeWsView(value.bounds);
-    return { ok: true, status: wsViewState };
+    setWsStatus(accountId, action === 'login' ? '登录中' : '等待登录'); resizeWsView(accountId, value.bounds);
+    return { ok: true, accountId, status: record.status, partitionKey: record.partitionKey };
   }
   if (action === 'reload' || action === 'reconnect') {
-    const view = ensureWsView();
-    setWsStatus(action === 'reconnect' ? '正在重连' : '登录中');
+    const record = ensureWsView(account); switchWsAccount(accountId, record); const view = record.view;
+    setWsStatus(accountId, action === 'reconnect' ? '正在重连' : '登录中');
     if (view.webContents.getURL() && wsAllowedUrl(view.webContents.getURL())) view.webContents.reload();
     else await view.webContents.loadURL(wsEntryUrl);
-    resizeWsView(value.bounds);
-    return { ok: true, status: wsViewState };
+    resizeWsView(accountId, value.bounds); return { ok: true, accountId, status: record.status, partitionKey: record.partitionKey };
   }
   if (action === 'mark-connected' || action === 'mark-expired' || action === 'mark-reconnecting') {
     const next = action === 'mark-connected' ? '已连接' : action === 'mark-expired' ? '会话过期' : '正在重连';
-    setWsStatus(next);
-    return { ok: true, status: wsViewState };
+    setWsStatus(accountId, next); return { ok: true, accountId, status: next };
   }
   if (action === 'capture-selection') {
-    const view = wsView;
+    if (accountId !== activeWsAccountId) throw new Error('请先切换到当前 WS 账号。');
+    const view = wsViews.get(accountId)?.view;
     if (!view || view.webContents.isDestroyed()) throw new Error('请先打开 WS 页面并选择聊天文字。');
     const captured = await view.webContents.executeJavaScript('window.zhikeWsPage?.captureSelection?.() ?? null', true);
     const source = String(captured?.text || ''), text = source.slice(0, 120000);
     return { ok: true, text, length: text.length, truncated: Boolean(captured?.truncated) || source.length > text.length };
   }
   if (action === 'discover-conversations' || action === 'capture-visible-messages') {
-    const view = wsView;
+    if (accountId !== activeWsAccountId) throw new Error('请先切换到当前 WS 账号。');
+    const view = wsViews.get(accountId)?.view;
     if (!view || view.webContents.isDestroyed()) throw new Error('请先打开 WS 页面并完成登录。');
     const method = action === 'discover-conversations' ? 'discoverVisibleConversations' : 'captureVisibleMessages';
     const captured = await view.webContents.executeJavaScript(`window.zhikeWsPage?.${method}?.() ?? null`, true);
     if (!captured?.supported) return { ok: false, supported: false, error: '当前页面结构未识别，未读取任何内容。' };
     return { ok: true, ...captured };
   }
-  if (action === 'hide') { resizeWsView({ hidden: true }); return { ok: true, hidden: wsViewHidden }; }
-  if (action === 'resize') { resizeWsView(value.bounds); return { ok: true, hidden: wsViewHidden }; }
-  if (action === 'clear-session') return clearWsSession();
-  if (action === 'close' || action === 'logout') { destroyWsView(); return { ok: true, status: wsViewState, cleared: false }; }
+  if (action === 'hide') { if (accountId === activeWsAccountId) resizeWsView(accountId, { hidden: true }); return { ok: true, accountId, hidden: wsViews.get(accountId)?.hidden !== false }; }
+  if (action === 'resize') { if (accountId !== activeWsAccountId) return { ok: false, accountId, hidden: true, inactive: true }; resizeWsView(accountId, value.bounds); return { ok: true, accountId, hidden: wsViews.get(accountId)?.hidden !== false }; }
+  if (action === 'clear-session') return clearWsSession(accountId);
+  if (action === 'close' || action === 'logout') { destroyWsView(accountId); return { ok: true, accountId, status: wsViews.get(accountId)?.status || '未连接', cleared: false }; }
   throw new Error('不支持的 WS 操作。');
+});
+
+ipcMain.handle('zhike-ws-accounts', async (event, value = {}) => {
+  if (!trustedSender(event)) throw new Error('不受信任的请求来源。');
+  if (!servicePort) throw new Error('本地数据服务尚未准备好。');
+  const action = String(value.action || 'list'), id = value.accountId ? normalizeWsAccountId(value.accountId) : '';
+  const endpoint = action === 'list' ? '/api/ws/accounts' : `/api/ws/accounts/${encodeURIComponent(id)}`;
+  const response = await fetch(`http://127.0.0.1:${servicePort}${endpoint}`, { method: action === 'create' ? 'POST' : action === 'update' ? 'PATCH' : action === 'delete' ? 'DELETE' : 'GET', headers: { 'Content-Type': 'application/json', 'X-Zhike-Api-Token': apiToken }, body: ['create', 'update'].includes(action) ? JSON.stringify(value.account || value) : undefined });
+  const body = await response.json().catch(() => ({})); if (!response.ok) throw new Error(body.error || 'WS 账号操作失败。');
+  if (action === 'delete') { wsAccounts.delete(id); destroyWsView(id); } else if (body.account) wsAccounts.set(String(body.account.id), body.account);
+  return body;
 });
 
 ipcMain.handle('zhike-ai-status', (event, value) => {
@@ -585,8 +628,14 @@ function createWindow() {
   mainWindow.webContents.once('dom-ready', () => { const fallback = setTimeout(revealWindow, 1500); fallback.unref?.(); });
   // Let the renderer recalculate the BrowserView rectangle from the actual panel.
   // Calling resizeWsView() without panel bounds would incorrectly stretch WS over the whole window.
-  mainWindow.on('resize', () => { if (wsView && !wsView.webContents.isDestroyed()) mainWindow.webContents.executeJavaScript('window.dispatchEvent(new Event("resize"))').catch(() => {}); });
-  mainWindow.on('closed', () => { destroyWsView(); mainWindow = null; });
+  mainWindow.on('resize', () => {
+    const active = wsViews.get(activeWsAccountId);
+    if (active?.view && !active.view.webContents.isDestroyed()) {
+      if (active.lastBounds && !active.lastBounds.hidden) resizeWsView(activeWsAccountId, active.lastBounds);
+      mainWindow.webContents.executeJavaScript('window.dispatchEvent(new Event("resize"))').catch(() => {});
+    }
+  });
+  mainWindow.on('closed', () => { for (const id of wsViews.keys()) destroyWsView(id); mainWindow = null; });
   mainWindow.on('close', event => {
     if (quitting || flushingClose || !mainWindow) return;
     event.preventDefault();

@@ -3,7 +3,8 @@ contextBridge.exposeInMainWorld('zhikeDesktop',Object.freeze({
   tools:value=>ipcRenderer.invoke('zhike-desktop-tools',value),
   onCustomer:callback=>{if(typeof callback==='function')ipcRenderer.on('zhike-open-customer',(_event,id)=>callback(id));},
   onError:callback=>{if(typeof callback==='function')ipcRenderer.on('zhike-tools-error',(_event,message)=>callback(message));},
-  ws:value=>ipcRenderer.invoke('zhike-ws',value),
+  ws:value=>ipcRenderer.invoke('zhike-ws',{...(value||{}),accountId:String(value?.accountId||'default')}),
+  wsAccounts:value=>ipcRenderer.invoke('zhike-ws-accounts',value||{action:'list'}),
   onWsStatus:callback=>{if(typeof callback==='function')ipcRenderer.on('zhike-ws-status',(_event,payload)=>callback(payload));}
 }));
 
