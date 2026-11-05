@@ -40,7 +40,13 @@ assert.match(ui, /state\.busy\.connection\s*=\s*false[\s\S]*state\.busy\.reply\s
 assert.match(ui, /translationServiceStatus\(context = captureContext\(\)\)[\s\S]*assertContext\(context\)[\s\S]*translateText\(originalText, direction, context = captureContext\(\)\)/, 'translation service status is account fenced');
 assert.match(ui, /translateMessage\(id, parentContext = null\)[\s\S]*translateText\(message\.originalText, message\.direction, context\)/, 'single-message translation carries immutable context');
 assert.match(ui, /leftCollapsed|rightCollapsed/, 'left and right panels remain independently collapsible');
+assert.match(ui, /ws-sidebar-collapse/, 'panels expose an in-panel collapse and expand control');
+assert.match(ui, /aria-controls="wsSessionsPanel"/, 'left collapse control exposes accessible state');
+assert.match(ui, /aria-controls="wsAssistPanel"/, 'right collapse control exposes accessible state');
 assert.match(css, /ws-account-list|ws-account-row/, 'account cards have dedicated layout styles');
+assert.match(css, /\.ws-layout\.left-collapsed\{grid-template-columns:(?:48|52)px/, 'collapsed left panel keeps a visible narrow rail');
+assert.match(css, /body\.ws-mode \.view-container/, 'WS mode tightens outer page padding');
+assert.match(css, /\.ws-page-heading\{[^}]*min-height:38px/, 'WS heading uses compact fixed height');
 assert.match(css, /ws-workbench-page\{[^}]*overflow:hidden/, 'outer workbench does not chase page scroll');
 assert.match(preload, /restoreAccountId|restored/, 'preload accepts restore-account status events');
 assert.match(main, /restoreAccountId[\s\S]*restoredFrom|restoredFrom[\s\S]*restoreAccountId/, 'main emits explicit restored account context');

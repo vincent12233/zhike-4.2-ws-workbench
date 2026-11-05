@@ -625,8 +625,8 @@
               <option value="manual" ${translationModeValue() === 'manual' ? 'selected' : ''}>仅手动</option>
               <option value="off" ${translationModeValue() === 'off' ? 'selected' : ''}>全部关闭</option>
             </select>
-            <button class="btn small" data-ws-action="toggle-left">${state.leftCollapsed ? '显示会话' : '隐藏会话'}</button>
-            <button class="btn small" data-ws-action="toggle-right">${state.rightCollapsed ? '显示辅助' : '隐藏辅助'}</button>
+            <button class="btn small ws-heading-collapse" data-ws-action="toggle-left" aria-expanded="${state.leftCollapsed ? 'false' : 'true'}" aria-controls="wsSessionsPanel">${state.leftCollapsed ? '显示会话' : '隐藏会话'}</button>
+            <button class="btn small ws-heading-collapse" data-ws-action="toggle-right" aria-expanded="${state.rightCollapsed ? 'false' : 'true'}" aria-controls="wsAssistPanel">${state.rightCollapsed ? '显示辅助' : '隐藏辅助'}</button>
           </div>
         </div>
         ${errorBanner}${loadingBanner}
@@ -636,7 +636,8 @@
           <button data-ws-action="mobile-right" class="${state.mobilePanel === 'right' ? 'active' : ''}">翻译与 AI</button>
         </div>
         <div class="ws-layout ${state.leftCollapsed ? 'left-collapsed' : ''} ${state.rightCollapsed ? 'right-collapsed' : ''} mobile-${state.mobilePanel}">
-          <aside class="ws-sessions-panel">
+          <aside id="wsSessionsPanel" class="ws-sessions-panel" aria-label="WS 账号与会话">
+            <button class="ws-sidebar-collapse ws-sidebar-collapse-left" data-ws-action="toggle-left" aria-expanded="${state.leftCollapsed ? 'false' : 'true'}" aria-controls="wsSessionsPanel" title="${state.leftCollapsed ? '展开会话栏' : '收起会话栏'}"><span aria-hidden="true">${state.leftCollapsed ? '›' : '‹'}</span><b>${state.leftCollapsed ? '会话' : '收起'}</b></button>
             <div class="ws-panel-heading"><div><strong>WS 账号</strong><span>${state.accounts.length} 个本机隔离会话</span></div><button class="btn small" data-ws-action="create-account" ${state.accountBusy ? 'disabled' : ''}>＋ 添加账号</button></div>
             ${renderAccountForm()}<div class="ws-account-list">${renderAccountList()}</div>
             <div class="ws-panel-heading ws-conversation-heading"><div><strong>会话</strong><span>${state.conversations.length} 个本地记录 · ${esc(accountDisplayName(activeAccount()))}</span></div><button class="icon-button" data-ws-action="new-conversation" title="建立会话">＋</button></div>
@@ -680,7 +681,8 @@
             <div class="ws-message-heading"><strong>本地消息</strong><span>原文优先落库，翻译失败不丢消息</span>${failedTranslations ? `<button class="btn small" data-ws-action="retry-failed">重试 ${failedTranslations} 条失败翻译</button>` : ''}</div>
             <div class="ws-message-list">${renderMessageRows()}</div>
           </section>
-          <aside class="ws-assist-panel">
+          <aside id="wsAssistPanel" class="ws-assist-panel" aria-label="翻译与 AI 辅助">
+            <button class="ws-sidebar-collapse ws-sidebar-collapse-right" data-ws-action="toggle-right" aria-expanded="${state.rightCollapsed ? 'false' : 'true'}" aria-controls="wsAssistPanel" title="${state.rightCollapsed ? '展开辅助栏' : '收起辅助栏'}"><span aria-hidden="true">${state.rightCollapsed ? '‹' : '›'}</span><b>${state.rightCollapsed ? '辅助' : '收起'}</b></button>
             <section class="ws-card ws-translation-card">
               <div class="ws-card-heading"><div><strong>翻译控制</strong><span id="wsTranslationStatus">${esc(state.translationStatus)}</span></div><label class="ws-switch"><input id="wsTranslateEnabled" type="checkbox" ${state.settings.enabled ? 'checked' : ''}><span>总开关</span></label></div>
               <div class="ws-control-grid">
