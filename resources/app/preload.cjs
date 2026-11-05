@@ -4,7 +4,7 @@ contextBridge.exposeInMainWorld('zhikeDesktop',Object.freeze({
   tools:value=>ipcRenderer.invoke('zhike-desktop-tools',value),
   onCustomer:callback=>{if(typeof callback==='function')ipcRenderer.on('zhike-open-customer',(_event,id)=>callback(id));},
   onError:callback=>{if(typeof callback==='function')ipcRenderer.on('zhike-tools-error',(_event,message)=>callback(message));},
-  ws:value=>{const payload={...(value||{}),accountId:String(value?.accountId||'default')};if(['open','login','reload','reconnect'].includes(payload.action))wsActiveAccountId=payload.accountId;return ipcRenderer.invoke('zhike-ws',payload);},
+  ws:value=>{const payload={...(value||{}),accountId:String(value?.accountId||'default')},switching=['open','login','reload','reconnect'].includes(payload.action),previousWsAccountId=wsActiveAccountId;const pending=ipcRenderer.invoke('zhike-ws',payload);if(!switching)return pending;return pending.then(result=>{wsActiveAccountId=payload.accountId;return result;},error=>{wsActiveAccountId=previousWsAccountId;throw error;});},
   wsAccounts:value=>ipcRenderer.invoke('zhike-ws-accounts',value||{action:'list'}),
   onWsStatus:callback=>{if(typeof callback==='function')ipcRenderer.on('zhike-ws-status',(_event,payload)=>{if(!payload?.accountId||String(payload.accountId)===wsActiveAccountId)callback(payload);});}
 }));

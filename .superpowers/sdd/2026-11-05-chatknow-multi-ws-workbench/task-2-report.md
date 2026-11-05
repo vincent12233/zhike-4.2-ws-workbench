@@ -36,3 +36,12 @@ Validation:
 
 - `node tests/ws-multi-account-main.test.cjs` — pass
 - `node scripts/run-tests.cjs all` — 31 checks passed
+
+## Fix round 3
+
+Account activation in preload now commits only after `zhike-ws` resolves successfully. Failed open/login/reload/reconnect requests roll back to the previous account ID, preserving status-event routing and preventing stale renderer state.
+
+Validation:
+
+- `node tests/ws-multi-account-main.test.cjs` — pass
+- `node scripts/run-tests.cjs all` — 31 checks passed
