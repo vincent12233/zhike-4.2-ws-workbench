@@ -264,6 +264,12 @@ async function probeWsStatus(accountId = activeWsAccountId) {
   } catch { setWsStatus(id, '连接失败', '无法检查 WS 页面状态，请刷新后重试。'); }
   return { accountId: id, status: record.status, open: true };
 }
+function sameWsBounds(previous, next) {
+  if (!previous || !next) return false;
+  const previousHidden = previous.hidden === true, nextHidden = next.hidden === true;
+  if (previousHidden || nextHidden) return previousHidden === nextHidden;
+  return previous.x === next.x && previous.y === next.y && previous.width === next.width && previous.height === next.height;
+}
 function resizeWsView(accountId, bounds = null) {
   const id = normalizeWsAccountId(accountId), record = wsViews.get(id);
   if (!record || !record.view || record.view.webContents.isDestroyed() || !mainWindow || mainWindow.isDestroyed()) return false;
@@ -272,6 +278,8 @@ function resizeWsView(accountId, bounds = null) {
   const input = bounds && typeof bounds === 'object' ? bounds : {};
   const requestedWidth = Number(input.width), requestedHeight = Number(input.height);
   if (input.hidden === true || (bounds && (requestedWidth < 40 || requestedHeight < 40))) {
+    const next = { hidden: true };
+    if (sameWsBounds(record.lastBounds, next)) { record.hidden = true; syncLegacyWsAlias(record); return true; }
     record.view.setBounds({ x: 0, y: 0, width: 0, height: 0 }); record.hidden = true; record.lastBounds = { hidden: true }; syncLegacyWsAlias(record); return true;
   }
   // Keep the embedded WS page below the compact workbench chrome. This is a
@@ -288,13 +296,15 @@ function resizeWsView(accountId, bounds = null) {
   const boundedHeight = Math.round(Number(input.height) || content.height - y);
   const width = Math.max(minWidth, Math.min(boundedWidth, content.width - x));
   const height = Math.max(minHeight, Math.min(boundedHeight, content.height - y));
-  const next = { x, y, width, height }; record.view.setBounds(next); record.lastBounds = next; record.hidden = false; syncLegacyWsAlias(record); return true;
+  const next = { x, y, width, height };
+  if (sameWsBounds(record.lastBounds, next)) { record.hidden = false; syncLegacyWsAlias(record); return true; }
+  record.view.setBounds(next); record.lastBounds = next; record.hidden = false; syncLegacyWsAlias(record); return true;
 }
 function hideWsView(record) {
   if (!record?.view || record.view.webContents.isDestroyed()) return;
   try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.removeBrowserView(record.view); } catch {}
   try { record.view.setBounds({ x: 0, y: 0, width: 0, height: 0 }); } catch {}
-  record.hidden = true;
+  record.lastBounds = { hidden: true }; record.hidden = true;
 }
 function destroyWsView(accountId) {
   const id = normalizeWsAccountId(accountId), record = wsViews.get(id);
@@ -417,7 +427,7 @@ ipcMain.handle('zhike-ws-accounts', async (event, value = {}) => {
   if (!trustedSender(event)) throw new Error('不受信任的请求来源。');
   if (!servicePort) throw new Error('本地数据服务尚未准备好。');
   const action = String(value.action || 'list'), id = value.accountId ? normalizeWsAccountId(value.accountId) : '';
-  const endpoint = action === 'list' ? '/api/ws/accounts' : `/api/ws/accounts/${encodeURIComponent(id)}`;
+  const endpoint = ['list', 'create'].includes(action) ? '/api/ws/accounts' : `/api/ws/accounts/${encodeURIComponent(id)}`;
   const response = await fetch(`http://127.0.0.1:${servicePort}${endpoint}`, { method: action === 'create' ? 'POST' : action === 'update' ? 'PATCH' : action === 'delete' ? 'DELETE' : 'GET', headers: { 'Content-Type': 'application/json', 'X-Zhike-Api-Token': apiToken }, body: ['create', 'update'].includes(action) ? JSON.stringify(value.account || value) : undefined });
   const body = await response.json().catch(() => ({})); if (!response.ok) throw new Error(body.error || 'WS 账号操作失败。');
   if (action === 'delete') { wsAccounts.delete(id); destroyWsView(id); } else if (body.account) wsAccounts.set(String(body.account.id), body.account);

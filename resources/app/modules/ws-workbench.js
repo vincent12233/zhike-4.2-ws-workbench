@@ -51,6 +51,7 @@
     collectionRun: null,
     followupAlerts: [],
     discoveredConversations: [],
+    visibleConversationFingerprint: '',
     collectionRefreshing: false,
     autoCaptureSignature: '',
   };
@@ -173,6 +174,7 @@
     state.accountBusy = true;
     state.collectionRefreshing = false;
     state.autoCaptureSignature = '';
+    state.visibleConversationFingerprint = '';
     clearTimeout(settingsSaveTimer); settingsSaveTimer = undefined; ++settingsSaveSequence;
     state.busy.import = false; state.busy.customer = false; state.busy.followup = false; state.busy.connection = false; state.busy.reply = false; state.busy.capture = false; state.aiBusy = false; state.translationBusy.clear();
     state.activeAccountId = id;
@@ -196,6 +198,15 @@
   function toast(message, icon = 'check') { getHost()?.toast?.(message, icon); }
   function activeConversation() { return state.conversations.find(item => String(item.id) === String(state.currentConversationId)) || null; }
   function stableHash(value) { return core.stableHash(value); }
+  function visibleConversationFingerprint(items) {
+    const rows = (Array.isArray(items) ? items : []).map(item => [
+      text(item?.externalId || ''),
+      text(item?.title || ''),
+      text(item?.preview || '').slice(0, 400),
+      Number(item?.unreadCount || 0),
+    ]).sort((left, right) => left[0].localeCompare(right[0]));
+    return stableHash(JSON.stringify(rows));
+  }
   function translationBusyKey(messageId, context = captureContext()) { return `${context.accountId}:${context.conversationId || state.currentConversationId}:${String(messageId)}`; }
   function blankDraft() {
     return {
@@ -359,7 +370,13 @@
       if (state.wsStatus === '已连接') {
         const visible = await wsBridge('discover-conversations').catch(() => null);
         assertContext(context);
-        if (visible?.supported && visible.conversations?.length) await enqueueDiscoveredConversations(visible.conversations, false, context);
+        if (visible?.supported) {
+          const fingerprint = visibleConversationFingerprint(visible.conversations);
+          if (fingerprint !== state.visibleConversationFingerprint) {
+            if (visible.conversations?.length) await enqueueDiscoveredConversations(visible.conversations, false, context);
+            state.visibleConversationFingerprint = fingerprint;
+          }
+        }
       }
       assertContext(context);
       render();
@@ -425,6 +442,7 @@
       const result = await wsBridge('discover-conversations'); assertContext(context); if (!result?.supported) throw new Error(result?.error || '当前页面结构未识别'); state.discoveredConversations = result.conversations || [];
       const queued = await enqueueDiscoveredConversations(state.discoveredConversations, false, context);
       assertContext(context);
+      state.visibleConversationFingerprint = visibleConversationFingerprint(state.discoveredConversations);
       const runResult = await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', discovered: state.discoveredConversations.length, total: state.discoveredConversations.length }) }, context);
       assertContext(context);
       state.collectionRun = runResult.run;

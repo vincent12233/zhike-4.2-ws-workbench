@@ -1,5 +1,5 @@
 #ifndef AppVersion
-#define AppVersion "4.2.3"
+#define AppVersion "4.2.4"
 #endif
 #ifndef StageDir
 #define StageDir "work\staging\zhike-win-x64"
@@ -17,7 +17,7 @@ DefaultDirName={localappdata}\Programs\Zhike
 DefaultGroupName=知客运营工作台
 PrivilegesRequired=lowest
 OutputDir={#BuildOutputDir}
-OutputBaseFilename=知客-4.2.3-WS工作台完善版
+OutputBaseFilename=知客-4.2.4-WS工作台完善版
 Compression=lzma2/fast
 SolidCompression=yes
 WizardStyle=modern

@@ -22,11 +22,15 @@ assert.match(main, /did-fail-load[\s\S]*?restoreWsAccount/, 'did-fail-load resto
 assert.match(main, /catch \(error\).*restoreWsAccount|restoreWsAccount\([\s\S]*?throw error/, 'load failures roll back BrowserView switching');
 assert.match(main, /persist:ws-workbench-/, 'views use account-isolated persistent partitions');
 assert.match(main, /accountId/, 'WS IPC accepts account ids');
+assert.match(main, /\[['"]list['"],\s*['"]create['"]\]\.includes\(action\)|action\s*===\s*['"]create['"][\s\S]{0,180}\/api\/ws\/accounts/, 'account creation uses the collection endpoint instead of a trailing slash item endpoint');
 assert.match(main, /addBrowserView|setBrowserView/, 'views attach to the main window');
 assert.match(main, /removeBrowserView/, 'switching or clearing removes only the selected view');
 assert.match(main, /setBounds\(\{ x: 0, y: 0, width: 0, height: 0 \}\)/, 'inactive views are hidden without destroying them');
 assert.match(main, /getContentBounds/, 'bounds are clamped to window content');
 assert.match(main, /toolbarHeight\s*=\s*96/, 'view bounds stay below the compact workbench toolbar');
+assert.match(main, /function sameWsBounds\(previous,\s*next\)[\s\S]*?previous\.x === next\.x[\s\S]*?previous\.height === next\.height/, 'main process has a geometry equality guard for BrowserView bounds');
+assert.match(main, /if \(sameWsBounds\(record\.lastBounds,\s*next\)\)[\s\S]*?return true;/, 'identical BrowserView bounds skip native setBounds');
+assert.match(main, /function hideWsView\(record\)[\s\S]*?record\.lastBounds\s*=\s*\{\s*hidden:\s*true\s*\}/, 'hiding a BrowserView invalidates the cached visible bounds');
 assert.match(main, /zhike-ws-status[^\n]*accountId|accountId[^\n]*zhike-ws-status/, 'status events include the account id');
 assert.match(main, /action === ['"]clear-session['"][\s\S]*?accountId/, 'clear-session is account scoped');
 assert.match(main, /action === ['"]open['"][\s\S]*?default/, 'legacy open action still defaults to default account');
