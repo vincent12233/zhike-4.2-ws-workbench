@@ -31,8 +31,8 @@
 ## 安装包
 
 - `releases/知客-4.2.3-WS工作台完善版.exe`
-- SHA-256：`11408056AE239637020F91ECBC89A505F77CCE74C09CDC088590DFCE9AE4A62C`
-- 大小：173,915,466 字节
+- SHA-256：`9C2937A3A2341FBF6C959214E3F14E1ADFDC40BED2BCB8BC7FFB92544A26C2E1`
+- 大小：173,916,757 字节
 - 运行时：Electron 45.2.1、Node.js 24.22.1、Inno Setup 6.7.3
 - 用户输出副本：`C:\Users\酷酷\Documents\Codex\2026-11-04\c-users-documents-codex-2026-11\outputs\知客-4.2.3-WS工作台完善版.exe`
 
