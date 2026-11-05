@@ -142,6 +142,63 @@
     return { kind: 'new', customer: null, candidates: [] };
   }
 
+  function contextCurrent(context, current = {}) {
+    if (!context || typeof context !== 'object') return false;
+    const accountId = text(current.accountId || current.activeAccountId) || 'default';
+    const sequence = Number(current.sequence ?? current.accountLoadSequence ?? 0);
+    const conversationId = text(current.conversationId || current.currentConversationId);
+    return text(context.accountId) === accountId
+      && Number(context.sequence) === sequence
+      && (!text(context.conversationId) || text(context.conversationId) === conversationId);
+  }
+
+  function mergeCustomerProfile(customer, profile = {}) {
+    if (!customer || typeof customer !== 'object') return customer;
+    const accountId = text(profile.wsAccountId || profile.account);
+    const externalId = text(profile.wsExternalId);
+    const conversationId = text(profile.conversationId);
+    const accountIds = new Set(Array.isArray(customer.wsAccountIds) ? customer.wsAccountIds.map(text).filter(Boolean) : []);
+    const externalIds = new Set(Array.isArray(customer.wsExternalIds) ? customer.wsExternalIds.map(text).filter(Boolean) : []);
+    const conversationIds = new Set(Array.isArray(customer.wsConversationIds) ? customer.wsConversationIds.map(text).filter(Boolean) : []);
+    if (accountId) accountIds.add(accountId);
+    if (externalId) externalIds.add(externalId);
+    if (conversationId) conversationIds.add(conversationId);
+    const patch = {
+      name: profile.name,
+      rawPhone: profile.phone,
+      phone: profile.phone ? normalizePhone(profile.phone) : '',
+      wsExternalId: customer.wsExternalId || externalId,
+      wsConversationId: customer.wsConversationId || conversationId,
+      wsAccountId: customer.wsAccountId || accountId,
+      country: profile.country,
+      language: profile.language,
+      productInterest: profile.productInterest,
+      budget: profile.budget,
+      phase: profile.customerStage,
+      intent: profile.intent,
+      intentScore: profile.intentScore,
+      emotion: profile.emotion,
+      aiSummary: profile.aiSummary,
+      note: profile.note,
+    };
+    for (const [key, value] of Object.entries(patch)) if (value !== '' && value != null) customer[key] = value;
+    if (accountIds.size) customer.wsAccountIds = [...accountIds].slice(0, 100);
+    if (externalIds.size) customer.wsExternalIds = [...externalIds].slice(0, 100);
+    if (conversationIds.size) customer.wsConversationIds = [...conversationIds].slice(0, 100);
+    if (Array.isArray(profile.tags) && profile.tags.length) customer.tags = [...new Set([...(Array.isArray(customer.tags) ? customer.tags : []), ...profile.tags])];
+    customer.touched = true;
+    return customer;
+  }
+
+  function restoreFollowupSnapshot(hostState, customer, snapshot = {}) {
+    if (hostState && Array.isArray(snapshot.followups)) hostState.followups = snapshot.followups;
+    if (customer && snapshot.customer) {
+      customer.lastFollow = snapshot.customer.lastFollow;
+      customer.due = snapshot.customer.due;
+    }
+    return { hostState, customer };
+  }
+
   function dedupeMessages(messages) {
     const map = new Map();
     let anonymous = 0;
@@ -237,6 +294,9 @@
     normalizePhone,
     extractPhone,
     matchCustomer,
+    contextCurrent,
+    mergeCustomerProfile,
+    restoreFollowupSnapshot,
     dedupeMessages,
     parseVisibleChat,
     visibleChatFingerprint,

@@ -71,7 +71,7 @@
     return { accountId: String(state.activeAccountId || 'default'), conversationId: String(conversationId || ''), sequence: Number(state.accountLoadSequence || 0) };
   }
   function contextCurrent(context) {
-    return Boolean(context) && context.sequence === Number(state.accountLoadSequence || 0) && context.accountId === String(state.activeAccountId || 'default') && (!context.conversationId || context.conversationId === String(state.currentConversationId || ''));
+    return core.contextCurrent(context, { accountId: state.activeAccountId, conversationId: state.currentConversationId, sequence: state.accountLoadSequence });
   }
   function assertContext(context) { if (!contextCurrent(context)) throw new Error('WS 账号已切换，已丢弃过期操作。'); }
   async function loadAccounts() {
@@ -336,7 +336,11 @@
     for (const item of items) {
       const externalId = text(item.externalId || `visible-${item.index}`); const title = text(item.title || externalId);
       const preview = text(item.preview).slice(0, 4000);
-      const match = core.matchCustomer(getHost()?.state?.customers || [], { phone: core.extractPhone(`${externalId} ${title} ${preview}`) });
+      const match = core.matchCustomer(getHost()?.state?.customers || [], {
+        wsExternalId: externalId,
+        wsAccountId: context.accountId,
+        phone: core.extractPhone(`${externalId} ${title} ${preview}`),
+      });
       const matchedCustomerId = match?.kind === 'phone' || match?.kind === 'ws-id' || match?.kind === 'account' ? String(match.customer?.id || '') : '';
       assertContext(context);
       const conversation = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId, title, customerId: matchedCustomerId, lastMessageText: preview, unreadCount: Number(item.unreadCount || 0), data: { discovery: 'visible-page', previewOnly: true, historyLoaded: false, customerMatch: matchedCustomerId ? 'automatic' : 'pending' } }) }, context);
@@ -1036,39 +1040,7 @@
     };
   }
   function applyProfileToCustomer(customer, profile) {
-    const accountId = text(profile.wsAccountId || profile.account);
-    const externalId = text(profile.wsExternalId);
-    const conversationId = text(profile.conversationId);
-    const accountIds = new Set(Array.isArray(customer.wsAccountIds) ? customer.wsAccountIds.map(text).filter(Boolean) : []);
-    const externalIds = new Set(Array.isArray(customer.wsExternalIds) ? customer.wsExternalIds.map(text).filter(Boolean) : []);
-    const conversationIds = new Set(Array.isArray(customer.wsConversationIds) ? customer.wsConversationIds.map(text).filter(Boolean) : []);
-    if (accountId) accountIds.add(accountId);
-    if (externalId) externalIds.add(externalId);
-    if (conversationId) conversationIds.add(conversationId);
-    const patch = {
-      name: profile.name,
-      rawPhone: profile.phone,
-      phone: profile.phone ? core.normalizePhone(profile.phone) : '',
-      wsExternalId: customer.wsExternalId || externalId,
-      wsConversationId: customer.wsConversationId || conversationId,
-      wsAccountId: customer.wsAccountId || accountId,
-      country: profile.country,
-      language: profile.language,
-      productInterest: profile.productInterest,
-      budget: profile.budget,
-      phase: profile.customerStage,
-      intent: profile.intent,
-      intentScore: profile.intentScore,
-      emotion: profile.emotion,
-      aiSummary: profile.aiSummary,
-      note: profile.note,
-    };
-    for (const [key, value] of Object.entries(patch)) if (value !== '' && value != null) customer[key] = value;
-    if (accountIds.size) customer.wsAccountIds = [...accountIds].slice(0, 100);
-    if (externalIds.size) customer.wsExternalIds = [...externalIds].slice(0, 100);
-    if (conversationIds.size) customer.wsConversationIds = [...conversationIds].slice(0, 100);
-    if (profile.tags.length) customer.tags = [...new Set([...(Array.isArray(customer.tags) ? customer.tags : []), ...profile.tags])];
-    customer.touched = true;
+    return core.mergeCustomerProfile(customer, profile);
   }
   async function saveCustomerTo(explicitId = '') {
     const current = activeConversation();
@@ -1193,9 +1165,7 @@
       draft.nextFollow = '';
       if (contextCurrent(context)) toast('跟进记录已保存到任务中心');
     } catch (error) {
-      host.state.followups = before.followups;
-      customer.lastFollow = before.lastFollow;
-      customer.due = before.due;
+      core.restoreFollowupSnapshot(host.state, customer, { followups: before.followups, customer: { lastFollow: before.lastFollow, due: before.due } });
       host.persist();
       await host.flushStateWrites().catch(() => {});
       if (contextCurrent(context)) toast('跟进保存失败，原资料已恢复：' + error.message, 'x');
