@@ -20,10 +20,15 @@ assert.match(ui, /function captureContext[\s\S]*sequence/, 'async work captures 
 assert.match(ui, /function assertContext[\s\S]*contextCurrent/, 'stale async work is fenced before writes');
 assert.match(ui, /api\([^\n]*context\)|api\([^\n]*, context\)/, 'mutations can pass an explicit account context');
 assert.match(ui, /refreshCollectionSummary[\s\S]*captureContext[\s\S]*assertContext/, 'collection refresh is account fenced');
+assert.match(ui, /loadConversations[\s\S]*Promise\.all[\s\S]*collection-runs[\s\S]*followup-alerts[\s\S]*contextCurrent/, 'conversation loading fences collection summary and alerts');
 assert.match(ui, /importVisible\(context[\s\S]*messages\/batch[\s\S]*context/, 'chat import writes use immutable account context');
 assert.match(ui, /analyzeConversation\(context[\s\S]*api\('\/api\/ws\/analyses'[\s\S]*context/, 'AI analysis writes use immutable account context');
 assert.match(ui, /saveCustomerTo[\s\S]*captureContext[\s\S]*api\('\/api\/ws\/conversations'[\s\S]*context/, 'customer sync is account fenced');
 assert.match(ui, /saveFollowup[\s\S]*captureContext[\s\S]*assertContext/, 'follow-up writes are account fenced');
+assert.match(ui, /saveSettings\(sequence, context[\s\S]*api\('\/api\/ws\/settings[\s\S]*context/, 'debounced settings writes keep account context');
+assert.match(ui, /createConversation[\s\S]*api\('\/api\/ws\/conversations'[\s\S]*context/, 'conversation creation keeps account context');
+assert.match(ui, /copyReply[\s\S]*api\('\/api\/ws\/replies'[\s\S]*context/, 'reply records keep account context');
+assert.match(ui, /createCollectionRun[\s\S]*api\('\/api\/ws\/collection-runs'[\s\S]*context/, 'collection controls keep account context');
 assert.match(ui, /pendingRestoreAccountId/, 'restore signals are queued before account list loading');
 assert.match(ui, /loadAccounts\(\)[\s\S]*wsBridge\('open'\)[\s\S]*loadConversations/, 'activation opens persisted account before loading data');
 assert.match(ui, /leftCollapsed|rightCollapsed/, 'left and right panels remain independently collapsible');

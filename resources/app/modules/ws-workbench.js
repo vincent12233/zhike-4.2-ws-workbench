@@ -81,9 +81,13 @@
       if (sequence !== state.accountLoadSequence && !state.pendingRestoreAccountId) return;
       state.accounts = Array.isArray(result?.accounts) ? result.accounts : [];
       const stored = readStoredAccountId();
-      const preferred = state.pendingRestoreAccountId || stored;
+      const pending = state.pendingRestoreAccountId;
+      const preferred = pending || stored;
       if (state.accounts.some(item => String(item.id) === preferred)) state.activeAccountId = preferred;
-      else if (state.accounts.some(item => String(item.id) === 'default')) state.activeAccountId = 'default';
+      else if (state.accounts.some(item => String(item.id) === 'default')) {
+        state.activeAccountId = 'default';
+        if (pending) state.error = 'WS 上一个账号已不存在，已切换到默认账号；请重新添加并登录。';
+      }
       state.pendingRestoreAccountId = '';
       writeStoredAccountId(state.activeAccountId);
       const active = activeAccount();
@@ -126,6 +130,7 @@
     state.accountBusy = true;
     state.collectionRefreshing = false;
     state.autoCaptureSignature = '';
+    clearTimeout(settingsSaveTimer); settingsSaveTimer = undefined; ++settingsSaveSequence;
     state.busy.import = false; state.busy.customer = false; state.busy.followup = false; state.aiBusy = false;
     state.activeAccountId = id;
     state.currentConversationId = '';
@@ -269,22 +274,28 @@
   async function loadConversations() {
     const sequence = ++loadSequence;
     const accountId = String(state.activeAccountId || 'default');
+    const context = captureContext('');
     state.loading = true;
     state.error = '';
     render();
     try {
-      const result = await api('/api/ws/conversations?limit=200');
-      if (sequence !== loadSequence || accountId !== String(state.activeAccountId || 'default')) return;
-      try { state.collectionRun = (await api('/api/ws/collection-runs')).run || null; } catch {}
-      try { state.followupAlerts = (await api('/api/ws/followup-alerts?limit=8')).alerts || []; } catch {}
+      const [result, runResult, alertResult] = await Promise.all([
+        api('/api/ws/conversations?limit=200', {}, context),
+        api('/api/ws/collection-runs', {}, context).catch(() => null),
+        api('/api/ws/followup-alerts?limit=8', {}, context).catch(() => null),
+      ]);
+      if (sequence !== loadSequence || !contextCurrent(context)) return;
+      if (runResult) { assertContext(context); state.collectionRun = runResult.run || null; }
+      if (alertResult) { assertContext(context); state.followupAlerts = alertResult.alerts || []; }
       state.conversations = Array.isArray(result.conversations) ? result.conversations : [];
       if (!state.currentConversationId && state.conversations[0]) state.currentConversationId = state.conversations[0].id;
       if (state.currentConversationId) await loadConversationData(state.currentConversationId, false);
+      assertContext(context);
       state.lastLoadedAt = nowIso();
     } catch (error) {
-      if (sequence === loadSequence && accountId === String(state.activeAccountId || 'default')) state.error = error.message;
+      if (sequence === loadSequence && contextCurrent(context)) state.error = error.message;
     } finally {
-      if (sequence === loadSequence && accountId === String(state.activeAccountId || 'default')) { state.loading = false; render(); }
+      if (sequence === loadSequence && contextCurrent(context)) { state.loading = false; render(); }
     }
   }
   async function refreshCollectionSummary() {
@@ -303,8 +314,10 @@
       state.followupAlerts = alerts.alerts || [];
       if (state.wsStatus === '已连接') {
         const visible = await wsBridge('discover-conversations').catch(() => null);
+        assertContext(context);
         if (visible?.supported && visible.conversations?.length) await enqueueDiscoveredConversations(visible.conversations, false, context);
       }
+      assertContext(context);
       render();
     } catch (error) { if (contextCurrent(context) && error?.message && !/过期操作/.test(error.message)) state.error = error.message; } finally {
       if (contextCurrent(context)) state.collectionRefreshing = false;
@@ -313,7 +326,11 @@
   async function enqueueDiscoveredConversations(items, announce = true, context = captureContext()) {
     if (!Array.isArray(items) || !items.length) return 0;
     assertContext(context);
-    if (!state.collectionRun) state.collectionRun = (await api('/api/ws/collection-runs', { method: 'POST', body: JSON.stringify({}) }, context)).run;
+    if (!state.collectionRun) {
+      const runResult = await api('/api/ws/collection-runs', { method: 'POST', body: JSON.stringify({}) }, context);
+      assertContext(context);
+      state.collectionRun = runResult.run;
+    }
     let queued = 0;
     for (const item of items) {
       const externalId = text(item.externalId || `visible-${item.index}`); const title = text(item.title || externalId);
@@ -324,21 +341,35 @@
       const conversation = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId, title, customerId: matchedCustomerId, lastMessageText: preview, unreadCount: Number(item.unreadCount || 0), data: { discovery: 'visible-page', previewOnly: true, historyLoaded: false, customerMatch: matchedCustomerId ? 'automatic' : 'pending' } }) }, context);
       assertContext(context);
       await api('/api/ws/collection-items', { method: 'POST', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: conversation.id, status: 'queued' }) }, context);
+      assertContext(context);
       queued += 1;
     }
     assertContext(context);
-    state.conversations = (await api('/api/ws/conversations?limit=200', {}, context)).conversations || state.conversations;
+    const refreshed = await api('/api/ws/conversations?limit=200', {}, context);
+    assertContext(context);
+    state.conversations = refreshed.conversations || state.conversations;
     if (announce) toast(`已发现 ${items.length} 个会话，入队 ${queued} 个`);
     return queued;
   }
   async function createCollectionRun() {
-    try { state.collectionRun = (await api('/api/ws/collection-runs', { method: 'POST', body: JSON.stringify({}) })).run; toast('已创建采集任务，请开始读取 WhatsApp Web 会话'); render(); }
-    catch (error) { state.error = error.message; render(); }
+    const context = captureContext();
+    try {
+      const result = await api('/api/ws/collection-runs', { method: 'POST', body: JSON.stringify({}) }, context);
+      assertContext(context);
+      state.collectionRun = result.run;
+      toast('已创建采集任务，请开始读取 WhatsApp Web 会话'); render();
+    } catch (error) { if (contextCurrent(context)) { state.error = error.message; render(); } }
   }
   async function updateCollectionRun(status) {
     if (!state.collectionRun?.id) return;
-    try { state.collectionRun = (await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status }) })).run; toast(status === 'paused' ? '采集已暂停' : status === 'stopped' ? '采集已停止' : '采集已继续'); render(); }
-    catch (error) { state.error = error.message; render(); }
+    const context = captureContext();
+    const runId = state.collectionRun.id;
+    try {
+      const result = await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: runId, status }) }, context);
+      assertContext(context);
+      state.collectionRun = result.run;
+      toast(status === 'paused' ? '采集已暂停' : status === 'stopped' ? '采集已停止' : '采集已继续'); render();
+    } catch (error) { if (contextCurrent(context)) { state.error = error.message; render(); } }
   }
   async function discoverConversations() {
     const context = captureContext();
@@ -346,10 +377,12 @@
       const result = await wsBridge('discover-conversations'); assertContext(context); if (!result?.supported) throw new Error(result?.error || '当前页面结构未识别'); state.discoveredConversations = result.conversations || [];
       const queued = await enqueueDiscoveredConversations(state.discoveredConversations, false, context);
       assertContext(context);
-      state.collectionRun = (await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', discovered: state.discoveredConversations.length, total: state.discoveredConversations.length }) }, context)).run;
+      const runResult = await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', discovered: state.discoveredConversations.length, total: state.discoveredConversations.length }) }, context);
+      assertContext(context);
+      state.collectionRun = runResult.run;
       toast(`已发现 ${state.discoveredConversations.length} 个会话，入队 ${queued} 个`); render();
     }
-    catch (error) { state.error = error.message; render(); }
+    catch (error) { if (contextCurrent(context)) { state.error = error.message; render(); } }
   }
   async function captureVisibleMessages() {
     const current = activeConversation(); if (!current) { toast('请先选择一个本机会话', 'x'); return; }
@@ -439,23 +472,23 @@
     const externalId = text($('#wsConversationExternalId')?.value || state.createExternalId);
     const title = text($('#wsConversationTitle')?.value || state.createTitle);
     if (!externalId) { toast('请输入 WS 会话标识；不读取平台账号或 Cookie。', 'x'); return; }
+    const context = captureContext();
     state.busy.customer = true;
     render();
     try {
-      const item = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId, title }) });
+      const item = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId, title }) }, context);
+      assertContext(context);
       const existing = state.conversations.find(row => String(row.id) === String(item.id));
       state.conversations = existing ? state.conversations.map(row => String(row.id) === String(item.id) ? item : row) : [item, ...state.conversations];
       state.createExternalId = '';
       state.createTitle = '';
       state.mobilePanel = 'center';
       await loadConversationData(item.id, false);
-      toast(existing ? '已打开现有 WS 会话' : '已建立本机会话记录');
+      if (contextCurrent(context)) toast(existing ? '已打开现有 WS 会话' : '已建立本机会话记录');
     } catch (error) {
-      state.error = error.message;
-      toast(error.message, 'x');
+      if (contextCurrent(context)) { state.error = error.message; toast(error.message, 'x'); }
     } finally {
-      state.busy.customer = false;
-      render();
+      if (contextCurrent(context)) { state.busy.customer = false; render(); }
     }
   }
 
@@ -656,27 +689,33 @@
     requestAnimationFrame(resizeWsView);
   }
 
-  async function saveSettings(sequence) {
+  async function saveSettings(sequence, context, snapshot) {
+    context ||= captureContext();
     const current = activeConversation();
-    if (!current) return;
+    if (!current || !contextCurrent(context)) return;
+    const settings = snapshot || { ...state.settings, aiEnabled: state.aiEnabled };
     try {
       const saved = await api('/api/ws/settings?conversationId=' + encodeURIComponent(current.id), {
         method: 'PUT',
-        body: JSON.stringify({ ...state.settings, aiEnabled: state.aiEnabled }),
-      });
-      if (sequence !== settingsSaveSequence) return;
+        body: JSON.stringify(settings),
+      }, context);
+      if (sequence !== settingsSaveSequence || !contextCurrent(context)) return;
       state.settings = core.normalizeTranslationSettings(saved);
       state.aiEnabled = saved.aiEnabled !== false;
       state.translationStatus = state.settings.enabled ? `${core.translationMode(state.settings)} · 设置已保存` : '翻译已关闭 · 手动翻译仍可用';
     } catch (error) {
-      state.error = '翻译设置保存失败：' + error.message;
-      toast(state.error, 'x');
+      if (sequence === settingsSaveSequence && contextCurrent(context)) {
+        state.error = '翻译设置保存失败：' + error.message;
+        toast(state.error, 'x');
+      }
     }
   }
   function queueSaveSettings() {
     clearTimeout(settingsSaveTimer);
     const sequence = ++settingsSaveSequence;
-    settingsSaveTimer = setTimeout(() => saveSettings(sequence), 220);
+    const context = captureContext();
+    const snapshot = { ...state.settings, aiEnabled: state.aiEnabled };
+    settingsSaveTimer = setTimeout(() => saveSettings(sequence, context, snapshot), 220);
   }
   function sendLanguage() {
     if (state.settings.sendLanguage && state.settings.sendLanguage !== '自动识别') return state.settings.sendLanguage;
@@ -1152,6 +1191,7 @@
     requestAnimationFrame(() => $('#wsReplyInput')?.focus());
   }
   async function translateReply() {
+    const context = captureContext();
     const draft = currentDraft();
     const input = text(draft.replyInput || $('#wsReplyInput')?.value);
     if (!input) { toast('请先输入回复内容。', 'x'); return null; }
@@ -1159,18 +1199,18 @@
     draft.replyError = '';
     render();
     try {
+      assertContext(context);
       const result = await translateText(input, 'send');
+      assertContext(context);
       draft.replyPreview = result.translated;
       draft.replyPreviewSource = input;
       draft.replyPreviewLanguage = result.destination;
       return result.translated;
     } catch (error) {
-      draft.replyError = error.message + ' 原文仍可继续使用。';
-      toast(error.message, 'x');
+      if (contextCurrent(context)) { draft.replyError = error.message + ' 原文仍可继续使用。'; toast(error.message, 'x'); }
       return null;
     } finally {
-      state.busy.reply = false;
-      render();
+      if (contextCurrent(context)) { state.busy.reply = false; render(); }
     }
   }
   async function copyReply() {
@@ -1179,10 +1219,12 @@
     const input = text(draft.replyInput || $('#wsReplyInput')?.value);
     if (state.busy.reply) return;
     if (!current || !input) { toast('请先输入回复内容。', 'x'); return; }
+    const context = captureContext(current.id);
     state.busy.reply = true;
     draft.replyError = '';
     render();
     try {
+      assertContext(context);
       let output = input;
       let language = '原文';
       if (core.shouldTranslate(state.settings, 'send')) {
@@ -1191,6 +1233,7 @@
           language = draft.replyPreviewLanguage || sendLanguage();
         } else {
           const result = await translateText(input, 'send');
+          assertContext(context);
           output = result.translated;
           language = result.destination;
           draft.replyPreview = output;
@@ -1208,20 +1251,20 @@
       if (!window.zhikeDesktop?.tools) throw new Error('当前环境没有本机剪贴板能力。');
       const copied = await window.zhikeDesktop.tools({ action: 'copy', text: output });
       if (!copied?.ok || copied.truncated || Number(copied.length) !== output.length) throw new Error('回复复制不完整，已停止并保留原文。');
+      assertContext(context);
       draft.replyOperationId ||= 'ws-reply-' + Date.now().toString(36) + '-' + stableHash(current.id + input + output);
       const saved = await api('/api/ws/replies', {
         method: 'POST',
         body: JSON.stringify({ conversationId: current.id, originalText: input, translatedText: output, status: 'copied', idempotencyKey: draft.replyOperationId }),
-      });
+      }, context);
+      assertContext(context);
       state.replies = [saved, ...state.replies.filter(item => String(item.id) !== String(saved.id))].slice(0, 10);
       draft.replyOperationId = '';
       toast(`回复已完整复制（${output.length} 字），请回到 WS 页面人工发送。`);
     } catch (error) {
-      draft.replyError = error.message;
-      toast(error.message, 'x');
+      if (contextCurrent(context)) { draft.replyError = error.message; toast(error.message, 'x'); }
     } finally {
-      state.busy.reply = false;
-      render();
+      if (contextCurrent(context)) { state.busy.reply = false; render(); }
     }
   }
 
