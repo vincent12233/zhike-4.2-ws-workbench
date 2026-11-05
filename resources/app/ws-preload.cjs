@@ -26,6 +26,6 @@ function discoverVisibleConversations() {
 }
 function captureVisibleMessages() {
   const nodes = [...document.querySelectorAll('[data-pre-plain-text], [data-testid="msg-container"]')].slice(-500);
-  return { supported: nodes.length > 0, messages: nodes.map((node, index) => ({ index, text: String(node.getAttribute('aria-label') || node.getAttribute('data-pre-plain-text') || '').slice(0, 12000), marker: String(node.getAttribute('data-id') || '').slice(0, 200) })).filter(item => item.text) };
+  return { supported: nodes.length > 0, messages: nodes.map((node, index) => { const outgoing = Boolean(node.closest?.('.message-out, [data-testid="msg-out"]')); const raw = String(node.getAttribute('aria-label') || node.getAttribute('data-pre-plain-text') || '').slice(0, 12000); return { index, text: outgoing ? `我：${raw}` : `客户：${raw}`, direction: outgoing ? 'send' : 'receive', marker: String(node.getAttribute('data-id') || '').slice(0, 200) }; }).filter(item => item.text) };
 }
 contextBridge.exposeInMainWorld('zhikeWsPage', Object.freeze({ version: '3', purpose: 'visible-page-only', probeStatus, captureSelection, discoverVisibleConversations, captureVisibleMessages }));
