@@ -34,6 +34,7 @@
     createExternalId: '',
     createTitle: '',
     error: '',
+    collectionRun: null,
   };
   let rendering = false;
   let observer;
@@ -160,6 +161,7 @@
     render();
     try {
       const result = await api('/api/ws/conversations?limit=200');
+      try { state.collectionRun = (await api('/api/ws/collection-runs')).run || null; } catch {}
       state.conversations = Array.isArray(result.conversations) ? result.conversations : [];
       if (!state.currentConversationId && state.conversations[0]) state.currentConversationId = state.conversations[0].id;
       if (state.currentConversationId) await loadConversationData(state.currentConversationId, false);
@@ -170,6 +172,12 @@
       state.loading = false;
       render();
     }
+  }
+  function renderCollectionCard() {
+    const run = state.collectionRun;
+    if (!run) return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>采集与跟进</strong><span>尚未创建采集任务</span></div></div><p class="ws-muted">采集会话后再由 AI 分析，并把需要跟进的客户写入跟进记录。</p></section>`;
+    const pending = Math.max(0, run.total - run.completed - run.failed - run.skipped);
+    return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>采集与跟进</strong><span>${esc(run.status)} · 更新于 ${esc(displayTime(run.updatedAt))}</span></div></div><div class="ws-collection-stats"><b>${run.completed}/${run.total || run.discovered}</b><span>已采集</span><b>${run.analyzed}</b><span>已分析</span><b>${run.retryable}</b><span>待重试</span><b>${pending}</b><span>待处理</span></div>${run.lastError ? `<p class="ws-error-line">${esc(run.lastError)}</p>` : '<p class="ws-muted">AI 将优先标记高意向、紧急或超过建议跟进时间的客户；最终发送仍需人工确认。</p>'}</section>`;
   }
   async function loadConversationData(id, redraw = true) {
     state.currentConversationId = String(id || '');
@@ -375,6 +383,7 @@
               <button class="btn small primary ws-full-button" data-ws-action="analyze" ${!current || !state.messages.length || !state.aiEnabled || state.aiBusy ? 'disabled' : ''}>${state.aiBusy ? '分析中…' : state.analysis ? '重新分析当前聊天' : '分析当前聊天'}</button>
               <div class="ws-analysis-content">${renderAnalysis()}</div>
             </section>
+            ${renderCollectionCard()}
             <section class="ws-card">
               <div class="ws-card-heading"><div><strong>客户资料</strong><span>所有 AI 字段均可人工修改后再保存</span></div></div>
               <div class="ws-customer-fields">

@@ -45,7 +45,7 @@ async function request(pathname, init = {}) {
 (async () => {
   try {
     const diagnostics = await (await request('/api/ws/diagnostics')).json();
-    assert.equal(diagnostics.schemaVersion, 6);
+    assert.ok(diagnostics.schemaVersion >= 7);
     const settings = await (await request('/api/ws/settings?conversationId=conv-v5')).json();
     assert.equal(settings.enabled, false);
     assert.equal(settings.receive, true);
@@ -56,7 +56,7 @@ async function request(pathname, init = {}) {
     assert.equal(messages.messages[0].translationStatus, 'translated');
     assert.equal(messages.messages[0].translatedText, '你好');
     const exported = await (await request('/api/ws/export')).json();
-    assert.equal(exported.schemaVersion, 6);
+    assert.ok(exported.schemaVersion >= 6);
     assert.deepEqual(exported.batches, []);
     console.log('ws-workbench-migration-v6: pass');
   } finally {

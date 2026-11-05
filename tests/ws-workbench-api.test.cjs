@@ -112,7 +112,7 @@ async function json(response) { return response.json(); }
     assert.equal(replies.replies[0].idempotencyKey, 'reply-copy-001');
 
     const diagnostics = await json(await request('/api/ws/diagnostics'));
-    assert.equal(diagnostics.schemaVersion, 6);
+    assert.ok(diagnostics.schemaVersion >= 7);
     assert.equal(diagnostics.counts.messages, 3);
     assert.equal(diagnostics.counts.batches, 1);
 

@@ -120,6 +120,16 @@ if (Number(db.prepare('PRAGMA user_version').get().user_version || 0) < 6) {
     db.exec('PRAGMA user_version = 6; COMMIT');
   } catch (error) { db.exec('ROLLBACK'); throw error; }
 }
+if (Number(db.prepare('PRAGMA user_version').get().user_version || 0) < 7) {
+  const migrationPath = join(root, 'migrations', '007-ws-collection-followup.sql');
+  const migration = readFileSync(migrationPath, 'utf8');
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    db.exec(migration);
+    db.prepare('INSERT OR IGNORE INTO schema_migrations(version,applied_at,description) VALUES(?,?,?)').run(7, new Date().toISOString(), '4.2 WS 全会话采集、AI 分析与跟进队列');
+    db.exec('PRAGMA user_version = 7; COMMIT');
+  } catch (error) { db.exec('ROLLBACK'); throw error; }
+}
 
 function databaseDiagnostics() {
   const integrity = db.prepare('PRAGMA integrity_check').all().map(row => Object.values(row)[0]);
@@ -362,6 +372,8 @@ function wsMessagePayload(row) { return { id: row.id, conversationId: row.conver
 function wsAnalysisPayload(row) { return { id: row.id, conversationId: row.conversation_id, result: wsJson(row.result_json), confidence: Number(row.confidence || 0), providerName: row.provider_name, model: row.model, errorMessage: row.error_message, createdAt: row.created_at, updatedAt: row.updated_at }; }
 function wsReplyPayload(row) { return { id: row.id, conversationId: row.conversation_id, originalText: row.original_text, translatedText: row.translated_text, status: row.status, idempotencyKey: row.idempotency_key || '', createdAt: row.created_at, updatedAt: row.updated_at }; }
 function wsBatchPayload(row) { return { id: row.id, conversationId: row.conversation_id, fingerprint: row.fingerprint, messageCount: Number(row.message_count || 0), insertedCount: Number(row.inserted_count || 0), messageIds: wsJson(row.message_ids_json, []), createdAt: row.created_at, updatedAt: row.updated_at }; }
+function wsCollectionRunPayload(row) { return { id: row.id, status: row.status, total: Number(row.total||0), discovered: Number(row.discovered||0), completed: Number(row.completed||0), analyzing: Number(row.analyzing||0), analyzed: Number(row.analyzed||0), failed: Number(row.failed||0), skipped: Number(row.skipped||0), retryable: Number(row.retryable||0), lastError: row.last_error||'', checkpoint: row.checkpoint||'', createdAt: row.created_at, updatedAt: row.updated_at }; }
+function wsCollectionItemPayload(row) { return { id: row.id, runId: row.run_id, conversationId: row.conversation_id, status: row.status, attempts: Number(row.attempts||0), analysisStatus: row.analysis_status, followupStatus: row.followup_status, nextFollowupAt: row.next_followup_at||'', lastError: row.last_error||'', checkpoint: row.checkpoint||'', createdAt: row.created_at, updatedAt: row.updated_at }; }
 function wsConversationRow(id) { return db.prepare('SELECT * FROM ws_conversations WHERE id=?').get(String(id || '')); }
 function wsRequireConversation(id) { const row = wsConversationRow(id); if (!row) throw new Error('WS 会话不存在或已被清理。'); return row; }
 function wsCreateId(prefix) { return `${prefix}-${Date.now().toString(36)}-${randomBytes(5).toString('hex')}`; }
@@ -614,8 +626,19 @@ const server = createServer(async (req, res) => {
       }
       return json(res, 405, { error: 'WS 回复只支持 GET/POST/PUT。' });
     }
+    if (url.pathname === '/api/ws/collection-runs') {
+      if (req.method === 'GET') { const row = url.searchParams.get('id') ? db.prepare('SELECT * FROM ws_collection_runs WHERE id=?').get(url.searchParams.get('id')) : db.prepare('SELECT * FROM ws_collection_runs ORDER BY created_at DESC LIMIT 1').get(); return json(res,200,{run:row?wsCollectionRunPayload(row):null}); }
+      if (req.method === 'POST') { const body=JSON.parse((await readBody(req,64*1024)).toString('utf8')); const now=new Date().toISOString(), id=wsText(body.id,160)||wsCreateId('wsr'); db.prepare('INSERT INTO ws_collection_runs(id,status,created_at,updated_at) VALUES(?,?,?,?)').run(id,'created',now,now); return json(res,201,{run:wsCollectionRunPayload(db.prepare('SELECT * FROM ws_collection_runs WHERE id=?').get(id))}); }
+      if (req.method === 'PATCH') { const body=JSON.parse((await readBody(req,64*1024)).toString('utf8')); const id=wsText(body.id,160), existing=db.prepare('SELECT * FROM ws_collection_runs WHERE id=?').get(id); if(!existing)return json(res,404,{error:'采集任务不存在。'}); const n=k=>Math.max(0,Math.floor(Number(body[k] ?? existing[k])||0)); const now=new Date().toISOString(); db.prepare('UPDATE ws_collection_runs SET status=?,total=?,discovered=?,completed=?,analyzing=?,analyzed=?,failed=?,skipped=?,retryable=?,last_error=?,checkpoint=?,updated_at=? WHERE id=?').run(wsText(body.status,30)||existing.status,n('total'),n('discovered'),n('completed'),n('analyzing'),n('analyzed'),n('failed'),n('skipped'),n('retryable'),wsText(body.lastError??existing.last_error,1000),wsText(body.checkpoint??existing.checkpoint,500),now,id); return json(res,200,{run:wsCollectionRunPayload(db.prepare('SELECT * FROM ws_collection_runs WHERE id=?').get(id))}); }
+      return json(res,405,{error:'采集任务只支持 GET/POST/PATCH。'});
+    }
+    if (url.pathname === '/api/ws/collection-items') {
+      if (req.method === 'GET') { const runId=wsText(url.searchParams.get('runId'),160); return json(res,200,{items:db.prepare('SELECT * FROM ws_collection_items WHERE run_id=? ORDER BY updated_at DESC').all(runId).map(wsCollectionItemPayload)}); }
+      if (req.method === 'POST' || req.method === 'PATCH') { const body=JSON.parse((await readBody(req,128*1024)).toString('utf8')); const runId=wsText(body.runId,160), conversationId=wsText(body.conversationId,160); if(!db.prepare('SELECT 1 FROM ws_collection_runs WHERE id=?').get(runId))return json(res,404,{error:'采集任务不存在。'}); wsRequireConversation(conversationId); const now=new Date().toISOString(), existing=db.prepare('SELECT * FROM ws_collection_items WHERE run_id=? AND conversation_id=?').get(runId,conversationId), id=existing?.id||wsText(body.id,160)||wsCreateId('wsi'); const val=(key,old,max=1000)=>wsText(body[key]??old,max); if(existing) db.prepare('UPDATE ws_collection_items SET status=?,attempts=?,analysis_status=?,followup_status=?,next_followup_at=?,last_error=?,checkpoint=?,updated_at=? WHERE id=?').run(val('status',existing.status,30),Math.max(0,Math.floor(Number(body.attempts??existing.attempts)||0)),val('analysisStatus',existing.analysis_status,30),val('followupStatus',existing.followup_status,30),val('nextFollowupAt',existing.next_followup_at,80),val('lastError',existing.last_error),val('checkpoint',existing.checkpoint,500),now,id); else db.prepare('INSERT INTO ws_collection_items(id,run_id,conversation_id,status,attempts,analysis_status,followup_status,next_followup_at,last_error,checkpoint,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run(id,runId,conversationId,val('status','queued',30),Math.max(0,Math.floor(Number(body.attempts)||0)),val('analysisStatus','pending',30),val('followupStatus','none',30),val('nextFollowupAt','',80),val('lastError',''),val('checkpoint','',500),now,now); return json(res,200,{item:wsCollectionItemPayload(db.prepare('SELECT * FROM ws_collection_items WHERE id=?').get(id))}); }
+      return json(res,405,{error:'采集项只支持 GET/POST/PATCH。'});
+    }
     if (req.method === 'GET' && url.pathname === '/api/ws/diagnostics') {
-      return json(res, 200, { schemaVersion: Number(db.prepare('PRAGMA user_version').get().user_version || 0), counts: { settings: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_settings').get().count || 0), conversations: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_conversations').get().count || 0), messages: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_messages').get().count || 0), analyses: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_ai_analyses').get().count || 0), replies: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_replies').get().count || 0), batches: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_ingest_batches').get().count || 0) } });
+      return json(res, 200, { schemaVersion: Number(db.prepare('PRAGMA user_version').get().user_version || 0), counts: { settings: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_settings').get().count || 0), conversations: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_conversations').get().count || 0), messages: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_messages').get().count || 0), analyses: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_ai_analyses').get().count || 0), replies: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_replies').get().count || 0), batches: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_ingest_batches').get().count || 0), collectionRuns: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_collection_runs').get().count || 0), collectionItems: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_collection_items').get().count || 0) } });
     }
     if (req.method === 'GET' && url.pathname === '/api/ws/export') {
       const conversations = db.prepare('SELECT * FROM ws_conversations ORDER BY updated_at DESC').all().map(wsConversationPayload);
