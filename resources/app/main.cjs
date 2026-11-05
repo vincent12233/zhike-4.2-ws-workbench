@@ -18,6 +18,7 @@ let mainWindow = null;
 let wsView = null;
 let wsViewState = '未连接';
 let wsViewHidden = false;
+let wsProbeTimer = null;
 const wsAllowedOrigins = new Set(['https://web.whatsapp.com', 'https://www.whatsapp.com']);
 const wsEntryUrl = 'https://web.whatsapp.com/';
 // WhatsApp Web rejects Electron's default UA because it contains an Electron token.
@@ -248,6 +249,7 @@ function resizeWsView(bounds = null) {
   wsViewHidden = false;
 }
 function destroyWsView() {
+  if (wsProbeTimer) { clearInterval(wsProbeTimer); wsProbeTimer = null; }
   if (!wsView) { setWsStatus('未连接'); return; }
   try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.removeBrowserView(wsView); } catch {}
   try { if (!wsView.webContents.isDestroyed()) wsView.webContents.close(); } catch {}
@@ -279,11 +281,13 @@ function ensureWsView() {
   });
   view.webContents.on('did-start-loading', () => { if (view === wsView && wsViewState !== '正在重连') setWsStatus('登录中'); });
   view.webContents.on('did-finish-load', () => { void probeWsStatus(view); });
+  view.webContents.on('did-navigate', () => { void probeWsStatus(view); });
   view.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
     if (errorCode !== -3) setWsStatus('连接失败', errorDescription || 'WS 页面加载失败。');
   });
   view.webContents.on('render-process-gone', () => { if (view === wsView) setWsStatus('连接失败', 'WS 页面进程已结束。'); });
   view.webContents.on('destroyed', () => { if (view === wsView) wsView = null; });
+  wsProbeTimer = setInterval(() => { if (wsView === view && !view.webContents.isDestroyed()) void probeWsStatus(view); }, 15000);
   resizeWsView({ hidden: true });
   return wsView;
 }
