@@ -241,10 +241,14 @@ function resizeWsView(bounds = null) {
     wsViewHidden = true;
     return;
   }
-  const x = Math.max(0, Math.round(Number(input.x) || 0));
-  const y = Math.max(0, Math.round(Number(input.y) || 0));
-  const width = Math.max(260, Math.round(Number(input.width) || Math.max(260, content.width - x)));
-  const height = Math.max(240, Math.round(Number(input.height) || Math.max(240, content.height - y)));
+  const rawX = Math.max(0, Math.round(Number(input.x) || 0));
+  const rawY = Math.max(0, Math.round(Number(input.y) || 0));
+  const x = Math.min(rawX, Math.max(0, content.width - 260));
+  const y = Math.min(rawY, Math.max(0, content.height - 240));
+  const requestedWidth = Math.round(Number(input.width) || content.width - x);
+  const requestedHeight = Math.round(Number(input.height) || content.height - y);
+  const width = Math.max(260, Math.min(requestedWidth, content.width - x));
+  const height = Math.max(240, Math.min(requestedHeight, content.height - y));
   wsView.setBounds({ x, y, width, height });
   wsViewHidden = false;
 }
