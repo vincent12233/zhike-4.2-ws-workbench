@@ -38,12 +38,14 @@
     followupAlerts: [],
     discoveredConversations: [],
     collectionRefreshing: false,
+    autoCaptureSignature: '',
   };
   let rendering = false;
   let observer;
   let settingsSaveTimer;
   let settingsSaveSequence = 0;
   let collectionRefreshTimer;
+  let autoCaptureTimer;
   let loadSequence = 0;
 
   function toast(message, icon = 'check') { getHost()?.toast?.(message, icon); }
@@ -239,12 +241,29 @@
       const result = await wsBridge('capture-visible-messages'); if (!result?.supported || !result.messages?.length) throw new Error(result?.error || '当前页面没有可识别的可见消息');
       const draft = currentDraft(); draft.captureText = result.messages.map(item => item.text).join('\n'); state.captureDirection = 'receive'; render();
       await importVisible();
+      if (state.aiEnabled && state.messages.length) await analyzeConversation();
       if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: 'pending', checkpoint: String(result.messages.length) }) });
       toast(`已采集当前会话 ${result.messages.length} 条可见消息`);
     } catch (error) {
       if (state.collectionRun?.id) { try { await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'failed', attempts: 1, lastError: error.message }) }); } catch {} }
       state.error = error.message; render();
     }
+  }
+  async function autoCaptureCurrentConversation() {
+    if (!state.active || state.wsStatus !== '已连接' || state.loading || state.busy.import || state.aiBusy) return;
+    const current = activeConversation();
+    if (!current || ['paused', 'stopped', 'completed'].includes(state.collectionRun?.status)) return;
+    const result = await wsBridge('capture-visible-messages').catch(() => null);
+    if (!result?.supported || !result.messages?.length) return;
+    const text = result.messages.map(item => item.text).join('\n').trim();
+    if (!text || text === state.autoCaptureSignature) return;
+    state.autoCaptureSignature = text;
+    const draft = currentDraft();
+    draft.captureText = text;
+    state.captureDirection = 'receive';
+    await importVisible();
+    if (state.aiEnabled && state.messages.length) await analyzeConversation();
+    if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: state.aiEnabled ? 'completed' : 'pending', checkpoint: String(result.messages.length) }) }).catch(() => {});
   }
   function renderCollectionCard() {
     const run = state.collectionRun;
@@ -1160,7 +1179,9 @@
     if (!host) return;
     state.active = true;
     clearInterval(collectionRefreshTimer);
+    clearInterval(autoCaptureTimer);
     collectionRefreshTimer = setInterval(() => { void refreshCollectionSummary(); }, 30000);
+    autoCaptureTimer = setInterval(() => { void autoCaptureCurrentConversation().catch(() => {}); }, 15000);
     host.state.view = 'ws-workbench';
     state.error = '';
     $('#crumbCurrent').textContent = 'WS 工作台';
@@ -1175,6 +1196,8 @@
     state.active = false;
     clearInterval(collectionRefreshTimer);
     collectionRefreshTimer = undefined;
+    clearInterval(autoCaptureTimer);
+    autoCaptureTimer = undefined;
     document.body.classList.remove('ws-mode');
     wsBridge('hide').catch(() => {});
   }
