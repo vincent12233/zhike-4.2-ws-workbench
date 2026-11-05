@@ -179,13 +179,19 @@
     try { state.collectionRun = (await api('/api/ws/collection-runs', { method: 'POST', body: JSON.stringify({}) })).run; toast('已创建采集任务，请开始读取 WhatsApp Web 会话'); render(); }
     catch (error) { state.error = error.message; render(); }
   }
+  async function updateCollectionRun(status) {
+    if (!state.collectionRun?.id) return;
+    try { state.collectionRun = (await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status }) })).run; toast(status === 'paused' ? '采集已暂停' : status === 'stopped' ? '采集已停止' : '采集已继续'); render(); }
+    catch (error) { state.error = error.message; render(); }
+  }
   function renderCollectionCard() {
     const run = state.collectionRun;
     if (!run) return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>采集与跟进</strong><span>尚未创建采集任务</span></div></div><p class="ws-muted">采集会话后再由 AI 分析，并把需要跟进的客户写入跟进记录。</p><button class="btn small primary ws-full-button" data-ws-action="create-collection-run">创建采集任务</button></section>`;
     const pending = Math.max(0, run.total - run.completed - run.failed - run.skipped);
     const alerts = state.followupAlerts || [];
     const alertHtml = alerts.length ? `<div class="ws-followup-alerts">${alerts.map(item => `<div class="ws-followup-alert"><strong>${esc(item.title || item.externalId || '未命名客户')}</strong><span>${esc(item.intent || item.urgency || '建议跟进')}</span><p>${esc(item.nextStep || item.summary || '请人工查看会话并确认下一步')}</p></div>`).join('')}</div>` : '<p class="ws-muted">当前没有自动识别出的待跟进客户。</p>';
-    return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>采集与跟进</strong><span>${esc(run.status)} · 更新于 ${esc(displayTime(run.updatedAt))}</span></div><button class="btn small" data-ws-action="create-collection-run">新建任务</button></div><div class="ws-collection-stats"><b>${run.completed}/${run.total || run.discovered}</b><span>已采集</span><b>${run.analyzed}</b><span>已分析</span><b>${run.retryable}</b><span>待重试</span><b>${pending}</b><span>待处理</span></div>${run.lastError ? `<p class="ws-error-line">${esc(run.lastError)}</p>` : ''}${alertHtml}</section>`;
+    const controls = run.status === 'paused' ? '<button class="btn small" data-ws-action="resume-collection">继续</button>' : ['created','running','discovering'].includes(run.status) ? '<button class="btn small" data-ws-action="pause-collection">暂停</button><button class="btn small danger" data-ws-action="stop-collection">停止</button>' : '';
+    return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>采集与跟进</strong><span>${esc(run.status)} · 更新于 ${esc(displayTime(run.updatedAt))}</span></div><div>${controls}<button class="btn small" data-ws-action="create-collection-run">新建任务</button></div></div><div class="ws-collection-stats"><b>${run.completed}/${run.total || run.discovered}</b><span>已采集</span><b>${run.analyzed}</b><span>已分析</span><b>${run.retryable}</b><span>待重试</span><b>${pending}</b><span>待处理</span></div>${run.lastError ? `<p class="ws-error-line">${esc(run.lastError)}</p>` : ''}${alertHtml}</section>`;
   }
   async function loadConversationData(id, redraw = true) {
     state.currentConversationId = String(id || '');
@@ -986,6 +992,9 @@
     if (action === 'new-conversation') { state.mobilePanel = 'left'; render(); requestAnimationFrame(() => $('#wsConversationExternalId')?.focus()); return; }
     if (action === 'create-conversation') return createConversation();
     if (action === 'create-collection-run') return createCollectionRun();
+    if (action === 'pause-collection') return updateCollectionRun('paused');
+    if (action === 'resume-collection') return updateCollectionRun('running');
+    if (action === 'stop-collection') return updateCollectionRun('stopped');
     if (action === 'select-conversation') { state.mobilePanel = 'center'; return loadConversationData(element.dataset.id); }
     if (action === 'clear-capture') { currentDraft().captureText = ''; render(); return; }
     if (action === 'import-visible') return importVisible();
