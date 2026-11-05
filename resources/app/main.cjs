@@ -228,7 +228,7 @@ function setWsStatus(accountId, status, detail = '') {
   const record = wsViews.get(id);
   const next = ['未连接', '等待登录', '登录中', '已连接', '会话过期', '连接失败', '正在重连'].includes(status) ? status : '未连接';
   if (record) record.status = next;
-  if (id === activeWsAccountId || !record) { wsViewState = next; if (id === activeWsAccountId) wsViewHidden = record?.hidden !== false; }
+  if (id === activeWsAccountId) { wsViewState = next; wsViewHidden = record?.hidden !== false; }
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('zhike-ws-status', { accountId: id, status: next, detail: String(detail || '').slice(0, 200) });
 }
 function wsSession(record) {

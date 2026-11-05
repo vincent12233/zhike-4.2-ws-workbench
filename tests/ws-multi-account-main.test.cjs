@@ -12,6 +12,8 @@ assert.match(main, /activeWsAccountId/, 'main process tracks active account id')
 assert.match(main, /A-Za-z0-9._:-/, 'account ids accept colon as allowed by the account API');
 assert.match(main, /wsViews\.delete\(id\)/, 'destroying a view removes its registry record');
 assert.match(main, /sessionHardened:\s*false/, 'recreated views start with fresh session hardening');
+assert.match(main, /if \(id === activeWsAccountId\) \{ wsViewState/, 'inactive account status cannot overwrite active state');
+assert.match(preload, /accountId.*wsActiveAccountId|wsActiveAccountId.*accountId/, 'preload filters status events to the active account');
 assert.match(main, /persist:ws-workbench-/, 'views use account-isolated persistent partitions');
 assert.match(main, /accountId/, 'WS IPC accepts account ids');
 assert.match(main, /addBrowserView|setBrowserView/, 'views attach to the main window');

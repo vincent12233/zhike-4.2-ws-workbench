@@ -27,3 +27,12 @@ Validation:
 
 - `node tests/ws-multi-account-main.test.cjs` — pass
 - `node scripts/run-tests.cjs all` — 31 checks passed
+
+## Fix round 2
+
+Inactive account status updates are now scoped to the active account before updating legacy aliases. The preload tracks the active account on view-switching actions and filters status events so inactive account events cannot overwrite the renderer's active status display.
+
+Validation:
+
+- `node tests/ws-multi-account-main.test.cjs` — pass
+- `node scripts/run-tests.cjs all` — 31 checks passed
