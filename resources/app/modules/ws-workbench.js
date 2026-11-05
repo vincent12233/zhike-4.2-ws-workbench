@@ -1250,7 +1250,8 @@
         importVisible();
       }
     }, true);
-    view?.addEventListener('scroll', () => { if (state.active) requestAnimationFrame(resizeWsView); }, true);
+    // WS BrowserView is docked to the workbench viewport; page scrolling is
+    // disabled in ws-mode, so it must not chase nested scroll containers.
     window.zhikeDesktop?.onWsStatus?.(payload => {
       if (!payload) return;
       setStatus(payload.status || '未连接', payload.detail || '');
