@@ -37,6 +37,7 @@
     collectionRun: null,
     followupAlerts: [],
     discoveredConversations: [],
+    collectionRefreshing: false,
   };
   let rendering = false;
   let observer;
@@ -180,7 +181,8 @@
     }
   }
   async function refreshCollectionSummary() {
-    if (!state.active || state.loading) return;
+    if (!state.active || state.loading || state.collectionRefreshing) return;
+    state.collectionRefreshing = true;
     try {
       const [result, run, alerts] = await Promise.all([
         api('/api/ws/conversations?limit=200'),
@@ -195,7 +197,9 @@
         if (visible?.supported && visible.conversations?.length) await enqueueDiscoveredConversations(visible.conversations, false);
       }
       render();
-    } catch {}
+    } catch {} finally {
+      state.collectionRefreshing = false;
+    }
   }
   async function enqueueDiscoveredConversations(items, announce = true) {
     if (!Array.isArray(items) || !items.length) return 0;
