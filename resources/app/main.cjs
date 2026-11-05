@@ -278,6 +278,8 @@ function ensureWsView() {
   });
   const view = wsView;
   view.webContents.setUserAgent(wsUserAgent);
+  // Keep the full WhatsApp Web shell usable inside the three-column workbench.
+  view.webContents.setZoomFactor(0.9);
   mainWindow.setBrowserView(view);
   view.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   view.webContents.on('will-navigate', (event, target) => {
