@@ -1,7 +1,10 @@
 body.ws-mode{min-width:0;height:100vh;overflow:hidden}
 .ws-workbench-page{min-width:0;height:100%;display:flex;flex-direction:column;gap:14px;overflow:hidden}
-.ws-page-heading{margin-bottom:0}
-.ws-layout{display:grid;grid-template-columns:minmax(198px,240px) minmax(360px,1fr) minmax(300px,360px);gap:12px;min-height:0;flex:1;overflow:hidden}
+.ws-page-heading{margin-bottom:0;padding:2px 0;gap:8px}
+.ws-page-heading .page-title{font-size:24px;line-height:1.1}
+.ws-page-heading .page-subtitle{font-size:11px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws-page-heading .heading-actions{gap:5px}
+.ws-layout{display:grid;grid-template-columns:minmax(198px,240px) minmax(360px,1fr) minmax(300px,360px);gap:8px;min-height:0;flex:1;overflow:hidden}
 .ws-layout.left-collapsed{grid-template-columns:0 minmax(360px,1fr) minmax(300px,360px)}
 .ws-layout.right-collapsed{grid-template-columns:minmax(198px,240px) minmax(360px,1fr) 0}
 .ws-layout.left-collapsed.right-collapsed{grid-template-columns:0 minmax(360px,1fr) 0}
@@ -20,7 +23,7 @@ body.ws-mode{min-width:0;height:100vh;overflow:hidden}
 .ws-session-avatar{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#e9eef8;color:#3b5ca7;font-weight:700}
 .ws-session-copy{min-width:0}.ws-session-copy strong,.ws-session-copy small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ws-session-copy strong{font-size:12px}.ws-session-copy small{font-size:10px;color:var(--muted,#77839a);margin-top:3px}.ws-session-row em{font-style:normal;font-size:10px;color:#7b5b1c;white-space:nowrap}
 .ws-center-panel{display:flex;flex-direction:column;gap:10px;min-height:0;overflow:hidden}
-.ws-login-toolbar{background:var(--panel,#fff);border:1px solid var(--line,#dfe5ee);border-radius:12px;padding:10px 12px;align-items:flex-start}.ws-toolbar-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.ws-toolbar-actions .btn{font-size:11px;padding:6px 8px}
+.ws-login-toolbar{background:var(--panel,#fff);border:1px solid var(--line,#dfe5ee);border-radius:10px;padding:7px 9px;align-items:flex-start}.ws-toolbar-actions{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}.ws-toolbar-actions .btn{font-size:10px;padding:5px 7px}
 .ws-status-badge{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;font-size:11px;background:#edf1f6;color:#5f6b7d}.ws-status-badge[data-status="已连接"]{background:#e0f5e9;color:#147a45}.ws-status-badge[data-status="连接失败"],.ws-status-badge[data-status="会话过期"]{background:#ffe5e3;color:#a3332e}.ws-status-badge[data-status="登录中"],.ws-status-badge[data-status="正在重连"]{background:#fff1d9;color:#9a6410}
 .ws-browser-host{position:relative;min-height:360px;height:clamp(360px,calc(100vh - 190px),900px);flex:1 1 auto;background:#e9eef4;border:1px solid var(--line,#dfe5ee);border-radius:12px;overflow:hidden}.ws-browser-placeholder{height:100%;display:grid;place-content:center;gap:7px;text-align:center;color:#5f6b7d;font-size:12px}.ws-browser-placeholder strong{font-size:15px;color:#344054}
 .ws-capture-panel{background:var(--panel,#fff);border:1px solid var(--line,#dfe5ee);border-radius:12px;padding:10px 12px}.ws-capture-heading{align-items:flex-start}.ws-capture-heading select{border:1px solid var(--line,#dfe5ee);border-radius:7px;padding:6px;background:var(--input,#fff);color:inherit}.ws-capture-panel textarea{margin-top:8px;resize:vertical;min-height:58px}.ws-capture-actions{margin-top:7px}.ws-muted{font-size:11px;color:var(--muted,#77839a)}
