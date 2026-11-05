@@ -1,20 +1,21 @@
-# 知客 4.2.2 多账号 WS 工作台交付说明
+# 知客 4.2.3 多账号 WS 工作台交付说明
 
 ## 安装包
 
-- 文件：`知客-4.2.2-WS工作台完善版.exe`
-- SHA-256：`11408056AE239637020F91ECBC89A505F77CCE74C09CDC088590DFCE9AE4A62C`
-- 文件大小：173,915,466 字节
-- Git LFS 路径：`releases/知客-4.2.2-WS工作台完善版.exe`
-- 用户输出副本：`C:\Users\酷酷\Documents\Codex\2026-11-04\c-users-documents-codex-2026-11\outputs\知客-4.2.2-WS工作台完善版.exe`
+- 文件：`知客-4.2.3-WS工作台完善版.exe`
+- SHA-256：构建完成后记录
+- 文件大小：构建完成后记录
+- Git LFS 路径：`releases/知客-4.2.3-WS工作台完善版.exe`
+- 用户输出副本：`C:\Users\酷酷\Documents\Codex\2026-11-04\c-users-documents-codex-2026-11\outputs\知客-4.2.3-WS工作台完善版.exe`
 
 安装器已使用 Electron 45.2.1、Node.js 24.22.1 和 Inno Setup 6.7.3 编译。构建脚本先生成隔离 staging，再拒绝打包真实数据库、BrowserView 分区、日志、凭据和密钥。
 
 ## 本次交付内容
 
 - 同一工作台添加多个个人 WS 账号，账号卡片和顶栏标签切换。
+- 添加账号使用工作台内嵌表单，不再调用桌面运行时不支持的 `prompt()`。
 - 每个账号使用独立持久化 BrowserView 分区和账号级 WS 数据。
-- 左侧会话、中央固定 WS 页面、右侧翻译/AI/客户资料/跟进面板可独立收起。
+- 左侧会话和右侧辅助栏可独立收起为窄轨道，状态按本机工作台记忆；顶部标题、登录工具区和 WS 页面边界均采用紧凑布局。
 - 可见会话列表发现、当前可见聊天自动采集、手动导入、原文/译文保留和批次去重。
 - AI 摘要、意向/情绪/语言/需求/预算提取、跟进提醒和回复建议；回复默认只复制不发送。
 - 客户匹配按 WS 外部标识、电话号码、账号关联、会话标识依次处理，同一客户可关联多个 WS 账号。
@@ -25,7 +26,7 @@
 
 - 源码与完整回归：`node scripts/run-tests.cjs all`，35/35 通过。
 - staging：`scripts/build-installer.ps1 -StageOnly` 通过，142 个源文件进入干净 staging，未包含 `resources/app/data`。
-- 安装 QA：`ZHIKE_EXPECTED_VERSION=4.2.2 node tests/ws-installer-qa.cjs` 通过，覆盖隔离安装、覆盖升级、WS 资产、卸载和安装目录用户文件保留。
+- 安装 QA：`ZHIKE_EXPECTED_VERSION=4.2.3 node tests/ws-installer-qa.cjs` 通过，覆盖隔离安装、覆盖升级、WS 资产、卸载和安装目录用户文件保留。
 - 安装器模式：`node scripts/run-tests.cjs installer`，2/2 通过；4.1.3 旧安装包不存在，升级项按脚本约定显示 SKIP，不误报通过。
 
 完整测试表见 `docs/ws-workbench-测试报告.md`；多账号使用和限制见 `docs/ws-workbench-multi-account.md`。

@@ -1,4 +1,4 @@
-# 知客 4.2.2 WS 工作台
+# 知客 4.2.3 WS 工作台
 
 这是现有知客 4.1 客户运营桌面项目的增量源码仓库。项目保留原有客户中心、快速录入、跟票、入金、统计、数据中心、设置和 GPT 助手业务逻辑，并增加个人 WS 工作台。
 
@@ -11,7 +11,8 @@
 - `scripts/`：统一测试入口与可复现的 Windows 安装包构建脚本。
 - `releases/知客-4.2-WS工作台版.exe`：Windows 安装包，通过 Git LFS 保存。
 - `releases/知客-4.2.1-WS工作台完善版.exe`：历史 WS 完善版安装包，通过 Git LFS 保存。
-- `releases/知客-4.2.2-WS工作台完善版.exe`：当前多账号 WS 工作台安装包，通过 Git LFS 保存。
+- `releases/知客-4.2.2-WS工作台完善版.exe`：历史多账号 WS 工作台安装包，通过 Git LFS 保存。
+- `releases/知客-4.2.3-WS工作台完善版.exe`：当前紧凑多账号 WS 工作台安装包，通过 Git LFS 保存。
 - `zhike-setup.iss`：Windows Inno Setup 安装脚本。
 
 ## 安装包
@@ -22,7 +23,7 @@
 
 当前 4.2.2 多账号 WS 工作台安装包 SHA-256：`11408056AE239637020F91ECBC89A505F77CCE74C09CDC088590DFCE9AE4A62C`，大小 173,915,466 字节。
 
-4.2.2 增加同一工作台的多 WS 账号标签式切换、独立持久化登录分区、账号级采集/翻译/AI/客户关联、过期响应隔离和可见列表外部标识匹配；原有知客业务数据和统计口径保持不变。
+4.2.3 当前安装包的 SHA-256 和大小以本次构建后的发布记录为准。4.2.3 在 4.2.2 多账号能力上补充紧凑顶部工具区、左右侧栏可收起为窄轨道并记忆状态、WS BrowserView 边界安全阈值，以及不依赖 `prompt()` 的内嵌添加账号表单；原有知客业务数据和统计口径保持不变。
 
 克隆仓库前请安装 Git LFS；执行 `git lfs pull` 可下载完整安装包。安装包已经包含 Electron 和本机 Node 运行时，因此这些打包二进制不重复放入源码目录。
 
@@ -46,9 +47,9 @@ npm --prefix resources/app run test:all
 安装测试默认使用 `releases/` 中最新已知安装包；4.1.3 旧安装包不存在时，升级测试会明确显示 `SKIP`，不会误报通过。也可以显式指定经过校验的构件：
 
 ```powershell
-$env:ZHIKE_INSTALLER='C:\path\知客-4.2.2-WS工作台完善版.exe'
+$env:ZHIKE_INSTALLER='C:\path\知客-4.2.3-WS工作台完善版.exe'
 $env:ZHIKE_OLD_INSTALLER='C:\path\知客-4.1-全面增强版.exe'
-$env:ZHIKE_EXPECTED_VERSION='4.2.2'
+$env:ZHIKE_EXPECTED_VERSION='4.2.3'
 npm --prefix resources/app run test:installer
 ```
 
@@ -60,7 +61,7 @@ npm --prefix resources/app run test:installer
 # 只生成并验证干净 staging
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-installer.ps1 -StageOnly
 
-# 生成 work/output/知客-4.2.2-WS工作台完善版.exe
+# 生成 work/output/知客-4.2.3-WS工作台完善版.exe
 npm --prefix resources/app run build:installer
 ```
 

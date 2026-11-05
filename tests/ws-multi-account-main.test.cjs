@@ -26,7 +26,7 @@ assert.match(main, /addBrowserView|setBrowserView/, 'views attach to the main wi
 assert.match(main, /removeBrowserView/, 'switching or clearing removes only the selected view');
 assert.match(main, /setBounds\(\{ x: 0, y: 0, width: 0, height: 0 \}\)/, 'inactive views are hidden without destroying them');
 assert.match(main, /getContentBounds/, 'bounds are clamped to window content');
-assert.match(main, /y[^\n]*180|toolbar/i, 'view bounds stay below the workbench toolbar');
+assert.match(main, /toolbarHeight\s*=\s*96/, 'view bounds stay below the compact workbench toolbar');
 assert.match(main, /zhike-ws-status[^\n]*accountId|accountId[^\n]*zhike-ws-status/, 'status events include the account id');
 assert.match(main, /action === ['"]clear-session['"][\s\S]*?accountId/, 'clear-session is account scoped');
 assert.match(main, /action === ['"]open['"][\s\S]*?default/, 'legacy open action still defaults to default account');

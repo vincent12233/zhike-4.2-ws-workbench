@@ -40,6 +40,8 @@ assert.match(ui, /state\.busy\.connection\s*=\s*false[\s\S]*state\.busy\.reply\s
 assert.match(ui, /translationServiceStatus\(context = captureContext\(\)\)[\s\S]*assertContext\(context\)[\s\S]*translateText\(originalText, direction, context = captureContext\(\)\)/, 'translation service status is account fenced');
 assert.match(ui, /translateMessage\(id, parentContext = null\)[\s\S]*translateText\(message\.originalText, message\.direction, context\)/, 'single-message translation carries immutable context');
 assert.match(ui, /leftCollapsed|rightCollapsed/, 'left and right panels remain independently collapsible');
+assert.match(ui, /readPanelCollapsed|zhike\.ws\.left\.collapsed/, 'left collapse state is restored from local storage');
+assert.match(ui, /writePanelCollapsed|zhike\.ws\.right\.collapsed/, 'right collapse state is persisted to local storage');
 assert.match(ui, /ws-sidebar-collapse/, 'panels expose an in-panel collapse and expand control');
 assert.match(ui, /aria-controls="wsSessionsPanel"/, 'left collapse control exposes accessible state');
 assert.match(ui, /aria-controls="wsAssistPanel"/, 'right collapse control exposes accessible state');

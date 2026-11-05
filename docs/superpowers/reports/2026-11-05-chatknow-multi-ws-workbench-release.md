@@ -1,4 +1,4 @@
-# 知客 4.2.2 多账号 WS 工作台发布验收记录
+# 知客 4.2.3 多账号 WS 工作台发布验收记录
 
 日期：2026-11-06
 
@@ -25,16 +25,16 @@
 | --- | --- |
 | `node scripts/run-tests.cjs all` | 35 checks，35 passed，0 failed |
 | `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-installer.ps1 -StageOnly` | 通过；142 个文件进入干净 staging，未包含真实数据 |
-| `ZHIKE_EXPECTED_VERSION=4.2.2 node tests/ws-installer-qa.cjs` | 通过；隔离安装、覆盖安装、WS 资产、卸载与用户文件保留 |
-| `ZHIKE_EXPECTED_VERSION=4.2.2 node scripts/run-tests.cjs installer` | 2 checks，2 passed；缺少旧 4.1.3 安装包的升级项明确 SKIP |
+| `ZHIKE_EXPECTED_VERSION=4.2.3 node tests/ws-installer-qa.cjs` | 通过；隔离安装、覆盖安装、WS 资产、卸载与用户文件保留 |
+| `ZHIKE_EXPECTED_VERSION=4.2.3 node scripts/run-tests.cjs installer` | 2 checks，2 passed；缺少旧 4.1.3 安装包的升级项明确 SKIP |
 
 ## 安装包
 
-- `releases/知客-4.2.2-WS工作台完善版.exe`
+- `releases/知客-4.2.3-WS工作台完善版.exe`
 - SHA-256：`11408056AE239637020F91ECBC89A505F77CCE74C09CDC088590DFCE9AE4A62C`
 - 大小：173,915,466 字节
 - 运行时：Electron 45.2.1、Node.js 24.22.1、Inno Setup 6.7.3
-- 用户输出副本：`C:\Users\酷酷\Documents\Codex\2026-11-04\c-users-documents-codex-2026-11\outputs\知客-4.2.2-WS工作台完善版.exe`
+- 用户输出副本：`C:\Users\酷酷\Documents\Codex\2026-11-04\c-users-documents-codex-2026-11\outputs\知客-4.2.3-WS工作台完善版.exe`
 
 ## 数据安全和回滚
 

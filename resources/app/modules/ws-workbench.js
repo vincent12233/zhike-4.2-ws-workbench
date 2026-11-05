@@ -1,6 +1,12 @@
 (() => {
   const core = window.ZhikeWsCore;
   const getHost = () => window.__zhikeRegistryHost;
+  const readPanelCollapsed = panel => {
+    try { return localStorage.getItem(`zhike.ws.${panel}.collapsed`) === 'true'; } catch { return false; }
+  };
+  const writePanelCollapsed = (panel, value) => {
+    try { localStorage.setItem(`zhike.ws.${panel}.collapsed`, String(Boolean(value))); } catch {}
+  };
   const esc = value => getHost()?.esc?.(value) || String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -29,8 +35,8 @@
     aiBusy: false,
     translationBusy: new Set(),
     busy: { import: false, customer: false, followup: false, reply: false, capture: false, connection: false },
-    leftCollapsed: false,
-    rightCollapsed: false,
+    leftCollapsed: readPanelCollapsed('left'),
+    rightCollapsed: readPanelCollapsed('right'),
     mobilePanel: 'center',
     captureDirection: 'receive',
     conversationQuery: '',
@@ -1317,8 +1323,8 @@
     if (action === 'cancel-account') return cancelAccountForm();
     if (action === 'switch-account') return switchAccount(element?.dataset?.accountId);
     if (action === 'capture-selection') return captureSelection();
-    if (action === 'toggle-left') { state.leftCollapsed = !state.leftCollapsed; render(); return; }
-    if (action === 'toggle-right') { state.rightCollapsed = !state.rightCollapsed; render(); return; }
+    if (action === 'toggle-left') { state.leftCollapsed = !state.leftCollapsed; writePanelCollapsed('left', state.leftCollapsed); render(); return; }
+    if (action === 'toggle-right') { state.rightCollapsed = !state.rightCollapsed; writePanelCollapsed('right', state.rightCollapsed); render(); return; }
     if (action === 'mobile-left' || action === 'mobile-center' || action === 'mobile-right') { state.mobilePanel = action.slice(7); render(); return; }
     if (action === 'new-conversation') { state.mobilePanel = 'left'; render(); requestAnimationFrame(() => $('#wsConversationExternalId')?.focus()); return; }
     if (action === 'create-conversation') return createConversation();

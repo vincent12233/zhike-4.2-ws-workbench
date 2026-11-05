@@ -274,7 +274,10 @@ function resizeWsView(accountId, bounds = null) {
   if (input.hidden === true || (bounds && (requestedWidth < 40 || requestedHeight < 40))) {
     record.view.setBounds({ x: 0, y: 0, width: 0, height: 0 }); record.hidden = true; record.lastBounds = { hidden: true }; syncLegacyWsAlias(record); return true;
   }
-  const toolbarHeight = 180;
+  // Keep the embedded WS page below the compact workbench chrome. This is a
+  // safety floor for stale bounds during a fast resize or panel collapse;
+  // the renderer still supplies the actual host rectangle.
+  const toolbarHeight = 96;
   const minWidth = Math.min(260, Math.max(1, content.width));
   const minHeight = Math.min(240, Math.max(1, content.height - toolbarHeight));
   const rawX = Math.max(0, Math.round(Number(input.x) || 0));
