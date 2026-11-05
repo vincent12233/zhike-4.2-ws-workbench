@@ -218,7 +218,7 @@ async function probeWsStatus(view = wsView) {
       setWsStatus('正在重连', '网络已断开，WS 页面等待恢复连接。');
     } else if (probe.hasExpiredMarker) {
       setWsStatus('会话过期', 'WS 会话已过期，请重新登录。');
-    } else if (probe.hasChatShell) {
+    } else if (probe.hasChatShell || (probe.hasAppShell && !probe.hasQrMarker && !probe.hasLoginMarker)) {
       setWsStatus('已连接', '已检测到 WS 聊天界面。');
     } else if (probe.hasQrMarker || probe.hasLoginMarker || probe.readyState === 'complete') {
       setWsStatus('等待登录', '请在 WS 页面自行扫码或登录。');
@@ -570,7 +570,9 @@ function createWindow() {
   const revealWindow = () => { if (windowShown || mainWindow?.isDestroyed()) return; windowShown = true; mainWindow.show(); };
   mainWindow.once('ready-to-show', revealWindow);
   mainWindow.webContents.once('dom-ready', () => { const fallback = setTimeout(revealWindow, 1500); fallback.unref?.(); });
-  mainWindow.on('resize', () => resizeWsView());
+  // Let the renderer recalculate the BrowserView rectangle from the actual panel.
+  // Calling resizeWsView() without panel bounds would incorrectly stretch WS over the whole window.
+  mainWindow.on('resize', () => { if (wsView && !wsView.webContents.isDestroyed()) mainWindow.webContents.executeJavaScript('window.dispatchEvent(new Event("resize"))').catch(() => {}); });
   mainWindow.on('closed', () => { destroyWsView(); mainWindow = null; });
   mainWindow.on('close', event => {
     if (quitting || flushingClose || !mainWindow) return;
