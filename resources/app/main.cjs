@@ -242,7 +242,9 @@ function resizeWsView(bounds = null) {
     return;
   }
   const rawX = Math.max(0, Math.round(Number(input.x) || 0));
-  const rawY = Math.max(0, Math.round(Number(input.y) || 0));
+  // Keep the embedded page below the Zhike heading/login toolbar even when
+  // the renderer is temporarily reflowing or its scroll position changes.
+  const rawY = Math.max(112, Math.round(Number(input.y) || 0));
   const x = Math.min(rawX, Math.max(0, content.width - 260));
   const y = Math.min(rawY, Math.max(0, content.height - 240));
   const boundedWidth = Math.round(Number(input.width) || content.width - x);
