@@ -1,12 +1,12 @@
-# 知客 4.2.6 分类与工作流稳定版交付说明
+# 知客 4.3.0 产品级重整版交付说明
 
 ## 安装包
 
-- 文件：[知客-4.2.6-WS工作台智能录入版.exe](../releases/知客-4.2.6-WS工作台智能录入版.exe)
-- SHA-256：`D86B9D7C2D0AD0D7F91667D7B40D34443F7090CA49FD3DDA8FB42C3604BCBC9C`
-- 文件大小：`173,926,464` 字节
-- Git LFS 路径：`releases/知客-4.2.6-WS工作台智能录入版.exe`
-- 用户输出副本：`C:\Users\酷酷\Documents\Codex\2026-11-04\c-users-documents-codex-2026-11\outputs\知客-4.2.6-WS工作台智能录入版.exe`
+- 文件：[知客-4.3.0-WS工作台智能录入版.exe](../releases/知客-4.3.0-WS工作台智能录入版.exe)
+- SHA-256：`FB51AAC94CD5EC4E396418FC16B982B0474FCE52312AD3B9C4EBA057F295D95C`
+- 文件大小：`173,929,072` 字节
+- Git LFS 路径：`releases/知客-4.3.0-WS工作台智能录入版.exe`
+- 用户输出副本：`C:\Users\酷酷\Documents\Codex\2026-11-04\c-users-documents-codex-2026-11\outputs\知客-4.3.0-产品级重整版.exe`
 
 安装器使用 Electron 45.2.1、Node.js 24.22.1 和 Inno Setup 6.7.3 构建。构建脚本先生成隔离 staging，并拒绝打包 `resources/app/data`、BrowserView 分区、日志、凭据和密钥。
 
@@ -35,9 +35,9 @@
 
 ## 验证结果
 
-- 完整回归：`node scripts/run-tests.cjs all`，`36/36` 通过。
+- 完整回归：`node scripts/run-tests.cjs all`，`37/37` 通过。
 - 干净 staging：`scripts/build-installer.ps1 -StageOnly`，`142` 个源文件进入 staging，未包含真实数据目录。
-- 安装器 QA：`ZHIKE_EXPECTED_VERSION=4.2.6 node scripts/run-tests.cjs installer`，`2/2` 通过；隔离安装、覆盖安装、WS 资源、卸载和安装根目录用户文件保留均通过。
+- 安装器 QA：`ZHIKE_EXPECTED_VERSION=4.3.0 node scripts/run-tests.cjs installer`，`2/2` 通过；隔离安装、覆盖安装、WS 资源、卸载和安装根目录用户文件保留均通过。
 - 4.1.3 旧安装包当前仓库不存在，升级项按测试脚本明确 `SKIP`，没有把缺失旧构件当作通过。
 - 4.2.4 已验证的 10,000/50,000 合成规模索引性能优化随本次版本保留；本轮新增筛选和归一化没有改变原有数据写入路径。
 
@@ -46,7 +46,7 @@
 - 本轮没有读取、导入或修改真实业务数据库；测试使用隔离临时目录、SQLite 和合成数据。
 - 升级前建议在“数据中心”创建 JSON 备份；安装器覆盖升级和卸载均保留用户 AppData 数据。
 - 自动备份只清理自身 `zhike-auto-*.json` 文件，不删除同目录其他文件。
-- 如需回滚，关闭知客后保留数据目录，安装 4.2.4 或更早版本，再从快照/JSON 备份恢复。
+- 如需回滚，关闭知客后保留数据目录，安装上一稳定版本，再从快照/JSON 备份恢复。回滚分支为 `backup/4.2.6-before-full-redesign`。
 
 ## 仍需现场验证
 
