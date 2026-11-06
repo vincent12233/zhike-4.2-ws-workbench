@@ -1,12 +1,12 @@
-# 知客 4.3.2 产品级重整版交付说明
+# 知客 4.3.3 产品级重整版交付说明
 
 ## 安装包
 
-- 文件：[知客-4.3.2-WS工作台智能录入版.exe](../releases/知客-4.3.2-WS工作台智能录入版.exe)
+- 文件：[知客-4.3.3-WS工作台智能录入版.exe](../releases/知客-4.3.3-WS工作台智能录入版.exe)
 - SHA-256：`7F94E1C50AB82BD7CD4CF8F8AA355840F093F4CD428771EF9E7F956CCAF37455`
 - 文件大小：`173,929,238` 字节
-- Git LFS 路径：`releases/知客-4.3.2-WS工作台智能录入版.exe`
-- 用户输出副本：`C:\Users\酷酷\Documents\Codex\2026-11-04\c-users-documents-codex-2026-11\outputs\知客-4.3.2-产品级重整版.exe`
+- Git LFS 路径：`releases/知客-4.3.3-WS工作台智能录入版.exe`
+- 用户输出副本：`C:\Users\酷酷\Documents\Codex\2026-11-04\c-users-documents-codex-2026-11\outputs\知客-4.3.3-产品级重整版.exe`
 
 安装器使用 Electron 45.2.1、Node.js 24.22.1 和 Inno Setup 6.7.3 构建。构建脚本先生成隔离 staging，并拒绝打包 `resources/app/data`、BrowserView 分区、日志、凭据和密钥。
 
@@ -37,7 +37,7 @@
 
 - 完整回归：`node scripts/run-tests.cjs all`，`37/37` 通过。
 - 干净 staging：`scripts/build-installer.ps1 -StageOnly`，`142` 个源文件进入 staging，未包含真实数据目录。
-- 安装器 QA：`ZHIKE_EXPECTED_VERSION=4.3.2 node scripts/run-tests.cjs installer`，`2/2` 通过；隔离安装、覆盖安装、WS 资源、卸载和安装根目录用户文件保留均通过。
+- 安装器 QA：`ZHIKE_EXPECTED_VERSION=4.3.3 node scripts/run-tests.cjs installer`，`2/2` 通过；隔离安装、覆盖安装、WS 资源、卸载和安装根目录用户文件保留均通过。
 - 4.1.3 旧安装包当前仓库不存在，升级项按测试脚本明确 `SKIP`，没有把缺失旧构件当作通过。
 - 4.2.4 已验证的 10,000/50,000 合成规模索引性能优化随本次版本保留；本轮新增筛选和归一化没有改变原有数据写入路径。
 
