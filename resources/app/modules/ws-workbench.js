@@ -54,6 +54,9 @@
     visibleConversationFingerprint: '',
     collectionRefreshing: false,
     autoCaptureSignature: '',
+    previewAnalysisSignatures: new Map(),
+    previewAnalysisQueue: [],
+    listSyncBusy: false,
   };
   let rendering = false;
   let observer;
@@ -175,6 +178,9 @@
     state.accountBusy = true;
     state.collectionRefreshing = false;
     state.autoCaptureSignature = '';
+    state.previewAnalysisSignatures.clear();
+    state.previewAnalysisQueue = [];
+    state.listSyncBusy = false;
     state.visibleConversationFingerprint = '';
     clearTimeout(settingsSaveTimer); settingsSaveTimer = undefined; ++settingsSaveSequence;
     state.busy.import = false; state.busy.customer = false; state.busy.followup = false; state.busy.connection = false; state.busy.reply = false; state.busy.capture = false; state.aiBusy = false; state.translationBusy.clear();
@@ -368,14 +374,21 @@
       state.conversations = Array.isArray(result.conversations) ? result.conversations : state.conversations;
       state.collectionRun = run.run || null;
       state.followupAlerts = alerts.alerts || [];
-      if (state.wsStatus === '已连接') {
-        const visible = await wsBridge('discover-conversations').catch(() => null);
+      let listSyncResult = { synced: 0, analyzed: 0 };
+      if (state.wsStatus === '已连接' && (!state.collectionRun || !['paused', 'stopped', 'completed'].includes(state.collectionRun.status))) {
+        const visible = await wsBridge('discover-conversations', context).catch(() => null);
         assertContext(context);
         if (visible?.supported) {
           const fingerprint = visibleConversationFingerprint(visible.conversations);
           if (fingerprint !== state.visibleConversationFingerprint) {
             if (visible.conversations?.length) await enqueueDiscoveredConversations(visible.conversations, false, context);
             state.visibleConversationFingerprint = fingerprint;
+          }
+          listSyncResult = await syncConversationListPreviews(visible.conversations, context);
+          if (listSyncResult.synced) {
+            const refreshedAlerts = await api('/api/ws/followup-alerts?limit=8', {}, context);
+            assertContext(context);
+            state.followupAlerts = refreshedAlerts.alerts || [];
           }
         }
       }
@@ -417,6 +430,82 @@
     if (announce) toast(`已发现 ${items.length} 个会话，入队 ${queued} 个`);
     return queued;
   }
+  function listPreviewText(item) {
+    const title = text(item?.title);
+    const explicit = text(item?.previewText);
+    const listText = text(item?.listText);
+    const fallback = text(item?.preview).replace(title, '').trim();
+    return (explicit || fallback || listText.replace(title, '').trim()).slice(0, 4000);
+  }
+  function listPreviewFingerprint(item, preview) {
+    return stableHash(JSON.stringify([text(item?.externalId), preview, text(item?.lastMessageAt), text(item?.previewDirection || 'receive')]));
+  }
+  async function analyzeStoredConversation(conversation, context) {
+    if (!state.aiEnabled || !window.zhikeAI?.request || !window.zhikeAI?.status || !conversation?.id) return false;
+    const messagesResult = await api(`/api/ws/messages?conversationId=${encodeURIComponent(conversation.id)}&limit=500`, {}, context);
+    const messages = core.dedupeMessages(messagesResult.messages || []);
+    if (!messages.length) return false;
+    const transcript = core.buildTranscript(messages, { maxChars: 8200, maxMessages: 40 });
+    const service = await window.zhikeAI.status().catch(() => ({ configured: false }));
+    if (!service.configured) return false;
+    try {
+      const result = await window.zhikeAI.request({
+        assistantMode: 'operations',
+        analysisDepth: 'standard',
+        input: '只分析下面当前 WS 会话文本。只返回一个 JSON 对象，不要 Markdown，不要编造未出现的资料。字段必须包含 summary、intent、intentScore、emotion、urgency、language、needs（数组）、productInterest（数组）、budget、contact（对象，含 name/phone/country/account）、tags（数组）、customerStage、nextStep、followupTime、replySuggestion、confidence（0 到 1）。\n' + transcript.text,
+        context: { feature: 'ws-list-preview-analysis', conversationId: conversation.id, title: conversation.title || '', includedMessages: transcript.included, truncated: transcript.truncated },
+      });
+      const analysis = core.parseAiResult(result?.text || '');
+      analysis.providerName = result.providerName || '';
+      analysis.model = result.model || '';
+      analysis.transcriptInfo = transcript;
+      await api('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, result: analysis, confidence: analysis.confidence, providerName: analysis.providerName, model: analysis.model }) }, context);
+      return true;
+    } catch { return false; }
+  }
+  async function syncConversationListPreviews(items, context = captureContext()) {
+    if (state.listSyncBusy || !Array.isArray(items) || !items.length) return { synced: 0, analyzed: 0 };
+    state.listSyncBusy = true;
+    let synced = 0, analyzed = 0;
+    try {
+      const byExternal = new Map(state.conversations.map(item => [String(item.externalId || ''), item]));
+      for (const item of items.slice(0, 500)) {
+        assertContext(context);
+        const externalId = text(item?.externalId);
+        const preview = listPreviewText(item);
+        const conversation = byExternal.get(externalId);
+        if (!externalId || !preview || !conversation) continue;
+        const fingerprint = listPreviewFingerprint(item, preview);
+        const messageExternalId = `list-preview-${fingerprint}`;
+        const result = await api('/api/ws/messages/batch', { method: 'POST', timeout: 30000, body: JSON.stringify({ conversationId: conversation.id, fingerprint: `list-preview-${fingerprint}`, messages: [{ externalId: messageExternalId, direction: item.previewDirection === 'send' ? 'send' : 'receive', originalText: preview, order: Date.now(), data: { source: 'ws-list-preview', previewOnly: true, listText: text(item.listText).slice(0, 2000), lastMessageAt: text(item.lastMessageAt), fingerprint } }] }) }, context);
+        assertContext(context);
+        const inserted = Number(result.inserted || 0);
+        if (!inserted) continue;
+        synced += inserted;
+        const refreshedConversation = state.conversations.find(row => String(row.id) === String(conversation.id));
+        if (refreshedConversation) { refreshedConversation.lastMessageText = preview; refreshedConversation.lastMessageAt = nowIso(); refreshedConversation.updatedAt = refreshedConversation.lastMessageAt; }
+        if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: conversation.id, status: 'completed', analysisStatus: 'pending', coverageStatus: 'list-preview', checkpoint: fingerprint }) }, context).catch(() => {});
+        if (state.previewAnalysisSignatures.get(String(conversation.id)) !== fingerprint) {
+          state.previewAnalysisSignatures.set(String(conversation.id), fingerprint);
+          if (state.aiEnabled && window.zhikeAI?.request) state.previewAnalysisQueue.push({ conversation, fingerprint });
+        }
+      }
+      for (let budget = 0; budget < 5 && state.previewAnalysisQueue.length; budget += 1) {
+        const task = state.previewAnalysisQueue.shift();
+        if (await analyzeStoredConversation(task.conversation, context)) analyzed += 1;
+      }
+      if (synced) {
+        if (state.collectionRun?.id) {
+          const runResult = await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', cursor: JSON.stringify({ mode: 'list-preview', synced, analyzed, syncedAt: nowIso() }), lastSuccessAt: nowIso() }) }, context).catch(() => null);
+          if (runResult?.run) state.collectionRun = runResult.run;
+        }
+        const refreshed = await api('/api/ws/conversations?limit=200', {}, context);
+        assertContext(context);
+        state.conversations = refreshed.conversations || state.conversations;
+      }
+      return { synced, analyzed };
+    } finally { state.listSyncBusy = false; }
+  }
   async function createCollectionRun() {
     const context = captureContext();
     try {
@@ -446,6 +535,8 @@
     if (!visible?.supported) return;
     const items = Array.isArray(visible.conversations) ? visible.conversations : [];
     if (items.length) await enqueueDiscoveredConversations(items, false, context);
+    const listSync = await syncConversationListPreviews(items, context);
+    if (listSync.synced) state.followupAlerts = (await api('/api/ws/followup-alerts?limit=8', {}, context)).alerts || state.followupAlerts;
     const cursor = JSON.stringify({ lastExternalId: text(items.at(-1)?.externalId || ''), discovered: items.length, scannedAt: nowIso() });
     const result = await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', discovered: Math.max(Number(state.collectionRun.discovered || 0), items.length), total: Math.max(Number(state.collectionRun.total || 0), items.length), cursor, resumeCount: Number(state.collectionRun.resumeCount || 0) + 1, lastSuccessAt: nowIso() }) }, context);
     assertContext(context);
@@ -459,12 +550,13 @@
     try {
       const result = await wsBridge('discover-conversations'); assertContext(context); if (!result?.supported) throw new Error(result?.error || '当前页面结构未识别'); state.discoveredConversations = result.conversations || [];
       const queued = await enqueueDiscoveredConversations(state.discoveredConversations, false, context);
+      const listSync = await syncConversationListPreviews(state.discoveredConversations, context);
       assertContext(context);
       state.visibleConversationFingerprint = visibleConversationFingerprint(state.discoveredConversations);
       const runResult = await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', discovered: state.discoveredConversations.length, total: state.discoveredConversations.length, cursor: JSON.stringify({ lastExternalId: text(state.discoveredConversations.at(-1)?.externalId || ''), discovered: state.discoveredConversations.length, scannedAt: nowIso() }), lastSuccessAt: nowIso() }) }, context);
       assertContext(context);
       state.collectionRun = runResult.run;
-      toast(`已发现 ${state.discoveredConversations.length} 个会话，入队 ${queued} 个`); render();
+      toast(`已发现 ${state.discoveredConversations.length} 个会话，入队 ${queued} 个${listSync.synced ? `，列表消息 ${listSync.synced} 条` : ''}`); render();
     }
     catch (error) { if (contextCurrent(context)) { state.error = error.message; render(); } }
   }
@@ -530,10 +622,10 @@
   }
   function renderCollectionCard() {
     const run = state.collectionRun;
-    if (!run) return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>AI 跟进提醒</strong><span>每个会话只采用最新有效分析</span></div></div>${renderFollowupAlerts()}<p class="ws-muted">创建采集任务后可持续更新会话、分析和提醒。</p><button class="btn small primary ws-full-button" data-ws-action="create-collection-run">创建采集任务</button></section>`;
+    if (!run) return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>AI 跟进提醒</strong><span>列表级采集已开启，不打开会话也会同步最新预览</span></div></div>${renderFollowupAlerts()}<p class="ws-muted">创建采集任务后可持续更新会话、分析和提醒。</p><button class="btn small primary ws-full-button" data-ws-action="create-collection-run">创建采集任务</button></section>`;
     const pending = Math.max(0, run.total - run.completed - run.failed - run.skipped);
     const controls = run.status === 'paused' ? '<button class="btn small" data-ws-action="resume-collection">继续</button>' : ['created','running','discovering'].includes(run.status) ? '<button class="btn small" data-ws-action="pause-collection">暂停</button><button class="btn small danger" data-ws-action="stop-collection">停止</button>' : '';
-    return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>采集与跟进</strong><span>${esc(run.status)} · 更新于 ${esc(displayTime(run.updatedAt))}${run.lastSuccessAt ? ` · 最近成功 ${esc(displayTime(run.lastSuccessAt))}` : ''}</span></div><div>${controls}${['running','discovering','paused'].includes(run.status) ? '<button class="btn small" data-ws-action="resume-collection-checkpoint">从断点继续</button>' : ''}<button class="btn small" data-ws-action="create-collection-run">新建任务</button></div></div><div class="ws-collection-stats"><b>${run.completed}/${run.total || run.discovered}</b><span>已采集</span><b>${run.analyzed}</b><span>已分析</span><b>${run.retryable}</b><span>待重试</span><b>${pending}</b><span>待处理</span><b>${run.resumeCount || 0}</b><span>续采次数</span></div>${run.lastError ? `<p class="ws-error-line">${esc(run.lastError)}</p>` : ''}${renderFollowupAlerts()}</section>`;
+    return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>采集与跟进</strong><span>${esc(run.status)} · 列表级自动采集（无需打开会话） · 更新于 ${esc(displayTime(run.updatedAt))}${run.lastSuccessAt ? ` · 最近成功 ${esc(displayTime(run.lastSuccessAt))}` : ''}</span></div><div>${controls}${['running','discovering','paused'].includes(run.status) ? '<button class="btn small" data-ws-action="resume-collection-checkpoint">从断点继续</button>' : ''}<button class="btn small" data-ws-action="create-collection-run">新建任务</button></div></div><div class="ws-collection-stats"><b>${run.completed}/${run.total || run.discovered}</b><span>已采集</span><b>${run.analyzed}</b><span>已分析</span><b>${run.retryable}</b><span>待重试</span><b>${pending}</b><span>待处理</span><b>${run.resumeCount || 0}</b><span>续采次数</span></div>${run.lastError ? `<p class="ws-error-line">${esc(run.lastError)}</p>` : ''}${renderFollowupAlerts()}</section>`;
   }
   async function loadConversationData(id, redraw = true, parentContext = null) {
     const conversationId = String(id || '');
@@ -1517,7 +1609,7 @@
     state.active = true;
     clearInterval(collectionRefreshTimer);
     clearInterval(autoCaptureTimer);
-    collectionRefreshTimer = setInterval(() => { void refreshCollectionSummary(); }, 30000);
+    collectionRefreshTimer = setInterval(() => { void refreshCollectionSummary(); }, 12000);
     autoCaptureTimer = setInterval(() => { void autoCaptureCurrentConversation().catch(() => {}); }, 15000);
     host.state.view = 'ws-workbench';
     state.error = '';
@@ -1528,7 +1620,7 @@
     loadAccounts().then(() => {
       render();
       return wsBridge('open').catch(error => { state.error = error.message || 'WS 账号页面打开失败。'; }).then(() => loadConversations());
-    }).then(() => wsBridge('status')).then(result => { updateAccountStatus(result); setStatus(result.status, result.detail || ''); render(); }).catch(error => setStatus('连接失败', error.message));
+    }).then(() => wsBridge('status')).then(result => { updateAccountStatus(result); setStatus(result.status, result.detail || ''); render(); return refreshCollectionSummary(); }).catch(error => setStatus('连接失败', error.message));
   }
   function deactivate() {
     if (!state.active) return;

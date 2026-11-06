@@ -1,4 +1,4 @@
-# 知客 4.4.0 WS 工作台
+# 知客 4.4.1 WS 工作台
 
 这是现有知客 4.1 客户运营桌面项目的增量源码仓库。项目保留原有客户中心、快速录入、跟票、入金、统计、数据中心、设置和 GPT 助手业务逻辑，并增加个人 WS 工作台。
 
@@ -12,7 +12,7 @@
 - `releases/知客-4.2-WS工作台版.exe`：Windows 安装包，通过 Git LFS 保存。
 - `releases/知客-4.2.1-WS工作台完善版.exe`：历史 WS 完善版安装包，通过 Git LFS 保存。
 - `releases/知客-4.2.2-WS工作台完善版.exe`：历史多账号 WS 工作台安装包，通过 Git LFS 保存。
-- `releases/知客-4.4.0-WS工作台智能录入版.exe`：当前 AI 跟进、WS 断点采集、日期迁移和混合导入优化安装包，通过 Git LFS 保存。
+- `releases/知客-4.4.1-WS工作台智能录入版.exe`：当前 AI 跟进、列表级 WS 自动采集、手机/工作台同步轮询、日期迁移和混合导入优化安装包，通过 Git LFS 保存。
 - `zhike-setup.iss`：Windows Inno Setup 安装脚本。
 
 ## 安装包
@@ -23,9 +23,9 @@
 
 当前 4.2.2 多账号 WS 工作台安装包 SHA-256：`11408056AE239637020F91ECBC89A505F77CCE74C09CDC088590DFCE9AE4A62C`，大小 173,915,466 字节。
 
-当前 4.4.0 安装包 SHA-256 和大小见发布记录（构建完成后更新）。
+当前 4.4.1 安装包 SHA-256：`63896D42FEFBD43818B2CEB30DD7276512B2C765ACD930F3DA25569312457670`，大小 `173,936,161` 字节。
 
-4.4.0 在现有多账号 WS 工作台上补充 AI 跟进提醒状态、WS 可见会话列表分批扫描与断点游标、历史日期迁移预览、混合业务按行识别、导入分批让出 UI，以及回归和覆盖升级验证；原有知客业务数据和统计口径保持不变。
+4.4.1 在 4.4.0 基础上补充无需打开会话的列表级 WS 自动采集、预览消息幂等同步、手机与工作台的 12 秒增量轮询、列表预览 AI 分析排队和跟进提醒刷新；原有知客业务数据和统计口径保持不变。
 
 克隆仓库前请安装 Git LFS；执行 `git lfs pull` 可下载完整安装包。安装包已经包含 Electron 和本机 Node 运行时，因此这些打包二进制不重复放入源码目录。
 
@@ -49,9 +49,9 @@ npm --prefix resources/app run test:all
 安装测试默认使用 `releases/` 中最新已知安装包；4.1.3 旧安装包不存在时，升级测试会明确显示 `SKIP`，不会误报通过。也可以显式指定经过校验的构件：
 
 ```powershell
-$env:ZHIKE_INSTALLER='C:\path\知客-4.4.0-WS工作台智能录入版.exe'
+$env:ZHIKE_INSTALLER='C:\path\知客-4.4.1-WS工作台智能录入版.exe'
 $env:ZHIKE_OLD_INSTALLER='C:\path\知客-4.1-全面增强版.exe'
-$env:ZHIKE_EXPECTED_VERSION='4.4.0'
+$env:ZHIKE_EXPECTED_VERSION='4.4.1'
 npm --prefix resources/app run test:installer
 ```
 
@@ -63,7 +63,7 @@ npm --prefix resources/app run test:installer
 # 只生成并验证干净 staging
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-installer.ps1 -StageOnly
 
-# 生成 work/output/知客-4.4.0-WS工作台智能录入版.exe
+# 生成 work/output/知客-4.4.1-WS工作台智能录入版.exe
 npm --prefix resources/app run build:installer
 ```
 

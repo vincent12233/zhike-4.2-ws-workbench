@@ -25,7 +25,20 @@ function captureSelection() {
 }
 function conversationNodes() { return [...document.querySelectorAll('#pane-side [role="listitem"], [data-testid="chat-list"] [role="listitem"], [aria-label="Chat list"] [role="listitem"]')]; }
 function readConversationNodes() {
-  return conversationNodes().map((node, index) => { const label = String(node.getAttribute('aria-label') || node.getAttribute('title') || '').slice(0, 1000); const badge = node.querySelector?.('[aria-label*="unread"], [data-testid*="unread"]'); return { index, title: label.slice(0, 200), externalId: String(node.getAttribute('data-id') || node.getAttribute('data-testid') || '').slice(0, 200), preview: label.slice(0, 1000), unreadCount: Number(String(badge?.getAttribute?.('aria-label') || '').match(/\d+/)?.[0] || 0) }; }).filter(item => item.title || item.externalId);
+  return conversationNodes().map((node, index) => {
+    const label = String(node.getAttribute('aria-label') || node.getAttribute('title') || '').slice(0, 1000);
+    const labels = [node, ...node.querySelectorAll?.('[aria-label], [title], [data-pre-plain-text]') || []].map(element => String(element.getAttribute?.('aria-label') || element.getAttribute?.('title') || element.getAttribute?.('data-pre-plain-text') || '')).filter(Boolean);
+    const pageText = labels.join(' ').replace(/\s+/g, ' ').trim().slice(0, 2000);
+    const title = (label || pageText.split(/\s{2,}|\n/)[0] || '').slice(0, 200);
+    const previewNode = node.querySelector?.('[data-testid*="last-msg"], [data-testid*="message"], [data-testid*="preview"], span[title]');
+    const previewText = String(previewNode?.getAttribute?.('aria-label') || previewNode?.getAttribute?.('title') || previewNode?.getAttribute?.('data-pre-plain-text') || '').replace(/\s+/g, ' ').trim().slice(0, 4000);
+    const preview = (previewText || pageText.replace(title, '').trim() || label).slice(0, 4000);
+    const timeNode = node.querySelector?.('time, [data-testid*="time"], [aria-label*="AM"], [aria-label*="PM"]');
+    const lastMessageAt = String(timeNode?.getAttribute?.('datetime') || timeNode?.getAttribute?.('aria-label') || timeNode?.getAttribute?.('title') || '').trim().slice(0, 100);
+    const badge = node.querySelector?.('[aria-label*="unread"], [data-testid*="unread"]');
+    const previewDirection = /^(你|我|you|me)\s*[:：]/i.test(preview) ? 'send' : 'receive';
+    return { index, title, externalId: String(node.getAttribute('data-id') || node.getAttribute('data-testid') || '').slice(0, 200), preview, previewText, listText: pageText, lastMessageAt, previewDirection, previewOnly: true, unreadCount: Number(String(badge?.getAttribute?.('aria-label') || '').match(/\d+/)?.[0] || 0) };
+  }).filter(item => item.title || item.externalId || item.preview);
 }
 function discoverVisibleConversations() { const conversations = readConversationNodes().slice(0, 500); return { supported: conversations.length > 0, conversations }; }
 async function discoverAllConversations() {
