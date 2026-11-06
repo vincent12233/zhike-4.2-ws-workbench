@@ -30,7 +30,7 @@ assert(html.includes('./modules/operations-upgrade.js'));
 assert(html.includes('./modules/ui-refresh.css'));
 assert(html.includes('./modules/accessibility-enhancements.js'));
 assert(html.includes('./modules/ws-workbench.js'));
-assert(pkg.includes('"version": "4.3.3"'));
+assert(pkg.includes('"version": "4.3.4"'));
 assert(setup.includes('OutputBaseFilename=知客-{#AppVersion}-WS工作台智能录入版'));
 assert(setup.includes('#define AppVersion "4.2.6"'));
 assert(readme.includes('## 4.2.0 WS 工作台版'));
@@ -53,6 +53,7 @@ assert.match(app, /organize-intake/, 'quick intake exposes one-click smart organ
 assert.match(app, /apply-intake-smart-defaults/, 'quick intake exposes automatic batch defaults');
 assert.match(app, /detectHeaderRow/, 'imports detect title rows before the table header');
 assert.match(app, /csvHeaderMapping\(headers,rows\.slice\(1,21\)\)/, 'imports infer fields from sample values');
+assert.match(app, /due:registered\|\|today/, 'bulk import preserves imported registration date for displayed due date');
 assert.match(app, /customerJournal/, 'mixed import journals existing customer mutations before commit');
 assert.match(app, /rollback=null;persist\(\)/, 'ticket import clears rollback state after restoring failed writes');
 assert.match(app, /qualityScanCache/, 'quality scan caches derived duplicate and invalid results');
