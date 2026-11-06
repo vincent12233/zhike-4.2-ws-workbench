@@ -68,7 +68,11 @@ function compactId(value) {
 function splitAccessibleRow(value) {
   const normalized = cleanVisibleText(value);
   const withoutUnread = normalized.replace(/^\d+\s*条未读消息\s*/, '').trim();
-  const stripSystemNotice = input => cleanVisibleText(input);
+  const stripSystemNotice = input => cleanVisibleText(input)
+    .replace(/\s*此聊天中的新消息将在发送(?:7|90)天后自动消失(?:（除非消息已保留）)?。?\s*$/g, '')
+    .replace(/\s*\d+\s*条未读消息\s*/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
   const cleanRow = stripSystemNotice(withoutUnread);
   const marker = cleanRow.search(/\s+(?:(?:凌晨|早上|上午|中午|下午|晚上)\s*\d{1,2}:\d{2}|星期[一二三四五六日天]|昨天|今天|前天|\d{4}年\d{1,2}月\d{1,2}日)\s+/);
   if (marker < 0) return { title: cleanRow, preview: '' };
@@ -84,9 +88,12 @@ function readConversationNodes() {
     const rowParts = splitAccessibleRow(pageText || label);
     let title = (rowParts.title || label || pageText.split(/\s{2,}|\n/)[0] || '').slice(0, 200);
     const previewNode = node.querySelector?.('[data-testid*="last-msg"], [data-testid*="message"], [data-testid*="preview"], [aria-description], span[title]');
-    const previewText = cleanVisibleText(previewNode?.getAttribute?.('aria-label') || previewNode?.getAttribute?.('aria-description') || previewNode?.getAttribute?.('title') || previewNode?.getAttribute?.('data-pre-plain-text') || '').slice(0, 4000);
+    const previewText = stripSystemNotice(previewNode?.getAttribute?.('aria-label') || previewNode?.getAttribute?.('aria-description') || previewNode?.getAttribute?.('title') || previewNode?.getAttribute?.('data-pre-plain-text') || '').slice(0, 4000);
     if (previewText && title.toLocaleLowerCase().endsWith(previewText.toLocaleLowerCase()) && title.length > previewText.length) title = title.slice(0, -previewText.length).trim();
-    const preview = cleanVisibleText(previewText || rowParts.preview || pageText.replace(title, '').trim() || label).slice(0, 4000);
+    const rowPreview = stripSystemNotice(rowParts.preview).slice(0, 4000);
+    const previewCandidates = [previewText, rowPreview, stripSystemNotice(pageText.replace(title, '').trim()), stripSystemNotice(label)]
+      .filter(value => value && value.toLocaleLowerCase() !== title.toLocaleLowerCase());
+    const preview = (previewCandidates[0] || '').slice(0, 4000);
     const timeNode = node.querySelector?.('time, [data-testid*="time"], [aria-label*="AM"], [aria-label*="PM"]');
     const lastMessageAt = String(timeNode?.getAttribute?.('datetime') || timeNode?.getAttribute?.('aria-label') || timeNode?.getAttribute?.('title') || '').trim().slice(0, 100);
     const badge = node.querySelector?.('[aria-label*="unread"], [data-testid*="unread"]');

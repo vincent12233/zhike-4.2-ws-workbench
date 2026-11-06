@@ -1,5 +1,5 @@
 #ifndef AppVersion
-#define AppVersion "4.4.9"
+#define AppVersion "4.4.11"
 #endif
 #ifndef StageDir
 #define StageDir "work\staging\zhike-win-x64"
@@ -47,3 +47,5 @@ Name: "{autodesktop}\知客运营工作台"; Filename: "{app}\知客离线工作
 Filename: "{app}\知客离线工作台.exe"; Description: "启动知客运营工作台"; Flags: nowait postinstall skipifsilent
 
 ; No AppData uninstall-delete rule: user databases and backups are retained.
+
+

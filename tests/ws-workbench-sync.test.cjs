@@ -20,6 +20,7 @@ const splitAccessibleRowSource = preload.slice(preload.indexOf('function splitAc
 const splitAccessibleRow = vm.runInNewContext(`(${splitAccessibleRowSource})`, { cleanVisibleText });
 assert.deepEqual(JSON.parse(JSON.stringify(splitAccessibleRow('1条未读消息 Vaishali Joshi. 凌晨2:06 As 此聊天中的新消息将在发送90天后自动消失（除非消息已保留）。'))), { title: 'Vaishali Joshi.', preview: 'As' }, 'WhatsApp unread/time/system markers must not pollute title or preview');
 assert.match(preload, /previewText && title\.toLocaleLowerCase\(\)\.endsWith\(previewText\.toLocaleLowerCase\(\)\)/, 'preload parser removes preview suffix from accessibility titles');
+assert.match(preload, /stripSystemNotice = input => cleanVisibleText\(input\)[\s\S]*自动消失/, 'preload parser removes WhatsApp disappearing-message notices before choosing preview text');
 
 const splitListPreviewSource = ui.slice(ui.indexOf('function splitListPreview'), ui.indexOf('function normalizeListItem'));
 const splitListPreview = vm.runInNewContext(`(${splitListPreviewSource})`, { text: value => String(value || '') });
@@ -75,6 +76,7 @@ assert.match(server, /sameCheckpoint[\s\S]*successfulAnalysis[\s\S]*analysis_sta
 assert.match(server, /wsCleanListPreviewText[\s\S]*自动消失[\s\S]*条未读消息/, 'server canonicalizes WhatsApp system markers before persistence');
 assert.match(server, /normalizeStoredWsListPreviews[\s\S]*UPDATE ws_messages/, 'server repairs previously persisted list-preview noise at startup');
 assert.match(server, /cleanedTitle[\s\S]*endsWith\(latest\.original_text/, 'server repairs titles that were previously concatenated with list previews');
+assert.match(server, /function wsCanonicalListPreviewTitle[\s\S]*lowerTitle\.startsWith\(lowerPreview\)/, 'server protects conversation titles when a list preview is exposed as a title prefix');
 assert.match(ui, /wsAccountIds|activeAccountId/, 'CRM profile stores WS account identity');
 assert.match(ui, /matchCustomer\([\s\S]*wsAccountId/, 'CRM matching uses WS account identity after phone');
 assert.match(ui, /wsExternalId: externalId[\s\S]*wsAccountId: context\.accountId/, 'visible discovery matches WS external id and account identity');

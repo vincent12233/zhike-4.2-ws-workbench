@@ -1,6 +1,6 @@
 {
   "name": "zhike-offline-desktop",
-  "version": "4.4.9",
+  "version": "4.4.11",
   "description": "知客 4.1 本机客户运营与 GPT 助手桌面版",
   "main": "main.cjs",
   "private": true,
@@ -18,3 +18,5 @@
     "build:installer": "powershell -NoProfile -ExecutionPolicy Bypass -File ../../scripts/build-installer.ps1"
   }
 }
+
+

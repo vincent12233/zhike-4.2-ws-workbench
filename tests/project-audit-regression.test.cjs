@@ -31,9 +31,9 @@ assert(html.includes('./modules/operations-upgrade.js'));
 assert(html.includes('./modules/ui-refresh.css'));
 assert(html.includes('./modules/accessibility-enhancements.js'));
 assert(html.includes('./modules/ws-workbench.js'));
-assert(pkg.includes('"version": "4.4.9"'));
+assert(pkg.includes('"version": "4.4.11"'));
 assert(setup.includes('OutputBaseFilename=知客-{#AppVersion}-WS工作台智能录入版'));
-assert(setup.includes('#define AppVersion "4.4.9"'));
+assert(setup.includes('#define AppVersion "4.4.11"'));
 assert(readme.includes('## 4.2.0 WS 工作台版'));
 assert(readme.includes('## 4.1.3 全面增强版'));
 assert(readme.includes('低置信度与多候选行进入待复核'));
@@ -100,3 +100,5 @@ assert.match(wsPreload, /discoverAllConversations/, 'WS list collection scans th
 assert.match(wsPreload, /previewText[\s\S]*listText[\s\S]*previewDirection/, 'WS list scan extracts preview text and direction without opening chats');
 assert.match(wsPreload, /聊天列表[\s\S]*role="row"[\s\S]*compactId/, 'WS list scan covers the current Chinese grid/row chat-list DOM');
 console.log('project audit regression: no demo seed, guards, smart-import/business/performance/operations routes, release notes');
+
+

@@ -435,6 +435,17 @@ function wsCleanListPreviewText(value) {
     .replace(/\s+/g, ' ')
     .trim();
 }
+function wsCanonicalListPreviewTitle(title, lastMessageText, data = {}) {
+  const cleanTitle = wsCleanListPreviewText(title);
+  const preview = wsCleanListPreviewText(lastMessageText);
+  if (!data?.previewOnly || !cleanTitle || !preview || cleanTitle.toLocaleLowerCase() === preview.toLocaleLowerCase()) return cleanTitle;
+  const lowerTitle = cleanTitle.toLocaleLowerCase(), lowerPreview = preview.toLocaleLowerCase();
+  if (lowerTitle.endsWith(lowerPreview) && cleanTitle.length > preview.length) return cleanTitle.slice(0, -preview.length).trim();
+  // A few WhatsApp accessibility rows expose the contact name as both the
+  // declared title and the preview prefix. Keep the contact portion as title.
+  if (lowerTitle.startsWith(lowerPreview) && cleanTitle.length > preview.length) return preview;
+  return cleanTitle;
+}
 function wsListPreviewOriginal(item, data) {
   const original = wsText(item?.originalText, 12000);
   if (data?.source !== 'ws-list-preview' || data?.previewOnly !== true) return original;
@@ -614,14 +625,14 @@ const server = createServer(async (req, res) => {
         const now = new Date().toISOString();
         const existing = db.prepare('SELECT * FROM ws_conversations WHERE account_id=? AND external_id=?').get(accountId, externalId);
         if (existing) {
-          const title = Object.hasOwn(body, 'title') ? wsText(body.title, 200) : existing.title;
           const customerId = Object.hasOwn(body, 'customerId') ? wsText(body.customerId, 128) : existing.customer_id;
           const lastMessageText = Object.hasOwn(body, 'lastMessageText') ? wsText(body.lastMessageText, 4000) : existing.last_message_text;
+          const data = Object.hasOwn(body, 'data') ? wsObject(body.data, 32 * 1024) : wsJson(existing.data_json);
+          const title = Object.hasOwn(body, 'title') ? wsCanonicalListPreviewTitle(body.title, lastMessageText, data) : existing.title;
           const lastMessageAt = Object.hasOwn(body, 'lastMessageAt') ? wsIso(body.lastMessageAt) : existing.last_message_at;
           const unreadCount = Object.hasOwn(body, 'unreadCount') ? Math.max(0, Math.floor(Number(body.unreadCount) || 0)) : Number(existing.unread_count || 0);
           const language = Object.hasOwn(body, 'language') ? wsText(body.language, 40) : existing.language;
           const intentLevel = Object.hasOwn(body, 'intentLevel') ? wsText(body.intentLevel, 40) : existing.intent_level;
-          const data = Object.hasOwn(body, 'data') ? wsObject(body.data, 32 * 1024) : wsJson(existing.data_json);
           db.prepare('UPDATE ws_conversations SET title=?,customer_id=?,last_message_text=?,last_message_at=?,unread_count=?,language=?,intent_level=?,data_json=?,updated_at=? WHERE id=? AND account_id=?')
             .run(title, customerId, lastMessageText, lastMessageAt, unreadCount, language, intentLevel, JSON.stringify(data), now, existing.id, accountId);
         } else {
@@ -630,7 +641,7 @@ const server = createServer(async (req, res) => {
           const lastMessageAt = Object.hasOwn(body, 'lastMessageAt') ? wsIso(body.lastMessageAt) : (lastMessageText ? now : '');
           db.prepare(`INSERT INTO ws_conversations(id,account_id,external_id,title,customer_id,last_message_text,intent_level,data_json,created_at,updated_at,last_message_at,unread_count,language)
             VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-            .run(id, accountId, externalId, wsText(body.title, 200), wsText(body.customerId, 128), lastMessageText, wsText(body.intentLevel, 40), JSON.stringify(wsObject(body.data, 32 * 1024)), now, now, lastMessageAt, Math.max(0, Math.floor(Number(body.unreadCount) || 0)), wsText(body.language, 40));
+            .run(id, accountId, externalId, wsCanonicalListPreviewTitle(body.title, lastMessageText, body.data), wsText(body.customerId, 128), lastMessageText, wsText(body.intentLevel, 40), JSON.stringify(wsObject(body.data, 32 * 1024)), now, now, lastMessageAt, Math.max(0, Math.floor(Number(body.unreadCount) || 0)), wsText(body.language, 40));
         }
         const row = db.prepare('SELECT * FROM ws_conversations WHERE account_id=? AND external_id=?').get(accountId, externalId);
         return json(res, 200, wsConversationPayload(row));
@@ -710,7 +721,13 @@ const server = createServer(async (req, res) => {
           resultRows.push(wsMessagePayload(row));
         }
         const last = resultRows.at(-1);
-        if (last) db.prepare('UPDATE ws_conversations SET last_message_text=?,last_message_at=?,unread_count=unread_count+?,updated_at=? WHERE id=?').run(last.originalText.slice(0, 4000), last.createdAt || now, unreadAdded, now, conversationId);
+        if (last) {
+          const existingConversation = db.prepare('SELECT title,data_json FROM ws_conversations WHERE id=? AND account_id=?').get(conversationId, accountId);
+          const data = wsJson(existingConversation?.data_json, {});
+          const title = wsCanonicalListPreviewTitle(existingConversation?.title || '', last.originalText, { ...data, previewOnly: data.previewOnly || data.discovery === 'visible-page' });
+          db.prepare('UPDATE ws_conversations SET title=?,last_message_text=?,last_message_at=?,unread_count=unread_count+?,updated_at=? WHERE id=? AND account_id=?')
+            .run(title, last.originalText.slice(0, 4000), last.createdAt || now, unreadAdded, now, conversationId, accountId);
+        }
         db.prepare('UPDATE ws_ingest_batches SET inserted_count=?,message_ids_json=?,updated_at=? WHERE id=?').run(inserted, JSON.stringify(messageIds), now, batchId);
         db.exec('COMMIT');
       } catch (error) { db.exec('ROLLBACK'); throw error; }
