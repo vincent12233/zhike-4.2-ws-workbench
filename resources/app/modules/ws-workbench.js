@@ -485,14 +485,25 @@
     if (state.aiEnabled && state.messages.length) await analyzeConversation(context);
     if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: state.aiEnabled ? 'completed' : 'pending', checkpoint: String(result.messages.length) }) }, context).catch(() => {});
   }
+  function renderFollowupAlerts() {
+    const alerts = state.followupAlerts || [];
+    if (!alerts.length) return '<p class="ws-muted">当前没有自动识别出的待跟进客户。</p>';
+    return `<div class="ws-followup-alerts">${alerts.map(item => {
+      const confidence = Math.round(Number(item.confidence || 0) * 100);
+      return `<article class="ws-followup-alert ${esc(item.priority || 'today')}">
+        <div class="ws-followup-alert-head"><strong>${esc(item.title || item.externalId || '未命名客户')}</strong><span>${esc(item.reason || item.intent || '建议跟进')}</span></div>
+        <p>${esc(item.nextStep || item.summary || '请人工查看会话并确认下一步')}</p>
+        <div class="ws-followup-alert-meta"><span>${item.followupTime ? `计划 ${esc(String(item.followupTime).slice(0, 16))}` : '未设置时间'}</span><span>置信度 ${confidence}%</span></div>
+        <button class="btn small" data-ws-action="open-followup-alert" data-id="${esc(item.conversationId)}">查看会话并确认</button>
+      </article>`;
+    }).join('')}</div>`;
+  }
   function renderCollectionCard() {
     const run = state.collectionRun;
-    if (!run) return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>采集与跟进</strong><span>尚未创建采集任务</span></div></div><p class="ws-muted">采集会话后再由 AI 分析，并把需要跟进的客户写入跟进记录。</p><button class="btn small primary ws-full-button" data-ws-action="create-collection-run">创建采集任务</button></section>`;
+    if (!run) return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>AI 跟进提醒</strong><span>每个会话只采用最新有效分析</span></div></div>${renderFollowupAlerts()}<p class="ws-muted">创建采集任务后可持续更新会话、分析和提醒。</p><button class="btn small primary ws-full-button" data-ws-action="create-collection-run">创建采集任务</button></section>`;
     const pending = Math.max(0, run.total - run.completed - run.failed - run.skipped);
-    const alerts = state.followupAlerts || [];
-    const alertHtml = alerts.length ? `<div class="ws-followup-alerts">${alerts.map(item => `<div class="ws-followup-alert"><strong>${esc(item.title || item.externalId || '未命名客户')}</strong><span>${esc(item.intent || item.urgency || '建议跟进')}</span><p>${esc(item.nextStep || item.summary || '请人工查看会话并确认下一步')}</p></div>`).join('')}</div>` : '<p class="ws-muted">当前没有自动识别出的待跟进客户。</p>';
     const controls = run.status === 'paused' ? '<button class="btn small" data-ws-action="resume-collection">继续</button>' : ['created','running','discovering'].includes(run.status) ? '<button class="btn small" data-ws-action="pause-collection">暂停</button><button class="btn small danger" data-ws-action="stop-collection">停止</button>' : '';
-    return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>采集与跟进</strong><span>${esc(run.status)} · 更新于 ${esc(displayTime(run.updatedAt))}</span></div><div>${controls}<button class="btn small" data-ws-action="create-collection-run">新建任务</button></div></div><div class="ws-collection-stats"><b>${run.completed}/${run.total || run.discovered}</b><span>已采集</span><b>${run.analyzed}</b><span>已分析</span><b>${run.retryable}</b><span>待重试</span><b>${pending}</b><span>待处理</span></div>${run.lastError ? `<p class="ws-error-line">${esc(run.lastError)}</p>` : ''}${alertHtml}</section>`;
+    return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>采集与跟进</strong><span>${esc(run.status)} · 更新于 ${esc(displayTime(run.updatedAt))}</span></div><div>${controls}<button class="btn small" data-ws-action="create-collection-run">新建任务</button></div></div><div class="ws-collection-stats"><b>${run.completed}/${run.total || run.discovered}</b><span>已采集</span><b>${run.analyzed}</b><span>已分析</span><b>${run.retryable}</b><span>待重试</span><b>${pending}</b><span>待处理</span></div>${run.lastError ? `<p class="ws-error-line">${esc(run.lastError)}</p>` : ''}${renderFollowupAlerts()}</section>`;
   }
   async function loadConversationData(id, redraw = true, parentContext = null) {
     const conversationId = String(id || '');
@@ -1352,6 +1363,7 @@
     if (action === 'stop-collection') return updateCollectionRun('stopped');
     if (action === 'discover-conversations') return discoverConversations();
     if (action === 'capture-visible-messages') return captureVisibleMessages();
+    if (action === 'open-followup-alert') { state.mobilePanel = 'center'; return loadConversationData(element.dataset.id); }
     if (action === 'select-conversation') { state.mobilePanel = 'center'; return loadConversationData(element.dataset.id); }
     if (action === 'clear-capture') { currentDraft().captureText = ''; render(); return; }
     if (action === 'import-visible') return importVisible();
@@ -1471,6 +1483,14 @@
     return api('/api/ws/import', { method: 'POST', timeout: 60000, body: JSON.stringify(value) });
   }
   window.__zhikeWsBackup = Object.freeze({ exportData: exportWsData, importData: importWsData });
+  window.__zhikeWsFollowups = Object.freeze({
+    load: async (limit = 8) => {
+      const safeLimit = Math.min(30, Math.max(1, Number(limit) || 8));
+      const result = await api(`/api/ws/followup-alerts?limit=${safeLimit}`);
+      return Array.isArray(result.alerts) ? result.alerts : [];
+    },
+    openWorkspace: () => activate(),
+  });
   function boot() {
     const host = getHost();
     if (!host) { setTimeout(boot, 50); return; }

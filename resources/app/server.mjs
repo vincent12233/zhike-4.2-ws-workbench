@@ -752,8 +752,42 @@ const server = createServer(async (req, res) => {
       wsRequireAccount(accountId);
       const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit')) || 30));
       const rows = db.prepare(`SELECT a.*, c.title, c.external_id, c.customer_id FROM ws_ai_analyses a JOIN ws_conversations c ON c.id=a.conversation_id AND c.account_id=a.account_id WHERE a.account_id=? ORDER BY a.created_at DESC LIMIT ${limit * 3}`).all(accountId);
-      const today = new Date().toISOString().slice(0, 10); const alerts = [];
-      for (const row of rows) { const result = wsJson(row.result_json, {}); const due = String(result.followupTime || '').slice(0, 10); const urgent = /高|紧急|urgent|hot/i.test(String(result.urgency || '')) || Number(result.intentScore || 0) >= 80; if (urgent || (due && due <= today)) alerts.push({ accountId: row.account_id, conversationId: row.conversation_id, title: row.title, externalId: row.external_id, customerId: row.customer_id, summary: result.summary || '', nextStep: result.nextStep || '', followupTime: result.followupTime || '', urgency: result.urgency || '', intent: result.intent || '', confidence: Number(row.confidence || 0), needsConfirmation: true }); if (alerts.length >= limit) break; }
+      const today = new Date().toISOString().slice(0, 10);
+      const alerts = [];
+      const seenConversations = new Set();
+      for (const row of rows) {
+        if (seenConversations.has(row.conversation_id)) continue;
+        seenConversations.add(row.conversation_id);
+        const result = wsJson(row.result_json, {});
+        const confidence = Number(row.confidence || 0);
+        if (result.error || confidence < 0.3) continue;
+        const due = String(result.followupTime || '').slice(0, 10);
+        const urgent = /高|紧急|urgent|hot/i.test(String(result.urgency || '')) || Number(result.intentScore || 0) >= 80;
+        const overdue = Boolean(due && due < today);
+        const dueToday = Boolean(due && due === today);
+        if (!urgent && !overdue && !dueToday) continue;
+        const reason = urgent && overdue ? '高意向且已逾期' : urgent ? '高意向客户' : overdue ? '跟进已逾期' : '今日应跟进';
+        alerts.push({
+          alertKey: `${row.account_id}:${row.conversation_id}`,
+          analysisId: row.id,
+          analyzedAt: row.created_at,
+          accountId: row.account_id,
+          conversationId: row.conversation_id,
+          title: row.title,
+          externalId: row.external_id,
+          customerId: row.customer_id,
+          summary: result.summary || '',
+          nextStep: result.nextStep || '',
+          followupTime: result.followupTime || '',
+          urgency: result.urgency || '',
+          intent: result.intent || '',
+          confidence,
+          priority: urgent ? 'urgent' : overdue ? 'overdue' : 'today',
+          reason,
+          needsConfirmation: true,
+        });
+        if (alerts.length >= limit) break;
+      }
       return json(res, 200, { alerts, generatedAt: new Date().toISOString() });
     }
     if (req.method === 'GET' && url.pathname === '/api/ws/diagnostics') {

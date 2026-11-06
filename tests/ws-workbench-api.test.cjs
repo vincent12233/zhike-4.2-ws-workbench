@@ -90,7 +90,7 @@ async function json(response) { return response.json(); }
     assert.equal(messageRows.length, 3);
     assert.equal(messageRows.find(item => item.externalId === 'msg-2').translationStatus, 'pending');
 
-    const analysis = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, result: { summary: '咨询产品', intent: '高意向', language: 'English', confidence: 0.8 }, providerName: 'test', model: 'test-model' }) });
+    const analysis = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, result: { summary: '咨询产品', intent: '高意向', intentScore: 90, urgency: '高', nextStep: '今天联系客户确认预算', followupTime: '2026-11-05', language: 'English', confidence: 0.8 }, providerName: 'test', model: 'test-model' }) });
     assert.equal(analysis.status, 200);
     const analysisList = await json(await request(`/api/ws/analyses?conversationId=${encodeURIComponent(conversationBody.id)}&limit=1&offset=0`));
     assert.equal(analysisList.total, 1);
@@ -101,6 +101,20 @@ async function json(response) { return response.json(); }
     assert.equal(refreshedConversation.language, 'English');
     assert.ok(refreshedConversation.lastMessageAt);
     assert.equal(refreshedConversation.unreadCount, 4);
+
+    const firstAlerts = await json(await request('/api/ws/followup-alerts?limit=8'));
+    assert.equal(firstAlerts.alerts.length, 1);
+    assert.equal(firstAlerts.alerts[0].conversationId, conversationBody.id);
+    assert.equal(firstAlerts.alerts[0].priority, 'urgent');
+    assert.match(firstAlerts.alerts[0].reason, /高意向/);
+    assert.ok(firstAlerts.alerts[0].alertKey);
+    assert.ok(firstAlerts.alerts[0].analysisId);
+
+    await wait(5);
+    const newerAnalysis = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, result: { summary: '客户暂时不考虑', intent: '低意向', intentScore: 10, urgency: '低', nextStep: '一个月后再联系', followupTime: '2099-01-01', language: 'English', confidence: 0.9 }, providerName: 'test', model: 'test-model' }) });
+    assert.equal(newerAnalysis.status, 200);
+    const alertsAfterNewerAnalysis = await json(await request('/api/ws/followup-alerts?limit=8'));
+    assert.equal(alertsAfterNewerAnalysis.alerts.length, 0, '同一会话只应采用最新分析，不能保留旧的紧急提醒');
 
     const replyPayload = { conversationId: conversationBody.id, originalText: 'Thank you', translatedText: '谢谢', status: 'copied', idempotencyKey: 'reply-copy-001' };
     const reply = await json(await request('/api/ws/replies', { method: 'POST', body: JSON.stringify(replyPayload) }));
@@ -126,7 +140,7 @@ async function json(response) { return response.json(); }
     assert.equal(imported.status, 200);
     const importResult = await json(imported);
     assert.equal(importResult.schemaVersion, 6);
-    assert.deepEqual(importResult.counts, { settings: 1, conversations: 1, messages: 3, analyses: 1, replies: 1, batches: 1 });
+    assert.deepEqual(importResult.counts, { settings: 1, conversations: 1, messages: 3, analyses: 2, replies: 1, batches: 1 });
 
     const v5 = JSON.parse(JSON.stringify(exportedBody));
     v5.schemaVersion = 5;
