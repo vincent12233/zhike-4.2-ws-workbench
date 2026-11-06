@@ -120,6 +120,7 @@
     if (!id) return;
     state.accounts = state.accounts.map(item => String(item.id) === id ? { ...item, status: payload.status || item.status, statusDetail: payload.detail || item.statusDetail } : item);
     if (id === String(state.activeAccountId) && payload.status) setStatus(payload.status, payload.detail || '');
+    if (state.active && host.state.view === 'ws-workbench') render();
   }
   function openAccountForm() {
     if (state.accountBusy) return;
