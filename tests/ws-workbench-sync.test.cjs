@@ -72,8 +72,9 @@ assert.match(ui, /includes\(item\.analysisStatus\)/, 'collection summary counts 
 assert.match(ui, /collectionRefreshTimer = setInterval\([\s\S]*12000/, 'phone-to-workbench list sync polls at a bounded interval');
 assert.match(ui, /analyzeConversation\(context[\s\S]*api\('\/api\/ws\/analyses'[\s\S]*context/, 'AI analysis writes use originating account');
 assert.match(server, /sameCheckpoint[\s\S]*successfulAnalysis[\s\S]*analysis_status/, 'collection item updates preserve successful analysis for an unchanged preview');
-assert.match(server, /cleanSystemMarkers[\s\S]*自动消失[\s\S]*条未读消息/, 'server canonicalizes WhatsApp system markers before persistence');
+assert.match(server, /wsCleanListPreviewText[\s\S]*自动消失[\s\S]*条未读消息/, 'server canonicalizes WhatsApp system markers before persistence');
 assert.match(server, /normalizeStoredWsListPreviews[\s\S]*UPDATE ws_messages/, 'server repairs previously persisted list-preview noise at startup');
+assert.match(server, /cleanedTitle[\s\S]*endsWith\(latest\.original_text/, 'server repairs titles that were previously concatenated with list previews');
 assert.match(ui, /wsAccountIds|activeAccountId/, 'CRM profile stores WS account identity');
 assert.match(ui, /matchCustomer\([\s\S]*wsAccountId/, 'CRM matching uses WS account identity after phone');
 assert.match(ui, /wsExternalId: externalId[\s\S]*wsAccountId: context\.accountId/, 'visible discovery matches WS external id and account identity');

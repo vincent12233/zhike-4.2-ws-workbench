@@ -427,17 +427,19 @@ function wsConversationPayload(row) { return { id: row.id, accountId: row.accoun
 function wsMessagePayload(row) { return { id: row.id, accountId: row.account_id || 'default', conversationId: row.conversation_id, externalId: row.external_id, direction: row.direction, originalText: row.original_text, translatedText: row.translated_text, sourceLanguage: row.source_language, targetLanguage: row.target_language, order: row.order_no, translationStatus: row.translation_status || (row.translated_text ? 'translated' : 'none'), translationError: row.translation_error || '', translationAttempts: Number(row.translation_attempts || 0), lastAttemptAt: row.last_attempt_at || '', data: wsJson(row.data_json), createdAt: row.created_at, updatedAt: row.updated_at }; }
 function wsAnalysisPayload(row) { return { id: row.id, accountId: row.account_id || 'default', conversationId: row.conversation_id, result: wsJson(row.result_json), confidence: Number(row.confidence || 0), providerName: row.provider_name, model: row.model, errorMessage: row.error_message, createdAt: row.created_at, updatedAt: row.updated_at }; }
 function wsReplyPayload(row) { return { id: row.id, accountId: row.account_id || 'default', conversationId: row.conversation_id, originalText: row.original_text, translatedText: row.translated_text, status: row.status, idempotencyKey: row.idempotency_key || '', createdAt: row.created_at, updatedAt: row.updated_at }; }
-function wsListPreviewOriginal(item, data) {
-  const original = wsText(item?.originalText, 12000);
-  if (data?.source !== 'ws-list-preview' || data?.previewOnly !== true) return original;
-  const cleanSystemMarkers = value => wsText(value, 12000)
+function wsCleanListPreviewText(value) {
+  return wsText(value, 12000)
     .replace(/[\u200e\u200f\u202a-\u202e]/g, '')
     .replace(/此聊天中的新消息将在发送(?:7|90)天后自动消失（除非消息已保留）。?/g, '')
     .replace(/\d+\s*条未读消息/g, '')
     .replace(/\s+/g, ' ')
     .trim();
-  const listText = cleanSystemMarkers(data?.listText);
-  const cleanedOriginal = cleanSystemMarkers(original);
+}
+function wsListPreviewOriginal(item, data) {
+  const original = wsText(item?.originalText, 12000);
+  if (data?.source !== 'ws-list-preview' || data?.previewOnly !== true) return original;
+  const listText = wsCleanListPreviewText(data?.listText);
+  const cleanedOriginal = wsCleanListPreviewText(original);
   if (cleanedOriginal && cleanedOriginal !== original) return cleanedOriginal;
   if (!listText || !cleanedOriginal) return cleanedOriginal || original;
   if (listText.toLocaleLowerCase().startsWith(cleanedOriginal.toLocaleLowerCase()) && listText.length > cleanedOriginal.length) {
@@ -465,7 +467,14 @@ function normalizeStoredWsListPreviews() {
       const conversations = db.prepare("SELECT DISTINCT conversation_id FROM ws_messages WHERE json_extract(data_json,'$.source')='ws-list-preview'").all();
       for (const conversation of conversations) {
         const latest = db.prepare("SELECT original_text FROM ws_messages WHERE conversation_id=? AND json_extract(data_json,'$.source')='ws-list-preview' ORDER BY updated_at DESC,created_at DESC LIMIT 1").get(conversation.conversation_id);
-        if (latest) db.prepare('UPDATE ws_conversations SET last_message_text=?,updated_at=? WHERE id=?').run(latest.original_text.slice(0, 4000), new Date().toISOString(), conversation.conversation_id);
+        const current = db.prepare('SELECT title,last_message_text FROM ws_conversations WHERE id=?').get(conversation.conversation_id);
+        if (latest && current) {
+          const cleanedTitle = wsCleanListPreviewText(current.title);
+          const title = cleanedTitle && latest.original_text && cleanedTitle.toLocaleLowerCase().endsWith(latest.original_text.toLocaleLowerCase())
+            ? cleanedTitle.slice(0, -latest.original_text.length).trim()
+            : cleanedTitle;
+          db.prepare('UPDATE ws_conversations SET title=?,last_message_text=?,updated_at=? WHERE id=?').run(title, latest.original_text.slice(0, 4000), new Date().toISOString(), conversation.conversation_id);
+        }
       }
     }
     db.exec('COMMIT');
