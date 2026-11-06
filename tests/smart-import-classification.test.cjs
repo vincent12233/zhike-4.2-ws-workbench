@@ -78,6 +78,17 @@ assert.equal(dateLast.source, 2);
 assert.equal(dateLast.status, 3);
 assert.equal(dateLast.registered, 4);
 
+const mixedHeaders = ['跟票日期', '金额', '客户号码', '股票代码', '方向', '记录类型', '下次跟进'];
+const mixedRows = [['2026-11-09', '', '9876543219', 'AAPL', '买入', '跟票', '2026-11-12'], ['2026-11-10', '1500', '9876543220', '', '', '入金', '2026-11-15']];
+const mixedMapping = api.inferHeaderMapping(mixedHeaders, mixedRows);
+assert.equal(mixedMapping.followDate, 0);
+assert.equal(mixedMapping.amount, 1);
+assert.equal(mixedMapping.product, 3);
+assert.equal(mixedMapping.direction, 4);
+assert.equal(api.inferRecordType({ recordType: '跟票', product: 'AAPL', direction: '买入', amount: '' }), 'ticket');
+assert.equal(api.inferRecordType({ recordType: '入金', product: '', direction: '', amount: '1500' }), 'deposit');
+assert.equal(api.date('2026年11月12日'), '2026-11-12');
+
 const unorderedNatural = api.parseNaturalLine('06/11/2026 单导 已进群 周十一 9876543217');
 assert.equal(unorderedNatural.registered, '2026-11-06');
 assert.equal(unorderedNatural.phone, '9876543217');

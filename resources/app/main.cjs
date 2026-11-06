@@ -417,7 +417,7 @@ ipcMain.handle('zhike-ws', async (event, value = {}) => {
     if (accountId !== activeWsAccountId) throw new Error('请先切换到当前 WS 账号。');
     const view = wsViews.get(accountId)?.view;
     if (!view || view.webContents.isDestroyed()) throw new Error('请先打开 WS 页面并完成登录。');
-    const method = action === 'discover-conversations' ? 'discoverVisibleConversations' : 'captureVisibleMessages';
+    const method = action === 'discover-conversations' ? 'discoverAllConversations' : 'captureVisibleMessages';
     const captured = await view.webContents.executeJavaScript(`window.zhikeWsPage?.${method}?.() ?? null`, true);
     if (!captured?.supported) return { ok: false, supported: false, error: '当前页面结构未识别，未读取任何内容。' };
     return { ok: true, ...captured };

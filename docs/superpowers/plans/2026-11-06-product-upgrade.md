@@ -29,27 +29,27 @@
 
 **Files:** `resources/app/app.js`, `resources/app/modules/smart-import.js`, `tests/project-audit-regression.test.cjs`
 
-- [ ] 增加登记日期/下次跟进日期兼容归一化规则。
-- [ ] 导入预览中显示原始日期、标准日期和字段来源。
-- [ ] 为 Excel 序列日期、中文日期、带时间日期增加回归断言。
+- [x] 增加登记日期/下次跟进日期兼容归一化规则。
+- [x] 导入预览中显示原始日期、标准日期和字段来源。
+- [x] 为 Excel 序列日期、中文日期、带时间日期增加回归断言。
 
 ### Task 2: 性能与数据一致性
 
 **Files:** `resources/app/app.js`, `resources/app/modules/performance-enhancements.js`, `tests/performance-scale.test.cjs`
 
-- [ ] 保持索引缓存、筛选防抖和分页边界稳定。
-- [ ] 增加导入批次原子写入、重复键和失败回滚断言。
+- [x] 保持索引缓存、筛选防抖和分页边界稳定。
+- [x] 增加导入批次原子写入、重复键和失败回滚断言。
 
 ### Task 3: WS 与 AI 跟进
 
 **Files:** `resources/app/modules/ws-workbench.js`, `resources/app/modules/ws-workbench-core.js`, `resources/app/modules/gpt-assistant.js`
 
-- [ ] 增加同步游标、重复消息去重和断线恢复状态。
-- [ ] 增加 AI 跟进建议的优先级、原因、提醒时间和已处理状态。
+- [x] 增加同步游标、重复消息去重和断线恢复状态。
+- [x] 增加 AI 跟进建议的优先级、原因、提醒时间和已处理状态。
 
 ### Task 4: 备份、版本和验收
 
 **Files:** `tests`, `docs`, `resources/app/package.json`, `resources/app/index.html`
 
-- [ ] 完成全量测试和安装包隔离/覆盖安装验证。
-- [ ] 更新版本号、修复清单和测试报告，生成安装包。
+- [x] 完成全量测试和安装包隔离/覆盖安装验证。
+- [x] 更新版本号、修复清单和测试报告，生成安装包。

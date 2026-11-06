@@ -435,7 +435,24 @@
       assertContext(context);
       state.collectionRun = result.run;
       toast(status === 'paused' ? '采集已暂停' : status === 'stopped' ? '采集已停止' : '采集已继续'); render();
+      if (status === 'running') await resumeCollectionFromCheckpoint(context);
     } catch (error) { if (contextCurrent(context)) { state.error = error.message; render(); } }
+  }
+  async function resumeCollectionFromCheckpoint(context = captureContext()) {
+    if (!state.collectionRun?.id || !['running','discovering'].includes(state.collectionRun.status) || state.wsStatus !== '已连接') return;
+    assertContext(context);
+    const visible = await wsBridge('discover-conversations', context).catch(() => null);
+    assertContext(context);
+    if (!visible?.supported) return;
+    const items = Array.isArray(visible.conversations) ? visible.conversations : [];
+    if (items.length) await enqueueDiscoveredConversations(items, false, context);
+    const cursor = JSON.stringify({ lastExternalId: text(items.at(-1)?.externalId || ''), discovered: items.length, scannedAt: nowIso() });
+    const result = await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', discovered: Math.max(Number(state.collectionRun.discovered || 0), items.length), total: Math.max(Number(state.collectionRun.total || 0), items.length), cursor, resumeCount: Number(state.collectionRun.resumeCount || 0) + 1, lastSuccessAt: nowIso() }) }, context);
+    assertContext(context);
+    state.collectionRun = result.run;
+    state.discoveredConversations = items;
+    state.visibleConversationFingerprint = visibleConversationFingerprint(items);
+    render();
   }
   async function discoverConversations() {
     const context = captureContext();
@@ -444,7 +461,7 @@
       const queued = await enqueueDiscoveredConversations(state.discoveredConversations, false, context);
       assertContext(context);
       state.visibleConversationFingerprint = visibleConversationFingerprint(state.discoveredConversations);
-      const runResult = await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', discovered: state.discoveredConversations.length, total: state.discoveredConversations.length }) }, context);
+      const runResult = await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', discovered: state.discoveredConversations.length, total: state.discoveredConversations.length, cursor: JSON.stringify({ lastExternalId: text(state.discoveredConversations.at(-1)?.externalId || ''), discovered: state.discoveredConversations.length, scannedAt: nowIso() }), lastSuccessAt: nowIso() }) }, context);
       assertContext(context);
       state.collectionRun = runResult.run;
       toast(`已发现 ${state.discoveredConversations.length} 个会话，入队 ${queued} 个`); render();
@@ -460,7 +477,7 @@
       await importVisible(context);
       assertContext(context);
       if (state.aiEnabled && state.messages.length) await analyzeConversation(context);
-      if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: 'pending', checkpoint: String(result.messages.length) }) }, context);
+      if (state.collectionRun?.id) { await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: 'pending', coverageStatus: 'visible', checkpoint: String(result.messages.length) }) }, context); await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, cursor: JSON.stringify({ conversationId: current.id, messageCount: result.messages.length, capturedAt: nowIso() }), lastSuccessAt: nowIso() }) }, context); }
       toast(`已采集当前会话 ${result.messages.length} 条可见消息`);
     } catch (error) {
       if (contextCurrent(context) && state.collectionRun?.id) { try { await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'failed', attempts: 1, lastError: error.message }) }, context); } catch {} }
@@ -484,7 +501,7 @@
     await importVisible(context);
     if (!contextCurrent(context)) return;
     if (state.aiEnabled && state.messages.length) await analyzeConversation(context);
-    if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: state.aiEnabled ? 'completed' : 'pending', checkpoint: String(result.messages.length) }) }, context).catch(() => {});
+    if (state.collectionRun?.id) { await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: state.aiEnabled ? 'completed' : 'pending', coverageStatus: 'visible', checkpoint: String(result.messages.length) }) }, context).catch(() => {}); await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, cursor: JSON.stringify({ conversationId: current.id, messageCount: result.messages.length, capturedAt: nowIso() }), lastSuccessAt: nowIso() }) }, context).catch(() => {}); }
   }
   function renderFollowupAlerts() {
     const alerts = state.followupAlerts || [];
@@ -495,16 +512,28 @@
         <div class="ws-followup-alert-head"><strong>${esc(item.title || item.externalId || '未命名客户')}</strong><span>${esc(item.reason || item.intent || '建议跟进')}</span></div>
         <p>${esc(item.nextStep || item.summary || '请人工查看会话并确认下一步')}</p>
         <div class="ws-followup-alert-meta"><span>${item.followupTime ? `计划 ${esc(String(item.followupTime).slice(0, 16))}` : '未设置时间'}</span><span>置信度 ${confidence}%</span></div>
-        <button class="btn small" data-ws-action="open-followup-alert" data-id="${esc(item.conversationId)}">查看会话并确认</button>
+        <div class="ws-followup-alert-actions"><button class="btn small" data-ws-action="open-followup-alert" data-id="${esc(item.conversationId)}">查看会话</button><button class="btn small" data-ws-action="done-followup-alert" data-alert-id="${esc(item.id || '')}" data-alert-key="${esc(item.alertKey || '')}">已处理</button><button class="btn small" data-ws-action="snooze-followup-alert" data-alert-id="${esc(item.id || '')}" data-alert-key="${esc(item.alertKey || '')}">明日提醒</button><button class="btn small" data-ws-action="dismiss-followup-alert" data-alert-id="${esc(item.id || '')}" data-alert-key="${esc(item.alertKey || '')}">忽略</button></div>
       </article>`;
     }).join('')}</div>`;
+  }
+  async function updateFollowupAlert(element, status) {
+    const context = captureContext();
+    const snoozedUntil = status === 'snoozed' ? new Date(Date.now() + 86400000).toISOString() : '';
+    try {
+      const result = await api('/api/ws/followup-alerts', { method: 'PATCH', body: JSON.stringify({ id: text(element?.dataset?.alertId), alertKey: text(element?.dataset?.alertKey), status, snoozedUntil }) }, context);
+      assertContext(context);
+      const saved = result.alert;
+      state.followupAlerts = state.followupAlerts.map(item => String(item.id) === String(saved.id) ? { ...item, status: saved.status, snoozedUntil: saved.snoozedUntil } : item).filter(item => !['done','dismissed'].includes(item.status));
+      render();
+      toast(status === 'done' ? '已标记为已处理' : status === 'snoozed' ? '已安排明日提醒' : '已忽略本条提醒');
+    } catch (error) { if (contextCurrent(context)) toast(error.message, 'x'); }
   }
   function renderCollectionCard() {
     const run = state.collectionRun;
     if (!run) return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>AI 跟进提醒</strong><span>每个会话只采用最新有效分析</span></div></div>${renderFollowupAlerts()}<p class="ws-muted">创建采集任务后可持续更新会话、分析和提醒。</p><button class="btn small primary ws-full-button" data-ws-action="create-collection-run">创建采集任务</button></section>`;
     const pending = Math.max(0, run.total - run.completed - run.failed - run.skipped);
     const controls = run.status === 'paused' ? '<button class="btn small" data-ws-action="resume-collection">继续</button>' : ['created','running','discovering'].includes(run.status) ? '<button class="btn small" data-ws-action="pause-collection">暂停</button><button class="btn small danger" data-ws-action="stop-collection">停止</button>' : '';
-    return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>采集与跟进</strong><span>${esc(run.status)} · 更新于 ${esc(displayTime(run.updatedAt))}</span></div><div>${controls}<button class="btn small" data-ws-action="create-collection-run">新建任务</button></div></div><div class="ws-collection-stats"><b>${run.completed}/${run.total || run.discovered}</b><span>已采集</span><b>${run.analyzed}</b><span>已分析</span><b>${run.retryable}</b><span>待重试</span><b>${pending}</b><span>待处理</span></div>${run.lastError ? `<p class="ws-error-line">${esc(run.lastError)}</p>` : ''}${renderFollowupAlerts()}</section>`;
+    return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>采集与跟进</strong><span>${esc(run.status)} · 更新于 ${esc(displayTime(run.updatedAt))}${run.lastSuccessAt ? ` · 最近成功 ${esc(displayTime(run.lastSuccessAt))}` : ''}</span></div><div>${controls}${['running','discovering','paused'].includes(run.status) ? '<button class="btn small" data-ws-action="resume-collection-checkpoint">从断点继续</button>' : ''}<button class="btn small" data-ws-action="create-collection-run">新建任务</button></div></div><div class="ws-collection-stats"><b>${run.completed}/${run.total || run.discovered}</b><span>已采集</span><b>${run.analyzed}</b><span>已分析</span><b>${run.retryable}</b><span>待重试</span><b>${pending}</b><span>待处理</span><b>${run.resumeCount || 0}</b><span>续采次数</span></div>${run.lastError ? `<p class="ws-error-line">${esc(run.lastError)}</p>` : ''}${renderFollowupAlerts()}</section>`;
   }
   async function loadConversationData(id, redraw = true, parentContext = null) {
     const conversationId = String(id || '');
@@ -1391,9 +1420,13 @@
     if (action === 'pause-collection') return updateCollectionRun('paused');
     if (action === 'resume-collection') return updateCollectionRun('running');
     if (action === 'stop-collection') return updateCollectionRun('stopped');
+    if (action === 'resume-collection-checkpoint') return resumeCollectionFromCheckpoint();
     if (action === 'discover-conversations') return discoverConversations();
     if (action === 'capture-visible-messages') return captureVisibleMessages();
     if (action === 'open-followup-alert') { state.mobilePanel = 'center'; return loadConversationData(element.dataset.id); }
+    if (action === 'done-followup-alert') return updateFollowupAlert(element, 'done');
+    if (action === 'snooze-followup-alert') return updateFollowupAlert(element, 'snoozed');
+    if (action === 'dismiss-followup-alert') return updateFollowupAlert(element, 'dismissed');
     if (action === 'select-conversation') { state.mobilePanel = 'center'; return loadConversationData(element.dataset.id); }
     if (action === 'clear-capture') { currentDraft().captureText = ''; render(); return; }
     if (action === 'import-visible') return importVisible();

@@ -1,12 +1,12 @@
-# 知客 4.3.3 产品级重整版交付说明
+# 知客 4.4.0 产品级重整版交付说明
 
 ## 安装包
 
-- 文件：[知客-4.3.3-WS工作台智能录入版.exe](../releases/知客-4.3.3-WS工作台智能录入版.exe)
-- SHA-256：`7F94E1C50AB82BD7CD4CF8F8AA355840F093F4CD428771EF9E7F956CCAF37455`
-- 文件大小：`173,929,238` 字节
-- Git LFS 路径：`releases/知客-4.3.3-WS工作台智能录入版.exe`
-- 用户输出副本：`C:\Users\酷酷\Documents\Codex\2026-11-04\c-users-documents-codex-2026-11\outputs\知客-4.3.3-产品级重整版.exe`
+- 文件：[知客-4.4.0-WS工作台智能录入版.exe](../releases/知客-4.4.0-WS工作台智能录入版.exe)
+- SHA-256：`EB9C1FF6D5583B8C1EAE6C052AEB4CB64F2A9D5E44CD09CF80D591B06E1426AF`
+- 文件大小：`173,934,059` 字节
+- Git LFS 路径：`releases/知客-4.4.0-WS工作台智能录入版.exe`
+- 用户输出副本：`C:\Users\酷酷\Documents\Codex\2026-11-04\c-users-documents-codex-2026-11\outputs\知客-4.4.0-产品级重整版.exe`
 
 安装器使用 Electron 45.2.1、Node.js 24.22.1 和 Inno Setup 6.7.3 构建。构建脚本先生成隔离 staging，并拒绝打包 `resources/app/data`、BrowserView 分区、日志、凭据和密钥。
 
@@ -37,7 +37,7 @@
 
 - 完整回归：`node scripts/run-tests.cjs all`，`37/37` 通过。
 - 干净 staging：`scripts/build-installer.ps1 -StageOnly`，`142` 个源文件进入 staging，未包含真实数据目录。
-- 安装器 QA：`ZHIKE_EXPECTED_VERSION=4.3.3 node scripts/run-tests.cjs installer`，`2/2` 通过；隔离安装、覆盖安装、WS 资源、卸载和安装根目录用户文件保留均通过。
+- 安装器 QA：`ZHIKE_EXPECTED_VERSION=4.4.0 node scripts/run-tests.cjs installer`，`2/2` 通过；隔离安装、覆盖安装、WS 资源、卸载和安装根目录用户文件保留均通过。
 - 4.1.3 旧安装包当前仓库不存在，升级项按测试脚本明确 `SKIP`，没有把缺失旧构件当作通过。
 - 4.2.4 已验证的 10,000/50,000 合成规模索引性能优化随本次版本保留；本轮新增筛选和归一化没有改变原有数据写入路径。
 
@@ -60,3 +60,10 @@
 - 重点：任意字段顺序识别、前置标题行识别、中文/Excel 日期识别、渠道与状态自动推断、快速录入一键整理。
 - 保存失败保护：快速录入、混合 CSV 导入、跟票导入均增加内存回滚保护。
 - 真实业务数据：未读取、未修改。
+
+## 4.4.0 重点升级
+
+- AI 跟进提醒支持完成、明日提醒和忽略，状态持久化且按最新分析去重。
+- WS 可见会话列表有界扫描并保存断点游标、续采次数和最近成功时间。
+- 历史日期迁移提供预览、快照和失败回滚；混合业务导入按行识别客户、跟票和入金。
+- 安装包版本为 4.4.0，源码回归 37/37 通过。

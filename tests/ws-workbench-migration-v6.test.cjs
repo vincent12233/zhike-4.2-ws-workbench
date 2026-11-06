@@ -45,7 +45,7 @@ async function request(pathname, init = {}) {
 (async () => {
   try {
     const diagnostics = await (await request('/api/ws/diagnostics')).json();
-    assert.ok(diagnostics.schemaVersion >= 7);
+    assert.ok(diagnostics.schemaVersion >= 9);
     const settings = await (await request('/api/ws/settings?conversationId=conv-v5')).json();
     assert.equal(settings.enabled, false);
     assert.equal(settings.receive, true);
@@ -58,7 +58,7 @@ async function request(pathname, init = {}) {
     const exported = await (await request('/api/ws/export')).json();
     assert.ok(exported.schemaVersion >= 6);
     assert.deepEqual(exported.batches, []);
-    console.log('ws-workbench-migration-v6: pass');
+    console.log('ws-workbench-migration-v6/v9: pass');
   } finally {
     try { await fetch(`http://127.0.0.1:${port}/api/shutdown`, { method: 'POST', headers: { ...headers, 'x-zhike-shutdown-token': token } }); } catch {}
     if (child.exitCode === null) child.kill();

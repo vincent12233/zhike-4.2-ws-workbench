@@ -36,6 +36,13 @@ async function json(response) { return response.json(); }
     assert.equal(conversationBody.language, 'English');
     assert.equal(conversationBody.unreadCount, 2);
 
+    const collectionRun = await json(await request('/api/ws/collection-runs', { method: 'POST', body: JSON.stringify({}) }));
+    assert.equal(collectionRun.run.status, 'created');
+    const checkpointRun = await json(await request('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: collectionRun.run.id, status: 'discovering', discovered: 1, total: 1, cursor: JSON.stringify({ lastExternalId: 'wa-001', discovered: 1 }), resumeCount: 1, lastSuccessAt: '2026-11-06T08:00:00Z' }) }));
+    assert.equal(JSON.parse(checkpointRun.run.cursor).lastExternalId, 'wa-001');
+    assert.equal(checkpointRun.run.resumeCount, 1);
+    assert.equal(checkpointRun.run.lastSuccessAt, '2026-11-06T08:00:00Z');
+
     const settings = await request(`/api/ws/settings?conversationId=${encodeURIComponent(conversationBody.id)}`, { method: 'PUT', body: JSON.stringify({ enabled: false, receive: true, send: false, targetLanguage: '中文', sendLanguage: 'English', aiEnabled: false }) });
     assert.equal(settings.status, 200);
     const settingsBody = await json(settings);
@@ -90,6 +97,9 @@ async function json(response) { return response.json(); }
     assert.equal(messageRows.length, 3);
     assert.equal(messageRows.find(item => item.externalId === 'msg-2').translationStatus, 'pending');
 
+    const collectionItem = await json(await request('/api/ws/collection-items', { method: 'POST', body: JSON.stringify({ runId: collectionRun.run.id, conversationId: conversationBody.id, status: 'completed', coverageStatus: 'visible', checkpoint: '3' }) }));
+    assert.equal(collectionItem.item.coverageStatus, 'visible');
+
     const analysis = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, result: { summary: '咨询产品', intent: '高意向', intentScore: 90, urgency: '高', nextStep: '今天联系客户确认预算', followupTime: '2026-11-05', language: 'English', confidence: 0.8 }, providerName: 'test', model: 'test-model' }) });
     assert.equal(analysis.status, 200);
     const analysisList = await json(await request(`/api/ws/analyses?conversationId=${encodeURIComponent(conversationBody.id)}&limit=1&offset=0`));
@@ -109,6 +119,14 @@ async function json(response) { return response.json(); }
     assert.match(firstAlerts.alerts[0].reason, /高意向/);
     assert.ok(firstAlerts.alerts[0].alertKey);
     assert.ok(firstAlerts.alerts[0].analysisId);
+
+    const alertId = firstAlerts.alerts[0].id;
+    const snoozedAlert = await json(await request('/api/ws/followup-alerts', { method: 'PATCH', body: JSON.stringify({ id: alertId, status: 'snoozed', snoozedUntil: '2099-01-01T00:00:00.000Z' }) }));
+    assert.equal(snoozedAlert.alert.status, 'snoozed');
+    assert.equal((await json(await request('/api/ws/followup-alerts?limit=8'))).alerts.length, 0, '已延后的提醒在到期前不应再次出现');
+    const reopenedAlert = await json(await request('/api/ws/followup-alerts', { method: 'PATCH', body: JSON.stringify({ id: alertId, status: 'open', snoozedUntil: '' }) }));
+    assert.equal(reopenedAlert.alert.status, 'open');
+    assert.equal((await json(await request('/api/ws/followup-alerts?limit=8'))).alerts.length, 1);
 
     await wait(5);
     const newerAnalysis = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, result: { summary: '客户暂时不考虑', intent: '低意向', intentScore: 10, urgency: '低', nextStep: '一个月后再联系', followupTime: '2099-01-01', language: 'English', confidence: 0.9 }, providerName: 'test', model: 'test-model' }) });

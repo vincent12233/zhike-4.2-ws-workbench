@@ -1,18 +1,18 @@
-# 知客 4.2.3 WS 工作台
+# 知客 4.4.0 WS 工作台
 
 这是现有知客 4.1 客户运营桌面项目的增量源码仓库。项目保留原有客户中心、快速录入、跟票、入金、统计、数据中心、设置和 GPT 助手业务逻辑，并增加个人 WS 工作台。
 
 ## 目录
 
 - `resources/app/`：Electron 渲染层、主进程、本机 API、SQLite 迁移和前端模块。
-- `resources/app/migrations/005-ws-workbench.sql`–`008-ws-accounts.sql`：WS 工作台独立数据迁移，008 为多账号隔离和历史数据回填。
+- `resources/app/migrations/005-ws-workbench.sql`–`009-ws-resume-alerts.sql`：WS 工作台独立数据迁移，009 为断点采集和跟进提醒状态。
 - `tests/`：WS、备份、HTTP、安装和项目回归测试。
 - `docs/`：项目检查、使用、故障排查、回滚和测试说明。
 - `scripts/`：统一测试入口与可复现的 Windows 安装包构建脚本。
 - `releases/知客-4.2-WS工作台版.exe`：Windows 安装包，通过 Git LFS 保存。
 - `releases/知客-4.2.1-WS工作台完善版.exe`：历史 WS 完善版安装包，通过 Git LFS 保存。
 - `releases/知客-4.2.2-WS工作台完善版.exe`：历史多账号 WS 工作台安装包，通过 Git LFS 保存。
-- `releases/知客-4.2.3-WS工作台完善版.exe`：当前紧凑多账号 WS 工作台安装包，通过 Git LFS 保存。
+- `releases/知客-4.4.0-WS工作台智能录入版.exe`：当前 AI 跟进、WS 断点采集、日期迁移和混合导入优化安装包，通过 Git LFS 保存。
 - `zhike-setup.iss`：Windows Inno Setup 安装脚本。
 
 ## 安装包
@@ -23,9 +23,9 @@
 
 当前 4.2.2 多账号 WS 工作台安装包 SHA-256：`11408056AE239637020F91ECBC89A505F77CCE74C09CDC088590DFCE9AE4A62C`，大小 173,915,466 字节。
 
-当前 4.2.3 紧凑多账号 WS 工作台安装包 SHA-256：`9C2937A3A2341FBF6C959214E3F14E1ADFDC40BED2BCB8BC7FFB92544A26C2E1`，大小 173,916,757 字节。
+当前 4.4.0 安装包 SHA-256 和大小见发布记录（构建完成后更新）。
 
-4.2.3 在 4.2.2 多账号能力上补充紧凑顶部工具区、左右侧栏可收起为窄轨道并记忆状态、WS BrowserView 边界安全阈值，以及不依赖 `prompt()` 的内嵌添加账号表单；原有知客业务数据和统计口径保持不变。
+4.4.0 在现有多账号 WS 工作台上补充 AI 跟进提醒状态、WS 可见会话列表分批扫描与断点游标、历史日期迁移预览、混合业务按行识别、导入分批让出 UI，以及回归和覆盖升级验证；原有知客业务数据和统计口径保持不变。
 
 克隆仓库前请安装 Git LFS；执行 `git lfs pull` 可下载完整安装包。安装包已经包含 Electron 和本机 Node 运行时，因此这些打包二进制不重复放入源码目录。
 
@@ -49,9 +49,9 @@ npm --prefix resources/app run test:all
 安装测试默认使用 `releases/` 中最新已知安装包；4.1.3 旧安装包不存在时，升级测试会明确显示 `SKIP`，不会误报通过。也可以显式指定经过校验的构件：
 
 ```powershell
-$env:ZHIKE_INSTALLER='C:\path\知客-4.2.3-WS工作台完善版.exe'
+$env:ZHIKE_INSTALLER='C:\path\知客-4.4.0-WS工作台智能录入版.exe'
 $env:ZHIKE_OLD_INSTALLER='C:\path\知客-4.1-全面增强版.exe'
-$env:ZHIKE_EXPECTED_VERSION='4.2.3'
+$env:ZHIKE_EXPECTED_VERSION='4.4.0'
 npm --prefix resources/app run test:installer
 ```
 
@@ -63,7 +63,7 @@ npm --prefix resources/app run test:installer
 # 只生成并验证干净 staging
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-installer.ps1 -StageOnly
 
-# 生成 work/output/知客-4.2.3-WS工作台完善版.exe
+# 生成 work/output/知客-4.4.0-WS工作台智能录入版.exe
 npm --prefix resources/app run build:installer
 ```
 

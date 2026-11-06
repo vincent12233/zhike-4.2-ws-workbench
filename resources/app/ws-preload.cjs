@@ -23,12 +23,28 @@ function captureSelection() {
   const text = source.slice(0, 120000);
   return { text, length: text.length, truncated: source.length > text.length };
 }
-function discoverVisibleConversations() {
-  const nodes = [...document.querySelectorAll('#pane-side [role="listitem"], [data-testid="chat-list"] [role="listitem"], [aria-label="Chat list"] [role="listitem"]')].slice(0, 500);
-  return { supported: nodes.length > 0, conversations: nodes.map((node, index) => { const label = String(node.getAttribute('aria-label') || node.getAttribute('title') || '').slice(0, 1000); const badge = node.querySelector?.('[aria-label*="unread"], [data-testid*="unread"]'); return { index, title: label.slice(0, 200), externalId: String(node.getAttribute('data-id') || node.getAttribute('data-testid') || '').slice(0, 200), preview: label.slice(0, 1000), unreadCount: Number(String(badge?.getAttribute?.('aria-label') || '').match(/\d+/)?.[0] || 0) }; }).filter(item => item.title || item.externalId) };
+function conversationNodes() { return [...document.querySelectorAll('#pane-side [role="listitem"], [data-testid="chat-list"] [role="listitem"], [aria-label="Chat list"] [role="listitem"]')]; }
+function readConversationNodes() {
+  return conversationNodes().map((node, index) => { const label = String(node.getAttribute('aria-label') || node.getAttribute('title') || '').slice(0, 1000); const badge = node.querySelector?.('[aria-label*="unread"], [data-testid*="unread"]'); return { index, title: label.slice(0, 200), externalId: String(node.getAttribute('data-id') || node.getAttribute('data-testid') || '').slice(0, 200), preview: label.slice(0, 1000), unreadCount: Number(String(badge?.getAttribute?.('aria-label') || '').match(/\d+/)?.[0] || 0) }; }).filter(item => item.title || item.externalId);
+}
+function discoverVisibleConversations() { const conversations = readConversationNodes().slice(0, 500); return { supported: conversations.length > 0, conversations }; }
+async function discoverAllConversations() {
+  const selector = '#pane-side, [data-testid="chat-list"], [aria-label="Chat list"], [aria-label="Conversation list"]';
+  const container = document.querySelector(selector);
+  if (!container) return discoverVisibleConversations();
+  const seen = new Map(); let stableRounds = 0; let lastSize = 0; let scannedRounds = 0;
+  for (let round = 0; round < 24 && stableRounds < 3; round += 1) {
+    scannedRounds = round + 1;
+    for (const item of readConversationNodes()) { const key = item.externalId || `${item.title}|${item.preview}`; if (key && !seen.has(key)) seen.set(key, { ...item, index: seen.size }); }
+    const before = Number(container.scrollTop || 0); container.scrollTop = Math.min(Number(container.scrollHeight || before), before + Math.max(480, Number(container.clientHeight || 480) * 0.9));
+    await new Promise(resolve => setTimeout(resolve, 180));
+    const size = seen.size; stableRounds = size === lastSize ? stableRounds + 1 : 0; lastSize = size;
+    if (container.scrollTop <= before && Number(container.scrollHeight || 0) <= Number(container.clientHeight || 0)) break;
+  }
+  return { supported: seen.size > 0, conversations: [...seen.values()].slice(0, 500), scannedRounds, coverage: seen.size ? 'page-list-scanned' : 'none' };
 }
 function captureVisibleMessages() {
   const nodes = [...document.querySelectorAll('[data-pre-plain-text], [data-testid="msg-container"]')].slice(-500);
   return { supported: nodes.length > 0, messages: nodes.map((node, index) => { const outgoing = Boolean(node.closest?.('.message-out, [data-testid="msg-out"]')); const raw = String(node.getAttribute('aria-label') || node.getAttribute('data-pre-plain-text') || '').slice(0, 12000); return { index, text: outgoing ? `我：${raw}` : `客户：${raw}`, direction: outgoing ? 'send' : 'receive', marker: String(node.getAttribute('data-id') || '').slice(0, 200) }; }).filter(item => item.text) };
 }
-contextBridge.exposeInMainWorld('zhikeWsPage', Object.freeze({ version: '3', purpose: 'visible-page-only', probeStatus, captureSelection, discoverVisibleConversations, captureVisibleMessages }));
+contextBridge.exposeInMainWorld('zhikeWsPage', Object.freeze({ version: '4', purpose: 'visible-page-only-with-list-scan', probeStatus, captureSelection, discoverVisibleConversations, discoverAllConversations, captureVisibleMessages }));
