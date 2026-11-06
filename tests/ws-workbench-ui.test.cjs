@@ -45,6 +45,7 @@ assert.match(ui, /leftCollapsed|rightCollapsed/, 'left and right panels remain i
 assert.match(ui, /readPanelCollapsed|zhike\.ws\.left\.collapsed/, 'left collapse state is restored from local storage');
 assert.match(ui, /writePanelCollapsed|zhike\.ws\.right\.collapsed/, 'right collapse state is persisted to local storage');
 assert.match(ui, /ws-sidebar-collapse/, 'panels expose an in-panel collapse and expand control');
+assert.match(ui, /ResizeObserver/, 'browser view follows panel size changes after collapse, zoom or DPI updates');
 assert.match(ui, /aria-controls="wsSessionsPanel"/, 'left collapse control exposes accessible state');
 assert.match(ui, /aria-controls="wsAssistPanel"/, 'right collapse control exposes accessible state');
 assert.match(css, /ws-account-list|ws-account-row/, 'account cards have dedicated layout styles');
@@ -52,6 +53,8 @@ assert.match(css, /\.ws-layout\.left-collapsed\{grid-template-columns:(?:48|52)p
 assert.match(css, /body\.ws-mode \.view-container/, 'WS mode tightens outer page padding');
 assert.match(css, /\.ws-page-heading\{[^}]*min-height:38px/, 'WS heading uses compact fixed height');
 assert.match(css, /ws-workbench-page\{[^}]*overflow:hidden/, 'outer workbench does not chase page scroll');
+assert.match(css, /ws-browser-host\{[^}]*flex:1 1 0/, 'browser host flexes before capture controls consume space');
+assert.match(css, /ws-capture-panel\{[^}]*max-height:190px/, 'capture controls stay bounded so the WS page remains reachable');
 assert.match(preload, /restoreAccountId|restored/, 'preload accepts restore-account status events');
 assert.match(main, /restoreAccountId[\s\S]*restoredFrom|restoredFrom[\s\S]*restoreAccountId/, 'main emits explicit restored account context');
 console.log('ws-workbench-ui: account cards, scoped context, collapse and restore synchronization contracts pass');

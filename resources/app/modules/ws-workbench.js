@@ -57,6 +57,7 @@
   };
   let rendering = false;
   let observer;
+  let browserResizeObserver;
   let settingsSaveTimer;
   let settingsSaveSequence = 0;
   let collectionRefreshTimer;
@@ -771,6 +772,15 @@
     `;
     updateStatusDom();
     rendering = false;
+    browserResizeObserver?.disconnect?.();
+    browserResizeObserver = undefined;
+    const browserHost = $('#wsBrowserHost');
+    if (browserHost && typeof ResizeObserver === 'function') {
+      browserResizeObserver = new ResizeObserver(() => {
+        if (state.active) requestAnimationFrame(resizeWsView);
+      });
+      browserResizeObserver.observe(browserHost);
+    }
     requestAnimationFrame(resizeWsView);
   }
 
@@ -1490,6 +1500,8 @@
   function deactivate() {
     if (!state.active) return;
     state.active = false;
+    browserResizeObserver?.disconnect?.();
+    browserResizeObserver = undefined;
     clearInterval(collectionRefreshTimer);
     collectionRefreshTimer = undefined;
     clearInterval(autoCaptureTimer);
