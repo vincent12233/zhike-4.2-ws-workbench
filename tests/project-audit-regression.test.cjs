@@ -4,6 +4,7 @@ const operationsUi=fs.readFileSync(require('node:path').join(__dirname,'..','res
 const performanceUi=fs.readFileSync(require('node:path').join(__dirname,'..','resources','app','modules','performance-enhancements.js'),'utf8');
 const businessUi=fs.readFileSync(require('node:path').join(__dirname,'..','resources','app','modules','business-enhancements.js'),'utf8');
 const wsUi=fs.readFileSync(require('node:path').join(__dirname,'..','resources','app','modules','ws-workbench.js'),'utf8');
+const main=fs.readFileSync(require('node:path').join(__dirname,'..','resources','app','main.cjs'),'utf8');
 assert(app.includes('customers: Array.isArray(stored?.customers)?stored.customers:[]'));
 assert(app.includes('请先粘贴或导入有效客户资料'));
 assert(app.includes('清空当前快速录入内容'));
@@ -26,7 +27,7 @@ assert(html.includes('./modules/operations-upgrade.js'));
 assert(html.includes('./modules/ui-refresh.css'));
 assert(html.includes('./modules/accessibility-enhancements.js'));
 assert(html.includes('./modules/ws-workbench.js'));
-assert(pkg.includes('"version": "4.3.0"'));
+assert(pkg.includes('"version": "4.3.1"'));
 assert(setup.includes('OutputBaseFilename=知客-{#AppVersion}-WS工作台智能录入版'));
 assert(setup.includes('#define AppVersion "4.2.6"'));
 assert(readme.includes('## 4.2.0 WS 工作台版'));
@@ -64,6 +65,7 @@ assert.match(operationsUi, /setTimeout\([\s\S]*160/, 'task search is debounced i
 assert.match(performanceUi, /mountPending[\s\S]*requestAnimationFrame/, 'DOM performance enhancement batches mutation work by animation frame');
 assert.match(businessUi, /ticketProductSearchOptions[\s\S]*股票代码搜索分类/, 'ticket stock filter is upgraded to searchable classification');
 assert.match(wsUi, /operatingTasks[\s\S]*wsConversationId[\s\S]*跟进记录与下一次任务已同步保存/, 'confirmed WS follow-up creates or updates a deduplicated task');
+assert.match(main, /ZHIKE_USER_DATA_DIR[\s\S]*app\.setPath\('userData'/, 'isolated QA can move the complete Electron profile before storage is opened');
 assert.match(app, /businessProductFilter/, 'ticket page tracks selected stock/product filter');
 assert.match(app, /data-business-product-filter/, 'ticket page exposes a stock code classification control');
 assert.match(app, /businessDirectionFilter/, 'ticket page tracks the purchase direction filter');

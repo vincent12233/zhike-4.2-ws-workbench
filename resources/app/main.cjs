@@ -5,6 +5,12 @@ const { copyFileSync, existsSync, readFileSync, writeFileSync, mkdirSync, unlink
 const path = require('node:path');
 const XLSX = require('./vendor/xlsx');
 
+// Test and support sessions can opt into a completely separate Electron
+// profile. This isolates SQLite, localStorage, WS partitions, logs and window
+// state instead of only moving the backend database.
+const requestedUserDataPath = String(process.env.ZHIKE_USER_DATA_DIR || '').trim();
+if (requestedUserDataPath && path.isAbsolute(requestedUserDataPath)) app.setPath('userData', path.resolve(requestedUserDataPath));
+
 const appRoot = app.getAppPath();
 const runtimePath = path.join(appRoot, 'node.exe');
 const requestedPort = Number(process.env.ZHIKE_PORT || 4173);
