@@ -1229,21 +1229,41 @@
       wsConversationId: current.id,
       wsOperationId: operationId,
     };
-    const before = { followups: host.state.followups.slice(), lastFollow: customer.lastFollow, due: customer.due };
+    const previousTasks = (host.state.settings.operatingTasks || []).slice();
+    const before = { followups: host.state.followups.slice(), tasks: previousTasks, lastFollow: customer.lastFollow, due: customer.due };
     host.state.followups.unshift(record);
     customer.lastFollow = record.date.slice(0, 10);
     customer.due = record.nextDate || customer.due;
+    if (record.nextDate) {
+      const tasks = host.state.settings.operatingTasks || [];
+      const existingTask = tasks.find(item => !item.done && String(item.wsConversationId || '') === String(current.id));
+      const taskInput = {
+        title: `跟进 ${customer.name || customer.rawPhone || customer.phone}`,
+        due: record.nextDate,
+        customerId: customer.id,
+        owner: customer.assistant || '未分配',
+        priority: /高|紧急|urgent|hot/i.test(String(state.analysis?.urgency || '')) || Number(state.analysis?.intentScore || 0) >= 80 ? 'high' : 'normal',
+        note: note,
+      };
+      if (existingTask) Object.assign(existingTask, taskInput, { updatedAt: nowIso(), wsConversationId: current.id, wsOperationId: operationId });
+      else {
+        const task = window.ZhikeOperationsCore?.createTask?.(taskInput, host.state.customers) || { id: `TWS-${Date.now().toString(36)}`, ...taskInput, done: false, createdAt: nowIso(), updatedAt: nowIso() };
+        host.state.settings.operatingTasks = [{ ...task, wsConversationId: current.id, wsOperationId: operationId }, ...tasks];
+      }
+    }
     host.persist();
     try {
       await host.flushStateWrites();
       assertContext(context);
       host.activity('WS 工作台登记跟进：' + customer.name);
       await host.flushStateWrites();
+      if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, followupStatus: 'confirmed', nextFollowupAt: record.nextDate || '' }) }, context).catch(() => {});
       draft.followupNote = '';
       draft.nextFollow = '';
-      if (contextCurrent(context)) toast('跟进记录已保存到任务中心');
+      if (contextCurrent(context)) toast(record.nextDate ? '跟进记录与下一次任务已同步保存' : '跟进记录已保存');
     } catch (error) {
       core.restoreFollowupSnapshot(host.state, customer, { followups: before.followups, customer: { lastFollow: before.lastFollow, due: before.due } });
+      host.state.settings.operatingTasks = before.tasks;
       host.persist();
       await host.flushStateWrites().catch(() => {});
       if (contextCurrent(context)) toast('跟进保存失败，原资料已恢复：' + error.message, 'x');

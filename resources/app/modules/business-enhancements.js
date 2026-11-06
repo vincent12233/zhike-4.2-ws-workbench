@@ -124,6 +124,23 @@
     if (h.state.view === 'tickets' || h.state.view === 'deposits') {
       const kind = h.state.view === 'tickets' ? 'ticket' : 'deposit', actions = view.querySelector('.page-heading .heading-actions');
       if (actions && !actions.querySelector('[data-business-enhance="batch"]')) actions.insertAdjacentHTML('beforeend', `<button class="btn" data-business-enhance="batch" data-kind="${kind}">批量编辑</button>${h.state.settings.businessBatchUndo?.kind === kind ? `<button class="btn subtle" data-business-enhance="undo" data-kind="${kind}">撤销上次批量编辑</button>` : ''}`);
+      if (kind === 'ticket') {
+        const select = view.querySelector('select[data-business-product-filter]');
+        if (select) {
+          const listId = 'ticketProductSearchOptions', input = document.createElement('input'), datalist = document.createElement('datalist');
+          datalist.id = listId;
+          [...select.options].filter(option => option.value).forEach(option => { const item = document.createElement('option'); item.value = option.value; datalist.append(item); });
+          input.className = select.className;
+          input.dataset.businessProductFilter = '';
+          input.setAttribute('list', listId);
+          input.setAttribute('aria-label', '股票代码搜索分类');
+          input.placeholder = '输入股票代码';
+          input.value = select.value;
+          select.replaceWith(input);
+          input.after(datalist);
+          input.addEventListener('input', () => { clearTimeout(input._filterTimer); input._filterTimer = setTimeout(() => input.dispatchEvent(new Event('change', { bubbles: true })), 160); });
+        }
+      }
     }
     if (h.state.view === 'quality') {
       const actions = view.querySelector('.page-heading .heading-actions');

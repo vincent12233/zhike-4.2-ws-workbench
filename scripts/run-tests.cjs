@@ -62,6 +62,7 @@ function runAll() {
   runWs();
   run('operations core', [path.join(app, 'modules', 'operations-core.test.cjs')]);
   run('smart import classification', [path.join(repo, 'tests', 'smart-import-classification.test.cjs')]);
+  run('10k/50k performance scale', [path.join(repo, 'tests', 'performance-scale.test.cjs')]);
   run('automatic backup isolation', [path.join(repo, 'tests', 'automatic-backup-test.cjs'), path.join(app, 'main.cjs')]);
   run('HTTP asset smoke', [path.join(repo, 'tests', 'upgrade-http-smoke.test.cjs'), app]);
   run('backup and restore drill', [path.join(repo, 'tests', 'backup-restore-drill.cjs'), app]);
