@@ -557,9 +557,17 @@
         synced += Math.max(1, inserted + updated);
         const refreshedConversation = state.conversations.find(row => String(row.id) === String(conversation.id));
         if (refreshedConversation) { refreshedConversation.lastMessageText = preview; refreshedConversation.lastMessageAt = nowIso(); refreshedConversation.updatedAt = refreshedConversation.lastMessageAt; }
-        if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: conversation.id, status: 'completed', analysisStatus: 'pending', coverageStatus: 'list-preview', checkpoint: fingerprint }) }, context).catch(() => {});
-        if (state.previewAnalysisSignatures.get(String(conversation.id)) !== fingerprint) {
-          state.previewAnalysisSignatures.set(String(conversation.id), fingerprint);
+        const previewSignatureKey = String(conversation.id);
+        const previewChanged = state.previewAnalysisSignatures.get(previewSignatureKey) !== fingerprint;
+        // A repeated list refresh must not downgrade an already analyzed item
+        // back to pending. Only a new preview fingerprint starts a fresh AI run.
+        if (state.collectionRun?.id) {
+          const itemPatch = { runId: state.collectionRun.id, conversationId: conversation.id, status: 'completed', coverageStatus: 'list-preview', checkpoint: fingerprint };
+          if (previewChanged) itemPatch.analysisStatus = 'pending';
+          await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify(itemPatch) }, context).catch(() => {});
+        }
+        if (previewChanged) {
+          state.previewAnalysisSignatures.set(previewSignatureKey, fingerprint);
           if (state.aiEnabled && window.zhikeAI?.request) state.previewAnalysisQueue.push({ conversation, fingerprint });
         }
       }
@@ -1285,6 +1293,7 @@
       }, context);
       assertContext(context);
       state.analysisMeta = saved;
+      if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: 'completed', coverageStatus: 'visible' }) }, context).catch(() => {});
       seedDraftFromAnalysis();
       const conversation = state.conversations.find(item => String(item.id) === String(current.id));
       if (conversation) {

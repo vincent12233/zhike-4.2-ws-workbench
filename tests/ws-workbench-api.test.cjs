@@ -108,6 +108,8 @@ async function json(response) { return response.json(); }
     const analysisList = await json(await request(`/api/ws/analyses?conversationId=${encodeURIComponent(conversationBody.id)}&limit=1&offset=0`));
     assert.equal(analysisList.total, 1);
     assert.equal(analysisList.analysis.result.summary, '咨询产品');
+    const preservedAnalysisItem = await json(await request('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: collectionRun.run.id, conversationId: conversationBody.id, status: 'completed', analysisStatus: 'pending', checkpoint: '3' }) }));
+    assert.equal(preservedAnalysisItem.item.analysisStatus, 'completed', 'unchanged preview refresh keeps a successful AI analysis completed');
     const conversations = await json(await request('/api/ws/conversations'));
     const refreshedConversation = conversations.conversations.find(item => item.id === conversationBody.id);
     assert.equal(refreshedConversation.intentLevel, '高意向');

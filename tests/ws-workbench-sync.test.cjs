@@ -5,6 +5,7 @@ const path = require('node:path');
 
 const root = path.join(__dirname, '..');
 const ui = fs.readFileSync(path.join(root, 'resources', 'app', 'modules', 'ws-workbench.js'), 'utf8');
+const server = fs.readFileSync(path.join(root, 'resources', 'app', 'server.mjs'), 'utf8');
 const core = require(path.join(root, 'resources', 'app', 'modules', 'ws-workbench-core.js'));
 
 assert.ok(core, 'WS core should load');
@@ -56,6 +57,7 @@ assert.match(ui, /markAnalysisRetryable[\s\S]*analysisStatus: 'retryable'[\s\S]*
 assert.match(ui, /includes\(item\.analysisStatus\)/, 'collection summary counts AI retryable items');
 assert.match(ui, /collectionRefreshTimer = setInterval\([\s\S]*12000/, 'phone-to-workbench list sync polls at a bounded interval');
 assert.match(ui, /analyzeConversation\(context[\s\S]*api\('\/api\/ws\/analyses'[\s\S]*context/, 'AI analysis writes use originating account');
+assert.match(server, /sameCheckpoint[\s\S]*successfulAnalysis[\s\S]*analysis_status/, 'collection item updates preserve successful analysis for an unchanged preview');
 assert.match(ui, /wsAccountIds|activeAccountId/, 'CRM profile stores WS account identity');
 assert.match(ui, /matchCustomer\([\s\S]*wsAccountId/, 'CRM matching uses WS account identity after phone');
 assert.match(ui, /wsExternalId: externalId[\s\S]*wsAccountId: context\.accountId/, 'visible discovery matches WS external id and account identity');

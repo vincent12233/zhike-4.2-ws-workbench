@@ -28,6 +28,8 @@ assert.match(ui, /visibleConversationFingerprint[\s\S]*enqueueDiscoveredConversa
 assert.match(ui, /loadConversations[\s\S]*Promise\.all[\s\S]*collection-runs[\s\S]*followup-alerts[\s\S]*contextCurrent/, 'conversation loading fences collection summary and alerts');
 assert.match(ui, /importVisible\(context[\s\S]*messages\/batch[\s\S]*context/, 'chat import writes use immutable account context');
 assert.match(ui, /analyzeConversation\(context[\s\S]*api\('\/api\/ws\/analyses'[\s\S]*context/, 'AI analysis writes use immutable account context');
+assert.match(ui, /analyzeConversation\(context[\s\S]*collection-items'[\s\S]*analysisStatus:\s*['"]completed['"]/, 'manual AI analysis marks the matching collection item analyzed');
+assert.match(ui, /syncConversationListPreviews[\s\S]*previewAnalysisSignatures[\s\S]*analysisStatus/, 'list resync preserves completed AI analysis state');
 assert.match(ui, /saveCustomerTo[\s\S]*captureContext[\s\S]*api\('\/api\/ws\/conversations'[\s\S]*context/, 'customer sync is account fenced');
 assert.match(ui, /saveFollowup[\s\S]*captureContext[\s\S]*assertContext/, 'follow-up writes are account fenced');
 assert.match(ui, /saveSettings\(sequence, context[\s\S]*api\('\/api\/ws\/settings[\s\S]*context/, 'debounced settings writes keep account context');
