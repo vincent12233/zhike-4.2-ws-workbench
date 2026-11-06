@@ -4,6 +4,7 @@ const operationsUi=fs.readFileSync(require('node:path').join(__dirname,'..','res
 const performanceUi=fs.readFileSync(require('node:path').join(__dirname,'..','resources','app','modules','performance-enhancements.js'),'utf8');
 const businessUi=fs.readFileSync(require('node:path').join(__dirname,'..','resources','app','modules','business-enhancements.js'),'utf8');
 const wsUi=fs.readFileSync(require('node:path').join(__dirname,'..','resources','app','modules','ws-workbench.js'),'utf8');
+const smartImport=fs.readFileSync(require('node:path').join(__dirname,'..','resources','app','modules','smart-import.js'),'utf8');
 const main=fs.readFileSync(require('node:path').join(__dirname,'..','resources','app','main.cjs'),'utf8');
 assert(app.includes('customers: Array.isArray(stored?.customers)?stored.customers:[]'));
 assert(app.includes('请先粘贴或导入有效客户资料'));
@@ -30,7 +31,7 @@ assert(html.includes('./modules/operations-upgrade.js'));
 assert(html.includes('./modules/ui-refresh.css'));
 assert(html.includes('./modules/accessibility-enhancements.js'));
 assert(html.includes('./modules/ws-workbench.js'));
-assert(pkg.includes('"version": "4.3.4"'));
+assert(pkg.includes('"version": "4.3.5"'));
 assert(setup.includes('OutputBaseFilename=知客-{#AppVersion}-WS工作台智能录入版'));
 assert(setup.includes('#define AppVersion "4.2.6"'));
 assert(readme.includes('## 4.2.0 WS 工作台版'));
@@ -54,6 +55,7 @@ assert.match(app, /apply-intake-smart-defaults/, 'quick intake exposes automatic
 assert.match(app, /detectHeaderRow/, 'imports detect title rows before the table header');
 assert.match(app, /csvHeaderMapping\(headers,rows\.slice\(1,21\)\)/, 'imports infer fields from sample values');
 assert.match(app, /due:registered\|\|today/, 'bulk import preserves imported registration date for displayed due date');
+assert.match(smartImport, /登记时间/,'smart import recognizes registration time headers');
 assert.match(app, /customerJournal/, 'mixed import journals existing customer mutations before commit');
 assert.match(app, /rollback=null;persist\(\)/, 'ticket import clears rollback state after restoring failed writes');
 assert.match(app, /qualityScanCache/, 'quality scan caches derived duplicate and invalid results');

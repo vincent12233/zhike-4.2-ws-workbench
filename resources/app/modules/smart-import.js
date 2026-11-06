@@ -32,7 +32,7 @@
     phase:['客户阶段','客户状态阶段','销售阶段','客户分层','customer_stage','阶段','phase','stage'],
     qualification:['资质评级','资质等级','客户资质','客户评级','qualification','qualification_level','rating','grade'],
     group:['群编号','群号','群组编号','群组','group_code','groupid','group_no','group'],
-    registered:['登记日期','注册日期','入群日期','添加日期','创建时间','录入时间','首次联系时间','registered_at','registerdate','createdat','日期','时间','registered','date'],
+    registered:['登记日期','登记时间','注册日期','注册时间','入群日期','添加日期','导入日期','创建时间','录入时间','首次联系时间','registered_at','registerdate','createdat','日期','时间','registered','date'],
     note:['备注','客户备注','跟进备注','说明','note','notes','remark','comment'],
     recordType:['记录类型','业务类型','数据类型','类型','recordtype','businesstype','type'],
     product:['产品','产品代码','股票','股票代码','股票名称','证券代码','品种','product','productcode','symbol','stock','stockcode'],
