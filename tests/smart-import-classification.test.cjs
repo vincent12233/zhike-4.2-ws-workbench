@@ -27,6 +27,7 @@ assert.equal(groupFan.source, '群粉');
 assert.equal(api.date('2026年11月5日'), '2026-11-05');
 assert.equal(api.date('20261106'), '2026-11-06');
 assert.equal(api.date('2026-11-06 13:20'), '2026-11-06');
+assert.equal(api.date('06/11/2026'), '2026-11-06');
 assert.equal(api.looksLikePhone('9876543210'), true);
 assert.equal(api.looksLikePhone('20261106'), false);
 
@@ -76,5 +77,17 @@ assert.equal(dateLast.phone, 1);
 assert.equal(dateLast.source, 2);
 assert.equal(dateLast.status, 3);
 assert.equal(dateLast.registered, 4);
+
+const unorderedNatural = api.parseNaturalLine('06/11/2026 单导 已进群 周十一 9876543217');
+assert.equal(unorderedNatural.registered, '2026-11-06');
+assert.equal(unorderedNatural.phone, '9876543217');
+assert.equal(unorderedNatural.name, '周十一');
+assert.equal(unorderedNatural.source, '单导');
+assert.equal(unorderedNatural.status, '已进群');
+assert.equal(unorderedNatural.dateOrigin, '识别');
+
+const dateAtEnd = api.parseNaturalLine('9876543218 周十二 群粉 未进群 2026.11.07');
+assert.equal(dateAtEnd.registered, '2026-11-07');
+assert.equal(dateAtEnd.phone, '9876543218');
 
 console.log('smart import classification: explicit single-group and group-fan sources normalize correctly');
