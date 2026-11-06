@@ -408,8 +408,10 @@
     }
     let queued = 0;
     for (const item of items) {
-      const externalId = text(item.externalId || `visible-${item.index}`); const title = text(item.title || externalId);
-      const preview = text(item.preview).slice(0, 4000);
+      const normalized = normalizeListItem(item);
+      const legacy = state.conversations.find(row => [`list-item-${normalized.index}`, `visible-${normalized.index}`].includes(String(row.externalId || '')));
+      const externalId = text(normalized.externalId || legacy?.externalId || `visible-${normalized.index}`); const title = text(normalized.title || externalId);
+      const preview = listPreviewText(normalized);
       const match = core.matchCustomer(getHost()?.state?.customers || [], {
         wsExternalId: externalId,
         wsAccountId: context.accountId,
@@ -430,12 +432,51 @@
     if (announce) toast(`已发现 ${items.length} 个会话，入队 ${queued} 个`);
     return queued;
   }
-  function listPreviewText(item) {
-    const title = text(item?.title);
-    const explicit = text(item?.previewText);
-    const listText = text(item?.listText);
-    const fallback = text(item?.preview).replace(title, '').trim();
-    return (explicit || fallback || listText.replace(title, '').trim()).slice(0, 4000);
+  function splitListPreview(value) {
+    const normalized = text(value).replace(/[\u200e\u200f\u202a-\u202e]/g, '').replace(/\s+/g, ' ').trim();
+    const withoutUnread = normalized.replace(/^\d+\s*条未读消息\s*/, '').trim();
+    const marker = withoutUnread.search(/\s+(?:(?:上午|下午)\s*\d{1,2}:\d{2}|星期[一二三四五六日天]|昨天|今天|前天)\s+/);
+    if (marker < 0) return { title: withoutUnread, preview: '' };
+    const title = withoutUnread.slice(0, marker).trim();
+    const preview = withoutUnread.slice(marker).replace(/^\s+(?:(?:上午|下午)\s*\d{1,2}:\d{2}|星期[一二三四五六日天]|昨天|今天|前天)\s+/, '').split('此聊天中的新消息将在发送7天后自动消失')[0].trim();
+    return { title, preview };
+  }
+  function normalizeListItem(item) {
+    const declaredTitle = text(item?.title);
+    const listText = text(item?.listText).replace(/[\u200e\u200f\u202a-\u202e]/g, '').replace(/\s+/g, ' ').trim();
+    const parts = splitListPreview(listText || declaredTitle || item?.preview || '');
+    const explicitPreview = text(item?.previewText);
+    const itemPreview = text(item?.preview);
+    const title = declaredTitle || parts.title;
+    let preview = parts.preview || (explicitPreview && explicitPreview !== title ? explicitPreview : '') || (itemPreview && itemPreview !== title ? itemPreview : '');
+    // WhatsApp's row-level accessibility text sometimes omits the date marker
+    // from listText, while title and preview are still available separately.
+    // Prefer the declared title and strip it from the combined row text.
+    if (!preview && listText && title && listText !== title) {
+      const lowerListText = listText.toLocaleLowerCase();
+      const lowerTitle = title.toLocaleLowerCase();
+      const stripped = lowerListText.startsWith(lowerTitle) ? listText.slice(title.length).trim() : '';
+      if (stripped && stripped !== title) preview = stripped;
+    }
+    const previewText = preview;
+    return { ...item, title: title || listText, previewText, preview };
+  }
+  function listPreviewText(item, fallbackTitle = '') {
+    const normalized = normalizeListItem(item);
+    const title = text(normalized?.title);
+    const explicit = text(normalized?.previewText);
+    const listText = text(normalized?.listText);
+    const fallback = text(normalized?.preview).replace(title, '').trim();
+    const knownTitle = text(fallbackTitle);
+    let fromKnownTitle = '';
+    if (listText && knownTitle && listText.toLocaleLowerCase().startsWith(knownTitle.toLocaleLowerCase())) {
+      fromKnownTitle = listText.slice(knownTitle.length).trim();
+    }
+    if (!fromKnownTitle && knownTitle && title && title.toLocaleLowerCase().startsWith(knownTitle.toLocaleLowerCase()) && title.length > knownTitle.length) {
+      fromKnownTitle = title.slice(knownTitle.length).trim();
+    }
+    const fromDeclaredTitle = listText && title && listText.toLocaleLowerCase().startsWith(title.toLocaleLowerCase()) ? listText.slice(title.length).trim() : '';
+    return (explicit || fallback || fromKnownTitle || fromDeclaredTitle || (title !== listText ? listText.replace(title, '').trim() : '')).slice(0, 4000);
   }
   function listPreviewFingerprint(item, preview) {
     return stableHash(JSON.stringify([text(item?.externalId), preview, text(item?.lastMessageAt), text(item?.previewDirection || 'receive')]));
@@ -469,19 +510,25 @@
     let synced = 0, analyzed = 0;
     try {
       const byExternal = new Map(state.conversations.map(item => [String(item.externalId || ''), item]));
-      for (const item of items.slice(0, 500)) {
+      for (const rawItem of items.slice(0, 500)) {
         assertContext(context);
-        const externalId = text(item?.externalId);
-        const preview = listPreviewText(item);
-        const conversation = byExternal.get(externalId);
+        const item = normalizeListItem(rawItem);
+        const legacyByIndex = new Map(state.conversations.filter(row => /^(?:list-item|visible)-\d+$/.test(String(row.externalId || ''))).map(row => [Number(String(row.externalId).split('-').at(-1)), row]));
+        const legacy = legacyByIndex.get(Number(item?.index));
+        const externalId = text(item?.externalId || legacy?.externalId || `visible-${item?.index}`);
+        const conversation = byExternal.get(externalId) || legacy;
+        const preview = listPreviewText(item, conversation?.lastMessageText || conversation?.title || '');
         if (!externalId || !preview || !conversation) continue;
         const fingerprint = listPreviewFingerprint(item, preview);
         const messageExternalId = `list-preview-${fingerprint}`;
         const result = await api('/api/ws/messages/batch', { method: 'POST', timeout: 30000, body: JSON.stringify({ conversationId: conversation.id, fingerprint: `list-preview-${fingerprint}`, messages: [{ externalId: messageExternalId, direction: item.previewDirection === 'send' ? 'send' : 'receive', originalText: preview, order: Date.now(), data: { source: 'ws-list-preview', previewOnly: true, listText: text(item.listText).slice(0, 2000), lastMessageAt: text(item.lastMessageAt), fingerprint } }] }) }, context);
         assertContext(context);
         const inserted = Number(result.inserted || 0);
-        if (!inserted) continue;
-        synced += inserted;
+        const updated = Number(result.updated || 0);
+        // A repeated fingerprint still means the list preview is valid. Mark
+        // the collection item complete even when the message was already stored.
+        if (!inserted && !updated && !Number(result.existed || 0)) continue;
+        synced += Math.max(1, inserted + updated);
         const refreshedConversation = state.conversations.find(row => String(row.id) === String(conversation.id));
         if (refreshedConversation) { refreshedConversation.lastMessageText = preview; refreshedConversation.lastMessageAt = nowIso(); refreshedConversation.updatedAt = refreshedConversation.lastMessageAt; }
         if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: conversation.id, status: 'completed', analysisStatus: 'pending', coverageStatus: 'list-preview', checkpoint: fingerprint }) }, context).catch(() => {});
@@ -496,7 +543,13 @@
       }
       if (synced) {
         if (state.collectionRun?.id) {
-          const runResult = await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', cursor: JSON.stringify({ mode: 'list-preview', synced, analyzed, syncedAt: nowIso() }), lastSuccessAt: nowIso() }) }, context).catch(() => null);
+          const itemsResult = await api(`/api/ws/collection-items?runId=${encodeURIComponent(state.collectionRun.id)}`, {}, context).catch(() => ({ items: [] }));
+          const items = Array.isArray(itemsResult.items) ? itemsResult.items : [];
+          const completed = items.filter(item => item.status === 'completed').length;
+          const analyzedItems = items.filter(item => item.analysisStatus === 'completed').length;
+          const failed = items.filter(item => item.status === 'failed').length;
+          const retryable = items.filter(item => ['failed', 'retryable'].includes(item.status)).length;
+          const runResult = await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', total: items.length, discovered: items.length, completed, analyzed: Math.max(analyzedItems, analyzed), failed, retryable, cursor: JSON.stringify({ mode: 'list-preview', synced, analyzed, syncedAt: nowIso() }), lastSuccessAt: nowIso() }) }, context).catch(() => null);
           if (runResult?.run) state.collectionRun = runResult.run;
         }
         const refreshed = await api('/api/ws/conversations?limit=200', {}, context);

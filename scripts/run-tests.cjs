@@ -50,6 +50,7 @@ function runWs() {
   runSyntax();
   run('WS core rules', [path.join(repo, 'tests', 'ws-workbench-core.test.cjs')]);
   run('WS API and SQLite', [path.join(repo, 'tests', 'ws-workbench-api.test.cjs')]);
+  run('WS list preview update', [path.join(repo, 'tests', 'ws-list-preview-update.test.cjs')]);
   run('WS SQLite v6 migration', [path.join(repo, 'tests', 'ws-workbench-migration-v6.test.cjs')]);
   run('WS security contract', [path.join(repo, 'tests', 'ws-workbench-security.test.cjs')]);
   run('WS multi-account database isolation', [path.join(repo, 'tests', 'ws-multi-account.test.cjs')]);

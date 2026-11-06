@@ -427,6 +427,19 @@ function wsConversationPayload(row) { return { id: row.id, accountId: row.accoun
 function wsMessagePayload(row) { return { id: row.id, accountId: row.account_id || 'default', conversationId: row.conversation_id, externalId: row.external_id, direction: row.direction, originalText: row.original_text, translatedText: row.translated_text, sourceLanguage: row.source_language, targetLanguage: row.target_language, order: row.order_no, translationStatus: row.translation_status || (row.translated_text ? 'translated' : 'none'), translationError: row.translation_error || '', translationAttempts: Number(row.translation_attempts || 0), lastAttemptAt: row.last_attempt_at || '', data: wsJson(row.data_json), createdAt: row.created_at, updatedAt: row.updated_at }; }
 function wsAnalysisPayload(row) { return { id: row.id, accountId: row.account_id || 'default', conversationId: row.conversation_id, result: wsJson(row.result_json), confidence: Number(row.confidence || 0), providerName: row.provider_name, model: row.model, errorMessage: row.error_message, createdAt: row.created_at, updatedAt: row.updated_at }; }
 function wsReplyPayload(row) { return { id: row.id, accountId: row.account_id || 'default', conversationId: row.conversation_id, originalText: row.original_text, translatedText: row.translated_text, status: row.status, idempotencyKey: row.idempotency_key || '', createdAt: row.created_at, updatedAt: row.updated_at }; }
+function wsListPreviewOriginal(item, data) {
+  const original = wsText(item?.originalText, 12000);
+  if (data?.source !== 'ws-list-preview' || data?.previewOnly !== true) return original;
+  const listText = wsText(data?.listText, 12000).replace(/[\u200e\u200f\u202a-\u202e]/g, '').replace(/\s+/g, ' ').trim();
+  if (!listText || !original) return original;
+  if (listText.toLocaleLowerCase().startsWith(original.toLocaleLowerCase()) && listText.length > original.length) {
+    const remainder = listText.slice(original.length).trim()
+      .replace(/^(?:(?:上午|下午|AM|PM)\s*\d{1,2}:?\d{2}|星期[一二三四五六日天]|昨天|今天|前天)\s+/i, '')
+      .split('此聊天中的新消息将在发送7天后自动消失')[0].trim();
+    if (remainder && remainder !== original) return remainder.slice(0, 12000);
+  }
+  return original;
+}
 function wsBatchPayload(row) { return { id: row.id, accountId: row.account_id || 'default', conversationId: row.conversation_id, fingerprint: row.fingerprint, messageCount: Number(row.message_count || 0), insertedCount: Number(row.inserted_count || 0), messageIds: wsJson(row.message_ids_json, []), createdAt: row.created_at, updatedAt: row.updated_at }; }
 function wsCollectionRunPayload(row) { return { id: row.id, accountId: row.account_id || 'default', status: row.status, total: Number(row.total||0), discovered: Number(row.discovered||0), completed: Number(row.completed||0), analyzing: Number(row.analyzing||0), analyzed: Number(row.analyzed||0), failed: Number(row.failed||0), skipped: Number(row.skipped||0), retryable: Number(row.retryable||0), lastError: row.last_error||'', checkpoint: row.checkpoint||'', cursor: row.cursor||'', resumeCount: Number(row.resume_count||0), lastSuccessAt: row.last_success_at||'', createdAt: row.created_at, updatedAt: row.updated_at }; }
 function wsCollectionItemPayload(row) { return { id: row.id, accountId: row.account_id || 'default', runId: row.run_id, conversationId: row.conversation_id, status: row.status, attempts: Number(row.attempts||0), analysisStatus: row.analysis_status, followupStatus: row.followup_status, nextFollowupAt: row.next_followup_at||'', coverageStatus: row.coverage_status||'unknown', lastError: row.last_error||'', checkpoint: row.checkpoint||'', createdAt: row.created_at, updatedAt: row.updated_at }; }
@@ -598,26 +611,53 @@ const server = createServer(async (req, res) => {
       if (previous) {
         if (Number(previous.message_count) !== messages.length) return json(res, 409, { error: '该批次指纹已用于不同数量的消息，请生成新的批次指纹。' });
         const ids = wsJson(previous.message_ids_json, []);
-        const rows = ids.map(id => db.prepare('SELECT * FROM ws_messages WHERE id=?').get(String(id))).filter(Boolean).map(wsMessagePayload);
-        return json(res, 200, { batch: wsBatchPayload(previous), inserted: 0, existed: rows.length, messages: rows, repeated: true });
+        let updated = 0;
+        const rows = ids.map((id, index) => {
+          let row = db.prepare('SELECT * FROM ws_messages WHERE id=?').get(String(id));
+          const item = messages[index], data = wsObject(item?.data, 32 * 1024);
+          const canonical = wsListPreviewOriginal(item, data);
+          if (row && canonical && canonical !== row.original_text) {
+            db.prepare('UPDATE ws_messages SET original_text=?,updated_at=? WHERE id=?').run(canonical, new Date().toISOString(), row.id);
+            row = db.prepare('SELECT * FROM ws_messages WHERE id=?').get(row.id);
+            updated += 1;
+          }
+          return row;
+        }).filter(Boolean).map(wsMessagePayload);
+        if (updated && rows.length) db.prepare('UPDATE ws_conversations SET last_message_text=?,updated_at=? WHERE id=? AND account_id=?').run(rows.at(-1).originalText.slice(0, 4000), new Date().toISOString(), conversationId, accountId);
+        return json(res, 200, { batch: wsBatchPayload(previous), inserted: 0, updated, existed: rows.length, messages: rows, repeated: true });
       }
       const now = new Date().toISOString(), batchId = wsCreateId('wsb'), messageIds = [], resultRows = [];
-      let inserted = 0, existed = 0, unreadAdded = 0;
+      let inserted = 0, updated = 0, existed = 0, unreadAdded = 0;
       db.exec('BEGIN IMMEDIATE');
       try {
         db.prepare('INSERT INTO ws_ingest_batches(id,account_id,conversation_id,fingerprint,message_count,inserted_count,message_ids_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)')
           .run(batchId, accountId, conversationId, fingerprint, messages.length, 0, '[]', now, now);
         for (let index = 0; index < messages.length; index++) {
           const item = messages[index], externalId = wsText(item.externalId, 200);
+          const rawData = wsObject(item.data, 32 * 1024);
+          const previewOnly = rawData?.source === 'ws-list-preview' && rawData?.previewOnly === true;
           let row = externalId ? db.prepare('SELECT * FROM ws_messages WHERE conversation_id=? AND external_id=?').get(conversationId, externalId) : null;
+          let wasUpdated = false;
+          if (!row && previewOnly) {
+            row = db.prepare("SELECT * FROM ws_messages WHERE conversation_id=? AND json_extract(data_json,'$.source')='ws-list-preview' ORDER BY updated_at DESC,created_at DESC LIMIT 1").get(conversationId);
+            if (row) {
+              const originalText = wsListPreviewOriginal(item, rawData), direction = wsText(item.direction, 16), translation = wsTranslationFields(item), nowUpdated = new Date().toISOString();
+              const data = { ...rawData, ingestBatchId: batchId };
+              db.prepare('UPDATE ws_messages SET external_id=?,direction=?,original_text=?,translated_text=?,source_language=?,target_language=?,order_no=?,data_json=?,updated_at=?,translation_status=?,translation_error=?,translation_attempts=?,last_attempt_at=? WHERE id=?')
+                .run(externalId, direction, originalText, translation.translatedText, wsText(item.sourceLanguage, 40), wsText(item.targetLanguage, 40), Number.isFinite(Number(item.order)) ? Number(item.order) : index + 1, JSON.stringify(data), nowUpdated, translation.translationStatus, translation.translationError, translation.translationAttempts, translation.lastAttemptAt, row.id);
+              row = db.prepare('SELECT * FROM ws_messages WHERE id=?').get(row.id);
+              updated += 1;
+              wasUpdated = true;
+            }
+          }
           if (row) {
-            existed += 1;
+            if (!wasUpdated) existed += 1;
           } else {
             const id = wsText(item.id, 160) || wsCreateId('wsm');
-            const originalText = wsText(item.originalText, 12000), direction = wsText(item.direction, 16);
+            const originalText = wsListPreviewOriginal(item, rawData), direction = wsText(item.direction, 16);
             const translation = wsTranslationFields(item);
             const createdAt = item.createdAt ? wsIso(item.createdAt) : now;
-            const data = { ...wsObject(item.data, 32 * 1024), ingestBatchId: batchId };
+            const data = { ...rawData, ingestBatchId: batchId };
             db.prepare(`INSERT INTO ws_messages(id,account_id,conversation_id,external_id,direction,original_text,translated_text,source_language,target_language,order_no,data_json,created_at,updated_at,translation_status,translation_error,translation_attempts,last_attempt_at)
               VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(id, accountId, conversationId, externalId, direction, originalText, translation.translatedText, wsText(item.sourceLanguage, 40), wsText(item.targetLanguage, 40), Number.isFinite(Number(item.order)) ? Number(item.order) : index + 1, JSON.stringify(data), createdAt, now, translation.translationStatus, translation.translationError, translation.translationAttempts, translation.lastAttemptAt);
             row = db.prepare('SELECT * FROM ws_messages WHERE id=?').get(id);
@@ -633,7 +673,7 @@ const server = createServer(async (req, res) => {
         db.exec('COMMIT');
       } catch (error) { db.exec('ROLLBACK'); throw error; }
       const batch = db.prepare('SELECT * FROM ws_ingest_batches WHERE id=?').get(batchId);
-      return json(res, 200, { batch: wsBatchPayload(batch), inserted, existed, messages: resultRows, repeated: false });
+      return json(res, 200, { batch: wsBatchPayload(batch), inserted, updated, existed, messages: resultRows, repeated: false });
     }
     if (url.pathname === '/api/ws/messages') {
       if (req.method === 'GET') {

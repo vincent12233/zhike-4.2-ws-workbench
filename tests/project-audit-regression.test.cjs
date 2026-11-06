@@ -98,4 +98,5 @@ assert.match(wsUi, /done-followup-alert[\s\S]*snooze-followup-alert[\s\S]*dismis
 const wsPreload=fs.readFileSync(require('node:path').join(__dirname,'..','resources','app','ws-preload.cjs'),'utf8');
 assert.match(wsPreload, /discoverAllConversations/, 'WS list collection scans the visible conversation list with a bounded loop');
 assert.match(wsPreload, /previewText[\s\S]*listText[\s\S]*previewDirection/, 'WS list scan extracts preview text and direction without opening chats');
+assert.match(wsPreload, /聊天列表[\s\S]*role="row"[\s\S]*compactId/, 'WS list scan covers the current Chinese grid/row chat-list DOM');
 console.log('project audit regression: no demo seed, guards, smart-import/business/performance/operations routes, release notes');
