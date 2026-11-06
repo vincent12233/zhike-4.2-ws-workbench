@@ -594,13 +594,20 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
     render();toast(`已清空 ${recycled.length} 位客户及 ${relatedTotal} 条关联记录`);
   }
   async function passwordHash(value){const bytes=new TextEncoder().encode(String(value));const digest=await crypto.subtle.digest('SHA-256',bytes);return [...new Uint8Array(digest)].map(byte=>byte.toString(16).padStart(2,'0')).join('');}
-  async function clearAllDataWithSnapshot(){
+  function clearAllDataModal(){
+    if(destructiveWriteBusy){toast('清空操作正在执行，请稍候');return;}
+    const total=state.customers.length+state.tickets.length+state.deposits.length+state.followups.length+state.registrations.length+state.batchOperations.length;
+    if(!total){toast('客户业务数据已经为空；独立手机号登记不包含在此操作中');return;}
+    if(!state.settings.clearDataPasswordHash){toast('请先在“系统设置 → 安全与备份”中设置清空密码','x');securitySettingsModal();return;}
+    openModal('清空本机全库数据','此操作会先创建快照，密码验证通过后才会执行。',`<div class="notice-line">将清空 ${total} 条客户业务数据，包括客户、跟票、入金、跟进、报名、批量操作记录和导入审计记录。操作完成后仍可从数据中心恢复清空前快照。</div><label class="filter-field"><span>清空密码</span><input id="clearDataVerify" type="password" maxlength="64" autocomplete="current-password" placeholder="输入系统设置中的清空密码"></label>`,`<button class="btn" data-action="close-modal">取消</button><button class="btn danger" data-action="confirm-clear-all-data">验证并清空</button>`);
+    $('#clearDataVerify')?.focus();
+  }
+  async function clearAllDataWithSnapshot(password){
     if(destructiveWriteBusy){toast('清空操作正在执行，请稍候');return;}
     const total=state.customers.length+state.tickets.length+state.deposits.length+state.followups.length+state.registrations.length+state.batchOperations.length;
     if(!total){toast('客户业务数据已经为空；独立手机号登记未包含在此操作中');return;}
     if(!state.settings.clearDataPasswordHash){toast('请先在“系统设置 → 安全与备份”中设置清空密码','x');securitySettingsModal();return;}
-    const password=prompt(`将永久清空本机全库 ${total} 条业务数据。请输入清空密码：`);
-    if(password==null)return;
+    if(!String(password||'')){toast('请输入清空密码','x');return;}
     if(await passwordHash(password)!==state.settings.clearDataPasswordHash){toast('密码错误，未执行清空','x');return;}
     if(!confirm('密码验证通过。确定继续清空全库数据？'))return;
     if(!await snapshotBeforeWrite('清空全库前自动快照'))return;
@@ -908,7 +915,8 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
     else if(action==='save-preferences'){state.perPage=Number($('#defaultPerPage')?.value)||10;state.settings.defaultPerPage=state.perPage;state.settings.theme=$('#appearanceTheme')?.value||state.settings.theme||'light';state.settings.density=$('#appearanceDensity')?.value||state.settings.density||'comfortable';applyAppearance();persist();activity(`更新界面主题、密度与表格默认每页 ${state.perPage} 条`);render();toast('界面与表格偏好已保存');}
     else if(action==='remove-import-file'){const index=Number(el.dataset.index),batches=state.pendingCsv?.batches||[];batches.splice(index,1);if(!batches.length){state.pendingCsv=null;closeModal();toast('已取消本次导入');return;}state.pendingCsv={...batches[0],batches};$('#modal .modal-body').innerHTML=csvSampleHtml();$('#modal .modal-header p').textContent=`${batches.length} 个 CSV 文件 · 共 ${batches.reduce((sum,batch)=>sum+batch.rows.length-1,0)} 行待预览`;}
     else if(action==='close-customer-drawer')closeCustomerDrawer();
-    else if(action==='clear-all-data')clearAllDataWithSnapshot();
+    else if(action==='clear-all-data')clearAllDataModal();
+    else if(action==='confirm-clear-all-data'){const password=$('#clearDataVerify')?.value||'';closeModal();clearAllDataWithSnapshot(password);}
     else if(action==='columns')customerColumnsModal(el.dataset.mode||'customer');
     else if(action==='columns-reset'){$$('#modal [data-column-option]').forEach(input=>input.checked=true);}
     else if(action==='columns-apply'){const mode=el.dataset.mode==='segment'?'segment':'customer';const selected=$$('#modal [data-column-option]:checked').map(input=>input.value);state.settings.tableColumns={...(state.settings.tableColumns||{}),[mode]:['select','customer',...selected,'actions']};activity(`更新${mode==='customer'?'客户中心':'分类视图'}表格列设置`);closeModal();render();toast('表格列设置已保存');}

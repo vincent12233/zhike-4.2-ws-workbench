@@ -8,6 +8,9 @@ const main=fs.readFileSync(require('node:path').join(__dirname,'..','resources',
 assert(app.includes('customers: Array.isArray(stored?.customers)?stored.customers:[]'));
 assert(app.includes('请先粘贴或导入有效客户资料'));
 assert(app.includes('清空当前快速录入内容'));
+assert.match(app, /clearAllDataModal|clear-data-password/, 'full database clear exposes a renderer-safe password modal');
+assert.match(app, /confirm-clear-all-data/, 'full database clear has an explicit modal confirmation action');
+assert.doesNotMatch(app, /function clearAllDataWithSnapshot\(\)[\s\S]{0,900}prompt\(/, 'full database clear does not depend on unsupported native prompt()');
 assert(app.includes('已保存到本机'));
 assert(app.includes('录入客户或导入业务数据后'));
 assert(server.includes("'/modules/smart-import.js'"));
@@ -27,7 +30,7 @@ assert(html.includes('./modules/operations-upgrade.js'));
 assert(html.includes('./modules/ui-refresh.css'));
 assert(html.includes('./modules/accessibility-enhancements.js'));
 assert(html.includes('./modules/ws-workbench.js'));
-assert(pkg.includes('"version": "4.3.2"'));
+assert(pkg.includes('"version": "4.3.3"'));
 assert(setup.includes('OutputBaseFilename=知客-{#AppVersion}-WS工作台智能录入版'));
 assert(setup.includes('#define AppVersion "4.2.6"'));
 assert(readme.includes('## 4.2.0 WS 工作台版'));
