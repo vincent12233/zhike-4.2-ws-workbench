@@ -48,6 +48,8 @@ assert.match(ui, /ws-sidebar-collapse/, 'panels expose an in-panel collapse and 
 assert.match(ui, /ResizeObserver/, 'browser view follows panel size changes after collapse, zoom or DPI updates');
 assert.match(ui, /aria-controls="wsSessionsPanel"/, 'left collapse control exposes accessible state');
 assert.match(ui, /aria-controls="wsAssistPanel"/, 'right collapse control exposes accessible state');
+const gpt = fs.readFileSync(path.join(__dirname, '..', 'resources', 'app', 'modules', 'gpt-assistant.js'), 'utf8');
+assert.match(gpt, /nav\.addEventListener\(['"]click['"][\s\S]*state\.view\s*=\s*['"]gpt['"]/, 'GPT navigation claims the host view so WS observer cannot overwrite it');
 assert.match(css, /ws-account-list|ws-account-row/, 'account cards have dedicated layout styles');
 assert.match(css, /\.ws-layout\.left-collapsed\{grid-template-columns:(?:48|52)px/, 'collapsed left panel keeps a visible narrow rail');
 assert.match(css, /body\.ws-mode \.view-container/, 'WS mode tightens outer page padding');
