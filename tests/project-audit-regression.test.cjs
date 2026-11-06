@@ -1,6 +1,7 @@
 const fs=require('node:fs'),assert=require('node:assert/strict');
 const app=fs.readFileSync(process.argv[2],'utf8'),server=fs.readFileSync(process.argv[3],'utf8'),html=fs.readFileSync(process.argv[4],'utf8'),pkg=fs.readFileSync(process.argv[5],'utf8'),setup=fs.readFileSync(process.argv[6],'utf8'),readme=fs.readFileSync(process.argv[7],'utf8');
 const operationsUi=fs.readFileSync(require('node:path').join(__dirname,'..','resources','app','modules','operations-ui.js'),'utf8');
+const performanceUi=fs.readFileSync(require('node:path').join(__dirname,'..','resources','app','modules','performance-enhancements.js'),'utf8');
 assert(app.includes('customers: Array.isArray(stored?.customers)?stored.customers:[]'));
 assert(app.includes('请先粘贴或导入有效客户资料'));
 assert(app.includes('清空当前快速录入内容'));
@@ -56,6 +57,9 @@ assert.match(app, /data-action="registration-page"/, 'registration list exposes 
 assert.match(app, /case'operations':case'stage-board':[\s\S]*ZhikeOperationsUI[\s\S]*render/, 'main renderer explicitly dispatches operations and stage-board views');
 assert.match(operationsUi, /window\.ZhikeOperationsUI[\s\S]*render/, 'operations renderer exposes a stable render entrypoint');
 assert.match(operationsUi, /view==='operations'[\s\S]*taskPage[\s\S]*view==='stage-board'[\s\S]*boardPage/, 'operations and stage-board keep distinct page renderers');
+assert.match(operationsUi, /filtered\.slice\(0,200\)/, 'large task lists use a bounded render window');
+assert.match(operationsUi, /setTimeout\([\s\S]*160/, 'task search is debounced instead of rebuilding on every keystroke');
+assert.match(performanceUi, /mountPending[\s\S]*requestAnimationFrame/, 'DOM performance enhancement batches mutation work by animation frame');
 assert.match(app, /businessProductFilter/, 'ticket page tracks selected stock/product filter');
 assert.match(app, /data-business-product-filter/, 'ticket page exposes a stock code classification control');
 assert.match(app, /businessDirectionFilter/, 'ticket page tracks the purchase direction filter');
