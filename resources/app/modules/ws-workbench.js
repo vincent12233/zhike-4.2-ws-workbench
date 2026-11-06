@@ -482,13 +482,17 @@
     return stableHash(JSON.stringify([text(item?.externalId), preview, text(item?.lastMessageAt), text(item?.previewDirection || 'receive')]));
   }
   async function analyzeStoredConversation(conversation, context) {
-    if (!state.aiEnabled || !window.zhikeAI?.request || !window.zhikeAI?.status || !conversation?.id) return false;
-    const messagesResult = await api(`/api/ws/messages?conversationId=${encodeURIComponent(conversation.id)}&limit=500`, {}, context);
+    if (!state.aiEnabled) return { ok: false, reason: 'AI 分析已关闭。', disabled: true };
+    if (!window.zhikeAI?.request || !window.zhikeAI?.status) return { ok: false, reason: '当前运行环境不支持 AI 安全桥接。' };
+    if (!conversation?.id) return { ok: false, reason: '缺少会话标识。' };
+    let messagesResult;
+    try { messagesResult = await api(`/api/ws/messages?conversationId=${encodeURIComponent(conversation.id)}&limit=500`, {}, context); }
+    catch (error) { return { ok: false, reason: `读取会话消息失败：${error.message || '本机接口异常'}` }; }
     const messages = core.dedupeMessages(messagesResult.messages || []);
-    if (!messages.length) return false;
+    if (!messages.length) return { ok: false, reason: '当前会话暂无可分析消息。' };
     const transcript = core.buildTranscript(messages, { maxChars: 8200, maxMessages: 40 });
     const service = await window.zhikeAI.status().catch(() => ({ configured: false }));
-    if (!service.configured) return false;
+    if (!service.configured) return { ok: false, reason: 'AI 服务未配置，请先在 GPT 运营助手中配置 TeamoRouter 或 OpenAI。' };
     try {
       const result = await window.zhikeAI.request({
         assistantMode: 'operations',
@@ -501,8 +505,30 @@
       analysis.model = result.model || '';
       analysis.transcriptInfo = transcript;
       await api('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, result: analysis, confidence: analysis.confidence, providerName: analysis.providerName, model: analysis.model }) }, context);
-      return true;
-    } catch { return false; }
+      if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({
+        runId: state.collectionRun.id,
+        conversationId: conversation.id,
+        status: 'completed',
+        analysisStatus: 'completed',
+        coverageStatus: 'list-preview',
+        lastError: '',
+      }) }, context).catch(() => {});
+      return { ok: true };
+    } catch (error) {
+      const message = String(error?.message || 'AI 分析请求失败').replace(/[\r\n\t]+/g, ' ').slice(0, 300);
+      return { ok: false, reason: message || 'AI 分析请求失败。' };
+    }
+  }
+  async function markAnalysisRetryable(conversation, context, reason) {
+    if (!state.collectionRun?.id || !conversation?.id) return;
+    await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({
+      runId: state.collectionRun.id,
+      conversationId: conversation.id,
+      status: 'completed',
+      analysisStatus: 'retryable',
+      coverageStatus: 'list-preview',
+      lastError: String(reason || 'AI 分析待重试').slice(0, 500),
+    }) }, context).catch(() => {});
   }
   async function syncConversationListPreviews(items, context = captureContext()) {
     if (state.listSyncBusy || !Array.isArray(items) || !items.length) return { synced: 0, analyzed: 0 };
@@ -539,7 +565,9 @@
       }
       for (let budget = 0; budget < 5 && state.previewAnalysisQueue.length; budget += 1) {
         const task = state.previewAnalysisQueue.shift();
-        if (await analyzeStoredConversation(task.conversation, context)) analyzed += 1;
+        const analysis = await analyzeStoredConversation(task.conversation, context);
+        if (analysis.ok) analyzed += 1;
+        else if (!analysis.disabled) await markAnalysisRetryable(task.conversation, context, analysis.reason);
       }
       if (synced) {
         if (state.collectionRun?.id) {
@@ -548,7 +576,7 @@
           const completed = items.filter(item => item.status === 'completed').length;
           const analyzedItems = items.filter(item => item.analysisStatus === 'completed').length;
           const failed = items.filter(item => item.status === 'failed').length;
-          const retryable = items.filter(item => ['failed', 'retryable'].includes(item.status)).length;
+          const retryable = items.filter(item => ['failed', 'retryable'].includes(item.status) || ['retryable', 'failed'].includes(item.analysisStatus)).length;
           const runResult = await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', total: items.length, discovered: items.length, completed, analyzed: Math.max(analyzedItems, analyzed), failed, retryable, cursor: JSON.stringify({ mode: 'list-preview', synced, analyzed, syncedAt: nowIso() }), lastSuccessAt: nowIso() }) }, context).catch(() => null);
           if (runResult?.run) state.collectionRun = runResult.run;
         }

@@ -51,6 +51,9 @@ assert.match(ui, /refreshCollectionSummary[\s\S]*assertContext\(context\)/, 'col
 assert.match(ui, /autoCaptureCurrentConversation[\s\S]*captureContext\([\s\S]*importVisible\(context\)/, 'automatic capture keeps account context');
 assert.match(ui, /syncConversationListPreviews[\s\S]*messages\/batch[\s\S]*list-preview/, 'list-level preview capture saves messages without opening a conversation');
 assert.match(ui, /analyzeStoredConversation[\s\S]*ws-list-preview-analysis[\s\S]*api\('\/api\/ws\/analyses'/, 'list-level captures can trigger AI analysis and follow-up alerts');
+assert.match(ui, /analyzeStoredConversation[\s\S]*analysisStatus: 'completed'/, 'successful list-level analysis clears retry state');
+assert.match(ui, /markAnalysisRetryable[\s\S]*analysisStatus: 'retryable'[\s\S]*lastError/, 'AI failures remain visible and retryable');
+assert.match(ui, /includes\(item\.analysisStatus\)/, 'collection summary counts AI retryable items');
 assert.match(ui, /collectionRefreshTimer = setInterval\([\s\S]*12000/, 'phone-to-workbench list sync polls at a bounded interval');
 assert.match(ui, /analyzeConversation\(context[\s\S]*api\('\/api\/ws\/analyses'[\s\S]*context/, 'AI analysis writes use originating account');
 assert.match(ui, /wsAccountIds|activeAccountId/, 'CRM profile stores WS account identity');

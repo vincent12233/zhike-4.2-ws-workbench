@@ -99,6 +99,9 @@ async function json(response) { return response.json(); }
 
     const collectionItem = await json(await request('/api/ws/collection-items', { method: 'POST', body: JSON.stringify({ runId: collectionRun.run.id, conversationId: conversationBody.id, status: 'completed', coverageStatus: 'visible', checkpoint: '3' }) }));
     assert.equal(collectionItem.item.coverageStatus, 'visible');
+    const retryableItem = await json(await request('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: collectionRun.run.id, conversationId: conversationBody.id, status: 'completed', analysisStatus: 'retryable', lastError: 'AI 服务未配置，请先配置 TeamoRouter。' }) }));
+    assert.equal(retryableItem.item.analysisStatus, 'retryable');
+    assert.match(retryableItem.item.lastError, /AI 服务未配置/);
 
     const analysis = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, result: { summary: '咨询产品', intent: '高意向', intentScore: 90, urgency: '高', nextStep: '今天联系客户确认预算', followupTime: '2026-11-05', language: 'English', confidence: 0.8 }, providerName: 'test', model: 'test-model' }) });
     assert.equal(analysis.status, 200);
