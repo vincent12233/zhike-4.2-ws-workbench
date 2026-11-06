@@ -430,16 +430,49 @@ function wsReplyPayload(row) { return { id: row.id, accountId: row.account_id ||
 function wsListPreviewOriginal(item, data) {
   const original = wsText(item?.originalText, 12000);
   if (data?.source !== 'ws-list-preview' || data?.previewOnly !== true) return original;
-  const listText = wsText(data?.listText, 12000).replace(/[\u200e\u200f\u202a-\u202e]/g, '').replace(/\s+/g, ' ').trim();
-  if (!listText || !original) return original;
-  if (listText.toLocaleLowerCase().startsWith(original.toLocaleLowerCase()) && listText.length > original.length) {
-    const remainder = listText.slice(original.length).trim()
+  const cleanSystemMarkers = value => wsText(value, 12000)
+    .replace(/[\u200e\u200f\u202a-\u202e]/g, '')
+    .replace(/此聊天中的新消息将在发送(?:7|90)天后自动消失（除非消息已保留）。?/g, '')
+    .replace(/\d+\s*条未读消息/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const listText = cleanSystemMarkers(data?.listText);
+  const cleanedOriginal = cleanSystemMarkers(original);
+  if (cleanedOriginal && cleanedOriginal !== original) return cleanedOriginal;
+  if (!listText || !cleanedOriginal) return cleanedOriginal || original;
+  if (listText.toLocaleLowerCase().startsWith(cleanedOriginal.toLocaleLowerCase()) && listText.length > cleanedOriginal.length) {
+    const remainder = listText.slice(cleanedOriginal.length).trim()
       .replace(/^(?:(?:上午|下午|AM|PM)\s*\d{1,2}:?\d{2}|星期[一二三四五六日天]|昨天|今天|前天)\s+/i, '')
-      .split('此聊天中的新消息将在发送7天后自动消失')[0].trim();
-    if (remainder && remainder !== original) return remainder.slice(0, 12000);
+      .trim();
+    if (remainder && remainder !== cleanedOriginal) return remainder.slice(0, 12000);
   }
-  return original;
+  return cleanedOriginal || original;
 }
+function normalizeStoredWsListPreviews() {
+  const rows = db.prepare("SELECT id,conversation_id,original_text,data_json FROM ws_messages WHERE json_extract(data_json,'$.source')='ws-list-preview'").all();
+  if (!rows.length) return 0;
+  let updated = 0;
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    for (const row of rows) {
+      const canonical = wsListPreviewOriginal({ originalText: row.original_text }, wsJson(row.data_json, {}));
+      if (canonical && canonical !== row.original_text) {
+        db.prepare('UPDATE ws_messages SET original_text=?,updated_at=? WHERE id=?').run(canonical, new Date().toISOString(), row.id);
+        updated += 1;
+      }
+    }
+    if (updated) {
+      const conversations = db.prepare("SELECT DISTINCT conversation_id FROM ws_messages WHERE json_extract(data_json,'$.source')='ws-list-preview'").all();
+      for (const conversation of conversations) {
+        const latest = db.prepare("SELECT original_text FROM ws_messages WHERE conversation_id=? AND json_extract(data_json,'$.source')='ws-list-preview' ORDER BY updated_at DESC,created_at DESC LIMIT 1").get(conversation.conversation_id);
+        if (latest) db.prepare('UPDATE ws_conversations SET last_message_text=?,updated_at=? WHERE id=?').run(latest.original_text.slice(0, 4000), new Date().toISOString(), conversation.conversation_id);
+      }
+    }
+    db.exec('COMMIT');
+  } catch (error) { db.exec('ROLLBACK'); throw error; }
+  return updated;
+}
+normalizeStoredWsListPreviews();
 function wsBatchPayload(row) { return { id: row.id, accountId: row.account_id || 'default', conversationId: row.conversation_id, fingerprint: row.fingerprint, messageCount: Number(row.message_count || 0), insertedCount: Number(row.inserted_count || 0), messageIds: wsJson(row.message_ids_json, []), createdAt: row.created_at, updatedAt: row.updated_at }; }
 function wsCollectionRunPayload(row) { return { id: row.id, accountId: row.account_id || 'default', status: row.status, total: Number(row.total||0), discovered: Number(row.discovered||0), completed: Number(row.completed||0), analyzing: Number(row.analyzing||0), analyzed: Number(row.analyzed||0), failed: Number(row.failed||0), skipped: Number(row.skipped||0), retryable: Number(row.retryable||0), lastError: row.last_error||'', checkpoint: row.checkpoint||'', cursor: row.cursor||'', resumeCount: Number(row.resume_count||0), lastSuccessAt: row.last_success_at||'', createdAt: row.created_at, updatedAt: row.updated_at }; }
 function wsCollectionItemPayload(row) { return { id: row.id, accountId: row.account_id || 'default', runId: row.run_id, conversationId: row.conversation_id, status: row.status, attempts: Number(row.attempts||0), analysisStatus: row.analysis_status, followupStatus: row.followup_status, nextFollowupAt: row.next_followup_at||'', coverageStatus: row.coverage_status||'unknown', lastError: row.last_error||'', checkpoint: row.checkpoint||'', createdAt: row.created_at, updatedAt: row.updated_at }; }

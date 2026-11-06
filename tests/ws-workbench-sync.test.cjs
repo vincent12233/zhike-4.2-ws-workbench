@@ -2,15 +2,29 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const root = path.join(__dirname, '..');
 const ui = fs.readFileSync(path.join(root, 'resources', 'app', 'modules', 'ws-workbench.js'), 'utf8');
 const server = fs.readFileSync(path.join(root, 'resources', 'app', 'server.mjs'), 'utf8');
+const preload = fs.readFileSync(path.join(root, 'resources', 'app', 'ws-preload.cjs'), 'utf8');
 const core = require(path.join(root, 'resources', 'app', 'modules', 'ws-workbench-core.js'));
 
 assert.ok(core, 'WS core should load');
 assert.deepEqual(core.matchCustomer([{ id: 'c1', wsAccountIds: ['alpha', 'beta'] }], { wsAccountId: 'beta' }).customer?.id, 'c1', 'existing multi-account linkage should match');
 assert.equal(core.matchCustomer([{ id: 'c1', wsAccountIds: ['alpha'] }, { id: 'c2', wsAccountIds: ['beta'] }], { wsAccountId: 'beta' }).kind, 'account', 'account identity should match additively');
+
+const cleanVisibleTextSource = preload.slice(preload.indexOf('function cleanVisibleText'), preload.indexOf('function conversationNodes'));
+const cleanVisibleText = vm.runInNewContext(`(${cleanVisibleTextSource})`);
+const splitAccessibleRowSource = preload.slice(preload.indexOf('function splitAccessibleRow'), preload.indexOf('function readConversationNodes'));
+const splitAccessibleRow = vm.runInNewContext(`(${splitAccessibleRowSource})`, { cleanVisibleText });
+assert.deepEqual(JSON.parse(JSON.stringify(splitAccessibleRow('1条未读消息 Vaishali Joshi. 凌晨2:06 As 此聊天中的新消息将在发送90天后自动消失（除非消息已保留）。'))), { title: 'Vaishali Joshi.', preview: 'As' }, 'WhatsApp unread/time/system markers must not pollute title or preview');
+assert.match(preload, /previewText && title\.toLocaleLowerCase\(\)\.endsWith\(previewText\.toLocaleLowerCase\(\)\)/, 'preload parser removes preview suffix from accessibility titles');
+
+const splitListPreviewSource = ui.slice(ui.indexOf('function splitListPreview'), ui.indexOf('function normalizeListItem'));
+const splitListPreview = vm.runInNewContext(`(${splitListPreviewSource})`, { text: value => String(value || '') });
+assert.deepEqual(JSON.parse(JSON.stringify(splitListPreview('1条未读消息 Vaishali Joshi. 凌晨2:06 As 此聊天中的新消息将在发送90天后自动消失（除非消息已保留）。'))), { title: 'Vaishali Joshi.', preview: 'As' }, 'renderer list parser must match preload cleanup');
+assert.match(ui, /preview && title\.toLocaleLowerCase\(\)\.endsWith\(preview\.toLocaleLowerCase\(\)\)/, 'renderer parser removes preview suffix from declared titles');
 
 // Execute the same deterministic primitives used by import/capture and account writes.
 const captured = core.dedupeMessages([
@@ -58,6 +72,8 @@ assert.match(ui, /includes\(item\.analysisStatus\)/, 'collection summary counts 
 assert.match(ui, /collectionRefreshTimer = setInterval\([\s\S]*12000/, 'phone-to-workbench list sync polls at a bounded interval');
 assert.match(ui, /analyzeConversation\(context[\s\S]*api\('\/api\/ws\/analyses'[\s\S]*context/, 'AI analysis writes use originating account');
 assert.match(server, /sameCheckpoint[\s\S]*successfulAnalysis[\s\S]*analysis_status/, 'collection item updates preserve successful analysis for an unchanged preview');
+assert.match(server, /cleanSystemMarkers[\s\S]*自动消失[\s\S]*条未读消息/, 'server canonicalizes WhatsApp system markers before persistence');
+assert.match(server, /normalizeStoredWsListPreviews[\s\S]*UPDATE ws_messages/, 'server repairs previously persisted list-preview noise at startup');
 assert.match(ui, /wsAccountIds|activeAccountId/, 'CRM profile stores WS account identity');
 assert.match(ui, /matchCustomer\([\s\S]*wsAccountId/, 'CRM matching uses WS account identity after phone');
 assert.match(ui, /wsExternalId: externalId[\s\S]*wsAccountId: context\.accountId/, 'visible discovery matches WS external id and account identity');

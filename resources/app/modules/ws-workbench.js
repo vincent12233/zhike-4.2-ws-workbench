@@ -435,20 +435,32 @@
   function splitListPreview(value) {
     const normalized = text(value).replace(/[\u200e\u200f\u202a-\u202e]/g, '').replace(/\s+/g, ' ').trim();
     const withoutUnread = normalized.replace(/^\d+\s*条未读消息\s*/, '').trim();
-    const marker = withoutUnread.search(/\s+(?:(?:上午|下午)\s*\d{1,2}:\d{2}|星期[一二三四五六日天]|昨天|今天|前天)\s+/);
-    if (marker < 0) return { title: withoutUnread, preview: '' };
-    const title = withoutUnread.slice(0, marker).trim();
-    const preview = withoutUnread.slice(marker).replace(/^\s+(?:(?:上午|下午)\s*\d{1,2}:\d{2}|星期[一二三四五六日天]|昨天|今天|前天)\s+/, '').split('此聊天中的新消息将在发送7天后自动消失')[0].trim();
+    const stripSystemNotice = input => text(input)
+      .replace(/\s*此聊天中的新消息将在发送(?:7|90)天后自动消失(?:（除非消息已保留）)?。?\s*$/g, '')
+      .replace(/\s*\d+\s*条未读消息\s*/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const cleanRow = stripSystemNotice(withoutUnread);
+    const marker = cleanRow.search(/\s+(?:(?:凌晨|早上|上午|中午|下午|晚上)\s*\d{1,2}:\d{2}|星期[一二三四五六日天]|昨天|今天|前天|\d{4}年\d{1,2}月\d{1,2}日)\s+/);
+    if (marker < 0) return { title: cleanRow, preview: '' };
+    const title = cleanRow.slice(0, marker).trim();
+    const preview = stripSystemNotice(cleanRow.slice(marker).replace(/^\s+(?:(?:凌晨|早上|上午|中午|下午|晚上)\s*\d{1,2}:\d{2}|星期[一二三四五六日天]|昨天|今天|前天|\d{4}年\d{1,2}月\d{1,2}日)\s+/, ''));
     return { title, preview };
   }
   function normalizeListItem(item) {
     const declaredTitle = text(item?.title);
     const listText = text(item?.listText).replace(/[\u200e\u200f\u202a-\u202e]/g, '').replace(/\s+/g, ' ').trim();
     const parts = splitListPreview(listText || declaredTitle || item?.preview || '');
-    const explicitPreview = text(item?.previewText);
-    const itemPreview = text(item?.preview);
-    const title = declaredTitle || parts.title;
+    const cleanText = value => text(value)
+      .replace(/\s*此聊天中的新消息将在发送(?:7|90)天后自动消失(?:（除非消息已保留）)?。?\s*$/g, '')
+      .replace(/\s*\d+\s*条未读消息\s*/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const explicitPreview = cleanText(item?.previewText);
+    const itemPreview = cleanText(item?.preview);
+    let title = cleanText(declaredTitle || parts.title);
     let preview = parts.preview || (explicitPreview && explicitPreview !== title ? explicitPreview : '') || (itemPreview && itemPreview !== title ? itemPreview : '');
+    if (preview && title.toLocaleLowerCase().endsWith(preview.toLocaleLowerCase()) && title.length > preview.length) title = title.slice(0, -preview.length).trim();
     // WhatsApp's row-level accessibility text sometimes omits the date marker
     // from listText, while title and preview are still available separately.
     // Prefer the declared title and strip it from the combined row text.
@@ -456,10 +468,10 @@
       const lowerListText = listText.toLocaleLowerCase();
       const lowerTitle = title.toLocaleLowerCase();
       const stripped = lowerListText.startsWith(lowerTitle) ? listText.slice(title.length).trim() : '';
-      if (stripped && stripped !== title) preview = stripped;
+      if (stripped && stripped !== title) preview = cleanText(stripped);
     }
-    const previewText = preview;
-    return { ...item, title: title || listText, previewText, preview };
+    const previewText = cleanText(preview);
+    return { ...item, title: cleanText(title || listText), previewText, preview: previewText };
   }
   function listPreviewText(item, fallbackTitle = '') {
     const normalized = normalizeListItem(item);

@@ -23,6 +23,14 @@ function captureSelection() {
   const text = source.slice(0, 120000);
   return { text, length: text.length, truncated: source.length > text.length };
 }
+function cleanVisibleText(value) {
+  return String(value || '')
+    .replace(/[\u200e\u200f\u202a-\u202e]/g, '')
+    .replace(/\s*此聊天中的新消息将在发送(?:7|90)天后自动消失(?:（除非消息已保留）)?。?\s*$/g, '')
+    .replace(/\s*\d+\s*条未读消息\s*/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 function conversationNodes() {
   const rowSelectors = [
     '[data-testid="chat-list"] [role="row"]',
@@ -58,12 +66,14 @@ function compactId(value) {
   return `row-${(hash >>> 0).toString(36)}`;
 }
 function splitAccessibleRow(value) {
-  const normalized = String(value || '').replace(/[\u200e\u200f\u202a-\u202e]/g, '').replace(/\s+/g, ' ').trim();
+  const normalized = cleanVisibleText(value);
   const withoutUnread = normalized.replace(/^\d+\s*条未读消息\s*/, '').trim();
-  const marker = withoutUnread.search(/\s+(?:(?:上午|下午)\s*\d{1,2}:\d{2}|星期[一二三四五六日天]|昨天|今天|前天)\s+/);
-  if (marker < 0) return { title: withoutUnread, preview: '' };
-  const title = withoutUnread.slice(0, marker).trim();
-  const preview = withoutUnread.slice(marker).replace(/^\s+(?:(?:上午|下午)\s*\d{1,2}:\d{2}|星期[一二三四五六日天]|昨天|今天|前天)\s+/, '').split('此聊天中的新消息将在发送7天后自动消失')[0].trim();
+  const stripSystemNotice = input => cleanVisibleText(input);
+  const cleanRow = stripSystemNotice(withoutUnread);
+  const marker = cleanRow.search(/\s+(?:(?:凌晨|早上|上午|中午|下午|晚上)\s*\d{1,2}:\d{2}|星期[一二三四五六日天]|昨天|今天|前天|\d{4}年\d{1,2}月\d{1,2}日)\s+/);
+  if (marker < 0) return { title: cleanRow, preview: '' };
+  const title = cleanRow.slice(0, marker).trim();
+  const preview = stripSystemNotice(cleanRow.slice(marker).replace(/^\s+(?:(?:凌晨|早上|上午|中午|下午|晚上)\s*\d{1,2}:\d{2}|星期[一二三四五六日天]|昨天|今天|前天|\d{4}年\d{1,2}月\d{1,2}日)\s+/, ''));
   return { title, preview };
 }
 function readConversationNodes() {
@@ -72,10 +82,11 @@ function readConversationNodes() {
     const labels = [node, ...node.querySelectorAll?.('[aria-label], [aria-description], [title], [data-pre-plain-text]') || []].map(element => String(element.getAttribute?.('aria-label') || element.getAttribute?.('aria-description') || element.getAttribute?.('title') || element.getAttribute?.('data-pre-plain-text') || '')).filter(Boolean);
     const pageText = labels.join(' ').replace(/\s+/g, ' ').trim().slice(0, 2000);
     const rowParts = splitAccessibleRow(pageText || label);
-    const title = (rowParts.title || label || pageText.split(/\s{2,}|\n/)[0] || '').slice(0, 200);
+    let title = (rowParts.title || label || pageText.split(/\s{2,}|\n/)[0] || '').slice(0, 200);
     const previewNode = node.querySelector?.('[data-testid*="last-msg"], [data-testid*="message"], [data-testid*="preview"], [aria-description], span[title]');
-    const previewText = String(previewNode?.getAttribute?.('aria-label') || previewNode?.getAttribute?.('aria-description') || previewNode?.getAttribute?.('title') || previewNode?.getAttribute?.('data-pre-plain-text') || '').replace(/\s+/g, ' ').trim().slice(0, 4000);
-    const preview = (previewText || rowParts.preview || pageText.replace(title, '').trim() || label).slice(0, 4000);
+    const previewText = cleanVisibleText(previewNode?.getAttribute?.('aria-label') || previewNode?.getAttribute?.('aria-description') || previewNode?.getAttribute?.('title') || previewNode?.getAttribute?.('data-pre-plain-text') || '').slice(0, 4000);
+    if (previewText && title.toLocaleLowerCase().endsWith(previewText.toLocaleLowerCase()) && title.length > previewText.length) title = title.slice(0, -previewText.length).trim();
+    const preview = cleanVisibleText(previewText || rowParts.preview || pageText.replace(title, '').trim() || label).slice(0, 4000);
     const timeNode = node.querySelector?.('time, [data-testid*="time"], [aria-label*="AM"], [aria-label*="PM"]');
     const lastMessageAt = String(timeNode?.getAttribute?.('datetime') || timeNode?.getAttribute?.('aria-label') || timeNode?.getAttribute?.('title') || '').trim().slice(0, 100);
     const badge = node.querySelector?.('[aria-label*="unread"], [data-testid*="unread"]');

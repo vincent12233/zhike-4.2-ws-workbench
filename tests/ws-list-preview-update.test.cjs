@@ -34,6 +34,14 @@ const json = response => response.json();
     }) }));
     assert.equal(first.inserted, 1);
     assert.equal(first.messages[0].originalText, 'Important Update for Airtel mobile number');
+    const noisy = await json(await request('/api/ws/messages/batch', { method: 'POST', body: JSON.stringify({
+      conversationId: conversation.id,
+      fingerprint: 'list-preview-noisy',
+      messages: [{ externalId: 'list-preview-noisy', direction: 'receive', originalText: 'As 1条未读消息 此聊天中的新消息将在发送90天后自动消失（除非消息已保留）。', order: 3, data: { source: 'ws-list-preview', previewOnly: true, listText: '1条未读消息 Vaishali Joshi. 凌晨2:06 As 此聊天中的新消息将在发送90天后自动消失（除非消息已保留）。' } }],
+    }) }));
+    assert.equal(noisy.inserted, 0);
+    assert.equal(noisy.updated, 1);
+    assert.equal(noisy.messages[0].originalText, 'As', 'server canonicalizes WhatsApp system markers before persistence');
     const second = await json(await request('/api/ws/messages/batch', { method: 'POST', body: JSON.stringify({
       conversationId: conversation.id,
       fingerprint: 'list-preview-new',
