@@ -27,6 +27,7 @@ assert(html.includes('./modules/ui-refresh.css'));
 assert(html.includes('./modules/accessibility-enhancements.js'));
 assert(html.includes('./modules/ws-workbench.js'));
 assert(pkg.includes('"version": "4.3.0"'));
+assert(setup.includes('OutputBaseFilename=知客-{#AppVersion}-WS工作台智能录入版'));
 assert(setup.includes('#define AppVersion "4.2.6"'));
 assert(setup.includes('OutputBaseFilename=知客-4.2.6-WS工作台智能录入版'));
 assert(readme.includes('## 4.2.0 WS 工作台版'));
