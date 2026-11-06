@@ -463,16 +463,16 @@ function normalizeStoredWsListPreviews() {
         updated += 1;
       }
     }
-    if (updated) {
-      const conversations = db.prepare("SELECT DISTINCT conversation_id FROM ws_messages WHERE json_extract(data_json,'$.source')='ws-list-preview'").all();
-      for (const conversation of conversations) {
-        const latest = db.prepare("SELECT original_text FROM ws_messages WHERE conversation_id=? AND json_extract(data_json,'$.source')='ws-list-preview' ORDER BY updated_at DESC,created_at DESC LIMIT 1").get(conversation.conversation_id);
-        const current = db.prepare('SELECT title,last_message_text FROM ws_conversations WHERE id=?').get(conversation.conversation_id);
-        if (latest && current) {
-          const cleanedTitle = wsCleanListPreviewText(current.title);
-          const title = cleanedTitle && latest.original_text && cleanedTitle.toLocaleLowerCase().endsWith(latest.original_text.toLocaleLowerCase())
-            ? cleanedTitle.slice(0, -latest.original_text.length).trim()
-            : cleanedTitle;
+    const conversations = db.prepare("SELECT DISTINCT conversation_id FROM ws_messages WHERE json_extract(data_json,'$.source')='ws-list-preview'").all();
+    for (const conversation of conversations) {
+      const latest = db.prepare("SELECT original_text FROM ws_messages WHERE conversation_id=? AND json_extract(data_json,'$.source')='ws-list-preview' ORDER BY updated_at DESC,created_at DESC LIMIT 1").get(conversation.conversation_id);
+      const current = db.prepare('SELECT title,last_message_text FROM ws_conversations WHERE id=?').get(conversation.conversation_id);
+      if (latest && current) {
+        const cleanedTitle = wsCleanListPreviewText(current.title);
+        const title = cleanedTitle && latest.original_text && cleanedTitle.toLocaleLowerCase().endsWith(latest.original_text.toLocaleLowerCase())
+          ? cleanedTitle.slice(0, -latest.original_text.length).trim()
+          : cleanedTitle;
+        if (title !== current.title || latest.original_text !== current.last_message_text || updated) {
           db.prepare('UPDATE ws_conversations SET title=?,last_message_text=?,updated_at=? WHERE id=?').run(title, latest.original_text.slice(0, 4000), new Date().toISOString(), conversation.conversation_id);
         }
       }
