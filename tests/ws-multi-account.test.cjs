@@ -80,6 +80,14 @@ async function run() {
     assert.ok(Array.isArray(state.customers));
   } finally {
     await server.stop();
+  }
+
+  const restarted = await startServer(dataDir, 4483, 'ws-multi-account-restart-token');
+  try {
+    const afterRestart = await (await restarted.request('/api/ws/accounts')).json();
+    assert.ok(afterRestart.accounts.every(account => account.status === '未连接'), 'server restart should clear stale runtime account statuses');
+  } finally {
+    await restarted.stop();
     rmSync(dataDir, { recursive: true, force: true });
   }
 

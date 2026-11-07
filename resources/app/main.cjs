@@ -769,6 +769,28 @@ async function stopOwnedService() {
   if (serviceProcess.exitCode === null) serviceProcess.kill();
 }
 
+async function resetWsStatusesBeforeQuit() {
+  if (!servicePort) return;
+  let accounts = [...wsAccounts.keys()];
+  try {
+    const response = await fetch(`http://127.0.0.1:${servicePort}/api/ws/accounts`, { headers: { 'X-Zhike-Api-Token': apiToken }, signal: AbortSignal.timeout(1500) });
+    if (response.ok) {
+      const payload = await response.json();
+      if (Array.isArray(payload.accounts)) accounts = payload.accounts.map(account => String(account.id || '')).filter(Boolean);
+    }
+  } catch {}
+  await Promise.all(accounts.map(async accountId => {
+    try {
+      await fetch(`http://127.0.0.1:${servicePort}/api/ws/accounts/${encodeURIComponent(accountId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-Zhike-Api-Token': apiToken },
+        body: JSON.stringify({ status: '未连接' }),
+        signal: AbortSignal.timeout(1500),
+      });
+    } catch {}
+  }));
+}
+
 app.whenReady().then(async () => {
   if (!singleInstance) return;
   try {
@@ -791,5 +813,5 @@ app.on('before-quit', event => {
   if (quitting) return;
   event.preventDefault();
   quitting = true;
-  stopOwnedService().finally(() => app.exit(0));
+  resetWsStatusesBeforeQuit().finally(() => stopOwnedService()).finally(() => app.exit(0));
 });

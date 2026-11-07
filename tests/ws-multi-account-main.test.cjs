@@ -35,6 +35,8 @@ assert.match(main, /zhike-ws-status[^\n]*accountId|accountId[^\n]*zhike-ws-statu
 assert.match(main, /persistWsAccountStatus/, 'runtime WS status is persisted to the account row');
 assert.match(main, /method:\s*'PATCH'[\s\S]*api\/ws\/accounts\//, 'status persistence uses the account-scoped PATCH endpoint');
 assert.match(main, /wsStatusPersistence\s*=\s*new Map\(\)/, 'status persistence coalesces rapid transitions per account');
+assert.match(main, /resetWsStatusesBeforeQuit/, 'application shutdown resets persisted WS statuses');
+assert.match(main, /resetWsStatusesBeforeQuit\(\)\.finally\(\(\) => stopOwnedService\(\)\)/, 'shutdown persists status reset before stopping the data service');
 assert.match(main, /action === ['"]clear-session['"][\s\S]*?accountId/, 'clear-session is account scoped');
 assert.match(main, /action === ['"]open['"][\s\S]*?default/, 'legacy open action still defaults to default account');
 assert.match(preload, /accountId/, 'desktop preload forwards account context');
