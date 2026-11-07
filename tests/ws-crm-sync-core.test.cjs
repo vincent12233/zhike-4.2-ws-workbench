@@ -46,5 +46,7 @@ assert.equal(existingCustomer.name, '人工确认姓名', '自动同步不得覆
 assert.equal(existingCustomer.phone, '9999999999', '自动同步不得覆盖已有电话号码');
 assert.equal(existingCustomer.aiSummary, '新摘要');
 assert.deepEqual(existingCustomer.tags, ['人工', '高意向']);
+const accountScopedCustomer = { id: 'c-account', account: 'default', wsAccountId: 'default', wsAccountIds: ['default'], wsExternalIds: ['wa-existing'], wsConversationIds: ['conv-existing'] };
+assert.equal(core.matchCustomerForAutoSync([accountScopedCustomer], { wsAccountId: 'default', wsExternalId: 'wa-new', conversationId: 'conv-new', phone: '' }).kind, 'new', '不同 WS 会话不能仅因共用同一个登录账号而合并');
 
 console.log('ws-crm-sync-core: pass');

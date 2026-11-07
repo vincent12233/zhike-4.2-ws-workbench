@@ -863,7 +863,9 @@ const server = createServer(async (req, res) => {
       for (const key of ['customers', 'tickets', 'deposits', 'followups', 'registrations', 'phoneRegistry', 'batchOperations', 'activities', 'importIssues']) if (!Array.isArray(state[key])) state[key] = [];
       if (!state.settings || typeof state.settings !== 'object' || Array.isArray(state.settings)) state.settings = {};
       if (!Array.isArray(state.settings.operatingTasks)) state.settings.operatingTasks = [];
-      const match = wsCore.matchCustomer(state.customers, profile);
+      // 自动同步不得按 WS 登录账号匹配客户：同一账号下的多个联系人必须保持独立。
+      // 仅使用 WS 联系人标识、电话号码、联系人账号或会话标识进行匹配。
+      const match = wsCrmSync.matchCustomerForAutoSync(state.customers, profile);
       if (match.kind === 'ambiguous') return json(res, 409, { error: 'AI 识别到多个候选客户，未自动合并。', needsConfirmation: true, candidates: match.candidates.map(item => ({ id: item.id, name: item.name, phone: item.rawPhone || item.phone || '' })) });
       let customer = match.customer;
       const created = !customer;

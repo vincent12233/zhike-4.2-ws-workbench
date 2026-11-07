@@ -32,6 +32,7 @@
       wsExternalId: text(conversation.externalId),
       wsAccountId: text(accountId) || 'default',
       conversationId: text(conversation.id),
+      contactAccount: trusted ? text(contact.account || result.account) : '',
       phone,
       name,
       country: trusted ? text(contact.country || result.country) : '',
@@ -54,6 +55,35 @@
   function normalizeDate(value) {
     const match = text(value).match(/\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b/);
     return match ? `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}` : '';
+  }
+
+  function matchCustomerForAutoSync(customers, profile = {}) {
+    const rows = (Array.isArray(customers) ? customers : []).filter(item => item && !item.deleted);
+    const externalId = text(profile.wsExternalId);
+    if (externalId) {
+      const candidates = rows.filter(item => text(item.wsExternalId) === externalId || (Array.isArray(item.wsExternalIds) && item.wsExternalIds.map(text).includes(externalId)));
+      if (candidates.length === 1) return { kind: 'ws-id', customer: candidates[0], candidates };
+      if (candidates.length > 1) return { kind: 'ambiguous', customer: null, candidates };
+    }
+    const phone = normalizePhone(profile.phone);
+    if (phone) {
+      const candidates = rows.filter(item => normalizePhone(item.phone || item.rawPhone) === phone);
+      if (candidates.length === 1) return { kind: 'phone', customer: candidates[0], candidates };
+      if (candidates.length > 1) return { kind: 'ambiguous', customer: null, candidates };
+    }
+    const contactAccount = text(profile.contactAccount || profile.account);
+    if (contactAccount) {
+      const candidates = rows.filter(item => text(item.wsContactAccount) === contactAccount || (Array.isArray(item.wsContactAccounts) && item.wsContactAccounts.map(text).includes(contactAccount)));
+      if (candidates.length === 1) return { kind: 'contact-account', customer: candidates[0], candidates };
+      if (candidates.length > 1) return { kind: 'ambiguous', customer: null, candidates };
+    }
+    const conversationId = text(profile.conversationId);
+    if (conversationId) {
+      const candidates = rows.filter(item => text(item.wsConversationId) === conversationId || (Array.isArray(item.wsConversationIds) && item.wsConversationIds.map(text).includes(conversationId)));
+      if (candidates.length === 1) return { kind: 'conversation', customer: candidates[0], candidates };
+      if (candidates.length > 1) return { kind: 'ambiguous', customer: null, candidates };
+    }
+    return { kind: 'new', customer: null, candidates: [] };
   }
 
   function deriveFollowupPlan(analysis = {}, analysisMeta = {}, conversation = {}, accountId = 'default') {
@@ -96,6 +126,7 @@
     const aiFields = { intent: profile.intent, intentScore: profile.intentScore, emotion: profile.emotion, aiSummary: profile.aiSummary };
     for (const [key, value] of Object.entries(aiFields)) if (value !== '' && value != null && JSON.stringify(customer[key]) !== JSON.stringify(value)) { customer[key] = value; changedFields.push(key); }
     if (!text(customer.note) && text(profile.note)) { customer.note = text(profile.note); changedFields.push('note'); }
+    if (!text(customer.wsContactAccount) && text(profile.contactAccount)) { customer.wsContactAccount = text(profile.contactAccount); changedFields.push('wsContactAccount'); }
     const ids = [
       ['wsExternalIds', profile.wsExternalId],
       ['wsAccountIds', profile.wsAccountId],
@@ -115,5 +146,5 @@
     return { customer, changedFields };
   }
 
-  return { shouldAutoSync, deriveCustomerProfile, deriveFollowupPlan, mergeCustomerProfileSafely, normalizeDate, normalizePhone };
+  return { shouldAutoSync, deriveCustomerProfile, deriveFollowupPlan, matchCustomerForAutoSync, mergeCustomerProfileSafely, normalizeDate, normalizePhone };
 });

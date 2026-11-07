@@ -118,6 +118,7 @@ async function json(response) { return response.json(); }
     assert.equal(crmState.customers.length, 1, 'AI 同步按 WS 会话只创建一个客户');
     assert.equal(crmState.followups.length, 1, 'AI 同步按分析幂等创建一个跟进');
     assert.equal(crmState.settings.operatingTasks.length, 1, 'AI 同步创建一个待跟进任务');
+
     const analysisList = await json(await request(`/api/ws/analyses?conversationId=${encodeURIComponent(conversationBody.id)}&limit=1&offset=0`));
     assert.equal(analysisList.total, 1);
     assert.equal(analysisList.analysis.result.summary, '咨询产品');
@@ -190,6 +191,22 @@ async function json(response) { return response.json(); }
     const afterV5 = await json(await request('/api/ws/diagnostics'));
     assert.equal(afterV5.counts.messages, 3);
     assert.equal(afterV5.counts.batches, 0);
+
+    // 同一 WS 登录账号下的另一联系人必须创建独立客户，不能因 wsAccountId 相同而合并。
+    const secondConversation = await json(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-002', title: '李四', customerId: '', language: 'English' }) }));
+    const secondAnalysisResponse = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: secondConversation.id, result: { summary: '另一位客户咨询', intent: '高意向', intentScore: 85, urgency: '中', nextStep: '明天联系确认', followupTime: '2026-11-06', language: 'English', confidence: 0.9 }, providerName: 'test', model: 'test-model' }) });
+    assert.equal(secondAnalysisResponse.status, 200);
+    const secondAnalysis = await json(secondAnalysisResponse);
+    const secondCrmSync = await json(await request('/api/ws/crm-sync', { method: 'POST', body: JSON.stringify({ conversationId: secondConversation.id, analysisId: secondAnalysis.id }) }));
+    assert.equal(secondCrmSync.created, true);
+    const crmStateAfterSecond = await json(await request('/api/state'));
+    assert.equal(crmStateAfterSecond.customers.length, 2, '同一 WS 登录账号下的不同联系人不得合并为一个客户');
+    assert.notEqual(crmStateAfterSecond.customers[0].id, crmStateAfterSecond.customers[1].id);
+    const wsConversationsAfterSecond = await json(await request('/api/ws/conversations'));
+    const firstLinked = wsConversationsAfterSecond.conversations.find(item => item.id === conversationBody.id);
+    const secondLinked = wsConversationsAfterSecond.conversations.find(item => item.id === secondConversation.id);
+    assert.ok(firstLinked.customerId && secondLinked.customerId);
+    assert.notEqual(firstLinked.customerId, secondLinked.customerId, '不同 WS 联系人应关联不同客户');
 
     const invalidShape = await request('/api/ws/import', { method: 'POST', body: JSON.stringify({ schemaVersion: 6, conversations: {} }) });
     assert.equal(invalidShape.status, 400);

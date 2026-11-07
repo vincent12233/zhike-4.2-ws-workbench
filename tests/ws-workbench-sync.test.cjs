@@ -12,6 +12,7 @@ const core = require(path.join(root, 'resources', 'app', 'modules', 'ws-workbenc
 const crmSync = require(path.join(root, 'resources', 'app', 'modules', 'ws-crm-sync-core.js'));
 
 assert.ok(core, 'WS core should load');
+assert.match(server, /matchCustomerForAutoSync/, 'CRM auto-sync should not merge contacts by shared WS login account');
 assert.deepEqual(core.matchCustomer([{ id: 'c1', wsAccountIds: ['alpha', 'beta'] }], { wsAccountId: 'beta' }).customer?.id, 'c1', 'existing multi-account linkage should match');
 assert.equal(core.matchCustomer([{ id: 'c1', wsAccountIds: ['alpha'] }, { id: 'c2', wsAccountIds: ['beta'] }], { wsAccountId: 'beta' }).kind, 'account', 'account identity should match additively');
 const autoProfile = crmSync.deriveCustomerProfile({ confidence: 0.9, summary: '客户需要报价', contact: { name: '自动客户', phone: '+91 98765 43210' }, tags: ['高意向'] }, { id: 'conv-auto', externalId: 'wa-auto', title: '自动客户' }, 'alpha');
