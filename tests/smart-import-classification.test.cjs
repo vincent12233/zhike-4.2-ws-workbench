@@ -101,4 +101,10 @@ const dateAtEnd = api.parseNaturalLine('9876543218 周十二 群粉 未进群 20
 assert.equal(dateAtEnd.registered, '2026-11-07');
 assert.equal(dateAtEnd.phone, '9876543218');
 
+const tradeDates = api.inferHeaderMapping(['客户号码', '股票代码', '方向', '买入日期', '卖出日期'], [
+  ['9876543219', 'AAPL', '买入', '2026-11-01', ''],
+]);
+assert.equal(tradeDates.buyDate, 3);
+assert.equal(tradeDates.sellDate, 4);
+
 console.log('smart import classification: explicit single-group and group-fan sources normalize correctly');

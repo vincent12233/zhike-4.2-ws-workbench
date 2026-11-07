@@ -15,6 +15,7 @@
     return (list || []).filter(record => ids.has(String(record.customerId)) || phones.has(normalizePhone(record.phone))).slice(0, 200);
   };
   const businessSignature = (record, kind) => {
+    if (kind === 'ticket' && window.ZhikeTicketRecords?.ticketRecordKey) return window.ZhikeTicketRecords.ticketRecordKey(record);
     const clean = value => String(value ?? '').trim().toLocaleLowerCase();
     const owner = clean(record?.customerId || record?.customer || record?.phone);
     const date = clean(String(record?.date || '').slice(0, 10));
@@ -33,7 +34,7 @@
     if (!rows.length) { host()?.toast(`当前没有可批量编辑的${label}记录`, 'x'); return; }
     const state = host().state;
     const customer = id => (state.customers || []).find(c => String(c.id) === String(id));
-    const list = rows.map(record => { const c = customer(record.customerId); return `<label class="business-batch-record"><input type="checkbox" data-biz-record="${esc(record.id)}"><span><strong>${esc(c?.name || record.customer || '未关联客户')}</strong> · ${esc(record.date || '未记录')} · ${esc(kind === 'ticket' ? record.product || '未指定' : String(record.amount ?? 0) + ' ' + (record.currency || 'INR'))}<small>${esc(record.note || '')}</small></span></label>`; }).join('');
+    const list = rows.map(record => { const c = customer(record.customerId), recordDate = kind === 'ticket' ? (window.ZhikeTicketRecords?.effectiveTicketDate?.(record) || record.date) : record.date; return `<label class="business-batch-record"><input type="checkbox" data-biz-record="${esc(record.id)}"><span><strong>${esc(c?.name || record.customer || '未关联客户')}</strong> · ${esc(recordDate || '未记录')} · ${esc(kind === 'ticket' ? record.product || '未指定' : String(record.amount ?? 0) + ' ' + (record.currency || 'INR'))}<small>${esc(record.note || '')}</small></span></label>`; }).join('');
     host().openModal(`批量编辑${label}`, `选择记录后设置需要统一修改的字段，其他字段保持原值。最多展示 ${rows.length} 条。`, `<div class="business-batch-list">${list}</div><div class="business-batch-fields">${fieldMarkup(kind)}</div><div class="notice-line">系统会在写入前检查完全重复记录；不同票据和不同入金不会互相拦截。</div>`, `<button class="btn" data-action="close-modal">取消</button><button class="btn primary" data-be-action="batch-preview-business" data-kind="${kind}">预览变更</button>`);
   }
   function readBatchDraft(kind) {
@@ -51,7 +52,7 @@
   }
   function previewBatch(kind) {
     try {
-      const draft = readBatchDraft(kind), state = host().state, list = kind === 'ticket' ? state.tickets : state.deposits, selected = list.filter(record => draft.selected.includes(String(record.id))), after = selected.map(record => ({ ...record, ...draft.fields }));
+      const draft = readBatchDraft(kind), state = host().state, list = kind === 'ticket' ? state.tickets : state.deposits, selected = list.filter(record => draft.selected.includes(String(record.id))), after = selected.map(record => kind === 'ticket' ? (window.ZhikeTicketRecords?.normalizeTicketRecord?.({ ...record, ...draft.fields, buyDate: '', sellDate: '' }) || { ...record, ...draft.fields }) : ({ ...record, ...draft.fields }));
       const selectedIds = new Set(draft.selected), conflicts = after.filter(candidate => list.some(record => !selectedIds.has(String(record.id)) && businessSignature(record, kind) === businessSignature(candidate, kind)));
       pendingBatch = { ...draft, before: selected.map(clone), after, conflicts: conflicts.map(clone) };
       const label = labelFor(kind), names = after.slice(0, 20).map((record, index) => `<span class="batch-preview-name">${esc(record.customer || record.phone || record.id)} · ${esc(String(selected[index].date || ''))} → ${esc(String(record.date || ''))}</span>`).join('');
