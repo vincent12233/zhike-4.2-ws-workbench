@@ -18,7 +18,14 @@ const headers = { 'content-type': 'application/json', 'x-zhike-api-token': token
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function request(pathname, init = {}) {
   for (let i = 0; i < 120; i++) {
-    try { return await fetch(`http://127.0.0.1:${port}${pathname}`, { ...init, headers: { ...headers, ...(init.headers || {}) } }); }
+    try {
+      const nextHeaders = { ...headers, ...(init.headers || {}) };
+      if (String(init.method || 'GET').toUpperCase() !== 'GET' && pathname !== '/api/state' && !Object.keys(nextHeaders).some(key => key.toLowerCase() === 'x-state-version')) {
+        const version = await fetch(`http://127.0.0.1:${port}/api/state/version`, { headers }).then(response => response.json());
+        nextHeaders['x-state-version'] = String(version.version || '');
+      }
+      return await fetch(`http://127.0.0.1:${port}${pathname}`, { ...init, headers: nextHeaders });
+    }
     catch { await wait(50); }
   }
   throw new Error('isolated server did not become available');
@@ -105,9 +112,12 @@ async function json(response) { return response.json(); }
 
     const analysis = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, result: { summary: '咨询产品', intent: '高意向', intentScore: 90, urgency: '高', nextStep: '今天联系客户确认预算', followupTime: '2026-11-05', language: 'English', confidence: 0.8, contact: { name: '张三', phone: '+91 98765 43210' }, profile: { origin: '展会', age: 36, occupation: '采购经理' }, evidence: [{ field: 'age', value: 36, text: '我今年36岁' }] }, providerName: 'test', model: 'test-model' }) });
     assert.equal(analysis.status, 200);
+    const analysisBody = await json(analysis);
     const initializeCrm = await request('/api/state', { method: 'POST', headers: { 'x-state-version': '' }, body: JSON.stringify({ schemaVersion: 4, customers: [], savedViews: [], activities: [], tickets: [], deposits: [], followups: [], registrations: [], phoneRegistry: [], batchOperations: [], settings: { operatingTasks: [] }, channelAliases: {}, importIssues: [], qualityDecisions: {} }) });
     assert.equal(initializeCrm.status, 200);
-    const crmSync = await json(await request('/api/ws/crm-sync', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, analysisId: (await json(analysis)).id }) }));
+    const staleCrmSync = await request('/api/ws/crm-sync', { method: 'POST', headers: { 'x-state-version': 'stale-version' }, body: JSON.stringify({ conversationId: conversationBody.id, analysisId: analysisBody.id }) });
+    assert.equal(staleCrmSync.status, 409, 'WS AI 同步必须拒绝过期数据版本');
+    const crmSync = await json(await request('/api/ws/crm-sync', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, analysisId: analysisBody.id }) }));
     assert.equal(crmSync.ok, true);
     assert.equal(crmSync.created, true);
     assert.equal(crmSync.followup.aiGenerated, true);

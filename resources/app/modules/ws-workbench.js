@@ -287,11 +287,16 @@
       if (nextInit.body && typeof nextInit.body === 'string' && /^\s*\{/.test(nextInit.body)) {
         try { nextInit.body = JSON.stringify({ ...JSON.parse(nextInit.body), accountId }); } catch {}
       }
+      const requestHeaders = { 'Content-Type': 'application/json', ...(nextInit.headers || {}) };
+      if (url.pathname === '/api/ws/crm-sync' && !Object.keys(requestHeaders).some(key => key.toLowerCase() === 'x-state-version')) {
+        const version = getHost()?.getStateVersion?.();
+        if (version !== undefined) requestHeaders['X-State-Version'] = String(version || '');
+      }
       const response = await fetch(url.pathname + url.search + url.hash, {
         cache: 'no-store',
         ...nextInit,
         signal: controller.signal,
-        headers: { 'Content-Type': 'application/json', ...(nextInit.headers || {}) },
+        headers: requestHeaders,
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || 'WS 本机数据服务暂不可用。');

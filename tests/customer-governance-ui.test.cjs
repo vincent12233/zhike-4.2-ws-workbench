@@ -15,4 +15,5 @@ assert.match(ui, /data-gov-action="restore"/);
 assert.match(ui, /purge-request/);
 assert.match(ui, /purge-confirm/);
 assert.match(ui, /api\/data-governance\/audit/);
+assert.match(ui, /X-State-Version/);
 console.log('customer governance ui: loaded and exposes audit, soft-delete, restore and purge confirmation controls');

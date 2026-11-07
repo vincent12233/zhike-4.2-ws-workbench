@@ -13,7 +13,10 @@
 
   function shouldAutoSync(analysis) {
     const confidence = Number(analysis?.confidence);
-    return !analysis?.error && Number.isFinite(confidence) && confidence >= 0.6;
+    if (analysis?.error || !Number.isFinite(confidence) || confidence < 0.6) return false;
+    const contact = analysis?.contact && typeof analysis.contact === 'object' ? analysis.contact : {};
+    const profile = analysis?.profile && typeof analysis.profile === 'object' ? analysis.profile : {};
+    return Boolean(text(contact.phone || contact.account || contact.name || analysis.customerName || analysis.phone || profile.origin || profile.age || profile.occupation || profile.job || profile.productInterest || analysis.productInterest || analysis.country || analysis.language || analysis.budget || analysis.intent || analysis.nextStep || analysis.followupTime));
   }
 
   function listValue(value) {
@@ -62,7 +65,7 @@
   }
 
   function matchCustomerForAutoSync(customers, profile = {}) {
-    const rows = (Array.isArray(customers) ? customers : []).filter(item => item && !item.deleted);
+    const rows = (Array.isArray(customers) ? customers : []).filter(item => item && typeof item === 'object');
     const externalId = text(profile.wsExternalId);
     if (externalId) {
       const candidates = rows.filter(item => text(item.wsExternalId) === externalId || (Array.isArray(item.wsExternalIds) && item.wsExternalIds.map(text).includes(externalId)));

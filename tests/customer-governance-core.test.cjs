@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const core = require('../resources/app/modules/customer-governance-core.js');
+const wsCore = require('../resources/app/modules/ws-crm-sync-core.js');
 
 const analysis = {
   confidence: 0.92,
@@ -20,7 +21,9 @@ assert.equal(normalized.origin, '展会名片');
 assert.equal(normalized.age, 36);
 assert.equal(normalized.occupation, '采购经理');
 assert.equal(normalized.source, 'WhatsApp');
-assert.equal(normalized.evidence.length, 4);
+assert.ok(normalized.evidence.length >= 10);
+assert.ok(normalized.evidence.some(item => item.field === 'phone'), '缺少 phone 字段的自动证据');
+assert.ok(normalized.evidence.some(item => item.field === 'productInterest'), '缺少 productInterest 字段的自动证据');
 
 const customer = { id: 'C1', name: '人工姓名', phone: '9876543210', origin: '老客户转介绍', age: '', occupation: '', tags: ['VIP'], deleted: false };
 const merged = core.mergeAiProfileSafely(customer, normalized);
@@ -31,7 +34,8 @@ assert.equal(merged.customer.occupation, '采购经理');
 assert.ok(merged.changedFields.includes('age'));
 assert.ok(merged.changedFields.includes('occupation'));
 assert.ok(merged.conflicts.some(item => item.field === 'origin'));
-assert.equal(merged.evidenceRows.length, 4);
+assert.ok(merged.evidenceRows.length >= 10);
+assert.ok(merged.customer.aiFieldSources?.age, '缺少 AI 字段来源索引');
 
 const duplicateEvidence = core.mergeAiProfileSafely(merged.customer, normalized);
 assert.equal(duplicateEvidence.evidenceRows.length, 0, '同一分析证据不应重复写入');
@@ -39,6 +43,11 @@ assert.equal(duplicateEvidence.evidenceRows.length, 0, '同一分析证据不应
 assert.equal(core.shouldAutoSoftDelete({ confidence: 0.9, deletionSignal: '明确拒绝联系' }), true);
 assert.equal(core.shouldAutoSoftDelete({ confidence: 0.84, deletionSignal: '明确拒绝联系' }), false);
 assert.equal(core.shouldAutoSoftDelete({ confidence: 0.99, deletionSignal: '客户感兴趣' }), false);
+
+const deletedMatch = wsCore.matchCustomerForAutoSync([
+  { id: 'C2', deleted: true, wsExternalId: 'wa-deleted', phone: '9876543212' },
+], { wsExternalId: 'wa-deleted' });
+assert.equal(deletedMatch.customer.id, 'C2', '已移入回收站的 WS 客户不能再次自动建成重复客户');
 
 const audit = core.buildGovernanceAction('C1', 'update', { age: '' }, { age: 36 }, { analysisId: 'a1', reason: 'AI 补全年龄', confidence: 0.92 });
 assert.equal(audit.customerId, 'C1');

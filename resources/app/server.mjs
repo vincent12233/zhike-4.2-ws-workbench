@@ -568,6 +568,13 @@ function governanceState() {
   return state;
 }
 function governanceCustomer(state, id) { return state.customers.find(item => String(item?.id || '') === String(id || '')); }
+function stateVersionFailure(req) {
+  const expected = req.headers['x-state-version'];
+  const current = readStateEnvelope().version;
+  if (expected === undefined) return { status: 428, body: { error: '本次写入必须提供数据版本，请先同步后重试。', version: current } };
+  if (String(expected) !== current) return { status: 409, body: { error: '共享数据已在其他窗口更新，请先同步后重试。', version: current } };
+  return null;
+}
 function governanceActionPayload(row) {
   return { id: row.id, customerId: row.customer_id, action: row.action, reason: row.reason, source: row.source, confidence: Number(row.confidence || 0), analysisId: row.analysis_id, before: wsJson(row.before_json, {}), after: wsJson(row.after_json, {}), createdAt: row.created_at };
 }
@@ -893,6 +900,8 @@ const server = createServer(async (req, res) => {
       return json(res, 405, { error: 'WS 分析只支持 GET/POST/PUT。' });
     }
     if (req.method === 'POST' && url.pathname === '/api/ws/crm-sync') {
+      const versionFailure = stateVersionFailure(req);
+      if (versionFailure) return json(res, versionFailure.status, versionFailure.body);
       const body = JSON.parse((await readBody(req, 512 * 1024)).toString('utf8'));
       const accountId = wsAccountId(body.accountId);
       const conversationId = wsText(body.conversationId, 160);
@@ -922,7 +931,7 @@ const server = createServer(async (req, res) => {
       let customer = match.customer;
       const created = !customer;
       if (!customer) {
-        if (!profile.wsExternalId && !profile.phone) return json(res, 200, { ok: true, skipped: true, reason: '缺少 WS 标识和电话，未自动创建客户。' });
+        if (!profile.wsExternalId && !profile.phone && !profile.conversationId) return json(res, 200, { ok: true, skipped: true, reason: '缺少 WS 标识、电话和会话标识，未自动创建客户。' });
         customer = {
           id: `CWS-${Date.now().toString(36)}-${wsCore.normalizePhone(profile.phone) || wsCrmSync.deriveFollowupPlan(analysis, { id: analysisRow.id }, conversation, accountId).dedupeKey.split(':').at(-1)}`,
           name: profile.name || conversation.title || '未命名客户', rawPhone: profile.phone, phone: wsCore.normalizePhone(profile.phone),
@@ -1240,6 +1249,8 @@ const server = createServer(async (req, res) => {
     }
     const softDeleteMatch = url.pathname.match(/^\/api\/data-governance\/customers\/([^/]+)\/soft-delete$/);
     if (req.method === 'POST' && softDeleteMatch) {
+      const versionFailure = stateVersionFailure(req);
+      if (versionFailure) return json(res, versionFailure.status, versionFailure.body);
       const customerId = decodeURIComponent(softDeleteMatch[1]);
       const body = JSON.parse((await readBody(req, 64 * 1024)).toString('utf8') || '{}');
       const state = governanceState();
@@ -1257,6 +1268,8 @@ const server = createServer(async (req, res) => {
     }
     const restoreMatch = url.pathname.match(/^\/api\/data-governance\/customers\/([^/]+)\/restore$/);
     if (req.method === 'POST' && restoreMatch) {
+      const versionFailure = stateVersionFailure(req);
+      if (versionFailure) return json(res, versionFailure.status, versionFailure.body);
       const customerId = decodeURIComponent(restoreMatch[1]);
       const body = JSON.parse((await readBody(req, 64 * 1024)).toString('utf8') || '{}');
       const state = governanceState();
@@ -1272,6 +1285,8 @@ const server = createServer(async (req, res) => {
       return json(res, 200, { ok: true, changed: true, customer, revision: readStateEnvelope().version });
     }
     if (req.method === 'POST' && url.pathname === '/api/data-governance/customers/batch-soft-delete') {
+      const versionFailure = stateVersionFailure(req);
+      if (versionFailure) return json(res, versionFailure.status, versionFailure.body);
       const body = JSON.parse((await readBody(req, 128 * 1024)).toString('utf8') || '{}');
       const ids = [...new Set((Array.isArray(body.customerIds) ? body.customerIds : []).map(item => wsText(item, 128)).filter(Boolean))];
       if (!ids.length) return json(res, 400, { error: '没有可删除的客户编号。' });
@@ -1288,12 +1303,15 @@ const server = createServer(async (req, res) => {
     }
     const purgeRequestMatch = url.pathname.match(/^\/api\/data-governance\/customers\/([^/]+)\/purge-request$/);
     if (req.method === 'POST' && purgeRequestMatch) {
+      const versionFailure = stateVersionFailure(req);
+      if (versionFailure) return json(res, versionFailure.status, versionFailure.body);
       const customerId = decodeURIComponent(purgeRequestMatch[1]);
       const state = governanceState();
       if (!governanceCustomer(state, customerId)) return json(res, 404, { error: '客户不存在。' });
       const token = randomBytes(24).toString('hex');
       const hash = createHash('sha256').update(token).digest('hex');
       const now = new Date().toISOString();
+      if (readState()) saveSnapshot('数据治理永久删除申请前自动快照');
       db.exec('BEGIN IMMEDIATE');
       try {
         db.prepare("UPDATE customer_delete_requests SET status='cancelled' WHERE customer_id=? AND mode='purge' AND status='pending'").run(customerId);
@@ -1304,26 +1322,35 @@ const server = createServer(async (req, res) => {
     }
     const purgeConfirmMatch = url.pathname.match(/^\/api\/data-governance\/customers\/([^/]+)\/purge-confirm$/);
     if (req.method === 'POST' && purgeConfirmMatch) {
+      const versionFailure = stateVersionFailure(req);
+      if (versionFailure) return json(res, versionFailure.status, versionFailure.body);
       const customerId = decodeURIComponent(purgeConfirmMatch[1]);
       const body = JSON.parse((await readBody(req, 64 * 1024)).toString('utf8') || '{}');
       const token = wsText(body.confirmationToken, 200);
       const hash = createHash('sha256').update(token).digest('hex');
-      const requestRow = db.prepare("SELECT * FROM customer_delete_requests WHERE customer_id=? AND mode='purge' AND confirmation_token_hash=? AND status='pending' ORDER BY created_at DESC LIMIT 1").get(customerId, hash);
-      if (!requestRow) return json(res, 409, { error: '永久删除确认令牌无效、已使用或已取消。' });
-      const state = governanceState(), customer = governanceCustomer(state, customerId);
-      if (!customer) return json(res, 404, { error: '客户不存在。' });
       if (readState()) saveSnapshot('数据治理永久删除前自动快照');
-      const before = JSON.parse(JSON.stringify(customer));
-      state.customers = state.customers.filter(item => String(item.id) !== customerId);
-      for (const key of ['tickets', 'deposits', 'followups', 'registrations']) state[key] = state[key].filter(item => String(item.customerId || '') !== customerId);
-      state.settings.operatingTasks = state.settings.operatingTasks.filter(item => String(item.customerId || '') !== customerId);
       const now = new Date().toISOString();
       db.exec('BEGIN IMMEDIATE');
       try {
+        const requestRow = db.prepare("SELECT * FROM customer_delete_requests WHERE customer_id=? AND mode='purge' AND confirmation_token_hash=? AND status='pending' ORDER BY created_at DESC LIMIT 1").get(customerId, hash);
+        if (!requestRow) { db.exec('ROLLBACK'); return json(res, 409, { error: '永久删除确认令牌无效、已使用或已取消。' }); }
+        const requestedAt = Date.parse(requestRow.requested_at || '');
+        if (!Number.isFinite(requestedAt) || Date.now() - requestedAt > 15 * 60 * 1000) {
+          db.prepare("UPDATE customer_delete_requests SET status='expired' WHERE id=? AND status='pending'").run(requestRow.id);
+          db.exec('COMMIT');
+          return json(res, 409, { error: '永久删除确认令牌已过期，请重新申请。' });
+        }
+        const state = governanceState(), customer = governanceCustomer(state, customerId);
+        if (!customer) { db.exec('ROLLBACK'); return json(res, 404, { error: '客户不存在。' }); }
+        const claimed = db.prepare("UPDATE customer_delete_requests SET status='confirmed',confirmed_at=? WHERE id=? AND status='pending'").run(now, requestRow.id);
+        if (Number(claimed?.changes || 0) !== 1) { db.exec('ROLLBACK'); return json(res, 409, { error: '永久删除确认令牌已被其他操作使用。' }); }
+        const before = JSON.parse(JSON.stringify(customer));
+        state.customers = state.customers.filter(item => String(item.id) !== customerId);
+        for (const key of ['tickets', 'deposits', 'followups', 'registrations']) state[key] = state[key].filter(item => String(item.customerId || '') !== customerId);
+        state.settings.operatingTasks = state.settings.operatingTasks.filter(item => String(item.customerId || '') !== customerId);
         writeState(state, false);
         db.prepare("UPDATE ws_followup_alerts SET status='dismissed',updated_at=? WHERE conversation_id IN (SELECT id FROM ws_conversations WHERE customer_id=? )").run(now, customerId);
         db.prepare('UPDATE ws_conversations SET customer_id=?,updated_at=? WHERE customer_id=?').run('', now, customerId);
-        db.prepare("UPDATE customer_delete_requests SET status='confirmed',confirmed_at=? WHERE id=?").run(now, requestRow.id);
         recordGovernanceAction('purge', customerId, before, {}, { source: '数据治理', reason: wsText(body.reason || '永久删除客户', 500) });
         db.exec('COMMIT');
       } catch (error) { db.exec('ROLLBACK'); throw error; }

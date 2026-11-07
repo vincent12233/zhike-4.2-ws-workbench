@@ -3,6 +3,7 @@
   const root = document.querySelector('#viewContainer');
   if (!root) return;
   let purgeToken = '';
+  const mutationHeaders = () => ({ 'Content-Type': 'application/json', 'X-State-Version': String(window.__zhikeRegistryHost?.getStateVersion?.() ?? '') });
 
   const panelHtml = () => `
     <section id="customerGovernancePanel" class="panel v4-panel">
@@ -56,15 +57,16 @@
       try {
         if (action === 'refresh') { await load(panel); notice('审计记录已刷新。'); return; }
         if (action === 'soft-delete' || action === 'restore') {
-          const response = await fetch(`/api/data-governance/customers/${encodeURIComponent(customerId)}/${action}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason }) });
+          const response = await fetch(`/api/data-governance/customers/${encodeURIComponent(customerId)}/${action}`, { method: 'POST', headers: mutationHeaders(), body: JSON.stringify({ reason }) });
           const result = await response.json();
           if (!response.ok || !result.ok) throw new Error(result.error || '操作失败');
           notice(action === 'soft-delete' ? '客户已移入回收站。' : '客户已恢复。');
+          if (window.__zhikeRegistryHost?.refreshState) await window.__zhikeRegistryHost.refreshState().catch(() => {});
           await load(panel);
           return;
         }
         if (action === 'purge-request') {
-          const response = await fetch(`/api/data-governance/customers/${encodeURIComponent(customerId)}/purge-request`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason }) });
+          const response = await fetch(`/api/data-governance/customers/${encodeURIComponent(customerId)}/purge-request`, { method: 'POST', headers: mutationHeaders(), body: JSON.stringify({ reason }) });
           const result = await response.json();
           if (!response.ok || !result.confirmationToken) throw new Error(result.error || '无法生成确认令牌');
           purgeToken = result.confirmationToken;
@@ -74,12 +76,13 @@
         }
         if (action === 'purge-confirm') {
           if (!purgeToken) throw new Error('请先申请永久删除');
-          const response = await fetch(`/api/data-governance/customers/${encodeURIComponent(customerId)}/purge-confirm`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason, confirmationToken: purgeToken }) });
+          const response = await fetch(`/api/data-governance/customers/${encodeURIComponent(customerId)}/purge-confirm`, { method: 'POST', headers: mutationHeaders(), body: JSON.stringify({ reason, confirmationToken: purgeToken }) });
           const result = await response.json();
           if (!response.ok || !result.ok) throw new Error(result.error || '永久删除失败');
           purgeToken = '';
           button.disabled = true;
           notice('客户及关联跟进、任务已永久删除，审计记录已保留。');
+          if (window.__zhikeRegistryHost?.refreshState) await window.__zhikeRegistryHost.refreshState().catch(() => {});
           await load(panel);
         }
       } catch (error) { notice(error.message || '治理操作失败，请重试。'); }

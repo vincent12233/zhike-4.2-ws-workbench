@@ -1,5 +1,5 @@
 #ifndef AppVersion
-#define AppVersion "4.4.21"
+#define AppVersion "4.4.22"
 #endif
 #ifndef StageDir
 #define StageDir "work\staging\zhike-win-x64"

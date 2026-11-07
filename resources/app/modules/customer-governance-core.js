@@ -57,7 +57,7 @@
       seen.add(key);
       rows.push({ key, field, value, sourceText, confidence: Number(result.confidence) || 0, analysisId, conversationId });
     }
-    for (const field of ['origin', 'age', 'occupation', 'name']) {
+    for (const field of Object.keys(fields)) {
       if (!fields[field]) continue;
       const key = `${analysisId}:${field}`;
       if (seen.has(key)) continue;
@@ -162,6 +162,18 @@
       evidenceKeys.add(row.key); evidenceRows.push(row);
     }
     customer.aiFieldEvidenceKeys = [...evidenceKeys].slice(-500);
+    const fieldSources = customer.aiFieldSources && typeof customer.aiFieldSources === 'object' ? customer.aiFieldSources : {};
+    for (const row of evidenceRows) {
+      fieldSources[row.field] = { value: row.value, sourceText: row.sourceText, confidence: row.confidence, analysisId: row.analysisId, conversationId: row.conversationId, updatedAt: new Date().toISOString() };
+    }
+    customer.aiFieldSources = fieldSources;
+    customer.aiProfile = {
+      ...(customer.aiProfile && typeof customer.aiProfile === 'object' ? customer.aiProfile : {}),
+      ...Object.fromEntries(Object.entries(profile).filter(([key, value]) => ['name', 'phone', 'country', 'language', 'origin', 'age', 'occupation', 'productInterest', 'budget', 'intent', 'intentScore', 'emotion', 'customerStage', 'aiSummary'].includes(key) && value !== '' && value != null)),
+      confidence: Number(profile.confidence) || 0,
+      lastAnalysisId: profile.analysisId || '',
+      updatedAt: new Date().toISOString(),
+    };
     customer.touched = true;
     return { customer, changedFields: [...new Set(changedFields)], conflicts, evidenceRows };
   }

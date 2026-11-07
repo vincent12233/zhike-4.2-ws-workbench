@@ -13,7 +13,14 @@ const headers = { 'content-type': 'application/json', 'x-zhike-api-token': token
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function request(pathname, init = {}) {
   for (let i = 0; i < 120; i++) {
-    try { return await fetch(`http://127.0.0.1:${port}${pathname}`, { ...init, headers: { ...headers, ...(init.headers || {}) } }); }
+    try {
+      const nextHeaders = { ...headers, ...(init.headers || {}) };
+      if (String(init.method || 'GET').toUpperCase() !== 'GET' && pathname !== '/api/state' && !Object.keys(nextHeaders).some(key => key.toLowerCase() === 'x-state-version')) {
+        const version = await fetch(`http://127.0.0.1:${port}/api/state/version`, { headers }).then(response => response.json());
+        nextHeaders['x-state-version'] = String(version.version || '');
+      }
+      return await fetch(`http://127.0.0.1:${port}${pathname}`, { ...init, headers: nextHeaders });
+    }
     catch { await wait(50); }
   }
   throw new Error('isolated server did not become available');
@@ -37,6 +44,14 @@ const json = response => response.json();
     assert.equal(profile.customer.id, 'C1');
     assert.ok(profile.evidence.some(item => item.fieldName === 'age'));
 
+    const malformedConversation = await json(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-malformed', title: '未命名会话' }) }));
+    const malformedAnalysis = await json(await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: malformedConversation.id, result: { confidence: 0.99, summary: '只有摘要，没有可验证客户字段' } }) }));
+    const malformedSync = await json(await request('/api/ws/crm-sync', { method: 'POST', body: JSON.stringify({ conversationId: malformedConversation.id, analysisId: malformedAnalysis.id }) }));
+    assert.equal(malformedSync.skipped, true, '格式不完整的 AI 结果不应自动建档');
+
+    const stale = await request('/api/data-governance/customers/C2/soft-delete', { method: 'POST', headers: { 'x-state-version': 'stale-version' }, body: JSON.stringify({ reason: '冲突测试' }) });
+    assert.equal(stale.status, 409, '治理写入必须拒绝过期版本');
+
     const soft = await json(await request('/api/data-governance/customers/C1/soft-delete', { method: 'POST', body: JSON.stringify({ reason: '测试软删除', source: 'test' }) }));
     assert.equal(soft.ok, true);
     assert.equal(soft.customer.deleted, true);
@@ -57,6 +72,14 @@ const json = response => response.json();
     assert.equal(purged.ok, true);
     const repeated = await request('/api/data-governance/customers/C1/purge-confirm', { method: 'POST', body: JSON.stringify({ confirmationToken: purgeRequest.confirmationToken }) });
     assert.equal(repeated.status, 409);
+
+    const expiredRequest = await json(await request('/api/data-governance/customers/C2/purge-request', { method: 'POST', body: JSON.stringify({ reason: '过期令牌测试' }) }));
+    const { DatabaseSync } = require('node:sqlite');
+    const db = new DatabaseSync(path.join(dataDir, 'workspace.sqlite'));
+    db.prepare("UPDATE customer_delete_requests SET requested_at=? WHERE customer_id='C2' AND status='pending'").run(new Date(Date.now() - 901000).toISOString());
+    db.close();
+    const expired = await request('/api/data-governance/customers/C2/purge-confirm', { method: 'POST', body: JSON.stringify({ confirmationToken: expiredRequest.confirmationToken }) });
+    assert.equal(expired.status, 409, '永久删除令牌必须在 15 分钟后失效');
     const finalState = await json(await request('/api/state'));
     assert.equal(finalState.customers.some(item => item.id === 'C1'), false);
 
