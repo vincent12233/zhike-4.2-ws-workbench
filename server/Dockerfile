@@ -7,6 +7,7 @@ RUN dotnet publish src/Zhike.Worker/Zhike.Worker.csproj -c Release -o /out/worke
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS api
 WORKDIR /app
 COPY --from=build /out/api .
+COPY --from=build /src/migrations ./migrations
 ENTRYPOINT ["dotnet", "Zhike.Api.dll"]
 
 FROM mcr.microsoft.com/dotnet/runtime:10.0 AS worker
