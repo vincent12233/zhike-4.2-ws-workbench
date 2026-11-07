@@ -1,6 +1,8 @@
-# 知客 4.4.22 AI 客户档案治理稳定版
+# 知客 4.4.24 跟票多股票分离与 AI 档案治理版
 
-本版本在现有知客客户库和 WS 工作台基础上增加 AI 客户档案自动建档、字段补全、来源/年龄/职业识别、字段证据、跟进任务联动和数据治理删除接口。AI 只补齐空字段，已有人工内容不覆盖；AI 自动删除只进入回收站，永久删除需要二次确认。
+> 服务器版重整正在同一业务基线上增量实施：用户界面保持 Windows 桌面应用（WinUI 3），不是网页管理端；PostgreSQL/API/AI Worker/可选 WS Connector 仅作为 Docker 后台服务。4.4.24 仍是可回滚业务基线，未完成 WinUI/Docker 实机门禁前不会把新架构标记为正式发布。
+
+本版本在现有知客客户库和 WS 工作台基础上增加 VIP 编号管理、客户分类联动、AI 客户档案自动建档、字段补全、来源/年龄/职业识别、字段证据、跟进任务联动和数据治理删除接口。VIP 编号可从客户中心、快速录入和 CSV/Excel 导入维护，并在群组管理下方独立查看；AI 只补齐空字段，已有人工内容不覆盖；AI 自动删除只进入回收站，永久删除需要二次确认。
 
 这是现有知客 4.1 客户运营桌面项目的增量源码仓库。项目保留原有客户中心、快速录入、跟票、入金、统计、数据中心、设置和 GPT 助手业务逻辑，并增加个人 WS 工作台。
 
@@ -23,8 +25,11 @@
 - `releases/知客-4.4.7-WS工作台智能录入版.exe`：补齐历史客户标题迁移，清除旧版把消息预览粘连到客户名称的问题。
 - `releases/知客-4.4.8-WS工作台智能录入版.exe`：修复升级启动时仅在消息更新后检查标题的条件遗漏，确保已清洗消息的历史标题也会迁移。
 - `releases/知客-4.4.11-WS工作台智能录入版.exe`：修复顶部连接状态与账号卡状态不同步的问题。
-- `outputs/知客-4.4.22-WS工作台智能录入版.exe`：AI 客户档案自动建档、字段补全、治理审计、回收站和安全删除接口。
+- `work/legacy-installer-output/知客-4.4.24-WS工作台智能录入版.exe`：跟票多股票独立记录、旧股票字段兼容、VIP 编号管理、客户分类联动、AI 客户档案自动建档、字段补全、治理审计、回收站和安全删除接口。
 - `zhike-setup.iss`：Windows Inno Setup 安装脚本。
+- `desktop/`：WinUI 3 原生桌面壳；WebView2 仅承载 WS 登录/聊天/账号 Profile。
+- `server/`、`infra/`、`connectors/ws-worker/`：PostgreSQL/API/AI Worker/可选 WS 连接器和版本化迁移。
+- `tools/sqlite-to-postgres/`：旧版 SQLite 只读对账和迁移工具。
 
 ## 安装包
 
@@ -36,7 +41,7 @@
 
 当前 4.4.1 安装包 SHA-256：`E6B00666256BB8B92BB9A1B80570C0F34C35D82C2E2EDFA8DB3AC4BFA43C3B60`，大小 `173,938,768` 字节。
 
-当前 4.4.22 安装包 SHA-256：`F6F4248F59444E48106530AE882883ABAEA70028CB5E4BB7C5C383481CBD45B0`，大小 `173,959,413` 字节。
+当前 4.4.24 兼容安装包 SHA-256：`AC20E654912500675A03596E3AEEBEB438D8860822A04027501754E9C8184ECE`，大小 `173,976,875` 字节（对应 `work/legacy-installer-output`）。
 
 4.4.1 在 4.4.0 基础上补充无需打开会话的列表级 WS 自动采集、预览消息幂等同步、手机与工作台的 12 秒增量轮询、列表预览 AI 分析排队和跟进提醒刷新；原有知客业务数据和统计口径保持不变。
 
@@ -66,7 +71,27 @@ $env:ZHIKE_INSTALLER='C:\path\知客-4.4.1-WS工作台智能录入版.exe'
 $env:ZHIKE_OLD_INSTALLER='C:\path\知客-4.1-全面增强版.exe'
 $env:ZHIKE_EXPECTED_VERSION='4.4.1'
 npm --prefix resources/app run test:installer
+
+# 新架构当前可执行的参考/静态门禁
+node tests/server-v2/run-all.cjs
+node desktop/tests/DesktopSmokeTests.cjs
+node connectors/ws-worker/tests/collector-fixtures.test.cjs
 ```
+
+服务器 bundle（需要 PowerShell 7 或 Windows PowerShell 5+；不包含真实数据和密钥）：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-server-bundle.ps1
+```
+
+WinUI 原生桌面 bundle/安装包：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-bundle.ps1 -Version 5.0.0
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installer.ps1 -AppVersion 5.0.0
+```
+
+本机已完成 WinUI 3 Release 构建及安装/启动/卸载隔离冒烟；MSIX 签名、Docker Compose/PostgreSQL 实机和真实 WS 登录仍需相应环境门禁。
 
 ## 可复现构建
 
@@ -82,6 +107,6 @@ npm --prefix resources/app run build:installer
 
 完整编译需要 Inno Setup 6。可安装到默认位置，或用 `INNO_SETUP_COMPILER` 指向 `ISCC.exe`。`zhike-setup.iss` 只允许从构建脚本生成的 staging 目录打包，不应改回递归仓库根目录。
 
-多账号使用、客户库关联和采集边界见 `docs/ws-workbench-multi-account.md`；完整安装和回归结果见 `docs/ws-workbench-测试报告.md`。
+多账号使用、客户库关联和采集边界见 `docs/ws-workbench-multi-account.md`；本次 4.4.24/v5 交付的安装、回归与未验证门禁见 `docs/release-notes-v5-server-desktop.md` 和 `docs/v5-implementation-report.md`。`docs/ws-workbench-测试报告.md` 是 4.4.1 历史报告，不代表本次版本结果。
 
 

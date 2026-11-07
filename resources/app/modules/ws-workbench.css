@@ -1,4 +1,8 @@
+/* The main application keeps a wide desktop minimum for its data tables, but
+   WS has its own responsive layout and must be able to enter the mobile-panel
+   mode at 820px instead of forcing horizontal overflow. */
 body.ws-mode{min-width:0;height:100vh;overflow:hidden}
+body.ws-mode .app-shell,body.ws-mode .main-area{min-width:0;overflow:hidden}
 body.ws-mode .view-container{max-width:none;padding:10px 18px 12px}
 .ws-workbench-page{min-width:0;height:100%;display:flex;flex-direction:column;gap:6px;overflow:hidden}
 .ws-page-heading{margin-bottom:0;padding:0;gap:6px;min-height:38px;align-items:center}

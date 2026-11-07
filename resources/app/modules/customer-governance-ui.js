@@ -47,6 +47,17 @@
     root.insertAdjacentHTML('beforeend', panelHtml());
     const panel = root.querySelector('#customerGovernancePanel');
     const notice = message => { panel.querySelector('[data-gov-notice]').textContent = message; };
+    const refreshHost = async successMessage => {
+      try {
+        if (window.__zhikeRegistryHost?.refreshState) await window.__zhikeRegistryHost.refreshState();
+        notice(successMessage);
+        return true;
+      } catch (error) {
+        console.warn('[知客] 客户治理已写入，但主界面刷新失败：', error?.message || error);
+        notice(`${successMessage} 主界面刷新失败，请手动刷新页面。`);
+        return false;
+      }
+    };
     panel.addEventListener('click', async event => {
       const button = event.target.closest('[data-gov-action]');
       if (!button) return;
@@ -60,8 +71,7 @@
           const response = await fetch(`/api/data-governance/customers/${encodeURIComponent(customerId)}/${action}`, { method: 'POST', headers: mutationHeaders(), body: JSON.stringify({ reason }) });
           const result = await response.json();
           if (!response.ok || !result.ok) throw new Error(result.error || '操作失败');
-          notice(action === 'soft-delete' ? '客户已移入回收站。' : '客户已恢复。');
-          if (window.__zhikeRegistryHost?.refreshState) await window.__zhikeRegistryHost.refreshState().catch(() => {});
+          await refreshHost(action === 'soft-delete' ? '客户已移入回收站。' : '客户已恢复。');
           await load(panel);
           return;
         }
@@ -81,8 +91,7 @@
           if (!response.ok || !result.ok) throw new Error(result.error || '永久删除失败');
           purgeToken = '';
           button.disabled = true;
-          notice('客户及关联跟进、任务已永久删除，审计记录已保留。');
-          if (window.__zhikeRegistryHost?.refreshState) await window.__zhikeRegistryHost.refreshState().catch(() => {});
+          await refreshHost('客户及关联跟进、任务已永久删除，审计记录已保留。');
           await load(panel);
         }
       } catch (error) { notice(error.message || '治理操作失败，请重试。'); }

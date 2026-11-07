@@ -1,0 +1,34 @@
+'use strict';
+
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+
+const repo = path.resolve(__dirname, '..', '..');
+const build = fs.readFileSync(path.join(repo, 'scripts', 'build-installer.ps1'), 'utf8');
+const iss = fs.readFileSync(path.join(repo, 'zhike-setup.iss'), 'utf8');
+const bundle = fs.readFileSync(path.join(repo, 'scripts', 'build-server-bundle.ps1'), 'utf8');
+const winuiBuild = fs.readFileSync(path.join(repo, 'scripts', 'build-winui-bundle.ps1'), 'utf8');
+const winuiInstaller = fs.readFileSync(path.join(repo, 'scripts', 'build-winui-installer.ps1'), 'utf8');
+const winuiIss = fs.readFileSync(path.join(repo, 'zhike-desktop-setup.iss'), 'utf8');
+assert.match(build, /Copy-AppSource/);
+assert.match(build, /resources[\\/]app[\\/]data/);
+assert.match(build, /Get-FileHash/);
+assert.match(iss, /DefaultDirName=.*localappdata/);
+assert.doesNotMatch(iss, /UninstallDelete/);
+assert.match(bundle, /bundle-manifest\.json/);
+assert.match(bundle, /Compress-Archive/);
+assert.match(bundle, /sha256/);
+assert.match(bundle, /Copy-TreeWithoutGeneratedArtifacts/);
+assert.match(bundle, /excludedDirectoryNames/);
+assert.match(bundle, /'bin', 'obj', 'node_modules'/);
+assert.doesNotMatch(bundle, /resources\\app\\data|\.env(?!\.example)/i);
+assert.match(winuiBuild, /dotnet restore/);
+assert.match(winuiBuild, /dotnet publish/);
+assert.match(winuiBuild, /bundle-manifest\.json/);
+assert.match(winuiBuild, /\[string\]\$Version = '5\.0\.0'/);
+assert.match(winuiInstaller, /ISCC\.exe/);
+assert.match(winuiIss, /Zhike\.Desktop\.exe/);
+assert.doesNotMatch(winuiIss, /UninstallDelete/);
+for (const relative of ['scripts/build-server-bundle.ps1', 'infra/compose.prod.yaml', 'infra/backup/backup.ps1']) assert.equal(fs.existsSync(path.join(repo, relative)), true);
+console.log('installer/bundle contract: legacy and WinUI user-data preservation, staged whitelist, server checksum and rollback-safe packaging pass');

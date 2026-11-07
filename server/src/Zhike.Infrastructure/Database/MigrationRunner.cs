@@ -17,6 +17,30 @@ public sealed class MigrationRunner(PostgresConnectionFactory connections, strin
         await using (var bootstrap = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now(), description TEXT NOT NULL);", connection))
             await bootstrap.ExecuteNonQueryAsync(cancellationToken);
 
+        // Compose normally runs one API instance, but the lock keeps a
+        // rolling deployment or an accidental second instance from applying
+        // the same migration concurrently.
+        await using var migrationLock = new NpgsqlCommand("SELECT pg_advisory_lock(hashtextextended('zhike:migrations', 0))", connection);
+        await migrationLock.ExecuteNonQueryAsync(cancellationToken);
+        try
+        {
+            return await ApplyLockedAsync(connection, applied, skipped, failed, cancellationToken);
+        }
+        finally
+        {
+            await using var unlock = new NpgsqlCommand("SELECT pg_advisory_unlock(hashtextextended('zhike:migrations', 0))", connection);
+            await unlock.ExecuteNonQueryAsync(CancellationToken.None);
+        }
+    }
+
+    private async Task<MigrationReport> ApplyLockedAsync(
+        NpgsqlConnection connection,
+        List<int> applied,
+        List<int> skipped,
+        List<string> failed,
+        CancellationToken cancellationToken)
+    {
+
         foreach (var file in Directory.EnumerateFiles(migrationsDirectory, "*.sql").OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
         {
             var match = VersionPattern.Match(Path.GetFileName(file));

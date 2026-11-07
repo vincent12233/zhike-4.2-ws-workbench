@@ -1,5 +1,6 @@
 (() => {
   const defaults={workspace_name:'本地客户库',workspace_subtitle:'离线数据空间',admin_name:'本地管理员',home_title:'今日工作台',home_subtitle:'本地客户运营概览 · 今天先处理最重要的事'};
+  const notify=(message,icon='x')=>{const host=window.__zhikeRegistryHost;if(host?.toast){host.toast(String(message),icon);return;}console.warn(String(message));};
   let config={},scheduled=false;
   const setText=(selector,value)=>{const node=document.querySelector(selector);if(node&&value&&node.textContent!==value)node.textContent=value;};
   function applyMenu(item,key){const setting=config.menu?.[key];if(!setting)return;const label=item.querySelector('span');if(label&&setting.label)label.textContent=String(setting.label).slice(0,32);item.hidden=setting.visible===false;}
@@ -19,7 +20,7 @@
   }
   async function reset(){
     if(!confirm('恢复工作台默认内容？客户资料和业务数据不会改变，恢复前会创建快照。'))return;
-    try{const response=await fetch('/api/state',{cache:'no-store'});if(!response.ok)throw new Error('读取本机数据失败');const state=await response.json(),version=String(state.version||'');const snapshot=await fetch('/api/snapshot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:'恢复工作台默认内容前自动快照'})});if(!snapshot.ok)throw new Error('快照创建失败');state.settings=state.settings||{};delete state.settings.runtimeCustomization;delete state.version;delete state.initialized;const saved=await fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json','X-State-Version':version},body:JSON.stringify(state)});if(!saved.ok)throw new Error('默认内容保存失败');location.reload();}catch(error){alert(`恢复失败：${error.message}`);}
+    try{const response=await fetch('/api/state',{cache:'no-store'});if(!response.ok)throw new Error('读取本机数据失败');const state=await response.json(),version=String(state.version||'');const snapshot=await fetch('/api/snapshot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:'恢复工作台默认内容前自动快照'})});if(!snapshot.ok)throw new Error('快照创建失败');state.settings=state.settings||{};delete state.settings.runtimeCustomization;delete state.version;delete state.initialized;const saved=await fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json','X-State-Version':version},body:JSON.stringify(state)});if(!saved.ok)throw new Error('默认内容保存失败');location.reload();}catch(error){notify(`恢复失败：${error.message}`);}
   }
   window.addEventListener('zhike-runtime-config-updated',load);new MutationObserver(()=>{schedule();renderSettingsPanel();}).observe(document.body,{childList:true,subtree:true});load();
 })();

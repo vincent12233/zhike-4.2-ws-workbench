@@ -1,4 +1,6 @@
-# 知客 4.4.1 产品级重整版交付说明
+# 知客 4.4.1 产品级重整版交付说明（历史记录）
+
+> 本文是 4.4.1 的历史交付说明。当前桌面 + Docker 服务端方案、产物与门禁请以 `docs/release-notes-v5-server-desktop.md` 和 `docs/v5-implementation-report.md` 为准。
 
 ## 安装包
 

@@ -52,8 +52,14 @@
   }
   function previewBatch(kind) {
     try {
-      const draft = readBatchDraft(kind), state = host().state, list = kind === 'ticket' ? state.tickets : state.deposits, selected = list.filter(record => draft.selected.includes(String(record.id))), after = selected.map(record => kind === 'ticket' ? (window.ZhikeTicketRecords?.normalizeTicketRecord?.({ ...record, ...draft.fields, buyDate: '', sellDate: '' }) || { ...record, ...draft.fields }) : ({ ...record, ...draft.fields }));
-      const selectedIds = new Set(draft.selected), conflicts = after.filter(candidate => list.some(record => !selectedIds.has(String(record.id)) && businessSignature(record, kind) === businessSignature(candidate, kind)));
+      const draft = readBatchDraft(kind), state = host().state, list = kind === 'ticket' ? state.tickets : state.deposits, selected = list.filter(record => draft.selected.includes(String(record.id))), after = selected.map(record => { if (kind !== 'ticket') return { ...record, ...draft.fields }; const next = { ...record, ...draft.fields }; const previousDirection = window.ZhikeTicketRecords?.normalizeDirection?.(record.direction) || record.direction; const direction = window.ZhikeTicketRecords?.normalizeDirection?.(next.direction) || next.direction; if (direction !== previousDirection || direction === '关注') { next.buyDate = ''; next.sellDate = ''; } if (Object.hasOwn(draft.fields, 'date')) { if (direction === '买入') next.buyDate = draft.fields.date; else if (direction === '卖出') next.sellDate = draft.fields.date; } return window.ZhikeTicketRecords?.normalizeTicketRecord?.(next) || next; });
+      const selectedIds = new Set(draft.selected), signatureOwners = new Map(), conflicts = [];
+      for (const candidate of after) {
+        const signature = businessSignature(candidate, kind), owner = signatureOwners.get(signature);
+        if (owner && String(owner.id) !== String(candidate.id)) conflicts.push(candidate);
+        else signatureOwners.set(signature, candidate);
+        if (list.some(record => !selectedIds.has(String(record.id)) && businessSignature(record, kind) === signature)) conflicts.push(candidate);
+      }
       pendingBatch = { ...draft, before: selected.map(clone), after, conflicts: conflicts.map(clone) };
       const label = labelFor(kind), names = after.slice(0, 20).map((record, index) => `<span class="batch-preview-name">${esc(record.customer || record.phone || record.id)} · ${esc(String(selected[index].date || ''))} → ${esc(String(record.date || ''))}</span>`).join('');
       host().openModal(`确认批量编辑${label}`, `将修改 ${after.length} 条记录${conflicts.length ? `，发现 ${conflicts.length} 条会形成完全重复` : ''}`, `<div class="batch-preview-summary"><div><span>已选择</span><strong>${after.length}</strong></div><div><span>完全重复</span><strong>${conflicts.length}</strong></div><div><span>字段</span><strong>${Object.keys(draft.fields).length}</strong></div></div><div class="batch-preview-list">${names}</div>${conflicts.length ? '<div class="notice-line danger-line">存在完全重复记录，本次操作已阻止写入。</div>' : ''}`, `<button class="btn" data-action="close-modal">取消</button><button class="btn primary" data-be-action="batch-apply-business" data-kind="${kind}" ${conflicts.length ? 'disabled' : ''}>确认并执行</button>`);
@@ -63,13 +69,17 @@
     if (!pendingBatch || pendingBatch.kind !== kind || pendingBatch.conflicts.length) return;
     const h = host(), state = h.state, list = kind === 'ticket' ? state.tickets : state.deposits, ids = new Set(pendingBatch.selected);
     if (!await h.snapshotBeforeWrite(`批量编辑${labelFor(kind)}前自动快照`)) return;
-    const before = pendingBatch.before, after = pendingBatch.after.map(clone), settingsBefore = clone(state.settings), now = new Date().toISOString();
+    const before = pendingBatch.before, after = pendingBatch.after.map(clone), settingsBefore = clone(state.settings), activitiesBefore = clone(state.activities || []), now = new Date().toISOString();
     try {
+      for (const beforeRecord of before) {
+        const current = list.find(record => String(record.id) === String(beforeRecord.id));
+        if (!current || JSON.stringify(current) !== JSON.stringify(beforeRecord)) throw new Error('预览后记录已发生变化，请重新打开批量编辑。');
+      }
       for (const record of list) { const index = pendingBatch.selected.indexOf(String(record.id)); if (index >= 0) Object.assign(record, pendingBatch.after[index]); }
       state.settings.businessBatchUndo = { kind, createdAt: now, before, after, ids: [...ids] };
       h.persist(); h.activity(`批量编辑${labelFor(kind)} ${after.length} 条`); await h.flushStateWrites(); pendingBatch = null; h.closeModal(); h.render(); h.toast(`已保存 ${after.length} 条${labelFor(kind)}记录，可撤销本次批量编辑`);
     } catch (error) {
-      list.forEach(record => { const index = before.findIndex(item => String(item.id) === String(record.id)); if (index >= 0) Object.assign(record, before[index]); }); state.settings = settingsBefore;
+      list.forEach(record => { const index = before.findIndex(item => String(item.id) === String(record.id)); if (index >= 0) Object.assign(record, before[index]); }); state.settings = settingsBefore; state.activities = activitiesBefore;
       h.persist(); h.render(); h.toast(`批量编辑失败，已恢复原记录：${error.message || '保存失败'}`, 'x');
     }
   }
@@ -78,8 +88,8 @@
     if (!undo || undo.kind !== kind) { h.toast('没有可撤销的批量编辑'); return; }
     if (!confirm(`撤销上次批量编辑的 ${undo.before.length} 条${labelFor(kind)}记录？`)) return;
     if (!await h.snapshotBeforeWrite(`撤销批量编辑${labelFor(kind)}前自动快照`)) return;
-    const list = kind === 'ticket' ? h.state.tickets : h.state.deposits;
-    try { for (const before of undo.before) { const current = list.find(record => String(record.id) === String(before.id)); if (current) Object.assign(current, before); } h.state.settings.businessBatchUndo = null; h.persist(); h.activity(`撤销批量编辑${labelFor(kind)} ${undo.before.length} 条`); await h.flushStateWrites(); h.render(); h.toast(`已撤销批量编辑，恢复 ${undo.before.length} 条记录`); } catch (error) { h.toast(`撤销失败：${error.message || '保存失败'}`, 'x'); }
+    const list = kind === 'ticket' ? h.state.tickets : h.state.deposits, beforeRecords = clone(list), beforeSettings = clone(h.state.settings), beforeActivities = clone(h.state.activities || []);
+    try { for (const before of undo.before) { const current = list.find(record => String(record.id) === String(before.id)); if (current) Object.assign(current, before); } h.state.settings.businessBatchUndo = null; h.persist(); h.activity(`撤销批量编辑${labelFor(kind)} ${undo.before.length} 条`); await h.flushStateWrites(); h.render(); h.toast(`已撤销批量编辑，恢复 ${undo.before.length} 条记录`); } catch (error) { h.state.tickets = kind === 'ticket' ? beforeRecords : h.state.tickets; h.state.deposits = kind === 'deposit' ? beforeRecords : h.state.deposits; h.state.settings = beforeSettings; h.state.activities = beforeActivities; h.persist(); h.render(); h.toast(`撤销失败：${error.message || '保存失败'}`, 'x'); }
   }
   function duplicateGroups() {
     const state = host()?.state, groups = new Map();
@@ -98,7 +108,7 @@
   async function applyMerge() {
     const groups = duplicateGroups(), index = Number(document.querySelector('#mergeDuplicateGroup')?.value), group = groups[index]?.[1] || [], survivorId = document.querySelector('#mergeSurvivor')?.value, survivor = group.find(row => String(row.id) === String(survivorId)), duplicates = group.filter(row => String(row.id) !== String(survivorId));
     if (!survivor || !duplicates.length) return;
-    const h = host(), state = h.state, affectedIds = new Set([survivor.id, ...duplicates.map(row => row.id)]), backup = { customers: clone(state.customers), tickets: clone(state.tickets), deposits: clone(state.deposits), followups: clone(state.followups), registrations: clone(state.registrations), phoneRegistry: clone(state.phoneRegistry), settings: clone(state.settings) };
+    const h = host(), state = h.state, affectedIds = new Set([survivor.id, ...duplicates.map(row => row.id)]), backup = { customers: clone(state.customers), tickets: clone(state.tickets), deposits: clone(state.deposits), followups: clone(state.followups), registrations: clone(state.registrations), phoneRegistry: clone(state.phoneRegistry), settings: clone(state.settings), activities: clone(state.activities || []), batchOperations: clone(state.batchOperations || []) };
     if (!await h.snapshotBeforeWrite('合并重复客户前自动快照')) return;
     try {
       for (const duplicate of duplicates) {
@@ -118,7 +128,7 @@
     if (!merge?.backup) { h.toast('没有可撤销的客户合并'); return; }
     if (!confirm('撤销上次客户合并？将恢复重复客户和已转移的业务记录。')) return;
     if (!await h.snapshotBeforeWrite('撤销客户合并前自动快照')) return;
-    const settingsBefore = clone(h.state.settings); Object.assign(h.state, clone(merge.backup)); h.state.settings.lastCustomerMerge = null; h.persist(); h.activity('撤销上次客户合并'); try { await h.flushStateWrites(); h.render(); h.toast('已撤销客户合并'); } catch (error) { h.state.settings = settingsBefore; h.persist(); h.render(); h.toast(`撤销失败：${error.message || '保存失败'}`, 'x'); }
+    const beforeUndo = { customers: clone(h.state.customers), tickets: clone(h.state.tickets), deposits: clone(h.state.deposits), followups: clone(h.state.followups), registrations: clone(h.state.registrations), phoneRegistry: clone(h.state.phoneRegistry), settings: clone(h.state.settings), activities: clone(h.state.activities || []), batchOperations: clone(h.state.batchOperations || []) }; Object.assign(h.state, clone(merge.backup)); h.state.settings.lastCustomerMerge = null; h.persist(); h.activity('撤销上次客户合并'); try { await h.flushStateWrites(); h.render(); h.toast('已撤销客户合并'); } catch (error) { Object.assign(h.state, beforeUndo); h.persist(); h.render(); h.toast(`撤销失败：${error.message || '保存失败'}`, 'x'); }
   }
   function mount() {
     const h = host(); if (!h) return;

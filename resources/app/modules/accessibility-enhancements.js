@@ -78,5 +78,14 @@
   document.addEventListener('keydown', keyboardNavigation, true);
   let queued = false;
   const refresh = () => { if (queued) return; queued = true; queueMicrotask(() => { queued = false; labelControls(document.querySelector('#viewContainer') || document); syncNavigation(); syncModal(); }); };
-  new MutationObserver(refresh).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'hidden', 'title', 'disabled'] });
+  // The application re-renders the view frequently. Observing every
+  // attribute mutation on <body> made accessibility repair work compete with
+  // large table renders and could create a feedback loop of needless scans.
+  // Child-list changes cover page renders; the two small targeted observers
+  // cover modal visibility and navigation state changes.
+  new MutationObserver(refresh).observe(document.body, { childList: true, subtree: true });
+  const backdrop = modalBackdrop();
+  if (backdrop) new MutationObserver(refresh).observe(backdrop, { attributes: true, attributeFilter: ['class', 'hidden'] });
+  const nav = document.querySelector('#mainNav');
+  if (nav) new MutationObserver(refresh).observe(nav, { attributes: true, attributeFilter: ['class', 'hidden'] });
 })();

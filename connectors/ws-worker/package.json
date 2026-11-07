@@ -4,6 +4,6 @@
   "version": "5.0.0-dev",
   "type": "module",
   "engines": { "node": ">=24" },
-  "scripts": { "test": "node tests/collector-fixtures.test.cjs && node tests/connector-protocol.test.cjs && node tests/session-state.test.cjs", "start": "node src/runner.mjs" },
+  "scripts": { "test": "node tests/collector-fixtures.test.cjs && node tests/connector-protocol.test.cjs && node tests/session-state.test.cjs && node tests/profile-store.test.cjs && node tests/transport-flush.test.cjs", "start": "node src/runner.mjs" },
   "dependencies": { "playwright": "^1.55.0" }
 }

@@ -30,7 +30,9 @@ assert.match(preload, /ws/);
 assert.match(server, /ws_messages/);
 assert.doesNotMatch(preload, /session\.cookies/);
 assert.doesNotMatch(main, /session\.cookies/);
-assert.doesNotMatch(wsPreload, /session\.cookies|document\.body|innerText|textContent|innerHTML/);
+assert.doesNotMatch(wsPreload, /session\.cookies|document\.body|innerHTML/);
+assert.match(wsPreload, /captureVisibleMessages/);
+assert.match(wsPreload, /innerText|textContent/, 'WS collection reads message text only from selected visible message nodes');
 
 const exposed = {};
 const markers = new Set(['#pane-side']);

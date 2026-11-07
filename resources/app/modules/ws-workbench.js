@@ -68,7 +68,21 @@
   let settingsSaveSequence = 0;
   let collectionRefreshTimer;
   let autoCaptureTimer;
+  let autoCaptureNoticeAt = 0;
   let loadSequence = 0;
+
+  function restartBackgroundPolling() {
+    clearInterval(collectionRefreshTimer);
+    clearInterval(autoCaptureTimer);
+    collectionRefreshTimer = undefined;
+    autoCaptureTimer = undefined;
+    if (!state.active || document.hidden) return;
+    collectionRefreshTimer = setInterval(() => { if (!document.hidden) void refreshCollectionSummary(); }, 12000);
+    autoCaptureTimer = setInterval(() => { if (!document.hidden) void autoCaptureCurrentConversation(); }, 15000);
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (state.active) restartBackgroundPolling();
+  });
 
   function activeAccount() {
     return state.accounts.find(item => String(item.id) === String(state.activeAccountId)) || null;
@@ -101,10 +115,17 @@
         if (!window.zhikeDesktop?.wsAccounts) throw new Error('当前页面没有桌面 WS 账号能力。');
         const response = await window.zhikeDesktop.wsAccounts({ action: 'list' });
         if (!response || !Array.isArray(response.accounts)) throw new Error('WS 账号列表暂未准备好。');
+        // Do not replace a previously loaded list with a transient empty
+        // response. The backend repairs the default row, but this guard also
+        // protects the first render while the service is still opening its
+        // SQLite profile.
+        if (!response.accounts.length) throw new Error('WS 账号列表为空，正在重试。');
         return response;
       }, { attempts: 6, delayMs: attempt => Math.min(1200, 100 * (2 ** attempt)) });
       if (sequence !== state.accountLoadSequence && !state.pendingRestoreAccountId) return;
-      state.accounts = Array.isArray(result?.accounts) ? result.accounts : [];
+      const loadedAccounts = Array.isArray(result?.accounts) ? result.accounts : [];
+      if (!loadedAccounts.length && state.accounts.length) throw new Error('WS 账号列表为空，已保留当前账号。');
+      state.accounts = loadedAccounts;
       const stored = readStoredAccountId();
       const pending = state.pendingRestoreAccountId;
       const preferred = pending || stored;
@@ -120,7 +141,9 @@
         try {
           const status = await window.zhikeDesktop.ws({ action: 'status', accountId: active.id });
           updateAccountStatus(status);
-        } catch {}
+         } catch (error) {
+           if (sequence === state.accountLoadSequence) state.error = `WS 账号状态检测失败：${String(error?.message || '桌面视图暂不可用').slice(0, 200)}`;
+         }
       }
     } catch (error) {
       if (sequence === state.accountLoadSequence) state.error = error.message || 'WS 账号列表加载失败。';
@@ -176,7 +199,12 @@
       state.accountFormOpen = false;
       state.accountFormName = '';
       state.accountFormError = '';
-      await switchAccount(result.account.id);
+      const switched = await switchAccount(result.account.id);
+      if (!switched) {
+        state.accountFormError = '账号已创建，但当前窗口切换失败；请从账号列表重新选择。';
+        toast(state.accountFormError, 'x');
+        return;
+      }
       toast('已添加 WS 账号，请在中栏完成扫码或登录。');
     } catch (error) {
       state.accountFormError = error.message || 'WS 账号创建失败。';
@@ -186,8 +214,8 @@
   }
   async function switchAccount(accountId) {
     const id = text(accountId) || 'default';
-    if (id === String(state.activeAccountId)) return;
-    if (!state.accounts.some(item => String(item.id) === id)) return;
+    if (id === String(state.activeAccountId)) return true;
+    if (!state.accounts.some(item => String(item.id) === id)) return false;
     const previous = state.activeAccountId;
     const sequence = ++state.accountLoadSequence;
     state.accountBusy = true;
@@ -206,15 +234,17 @@
     writeStoredAccountId(id); render();
     try {
       await window.zhikeDesktop.ws({ action: 'open', accountId: id, bounds: boundsForBrowserView() });
-      if (sequence !== state.accountLoadSequence) return;
+      if (sequence !== state.accountLoadSequence) return false;
       await loadConversations();
       state.error = '';
+      return true;
     } catch (error) {
       state.activeAccountId = previous;
       writeStoredAccountId(previous);
       state.error = error.message || 'WS 账号切换失败，已恢复原账号。';
       try { await window.zhikeDesktop.ws({ action: 'open', accountId: previous, bounds: boundsForBrowserView() }); } catch {}
       await loadConversations();
+      return false;
     } finally { state.accountBusy = false; render(); }
   }
 
@@ -363,7 +393,7 @@
     render();
     try {
       const [result, runResult, alertResult] = await Promise.all([
-        api('/api/ws/conversations?limit=200', {}, context),
+        api('/api/ws/conversations?limit=5000', {}, context),
         api('/api/ws/collection-runs', {}, context).catch(() => null),
         api('/api/ws/followup-alerts?limit=8', {}, context).catch(() => null),
       ]);
@@ -388,7 +418,7 @@
     state.collectionRefreshing = true;
     try {
       const [result, run, alerts] = await Promise.all([
-        api('/api/ws/conversations?limit=200', {}, context),
+        api('/api/ws/conversations?limit=5000', {}, context),
         api('/api/ws/collection-runs', {}, context),
         api('/api/ws/followup-alerts?limit=8', {}, context),
       ]);
@@ -398,7 +428,10 @@
       state.followupAlerts = alerts.alerts || [];
       let listSyncResult = { synced: 0, analyzed: 0 };
       if (state.wsStatus === '已连接' && (!state.collectionRun || !['paused', 'stopped', 'completed'].includes(state.collectionRun.status))) {
-        const visible = await wsBridge('discover-conversations', context).catch(() => null);
+         const visible = await wsBridge('discover-conversations', context).catch(error => {
+           if (contextCurrent(context)) state.error = `WS 会话列表读取失败：${String(error?.message || '页面暂不可读').slice(0, 240)}`;
+           return null;
+         });
         assertContext(context);
         if (visible?.supported) {
           const fingerprint = visibleConversationFingerprint(visible.conversations);
@@ -435,7 +468,7 @@
       state.collectionRun = runResult.run;
     }
     let queued = 0;
-    for (const item of items) {
+    const enqueueOne = async item => {
       const normalized = normalizeListItem(item);
       const legacy = state.conversations.find(row => [`list-item-${normalized.index}`, `visible-${normalized.index}`].includes(String(row.externalId || '')));
       const externalId = text(normalized.externalId || legacy?.externalId || `visible-${normalized.index}`); const title = text(normalized.title || externalId);
@@ -451,10 +484,15 @@
       assertContext(context);
       await api('/api/ws/collection-items', { method: 'POST', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: conversation.id, status: 'queued' }) }, context);
       assertContext(context);
-      queued += 1;
+      return 1;
+    };
+    for (let offset = 0; offset < items.length; offset += 8) {
+      const chunk = items.slice(offset, offset + 8);
+      const results = await Promise.all(chunk.map(enqueueOne));
+      queued += results.reduce((sum, value) => sum + value, 0);
     }
     assertContext(context);
-    const refreshed = await api('/api/ws/conversations?limit=200', {}, context);
+    const refreshed = await api('/api/ws/conversations?limit=5000', {}, context);
     assertContext(context);
     state.conversations = refreshed.conversations || state.conversations;
     if (announce) toast(`已发现 ${items.length} 个会话，入队 ${queued} 个`);
@@ -529,7 +567,11 @@
       await host?.flushStateWrites?.();
       const result = await api('/api/ws/crm-sync', { method: 'POST', timeout: 30000, body: JSON.stringify({ conversationId: conversation.id, analysisId: analysisMeta.id }) }, context);
       assertContext(context);
-      if (options.refreshHost !== false) await host?.refreshState?.();
+      let refreshWarning = '';
+      if (options.refreshHost !== false) {
+        try { await host?.refreshState?.(); }
+        catch (refreshError) { refreshWarning = String(refreshError?.message || '界面刷新失败，请手动刷新页面。'); console.warn('[知客] WS 客户同步成功，但界面刷新失败：', refreshWarning); }
+      }
       const alerts = await api('/api/ws/followup-alerts?limit=8', {}, context).catch(() => null);
       if (alerts && contextCurrent(context)) state.followupAlerts = alerts.alerts || state.followupAlerts;
       if (options.notify !== false && contextCurrent(context)) {
@@ -537,7 +579,8 @@
         else toast(result.created ? (result.followup ? 'AI 已新增客户并生成跟进提醒' : 'AI 已新增客户资料') : (result.followup ? 'AI 已更新客户并刷新跟进提醒' : 'AI 已更新客户资料'));
       }
       state.crmSyncStatus = result.skipped ? (result.reason || '未自动写入客户库') : (result.created ? '已自动新增客户并同步跟进' : '已自动更新客户并同步跟进');
-      return result;
+      if (refreshWarning) state.crmSyncStatus += `（${refreshWarning}）`;
+      return refreshWarning ? { ...result, refreshWarning } : result;
     } catch (error) {
       state.crmSyncStatus = `同步失败：${error.message}`;
       if (options.notify !== false && contextCurrent(context)) toast(`AI 结果已保存，但同步知客客户库失败：${error.message}`, 'x');
@@ -567,16 +610,17 @@
       analysis.providerName = result.providerName || '';
       analysis.model = result.model || '';
       analysis.transcriptInfo = transcript;
-      const saved = await api('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, result: analysis, confidence: analysis.confidence, providerName: analysis.providerName, model: analysis.model }) }, context);
-      await syncAnalysisToCrm(conversation, analysis, saved, context, { refreshHost: false, notify: false });
-      if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({
+       const saved = await api('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, result: analysis, confidence: analysis.confidence, providerName: analysis.providerName, model: analysis.model }) }, context);
+       const crmResult = await syncAnalysisToCrm(conversation, analysis, saved, context, { refreshHost: false, notify: false });
+       if (crmResult?.ok === false) throw new Error(crmResult.reason || 'AI 结果同步知客客户库失败。');
+       if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({
         runId: state.collectionRun.id,
         conversationId: conversation.id,
         status: 'completed',
         analysisStatus: 'completed',
         coverageStatus: 'list-preview',
         lastError: '',
-      }) }, context).catch(() => {});
+       }) }, context);
       return { ok: true };
     } catch (error) {
       const message = String(error?.message || 'AI 分析请求失败').replace(/[\r\n\t]+/g, ' ').slice(0, 300);
@@ -604,15 +648,17 @@
     let synced = 0, analyzed = 0;
     try {
       const byExternal = new Map(state.conversations.map(item => [String(item.externalId || ''), item]));
-      for (const rawItem of items.slice(0, 500)) {
+      const legacyByIndex = new Map(state.conversations
+        .filter(row => /^(?:list-item|visible)-\d+$/.test(String(row.externalId || '')))
+        .map(row => [Number(String(row.externalId).split('-').at(-1)), row]));
+      const syncOnePreview = async rawItem => {
         assertContext(context);
         const item = normalizeListItem(rawItem);
-        const legacyByIndex = new Map(state.conversations.filter(row => /^(?:list-item|visible)-\d+$/.test(String(row.externalId || ''))).map(row => [Number(String(row.externalId).split('-').at(-1)), row]));
         const legacy = legacyByIndex.get(Number(item?.index));
         const externalId = text(item?.externalId || legacy?.externalId || `visible-${item?.index}`);
         const conversation = byExternal.get(externalId) || legacy;
         const preview = listPreviewText(item, conversation?.lastMessageText || conversation?.title || '');
-        if (!externalId || !preview || !conversation) continue;
+        if (!externalId || !preview || !conversation) return 0;
         const fingerprint = listPreviewFingerprint(item, preview);
         const messageExternalId = `list-preview-${fingerprint}`;
         const result = await api('/api/ws/messages/batch', { method: 'POST', timeout: 30000, body: JSON.stringify({ conversationId: conversation.id, fingerprint: `list-preview-${fingerprint}`, messages: [{ externalId: messageExternalId, direction: item.previewDirection === 'send' ? 'send' : 'receive', originalText: preview, order: Date.now(), data: { source: 'ws-list-preview', previewOnly: true, listText: text(item.listText).slice(0, 2000), lastMessageAt: text(item.lastMessageAt), fingerprint } }] }) }, context);
@@ -621,10 +667,12 @@
         const updated = Number(result.updated || 0);
         // A repeated fingerprint still means the list preview is valid. Mark
         // the collection item complete even when the message was already stored.
-        if (!inserted && !updated && !Number(result.existed || 0)) continue;
-        synced += Math.max(1, inserted + updated);
+        if (!inserted && !updated && !Number(result.existed || 0)) return 0;
         const refreshedConversation = state.conversations.find(row => String(row.id) === String(conversation.id));
-        if (refreshedConversation) { refreshedConversation.lastMessageText = preview; refreshedConversation.lastMessageAt = nowIso(); refreshedConversation.updatedAt = refreshedConversation.lastMessageAt; }
+        // Keep the server's chronology. The list scan may repeat unchanged
+        // previews every few seconds; stamping them with now would reorder
+        // the whole sidebar and create needless rerenders.
+        if (refreshedConversation && preview !== refreshedConversation.lastMessageText) refreshedConversation.lastMessageText = preview;
         const previewSignatureKey = String(conversation.id);
         const previewChanged = state.previewAnalysisSignatures.get(previewSignatureKey) !== fingerprint;
         // A repeated list refresh must not downgrade an already analyzed item
@@ -632,31 +680,39 @@
         if (state.collectionRun?.id) {
           const itemPatch = { runId: state.collectionRun.id, conversationId: conversation.id, status: 'completed', coverageStatus: 'list-preview', checkpoint: fingerprint };
           if (previewChanged) itemPatch.analysisStatus = 'pending';
-          await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify(itemPatch) }, context).catch(() => {});
+          await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify(itemPatch) }, context);
         }
-        if (previewChanged) {
-          state.previewAnalysisSignatures.set(previewSignatureKey, fingerprint);
-          if (state.aiEnabled && window.zhikeAI?.request) state.previewAnalysisQueue.push({ conversation, fingerprint });
-        }
+         // Keep a new preview unsigned while AI is disabled. That leaves the
+         // item pending so enabling AI later can analyze the already collected
+         // conversation without waiting for another WhatsApp message.
+         if (previewChanged && state.aiEnabled && window.zhikeAI?.request) state.previewAnalysisQueue.push({ conversation, fingerprint });
+        return Math.max(1, inserted + updated);
+      };
+      // Keep the list scan responsive while avoiding a thousand serial
+      // network round trips when a WhatsApp account has a large chat list.
+      const previewItems = items.slice(0, 5000);
+      for (let offset = 0; offset < previewItems.length; offset += 8) {
+        const results = await Promise.all(previewItems.slice(offset, offset + 8).map(syncOnePreview));
+        synced += results.reduce((sum, value) => sum + value, 0);
       }
       for (let budget = 0; budget < 5 && state.previewAnalysisQueue.length; budget += 1) {
         const task = state.previewAnalysisQueue.shift();
-        const analysis = await analyzeStoredConversation(task.conversation, context);
-        if (analysis.ok) analyzed += 1;
-        else if (!analysis.disabled) await markAnalysisRetryable(task.conversation, context, analysis.reason);
+         const analysis = await analyzeStoredConversation(task.conversation, context);
+         if (analysis.ok) { analyzed += 1; state.previewAnalysisSignatures.set(String(task.conversation.id), task.fingerprint); }
+         else if (!analysis.disabled) await markAnalysisRetryable(task.conversation, context, analysis.reason);
       }
       if (synced) {
         if (state.collectionRun?.id) {
-          const itemsResult = await api(`/api/ws/collection-items?runId=${encodeURIComponent(state.collectionRun.id)}`, {}, context).catch(() => ({ items: [] }));
+          const itemsResult = await api(`/api/ws/collection-items?runId=${encodeURIComponent(state.collectionRun.id)}`, {}, context);
           const items = Array.isArray(itemsResult.items) ? itemsResult.items : [];
           const completed = items.filter(item => item.status === 'completed').length;
           const analyzedItems = items.filter(item => item.analysisStatus === 'completed').length;
           const failed = items.filter(item => item.status === 'failed').length;
           const retryable = items.filter(item => ['failed', 'retryable'].includes(item.status) || ['retryable', 'failed'].includes(item.analysisStatus)).length;
-          const runResult = await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', total: items.length, discovered: items.length, completed, analyzed: Math.max(analyzedItems, analyzed), failed, retryable, cursor: JSON.stringify({ mode: 'list-preview', synced, analyzed, syncedAt: nowIso() }), lastSuccessAt: nowIso() }) }, context).catch(() => null);
+          const runResult = await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', total: items.length, discovered: items.length, completed, analyzed: Math.max(analyzedItems, analyzed), failed, retryable, cursor: JSON.stringify({ mode: 'list-preview', synced, analyzed, syncedAt: nowIso() }), lastSuccessAt: nowIso() }) }, context);
           if (runResult?.run) state.collectionRun = runResult.run;
         }
-        const refreshed = await api('/api/ws/conversations?limit=200', {}, context);
+        const refreshed = await api('/api/ws/conversations?limit=5000', {}, context);
         assertContext(context);
         state.conversations = refreshed.conversations || state.conversations;
       }
@@ -726,8 +782,9 @@
       const draft = currentDraft(); draft.captureText = result.messages.map(item => item.text).join('\n'); state.captureDirection = 'receive'; render();
       await importVisible(context);
       assertContext(context);
-      if (state.aiEnabled && state.messages.length) await analyzeConversation(context);
-      if (state.collectionRun?.id) { await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: 'pending', coverageStatus: 'visible', checkpoint: String(result.messages.length) }) }, context); await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, cursor: JSON.stringify({ conversationId: current.id, messageCount: result.messages.length, capturedAt: nowIso() }), lastSuccessAt: nowIso() }) }, context); }
+      const analysisResult = state.aiEnabled && state.messages.length ? await analyzeConversation(context) : { ok: false, disabled: !state.aiEnabled };
+      if (!contextCurrent(context)) return;
+      if (state.collectionRun?.id) { await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: analysisResult.ok ? 'completed' : analysisResult.disabled ? 'pending' : 'retryable', coverageStatus: 'visible', checkpoint: String(result.messages.length), lastError: analysisResult.ok || analysisResult.disabled ? '' : String(analysisResult.reason || '').slice(0, 500) }) }, context); await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, cursor: JSON.stringify({ conversationId: current.id, messageCount: result.messages.length, capturedAt: nowIso() }), lastSuccessAt: nowIso() }) }, context); }
       toast(`已采集当前会话 ${result.messages.length} 条可见消息`);
     } catch (error) {
       if (contextCurrent(context) && state.collectionRun?.id) { try { await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'failed', attempts: 1, lastError: error.message }) }, context); } catch {} }
@@ -739,19 +796,34 @@
     const current = activeConversation();
     if (!current || ['paused', 'stopped', 'completed'].includes(state.collectionRun?.status)) return;
     const context = captureContext(current.id);
-    const result = await wsBridge('capture-visible-messages').catch(() => null);
-    if (!contextCurrent(context)) return;
-    if (!result?.supported || !result.messages?.length) return;
-    const text = result.messages.map(item => item.text).join('\n').trim();
-    if (!text || text === state.autoCaptureSignature) return;
-    state.autoCaptureSignature = text;
-    const draft = currentDraft();
-    draft.captureText = text;
-    state.captureDirection = 'receive';
-    await importVisible(context);
-    if (!contextCurrent(context)) return;
-    if (state.aiEnabled && state.messages.length) await analyzeConversation(context);
-    if (state.collectionRun?.id) { await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: state.aiEnabled ? 'completed' : 'pending', coverageStatus: 'visible', checkpoint: String(result.messages.length) }) }, context).catch(() => {}); await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, cursor: JSON.stringify({ conversationId: current.id, messageCount: result.messages.length, capturedAt: nowIso() }), lastSuccessAt: nowIso() }) }, context).catch(() => {}); }
+    try {
+      const result = await wsBridge('capture-visible-messages');
+      if (!contextCurrent(context)) return;
+      if (!result?.supported || !result.messages?.length) return;
+      const capturedText = result.messages.map(item => item.text).join('\n').trim();
+      if (!capturedText || capturedText === state.autoCaptureSignature) return;
+      const draft = currentDraft();
+      draft.captureText = capturedText;
+      state.captureDirection = 'receive';
+      await importVisible(context);
+      if (!contextCurrent(context)) return;
+       const analysisResult = state.aiEnabled && state.messages.length ? await analyzeConversation(context) : { ok: false, disabled: !state.aiEnabled };
+       if (!contextCurrent(context)) return;
+       if (analysisResult.ok || analysisResult.disabled) state.autoCaptureSignature = capturedText;
+       else state.autoCaptureSignature = '';
+      if (state.collectionRun?.id) {
+        await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: analysisResult.ok ? 'completed' : analysisResult.disabled ? 'pending' : 'retryable', coverageStatus: 'visible', checkpoint: String(result.messages.length), lastError: analysisResult.ok || analysisResult.disabled ? '' : String(analysisResult.reason || '').slice(0, 500) }) }, context);
+        await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, cursor: JSON.stringify({ conversationId: current.id, messageCount: result.messages.length, capturedAt: nowIso() }), lastSuccessAt: nowIso() }) }, context);
+      }
+    } catch (error) {
+      if (!contextCurrent(context)) return;
+      state.error = `后台采集暂时失败：${String(error?.message || 'WS 页面暂不可读').slice(0, 240)}`;
+      if (Date.now() - autoCaptureNoticeAt > 60000) {
+        autoCaptureNoticeAt = Date.now();
+        toast(state.error, 'x');
+        render();
+      }
+    }
   }
   function renderFollowupAlerts() {
     const alerts = state.followupAlerts || [];
@@ -1334,12 +1406,12 @@
 
   async function analyzeConversation(context = captureContext()) {
     const current = activeConversation();
-    if (context.conversationId && context.conversationId !== String(current?.id || '')) return;
+    if (context.conversationId && context.conversationId !== String(current?.id || '')) return { ok: false, reason: 'WS 会话已切换。' };
     assertContext(context);
-    if (state.aiBusy) return;
-    if (!current || !state.messages.length) { toast('请先建立会话并导入可见聊天。', 'x'); return; }
-    if (!state.aiEnabled) { toast('当前会话的 AI 分析已关闭。', 'x'); return; }
-    if (!window.zhikeAI?.request || !window.zhikeAI?.status) { toast('当前没有可用的 AI 服务，请先配置 GPT 运营助手。', 'x'); return; }
+    if (state.aiBusy) return { ok: false, reason: 'AI 分析正在进行。' };
+    if (!current || !state.messages.length) { toast('请先建立会话并导入可见聊天。', 'x'); return { ok: false, reason: '当前会话暂无可分析消息。' }; }
+    if (!state.aiEnabled) { toast('当前会话的 AI 分析已关闭。', 'x'); return { ok: false, reason: 'AI 分析已关闭。', disabled: true }; }
+    if (!window.zhikeAI?.request || !window.zhikeAI?.status) { toast('当前没有可用的 AI 服务，请先配置 GPT 运营助手。', 'x'); return { ok: false, reason: '当前没有可用的 AI 服务。' }; }
     state.aiBusy = true;
     state.error = '';
     render();
@@ -1364,9 +1436,13 @@
       }, context);
       assertContext(context);
       state.analysisMeta = saved;
-      await syncAnalysisToCrm(current, state.analysis, saved, context);
+      const crmResult = await syncAnalysisToCrm(current, state.analysis, saved, context);
+      if (crmResult?.ok === false) throw new Error(crmResult.reason || 'AI 结果同步知客客户库失败。');
       assertContext(context);
-      if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: 'completed', coverageStatus: 'visible' }) }, context).catch(() => {});
+       if (state.collectionRun?.id) {
+         try { await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: 'completed', coverageStatus: 'visible' }) }, context); }
+         catch (error) { state.error = `采集进度保存失败：${String(error?.message || '本机接口异常').slice(0, 240)}`; }
+       }
       seedDraftFromAnalysis();
       const conversation = state.conversations.find(item => String(item.id) === String(current.id));
       if (conversation) {
@@ -1375,12 +1451,14 @@
         conversation.updatedAt = nowIso();
       }
       toast(state.analysis.lowConfidence ? '分析完成，但需要人工确认' : `分析完成：已使用最近 ${transcript.included} 条消息`, state.analysis.lowConfidence ? 'x' : 'check');
+      return { ok: true, analysis: state.analysis, crm: crmResult };
     } catch (error) {
       if (contextCurrent(context)) {
         state.analysis = { summary: '', lowConfidence: true, confidence: 0, error: error.message, warning: 'AI 判断置信度较低，请人工确认。' };
         try { state.analysisMeta = await api('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: current.id, result: state.analysis, confidence: 0, errorMessage: error.message }) }, context); } catch {}
         toast(error.message, 'x');
       }
+      return { ok: false, reason: String(error?.message || 'AI 分析失败') };
     } finally {
       if (contextCurrent(context)) { state.aiBusy = false; render(); }
     }
@@ -1551,7 +1629,10 @@
       assertContext(context);
       host.activity('WS 工作台登记跟进：' + customer.name);
       await host.flushStateWrites();
-      if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, followupStatus: 'confirmed', nextFollowupAt: record.nextDate || '' }) }, context).catch(() => {});
+       if (state.collectionRun?.id) {
+         try { await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, followupStatus: 'confirmed', nextFollowupAt: record.nextDate || '' }) }, context); }
+         catch (error) { state.error = `跟进同步失败：${String(error?.message || '本机接口异常').slice(0, 240)}`; }
+       }
       draft.followupNote = '';
       draft.nextFollow = '';
       if (contextCurrent(context)) toast(record.nextDate ? '跟进记录与下一次任务已同步保存' : '跟进记录已保存');
@@ -1770,10 +1851,8 @@
     const host = getHost();
     if (!host) return;
     state.active = true;
-    clearInterval(collectionRefreshTimer);
-    clearInterval(autoCaptureTimer);
-    collectionRefreshTimer = setInterval(() => { void refreshCollectionSummary(); }, 12000);
-    autoCaptureTimer = setInterval(() => { void autoCaptureCurrentConversation().catch(() => {}); }, 15000);
+    // Polling is paused while the desktop window is hidden and restarted on return.
+    restartBackgroundPolling();
     host.state.view = 'ws-workbench';
     state.error = '';
     $('#crumbCurrent').textContent = 'WS 工作台';
@@ -1869,7 +1948,10 @@
         state.currentConversationId = '';
         state.conversations = [];
         updateAccountStatus({ ...payload, accountId: state.activeAccountId, status: payload.status || '连接失败' });
-        if (state.accounts.some(item => String(item.id) === state.activeAccountId)) void loadConversations();
+        // The restore event can arrive before the first account-list response.
+        // Always reload the list so the pending account is resolved instead of
+        // leaving the sidebar empty until a manual refresh.
+        void loadAccounts();
         render();
         return;
       }

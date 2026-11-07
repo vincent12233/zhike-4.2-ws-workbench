@@ -39,6 +39,9 @@ assert.equal(plan.nextDate, '2026-11-08');
 assert.equal(plan.priority, 'high');
 assert.match(plan.note, /今天发送报价/);
 assert.equal(plan.dedupeKey, 'account-a:conv-1:wsa-1');
+assert.equal(core.normalizeDate('2026年11月8日'), '2026-11-08');
+assert.equal(core.normalizeDate('08/11/2026'), '2026-11-08');
+assert.equal(core.normalizeDate('20261108'), '2026-11-08');
 
 const lowConfidence = core.deriveCustomerProfile({ summary: '不确定', confidence: 0.2, contact: { phone: '+91 11111 11111' } }, { id: 'conv-2', externalId: 'wa-2' }, 'account-a');
 assert.equal(lowConfidence.phone, '', '低置信度不能自动写入联系方式');

@@ -116,18 +116,27 @@
     return digits;
   }
   function extractPhone(text) {
-    const matches = String(text || '').match(/(?:\+?\d[\d\s().-]{7,}\d)/g) || [];
+    const source = String(text || '').replace(/(?:\d{4}[年.\/-]\d{1,2}[月.\/-]\d{1,2}日?|\d{1,2}[.\/-]\d{1,2}[.\/-]\d{4}|\b\d{8}\b)/g, ' ');
+    const matches = [...source.matchAll(/(?:\+?\d[\d\s().-]{7,}\d)/g)].map(match => match[0]);
     return matches.map(normalizePhone).find(value => value.length >= 8 && value.length <= 15) || '';
   }
 
   function matchCustomer(customers, profile = {}) {
     const rows = (Array.isArray(customers) ? customers : []).filter(item => item && !item.deleted);
     const wsExternalId = text(profile.wsExternalId);
+    const accountId = text(profile.wsAccountId);
+    const belongsToAccount = item => {
+      if (!accountId) return true;
+      const accountIds = Array.isArray(item.wsAccountIds) ? item.wsAccountIds.map(text).filter(Boolean) : [];
+      const legacyAccount = text(item.wsAccountId || item.account);
+      if (!accountIds.length && !legacyAccount) return true;
+      return accountIds.includes(accountId) || legacyAccount === accountId;
+    };
     if (wsExternalId) {
-      const candidates = rows.filter(item => {
+      const candidates = rows.filter(item => belongsToAccount(item) && (() => {
         const ids = Array.isArray(item.wsExternalIds) ? item.wsExternalIds.map(text) : [];
         return text(item.wsExternalId) === wsExternalId || ids.includes(wsExternalId);
-      });
+      })());
       if (candidates.length === 1) return { kind: 'ws-id', customer: candidates[0], candidates };
       if (candidates.length > 1) return { kind: 'ambiguous', customer: null, candidates };
     }
@@ -139,19 +148,19 @@
     }
     const account = text(profile.wsAccountId || profile.account);
     if (account) {
-      const candidates = rows.filter(item => {
+      const candidates = rows.filter(item => belongsToAccount(item) && (() => {
         const ids = Array.isArray(item.wsAccountIds) ? item.wsAccountIds.map(text) : [];
         return text(item.wsAccountId || item.account) === account || ids.includes(account);
-      });
+      })());
       if (candidates.length === 1) return { kind: 'account', customer: candidates[0], candidates };
       if (candidates.length > 1) return { kind: 'ambiguous', customer: null, candidates };
     }
     const conversationId = text(profile.conversationId);
     if (conversationId) {
-      const candidates = rows.filter(item => {
+      const candidates = rows.filter(item => belongsToAccount(item) && (() => {
         const ids = Array.isArray(item.wsConversationIds) ? item.wsConversationIds.map(text) : [];
         return text(item.wsConversationId) === conversationId || ids.includes(conversationId);
-      });
+      })());
       if (candidates.length === 1) return { kind: 'conversation', customer: candidates[0], candidates };
       if (candidates.length > 1) return { kind: 'ambiguous', customer: null, candidates };
     }
@@ -293,14 +302,28 @@
   }
 
   function suggestedDate(value) {
-    const source = text(value);
-    const direct = source.match(/\b(20\d{2})[-\/.](\d{1,2})[-\/.](\d{1,2})\b/);
-    if (direct) return `${direct[1]}-${direct[2].padStart(2, '0')}-${direct[3].padStart(2, '0')}`;
-    const date = new Date();
-    if (/明天|tomorrow/i.test(source)) date.setDate(date.getDate() + 1);
-    else if (/后天|day after tomorrow/i.test(source)) date.setDate(date.getDate() + 2);
-    else return '';
-    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    const source = text(value).normalize('NFKC').replace(/[，。]/g, '').trim();
+    if (!source) return '';
+    const dateKey = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const calendarKey = (year, month, day) => {
+      const y = Number(year), m = Number(month), d = Number(day);
+      if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d) || y < 2000 || y > 2200 || m < 1 || m > 12 || d < 1 || d > 31) return '';
+      const date = new Date(y, m - 1, d);
+      return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d ? dateKey(date) : '';
+    };
+    const lowered = source.toLocaleLowerCase();
+    if (/^(今天|today)$/.test(lowered) || /今天/.test(lowered)) return dateKey(new Date());
+    if (/^(明天|tomorrow)$/.test(lowered) || /明天/.test(lowered) || /\btomorrow\b/.test(lowered)) { const date = new Date(); date.setDate(date.getDate() + 1); return dateKey(date); }
+    if (/^(后天|day after tomorrow)$/.test(lowered) || /后天/.test(lowered) || /\bday after tomorrow\b/.test(lowered)) { const date = new Date(); date.setDate(date.getDate() + 2); return dateKey(date); }
+    let match = source.match(/\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b/) || source.match(/\b(20\d{2})年(\d{1,2})月(\d{1,2})日?\b/);
+    if (match) return calendarKey(match[1], match[2], match[3]);
+    match = source.match(/\b(\d{1,2})[-/.](\d{1,2})[-/.](20\d{2})\b/);
+    if (match) { const first = Number(match[1]), second = Number(match[2]); return first > 12 ? calendarKey(match[3], second, first) : second > 12 ? calendarKey(match[3], first, second) : calendarKey(match[3], second, first); }
+    match = source.match(/\b(\d{1,2})月(\d{1,2})日?\b/);
+    if (match) return calendarKey(new Date().getFullYear(), match[1], match[2]);
+    if (/^\d{8}$/.test(source)) return calendarKey(source.slice(0, 4), source.slice(4, 6), source.slice(6, 8));
+    const parsed = Date.parse(source);
+    return Number.isFinite(parsed) ? dateKey(new Date(parsed)) : '';
   }
 
   return {

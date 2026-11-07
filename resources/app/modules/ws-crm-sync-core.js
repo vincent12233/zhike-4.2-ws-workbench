@@ -59,16 +59,50 @@
     };
   }
 
+  function dateKey(date) {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
+  function calendarKey(year, month, day) {
+    const y = Number(year), m = Number(month), d = Number(day);
+    if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d) || y < 2000 || y > 2200 || m < 1 || m > 12 || d < 1 || d > 31) return '';
+    const date = new Date(y, m - 1, d);
+    return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d ? dateKey(date) : '';
+  }
   function normalizeDate(value) {
-    const match = text(value).match(/\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b/);
-    return match ? `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}` : '';
+    const source = text(value).normalize('NFKC').replace(/[，。]/g, '').trim();
+    if (!source) return '';
+    const relative = source.toLocaleLowerCase();
+    if (/^(今天|today)$/.test(relative)) return dateKey(new Date());
+    if (/^(明天|tomorrow)$/.test(relative)) { const date = new Date(); date.setDate(date.getDate() + 1); return dateKey(date); }
+    if (/^(后天|day after tomorrow)$/.test(relative)) { const date = new Date(); date.setDate(date.getDate() + 2); return dateKey(date); }
+    let match = source.match(/\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b/) || source.match(/\b(20\d{2})年(\d{1,2})月(\d{1,2})日?\b/);
+    if (match) return calendarKey(match[1], match[2], match[3]);
+    match = source.match(/\b(\d{1,2})[-/.](\d{1,2})[-/.](20\d{2})\b/);
+    if (match) {
+      const first = Number(match[1]), second = Number(match[2]);
+      return first > 12 ? calendarKey(match[3], second, first) : second > 12 ? calendarKey(match[3], first, second) : calendarKey(match[3], second, first);
+    }
+    match = source.match(/\b(\d{1,2})月(\d{1,2})日?\b/);
+    if (match) return calendarKey(new Date().getFullYear(), match[1], match[2]);
+    if (/^\d{8}$/.test(source)) return calendarKey(source.slice(0, 4), source.slice(4, 6), source.slice(6, 8));
+    const parsed = Date.parse(source);
+    return Number.isFinite(parsed) ? dateKey(new Date(parsed)) : '';
   }
 
   function matchCustomerForAutoSync(customers, profile = {}) {
     const rows = (Array.isArray(customers) ? customers : []).filter(item => item && typeof item === 'object');
     const externalId = text(profile.wsExternalId);
+    const accountId = text(profile.wsAccountId);
+    const belongsToAccount = item => {
+      if (!accountId) return true;
+      const accounts = Array.isArray(item.wsAccountIds) ? item.wsAccountIds.map(text).filter(Boolean) : [];
+      const legacy = text(item.wsAccountId);
+      if (!accounts.length && !legacy) return true;
+      return accounts.includes(accountId) || legacy === accountId;
+    };
     if (externalId) {
-      const candidates = rows.filter(item => text(item.wsExternalId) === externalId || (Array.isArray(item.wsExternalIds) && item.wsExternalIds.map(text).includes(externalId)));
+      const candidates = rows.filter(item => belongsToAccount(item) && (text(item.wsExternalId) === externalId || (Array.isArray(item.wsExternalIds) && item.wsExternalIds.map(text).includes(externalId))));
       if (candidates.length === 1) return { kind: 'ws-id', customer: candidates[0], candidates };
       if (candidates.length > 1) return { kind: 'ambiguous', customer: null, candidates };
     }
@@ -119,14 +153,18 @@
   function mergeCustomerProfileSafely(customer, profile = {}) {
     if (!customer || typeof customer !== 'object') return { customer, changedFields: [] };
     const changedFields = [];
+    const missing = (field, value) => {
+      const current = text(value);
+      return !current || (field === 'name' && /^(未命名客户|未命名|未知客户|未知|—|-)$/.test(current));
+    };
     const fill = (key, value) => {
-      if (key === 'age' && value !== '' && value != null && !customer[key]) {
+      if (key === 'age' && value !== '' && value != null && missing(key, customer[key])) {
         const age = Number(value);
         if (Number.isFinite(age) && age >= 0 && age <= 120) { customer[key] = age; changedFields.push(key); }
         return;
       }
       const next = text(value);
-      if (!next || text(customer[key])) return;
+      if (!next || !missing(key, customer[key])) return;
       customer[key] = next;
       changedFields.push(key);
     };

@@ -11,9 +11,9 @@
   async function modify(id,label,apply){
     const h=host(),c=customer(id);if(!c)return;
     if(!await h.snapshotBeforeWrite(label))return;
-    const before=JSON.parse(JSON.stringify(c));
+    const before=JSON.parse(JSON.stringify(c)),activitiesBefore=JSON.parse(JSON.stringify(h.state.activities||[]));
     try{apply(c);c.touched=true;h.persist();h.activity(label+'：'+c.name);await h.flushStateWrites();h.render();h.toast('已保存');}
-    catch(error){for(const key of Object.keys(c))if(!Object.hasOwn(before,key))delete c[key];Object.assign(c,before);h.persist();h.render();h.toast('保存失败，已恢复客户资料','x');}
+    catch(error){for(const key of Object.keys(c))if(!Object.hasOwn(before,key))delete c[key];Object.assign(c,before);h.state.activities=activitiesBefore;h.persist();h.render();h.toast('保存失败，已恢复客户资料','x');}
   }
   function open(id){const c=customer(id);if(c){host().closeModal();host().showCustomer(c);}}
   document.addEventListener('click',e=>{const b=e.target.closest('[data-product-customer]');if(b)open(b.dataset.productCustomer);});
@@ -67,8 +67,8 @@
       if(action==='open')open(id);
       if(action==='copy'){try{await desktop.tools({action:'copy',text:c.rawPhone||c.phone});host().toast('号码已复制');}catch{host().toast('复制失败','x');}}
       if(action==='follow'){const b=document.createElement('button');b.dataset.action='follow';b.dataset.id=id;b.hidden=true;document.body.append(b);b.click();b.remove();}
-      if(action==='owner'){const owner=prompt('分配跟进助理',c.assistant||'未分配');if(owner?.trim())await modify(id,'分配助理',c=>c.assistant=owner.trim().slice(0,80));}
-      if(action==='date'){const due=prompt('安排日期（YYYY-MM-DD）',c.due&&c.due!=='—'?c.due:day());if(due===null)return;if(!window.ZhikeOperationsCore.validDate(due)){host().toast('日期无效','x');return;}await modify(id,'安排跟进日期',c=>c.due=due);}
+      if(action==='owner'){const owner=await host().requestText('分配跟进助理','请输入助理名称。',c.assistant||'未分配',{label:'助理名称',maxLength:80});if(owner?.trim())await modify(id,'分配助理',c=>c.assistant=owner.trim().slice(0,80));}
+      if(action==='date'){const due=await host().requestText('安排跟进日期','格式为 YYYY-MM-DD。',c.due&&c.due!=='—'?c.due:day(),{label:'跟进日期',type:'date'});if(due===null)return;if(!window.ZhikeOperationsCore.validDate(due)){host().toast('日期无效','x');return;}await modify(id,'安排跟进日期',c=>c.due=due);}
     };
   });
   document.addEventListener('click',e=>{if(menu&&!menu.contains(e.target))closeMenu();});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();});window.addEventListener('blur',closeMenu);
@@ -85,8 +85,9 @@
     const panel=document.createElement('section');panel.id='desktopToolsSettings';panel.className='panel productivity-panel';
     panel.innerHTML='<div class="panel-heading"><h2 class="panel-title">跟进提醒与自动备份</h2></div><div class="productivity-body"><label class="home-module-choice"><input type="checkbox" id="desktopReminder">启用到期桌面提醒</label><button class="btn" id="snoozeReminder">全部稍后提醒 15 分钟</button><hr><p>自动备份仅在应用运行期间执行，备份包含业务与设置，不含 API Key。</p><div class="productivity-settings"><button class="btn" id="backupDirectory">选择备份目录</button><label>间隔（分钟）<input id="backupMinutes" type="number" min="15" max="1440" value="60"></label><label>保留份数<input id="backupKeep" type="number" min="3" max="100" value="10"></label><label><input id="backupEnabled" type="checkbox">启用定时备份</label><button class="btn primary" id="saveDesktopTools">保存</button><button class="btn" id="backupNow">立即备份</button></div><p id="desktopBackupStatus" role="status">正在读取备份设置…</p></div>';
     view.append(panel);panel.querySelector('#desktopReminder').checked=Boolean(h.state.settings.desktopReminders);
-    panel.querySelector('#desktopReminder').onchange=()=>{h.state.settings.desktopReminders=panel.querySelector('#desktopReminder').checked;h.persist();};
-    panel.querySelector('#snoozeReminder').onclick=()=>{h.state.settings.reminderSnoozeUntil=Date.now()+15*60000;h.persist();h.toast('15 分钟后继续提醒');};
+    const saveSetting=async(key,value,label)=>{const previous=h.state.settings[key];h.state.settings[key]=value;h.persist();try{await h.flushStateWrites();h.toast(label);}catch(error){if(previous===undefined)delete h.state.settings[key];else h.state.settings[key]=previous;h.persist();h.toast(error.message||'设置保存失败，已恢复原值','x');}};
+    panel.querySelector('#desktopReminder').onchange=()=>{void saveSetting('desktopReminders',panel.querySelector('#desktopReminder').checked,panel.querySelector('#desktopReminder').checked?'桌面提醒已开启':'桌面提醒已关闭');};
+    panel.querySelector('#snoozeReminder').onclick=()=>{void saveSetting('reminderSnoozeUntil',Date.now()+15*60000,'15 分钟后继续提醒');};
     const status=panel.querySelector('#desktopBackupStatus');
     const load=async()=>{try{const c=await desktop.tools({action:'status'});if(!panel.isConnected)return;panel.querySelector('#backupMinutes').value=c.minutes||60;panel.querySelector('#backupKeep').value=c.keep||10;panel.querySelector('#backupEnabled').checked=Boolean(c.enabled);status.textContent=(c.directory||'尚未选择目录')+' · 最近备份：'+(c.lastAt?new Date(c.lastAt).toLocaleString():'无')+(c.lastError?' · '+c.lastError:'');}catch(e){status.textContent=e.message;}};
     panel.querySelector('#backupDirectory').onclick=async()=>{await desktop.tools({action:'directory'});load();};
@@ -97,9 +98,9 @@
   async function reminders(){
     const h=host();if(!h||!desktop||!h.state.settings.desktopReminders||Date.now()<(h.state.settings.reminderSnoozeUntil||0))return;
     const due=h.state.customers.filter(c=>!c.deleted&&/^\d{4}-\d{2}-\d{2}$/.test(c.due||'')&&c.due<=day());
-    let count=0;for(const c of due){const key=c.id+':'+c.due;if(Date.now()-(notified.get(key)||0)<60*60000)continue;notified.set(key,Date.now());try{const result=await desktop.tools({action:'notify',id:c.id,body:c.name+' · '+(c.due<day()?'已逾期':'今日到期')+' · 点击查看客户'});if(!result.supported)h.toast('当前系统不支持桌面通知，可在首页查看待跟进');}catch{}if(++count>=3)break;}
+    let count=0;for(const c of due){const key=c.id+':'+c.due;if(Date.now()-(notified.get(key)||0)<60*60000)continue;try{const result=await desktop.tools({action:'notify',id:c.id,body:c.name+' · '+(c.due<day()?'已逾期':'今日到期')+' · 点击查看客户'});notified.set(key,Date.now());if(!result.supported)h.toast('当前系统不支持桌面通知，可在首页查看待跟进');}catch{}if(++count>=3)break;}
   }
   desktop?.onCustomer(open);desktop?.onError(message=>host()?.toast(message,'x'));
   let queued=false;function refresh(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;if(!host())return;batches();duplicates();homeLayout();stageDrag();columnSizes();settings();businessEditButtons();intakeGuard();});}
-  new MutationObserver(refresh).observe(view,{childList:true,subtree:true});setInterval(reminders,30000);refresh();
+  new MutationObserver(refresh).observe(view,{childList:true,subtree:true});let reminderTimer;const startReminderTimer=()=>{clearInterval(reminderTimer);reminderTimer=setInterval(()=>{if(document.hidden)return;reminders().catch(()=>{});},30000);};startReminderTimer();document.addEventListener('visibilitychange',startReminderTimer);refresh();
 })();

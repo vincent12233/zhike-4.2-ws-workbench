@@ -1,5 +1,4 @@
 import { createServer } from 'node:http';
-import { execFile } from 'node:child_process';
 import { closeSync, createReadStream, existsSync, mkdirSync, mkdtempSync, openSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
@@ -21,6 +20,8 @@ const lockPath = join(dataDir, '.workbench.lock');
 const lockToken = randomUUID();
 const runtimeHost = hostname();
 const bootTime = Math.floor(Date.now() / 1000 - uptime());
+const parentProcessId = Number(process.env.ZHIKE_PARENT_PID || 0);
+let parentMonitor = null;
 let ownsWorkspaceLock = false;
 let port = Number(process.env.ZHIKE_PORT || 4173);
 const apiToken = String(process.env.ZHIKE_API_TOKEN || randomBytes(32).toString('hex'));
@@ -171,6 +172,9 @@ if (Number(db.prepare('PRAGMA user_version').get().user_version || 0) < 10) {
 // state from the previous process is therefore stale until the new view is
 // opened and probed by the Electron main process.
 db.prepare("UPDATE ws_accounts SET status='未连接', updated_at=? WHERE status <> '未连接'").run(new Date().toISOString());
+// Create the default account before the first renderer request so the initial
+// account list cannot be empty while the service is still warming up.
+ensureDefaultWsAccount();
 
 function databaseDiagnostics() {
   const integrity = db.prepare('PRAGMA integrity_check').all().map(row => Object.values(row)[0]);
@@ -240,6 +244,14 @@ function validateState(value) {
   }
   for (const key of ['tickets', 'deposits', 'followups', 'registrations', 'phoneRegistry', 'batchOperations', 'activities', 'importIssues']) {
     if (Object.hasOwn(value, key) && (!Array.isArray(value[key]) || value[key].some(record => !record || typeof record !== 'object' || Array.isArray(record)))) throw new Error(`${key} 清单格式异常，未保存本次数据。`);
+    if (Array.isArray(value[key])) {
+      const recordIds = new Set();
+      for (const record of value[key]) {
+        const id = String(record?.id ?? '').trim();
+        if (id && recordIds.has(id)) throw new Error(`${key} 中存在重复记录编号，未保存本次数据。`);
+        if (id) recordIds.add(id);
+      }
+    }
   }
   if (value.phoneRegistry?.length > 100000) throw new Error('手机号登记超过 100,000 条上限，未保存本次数据。');
   if (value.phoneRegistry) {
@@ -425,6 +437,12 @@ function wsIso(value) { const date = value ? new Date(value) : new Date(); retur
 function wsAccountId(value) { return wsText(value, 120) || 'default'; }
 function wsAccountRow(id) { return db.prepare('SELECT * FROM ws_accounts WHERE id=?').get(wsAccountId(id)); }
 function wsRequireAccount(id) { const row = wsAccountRow(id); if (!row) throw new Error('WS 账号不存在或已被删除。'); return row; }
+function ensureDefaultWsAccount() {
+  const now = new Date().toISOString();
+  db.prepare(`INSERT OR IGNORE INTO ws_accounts(id,display_name,provider,origin,partition_key,status,enabled,created_at,updated_at)
+    VALUES('default','默认账号','WhatsApp Web','https://web.whatsapp.com','persist:default','未连接',1,?,?)`).run(now, now);
+  db.prepare(`INSERT OR IGNORE INTO ws_account_settings(account_id,created_at,updated_at) VALUES('default',?,?)`).run(now, now);
+}
 function wsAccountPayload(row) {
   if (!row) return null;
   const settings = db.prepare('SELECT * FROM ws_account_settings WHERE account_id=?').get(row.id);
@@ -434,7 +452,7 @@ function wsAccountPayload(row) {
     provider: row.provider,
     origin: row.origin,
     partitionKey: row.partition_key,
-    status: row.status,
+    status: WS_STATUSES.has(String(row.status || '')) ? row.status : '未连接',
     enabled: Boolean(row.enabled),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -500,7 +518,7 @@ function wsListPreviewOriginal(item, data) {
   return cleanedOriginal || original;
 }
 function normalizeStoredWsListPreviews() {
-  const rows = db.prepare("SELECT id,conversation_id,original_text,data_json FROM ws_messages WHERE json_extract(data_json,'$.source')='ws-list-preview'").all();
+  const rows = db.prepare("SELECT id,account_id,conversation_id,original_text,data_json,created_at,updated_at FROM ws_messages WHERE json_extract(data_json,'$.source')='ws-list-preview'").all();
   if (!rows.length) return 0;
   let updated = 0;
   db.exec('BEGIN IMMEDIATE');
@@ -508,21 +526,29 @@ function normalizeStoredWsListPreviews() {
     for (const row of rows) {
       const canonical = wsListPreviewOriginal({ originalText: row.original_text }, wsJson(row.data_json, {}));
       if (canonical && canonical !== row.original_text) {
-        db.prepare('UPDATE ws_messages SET original_text=?,updated_at=? WHERE id=?').run(canonical, new Date().toISOString(), row.id);
+        const updatedAt = new Date().toISOString();
+        db.prepare('UPDATE ws_messages SET original_text=?,updated_at=? WHERE id=? AND account_id=?').run(canonical, updatedAt, row.id, row.account_id);
+        row.original_text = canonical;
+        row.updated_at = updatedAt;
         updated += 1;
       }
     }
-    const conversations = db.prepare("SELECT DISTINCT conversation_id FROM ws_messages WHERE json_extract(data_json,'$.source')='ws-list-preview'").all();
-    for (const conversation of conversations) {
-      const latest = db.prepare("SELECT original_text FROM ws_messages WHERE conversation_id=? AND json_extract(data_json,'$.source')='ws-list-preview' ORDER BY updated_at DESC,created_at DESC LIMIT 1").get(conversation.conversation_id);
-      const current = db.prepare('SELECT title,last_message_text FROM ws_conversations WHERE id=?').get(conversation.conversation_id);
+    const latestByConversation = new Map();
+    for (const row of rows) {
+      const key = `${row.account_id}\u0000${row.conversation_id}`;
+      const prior = latestByConversation.get(key);
+      if (!prior || `${row.updated_at || ''}|${row.created_at || ''}` > `${prior.updated_at || ''}|${prior.created_at || ''}`) latestByConversation.set(key, row);
+    }
+    const currentByConversation = new Map(db.prepare('SELECT id,account_id,title,last_message_text FROM ws_conversations').all().map(row => [`${row.account_id}\u0000${row.id}`, row]));
+    for (const [key, latest] of latestByConversation) {
+      const current = currentByConversation.get(key);
       if (latest && current) {
         const cleanedTitle = wsCleanListPreviewText(current.title);
         const title = cleanedTitle && latest.original_text && cleanedTitle.toLocaleLowerCase().endsWith(latest.original_text.toLocaleLowerCase())
           ? cleanedTitle.slice(0, -latest.original_text.length).trim()
           : cleanedTitle;
-        if (title !== current.title || latest.original_text !== current.last_message_text || updated) {
-          db.prepare('UPDATE ws_conversations SET title=?,last_message_text=?,updated_at=? WHERE id=?').run(title, latest.original_text.slice(0, 4000), new Date().toISOString(), conversation.conversation_id);
+        if (title !== current.title || latest.original_text !== current.last_message_text) {
+          db.prepare('UPDATE ws_conversations SET title=?,last_message_text=?,updated_at=? WHERE id=? AND account_id=?').run(title, latest.original_text.slice(0, 4000), new Date().toISOString(), current.id, current.account_id);
         }
       }
     }
@@ -622,6 +648,11 @@ const server = createServer(async (req, res) => {
     }
     if (url.pathname === '/api/ws/accounts') {
       if (req.method === 'GET') {
+        // A damaged or manually migrated profile can miss the seed row even
+        // though the rest of the WS schema is present. Repair that invariant
+        // before the first account-list response so the renderer never boots
+        // into an empty account picker.
+        ensureDefaultWsAccount();
         return json(res, 200, { accounts: db.prepare('SELECT * FROM ws_accounts ORDER BY CASE WHEN id=\'default\' THEN 0 ELSE 1 END, created_at ASC').all().map(wsAccountPayload) });
       }
       if (req.method === 'POST') {
@@ -632,8 +663,9 @@ const server = createServer(async (req, res) => {
         const now = new Date().toISOString();
         db.exec('BEGIN IMMEDIATE');
         try {
+          const status = WS_STATUSES.has(wsText(body.status, 32)) ? wsText(body.status, 32) : '未连接';
           db.prepare('INSERT INTO ws_accounts(id,display_name,provider,origin,partition_key,status,enabled,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)')
-            .run(id, wsText(body.displayName, 200) || id, wsText(body.provider, 120), wsText(body.origin, 500), wsText(body.partitionKey, 200) || `persist:${id}`, wsText(body.status, 32) || '未连接', body.enabled === false ? 0 : 1, now, now);
+            .run(id, wsText(body.displayName, 200) || id, wsText(body.provider, 120), wsText(body.origin, 500), wsText(body.partitionKey, 200) || `persist:${id}`, status, body.enabled === false ? 0 : 1, now, now);
           wsSaveAccountSettings(id, body.settings || body, now);
           db.exec('COMMIT');
         } catch (error) { db.exec('ROLLBACK'); throw error; }
@@ -651,8 +683,9 @@ const server = createServer(async (req, res) => {
         const now = new Date().toISOString();
         db.exec('BEGIN IMMEDIATE');
         try {
+          const status = Object.hasOwn(body, 'status') && WS_STATUSES.has(wsText(body.status, 32)) ? wsText(body.status, 32) : (WS_STATUSES.has(String(account.status || '')) ? account.status : '未连接');
           db.prepare('UPDATE ws_accounts SET display_name=?,provider=?,origin=?,partition_key=?,status=?,enabled=?,updated_at=? WHERE id=?')
-            .run(Object.hasOwn(body, 'displayName') ? wsText(body.displayName, 200) : account.display_name, Object.hasOwn(body, 'provider') ? wsText(body.provider, 120) : account.provider, Object.hasOwn(body, 'origin') ? wsText(body.origin, 500) : account.origin, Object.hasOwn(body, 'partitionKey') ? wsText(body.partitionKey, 200) : account.partition_key, Object.hasOwn(body, 'status') ? wsText(body.status, 32) : account.status, body.enabled === false ? 0 : (body.enabled === true ? 1 : account.enabled), now, accountId);
+            .run(Object.hasOwn(body, 'displayName') ? wsText(body.displayName, 200) : account.display_name, Object.hasOwn(body, 'provider') ? wsText(body.provider, 120) : account.provider, Object.hasOwn(body, 'origin') ? wsText(body.origin, 500) : account.origin, Object.hasOwn(body, 'partitionKey') ? wsText(body.partitionKey, 200) : account.partition_key, status, body.enabled === false ? 0 : (body.enabled === true ? 1 : account.enabled), now, accountId);
           if (body.settings || Object.hasOwn(body, 'translationEnabled') || Object.hasOwn(body, 'aiEnabled') || Object.hasOwn(body, 'autoCollectionEnabled')) wsSaveAccountSettings(accountId, body.settings || body, now);
           db.exec('COMMIT');
         } catch (error) { db.exec('ROLLBACK'); throw error; }
@@ -680,6 +713,8 @@ const server = createServer(async (req, res) => {
         const body = JSON.parse((await readBody(req, 256 * 1024)).toString('utf8'));
         const scopedAccountId = wsAccountId(body.accountId || accountId);
         wsRequireConversation(conversationId, scopedAccountId);
+        const existingSettings = db.prepare('SELECT account_id FROM ws_settings WHERE conversation_id=?').get(conversationId);
+        if (existingSettings && String(existingSettings.account_id || 'default') !== scopedAccountId) return json(res, 409, { error: '该 WS 会话设置已属于另一个账号，请先切换到对应账号。' });
         const now = new Date().toISOString();
         const status = WS_STATUSES.has(wsText(body.status, 32)) ? wsText(body.status, 32) : '未连接';
         db.prepare(`INSERT INTO ws_settings(conversation_id,account_id,enabled,receive_enabled,send_enabled,target_language,send_language,show_original,ai_enabled,status,created_at,updated_at)
@@ -693,7 +728,7 @@ const server = createServer(async (req, res) => {
       if (req.method === 'GET') {
         const accountId = wsAccountId(url.searchParams.get('accountId'));
         wsRequireAccount(accountId);
-        const limit = Math.min(200, Math.max(1, Number(url.searchParams.get('limit')) || 50));
+        const limit = Math.min(5000, Math.max(1, Number(url.searchParams.get('limit')) || 50));
         const rows = db.prepare(`SELECT * FROM ws_conversations WHERE account_id=? ORDER BY updated_at DESC LIMIT ${limit}`).all(accountId);
         return json(res, 200, { conversations: rows.map(wsConversationPayload) });
       }
@@ -747,12 +782,12 @@ const server = createServer(async (req, res) => {
         const ids = wsJson(previous.message_ids_json, []);
         let updated = 0;
         const rows = ids.map((id, index) => {
-          let row = db.prepare('SELECT * FROM ws_messages WHERE id=?').get(String(id));
+          let row = db.prepare('SELECT * FROM ws_messages WHERE id=? AND account_id=?').get(String(id), accountId);
           const item = messages[index], data = wsObject(item?.data, 32 * 1024);
           const canonical = wsListPreviewOriginal(item, data);
           if (row && canonical && canonical !== row.original_text) {
-            db.prepare('UPDATE ws_messages SET original_text=?,updated_at=? WHERE id=?').run(canonical, new Date().toISOString(), row.id);
-            row = db.prepare('SELECT * FROM ws_messages WHERE id=?').get(row.id);
+            db.prepare('UPDATE ws_messages SET original_text=?,updated_at=? WHERE id=? AND account_id=?').run(canonical, new Date().toISOString(), row.id, accountId);
+            row = db.prepare('SELECT * FROM ws_messages WHERE id=? AND account_id=?').get(row.id, accountId);
             updated += 1;
           }
           return row;
@@ -761,7 +796,14 @@ const server = createServer(async (req, res) => {
         // The message row is intentionally not duplicated, but older builds could
         // leave last_message_text at the contact name after the first discovery.
         // Keep this update side-effect free for unread counts and timestamps.
-        if (rows.length) db.prepare('UPDATE ws_conversations SET last_message_text=?,updated_at=? WHERE id=? AND account_id=?').run(rows.at(-1).originalText.slice(0, 4000), new Date().toISOString(), conversationId, accountId);
+        if (rows.length) {
+          const latestText = rows.at(-1).originalText.slice(0, 4000);
+          const currentConversation = db.prepare('SELECT last_message_text FROM ws_conversations WHERE id=? AND account_id=?').get(conversationId, accountId);
+          // Repeated list scans are expected. Avoid rewriting the conversation
+          // row when the preview did not change, otherwise every poll changes
+          // updated_at and makes large accounts look perpetually dirty.
+          if (String(currentConversation?.last_message_text || '') !== latestText) db.prepare('UPDATE ws_conversations SET last_message_text=?,updated_at=? WHERE id=? AND account_id=?').run(latestText, new Date().toISOString(), conversationId, accountId);
+        }
         return json(res, 200, { batch: wsBatchPayload(previous), inserted: 0, updated, existed: rows.length, messages: rows, repeated: true });
       }
       const now = new Date().toISOString(), batchId = wsCreateId('wsb'), messageIds = [], resultRows = [];
@@ -774,16 +816,16 @@ const server = createServer(async (req, res) => {
           const item = messages[index], externalId = wsText(item.externalId, 200);
           const rawData = wsObject(item.data, 32 * 1024);
           const previewOnly = rawData?.source === 'ws-list-preview' && rawData?.previewOnly === true;
-          let row = externalId ? db.prepare('SELECT * FROM ws_messages WHERE conversation_id=? AND external_id=?').get(conversationId, externalId) : null;
+          let row = externalId ? db.prepare('SELECT * FROM ws_messages WHERE account_id=? AND conversation_id=? AND external_id=?').get(accountId, conversationId, externalId) : null;
           let wasUpdated = false;
           if (!row && previewOnly) {
-            row = db.prepare("SELECT * FROM ws_messages WHERE conversation_id=? AND json_extract(data_json,'$.source')='ws-list-preview' ORDER BY updated_at DESC,created_at DESC LIMIT 1").get(conversationId);
+            row = db.prepare("SELECT * FROM ws_messages WHERE account_id=? AND conversation_id=? AND json_extract(data_json,'$.source')='ws-list-preview' ORDER BY updated_at DESC,created_at DESC LIMIT 1").get(accountId, conversationId);
             if (row) {
               const originalText = wsListPreviewOriginal(item, rawData), direction = wsText(item.direction, 16), translation = wsTranslationFields(item), nowUpdated = new Date().toISOString();
               const data = { ...rawData, ingestBatchId: batchId };
-              db.prepare('UPDATE ws_messages SET external_id=?,direction=?,original_text=?,translated_text=?,source_language=?,target_language=?,order_no=?,data_json=?,updated_at=?,translation_status=?,translation_error=?,translation_attempts=?,last_attempt_at=? WHERE id=?')
-                .run(externalId, direction, originalText, translation.translatedText, wsText(item.sourceLanguage, 40), wsText(item.targetLanguage, 40), Number.isFinite(Number(item.order)) ? Number(item.order) : index + 1, JSON.stringify(data), nowUpdated, translation.translationStatus, translation.translationError, translation.translationAttempts, translation.lastAttemptAt, row.id);
-              row = db.prepare('SELECT * FROM ws_messages WHERE id=?').get(row.id);
+              db.prepare('UPDATE ws_messages SET external_id=?,direction=?,original_text=?,translated_text=?,source_language=?,target_language=?,order_no=?,data_json=?,updated_at=?,translation_status=?,translation_error=?,translation_attempts=?,last_attempt_at=? WHERE id=? AND account_id=?')
+                .run(externalId, direction, originalText, translation.translatedText, wsText(item.sourceLanguage, 40), wsText(item.targetLanguage, 40), Number.isFinite(Number(item.order)) ? Number(item.order) : index + 1, JSON.stringify(data), nowUpdated, translation.translationStatus, translation.translationError, translation.translationAttempts, translation.lastAttemptAt, row.id, accountId);
+              row = db.prepare('SELECT * FROM ws_messages WHERE id=? AND account_id=?').get(row.id, accountId);
               updated += 1;
               wasUpdated = true;
             }
@@ -798,7 +840,7 @@ const server = createServer(async (req, res) => {
             const data = { ...rawData, ingestBatchId: batchId };
             db.prepare(`INSERT INTO ws_messages(id,account_id,conversation_id,external_id,direction,original_text,translated_text,source_language,target_language,order_no,data_json,created_at,updated_at,translation_status,translation_error,translation_attempts,last_attempt_at)
               VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(id, accountId, conversationId, externalId, direction, originalText, translation.translatedText, wsText(item.sourceLanguage, 40), wsText(item.targetLanguage, 40), Number.isFinite(Number(item.order)) ? Number(item.order) : index + 1, JSON.stringify(data), createdAt, now, translation.translationStatus, translation.translationError, translation.translationAttempts, translation.lastAttemptAt);
-            row = db.prepare('SELECT * FROM ws_messages WHERE id=?').get(id);
+            row = db.prepare('SELECT * FROM ws_messages WHERE id=? AND account_id=?').get(id, accountId);
             inserted += 1;
             if (direction === 'receive') unreadAdded += 1;
           }
@@ -813,10 +855,10 @@ const server = createServer(async (req, res) => {
           db.prepare('UPDATE ws_conversations SET title=?,last_message_text=?,last_message_at=?,unread_count=unread_count+?,updated_at=? WHERE id=? AND account_id=?')
             .run(title, last.originalText.slice(0, 4000), last.createdAt || now, unreadAdded, now, conversationId, accountId);
         }
-        db.prepare('UPDATE ws_ingest_batches SET inserted_count=?,message_ids_json=?,updated_at=? WHERE id=?').run(inserted, JSON.stringify(messageIds), now, batchId);
+        db.prepare('UPDATE ws_ingest_batches SET inserted_count=?,message_ids_json=?,updated_at=? WHERE id=? AND account_id=?').run(inserted, JSON.stringify(messageIds), now, batchId, accountId);
         db.exec('COMMIT');
       } catch (error) { db.exec('ROLLBACK'); throw error; }
-      const batch = db.prepare('SELECT * FROM ws_ingest_batches WHERE id=?').get(batchId);
+      const batch = db.prepare('SELECT * FROM ws_ingest_batches WHERE id=? AND account_id=?').get(batchId, accountId);
       return json(res, 200, { batch: wsBatchPayload(batch), inserted, updated, existed, messages: resultRows, repeated: false });
     }
     if (url.pathname === '/api/ws/messages') {
@@ -841,14 +883,14 @@ const server = createServer(async (req, res) => {
         const originalText = wsText(body.originalText, 12000);
         if (!originalText) return json(res, 400, { error: 'WS 原文不能为空。' });
         if (externalId) {
-          const existing = db.prepare('SELECT * FROM ws_messages WHERE conversation_id=? AND external_id=?').get(conversationId, externalId);
+          const existing = db.prepare('SELECT * FROM ws_messages WHERE account_id=? AND conversation_id=? AND external_id=?').get(accountId, conversationId, externalId);
           if (existing) {
             const hasTranslationUpdate = ['translatedText','targetLanguage','sourceLanguage','translationStatus','translationError','translationAttempts','lastAttemptAt'].some(key => Object.hasOwn(body, key));
             if (hasTranslationUpdate) {
               const translation = wsTranslationFields(body, existing), updatedAt = new Date().toISOString();
-              db.prepare('UPDATE ws_messages SET translated_text=?,source_language=?,target_language=?,translation_status=?,translation_error=?,translation_attempts=?,last_attempt_at=?,updated_at=? WHERE id=?')
-                .run(translation.translatedText, Object.hasOwn(body, 'sourceLanguage') ? wsText(body.sourceLanguage, 40) : existing.source_language, Object.hasOwn(body, 'targetLanguage') ? wsText(body.targetLanguage, 40) : existing.target_language, translation.translationStatus, translation.translationError, translation.translationAttempts, translation.lastAttemptAt, updatedAt, existing.id);
-              return json(res, 200, { ...wsMessagePayload(db.prepare('SELECT * FROM ws_messages WHERE id=?').get(existing.id)), existed: true, updated: true });
+              db.prepare('UPDATE ws_messages SET translated_text=?,source_language=?,target_language=?,translation_status=?,translation_error=?,translation_attempts=?,last_attempt_at=?,updated_at=? WHERE id=? AND account_id=?')
+                .run(translation.translatedText, Object.hasOwn(body, 'sourceLanguage') ? wsText(body.sourceLanguage, 40) : existing.source_language, Object.hasOwn(body, 'targetLanguage') ? wsText(body.targetLanguage, 40) : existing.target_language, translation.translationStatus, translation.translationError, translation.translationAttempts, translation.lastAttemptAt, updatedAt, existing.id, accountId);
+              return json(res, 200, { ...wsMessagePayload(db.prepare('SELECT * FROM ws_messages WHERE id=? AND account_id=?').get(existing.id, accountId)), existed: true, updated: true });
             }
             return json(res, 200, { ...wsMessagePayload(existing), existed: true });
           }
@@ -860,10 +902,10 @@ const server = createServer(async (req, res) => {
         try {
           db.prepare(`INSERT INTO ws_messages(id,account_id,conversation_id,external_id,direction,original_text,translated_text,source_language,target_language,order_no,data_json,created_at,updated_at,translation_status,translation_error,translation_attempts,last_attempt_at)
             VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(id, accountId, conversationId, externalId, direction, originalText, translation.translatedText, wsText(body.sourceLanguage, 40), wsText(body.targetLanguage, 40), Number.isFinite(Number(body.order)) ? Number(body.order) : 0, JSON.stringify(data), now, now, translation.translationStatus, translation.translationError, translation.translationAttempts, translation.lastAttemptAt);
-          db.prepare('UPDATE ws_conversations SET last_message_text=?,last_message_at=?,unread_count=unread_count+?,updated_at=? WHERE id=?').run(originalText.slice(0, 4000), now, direction === 'receive' ? 1 : 0, now, conversationId);
+          db.prepare('UPDATE ws_conversations SET last_message_text=?,last_message_at=?,unread_count=unread_count+?,updated_at=? WHERE id=? AND account_id=?').run(originalText.slice(0, 4000), now, direction === 'receive' ? 1 : 0, now, conversationId, accountId);
           db.exec('COMMIT');
         } catch (error) { db.exec('ROLLBACK'); throw error; }
-        return json(res, 200, { ...wsMessagePayload(db.prepare('SELECT * FROM ws_messages WHERE id=?').get(id)), existed: false });
+        return json(res, 200, { ...wsMessagePayload(db.prepare('SELECT * FROM ws_messages WHERE id=? AND account_id=?').get(id, accountId)), existed: false });
       }
       return json(res, 405, { error: 'WS 消息只支持 GET/POST。' });
     }
@@ -892,10 +934,10 @@ const server = createServer(async (req, res) => {
         db.exec('BEGIN IMMEDIATE');
         try {
           db.prepare('INSERT INTO ws_ai_analyses(id,account_id,conversation_id,result_json,confidence,provider_name,model,error_message,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)').run(id, accountId, conversationId, JSON.stringify(result), confidence, wsText(body.providerName, 120), wsText(body.model, 120), wsText(body.errorMessage, 1000), now, now);
-          db.prepare(`UPDATE ws_conversations SET intent_level=CASE WHEN ?<>'' THEN ? ELSE intent_level END,language=CASE WHEN ?<>'' THEN ? ELSE language END,updated_at=? WHERE id=?`).run(intentLevel, intentLevel, language, language, now, conversationId);
+          db.prepare(`UPDATE ws_conversations SET intent_level=CASE WHEN ?<>'' THEN ? ELSE intent_level END,language=CASE WHEN ?<>'' THEN ? ELSE language END,updated_at=? WHERE id=? AND account_id=?`).run(intentLevel, intentLevel, language, language, now, conversationId, accountId);
           db.exec('COMMIT');
         } catch (error) { db.exec('ROLLBACK'); throw error; }
-        return json(res, 200, wsAnalysisPayload(db.prepare('SELECT * FROM ws_ai_analyses WHERE id=?').get(id)));
+        return json(res, 200, wsAnalysisPayload(db.prepare('SELECT * FROM ws_ai_analyses WHERE id=? AND account_id=?').get(id, accountId)));
       }
       return json(res, 405, { error: 'WS 分析只支持 GET/POST/PUT。' });
     }
@@ -1025,7 +1067,7 @@ const server = createServer(async (req, res) => {
         const status = WS_REPLY_STATUSES.has(wsText(body.status, 16)) ? wsText(body.status, 16) : 'draft';
         const now = new Date().toISOString(), id = wsCreateId('wsr');
         db.prepare('INSERT INTO ws_replies(id,account_id,conversation_id,original_text,translated_text,status,created_at,updated_at,idempotency_key) VALUES(?,?,?,?,?,?,?,?,?)').run(id, accountId, conversationId, wsText(body.originalText, 12000), wsText(body.translatedText, 12000), status, now, now, idempotencyKey);
-        return json(res, 200, { ...wsReplyPayload(db.prepare('SELECT * FROM ws_replies WHERE id=?').get(id)), existed: false });
+        return json(res, 200, { ...wsReplyPayload(db.prepare('SELECT * FROM ws_replies WHERE id=? AND account_id=?').get(id, accountId)), existed: false });
       }
       return json(res, 405, { error: 'WS 回复只支持 GET/POST/PUT。' });
     }
@@ -1033,8 +1075,8 @@ const server = createServer(async (req, res) => {
       const accountId = wsAccountId(url.searchParams.get('accountId'));
       wsRequireAccount(accountId);
       if (req.method === 'GET') { const row = url.searchParams.get('id') ? db.prepare('SELECT * FROM ws_collection_runs WHERE id=? AND account_id=?').get(url.searchParams.get('id'), accountId) : db.prepare('SELECT * FROM ws_collection_runs WHERE account_id=? ORDER BY created_at DESC LIMIT 1').get(accountId); return json(res,200,{run:row?wsCollectionRunPayload(row):null}); }
-      if (req.method === 'POST') { const body=JSON.parse((await readBody(req,64*1024)).toString('utf8')); const scopedAccountId=wsAccountId(body.accountId || accountId); wsRequireAccount(scopedAccountId); const now=new Date().toISOString(), id=wsText(body.id,160)||wsCreateId('wsr'); db.prepare('INSERT INTO ws_collection_runs(id,account_id,status,created_at,updated_at) VALUES(?,?,?,?,?)').run(id,scopedAccountId,'created',now,now); return json(res,201,{run:wsCollectionRunPayload(db.prepare('SELECT * FROM ws_collection_runs WHERE id=?').get(id))}); }
-      if (req.method === 'PATCH') { const body=JSON.parse((await readBody(req,64*1024)).toString('utf8')); const id=wsText(body.id,160), existing=db.prepare('SELECT * FROM ws_collection_runs WHERE id=? AND account_id=?').get(id, accountId); if(!existing)return json(res,404,{error:'采集任务不存在。'}); const n=k=>Math.max(0,Math.floor(Number(body[k] ?? existing[k])||0)); const now=new Date().toISOString(),status=wsText(body.status,30)||existing.status,lastSuccessAt=Object.hasOwn(body,'lastSuccessAt')?wsText(body.lastSuccessAt,80):existing.last_success_at,cursor=Object.hasOwn(body,'cursor')?wsText(body.cursor,500):existing.cursor,resumeCount=Object.hasOwn(body,'resumeCount')?Math.max(0,Math.floor(Number(body.resumeCount)||0)):existing.resume_count+(status==='running'&&existing.status==='paused'?1:0); db.prepare('UPDATE ws_collection_runs SET status=?,total=?,discovered=?,completed=?,analyzing=?,analyzed=?,failed=?,skipped=?,retryable=?,last_error=?,checkpoint=?,cursor=?,resume_count=?,last_success_at=?,updated_at=? WHERE id=? AND account_id=?').run(status,n('total'),n('discovered'),n('completed'),n('analyzing'),n('analyzed'),n('failed'),n('skipped'),n('retryable'),wsText(body.lastError??existing.last_error,1000),wsText(body.checkpoint??existing.checkpoint,500),cursor,resumeCount,lastSuccessAt,now,id,accountId); return json(res,200,{run:wsCollectionRunPayload(db.prepare('SELECT * FROM ws_collection_runs WHERE id=?').get(id))}); }
+      if (req.method === 'POST') { const body=JSON.parse((await readBody(req,64*1024)).toString('utf8')); const scopedAccountId=wsAccountId(body.accountId || accountId); wsRequireAccount(scopedAccountId); const now=new Date().toISOString(), id=wsText(body.id,160)||wsCreateId('wsr'); db.prepare('INSERT INTO ws_collection_runs(id,account_id,status,created_at,updated_at) VALUES(?,?,?,?,?)').run(id,scopedAccountId,'created',now,now); return json(res,201,{run:wsCollectionRunPayload(db.prepare('SELECT * FROM ws_collection_runs WHERE id=? AND account_id=?').get(id,scopedAccountId))}); }
+      if (req.method === 'PATCH') { const body=JSON.parse((await readBody(req,64*1024)).toString('utf8')); const id=wsText(body.id,160), existing=db.prepare('SELECT * FROM ws_collection_runs WHERE id=? AND account_id=?').get(id, accountId); if(!existing)return json(res,404,{error:'采集任务不存在。'}); const n=k=>Math.max(0,Math.floor(Number(body[k] ?? existing[k])||0)); const now=new Date().toISOString(),status=wsText(body.status,30)||existing.status,lastSuccessAt=Object.hasOwn(body,'lastSuccessAt')?wsText(body.lastSuccessAt,80):existing.last_success_at,cursor=Object.hasOwn(body,'cursor')?wsText(body.cursor,500):existing.cursor,resumeCount=Object.hasOwn(body,'resumeCount')?Math.max(0,Math.floor(Number(body.resumeCount)||0)):existing.resume_count+(status==='running'&&existing.status==='paused'?1:0); db.prepare('UPDATE ws_collection_runs SET status=?,total=?,discovered=?,completed=?,analyzing=?,analyzed=?,failed=?,skipped=?,retryable=?,last_error=?,checkpoint=?,cursor=?,resume_count=?,last_success_at=?,updated_at=? WHERE id=? AND account_id=?').run(status,n('total'),n('discovered'),n('completed'),n('analyzing'),n('analyzed'),n('failed'),n('skipped'),n('retryable'),wsText(body.lastError??existing.last_error,1000),wsText(body.checkpoint??existing.checkpoint,500),cursor,resumeCount,lastSuccessAt,now,id,accountId); return json(res,200,{run:wsCollectionRunPayload(db.prepare('SELECT * FROM ws_collection_runs WHERE id=? AND account_id=?').get(id,accountId))}); }
       return json(res,405,{error:'采集任务只支持 GET/POST/PATCH。'});
     }
     if (url.pathname === '/api/ws/collection-items') {
@@ -1058,7 +1100,7 @@ const server = createServer(async (req, res) => {
         const analysisStatus = requestedAnalysisStatus === 'pending' && sameCheckpoint && successfulAnalysis ? 'completed' : requestedAnalysisStatus;
         if (existing) db.prepare('UPDATE ws_collection_items SET status=?,attempts=?,analysis_status=?,followup_status=?,next_followup_at=?,coverage_status=?,last_error=?,checkpoint=?,updated_at=? WHERE id=? AND account_id=?').run(val('status', existing.status, 30), Math.max(0, Math.floor(Number(body.attempts ?? existing.attempts) || 0)), analysisStatus, val('followupStatus', existing.followup_status, 30), val('nextFollowupAt', existing.next_followup_at, 80), val('coverageStatus', existing.coverage_status, 30), val('lastError', existing.last_error), requestedCheckpoint, now, id, scopedAccountId);
         else db.prepare('INSERT INTO ws_collection_items(id,account_id,run_id,conversation_id,status,attempts,analysis_status,followup_status,next_followup_at,coverage_status,last_error,checkpoint,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)').run(id, scopedAccountId, runId, conversationId, val('status', 'queued', 30), Math.max(0, Math.floor(Number(body.attempts) || 0)), analysisStatus, val('followupStatus', 'none', 30), val('nextFollowupAt', '', 80), val('coverageStatus', 'unknown', 30), val('lastError', ''), requestedCheckpoint, now, now);
-        return json(res, 200, { item: wsCollectionItemPayload(db.prepare('SELECT * FROM ws_collection_items WHERE id=?').get(id)) });
+        return json(res, 200, { item: wsCollectionItemPayload(db.prepare('SELECT * FROM ws_collection_items WHERE id=? AND account_id=?').get(id,scopedAccountId)) });
       }
       return json(res,405,{error:'采集项只支持 GET/POST/PATCH。'});
     }
@@ -1075,24 +1117,28 @@ const server = createServer(async (req, res) => {
       const snoozedUntil = wsText(body.snoozedUntil ?? existing.snoozed_until, 80);
       const now = new Date().toISOString();
       db.prepare('UPDATE ws_followup_alerts SET status=?,snoozed_until=?,updated_at=? WHERE id=? AND account_id=?').run(status, snoozedUntil, now, existing.id, accountId);
-      return json(res, 200, { alert: wsFollowupAlertPayload(db.prepare('SELECT * FROM ws_followup_alerts WHERE id=?').get(existing.id)) });
+      return json(res, 200, { alert: wsFollowupAlertPayload(db.prepare('SELECT * FROM ws_followup_alerts WHERE id=? AND account_id=?').get(existing.id,accountId)) });
     }
     if (req.method === 'GET' && url.pathname === '/api/ws/followup-alerts') {
       const accountId = wsAccountId(url.searchParams.get('accountId'));
       wsRequireAccount(accountId);
       const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit')) || 30));
       const rows = db.prepare(`SELECT a.*, c.title, c.external_id, c.customer_id FROM ws_ai_analyses a JOIN ws_conversations c ON c.id=a.conversation_id AND c.account_id=a.account_id WHERE a.account_id=? ORDER BY a.created_at DESC LIMIT ${limit * 3}`).all(accountId);
-      const today = new Date().toISOString().slice(0, 10);
-      const upcomingLimit = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const localDateKey = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      const today = localDateKey(new Date());
+      const upcomingLimitDate = new Date(); upcomingLimitDate.setDate(upcomingLimitDate.getDate() + 7);
+      const upcomingLimit = localDateKey(upcomingLimitDate);
       const alerts = [];
       const seenConversations = new Set();
       for (const row of rows) {
         if (seenConversations.has(row.conversation_id)) continue;
-        seenConversations.add(row.conversation_id);
         const result = wsJson(row.result_json, {});
         const confidence = Number(row.confidence || 0);
         if (result.error || confidence < 0.3) continue;
-        const due = String(result.followupTime || '').slice(0, 10);
+        // A newer failed or low-confidence analysis must not hide an older
+        // valid analysis that still contains an actionable follow-up date.
+        seenConversations.add(row.conversation_id);
+        const due = wsCrmSync.normalizeDate(result.followupTime);
         const urgent = /高|紧急|urgent|hot/i.test(String(result.urgency || '')) || Number(result.intentScore || 0) >= 80;
         const overdue = Boolean(due && due < today);
         const dueToday = Boolean(due && due === today);
@@ -1116,7 +1162,15 @@ const server = createServer(async (req, res) => {
         };
         const now = new Date().toISOString();
         if (!existingAlert) db.prepare('INSERT INTO ws_followup_alerts(id,account_id,conversation_id,analysis_id,alert_key,priority,reason,followup_time,status,snoozed_until,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)').run(wsCreateId('wfa'), accountId, row.conversation_id, row.id, alertKey, priority, reason, result.followupTime || '', 'open', '', JSON.stringify(alertData), now, now);
-        else db.prepare('UPDATE ws_followup_alerts SET analysis_id=?,priority=?,reason=?,followup_time=?,data_json=?,updated_at=? WHERE id=? AND account_id=?').run(row.id, priority, reason, result.followupTime || '', JSON.stringify(alertData), now, existingAlert.id, accountId);
+        else {
+          // A newer analysis is a new reminder decision. Reopen an alert that
+          // was completed, dismissed, or snoozed for the older analysis so a
+          // fresh incoming message cannot silently suppress the next action.
+          const newAnalysis = String(existingAlert.analysis_id || '') !== String(row.id);
+          const nextStatus = newAnalysis && ['done', 'dismissed', 'snoozed'].includes(String(existingAlert.status || '')) ? 'open' : existingAlert.status;
+          const nextSnoozedUntil = newAnalysis ? '' : existingAlert.snoozed_until;
+          db.prepare('UPDATE ws_followup_alerts SET analysis_id=?,priority=?,reason=?,followup_time=?,status=?,snoozed_until=?,data_json=?,updated_at=? WHERE id=? AND account_id=?').run(row.id, priority, reason, result.followupTime || '', nextStatus, nextSnoozedUntil, JSON.stringify(alertData), now, existingAlert.id, accountId);
+        }
         const savedAlert = db.prepare('SELECT * FROM ws_followup_alerts WHERE account_id=? AND alert_key=?').get(accountId, alertKey);
         if (savedAlert.status === 'done' || savedAlert.status === 'dismissed') continue;
         if (savedAlert.status === 'snoozed' && savedAlert.snoozed_until && savedAlert.snoozed_until > new Date().toISOString()) continue;
@@ -1158,7 +1212,10 @@ const server = createServer(async (req, res) => {
       const analyses = db.prepare('SELECT * FROM ws_ai_analyses WHERE account_id=? ORDER BY created_at').all(accountId).map(wsAnalysisPayload);
       const replies = db.prepare('SELECT * FROM ws_replies WHERE account_id=? ORDER BY created_at').all(accountId).map(wsReplyPayload);
       const batches = db.prepare('SELECT * FROM ws_ingest_batches WHERE account_id=? ORDER BY created_at').all(accountId).map(wsBatchPayload);
-      return json(res, 200, { schemaVersion: 6, createdAt: new Date().toISOString(), settings, conversations, messages, analyses, replies, batches });
+      const collectionRuns = db.prepare('SELECT * FROM ws_collection_runs WHERE account_id=? ORDER BY created_at').all(accountId).map(wsCollectionRunPayload);
+      const collectionItems = db.prepare('SELECT * FROM ws_collection_items WHERE account_id=? ORDER BY created_at').all(accountId).map(wsCollectionItemPayload);
+      const followupAlerts = db.prepare('SELECT * FROM ws_followup_alerts WHERE account_id=? ORDER BY created_at').all(accountId).map(wsFollowupAlertPayload);
+      return json(res, 200, { schemaVersion: 6, createdAt: new Date().toISOString(), settings, conversations, messages, analyses, replies, batches, collectionRuns, collectionItems, followupAlerts });
     }
     if (req.method === 'POST' && url.pathname === '/api/ws/import') {
       const body = JSON.parse((await readBody(req, 50 * 1024 * 1024)).toString('utf8'));
@@ -1166,15 +1223,18 @@ const server = createServer(async (req, res) => {
       wsRequireAccount(accountId);
       const schemaVersion = Number(body.schemaVersion || 5);
       if (!Number.isInteger(schemaVersion) || schemaVersion < 5 || schemaVersion > 6) return json(res, 400, { error: 'WS 备份版本不受支持，只能恢复 v5 或 v6 数据。' });
-      for (const key of ['settings','conversations','messages','analyses','replies','batches']) if (Object.hasOwn(body, key) && !Array.isArray(body[key])) return json(res, 400, { error: `WS 备份中的 ${key} 不是有效数组。` });
+      for (const key of ['settings','conversations','messages','analyses','replies','batches','collectionRuns','collectionItems','followupAlerts']) if (Object.hasOwn(body, key) && !Array.isArray(body[key])) return json(res, 400, { error: `WS 备份中的 ${key} 不是有效数组。` });
       const settings = body.settings || [];
       const conversations = body.conversations || [];
       const messages = body.messages || [];
       const analyses = body.analyses || [];
       const replies = body.replies || [];
       const batches = body.batches || [];
-      const limits = { settings: 5000, conversations: 5000, messages: 100000, analyses: 20000, replies: 20000, batches: 20000 };
-      for (const [key, limit] of Object.entries(limits)) if ({ settings, conversations, messages, analyses, replies, batches }[key].length > limit) return json(res, 413, { error: `WS 备份中的 ${key} 超过 ${limit} 条上限，未执行恢复。` });
+      const collectionRuns = body.collectionRuns || [];
+      const collectionItems = body.collectionItems || [];
+      const followupAlerts = body.followupAlerts || [];
+      const limits = { settings: 5000, conversations: 5000, messages: 100000, analyses: 20000, replies: 20000, batches: 20000, collectionRuns: 5000, collectionItems: 100000, followupAlerts: 20000 };
+      for (const [key, limit] of Object.entries(limits)) if ({ settings, conversations, messages, analyses, replies, batches, collectionRuns, collectionItems, followupAlerts }[key].length > limit) return json(res, 413, { error: `WS 备份中的 ${key} 超过 ${limit} 条上限，未执行恢复。` });
       const conversationIds = new Set(conversations.map(item => wsText(item.id, 160)).filter(Boolean));
       const externalIds = new Set(conversations.map(item => wsText(item.externalId, 160)).filter(Boolean));
       if (conversations.some(item => !wsText(item.id, 160) || !wsText(item.externalId, 160)) || conversationIds.size !== conversations.length || externalIds.size !== conversations.length) return json(res, 400, { error: 'WS 备份中的会话编号或外部标识缺失或重复。' });
@@ -1197,8 +1257,25 @@ const server = createServer(async (req, res) => {
       const batchKeys = batches.map(item => `${wsText(item.conversationId, 160)}\u0000${wsText(item.fingerprint, 160)}`);
       if (new Set(batchKeys).size !== batchKeys.length) return json(res, 400, { error: 'WS 备份中同一会话存在重复批次指纹。' });
       if (batches.some(item => Object.hasOwn(item, 'messageIds') && (!Array.isArray(item.messageIds) || item.messageIds.some(id => !messageIds.has(wsText(id, 160)))))) return json(res, 400, { error: 'WS 备份中的消息批次引用了不存在的消息。' });
+      const collectionRunIds = new Set(collectionRuns.map(item => wsText(item.id, 160)).filter(Boolean));
+      if (collectionRuns.some(item => !wsText(item.id, 160)) || collectionRunIds.size !== collectionRuns.length) return json(res, 400, { error: 'WS 备份中的采集任务编号缺失或重复。' });
+      const analysisIds = new Set(analyses.map(item => wsText(item.id, 160)).filter(Boolean));
+      if (analysisIds.size !== analyses.filter(item => wsText(item.id, 160)).length) return json(res, 400, { error: 'WS 备份中的 AI 分析编号重复。' });
+      const collectionItemIds = new Set(collectionItems.map(item => wsText(item.id, 160)).filter(Boolean));
+      if (collectionItemIds.size !== collectionItems.filter(item => wsText(item.id, 160)).length) return json(res, 400, { error: 'WS 备份中的采集项目编号重复。' });
+      const alertIds = new Set(followupAlerts.map(item => wsText(item.id, 160)).filter(Boolean));
+      if (alertIds.size !== followupAlerts.filter(item => wsText(item.id, 160)).length) return json(res, 400, { error: 'WS 备份中的跟进提醒编号重复。' });
+      const collectionItemKeys = collectionItems.map(item => `${wsText(item.runId, 160)}\u0000${wsText(item.conversationId, 160)}`);
+      if (new Set(collectionItemKeys).size !== collectionItemKeys.length) return json(res, 400, { error: 'WS 备份中同一采集任务存在重复会话项目。' });
+      if (collectionItems.some(item => !collectionRunIds.has(wsText(item.runId, 160)) || !conversationIds.has(wsText(item.conversationId, 160)))) return json(res, 400, { error: 'WS 备份中的采集项目关联无效。' });
+      if (followupAlerts.some(item => !conversationIds.has(wsText(item.conversationId, 160)) || !wsText(item.alertKey, 240) || (wsText(item.analysisId, 160) && !analysisIds.has(wsText(item.analysisId, 160))))) return json(res, 400, { error: 'WS 备份中的跟进提醒关联无效。' });
+      const alertKeys = followupAlerts.map(item => wsText(item.alertKey, 240));
+      if (new Set(alertKeys).size !== alertKeys.length) return json(res, 400, { error: 'WS 备份中存在重复跟进提醒标识。' });
       db.exec('BEGIN IMMEDIATE');
       try {
+        db.prepare('DELETE FROM ws_followup_alerts WHERE account_id=?').run(accountId);
+        db.prepare('DELETE FROM ws_collection_items WHERE account_id=?').run(accountId);
+        db.prepare('DELETE FROM ws_collection_runs WHERE account_id=?').run(accountId);
         db.prepare('DELETE FROM ws_ingest_batches WHERE account_id=?').run(accountId);
         db.prepare('DELETE FROM ws_messages WHERE account_id=?').run(accountId);
         db.prepare('DELETE FROM ws_ai_analyses WHERE account_id=?').run(accountId);
@@ -1218,9 +1295,15 @@ const server = createServer(async (req, res) => {
         for (const item of replies) addReply.run(wsText(item.id, 160) || wsCreateId('wsr'), accountId, wsText(item.conversationId, 160), wsText(item.originalText, 12000), wsText(item.translatedText, 12000), WS_REPLY_STATUSES.has(wsText(item.status, 16)) ? wsText(item.status, 16) : 'draft', wsIso(item.createdAt || now), wsIso(item.updatedAt || now), wsText(item.idempotencyKey, 160));
         const addBatch = db.prepare('INSERT INTO ws_ingest_batches(id,account_id,conversation_id,fingerprint,message_count,inserted_count,message_ids_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)');
         for (const item of batches) { const ids = Array.isArray(item.messageIds) ? item.messageIds.map(id => wsText(id, 160)).filter(id => messageIds.has(id)) : []; addBatch.run(wsText(item.id, 160) || wsCreateId('wsb'), accountId, wsText(item.conversationId, 160), wsText(item.fingerprint, 160), Math.max(0, Math.floor(Number(item.messageCount) || ids.length)), Math.max(0, Math.floor(Number(item.insertedCount) || 0)), JSON.stringify(ids), wsIso(item.createdAt || now), wsIso(item.updatedAt || now)); }
+         const addRun = db.prepare('INSERT INTO ws_collection_runs(id,account_id,status,total,discovered,completed,analyzing,analyzed,failed,skipped,retryable,last_error,checkpoint,cursor,resume_count,last_success_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+         for (const item of collectionRuns) addRun.run(wsText(item.id, 160), accountId, wsText(item.status, 30) || 'created', Math.max(0, Math.floor(Number(item.total) || 0)), Math.max(0, Math.floor(Number(item.discovered) || 0)), Math.max(0, Math.floor(Number(item.completed) || 0)), Math.max(0, Math.floor(Number(item.analyzing) || 0)), Math.max(0, Math.floor(Number(item.analyzed) || 0)), Math.max(0, Math.floor(Number(item.failed) || 0)), Math.max(0, Math.floor(Number(item.skipped) || 0)), Math.max(0, Math.floor(Number(item.retryable) || 0)), wsText(item.lastError, 1000), wsText(item.checkpoint, 500), wsText(item.cursor, 500), Math.max(0, Math.floor(Number(item.resumeCount) || 0)), wsText(item.lastSuccessAt, 80), wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
+         const addItem = db.prepare('INSERT INTO ws_collection_items(id,account_id,run_id,conversation_id,status,attempts,analysis_status,followup_status,next_followup_at,last_error,checkpoint,created_at,updated_at,coverage_status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+         for (const item of collectionItems) addItem.run(wsText(item.id, 160) || wsCreateId('wsi'), accountId, wsText(item.runId, 160), wsText(item.conversationId, 160), wsText(item.status, 30) || 'queued', Math.max(0, Math.floor(Number(item.attempts) || 0)), wsText(item.analysisStatus, 30) || 'pending', wsText(item.followupStatus, 30) || 'none', wsText(item.nextFollowupAt, 80), wsText(item.lastError, 1000), wsText(item.checkpoint, 500), wsIso(item.createdAt || now), wsIso(item.updatedAt || now), wsText(item.coverageStatus, 30) || 'unknown');
+         const addAlert = db.prepare('INSERT INTO ws_followup_alerts(id,account_id,conversation_id,analysis_id,alert_key,priority,reason,followup_time,status,snoozed_until,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)');
+         for (const item of followupAlerts) addAlert.run(wsText(item.id, 160) || wsCreateId('wfa'), accountId, wsText(item.conversationId, 160), wsText(item.analysisId, 160), wsText(item.alertKey, 240), wsText(item.priority, 20) || 'today', wsText(item.reason, 500), wsText(item.followupTime, 80), wsText(item.status, 20) || 'open', wsText(item.snoozedUntil, 80), JSON.stringify(wsObject(item.data, 32 * 1024)), wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
         db.exec('COMMIT');
       } catch (error) { db.exec('ROLLBACK'); throw error; }
-      return json(res, 200, { ok: true, schemaVersion: 6, counts: { settings: settings.length, conversations: conversations.length, messages: messages.length, analyses: analyses.length, replies: replies.length, batches: batches.length } });
+      return json(res, 200, { ok: true, schemaVersion: 6, counts: { settings: settings.length, conversations: conversations.length, messages: messages.length, analyses: analyses.length, replies: replies.length, batches: batches.length, collectionRuns: collectionRuns.length, collectionItems: collectionItems.length, followupAlerts: followupAlerts.length } });
     }
     const governanceProfileMatch = url.pathname.match(/^\/api\/data-governance\/customers\/([^/]+)\/profile$/);
     if (req.method === 'GET' && governanceProfileMatch) {
@@ -1494,7 +1577,14 @@ server.on('listening', () => {
   const url = `http://127.0.0.1:${port}`;
   console.log(`知客离线工作台已启动：${url}`);
   console.log(`SQLite 数据库：${dbPath}`);
-  if (process.env.ZHIKE_OPEN_BROWSER === '1') execFile('cmd.exe', ['/c', 'start', '', url], { windowsHide: true }, () => {});
+  if (process.env.ZHIKE_OPEN_BROWSER === '1') console.warn('网页版入口已停用：请使用知客桌面应用，普通浏览器不会获得本机 API 会话授权。');
+  if (parentProcessId > 0 && !parentMonitor) {
+    parentMonitor = setInterval(() => {
+      try { process.kill(parentProcessId, 0); }
+      catch { server.close(() => process.exit(0)); }
+    }, 5000);
+    parentMonitor.unref?.();
+  }
 });
 server.on('error', error => {
   if (error.code === 'EADDRINUSE' && port < 4199) return startListening(port + 1);
@@ -1502,6 +1592,6 @@ server.on('error', error => {
   process.exit(1);
 });
 startListening(port);
-server.on('close', () => { clearTimeout(pendingImportTimer); if (pendingImport?.workDir) rmSync(pendingImport.workDir, { recursive: true, force: true }); db.close(); releaseWorkspaceLock(); });
+server.on('close', () => { clearTimeout(pendingImportTimer); if (parentMonitor) clearInterval(parentMonitor); if (pendingImport?.workDir) rmSync(pendingImport.workDir, { recursive: true, force: true }); db.close(); releaseWorkspaceLock(); });
 process.on('SIGINT', () => server.close(() => process.exit(0)));
 process.on('SIGTERM', () => server.close(() => process.exit(0)));

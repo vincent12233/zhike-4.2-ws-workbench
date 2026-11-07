@@ -2,6 +2,11 @@ namespace Zhike.Domain.Business;
 
 public static class BusinessRecordKey
 {
+    // Compatibility adapter: the legacy key remains the source of truth. The
+    // follow-up date and source are metadata, not a reason to merge two trades.
+    public static string Create(string customerId, string productCode, string direction, string registeredAt, string followupAt, string source)
+        => Ticket(customerId, registeredAt, productCode, direction);
+
     public static string Ticket(string owner, string date, string product, string direction, string note = "")
         => string.Join('|', Clean(owner), Clean(date), Clean(product).ToLowerInvariant(), Clean(direction).ToLowerInvariant(), Clean(note).ToLowerInvariant());
 

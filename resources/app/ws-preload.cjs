@@ -112,24 +112,45 @@ function readConversationNodes() {
     return { index, title, externalId, preview, previewText, listText: pageText, lastMessageAt, previewDirection, previewOnly: true, unreadCount: Number(String(badge?.getAttribute?.('aria-label') || '').match(/\d+/)?.[0] || 0) };
   }).filter(item => item.title || item.externalId || item.preview);
 }
-function discoverVisibleConversations() { const conversations = readConversationNodes().slice(0, 500); return { supported: conversations.length > 0, conversations }; }
+function discoverVisibleConversations() { const conversations = readConversationNodes().slice(0, 5000); return { supported: conversations.length > 0, conversations }; }
 async function discoverAllConversations() {
   const selector = '#pane-side, [data-testid="chat-list"], [data-testid="chatlist"], [aria-label="Chat list"], [aria-label="聊天列表"], [aria-label="Conversation list"], [role="grid"][aria-label*="Chat"], [role="grid"][aria-label*="聊天"]';
   const container = document.querySelector(selector);
   if (!container) return discoverVisibleConversations();
-  const seen = new Map(); let stableRounds = 0; let lastSize = 0; let scannedRounds = 0;
-  for (let round = 0; round < 24 && stableRounds < 3; round += 1) {
-    scannedRounds = round + 1;
-    for (const item of readConversationNodes()) { const key = item.externalId || `${item.title}|${item.preview}`; if (key && !seen.has(key)) seen.set(key, { ...item, index: seen.size }); }
-    const before = Number(container.scrollTop || 0); container.scrollTop = Math.min(Number(container.scrollHeight || before), before + Math.max(480, Number(container.clientHeight || 480) * 0.9));
-    await new Promise(resolve => setTimeout(resolve, 180));
-    const size = seen.size; stableRounds = size === lastSize ? stableRounds + 1 : 0; lastSize = size;
-    if (container.scrollTop <= before && Number(container.scrollHeight || 0) <= Number(container.clientHeight || 0)) break;
-  }
-  return { supported: seen.size > 0, conversations: [...seen.values()].slice(0, 500), scannedRounds, coverage: seen.size ? 'page-list-scanned' : 'none' };
+  const initialScrollTop = Number(container.scrollTop || 0); const seen = new Map(); let stableRounds = 0; let lastSize = 0; let scannedRounds = 0;
+  try {
+    for (let round = 0; round < 240 && stableRounds < 3; round += 1) {
+      scannedRounds = round + 1;
+      for (const item of readConversationNodes()) { const key = item.externalId || `${item.title}|${item.preview}`; if (key && !seen.has(key)) seen.set(key, { ...item, index: seen.size }); }
+      const before = Number(container.scrollTop || 0); container.scrollTop = Math.min(Number(container.scrollHeight || before), before + Math.max(480, Number(container.clientHeight || 480) * 0.9));
+      await new Promise(resolve => setTimeout(resolve, 140));
+      const size = seen.size; stableRounds = size === lastSize ? stableRounds + 1 : 0; lastSize = size;
+      if (container.scrollTop <= before && Number(container.scrollHeight || 0) <= Number(container.clientHeight || 0)) break;
+    }
+  } finally { container.scrollTop = initialScrollTop; }
+  return { supported: seen.size > 0, conversations: [...seen.values()].slice(0, 5000), scannedRounds, coverage: seen.size ? 'page-list-scanned' : 'none' };
 }
 function captureVisibleMessages() {
-  const nodes = [...document.querySelectorAll('[data-pre-plain-text], [data-testid="msg-container"]')].slice(-500);
-  return { supported: nodes.length > 0, messages: nodes.map((node, index) => { const outgoing = Boolean(node.closest?.('.message-out, [data-testid="msg-out"]')); const raw = String(node.getAttribute('aria-label') || node.getAttribute('data-pre-plain-text') || '').slice(0, 12000); return { index, text: outgoing ? `我：${raw}` : `客户：${raw}`, direction: outgoing ? 'send' : 'receive', marker: String(node.getAttribute('data-id') || '').slice(0, 200) }; }).filter(item => item.text) };
+  const allNodes = [...document.querySelectorAll('[data-pre-plain-text], [data-testid="msg-container"]')];
+  const nodes = allNodes.slice(-500);
+  const seen = new Set();
+  const messages = nodes.map((node, index) => {
+    const outgoing = Boolean(node.closest?.('.message-out, [data-testid="msg-out"]'));
+    // WhatsApp changes the message DOM frequently. Prefer the selectable
+    // message body or visible text, and only fall back to metadata when a
+    // body node is unavailable. This avoids storing the timestamp from
+    // data-pre-plain-text as if it were the message content.
+    const bodyNode = node.querySelector?.('[data-testid*="selectable-text"], span.selectable-text, [dir="auto"]');
+    const body = String(bodyNode?.innerText || bodyNode?.textContent || node.innerText || node.textContent || '').replace(/\s+/g, ' ').trim();
+    const metadata = String(node.getAttribute('aria-label') || '').trim();
+    const raw = (body || metadata || String(node.getAttribute('data-pre-plain-text') || '').trim()).slice(0, 12000);
+    const text = raw ? (outgoing ? `我：${raw}` : `客户：${raw}`) : '';
+    const marker = String(node.getAttribute('data-id') || '').slice(0, 200);
+    const dedupeKey = marker || `${outgoing ? 'send' : 'receive'}:${text}`;
+    if (!text || seen.has(dedupeKey)) return null;
+    seen.add(dedupeKey);
+    return { index, text, direction: outgoing ? 'send' : 'receive', marker };
+  }).filter(Boolean);
+  return { supported: messages.length > 0, messages };
 }
 contextBridge.exposeInMainWorld('zhikeWsPage', Object.freeze({ version: '4', purpose: 'visible-page-only-with-list-scan', probeStatus, captureSelection, discoverVisibleConversations, discoverAllConversations, captureVisibleMessages }));

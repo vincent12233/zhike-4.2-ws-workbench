@@ -14,6 +14,12 @@ const assert = require('node:assert/strict');
   assert.equal(conversations[1].unreadCount, 3);
   assert.equal(conversations[1].lastMessagePreview, 'new');
 
+  const unreadMerge = protocol.collectConversationList([
+    { id: 'c-3', unread: 7, lastMessageAt: '2026-11-08T02:04:00Z', preview: 'latest' },
+    { id: 'c-3', unread: 1, lastMessageAt: '2026-11-08T02:03:00Z', preview: 'older' },
+  ]);
+  assert.equal(unreadMerge[0].unreadCount, 7, 'latest list row keeps the highest unread count');
+
   const base = {
     accountId: 'acct-1', conversationKey: 'c-1', externalMessageId: 'm-1',
     body: 'hello', sentAt: '2026-11-08T02:01:00Z', direction: 'incoming',
@@ -31,6 +37,27 @@ const assert = require('node:assert/strict');
     lastMessageAt: first.sentAt,
   });
   assert.equal(protocol.resumeMessages([first, { ...base, externalMessageId: 'm-2', body: 'new' }], checkpoint).length, 1);
+
+  assert.throws(() => protocol.createCheckpoint({}), /accountId is required/i);
+  assert.throws(() => protocol.buildIngestBatch({
+    accountId: 'acct-2', checkpoint,
+    messages: [{ ...base, externalMessageId: 'm-3', body: 'wrong account' }],
+  }), /account mismatch/i);
+
+  const ordered = protocol.buildIngestBatch({
+    accountId: 'acct-1',
+    messages: [
+      { ...base, externalMessageId: 'm-4', body: 'newer', sentAt: '2026-11-08T03:00:00Z', cursor: '20' },
+      { ...base, externalMessageId: 'm-5', body: 'older', sentAt: '2026-11-08T02:30:00Z', cursor: '19' },
+    ],
+  });
+  assert.equal(ordered.checkpoint.cursor, '20', 'checkpoint cursor does not move backwards for out-of-order messages');
+  assert.equal(ordered.messages[0].cursor, '20');
+  assert.equal(typeof ordered.messages[0].observedAt, 'string');
+  assert.deepEqual(ordered.checkpoints.map((item) => item.accountId), ['acct-1']);
+
+  const listOnly = protocol.buildIngestBatch({ accountId: 'acct-list-only', conversations: [{ id: 'chat-1', title: '列表客户' }] });
+  assert.deepEqual(listOnly.checkpoints, [], 'list-only capture must not emit an empty checkpoint');
 
   const batch = protocol.buildIngestBatch({
     accountId: 'acct-1',

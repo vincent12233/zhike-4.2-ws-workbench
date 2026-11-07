@@ -87,6 +87,11 @@ assert.equal(mixedMapping.product, 3);
 assert.equal(mixedMapping.direction, 4);
 assert.equal(api.inferRecordType({ recordType: '跟票', product: 'AAPL', direction: '买入', amount: '' }), 'ticket');
 assert.equal(api.inferRecordType({ recordType: '入金', product: '', direction: '', amount: '1500' }), 'deposit');
+const customerInterestMapping = api.inferHeaderMapping(['客户姓名', '联系人号码', '产品兴趣', '登记日期'], [
+  ['李四', '9876543221', 'AAPL、ETF', '2026-11-12'],
+]);
+assert.equal(customerInterestMapping.product, undefined, '产品兴趣不应被识别为跟票股票代码');
+assert.equal(api.inferRecordType({ recordType: '', product: '', direction: '', amount: '' }), 'customer');
 assert.equal(api.date('2026年11月12日'), '2026-11-12');
 
 const unorderedNatural = api.parseNaturalLine('06/11/2026 单导 已进群 周十一 9876543217');
@@ -100,6 +105,15 @@ assert.equal(unorderedNatural.dateOrigin, '识别');
 const dateAtEnd = api.parseNaturalLine('9876543218 周十二 群粉 未进群 2026.11.07');
 assert.equal(dateAtEnd.registered, '2026-11-07');
 assert.equal(dateAtEnd.phone, '9876543218');
+
+const vipNatural = api.parseNaturalLine('VIP编号:VIP-001 周十三 9876543222 单导 登记日期:2026-11-08');
+assert.equal(vipNatural.vipNumber, 'VIP-001');
+assert.equal(vipNatural.phone, '9876543222');
+
+const vipHeaders = api.inferHeaderMapping(['客户姓名', 'VIP编号', '手机号码', '登记日期'], [
+  ['周十三', 'VIP-001', '9876543222', '2026-11-08'],
+]);
+assert.equal(vipHeaders.vipNumber, 1);
 
 const tradeDates = api.inferHeaderMapping(['客户号码', '股票代码', '方向', '买入日期', '卖出日期'], [
   ['9876543219', 'AAPL', '买入', '2026-11-01', ''],

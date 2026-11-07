@@ -1,4 +1,6 @@
-# 知客 4.4.1 产品级重整测试报告
+# 知客 4.4.1 产品级重整测试报告（历史记录）
+
+> 本文记录 4.4.1 的历史验收，不代表当前 4.4.24/v5 交付结果。当前版本请以 `docs/release-notes-v5-server-desktop.md` 和 `docs/v5-implementation-report.md` 为准。
 
 ## 4.4.1 WS 列表级采集与同步补充
 

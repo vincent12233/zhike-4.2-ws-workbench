@@ -2,7 +2,7 @@
     x:Class="Zhike.Desktop.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid MinWidth="820" MinHeight="540" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <NavigationView x:Name="RootNavigation" IsBackEnabled="False" IsSettingsVisible="True" PaneDisplayMode="LeftCompact" SelectionChanged="OnNavigationChanged">
             <NavigationView.MenuItems>
                 <NavigationViewItem Content="首页" Tag="home" Icon="Home" />

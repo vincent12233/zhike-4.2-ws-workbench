@@ -25,7 +25,12 @@ services:
     environment:
       ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=${POSTGRES_DB:-zhike};Username=${POSTGRES_USER:-zhike_app};Password=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
       ZHike__AppVersion: ${ZHike_APP_VERSION:-5.0.0-dev}
-      ZHike__SchemaVersion: ${ZHike_SCHEMA_VERSION:-1}
+      ZHike__SchemaVersion: ${ZHike_SCHEMA_VERSION:-8}
+      ZHike__WorkspaceOwnerId: ${ZHike_WORKSPACE_OWNER_ID:-}
+      ZHike__AllowRemotePairing: ${ZHike_ALLOW_REMOTE_PAIRING:-false}
+      ZHike__PairingApprovalCode: ${ZHIKE_PAIRING_APPROVAL_CODE:-}
+      ZHike__ConnectorToken: ${ZHIKE_API_TOKEN:-}
+      ZHike__ConnectorTokenFile: ${ZHIKE_API_TOKEN_FILE:-}
     ports:
       - "${ZHike_API_BIND:-127.0.0.1}:${ZHike_API_PORT:-48080}:8080"
     depends_on:
@@ -40,6 +45,15 @@ services:
       target: worker
     environment:
       ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=${POSTGRES_DB:-zhike};Username=${POSTGRES_USER:-zhike_app};Password=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      ZHike__AIBaseUrl: ${ZHike_AI_BASE_URL:-}
+      ZHike__AIModel: ${ZHike_AI_MODEL:-gpt-5-mini}
+      ZHike__AIKey: ${ZHike_AI_KEY:-}
+      ZHike__AIKeyFile: ${ZHike_AI_KEY_FILE:-}
+      ZHike__BackupDirectory: /backups
+      ZHike__BackupIntervalMinutes: ${ZHike_BACKUP_INTERVAL_MINUTES:-60}
+      ZHike__BackupRetention: ${ZHike_BACKUP_RETENTION:-14}
+    volumes:
+      - zhike_backup:/backups
     depends_on:
       postgres:
         condition: service_healthy
@@ -51,7 +65,12 @@ services:
       dockerfile: Dockerfile
     environment:
       ZHIKE_API_BASE_URL: http://api:8080
+      ZHIKE_API_TOKEN: ${ZHIKE_API_TOKEN:-}
+      ZHIKE_API_TOKEN_FILE: ${ZHIKE_API_TOKEN_FILE:-}
       ZHIKE_CONNECTOR_ID: ${ZHIKE_CONNECTOR_ID:-docker-default}
+      ZHIKE_ACCOUNT_IDS: ${ZHIKE_ACCOUNT_IDS:-}
+      ZHIKE_WS_URL: ${ZHIKE_WS_URL:-}
+      ZHIKE_WS_HEADLESS: ${ZHIKE_WS_HEADLESS:-false}
     volumes:
       - zhike_ws_profiles:/profiles
     depends_on:

@@ -486,6 +486,15 @@ ipcMain.handle('zhike-ws-accounts', async (event, value = {}) => {
   const endpoint = ['list', 'create'].includes(action) ? '/api/ws/accounts' : `/api/ws/accounts/${encodeURIComponent(id)}`;
   const response = await fetch(`http://127.0.0.1:${servicePort}${endpoint}`, { method: action === 'create' ? 'POST' : action === 'update' ? 'PATCH' : action === 'delete' ? 'DELETE' : 'GET', headers: { 'Content-Type': 'application/json', 'X-Zhike-Api-Token': apiToken }, body: ['create', 'update'].includes(action) ? JSON.stringify(value.account || value) : undefined });
   const body = await response.json().catch(() => ({})); if (!response.ok) throw new Error(body.error || 'WS 账号操作失败。');
+  if (action === 'list' && Array.isArray(body.accounts)) {
+    body.accounts = body.accounts.map(account => {
+      const accountId = String(account.id || 'default');
+      const runtime = wsViews.get(accountId);
+      const merged = runtime?.status ? { ...account, status: runtime.status } : account;
+      wsAccounts.set(accountId, merged);
+      return merged;
+    });
+  }
   if (action === 'delete') { wsAccounts.delete(id); destroyWsView(id); } else if (body.account) wsAccounts.set(String(body.account.id), body.account);
   return body;
 });
@@ -670,7 +679,7 @@ async function startService() {
     cwd: appRoot,
     windowsHide: true,
     stdio: 'ignore',
-    env: { ...process.env, ZHIKE_OPEN_BROWSER: '0', ZHIKE_DESKTOP_APP: '1', ZHIKE_PORT: String(startPort), ZHIKE_SHUTDOWN_TOKEN: shutdownToken, ZHIKE_API_TOKEN: apiToken, ZHIKE_DATA_DIR: userDataPath },
+    env: { ...process.env, ZHIKE_OPEN_BROWSER: '0', ZHIKE_DESKTOP_APP: '1', ZHIKE_PARENT_PID: String(process.pid), ZHIKE_PORT: String(startPort), ZHIKE_SHUTDOWN_TOKEN: shutdownToken, ZHIKE_API_TOKEN: apiToken, ZHIKE_DATA_DIR: userDataPath },
   });
   serviceProcess.once('error', () => {});
   ownsService = true;
@@ -797,7 +806,7 @@ app.whenReady().then(async () => {
     migrateLegacyUserData();
     servicePort = await startService();
     await createWindow();
-    setInterval(()=>automaticBackup().catch(()=>{}),60000).unref();
+    setInterval(()=>automaticBackup().catch(error=>console.error('[知客] 自动备份失败：', error?.message || error)),60000).unref();
   } catch (error) {
     await stopOwnedService();
     await dialog.showMessageBox({ type: 'error', title: '知客工作台无法启动', message: error.message || '应用启动失败。' });

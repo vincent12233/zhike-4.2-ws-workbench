@@ -122,6 +122,10 @@
   function mergeAiProfileSafely(customer, profile = {}) {
     if (!customer || typeof customer !== 'object') return { customer, changedFields: [], conflicts: [], evidenceRows: [] };
     const changedFields = [], conflicts = [], evidenceRows = [];
+    const missing = (field, value) => {
+      const current = text(value);
+      return !current || (field === 'name' && /^(未命名客户|未命名|未知客户|未知|—|-)$/.test(current));
+    };
     const evidenceKeys = new Set(Array.isArray(customer.aiFieldEvidenceKeys) ? customer.aiFieldEvidenceKeys.map(text) : []);
     const protectedFields = ['name', 'phone', 'rawPhone', 'country', 'language', 'origin', 'age', 'occupation', 'productInterest', 'budget', 'source', 'channel', 'assistant'];
     for (const field of protectedFields) {
@@ -131,7 +135,7 @@
       if (field === 'rawPhone' && !value) value = profile.phone;
       if (field === 'productInterest' && Array.isArray(value)) value = list(value).join('、');
       if (value === '' || value == null) continue;
-      if (!text(customer[field]) && !(field === 'age' && customer[field] !== '' && customer[field] != null)) {
+      if (missing(field, customer[field]) && !(field === 'age' && customer[field] !== '' && customer[field] != null && !missing(field, customer[field]))) {
         customer[field] = value;
         changedFields.push(field);
       } else if (!sameValue(field, customer[field], value)) {
