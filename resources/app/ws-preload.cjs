@@ -60,6 +60,11 @@ function conversationNodes() {
   if (rows.length) return rows;
   return collect(selectors);
 }
+const wsStripSystemNotice = value => cleanVisibleText(value)
+  .replace(/\s*此聊天中的新消息将在发送(?:7|90)天后自动消失(?:（除非消息已保留）)?。?\s*$/g, '')
+  .replace(/\s*\d+\s*条未读消息\s*/g, ' ')
+  .replace(/\s+/g, ' ')
+  .trim();
 function compactId(value) {
   let hash = 2166136261;
   for (const char of String(value || '')) { hash ^= char.codePointAt(0); hash = Math.imul(hash, 16777619); }
@@ -88,10 +93,10 @@ function readConversationNodes() {
     const rowParts = splitAccessibleRow(pageText || label);
     let title = (rowParts.title || label || pageText.split(/\s{2,}|\n/)[0] || '').slice(0, 200);
     const previewNode = node.querySelector?.('[data-testid*="last-msg"], [data-testid*="message"], [data-testid*="preview"], [aria-description], span[title]');
-    const previewText = stripSystemNotice(previewNode?.getAttribute?.('aria-label') || previewNode?.getAttribute?.('aria-description') || previewNode?.getAttribute?.('title') || previewNode?.getAttribute?.('data-pre-plain-text') || '').slice(0, 4000);
+    const previewText = wsStripSystemNotice(previewNode?.getAttribute?.('aria-label') || previewNode?.getAttribute?.('aria-description') || previewNode?.getAttribute?.('title') || previewNode?.getAttribute?.('data-pre-plain-text') || '').slice(0, 4000);
     if (previewText && title.toLocaleLowerCase().endsWith(previewText.toLocaleLowerCase()) && title.length > previewText.length) title = title.slice(0, -previewText.length).trim();
-    const rowPreview = stripSystemNotice(rowParts.preview).slice(0, 4000);
-    const previewCandidates = [previewText, rowPreview, stripSystemNotice(pageText.replace(title, '').trim()), stripSystemNotice(label)]
+    const rowPreview = wsStripSystemNotice(rowParts.preview).slice(0, 4000);
+    const previewCandidates = [previewText, rowPreview, wsStripSystemNotice(pageText.replace(title, '').trim()), wsStripSystemNotice(label)]
       .filter(value => value && value.toLocaleLowerCase() !== title.toLocaleLowerCase());
     const preview = (previewCandidates[0] || '').slice(0, 4000);
     const timeNode = node.querySelector?.('time, [data-testid*="time"], [aria-label*="AM"], [aria-label*="PM"]');
