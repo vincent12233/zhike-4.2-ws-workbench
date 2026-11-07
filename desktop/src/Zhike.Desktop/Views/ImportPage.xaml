@@ -1,0 +1,17 @@
+<Page x:Class="Zhike.Desktop.Views.ImportPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer Padding="24">
+        <StackPanel Spacing="14">
+            <TextBlock Text="快速录入与智能导入" FontSize="28" FontWeight="SemiBold" />
+            <TextBlock Text="列顺序可以变化；系统根据表头、样例值和页面上下文识别渠道、状态、登记日期、下次跟进日期、股票、方向、跟票、入金、群组与 VIP。" TextWrapping="Wrap" />
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="选择文件并预览" HorizontalAlignment="Stretch" />
+                <Button Grid.Column="1" Content="连续录入" HorizontalAlignment="Stretch" />
+            </Grid>
+            <InfoBar Title="日期字段" Message="登记日期与下次跟进日期独立保存，缺失时保持为空，不用当天日期替代。" IsOpen="True" Severity="Informational" />
+            <ListView x:Name="PreviewList">
+                <ListViewItem Content="预览结果会显示识别字段、置信度、冲突和待确认项。" />
+            </ListView>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

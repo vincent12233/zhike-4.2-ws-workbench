@@ -1,0 +1,11 @@
+<Page x:Class="Zhike.Desktop.Views.OperationsPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Padding="24">
+        <Pivot>
+            <PivotItem Header="跟票"><StackPanel Spacing="10"><TextBlock Text="跟票管理" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="股票代码、买入/卖出方向和日期组成独立记录；同一客户的不同股票不会合并。" TextWrapping="Wrap"/><ListView><ListViewItem Content="按股票代码筛选只显示购买该股票的客户"/></ListView></StackPanel></PivotItem>
+            <PivotItem Header="入金"><StackPanel Spacing="10"><TextBlock Text="入金管理" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="同一客户可以有多条不同日期、金额和币种的入金记录。" TextWrapping="Wrap"/></StackPanel></PivotItem>
+            <PivotItem Header="VIP"><StackPanel Spacing="10"><TextBlock Text="VIP 管理" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="按 VIP 编号归档客户，并与现有客户库同步。"/></StackPanel></PivotItem>
+            <PivotItem Header="任务与看板"><StackPanel Spacing="10"><TextBlock Text="任务中心与阶段看板" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="任务列表和阶段看板共享同一状态源，拖动后即时刷新统计与客户阶段。" TextWrapping="Wrap"/></StackPanel></PivotItem>
+            <PivotItem Header="统计"><StackPanel Spacing="10"><TextBlock Text="统计" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="统计口径沿用 4.4.24 黄金快照。"/></StackPanel></PivotItem>
+        </Pivot>
+    </Grid>
+</Page>

@@ -1,0 +1,33 @@
+<Page x:Class="Zhike.Desktop.Views.WsWorkbenchPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:wv2="using:Microsoft.Web.WebView2.WinUI">
+    <Grid Padding="12" RowSpacing="8">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
+        <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <TextBlock Text="WS 工作台" FontSize="24" FontWeight="SemiBold" />
+            <Button Grid.Column="1" Content="隐藏会话" Click="ToggleLeftPane" />
+            <Button Grid.Column="2" Content="隐藏辅助" Click="ToggleRightPane" />
+        </Grid>
+        <Grid Grid.Row="1" ColumnSpacing="8">
+            <Grid.ColumnDefinitions><ColumnDefinition x:Name="LeftPaneColumn" Width="220"/><ColumnDefinition Width="*"/><ColumnDefinition x:Name="RightPaneColumn" Width="300"/></Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" x:Name="LeftPane" Spacing="8">
+                <TextBlock Text="WS 账号" FontSize="18" FontWeight="SemiBold" />
+                <Button Content="添加账号" Click="AddAccount" />
+                <ListView x:Name="AccountsList"><ListViewItem Content="默认账号 · 状态加载中" /></ListView>
+                <TextBlock Text="会话列表由账号级 checkpoint 持续采集，不需要逐个打开会话。" TextWrapping="Wrap" Opacity="0.72" />
+            </StackPanel>
+            <Border Grid.Column="1" BorderBrush="Gray" BorderThickness="1" CornerRadius="8">
+                <wv2:WebView2 x:Name="WhatsAppView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+            </Border>
+            <ScrollViewer Grid.Column="2" x:Name="RightPane">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="翻译与 AI 辅助" FontSize="18" FontWeight="SemiBold" />
+                    <ToggleSwitch Header="翻译" IsOn="True" />
+                    <ToggleSwitch Header="AI 分析" IsOn="True" />
+                    <Button Content="分析当前会话" />
+                    <InfoBar Title="同步状态" Message="只处理用户在 WS 中已授权可见的内容。" IsOpen="True" />
+                    <TextBlock Text="客户摘要、意向、来源、年龄、职业、产品兴趣和预算会写入客户库的空字段；冲突进入待确认。" TextWrapping="Wrap" />
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Page>
