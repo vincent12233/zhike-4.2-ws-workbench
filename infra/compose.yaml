@@ -1,0 +1,82 @@
+name: zhike-server
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-zhike}
+      POSTGRES_USER: ${POSTGRES_USER:-zhike_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - zhike_pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [zhike_internal]
+
+  api:
+    build:
+      context: ../server
+      dockerfile: Dockerfile
+      target: api
+    environment:
+      ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=${POSTGRES_DB:-zhike};Username=${POSTGRES_USER:-zhike_app};Password=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      ZHike__AppVersion: ${ZHike_APP_VERSION:-5.0.0-dev}
+      ZHike__SchemaVersion: ${ZHike_SCHEMA_VERSION:-1}
+    ports:
+      - "${ZHike_API_BIND:-127.0.0.1}:${ZHike_API_PORT:-48080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [zhike_internal]
+
+  ai-worker:
+    build:
+      context: ../server
+      dockerfile: Dockerfile
+      target: worker
+    environment:
+      ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=${POSTGRES_DB:-zhike};Username=${POSTGRES_USER:-zhike_app};Password=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [zhike_internal]
+
+  ws-connector:
+    build:
+      context: ../connectors/ws-worker
+      dockerfile: Dockerfile
+    environment:
+      ZHIKE_API_BASE_URL: http://api:8080
+      ZHIKE_CONNECTOR_ID: ${ZHIKE_CONNECTOR_ID:-docker-default}
+    volumes:
+      - zhike_ws_profiles:/profiles
+    depends_on:
+      api:
+        condition: service_started
+    networks: [zhike_internal]
+
+  backup:
+    image: postgres:18
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["while true; do sleep 3600; done"]
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - zhike_backup:/backup
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [zhike_internal]
+
+volumes:
+  zhike_pgdata:
+  zhike_ws_profiles:
+  zhike_backup:
+
+networks:
+  zhike_internal:
+    internal: true

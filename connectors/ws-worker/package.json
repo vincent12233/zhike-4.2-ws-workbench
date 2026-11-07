@@ -1,0 +1,9 @@
+{
+  "name": "zhike-ws-connector-worker",
+  "private": true,
+  "version": "5.0.0-dev",
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": { "test": "node --test tests/collector-fixtures.test.cjs", "start": "node src/runner.mjs" },
+  "dependencies": { "playwright": "^1.55.0" }
+}

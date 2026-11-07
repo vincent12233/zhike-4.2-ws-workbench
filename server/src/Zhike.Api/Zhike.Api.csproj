@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Zhike.Contracts/Zhike.Contracts.csproj" />
+    <ProjectReference Include="../Zhike.Domain/Zhike.Domain.csproj" />
+    <ProjectReference Include="../Zhike.Infrastructure/Zhike.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>
