@@ -13,7 +13,7 @@ const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
     let healthy=false;
     for(let i=0;i<120;i++){try{if((await fetch(`http://127.0.0.1:${port}/api/health`)).ok){healthy=true;break;}}catch{}await wait(50);}
     if(!healthy) throw new Error('isolated server did not become healthy');
-    const paths=['/modules/smart-import.js','/modules/ticket-record-core.js','/modules/ui-refresh.css','/modules/performance-enhancements.js','/modules/business-enhancements.js','/modules/business-enhancements.css','/modules/accessibility-enhancements.js','/modules/operations-upgrade.js','/modules/operations-upgrade.css','/modules/ws-workbench-core.js','/modules/ws-workbench.js','/modules/ws-workbench.css'];
+    const paths=['/modules/smart-import.js','/modules/ticket-record-core.js','/modules/ui-refresh.css','/modules/performance-enhancements.js','/modules/business-enhancements.js','/modules/business-enhancements.css','/modules/accessibility-enhancements.js','/modules/operations-upgrade.js','/modules/operations-upgrade.css','/modules/ws-workbench-core.js','/modules/ws-workbench.js','/modules/ws-workbench.css','/modules/customer-governance-ui.js'];
     for(const route of paths){const response=await fetch(`http://127.0.0.1:${port}${route}`);if(!response.ok)throw new Error(`${route} HTTP ${response.status}`);const body=await response.text();if(!body.trim())throw new Error(`${route} empty body`);}
     console.log('upgrade HTTP smoke: isolated server served all new module assets');
     await fetch(`http://127.0.0.1:${port}/api/shutdown`,{method:'POST',headers:{'X-Zhike-Api-Token':token,'X-Zhike-Shutdown-Token':token}});

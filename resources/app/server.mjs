@@ -11,6 +11,7 @@ const require = createRequire(import.meta.url);
 const { applyDelta } = require('./state-delta.cjs');
 const wsCore = require('./modules/ws-workbench-core.js');
 const wsCrmSync = require('./modules/ws-crm-sync-core.js');
+const customerGovernance = require('./modules/customer-governance-core.js');
 const { DatabaseSync } = require('node:sqlite');
 const root = dirname(fileURLToPath(import.meta.url));
 const configuredDataDir = String(process.env.ZHIKE_DATA_DIR || '').trim();
@@ -152,6 +153,17 @@ if (Number(db.prepare('PRAGMA user_version').get().user_version || 0) < 9) {
     db.exec(migration);
     db.prepare('INSERT OR IGNORE INTO schema_migrations(version,applied_at,description) VALUES(?,?,?)').run(9, new Date().toISOString(), '4.3 WS 断点采集与 AI 提醒状态');
     db.exec('PRAGMA user_version = 9; COMMIT');
+  } catch (error) { db.exec('ROLLBACK'); throw error; }
+}
+if (Number(db.prepare('PRAGMA user_version').get().user_version || 0) < 10) {
+  const migrationPath = join(root, 'migrations', '010-ai-customer-governance.sql');
+  if (!existsSync(migrationPath)) throw new Error('缺少 AI 客户档案治理迁移文件。');
+  const migration = readFileSync(migrationPath, 'utf8');
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    db.exec(migration);
+    db.prepare('INSERT OR IGNORE INTO schema_migrations(version,applied_at,description) VALUES(?,?,?)').run(10, new Date().toISOString(), '4.4 AI 客户档案自动治理、字段证据与删除审计');
+    db.exec('PRAGMA user_version = 10; COMMIT');
   } catch (error) { db.exec('ROLLBACK'); throw error; }
 }
 
@@ -526,6 +538,42 @@ function wsFollowupAlertPayload(row) { return { id: row.id, accountId: row.accou
 function wsConversationRow(id, accountId = 'default') { return db.prepare('SELECT * FROM ws_conversations WHERE id=? AND account_id=?').get(String(id || ''), wsAccountId(accountId)); }
 function wsRequireConversation(id, accountId = 'default') { const row = wsConversationRow(id, accountId); if (!row) throw new Error('WS 会话不存在或已被清理。'); return row; }
 function wsCreateId(prefix) { return `${prefix}-${Date.now().toString(36)}-${randomBytes(5).toString('hex')}`; }
+function governanceActionId() { return wsCreateId('cga'); }
+function governanceEvidenceId() { return wsCreateId('cge'); }
+function recordGovernanceAction(action, customerId, before, after, options = {}) {
+  const row = customerGovernance.buildGovernanceAction(customerId, action, before, after, options);
+  db.prepare('INSERT INTO customer_governance_actions(id,customer_id,action,reason,source,confidence,analysis_id,before_json,after_json,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)')
+    .run(governanceActionId(), row.customerId, row.action, row.reason, row.source, row.confidence, row.analysisId, JSON.stringify(row.before), JSON.stringify(row.after), row.createdAt);
+  return row;
+}
+function recordAiFieldEvidence(customerId, evidenceRows, conflicts = []) {
+  const conflictFields = new Set(conflicts.map(item => wsText(item.field, 120)));
+  const insert = db.prepare(`INSERT OR IGNORE INTO ai_customer_field_evidence
+    (id,customer_id,conversation_id,analysis_id,field_name,value_json,confidence,source_text,status,created_at,updated_at)
+    VALUES(?,?,?,?,?,?,?,?,?,?,?)`);
+  const now = new Date().toISOString();
+  let inserted = 0;
+  for (const row of evidenceRows || []) {
+    const status = conflictFields.has(wsText(row.field, 120)) ? 'conflict' : 'accepted';
+    const result = insert.run(governanceEvidenceId(), customerId, wsText(row.conversationId, 160), wsText(row.analysisId, 160), wsText(row.field, 120), JSON.stringify(row.value ?? null), Number(row.confidence) || 0, wsText(row.sourceText, 2000), status, now, now);
+    inserted += Number(result?.changes || 0);
+  }
+  return inserted;
+}
+function governanceState() {
+  const state = readState() || emptyCrmState();
+  for (const key of ['customers', 'tickets', 'deposits', 'followups', 'registrations', 'phoneRegistry', 'batchOperations', 'activities', 'importIssues']) if (!Array.isArray(state[key])) state[key] = [];
+  if (!state.settings || typeof state.settings !== 'object' || Array.isArray(state.settings)) state.settings = {};
+  if (!Array.isArray(state.settings.operatingTasks)) state.settings.operatingTasks = [];
+  return state;
+}
+function governanceCustomer(state, id) { return state.customers.find(item => String(item?.id || '') === String(id || '')); }
+function governanceActionPayload(row) {
+  return { id: row.id, customerId: row.customer_id, action: row.action, reason: row.reason, source: row.source, confidence: Number(row.confidence || 0), analysisId: row.analysis_id, before: wsJson(row.before_json, {}), after: wsJson(row.after_json, {}), createdAt: row.created_at };
+}
+function governanceEvidencePayload(row) {
+  return { id: row.id, customerId: row.customer_id, conversationId: row.conversation_id, analysisId: row.analysis_id, fieldName: row.field_name, value: wsJson(row.value_json, row.value_json), confidence: Number(row.confidence || 0), sourceText: row.source_text, status: row.status, createdAt: row.created_at, updatedAt: row.updated_at };
+}
 function wsTranslationFields(body, existing = null) {
   const translatedText = Object.hasOwn(body, 'translatedText') ? wsText(body.translatedText, 12000) : (existing?.translated_text || '');
   let translationStatus = Object.hasOwn(body, 'translationStatus') && WS_TRANSLATION_STATUSES.has(wsText(body.translationStatus, 24)) ? wsText(body.translationStatus, 24) : (existing?.translation_status || (translatedText ? 'translated' : 'none'));
@@ -857,7 +905,11 @@ const server = createServer(async (req, res) => {
       const analysis = wsJson(analysisRow.result_json, {});
       const confidence = Number(analysisRow.confidence || analysis.confidence || 0);
       if (!wsCrmSync.shouldAutoSync({ ...analysis, confidence })) return json(res, 200, { ok: true, skipped: true, reason: 'AI 置信度不足，未自动写入客户资料。', confidence });
-      const profile = wsCrmSync.deriveCustomerProfile({ ...analysis, confidence }, { id: conversation.id, externalId: conversation.external_id, title: conversation.title }, accountId);
+      const conversationRef = { id: conversation.id, externalId: conversation.external_id, title: conversation.title, analysisId: analysisRow.id };
+      const profile = {
+        ...wsCrmSync.deriveCustomerProfile({ ...analysis, confidence }, conversationRef, accountId),
+        ...customerGovernance.normalizeAiProfile({ ...analysis, confidence }, conversationRef, accountId),
+      };
       const followupPlan = wsCrmSync.deriveFollowupPlan({ ...analysis, confidence }, { id: analysisRow.id }, { id: conversation.id, externalId: conversation.external_id }, accountId);
       let state = readState() || emptyCrmState();
       for (const key of ['customers', 'tickets', 'deposits', 'followups', 'registrations', 'phoneRegistry', 'batchOperations', 'activities', 'importIssues']) if (!Array.isArray(state[key])) state[key] = [];
@@ -880,11 +932,24 @@ const server = createServer(async (req, res) => {
         };
         state.customers.unshift(customer);
       }
+      const customerBefore = created ? {} : JSON.parse(JSON.stringify(customer));
       const beforeCustomer = JSON.stringify(customer);
       const profileMerge = wsCrmSync.mergeCustomerProfileSafely(customer, profile);
+      const governanceMerge = customerGovernance.mergeAiProfileSafely(customer, profile);
       customer.wsAnalysisId = analysisRow.id;
       customer.aiSyncedAt = new Date().toISOString();
+      if (profile.origin && !customer.origin) customer.origin = profile.origin;
+      if (profile.age !== '' && (customer.age === '' || customer.age == null)) customer.age = profile.age;
+      if (profile.occupation && !customer.occupation) customer.occupation = profile.occupation;
+      const softDeleted = customerGovernance.shouldAutoSoftDelete({ confidence, deletionSignal: profile.deletionSignal || analysis.deletionSignal || analysis.contactStatus });
+      if (softDeleted && !customer.deleted) {
+        customer.deleted = true;
+        customer.deletedAt = new Date().toISOString();
+        customer.aiDeletedAt = customer.deletedAt;
+        customer.aiDeleteReason = profile.deletionSignal || analysis.deletionSignal || analysis.contactStatus || 'AI 识别为无效或拒绝联系';
+      }
       let followup = null;
+      let task = null;
       let duplicate = false;
       if (followupPlan.shouldCreate) {
         const existing = state.followups.find(item => String(item.wsFollowupKey || '') === followupPlan.dedupeKey);
@@ -902,16 +967,29 @@ const server = createServer(async (req, res) => {
         const tasks = state.settings.operatingTasks;
         const existingTask = tasks.find(item => !item.done && (String(item.wsFollowupKey || '') === followupPlan.dedupeKey || String(item.wsConversationId || '') === String(conversation.id)));
         const taskInput = { title: `跟进 ${customer.name || customer.rawPhone || customer.phone}`, due: followupPlan.nextDate || '', customerId: customer.id, owner: customer.assistant || '未分配', priority: followupPlan.priority, note: followupPlan.note, wsConversationId: conversation.id, wsFollowupKey: followupPlan.dedupeKey, aiGenerated: true };
-        if (existingTask) Object.assign(existingTask, taskInput, { updatedAt: now });
-        else tasks.unshift({ id: `TWS-${wsCore.stableHash(followupPlan.dedupeKey)}`, ...taskInput, done: false, createdAt: now, updatedAt: now });
+        if (existingTask) { Object.assign(existingTask, taskInput, { updatedAt: now }); task = existingTask; }
+        else { task = { id: `TWS-${wsCore.stableHash(followupPlan.dedupeKey)}`, ...taskInput, done: false, createdAt: now, updatedAt: now }; tasks.unshift(task); }
       }
       const activity = { id: `AWS-${Date.now().toString(36)}`, text: `AI 自动同步 WS 客户${followupPlan.shouldCreate ? '并生成跟进提醒' : ''}：${customer.name || customer.id}`, time: new Date().toISOString(), color: 'blue', source: 'ws-ai-sync', conversationId: conversation.id, analysisId: analysisRow.id };
       state.activities.unshift(activity);
       state.activities = state.activities.slice(0, 1000);
       if (readState()) saveSnapshot('WS AI 自动补充前自动快照');
-      writeState(state);
-      const linked = db.prepare('UPDATE ws_conversations SET customer_id=?,updated_at=? WHERE id=? AND account_id=?').run(customer.id, new Date().toISOString(), conversation.id, accountId);
-      return json(res, 200, { ok: true, skipped: false, created, duplicate, customer, followup, updatedFields: [...new Set([...profileMerge.changedFields, ...(beforeCustomer === JSON.stringify(customer) ? [] : ['aiSyncedAt'])])], revision: readStateEnvelope().version });
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        writeState(state, false);
+        if (created || profileMerge.changedFields.length || governanceMerge.changedFields.length || softDeleted) {
+          recordGovernanceAction(created ? 'create' : 'update', customer.id, customerBefore, customer, { analysisId: analysisRow.id, source: 'WS AI', confidence, reason: created ? 'AI 自动建档' : 'AI 自动补充客户档案' });
+        }
+        recordAiFieldEvidence(customer.id, governanceMerge.evidenceRows, governanceMerge.conflicts);
+        for (const conflict of governanceMerge.conflicts) {
+          const row = { key: `${analysisRow.id}:${conflict.field}`, field: conflict.field, value: conflict.incoming, conversationId: conversation.id, analysisId: analysisRow.id, confidence, sourceText: `AI 识别值与现有值冲突：${String(conflict.existing).slice(0, 200)}` };
+          recordAiFieldEvidence(customer.id, [row], [conflict]);
+        }
+        if (softDeleted) recordGovernanceAction('soft_delete', customer.id, customerBefore, customer, { analysisId: analysisRow.id, source: 'WS AI', confidence, reason: customer.aiDeleteReason });
+        db.prepare('UPDATE ws_conversations SET customer_id=?,updated_at=? WHERE id=? AND account_id=?').run(customer.id, new Date().toISOString(), conversation.id, accountId);
+        db.exec('COMMIT');
+      } catch (error) { db.exec('ROLLBACK'); throw error; }
+      return json(res, 200, { ok: true, skipped: false, created, duplicate, softDeleted, conflicts: governanceMerge.conflicts, customer, followup, task, updatedFields: [...new Set([...profileMerge.changedFields, ...governanceMerge.changedFields, ...(beforeCustomer === JSON.stringify(customer) ? [] : ['aiSyncedAt'])])], revision: readStateEnvelope().version });
     }
     if (url.pathname === '/api/ws/replies') {
       if (req.method === 'GET') {
@@ -1135,6 +1213,122 @@ const server = createServer(async (req, res) => {
       } catch (error) { db.exec('ROLLBACK'); throw error; }
       return json(res, 200, { ok: true, schemaVersion: 6, counts: { settings: settings.length, conversations: conversations.length, messages: messages.length, analyses: analyses.length, replies: replies.length, batches: batches.length } });
     }
+    const governanceProfileMatch = url.pathname.match(/^\/api\/data-governance\/customers\/([^/]+)\/profile$/);
+    if (req.method === 'GET' && governanceProfileMatch) {
+      const customerId = decodeURIComponent(governanceProfileMatch[1]);
+      const state = governanceState();
+      const customer = governanceCustomer(state, customerId);
+      if (!customer) return json(res, 404, { error: '客户不存在。' });
+      const evidence = db.prepare('SELECT * FROM ai_customer_field_evidence WHERE customer_id=? ORDER BY updated_at DESC,id DESC').all(customerId).map(governanceEvidencePayload);
+      const actions = db.prepare('SELECT * FROM customer_governance_actions WHERE customer_id=? ORDER BY created_at DESC,id DESC LIMIT 100').all(customerId).map(governanceActionPayload);
+      return json(res, 200, { customer, evidence, actions, conflicts: evidence.filter(item => item.status === 'conflict') });
+    }
+    const governanceAuditPath = url.pathname === '/api/data-governance/audit';
+    if (req.method === 'GET' && governanceAuditPath) {
+      const customerId = wsText(url.searchParams.get('customerId'), 128);
+      const action = wsText(url.searchParams.get('action'), 32);
+      const limit = Math.min(200, Math.max(1, Number(url.searchParams.get('limit')) || 50));
+      const offset = Math.max(0, Math.floor(Number(url.searchParams.get('offset')) || 0));
+      const where = [], params = [];
+      if (customerId) { where.push('customer_id=?'); params.push(customerId); }
+      if (action) { where.push('action=?'); params.push(action); }
+      const clause = where.length ? ` WHERE ${where.join(' AND ')}` : '';
+      const rows = db.prepare(`SELECT * FROM customer_governance_actions${clause} ORDER BY created_at DESC,id DESC LIMIT ${limit} OFFSET ${offset}`).all(...params).map(governanceActionPayload);
+      const total = Number(db.prepare(`SELECT COUNT(*) AS count FROM customer_governance_actions${clause}`).get(...params).count || 0);
+      const conflicts = db.prepare(`SELECT * FROM ai_customer_field_evidence WHERE status='conflict'${customerId ? ' AND customer_id=?' : ''} ORDER BY updated_at DESC,id DESC LIMIT ${limit} OFFSET ${offset}`).all(...(customerId ? [customerId] : [])).map(governanceEvidencePayload);
+      return json(res, 200, { actions: rows, conflicts, total, limit, offset });
+    }
+    const softDeleteMatch = url.pathname.match(/^\/api\/data-governance\/customers\/([^/]+)\/soft-delete$/);
+    if (req.method === 'POST' && softDeleteMatch) {
+      const customerId = decodeURIComponent(softDeleteMatch[1]);
+      const body = JSON.parse((await readBody(req, 64 * 1024)).toString('utf8') || '{}');
+      const state = governanceState();
+      const customer = governanceCustomer(state, customerId);
+      if (!customer) return json(res, 404, { error: '客户不存在。' });
+      if (customer.deleted) return json(res, 200, { ok: true, changed: false, customer });
+      if (readState()) saveSnapshot('数据治理软删除前自动快照');
+      const before = JSON.parse(JSON.stringify(customer));
+      const now = new Date().toISOString();
+      customer.deleted = true; customer.deletedAt = now; customer.deleteReason = wsText(body.reason || '数据治理软删除', 500);
+      db.exec('BEGIN IMMEDIATE');
+      try { writeState(state, false); recordGovernanceAction('soft_delete', customerId, before, customer, { source: wsText(body.source || '数据治理', 120), reason: customer.deleteReason, confidence: Number(body.confidence) || 0 }); db.exec('COMMIT'); }
+      catch (error) { db.exec('ROLLBACK'); throw error; }
+      return json(res, 200, { ok: true, changed: true, customer, revision: readStateEnvelope().version });
+    }
+    const restoreMatch = url.pathname.match(/^\/api\/data-governance\/customers\/([^/]+)\/restore$/);
+    if (req.method === 'POST' && restoreMatch) {
+      const customerId = decodeURIComponent(restoreMatch[1]);
+      const body = JSON.parse((await readBody(req, 64 * 1024)).toString('utf8') || '{}');
+      const state = governanceState();
+      const customer = governanceCustomer(state, customerId);
+      if (!customer) return json(res, 404, { error: '客户不存在。' });
+      if (!customer.deleted) return json(res, 200, { ok: true, changed: false, customer });
+      if (readState()) saveSnapshot('数据治理恢复客户前自动快照');
+      const before = JSON.parse(JSON.stringify(customer));
+      customer.deleted = false; delete customer.deletedAt; delete customer.aiDeletedAt; delete customer.deleteReason; delete customer.aiDeleteReason;
+      db.exec('BEGIN IMMEDIATE');
+      try { writeState(state, false); recordGovernanceAction('restore', customerId, before, customer, { source: '数据治理', reason: wsText(body.reason || '恢复客户', 500) }); db.exec('COMMIT'); }
+      catch (error) { db.exec('ROLLBACK'); throw error; }
+      return json(res, 200, { ok: true, changed: true, customer, revision: readStateEnvelope().version });
+    }
+    if (req.method === 'POST' && url.pathname === '/api/data-governance/customers/batch-soft-delete') {
+      const body = JSON.parse((await readBody(req, 128 * 1024)).toString('utf8') || '{}');
+      const ids = [...new Set((Array.isArray(body.customerIds) ? body.customerIds : []).map(item => wsText(item, 128)).filter(Boolean))];
+      if (!ids.length) return json(res, 400, { error: '没有可删除的客户编号。' });
+      if (ids.length > 500) return json(res, 413, { error: '单次最多软删除 500 位客户。' });
+      const state = governanceState(), now = new Date().toISOString(), changed = [];
+      const beforeRows = [];
+      for (const id of ids) { const customer = governanceCustomer(state, id); if (!customer || customer.deleted) continue; beforeRows.push({ id, before: JSON.parse(JSON.stringify(customer)) }); customer.deleted = true; customer.deletedAt = now; customer.deleteReason = wsText(body.reason || '批量软删除', 500); changed.push(customer); }
+      if (!changed.length) return json(res, 200, { ok: true, count: 0, customers: [] });
+      if (readState()) saveSnapshot('数据治理批量软删除前自动快照');
+      db.exec('BEGIN IMMEDIATE');
+      try { writeState(state, false); for (const row of beforeRows) { const customer = governanceCustomer(state, row.id); recordGovernanceAction('soft_delete', row.id, row.before, customer, { source: wsText(body.source || '数据治理', 120), reason: customer.deleteReason }); } db.exec('COMMIT'); }
+      catch (error) { db.exec('ROLLBACK'); throw error; }
+      return json(res, 200, { ok: true, count: changed.length, customers: changed, revision: readStateEnvelope().version });
+    }
+    const purgeRequestMatch = url.pathname.match(/^\/api\/data-governance\/customers\/([^/]+)\/purge-request$/);
+    if (req.method === 'POST' && purgeRequestMatch) {
+      const customerId = decodeURIComponent(purgeRequestMatch[1]);
+      const state = governanceState();
+      if (!governanceCustomer(state, customerId)) return json(res, 404, { error: '客户不存在。' });
+      const token = randomBytes(24).toString('hex');
+      const hash = createHash('sha256').update(token).digest('hex');
+      const now = new Date().toISOString();
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        db.prepare("UPDATE customer_delete_requests SET status='cancelled' WHERE customer_id=? AND mode='purge' AND status='pending'").run(customerId);
+        db.prepare('INSERT INTO customer_delete_requests(id,customer_id,mode,confirmation_token_hash,status,requested_at,confirmed_at,created_at) VALUES(?,?,?,?,?,?,?,?)').run(governanceActionId(), customerId, 'purge', hash, 'pending', now, '', now);
+        db.exec('COMMIT');
+      } catch (error) { db.exec('ROLLBACK'); throw error; }
+      return json(res, 200, { ok: true, customerId, confirmationToken: token, expiresInSeconds: 900 });
+    }
+    const purgeConfirmMatch = url.pathname.match(/^\/api\/data-governance\/customers\/([^/]+)\/purge-confirm$/);
+    if (req.method === 'POST' && purgeConfirmMatch) {
+      const customerId = decodeURIComponent(purgeConfirmMatch[1]);
+      const body = JSON.parse((await readBody(req, 64 * 1024)).toString('utf8') || '{}');
+      const token = wsText(body.confirmationToken, 200);
+      const hash = createHash('sha256').update(token).digest('hex');
+      const requestRow = db.prepare("SELECT * FROM customer_delete_requests WHERE customer_id=? AND mode='purge' AND confirmation_token_hash=? AND status='pending' ORDER BY created_at DESC LIMIT 1").get(customerId, hash);
+      if (!requestRow) return json(res, 409, { error: '永久删除确认令牌无效、已使用或已取消。' });
+      const state = governanceState(), customer = governanceCustomer(state, customerId);
+      if (!customer) return json(res, 404, { error: '客户不存在。' });
+      if (readState()) saveSnapshot('数据治理永久删除前自动快照');
+      const before = JSON.parse(JSON.stringify(customer));
+      state.customers = state.customers.filter(item => String(item.id) !== customerId);
+      for (const key of ['tickets', 'deposits', 'followups', 'registrations']) state[key] = state[key].filter(item => String(item.customerId || '') !== customerId);
+      state.settings.operatingTasks = state.settings.operatingTasks.filter(item => String(item.customerId || '') !== customerId);
+      const now = new Date().toISOString();
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        writeState(state, false);
+        db.prepare("UPDATE ws_followup_alerts SET status='dismissed',updated_at=? WHERE conversation_id IN (SELECT id FROM ws_conversations WHERE customer_id=? )").run(now, customerId);
+        db.prepare('UPDATE ws_conversations SET customer_id=?,updated_at=? WHERE customer_id=?').run('', now, customerId);
+        db.prepare("UPDATE customer_delete_requests SET status='confirmed',confirmed_at=? WHERE id=?").run(now, requestRow.id);
+        recordGovernanceAction('purge', customerId, before, {}, { source: '数据治理', reason: wsText(body.reason || '永久删除客户', 500) });
+        db.exec('COMMIT');
+      } catch (error) { db.exec('ROLLBACK'); throw error; }
+      return json(res, 200, { ok: true, customerId, removed: true, revision: readStateEnvelope().version });
+    }
     if (req.method === 'GET' && url.pathname === '/api/state/version') {
       const row = db.prepare('SELECT revision FROM app_state WHERE id=1').get();
       return json(res, 200, { initialized: Boolean(row), version: row ? String(row.revision) : '' });
@@ -1241,6 +1435,14 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/health') return json(res, 200, { ok: true, storage: 'sqlite', workspace: root });
 
     const requestPath = decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname);
+    if (requestPath === '/modules/customer-governance-ui.js') {
+      const governanceUiPath = resolve(root, `.${normalize(requestPath)}`);
+      if (!governanceUiPath.startsWith(root + sep) || !existsSync(governanceUiPath)) return json(res, 404, { error: '文件不存在。' });
+      const body = readFileSync(governanceUiPath);
+      res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Content-Length': body.length, 'Cache-Control': 'no-store' });
+      res.end(body);
+      return;
+    }
     if (!['/modules/productivity.js', '/modules/performance-enhancements.js', '/modules/smart-import.js', '/modules/business-enhancements.js', '/modules/business-enhancements.css', '/modules/accessibility-enhancements.js', '/modules/operations-upgrade.js', '/modules/operations-upgrade.css', '/modules/ui-refresh.css', '/index.html', '/styles.css', '/app.js', '/modules/v4-data-center.js', '/modules/v4.css', '/modules/gpt-assistant.js', '/modules/runtime-customizer.js', '/modules/gpt-assistant.css', '/modules/gpt-workbench.css', '/modules/gpt-modern.css', '/modules/gpt-upgrade.css', '/modules/gpt-management.css', '/modules/phone-registry.js', '/modules/phone-registry.css', '/modules/phone-registry-seed.json', '/modules/v41-ui.css', '/modules/operations-core.cjs', '/modules/operations-ui.js', '/modules/ticket-record-core.js', '/modules/ws-workbench-core.js', '/modules/ws-crm-sync-core.js', '/modules/ws-workbench.js', '/modules/ws-workbench.css'].includes(requestPath)) return json(res, 404, { error: '文件不存在。' });
     const filePath = resolve(root, `.${normalize(requestPath)}`);
     if (!filePath.startsWith(root + sep) || !existsSync(filePath) || !statSync(filePath).isFile()) return json(res, 404, { error: '文件不存在。' });

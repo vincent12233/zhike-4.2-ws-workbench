@@ -23,6 +23,7 @@
   function deriveCustomerProfile(analysis = {}, conversation = {}, accountId = 'default') {
     const result = analysis && typeof analysis === 'object' ? analysis : {};
     const contact = result.contact && typeof result.contact === 'object' ? result.contact : {};
+    const profile = result.profile && typeof result.profile === 'object' ? result.profile : {};
     const trusted = shouldAutoSync(result);
     const productInterest = listValue(result.productInterest);
     const tags = listValue(result.tags);
@@ -37,6 +38,9 @@
       name,
       country: trusted ? text(contact.country || result.country) : '',
       language: text(result.language),
+      origin: trusted ? text(profile.origin || result.origin || result.leadSource) : '',
+      age: trusted && Number.isFinite(Number(profile.age || result.age)) ? Number(profile.age || result.age) : '',
+      occupation: trusted ? text(profile.occupation || profile.job || result.occupation || result.job) : '',
       productInterest: productInterest.join('、'),
       budget: trusted ? text(result.budget) : '',
       customerStage: text(result.customerStage || result.stage),
@@ -113,6 +117,11 @@
     if (!customer || typeof customer !== 'object') return { customer, changedFields: [] };
     const changedFields = [];
     const fill = (key, value) => {
+      if (key === 'age' && value !== '' && value != null && !customer[key]) {
+        const age = Number(value);
+        if (Number.isFinite(age) && age >= 0 && age <= 120) { customer[key] = age; changedFields.push(key); }
+        return;
+      }
       const next = text(value);
       if (!next || text(customer[key])) return;
       customer[key] = next;
@@ -121,7 +130,7 @@
     fill('name', profile.name);
     if (!text(customer.rawPhone) && text(profile.phone)) { customer.rawPhone = text(profile.phone); changedFields.push('rawPhone'); }
     if (!normalizePhone(customer.phone) && normalizePhone(profile.phone)) { customer.phone = normalizePhone(profile.phone); changedFields.push('phone'); }
-    for (const key of ['country', 'language', 'productInterest', 'budget', 'source', 'channel', 'assistant']) fill(key, profile[key]);
+    for (const key of ['country', 'language', 'origin', 'age', 'occupation', 'productInterest', 'budget', 'source', 'channel', 'assistant']) fill(key, profile[key]);
     if (!text(customer.phase) || customer.phase === '新客户') fill('phase', profile.customerStage);
     const aiFields = { intent: profile.intent, intentScore: profile.intentScore, emotion: profile.emotion, aiSummary: profile.aiSummary };
     for (const [key, value] of Object.entries(aiFields)) if (value !== '' && value != null && JSON.stringify(customer[key]) !== JSON.stringify(value)) { customer[key] = value; changedFields.push(key); }

@@ -92,6 +92,6 @@ assert.match(ui, /idempotencyKey/, 'reply writes retain idempotency keys');
 assert.match(ui, /core\.restoreFollowupSnapshot/, 'follow-up writes use deterministic rollback helper');
 assert.match(ui, /syncAnalysisToCrm[\s\S]*\/api\/ws\/crm-sync/, 'AI 分析完成后自动同步到知客客户库');
 assert.match(ui, /refreshState/, 'AI CRM 同步后刷新知客工作台共享状态');
-assert.match(server, /\/api\/ws\/crm-sync[\s\S]*writeState\(state\)/, 'AI CRM 同步在服务端事务写入本地客户库');
+assert.match(server, /\/api\/ws\/crm-sync[\s\S]*writeState\(state(?:, false)?\)/, 'AI CRM 同步在服务端事务写入本地客户库');
 assert.match(server, /未来 7 天内应跟进/, '跟进提醒覆盖未来七天的计划任务');
 console.log('ws-workbench-sync: dedupe, stale fencing, cross-account isolation, CRM linkage, rollback and idempotency pass');

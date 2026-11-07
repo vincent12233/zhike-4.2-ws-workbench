@@ -36,4 +36,5 @@ Thumbs.db
 /work/
 tmp/
 *.tmp
+.superpowers/
 *.bak

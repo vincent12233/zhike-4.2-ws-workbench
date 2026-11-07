@@ -103,7 +103,7 @@ async function json(response) { return response.json(); }
     assert.equal(retryableItem.item.analysisStatus, 'retryable');
     assert.match(retryableItem.item.lastError, /AI 服务未配置/);
 
-    const analysis = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, result: { summary: '咨询产品', intent: '高意向', intentScore: 90, urgency: '高', nextStep: '今天联系客户确认预算', followupTime: '2026-11-05', language: 'English', confidence: 0.8 }, providerName: 'test', model: 'test-model' }) });
+    const analysis = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, result: { summary: '咨询产品', intent: '高意向', intentScore: 90, urgency: '高', nextStep: '今天联系客户确认预算', followupTime: '2026-11-05', language: 'English', confidence: 0.8, contact: { name: '张三', phone: '+91 98765 43210' }, profile: { origin: '展会', age: 36, occupation: '采购经理' }, evidence: [{ field: 'age', value: 36, text: '我今年36岁' }] }, providerName: 'test', model: 'test-model' }) });
     assert.equal(analysis.status, 200);
     const initializeCrm = await request('/api/state', { method: 'POST', headers: { 'x-state-version': '' }, body: JSON.stringify({ schemaVersion: 4, customers: [], savedViews: [], activities: [], tickets: [], deposits: [], followups: [], registrations: [], phoneRegistry: [], batchOperations: [], settings: { operatingTasks: [] }, channelAliases: {}, importIssues: [], qualityDecisions: {} }) });
     assert.equal(initializeCrm.status, 200);
@@ -111,6 +111,11 @@ async function json(response) { return response.json(); }
     assert.equal(crmSync.ok, true);
     assert.equal(crmSync.created, true);
     assert.equal(crmSync.followup.aiGenerated, true);
+    assert.equal(crmSync.customer.origin, '展会');
+    assert.equal(crmSync.customer.age, 36);
+    assert.equal(crmSync.customer.occupation, '采购经理');
+    assert.ok(crmSync.updatedFields.includes('age'));
+    assert.ok(crmSync.task && crmSync.task.aiGenerated);
     const repeatedCrmSync = await json(await request('/api/ws/crm-sync', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, analysisId: crmSync.followup.wsAnalysisId }) }));
     assert.equal(repeatedCrmSync.ok, true);
     assert.equal(repeatedCrmSync.duplicate, true, '重复同步同一分析不会重复创建跟进记录');
@@ -118,6 +123,7 @@ async function json(response) { return response.json(); }
     assert.equal(crmState.customers.length, 1, 'AI 同步按 WS 会话只创建一个客户');
     assert.equal(crmState.followups.length, 1, 'AI 同步按分析幂等创建一个跟进');
     assert.equal(crmState.settings.operatingTasks.length, 1, 'AI 同步创建一个待跟进任务');
+
 
     const analysisList = await json(await request(`/api/ws/analyses?conversationId=${encodeURIComponent(conversationBody.id)}&limit=1&offset=0`));
     assert.equal(analysisList.total, 1);

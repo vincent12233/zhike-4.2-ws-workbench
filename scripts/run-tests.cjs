@@ -62,6 +62,9 @@ function runWs() {
 }
 
 function runAll() {
+  run('customer governance core', [path.join(repo, 'tests', 'customer-governance-core.test.cjs')]);
+  run('customer governance API', [path.join(repo, 'tests', 'customer-governance-api.test.cjs')]);
+  run('customer governance UI', [path.join(repo, 'tests', 'customer-governance-ui.test.cjs')]);
   runWs();
   run('operations core', [path.join(app, 'modules', 'operations-core.test.cjs')]);
   run('smart import classification', [path.join(repo, 'tests', 'smart-import-classification.test.cjs')]);

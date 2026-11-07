@@ -10,6 +10,7 @@ const analysis = {
   productInterest: ['A 方案'],
   budget: '5000 USD',
   contact: { name: 'Alice', phone: '+91 98765 43210', country: 'India', account: 'alice-wa' },
+  profile: { origin: '展会', age: 34, occupation: '采购经理' },
   tags: ['高意向', '待报价'],
   customerStage: '意向客户',
   nextStep: '今天发送报价并确认预算',
@@ -28,6 +29,9 @@ assert.equal(profile.conversationId, 'conv-1');
 assert.equal(profile.phone, '+91 98765 43210');
 assert.equal(profile.name, 'Alice');
 assert.equal(profile.aiSummary, analysis.summary);
+assert.equal(profile.origin, '展会');
+assert.equal(profile.age, 34);
+assert.equal(profile.occupation, '采购经理');
 assert.deepEqual(profile.tags, ['高意向', '待报价']);
 
 const plan = core.deriveFollowupPlan(analysis, { id: 'wsa-1' }, { id: 'conv-1', externalId: 'wa-1' }, 'account-a');
