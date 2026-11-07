@@ -10,6 +10,7 @@ const main = fs.readFileSync(path.join(__dirname, '..', 'resources', 'app', 'mai
 assert.match(ui, /accounts:\s*\[\]/, 'renderer keeps WS account list state');
 assert.match(ui, /activeAccountId:\s*['"]default['"]/, 'renderer tracks active account');
 assert.match(ui, /renderAccountList|ws-account-row/, 'left panel renders account cards and active marker');
+assert.match(ui, /accountsLoading|正在加载 WS 账号/, 'first-open account loading shows a non-empty loading state');
 assert.match(ui, /create-account|添加账号/, 'new account action exists');
 assert.doesNotMatch(ui, /\bprompt\s*\(/, 'account creation does not depend on unsupported prompt()');
 assert.match(ui, /accountFormOpen|wsAccountDisplayName/, 'account creation uses an inline form');
@@ -17,6 +18,7 @@ assert.match(ui, /submit-account[\s\S]*cancel-account/, 'account creation expose
 assert.match(ui, /switch-account|switchAccount/, 'account switching action exists');
 assert.match(ui, /wsTopAccount/, 'compact toolbar keeps account switching accessible when the left panel is collapsed');
 assert.match(ui, /wsAccounts/, 'renderer uses account IPC');
+assert.match(ui, /retryTransient[\s\S]*wsAccounts/, 'account list retries transient desktop-service readiness failures');
 assert.match(ui, /accountId.*state\.activeAccountId|state\.activeAccountId.*accountId/, 'WS bridge carries active account id');
 assert.match(ui, /accountId.*url\.searchParams|url\.searchParams.*accountId/, 'API calls are scoped to active account');
 assert.match(ui, /function captureContext[\s\S]*sequence/, 'async work captures immutable account and sequence context');

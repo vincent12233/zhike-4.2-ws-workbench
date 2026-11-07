@@ -65,11 +65,13 @@ assert.deepEqual({ lastFollow: followupCustomer.lastFollow, due: followupCustome
 
 assert.match(ui, /function captureContext[\s\S]*accountId[\s\S]*sequence/, 'sync paths capture immutable account context');
 assert.match(ui, /refreshCollectionSummary[\s\S]*assertContext\(context\)/, 'collection summary fences stale responses');
+assert.match(ui, /collectionRefreshQueued/, 'overlapping refresh triggers are queued instead of dropped');
 assert.match(ui, /autoCaptureCurrentConversation[\s\S]*captureContext\([\s\S]*importVisible\(context\)/, 'automatic capture keeps account context');
 assert.match(ui, /syncConversationListPreviews[\s\S]*messages\/batch[\s\S]*list-preview/, 'list-level preview capture saves messages without opening a conversation');
 assert.match(ui, /analyzeStoredConversation[\s\S]*ws-list-preview-analysis[\s\S]*api\('\/api\/ws\/analyses'/, 'list-level captures can trigger AI analysis and follow-up alerts');
 assert.match(ui, /analyzeStoredConversation[\s\S]*analysisStatus: 'completed'/, 'successful list-level analysis clears retry state');
 assert.match(ui, /markAnalysisRetryable[\s\S]*analysisStatus: 'retryable'[\s\S]*lastError/, 'AI failures remain visible and retryable');
+assert.match(ui, /markAnalysisRetryable[\s\S]*previewAnalysisSignatures\.delete/, 'AI retryable list previews are eligible for a later refresh retry');
 assert.match(ui, /includes\(item\.analysisStatus\)/, 'collection summary counts AI retryable items');
 assert.match(ui, /collectionRefreshTimer = setInterval\([\s\S]*12000/, 'phone-to-workbench list sync polls at a bounded interval');
 assert.match(ui, /analyzeConversation\(context[\s\S]*api\('\/api\/ws\/analyses'[\s\S]*context/, 'AI analysis writes use originating account');

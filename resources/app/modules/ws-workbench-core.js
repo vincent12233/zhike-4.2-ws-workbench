@@ -11,6 +11,22 @@
     return (hash >>> 0).toString(36);
   }
 
+  async function retryTransient(operation, options = {}) {
+    const attempts = Math.max(1, Math.min(8, Number(options.attempts) || 4));
+    const delayOption = options.delayMs;
+    let lastError;
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      try { return await operation(attempt); }
+      catch (error) {
+        lastError = error;
+        if (attempt + 1 >= attempts) throw error;
+        const delay = Math.max(0, Number(typeof delayOption === 'function' ? delayOption(attempt) : delayOption) || 0);
+        if (delay) await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    throw lastError || new Error('操作失败，请重试。');
+  }
+
   function normalizeTranslationSettings(value = {}) {
     return {
       enabled: value.enabled !== false,
@@ -303,5 +319,6 @@
     buildTranscript,
     suggestedDate,
     stableHash,
+    retryTransient,
   };
 });

@@ -42,6 +42,7 @@
     conversationQuery: '',
     translationStatus: '翻译服务未检测',
     loading: false,
+    accountsLoading: false,
     lastLoadedAt: '',
     drafts: new Map(),
     matchCandidates: [],
@@ -53,6 +54,7 @@
     discoveredConversations: [],
     visibleConversationFingerprint: '',
     collectionRefreshing: false,
+    collectionRefreshQueued: false,
     autoCaptureSignature: '',
     previewAnalysisSignatures: new Map(),
     previewAnalysisQueue: [],
@@ -90,8 +92,16 @@
   function assertContext(context) { if (!contextCurrent(context)) throw new Error('WS 账号已切换，已丢弃过期操作。'); }
   async function loadAccounts() {
     const sequence = ++state.accountLoadSequence;
+    state.accountsLoading = true;
+    state.error = '';
+    render();
     try {
-      const result = await window.zhikeDesktop?.wsAccounts?.({ action: 'list' });
+      const result = await core.retryTransient(async () => {
+        if (!window.zhikeDesktop?.wsAccounts) throw new Error('当前页面没有桌面 WS 账号能力。');
+        const response = await window.zhikeDesktop.wsAccounts({ action: 'list' });
+        if (!response || !Array.isArray(response.accounts)) throw new Error('WS 账号列表暂未准备好。');
+        return response;
+      }, { attempts: 6, delayMs: attempt => Math.min(1200, 100 * (2 ** attempt)) });
       if (sequence !== state.accountLoadSequence && !state.pendingRestoreAccountId) return;
       state.accounts = Array.isArray(result?.accounts) ? result.accounts : [];
       const stored = readStoredAccountId();
@@ -112,7 +122,9 @@
         } catch {}
       }
     } catch (error) {
-      state.error = error.message || 'WS 账号列表加载失败。';
+      if (sequence === state.accountLoadSequence) state.error = error.message || 'WS 账号列表加载失败。';
+    } finally {
+      if (sequence === state.accountLoadSequence) { state.accountsLoading = false; render(); }
     }
   }
   function updateAccountStatus(payload) {
@@ -179,6 +191,7 @@
     const sequence = ++state.accountLoadSequence;
     state.accountBusy = true;
     state.collectionRefreshing = false;
+    state.collectionRefreshQueued = false;
     state.autoCaptureSignature = '';
     state.previewAnalysisSignatures.clear();
     state.previewAnalysisQueue = [];
@@ -363,7 +376,8 @@
     }
   }
   async function refreshCollectionSummary() {
-    if (!state.active || state.loading || state.collectionRefreshing) return;
+    if (!state.active) return;
+    if (state.loading || state.collectionRefreshing) { state.collectionRefreshQueued = true; return; }
     const context = captureContext();
     state.collectionRefreshing = true;
     try {
@@ -397,7 +411,13 @@
       assertContext(context);
       render();
     } catch (error) { if (contextCurrent(context) && error?.message && !/过期操作/.test(error.message)) state.error = error.message; } finally {
-      if (contextCurrent(context)) state.collectionRefreshing = false;
+      if (contextCurrent(context)) {
+        state.collectionRefreshing = false;
+        if (state.collectionRefreshQueued && state.active && !state.loading) {
+          state.collectionRefreshQueued = false;
+          queueMicrotask(() => { void refreshCollectionSummary(); });
+        }
+      }
     }
   }
   async function enqueueDiscoveredConversations(items, announce = true, context = captureContext()) {
@@ -535,6 +555,10 @@
   }
   async function markAnalysisRetryable(conversation, context, reason) {
     if (!state.collectionRun?.id || !conversation?.id) return;
+    // Keep the preview eligible for the next background poll. The signature is
+    // only committed after a successful analysis; transient AI/network errors
+    // must not permanently suppress follow-up analysis and reminders.
+    state.previewAnalysisSignatures.delete(String(conversation.id));
     await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({
       runId: state.collectionRun.id,
       conversationId: conversation.id,
@@ -810,6 +834,7 @@
     return `<div class="ws-empty">${state.conversations.length ? '没有匹配的会话。' : '还没有本机会话。输入会话标识后建立记录，不会预置演示数据。'}</div>`;
   }
   function renderAccountList() {
+    if (state.accountsLoading) return '<div class="ws-empty ws-loading">正在加载 WS 账号…</div>';
     if (!state.accounts.length) return '<div class="ws-empty">暂无 WS 账号。点击“添加账号”创建本机登录页。</div>';
     return state.accounts.map(account => {
       const active = String(account.id) === String(state.activeAccountId);
