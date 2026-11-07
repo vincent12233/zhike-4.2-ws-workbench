@@ -9,6 +9,8 @@ import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypt
 
 const require = createRequire(import.meta.url);
 const { applyDelta } = require('./state-delta.cjs');
+const wsCore = require('./modules/ws-workbench-core.js');
+const wsCrmSync = require('./modules/ws-crm-sync-core.js');
 const { DatabaseSync } = require('node:sqlite');
 const root = dirname(fileURLToPath(import.meta.url));
 const configuredDataDir = String(process.env.ZHIKE_DATA_DIR || '').trim();
@@ -195,6 +197,25 @@ function readStateEnvelope() {
   const row = db.prepare('SELECT json,revision FROM app_state WHERE id = 1').get();
   if (!row) return { state: null, version: '' };
   return { state: JSON.parse(row.json), version: String(row.revision) };
+}
+
+function emptyCrmState() {
+  return {
+    schemaVersion: 4,
+    customers: [],
+    savedViews: [],
+    activities: [],
+    tickets: [],
+    deposits: [],
+    followups: [],
+    registrations: [],
+    phoneRegistry: [],
+    batchOperations: [],
+    settings: { operatingTasks: [] },
+    channelAliases: {},
+    importIssues: [],
+    qualityDecisions: {},
+  };
 }
 
 function validateState(value) {
@@ -823,6 +844,73 @@ const server = createServer(async (req, res) => {
       }
       return json(res, 405, { error: 'WS 分析只支持 GET/POST/PUT。' });
     }
+    if (req.method === 'POST' && url.pathname === '/api/ws/crm-sync') {
+      const body = JSON.parse((await readBody(req, 512 * 1024)).toString('utf8'));
+      const accountId = wsAccountId(body.accountId);
+      const conversationId = wsText(body.conversationId, 160);
+      const conversation = wsRequireConversation(conversationId, accountId);
+      const analysisId = wsText(body.analysisId, 160);
+      const analysisRow = analysisId
+        ? db.prepare('SELECT * FROM ws_ai_analyses WHERE id=? AND account_id=? AND conversation_id=?').get(analysisId, accountId, conversationId)
+        : db.prepare('SELECT * FROM ws_ai_analyses WHERE account_id=? AND conversation_id=? ORDER BY created_at DESC,id DESC LIMIT 1').get(accountId, conversationId);
+      if (!analysisRow) return json(res, 404, { error: '找不到要同步的 WS 分析结果。' });
+      const analysis = wsJson(analysisRow.result_json, {});
+      const confidence = Number(analysisRow.confidence || analysis.confidence || 0);
+      if (!wsCrmSync.shouldAutoSync({ ...analysis, confidence })) return json(res, 200, { ok: true, skipped: true, reason: 'AI 置信度不足，未自动写入客户资料。', confidence });
+      const profile = wsCrmSync.deriveCustomerProfile({ ...analysis, confidence }, { id: conversation.id, externalId: conversation.external_id, title: conversation.title }, accountId);
+      const followupPlan = wsCrmSync.deriveFollowupPlan({ ...analysis, confidence }, { id: analysisRow.id }, { id: conversation.id, externalId: conversation.external_id }, accountId);
+      let state = readState() || emptyCrmState();
+      for (const key of ['customers', 'tickets', 'deposits', 'followups', 'registrations', 'phoneRegistry', 'batchOperations', 'activities', 'importIssues']) if (!Array.isArray(state[key])) state[key] = [];
+      if (!state.settings || typeof state.settings !== 'object' || Array.isArray(state.settings)) state.settings = {};
+      if (!Array.isArray(state.settings.operatingTasks)) state.settings.operatingTasks = [];
+      const match = wsCore.matchCustomer(state.customers, profile);
+      if (match.kind === 'ambiguous') return json(res, 409, { error: 'AI 识别到多个候选客户，未自动合并。', needsConfirmation: true, candidates: match.candidates.map(item => ({ id: item.id, name: item.name, phone: item.rawPhone || item.phone || '' })) });
+      let customer = match.customer;
+      const created = !customer;
+      if (!customer) {
+        if (!profile.wsExternalId && !profile.phone) return json(res, 200, { ok: true, skipped: true, reason: '缺少 WS 标识和电话，未自动创建客户。' });
+        customer = {
+          id: `CWS-${Date.now().toString(36)}-${wsCore.normalizePhone(profile.phone) || wsCrmSync.deriveFollowupPlan(analysis, { id: analysisRow.id }, conversation, accountId).dedupeKey.split(':').at(-1)}`,
+          name: profile.name || conversation.title || '未命名客户', rawPhone: profile.phone, phone: wsCore.normalizePhone(profile.phone),
+          source: 'WhatsApp', channel: 'WhatsApp', assistant: '未分配', status: '未进群', phase: '新客户', qualification: '待评估',
+          hot: false, investor: false, group: '—', ticket: false, deposit: false, amount: 0,
+          registered: new Date().toISOString().slice(0, 10), lastFollow: '', due: '', note: '', deleted: false, touched: true,
+        };
+        state.customers.unshift(customer);
+      }
+      const beforeCustomer = JSON.stringify(customer);
+      const profileMerge = wsCrmSync.mergeCustomerProfileSafely(customer, profile);
+      customer.wsAnalysisId = analysisRow.id;
+      customer.aiSyncedAt = new Date().toISOString();
+      let followup = null;
+      let duplicate = false;
+      if (followupPlan.shouldCreate) {
+        const existing = state.followups.find(item => String(item.wsFollowupKey || '') === followupPlan.dedupeKey);
+        const now = new Date().toISOString();
+        followup = existing || {
+          id: `FWS-${wsCore.stableHash(followupPlan.dedupeKey)}`,
+          customerId: customer.id, customer: customer.name, phone: customer.rawPhone || customer.phone || '', date: now,
+          method: 'WhatsApp', registration: '', wsConversationId: conversation.id, wsAnalysisId: analysisRow.id,
+          wsFollowupKey: followupPlan.dedupeKey, aiGenerated: true,
+        };
+        Object.assign(followup, { customerId: customer.id, customer: customer.name, phone: customer.rawPhone || customer.phone || '', result: followupPlan.note, note: followupPlan.note, nextDate: followupPlan.nextDate || '', wsConversationId: conversation.id, wsAnalysisId: analysisRow.id, wsFollowupKey: followupPlan.dedupeKey, aiGenerated: true, priority: followupPlan.priority, updatedAt: now });
+        if (existing) duplicate = true;
+        else state.followups.unshift(followup);
+        if (followupPlan.nextDate) customer.due = followupPlan.nextDate;
+        const tasks = state.settings.operatingTasks;
+        const existingTask = tasks.find(item => !item.done && (String(item.wsFollowupKey || '') === followupPlan.dedupeKey || String(item.wsConversationId || '') === String(conversation.id)));
+        const taskInput = { title: `跟进 ${customer.name || customer.rawPhone || customer.phone}`, due: followupPlan.nextDate || '', customerId: customer.id, owner: customer.assistant || '未分配', priority: followupPlan.priority, note: followupPlan.note, wsConversationId: conversation.id, wsFollowupKey: followupPlan.dedupeKey, aiGenerated: true };
+        if (existingTask) Object.assign(existingTask, taskInput, { updatedAt: now });
+        else tasks.unshift({ id: `TWS-${wsCore.stableHash(followupPlan.dedupeKey)}`, ...taskInput, done: false, createdAt: now, updatedAt: now });
+      }
+      const activity = { id: `AWS-${Date.now().toString(36)}`, text: `AI 自动同步 WS 客户${followupPlan.shouldCreate ? '并生成跟进提醒' : ''}：${customer.name || customer.id}`, time: new Date().toISOString(), color: 'blue', source: 'ws-ai-sync', conversationId: conversation.id, analysisId: analysisRow.id };
+      state.activities.unshift(activity);
+      state.activities = state.activities.slice(0, 1000);
+      if (readState()) saveSnapshot('WS AI 自动补充前自动快照');
+      writeState(state);
+      const linked = db.prepare('UPDATE ws_conversations SET customer_id=?,updated_at=? WHERE id=? AND account_id=?').run(customer.id, new Date().toISOString(), conversation.id, accountId);
+      return json(res, 200, { ok: true, skipped: false, created, duplicate, customer, followup, updatedFields: [...new Set([...profileMerge.changedFields, ...(beforeCustomer === JSON.stringify(customer) ? [] : ['aiSyncedAt'])])], revision: readStateEnvelope().version });
+    }
     if (url.pathname === '/api/ws/replies') {
       if (req.method === 'GET') {
         const conversationId = wsText(url.searchParams.get('conversationId'), 160);
@@ -906,6 +994,7 @@ const server = createServer(async (req, res) => {
       const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit')) || 30));
       const rows = db.prepare(`SELECT a.*, c.title, c.external_id, c.customer_id FROM ws_ai_analyses a JOIN ws_conversations c ON c.id=a.conversation_id AND c.account_id=a.account_id WHERE a.account_id=? ORDER BY a.created_at DESC LIMIT ${limit * 3}`).all(accountId);
       const today = new Date().toISOString().slice(0, 10);
+      const upcomingLimit = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
       const alerts = [];
       const seenConversations = new Set();
       for (const row of rows) {
@@ -918,11 +1007,12 @@ const server = createServer(async (req, res) => {
         const urgent = /高|紧急|urgent|hot/i.test(String(result.urgency || '')) || Number(result.intentScore || 0) >= 80;
         const overdue = Boolean(due && due < today);
         const dueToday = Boolean(due && due === today);
-        if (!urgent && !overdue && !dueToday) continue;
+        const upcoming = Boolean(due && due > today && due <= upcomingLimit);
+        if (!urgent && !overdue && !dueToday && !upcoming) continue;
         const alertKey = `${row.account_id}:${row.conversation_id}`;
         const existingAlert = db.prepare('SELECT * FROM ws_followup_alerts WHERE account_id=? AND alert_key=?').get(accountId, alertKey);
-        const priority = urgent ? 'urgent' : overdue ? 'overdue' : 'today';
-        const reason = urgent && overdue ? '高意向且已逾期' : urgent ? '高意向客户' : overdue ? '跟进已逾期' : '今日应跟进';
+        const priority = urgent ? 'urgent' : overdue ? 'overdue' : dueToday ? 'today' : 'upcoming';
+        const reason = urgent && overdue ? '高意向且已逾期' : urgent ? '高意向客户' : overdue ? '跟进已逾期' : dueToday ? '今日应跟进' : '未来 7 天内应跟进';
         const alertData = {
           title: row.title,
           externalId: row.external_id,
@@ -1149,7 +1239,7 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/health') return json(res, 200, { ok: true, storage: 'sqlite', workspace: root });
 
     const requestPath = decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname);
-    if (!['/modules/productivity.js', '/modules/performance-enhancements.js', '/modules/smart-import.js', '/modules/business-enhancements.js', '/modules/business-enhancements.css', '/modules/accessibility-enhancements.js', '/modules/operations-upgrade.js', '/modules/operations-upgrade.css', '/modules/ui-refresh.css', '/index.html', '/styles.css', '/app.js', '/modules/v4-data-center.js', '/modules/v4.css', '/modules/gpt-assistant.js', '/modules/runtime-customizer.js', '/modules/gpt-assistant.css', '/modules/gpt-workbench.css', '/modules/gpt-modern.css', '/modules/gpt-upgrade.css', '/modules/gpt-management.css', '/modules/phone-registry.js', '/modules/phone-registry.css', '/modules/phone-registry-seed.json', '/modules/v41-ui.css', '/modules/operations-core.cjs', '/modules/operations-ui.js', '/modules/ticket-record-core.js', '/modules/ws-workbench-core.js', '/modules/ws-workbench.js', '/modules/ws-workbench.css'].includes(requestPath)) return json(res, 404, { error: '文件不存在。' });
+    if (!['/modules/productivity.js', '/modules/performance-enhancements.js', '/modules/smart-import.js', '/modules/business-enhancements.js', '/modules/business-enhancements.css', '/modules/accessibility-enhancements.js', '/modules/operations-upgrade.js', '/modules/operations-upgrade.css', '/modules/ui-refresh.css', '/index.html', '/styles.css', '/app.js', '/modules/v4-data-center.js', '/modules/v4.css', '/modules/gpt-assistant.js', '/modules/runtime-customizer.js', '/modules/gpt-assistant.css', '/modules/gpt-workbench.css', '/modules/gpt-modern.css', '/modules/gpt-upgrade.css', '/modules/gpt-management.css', '/modules/phone-registry.js', '/modules/phone-registry.css', '/modules/phone-registry-seed.json', '/modules/v41-ui.css', '/modules/operations-core.cjs', '/modules/operations-ui.js', '/modules/ticket-record-core.js', '/modules/ws-workbench-core.js', '/modules/ws-crm-sync-core.js', '/modules/ws-workbench.js', '/modules/ws-workbench.css'].includes(requestPath)) return json(res, 404, { error: '文件不存在。' });
     const filePath = resolve(root, `.${normalize(requestPath)}`);
     if (!filePath.startsWith(root + sep) || !existsSync(filePath) || !statSync(filePath).isFile()) return json(res, 404, { error: '文件不存在。' });
     const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.cjs': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml' };

@@ -32,6 +32,7 @@
     wsDetail: '',
     analysis: null,
     analysisMeta: null,
+    crmSyncStatus: '',
     aiBusy: false,
     translationBusy: new Set(),
     busy: { import: false, customer: false, followup: false, reply: false, capture: false, connection: false },
@@ -515,6 +516,29 @@
   function listPreviewFingerprint(item, preview) {
     return stableHash(JSON.stringify([text(item?.externalId), preview, text(item?.lastMessageAt), text(item?.previewDirection || 'receive')]));
   }
+  async function syncAnalysisToCrm(conversation, analysis, analysisMeta, context, options = {}) {
+    const syncCore = window.ZhikeWsCrmSync;
+    if (!syncCore || !syncCore.shouldAutoSync(analysis) || !analysisMeta?.id || !conversation?.id) { state.crmSyncStatus = '低置信度或缺少分析编号，等待人工确认'; return { ok: true, skipped: true, reason: 'AI 置信度不足或缺少分析编号。' }; }
+    try {
+      const host = getHost();
+      await host?.flushStateWrites?.();
+      const result = await api('/api/ws/crm-sync', { method: 'POST', timeout: 30000, body: JSON.stringify({ conversationId: conversation.id, analysisId: analysisMeta.id }) }, context);
+      assertContext(context);
+      if (options.refreshHost !== false) await host?.refreshState?.();
+      const alerts = await api('/api/ws/followup-alerts?limit=8', {}, context).catch(() => null);
+      if (alerts && contextCurrent(context)) state.followupAlerts = alerts.alerts || state.followupAlerts;
+      if (options.notify !== false && contextCurrent(context)) {
+        if (result.skipped) toast(result.reason || 'AI 结果未自动写入客户库', 'x');
+        else toast(result.created ? (result.followup ? 'AI 已新增客户并生成跟进提醒' : 'AI 已新增客户资料') : (result.followup ? 'AI 已更新客户并刷新跟进提醒' : 'AI 已更新客户资料'));
+      }
+      state.crmSyncStatus = result.skipped ? (result.reason || '未自动写入客户库') : (result.created ? '已自动新增客户并同步跟进' : '已自动更新客户并同步跟进');
+      return result;
+    } catch (error) {
+      state.crmSyncStatus = `同步失败：${error.message}`;
+      if (options.notify !== false && contextCurrent(context)) toast(`AI 结果已保存，但同步知客客户库失败：${error.message}`, 'x');
+      return { ok: false, reason: error.message };
+    }
+  }
   async function analyzeStoredConversation(conversation, context) {
     if (!state.aiEnabled) return { ok: false, reason: 'AI 分析已关闭。', disabled: true };
     if (!window.zhikeAI?.request || !window.zhikeAI?.status) return { ok: false, reason: '当前运行环境不支持 AI 安全桥接。' };
@@ -538,7 +562,8 @@
       analysis.providerName = result.providerName || '';
       analysis.model = result.model || '';
       analysis.transcriptInfo = transcript;
-      await api('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, result: analysis, confidence: analysis.confidence, providerName: analysis.providerName, model: analysis.model }) }, context);
+      const saved = await api('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, result: analysis, confidence: analysis.confidence, providerName: analysis.providerName, model: analysis.model }) }, context);
+      await syncAnalysisToCrm(conversation, analysis, saved, context, { refreshHost: false, notify: false });
       if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({
         runId: state.collectionRun.id,
         conversationId: conversation.id,
@@ -630,6 +655,7 @@
         assertContext(context);
         state.conversations = refreshed.conversations || state.conversations;
       }
+      if (analyzed && getHost()?.refreshState) await getHost().refreshState().catch(() => {});
       return { synced, analyzed };
     } finally { state.listSyncBusy = false; }
   }
@@ -761,6 +787,7 @@
     state.currentConversationId = conversationId;
     state.analysis = null;
     state.analysisMeta = null;
+    state.crmSyncStatus = '';
     state.replies = [];
     state.matchCandidates = [];
     state.error = '';
@@ -865,7 +892,7 @@
     const tags = (analysis.tags || []).map(tag => `<span class="ws-tag">${esc(tag)}</span>`).join('');
     const needs = (analysis.needs || []).map(item => `<li>${esc(item)}</li>`).join('');
     const analyzedAt = displayTime(state.analysisMeta?.createdAt);
-    return `<div class="ws-analysis-result"><div class="ws-ai-summary"><strong>${esc(analysis.summary || '暂无摘要')}</strong><span class="ws-confidence ${analysis.lowConfidence ? 'low' : ''}">${analysis.lowConfidence ? 'AI 判断置信度较低，请人工确认。' : `置信度 ${Math.round((Number(analysis.confidence) || 0) * 100)}%`}</span>${analyzedAt ? `<small>分析于 ${esc(analyzedAt)}</small>` : ''}</div><dl class="ws-fact-grid"><div><dt>意向</dt><dd>${esc(analysis.intent || '未识别')} ${analysis.intentScore == null ? '' : `· ${esc(analysis.intentScore)}`}</dd></div><div><dt>情绪</dt><dd>${esc(analysis.emotion || '未识别')}</dd></div><div><dt>语言</dt><dd>${esc(analysis.language || '未识别')}</dd></div><div><dt>紧急程度</dt><dd>${esc(analysis.urgency || '未识别')}</dd></div><div><dt>客户阶段</dt><dd>${esc(analysis.customerStage || '未识别')}</dd></div><div><dt>国家/地区</dt><dd>${esc(analysis.contact?.country || analysis.country || '未提取')}</dd></div><div><dt>产品兴趣</dt><dd>${esc(Array.isArray(analysis.productInterest) ? analysis.productInterest.join('、') : analysis.productInterest || '未提取')}</dd></div><div><dt>预算</dt><dd>${esc(analysis.budget || '未提取')}</dd></div></dl>${needs ? `<div class="ws-analysis-section"><strong>需求</strong><ul>${needs}</ul></div>` : ''}${tags ? `<div class="ws-analysis-section"><strong>标签建议</strong><div class="ws-tag-list">${tags}</div></div>` : ''}<div class="ws-analysis-section"><strong>下一步</strong><p>${esc(analysis.nextStep || '请人工确认下一步沟通')}</p><p class="ws-muted">${esc(analysis.followupTime || '')}</p></div>${analysis.replySuggestion ? `<div class="ws-analysis-section ws-ai-reply"><strong>AI 回复建议</strong><p>${esc(analysis.replySuggestion)}</p><button class="btn small" data-ws-action="use-ai-reply">采用到回复框</button></div>` : ''}${analysis.error ? `<p class="ws-error-line">${esc(analysis.error)}</p>` : ''}</div>`;
+    return `<div class="ws-analysis-result"><div class="ws-ai-summary"><strong>${esc(analysis.summary || '暂无摘要')}</strong><span class="ws-confidence ${analysis.lowConfidence ? 'low' : ''}">${analysis.lowConfidence ? 'AI 判断置信度较低，请人工确认。' : `置信度 ${Math.round((Number(analysis.confidence) || 0) * 100)}%`}</span>${analyzedAt ? `<small>分析于 ${esc(analyzedAt)}</small>` : ''}${state.crmSyncStatus ? `<small class="ws-crm-sync-status">知客联动：${esc(state.crmSyncStatus)}</small>` : ''}</div><dl class="ws-fact-grid"><div><dt>意向</dt><dd>${esc(analysis.intent || '未识别')} ${analysis.intentScore == null ? '' : `· ${esc(analysis.intentScore)}`}</dd></div><div><dt>情绪</dt><dd>${esc(analysis.emotion || '未识别')}</dd></div><div><dt>语言</dt><dd>${esc(analysis.language || '未识别')}</dd></div><div><dt>紧急程度</dt><dd>${esc(analysis.urgency || '未识别')}</dd></div><div><dt>客户阶段</dt><dd>${esc(analysis.customerStage || '未识别')}</dd></div><div><dt>国家/地区</dt><dd>${esc(analysis.contact?.country || analysis.country || '未提取')}</dd></div><div><dt>产品兴趣</dt><dd>${esc(Array.isArray(analysis.productInterest) ? analysis.productInterest.join('、') : analysis.productInterest || '未提取')}</dd></div><div><dt>预算</dt><dd>${esc(analysis.budget || '未提取')}</dd></div></dl>${needs ? `<div class="ws-analysis-section"><strong>需求</strong><ul>${needs}</ul></div>` : ''}${tags ? `<div class="ws-analysis-section"><strong>标签建议</strong><div class="ws-tag-list">${tags}</div></div>` : ''}<div class="ws-analysis-section"><strong>下一步</strong><p>${esc(analysis.nextStep || '请人工确认下一步沟通')}</p><p class="ws-muted">${esc(analysis.followupTime || '')}</p></div>${analysis.replySuggestion ? `<div class="ws-analysis-section ws-ai-reply"><strong>AI 回复建议</strong><p>${esc(analysis.replySuggestion)}</p><button class="btn small" data-ws-action="use-ai-reply">采用到回复框</button></div>` : ''}${analysis.error ? `<p class="ws-error-line">${esc(analysis.error)}</p>` : ''}</div>`;
   }
   function languageOptions(selected, includeAuto = false) {
     const values = [includeAuto ? '自动识别' : '', '中文', 'English', 'हिन्दी', 'العربية', 'Español', 'Português', 'Français', 'Deutsch', 'Русский'].filter(Boolean);
@@ -1332,6 +1359,8 @@
       }, context);
       assertContext(context);
       state.analysisMeta = saved;
+      await syncAnalysisToCrm(current, state.analysis, saved, context);
+      assertContext(context);
       if (state.collectionRun?.id) await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: 'completed', coverageStatus: 'visible' }) }, context).catch(() => {});
       seedDraftFromAnalysis();
       const conversation = state.conversations.find(item => String(item.id) === String(current.id));

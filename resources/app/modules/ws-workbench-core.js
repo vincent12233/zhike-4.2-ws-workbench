@@ -196,6 +196,9 @@
       emotion: profile.emotion,
       aiSummary: profile.aiSummary,
       note: profile.note,
+      source: profile.source,
+      channel: profile.channel || profile.source,
+      assistant: profile.assistant,
     };
     for (const [key, value] of Object.entries(patch)) if (value !== '' && value != null) customer[key] = value;
     if (accountIds.size) customer.wsAccountIds = [...accountIds].slice(0, 100);

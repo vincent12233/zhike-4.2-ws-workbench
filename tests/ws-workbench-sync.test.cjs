@@ -9,10 +9,14 @@ const ui = fs.readFileSync(path.join(root, 'resources', 'app', 'modules', 'ws-wo
 const server = fs.readFileSync(path.join(root, 'resources', 'app', 'server.mjs'), 'utf8');
 const preload = fs.readFileSync(path.join(root, 'resources', 'app', 'ws-preload.cjs'), 'utf8');
 const core = require(path.join(root, 'resources', 'app', 'modules', 'ws-workbench-core.js'));
+const crmSync = require(path.join(root, 'resources', 'app', 'modules', 'ws-crm-sync-core.js'));
 
 assert.ok(core, 'WS core should load');
 assert.deepEqual(core.matchCustomer([{ id: 'c1', wsAccountIds: ['alpha', 'beta'] }], { wsAccountId: 'beta' }).customer?.id, 'c1', 'existing multi-account linkage should match');
 assert.equal(core.matchCustomer([{ id: 'c1', wsAccountIds: ['alpha'] }, { id: 'c2', wsAccountIds: ['beta'] }], { wsAccountId: 'beta' }).kind, 'account', 'account identity should match additively');
+const autoProfile = crmSync.deriveCustomerProfile({ confidence: 0.9, summary: '客户需要报价', contact: { name: '自动客户', phone: '+91 98765 43210' }, tags: ['高意向'] }, { id: 'conv-auto', externalId: 'wa-auto', title: '自动客户' }, 'alpha');
+assert.equal(autoProfile.wsExternalId, 'wa-auto', 'AI 自动同步保留 WS 会话标识');
+assert.equal(autoProfile.phone, '+91 98765 43210', '高置信度 AI 联系方式可进入同步候选');
 
 const cleanVisibleTextSource = preload.slice(preload.indexOf('function cleanVisibleText'), preload.indexOf('function conversationNodes'));
 const cleanVisibleText = vm.runInNewContext(`(${cleanVisibleTextSource})`);
@@ -85,4 +89,8 @@ assert.match(ui, /matchCustomer\([\s\S]*wsAccountId/, 'CRM matching uses WS acco
 assert.match(ui, /wsExternalId: externalId[\s\S]*wsAccountId: context\.accountId/, 'visible discovery matches WS external id and account identity');
 assert.match(ui, /idempotencyKey/, 'reply writes retain idempotency keys');
 assert.match(ui, /core\.restoreFollowupSnapshot/, 'follow-up writes use deterministic rollback helper');
+assert.match(ui, /syncAnalysisToCrm[\s\S]*\/api\/ws\/crm-sync/, 'AI 分析完成后自动同步到知客客户库');
+assert.match(ui, /refreshState/, 'AI CRM 同步后刷新知客工作台共享状态');
+assert.match(server, /\/api\/ws\/crm-sync[\s\S]*writeState\(state\)/, 'AI CRM 同步在服务端事务写入本地客户库');
+assert.match(server, /未来 7 天内应跟进/, '跟进提醒覆盖未来七天的计划任务');
 console.log('ws-workbench-sync: dedupe, stale fencing, cross-account isolation, CRM linkage, rollback and idempotency pass');

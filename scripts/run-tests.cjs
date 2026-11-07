@@ -49,6 +49,7 @@ function runSyntax() {
 function runWs() {
   runSyntax();
   run('WS core rules', [path.join(repo, 'tests', 'ws-workbench-core.test.cjs')]);
+  run('WS AI CRM sync rules', [path.join(repo, 'tests', 'ws-crm-sync-core.test.cjs')]);
   run('WS workbench initialization', [path.join(repo, 'tests', 'ws-workbench-init.test.cjs')]);
   run('WS API and SQLite', [path.join(repo, 'tests', 'ws-workbench-api.test.cjs')]);
   run('WS list preview update', [path.join(repo, 'tests', 'ws-list-preview-update.test.cjs')]);
