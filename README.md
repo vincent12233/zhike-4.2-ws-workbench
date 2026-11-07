@@ -7,7 +7,7 @@
 ## 目录
 
 - `resources/app/`：Electron 渲染层、主进程、本机 API、SQLite 迁移和前端模块。
-- `resources/app/migrations/005-ws-workbench.sql`–`009-ws-resume-alerts.sql`：WS 工作台独立数据迁移，009 为断点采集和跟进提醒状态。
+- `resources/app/migrations/005-ws-workbench.sql`–`010-ai-customer-governance.sql`：WS 工作台、断点采集、跟进提醒和 AI 客户档案治理迁移。
 - `tests/`：WS、备份、HTTP、安装和项目回归测试。
 - `docs/`：项目检查、使用、故障排查、回滚和测试说明。
 - `scripts/`：统一测试入口与可复现的 Windows 安装包构建脚本。
@@ -23,6 +23,7 @@
 - `releases/知客-4.4.7-WS工作台智能录入版.exe`：补齐历史客户标题迁移，清除旧版把消息预览粘连到客户名称的问题。
 - `releases/知客-4.4.8-WS工作台智能录入版.exe`：修复升级启动时仅在消息更新后检查标题的条件遗漏，确保已清洗消息的历史标题也会迁移。
 - `releases/知客-4.4.11-WS工作台智能录入版.exe`：修复顶部连接状态与账号卡状态不同步的问题。
+- `outputs/知客-4.4.21-WS工作台智能录入版.exe`：AI 客户档案自动建档、字段补全、治理审计、回收站和安全删除接口。
 - `zhike-setup.iss`：Windows Inno Setup 安装脚本。
 
 ## 安装包
@@ -34,6 +35,8 @@
 当前 4.2.2 多账号 WS 工作台安装包 SHA-256：`11408056AE239637020F91ECBC89A505F77CCE74C09CDC088590DFCE9AE4A62C`，大小 173,915,466 字节。
 
 当前 4.4.1 安装包 SHA-256：`E6B00666256BB8B92BB9A1B80570C0F34C35D82C2E2EDFA8DB3AC4BFA43C3B60`，大小 `173,938,768` 字节。
+
+当前 4.4.21 安装包 SHA-256：`6FE5BDD1E04C29421C40899C5CCAD17428DFACFFCCFBB7BC1E96867C5796E3FD`，大小 `173,958,356` 字节。
 
 4.4.1 在 4.4.0 基础上补充无需打开会话的列表级 WS 自动采集、预览消息幂等同步、手机与工作台的 12 秒增量轮询、列表预览 AI 分析排队和跟进提醒刷新；原有知客业务数据和统计口径保持不变。
 
