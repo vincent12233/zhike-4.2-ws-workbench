@@ -21,6 +21,7 @@ const splitAccessibleRow = vm.runInNewContext(`(${splitAccessibleRowSource})`, {
 assert.deepEqual(JSON.parse(JSON.stringify(splitAccessibleRow('1条未读消息 Vaishali Joshi. 凌晨2:06 As 此聊天中的新消息将在发送90天后自动消失（除非消息已保留）。'))), { title: 'Vaishali Joshi.', preview: 'As' }, 'WhatsApp unread/time/system markers must not pollute title or preview');
 assert.match(preload, /previewText && title\.toLocaleLowerCase\(\)\.endsWith\(previewText\.toLocaleLowerCase\(\)\)/, 'preload parser removes preview suffix from accessibility titles');
 assert.match(preload, /stripSystemNotice = input => cleanVisibleText\(input\)[\s\S]*自动消失/, 'preload parser removes WhatsApp disappearing-message notices before choosing preview text');
+assert.match(preload, /previewCandidates = \[rowPreview, previewText/, 'preload parser prefers date-delimited row previews over generic contact-name spans');
 
 const splitListPreviewSource = ui.slice(ui.indexOf('function splitListPreview'), ui.indexOf('function normalizeListItem'));
 const splitListPreview = vm.runInNewContext(`(${splitListPreviewSource})`, { text: value => String(value || '') });

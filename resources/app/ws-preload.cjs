@@ -96,7 +96,10 @@ function readConversationNodes() {
     const previewText = wsStripSystemNotice(previewNode?.getAttribute?.('aria-label') || previewNode?.getAttribute?.('aria-description') || previewNode?.getAttribute?.('title') || previewNode?.getAttribute?.('data-pre-plain-text') || '').slice(0, 4000);
     if (previewText && title.toLocaleLowerCase().endsWith(previewText.toLocaleLowerCase()) && title.length > previewText.length) title = title.slice(0, -previewText.length).trim();
     const rowPreview = wsStripSystemNotice(rowParts.preview).slice(0, 4000);
-    const previewCandidates = [previewText, rowPreview, wsStripSystemNotice(pageText.replace(title, '').trim()), wsStripSystemNotice(label)]
+    // Prefer the row parser's date-delimited preview. WhatsApp occasionally
+    // exposes the contact name through a generic span[title], which otherwise
+    // gets mistaken for the latest message and overwrites the real preview.
+    const previewCandidates = [rowPreview, previewText, wsStripSystemNotice(pageText.replace(title, '').trim()), wsStripSystemNotice(label)]
       .filter(value => value && value.toLocaleLowerCase() !== title.toLocaleLowerCase());
     const preview = (previewCandidates[0] || '').slice(0, 4000);
     const timeNode = node.querySelector?.('time, [data-testid*="time"], [aria-label*="AM"], [aria-label*="PM"]');
