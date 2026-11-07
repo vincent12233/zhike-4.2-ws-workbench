@@ -676,7 +676,11 @@ const server = createServer(async (req, res) => {
           }
           return row;
         }).filter(Boolean).map(wsMessagePayload);
-        if (updated && rows.length) db.prepare('UPDATE ws_conversations SET last_message_text=?,updated_at=? WHERE id=? AND account_id=?').run(rows.at(-1).originalText.slice(0, 4000), new Date().toISOString(), conversationId, accountId);
+        // A repeated idempotency batch must still repair the conversation summary.
+        // The message row is intentionally not duplicated, but older builds could
+        // leave last_message_text at the contact name after the first discovery.
+        // Keep this update side-effect free for unread counts and timestamps.
+        if (rows.length) db.prepare('UPDATE ws_conversations SET last_message_text=?,updated_at=? WHERE id=? AND account_id=?').run(rows.at(-1).originalText.slice(0, 4000), new Date().toISOString(), conversationId, accountId);
         return json(res, 200, { batch: wsBatchPayload(previous), inserted: 0, updated, existed: rows.length, messages: rows, repeated: true });
       }
       const now = new Date().toISOString(), batchId = wsCreateId('wsb'), messageIds = [], resultRows = [];

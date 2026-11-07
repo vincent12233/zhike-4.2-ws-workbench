@@ -50,6 +50,15 @@ const json = response => response.json();
     assert.equal(second.inserted, 0);
     assert.equal(second.updated, 1);
     assert.equal(second.messages[0].originalText, 'New offer details');
+    const repeated = await json(await request('/api/ws/messages/batch', { method: 'POST', body: JSON.stringify({
+      conversationId: conversation.id,
+      fingerprint: 'list-preview-new',
+      messages: [{ externalId: 'list-preview-new', direction: 'receive', originalText: 'Airtel India', order: 2, data: { source: 'ws-list-preview', previewOnly: true, listText: 'Airtel India New offer details' } }],
+    }) }));
+    assert.equal(repeated.inserted, 0);
+    assert.equal(repeated.updated, 0);
+    assert.equal(repeated.existed, 1);
+    assert.equal(repeated.repeated, true);
     const rows = await json(await request(`/api/ws/messages?conversationId=${encodeURIComponent(conversation.id)}`));
     assert.equal(rows.messages.length, 1, '列表预览更新不得重复写入消息');
     assert.equal(rows.messages[0].externalId, 'list-preview-new');
