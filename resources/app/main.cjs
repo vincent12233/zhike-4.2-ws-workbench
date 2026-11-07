@@ -25,6 +25,10 @@ let mainWindow = null;
 // session into another account or destroys the previous account's partition.
 const wsViews = new Map();
 const wsAccounts = new Map();
+// Runtime status is owned by the BrowserView, but the account list is backed
+// by SQLite. Keep a small per-account write queue so status transitions are
+// persisted without overlapping PATCH requests or losing the newest state.
+const wsStatusPersistence = new Map();
 let activeWsAccountId = 'default';
 let wsView = null; // legacy alias for the active account's view
 let wsViewState = '未连接';
@@ -229,11 +233,57 @@ async function resolveWsAccount(value = {}) {
   wsAccounts.set(accountId, account);
   return account;
 }
+function persistWsAccountStatus(accountId, status) {
+  const id = normalizeWsAccountId(accountId);
+  if (!servicePort) return;
+  const state = wsStatusPersistence.get(id) || { pending: '', running: false };
+  state.pending = status;
+  wsStatusPersistence.set(id, state);
+  if (state.running) return;
+  state.running = true;
+  void (async () => {
+    try {
+      while (state.pending) {
+        const next = state.pending;
+        state.pending = '';
+        let saved = false;
+        for (let attempt = 0; attempt < 3 && !saved; attempt += 1) {
+          try {
+            const response = await fetch(`http://127.0.0.1:${servicePort}/api/ws/accounts/${encodeURIComponent(id)}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json', 'X-Zhike-Api-Token': apiToken },
+              body: JSON.stringify({ status: next }),
+              signal: AbortSignal.timeout(3000),
+            });
+            if (!response.ok) throw new Error(`status persistence failed: ${response.status}`);
+            saved = true;
+          } catch {
+            if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)));
+          }
+        }
+        if (!saved) {
+          // Leave the latest value queued for the next probe/status transition;
+          // a transient service restart must not overwrite it with stale data.
+          state.pending = state.pending || next;
+          break;
+        }
+      }
+    } finally {
+      state.running = false;
+      if (state.pending) setTimeout(() => persistWsAccountStatus(id, state.pending), 250).unref?.();
+      else if (wsStatusPersistence.get(id) === state) wsStatusPersistence.delete(id);
+    }
+  })();
+}
 function setWsStatus(accountId, status, detail = '') {
   const id = normalizeWsAccountId(accountId);
   const record = wsViews.get(id);
   const next = ['未连接', '等待登录', '登录中', '已连接', '会话过期', '连接失败', '正在重连'].includes(status) ? status : '未连接';
   if (record) record.status = next;
+  const cached = wsAccounts.get(id);
+  const previousCachedStatus = cached?.status;
+  if (cached) cached.status = next;
+  if (previousCachedStatus !== next || !cached) persistWsAccountStatus(id, next);
   if (id === activeWsAccountId) { wsViewState = next; wsViewHidden = record?.hidden !== false; }
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('zhike-ws-status', { accountId: id, status: next, detail: String(detail || '').slice(0, 200) });
 }

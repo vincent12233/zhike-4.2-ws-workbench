@@ -153,6 +153,11 @@ if (Number(db.prepare('PRAGMA user_version').get().user_version || 0) < 9) {
   } catch (error) { db.exec('ROLLBACK'); throw error; }
 }
 
+// BrowserViews do not survive a process restart. Any persisted "connected"
+// state from the previous process is therefore stale until the new view is
+// opened and probed by the Electron main process.
+db.prepare("UPDATE ws_accounts SET status='未连接', updated_at=? WHERE status IN ('已连接','登录中','正在重连')").run(new Date().toISOString());
+
 function databaseDiagnostics() {
   const integrity = db.prepare('PRAGMA integrity_check').all().map(row => Object.values(row)[0]);
   const quickCheck = db.prepare('PRAGMA quick_check').all().map(row => Object.values(row)[0]);

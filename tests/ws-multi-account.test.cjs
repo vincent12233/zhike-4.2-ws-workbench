@@ -48,6 +48,12 @@ async function run() {
     const beta = await server.request('/api/ws/accounts', { method: 'POST', body: JSON.stringify({ id: 'beta', displayName: 'Beta', provider: 'whatsapp', origin: 'https://web.whatsapp.com', partitionKey: 'persist:beta' }) });
     assert.equal(beta.status, 201);
 
+    const connected = await server.request('/api/ws/accounts/default', { method: 'PATCH', body: JSON.stringify({ status: '已连接' }) });
+    assert.equal(connected.status, 200, 'account status PATCH should be accepted');
+    assert.equal((await connected.json()).account.status, '已连接', 'connected status should persist in the account row');
+    const statusList = await (await server.request('/api/ws/accounts')).json();
+    assert.equal(statusList.accounts.find(account => account.id === 'default').status, '已连接', 'account listing should return persisted runtime status');
+
     const defaultConversation = await server.request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'same-external', title: 'Default title' }) });
     assert.equal(defaultConversation.status, 200);
     const defaultBody = await defaultConversation.json();

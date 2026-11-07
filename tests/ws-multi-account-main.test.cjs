@@ -32,6 +32,9 @@ assert.match(main, /function sameWsBounds\(previous,\s*next\)[\s\S]*?previous\.x
 assert.match(main, /if \(sameWsBounds\(record\.lastBounds,\s*next\)\)[\s\S]*?return true;/, 'identical BrowserView bounds skip native setBounds');
 assert.match(main, /function hideWsView\(record\)[\s\S]*?record\.lastBounds\s*=\s*\{\s*hidden:\s*true\s*\}/, 'hiding a BrowserView invalidates the cached visible bounds');
 assert.match(main, /zhike-ws-status[^\n]*accountId|accountId[^\n]*zhike-ws-status/, 'status events include the account id');
+assert.match(main, /persistWsAccountStatus/, 'runtime WS status is persisted to the account row');
+assert.match(main, /method:\s*'PATCH'[\s\S]*api\/ws\/accounts\//, 'status persistence uses the account-scoped PATCH endpoint');
+assert.match(main, /wsStatusPersistence\s*=\s*new Map\(\)/, 'status persistence coalesces rapid transitions per account');
 assert.match(main, /action === ['"]clear-session['"][\s\S]*?accountId/, 'clear-session is account scoped');
 assert.match(main, /action === ['"]open['"][\s\S]*?default/, 'legacy open action still defaults to default account');
 assert.match(preload, /accountId/, 'desktop preload forwards account context');
