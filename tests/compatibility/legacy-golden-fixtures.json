@@ -1,0 +1,30 @@
+{
+  "inputs": {
+    "customers": [
+      { "id": "C1", "phone": "+8613800000001", "name": "客户一", "deleted": false },
+      { "id": "C2", "phone": "+8613800000002", "name": "客户二", "deleted": false }
+    ],
+    "businessRecords": [
+      { "id": "T1", "customerId": "C1", "product": "AAPL", "direction": "买入", "date": "2026-11-01" },
+      { "id": "T2", "customerId": "C1", "product": "TSLA", "direction": "买入", "date": "2026-11-01" },
+      { "id": "T3", "customerId": "C1", "product": "AAPL", "direction": "卖出", "date": "2026-11-08" }
+    ],
+    "importRows": [
+      { "客户名称": "客户二", "股票代码": "NVDA", "登记日期": "20261106", "渠道": "WS", "状态": "待跟进" }
+    ]
+  },
+  "expected": {
+    "homepage": { "customerIds": ["C1", "C2"], "activeCustomerCount": 2 },
+    "businessRecords": {
+      "ticketKeys": [
+        "c1|2026-11-01|aapl|买入|",
+        "c1|2026-11-01|tsla|买入|",
+        "c1|2026-11-08|aapl|卖出|"
+      ]
+    },
+    "imports": [
+      { "customerName": "客户二", "product": "NVDA", "registeredDate": "2026-11-06", "channel": "WS", "status": "待跟进" }
+    ],
+    "statistics": { "customerCount": 2, "businessRecordCount": 3, "buyCount": 2, "sellCount": 1 }
+  }
+}
