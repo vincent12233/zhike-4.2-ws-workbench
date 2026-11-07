@@ -21,7 +21,7 @@
 ## 实际验证
 
 - API、Worker、SQLite→PostgreSQL：`.NET 10` 构建均 0 警告、0 错误。
-- `node tests/server-v2/run-all.cjs`：14/14 通过。
+- `node tests/server-v2/run-all.cjs`：15/15 通过。
 - `node scripts/run-tests.cjs all`：48/48 通过。
 - WS Connector 5 组直接 Node 测试：全部通过。
 - WinUI/桌面静态 smoke：通过；覆盖账号列表、页面职责、折叠布局、API 状态和离线队列。

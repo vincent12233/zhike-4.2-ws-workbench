@@ -23,7 +23,7 @@
 - 原生桌面安装包（WinUI 3 unpackaged + Inno Setup）：`work/winui-installer-output/知客-5.0.0-WinUI桌面版.exe`。
 - Docker 服务端 bundle（PostgreSQL/API/AI Worker/WS Connector/迁移/备份）：`work/server-bundle-final/zhike-server-5.0.0-dev.zip`。
 - 产物均不包含真实业务数据库、AI Key、WS 密码、Cookie、二维码或 Token。
-- bundle SHA-256：`03A42B7A858E22598592716F26995F26F333290EE6F0C05C5F89CC8F96C890AD`，大小 `96,236` 字节。
+- bundle SHA-256：`A43332AB7D1F78700D879F6CFEB57DC6F451E5C03AE6F8ACD83C7DD1A15CB261`，大小 `96,238` 字节。
 - WinUI bundle SHA-256：`4CE86D0162473612D082C3A0AFF00ED911BFC74A10B04068B4FA9613929EE387`，大小 `28,835,180` 字节。
 - WinUI 安装包 SHA-256：`76DDF247904ABA89C93D6F53ABA709ACFCEBA9B00411AF2E0E6A2A2480B937D5`，大小 `24,820,467` 字节。
 
