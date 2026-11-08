@@ -55,7 +55,8 @@ assert.match(ui, /aria-controls="wsAssistPanel"/, 'right collapse control expose
 const gpt = fs.readFileSync(path.join(__dirname, '..', 'resources', 'app', 'modules', 'gpt-assistant.js'), 'utf8');
 assert.match(gpt, /nav\.addEventListener\(['"]click['"][\s\S]*state\.view\s*=\s*['"]gpt['"]/, 'GPT navigation claims the host view so WS observer cannot overwrite it');
 assert.match(css, /ws-account-list|ws-account-row/, 'account cards have dedicated layout styles');
-assert.match(css, /\.ws-layout\.left-collapsed\{grid-template-columns:(?:48|52)px/, 'collapsed left panel keeps a visible narrow rail');
+assert.match(css, /--ws-rail:(?:48|52)px/, 'collapsed panels define a visible narrow rail token');
+assert.match(css, /\.ws-layout\.left-collapsed\{grid-template-columns:var\(--ws-rail\)/, 'collapsed left panel uses the narrow rail token');
 assert.match(css, /body\.ws-mode \.view-container/, 'WS mode tightens outer page padding');
 assert.match(css, /\.ws-page-heading\{[^}]*min-height:38px/, 'WS heading uses compact fixed height');
 assert.match(css, /ws-workbench-page\{[^}]*overflow:hidden/, 'outer workbench does not chase page scroll');
