@@ -2,8 +2,47 @@
     x:Class="Zhike.Desktop.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid MinWidth="820" MinHeight="540" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <NavigationView x:Name="RootNavigation" IsBackEnabled="False" IsSettingsVisible="True" PaneDisplayMode="LeftCompact" SelectionChanged="OnNavigationChanged">
+    <Grid MinWidth="820" MinHeight="540" Background="{StaticResource ZhikePageBackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="64" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="{StaticResource ZhikeSurfaceBrush}"
+                BorderBrush="{StaticResource ZhikeLineBrush}" BorderThickness="0,0,0,1">
+            <Grid Padding="22,0" ColumnSpacing="18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="10">
+                    <Border Width="34" Height="34" CornerRadius="10" Background="{StaticResource ZhikeNavyBrush}">
+                        <TextBlock Text="知" Foreground="White" FontSize="18" FontWeight="Bold"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel VerticalAlignment="Center" Spacing="-2">
+                        <TextBlock Text="知客" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource ZhikeNavyBrush}" />
+                        <TextBlock Text="运营工作台" FontSize="11" Foreground="{StaticResource ZhikeMutedTextBrush}" />
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock Grid.Column="1" Text="业务数据 · AI 跟进 · WS 工作台"
+                           VerticalAlignment="Center" FontSize="12" Foreground="{StaticResource ZhikeMutedTextBrush}" />
+                <Border Grid.Column="2" Background="#E7F8F3" CornerRadius="14" Padding="12,5"
+                        VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Ellipse Width="7" Height="7" Fill="{StaticResource ZhikeTealBrush}" />
+                        <TextBlock Text="本机优先 · 已连接" FontSize="12" Foreground="#0A806E" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <NavigationView Grid.Row="1" x:Name="RootNavigation" IsBackEnabled="False"
+                        IsSettingsVisible="True" IsPaneToggleButtonVisible="True"
+                        PaneDisplayMode="LeftCompact" CompactPaneLength="64" OpenPaneLength="224"
+                        SelectionChanged="OnNavigationChanged"
+                        Background="{StaticResource ZhikePageBackgroundBrush}">
             <NavigationView.MenuItems>
                 <NavigationViewItem Content="首页" Tag="home" Icon="Home" />
                 <NavigationViewItem Content="客户中心" Tag="customers" Icon="Contact" />
@@ -12,6 +51,11 @@
                 <NavigationViewItem Content="WS 工作台" Tag="ws" Icon="Message" />
                 <NavigationViewItem Content="AI 跟进提醒" Tag="ai" Icon="Important" />
             </NavigationView.MenuItems>
+            <NavigationView.PaneFooter>
+                <Border Background="{StaticResource ZhikeSurfaceMutedBrush}" CornerRadius="8" Margin="8,4" Padding="10,7">
+                    <TextBlock Text="数据仅保存到本机/私有服务" FontSize="11" Foreground="{StaticResource ZhikeMutedTextBrush}" TextWrapping="Wrap" />
+                </Border>
+            </NavigationView.PaneFooter>
             <Frame x:Name="ContentFrame" />
         </NavigationView>
     </Grid>

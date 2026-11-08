@@ -32,7 +32,12 @@ foreach ($candidate in $candidates) {
 }
 if (-not $iscc) { throw 'Inno Setup compiler was not found.' }
 New-Item -ItemType Directory -Force -Path $out | Out-Null
-& $iscc "/DStageDir=$stage" "/DBuildOutputDir=$out" "/DAppVersion=$AppVersion" (Join-Path $repo 'zhike-desktop-setup.iss')
+# ISCC parses /D values itself. Explicitly quote paths so a repository or
+# output directory containing spaces is passed as one macro value; without
+# this, the compiler can silently truncate StageDir and package stale files.
+$stageDefine = '/DStageDir="' + $stage + '"'
+$outputDefine = '/DBuildOutputDir="' + $out + '"'
+& $iscc $stageDefine $outputDefine "/DAppVersion=$AppVersion" (Join-Path $repo 'zhike-desktop-setup.iss')
 if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
 $installer = Get-ChildItem -LiteralPath $out -Filter '*.exe' -File |
   Sort-Object LastWriteTimeUtc -Descending |

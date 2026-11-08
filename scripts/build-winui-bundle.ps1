@@ -5,7 +5,12 @@ param(
   [ValidateSet('Debug','Release')]
   [string]$Configuration = 'Release',
   [string]$RuntimeIdentifier = 'win-x64',
-  [switch]$SelfContained
+  # WinUI 3 unpackaged apps need the Windows App SDK runtime resources
+  # beside the executable. Keep self-contained as the safe default; use
+  # -FrameworkDependent only when the target machine is known to have the
+  # exact matching runtime installed.
+  [switch]$SelfContained,
+  [switch]$FrameworkDependent
 )
 
 Set-StrictMode -Version Latest
@@ -35,8 +40,19 @@ New-Item -ItemType Directory -Force -Path $stage | Out-Null
 
 & $dotnet restore $project -r $RuntimeIdentifier -p:RestoreLockedMode=false -v:minimal
 if ($LASTEXITCODE -ne 0) { throw "dotnet restore failed with exit code $LASTEXITCODE" }
+$useSelfContained = -not $FrameworkDependent -or $SelfContained
 $publishArgs = @('publish', $project, '-c', $Configuration, '-r', $RuntimeIdentifier, '--no-restore', '-o', $stage, '-v:minimal')
-if ($SelfContained) { $publishArgs += '--self-contained'; $publishArgs += 'true' } else { $publishArgs += '--self-contained'; $publishArgs += 'false' }
+if ($useSelfContained) {
+  $publishArgs += '-p:WindowsAppSDKSelfContained=true'
+  $publishArgs += '-p:WindowsPackageType=None'
+  $publishArgs += '--self-contained'
+  $publishArgs += 'true'
+} else {
+  $publishArgs += '-p:WindowsAppSDKSelfContained=false'
+  $publishArgs += '-p:WindowsPackageType=None'
+  $publishArgs += '--self-contained'
+  $publishArgs += 'false'
+}
 & $dotnet @publishArgs
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed with exit code $LASTEXITCODE" }
 
@@ -58,4 +74,4 @@ $manifest = @(
 $manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $stage 'bundle-manifest.json') -Encoding UTF8
 Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $archive -CompressionLevel Optimal
 $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash
-Write-Output (ConvertTo-Json @{ version = $Version; runtime = $RuntimeIdentifier; selfContained = [bool]$SelfContained; archive = $archive; sha256 = $hash; stage = $stage })
+Write-Output (ConvertTo-Json @{ version = $Version; runtime = $RuntimeIdentifier; selfContained = [bool]$useSelfContained; archive = $archive; sha256 = $hash; stage = $stage })

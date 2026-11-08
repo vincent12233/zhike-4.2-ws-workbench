@@ -15,6 +15,13 @@ for (const service of ['ApiClient.cs', 'LocalQueue.cs', 'WindowLayoutService.cs'
   assert.equal(fs.existsSync(path.join(desktopRoot, 'Services', service)), true, `missing desktop service ${service}`);
 
 const windowXaml = fs.readFileSync(path.join(desktopRoot, 'MainWindow.xaml'), 'utf8');
+const appXaml = fs.readFileSync(path.join(desktopRoot, 'App.xaml'), 'utf8');
+assert.match(appXaml, /XamlControlsResources/, 'App.xaml must register WinUI control resources before NavigationView is created');
+for (const token of ['ZhikePageBackgroundBrush', 'ZhikeNavyBrush', 'ZhikeTealBrush', 'ZhikeSurfaceBrush'])
+  assert.match(appXaml, new RegExp(token), `App.xaml missing visual token ${token}`);
+assert.match(windowXaml, /本机优先 · 已连接/, 'native shell must expose the local-first status pill');
+const windowCode = fs.readFileSync(path.join(desktopRoot, 'MainWindow.xaml.cs'), 'utf8');
+assert.match(windowCode, /知客工作台/, 'native window title must use Zhike branding');
 for (const tag of ['customers', 'import', 'operations', 'ws', 'ai']) assert.match(windowXaml, new RegExp(`Tag="${tag}"`));
 const wsXaml = fs.readFileSync(path.join(desktopRoot, 'Views', 'WsWorkbenchPage.xaml'), 'utf8');
 assert.doesNotMatch(wsXaml, /Microsoft\.Web\.WebView2\.WinUI/);
