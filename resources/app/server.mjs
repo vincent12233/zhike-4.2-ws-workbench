@@ -1414,7 +1414,8 @@ const server = createServer(async (req, res) => {
       if (req.method === 'GET' && (subpath === '' || subpath === 'diagnostics')) {
         const identity = hotProfileIdentity({ customerId: url.searchParams.get('customerId'), accountId: url.searchParams.get('accountId'), conversationId: url.searchParams.get('conversationId') });
         wsRequireAccount(identity.accountId);
-        const row = hotProfileRow(identity) || ensureHotProfile(identity);
+        let row = hotProfileRow(identity);
+        if (!row) { db.exec('BEGIN IMMEDIATE'); try { row = ensureHotProfile(identity); db.exec('COMMIT'); } catch (error) { db.exec('ROLLBACK'); throw error; } }
         const profile = hotProfilePayload(row);
         if (subpath === 'diagnostics') {
           const events = db.prepare('SELECT * FROM hot_chat_events WHERE profile_id=? ORDER BY created_at DESC,id DESC LIMIT 100').all(row.id).map(item => ({ id: item.id, type: item.event_type, payload: wsJson(item.payload_json, {}), source: item.source, analysisId: item.analysis_id, idempotencyKey: item.idempotency_key, createdAt: item.created_at }));
