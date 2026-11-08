@@ -10,7 +10,7 @@ const installer = fs.readFileSync(path.join(repo, 'scripts/build-winui-installer
 const setup = fs.readFileSync(path.join(repo, 'zhike-desktop-setup.iss'), 'utf8');
 const attributes = fs.readFileSync(path.join(repo, '.gitattributes'), 'utf8');
 
-assert.match(bundle, /Version\s*=\s*'5\.1\.0'/);
+assert.match(bundle, /Version\s*=\s*'5\.2\.0'/);
 assert.match(bundle, /resourcesRoot/);
 assert.match(bundle, /'index\.html'/);
 assert.match(bundle, /'app\.js'/);
@@ -41,7 +41,7 @@ assert.match(setup, /UninstallDisplayIcon=\{app\}\\zhike\.ico/);
 
 const project = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Zhike.Desktop.csproj'), 'utf8');
 assert.match(project, /ApplicationIcon>Assets\\zhike\.ico</);
-assert.match(project, /<Version>5\.1\.0<\/Version>/);
+assert.match(project, /<Version>5\.2\.0<\/Version>/);
 assert.match(bundle, /-p:Version=\$Version/);
 assert.match(bundle, /-p:FileVersion=\$Version\.0/);
 assert.equal(fs.existsSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Assets', 'zhike.ico')), true, 'brand ico must be tracked');

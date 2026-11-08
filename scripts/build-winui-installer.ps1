@@ -5,7 +5,7 @@ param(
   # version's binaries.
   [string]$StageDir = '',
   [string]$OutputDir = '',
-  [string]$AppVersion = '5.1.0',
+  [string]$AppVersion = '5.2.0',
   [switch]$SkipWebView2Check,
   [switch]$AllowUnsigned
 )

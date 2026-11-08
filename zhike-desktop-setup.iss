@@ -1,8 +1,8 @@
 #ifndef AppVersion
-#define AppVersion "5.1.0"
+#define AppVersion "5.2.0"
 #endif
 #ifndef StageDir
-#define StageDir "work\\winui-bundle\\zhike-winui-5.1.0-win-x64"
+#define StageDir "work\\winui-bundle\\zhike-winui-5.2.0-win-x64"
 #endif
 #ifndef BuildOutputDir
 #define BuildOutputDir "work\\winui-installer-output"

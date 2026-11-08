@@ -1,4 +1,7 @@
-# 知客桌面版 + Docker 服务端实施报告
+# 知客桌面版 + Docker 服务端实施报告（历史基线）
+
+> 本报告记录 5.0/v5 实施阶段的验证，不代表 5.2.0 的最终验收。当前版本、schema 011、
+> 回滚和未验证门禁请以 `docs/release-notes-5.2.0.md` 为准。
 
 ## 交付边界
 
@@ -30,7 +33,7 @@
 - WinUI Inno 安装包：隔离安装、安装后启动、卸载文件清理通过；卸载不删除 `%LOCALAPPDATA%\\Zhike` 用户数据目录（脚本无删除规则）。
 - Electron 4.4.24 安装 QA：隔离安装、覆盖安装、WS 资源、卸载后用户数据保留均通过。
 - 10,000/50,000 条合成索引搜索参考测试通过；本机参考耗时约 10k 建索引 0.14 秒、搜索 0.01 秒，50k 建索引 0.69 秒、搜索 0.03 秒。
-- Docker Desktop 4.98.0 / Engine 29.9.2 / Compose 5.6.1 已在隔离项目 `zhike-smoke-20261108` 实测启动 PostgreSQL 18.6、API、AI Worker 和备份服务；API 宿主端口 `127.0.0.1:48180` 可达，当前版本应执行 10 个迁移，健康接口返回实际 `schemaVersion=10` 和 `workerStatus=running`。
+- Docker Desktop 4.98.0 / Engine 29.9.2 / Compose 5.6.1 已在隔离项目 `zhike-smoke-20261108` 实测启动 PostgreSQL 18.6、API、AI Worker 和备份服务；API 宿主端口 `127.0.0.1:48180` 可达；当时版本执行 10 个迁移并返回 `schemaVersion=10`。5.2.0 新增 011 迁移，当前值以 `/api/v2/health` 实际响应为准。
 - Docker 配对实测：无审批证明的 Host/桥接容器请求返回 403，携带本地 `X-Zhike-Pairing-Approval` 证明后才返回 200；转发身份头、伪造 `Host: remote.example` 和内部容器伪造均返回 403。WS 批次首次写入 1 条、重复批次去重 1 条，跨账号坏批次返回 400 且消息数不变；旧断点游标 99 不会覆盖已保存的 101。
 - AI 未配置实测：任务保持 `pending`、`attempts=0` 并记录“AI 服务尚未配置”，不会生成空客户或空分析；配置 AI 后可继续消费。Worker 镜像内 `pg_dump`/`pg_restore` 为 18.6，49,358 字节隔离 dump 恢复到临时库成功（迁移 9、消息 1、AI 任务 1）。
 - 使用本机隔离假 AI（不含真实 Key）实测成功链路：AI 返回的姓名、电话、国家、来源、年龄、职业、阶段、预算和产品兴趣补齐客户档案，生成 1 条高优先级跟进任务并将 AI 任务置为 `succeeded`；修复了嵌套 JSON 文档释放导致的重试/死信问题。

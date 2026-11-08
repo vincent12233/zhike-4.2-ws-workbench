@@ -79,6 +79,7 @@ function runAll() {
   run('10k/50k performance scale', [path.join(repo, 'tests', 'performance-scale.test.cjs')]);
   run('automatic backup isolation', [path.join(repo, 'tests', 'automatic-backup-test.cjs'), path.join(app, 'main.cjs')]);
   run('Task 6 stability and operations contract', [path.join(repo, 'tests', 'task6-stability.test.cjs')]);
+  run('release 5.2 version consistency', [path.join(repo, 'tests', 'release-5.2-consistency.test.cjs')]);
   run('HTTP asset smoke', [path.join(repo, 'tests', 'upgrade-http-smoke.test.cjs'), app]);
   run('backup and restore drill', [path.join(repo, 'tests', 'backup-restore-drill.cjs'), app]);
   run('project audit regression', [

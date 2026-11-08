@@ -1,4 +1,8 @@
-# v5.0.0-dev 服务器版实施记录
+# v5.0.0-dev 服务器版实施记录（历史）
+
+> 这是 5.0.0-dev 的历史实施记录，不是当前发布验收结果。当前生产版本为 5.2.0，
+> 请以 `docs/release-notes-5.2.0.md`、`docs/server-version-deployment.md` 和实际
+> `/api/v2/health` 响应为准。
 
 ## 已实现
 
