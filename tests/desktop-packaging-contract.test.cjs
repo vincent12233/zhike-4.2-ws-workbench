@@ -22,7 +22,7 @@ assert.match(bundle, /sourceArchive/);
 assert.match(bundle, /WindowsAppSDKSelfContained=true/);
 assert.match(bundle, /sourceArchiveBytes/);
 assert.match(attributes, /releases\/\*\.exe\s+export-ignore/);
-assert.match(installer, /expectedName/);
+assert.match(installer, /expectedPattern/);
 assert.match(installer, /StageDir/);
 assert.match(installer, /requiredStageFiles/);
 assert.match(installer, /resources\\app\\app\.js/);
