@@ -44,6 +44,7 @@ assert.match(wsCode, /web\.whatsapp\.com/);
 assert.equal(fs.existsSync(path.join(desktopRoot, 'Views', 'LegacyUiHostPage.xaml')), true);
 assert.equal(fs.existsSync(path.join(desktopRoot, 'Views', 'LegacyUiHostPage.xaml.cs')), true);
 const legacyHostCode = fs.readFileSync(path.join(desktopRoot, 'Views', 'LegacyUiHostPage.xaml.cs'), 'utf8');
+const legacyHostXaml = fs.readFileSync(path.join(desktopRoot, 'Views', 'LegacyUiHostPage.xaml'), 'utf8');
 assert.match(legacyHostCode, /FlushBeforeCloseAsync/);
 assert.match(legacyHostCode, /PROFILE_CLEAR_FAILED/);
 assert.match(legacyHostCode, /args\.Source/);
@@ -56,6 +57,9 @@ assert.match(legacyHostCode, /Task\.WhenAny|WaitAsync\(timeout|WaitAsync\(TimeSp
 assert.match(legacyHostCode, /Debug\.WriteLine/);
 assert.match(legacyHostCode, /ForceDetachWsOverlay/);
 assert.match(legacyHostCode, /response is null/);
+assert.match(legacyHostXaml, /WebViewHost[^>]*SizeChanged="OnWebViewHostSizeChanged"/);
+assert.match(legacyHostCode, /RequestWsOverlayResize/);
+assert.match(legacyHostCode, /Math\.Clamp\(GetDouble\(bounds,\s*"width"|Math\.Clamp\(GetDouble\(bounds,\s*"height"/);
 assert.match(windowCode, /SetIcon\(/, 'the branded icon must be applied to the native title bar');
 assert.match(windowCode, /if\s*\(!flushed\)[\s\S]*_allowCloseAfterFlush\s*=\s*true/, 'a failed best-effort flush must not permanently block the close button');
 assert.match(windowCode, /if \(!flushed\)/);
@@ -71,8 +75,8 @@ const homeCode = fs.readFileSync(path.join(desktopRoot, 'Views', 'HomePage.xaml.
 assert.match(homeCode, /ComputePairingProof/);
 assert.match(homeCode, /SetPairingApprovalCode/);
 const layout = fs.readFileSync(path.join(desktopRoot, 'Services', 'WindowLayoutService.cs'), 'utf8');
-assert.match(layout, /Math\.Max\(820/);
-assert.match(layout, /Math\.Max\(540/);
+assert.doesNotMatch(layout, /Math\.Max\(820|Math\.Max\(540/);
+assert.match(layout, /Math\.Max\(0d?,\s*width\s*\/\s*scale\)/);
 assert.match(layout, /DpiScale/);
 assert.match(layout, /SaveAsync/);
 assert.match(layout, /LoadAsync/);

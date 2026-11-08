@@ -10,6 +10,8 @@ const design = fs.readFileSync(path.join(repo, 'resources/app/modules/design-sys
 const hostCss = fs.readFileSync(path.join(repo, 'resources/app/modules/desktop-host.css'), 'utf8');
 const layout = fs.readFileSync(path.join(repo, 'desktop/src/Zhike.Desktop/Services/WindowLayoutService.cs'), 'utf8');
 const wsCode = fs.readFileSync(path.join(repo, 'desktop/src/Zhike.Desktop/Views/WsWorkbenchPage.xaml.cs'), 'utf8');
+const legacyXaml = fs.readFileSync(path.join(repo, 'desktop/src/Zhike.Desktop/Views/LegacyUiHostPage.xaml'), 'utf8');
+const legacyCode = fs.readFileSync(path.join(repo, 'desktop/src/Zhike.Desktop/Views/LegacyUiHostPage.xaml.cs'), 'utf8');
 
 assert.match(css, /--ws-left-min|ws-layout-vars/, 'WS layout must expose shared responsive variables');
 assert.match(css, /@media \(max-width:900px\)/, 'WS must provide the tablet tab layout');
@@ -25,5 +27,14 @@ assert.match(design, /\.table-scroll,\.table-wrap,\.task-table-wrap,\.registry-t
 assert.match(design, /\.sidebar\{[^}]*width:224px[^}]*flex-basis:224px/, 'expanded navigation width must be stable');
 assert.match(design, /\.topbar\{[^}]*height:52px[^}]*min-height:52px/, 'topbar height must be stable');
 assert.match(design, /\.app-footer\{[^}]*height:28px/, 'footer height must be stable');
+assert.doesNotMatch(layout, /Math\.Max\(820|Math\.Max\(540/, 'responsive layout must not silently upscale small windows');
+assert.match(layout, /Math\.Max\(0d?,\s*width\s*\/\s*scale\)/, 'layout must preserve the actual logical width at small sizes');
+assert.match(legacyXaml, /WebViewHost[^>]*SizeChanged="OnWebViewHostSizeChanged"/, 'WS overlay host must react to native size changes');
+assert.match(legacyXaml, /WsOverlayBorder[^>]*BorderThickness="0"/, 'WS overlay must be edge-to-edge without a second frame');
+assert.match(legacyCode, /wsResizeTimer/, 'WS overlay resize must be coalesced');
+assert.match(legacyCode, /TimeSpan\.FromMilliseconds\(150\)/, 'WS overlay resize debounce must be short and deterministic');
+assert.match(legacyCode, /Math\.Clamp\(GetDouble\(bounds,\s*"x"|Math\.Clamp\(GetDouble\(bounds,\s*"y"/, 'WS overlay position must be clamped to the host');
+assert.match(legacyCode, /Math\.Clamp\(GetDouble\(bounds,\s*"width"|Math\.Clamp\(GetDouble\(bounds,\s*"height"/, 'WS overlay size must be clamped to the host');
+assert.match(wsCode, /ActualWidth\s*<=\s*0|NewSize\.Width\s*<=\s*0/, 'WS layout must ignore transient zero-size measurements');
 
 console.log('desktop responsive contract: DPI, breakpoints and WS adaptive layout are present');

@@ -11,9 +11,9 @@
                 Background="{StaticResource ZhikeSurfaceBrush}"
                 BorderBrush="{StaticResource ZhikeLineBrush}"
                 BorderThickness="1" CornerRadius="8">
-            <Grid x:Name="WebViewHost">
+            <Grid x:Name="WebViewHost" SizeChanged="OnWebViewHostSizeChanged">
                 <Canvas x:Name="WsOverlayLayer" Visibility="Collapsed" IsHitTestVisible="True">
-                    <Border x:Name="WsOverlayBorder" Background="White" BorderBrush="{StaticResource ZhikeLineBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border x:Name="WsOverlayBorder" Background="Transparent" BorderThickness="0" CornerRadius="0">
                         <Grid x:Name="WsOverlayHost" />
                     </Border>
                 </Canvas>

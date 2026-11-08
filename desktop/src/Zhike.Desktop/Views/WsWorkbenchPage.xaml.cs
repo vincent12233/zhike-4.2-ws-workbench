@@ -149,6 +149,7 @@ public sealed partial class WsWorkbenchPage : Page
 
     private void ApplyResponsiveLayout()
     {
+        if (WorkbenchRoot.ActualWidth <= 0 || WorkbenchRoot.ActualHeight <= 0) return;
         var state = _layout.CalculateLayout(WorkbenchRoot.ActualWidth, WorkbenchRoot.ActualHeight, WorkbenchRoot.XamlRoot?.RasterizationScale ?? 1d, _leftCollapsed, _rightCollapsed);
         LeftPaneColumn.Width = new GridLength(state.LeftPaneWidth);
         RightPaneColumn.Width = new GridLength(state.RightPaneWidth);
@@ -174,6 +175,7 @@ public sealed partial class WsWorkbenchPage : Page
 
     private async Task PersistLayoutAsync()
     {
+        if (WorkbenchRoot.ActualWidth <= 0 || WorkbenchRoot.ActualHeight <= 0) return;
         try
         {
             var state = _layout.ApplyLayout(WorkbenchRoot.ActualWidth, WorkbenchRoot.ActualHeight, WorkbenchRoot.XamlRoot?.RasterizationScale ?? 1d, _leftCollapsed, _rightCollapsed);

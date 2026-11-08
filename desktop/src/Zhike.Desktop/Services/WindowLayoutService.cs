@@ -19,25 +19,25 @@ public sealed class WindowLayoutService
     public LayoutState ApplyLayout(double width, double height, double dpiScale, bool leftCollapsed, bool rightCollapsed)
     {
         var scale = dpiScale is > 0 and < 4 ? dpiScale : 1;
-        var logicalWidth = Math.Max(820, width / scale);
-        var logicalHeight = Math.Max(540, height / scale);
+        var logicalWidth = Math.Max(0d, width / scale);
+        var logicalHeight = Math.Max(0d, height / scale);
         var left = leftCollapsed ? 0 : Math.Clamp(logicalWidth * 0.18, 170, 260);
         var right = rightCollapsed ? 0 : Math.Clamp(logicalWidth * 0.24, 260, 360);
-        var content = Math.Max(360, logicalWidth - left - right - 24);
+        var content = Math.Max(0d, logicalWidth - left - right - 24);
         return new LayoutState(logicalWidth, logicalHeight, left, right, content, leftCollapsed, rightCollapsed, scale);
     }
 
     public ResponsiveLayout CalculateLayout(double width, double height, double dpiScale, bool leftCollapsed, bool rightCollapsed)
     {
         var scale = dpiScale is > 0 and < 4 ? dpiScale : 1;
-        var logicalWidth = Math.Max(820, width / scale);
-        var logicalHeight = Math.Max(540, height / scale);
+        var logicalWidth = Math.Max(0d, width / scale);
+        var logicalHeight = Math.Max(0d, height / scale);
         var mobile = logicalWidth <= 900;
-        var narrow = logicalWidth <= 1150;
+        var narrow = logicalWidth <= 1200;
         var left = leftCollapsed ? 52 : (narrow ? 190 : 224);
         var right = rightCollapsed ? 52 : (narrow ? 300 : 340);
         if (mobile && !rightCollapsed) right = 52;
-        var center = Math.Max(320, logicalWidth - left - right - 24);
+        var center = Math.Max(0d, logicalWidth - left - right - 24);
         return new ResponsiveLayout(logicalWidth, logicalHeight, left, center, right, leftCollapsed, rightCollapsed || mobile, mobile, scale);
     }
 

@@ -25,6 +25,7 @@ public sealed partial class LegacyUiHostPage : Page
     private WebView2? _webView;
     private WebView2? _wsView;
     private DispatcherQueueTimer? _wsSyncTimer;
+    private DispatcherQueueTimer? _wsResizeTimer;
     private string _activeWsAccountId = "default";
     private string _wsViewAccountId = "";
     private long _wsGeneration;
@@ -45,6 +46,17 @@ public sealed partial class LegacyUiHostPage : Page
         {
             _wsSyncTimer.Interval = TimeSpan.FromSeconds(10);
             _wsSyncTimer.Tick += async (_, _) => await FlushWsQueueAsync();
+        }
+        _wsResizeTimer = DispatcherQueue.GetForCurrentThread()?.CreateTimer();
+        if (_wsResizeTimer is not null)
+        {
+            _wsResizeTimer.Interval = TimeSpan.FromMilliseconds(150);
+            _wsResizeTimer.IsRepeating = false;
+            _wsResizeTimer.Tick += async (_, _) =>
+            {
+                _wsResizeTimer.Stop();
+                await ResizeWsOverlayFromDomAsync();
+            };
         }
     }
 
@@ -67,7 +79,10 @@ public sealed partial class LegacyUiHostPage : Page
             await CloseWsOverlayAsync(false, cancellationToken: cancellationToken);
         }
         else
+        {
+            RequestWsOverlayResize();
             _ = ResizeWsOverlayFromDomAsync();
+        }
     }
 
     public async Task<bool> TryReloadAsync(CancellationToken cancellationToken = default)
@@ -191,7 +206,20 @@ public sealed partial class LegacyUiHostPage : Page
             _webView.CoreWebView2.ProcessFailed -= OnLegacyProcessFailed;
         }
         _wsSyncTimer?.Stop();
+        _wsResizeTimer?.Stop();
         HideWsOverlay();
+    }
+
+    private void OnWebViewHostSizeChanged(object sender, SizeChangedEventArgs args)
+        => RequestWsOverlayResize();
+
+    private void RequestWsOverlayResize()
+    {
+        if (!string.Equals(_currentRoute, "ws-workbench", StringComparison.OrdinalIgnoreCase)
+            || _wsView?.CoreWebView2 is null)
+            return;
+        _wsResizeTimer?.Stop();
+        _wsResizeTimer?.Start();
     }
 
     private void ForceDetachWsOverlay()
@@ -646,6 +674,7 @@ public sealed partial class LegacyUiHostPage : Page
                 _wsView.CoreWebView2.Reload();
             }
             ApplyWsBounds(payload);
+            RequestWsOverlayResize();
             await SetWsStatusAsync(accountId, "等待登录", cancellationToken);
         }
         catch (OperationCanceledException)
@@ -714,12 +743,19 @@ public sealed partial class LegacyUiHostPage : Page
             HideWsOverlay();
             return;
         }
-        var width = Math.Max(40, GetDouble(bounds, "width"));
-        var height = Math.Max(40, GetDouble(bounds, "height"));
-        var x = Math.Max(0, GetDouble(bounds, "x"));
-        var y = Math.Max(0, GetDouble(bounds, "y"));
-        WsOverlayBorder.Width = Math.Min(width, Math.Max(40, WebViewHost.ActualWidth - x));
-        WsOverlayBorder.Height = Math.Min(height, Math.Max(40, WebViewHost.ActualHeight - y));
+        var hostWidth = Math.Max(0d, WebViewHost.ActualWidth);
+        var hostHeight = Math.Max(0d, WebViewHost.ActualHeight);
+        if (hostWidth < 40 || hostHeight < 40)
+        {
+            HideWsOverlay();
+            return;
+        }
+        var x = Math.Clamp(GetDouble(bounds, "x"), 0d, Math.Max(0d, hostWidth - 40d));
+        var y = Math.Clamp(GetDouble(bounds, "y"), 0d, Math.Max(0d, hostHeight - 40d));
+        var width = Math.Clamp(GetDouble(bounds, "width"), 40d, Math.Max(40d, hostWidth - x));
+        var height = Math.Clamp(GetDouble(bounds, "height"), 40d, Math.Max(40d, hostHeight - y));
+        WsOverlayBorder.Width = width;
+        WsOverlayBorder.Height = height;
         Canvas.SetLeft(WsOverlayBorder, x);
         Canvas.SetTop(WsOverlayBorder, y);
         WsOverlayLayer.Visibility = Visibility.Visible;
@@ -924,7 +960,11 @@ public sealed partial class LegacyUiHostPage : Page
         => element.TryGetProperty(name, out var value) && value.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined ? value.ToString().Trim() : string.Empty;
 
     private static double GetDouble(JsonElement element, string name)
-        => element.TryGetProperty(name, out var value) && value.TryGetDouble(out var result) ? result : 0;
+        => element.TryGetProperty(name, out var value)
+            && value.TryGetDouble(out var result)
+            && double.IsFinite(result)
+            ? result
+            : 0;
 
     private static bool GetBool(JsonElement element, string name)
         => element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.True;
