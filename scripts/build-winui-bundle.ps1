@@ -113,8 +113,15 @@ $manifestDocument | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Pat
 Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $archive -CompressionLevel Optimal
 $sourceCommit = if ([string]::IsNullOrWhiteSpace($sourceCommit)) { 'unavailable' } else { $sourceCommit }
 if ($sourceCommit -ne 'unavailable') {
+  if (Test-Path -LiteralPath $sourceArchive) { Remove-Item -LiteralPath $sourceArchive -Force }
   & git -C $repo archive --format=zip --output=$sourceArchive $sourceCommit
   if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $sourceArchive)) { throw 'source archive generation failed' }
+  # Release installers are kept in Git LFS and are delivered separately; they
+  # are artifacts rather than source.  Refuse an unexpectedly expanded archive
+  # so a smudge/filter regression cannot silently produce a multi-gigabyte
+  # source package or make the hash race with a still-running LFS process.
+  $sourceArchiveBytes = (Get-Item -LiteralPath $sourceArchive).Length
+  if ($sourceArchiveBytes -gt 100MB) { throw "source archive unexpectedly exceeds 100 MB ($sourceArchiveBytes bytes)" }
 }
 $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash
 $sourceHash = if (Test-Path -LiteralPath $sourceArchive) { (Get-FileHash -LiteralPath $sourceArchive -Algorithm SHA256).Hash } else { $null }
