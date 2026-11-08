@@ -8,6 +8,13 @@ namespace Zhike.Infrastructure.Repositories;
 
 public sealed class WsRepository(PostgresConnectionFactory connections)
 {
+    // Keep provider requests bounded even when a connector sends a very large
+    // message or a long-running conversation. The newest messages are loaded
+    // first, then returned in chronological order for a natural prompt.
+    private const int MaxContextMessages = 20;
+    private const int MaxContextMessageChars = 2000;
+    private const int MaxContextChars = 20_000;
+
     public async Task<IReadOnlyList<WsAccountRow>> ListAccountsAsync(CancellationToken cancellationToken = default)
     {
         await using var connection = connections.Create();
@@ -143,6 +150,7 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
         else
         {
             var dedupeKey = $"ai.analysis:{accountId}:{fingerprint}";
+            var context = await LoadRecentContextAsync(connection, transaction, accountId, conversationId, cancellationToken);
             await using var ai = new NpgsqlCommand("""
                 INSERT INTO ai_jobs(id, job_type, dedupe_key, payload)
                 VALUES ($1, 'ai.analysis', $2, $3)
@@ -150,7 +158,7 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
                 """, connection, transaction);
             ai.Parameters.AddWithValue($"job-{ShortHash(dedupeKey)}");
             ai.Parameters.AddWithValue(dedupeKey);
-            ai.Parameters.Add(new NpgsqlParameter { NpgsqlDbType = NpgsqlDbType.Jsonb, Value = JsonSerializer.Serialize(new { messageId = actualMessageId, conversationId, accountId, conversationKey, body = envelope.Body, sentAt }) });
+            ai.Parameters.Add(new NpgsqlParameter { NpgsqlDbType = NpgsqlDbType.Jsonb, Value = JsonSerializer.Serialize(new { messageId = actualMessageId, conversationId, accountId, conversationKey, body = envelope.Body, sentAt, context = context }) });
             await ai.ExecuteNonQueryAsync(cancellationToken);
 
             await using var outbox = new NpgsqlCommand("""
@@ -168,6 +176,48 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
 
         if (inserted) await AuditWriter.AppendAsync(connection, transaction, "ws", accountId, "ws.message.ingested", "message", actualMessageId, new { conversationId, fingerprint, direction = envelope.Direction }, cancellationToken);
         return new IngestResult(actualMessageId, !inserted, conversationId);
+    }
+
+    private static async Task<IReadOnlyList<object>> LoadRecentContextAsync(
+        NpgsqlConnection connection,
+        NpgsqlTransaction transaction,
+        string accountId,
+        string conversationId,
+        CancellationToken cancellationToken)
+    {
+        await using var command = new NpgsqlCommand($"""
+            SELECT id, body, direction, COALESCE(sent_at, observed_at) AS occurred_at
+            FROM messages
+            WHERE account_id = $1 AND conversation_id = $2
+            ORDER BY sent_at DESC NULLS LAST, observed_at DESC, id DESC
+            LIMIT {MaxContextMessages}
+            """, connection, transaction);
+        command.Parameters.AddWithValue(accountId);
+        command.Parameters.AddWithValue(conversationId);
+
+        var newestFirst = new List<object>(MaxContextMessages);
+        var usedChars = 0;
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var body = reader.IsDBNull(1) ? string.Empty : reader.GetString(1).Trim();
+            if (body.Length == 0) continue;
+            if (body.Length > MaxContextMessageChars) body = body[..MaxContextMessageChars];
+            if (usedChars > 0 && usedChars + body.Length > MaxContextChars) break;
+            var occurredAt = reader.GetFieldValue<DateTimeOffset>(3).ToUniversalTime();
+            newestFirst.Add(new
+            {
+                messageId = reader.GetString(0),
+                body,
+                direction = reader.GetString(2),
+                sentAt = occurredAt,
+            });
+            usedChars += body.Length;
+            if (usedChars >= MaxContextChars) break;
+        }
+
+        newestFirst.Reverse();
+        return newestFirst;
     }
 
     public async Task SaveCheckpointAsync(string accountId, string conversationKey, string cursor, string fingerprint, DateTimeOffset updatedAt, CancellationToken cancellationToken = default)

@@ -7,6 +7,8 @@ const tests = [
   'compose-network.test.cjs',
   'ai-unconfigured.test.cjs',
   'ai-provider-lifetime.test.cjs',
+  'ai-hot-chat-worker.test.cjs',
+  'ws-ai-context.test.cjs',
   'postgres-migrations.test.cjs',
   'hot-chat-profile.test.cjs',
   'sqlite-postgres-migration.test.cjs',
