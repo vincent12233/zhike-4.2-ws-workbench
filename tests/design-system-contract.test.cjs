@@ -35,6 +35,8 @@ assert.match(css, /\.data-table\s+th[^}]*font-size:\s*12px/, 'table headers must
 assert.match(css, /@media\s*\(max-width:\s*1200px\)/, 'medium layout breakpoint must be explicit');
 assert.match(css, /@media\s*\(max-width:\s*900px\)/, 'small layout breakpoint must be explicit');
 assert.match(css, /@media\s*\(max-width:\s*640px\)/, 'phone layout breakpoint must be explicit');
+assert.match(css, /\.sidebar:not\(\.collapsed\)\{[^}]*width:224px[^}]*flex-basis:224px/, 'manual sidebar expansion must override the medium rail');
+assert.match(css, /\.sidebar:not\(\.collapsed\) \.nav-item\{[^}]*justify-content:flex-start/, 'expanded sidebar must restore text alignment');
 assert.match(css, /prefers-reduced-motion/, 'motion preferences must be respected');
 assert.match(css, /animation:\s*none\s*!important/, 'continuous visual animation must be disabled by default');
 assert.match(html, /modules\/design-system\.css/, 'index must load the unified design system last');

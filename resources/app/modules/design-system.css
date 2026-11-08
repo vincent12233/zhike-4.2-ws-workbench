@@ -60,3 +60,28 @@ body.ws-mode{background:var(--zk-bg)}body.ws-mode .view-container{padding:12px 1
 @media (max-width:640px){.brand{height:52px}.topbar{padding:7px 10px}.breadcrumbs{font-size:11px}.view-container{padding:12px 10px 24px}.page-title{font-size:20px!important}.page-heading{margin-bottom:12px;padding-bottom:9px}.heading-actions{flex-wrap:wrap}.heading-actions .btn{height:32px;font-size:12px}.metric-grid,.business-summary,.segment-summary{grid-template-columns:1fr}.filter-grid{grid-template-columns:1fr 1fr}.table-toolbar{align-items:stretch;flex-direction:column}.toolbar-controls{flex-wrap:wrap}.global-search{width:100%}.ws-browser-host{height:calc(100dvh - 170px)}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:0.01ms!important;scroll-behavior:auto!important}}
 html[data-motion="off"] *,html[data-motion="off"] *::before,html[data-motion="off"] *::after{animation:none!important;transition:none!important}
+
+/* A manual expand must remain usable at 125%/150% DPI. The JavaScript
+   adapter still defaults to the compact rail at narrow widths, but once the
+   user clicks the rail control the labels and workspace switch return. */
+@media (max-width:1200px){
+  .sidebar:not(.collapsed){width:224px;flex-basis:224px}
+  .sidebar:not(.collapsed) .brand-copy,
+  .sidebar:not(.collapsed) .workspace-switch>div:nth-child(2),
+  .sidebar:not(.collapsed) .workspace-switch>svg,
+  .sidebar:not(.collapsed) .nav-group-label,
+  .sidebar:not(.collapsed) .nav-item span,
+  .sidebar:not(.collapsed) .nav-count,
+  .sidebar:not(.collapsed) .live-dot,
+  .sidebar:not(.collapsed) .storage-copy,
+  .sidebar:not(.collapsed) .profile-button>div:nth-child(2),
+  .sidebar:not(.collapsed) .profile-button>svg{display:initial}
+  .sidebar:not(.collapsed) .brand-copy{display:grid}
+  .sidebar:not(.collapsed) .workspace-switch>div:nth-child(2){display:grid}
+  .sidebar:not(.collapsed) .nav-group-label{display:block}
+  .sidebar:not(.collapsed) .nav-item{justify-content:flex-start;padding:0 10px}
+  .sidebar:not(.collapsed) .workspace-switch{width:auto;margin:6px 10px 10px;justify-content:flex-start;padding:9px 10px}
+  .sidebar:not(.collapsed) .storage-card{width:auto;margin:0 0 6px;justify-content:flex-start;padding:0 9px}
+  .sidebar:not(.collapsed) .profile-button{justify-content:flex-start}
+  .sidebar:not(.collapsed) .collapse-button{display:grid;position:static;right:auto;top:auto}
+}
