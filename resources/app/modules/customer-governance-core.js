@@ -8,6 +8,7 @@
   const list = value => Array.isArray(value) ? value.map(text).filter(Boolean).slice(0, 30) : text(value) ? [text(value)] : [];
   const finite = value => Number.isFinite(Number(value)) ? Number(value) : '';
   const safeJson = value => JSON.parse(JSON.stringify(value ?? null));
+  const redactSensitive = value => text(value).replace(/(?:password|passcode|token|cookie|secret|验证码|校验码|密码|银行卡|收款码|二维码)[^\s，。；;]*/ig, '[已脱敏]');
 
   const FIELD_MAP = Object.freeze({
     name: ['name', 'customerName'],
@@ -49,7 +50,9 @@
   }
 
   function normalizeAge(value) {
-    const number = Number(String(value ?? '').match(/\d{1,3}/)?.[0] || '');
+    const match = String(value ?? '').match(/\d{1,3}/);
+    if (!match) return '';
+    const number = Number(match[0]);
     return Number.isFinite(number) && number >= 0 && number <= 120 ? number : '';
   }
 
@@ -62,18 +65,18 @@
       const field = text(item.field);
       if (!field || !fields[field] || text(item.value) === '') continue;
       const value = fields[field];
-      const sourceText = text(item.text || item.sourceText || result.summary).slice(0, 2000);
+      const sourceText = text(item.text || item.sourceText || result.summary).replace(/(?:password|passcode|token|cookie|secret|验证码|校验码|密码|银行卡|收款码|二维码)[^\s，。；;]*/ig, '[已脱敏]').slice(0, 2000);
       const key = `${analysisId}:${field}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      rows.push({ key, field, value, sourceText, confidence: Number(result.confidence) || 0, analysisId, conversationId });
+      rows.push({ key, field, value: redactSensitive(value), sourceText, confidence: Number(result.confidence) || 0, analysisId, conversationId });
     }
     for (const field of Object.keys(fields)) {
       if (!fields[field]) continue;
       const key = `${analysisId}:${field}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      rows.push({ key, field, value: fields[field], sourceText: text(result.summary).slice(0, 2000), confidence: Number(result.confidence) || 0, analysisId, conversationId });
+      rows.push({ key, field, value: redactSensitive(fields[field]), sourceText: text(result.summary).replace(/(?:password|passcode|token|cookie|secret|验证码|校验码|密码|银行卡|收款码|二维码)[^\s，。；;]*/ig, '[已脱敏]').slice(0, 2000), confidence: Number(result.confidence) || 0, analysisId, conversationId });
     }
     const profileFacts = result?.profileFacts && typeof result.profileFacts === 'object' ? result.profileFacts : {};
     for (const [field, fact] of Object.entries(profileFacts)) {
@@ -81,7 +84,7 @@
       const key = `${analysisId}:profile:${field}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      rows.push({ key, field, value: fact.value, sourceText: text(fact.evidence).slice(0, 2000), confidence: Number(fact.confidence ?? result.confidence) || 0, analysisId, conversationId });
+      rows.push({ key, field, value: redactSensitive(fact.value), sourceText: text(fact.evidence).replace(/(?:password|passcode|token|cookie|secret|验证码|校验码|密码|银行卡|收款码|二维码)[^\s，。；;]*/ig, '[已脱敏]').slice(0, 2000), confidence: Number(fact.confidence ?? result.confidence) || 0, analysisId, conversationId });
     }
     return rows;
   }
@@ -93,7 +96,8 @@
     const rawPhone = readNested(result, 'phone');
     const productInterest = list(readNested(result, 'productInterest'));
     const profileFacts = result.profileFacts && typeof result.profileFacts === 'object' ? result.profileFacts : {};
-    const factValue = key => profileFacts[key]?.value ?? readNested(result, key);
+    const factList = key => { const value = factValue(key); const values = list(value); return values.length ? values : ''; };
+    const factValue = key => { const fact = profileFacts[key]; if (fact && (fact.state === 'declined' || Number(fact.confidence || 0) < 0.6 || !text(fact.evidence || fact.sourceText))) return ''; return fact?.value ?? readNested(result, key); };
     const fields = {
       name: text(readNested(result, 'name') || factValue('preferred_name') || conversation.title || conversation.externalId || '未命名客户'),
       phone: normalizePhone(rawPhone),
@@ -108,11 +112,11 @@
       work_context: text(factValue('work_context')),
       is_investor: factValue('is_investor') ?? '',
       investment_years: normalizeAge(factValue('investment_years')),
-      holdings: list(factValue('holdings')),
-      investment_habits: list(factValue('investment_habits')),
-      investment_preferences: list(factValue('investment_preferences')),
+      holdings: factList('holdings'),
+      investment_habits: factList('investment_habits'),
+      investment_preferences: factList('investment_preferences'),
       family_context: text(factValue('family_context')),
-      life_interests: list(factValue('life_interests')),
+      life_interests: factList('life_interests'),
       future_plans: text(factValue('future_plans')),
       productInterest: productInterest.join('、'),
       budget: text(readNested(result, 'budget')),
@@ -174,7 +178,7 @@
         conflicts.push({ field, existing: customer[field], incoming: value, analysisId: profile.analysisId || '' });
       }
     }
-    const dynamic = { intent: profile.intent, intentScore: profile.intentScore, emotion: profile.emotion, aiSummary: profile.aiSummary, preferred_name: profile.preferred_name, gender: profile.gender, work_context: profile.work_context, is_investor: profile.is_investor, investment_years: profile.investment_years, holdings: profile.holdings, investment_habits: profile.investment_habits, investment_preferences: profile.investment_preferences, family_context: profile.family_context, life_interests: profile.life_interests, future_plans: profile.future_plans };
+    const dynamic = { intent: profile.intent, intentScore: profile.intentScore, emotion: profile.emotion, aiSummary: profile.aiSummary };
     for (const [field, value] of Object.entries(dynamic)) {
       if (value === '' || value == null) continue;
       if (JSON.stringify(customer[field]) !== JSON.stringify(value)) { customer[field] = value; changedFields.push(field); }
@@ -236,3 +240,5 @@
 
   return { normalizeAiProfile, mergeAiProfileSafely, shouldAutoSoftDelete, buildGovernanceAction, normalizePhone, normalizeAge };
 });
+
+

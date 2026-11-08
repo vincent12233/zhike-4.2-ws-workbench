@@ -56,7 +56,7 @@
     if (input.willingToTalk || input.customerTemperature === 'hot' || input.customerTemperature === 'warm') return 'blue';
     return COLORS.has(input.aiColor) ? input.aiColor : 'gray';
   }
-  function deriveNextTopics(input = {}) { return list(input.missingFields || PROFILE_FIELDS.filter(field => input.profile?.[field]?.state !== 'known')).filter((field, index, arr) => PROFILE_FIELDS.includes(field) && arr.indexOf(field) === index).slice(0, 3); }
+  function deriveNextTopics(input = {}) { const natural = list(input.naturalNextTopics || input.nextTopics); if (natural.length) return natural.slice(0, 3); return list(input.missingFields || PROFILE_FIELDS.filter(field => input.profile?.[field]?.state !== 'known')).filter((field, index, arr) => PROFILE_FIELDS.includes(field) && arr.indexOf(field) === index).slice(0, 3); }
   function assessNoReply(input = {}) {
     const now = Number(input.now) || Date.now(); const inbound = new Date(input.lastInboundAt || 0).getTime(); const outbound = new Date(input.lastOutboundAt || 0).getTime();
     const days = outbound && now > outbound ? (now - outbound) / 86400000 : 0; const cooldownDays = Number(input.cooldownDays) || 3; const cooldown = Boolean(input.followupCount >= 2 || (days >= cooldownDays && (!inbound || inbound <= outbound)));

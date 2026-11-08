@@ -42,3 +42,9 @@ assert.equal(event.payload.secret, undefined);
 assert.equal(JSON.stringify(event).includes('token-123'), false);
 
 console.log('hot-chat-profile-core: pass');
+const ws = require('../resources/app/modules/ws-workbench-core.js');
+const parsedContract = ws.parseAiResult(JSON.stringify({ confidence: 0.9, profileFacts: { age: { value: 40, confidence: 0.2, evidence: '我40岁', state: 'pending' }, unknown: { value: 'x', confidence: 1, evidence: 'x' }, gender: { value: '女', confidence: 0.9, evidence: '我是女性', state: 'declined' } }, naturalNextTopics: ['聊聊旅行'] }));
+assert.deepEqual(Object.keys(parsedContract.profileFacts), ['age', 'gender']);
+assert.equal(parsedContract.profileFacts.gender.state, 'declined');
+assert.deepEqual(parsedContract.profileFactsAutoFill, {});
+assert.deepEqual(core.deriveNextTopics({ missingFields: ['age'], naturalNextTopics: ['聊聊旅行'] }), ['聊聊旅行']);

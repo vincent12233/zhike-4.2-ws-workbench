@@ -38,3 +38,21 @@ All completed with exit code 0.
 
 - Status color thresholds are encoded as pure-function defaults and should be aligned with any future user-configurable thresholds.
 - Profile fact list values are normalized for governance storage as joined strings during protected-field merge.
+
+## Review fix round 1
+
+### RED
+
+Added regression assertions for allowlisted parser fields, declined state preservation, natural next topics, low-confidence facts, manual conflict protection, empty defaults, and sensitive evidence. Initial run failed on unknown parser fields and empty/default handling as expected.
+
+### GREEN
+
+Focused commands all passed after fixes:
+
+- `node tests/hot-chat-profile-core.test.cjs`
+- `node tests/customer-governance-core.test.cjs`
+- `node tests/ws-workbench-core.test.cjs`
+- `node tests/ws-crm-sync-core.test.cjs`
+- `node --check` for all modified core modules
+
+Fixes include profile field allowlisting/state preservation, confidence/evidence gating, empty numeric/list normalization, removal of unconditional dynamic overwrites, natural topic preference, and evidence value/source redaction.

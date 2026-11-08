@@ -56,3 +56,13 @@ assert.equal(audit.analysisId, 'a1');
 assert.equal(audit.confidence, 0.92);
 
 console.log('customer governance core: profile normalization, protected fields, evidence dedupe, soft-delete threshold passed');
+const lowFact = core.normalizeAiProfile({ confidence: 0.9, profileFacts: { age: { value: 44, confidence: 0.2, evidence: '我44岁' }, holdings: { value: [], confidence: 0.9, evidence: '' } } }, { id: 'c2' }, 'a2');
+assert.equal(lowFact.age, '');
+assert.equal(lowFact.investment_years, '');
+assert.equal(lowFact.holdings, '');
+const conflictCustomer = { preferred_name: '人工称呼' };
+const conflict = core.mergeAiProfileSafely(conflictCustomer, { preferred_name: 'AI称呼', evidence: [] });
+assert.equal(conflict.customer.preferred_name, '人工称呼');
+assert.equal(conflict.conflicts.some(item => item.field === 'preferred_name'), true);
+const sensitive = core.normalizeAiProfile({ confidence: 0.9, profileFacts: { family_context: { value: '密码 token-abc', confidence: 0.9, evidence: '密码 token-abc' } } }, { id: 'c3' }, 'a3');
+assert.equal(JSON.stringify(sensitive.evidence).includes('token-abc'), false);

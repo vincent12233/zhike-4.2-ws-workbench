@@ -68,11 +68,12 @@
   function normalizeProfileFacts(value, overallConfidence = 0) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
     const output = {};
-    for (const [field, input] of Object.entries(value).slice(0, 13)) {
+    const allowed = new Set(['preferred_name','age','gender','occupation','work_context','is_investor','investment_years','holdings','investment_habits','investment_preferences','family_context','life_interests','future_plans']);
+    for (const [field, input] of Object.entries(value).filter(([key]) => allowed.has(key)).slice(0, 13)) {
       const fact = input && typeof input === 'object' && !Array.isArray(input) ? input : { value: input };
       const confidence = Number.isFinite(Number(fact.confidence)) ? Math.max(0, Math.min(1, Number(fact.confidence))) : Number(overallConfidence) || 0;
       const evidence = text(fact.evidence || fact.sourceText || fact.quote).slice(0, 2000);
-      output[field] = { value: fact.value ?? null, confidence, evidence, state: confidence >= 0.6 && evidence ? 'known' : (fact.value == null || fact.value === '' ? 'missing' : 'pending') };
+      output[field] = { value: fact.value ?? null, confidence, evidence, state: ['known','missing','pending','declined'].includes(fact.state) ? fact.state : (confidence >= 0.6 && evidence ? 'known' : (fact.value == null || fact.value === '' ? 'missing' : 'pending')) };
     }
     return output;
   }
@@ -115,7 +116,7 @@
       lowConfidence: !Number.isFinite(confidence) || confidence < 0.6,
       raw,
     };
-    result.profileFactsAutoFill = result.lowConfidence ? {} : Object.fromEntries(Object.entries(result.profileFacts).filter(([, fact]) => fact && fact.evidence && fact.confidence >= 0.6 && fact.value != null && fact.value !== ''));
+    result.profileFactsAutoFill = result.lowConfidence ? {} : Object.fromEntries(Object.entries(result.profileFacts).filter(([, fact]) => fact && fact.state === 'known' && fact.evidence && fact.confidence >= 0.6 && fact.value != null && fact.value !== ''));
     if (result.lowConfidence) result.warning = 'AI 判断置信度较低，请人工确认。';
     return result;
   }
