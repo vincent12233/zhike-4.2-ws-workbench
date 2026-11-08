@@ -60,19 +60,19 @@
                 <NavigationViewItem Content="VIP 管理" Tag="vip" Icon="Favorite" />
 
                 <NavigationViewItemHeader Content="业务数据" />
-                <NavigationViewItem Content="跟票管理" Tag="tickets" Icon="Trending" />
+                <NavigationViewItem Content="跟票管理" Tag="tickets" Icon="Target" />
                 <NavigationViewItem Content="报名统计" Tag="registrations" Icon="ContactInfo" />
-                <NavigationViewItem Content="入金管理" Tag="deposits" Icon="Money" />
-                <NavigationViewItem Content="统计分析" Tag="analytics" Icon="BarChart4" />
+                <NavigationViewItem Content="入金管理" Tag="deposits" Icon="Calculator" />
+                <NavigationViewItem Content="统计分析" Tag="analytics" Icon="FourBars" />
 
                 <NavigationViewItemHeader Content="系统管理" />
                 <NavigationViewItem Content="WS 工作台" Tag="ws" Icon="Message" />
                 <NavigationViewItem x:Name="gptAssistantNav" Content="GPT 运营助手" Tag="gpt" Icon="Important" />
                 <NavigationViewItem Content="AI 跟进提醒" Tag="ai" Icon="Important" />
                 <NavigationViewItem Content="本地自动化" Tag="automation" Icon="Sync" />
-                <NavigationViewItem Content="数据治理" Tag="quality" Icon="Shield" />
-                <NavigationViewItem Content="数据中心" Tag="data" Icon="Database" />
-                <NavigationViewItem Content="操作记录" Tag="activity" Icon="History" />
+                <NavigationViewItem Content="数据治理" Tag="quality" Icon="ProtectedDocument" />
+                <NavigationViewItem Content="数据中心" Tag="data" Icon="Library" />
+                <NavigationViewItem Content="操作记录" Tag="activity" Icon="Clock" />
                 <NavigationViewItem Content="回收站" Tag="recycle" Icon="Delete" />
                 <NavigationViewItem Content="系统设置" Tag="settings" Icon="Setting" />
                 <NavigationViewItem Content="手机号登记" Tag="phone-registry" Icon="Phone" />

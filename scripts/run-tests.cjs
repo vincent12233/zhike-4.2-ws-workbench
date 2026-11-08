@@ -62,6 +62,7 @@ function runWs() {
 }
 
 function runAll() {
+  run('desktop startup XAML contract', [path.join(repo, 'tests', 'desktop-startup-contract.test.cjs')]);
   run('customer governance core', [path.join(repo, 'tests', 'customer-governance-core.test.cjs')]);
   run('customer governance API', [path.join(repo, 'tests', 'customer-governance-api.test.cjs')]);
   run('customer governance UI', [path.join(repo, 'tests', 'customer-governance-ui.test.cjs')]);
