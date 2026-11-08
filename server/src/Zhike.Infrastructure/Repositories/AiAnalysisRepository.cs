@@ -291,7 +291,11 @@ public sealed class AiAnalysisRepository(PostgresConnectionFactory connections)
             var state = field.State is "known" or "missing" or "pending" or "declined" ? field.State : "pending";
             var confidence = Math.Clamp(field.Confidence, 0, 1);
             if (state == "known" && (confidence < MinimumConfidence || string.IsNullOrWhiteSpace(field.Evidence))) state = "pending";
-            await using var current = new NpgsqlCommand("SELECT value_json, state, manual_locked FROM hot_chat_profile_fields WHERE profile_id = $1 AND field_name = $2", connection, transaction);
+            // Cast JSONB to text explicitly. Npgsql 9 can materialize JSONB as
+            // JsonDocument depending on the type mapper; GetString would then
+            // throw and abort the whole AI sync transaction. The profile reader
+            // uses the same explicit cast for deterministic provider behavior.
+            await using var current = new NpgsqlCommand("SELECT value_json::text, state, manual_locked FROM hot_chat_profile_fields WHERE profile_id = $1 AND field_name = $2", connection, transaction);
             current.Parameters.AddWithValue(profileId);
             current.Parameters.AddWithValue(field.Field);
             string? currentJson = null;

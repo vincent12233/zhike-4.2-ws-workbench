@@ -41,6 +41,8 @@ assert.match(sync, /ON CONFLICT.*job_id|existing.*analysis|duplicate/i, 'repeate
 assert.match(sync, /AutoSyncAllowed|MinimumConfidence/, 'repository must gate low-confidence writes');
 assert.doesNotMatch(sync, /input\.Fields/, 'repository must not reference a non-existent legacy result field map');
 assert.match(sync, /ValidateConversationScopeAsync/, 'cross-account conversations must be rejected before customer creation');
+assert.doesNotMatch(sync, /SELECT value_json, state, manual_locked/, 'JSONB values must be cast to text before GetString to avoid Npgsql materialization errors');
+assert.match(sync, /value_json::text, state, manual_locked/, 'profile fact reads must use a deterministic JSONB text projection');
 
 // Reminder worker must atomically mark and enqueue one notification.
 assert.match(reminder, /FOR UPDATE SKIP LOCKED/);
