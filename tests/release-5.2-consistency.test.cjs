@@ -44,6 +44,8 @@ assert.match(activeVersionSources.serverBundleScript, /\[string\]\$Version\s*=\s
 assert.match(activeVersionSources.serverBundleScript, /release-notes-5\.2\.0\.md/);
 assert.match(activeVersionSources.winuiBundleScript, /release-notes-5\.2\.0\.md/);
 assert.match(activeVersionSources.winuiBundleScript, /hot-chat-profile-usage\.md/);
+assert.match(activeVersionSources.installerScript, /rollback[\s\S]{0,140}Zhike 用户数据/);
+assert.doesNotMatch(activeVersionSources.installerScript, /rollback[\s\S]{0,140}ZhikeNative/);
 
 const releaseNotes = read('docs/release-notes-5.2.0.md');
 assert.match(releaseNotes, /^# 知客 5\.2\.0 发布说明/m);

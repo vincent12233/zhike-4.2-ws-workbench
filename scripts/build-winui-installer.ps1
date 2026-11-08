@@ -116,5 +116,5 @@ Write-Output (ConvertTo-Json @{
   bytes = $installerItem.Length
   webView2Version = if ($webView2Version) { $webView2Version } else { 'not-detected' }
   signingStatus = if ($certificate) { 'certificate-configured' } else { 'unsigned-placeholder' }
-  rollback = '覆盖升级保留 %LOCALAPPDATA%\ZhikeNative 用户数据；安装失败时使用上一版安装包回滚。'
+  rollback = '覆盖升级保留 %LOCALAPPDATA%\Zhike 用户数据；安装失败时使用上一版安装包回滚。'
 })
