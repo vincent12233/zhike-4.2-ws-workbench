@@ -26,6 +26,8 @@
 - `releases/知客-4.4.8-WS工作台智能录入版.exe`：修复升级启动时仅在消息更新后检查标题的条件遗漏，确保已清洗消息的历史标题也会迁移。
 - `releases/知客-4.4.11-WS工作台智能录入版.exe`：修复顶部连接状态与账号卡状态不同步的问题。
 - `work/legacy-installer-output/知客-4.4.24-WS工作台智能录入版.exe`：跟票多股票独立记录、旧股票字段兼容、VIP 编号管理、客户分类联动、AI 客户档案自动建档、字段补全、治理审计、回收站和安全删除接口。
+- `releases/知客-4.4.24-WS工作台智能录入版.exe`：当前兼容回滚安装包，通过 Git LFS 保存。
+- `releases/知客-5.0.0-WinUI桌面版.exe`：WinUI 3 + WebView2 桌面壳和 Docker 服务端连接页，通过 Git LFS 保存。
 - `zhike-setup.iss`：Windows Inno Setup 安装脚本。
 - `desktop/`：WinUI 3 原生桌面壳；WebView2 仅承载 WS 登录/聊天/账号 Profile。
 - `server/`、`infra/`、`connectors/ws-worker/`：PostgreSQL/API/AI Worker/可选 WS 连接器和版本化迁移。
