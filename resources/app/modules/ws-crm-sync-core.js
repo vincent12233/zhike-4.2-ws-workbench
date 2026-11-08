@@ -16,7 +16,13 @@
     if (analysis?.error || !Number.isFinite(confidence) || confidence < 0.6) return false;
     const contact = analysis?.contact && typeof analysis.contact === 'object' ? analysis.contact : {};
     const profile = analysis?.profile && typeof analysis.profile === 'object' ? analysis.profile : {};
-    return Boolean(text(contact.phone || contact.account || contact.name || analysis.customerName || analysis.phone || profile.origin || profile.age || profile.occupation || profile.job || profile.productInterest || analysis.productInterest || analysis.country || analysis.language || analysis.budget || analysis.intent || analysis.nextStep || analysis.followupTime));
+    const facts = analysis?.profileFacts && typeof analysis.profileFacts === 'object' ? analysis.profileFacts : {};
+    const factSignal = Object.values(facts).some(item => {
+      if (!item || typeof item !== 'object') return Boolean(text(item));
+      const state = text(item.state).toLowerCase();
+      return state !== 'declined' && Number(item.confidence ?? confidence) >= 0.6 && text(item.evidence || item.sourceText) && item.value != null && text(item.value) !== '';
+    });
+    return Boolean(factSignal || text(contact.phone || contact.account || contact.name || analysis.customerName || analysis.phone || profile.origin || profile.age || profile.occupation || profile.job || profile.productInterest || analysis.productInterest || analysis.country || analysis.language || analysis.budget || analysis.intent || analysis.nextStep || analysis.followupTime));
   }
 
   function listValue(value) {
@@ -27,11 +33,18 @@
     const result = analysis && typeof analysis === 'object' ? analysis : {};
     const contact = result.contact && typeof result.contact === 'object' ? result.contact : {};
     const profile = result.profile && typeof result.profile === 'object' ? result.profile : {};
+    const facts = result.profileFacts && typeof result.profileFacts === 'object' ? result.profileFacts : {};
+    const fact = (name) => {
+      const item = facts[name];
+      if (!item || typeof item !== 'object') return item ?? '';
+      const state = text(item.state).toLowerCase();
+      return state === 'declined' || Number(item.confidence ?? result.confidence) < 0.6 || !text(item.evidence || item.sourceText) ? '' : item.value ?? '';
+    };
     const trusted = shouldAutoSync(result);
     const productInterest = listValue(result.productInterest);
     const tags = listValue(result.tags);
     const phone = trusted ? text(contact.phone || result.phone) : '';
-    const name = text(contact.name || result.customerName || conversation.title || conversation.externalId || '未命名客户');
+    const name = text(contact.name || result.customerName || fact('preferred_name') || conversation.title || conversation.externalId || '未命名客户');
     return {
       wsExternalId: text(conversation.externalId),
       wsAccountId: text(accountId) || 'default',
@@ -42,8 +55,8 @@
       country: trusted ? text(contact.country || result.country) : '',
       language: text(result.language),
       origin: trusted ? text(profile.origin || result.origin || result.leadSource) : '',
-      age: trusted && Number.isFinite(Number(profile.age || result.age)) ? Number(profile.age || result.age) : '',
-      occupation: trusted ? text(profile.occupation || profile.job || result.occupation || result.job) : '',
+      age: trusted && Number.isFinite(Number(profile.age || result.age || fact('age'))) ? Number(profile.age || result.age || fact('age')) : '',
+      occupation: trusted ? text(profile.occupation || profile.job || result.occupation || result.job || fact('occupation')) : '',
       productInterest: productInterest.join('、'),
       budget: trusted ? text(result.budget) : '',
       customerStage: text(result.customerStage || result.stage),
@@ -129,12 +142,17 @@
 
   function deriveFollowupPlan(analysis = {}, analysisMeta = {}, conversation = {}, accountId = 'default') {
     const result = analysis && typeof analysis === 'object' ? analysis : {};
-    const nextDate = normalizeDate(result.followupTime);
+    const noReply = result.noReply && typeof result.noReply === 'object' ? result.noReply : (result.noReplyAssessment && typeof result.noReplyAssessment === 'object' ? result.noReplyAssessment : null);
+    const nextDate = normalizeDate(result.followupTime || noReply?.suggestedAt || noReply?.nextAt);
     const urgency = text(result.urgency);
     const intentScore = Number(result.intentScore || 0);
     const urgent = /高|紧急|urgent|hot/i.test(urgency) || intentScore >= 80;
-    const note = [text(result.nextStep), text(result.summary)].filter(Boolean).join('；').slice(0, 1000);
-    const shouldCreate = Boolean(note || nextDate || urgent);
+    const note = [text(result.nextStep), text(result.summary), text(noReply?.reason)].filter(Boolean).join('；').slice(0, 1000);
+    // A no-reply analysis may still produce a reminder, but only at the
+    // provider's suggested/cooldown date; it must never turn every poll into
+    // an immediate follow-up task.
+    const noReplyReminder = Boolean(noReply?.noReply || noReply?.isNoReply) && Boolean(nextDate);
+    const shouldCreate = Boolean((!noReply?.noReply && (note || nextDate || urgent)) || noReplyReminder);
     const analysisId = text(analysisMeta.id);
     const conversationId = text(conversation.id);
     const dedupeKey = `${text(accountId) || 'default'}:${conversationId}:${analysisId || stableHash(JSON.stringify([result.summary, result.nextStep, result.followupTime, result.intentScore]))}`;

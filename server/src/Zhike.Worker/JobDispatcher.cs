@@ -141,7 +141,7 @@ public sealed class JobDispatcher(AiJobRepository jobs, AiAnalysisRepository syn
             }
             catch (Exception error)
             {
-                logger.LogWarning("AI job {JobId} failed; it will be retried or dead-lettered", claim.Id);
+                logger.LogWarning("AI job {JobId} failed with {ErrorType}; it will be retried or dead-lettered", claim.Id, error.GetType().Name);
                 await jobs.FailAsync(claim.Id, "AI analysis failed", 5, cancellationToken);
             }
         }

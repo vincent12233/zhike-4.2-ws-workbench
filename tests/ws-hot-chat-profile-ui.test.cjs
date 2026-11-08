@@ -19,6 +19,9 @@ for (const selector of ['ws-hot-profile-card', 'ws-hot-profile-field', 'ws-hot-p
   assert.match(css, new RegExp(`\\.${selector}`), `CSS should define ${selector}`);
 }
 assert.match(ui, /profile\/diagnostics/, 'UI should load profile diagnostics from the local API');
+for (const field of ['conversationProgress', 'customerTemperature', 'profileSummary', 'nextTopics', 'noReply', 'tags']) {
+  assert.match(ui, new RegExp(field), `hot-chat progress metadata ${field} should be rendered and restored`);
+}
 assert.match(ui, /pending|declined|missing/, 'UI should distinguish pending, declined and missing profile facts');
 assert.match(ui, /aria-readonly="true" readonly/, 'locked profile facts must be read-only in the UI');
 assert.doesNotMatch(ui, /data-hot-profile-color[^>]*onchange|matches\('\[data-hot-profile-color\]'\).*saveHotProfileColor/, 'changing the color selector alone must not write twice');

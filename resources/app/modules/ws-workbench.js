@@ -327,12 +327,16 @@
   function hotProfileDerived(profile) {
     const fields = Object.fromEntries(hotProfileProfileFields(profile).map(item => [item.field, item]));
     const missingFields = hotProfileProfileFields(profile).filter(item => item.state !== 'known' && item.state !== 'declined').map(item => item.field);
-    const nextTopics = hotProfileCore.deriveNextTopics?.({ profile: fields, missingFields, naturalNextTopics: state.analysis?.naturalNextTopics }) || missingFields.slice(0, 3);
+    const persistedTopics = Array.isArray(profile?.nextTopics) ? profile.nextTopics.map(text).filter(Boolean).slice(0, 3) : [];
+    const nextTopics = persistedTopics.length ? persistedTopics : (hotProfileCore.deriveNextTopics?.({ profile: fields, missingFields, naturalNextTopics: state.analysis?.naturalNextTopics }) || missingFields.slice(0, 3));
     const messages = Array.isArray(state.messages) ? state.messages : [];
     const lastInbound = messages.filter(item => item.direction !== 'send').at(-1)?.createdAt || '';
     const lastOutbound = messages.filter(item => item.direction === 'send').at(-1)?.createdAt || '';
-    const noReply = hotProfileCore.assessNoReply?.({ lastInboundAt: lastInbound, lastOutboundAt: lastOutbound, followupCount: state.followupAlerts?.length || 0 }) || { reason: '可在自然话题中适度跟进。', cooldown: false };
-    return { fields, missingFields, nextTopics, noReply };
+    const persistedNoReply = profile?.noReply && typeof profile.noReply === 'object' ? profile.noReply : null;
+    const noReply = persistedNoReply?.noReply
+      ? { reason: persistedNoReply.reason || '客户暂未回复，按冷却周期再跟进。', cooldown: true }
+      : (hotProfileCore.assessNoReply?.({ lastInboundAt: lastInbound, lastOutboundAt: lastOutbound, followupCount: state.followupAlerts?.length || 0 }) || { reason: '可在自然话题中适度跟进。', cooldown: false });
+    return { fields, missingFields, nextTopics, noReply, progress: text(profile?.conversationProgress), summary: text(profile?.profileSummary), temperature: text(profile?.customerTemperature), tags: Array.isArray(profile?.tags) ? profile.tags.map(text).filter(Boolean).slice(0, 8) : [] };
   }
   function hotProfileEditValue(item) {
     if (Object.hasOwn(state.hotProfileEdits, item.field)) return state.hotProfileEdits[item.field];
@@ -366,7 +370,7 @@
       <div class="ws-card-heading"><div><strong>热聊客户档案</strong><span>已完成 ${Number(profile.completeness || 0)}% · 只补空字段，冲突交给人工确认</span></div><button class="btn small" data-ws-action="refresh-hot-profile" ${state.hotProfileBusy ? 'disabled' : ''}>${state.hotProfileBusy ? '刷新中…' : '刷新'}</button></div>
       <div class="ws-hot-profile-toolbar"><label>客户状态<select id="wsHotProfileColor" data-hot-profile-color>${colorOptions}</select></label><span class="ws-hot-profile-status status-${esc(color)}">${esc(HOT_PROFILE_COLORS[color])}</span><button class="btn small" data-ws-action="save-hot-profile-color">保存标记</button></div>
       <div class="ws-hot-profile-progress"><span style="width:${Math.max(0, Math.min(100, Number(profile.completeness) || 0))}%"></span></div>
-      <div class="ws-hot-profile-overview"><span class="ws-hot-profile-missing">待了解：${esc(missing)}</span><span class="${derived.noReply.cooldown ? 'is-warning' : ''}">${esc(derived.noReply.reason)}</span></div>
+      <div class="ws-hot-profile-overview"><span class="ws-hot-profile-missing">待了解：${esc(missing)}</span>${derived.progress ? `<span>沟通进度：${esc(derived.progress)}</span>` : ''}${derived.temperature ? `<span>客户温度：${esc(derived.temperature)}</span>` : ''}${derived.summary ? `<span>AI 摘要：${esc(derived.summary)}</span>` : ''}<span class="${derived.noReply.cooldown ? 'is-warning' : ''}">${esc(derived.noReply.reason)}</span>${derived.tags.length ? `<span>标签：${esc(derived.tags.join('、'))}</span>` : ''}</div>
       ${topics ? `<div class="ws-hot-profile-topics"><strong>下一步自然话题</strong><div>${topics}</div></div>` : ''}
       <div class="ws-hot-profile-fields">${fields}</div>
       ${state.hotProfileError ? `<p class="ws-error-line">${esc(state.hotProfileError)}</p>` : ''}

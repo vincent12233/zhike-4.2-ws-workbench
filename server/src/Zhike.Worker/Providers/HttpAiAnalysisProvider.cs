@@ -28,7 +28,7 @@ public sealed class HttpAiAnalysisProvider(HttpClient http, IConfiguration confi
         "investment_preferences", "family_context", "life_interests", "future_plans",
     ];
     private static readonly Regex SensitiveText = new(
-        "password|passcode|token|cookie|secret|验证码|校验码|密码|银行卡|收款码|二维码|身份证|护照|付款|退款|金融承诺|法律承诺|医疗建议|价格保证|交付保证",
+        "password|passcode|token|cookie|secret|api[_-]?key|验证码|校验码|密码|银行卡|收款码|二维码|身份证|护照|付款|退款|金融承诺|法律承诺|医疗建议|价格保证|交付保证",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     public async Task<AiAnalysisResult> AnalyzeAsync(JsonElement payload, CancellationToken cancellationToken)
@@ -280,24 +280,29 @@ public sealed class HttpAiAnalysisProvider(HttpClient http, IConfiguration confi
         if (value.ValueKind == JsonValueKind.Array)
         {
             var items = new List<object>();
+            var usedChars = 0;
             foreach (var item in value.EnumerateArray().Take(20))
             {
                 if (item.ValueKind == JsonValueKind.Object)
                 {
                     var text = Redact(String(item, "body", "text", "content"));
                     if (string.IsNullOrWhiteSpace(text)) continue;
+                    if (usedChars > 0 && usedChars + text.Length > 20_000) break;
                     items.Add(new
                     {
                         text,
                         direction = Redact(String(item, "direction", "senderType")),
                         sentAt = Redact(String(item, "sentAt", "timestamp")),
                     });
+                    usedChars += text.Length;
                 }
                 else if (item.ValueKind == JsonValueKind.String)
                 {
                     var text = Redact(item.GetString() ?? string.Empty);
                     if (!string.IsNullOrWhiteSpace(text)) items.Add(new { text });
+                    usedChars += text.Length;
                 }
+                if (usedChars >= 20_000) break;
             }
             return items;
         }
@@ -328,7 +333,7 @@ public sealed class HttpAiAnalysisProvider(HttpClient http, IConfiguration confi
     private static string Redact(string value)
     {
         if (string.IsNullOrWhiteSpace(value)) return string.Empty;
-        var redacted = Regex.Replace(value, "(?i)(password|passcode|token|cookie|secret|验证码|校验码|密码|银行卡(?:号)?|收款码|二维码|身份证(?:号)?|护照(?:号)?)\\s*[:：]?\\s*[^\\s，。；;]+", "[已脱敏]");
+        var redacted = Regex.Replace(value, "(?i)(password|passcode|token|cookie|secret|api[_-]?key|验证码|校验码|密码|银行卡(?:号)?|收款码|二维码|身份证(?:号)?|护照(?:号)?)\\s*[:：]?\\s*[^\\s，。；;]+", "[已脱敏]");
         return redacted.Length > 4000 ? redacted[..4000] : redacted;
     }
 

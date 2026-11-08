@@ -9,7 +9,7 @@
   const finite = value => Number.isFinite(Number(value)) ? Number(value) : '';
   const safeJson = value => JSON.parse(JSON.stringify(value ?? null));
   const redactSensitive = value => text(value)
-    .replace(/(?:password|passcode|token|cookie|secret)\s*[:：]?\s*[^\s，。；;]+/ig, '[已脱敏]')
+    .replace(/(?:password|passcode|token|cookie|secret|api[_-]?key)\s*[:：]?\s*[^\s，。；;]+/ig, '[已脱敏]')
     .replace(/(?:验证码|校验码|密码|银行卡(?:号)?|收款码|二维码)\s*[:：]?\s*[A-Za-z0-9_\-\s]+/ig, '[已脱敏]');
 
   const FIELD_MAP = Object.freeze({

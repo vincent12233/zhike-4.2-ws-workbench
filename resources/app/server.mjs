@@ -625,11 +625,23 @@ function hotProfileRow(identity) {
 function hotProfilePayload(row, fields = null) {
   const list = fields || (row ? db.prepare('SELECT * FROM hot_chat_profile_fields WHERE profile_id=? ORDER BY field_key').all(row.id) : []);
   const fieldMap = Object.fromEntries(list.map(item => [item.field_key, { field: item.field_key, value: wsJson(item.value_json, null), state: item.state, confidence: Number(item.confidence || 0), evidence: wsJson(item.evidence_json, []), manualLocked: Boolean(item.manual_locked), updatedAt: item.updated_at }]));
-  return { id: row?.id || '', customerId: row?.customer_id || '', accountId: row?.account_id || 'default', conversationId: row?.conversation_id || '', statusColor: row?.status_color || 'gray', manualColor: row?.manual_color || '', manualLocked: Boolean(row?.manual_locked), completeness: Number(row?.completeness || 0), version: Number(row?.version || 0), fields: fieldMap, fieldList: Object.values(fieldMap), createdAt: row?.created_at || '', updatedAt: row?.updated_at || '' };
+  const meta = row ? wsJson(row.data_json, {}) : {};
+  const safeMeta = meta && typeof meta === 'object' && !Array.isArray(meta) ? meta : {};
+  const nextTopics = Array.isArray(safeMeta.nextTopics) ? safeMeta.nextTopics.map(item => wsText(item, 240)).filter(Boolean).slice(0, 3) : [];
+  const noReply = safeMeta.noReply && typeof safeMeta.noReply === 'object' && !Array.isArray(safeMeta.noReply)
+    ? { noReply: Boolean(safeMeta.noReply.noReply), reason: wsText(safeMeta.noReply.reason, 500), cooldownDays: Math.max(1, Math.min(30, Number(safeMeta.noReply.cooldownDays) || 3)), suggestedAt: wsText(safeMeta.noReply.suggestedAt, 80) }
+    : { noReply: false, reason: '', cooldownDays: 3, suggestedAt: '' };
+  return {
+    id: row?.id || '', customerId: row?.customer_id || '', accountId: row?.account_id || 'default', conversationId: row?.conversation_id || '',
+    statusColor: row?.status_color || 'gray', manualColor: row?.manual_color || '', manualLocked: Boolean(row?.manual_locked), completeness: Number(row?.completeness || 0), version: Number(row?.version || 0),
+    conversationProgress: wsText(safeMeta.conversationProgress, 2000), customerTemperature: wsText(safeMeta.customerTemperature, 32), profileSummary: wsText(safeMeta.profileSummary, 4000),
+    nextTopics, noReply, nextFollowupAt: wsText(safeMeta.nextFollowupAt, 80), tags: Array.isArray(safeMeta.tags) ? safeMeta.tags.map(item => wsText(item, 80)).filter(Boolean).slice(0, 100) : [],
+    fields: fieldMap, fieldList: Object.values(fieldMap), createdAt: row?.created_at || '', updatedAt: row?.updated_at || '', lastProgressAt: safeMeta.lastProgressAt || row?.updated_at || '',
+  };
 }
 function hotProfileDefaultPayload(identity) {
   const fields = Object.fromEntries(hotChatProfile.PROFILE_FIELDS.map(field => [field, { field, value: null, state: 'missing', confidence: 0, evidence: [], manualLocked: false, updatedAt: '' }]));
-  return { id: '', customerId: identity.customerId, accountId: identity.accountId, conversationId: identity.conversationId, statusColor: 'gray', manualColor: '', manualLocked: false, completeness: 0, version: 0, fields, fieldList: Object.values(fields), createdAt: '', updatedAt: '' };
+  return { id: '', customerId: identity.customerId, accountId: identity.accountId, conversationId: identity.conversationId, statusColor: 'gray', manualColor: '', manualLocked: false, completeness: 0, version: 0, conversationProgress: '', customerTemperature: '', profileSummary: '', nextTopics: [], noReply: { noReply: false, reason: '', cooldownDays: 3, suggestedAt: '' }, nextFollowupAt: '', tags: [], fields, fieldList: Object.values(fields), createdAt: '', updatedAt: '', lastProgressAt: '' };
 }
 function ensureHotProfile(identity, now = new Date().toISOString()) {
   let row = hotProfileRow(identity);
@@ -704,7 +716,20 @@ function saveHotProfile(identity, facts = [], options = {}) {
   const manualColor = ['green', 'blue', 'amber', 'red', 'gray'].includes(requestedColor) ? requestedColor : (row.manual_color || '');
   const manualLocked = Object.hasOwn(options, 'manualLocked') ? (options.manualLocked ? 1 : 0) : row.manual_locked;
   const statusColor = hotChatProfile.deriveStatusColor({ completeness, manualOverride: manualLocked ? { color: manualColor, locked: true } : null, aiColor: options.statusColor || row.status_color });
-  db.prepare('UPDATE hot_chat_profiles SET status_color=?,manual_color=?,manual_locked=?,completeness=?,version=version+1,updated_at=? WHERE id=?').run(statusColor, manualColor, manualLocked, completeness, now, row.id);
+  const previousMeta = wsJson(row.data_json, {});
+  const meta = previousMeta && typeof previousMeta === 'object' && !Array.isArray(previousMeta) ? { ...previousMeta } : {};
+  if (Object.hasOwn(options, 'conversationProgress')) meta.conversationProgress = wsText(options.conversationProgress, 2000);
+  if (Object.hasOwn(options, 'customerTemperature')) meta.customerTemperature = wsText(options.customerTemperature, 32);
+  if (Object.hasOwn(options, 'profileSummary')) meta.profileSummary = wsText(options.profileSummary, 4000);
+  if (Object.hasOwn(options, 'nextTopics')) meta.nextTopics = Array.isArray(options.nextTopics) ? options.nextTopics.map(item => wsText(item, 240)).filter(Boolean).slice(0, 3) : [];
+  if (Object.hasOwn(options, 'noReply')) {
+    const value = options.noReply && typeof options.noReply === 'object' ? options.noReply : {};
+    meta.noReply = { noReply: Boolean(value.noReply), reason: wsText(value.reason, 500), cooldownDays: Math.max(1, Math.min(30, Number(value.cooldownDays) || 3)), suggestedAt: wsText(value.suggestedAt, 80) };
+  }
+  if (Object.hasOwn(options, 'nextFollowupAt')) meta.nextFollowupAt = options.nextFollowupAt ? wsIso(options.nextFollowupAt) : '';
+  if (Object.hasOwn(options, 'tags')) meta.tags = Array.isArray(options.tags) ? options.tags.map(item => wsText(item, 80)).filter(Boolean).slice(0, 100) : [];
+  meta.lastProgressAt = now;
+  db.prepare('UPDATE hot_chat_profiles SET status_color=?,manual_color=?,manual_locked=?,completeness=?,data_json=?,version=version+1,updated_at=? WHERE id=?').run(statusColor, manualColor, manualLocked, completeness, JSON.stringify(meta), now, row.id);
   return db.prepare('SELECT * FROM hot_chat_profiles WHERE id=?').get(row.id);
 }
 function enqueueHotOutbox(profileRow, eventId, payload, operation = 'upsert_profile') {
@@ -1152,7 +1177,16 @@ const server = createServer(async (req, res) => {
         const hotIdentity = { customerId: customer.id, accountId, conversationId: conversation.id };
         const hotRow = ensureHotProfile(hotIdentity);
         const hotFacts = hotFactsFromAnalysis(analysis, analysisRow.id);
-        const hotUpdated = saveHotProfile(hotIdentity, hotFacts, { statusColor: hotChatProfile.deriveStatusColor({ intent: analysis.intent, urgent: analysis.urgency === '高', completeness: hotChatProfile.computeCompleteness(Object.fromEntries(hotFacts.map(item => [item.field, item]))) }) });
+        const hotUpdated = saveHotProfile(hotIdentity, hotFacts, {
+          statusColor: analysis.statusColor || hotChatProfile.deriveStatusColor({ intent: analysis.intent, urgent: analysis.urgency === '高', completeness: hotChatProfile.computeCompleteness(Object.fromEntries(hotFacts.map(item => [item.field, item]))) }),
+          customerTemperature: analysis.customerTemperature,
+          conversationProgress: analysis.conversationProgress || analysis.progress || analysis.nextStep,
+          profileSummary: analysis.summary,
+          nextTopics: analysis.naturalNextTopics,
+          noReply: analysis.noReply || analysis.noReplyAssessment,
+          nextFollowupAt: followupPlan.nextDate,
+          tags: analysis.tags,
+        });
         const hotEventId = wsCreateId('hce');
         const hotEventResult = db.prepare('INSERT OR IGNORE INTO hot_chat_events(id,profile_id,customer_id,account_id,conversation_id,event_type,payload_json,source,analysis_id,idempotency_key,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)').run(hotEventId, hotUpdated.id, customer.id, accountId, conversation.id, 'analysis_profile', JSON.stringify({ facts: hotFacts }), 'AI', analysisRow.id, `analysis:${analysisRow.id}`, new Date().toISOString());
         if (Number(hotEventResult?.changes || 0) > 0) enqueueHotOutbox(hotUpdated, hotEventId, { facts: hotFacts, customerId: customer.id }, 'crm_sync');
@@ -1495,6 +1529,9 @@ const server = createServer(async (req, res) => {
             ? [hotChatProfile.normalizeProfileFact(body.field, { ...body, state: body.declined ? 'declined' : 'known' })]
             : normalizeHotFacts(body);
           const profileOptions = { allowManual: subpath === 'confirm', manualColor: body.manualColor ?? body.color, statusColor: body.statusColor };
+          for (const key of ['conversationProgress', 'customerTemperature', 'profileSummary', 'nextTopics', 'noReply', 'nextFollowupAt', 'tags']) {
+            if (Object.hasOwn(body, key)) profileOptions[key] = body[key];
+          }
           if (subpath === 'confirm') profileOptions.manualLocked = body.locked !== false;
           updated = saveHotProfile(identity, facts, profileOptions);
           const eventId = wsCreateId('hce');

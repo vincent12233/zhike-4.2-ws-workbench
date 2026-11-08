@@ -68,6 +68,13 @@ const version = async () => String((await (await request('/api/state/version')).
 
   const facts = await request('/api/ws/hot-chat/profile/facts', { method: 'POST', body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', facts: [{ field: 'age', value: 36, confidence: 0.9, evidence: '我今年36岁' }] }) });
   assert.equal(facts.status, 200);
+  const progress = await request('/api/ws/hot-chat/profile', { method: 'PUT', body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', conversationProgress: '已自然聊到职业和投资习惯', customerTemperature: 'warm', profileSummary: '客户愿意交流，下一步从工作日常切入。', nextTopics: ['工作节奏', '周末兴趣'], noReply: { noReply: false, reason: '最近有回复', cooldownDays: 3 }, nextFollowupAt: '2026-11-10', tags: ['愿意交流'] }) });
+  assert.equal(progress.status, 200);
+  const progressProfile = (await progress.json()).profile;
+  assert.equal(progressProfile.conversationProgress, '已自然聊到职业和投资习惯');
+  assert.deepEqual(progressProfile.nextTopics, ['工作节奏', '周末兴趣']);
+  assert.equal(progressProfile.noReply.noReply, false);
+  assert.match(progressProfile.nextFollowupAt, /^2026-11-10T/);
   const events = await request('/api/ws/hot-chat/profile/events', { method: 'POST', body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', type: 'message', idempotencyKey: 'm1', payload: { text: '你好' } }) });
   assert.equal(events.status, 200);
   const repeated = await request('/api/ws/hot-chat/profile/events', { method: 'POST', body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', type: 'message', idempotencyKey: 'm1', payload: { text: '你好' } }) });

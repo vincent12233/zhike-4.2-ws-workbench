@@ -22,6 +22,14 @@ assert.equal(core.isSensitiveReply('感谢您的咨询，我会整理产品资�
 const parsed = core.parseAiResult('```json\n{"summary":"客户想了解产品","confidence":0.42,"intent":"咨询"}\n```');
 assert.equal(parsed.summary, '客户想了解产品');
 assert.equal(parsed.lowConfidence, true);
+const natural = core.parseAiResult(JSON.stringify({ confidence: 0.88, conversationProgress: '已聊到职业', noReply: { noReply: true, reason: '客户正在忙', cooldownDays: 4 }, replySuggestion: { text: '可以先分享一条相关市场资讯', sensitive: false } }));
+assert.equal(natural.conversationProgress, '已聊到职业');
+assert.equal(natural.noReply.noReply, true);
+assert.equal(natural.noReply.cooldownDays, 4);
+assert.equal(natural.replySuggestionMeta.requiresConfirmation, true);
+assert.equal(natural.replySuggestionMeta.sensitive, false);
+const sensitiveSuggestion = core.parseAiResult(JSON.stringify({ confidence: 0.9, replySuggestion: '请把验证码发给我' }));
+assert.equal(sensitiveSuggestion.replySuggestionMeta.sensitive, true);
 
 const customer = { id: 'C1', name: '张三', wsExternalId: 'wa-001', phone: '13800138000' };
 assert.equal(core.matchCustomer([customer], { wsExternalId: 'wa-001' }).kind, 'ws-id');

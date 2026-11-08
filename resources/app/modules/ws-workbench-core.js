@@ -90,6 +90,10 @@
       country: text(parsed.contact.country || parsed.country),
       account: text(parsed.contact.account || parsed.contact.handle),
     } : { name: '', phone: '', country: text(parsed.country), account: '' };
+    const noReplyNode = parsed.noReply && typeof parsed.noReply === 'object' && !Array.isArray(parsed.noReply) ? parsed.noReply : (parsed.noReplyAssessment && typeof parsed.noReplyAssessment === 'object' ? parsed.noReplyAssessment : null);
+    const replyNode = parsed.replySuggestion && typeof parsed.replySuggestion === 'object' && !Array.isArray(parsed.replySuggestion) ? parsed.replySuggestion : null;
+    const replyText = text(replyNode?.text || replyNode?.content || parsed.replySuggestion || parsed.reply);
+    const replySensitive = Boolean(replyNode?.sensitive) || isSensitiveReply(replyText);
     const result = {
       summary: text(parsed.summary || parsed.sessionSummary),
       intent: text(parsed.intent),
@@ -106,10 +110,13 @@
       customerStage: text(parsed.customerStage || parsed.stage),
       nextStep: text(parsed.nextStep),
       followupTime: text(parsed.followupTime),
-      replySuggestion: text(parsed.replySuggestion || parsed.reply),
+      replySuggestion: replyText,
+      replySuggestionMeta: replyText ? { text: replyText, requiresConfirmation: true, sensitive: replySensitive, safetyReason: replySensitive ? '回复涉及敏感承诺或隐私内容，必须人工确认。' : 'AI 回复建议仅供预览、复制，不会自动发送。' } : null,
       profileFacts: normalizeProfileFacts(parsed.profileFacts, confidence),
       missingFields: Array.isArray(parsed.missingFields) ? parsed.missingFields.map(text).filter(Boolean).slice(0, 13) : [],
       naturalNextTopics: Array.isArray(parsed.naturalNextTopics) ? parsed.naturalNextTopics.map(text).filter(Boolean).slice(0, 5) : [],
+      conversationProgress: text(parsed.conversationProgress || parsed.progress || parsed.nextStep),
+      noReply: noReplyNode ? { noReply: Boolean(noReplyNode.noReply ?? noReplyNode.isNoReply), reason: text(noReplyNode.reason), cooldownDays: Math.max(1, Math.min(30, Number(noReplyNode.cooldownDays) || 3)), suggestedAt: text(noReplyNode.suggestedAt || noReplyNode.nextAt) } : null,
       customerTemperature: ['hot','warm','cool','silent'].includes(text(parsed.customerTemperature).toLowerCase()) ? text(parsed.customerTemperature).toLowerCase() : '',
       statusColor: ['green','blue','amber','red','gray'].includes(text(parsed.statusColor).toLowerCase()) ? text(parsed.statusColor).toLowerCase() : '',
       confidence: Number.isFinite(confidence) ? Math.min(1, Math.max(0, confidence)) : 0,

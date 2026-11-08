@@ -27,6 +27,7 @@ assert.match(provider, /text = Redact\(body\)/, 'AI request text must redact obv
 // follow-up side effects, while keeping the job retryable/dead-letterable.
 assert.match(dispatcher, /Validate|IsValid|[Cc]onfidence.*0\.6|[Cc]onfidence.*0\.60|最低置信度/, 'dispatcher must gate low-confidence results');
 assert.match(sync, /pending|Pending/, 'low-confidence facts must remain pending');
+assert.match(sync, /TryAutoRecycleAsync|customer\.recycle\.ai/, 'high-confidence explicit invalid-contact signals may move a customer to the recycle bin');
 assert.match(dispatcher, /AiAnalysis.*(Malformed|Schema|Quota|Timeout)|Quota|Timeout/, 'dispatcher must distinguish provider failure classes');
 assert.match(dispatcher, /duplicate|idempot|already/i, 'duplicate jobs must short-circuit side effects');
 

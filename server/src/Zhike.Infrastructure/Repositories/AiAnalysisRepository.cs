@@ -612,7 +612,7 @@ public sealed class AiAnalysisRepository(PostgresConnectionFactory connections)
     {
         var text = value?.Trim() ?? string.Empty;
         if (text.Length == 0) return text;
-        text = System.Text.RegularExpressions.Regex.Replace(text, "(?i)(password|passcode|token|cookie|secret|验证码|校验码|密码|银行卡(?:号)?|收款码|二维码|身份证(?:号)?|护照(?:号)?)\\s*[:：]?\\s*[^\\s，。；;]+", "[已脱敏]");
+        text = System.Text.RegularExpressions.Regex.Replace(text, "(?i)(password|passcode|token|cookie|secret|api[_-]?key|验证码|校验码|密码|银行卡(?:号)?|收款码|二维码|身份证(?:号)?|护照(?:号)?)\\s*[:：]?\\s*[^\\s，。；;]+", "[已脱敏]");
         return text.Length > 4000 ? text[..4000] : text;
     }
     private static string SafeJson(JsonElement value)
