@@ -18,6 +18,7 @@ const tests = [
   'api-contract.test.cjs',
   'data-integrity-regression.test.cjs',
   'outbox-idempotency.test.cjs',
+  'ai-followup-concurrency.test.cjs',
   'security-backup.test.cjs',
   'backup-script-parser.test.cjs',
   'e2e-migration.test.cjs',

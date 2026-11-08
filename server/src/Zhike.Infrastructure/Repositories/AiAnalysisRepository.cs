@@ -38,7 +38,7 @@ public sealed record AiAnalysisInput(
     string StatusColor = "gray",
     bool AutoSyncAllowed = true);
 
-public sealed record AiSyncResult(string? CustomerId, bool CustomerCreated, IReadOnlyList<string> AppliedFields, IReadOnlyList<string> Conflicts, bool FollowupCreated);
+public sealed record AiSyncResult(string? CustomerId, bool CustomerCreated, IReadOnlyList<string> AppliedFields, IReadOnlyList<string> Conflicts, bool FollowupCreated, bool CustomerRecycled = false);
 
 public sealed class AiAnalysisRepository(PostgresConnectionFactory connections)
 {
@@ -72,8 +72,8 @@ public sealed class AiAnalysisRepository(PostgresConnectionFactory connections)
         var sourceMessageId = await ExistingMessageIdAsync(connection, transaction, input.AccountId, input.SourceMessageId, cancellationToken);
         var analysisId = input.Id;
         await using (var analysis = new NpgsqlCommand("""
-            INSERT INTO ai_analysis_results(id, job_id, account_id, conversation_id, source_message_id, summary, intent, intent_score, emotion, urgency, language, product_interest, budget, contact, profile, confidence, raw_json)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+            INSERT INTO ai_analysis_results(id, job_id, account_id, conversation_id, source_message_id, summary, intent, intent_score, emotion, urgency, language, product_interest, budget, contact, profile, confidence, raw_json, state)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
             ON CONFLICT (job_id) DO NOTHING
             RETURNING id
             """, connection, transaction))
@@ -89,12 +89,13 @@ public sealed class AiAnalysisRepository(PostgresConnectionFactory connections)
             analysis.Parameters.AddWithValue(input.Emotion ?? string.Empty);
             analysis.Parameters.AddWithValue(input.Urgency ?? string.Empty);
             analysis.Parameters.AddWithValue(input.Language ?? string.Empty);
-            analysis.Parameters.Add(new NpgsqlParameter { NpgsqlDbType = NpgsqlDbType.Jsonb, Value = JsonSerializer.Serialize(input.ProductInterest ?? []) });
+            analysis.Parameters.Add(new NpgsqlParameter { NpgsqlDbType = NpgsqlDbType.Jsonb, Value = JsonSerializer.Serialize((input.ProductInterest ?? []).Select(SafeText).Where(value => value.Length > 0).Take(30).ToArray()) });
             analysis.Parameters.AddWithValue(input.Budget ?? string.Empty);
-            analysis.Parameters.Add(new NpgsqlParameter { NpgsqlDbType = NpgsqlDbType.Jsonb, Value = input.Contact.ValueKind == JsonValueKind.Undefined ? "{}" : input.Contact.GetRawText() });
-            analysis.Parameters.Add(new NpgsqlParameter { NpgsqlDbType = NpgsqlDbType.Jsonb, Value = input.Profile.ValueKind == JsonValueKind.Undefined ? "{}" : input.Profile.GetRawText() });
+            analysis.Parameters.Add(new NpgsqlParameter { NpgsqlDbType = NpgsqlDbType.Jsonb, Value = SafeJson(input.Contact) });
+            analysis.Parameters.Add(new NpgsqlParameter { NpgsqlDbType = NpgsqlDbType.Jsonb, Value = SafeJson(input.Profile) });
             analysis.Parameters.AddWithValue(Math.Clamp(input.Confidence, 0, 1));
-            analysis.Parameters.Add(new NpgsqlParameter { NpgsqlDbType = NpgsqlDbType.Jsonb, Value = input.Raw.ValueKind == JsonValueKind.Undefined ? "{}" : input.Raw.GetRawText() });
+            analysis.Parameters.Add(new NpgsqlParameter { NpgsqlDbType = NpgsqlDbType.Jsonb, Value = SafeJson(input.Raw) });
+            analysis.Parameters.AddWithValue(input.AutoSyncAllowed && input.Confidence >= MinimumConfidence ? "completed" : "pending");
             var insertedId = await analysis.ExecuteScalarAsync(cancellationToken);
             if (insertedId is null || insertedId is DBNull)
             {
@@ -117,7 +118,36 @@ public sealed class AiAnalysisRepository(PostgresConnectionFactory connections)
 
         var contact = ObjectMap(input.Contact);
         var profile = ObjectMap(input.Profile);
-        var phone = Digits(Value(contact, "phone", "number", "account"));
+        var factValues = input.ProfileFacts ?? new Dictionary<string, AiProfileFact>(StringComparer.OrdinalIgnoreCase);
+        var fact = (string field) => ProfileFactText(factValues, field);
+        var phone = Digits(FirstValue(Value(contact, "phone", "number", "account"), fact("phone")));
+        var productInterest = FirstValue(string.Join(", ", input.ProductInterest ?? []), fact("holdings"), fact("investment_preferences"));
+        var inferredNotes = string.Join("；", new[]
+        {
+            ("性别", fact("gender")),
+            ("是否股民", fact("is_investor")),
+            ("股龄", fact("investment_years")),
+            ("投资习惯", fact("investment_habits")),
+            ("家庭状况", fact("family_context")),
+            ("生活兴趣", fact("life_interests")),
+            ("未来规划", fact("future_plans")),
+        }.Where(item => !string.IsNullOrWhiteSpace(item.Item2)).Select(item => $"{item.Item1}：{item.Item2}"));
+        var fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["name"] = FirstValue(Value(contact, "name", "customerName"), fact("preferred_name")),
+            ["phone"] = phone,
+            ["country"] = FirstValue(Value(contact, "country", "countryCode"), fact("country")),
+            ["language"] = input.Language ?? string.Empty,
+            ["source"] = Value(profile, "origin", "source"),
+            ["stage"] = Value(profile, "customerStage", "stage"),
+            ["intent_level"] = input.Intent ?? string.Empty,
+            ["occupation"] = FirstValue(Value(profile, "occupation", "job"), fact("occupation")),
+            ["age"] = ParseAge(FirstValue(Value(profile, "age"), fact("age")))?.ToString() ?? string.Empty,
+            ["budget"] = input.Budget ?? string.Empty,
+            ["product_interest"] = productInterest,
+            ["notes"] = inferredNotes,
+            ["ai_summary"] = input.Summary ?? string.Empty,
+        };
         var customerId = await ResolveCustomerAsync(input.CustomerId, input.ConversationId, phone, connection, transaction, cancellationToken);
         var created = false;
         if (string.IsNullOrWhiteSpace(customerId))
@@ -126,19 +156,20 @@ public sealed class AiAnalysisRepository(PostgresConnectionFactory connections)
             // extract a phone number. This prevents concurrent retries from
             // creating a new customer for every analysis of the same chat.
             customerId = $"cust-ws-{ShortHash($"{input.AccountId}\u001f{input.ConversationId}")}";
-            await using var create = new NpgsqlCommand("INSERT INTO customers(id, name, phone, country, language, source, stage, intent_level, occupation, age, budget, product_interest, ai_summary) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) ON CONFLICT (id) DO NOTHING", connection, transaction);
+            await using var create = new NpgsqlCommand("INSERT INTO customers(id, name, phone, country, language, source, stage, intent_level, occupation, age, budget, product_interest, notes, ai_summary) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) ON CONFLICT (id) DO NOTHING", connection, transaction);
             create.Parameters.AddWithValue(customerId);
-            create.Parameters.AddWithValue(Value(contact, "name", "customerName"));
+            create.Parameters.AddWithValue(fields["name"]);
             create.Parameters.AddWithValue(phone);
-            create.Parameters.AddWithValue(Value(contact, "country", "countryCode"));
+            create.Parameters.AddWithValue(fields["country"]);
             create.Parameters.AddWithValue(input.Language ?? string.Empty);
             create.Parameters.AddWithValue(Value(profile, "origin", "source"));
             create.Parameters.AddWithValue(Value(profile, "customerStage", "stage"));
             create.Parameters.AddWithValue(input.Intent ?? string.Empty);
-            create.Parameters.AddWithValue(Value(profile, "occupation", "job"));
-            create.Parameters.AddWithValue(ParseAge(Value(profile, "age")) is int age ? age : DBNull.Value);
+            create.Parameters.AddWithValue(fields["occupation"]);
+            create.Parameters.AddWithValue(ParseAge(fields["age"]) is int age ? age : DBNull.Value);
             create.Parameters.AddWithValue(input.Budget ?? string.Empty);
-            create.Parameters.AddWithValue(string.Join(", ", input.ProductInterest ?? []));
+            create.Parameters.AddWithValue(productInterest);
+            create.Parameters.AddWithValue(fields["notes"]);
             create.Parameters.AddWithValue(input.Summary ?? string.Empty);
             created = await create.ExecuteNonQueryAsync(cancellationToken) > 0;
         }
@@ -163,21 +194,6 @@ public sealed class AiAnalysisRepository(PostgresConnectionFactory connections)
             await link.ExecuteNonQueryAsync(cancellationToken);
         }
 
-        var fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["name"] = Value(contact, "name", "customerName"),
-            ["phone"] = phone,
-            ["country"] = Value(contact, "country", "countryCode"),
-            ["language"] = input.Language ?? string.Empty,
-            ["source"] = Value(profile, "origin", "source"),
-            ["stage"] = Value(profile, "customerStage", "stage"),
-            ["intent_level"] = input.Intent ?? string.Empty,
-            ["occupation"] = Value(profile, "occupation", "job"),
-            ["age"] = ParseAge(Value(profile, "age"))?.ToString() ?? string.Empty,
-            ["budget"] = input.Budget ?? string.Empty,
-            ["product_interest"] = string.Join(", ", input.ProductInterest ?? []),
-            ["ai_summary"] = input.Summary ?? string.Empty,
-        };
         var applied = new List<string>();
         var conflicts = new List<string>();
         foreach (var field in fields.Where(item => !string.IsNullOrWhiteSpace(item.Value)))
@@ -206,9 +222,20 @@ public sealed class AiAnalysisRepository(PostgresConnectionFactory connections)
         await UpsertHotChatProfileAsync(connection, transaction, input, analysisId, customerId, sourceMessageId, cancellationToken);
 
         var followupCreated = false;
-        if (input.Followup is not null && !string.IsNullOrWhiteSpace(input.Followup.ReasonKey))
+        var customerRecycled = await TryAutoRecycleAsync(connection, transaction, customerId, input, profile, contact, analysisId, cancellationToken);
+        if (!customerRecycled && input.Followup is not null && !string.IsNullOrWhiteSpace(input.Followup.ReasonKey))
         {
             var reasonKey = input.Followup.ReasonKey.Trim();
+            // Serialize the cooldown check and insert for this customer/reason
+            // pair.  The dedupe key intentionally includes the analysis id so
+            // a later, valid follow-up can be created after the cooldown; the
+            // transaction advisory lock prevents two concurrent analyses from
+            // both observing an empty cooldown window and inserting duplicates.
+            await using var reminderLock = new NpgsqlCommand("SELECT pg_advisory_xact_lock(hashtextextended('followup:' || $1 || ':' || $2, 0))", connection, transaction);
+            reminderLock.Parameters.AddWithValue(customerId);
+            reminderLock.Parameters.AddWithValue(reasonKey);
+            await reminderLock.ExecuteNonQueryAsync(cancellationToken);
+
             // Cooldown applies only to still-open/recent reminders. A completed
             // or old reminder must not suppress a later natural follow-up.
             await using var recent = new NpgsqlCommand("SELECT 1 FROM followup_tasks WHERE customer_id=$1 AND reason_key=$2 AND state IN ('pending','notified') AND (due_at IS NULL OR due_at >= now() - interval '3 days') LIMIT 1", connection, transaction);
@@ -235,9 +262,34 @@ public sealed class AiAnalysisRepository(PostgresConnectionFactory connections)
                 followupCreated = await followup.ExecuteNonQueryAsync(cancellationToken) > 0;
             }
         }
-        await AuditWriter.AppendAsync(connection, transaction, "ai", input.AccountId, "ai.analysis.synced", "customer", customerId, new { analysisId, input.JobId, applied, conflicts, followupCreated }, cancellationToken);
+        await AuditWriter.AppendAsync(connection, transaction, "ai", input.AccountId, "ai.analysis.synced", "customer", customerId, new { analysisId, input.JobId, applied, conflicts, followupCreated, customerRecycled }, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
-        return new AiSyncResult(customerId, created, applied, conflicts, followupCreated);
+        return new AiSyncResult(customerId, created, applied, conflicts, followupCreated, customerRecycled);
+    }
+
+    private static async Task<bool> TryAutoRecycleAsync(
+        NpgsqlConnection connection,
+        NpgsqlTransaction transaction,
+        string customerId,
+        AiAnalysisInput input,
+        IReadOnlyDictionary<string, string> profile,
+        IReadOnlyDictionary<string, string> contact,
+        string analysisId,
+        CancellationToken cancellationToken)
+    {
+        if (input.Confidence < 0.85) return false;
+        var signal = FirstValue(
+            Value(profile, "deletionSignal", "contactStatus", "dataStatus"),
+            Value(contact, "deletionSignal", "contactStatus", "status"));
+        if (string.IsNullOrWhiteSpace(signal)
+            || !System.Text.RegularExpressions.Regex.IsMatch(signal, "明确拒绝|拒绝联系|不要再联系|号码无效|无效号码|重复客户|duplicate|invalid number|stop contact|do not contact", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant))
+            return false;
+        await using var command = new NpgsqlCommand("UPDATE customers SET deleted_at = COALESCE(deleted_at, now()), updated_at = now() WHERE id = $1 AND deleted_at IS NULL", connection, transaction);
+        command.Parameters.AddWithValue(customerId);
+        var changed = await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+        if (changed)
+            await AuditWriter.AppendAsync(connection, transaction, "ai", input.AccountId, "customer.recycle.ai", "customer", customerId, new { analysisId, confidence = input.Confidence, reason = SafeText(signal) }, cancellationToken);
+        return changed;
     }
 
     private static async Task UpsertHotChatProfileAsync(
@@ -310,7 +362,7 @@ public sealed class AiAnalysisRepository(PostgresConnectionFactory connections)
                     manualLocked = !reader.IsDBNull(2) && reader.GetBoolean(2);
                 }
             }
-            var incomingJson = field.Value.ValueKind == JsonValueKind.Undefined ? "null" : field.Value.GetRawText();
+            var incomingJson = SafeJson(field.Value);
             var hasCurrent = !string.IsNullOrWhiteSpace(currentJson) && currentJson != "null" && currentJson != "\"\"";
             var conflict = hasCurrent && !string.Equals(currentJson, incomingJson, StringComparison.Ordinal);
             var nextJson = manualLocked || conflict ? (currentJson ?? "null") : incomingJson;
@@ -533,10 +585,26 @@ public sealed class AiAnalysisRepository(PostgresConnectionFactory connections)
     }
 
     private static Dictionary<string, string> ObjectMap(JsonElement element)
-        => element.ValueKind == JsonValueKind.Object ? element.EnumerateObject().ToDictionary(item => item.Name, item => item.Value.ToString(), StringComparer.OrdinalIgnoreCase) : new(StringComparer.OrdinalIgnoreCase);
+        => element.ValueKind == JsonValueKind.Object ? element.EnumerateObject().ToDictionary(item => item.Name, item => SafeText(item.Value.ToString()), StringComparer.OrdinalIgnoreCase) : new(StringComparer.OrdinalIgnoreCase);
 
     private static string Value(IReadOnlyDictionary<string, string> map, params string[] keys)
         => keys.Select(key => map.TryGetValue(key, out var value) ? value : string.Empty).FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)) ?? string.Empty;
+
+    private static string FirstValue(params string?[] values)
+        => values.Select(SafeText).FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)) ?? string.Empty;
+
+    private static string ProfileFactText(IReadOnlyDictionary<string, AiProfileFact> facts, string field)
+    {
+        if (!facts.TryGetValue(field, out var fact) || fact is null) return string.Empty;
+        if (!string.Equals(fact.State, "known", StringComparison.OrdinalIgnoreCase)
+            || fact.Confidence < MinimumConfidence
+            || string.IsNullOrWhiteSpace(fact.Evidence)
+            || fact.Value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return string.Empty;
+        return SafeText(fact.Value.ValueKind == JsonValueKind.Array
+            ? string.Join("、", fact.Value.EnumerateArray().Select(item => item.ToString()).Where(item => !string.IsNullOrWhiteSpace(item)))
+            : fact.Value.ToString());
+    }
 
     private static string Digits(string value) => new(value.Where(char.IsDigit).ToArray());
     private static int? ParseAge(string value) => int.TryParse(value, out var age) && age is >= 0 and <= 120 ? age : null;
@@ -546,6 +614,22 @@ public sealed class AiAnalysisRepository(PostgresConnectionFactory connections)
         if (text.Length == 0) return text;
         text = System.Text.RegularExpressions.Regex.Replace(text, "(?i)(password|passcode|token|cookie|secret|验证码|校验码|密码|银行卡(?:号)?|收款码|二维码|身份证(?:号)?|护照(?:号)?)\\s*[:：]?\\s*[^\\s，。；;]+", "[已脱敏]");
         return text.Length > 4000 ? text[..4000] : text;
+    }
+    private static string SafeJson(JsonElement value)
+    {
+        if (value.ValueKind == JsonValueKind.Undefined) return "null";
+        if (value.ValueKind == JsonValueKind.Null) return "null";
+        object? Clean(JsonElement item)
+        {
+            if (item.ValueKind == JsonValueKind.Object)
+                return item.EnumerateObject().ToDictionary(property => property.Name, property => Clean(property.Value), StringComparer.OrdinalIgnoreCase);
+            if (item.ValueKind == JsonValueKind.Array) return item.EnumerateArray().Select(Clean).ToArray();
+            if (item.ValueKind == JsonValueKind.String) return SafeText(item.GetString());
+            if (item.ValueKind == JsonValueKind.Number && item.TryGetDecimal(out var number)) return number;
+            if (item.ValueKind is JsonValueKind.True or JsonValueKind.False) return item.GetBoolean();
+            return null;
+        }
+        return JsonSerializer.Serialize(Clean(value));
     }
     private static string NormalizeColor(string? value) => value is "green" or "blue" or "amber" or "red" or "gray" ? value! : "gray";
     private static string ShortHash(string value)
