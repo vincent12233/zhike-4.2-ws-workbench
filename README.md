@@ -1,6 +1,6 @@
-# 知客 4.4.24 跟票多股票分离与 AI 档案治理版
+# 知客 5.0.0 桌面版 + Docker 服务端（4.4.24 业务兼容基线）
 
-> 服务器版重整正在同一业务基线上增量实施：用户界面保持 Windows 桌面应用（WinUI 3），不是网页管理端；PostgreSQL/API/AI Worker/可选 WS Connector 仅作为 Docker 后台服务。4.4.24 仍是可回滚业务基线，未完成 WinUI/Docker 实机门禁前不会把新架构标记为正式发布。
+> 本版本在同一业务基线上增量实施：用户界面保持 Windows 桌面应用（WinUI 3），不是网页管理端；PostgreSQL/API/AI Worker/可选 WS Connector 仅作为 Docker 后台服务。Electron 4.4.24 兼容安装包仍保留为可回滚业务基线。
 
 本版本在现有知客客户库和 WS 工作台基础上增加 VIP 编号管理、客户分类联动、AI 客户档案自动建档、字段补全、来源/年龄/职业识别、字段证据、跟进任务联动和数据治理删除接口。VIP 编号可从客户中心、快速录入和 CSV/Excel 导入维护，并在群组管理下方独立查看；AI 只补齐空字段，已有人工内容不覆盖；AI 自动删除只进入回收站，永久删除需要二次确认。
 
@@ -31,6 +31,15 @@
 - `server/`、`infra/`、`connectors/ws-worker/`：PostgreSQL/API/AI Worker/可选 WS 连接器和版本化迁移。
 - `tools/sqlite-to-postgres/`：旧版 SQLite 只读对账和迁移工具。
 
+## v5 Docker 启动
+
+1. 安装并启动 Docker Desktop。
+2. 复制 `infra/.env.example` 为 `infra/.env`，至少修改 `POSTGRES_PASSWORD` 和随机的 `ZHIKE_PAIRING_APPROVAL_CODE`。
+3. 在 `infra` 目录执行 `docker compose up -d --build`；桌面端“服务器连接”页填写同一个 API 地址和审批码。
+4. 先检查 `/api/v2/health` 返回数据库健康、`schemaVersion=9`、`workerStatus=running`，再登录桌面端。
+
+详细迁移、备份、回滚和故障排查见 `infra/README.md` 与 `docs/server-version-*.md`。
+
 ## 安装包
 
 历史 4.2.0 WS 工作台安装包 SHA-256：`2633E0B1DAE754E7B84135C88BC27E7BAA6A77E67CEE76504D4872741D6658FD`。
@@ -41,11 +50,13 @@
 
 当前 4.4.1 安装包 SHA-256：`E6B00666256BB8B92BB9A1B80570C0F34C35D82C2E2EDFA8DB3AC4BFA43C3B60`，大小 `173,938,768` 字节。
 
-当前 4.4.24 兼容安装包 SHA-256：`AC20E654912500675A03596E3AEEBEB438D8860822A04027501754E9C8184ECE`，大小 `173,976,875` 字节（对应 `work/legacy-installer-output`）。
+当前 4.4.24 兼容安装包 SHA-256：`08A02641DFD3BCA35306B3F27BBF56EEC10A7F9A236D5F2CCD5943830D76A039`，大小 `173,976,589` 字节（对应 `work/legacy-installer-final`）。
+
+v5 交付目录中的 WinUI 安装包、Docker 服务端 bundle、源码压缩包和校验值以 `outputs/知客-5.0.0-最终交付/交付清单.json` 为准；当前源码提交为本文件对应的 Git 提交（以清单 `commit` 字段为准）。
 
 4.4.1 在 4.4.0 基础上补充无需打开会话的列表级 WS 自动采集、预览消息幂等同步、手机与工作台的 12 秒增量轮询、列表预览 AI 分析排队和跟进提醒刷新；原有知客业务数据和统计口径保持不变。
 
-克隆仓库前请安装 Git LFS；执行 `git lfs pull` 可下载完整安装包。安装包已经包含 Electron 和本机 Node 运行时，因此这些打包二进制不重复放入源码目录。
+克隆仓库前请安装 Git LFS；历史 `releases/*.exe` 是 LFS 管理的旧版二进制。当前 v5 安装包以交付目录单独提供，源码压缩包包含全部可构建源码、迁移、测试和 Docker 配置，不把历史发布二进制指针误当作源码。
 
 ## 安全边界
 
