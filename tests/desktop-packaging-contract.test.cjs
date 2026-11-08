@@ -27,6 +27,7 @@ assert.match(installer, /StageDir/);
 assert.match(installer, /requiredStageFiles/);
 assert.match(installer, /resources\\app\\app\.js/);
 assert.match(installer, /blockedStageNames/);
+assert.match(installer, /ComSpec \/d \/s \/c/);
 assert.match(setup, /DestDir:\s*\"\{app\}\"/);
 assert.match(setup, /LOCALAPPDATA.*Zhike/);
 assert.match(setup, /HasWebView2Runtime/);

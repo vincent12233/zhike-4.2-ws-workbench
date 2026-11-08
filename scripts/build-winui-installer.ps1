@@ -50,13 +50,18 @@ New-Item -ItemType Directory -Force -Path $out | Out-Null
 $expectedName = "知客-$AppVersion-WinUI桌面版.exe"
 $expectedPath = Join-Path $out $expectedName
 if (Test-Path -LiteralPath $expectedPath) { Remove-Item -LiteralPath $expectedPath -Force }
-# ISCC parses /D values itself. Explicitly quote paths so a repository or
-# output directory containing spaces is passed as one macro value; without
-# this, the compiler can silently truncate StageDir and package stale files.
-$stageDefine = '/DStageDir="' + $stage + '"'
-$outputDefine = '/DBuildOutputDir="' + $out + '"'
-& $iscc $stageDefine $outputDefine "/DAppVersion=$AppVersion" (Join-Path $repo 'zhike-desktop-setup.iss')
-if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
+# ISCC parses /D values itself. Invoke it through cmd.exe so quotes around
+# paths containing spaces survive PowerShell's native argument marshalling;
+# passing the same strings directly to ISCC is interpreted as multiple script
+# filenames on Windows and can silently package stale files.
+$iss = [IO.Path]::GetFullPath((Join-Path $repo 'zhike-desktop-setup.iss'))
+foreach ($value in @($iscc, $stage, $out, $iss)) {
+  if ($value.Contains('"')) { throw "Installer path contains an unsupported quote: $value" }
+}
+$commandLine = '"' + $iscc + '" /DStageDir="' + $stage + '" /DBuildOutputDir="' + $out + '" /DAppVersion=' + $AppVersion + ' "' + $iss + '"'
+& $env:ComSpec /d /s /c $commandLine
+$isccExitCode = $LASTEXITCODE
+if ($isccExitCode -ne 0) { throw "ISCC failed with exit code $isccExitCode" }
 $installer = $expectedPath
 if ([string]::IsNullOrWhiteSpace($installer) -or -not (Test-Path -LiteralPath $installer)) { throw "installer not found in output directory: $out" }
 Write-Output (ConvertTo-Json @{ installer = $installer; sha256 = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash; bytes = (Get-Item -LiteralPath $installer).Length })
