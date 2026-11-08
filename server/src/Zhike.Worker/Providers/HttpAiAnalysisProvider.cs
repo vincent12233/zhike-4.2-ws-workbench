@@ -303,7 +303,11 @@ public sealed class HttpAiAnalysisProvider(HttpClient http, IConfiguration confi
         return value?.Trim() ?? string.Empty;
     }
 
-    private static string NormalizeColor(string value) => value is "green" or "blue" or "amber" or "red" or "gray" ? value : "gray";
+    private static string NormalizeColor(string value)
+    {
+        var normalized = (value ?? string.Empty).Trim().ToLowerInvariant();
+        return normalized is "green" or "blue" or "amber" or "red" or "gray" ? normalized : "gray";
+    }
     private static bool IsAllowedEndpoint(string value)
     {
         if (!Uri.TryCreate(value, UriKind.Absolute, out var uri)) return false;
