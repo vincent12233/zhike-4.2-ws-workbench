@@ -42,7 +42,6 @@ public sealed class HotChatProfileRepository(PostgresConnectionFactory connectio
         ["age"] = "age",
         ["occupation"] = "occupation",
         ["work_context"] = "notes",
-        ["is_investor"] = "status",
         ["investment_years"] = "notes",
         ["holdings"] = "product_interest",
         ["investment_habits"] = "notes",
