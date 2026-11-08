@@ -52,6 +52,7 @@ assert.match(legacyHostCode, /OnWsNavigationStarting/);
 assert.match(legacyHostCode, /CloseWsOverlayAsync\(false/);
 assert.match(legacyHostCode, /CloseWsOverlayCoreAsync/);
 assert.match(legacyHostCode, /TimeSpan\.FromSeconds\(2\)/);
+assert.match(legacyHostCode, /Task\.WhenAny|WaitAsync\(TimeSpan\.FromSeconds\(4\)/, 'close flush must have a host-side timeout when WebView2 stops answering');
 assert.match(legacyHostCode, /Debug\.WriteLine/);
 assert.match(legacyHostCode, /ForceDetachWsOverlay/);
 assert.match(legacyHostCode, /response is null/);
