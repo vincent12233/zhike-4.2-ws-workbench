@@ -1152,7 +1152,6 @@ const server = createServer(async (req, res) => {
         const hotEventId = wsCreateId('hce');
         const hotEventResult = db.prepare('INSERT OR IGNORE INTO hot_chat_events(id,profile_id,customer_id,account_id,conversation_id,event_type,payload_json,source,analysis_id,idempotency_key,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)').run(hotEventId, hotUpdated.id, customer.id, accountId, conversation.id, 'analysis_profile', JSON.stringify({ facts: hotFacts }), 'AI', analysisRow.id, `analysis:${analysisRow.id}`, new Date().toISOString());
         if (Number(hotEventResult?.changes || 0) > 0) enqueueHotOutbox(hotUpdated, hotEventId, { facts: hotFacts, customerId: customer.id }, 'crm_sync');
-        bumpStateVersion();
         writeState(state, false);
         if (created || profileMerge.changedFields.length || governanceMerge.changedFields.length || softDeleted) {
           recordGovernanceAction(created ? 'create' : 'update', customer.id, customerBefore, customer, { analysisId: analysisRow.id, source: 'WS AI', confidence, reason: created ? 'AI 自动建档' : 'AI 自动补充客户档案' });
@@ -1437,6 +1436,8 @@ const server = createServer(async (req, res) => {
       if (req.method === 'GET' && (subpath === '' || subpath === 'diagnostics')) {
         const identity = hotProfileIdentity({ customerId: url.searchParams.get('customerId'), accountId: url.searchParams.get('accountId'), conversationId: url.searchParams.get('conversationId') });
         wsRequireAccount(identity.accountId);
+        const knownConversation = identity.conversationId ? db.prepare('SELECT account_id FROM ws_conversations WHERE id=?').get(identity.conversationId) : null;
+        if (knownConversation && String(knownConversation.account_id || 'default') !== identity.accountId) return json(res, 409, { error: 'WS 会话属于另一个账号。' });
         const row = hotProfileRow(identity);
         const profile = row ? hotProfilePayload(row) : hotProfileDefaultPayload(identity);
         if (subpath === 'diagnostics') {
@@ -1452,16 +1453,23 @@ const server = createServer(async (req, res) => {
       const body = JSON.parse((await readBody(req, 512 * 1024)).toString('utf8') || '{}');
       const identity = hotProfileIdentity(body);
       wsRequireAccount(identity.accountId);
+      const knownConversation = identity.conversationId ? db.prepare('SELECT account_id FROM ws_conversations WHERE id=?').get(identity.conversationId) : null;
+      if (knownConversation && String(knownConversation.account_id || 'default') !== identity.accountId) return json(res, 409, { error: 'WS 会话属于另一个账号。' });
       db.exec('BEGIN IMMEDIATE');
       try {
-        const row = ensureHotProfile(identity);
+        let row;
         if (subpath === 'sync-retry') {
-          const rows = db.prepare("SELECT * FROM hot_chat_sync_outbox WHERE account_id=? AND status IN ('pending','failed') ORDER BY created_at LIMIT 100").all(identity.accountId);
+          if (!identity.customerId && !identity.conversationId) { db.exec('ROLLBACK'); return json(res, 400, { error: '重试 outbox 必须指定客户或会话范围。' }); }
+          const where = ['p.account_id=?', "o.status IN ('pending','failed')"], params = [identity.accountId];
+          if (identity.customerId) { where.push('p.customer_id=?'); params.push(identity.customerId); }
+          if (identity.conversationId) { where.push('p.conversation_id=?'); params.push(identity.conversationId); }
+          const rows = db.prepare(`SELECT o.* FROM hot_chat_sync_outbox o JOIN hot_chat_profiles p ON p.id=o.profile_id WHERE ${where.join(' AND ')} ORDER BY o.created_at LIMIT 100`).all(...params);
           const now = new Date().toISOString();
           for (const item of rows) db.prepare("UPDATE hot_chat_sync_outbox SET status='pending',attempts=attempts+1,next_attempt_at=?,last_error='awaiting_external_delivery',updated_at=? WHERE id=?").run(now, now, item.id);
           bumpStateVersion(); db.exec('COMMIT');
           return json(res, 200, { retried: rows.length, outbox: rows.map(item => hotOutboxPayload({ ...item, status: 'pending', attempts: Number(item.attempts || 0) + 1, next_attempt_at: now, last_error: 'awaiting_external_delivery', updated_at: now })), version: readStateEnvelope().version });
         }
+        row = ensureHotProfile(identity);
         if (subpath === 'events') {
           const idempotencyKey = wsText(body.idempotencyKey || body.eventId, 240);
           const existing = idempotencyKey ? db.prepare('SELECT * FROM hot_chat_events WHERE profile_id=? AND idempotency_key=?').get(row.id, idempotencyKey) : null;

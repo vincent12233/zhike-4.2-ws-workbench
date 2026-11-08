@@ -57,3 +57,15 @@ Fix-round commands:
 - `node tests/customer-governance-api.test.cjs`
 - `node tests/ws-workbench-migration-v6.test.cjs`
 - `node tests/backup-restore-drill.cjs resources/app` (the existing isolated-server drill is timing-sensitive with ignored child stdio; a debug-pipe run passed end-to-end, while intermittent startup timeout is unrelated to assertions).
+
+## Fix round 2 scoped isolation follow-up (2026-11-09)
+
+RED evidence: added cross-account regression coverage; a known conversation created under `default` was initially readable through `account-b` (200). Added retry scope assertions to ensure a C1 retry does not increment C2 outbox attempts.
+
+GREEN changes:
+
+- Hot-chat profile GET/diagnostics and all write routes now check an existing conversation's owning account before reading or writing. Unknown conversation IDs remain allowed for unresolved CRM matching; known cross-account IDs return 409 before any transaction/write.
+- `/sync-retry` now requires a customer or conversation scope and joins outbox rows to the requested profile identity. It no longer retries every outbox row for the account. Rows remain `pending` with `awaiting_external_delivery`.
+- Removed the extra CRM sync `bumpStateVersion()` call; the transactional `writeState()` now performs the single shared revision increment on first sync.
+
+Fix-round verification: `node tests/hot-chat-profile-api.test.cjs`, `node tests/hot-chat-profile-migration.test.cjs`, `node tests/ws-workbench-api.test.cjs`, and `node --check resources/app/server.mjs` passed.

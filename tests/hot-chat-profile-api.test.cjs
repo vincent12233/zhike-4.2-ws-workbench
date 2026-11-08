@@ -17,6 +17,9 @@ const version = async () => String((await (await request('/api/state/version')).
   await wait(2000);
   const accountCreate = await request('/api/ws/accounts', { method: 'POST', body: body({ id: 'account-b', displayName: 'B' }) });
   assert.equal(accountCreate.status, 201);
+  const knownConversation = await request('/api/ws/conversations', { method: 'POST', body: body({ accountId: 'default', externalId: 'cross-account-conv', title: 'Cross account' }) });
+  assert.equal(knownConversation.status, 200);
+  const knownConversationBody = await knownConversation.json();
   const beforeGet = await version();
   const first = await request('/api/ws/hot-chat/profile?accountId=default&conversationId=missing&customerId=C1');
   assert.equal(first.status, 200);
@@ -31,6 +34,8 @@ const version = async () => String((await (await request('/api/state/version')).
   assert.equal(await version(), beforeGet, 'GET diagnostics must not change shared revision');
   const isolated = await request('/api/ws/hot-chat/profile?accountId=account-b&conversationId=missing&customerId=C1');
   assert.equal((await isolated.json()).profile.id, '', 'account scoped GET remains non-mutating');
+  const crossAccount = await request(`/api/ws/hot-chat/profile?accountId=account-b&conversationId=${encodeURIComponent(knownConversationBody.id)}&customerId=C1`);
+  assert.ok([403, 409].includes(crossAccount.status), 'known conversation cannot be read through another account');
 
   const put = await request('/api/ws/hot-chat/profile', { method: 'PUT', headers: { 'x-state-version': beforeGet }, body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', fields: { age: { value: 36, confidence: 0.9, evidence: '我今年36岁' } } }) });
   assert.equal(put.status, 200);
@@ -67,5 +72,15 @@ const version = async () => String((await (await request('/api/state/version')).
   const retry = await request('/api/ws/hot-chat/profile/sync-retry', { method: 'POST', body: body({ accountId: 'default', customerId: 'C1', conversationId: 'missing' }) });
   assert.equal(retry.status, 200);
   assert.ok((await retry.json()).outbox.every(item => item.status !== 'sent'), 'retry must not claim external delivery');
+  const secondEvent = await request('/api/ws/hot-chat/profile/events', { method: 'POST', body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C2', type: 'message', idempotencyKey: 'm2', payload: { text: '二号' } }) });
+  assert.equal(secondEvent.status, 200);
+  const secondBeforeRetry = await request('/api/ws/hot-chat/profile/diagnostics?accountId=default&conversationId=missing&customerId=C2');
+  const secondBeforeRetryBody = await secondBeforeRetry.json();
+  const scopedRetry = await request('/api/ws/hot-chat/profile/sync-retry', { method: 'POST', body: body({ accountId: 'default', customerId: 'C1', conversationId: 'missing' }) });
+  assert.equal(scopedRetry.status, 200);
+  const secondDiagnostics = await request('/api/ws/hot-chat/profile/diagnostics?accountId=default&conversationId=missing&customerId=C2');
+  const secondAfterRetryBody = await secondDiagnostics.json();
+  assert.equal(secondAfterRetryBody.outbox.pending, 1, 'retry only touches the requested profile');
+  assert.equal(secondAfterRetryBody.outbox.rows[0].attempts, secondBeforeRetryBody.outbox.rows[0].attempts, 'retry does not increment another profile');
   console.log('hot-chat-profile-api: migration, non-mutating reads, isolation, merge, confirm/reject/lock, colors, events and retry passed');
 } finally { try { await fetch(`http://127.0.0.1:${port}/api/shutdown`, { method: 'POST', headers: { ...headers, 'x-zhike-shutdown-token': token } }); } catch {} await wait(100); child.kill(); await wait(100); try { rmSync(dataDir, { recursive: true, force: true }); } catch {} } })();
