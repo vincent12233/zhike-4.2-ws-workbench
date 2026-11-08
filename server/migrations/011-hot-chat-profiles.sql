@@ -38,9 +38,12 @@ CREATE TABLE IF NOT EXISTS hot_chat_profile_fields (
     value_json JSONB NOT NULL DEFAULT 'null'::jsonb,
     state TEXT NOT NULL DEFAULT 'missing' CHECK (state IN ('known', 'missing', 'pending', 'declined')),
     confidence NUMERIC(6,5) NOT NULL DEFAULT 0 CHECK (confidence >= 0 AND confidence <= 1),
-    source_message_id TEXT REFERENCES messages(id) ON DELETE SET NULL,
+    -- References are intentionally soft: SQLite outbox may deliver the
+    -- evidence before the message/analysis row reaches PostgreSQL.  The
+    -- account/conversation scope still prevents cross-account attachment.
+    source_message_id TEXT,
     source_quote TEXT NOT NULL DEFAULT '',
-    analysis_id TEXT REFERENCES ai_analysis_results(id) ON DELETE SET NULL,
+    analysis_id TEXT,
     last_asked_at TIMESTAMPTZ,
     manual_locked BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),

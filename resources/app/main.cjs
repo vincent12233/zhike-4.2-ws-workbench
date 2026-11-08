@@ -836,9 +836,25 @@ async function completeQuitSequence() {
   if (quitSequenceStarted) return;
   quitSequenceStarted = true;
   flushingClose = true;
+  let cancelled = false;
   try {
     const flushed = await flushRendererBeforeQuit();
     if (!flushed.ok && mainWindow && !mainWindow.isDestroyed()) {
+      const choice = await dialog.showMessageBox(mainWindow, {
+        type: 'warning',
+        title: '本机数据尚未保存',
+        message: flushed.timedOut
+          ? '退出前保存等待超时。可以返回工作台重试，或仍然退出。'
+          : '最近的修改暂时没有写入本机数据库。可以返回工作台重试，或仍然退出。',
+        buttons: ['返回工作台', '仍然退出'],
+        defaultId: 0,
+        cancelId: 0,
+        noLink: true,
+      });
+      if (choice.response !== 1) {
+        cancelled = true;
+        return;
+      }
       mainWindow.webContents.send('zhike-tools-error', flushed.timedOut
         ? '退出前保存等待超时，已继续关闭；下次启动请检查同步状态。'
         : '退出前保存失败，已继续关闭；下次启动请检查同步状态。');
@@ -847,6 +863,7 @@ async function completeQuitSequence() {
     await stopOwnedService();
   } finally {
     flushingClose = false;
+    if (cancelled) { quitSequenceStarted = false; return; }
     quitting = true;
     // app.exit is intentionally the final operation. The bounded renderer
     // flush above is what prevents this forceful finalization from skipping

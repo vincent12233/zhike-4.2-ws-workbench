@@ -111,12 +111,16 @@ public static class HotChatRoutes
         catch (HotChatScopeException error) { return Results.Conflict(new { error = error.Message }); }
     }
 
-    private static async Task<IResult> GetDiagnosticsByScopeAsync(string profileId, string accountId, string conversationId, HotChatProfileRepository repository, CancellationToken cancellationToken)
+    private static async Task<IResult> GetDiagnosticsByScopeAsync(string? profileId, string accountId, string conversationId, string? customerId, HotChatProfileRepository repository, CancellationToken cancellationToken)
     {
         try
         {
-            var result = await repository.GetDiagnosticsAsync(profileId, accountId, conversationId, cancellationToken);
-            return result is null ? Results.NotFound(new { error = "热聊档案不存在。", profileId }) : Results.Ok(result);
+            var resolvedId = profileId?.Trim();
+            if (string.IsNullOrWhiteSpace(resolvedId) && !string.IsNullOrWhiteSpace(customerId))
+                resolvedId = (await repository.GetByScopeAsync(customerId, accountId, conversationId, cancellationToken))?.Id;
+            if (string.IsNullOrWhiteSpace(resolvedId)) return Results.BadRequest(new { error = "profileId 或 customerId 必须提供。" });
+            var result = await repository.GetDiagnosticsAsync(resolvedId, accountId, conversationId, cancellationToken);
+            return result is null ? Results.NotFound(new { error = "热聊档案不存在。", profileId = resolvedId }) : Results.Ok(result);
         }
         catch (HotChatScopeException error) { return Results.Conflict(new { error = error.Message }); }
     }
