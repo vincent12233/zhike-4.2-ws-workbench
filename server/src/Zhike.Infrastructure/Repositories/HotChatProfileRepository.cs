@@ -42,6 +42,9 @@ public sealed class HotChatProfileRepository(PostgresConnectionFactory connectio
         ["age"] = "age",
         ["occupation"] = "occupation",
         ["work_context"] = "notes",
+        // is_investor intentionally has no legacy Customer column.  Keeping
+        // it only in hot_chat_profile_fields avoids conflating investor status
+        // with the CRM workflow status column.
         ["investment_years"] = "notes",
         ["holdings"] = "product_interest",
         ["investment_habits"] = "notes",
