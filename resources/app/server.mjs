@@ -11,6 +11,7 @@ const { applyDelta } = require('./state-delta.cjs');
 const wsCore = require('./modules/ws-workbench-core.js');
 const wsCrmSync = require('./modules/ws-crm-sync-core.js');
 const customerGovernance = require('./modules/customer-governance-core.js');
+const hotChatProfile = require('./modules/hot-chat-profile-core.js');
 const { DatabaseSync } = require('node:sqlite');
 const root = dirname(fileURLToPath(import.meta.url));
 const configuredDataDir = String(process.env.ZHIKE_DATA_DIR || '').trim();
@@ -165,6 +166,17 @@ if (Number(db.prepare('PRAGMA user_version').get().user_version || 0) < 10) {
     db.exec(migration);
     db.prepare('INSERT OR IGNORE INTO schema_migrations(version,applied_at,description) VALUES(?,?,?)').run(10, new Date().toISOString(), '4.4 AI 客户档案自动治理、字段证据与删除审计');
     db.exec('PRAGMA user_version = 10; COMMIT');
+  } catch (error) { db.exec('ROLLBACK'); throw error; }
+}
+if (Number(db.prepare('PRAGMA user_version').get().user_version || 0) < 11) {
+  const migrationPath = join(root, 'migrations', '011-hot-chat-profile.sql');
+  if (!existsSync(migrationPath)) throw new Error('缺少热聊客户档案迁移文件。');
+  const migration = readFileSync(migrationPath, 'utf8');
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    db.exec(migration);
+    db.prepare('INSERT OR IGNORE INTO schema_migrations(version,applied_at,description) VALUES(?,?,?)').run(11, new Date().toISOString(), '4.5 热聊客户档案、事件与本地同步 outbox');
+    db.exec('PRAGMA user_version = 11; COMMIT');
   } catch (error) { db.exec('ROLLBACK'); throw error; }
 }
 
@@ -601,6 +613,89 @@ function stateVersionFailure(req) {
   if (String(expected) !== current) return { status: 409, body: { error: '共享数据已在其他窗口更新，请先同步后重试。', version: current } };
   return null;
 }
+function hotProfileId(customerId, accountId, conversationId) {
+  return `hcp-${createHash('sha256').update(`${customerId}\u0000${accountId}\u0000${conversationId}`).digest('hex').slice(0, 32)}`;
+}
+function hotProfileIdentity(input = {}) {
+  return { customerId: wsText(input.customerId, 128), accountId: wsAccountId(input.accountId), conversationId: wsText(input.conversationId, 160) };
+}
+function hotProfileRow(identity) {
+  return db.prepare('SELECT * FROM hot_chat_profiles WHERE customer_id=? AND account_id=? AND conversation_id=?').get(identity.customerId, identity.accountId, identity.conversationId);
+}
+function hotProfilePayload(row, fields = null) {
+  const list = fields || (row ? db.prepare('SELECT * FROM hot_chat_profile_fields WHERE profile_id=? ORDER BY field_key').all(row.id) : []);
+  const fieldMap = Object.fromEntries(list.map(item => [item.field_key, { field: item.field_key, value: wsJson(item.value_json, null), state: item.state, confidence: Number(item.confidence || 0), evidence: wsJson(item.evidence_json, []), manualLocked: Boolean(item.manual_locked), updatedAt: item.updated_at }]));
+  return { id: row?.id || '', customerId: row?.customer_id || '', accountId: row?.account_id || 'default', conversationId: row?.conversation_id || '', statusColor: row?.status_color || 'gray', manualColor: row?.manual_color || '', manualLocked: Boolean(row?.manual_locked), completeness: Number(row?.completeness || 0), version: Number(row?.version || 0), fields: fieldMap, fieldList: Object.values(fieldMap), createdAt: row?.created_at || '', updatedAt: row?.updated_at || '' };
+}
+function ensureHotProfile(identity, now = new Date().toISOString()) {
+  let row = hotProfileRow(identity);
+  if (row) return row;
+  const id = hotProfileId(identity.customerId, identity.accountId, identity.conversationId);
+  db.prepare('INSERT OR IGNORE INTO hot_chat_profiles(id,customer_id,account_id,conversation_id,status_color,manual_color,manual_locked,completeness,version,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)')
+    .run(id, identity.customerId, identity.accountId, identity.conversationId, 'gray', '', 0, 0, 0, '{}', now, now);
+  row = db.prepare('SELECT * FROM hot_chat_profiles WHERE id=?').get(id);
+  for (const field of hotChatProfile.PROFILE_FIELDS) db.prepare('INSERT OR IGNORE INTO hot_chat_profile_fields(id,profile_id,field_key,value_json,state,confidence,evidence_json,manual_locked,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)').run(wsCreateId('hcpf'), id, field, 'null', 'missing', 0, '[]', 0, now, now);
+  return db.prepare('SELECT * FROM hot_chat_profiles WHERE id=?').get(id);
+}
+function bumpStateVersion() {
+  const now = new Date().toISOString();
+  const changed = db.prepare('UPDATE app_state SET revision=revision+1,updated_at=? WHERE id=1').run(now);
+  if (Number(changed?.changes || 0) === 0) writeState(emptyCrmState(), false);
+}
+function normalizeHotFacts(body = {}) {
+  const facts = [];
+  if (body.fields && typeof body.fields === 'object' && !Array.isArray(body.fields)) for (const [field, value] of Object.entries(body.fields)) facts.push({ field, ...(value && typeof value === 'object' && !Array.isArray(value) ? value : { value }) });
+  if (Array.isArray(body.facts)) facts.push(...body.facts);
+  if (body.field) facts.push(body);
+  const merged = new Map();
+  for (const item of facts) { const field = wsText(item?.field, 80); if (!hotChatProfile.PROFILE_FIELDS.includes(field)) continue; merged.set(field, hotChatProfile.normalizeProfileFact(field, item)); }
+  return [...merged.values()];
+}
+function hotFactsFromAnalysis(analysis = {}, analysisId = '') {
+  const facts = [];
+  const source = analysis.profileFacts && typeof analysis.profileFacts === 'object' ? analysis.profileFacts : {};
+  for (const [field, item] of Object.entries(source)) {
+    if (!hotChatProfile.PROFILE_FIELDS.includes(field)) continue;
+    facts.push(hotChatProfile.normalizeProfileFact(field, { ...(item && typeof item === 'object' ? item : { value: item }), analysisId }));
+  }
+  for (const item of Array.isArray(analysis.evidence) ? analysis.evidence : []) {
+    const field = wsText(item?.field, 80);
+    if (!hotChatProfile.PROFILE_FIELDS.includes(field)) continue;
+    facts.push(hotChatProfile.normalizeProfileFact(field, { ...item, evidence: item.evidence || item.text, analysisId }));
+  }
+  return facts;
+}
+function saveHotProfile(identity, facts = [], options = {}) {
+  const now = new Date().toISOString();
+  const row = ensureHotProfile(identity, now);
+  const existing = db.prepare('SELECT * FROM hot_chat_profile_fields WHERE profile_id=?').all(row.id);
+  const byField = new Map(existing.map(item => [item.field_key, item]));
+  const upsert = db.prepare('UPDATE hot_chat_profile_fields SET value_json=?,state=?,confidence=?,evidence_json=?,manual_locked=?,updated_at=? WHERE profile_id=? AND field_key=?');
+  for (const fact of facts) {
+    const prior = byField.get(fact.field);
+    if (prior?.manual_locked && options.allowManual !== true) continue;
+    const evidence = Array.isArray(prior ? wsJson(prior.evidence_json, []) : []) ? wsJson(prior?.evidence_json, []) : [];
+    if (fact.evidence && !evidence.some(item => item.text === fact.evidence && JSON.stringify(item.value) === JSON.stringify(fact.value))) evidence.push({ value: fact.value, confidence: fact.confidence, text: fact.evidence });
+    const merged = { ...fact, evidence: fact.evidence || prior?.evidence_json ? evidence : [] };
+    upsert.run(JSON.stringify(merged.value ?? null), merged.state, merged.confidence, JSON.stringify(evidence), options.manualLocked ? 1 : Number(prior?.manual_locked || 0), now, row.id, fact.field);
+  }
+  const fields = db.prepare('SELECT * FROM hot_chat_profile_fields WHERE profile_id=?').all(row.id);
+  const profileObj = Object.fromEntries(fields.map(item => [item.field_key, { value: wsJson(item.value_json, null), state: item.state }]));
+  const completeness = hotChatProfile.computeCompleteness(profileObj);
+  const manualColor = Object.hasOwn(options, 'manualColor') ? wsText(options.manualColor, 20) : row.manual_color;
+  const manualLocked = Object.hasOwn(options, 'manualLocked') ? (options.manualLocked ? 1 : 0) : row.manual_locked;
+  const statusColor = hotChatProfile.deriveStatusColor({ completeness, manualOverride: manualLocked ? { color: manualColor, locked: true } : null, aiColor: options.statusColor || row.status_color });
+  db.prepare('UPDATE hot_chat_profiles SET status_color=?,manual_color=?,manual_locked=?,completeness=?,version=version+1,updated_at=? WHERE id=?').run(statusColor, manualColor, manualLocked, completeness, now, row.id);
+  return db.prepare('SELECT * FROM hot_chat_profiles WHERE id=?').get(row.id);
+}
+function enqueueHotOutbox(profileRow, eventId, payload, operation = 'upsert_profile') {
+  const now = new Date().toISOString();
+  const id = wsCreateId('hco');
+  db.prepare('INSERT OR IGNORE INTO hot_chat_sync_outbox(id,profile_id,event_id,account_id,operation,payload_json,status,attempts,next_attempt_at,last_error,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)')
+    .run(id, profileRow.id, eventId || '', profileRow.account_id, operation, JSON.stringify(payload || {}), 'pending', 0, now, '', now, now);
+  return db.prepare('SELECT * FROM hot_chat_sync_outbox WHERE profile_id=? AND event_id=?').get(profileRow.id, eventId || '') || db.prepare('SELECT * FROM hot_chat_sync_outbox WHERE id=?').get(id);
+}
+function hotOutboxPayload(row) { return { id: row.id, profileId: row.profile_id, eventId: row.event_id, accountId: row.account_id, operation: row.operation, payload: wsJson(row.payload_json, {}), status: row.status, attempts: Number(row.attempts || 0), nextAttemptAt: row.next_attempt_at || '', lastError: row.last_error || '', createdAt: row.created_at, updatedAt: row.updated_at }; }
 function governanceActionPayload(row) {
   return { id: row.id, customerId: row.customer_id, action: row.action, reason: row.reason, source: row.source, confidence: Number(row.confidence || 0), analysisId: row.analysis_id, before: wsJson(row.before_json, {}), after: wsJson(row.after_json, {}), createdAt: row.created_at };
 }
@@ -1027,6 +1122,14 @@ const server = createServer(async (req, res) => {
       if (readState()) saveSnapshot('WS AI 自动补充前自动快照');
       db.exec('BEGIN IMMEDIATE');
       try {
+        const hotIdentity = { customerId: customer.id, accountId, conversationId: conversation.id };
+        const hotRow = ensureHotProfile(hotIdentity);
+        const hotFacts = hotFactsFromAnalysis(analysis, analysisRow.id);
+        const hotUpdated = saveHotProfile(hotIdentity, hotFacts, { statusColor: hotChatProfile.deriveStatusColor({ intent: analysis.intent, urgent: analysis.urgency === '高', completeness: hotChatProfile.computeCompleteness(Object.fromEntries(hotFacts.map(item => [item.field, item]))) }) });
+        const hotEventId = wsCreateId('hce');
+        const hotEventResult = db.prepare('INSERT OR IGNORE INTO hot_chat_events(id,profile_id,customer_id,account_id,conversation_id,event_type,payload_json,source,analysis_id,idempotency_key,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)').run(hotEventId, hotUpdated.id, customer.id, accountId, conversation.id, 'analysis_profile', JSON.stringify({ facts: hotFacts }), 'AI', analysisRow.id, `analysis:${analysisRow.id}`, new Date().toISOString());
+        if (Number(hotEventResult?.changes || 0) > 0) enqueueHotOutbox(hotUpdated, hotEventId, { facts: hotFacts, customerId: customer.id }, 'crm_sync');
+        bumpStateVersion();
         writeState(state, false);
         if (created || profileMerge.changedFields.length || governanceMerge.changedFields.length || softDeleted) {
           recordGovernanceAction(created ? 'create' : 'update', customer.id, customerBefore, customer, { analysisId: analysisRow.id, source: 'WS AI', confidence, reason: created ? 'AI 自动建档' : 'AI 自动补充客户档案' });
@@ -1304,6 +1407,63 @@ const server = createServer(async (req, res) => {
         db.exec('COMMIT');
       } catch (error) { db.exec('ROLLBACK'); throw error; }
       return json(res, 200, { ok: true, schemaVersion: 6, counts: { settings: settings.length, conversations: conversations.length, messages: messages.length, analyses: analyses.length, replies: replies.length, batches: batches.length, collectionRuns: collectionRuns.length, collectionItems: collectionItems.length, followupAlerts: followupAlerts.length } });
+    }
+    const hotProfileMatch = url.pathname.match(/^\/api\/(?:ws\/)?hot-chat\/profile(?:\/(facts|confirm|events|diagnostics|sync-retry))?$/);
+    if (hotProfileMatch) {
+      const subpath = hotProfileMatch[1] || '';
+      if (req.method === 'GET' && (subpath === '' || subpath === 'diagnostics')) {
+        const identity = hotProfileIdentity({ customerId: url.searchParams.get('customerId'), accountId: url.searchParams.get('accountId'), conversationId: url.searchParams.get('conversationId') });
+        wsRequireAccount(identity.accountId);
+        const row = hotProfileRow(identity) || ensureHotProfile(identity);
+        const profile = hotProfilePayload(row);
+        if (subpath === 'diagnostics') {
+          const events = db.prepare('SELECT * FROM hot_chat_events WHERE profile_id=? ORDER BY created_at DESC,id DESC LIMIT 100').all(row.id).map(item => ({ id: item.id, type: item.event_type, payload: wsJson(item.payload_json, {}), source: item.source, analysisId: item.analysis_id, idempotencyKey: item.idempotency_key, createdAt: item.created_at }));
+          const outbox = db.prepare('SELECT * FROM hot_chat_sync_outbox WHERE profile_id=? ORDER BY created_at DESC,id DESC').all(row.id).map(hotOutboxPayload);
+          return json(res, 200, { profile, events, outbox: { count: outbox.length, pending: outbox.filter(item => item.status === 'pending').length, rows: outbox } });
+        }
+        return json(res, 200, { profile, version: readStateEnvelope().version });
+      }
+      if (req.method !== 'PUT' && req.method !== 'POST') return json(res, 405, { error: '热聊档案仅支持 GET/PUT/POST。' });
+      const versionFailure = stateVersionFailure(req);
+      if (versionFailure) return json(res, versionFailure.status, versionFailure.body);
+      const body = JSON.parse((await readBody(req, 512 * 1024)).toString('utf8') || '{}');
+      const identity = hotProfileIdentity(body);
+      wsRequireAccount(identity.accountId);
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        const row = ensureHotProfile(identity);
+        if (subpath === 'sync-retry') {
+          const rows = db.prepare("SELECT * FROM hot_chat_sync_outbox WHERE account_id=? AND status IN ('pending','failed') ORDER BY created_at LIMIT 100").all(identity.accountId);
+          const now = new Date().toISOString();
+          for (const item of rows) db.prepare("UPDATE hot_chat_sync_outbox SET status='sent',attempts=attempts+1,last_error='',updated_at=? WHERE id=?").run(now, item.id);
+          bumpStateVersion(); db.exec('COMMIT');
+          return json(res, 200, { retried: rows.length, outbox: rows.map(item => hotOutboxPayload({ ...item, status: 'sent', attempts: Number(item.attempts || 0) + 1, last_error: '', updated_at: now })), version: readStateEnvelope().version });
+        }
+        if (subpath === 'events') {
+          const idempotencyKey = wsText(body.idempotencyKey || body.eventId, 240);
+          const existing = idempotencyKey ? db.prepare('SELECT * FROM hot_chat_events WHERE profile_id=? AND idempotency_key=?').get(row.id, idempotencyKey) : null;
+          if (existing) { db.exec('COMMIT'); return json(res, 200, { event: { id: existing.id, type: existing.event_type, payload: wsJson(existing.payload_json, {}) }, existed: true, version: readStateEnvelope().version }); }
+          const now = new Date().toISOString(), eventId = wsText(body.id, 160) || wsCreateId('hce');
+          db.prepare('INSERT INTO hot_chat_events(id,profile_id,customer_id,account_id,conversation_id,event_type,payload_json,source,analysis_id,idempotency_key,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)').run(eventId, row.id, identity.customerId, identity.accountId, identity.conversationId, wsText(body.type || body.eventType, 80) || 'message', JSON.stringify(body.payload && typeof body.payload === 'object' ? body.payload : {}), wsText(body.source, 80) || 'AI', wsText(body.analysisId, 160), idempotencyKey, now);
+          enqueueHotOutbox(row, eventId, body.payload || {}, 'event');
+          bumpStateVersion(); db.exec('COMMIT');
+          return json(res, 200, { event: { id: eventId, type: wsText(body.type || body.eventType, 80) || 'message', payload: body.payload || {}, createdAt: now }, existed: false, version: readStateEnvelope().version });
+        }
+        let updated = row;
+        if (subpath === 'confirm' || subpath === 'facts' || req.method === 'PUT') {
+          const facts = normalizeHotFacts(body);
+          if (subpath === 'confirm' && body.field) facts.push(hotChatProfile.normalizeProfileFact(body.field, { ...body, state: body.declined ? 'declined' : 'known' }));
+          const profileOptions = { allowManual: subpath === 'confirm', manualColor: body.manualColor ?? body.color, statusColor: body.statusColor };
+          if (subpath === 'confirm') profileOptions.manualLocked = body.locked !== false;
+          updated = saveHotProfile(identity, facts, profileOptions);
+          const eventId = wsCreateId('hce');
+          db.prepare('INSERT INTO hot_chat_events(id,profile_id,customer_id,account_id,conversation_id,event_type,payload_json,source,analysis_id,idempotency_key,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)').run(eventId, updated.id, identity.customerId, identity.accountId, identity.conversationId, subpath === 'confirm' ? (body.declined ? 'fact_rejected' : 'fact_confirmed') : 'facts_updated', JSON.stringify({ facts }), wsText(body.source, 80) || 'operator', wsText(body.analysisId, 160), wsText(body.idempotencyKey, 240), new Date().toISOString());
+          enqueueHotOutbox(updated, eventId, { facts }, 'profile');
+          bumpStateVersion();
+        }
+        db.exec('COMMIT');
+        return json(res, 200, { profile: hotProfilePayload(updated), version: readStateEnvelope().version });
+      } catch (error) { db.exec('ROLLBACK'); throw error; }
     }
     const governanceProfileMatch = url.pathname.match(/^\/api\/data-governance\/customers\/([^/]+)\/profile$/);
     if (req.method === 'GET' && governanceProfileMatch) {
