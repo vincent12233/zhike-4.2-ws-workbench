@@ -49,7 +49,8 @@
 - 所有写入均使用参数化 SQL；动态客户列来自固定白名单。
 - 账号/会话范围在读取和写入前校验，跨账号读取/重试被拒绝；未知会话不会被静默绑定到其他账号。
 - 已知客户值不被 AI 覆盖；冲突进入 `pending`/事件，人工锁定优先。
-- PostgreSQL 真实 Docker 实例、真实 AI/WS、备份恢复、桌面安装包和 .NET 编译尚未在本任务环境运行，分别交由后续任务/发布门禁验证。
+- 隔离 PostgreSQL 18 Docker 实例已从 001–011 干净执行迁移（`schema_migrations.max(version)=11`），并核验 `source_message_id`/`analysis_id` 为软引用文本列；真实 AI/WS、备份恢复和桌面安装包仍交由后续任务/发布门禁验证。
+- .NET SDK 未安装在宿主机；使用隔离 `mcr.microsoft.com/dotnet/sdk:10.0` 容器完成 API/Worker restore + build（0 警告、0 错误）。
 - 服务器默认值已改为 schema 11；现有部署升级时必须先执行迁移，再检查 `/api/v2/health`。
 
 ## 追加审查（客户身份隔离）
