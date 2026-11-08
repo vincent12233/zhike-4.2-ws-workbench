@@ -67,7 +67,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installe
 
 以下项目没有在本次隔离环境伪造为“已通过”：
 
-- 当前机器没有可用 .NET SDK，WinUI 5.2.0 Release 编译未重新执行；
+- 本次文档提交前尚未重新执行 5.2.0 WinUI Release 编译；仓库内已有的 5.1.0 bundle 不能
+  作为 5.2.0 构建证据，需使用仓库 `.tools/dotnet10` SDK 或目标机 SDK 单独完成门禁；
 - 真实 Docker/PostgreSQL 迁移、备份恢复和磁盘不足告警需在目标机执行；
 - WebView2 已安装/缺失两条路径、代码签名和覆盖安装/卸载保留数据需人工验收；
 - 用户本人登录 WS 后的手机新消息实时同步、AI 额度和页面结构长期稳定性需现场验证。
