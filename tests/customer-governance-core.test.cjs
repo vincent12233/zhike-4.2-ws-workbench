@@ -66,3 +66,6 @@ assert.equal(conflict.customer.preferred_name, '人工称呼');
 assert.equal(conflict.conflicts.some(item => item.field === 'preferred_name'), true);
 const sensitive = core.normalizeAiProfile({ confidence: 0.9, profileFacts: { family_context: { value: '密码 token-abc', confidence: 0.9, evidence: '密码 token-abc' } } }, { id: 'c3' }, 'a3');
 assert.equal(JSON.stringify(sensitive.evidence).includes('token-abc'), false);
+const leakProfile = core.normalizeAiProfile({ confidence: 0.9, profileFacts: { family_context: { value: 'password: hunter2 银行卡号 1234 5678', confidence: 0.9, evidence: 'password: hunter2 银行卡号 1234 5678' } } }, { id: 'c4' }, 'a4');
+assert.equal(JSON.stringify(leakProfile.evidence).includes('hunter2'), false);
+assert.equal(JSON.stringify(leakProfile.evidence).includes('1234'), false);

@@ -8,7 +8,9 @@
   const list = value => Array.isArray(value) ? value.map(text).filter(Boolean).slice(0, 30) : text(value) ? [text(value)] : [];
   const finite = value => Number.isFinite(Number(value)) ? Number(value) : '';
   const safeJson = value => JSON.parse(JSON.stringify(value ?? null));
-  const redactSensitive = value => text(value).replace(/(?:password|passcode|token|cookie|secret|验证码|校验码|密码|银行卡|收款码|二维码)[^\s，。；;]*/ig, '[已脱敏]');
+  const redactSensitive = value => text(value)
+    .replace(/(?:password|passcode|token|cookie|secret)\s*[:：]?\s*[^\s，。；;]+/ig, '[已脱敏]')
+    .replace(/(?:验证码|校验码|密码|银行卡(?:号)?|收款码|二维码)\s*[:：]?\s*[A-Za-z0-9_\-\s]+/ig, '[已脱敏]');
 
   const FIELD_MAP = Object.freeze({
     name: ['name', 'customerName'],
@@ -76,7 +78,7 @@
       const key = `${analysisId}:${field}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      rows.push({ key, field, value: redactSensitive(fields[field]), sourceText: text(result.summary).replace(/(?:password|passcode|token|cookie|secret|验证码|校验码|密码|银行卡|收款码|二维码)[^\s，。；;]*/ig, '[已脱敏]').slice(0, 2000), confidence: Number(result.confidence) || 0, analysisId, conversationId });
+      rows.push({ key, field, value: redactSensitive(fields[field]), sourceText: redactSensitive(result.summary).slice(0, 2000), confidence: Number(result.confidence) || 0, analysisId, conversationId });
     }
     const profileFacts = result?.profileFacts && typeof result.profileFacts === 'object' ? result.profileFacts : {};
     for (const [field, fact] of Object.entries(profileFacts)) {
@@ -84,7 +86,7 @@
       const key = `${analysisId}:profile:${field}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      rows.push({ key, field, value: redactSensitive(fact.value), sourceText: text(fact.evidence).replace(/(?:password|passcode|token|cookie|secret|验证码|校验码|密码|银行卡|收款码|二维码)[^\s，。；;]*/ig, '[已脱敏]').slice(0, 2000), confidence: Number(fact.confidence ?? result.confidence) || 0, analysisId, conversationId });
+      rows.push({ key, field, value: redactSensitive(fact.value), sourceText: redactSensitive(fact.evidence).slice(0, 2000), confidence: Number(fact.confidence ?? result.confidence) || 0, analysisId, conversationId });
     }
     return rows;
   }

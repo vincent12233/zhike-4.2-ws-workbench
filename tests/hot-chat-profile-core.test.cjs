@@ -48,3 +48,6 @@ assert.deepEqual(Object.keys(parsedContract.profileFacts), ['age', 'gender']);
 assert.equal(parsedContract.profileFacts.gender.state, 'declined');
 assert.deepEqual(parsedContract.profileFactsAutoFill, {});
 assert.deepEqual(core.deriveNextTopics({ missingFields: ['age'], naturalNextTopics: ['聊聊旅行'] }), ['聊聊旅行']);
+const leakEvent = core.buildEvent('evidence', { sourceText: 'password: hunter2 银行卡号 1234 5678' });
+assert.equal(JSON.stringify(leakEvent).includes('hunter2'), false);
+assert.equal(JSON.stringify(leakEvent).includes('1234'), false);

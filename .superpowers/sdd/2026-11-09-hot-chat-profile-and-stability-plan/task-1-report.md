@@ -56,3 +56,21 @@ Focused commands all passed after fixes:
 - `node --check` for all modified core modules
 
 Fixes include profile field allowlisting/state preservation, confidence/evidence gating, empty numeric/list normalization, removal of unconditional dynamic overwrites, natural topic preference, and evidence value/source redaction.
+
+## Review fix round 2
+
+### RED
+
+Added regression assertions for complete redaction of `password: hunter2` and whitespace-separated bank numbers (`银行卡号 1234 5678`). The first run failed because the governance evidence path left secret values and trailing digits.
+
+### GREEN
+
+After consolidating governance evidence through the shared redaction helper, all passed:
+
+- `node tests/hot-chat-profile-core.test.cjs`
+- `node tests/customer-governance-core.test.cjs`
+- `node tests/ws-workbench-core.test.cjs`
+- `node tests/ws-crm-sync-core.test.cjs`
+- `node --check resources/app/modules/customer-governance-core.js`
+
+The redaction now consumes secret key/value tokens and whitespace-separated numeric sequences while preserving ordinary profile text.
