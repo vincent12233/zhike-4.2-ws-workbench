@@ -29,8 +29,10 @@ assert.match(wsCode, /GridLength\(_rightCollapsed \? 0 : 300\)/);
 assert.match(wsCode, /_suppressAccountSelection/);
 const homeXaml = fs.readFileSync(path.join(desktopRoot, 'Views', 'HomePage.xaml'), 'utf8');
 assert.match(homeXaml, /PairServer/);
+assert.match(homeXaml, /PairingProofBox/);
 const homeCode = fs.readFileSync(path.join(desktopRoot, 'Views', 'HomePage.xaml.cs'), 'utf8');
 assert.match(homeCode, /ComputePairingProof/);
+assert.match(homeCode, /SetPairingApprovalCode/);
 const layout = fs.readFileSync(path.join(desktopRoot, 'Services', 'WindowLayoutService.cs'), 'utf8');
 assert.match(layout, /Math\.Max\(820/);
 assert.match(layout, /Math\.Max\(540/);
@@ -56,6 +58,7 @@ assert.match(api, /search=/);
 assert.match(api, /api\/v2\/business-records\{suffix\}/);
 assert.match(api, /CommitImportAsync/);
 assert.match(api, /api\/v2\/import\/batches\/commit/);
+assert.match(api, /SetPairingApprovalCode/);
 
 const project = fs.readFileSync(path.join(desktopRoot, 'Zhike.Desktop.csproj'), 'utf8');
 assert.match(project, /Microsoft\.Web\.WebView2" Version="1\.0\.3719\.77"/);

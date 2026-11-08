@@ -32,5 +32,7 @@ for (const field of ['AppVersion', 'SchemaVersion', 'DatabaseStatus', 'WorkerSta
 assert.match(fs.readFileSync(path.join(repo, 'server/src/Zhike.Domain/DomainAssemblyMarker.cs'), 'utf8'), /class DomainAssemblyMarker\s*\{\s*\}/);
 assert.match(fs.readFileSync(path.join(repo, 'server/src/Zhike.Infrastructure/InfrastructureAssemblyMarker.cs'), 'utf8'), /class InfrastructureAssemblyMarker\s*\{\s*\}/);
 assert.match(fs.readFileSync(path.join(repo, 'server/src/Zhike.Api/Program.cs'), 'utf8'), /partial class Program\s*\{\s*\}/);
+assert.match(fs.readFileSync(path.join(repo, 'server/src/Zhike.Api/Program.cs'), 'utf8'), /GetStatusAsync\("ai-worker"/);
+assert.match(fs.readFileSync(path.join(repo, 'server/src/Zhike.Worker/Program.cs'), 'utf8'), /WorkerHeartbeatService/);
 
 console.log('server-v2 bootstrap contract: desktop-only UI and Docker service skeleton present');

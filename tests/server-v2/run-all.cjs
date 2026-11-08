@@ -4,6 +4,9 @@ const { spawnSync } = require('node:child_process');
 const path = require('node:path');
 const tests = [
   'bootstrap.test.cjs',
+  'compose-network.test.cjs',
+  'ai-unconfigured.test.cjs',
+  'ai-provider-lifetime.test.cjs',
   'postgres-migrations.test.cjs',
   'sqlite-postgres-migration.test.cjs',
   'domain-record-identity.test.cjs',
@@ -13,6 +16,7 @@ const tests = [
   'data-integrity-regression.test.cjs',
   'outbox-idempotency.test.cjs',
   'security-backup.test.cjs',
+  'backup-script-parser.test.cjs',
   'e2e-migration.test.cjs',
   'performance-postgres.test.cjs',
   'ws-authorized-smoke.test.cjs',

@@ -14,6 +14,7 @@ public sealed partial class HomePage : Page
     {
         InitializeComponent();
         ApiUrlBox.Text = Environment.GetEnvironmentVariable("ZHIKE_API_BASE_URL") ?? string.Empty;
+        PairingProofBox.Password = Environment.GetEnvironmentVariable("ZHIKE_PAIRING_APPROVAL_CODE") ?? string.Empty;
     }
 
     private async void CheckServer(object sender, RoutedEventArgs args)
@@ -22,7 +23,7 @@ public sealed partial class HomePage : Page
         {
             _api = CreateClient();
             var health = await _api.GetHealthAsync();
-            SetStatus(InfoBarSeverity.Success, "服务正常", $"版本 {health?.AppVersion ?? "未知"}，数据库 {health?.DatabaseStatus ?? "未知"}。");
+            SetStatus(InfoBarSeverity.Success, "服务正常", $"版本 {health?.AppVersion ?? "未知"}，数据库 {health?.DatabaseStatus ?? "未知"}，Worker {health?.WorkerStatus ?? "未知"}。");
         }
         catch (Exception error) { SetStatus(InfoBarSeverity.Warning, "服务不可用", error.Message); }
     }
@@ -47,7 +48,9 @@ public sealed partial class HomePage : Page
     private ApiClient CreateClient()
     {
         if (!Uri.TryCreate(ApiUrlBox.Text.Trim(), UriKind.Absolute, out var baseUri)) throw new InvalidOperationException("请输入有效的 API 地址");
-        return new ApiClient(new HttpClient { BaseAddress = new Uri(baseUri.ToString().TrimEnd('/') + "/") });
+        var client = new ApiClient(new HttpClient { BaseAddress = new Uri(baseUri.ToString().TrimEnd('/') + "/") });
+        client.SetPairingApprovalCode(PairingProofBox.Password);
+        return client;
     }
 
     private void SetStatus(InfoBarSeverity severity, string title, string message)

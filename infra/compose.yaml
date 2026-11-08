@@ -25,9 +25,13 @@ services:
     environment:
       ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=${POSTGRES_DB:-zhike};Username=${POSTGRES_USER:-zhike_app};Password=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
       ZHike__AppVersion: ${ZHike_APP_VERSION:-5.0.0-dev}
-      ZHike__SchemaVersion: ${ZHike_SCHEMA_VERSION:-8}
+      ZHike__SchemaVersion: ${ZHike_SCHEMA_VERSION:-9}
       ZHike__WorkspaceOwnerId: ${ZHike_WORKSPACE_OWNER_ID:-}
       ZHike__AllowRemotePairing: ${ZHike_ALLOW_REMOTE_PAIRING:-false}
+      ZHike__AllowDockerLoopbackPairing: ${ZHike_ALLOW_DOCKER_LOOPBACK_PAIRING:-true}
+      ZHike__DockerLoopbackPairingSourceCidr: ${ZHike_DOCKER_LOOPBACK_PAIRING_SOURCE_CIDR:-172.31.240.0/24}
+      # Docker Desktop's bridge source is not host-authenticating; the same
+      # local proof is therefore required on the compatibility pairing path.
       ZHike__PairingApprovalCode: ${ZHIKE_PAIRING_APPROVAL_CODE:-}
       ZHike__ConnectorToken: ${ZHIKE_API_TOKEN:-}
       ZHike__ConnectorTokenFile: ${ZHIKE_API_TOKEN_FILE:-}
@@ -36,7 +40,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    networks: [zhike_internal]
+    # Docker Desktop 4.98 may not create a published-port endpoint when a
+    # service is attached only to an internal network. Keep DB DNS isolated,
+    # and use a dedicated non-NAT bridge solely for the loopback API publish.
+    networks: [zhike_internal, zhike_ingress]
 
   ai-worker:
     build:
@@ -57,7 +64,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    networks: [zhike_internal]
+    # Keep database/API DNS on the isolated network while allowing the worker
+    # to reach the configured AI HTTPS endpoint.
+    networks: [zhike_internal, zhike_egress]
 
   ws-connector:
     build:
@@ -76,7 +85,9 @@ services:
     depends_on:
       api:
         condition: service_started
-    networks: [zhike_internal]
+    # Playwright must reach the user-authorized WS page; API writes remain on
+    # the isolated network and no connector port is published to the host.
+    networks: [zhike_internal, zhike_egress]
 
   backup:
     image: postgres:18
@@ -99,3 +110,17 @@ volumes:
 networks:
   zhike_internal:
     internal: true
+  # The API must be reachable from the local desktop through the published
+  # loopback port. Keep database/worker traffic on the internal network, while
+  # attaching only the API to a non-NAT bridge network for host access.
+  zhike_ingress:
+    driver: bridge
+    internal: false
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "false"
+    ipam:
+      config:
+        - subnet: ${ZHike_DOCKER_LOOPBACK_PAIRING_SOURCE_CIDR:-172.31.240.0/24}
+  zhike_egress:
+    driver: bridge
+    internal: false

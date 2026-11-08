@@ -5,23 +5,27 @@ using Microsoft.Extensions.Configuration;
 
 namespace Zhike.Worker.Providers;
 
+public sealed class AiAnalysisUnavailableException(string message) : InvalidOperationException(message);
+public sealed class AiAnalysisSkippedException(string message) : InvalidOperationException(message);
+
 public sealed class HttpAiAnalysisProvider(HttpClient http, IConfiguration configuration) : IAiAnalysisProvider
 {
-    private readonly string baseUrl = (configuration["ZHike:AIBaseUrl"] ?? string.Empty).TrimEnd('/');
-    private readonly string apiKey = ReadSecret(configuration["ZHike:AIKey"], configuration["ZHike:AIKeyFile"]);
-    private readonly string model = configuration["ZHike:AIModel"] ?? "gpt-5-mini";
-
     public async Task<AiAnalysisResult> AnalyzeAsync(JsonElement payload, CancellationToken cancellationToken)
     {
         var messageId = payload.TryGetProperty("messageId", out var id) ? id.GetString() ?? string.Empty : string.Empty;
         var body = payload.TryGetProperty("body", out var text) ? text.GetString() ?? string.Empty : string.Empty;
         var accountId = payload.TryGetProperty("accountId", out var account) ? account.GetString() ?? string.Empty : string.Empty;
+        // Read settings per job so a mounted secret file can be rotated while
+        // the worker is running; an environment-only change still requires a
+        // normal container restart.
+        var baseUrl = (configuration["ZHike:AIBaseUrl"] ?? string.Empty).TrimEnd('/');
+        var apiKey = ReadSecret(configuration["ZHike:AIKey"], configuration["ZHike:AIKeyFile"]);
+        var model = configuration["ZHike:AIModel"] ?? "gpt-5-mini";
+        if (string.IsNullOrWhiteSpace(body)) throw new AiAnalysisSkippedException("消息没有可分析的文本内容");
         if (!string.IsNullOrWhiteSpace(baseUrl) && !IsAllowedEndpoint(baseUrl))
             throw new InvalidOperationException("AI 服务地址必须使用 HTTPS；仅允许回环地址使用 HTTP。");
         if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(apiKey))
-            return new AiAnalysisResult(string.Empty, messageId, 0, new Dictionary<string, string>(), null, Raw: payload.Clone());
-        if (string.IsNullOrWhiteSpace(body)) return new AiAnalysisResult(string.Empty, messageId, 0, new Dictionary<string, string>(), null, Raw: payload.Clone());
-
+            throw new AiAnalysisUnavailableException("AI 服务尚未配置；本条消息会保留待分析，配置后自动继续。");
         using var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/v1/chat/completions");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
         request.Content = new StringContent(JsonSerializer.Serialize(new
@@ -43,8 +47,11 @@ public sealed class HttpAiAnalysisProvider(HttpClient http, IConfiguration confi
         using var resultDocument = JsonDocument.Parse(jsonText);
         var result = resultDocument.RootElement;
         var fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        var contact = GetObject(result, "contact");
-        var profile = GetObject(result, "profile");
+        // The parsed result document is disposed when this method returns.
+        // Clone nested elements before handing them to the dispatcher, which
+        // persists them after the provider call completes.
+        var contact = GetObject(result, "contact").Clone();
+        var profile = GetObject(result, "profile").Clone();
         AddField(fields, "name", contact, "name");
         AddField(fields, "phone", contact, "phone");
         AddField(fields, "country", contact, "country");

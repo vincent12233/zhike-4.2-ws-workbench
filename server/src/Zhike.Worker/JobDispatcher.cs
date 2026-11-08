@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Zhike.Domain.Jobs;
 using Zhike.Infrastructure.Repositories;
+using Zhike.Worker.Providers;
 
 namespace Zhike.Worker;
 
@@ -60,6 +61,15 @@ public sealed class JobDispatcher(AiJobRepository jobs, AiAnalysisRepository syn
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 throw;
+            }
+            catch (AiAnalysisUnavailableException error)
+            {
+                await jobs.DeferAsync(claim.Id, error.Message, TimeSpan.FromMinutes(5), cancellationToken);
+                logger.LogWarning("AI job {JobId} deferred because the provider is not configured", claim.Id);
+            }
+            catch (AiAnalysisSkippedException)
+            {
+                await jobs.CompleteAsync(claim.Id, cancellationToken);
             }
             catch (Exception error)
             {

@@ -83,4 +83,25 @@ public sealed class AiJobRepository(PostgresConnectionFactory connections)
         command.Parameters.AddWithValue(maxAttempts);
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
+
+    public async Task DeferAsync(string jobId, string reason, TimeSpan delay, CancellationToken cancellationToken = default)
+    {
+        var seconds = Math.Clamp((int)Math.Round(delay.TotalSeconds), 5, 86_400);
+        await using var connection = connections.Create();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = new NpgsqlCommand("""
+            UPDATE ai_jobs
+            SET state = 'pending',
+                attempts = GREATEST(attempts - 1, 0),
+                available_at = now() + make_interval(secs => $2),
+                locked_at = NULL,
+                last_error = LEFT($3, 500),
+                updated_at = now()
+            WHERE id = $1
+            """, connection);
+        command.Parameters.AddWithValue(jobId);
+        command.Parameters.AddWithValue(seconds);
+        command.Parameters.AddWithValue(reason ?? string.Empty);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
 }

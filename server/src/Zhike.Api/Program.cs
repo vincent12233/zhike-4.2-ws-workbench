@@ -13,6 +13,7 @@ var connectionString = builder.Configuration.GetConnectionString("Postgres")
 var migrationDirectory = builder.Configuration["ZHike:MigrationDirectory"]
     ?? Path.Combine(AppContext.BaseDirectory, "migrations");
 builder.Services.AddSingleton(new PostgresConnectionFactory(connectionString));
+builder.Services.AddSingleton<WorkerHeartbeatRepository>();
 builder.Services.AddSingleton(serviceProvider => new MigrationRunner(
     serviceProvider.GetRequiredService<PostgresConnectionFactory>(), migrationDirectory));
 builder.Services.AddSingleton<DatabaseHealthProbe>();
@@ -76,15 +77,18 @@ app.Use(async (context, next) =>
 var migrationRunner = app.Services.GetRequiredService<MigrationRunner>();
 await migrationRunner.ApplyAsync(app.Lifetime.ApplicationStopping);
 
-app.MapGet("/api/v2/health", async (DatabaseHealthProbe probe, CancellationToken cancellationToken) =>
+app.MapGet("/api/v2/health", async (DatabaseHealthProbe probe, WorkerHeartbeatRepository heartbeats, CancellationToken cancellationToken) =>
 {
     var databaseHealthy = await probe.CheckAsync(cancellationToken);
-    var schemaVersion = int.TryParse(app.Configuration["ZHike:SchemaVersion"], out var parsed) ? parsed : 8;
+    var schemaVersion = int.TryParse(app.Configuration["ZHike:SchemaVersion"], out var parsed) ? parsed : 9;
+    var workerStatus = databaseHealthy
+        ? await heartbeats.GetStatusAsync("ai-worker", TimeSpan.FromSeconds(30), cancellationToken)
+        : "unavailable";
     var response = HealthResponseFactory.Create(
         app.Configuration["ZHike:AppVersion"] ?? "5.0.0-dev",
         schemaVersion,
         databaseHealthy ? "healthy" : "degraded",
-        "starting");
+        workerStatus);
     return databaseHealthy ? Results.Ok(response) : Results.Json(response, statusCode: StatusCodes.Status503ServiceUnavailable);
 });
 app.MapWsRoutes();

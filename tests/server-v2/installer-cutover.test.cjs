@@ -28,6 +28,7 @@ assert.match(winuiBuild, /dotnet publish/);
 assert.match(winuiBuild, /bundle-manifest\.json/);
 assert.match(winuiBuild, /\[string\]\$Version = '5\.0\.0'/);
 assert.match(winuiInstaller, /ISCC\.exe/);
+assert.match(winuiInstaller, /Get-ChildItem[\s\S]*Filter '\*\.exe'/, 'WinUI installer must locate Unicode output without code-page assumptions');
 assert.match(winuiIss, /Zhike\.Desktop\.exe/);
 assert.doesNotMatch(winuiIss, /UninstallDelete/);
 for (const relative of ['scripts/build-server-bundle.ps1', 'infra/compose.prod.yaml', 'infra/backup/backup.ps1']) assert.equal(fs.existsSync(path.join(repo, relative)), true);

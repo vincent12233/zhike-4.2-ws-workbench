@@ -54,14 +54,46 @@ for (const relative of [
   'server/src/Zhike.Api/Auth/SessionService.cs',
   'server/src/Zhike.Infrastructure/Secrets/SecretRedactor.cs',
   'server/src/Zhike.Worker/BackupWorker.cs',
+  'server/src/Zhike.Worker/Program.cs',
+  'server/Dockerfile',
   'infra/backup/backup.ps1',
   'infra/compose.prod.yaml',
 ]) assert.equal(fs.existsSync(path.join(repo, relative)), true, `missing ${relative}`);
 
 const pairingGuard = fs.readFileSync(path.join(repo, 'server/src/Zhike.Api/Auth/PairingAccessGuard.cs'), 'utf8');
 assert.match(pairingGuard, /IPAddress\.IsLoopback/);
+assert.match(pairingGuard, /AllowDockerLoopbackPairing/);
+assert.match(pairingGuard, /DockerLoopbackPairingSourceCidr/);
+assert.match(pairingGuard, /IsInCidr\(remoteAddress/);
+assert.match(pairingGuard, /Host is client-controlled/);
+assert.match(pairingGuard, /Request\.Host\.Host/);
+assert.match(pairingGuard, /localhost/);
+assert.match(pairingGuard, /X-Forwarded-For/);
+assert.match(pairingGuard, /Forwarded/);
+assert.match(pairingGuard, /X-Real-IP/);
+assert.match(pairingGuard, /!hasForwardedIdentity/);
+assert.match(pairingGuard, /X-Zhike-Pairing-Approval/);
+assert.match(pairingGuard, /FixedEquals\(configuredApproval/);
 assert.match(pairingGuard, /AllowRemotePairing/);
 assert.match(pairingGuard, /X-Zhike-Pairing-Approval/);
 assert.match(fs.readFileSync(path.join(repo, 'server/src/Zhike.Api/Routes/AuthRoutes.cs'), 'utf8'), /PairingAccessGuard/);
+
+const workerDockerfile = fs.readFileSync(path.join(repo, 'server/Dockerfile'), 'utf8');
+assert.match(workerDockerfile, /postgresql-client-18/, 'worker backup client must match postgres:18');
+assert.doesNotMatch(workerDockerfile, /apt-get install[^\n]*postgresql-client\s*[\\\n]/,
+  'worker must not fall back to the distro default PostgreSQL client');
+assert.match(workerDockerfile, /COPY --from=build \/src\/migrations \.\/migrations/,
+  'worker must carry migrations so it can initialize before background jobs');
+const workerProgram = fs.readFileSync(path.join(repo, 'server/src/Zhike.Worker/Program.cs'), 'utf8');
+assert.match(workerProgram, /MigrationRunner/,
+  'worker must apply migrations before hosted jobs start');
+const backupScript = fs.readFileSync(path.join(repo, 'infra/backup/backup.ps1'), 'utf8');
+assert.match(backupScript, /PGPASSWORD/, 'PowerShell backup must pass the database secret through the environment');
+assert.doesNotMatch(backupScript, /pg_dump[^\r\n]*\$env:ConnectionStrings__Postgres/,
+  'PowerShell backup must not put the full connection string/password in pg_dump argv');
+assert.match(backupScript, /Parse-PostgresConnectionString/, 'PowerShell backup must parse quoted/URI connection strings without argv secrets');
+assert.match(backupScript, /Get-SafeTargetLabel/, 'PowerShell restore output must redact connection-string credentials');
+assert.match(backupScript, /Restore-PostgresEnvironment/, 'PowerShell backup must restore caller PG* environment values');
+assert.match(backupScript, /Remove-Item -LiteralPath \$temporaryDump/, 'PowerShell backup must remove partial dumps after pg_dump failure');
 
 console.log('security/backup: pairing expiry, token rotation, redaction, retention and isolated restore plans pass');

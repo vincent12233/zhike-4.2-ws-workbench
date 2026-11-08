@@ -4,12 +4,34 @@
 
 ## 首次启动
 
-1. 复制 `.env.example` 为 `.env`，设置一个随机的 `POSTGRES_PASSWORD`。
+1. 复制 `.env.example` 为 `.env`，设置随机的 `POSTGRES_PASSWORD` 和
+   `ZHIKE_PAIRING_APPROVAL_CODE`。桌面端首次配对时，在“服务器连接”中填入同一个审批码；
+   它只用于本机/私有网络配对，不要复用数据库、连接器或 AI 密钥。
 2. 使用 `docker compose -f infra/compose.yaml -f infra/compose.prod.yaml up -d --wait` 启动。
-3. 仅 API 端口映射到本机；PostgreSQL 只在内部网络可见，不能直接暴露 5432。
+3. 仅 API 端口映射到本机（默认 `127.0.0.1:48080`）；PostgreSQL 只在 `zhike_internal` 网络可见，不能直接暴露 5432。
+   API 同时加入专用 `zhike_ingress` bridge，这是 Docker Desktop 4.98 在 internal-only 服务上保持
+   published port 可达所需的兼容层；该网络关闭 bridge IP masquerade，API 不依赖它发起外部请求。
+   Docker Desktop 仍可能保留容器默认路由；如需硬性禁止 API 外联，请另配主机或企业防火墙规则。
+   AI Worker 和 WS 连接器另外加入不发布端口的 `zhike_egress` bridge：前者需要访问已配置的
+   AI HTTPS 服务，后者需要访问用户授权的 WS 页面。PostgreSQL 和备份容器仍只加入
+   `zhike_internal`；不要把 `ZHike_API_BIND` 改为 `0.0.0.0`，除非你已配置私有网络访问控制。
 4. 打开桌面端，在“服务器连接”中填写 API 地址并完成一次性配对。
 
-配对接口默认只接受 loopback 请求。若确实需要从同一私有网络的另一台电脑配对，必须同时设置
+升级网络配置时，先执行不带 `-v` 的
+`docker compose -f infra/compose.yaml -f infra/compose.prod.yaml down`，再重新执行
+`docker compose -f infra/compose.yaml -f infra/compose.prod.yaml up -d --wait`，让 Docker
+重建 `zhike_ingress`；不要使用 `down -v`，否则会删除 PostgreSQL 和备份卷。
+
+配对接口默认只接受 loopback 请求。Docker Desktop 会把本机 loopback 请求经过桥接网络转发；Compose
+默认开启 `ZHike_ALLOW_DOCKER_LOOPBACK_PAIRING=true`，但这条兼容路径同时要求请求来自专用
+`ZHike_DOCKER_LOOPBACK_PAIRING_SOURCE_CIDR`（默认 `172.31.240.0/24`）、`Host` 为 `localhost`、
+`127.0.0.1` 或 `[::1]`，并携带与 `ZHIKE_PAIRING_APPROVAL_CODE` 相同的
+`X-Zhike-Pairing-Approval`。仅靠来源 CIDR 不能区分 Docker Desktop 的其他本地容器，缺少审批码时
+所有桥接容器请求都会被拒绝。若把 API 绑定到本机以外的地址，应关闭该选项，并改用审批码；不要把
+来源 CIDR 改成局域网网段。
+如果 API 前面放置本机反向代理，代理必须保留/写入 `Forwarded`、`X-Forwarded-For` 或
+`X-Real-IP`；检测到这些转发身份头时，配对请求不会走 loopback 免审批路径，必须使用审批码。
+若确实需要从同一私有网络的另一台电脑配对，必须同时设置
 `ZHike_ALLOW_REMOTE_PAIRING=true` 和一条独立的随机 `ZHIKE_PAIRING_APPROVAL_CODE`；桌面端
 会把该值仅放在配对请求的 `X-Zhike-Pairing-Approval` 请求头中。不要复用数据库密码、连接器
 Token 或 AI Key，也不要把 API 端口直接暴露到公网。未配置审批码时，远程配对会被拒绝。

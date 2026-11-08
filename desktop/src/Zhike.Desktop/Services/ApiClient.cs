@@ -31,7 +31,7 @@ public sealed class ApiClient(HttpClient http)
     // Used only for the explicitly opt-in remote pairing flow. Do not add it
     // to HttpClient.DefaultRequestHeaders: pairing approval must never be sent
     // to ordinary API endpoints.
-    private readonly string? _pairingApprovalCode = Environment.GetEnvironmentVariable("ZHIKE_PAIRING_APPROVAL_CODE");
+    private string? _pairingApprovalCode = Environment.GetEnvironmentVariable("ZHIKE_PAIRING_APPROVAL_CODE");
 
     public static ApiClient? TryCreateFromEnvironment()
     {
@@ -52,6 +52,9 @@ public sealed class ApiClient(HttpClient http)
     }
 
     public string? SessionToken => _sessionToken;
+
+    public void SetPairingApprovalCode(string? code)
+        => _pairingApprovalCode = string.IsNullOrWhiteSpace(code) ? null : code.Trim();
 
     public static string ComputePairingProof(string code, string deviceId)
     {

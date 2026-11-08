@@ -14,6 +14,7 @@
                 <StackPanel Spacing="8">
                     <TextBlock Text="服务器连接（可选）" FontSize="18" FontWeight="SemiBold" />
                     <TextBox x:Name="ApiUrlBox" Header="API 地址" PlaceholderText="http://127.0.0.1:48080/" />
+                    <PasswordBox x:Name="PairingProofBox" Header="Docker/远程配对审批码" PlaceholderText="与 ZHIKE_PAIRING_APPROVAL_CODE 相同；本机 API 可留空" />
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button Content="检查服务" Click="CheckServer" />
                         <Button Content="本机配对并连接" Click="PairServer" />

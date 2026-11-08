@@ -34,6 +34,8 @@ if (-not $iscc) { throw 'Inno Setup compiler was not found.' }
 New-Item -ItemType Directory -Force -Path $out | Out-Null
 & $iscc "/DStageDir=$stage" "/DBuildOutputDir=$out" "/DAppVersion=$AppVersion" (Join-Path $repo 'zhike-desktop-setup.iss')
 if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
-$installer = Join-Path $out "知客-$AppVersion-WinUI桌面版.exe"
-if (-not (Test-Path -LiteralPath $installer)) { throw "installer not found: $installer" }
+$installer = Get-ChildItem -LiteralPath $out -Filter '*.exe' -File |
+  Sort-Object LastWriteTimeUtc -Descending |
+  Select-Object -First 1 -ExpandProperty FullName
+if ([string]::IsNullOrWhiteSpace($installer) -or -not (Test-Path -LiteralPath $installer)) { throw "installer not found in output directory: $out" }
 Write-Output (ConvertTo-Json @{ installer = $installer; sha256 = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash; bytes = (Get-Item -LiteralPath $installer).Length })

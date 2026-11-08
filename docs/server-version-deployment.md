@@ -8,11 +8,12 @@
 
 ```powershell
 Copy-Item infra/.env.example infra/.env
-# 编辑 infra/.env，设置随机 POSTGRES_PASSWORD
+# 编辑 infra/.env，设置随机 POSTGRES_PASSWORD 和 ZHIKE_PAIRING_APPROVAL_CODE
 docker compose -f infra/compose.yaml -f infra/compose.prod.yaml up -d --wait
 ```
 
-API 启动时会按版本顺序执行迁移。桌面端首次连接使用一次性配对，不把数据库密码写入桌面端或日志。
+API/Worker 启动时会按版本顺序执行迁移（当前到 009）。桌面端首次连接在“服务器连接”页填写同一个
+`ZHIKE_PAIRING_APPROVAL_CODE` 后再执行一次性配对；数据库密码不会写入桌面端或日志。
 
 ## 迁移旧版数据
 
