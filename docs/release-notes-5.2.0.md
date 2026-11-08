@@ -61,15 +61,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installe
 本次隔离回归已通过：
 
 - `node scripts/run-tests.cjs all`：60/60 Node 合约与恢复检查通过；
+- `node tests/server-v2/run-all.cjs`：23/23 服务端契约与数据隔离检查通过；
 - `node tests/task6-stability.test.cjs`：关闭刷盘、轮询退避、容量、WS 错误分类、Docker/安装门禁通过；
-- `docker compose -f infra/compose.yaml -f infra/compose.prod.yaml config --quiet`：Compose 配置通过；
-- 两个安装脚本 PowerShell 语法解析通过。
+- `docker compose --env-file infra/.env.example -f infra/compose.yaml config --quiet`：Compose 配置通过；
+- 使用仓库 `.tools/dotnet10` SDK 完成 WinUI 5.2.0 self-contained Release bundle，Inno Setup 7.1.1
+  成功生成安装包；安装包为 unsigned-placeholder，哈希见交付清单；
+- 使用独立项目名、独立卷和 `172.31.250.0/24` 隔离子网启动 PostgreSQL/API/AI Worker，
+  `/api/v2/health` 返回 `200`、`appVersion=5.2.0`、`schemaVersion=11`、`databaseStatus=healthy`、
+  `workerStatus=running`，随后已完整清理测试卷和容器。
 
 以下项目没有在本次隔离环境伪造为“已通过”：
 
-- 本次文档提交前尚未重新执行 5.2.0 WinUI Release 编译；仓库内已有的 5.1.0 bundle 不能
-  作为 5.2.0 构建证据，需使用仓库 `.tools/dotnet10` SDK 或目标机 SDK 单独完成门禁；
-- 真实 Docker/PostgreSQL 迁移、备份恢复和磁盘不足告警需在目标机执行；
+- 真实业务库的 PostgreSQL 迁移、备份恢复和磁盘不足告警仍需在目标机按业务备份执行；本次运行
+  仅使用空白隔离卷；
 - WebView2 已安装/缺失两条路径、代码签名和覆盖安装/卸载保留数据需人工验收；
 - 用户本人登录 WS 后的手机新消息实时同步、AI 额度和页面结构长期稳定性需现场验证。
 
