@@ -14,16 +14,24 @@
              blue/gray controls.  These are intentionally local resources so
              the desktop client can be restyled without changing business
              pages or API behaviour. -->
-        <SolidColorBrush x:Key="ZhikePageBackgroundBrush" Color="#F3F7FA" />
+        <SolidColorBrush x:Key="ZhikePageBackgroundBrush" Color="#F4F7FB" />
         <SolidColorBrush x:Key="ZhikeSurfaceBrush" Color="#FFFFFF" />
-        <SolidColorBrush x:Key="ZhikeSurfaceMutedBrush" Color="#F7F9FB" />
-        <SolidColorBrush x:Key="ZhikeNavyBrush" Color="#172033" />
-        <SolidColorBrush x:Key="ZhikeNavySecondaryBrush" Color="#202B40" />
-        <SolidColorBrush x:Key="ZhikeTealBrush" Color="#0CBCA4" />
-        <SolidColorBrush x:Key="ZhikeBlueBrush" Color="#4C7CF3" />
-        <SolidColorBrush x:Key="ZhikeTextBrush" Color="#202939" />
-        <SolidColorBrush x:Key="ZhikeMutedTextBrush" Color="#718096" />
-        <SolidColorBrush x:Key="ZhikeLineBrush" Color="#DDE7EF" />
+        <SolidColorBrush x:Key="ZhikeSurfaceMutedBrush" Color="#F5F8FC" />
+        <SolidColorBrush x:Key="ZhikeNavyBrush" Color="#203449" />
+        <SolidColorBrush x:Key="ZhikeNavySecondaryBrush" Color="#29445D" />
+        <SolidColorBrush x:Key="ZhikeTealBrush" Color="#0EA991" />
+        <SolidColorBrush x:Key="ZhikeBlueBrush" Color="#2B79D3" />
+        <SolidColorBrush x:Key="ZhikeTextBrush" Color="#203449" />
+        <SolidColorBrush x:Key="ZhikeMutedTextBrush" Color="#6B7F92" />
+        <SolidColorBrush x:Key="ZhikeLineBrush" Color="#DCE6EF" />
+        <SolidColorBrush x:Key="ZhikeSuccessBrush" Color="#167A52" />
+        <SolidColorBrush x:Key="ZhikeSuccessBackgroundBrush" Color="#E7F6EE" />
+        <SolidColorBrush x:Key="ZhikeWarningBrush" Color="#9A6410" />
+        <SolidColorBrush x:Key="ZhikeWarningBackgroundBrush" Color="#FFF2D8" />
+        <SolidColorBrush x:Key="ZhikeDangerBrush" Color="#A23A32" />
+        <SolidColorBrush x:Key="ZhikeDangerBackgroundBrush" Color="#FFEAE7" />
+        <SolidColorBrush x:Key="ZhikeAiBrush" Color="#7357C7" />
+        <SolidColorBrush x:Key="ZhikeAiBackgroundBrush" Color="#F0EBFF" />
 
         <Style TargetType="Page">
             <Setter Property="Background" Value="{StaticResource ZhikePageBackgroundBrush}" />
@@ -103,10 +111,10 @@
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         </Style>
 
-            <Style TargetType="InfoBar">
+        <Style TargetType="InfoBar">
             <Setter Property="CornerRadius" Value="10" />
             <Setter Property="Margin" Value="0,2,0,2" />
-            </Style>
+        </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

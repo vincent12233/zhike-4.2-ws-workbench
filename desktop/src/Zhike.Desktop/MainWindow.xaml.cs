@@ -155,7 +155,7 @@ public sealed partial class MainWindow : Window
     {
         var showNativeChrome = !_legacyHostEnabled;
         NativeHeader.Visibility = showNativeChrome ? Visibility.Visible : Visibility.Collapsed;
-        HeaderRow.Height = showNativeChrome ? new GridLength(57) : new GridLength(0);
+        HeaderRow.Height = showNativeChrome ? new GridLength(52) : new GridLength(0);
         RootNavigation.IsPaneVisible = showNativeChrome;
     }
 

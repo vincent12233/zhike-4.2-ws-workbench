@@ -9,6 +9,7 @@ const read = (file) => fs.readFileSync(path.join(repo, file), 'utf8');
 const index = read('resources/app/index.html');
 const styles = read('resources/app/styles.css');
 const v41 = read('resources/app/modules/v41-ui.css');
+const app = read('desktop/src/Zhike.Desktop/App.xaml');
 const main = read('desktop/src/Zhike.Desktop/MainWindow.xaml');
 const mainCode = read('desktop/src/Zhike.Desktop/MainWindow.xaml.cs');
 
@@ -32,5 +33,12 @@ assert.match(mainCode, /ApplyShellChrome\(\)/, 'shell chrome visibility must be 
 assert.match(mainCode, /NativeHeader\.Visibility\s*=\s*showNativeChrome/, 'legacy host must hide the duplicate native header');
 assert.match(mainCode, /HeaderRow\.Height\s*=\s*showNativeChrome/, 'legacy host must reclaim the native header height');
 assert.match(mainCode, /RootNavigation\.IsPaneVisible\s*=\s*showNativeChrome/, 'legacy host must hide the duplicate native navigation pane');
+for (const token of ['ZhikeSuccessBrush', 'ZhikeSuccessBackgroundBrush', 'ZhikeWarningBrush', 'ZhikeDangerBrush', 'ZhikeAiBrush'])
+  assert.match(app, new RegExp(token), `native shell missing semantic token ${token}`);
+assert.match(app, /ZhikePageBackgroundBrush[^\n]*Color="#F4F7FB"/, 'native shell background must align with the web visual system');
+assert.match(app, /ZhikeTealBrush[^\n]*Color="#0EA991"/, 'native shell accent must align with the web visual system');
+assert.match(main, /HeaderRow" Height="52"/, 'native header must use the compact 52px rhythm');
+assert.match(main, /ZhikeSuccessBackgroundBrush/, 'native status pill must use semantic success background');
+assert.doesNotMatch(main, /Background="#E7F8F3"|Foreground="#0A806E"/, 'native header must not keep hardcoded status colors');
 
 console.log('desktop visual contract: legacy routes, tokens and host boundary are present');

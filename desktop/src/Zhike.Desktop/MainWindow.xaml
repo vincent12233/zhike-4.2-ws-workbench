@@ -6,7 +6,7 @@
           Background="{StaticResource ZhikePageBackgroundBrush}"
           SizeChanged="OnShellSizeChanged">
         <Grid.RowDefinitions>
-            <RowDefinition x:Name="HeaderRow" Height="57" />
+            <RowDefinition x:Name="HeaderRow" Height="52" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -30,11 +30,11 @@
                 </StackPanel>
                 <TextBlock Grid.Column="1" Text="业务数据 · AI 跟进 · WS 工作台"
                            VerticalAlignment="Center" FontSize="11" Foreground="{StaticResource ZhikeMutedTextBrush}" />
-                <Border Grid.Column="2" Background="#E7F8F3" CornerRadius="14" Padding="10,4"
+                <Border Grid.Column="2" Background="{StaticResource ZhikeSuccessBackgroundBrush}" CornerRadius="14" Padding="10,4"
                         VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" Spacing="5">
                         <Ellipse Width="6" Height="6" Fill="{StaticResource ZhikeTealBrush}" />
-                        <TextBlock Text="本机优先 · 已连接" FontSize="10" Foreground="#0A806E" />
+                        <TextBlock Text="本机优先 · 已连接" FontSize="10" Foreground="{StaticResource ZhikeSuccessBrush}" />
                     </StackPanel>
                 </Border>
             </Grid>
