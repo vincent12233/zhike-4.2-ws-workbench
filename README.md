@@ -16,7 +16,7 @@
 ## 目录
 
 - `resources/app/`：Electron 渲染层、主进程、本机 API、SQLite 迁移和前端模块。
-- `resources/app/migrations/005-ws-workbench.sql`–`010-ai-customer-governance.sql`：WS 工作台、断点采集、跟进提醒和 AI 客户档案治理迁移。
+- `resources/app/migrations/005-ws-workbench.sql`–`010-ai-customer-governance.sql` 与 `server/migrations/011-hot-chat-profiles.sql`：WS 工作台、断点采集、跟进提醒和热聊客户档案治理迁移。
 - `tests/`：WS、备份、HTTP、安装和项目回归测试。
 - `docs/`：项目检查、使用、故障排查、回滚和测试说明。
 - `scripts/`：统一测试入口与可复现的 Windows 安装包构建脚本。
