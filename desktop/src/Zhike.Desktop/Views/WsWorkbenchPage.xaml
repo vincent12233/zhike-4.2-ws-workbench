@@ -1,14 +1,19 @@
 <Page x:Class="Zhike.Desktop.Views.WsWorkbenchPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Padding="12" RowSpacing="8">
+    <Grid x:Name="WorkbenchRoot" Padding="10" RowSpacing="6" SizeChanged="OnWorkbenchSizeChanged">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
         <Grid ColumnSpacing="8">
             <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-            <TextBlock Text="WS 工作台" FontSize="24" FontWeight="SemiBold" />
-            <Button Grid.Column="1" Content="隐藏会话" Click="ToggleLeftPane" />
-            <Button Grid.Column="2" Content="隐藏辅助" Click="ToggleRightPane" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="WS 工作台" FontSize="21" FontWeight="SemiBold" />
+                <TextBlock Text="个人账号 · 实时采集与 AI 跟进" VerticalAlignment="Center" FontSize="10" Opacity="0.64" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5">
+                <Button Content="收起会话" Click="ToggleLeftPane" />
+                <Button Grid.Column="2" Content="收起辅助" Click="ToggleRightPane" />
+            </StackPanel>
         </Grid>
         <Grid Grid.Row="1" ColumnSpacing="8">
-            <Grid.ColumnDefinitions><ColumnDefinition x:Name="LeftPaneColumn" Width="220"/><ColumnDefinition Width="*"/><ColumnDefinition x:Name="RightPaneColumn" Width="300"/></Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions><ColumnDefinition x:Name="LeftPaneColumn" Width="224"/><ColumnDefinition Width="*"/><ColumnDefinition x:Name="RightPaneColumn" Width="340"/></Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" x:Name="LeftPane" Spacing="8">
                 <TextBlock Text="WS 账号" FontSize="18" FontWeight="SemiBold" />
                 <Button Content="添加账号" Click="AddAccount" />

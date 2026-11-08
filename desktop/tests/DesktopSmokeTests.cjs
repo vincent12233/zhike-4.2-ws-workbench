@@ -31,8 +31,13 @@ const wsCode = fs.readFileSync(path.join(desktopRoot, 'Views', 'WsWorkbenchPage.
 assert.match(wsCode, /using Microsoft\.UI\.Xaml\.Controls;/);
 assert.doesNotMatch(wsCode, /Microsoft\.Web\.WebView2\.WinUI/);
 assert.match(wsCode, /new WebView2/);
-assert.match(wsCode, /GridLength\(_leftCollapsed \? 0 : 220\)/);
-assert.match(wsCode, /GridLength\(_rightCollapsed \? 0 : 300\)/);
+assert.match(wsCode, /ApplyResponsiveLayout/);
+assert.match(wsCode, /CalculateLayout/);
+assert.doesNotMatch(wsCode, /GridLength\(_leftCollapsed \? 0 : 220\)/);
+assert.doesNotMatch(wsCode, /GridLength\(_rightCollapsed \? 0 : 300\)/);
+assert.match(wsCode, /LoadLocalAccountsWithRetryAsync/);
+assert.equal(fs.existsSync(path.join(desktopRoot, 'Views', 'LegacyUiHostPage.xaml')), true);
+assert.equal(fs.existsSync(path.join(desktopRoot, 'Views', 'LegacyUiHostPage.xaml.cs')), true);
 assert.match(wsCode, /_suppressAccountSelection/);
 const homeXaml = fs.readFileSync(path.join(desktopRoot, 'Views', 'HomePage.xaml'), 'utf8');
 assert.match(homeXaml, /PairServer/);

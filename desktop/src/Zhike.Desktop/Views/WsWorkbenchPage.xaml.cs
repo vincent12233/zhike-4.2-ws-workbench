@@ -16,6 +16,7 @@ public sealed partial class WsWorkbenchPage : Page
     private bool _leftCollapsed;
     private bool _rightCollapsed;
     private readonly WebViewProfileService _profiles = new();
+    private readonly WindowLayoutService _layout = new();
     private readonly WsAccountStore _accountStore = new();
     private readonly LocalQueue _localQueue = new();
     private readonly ObservableCollection<WsAccountItem> _accounts = [];
@@ -25,6 +26,7 @@ public sealed partial class WsWorkbenchPage : Page
     private long _switchGeneration;
     private bool _loaded;
     private bool _suppressAccountSelection;
+    private bool _layoutRestored;
     private DateTimeOffset _nextSessionRotation = DateTimeOffset.UtcNow.AddHours(12);
 
     public WsWorkbenchPage()
@@ -62,6 +64,8 @@ public sealed partial class WsWorkbenchPage : Page
         if (_loaded) return;
         _loaded = true;
         _statusTimer?.Start();
+        await RestoreLayoutAsync();
+        ApplyResponsiveLayout();
         await LoadAccountsAsync();
         await SwitchAccountAsync(_accounts.FirstOrDefault());
     }
@@ -70,7 +74,8 @@ public sealed partial class WsWorkbenchPage : Page
 
     private async Task LoadAccountsAsync()
     {
-        var local = await _accountStore.LoadAsync();
+        var local = await LoadLocalAccountsWithRetryAsync();
+        _accounts.Clear();
         foreach (var stored in local) _accounts.Add(new WsAccountItem(stored.Id, stored.DisplayName, stored.Status, stored.LastSeen));
         if (_api is not null)
         {
@@ -97,18 +102,70 @@ public sealed partial class WsWorkbenchPage : Page
         AccountsEmptyState.Visibility = _accounts.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    private async Task<IReadOnlyList<StoredWsAccount>> LoadLocalAccountsWithRetryAsync()
+    {
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            try
+            {
+                var rows = await _accountStore.LoadAsync();
+                if (rows.Count > 0 || attempt == 1) return rows;
+            }
+            catch when (attempt == 0) { }
+            await Task.Delay(40);
+        }
+        return [];
+    }
+
     private void ToggleLeftPane(object sender, RoutedEventArgs args)
     {
         _leftCollapsed = !_leftCollapsed;
-        LeftPaneColumn.Width = new GridLength(_leftCollapsed ? 0 : 220);
-        LeftPane.Visibility = _leftCollapsed ? Visibility.Collapsed : Visibility.Visible;
+        ApplyResponsiveLayout();
+        _ = PersistLayoutAsync();
     }
 
     private void ToggleRightPane(object sender, RoutedEventArgs args)
     {
         _rightCollapsed = !_rightCollapsed;
-        RightPaneColumn.Width = new GridLength(_rightCollapsed ? 0 : 300);
-        RightPane.Visibility = _rightCollapsed ? Visibility.Collapsed : Visibility.Visible;
+        ApplyResponsiveLayout();
+        _ = PersistLayoutAsync();
+    }
+
+    private void OnWorkbenchSizeChanged(object sender, SizeChangedEventArgs args) => ApplyResponsiveLayout();
+
+    private void ApplyResponsiveLayout()
+    {
+        var state = _layout.CalculateLayout(WorkbenchRoot.ActualWidth, WorkbenchRoot.ActualHeight, 1, _leftCollapsed, _rightCollapsed);
+        LeftPaneColumn.Width = new GridLength(state.LeftPaneWidth);
+        RightPaneColumn.Width = new GridLength(state.RightPaneWidth);
+        LeftPane.Visibility = state.LeftCollapsed ? Visibility.Collapsed : Visibility.Visible;
+        RightPane.Visibility = state.RightCollapsed ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private async Task RestoreLayoutAsync()
+    {
+        if (_layoutRestored) return;
+        _layoutRestored = true;
+        try
+        {
+            var saved = await _layout.LoadAsync();
+            if (saved is not null)
+            {
+                _leftCollapsed = saved.LeftCollapsed;
+                _rightCollapsed = saved.RightCollapsed;
+            }
+        }
+        catch { }
+    }
+
+    private async Task PersistLayoutAsync()
+    {
+        try
+        {
+            var state = _layout.ApplyLayout(WorkbenchRoot.ActualWidth, WorkbenchRoot.ActualHeight, 1, _leftCollapsed, _rightCollapsed);
+            await _layout.SaveAsync(state);
+        }
+        catch { }
     }
 
     private async void AddAccount(object sender, RoutedEventArgs args)
