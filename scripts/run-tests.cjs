@@ -62,6 +62,7 @@ function runWs() {
 }
 
 function runAll() {
+  run('design system contract', [path.join(repo, 'tests', 'design-system-contract.test.cjs')]);
   run('save error regression', [path.join(repo, 'tests', 'save-error-regression.test.cjs')]);
   run('desktop startup XAML contract', [path.join(repo, 'tests', 'desktop-startup-contract.test.cjs')]);
   run('desktop visual single-shell contract', [path.join(repo, 'desktop', 'tests', 'DesktopVisualContractTests.cjs')]);

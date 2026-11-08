@@ -1553,6 +1553,14 @@ const server = createServer(async (req, res) => {
       res.end(body);
       return;
     }
+    if (requestPath === '/modules/design-system.css') {
+      const designPath = resolve(root, `.${normalize(requestPath)}`);
+      if (!designPath.startsWith(root + sep) || !existsSync(designPath)) return json(res, 404, { error: '文件不存在。' });
+      const body = readFileSync(designPath);
+      res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8', 'Content-Length': body.length, 'Cache-Control': 'no-store' });
+      res.end(body);
+      return;
+    }
     if (!['/modules/productivity.js', '/modules/performance-enhancements.js', '/modules/smart-import.js', '/modules/business-enhancements.js', '/modules/business-enhancements.css', '/modules/accessibility-enhancements.js', '/modules/operations-upgrade.js', '/modules/operations-upgrade.css', '/modules/ui-refresh.css', '/index.html', '/styles.css', '/app.js', '/modules/v4-data-center.js', '/modules/v4.css', '/modules/gpt-assistant.js', '/modules/runtime-customizer.js', '/modules/gpt-assistant.css', '/modules/gpt-workbench.css', '/modules/gpt-modern.css', '/modules/gpt-upgrade.css', '/modules/gpt-management.css', '/modules/phone-registry.js', '/modules/phone-registry.css', '/modules/phone-registry-seed.json', '/modules/v41-ui.css', '/modules/operations-core.cjs', '/modules/operations-ui.js', '/modules/ticket-record-core.js', '/modules/ws-workbench-core.js', '/modules/ws-crm-sync-core.js', '/modules/ws-workbench.js', '/modules/ws-workbench.css'].includes(requestPath)) return json(res, 404, { error: '文件不存在。' });
     const filePath = resolve(root, `.${normalize(requestPath)}`);
     if (!filePath.startsWith(root + sep) || !existsSync(filePath) || !statSync(filePath).isFile()) return json(res, 404, { error: '文件不存在。' });
