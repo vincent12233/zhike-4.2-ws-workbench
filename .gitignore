@@ -37,6 +37,7 @@ Thumbs.db
 /dist/
 /build/
 /work/
+.worktrees/
 .tools/
 **/bin/
 **/obj/
