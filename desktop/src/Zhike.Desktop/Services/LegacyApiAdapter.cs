@@ -114,7 +114,11 @@ public sealed class LegacyApiAdapter
             >= 500 => "UPSTREAM_ERROR",
             _ => $"HTTP_{raw.StatusCode}",
         };
-        return new(false, code, raw.Message, null, requestId);
+        var message = raw.Data is { ValueKind: JsonValueKind.Object } errorBody
+            && (errorBody.TryGetProperty("error", out var errorValue) || errorBody.TryGetProperty("message", out errorValue))
+            ? errorValue.ToString()
+            : raw.Message;
+        return new(false, code, message, raw.Data, requestId);
     }
 
     private static (string ErrorCode, string Message)? EvaluateBusinessResult(string key, HttpMethod method, JsonElement? data)

@@ -2,12 +2,12 @@ namespace Zhike.Desktop.Services;
 
 public static class LegacyBridgeScript
 {
-    public const string Source = """
+    private const string SourceTemplate = """
       (() => {
         const listeners = new Map();
         const pending = new Map();
         window.__DESKTOP_APP__ = true;
-        window.__LOCAL_DB__ = true;
+        window.__LOCAL_DB__ = __ZHikeLocalDbFlag__;
         const host = {
           version: '5.1',
           invoke(method, payload = {}, options = {}) {
@@ -55,7 +55,7 @@ public static class LegacyBridgeScript
         const nativeFetch = window.fetch.bind(window);
         window.fetch = async (input, init = {}) => {
           const url = typeof input === 'string' ? input : input?.url || '';
-          if (!url.startsWith('/api/')) return nativeFetch(input, init);
+          if (!url.startsWith('/api/') || !window.__LOCAL_DB__) return nativeFetch(input, init);
           const method = String(init.method || (typeof input === 'object' ? input.method : 'GET') || 'GET').toUpperCase();
           const headers = {};
           const sourceHeaders = init.headers || (typeof input === 'object' ? input.headers : null);
@@ -95,4 +95,9 @@ public static class LegacyBridgeScript
         };
       })();
       """;
+
+    public static string Build(bool apiConfigured)
+        => SourceTemplate.Replace("__ZHikeLocalDbFlag__", apiConfigured ? "true" : "false", StringComparison.Ordinal);
+
+    public static string Source => Build(true);
 }

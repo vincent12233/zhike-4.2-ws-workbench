@@ -206,7 +206,7 @@ public sealed partial class LegacyUiHostPage : Page
         core.Settings.AreDevToolsEnabled = false;
         core.Settings.AreDefaultContextMenusEnabled = true;
         AttachLegacyHandlers(core);
-        await core.AddScriptToExecuteOnDocumentCreatedAsync(LegacyBridgeScript.Source);
+        await core.AddScriptToExecuteOnDocumentCreatedAsync(LegacyBridgeScript.Build(_api?.SessionToken is { Length: > 0 }));
         core.SetVirtualHostNameToFolderMapping("zhike.local", ResolveResourcesRoot(), CoreWebView2HostResourceAccessKind.Allow);
         _initialized = true;
         HostStatus.IsOpen = false;
