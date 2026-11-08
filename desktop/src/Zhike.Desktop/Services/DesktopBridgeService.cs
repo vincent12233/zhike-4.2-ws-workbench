@@ -17,9 +17,16 @@ public sealed class DesktopBridgeService
         JsonElement payload,
         int timeoutMs = 15000,
         string? accountId = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? bridgeVersion = null)
     {
         var id = string.IsNullOrWhiteSpace(requestId) ? Guid.NewGuid().ToString("N") : requestId;
+        if (!string.Equals(bridgeVersion, CurrentVersion, StringComparison.Ordinal))
+            return BridgeResponse.Failure(id, CurrentVersion, "UNSUPPORTED_VERSION", "desktop bridge version is not supported");
+        if (id.Length > 128 || string.IsNullOrWhiteSpace(method) || method.Length > 128)
+            return BridgeResponse.Failure(id, CurrentVersion, "INVALID_REQUEST", "bridge request is invalid");
+        if (payload.GetRawText().Length > 1_000_000)
+            return BridgeResponse.Failure(id, CurrentVersion, "INVALID_REQUEST", "bridge payload is too large");
         var timeout = Math.Clamp(timeoutMs, 250, 120000);
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutCts.CancelAfter(timeout);

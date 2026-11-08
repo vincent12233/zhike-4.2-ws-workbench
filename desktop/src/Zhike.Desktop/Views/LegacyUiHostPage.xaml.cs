@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 using Windows.ApplicationModel.DataTransfer;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Text.Json;
 using Zhike.Desktop.Services;
@@ -58,7 +59,12 @@ public sealed partial class LegacyUiHostPage : Page
         var script = $"document.querySelector({JsonSerializer.Serialize(selector)})?.click(); void 0;";
         await _webView.CoreWebView2.ExecuteScriptAsync(script);
         if (!string.Equals(_currentRoute, "ws-workbench", StringComparison.OrdinalIgnoreCase))
-            HideWsOverlay();
+        {
+            // Leaving the WS route must stop the collector and release the
+            // WebView. Hiding the canvas alone would keep a logged-in page
+            // polling and ingesting messages in the background.
+            await CloseWsOverlayAsync(false, cancellationToken: cancellationToken);
+        }
         else
             _ = ResizeWsOverlayFromDomAsync();
     }
@@ -95,22 +101,84 @@ public sealed partial class LegacyUiHostPage : Page
         }
     }
 
-    private void OnUnloaded(object sender, RoutedEventArgs args)
+    public async Task<bool> FlushBeforeCloseAsync(bool snapshot)
     {
+        using var closeTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        var wsClosed = true;
+        try { wsClosed = await CloseWsOverlayAsync(false, cancellationToken: closeTimeout.Token); }
+        catch (OperationCanceledException) when (closeTimeout.IsCancellationRequested)
+        {
+            wsClosed = false;
+            Debug.WriteLine("WS overlay close timed out during desktop shutdown.");
+        }
+        catch (Exception error)
+        {
+            wsClosed = false;
+            Debug.WriteLine($"WS overlay close failed during desktop shutdown: {error.GetType().Name}");
+        }
+        if (!wsClosed) return false;
+        var webView = _webView;
+        if (webView?.CoreWebView2 is null) return true;
+        try
+        {
+            var options = snapshot ? "{snapshot:true}" : "{snapshot:false}";
+            // Keep shutdown bounded even if a fetch in the page never
+            // resolves.  The host awaits ExecuteScriptAsync directly because
+            // the WinRT IAsyncOperation projection does not expose Task's
+            // WaitAsync on every supported SDK target.
+            var script = "(async()=>{try{const fn=window.__flushLocalWrites;if(typeof fn!=='function')return true;const result=await Promise.race([Promise.resolve(fn(" + options + ")),new Promise(resolve=>setTimeout(()=>resolve(false),3500))]);return result!==false;}catch{return false;}})()";
+            // WebView2's WinRT IAsyncOperation does not expose Task.WaitAsync
+            // on all Windows App SDK target frameworks. The script itself has
+            // a bounded page-side operation; awaiting it directly keeps the
+            // desktop build portable across the supported SDKs.
+            var result = await webView.CoreWebView2.ExecuteScriptAsync(script);
+            var ok = string.Equals(result, "true", StringComparison.OrdinalIgnoreCase);
+            if (!ok) Debug.WriteLine("Legacy page flush did not complete before desktop shutdown.");
+            return ok;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async void OnUnloaded(object sender, RoutedEventArgs args)
+    {
+        var flushed = await FlushBeforeCloseAsync(snapshot: false);
+        if (!flushed)
+        {
+            // Shutdown/route teardown must not leave a collector running just
+            // because the async close gate timed out. Detach and close the
+            // native control synchronously as a last-resort safety net.
+            ForceDetachWsOverlay();
+        }
         // Keep the WebView profile alive for fast route changes, but stop
         // page-level events so a hidden route cannot mutate the UI.
         if (_webView?.CoreWebView2 is not null)
         {
             _webView.CoreWebView2.WebMessageReceived -= OnWebMessageReceived;
+            _webView.CoreWebView2.NavigationStarting -= OnLegacyNavigationStarting;
             _webView.CoreWebView2.NavigationCompleted -= OnLegacyNavigationCompleted;
             _webView.CoreWebView2.ProcessFailed -= OnLegacyProcessFailed;
         }
-        if (_wsView?.CoreWebView2 is not null)
-        {
-            _wsView.CoreWebView2.WebMessageReceived -= OnWsWebMessageReceived;
-            try { _ = _wsView.CoreWebView2.ExecuteScriptAsync("window.__zhikeStopCapture?.();"); } catch { }
-        }
         _wsSyncTimer?.Stop();
+        HideWsOverlay();
+    }
+
+    private void ForceDetachWsOverlay()
+    {
+        var view = _wsView;
+        _wsView = null;
+        _wsViewAccountId = string.Empty;
+        Interlocked.Increment(ref _wsGeneration);
+        if (view?.CoreWebView2 is not null)
+        {
+            view.CoreWebView2.WebMessageReceived -= OnWsWebMessageReceived;
+            view.CoreWebView2.NavigationStarting -= OnWsNavigationStarting;
+            try { view.CoreWebView2.Navigate("about:blank"); } catch { }
+        }
+        try { view?.Close(); } catch { }
+        WsOverlayHost.Children.Clear();
         HideWsOverlay();
     }
 
@@ -150,10 +218,30 @@ public sealed partial class LegacyUiHostPage : Page
     {
         core.WebMessageReceived -= OnWebMessageReceived;
         core.WebMessageReceived += OnWebMessageReceived;
+        core.NavigationStarting -= OnLegacyNavigationStarting;
+        core.NavigationStarting += OnLegacyNavigationStarting;
         core.NavigationCompleted -= OnLegacyNavigationCompleted;
         core.NavigationCompleted += OnLegacyNavigationCompleted;
         core.ProcessFailed -= OnLegacyProcessFailed;
         core.ProcessFailed += OnLegacyProcessFailed;
+    }
+
+    private static void OnLegacyNavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs args)
+    {
+        args.Cancel = !IsAllowedNavigation(args.Uri, "zhike.local");
+    }
+
+    private static void OnWsNavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs args)
+    {
+        args.Cancel = !IsAllowedNavigation(args.Uri, "web.whatsapp.com");
+    }
+
+    private static bool IsAllowedNavigation(string? uriText, string host)
+    {
+        if (string.Equals(uriText, "about:blank", StringComparison.OrdinalIgnoreCase)) return true;
+        if (!Uri.TryCreate(uriText, UriKind.Absolute, out var uri)) return false;
+        return string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(uri.Host, host, StringComparison.OrdinalIgnoreCase);
     }
 
     private void OnLegacyNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs args)
@@ -185,27 +273,55 @@ public sealed partial class LegacyUiHostPage : Page
         try
         {
             if (_webView?.CoreWebView2 is null || !ReferenceEquals(sender, _webView.CoreWebView2)) return;
-            using var document = JsonDocument.Parse(args.TryGetWebMessageAsString());
+            if (!IsAllowedNavigation(args.Source, "zhike.local")) return;
+            var rawMessage = args.TryGetWebMessageAsString();
+            if (rawMessage.Length > 1_200_000) return;
+            using var document = JsonDocument.Parse(rawMessage);
             var root = document.RootElement;
             if (!string.Equals(root.TryGetProperty("type", out var type) ? type.GetString() : null, "zhike.bridge.request", StringComparison.Ordinal)) return;
             var requestId = root.TryGetProperty("requestId", out var request) ? request.GetString() ?? string.Empty : string.Empty;
             var method = root.TryGetProperty("method", out var methodValue) ? methodValue.GetString() ?? string.Empty : string.Empty;
+            var bridgeVersion = StringValue(root, "bridgeVersion");
             using var emptyPayload = JsonDocument.Parse("{}");
             var payload = root.TryGetProperty("payload", out var payloadValue) ? payloadValue : emptyPayload.RootElement;
+            if (requestId.Length > 128 || string.IsNullOrWhiteSpace(method) || method.Length > 128 || payload.GetRawText().Length > 1_000_000)
+            {
+                var invalid = BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "INVALID_REQUEST", "bridge request is invalid");
+                sender.PostWebMessageAsJson(JsonSerializer.Serialize(new { type = "zhike.bridge.response", invalid.RequestId, invalid.BridgeVersion, invalid.Ok, invalid.ErrorCode, invalid.Message, invalid.Data }));
+                return;
+            }
             var timeout = root.TryGetProperty("timeoutMs", out var timeoutValue) && timeoutValue.TryGetInt32(out var parsedTimeout) ? parsedTimeout : 15000;
             var accountId = root.TryGetProperty("accountId", out var account) ? account.GetString() : null;
             var bridge = GetBridge();
             BridgeResponse? response;
-            try
+            if (!string.Equals(bridgeVersion, DesktopBridgeService.CurrentVersion, StringComparison.Ordinal))
             {
-                response = await HandleNativeBridgeAsync(requestId, method, payload, timeout, accountId)
-                    .WaitAsync(TimeSpan.FromMilliseconds(Math.Clamp(timeout, 250, 120000)));
+                response = BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "UNSUPPORTED_VERSION", "desktop bridge version is not supported");
             }
-            catch (TimeoutException)
+            else
             {
-                response = BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "TIMEOUT", "desktop bridge request timed out");
+                using var requestCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(Math.Clamp(timeout, 250, 120000)));
+                try
+                {
+                    response = await HandleNativeBridgeAsync(requestId, method, payload, timeout, accountId, requestCts.Token)
+                        .WaitAsync(requestCts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    response = BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "TIMEOUT", "desktop bridge request timed out");
+                }
+                if (response is null)
+                {
+                    try
+                    {
+                        response = await bridge.InvokeAsync(requestId, method, payload, timeout, accountId, bridgeVersion: bridgeVersion, cancellationToken: requestCts.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        response = BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "TIMEOUT", "desktop bridge request timed out");
+                    }
+                }
             }
-            response ??= await bridge.InvokeAsync(requestId, method, payload, timeout, accountId);
             var message = new { type = "zhike.bridge.response", response.RequestId, response.BridgeVersion, response.Ok, response.ErrorCode, response.Message, response.Data };
             sender.PostWebMessageAsJson(JsonSerializer.Serialize(message));
         }
@@ -247,19 +363,21 @@ public sealed partial class LegacyUiHostPage : Page
         string method,
         JsonElement payload,
         int timeout,
-        string? accountId)
+        string? accountId,
+        CancellationToken cancellationToken)
     {
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
             return method switch
             {
-                "ws.accounts" => await HandleWsAccountsAsync(requestId, payload),
-                "ws" => await HandleWsActionAsync(requestId, payload, accountId),
-                "tools" => await HandleToolsAsync(requestId, payload),
-                "ai" => await HandleAiBridgeAsync(requestId, "request", payload, timeout),
-                _ when method.StartsWith("ws.", StringComparison.OrdinalIgnoreCase) => await HandleWsActionAsync(requestId, WithAction(payload, method[3..]), accountId),
-                _ when method.StartsWith("tools.", StringComparison.OrdinalIgnoreCase) => await HandleToolsAsync(requestId, WithAction(payload, method[6..])),
-                _ when method.StartsWith("ai.", StringComparison.OrdinalIgnoreCase) => await HandleAiBridgeAsync(requestId, method[3..], payload, timeout),
+                "ws.accounts" => await HandleWsAccountsAsync(requestId, payload, cancellationToken),
+                "ws" => await HandleWsActionAsync(requestId, payload, accountId, cancellationToken),
+                "tools" => await HandleToolsAsync(requestId, payload, cancellationToken),
+                "ai" => await HandleAiBridgeAsync(requestId, "request", payload, timeout, cancellationToken),
+                _ when method.StartsWith("ws.", StringComparison.OrdinalIgnoreCase) => await HandleWsActionAsync(requestId, WithAction(payload, method[3..]), accountId, cancellationToken),
+                _ when method.StartsWith("tools.", StringComparison.OrdinalIgnoreCase) => await HandleToolsAsync(requestId, WithAction(payload, method[6..]), cancellationToken),
+                _ when method.StartsWith("ai.", StringComparison.OrdinalIgnoreCase) => await HandleAiBridgeAsync(requestId, method[3..], payload, timeout, cancellationToken),
                 _ => null,
             };
         }
@@ -273,8 +391,9 @@ public sealed partial class LegacyUiHostPage : Page
         }
     }
 
-    private async Task<BridgeResponse> HandleToolsAsync(string requestId, JsonElement payload)
+    private async Task<BridgeResponse> HandleToolsAsync(string requestId, JsonElement payload, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var action = StringValue(payload, "action");
         if (string.Equals(action, "status", StringComparison.OrdinalIgnoreCase))
             return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { supported = true }));
@@ -287,17 +406,19 @@ public sealed partial class LegacyUiHostPage : Page
         var value = StringValue(payload, "text");
         if (string.IsNullOrWhiteSpace(value))
             return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "INVALID_REQUEST", "copy text is required");
+        cancellationToken.ThrowIfCancellationRequested();
         var package = new DataPackage();
         package.SetText(value);
         Clipboard.SetContent(package);
         return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { copied = true }));
     }
 
-    private async Task<BridgeResponse> HandleAiBridgeAsync(string requestId, string action, JsonElement payload, int timeoutMs)
+    private async Task<BridgeResponse> HandleAiBridgeAsync(string requestId, string action, JsonElement payload, int timeoutMs, CancellationToken cancellationToken)
     {
         try
         {
-            using var timeout = new CancellationTokenSource(TimeSpan.FromMilliseconds(Math.Clamp(timeoutMs, 250, 120000)));
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(Math.Clamp(timeoutMs, 250, 120000));
             var result = await _ai.InvokeAsync(action, payload, timeout.Token);
             return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, result);
         }
@@ -323,10 +444,10 @@ public sealed partial class LegacyUiHostPage : Page
         return JsonSerializer.SerializeToElement(map);
     }
 
-    private async Task<BridgeResponse> HandleWsAccountsAsync(string requestId, JsonElement payload)
+    private async Task<BridgeResponse> HandleWsAccountsAsync(string requestId, JsonElement payload, CancellationToken cancellationToken)
     {
         var action = StringValue(payload, "action").ToLowerInvariant();
-        var accounts = await LoadWsAccountsAsync();
+        var accounts = await LoadWsAccountsAsync(cancellationToken);
         if (action == "list" || string.IsNullOrWhiteSpace(action))
             return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { accounts = accounts.Select(ToWsAccountDto).ToArray() }));
         if (action != "create")
@@ -344,17 +465,20 @@ public sealed partial class LegacyUiHostPage : Page
         if (existing is not null)
             return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { account = existing }));
         var created = new StoredWsAccount(id, displayName, "未连接");
-        await _wsAccountStore.SaveAsync(accounts.Append(created));
+        cancellationToken.ThrowIfCancellationRequested();
+        await _wsAccountStore.SaveAsync(accounts.Append(created), cancellationToken);
         if (_api is not null)
         {
-            try { await _api.UpsertWsAccountAsync(new WsAccountRequest(created.Id, created.DisplayName, created.Status)); }
+            try { await _api.UpsertWsAccountAsync(new WsAccountRequest(created.Id, created.DisplayName, created.Status), cancellationToken); }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
             catch { /* local index remains usable; sync will retry on next list */ }
         }
         return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { account = ToWsAccountDto(created) }));
     }
 
-    private async Task<BridgeResponse> HandleWsActionAsync(string requestId, JsonElement payload, string? requestAccountId)
+    private async Task<BridgeResponse> HandleWsActionAsync(string requestId, JsonElement payload, string? requestAccountId, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var action = StringValue(payload, "action").ToLowerInvariant();
         var id = StringValue(payload, "accountId");
         if (string.IsNullOrWhiteSpace(id)) id = requestAccountId ?? _activeWsAccountId;
@@ -365,53 +489,55 @@ public sealed partial class LegacyUiHostPage : Page
         switch (action)
         {
             case "open":
-                await OpenWsOverlayAsync(id, payload);
-                return await WsStatusResponseAsync(requestId, id);
+                await OpenWsOverlayAsync(id, payload, cancellationToken: cancellationToken);
+                return await WsStatusResponseAsync(requestId, id, cancellationToken);
             case "resize":
                 ApplyWsBounds(payload);
-                return await WsStatusResponseAsync(requestId, id);
+                return await WsStatusResponseAsync(requestId, id, cancellationToken);
             case "hide":
                 HideWsOverlay();
                 return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { accountId = id, status = "已连接" }));
             case "close":
-                await CloseWsOverlayAsync(false);
-                await SetWsStatusAsync(id, "未连接");
+                await CloseWsOverlayAsync(false, cancellationToken: cancellationToken);
+                await SetWsStatusAsync(id, "未连接", cancellationToken);
                 return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { accountId = id, status = "未连接" }));
             case "clear-session":
-                await CloseWsOverlayAsync(true, _wsViewAccountId);
-                await SetWsStatusAsync(id, "未连接");
+                var cleared = await CloseWsOverlayAsync(true, _wsViewAccountId, cancellationToken);
+                if (!cleared)
+                    return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "PROFILE_CLEAR_FAILED", "WS 会话仍被系统占用，未能清除本地会话；请关闭其他 WS 窗口后重试。");
+                await SetWsStatusAsync(id, "未连接", cancellationToken);
                 return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { accountId = id, status = "未连接" }));
             case "reconnect":
-                await OpenWsOverlayAsync(id, payload, reload: true);
-                return await WsStatusResponseAsync(requestId, id);
+                await OpenWsOverlayAsync(id, payload, reload: true, cancellationToken: cancellationToken);
+                return await WsStatusResponseAsync(requestId, id, cancellationToken);
             case "status":
             case "probe":
-                return await WsStatusResponseAsync(requestId, id);
+                return await WsStatusResponseAsync(requestId, id, cancellationToken);
             case "discover-conversations":
-                return await ExecuteWsCaptureAsync(requestId, "discover");
+                return await ExecuteWsCaptureAsync(requestId, "discover", cancellationToken);
             case "capture-visible-messages":
             case "capture-selection":
-                return await ExecuteWsCaptureAsync(requestId, "messages");
+                return await ExecuteWsCaptureAsync(requestId, "messages", cancellationToken);
             default:
                 return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "UNSUPPORTED", $"unsupported WS action: {action}");
         }
     }
 
-    private async Task<List<StoredWsAccount>> LoadWsAccountsAsync()
+    private async Task<List<StoredWsAccount>> LoadWsAccountsAsync(CancellationToken cancellationToken = default)
     {
-        var local = (await _wsAccountStore.LoadAsync()).ToList();
+        var local = (await _wsAccountStore.LoadAsync(cancellationToken)).ToList();
         if (local.Count == 0)
         {
             // The default row is a configuration anchor, not demo business
             // data. It keeps the original page from rendering an empty
             // account rail on first launch.
             local.Add(new StoredWsAccount("default", "默认账号", "未连接"));
-            await _wsAccountStore.SaveAsync(local);
+            await _wsAccountStore.SaveAsync(local, cancellationToken);
         }
         if (_api is null) return local;
         try
         {
-            var remote = await _api.GetWsAccountsAsync();
+            var remote = await _api.GetWsAccountsAsync(cancellationToken);
             if (remote is null) return local;
             foreach (var item in remote)
             {
@@ -429,8 +555,9 @@ public sealed partial class LegacyUiHostPage : Page
                     };
                 }
             }
-            await _wsAccountStore.SaveAsync(local);
+            await _wsAccountStore.SaveAsync(local, cancellationToken);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch { /* local account index is the offline fallback */ }
         return local;
     }
@@ -438,30 +565,43 @@ public sealed partial class LegacyUiHostPage : Page
     private static object ToWsAccountDto(StoredWsAccount account)
         => new { id = account.Id, displayName = account.DisplayName, status = account.Status, runtimeStatus = account.Status, lastSeen = account.LastSeen };
 
-    private async Task OpenWsOverlayAsync(string accountId, JsonElement payload, bool reload = false)
+    private async Task OpenWsOverlayAsync(string accountId, JsonElement payload, bool reload = false, CancellationToken cancellationToken = default)
     {
-        await _wsGate.WaitAsync();
+        await _wsGate.WaitAsync(cancellationToken);
+        WebView2? createdView = null;
+        var generation = _wsGeneration;
         try
         {
-            var generation = Interlocked.Increment(ref _wsGeneration);
+            cancellationToken.ThrowIfCancellationRequested();
+            generation = Interlocked.Increment(ref _wsGeneration);
             if (_wsView is null || !string.Equals(_wsViewAccountId, accountId, StringComparison.OrdinalIgnoreCase))
             {
                 HideWsOverlay();
                 if (_wsView?.CoreWebView2 is not null)
                 {
                     _wsView.CoreWebView2.WebMessageReceived -= OnWsWebMessageReceived;
+                    _wsView.CoreWebView2.NavigationStarting -= OnWsNavigationStarting;
                     try { _wsView.CoreWebView2.Navigate("about:blank"); } catch { }
                 }
+                try { _wsView?.Close(); } catch { }
                 WsOverlayHost.Children.Clear();
                 var view = new WebView2 { HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch };
+                createdView = view;
                 WsOverlayHost.Children.Add(view);
                 _wsView = view;
                 var environment = await _wsProfiles.GetOrCreateProfileAsync(accountId);
+                cancellationToken.ThrowIfCancellationRequested();
                 await view.EnsureCoreWebView2Async(environment);
-                if (generation != _wsGeneration) return;
+                cancellationToken.ThrowIfCancellationRequested();
+                if (generation != _wsGeneration)
+                {
+                    if (ReferenceEquals(_wsView, view)) ForceDetachWsOverlay();
+                    return;
+                }
                 view.CoreWebView2.Settings.AreDevToolsEnabled = false;
                 view.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
                 view.CoreWebView2.WebMessageReceived += OnWsWebMessageReceived;
+                view.CoreWebView2.NavigationStarting += OnWsNavigationStarting;
                 await view.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(BuildWsCollectorScript(accountId));
                 view.CoreWebView2.NavigationCompleted += async (_, navigation) =>
                 {
@@ -477,12 +617,34 @@ public sealed partial class LegacyUiHostPage : Page
                 _wsView.CoreWebView2.Reload();
             }
             ApplyWsBounds(payload);
-            await SetWsStatusAsync(accountId, "等待登录");
+            await SetWsStatusAsync(accountId, "等待登录", cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            if (createdView is not null && generation == _wsGeneration && ReferenceEquals(_wsView, createdView))
+                ForceDetachWsOverlay();
+            throw;
+        }
+        catch
+        {
+            if (createdView is not null && generation == _wsGeneration && ReferenceEquals(_wsView, createdView))
+                ForceDetachWsOverlay();
+            throw;
         }
         finally { _wsGate.Release(); }
     }
 
-    private async Task CloseWsOverlayAsync(bool clearProfile, string? profileAccountId = null)
+    private async Task<bool> CloseWsOverlayAsync(bool clearProfile, string? profileAccountId = null, CancellationToken cancellationToken = default)
+    {
+        await _wsGate.WaitAsync(cancellationToken);
+        try
+        {
+            return await CloseWsOverlayCoreAsync(clearProfile, profileAccountId, cancellationToken);
+        }
+        finally { _wsGate.Release(); }
+    }
+
+    private async Task<bool> CloseWsOverlayCoreAsync(bool clearProfile, string? profileAccountId, CancellationToken cancellationToken)
     {
         var view = _wsView;
         _wsView = null;
@@ -491,15 +653,18 @@ public sealed partial class LegacyUiHostPage : Page
         if (view?.CoreWebView2 is not null)
         {
             view.CoreWebView2.WebMessageReceived -= OnWsWebMessageReceived;
+            view.CoreWebView2.NavigationStarting -= OnWsNavigationStarting;
             try { view.CoreWebView2.Navigate("about:blank"); } catch { }
         }
+        try { view?.Close(); } catch { }
         WsOverlayHost.Children.Clear();
         HideWsOverlay();
         if (clearProfile)
         {
-            try { await Task.Delay(100); await _wsProfiles.ClearProfileAsync(profileAccountId ?? _activeWsAccountId); }
-            catch { /* the profile may still be releasing; do not delete user data forcibly */ }
+            await Task.Delay(100, cancellationToken);
+            return await _wsProfiles.ClearProfileAsync(profileAccountId ?? _activeWsAccountId);
         }
+        return true;
     }
 
     private void HideWsOverlay()
@@ -545,18 +710,20 @@ public sealed partial class LegacyUiHostPage : Page
         catch { }
     }
 
-    private async Task<BridgeResponse> WsStatusResponseAsync(string requestId, string accountId)
+    private async Task<BridgeResponse> WsStatusResponseAsync(string requestId, string accountId, CancellationToken cancellationToken = default)
     {
-        var status = await ProbeWsLoginStateAsync(accountId, _wsView, _wsGeneration);
+        var status = await ProbeWsLoginStateAsync(accountId, _wsView, _wsGeneration, cancellationToken);
         return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { accountId, status.status, detail = status.detail }));
     }
 
-    private async Task<(string status, string detail)> ProbeWsLoginStateAsync(string accountId, WebView2? view, long generation)
+    private async Task<(string status, string detail)> ProbeWsLoginStateAsync(string accountId, WebView2? view, long generation, CancellationToken cancellationToken = default)
     {
         if (view?.CoreWebView2 is null) return ("未连接", "WS 页面尚未打开。");
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var json = await view.CoreWebView2.ExecuteScriptAsync("document.body ? document.body.innerText : ''");
+            cancellationToken.ThrowIfCancellationRequested();
             var text = JsonSerializer.Deserialize<string>(json) ?? string.Empty;
             var status = text.Contains("搜索或开始新聊天", StringComparison.OrdinalIgnoreCase)
                 || text.Contains("Search or start new chat", StringComparison.OrdinalIgnoreCase)
@@ -569,7 +736,7 @@ public sealed partial class LegacyUiHostPage : Page
             var detail = status == "已连接" ? "已检测到 WS 主界面。" : "请在 WS 页面自行扫码或登录。";
             if (generation == _wsGeneration)
             {
-                await SetWsStatusAsync(accountId, status);
+                await SetWsStatusAsync(accountId, status, cancellationToken);
                 GetBridge().Publish("ws.status", JsonSerializer.SerializeToElement(new { accountId, status, detail }));
             }
             return (status, detail);
@@ -580,24 +747,27 @@ public sealed partial class LegacyUiHostPage : Page
         }
     }
 
-    private async Task SetWsStatusAsync(string accountId, string status)
+    private async Task SetWsStatusAsync(string accountId, string status, CancellationToken cancellationToken = default)
     {
-        var rows = await _wsAccountStore.LoadAsync();
+        cancellationToken.ThrowIfCancellationRequested();
+        var rows = await _wsAccountStore.LoadAsync(cancellationToken);
         var existing = rows.FirstOrDefault(item => string.Equals(item.Id, accountId, StringComparison.OrdinalIgnoreCase));
         if (existing is null) return;
-        await _wsAccountStore.SaveAsync(rows.Select(item => item.Id.Equals(accountId, StringComparison.OrdinalIgnoreCase) ? item with { Status = status, LastSeen = status == "已连接" ? DateTimeOffset.UtcNow : item.LastSeen } : item));
+        await _wsAccountStore.SaveAsync(rows.Select(item => item.Id.Equals(accountId, StringComparison.OrdinalIgnoreCase) ? item with { Status = status, LastSeen = status == "已连接" ? DateTimeOffset.UtcNow : item.LastSeen } : item), cancellationToken);
         if (_api is not null)
         {
-            try { await _api.UpdateWsAccountStatusAsync(accountId, status); } catch { }
+            try { await _api.UpdateWsAccountStatusAsync(accountId, status, cancellationToken); } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; } catch { }
         }
     }
 
-    private async Task<BridgeResponse> ExecuteWsCaptureAsync(string requestId, string kind)
+    private async Task<BridgeResponse> ExecuteWsCaptureAsync(string requestId, string kind, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (_wsView?.CoreWebView2 is null)
             return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "NOT_CONNECTED", "WS 页面尚未打开。");
         var script = kind == "discover" ? "window.__zhikeWsDiscover ? JSON.stringify(window.__zhikeWsDiscover()) : JSON.stringify({supported:false,error:'当前 WS 页面结构未识别'})" : "window.__zhikeWsCapture ? JSON.stringify(window.__zhikeWsCapture()) : JSON.stringify({supported:false,error:'当前 WS 页面结构未识别'})";
         var json = await _wsView.CoreWebView2.ExecuteScriptAsync(script);
+        cancellationToken.ThrowIfCancellationRequested();
         using var document = JsonDocument.Parse(json);
         return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, document.RootElement.Clone());
     }
@@ -607,7 +777,10 @@ public sealed partial class LegacyUiHostPage : Page
         try
         {
             if (_wsView?.CoreWebView2 is null || !ReferenceEquals(sender, _wsView.CoreWebView2)) return;
-            using var document = JsonDocument.Parse(args.TryGetWebMessageAsString());
+            if (!IsAllowedNavigation(args.Source, "web.whatsapp.com")) return;
+            var rawMessage = args.TryGetWebMessageAsString();
+            if (rawMessage.Length > 1_200_000) return;
+            using var document = JsonDocument.Parse(rawMessage);
             var root = document.RootElement;
             if (!string.Equals(StringValue(root, "type"), "zhike.ws.capture", StringComparison.Ordinal)) return;
             var claimedAccountId = StringValue(root, "accountId");

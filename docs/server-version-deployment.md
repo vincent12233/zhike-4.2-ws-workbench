@@ -12,8 +12,10 @@ Copy-Item infra/.env.example infra/.env
 docker compose -f infra/compose.yaml -f infra/compose.prod.yaml up -d --wait
 ```
 
-API/Worker 启动时会按版本顺序执行迁移（当前到 009）。桌面端首次连接在“服务器连接”页填写同一个
+API/Worker 启动时会按版本顺序执行迁移（当前到 010）。桌面端首次连接在“服务器连接”页填写同一个
 `ZHIKE_PAIRING_APPROVAL_CODE` 后再执行一次性配对；数据库密码不会写入桌面端或日志。
+
+`/api/v2/health` 的 `schemaVersion` 以数据库 `schema_migrations` 中实际已应用的最高版本为准，并与迁移目录目标版本及 `ZHike_SCHEMA_VERSION` 对比。如果三者不一致，健康接口返回 `503` 和 `databaseStatus=schema-mismatch`，避免桌面端连接到未完成迁移的服务。
 
 ## 迁移旧版数据
 

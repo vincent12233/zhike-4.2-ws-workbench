@@ -72,6 +72,16 @@ public sealed partial class WsWorkbenchPage : Page
 
     private void OnUnloaded(object sender, RoutedEventArgs args)
     {
+        Interlocked.Increment(ref _switchGeneration);
+        var view = _webView;
+        _webView = null;
+        if (view?.CoreWebView2 is not null)
+        {
+            view.CoreWebView2.WebMessageReceived -= OnWebMessageReceived;
+            view.CoreWebView2.NavigationStarting -= OnNavigationStarting;
+        }
+        try { view?.Close(); } catch { }
+        WebViewHost.Children.Clear();
         _statusTimer?.Stop();
         _loaded = false;
     }
@@ -227,26 +237,54 @@ public sealed partial class WsWorkbenchPage : Page
         if (account is null)
         {
             AccountStatusText.Text = "未添加账号";
+            try { _webView?.Close(); } catch { }
             WebViewHost.Children.Clear();
             _webView = null;
             return;
         }
         AccountStatusText.Text = $"{account.DisplayName} · {account.Status}";
+        WebView2? staleView = null;
         try
         {
             // A WebView2 environment is bound to one profile for its entire
             // lifetime. Recreate the control on account switches so multiple
             // WS accounts never share cookies or session state.
+            if (_webView?.CoreWebView2 is not null)
+            {
+                _webView.CoreWebView2.WebMessageReceived -= OnWebMessageReceived;
+                _webView.CoreWebView2.NavigationStarting -= OnNavigationStarting;
+            }
+            try { _webView?.Close(); } catch { }
             WebViewHost.Children.Clear();
             var view = new WebView2 { HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch };
+            staleView = view;
             WebViewHost.Children.Add(view);
             _webView = view;
             var environment = await _profiles.GetOrCreateProfileAsync(account.Id);
             await view.EnsureCoreWebView2Async(environment);
-            if (generation != _switchGeneration) return;
+            if (generation != _switchGeneration)
+            {
+                // A fast account switch can finish environment creation after
+                // a newer switch already installed another WebView. Detach and
+                // close this stale local control or it will retain the profile
+                // lock and keep a hidden collector alive.
+                if (view.CoreWebView2 is not null)
+                {
+                    view.CoreWebView2.WebMessageReceived -= OnWebMessageReceived;
+                    view.CoreWebView2.NavigationStarting -= OnNavigationStarting;
+                }
+                try { view.Close(); } catch { }
+                if (ReferenceEquals(_webView, view))
+                {
+                    WebViewHost.Children.Remove(view);
+                    _webView = null;
+                }
+                return;
+            }
             view.CoreWebView2.Settings.AreDevToolsEnabled = false;
             view.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
             view.CoreWebView2.WebMessageReceived += OnWebMessageReceived;
+            view.CoreWebView2.NavigationStarting += OnNavigationStarting;
             await view.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(BuildCollectorScript(account.Id));
             view.CoreWebView2.NavigationCompleted += async (_, navigation) =>
             {
@@ -261,6 +299,21 @@ public sealed partial class WsWorkbenchPage : Page
         }
         catch (Exception error)
         {
+            if (generation != _switchGeneration && staleView is not null)
+            {
+                if (staleView.CoreWebView2 is not null)
+                {
+                    staleView.CoreWebView2.WebMessageReceived -= OnWebMessageReceived;
+                    staleView.CoreWebView2.NavigationStarting -= OnNavigationStarting;
+                }
+                try { staleView.Close(); } catch { }
+                if (ReferenceEquals(_webView, staleView))
+                {
+                    WebViewHost.Children.Remove(staleView);
+                    _webView = null;
+                }
+                return;
+            }
             account.SetStatus("连接失败");
             AccountStatusText.Text = $"{account.DisplayName} · {account.Status}：{error.Message}";
             await SyncStatusAsync(account);
@@ -303,7 +356,11 @@ public sealed partial class WsWorkbenchPage : Page
     {
         try
         {
-            using var document = JsonDocument.Parse(args.TryGetWebMessageAsString());
+            if (_webView?.CoreWebView2 is null || !ReferenceEquals(sender, _webView.CoreWebView2)) return;
+            if (!IsAllowedNavigation(args.Source)) return;
+            var rawMessage = args.TryGetWebMessageAsString();
+            if (rawMessage.Length > 1_200_000) return;
+            using var document = JsonDocument.Parse(rawMessage);
             var root = document.RootElement;
             if (!root.TryGetProperty("type", out var type) || !string.Equals(type.GetString(), "zhike.ws.capture", StringComparison.Ordinal)) return;
             var accountId = root.TryGetProperty("accountId", out var account) ? account.GetString() ?? string.Empty : string.Empty;
@@ -357,6 +414,19 @@ public sealed partial class WsWorkbenchPage : Page
         {
             // A DOM shape change or malformed page message must not stop WS.
         }
+    }
+
+    private static void OnNavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs args)
+    {
+        args.Cancel = !IsAllowedNavigation(args.Uri);
+    }
+
+    private static bool IsAllowedNavigation(string? uriText)
+    {
+        if (string.Equals(uriText, "about:blank", StringComparison.OrdinalIgnoreCase)) return true;
+        if (!Uri.TryCreate(uriText, UriKind.Absolute, out var uri)) return false;
+        return string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(uri.Host, "web.whatsapp.com", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string StringValue(JsonElement element, string name)

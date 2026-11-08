@@ -38,7 +38,7 @@
 1. 安装并启动 Docker Desktop。
 2. 复制 `infra/.env.example` 为 `infra/.env`，至少修改 `POSTGRES_PASSWORD` 和随机的 `ZHIKE_PAIRING_APPROVAL_CODE`。
 3. 在 `infra` 目录执行 `docker compose up -d --build`；桌面端“服务器连接”页填写同一个 API 地址和审批码。
-4. 先检查 `/api/v2/health` 返回数据库健康、`schemaVersion=9`、`workerStatus=running`，再登录桌面端。
+4. 先检查 `/api/v2/health` 返回数据库健康、`schemaVersion=10`、`workerStatus=running`，再登录桌面端。
 
 详细迁移、备份、回滚和故障排查见 `infra/README.md` 与 `docs/server-version-*.md`。
 

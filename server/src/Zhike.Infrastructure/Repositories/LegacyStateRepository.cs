@@ -12,6 +12,16 @@ public sealed record LegacySaveResult(bool Saved, bool Conflict, long Revision);
 
 public sealed class LegacyStateRepository(PostgresConnectionFactory connections)
 {
+    public async Task<long?> GetRevisionAsync(string ownerId, CancellationToken cancellationToken = default)
+    {
+        await using var connection = connections.Create();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = new NpgsqlCommand("SELECT revision FROM legacy_workspace_state WHERE owner_id = $1", connection);
+        command.Parameters.AddWithValue(NormalizeOwner(ownerId));
+        var value = await command.ExecuteScalarAsync(cancellationToken);
+        return value is null or DBNull ? null : Convert.ToInt64(value);
+    }
+
     public async Task<LegacyStateResult?> GetAsync(string ownerId, CancellationToken cancellationToken = default)
     {
         await using var connection = connections.Create();

@@ -15,6 +15,9 @@ public sealed partial class MainWindow : Window
     private bool _legacyHostEnabled;
     private string _pendingLegacyRoute = "home";
     private DispatcherQueueTimer? _layoutSaveTimer;
+    private AppWindow? _appWindow;
+    private bool _flushBeforeCloseInProgress;
+    private bool _allowCloseAfterFlush;
 
     public MainWindow()
     {
@@ -24,6 +27,7 @@ public sealed partial class MainWindow : Window
         _legacyHostEnabled = !string.Equals(legacyFlag, "0", StringComparison.OrdinalIgnoreCase)
             && !string.Equals(legacyFlag, "false", StringComparison.OrdinalIgnoreCase);
         ContentFrame.Navigated += OnContentFrameNavigated;
+        Closed += OnClosed;
         SetBrandTitle();
         RootNavigation.SelectedItem = RootNavigation.MenuItems.OfType<NavigationViewItem>().First(item => Equals(item.Tag, "home"));
         ShowRoute("home");
@@ -36,9 +40,52 @@ public sealed partial class MainWindow : Window
         {
             var hWnd = WindowNative.GetWindowHandle(this);
             var windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
-            AppWindow.GetFromWindowId(windowId).Title = "知客工作台";
+            _appWindow = AppWindow.GetFromWindowId(windowId);
+            _appWindow.Title = "知客工作台";
+            _appWindow.Closing += OnAppWindowClosing;
         }
         catch { }
+    }
+
+    private void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)
+    {
+        if (_allowCloseAfterFlush) return;
+        args.Cancel = true;
+        if (_flushBeforeCloseInProgress) return;
+        _flushBeforeCloseInProgress = true;
+        _ = FlushThenCloseAsync();
+    }
+
+    private async Task FlushThenCloseAsync()
+    {
+        var flushed = true;
+        try
+        {
+            if (ContentFrame.Content is LegacyUiHostPage host)
+                flushed = await host.FlushBeforeCloseAsync(snapshot: true);
+            if (!flushed)
+            {
+                // The Closing event was cancelled. Keep the window open so a
+                // failed state write cannot be mistaken for a clean shutdown;
+                // the user can retry after the service/network recovers.
+                _flushBeforeCloseInProgress = false;
+                return;
+            }
+        }
+        catch
+        {
+            flushed = false;
+            _flushBeforeCloseInProgress = false;
+        }
+        finally
+        {
+            if (flushed)
+            {
+                _allowCloseAfterFlush = true;
+                _flushBeforeCloseInProgress = false;
+                DispatcherQueue.TryEnqueue(Close);
+            }
+        }
     }
 
     private void OnNavigationChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
@@ -126,4 +173,10 @@ public sealed partial class MainWindow : Window
     }
 
     private double CurrentRasterizationScale() => RootShell.XamlRoot?.RasterizationScale ?? 1d;
+
+    private async void OnClosed(object sender, WindowEventArgs args)
+    {
+        if (ContentFrame.Content is LegacyUiHostPage host && !_allowCloseAfterFlush)
+            await host.FlushBeforeCloseAsync(snapshot: true);
+    }
 }

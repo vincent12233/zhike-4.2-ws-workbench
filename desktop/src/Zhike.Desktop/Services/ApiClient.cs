@@ -139,7 +139,16 @@ public sealed class ApiClient(HttpClient http)
     public async Task<bool> CommitImportAsync(string batchId, CancellationToken cancellationToken = default)
     {
         using var response = await http.PostAsJsonAsync("api/v2/import/batches/commit", new { BatchId = batchId }, JsonOptions, cancellationToken);
-        return response.IsSuccessStatusCode;
+        if (!response.IsSuccessStatusCode) return false;
+        try
+        {
+            var result = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions, cancellationToken);
+            return result.ValueKind == JsonValueKind.Object
+                && result.TryGetProperty("ok", out var ok) && ok.ValueKind == JsonValueKind.True
+                && result.TryGetProperty("changed", out var changed)
+                && changed.TryGetInt32(out var count) && count > 0;
+        }
+        catch (JsonException) { return false; }
     }
 
     public async Task<FollowupDto[]?> GetFollowupsAsync(string? state = null, CancellationToken cancellationToken = default)

@@ -14,6 +14,8 @@ namespace Zhike.Desktop.Services;
 /// </summary>
 public sealed class AiBridgeService
 {
+    private const int MaxResponseBytes = 4 * 1024 * 1024;
+    private const int MaxOutputCharacters = 100_000;
     private sealed record Provider(string Name, string BaseUrl, string DefaultModel);
     private static readonly IReadOnlyDictionary<string, Provider> Providers = new Dictionary<string, Provider>(StringComparer.OrdinalIgnoreCase)
     {
@@ -120,7 +122,7 @@ public sealed class AiBridgeService
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", credential.ApiKey);
         using var response = await _http.SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode) throw new InvalidOperationException(FriendlyError(credential.ProviderKey, (int)response.StatusCode));
-        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+        using var document = JsonDocument.Parse(await ReadContentWithLimitAsync(response, cancellationToken));
         var models = document.RootElement.TryGetProperty("data", out var rows) && rows.ValueKind == JsonValueKind.Array
             ? rows.EnumerateArray().Select(row => row.TryGetProperty("id", out var id) ? id.GetString() ?? "" : "").Where(id => !string.IsNullOrWhiteSpace(id)).Where(id => credential.ProviderKey != "teamorouter" || id.StartsWith("gpt", StringComparison.OrdinalIgnoreCase)).OrderBy(id => id, StringComparer.OrdinalIgnoreCase).ToArray()
             : Array.Empty<string>();
@@ -131,7 +133,17 @@ public sealed class AiBridgeService
     {
         var requestId = StringValue(payload, "requestId");
         using var requestTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        if (!string.IsNullOrWhiteSpace(requestId)) _activeRequests[requestId] = requestTimeout;
+        if (!string.IsNullOrWhiteSpace(requestId))
+        {
+            _activeRequests.AddOrUpdate(
+                requestId,
+                requestTimeout,
+                (_, previous) =>
+                {
+                    try { previous.Cancel(); } catch (ObjectDisposedException) { }
+                    return requestTimeout;
+                });
+        }
         try
         {
         var credential = await ResolveCredentialAsync(payload, requestTimeout.Token);
@@ -145,13 +157,14 @@ public sealed class AiBridgeService
         var managementMode = string.Equals(StringValue(payload, "mode"), "manage", StringComparison.OrdinalIgnoreCase);
         if (assistantMode is "code" or "operations") instructions += " 当前模式：" + assistantMode + "，请优先给出结构化、可核对的分析。";
         var prompt = $"用户问题：{input}\n\n最近对话：{history}\n\n{attachments}\n本地上下文：{context}";
-        var body = new Dictionary<string, object?> { ["model"] = credential.Model, ["store"] = false, ["instructions"] = instructions, ["input"] = prompt };
+        var body = new Dictionary<string, object?> { ["model"] = credential.Model, ["store"] = false, ["max_output_tokens"] = 4096, ["instructions"] = instructions, ["input"] = prompt };
         if (managementMode) { body["tools"] = new[] { ManagementTool() }; body["tool_choice"] = new { type = "function", name = "propose_data_changes" }; }
         using var response = await SendAsync(credential, "/responses", body, requestTimeout.Token);
-        var text = await response.Content.ReadAsStringAsync(cancellationToken);
+        var text = await ReadContentWithLimitAsync(response, requestTimeout.Token);
         if (!response.IsSuccessStatusCode) throw new InvalidOperationException(FriendlyError(credential.ProviderKey, (int)response.StatusCode));
         using var document = JsonDocument.Parse(text);
         var output = ExtractOutputText(document.RootElement);
+        if (output.Length > MaxOutputCharacters) output = output[..MaxOutputCharacters];
         var responseId = document.RootElement.TryGetProperty("id", out var id) ? id.GetString() ?? "" : "";
         if (managementMode)
         {
@@ -163,7 +176,12 @@ public sealed class AiBridgeService
         }
         finally
         {
-            if (!string.IsNullOrWhiteSpace(requestId) && _activeRequests.TryRemove(requestId, out var active)) active.Dispose();
+            if (!string.IsNullOrWhiteSpace(requestId))
+            {
+                var pair = new KeyValuePair<string, CancellationTokenSource>(requestId, requestTimeout);
+                ((ICollection<KeyValuePair<string, CancellationTokenSource>>)_activeRequests).Remove(pair);
+            }
+            requestTimeout.Dispose();
         }
     }
 
@@ -246,7 +264,27 @@ public sealed class AiBridgeService
             Content = new StringContent(JsonSerializer.Serialize(body, _json), Encoding.UTF8, "application/json"),
         };
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", credential.ApiKey);
-        return await _http.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken);
+        return await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+    }
+
+    private static async Task<string> ReadContentWithLimitAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    {
+        if (response.Content.Headers.ContentLength is > MaxResponseBytes)
+            throw new InvalidOperationException("AI 服务响应超过 4 MB，已拒绝读取。");
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        await using var buffer = new MemoryStream();
+        var chunk = new byte[64 * 1024];
+        var total = 0;
+        while (true)
+        {
+            var read = await stream.ReadAsync(chunk.AsMemory(0, chunk.Length), cancellationToken);
+            if (read == 0) break;
+            total += read;
+            if (total > MaxResponseBytes)
+                throw new InvalidOperationException("AI 服务响应超过 4 MB，已拒绝读取。");
+            await buffer.WriteAsync(chunk.AsMemory(0, read), cancellationToken);
+        }
+        return Encoding.UTF8.GetString(buffer.ToArray());
     }
 
     private async Task<CredentialDocument> ReadAsync(CancellationToken cancellationToken)

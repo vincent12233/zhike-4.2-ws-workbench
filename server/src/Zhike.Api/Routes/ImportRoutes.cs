@@ -39,7 +39,15 @@ public static class ImportRoutes
             }).ToArray();
             return Results.Ok(await repository.CreatePreviewAsync(string.IsNullOrWhiteSpace(request.SourceName) ? request.Context : request.SourceName, rows, cancellationToken));
         });
-        group.MapPost("/commit", async (ImportCommitRequest request, ImportRepository repository, CancellationToken cancellationToken) => Results.Ok(new { changed = await repository.CommitAsync(request.BatchId, cancellationToken) }));
+        group.MapPost("/commit", async (ImportCommitRequest request, ImportRepository repository, CancellationToken cancellationToken) =>
+        {
+            if (request is null || string.IsNullOrWhiteSpace(request.BatchId))
+                return (IResult)Results.BadRequest("batchId is required");
+            var changed = await repository.CommitAsync(request.BatchId, cancellationToken);
+            return changed > 0
+                ? Results.Ok(new { ok = true, changed })
+                : Results.Conflict(new { ok = false, changed = 0, error = "批次不存在、已提交或没有可写入的记录。" });
+        });
         return endpoints;
     }
 }

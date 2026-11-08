@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Zhike.Contracts;
 using Zhike.Domain.Messaging;
 using Zhike.Infrastructure.Repositories;
@@ -7,6 +8,10 @@ namespace Zhike.Api.Routes;
 
 public static class WsRoutes
 {
+    private const long MaxRequestBytes = 8L * 1024 * 1024;
+    private const int MaxAccountIdLength = 160;
+    private const int MaxConnectorIdLength = 160;
+    private const int MaxDisplayNameLength = 200;
     private const string Protocol = "zhike.ws.ingest.batch.v1";
     private const string Scope = "visible-authorized-content";
     private static readonly HashSet<string> AccountStatuses = new(StringComparer.Ordinal) { "未连接", "等待登录", "登录中", "已连接", "会话过期", "连接失败", "正在重连" };
@@ -14,37 +19,48 @@ public static class WsRoutes
 
     public static IEndpointRouteBuilder MapWsRoutes(this IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("/api/v2/ws");
+        // Apply the limit at the server boundary so chunked requests are
+        // rejected before JSON model binding allocates a large object graph.
+        var group = endpoints.MapGroup("/api/v2/ws")
+            .WithMetadata(new RequestSizeLimitAttribute(MaxRequestBytes));
         group.MapPost("/ingest/batch", IngestBatchAsync);
         group.MapPost("/checkpoints", SaveCheckpointsAsync);
         group.MapPost("/heartbeat", async (WsHeartbeatRequest request, WsRepository repository, CancellationToken cancellationToken) =>
         {
-            if (request is null || string.IsNullOrWhiteSpace(request.AccountId) || !AccountStatuses.Contains(request.Status?.Trim() ?? string.Empty)) return (IResult)Results.BadRequest("accountId and a supported status are required");
-            return Results.Ok(new { changed = await repository.UpdateAccountStatusAsync(request.AccountId, request.Status!, cancellationToken), status = request.Status, at = DateTimeOffset.UtcNow });
+            if (request is null || string.IsNullOrWhiteSpace(request.AccountId) || request.AccountId.Trim().Length > MaxAccountIdLength || !AccountStatuses.Contains(request.Status?.Trim() ?? string.Empty)) return (IResult)Results.BadRequest("accountId and a supported status are required");
+            var changed = await repository.UpdateAccountStatusAsync(request.AccountId, request.Status!, cancellationToken);
+            return changed > 0
+                ? Results.Ok(new { changed, status = request.Status, at = DateTimeOffset.UtcNow })
+                : Results.NotFound(new { error = "WS 账号不存在。", accountId = request.AccountId });
         });
         group.MapGet("/followups", GetFollowupsAsync);
         group.MapGet("/accounts", async (WsRepository repository, CancellationToken cancellationToken) => Results.Ok(await repository.ListAccountsAsync(cancellationToken)));
         group.MapPost("/accounts", async (WsAccountRequest request, WsRepository repository, CancellationToken cancellationToken) =>
         {
-            if (request is null || string.IsNullOrWhiteSpace(request.Id) || request.Id.Trim().Length > 160 || !AccountStatuses.Contains(request.Status?.Trim() ?? string.Empty)) return (IResult)Results.BadRequest("id and a supported status are required");
+            if (request is null || string.IsNullOrWhiteSpace(request.Id) || request.Id.Trim().Length > MaxAccountIdLength || string.IsNullOrWhiteSpace(request.DisplayName) || request.DisplayName.Trim().Length > MaxDisplayNameLength || !AccountStatuses.Contains(request.Status?.Trim() ?? string.Empty)) return (IResult)Results.BadRequest("id, displayName and a supported status are required");
             return Results.Ok(await repository.UpsertAccountAsync(request.Id, request.DisplayName, request.Status!, cancellationToken));
         });
         group.MapPost("/accounts/{id}/status", async (string id, WsAccountStatusRequest request, WsRepository repository, CancellationToken cancellationToken) =>
         {
-            if (string.IsNullOrWhiteSpace(id) || request is null || !AccountStatuses.Contains(request.Status?.Trim() ?? string.Empty)) return (IResult)Results.BadRequest("id and a supported status are required");
-            return Results.Ok(new { changed = await repository.UpdateAccountStatusAsync(id, request.Status!, cancellationToken) });
+            if (string.IsNullOrWhiteSpace(id) || id.Trim().Length > MaxAccountIdLength || request is null || !AccountStatuses.Contains(request.Status?.Trim() ?? string.Empty)) return (IResult)Results.BadRequest("id and a supported status are required");
+            var changed = await repository.UpdateAccountStatusAsync(id, request.Status!, cancellationToken);
+            return changed > 0
+                ? Results.Ok(new { changed })
+                : Results.NotFound(new { error = "WS 账号不存在。", accountId = id });
         });
         return endpoints;
     }
 
     private static async Task<Results<Ok<WsIngestBatchResponse>, BadRequest<string>>> IngestBatchAsync(
+        HttpContext context,
         WsIngestBatchRequest request,
         WsRepository repository,
         CancellationToken cancellationToken)
     {
-        if (request is null || string.IsNullOrWhiteSpace(request.AccountId)) return TypedResults.BadRequest("accountId is required");
+        if (context.Request.ContentLength is > MaxRequestBytes) return TypedResults.BadRequest("WS 批次请求不能超过 8 MiB");
+        if (request is null || string.IsNullOrWhiteSpace(request.AccountId) || request.AccountId.Trim().Length > MaxAccountIdLength) return TypedResults.BadRequest("accountId is required and must be <= 160 characters");
         if (!string.Equals(request.Protocol?.Trim(), Protocol, StringComparison.Ordinal)) return TypedResults.BadRequest("unsupported ingest protocol");
-        if (string.IsNullOrWhiteSpace(request.ConnectorId) || request.ConnectorId.Trim().Length > 160) return TypedResults.BadRequest("connectorId is required");
+        if (string.IsNullOrWhiteSpace(request.ConnectorId) || request.ConnectorId.Trim().Length > MaxConnectorIdLength) return TypedResults.BadRequest("connectorId is required and must be <= 160 characters");
         if (!string.Equals(request.Scope?.Trim(), Scope, StringComparison.Ordinal)) return TypedResults.BadRequest("unsupported capture scope");
         if (request.Messages is { Count: > 5000 } || request.Checkpoints is { Count: > 5000 }) return TypedResults.BadRequest("单批次最多 5000 条消息和 5000 个断点");
         var messages = request.Messages ?? Array.Empty<WsMessageEnvelope>();
@@ -81,17 +97,19 @@ public static class WsRoutes
     }
 
     private static async Task<Results<Ok<object>, BadRequest<string>>> SaveCheckpointsAsync(
+        HttpContext context,
         IReadOnlyList<WsCheckpoint> checkpoints,
         WsRepository repository,
         CancellationToken cancellationToken)
     {
+        if (context.Request.ContentLength is > MaxRequestBytes) return TypedResults.BadRequest("WS 断点请求不能超过 8 MiB");
         if (checkpoints is { Count: > 5000 }) return TypedResults.BadRequest("最多保存 5000 个断点");
         var normalized = checkpoints ?? Array.Empty<WsCheckpoint>();
         var inputs = new List<WsCheckpointInput>(normalized.Count);
         foreach (var checkpoint in normalized)
         {
             var accountId = checkpoint?.AccountId?.Trim() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(accountId)) return TypedResults.BadRequest("accountId and conversationKey are required");
+            if (string.IsNullOrWhiteSpace(accountId) || accountId.Length > MaxAccountIdLength) return TypedResults.BadRequest("accountId and conversationKey are required");
             if (checkpoint is null || string.IsNullOrWhiteSpace(checkpoint.ConversationKey) || checkpoint.ConversationKey.Length > 512 || checkpoint.Cursor is { Length: > 512 } || checkpoint.LastMessageFingerprint is { Length: > 256 })
                 return TypedResults.BadRequest("checkpoint field exceeds the allowed length");
             inputs.Add(new WsCheckpointInput(accountId, checkpoint.ConversationKey!, checkpoint.Cursor ?? string.Empty, checkpoint.LastMessageFingerprint ?? string.Empty, checkpoint.UpdatedAt));

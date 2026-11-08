@@ -5,14 +5,14 @@
 | 旧调用 | v2 适配方向 | 幂等/分页 | 失败语义 |
 | --- | --- | --- | --- |
 | `/api/state` | `/api/v2/legacy/state` | `X-State-Version` optimistic revision；编辑时 `X-Zhike-State-Format: delta-v1` 的 `upsert/remove/fields` 在服务端合并，不覆盖未触及集合 | `CONFLICT` 保留页面草稿 |
-| `/api/state/version` | `/api/v2/legacy/state` | revision | 返回当前版本 |
-| `/api/snapshot` | `/api/v2/legacy/snapshot` | owner + retention | 保留页面草稿 |
+| `/api/state/version` | `/api/v2/legacy/state/version` | revision | 轻量轮询端点，仅返回 initialized/version，不传输完整工作区 |
+| `/api/snapshot` | `/api/v2/legacy/snapshot` | owner + retention | 有现有状态时必须创建快照；首次空工作区返回 `200 {snapshotCreated:false,skipped:true}`，不阻塞首条写入 |
 | `/api/snapshots` | `/api/v2/legacy/snapshots` | owner + retention | 返回空列表而不是假数据 |
 | `/api/ws/accounts` | `/api/v2/ws/accounts` | accountId | 仅影响当前账号 |
 | `/api/ws/accounts/{id}/status` | `/api/v2/ws/accounts/{id}/status` | accountId | 仅影响当前账号 |
 | `/api/ws/followups` | `/api/v2/ws/followups` | accountId + customerId | 只读提醒列表 |
-| `/api/ws/ingest/batch` | `/api/v2/ws/ingest/batch` | accountId + messageId | 服务端去重后才算成功 |
-| `/api/ws/checkpoints` | `/api/v2/ws/checkpoints` | accountId + conversationKey | 断点按时间/游标单调更新 |
+| `/api/ws/ingest/batch` | `/api/v2/ws/ingest/batch` | accountId + messageId；请求体上限 8 MiB；accountId/connectorId ≤160 | 服务端去重后才算成功 |
+| `/api/ws/checkpoints` | `/api/v2/ws/checkpoints` | accountId + conversationKey；请求体上限 8 MiB；accountId ≤160 | 断点按时间/游标单调更新 |
 | `/api/ws/heartbeat` | `/api/v2/ws/heartbeat` | accountId | 只更新连接状态 |
 | `/api/ws/conversations`, `/api/ws/messages`, `/api/ws/analyses`, `/api/ws/replies` | 暂无 Postgres v2 等价接口 | — | 明确返回 `UNSUPPORTED`，不得伪造本地成功 |
 | `/api/ws/collection-*`, `/api/ws/followup-alerts`, `/api/ws/crm-sync` | 暂无 Postgres v2 等价接口 | — | 明确返回 `UNSUPPORTED`，保留页面草稿 |

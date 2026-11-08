@@ -76,12 +76,19 @@ app.Use(async (context, next) =>
 });
 
 var migrationRunner = app.Services.GetRequiredService<MigrationRunner>();
-await migrationRunner.ApplyAsync(app.Lifetime.ApplicationStopping);
+var migrationReport = await migrationRunner.ApplyAsync(app.Lifetime.ApplicationStopping);
+if (migrationReport.Failed.Count > 0)
+    throw new InvalidOperationException($"数据库迁移失败：{string.Join("; ", migrationReport.Failed)}");
+var migrationTargetVersion = migrationRunner.LatestVersion;
+var runtimeSchemaVersion = await migrationRunner.GetAppliedVersionAsync(app.Lifetime.ApplicationStopping);
+if (runtimeSchemaVersion <= 0)
+    throw new InvalidOperationException("未找到有效的数据库迁移版本。");
 
 app.MapGet("/api/v2/health", async (DatabaseHealthProbe probe, WorkerHeartbeatRepository heartbeats, CancellationToken cancellationToken) =>
 {
     var databaseHealthy = await probe.CheckAsync(cancellationToken);
-    var schemaVersion = int.TryParse(app.Configuration["ZHike:SchemaVersion"], out var parsed) ? parsed : 9;
+    var configuredSchemaVersion = int.TryParse(app.Configuration["ZHike:SchemaVersion"], out var parsed) ? parsed : runtimeSchemaVersion;
+    var schemaVersion = runtimeSchemaVersion;
     var workerStatus = databaseHealthy
         ? await heartbeats.GetStatusAsync("ai-worker", TimeSpan.FromSeconds(30), cancellationToken)
         : "unavailable";
@@ -90,6 +97,8 @@ app.MapGet("/api/v2/health", async (DatabaseHealthProbe probe, WorkerHeartbeatRe
         schemaVersion,
         databaseHealthy ? "healthy" : "degraded",
         workerStatus);
+    if (configuredSchemaVersion != runtimeSchemaVersion || migrationTargetVersion != runtimeSchemaVersion)
+        return Results.Json(response with { DatabaseStatus = "schema-mismatch" }, statusCode: StatusCodes.Status503ServiceUnavailable);
     return databaseHealthy ? Results.Ok(response) : Results.Json(response, statusCode: StatusCodes.Status503ServiceUnavailable);
 });
 app.MapWsRoutes();

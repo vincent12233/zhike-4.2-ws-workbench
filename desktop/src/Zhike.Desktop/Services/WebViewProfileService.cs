@@ -17,13 +17,32 @@ public sealed class WebViewProfileService(string? root = null)
         return await CoreWebView2Environment.CreateWithOptionsAsync(null, profilePath, new CoreWebView2EnvironmentOptions());
     }
 
-    public Task ClearProfileAsync(string accountId)
+    public async Task<bool> ClearProfileAsync(string accountId)
     {
         var safeId = SafeId(accountId);
-        if (string.IsNullOrWhiteSpace(safeId)) return Task.CompletedTask;
+        if (string.IsNullOrWhiteSpace(safeId)) return false;
         var profilePath = Path.Combine(_root, safeId);
-        if (Directory.Exists(profilePath)) Directory.Delete(profilePath, true);
-        return Task.CompletedTask;
+        if (!Directory.Exists(profilePath)) return true;
+        // WebView2 may release profile files slightly after Close(). Retry a
+        // bounded number of times and report failure to the caller so the UI
+        // cannot claim that a session was cleared when it was not.
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            try
+            {
+                Directory.Delete(profilePath, true);
+                return true;
+            }
+            catch (IOException) when (attempt < 4)
+            {
+                await Task.Delay(100 * (attempt + 1));
+            }
+            catch (UnauthorizedAccessException) when (attempt < 4)
+            {
+                await Task.Delay(100 * (attempt + 1));
+            }
+        }
+        return !Directory.Exists(profilePath);
     }
 
     private static string SafeId(string? accountId)

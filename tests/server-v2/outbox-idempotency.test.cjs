@@ -14,6 +14,7 @@ const newer = pipeline.ingestMessage({
   sentAt: '2026-11-08T10:02:00Z',
   direction: 'incoming',
   cursor: '2',
+  observedAt: '2026-11-08T10:02:00Z',
 });
 assert.equal(newer.deduplicated, false);
 assert.equal(pipeline.messages.size, 1);
@@ -28,6 +29,7 @@ const duplicate = pipeline.ingestMessage({
   sentAt: '2026-11-08T10:02:00Z',
   direction: 'incoming',
   cursor: '2',
+  observedAt: '2026-11-08T10:02:00Z',
 });
 assert.equal(duplicate.deduplicated, true);
 assert.equal(pipeline.messages.size, 1);
@@ -42,6 +44,7 @@ const older = pipeline.ingestMessage({
   sentAt: '2026-11-08T10:01:00Z',
   direction: 'incoming',
   cursor: '1',
+  observedAt: '2026-11-08T10:01:00Z',
 });
 assert.equal(older.deduplicated, false);
 assert.equal(pipeline.messages.size, 2);

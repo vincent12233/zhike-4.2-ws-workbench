@@ -52,6 +52,10 @@ for (const file of [
 const runner = fs.readFileSync(path.join(repo, 'server/src/Zhike.Infrastructure/Database/MigrationRunner.cs'), 'utf8');
 assert.match(runner, /BeginTransactionAsync/);
 assert.match(runner, /RollbackAsync/);
+assert.match(runner, /LatestVersion/);
+assert.match(runner, /GetAppliedVersionAsync/);
+assert.match(fs.readFileSync(path.join(repo, 'server/src/Zhike.Api/Program.cs'), 'utf8'), /runtimeSchemaVersion/);
+assert.match(fs.readFileSync(path.join(repo, 'server/src/Zhike.Api/Program.cs'), 'utf8'), /schema-mismatch/);
 assert.match(fs.readFileSync(path.join(repo, 'server/src/Zhike.Api/Program.cs'), 'utf8'), /ApplyAsync/);
 
 console.log('PostgreSQL migration contract: schema files, indexes, JSON payloads and non-destructive guards present');

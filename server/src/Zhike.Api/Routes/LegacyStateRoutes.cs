@@ -20,6 +20,15 @@ public static class LegacyStateRoutes
             return Results.Json(node);
         });
 
+        // The legacy page polls this endpoint only for the revision. Returning
+        // the complete workspace here would transfer and deserialize the full
+        // customer database every few seconds on the desktop hot path.
+        group.MapGet("/state/version", async (HttpContext context, LegacyStateRepository repository, CancellationToken cancellationToken) =>
+        {
+            var revision = await repository.GetRevisionAsync(Owner(context), cancellationToken);
+            return Results.Ok(new { initialized = revision.HasValue, version = revision?.ToString() ?? string.Empty });
+        });
+
         group.MapPut("/state", async (HttpContext context, LegacyStateRepository repository, CancellationToken cancellationToken) =>
         {
             using var document = await JsonDocument.ParseAsync(context.Request.Body, cancellationToken: cancellationToken);
@@ -42,7 +51,12 @@ public static class LegacyStateRoutes
             using var document = await JsonDocument.ParseAsync(context.Request.Body, cancellationToken: cancellationToken);
             var reason = document.RootElement.TryGetProperty("reason", out var value) ? value.GetString() ?? "" : "";
             var id = await repository.CreateSnapshotAsync(Owner(context), reason, cancellationToken: cancellationToken);
-            return Results.Ok(new { ok = id > 0, snapshotCreated = id > 0, id });
+            // A fresh workspace has no state to snapshot. Treat that as a
+            // successful, idempotent no-op so the first import/write is not
+            // blocked by a pre-write snapshot requirement.
+            return id > 0
+                ? Results.Ok(new { ok = true, snapshotCreated = true, skipped = false, id })
+                : Results.Ok(new { ok = true, snapshotCreated = false, skipped = true, id = 0L });
         });
 
         group.MapGet("/snapshots", async (HttpContext context, LegacyStateRepository repository, CancellationToken cancellationToken) =>
@@ -60,7 +74,9 @@ public static class LegacyStateRoutes
             var result = await repository.SaveAsync(Owner(context), document.RootElement.Clone(), expected, cancellationToken);
             return result.Conflict
                 ? Results.Conflict(new { error = "版本冲突，请刷新后重试。", version = result.Revision })
-                : Results.Ok(new { ok = true, version = result.Revision.ToString(), snapshotCreated = true });
+                : result.Saved
+                    ? Results.Ok(new { ok = true, version = result.Revision.ToString(), snapshotCreated = true })
+                    : Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
         });
 
         return endpoints;

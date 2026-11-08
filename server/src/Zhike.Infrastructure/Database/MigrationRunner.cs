@@ -6,6 +6,28 @@ namespace Zhike.Infrastructure.Database;
 public sealed class MigrationRunner(PostgresConnectionFactory connections, string migrationsDirectory)
 {
     private static readonly Regex VersionPattern = new("^(?<version>\\d+)-", RegexOptions.Compiled);
+    public int LatestVersion => Directory.Exists(migrationsDirectory)
+        ? Directory.EnumerateFiles(migrationsDirectory, "*.sql")
+            .Select(path => VersionPattern.Match(Path.GetFileName(path)))
+            .Where(match => match.Success && int.TryParse(match.Groups["version"].Value, out _))
+            .Select(match => int.Parse(match.Groups["version"].Value))
+            .DefaultIfEmpty(0)
+            .Max()
+        : 0;
+
+    /// <summary>
+    /// Returns the highest migration that is actually recorded in the
+    /// database.  The file-system maximum is useful as a deployment target,
+    /// but health reporting must not claim a schema is current when a
+    /// migration was only copied to the image and never committed.
+    /// </summary>
+    public async Task<int> GetAppliedVersionAsync(CancellationToken cancellationToken = default)
+    {
+        await using var connection = connections.Create();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = new NpgsqlCommand("SELECT COALESCE(MAX(version), 0) FROM schema_migrations", connection);
+        return Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken) ?? 0);
+    }
 
     public async Task<MigrationReport> ApplyAsync(CancellationToken cancellationToken = default)
     {

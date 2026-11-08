@@ -17,12 +17,28 @@ const bridge = fs.readFileSync(path.join(root, 'DesktopBridgeService.cs'), 'utf8
 assert.match(bridge, /InvokeAsync\(/);
 assert.match(bridge, /Publish\(/);
 assert.match(bridge, /redact|sensitive|secret/i);
+const ai = fs.readFileSync(path.join(root, 'AiBridgeService.cs'), 'utf8');
+assert.match(ai, /MaxResponseBytes/);
+assert.match(ai, /ReadContentWithLimitAsync/);
+assert.match(ai, /max_output_tokens/);
+assert.match(ai, /AddOrUpdate/);
+assert.match(ai, /ICollection<KeyValuePair/);
 
 const adapter = fs.readFileSync(path.join(root, 'LegacyApiAdapter.cs'), 'utf8');
 assert.match(adapter, /ExplicitlyUnsupportedPrefixes/);
 assert.match(adapter, /UNSUPPORTED/);
 assert.match(adapter, /api\/ws\/checkpoints/);
 assert.match(adapter, /api\/ws\/heartbeat/);
+assert.match(adapter, /api\/v2\/legacy\/state\/version/);
+assert.match(adapter, /UnescapeDataString/);
+assert.match(adapter, /EscapeDataString/);
+assert.match(adapter, /TryParse\(suffix/);
+assert.match(adapter, /snapshot id is invalid/);
+assert.match(adapter, /snapshotCreated/);
+assert.match(adapter, /skipped/);
+assert.match(adapter, /BUSINESS_REJECTED/);
+assert.match(adapter, /NO_CHANGE/);
+assert.match(adapter, /importCommit/);
 assert.doesNotMatch(adapter, /StartsWith\("\/api\/ws\/"[^\n]*\)\s*\)\s*\n\s*v2Path\s*=/,
   'adapter must not blindly forward every legacy WS route to v2');
 
