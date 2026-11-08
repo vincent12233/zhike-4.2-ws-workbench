@@ -8,6 +8,8 @@ const repo = path.resolve(__dirname, '..');
 const bridge = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Services', 'LegacyBridgeScript.cs'), 'utf8');
 const host = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Views', 'LegacyUiHostPage.xaml.cs'), 'utf8');
 const adapter = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Services', 'LegacyApiAdapter.cs'), 'utf8');
+const client = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Services', 'ApiClient.cs'), 'utf8');
+const home = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Views', 'HomePage.xaml.cs'), 'utf8');
 const app = fs.readFileSync(path.join(repo, 'resources', 'app', 'app.js'), 'utf8');
 
 // Regression: an unpaired desktop app must use the existing localStorage
@@ -19,6 +21,9 @@ assert.doesNotMatch(bridge, /window\.__LOCAL_DB__\s*=\s*true;/, 'bridge does not
 assert.match(bridge, /!url\.startsWith\('\/api\/'\) \|\| !window\.__LOCAL_DB__/, 'offline mode bypasses the remote API bridge');
 assert.match(host, /AddScriptToExecuteOnDocumentCreatedAsync\(LegacyBridgeScript\.Build\(_api\?\.SessionToken is \{ Length: > 0 \}\)\)/, 'legacy host injects the correct persistence mode');
 assert.match(adapter, /raw\.Data[\s\S]*TryGetProperty\("error"/, 'native bridge preserves the API error reason');
+assert.match(client, /FirstConfigured\(Environment\.GetEnvironmentVariable\("ZHIKE_API_BASE_URL"\), saved\?\.BaseUrl\)/, 'blank environment values do not hide the saved server URL');
+assert.match(client, /string\.IsNullOrWhiteSpace\(preferred\) \? fallback : preferred\.Trim\(\)/, 'connection values are trimmed and fall back safely');
+assert.match(home, /FirstConfigured\(Environment\.GetEnvironmentVariable\("ZHIKE_API_BASE_URL"\), saved\?\.BaseUrl\)/, 'pairing page uses the same connection fallback');
 
 // Regression: server-side validation errors must reach the user instead of
 // being collapsed into the misleading generic “写入失败” message.

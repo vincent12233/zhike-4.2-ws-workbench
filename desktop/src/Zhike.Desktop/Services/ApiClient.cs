@@ -36,14 +36,19 @@ public sealed class ApiClient(HttpClient http)
     public static ApiClient? TryCreateFromEnvironment()
     {
         var saved = DesktopConnectionStore.Load();
-        var apiUrl = Environment.GetEnvironmentVariable("ZHIKE_API_BASE_URL") ?? saved?.BaseUrl;
+        // An empty environment variable is common after an installer upgrade
+        // and must not mask a valid DPAPI-backed connection profile.
+        var apiUrl = FirstConfigured(Environment.GetEnvironmentVariable("ZHIKE_API_BASE_URL"), saved?.BaseUrl);
         if (!Uri.TryCreate(apiUrl, UriKind.Absolute, out var baseUri)) return null;
         var baseAddress = new Uri(baseUri.ToString().TrimEnd('/') + "/");
         var client = new ApiClient(new HttpClient { BaseAddress = baseAddress });
-        client.SetSessionToken(Environment.GetEnvironmentVariable("ZHIKE_API_TOKEN") ?? saved?.Token);
-        client.SetPairingApprovalCode(Environment.GetEnvironmentVariable("ZHIKE_PAIRING_APPROVAL_CODE") ?? saved?.PairingApprovalCode);
+        client.SetSessionToken(FirstConfigured(Environment.GetEnvironmentVariable("ZHIKE_API_TOKEN"), saved?.Token));
+        client.SetPairingApprovalCode(FirstConfigured(Environment.GetEnvironmentVariable("ZHIKE_PAIRING_APPROVAL_CODE"), saved?.PairingApprovalCode));
         return client;
     }
+
+    private static string? FirstConfigured(string? preferred, string? fallback)
+        => string.IsNullOrWhiteSpace(preferred) ? fallback : preferred.Trim();
 
     public void SetSessionToken(string? token)
     {

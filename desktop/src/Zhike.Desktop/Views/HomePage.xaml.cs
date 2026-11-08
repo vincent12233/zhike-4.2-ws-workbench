@@ -14,8 +14,8 @@ public sealed partial class HomePage : Page
     {
         InitializeComponent();
         var saved = DesktopConnectionStore.Load();
-        ApiUrlBox.Text = Environment.GetEnvironmentVariable("ZHIKE_API_BASE_URL") ?? saved?.BaseUrl ?? string.Empty;
-        PairingProofBox.Password = Environment.GetEnvironmentVariable("ZHIKE_PAIRING_APPROVAL_CODE") ?? saved?.PairingApprovalCode ?? string.Empty;
+        ApiUrlBox.Text = FirstConfigured(Environment.GetEnvironmentVariable("ZHIKE_API_BASE_URL"), saved?.BaseUrl) ?? string.Empty;
+        PairingProofBox.Password = FirstConfigured(Environment.GetEnvironmentVariable("ZHIKE_PAIRING_APPROVAL_CODE"), saved?.PairingApprovalCode) ?? string.Empty;
     }
 
     private async void CheckServer(object sender, RoutedEventArgs args)
@@ -62,4 +62,7 @@ public sealed partial class HomePage : Page
         ServerStatus.Message = message;
         ServerStatus.IsOpen = true;
     }
+
+    private static string? FirstConfigured(string? preferred, string? fallback)
+        => string.IsNullOrWhiteSpace(preferred) ? fallback : preferred.Trim();
 }
