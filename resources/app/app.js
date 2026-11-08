@@ -1184,6 +1184,7 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
   async function initializeBackend(){if(!window.__LOCAL_DB__){render();return;}try{const response=await fetch('/api/state');if(!response.ok)throw new Error('读取本机数据库失败');const storedState=await response.json();stateVersion=String(storedState.version||'');if(storedState.initialized){applySharedData(storedState);lastCommittedState=cloneStateData(statePayload());}else persist();}catch(error){dbWriteFailure=error;markSyncVersion();toast(error.message||'本机数据库连接失败','x');}render();markSyncVersion(stateVersion);}
   async function refreshSharedState(){if(!window.__LOCAL_DB__)return false;const response=await fetch('/api/state');if(!response.ok)throw new Error('读取本机数据库失败');const storedState=await response.json();if(storedState.initialized){applySharedData(storedState);lastCommittedState=cloneStateData(statePayload());stateVersion=String(storedState.version||stateVersion);markSyncVersion(stateVersion);render();}return true;}
   window.__zhikeRegistryHost={state,persist,render,activity,toast,openModal,closeModal,requestText,icons,esc,download,csvCell,snapshotBeforeWrite,flushStateWrites,refreshState:refreshSharedState,getStateVersion:()=>stateVersion,showCustomer};
+  window.__refreshSharedState=refreshSharedState;
   setInterval(()=>{const currentDate=localDateKey();if(currentDate!==today){today=currentDate;render();}},60000);
   initializeBackend();
   startDataSync();

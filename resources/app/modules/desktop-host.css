@@ -1,0 +1,10 @@
+/* WinUI/WebView2 host adjustments: keep the original visual system while
+   removing the outer page scroll that made the embedded desktop window jump. */
+html[data-desktop-host],
+html[data-desktop-host] body{min-width:0;width:100%;height:100%;overflow:hidden}
+html[data-desktop-host] .app-shell{height:100vh;min-height:0}
+html[data-desktop-host] .sidebar{min-height:0;height:100vh}
+html[data-desktop-host] .main-area{min-height:0;height:100vh}
+html[data-desktop-host] .view-container{min-height:0;overflow:auto;overscroll-behavior:contain}
+html[data-desktop-host] .ws-mode .view-container{overflow:hidden}
+html[data-desktop-host] .modal-backdrop{overscroll-behavior:contain}
