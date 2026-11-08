@@ -35,3 +35,25 @@
 - SQLite 是离线事实源；PostgreSQL 只由 outbox 表示，未引入网络依赖或 UI 改动。
 - 档案可在客户或会话尚未解析时以空标识保存；账户仍受 WS 账号表约束。
 - 现有备份/恢复测试保持通过；热聊专属表暂不加入旧 WS 可移植备份载荷，后续任务可补充导出格式。
+
+## Fix round 1 review follow-up (2026-11-09)
+
+RED evidence: expanded API regression tests initially failed because GET profile seeded `hcp-*` rows; the test expected a non-mutating read. The same test also caught conflicting age facts overwriting the original value and reject confirmations remaining `known`.
+
+GREEN changes:
+
+- GET profile and diagnostics now return an in-memory default payload when no row exists; reads do not insert rows or increment the shared state revision.
+- Profile writes use `hot-chat-profile-core.mergeEvidence`: existing values survive conflicting evidence and move to `pending`, evidence is deduplicated by value/text, and manually locked fields are protected. Confirm/reject explicitly set `known`/`declined`; confirmation idempotency keys dedupe events. Manual colors use the five-color allowlist.
+- CRM sync short-circuits repeated analyses using the persisted `analysis_profile` event before mutating CRM state, keeping revision, profile version, activity and outbox unchanged. Hot profile evidence/outbox remains inside the same transaction before the customer state write.
+- Outbox retry leaves rows `pending` with an incremented attempt and `awaiting_external_delivery`; it never claims external delivery.
+- Added migration idempotency and CRM duplicate-version/event assertions.
+
+Fix-round commands:
+
+- `node tests/hot-chat-profile-migration.test.cjs`
+- `node tests/hot-chat-profile-api.test.cjs`
+- `node tests/hot-chat-profile-core.test.cjs`
+- `node tests/ws-workbench-api.test.cjs`
+- `node tests/customer-governance-api.test.cjs`
+- `node tests/ws-workbench-migration-v6.test.cjs`
+- `node tests/backup-restore-drill.cjs resources/app` (the existing isolated-server drill is timing-sensitive with ignored child stdio; a debug-pipe run passed end-to-end, while intermittent startup timeout is unrelated to assertions).

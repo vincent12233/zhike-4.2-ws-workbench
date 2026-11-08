@@ -126,9 +126,16 @@ async function json(response) { return response.json(); }
     assert.equal(crmSync.customer.occupation, '采购经理');
     assert.ok(crmSync.updatedFields.includes('age'));
     assert.ok(crmSync.task && crmSync.task.aiGenerated);
+    const beforeRepeatedVersion = await json(await request('/api/state/version'));
+    const beforeRepeatedProfile = await json(await request(`/api/ws/hot-chat/profile/diagnostics?accountId=default&conversationId=${encodeURIComponent(conversationBody.id)}&customerId=${encodeURIComponent(crmSync.customer.id)}`));
     const repeatedCrmSync = await json(await request('/api/ws/crm-sync', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, analysisId: crmSync.followup.wsAnalysisId }) }));
     assert.equal(repeatedCrmSync.ok, true);
     assert.equal(repeatedCrmSync.duplicate, true, '重复同步同一分析不会重复创建跟进记录');
+    const afterRepeatedVersion = await json(await request('/api/state/version'));
+    const afterRepeatedProfile = await json(await request(`/api/ws/hot-chat/profile/diagnostics?accountId=default&conversationId=${encodeURIComponent(conversationBody.id)}&customerId=${encodeURIComponent(crmSync.customer.id)}`));
+    assert.equal(afterRepeatedVersion.version, beforeRepeatedVersion.version, '重复分析不递增共享版本');
+    assert.equal(afterRepeatedProfile.profile.version, beforeRepeatedProfile.profile.version, '重复分析不递增热聊档案版本');
+    assert.equal(afterRepeatedProfile.events.length, beforeRepeatedProfile.events.length, '重复分析不追加热聊事件');
     const crmState = await json(await request('/api/state'));
     assert.equal(crmState.customers.length, 1, 'AI 同步按 WS 会话只创建一个客户');
     assert.equal(crmState.followups.length, 1, 'AI 同步按分析幂等创建一个跟进');

@@ -7,25 +7,65 @@ const app = path.join(__dirname, '..', 'resources', 'app');
 const dataDir = mkdtempSync(path.join(os.tmpdir(), 'zhike-hot-profile-'));
 const port = 4476, token = 'hot-profile-test-token';
 const child = spawn(process.execPath, ['server.mjs'], { cwd: app, windowsHide: true, env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token }, stdio: ['ignore','pipe','pipe'] });
-child.stderr.on('data', d => process.stderr.write(d)); const headers = { 'content-type': 'application/json', 'x-zhike-api-token': token, origin: `http://127.0.0.1:${port}` };
+child.stderr.on('data', d => process.stderr.write(d));
+const headers = { 'content-type': 'application/json', 'x-zhike-api-token': token, origin: `http://127.0.0.1:${port}` };
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-async function request(pathname, init = {}) { for (let i = 0; i < 120; i++) { try { const h = { ...headers, ...(init.headers || {}) }; if (String(init.method || 'GET').toUpperCase() !== 'GET' && !Object.keys(h).some(k => k.toLowerCase() === 'x-state-version')) { const v = await fetch(`http://127.0.0.1:${port}/api/state/version`, { headers }).then(r => r.json()); h['x-state-version'] = String(v.version || ''); } return fetch(`http://127.0.0.1:${port}${pathname}`, { ...init, headers: h }); } catch { await wait(50); } } throw new Error('server unavailable'); }
+async function request(pathname, init = {}) { for (let i = 0; i < 160; i++) { try { const h = { ...headers, ...(init.headers || {}) }; if (String(init.method || 'GET').toUpperCase() !== 'GET' && !Object.keys(h).some(k => k.toLowerCase() === 'x-state-version')) { const v = await fetch(`http://127.0.0.1:${port}/api/state/version`, { headers }).then(r => r.json()); h['x-state-version'] = String(v.version || ''); } return fetch(`http://127.0.0.1:${port}${pathname}`, { ...init, headers: h }); } catch { await wait(50); } } throw new Error('server unavailable'); }
 const body = data => JSON.stringify(data);
-(async () => { try { await wait(2000);
-  const first = await request('/api/ws/hot-chat/profile?accountId=default&conversationId=missing&customerId=C1'); assert.equal(first.status, 200); const initial = await first.json(); assert.equal(initial.profile.customerId, 'C1');
-  const version = (await (await request('/api/state/version')).json()).version;
-  const put = await request('/api/ws/hot-chat/profile', { method: 'PUT', headers: { 'x-state-version': version }, body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', fields: { age: { value: 36, confidence: 0.9, evidence: '我今年36岁' } } }) }); assert.equal(put.status, 200); const saved = await put.json(); assert.equal(saved.profile.fields.age.state, 'known');
-  const stale = await request('/api/ws/hot-chat/profile', { method: 'PUT', headers: { 'x-state-version': version }, body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', fields: { gender: { value: '女', confidence: 0.9, evidence: '我是女性' } } }) }); assert.equal(stale.status, 409);
-  const facts = await request('/api/ws/hot-chat/profile/facts', { method: 'POST', body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', facts: [{ field: 'age', value: 36, confidence: 0.9, evidence: '我今年36岁' }] }) }); assert.equal(facts.status, 200);
-  const events = await request('/api/ws/hot-chat/profile/events', { method: 'POST', body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', type: 'message', idempotencyKey: 'm1', payload: { text: '你好' } }) }); assert.equal(events.status, 200); const repeated = await request('/api/ws/hot-chat/profile/events', { method: 'POST', body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', type: 'message', idempotencyKey: 'm1', payload: { text: '你好' } }) }); assert.equal((await repeated.json()).existed, true);
-  const diagnostics = await request('/api/ws/hot-chat/profile/diagnostics?accountId=default&conversationId=missing&customerId=C1'); assert.equal(diagnostics.status, 200); const d = await diagnostics.json(); assert.ok(d.outbox.count >= 1);
-  console.log('hot-chat-profile-api: migration, isolation, evidence dedupe, version conflicts, events and outbox passed');
+const version = async () => String((await (await request('/api/state/version')).json()).version || '');
+(async () => { try {
+  await wait(2000);
+  const accountCreate = await request('/api/ws/accounts', { method: 'POST', body: body({ id: 'account-b', displayName: 'B' }) });
+  assert.equal(accountCreate.status, 201);
+  const beforeGet = await version();
+  const first = await request('/api/ws/hot-chat/profile?accountId=default&conversationId=missing&customerId=C1');
+  assert.equal(first.status, 200);
+  const initial = await first.json();
+  assert.equal(initial.profile.customerId, 'C1');
+  assert.equal(initial.profile.id, '', 'GET must not seed a profile row');
+  assert.equal(await version(), beforeGet, 'GET profile must not change shared revision');
+  const diagnostics = await request('/api/ws/hot-chat/profile/diagnostics?accountId=default&conversationId=missing&customerId=C1');
+  assert.equal(diagnostics.status, 200);
+  const diagnosticBody = await diagnostics.json();
+  assert.equal(diagnosticBody.profile.id, '', 'GET diagnostics must not seed a profile row');
+  assert.equal(await version(), beforeGet, 'GET diagnostics must not change shared revision');
+  const isolated = await request('/api/ws/hot-chat/profile?accountId=account-b&conversationId=missing&customerId=C1');
+  assert.equal((await isolated.json()).profile.id, '', 'account scoped GET remains non-mutating');
+
+  const put = await request('/api/ws/hot-chat/profile', { method: 'PUT', headers: { 'x-state-version': beforeGet }, body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', fields: { age: { value: 36, confidence: 0.9, evidence: '我今年36岁' } } }) });
+  assert.equal(put.status, 200);
+  let saved = await put.json();
+  assert.equal(saved.profile.fields.age.state, 'known');
+  const stale = await request('/api/ws/hot-chat/profile', { method: 'PUT', headers: { 'x-state-version': beforeGet }, body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', fields: { gender: { value: '女', confidence: 0.9, evidence: '我是女性' } } }) });
+  assert.equal(stale.status, 409);
+
+  const merge = await request('/api/ws/hot-chat/profile', { method: 'PUT', body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', fields: { age: { value: 37, confidence: 0.9, evidence: '我今年37岁' } } }) });
+  assert.equal(merge.status, 200);
+  saved = await merge.json();
+  assert.equal(saved.profile.fields.age.value, 36, 'conflicting evidence keeps the existing value');
+  assert.equal(saved.profile.fields.age.state, 'pending', 'conflicting evidence enters pending state');
+  assert.equal(saved.profile.fields.age.evidence.length, 2, 'evidence is deduplicated but retained');
+
+  const confirmed = await request('/api/ws/hot-chat/profile/confirm', { method: 'POST', body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', field: 'age', value: 36, confidence: 1, evidence: '我今年36岁', locked: true, color: 'blue' }) });
+  assert.equal(confirmed.status, 200);
+  saved = await confirmed.json();
+  assert.equal(saved.profile.fields.age.state, 'known');
+  assert.equal(saved.profile.fields.age.manualLocked, true);
+  assert.equal(saved.profile.manualColor, 'blue');
+  assert.equal(saved.profile.statusColor, 'blue');
+  const rejected = await request('/api/ws/hot-chat/profile/confirm', { method: 'POST', body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', field: 'gender', value: '女', confidence: 1, evidence: '我是女性', declined: true }) });
+  assert.equal((await rejected.json()).profile.fields.gender.state, 'declined');
+  const invalidColor = await request('/api/ws/hot-chat/profile/confirm', { method: 'POST', body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', color: 'purple' }) });
+  assert.notEqual((await invalidColor.json()).profile.statusColor, 'purple');
+
+  const facts = await request('/api/ws/hot-chat/profile/facts', { method: 'POST', body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', facts: [{ field: 'age', value: 36, confidence: 0.9, evidence: '我今年36岁' }] }) });
+  assert.equal(facts.status, 200);
+  const events = await request('/api/ws/hot-chat/profile/events', { method: 'POST', body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', type: 'message', idempotencyKey: 'm1', payload: { text: '你好' } }) });
+  assert.equal(events.status, 200);
+  const repeated = await request('/api/ws/hot-chat/profile/events', { method: 'POST', body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', type: 'message', idempotencyKey: 'm1', payload: { text: '你好' } }) });
+  assert.equal((await repeated.json()).existed, true);
+  const retry = await request('/api/ws/hot-chat/profile/sync-retry', { method: 'POST', body: body({ accountId: 'default', customerId: 'C1', conversationId: 'missing' }) });
+  assert.equal(retry.status, 200);
+  assert.ok((await retry.json()).outbox.every(item => item.status !== 'sent'), 'retry must not claim external delivery');
+  console.log('hot-chat-profile-api: migration, non-mutating reads, isolation, merge, confirm/reject/lock, colors, events and retry passed');
 } finally { try { await fetch(`http://127.0.0.1:${port}/api/shutdown`, { method: 'POST', headers: { ...headers, 'x-zhike-shutdown-token': token } }); } catch {} await wait(100); child.kill(); await wait(100); try { rmSync(dataDir, { recursive: true, force: true }); } catch {} } })();
-
-
-
-
-
-
-
-

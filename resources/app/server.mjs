@@ -627,6 +627,10 @@ function hotProfilePayload(row, fields = null) {
   const fieldMap = Object.fromEntries(list.map(item => [item.field_key, { field: item.field_key, value: wsJson(item.value_json, null), state: item.state, confidence: Number(item.confidence || 0), evidence: wsJson(item.evidence_json, []), manualLocked: Boolean(item.manual_locked), updatedAt: item.updated_at }]));
   return { id: row?.id || '', customerId: row?.customer_id || '', accountId: row?.account_id || 'default', conversationId: row?.conversation_id || '', statusColor: row?.status_color || 'gray', manualColor: row?.manual_color || '', manualLocked: Boolean(row?.manual_locked), completeness: Number(row?.completeness || 0), version: Number(row?.version || 0), fields: fieldMap, fieldList: Object.values(fieldMap), createdAt: row?.created_at || '', updatedAt: row?.updated_at || '' };
 }
+function hotProfileDefaultPayload(identity) {
+  const fields = Object.fromEntries(hotChatProfile.PROFILE_FIELDS.map(field => [field, { field, value: null, state: 'missing', confidence: 0, evidence: [], manualLocked: false, updatedAt: '' }]));
+  return { id: '', customerId: identity.customerId, accountId: identity.accountId, conversationId: identity.conversationId, statusColor: 'gray', manualColor: '', manualLocked: false, completeness: 0, version: 0, fields, fieldList: Object.values(fields), createdAt: '', updatedAt: '' };
+}
 function ensureHotProfile(identity, now = new Date().toISOString()) {
   let row = hotProfileRow(identity);
   if (row) return row;
@@ -671,18 +675,29 @@ function saveHotProfile(identity, facts = [], options = {}) {
   const existing = db.prepare('SELECT * FROM hot_chat_profile_fields WHERE profile_id=?').all(row.id);
   const byField = new Map(existing.map(item => [item.field_key, item]));
   const upsert = db.prepare('UPDATE hot_chat_profile_fields SET value_json=?,state=?,confidence=?,evidence_json=?,manual_locked=?,updated_at=? WHERE profile_id=? AND field_key=?');
-  for (const fact of facts) {
-    const prior = byField.get(fact.field);
+  const incoming = facts.filter(fact => hotChatProfile.PROFILE_FIELDS.includes(fact.field));
+  const current = Object.fromEntries(existing.map(item => [item.field_key, { value: wsJson(item.value_json, null), state: item.state, confidence: Number(item.confidence || 0), evidence: wsJson(item.evidence_json, []) }]));
+  const priorObservations = existing.flatMap(item => (Array.isArray(current[item.field_key].evidence) ? current[item.field_key].evidence : []).map(evidence => ({ field: item.field_key, value: evidence.value, confidence: evidence.confidence, evidence: evidence.text })));
+  const observations = [...priorObservations, ...incoming.map(fact => ({ field: fact.field, value: fact.value, confidence: fact.confidence, evidence: fact.evidence }))];
+  const mergedProfile = hotChatProfile.mergeEvidence(current, observations);
+  for (const field of new Set(incoming.map(item => item.field))) {
+    const prior = byField.get(field);
     if (prior?.manual_locked && options.allowManual !== true) continue;
-    const evidence = Array.isArray(prior ? wsJson(prior.evidence_json, []) : []) ? wsJson(prior?.evidence_json, []) : [];
-    if (fact.evidence && !evidence.some(item => item.text === fact.evidence && JSON.stringify(item.value) === JSON.stringify(fact.value))) evidence.push({ value: fact.value, confidence: fact.confidence, text: fact.evidence });
-    const merged = { ...fact, evidence: fact.evidence || prior?.evidence_json ? evidence : [] };
-    upsert.run(JSON.stringify(merged.value ?? null), merged.state, merged.confidence, JSON.stringify(evidence), options.manualLocked ? 1 : Number(prior?.manual_locked || 0), now, row.id, fact.field);
+    const merged = mergedProfile[field];
+    const explicit = incoming.find(item => item.field === field);
+    if (options.allowManual === true && (explicit?.state === 'known' || explicit?.state === 'declined')) {
+      merged.value = explicit.value;
+      merged.state = explicit.state;
+      merged.confidence = explicit.confidence;
+    }
+    const evidence = (Array.isArray(merged.observations) ? merged.observations : []).filter((item, index, all) => index === all.findIndex(other => other.evidence === item.evidence && JSON.stringify(other.value) === JSON.stringify(item.value))).map(item => ({ value: item.value, confidence: item.confidence, text: item.evidence }));
+    upsert.run(JSON.stringify(merged.value ?? null), merged.state, Number(merged.confidence || 0), JSON.stringify(evidence), options.manualLocked ? 1 : Number(prior?.manual_locked || 0), now, row.id, field);
   }
   const fields = db.prepare('SELECT * FROM hot_chat_profile_fields WHERE profile_id=?').all(row.id);
   const profileObj = Object.fromEntries(fields.map(item => [item.field_key, { value: wsJson(item.value_json, null), state: item.state }]));
   const completeness = hotChatProfile.computeCompleteness(profileObj);
-  const manualColor = Object.hasOwn(options, 'manualColor') ? wsText(options.manualColor, 20) : row.manual_color;
+  const requestedColor = Object.hasOwn(options, 'manualColor') ? wsText(options.manualColor, 20) : row.manual_color;
+  const manualColor = ['green', 'blue', 'amber', 'red', 'gray'].includes(requestedColor) ? requestedColor : (row.manual_color || '');
   const manualLocked = Object.hasOwn(options, 'manualLocked') ? (options.manualLocked ? 1 : 0) : row.manual_locked;
   const statusColor = hotChatProfile.deriveStatusColor({ completeness, manualOverride: manualLocked ? { color: manualColor, locked: true } : null, aiColor: options.statusColor || row.status_color });
   db.prepare('UPDATE hot_chat_profiles SET status_color=?,manual_color=?,manual_locked=?,completeness=?,version=version+1,updated_at=? WHERE id=?').run(statusColor, manualColor, manualLocked, completeness, now, row.id);
@@ -1050,6 +1065,14 @@ const server = createServer(async (req, res) => {
       if (!analysisRow) return json(res, 404, { error: '找不到要同步的 WS 分析结果。' });
       const analysis = wsJson(analysisRow.result_json, {});
       const confidence = Number(analysisRow.confidence || analysis.confidence || 0);
+      const existingHotEvent = db.prepare("SELECT * FROM hot_chat_events WHERE account_id=? AND analysis_id=? AND event_type='analysis_profile' ORDER BY created_at DESC LIMIT 1").get(accountId, analysisRow.id);
+      if (existingHotEvent) {
+        const existingState = readState() || emptyCrmState();
+        const existingCustomer = (existingState.customers || []).find(item => String(item.id) === String(existingHotEvent.customer_id)) || null;
+        const existingFollowup = (existingState.followups || []).find(item => String(item.wsAnalysisId || '') === String(analysisRow.id)) || null;
+        const existingTask = existingState.settings?.operatingTasks?.find(item => String(item.wsFollowupKey || '') === String(existingFollowup?.wsFollowupKey || '')) || null;
+        return json(res, 200, { ok: true, skipped: false, created: false, duplicate: true, softDeleted: Boolean(existingCustomer?.deleted), conflicts: [], customer: existingCustomer, followup: existingFollowup, task: existingTask, updatedFields: [], revision: readStateEnvelope().version });
+      }
       if (!wsCrmSync.shouldAutoSync({ ...analysis, confidence })) return json(res, 200, { ok: true, skipped: true, reason: 'AI 置信度不足，未自动写入客户资料。', confidence });
       const conversationRef = { id: conversation.id, externalId: conversation.external_id, title: conversation.title, analysisId: analysisRow.id };
       const profile = {
@@ -1414,12 +1437,11 @@ const server = createServer(async (req, res) => {
       if (req.method === 'GET' && (subpath === '' || subpath === 'diagnostics')) {
         const identity = hotProfileIdentity({ customerId: url.searchParams.get('customerId'), accountId: url.searchParams.get('accountId'), conversationId: url.searchParams.get('conversationId') });
         wsRequireAccount(identity.accountId);
-        let row = hotProfileRow(identity);
-        if (!row) { db.exec('BEGIN IMMEDIATE'); try { row = ensureHotProfile(identity); db.exec('COMMIT'); } catch (error) { db.exec('ROLLBACK'); throw error; } }
-        const profile = hotProfilePayload(row);
+        const row = hotProfileRow(identity);
+        const profile = row ? hotProfilePayload(row) : hotProfileDefaultPayload(identity);
         if (subpath === 'diagnostics') {
-          const events = db.prepare('SELECT * FROM hot_chat_events WHERE profile_id=? ORDER BY created_at DESC,id DESC LIMIT 100').all(row.id).map(item => ({ id: item.id, type: item.event_type, payload: wsJson(item.payload_json, {}), source: item.source, analysisId: item.analysis_id, idempotencyKey: item.idempotency_key, createdAt: item.created_at }));
-          const outbox = db.prepare('SELECT * FROM hot_chat_sync_outbox WHERE profile_id=? ORDER BY created_at DESC,id DESC').all(row.id).map(hotOutboxPayload);
+          const events = row ? db.prepare('SELECT * FROM hot_chat_events WHERE profile_id=? ORDER BY created_at DESC,id DESC LIMIT 100').all(row.id).map(item => ({ id: item.id, type: item.event_type, payload: wsJson(item.payload_json, {}), source: item.source, analysisId: item.analysis_id, idempotencyKey: item.idempotency_key, createdAt: item.created_at })) : [];
+          const outbox = row ? db.prepare('SELECT * FROM hot_chat_sync_outbox WHERE profile_id=? ORDER BY created_at DESC,id DESC').all(row.id).map(hotOutboxPayload) : [];
           return json(res, 200, { profile, events, outbox: { count: outbox.length, pending: outbox.filter(item => item.status === 'pending').length, rows: outbox } });
         }
         return json(res, 200, { profile, version: readStateEnvelope().version });
@@ -1436,9 +1458,9 @@ const server = createServer(async (req, res) => {
         if (subpath === 'sync-retry') {
           const rows = db.prepare("SELECT * FROM hot_chat_sync_outbox WHERE account_id=? AND status IN ('pending','failed') ORDER BY created_at LIMIT 100").all(identity.accountId);
           const now = new Date().toISOString();
-          for (const item of rows) db.prepare("UPDATE hot_chat_sync_outbox SET status='sent',attempts=attempts+1,last_error='',updated_at=? WHERE id=?").run(now, item.id);
+          for (const item of rows) db.prepare("UPDATE hot_chat_sync_outbox SET status='pending',attempts=attempts+1,next_attempt_at=?,last_error='awaiting_external_delivery',updated_at=? WHERE id=?").run(now, now, item.id);
           bumpStateVersion(); db.exec('COMMIT');
-          return json(res, 200, { retried: rows.length, outbox: rows.map(item => hotOutboxPayload({ ...item, status: 'sent', attempts: Number(item.attempts || 0) + 1, last_error: '', updated_at: now })), version: readStateEnvelope().version });
+          return json(res, 200, { retried: rows.length, outbox: rows.map(item => hotOutboxPayload({ ...item, status: 'pending', attempts: Number(item.attempts || 0) + 1, next_attempt_at: now, last_error: 'awaiting_external_delivery', updated_at: now })), version: readStateEnvelope().version });
         }
         if (subpath === 'events') {
           const idempotencyKey = wsText(body.idempotencyKey || body.eventId, 240);
@@ -1452,13 +1474,19 @@ const server = createServer(async (req, res) => {
         }
         let updated = row;
         if (subpath === 'confirm' || subpath === 'facts' || req.method === 'PUT') {
-          const facts = normalizeHotFacts(body);
-          if (subpath === 'confirm' && body.field) facts.push(hotChatProfile.normalizeProfileFact(body.field, { ...body, state: body.declined ? 'declined' : 'known' }));
+          const confirmKey = subpath === 'confirm' ? wsText(body.idempotencyKey || body.eventId, 240) : '';
+          if (confirmKey) {
+            const priorEvent = db.prepare("SELECT * FROM hot_chat_events WHERE profile_id=? AND idempotency_key=? AND event_type IN ('fact_confirmed','fact_rejected')").get(row.id, confirmKey);
+            if (priorEvent) { db.exec('COMMIT'); return json(res, 200, { profile: hotProfilePayload(row), existed: true, version: readStateEnvelope().version }); }
+          }
+          const facts = subpath === 'confirm' && body.field
+            ? [hotChatProfile.normalizeProfileFact(body.field, { ...body, state: body.declined ? 'declined' : 'known' })]
+            : normalizeHotFacts(body);
           const profileOptions = { allowManual: subpath === 'confirm', manualColor: body.manualColor ?? body.color, statusColor: body.statusColor };
           if (subpath === 'confirm') profileOptions.manualLocked = body.locked !== false;
           updated = saveHotProfile(identity, facts, profileOptions);
           const eventId = wsCreateId('hce');
-          db.prepare('INSERT INTO hot_chat_events(id,profile_id,customer_id,account_id,conversation_id,event_type,payload_json,source,analysis_id,idempotency_key,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)').run(eventId, updated.id, identity.customerId, identity.accountId, identity.conversationId, subpath === 'confirm' ? (body.declined ? 'fact_rejected' : 'fact_confirmed') : 'facts_updated', JSON.stringify({ facts }), wsText(body.source, 80) || 'operator', wsText(body.analysisId, 160), wsText(body.idempotencyKey, 240), new Date().toISOString());
+          db.prepare('INSERT INTO hot_chat_events(id,profile_id,customer_id,account_id,conversation_id,event_type,payload_json,source,analysis_id,idempotency_key,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)').run(eventId, updated.id, identity.customerId, identity.accountId, identity.conversationId, subpath === 'confirm' ? (body.declined ? 'fact_rejected' : 'fact_confirmed') : 'facts_updated', JSON.stringify({ facts }), wsText(body.source, 80) || 'operator', wsText(body.analysisId, 160), confirmKey || wsText(body.idempotencyKey, 240), new Date().toISOString());
           enqueueHotOutbox(updated, eventId, { facts }, 'profile');
           bumpStateVersion();
         }

@@ -1,0 +1,10 @@
+const assert = require('node:assert/strict');
+const { DatabaseSync } = require('node:sqlite');
+const { readFileSync } = require('node:fs');
+const path = require('node:path');
+const db = new DatabaseSync(':memory:');
+db.exec("PRAGMA foreign_keys=ON; CREATE TABLE ws_accounts(id TEXT PRIMARY KEY); INSERT INTO ws_accounts(id) VALUES('default');");
+const migration = readFileSync(path.join(__dirname, '..', 'resources', 'app', 'migrations', '011-hot-chat-profile.sql'), 'utf8');
+db.exec(migration); db.exec(migration);
+assert.equal(db.prepare("SELECT COUNT(*) count FROM sqlite_master WHERE type='table' AND name LIKE 'hot_chat_%'").get().count, 4);
+console.log('hot-chat-profile-migration: idempotent pass');
