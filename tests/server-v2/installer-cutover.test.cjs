@@ -26,7 +26,10 @@ assert.doesNotMatch(bundle, /resources\\app\\data|\.env(?!\.example)/i);
 assert.match(winuiBuild, /dotnet restore/);
 assert.match(winuiBuild, /dotnet publish/);
 assert.match(winuiBuild, /bundle-manifest\.json/);
-assert.match(winuiBuild, /\[string\]\$Version = '5\.1\.0'/);
+// 5.2.0 is the single active WinUI/Docker release line.  Keep this contract
+// aligned with the release consistency gate so a stale historical version
+// cannot make the full regression suite fail after a deliberate upgrade.
+assert.match(winuiBuild, /\[string\]\$Version = '5\.2\.0'/);
 assert.match(winuiBuild, /WindowsAppSDKSelfContained=true/, 'WinUI bundle must carry the Windows App SDK runtime for unpackaged startup');
 assert.match(winuiBuild, /--self-contained[\s\S]*true/, 'WinUI bundle must publish self-contained by default');
 assert.match(winuiInstaller, /ISCC\.exe/);
