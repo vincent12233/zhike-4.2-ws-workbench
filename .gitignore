@@ -1,4 +1,7 @@
 # User data and local credentials
+**/.env
+**/.env.*
+!.env.example
 resources/app/data/*
 !resources/app/data/.gitkeep
 **/ai-credentials.json
