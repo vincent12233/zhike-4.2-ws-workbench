@@ -26,5 +26,11 @@ for (const token of ['--navy:#172033', '--navy-2:#202b40', '--teal:#13a892', '--
 assert.match(v41, /page-heading|metric-card|table-toolbar/, 'legacy page component system must remain available');
 assert.match(main + mainCode, /LegacyUiHost|LegacyUiHostPage/, 'WinUI shell must host the original page system');
 assert.match(main, /PaneDisplayMode="LeftCompact"/, 'desktop shell must keep compact left navigation');
+assert.match(main, /x:Name="NativeHeader"/, 'native header must be independently collapsible');
+assert.match(main, /x:Name="HeaderRow"/, 'native header row must collapse with the header');
+assert.match(mainCode, /ApplyShellChrome\(\)/, 'shell chrome visibility must be centralized');
+assert.match(mainCode, /NativeHeader\.Visibility\s*=\s*showNativeChrome/, 'legacy host must hide the duplicate native header');
+assert.match(mainCode, /HeaderRow\.Height\s*=\s*showNativeChrome/, 'legacy host must reclaim the native header height');
+assert.match(mainCode, /RootNavigation\.IsPaneVisible\s*=\s*showNativeChrome/, 'legacy host must hide the duplicate native navigation pane');
 
 console.log('desktop visual contract: legacy routes, tokens and host boundary are present');

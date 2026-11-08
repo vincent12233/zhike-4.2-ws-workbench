@@ -6,11 +6,11 @@
           Background="{StaticResource ZhikePageBackgroundBrush}"
           SizeChanged="OnShellSizeChanged">
         <Grid.RowDefinitions>
-            <RowDefinition Height="57" />
+            <RowDefinition x:Name="HeaderRow" Height="57" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Background="{StaticResource ZhikeSurfaceBrush}"
+        <Border x:Name="NativeHeader" Grid.Row="0" Background="{StaticResource ZhikeSurfaceBrush}"
                 BorderBrush="{StaticResource ZhikeLineBrush}" BorderThickness="0,0,0,1">
             <Grid Padding="18,0" ColumnSpacing="14">
                 <Grid.ColumnDefinitions>

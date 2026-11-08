@@ -1,6 +1,13 @@
-# 知客 5.0.0 桌面版 + Docker 服务端（4.4.24 业务兼容基线）
+# 知客 5.1.0 桌面版 + Docker 服务端（4.4.24 业务兼容基线）
 
-> 本版本在同一业务基线上增量实施：用户界面保持 Windows 桌面应用（WinUI 3），不是网页管理端；PostgreSQL/API/AI Worker/可选 WS Connector 仅作为 Docker 后台服务。Electron 4.4.24 兼容安装包仍保留为可回滚业务基线。
+> 当前唯一生产入口是 WinUI 3 + WebView2 桌面版；PostgreSQL/API/AI Worker/可选 WS Connector 仅作为 Docker 后台服务。旧 Electron/4.4.x 包只作为归档回滚，不再作为日常启动入口。
+
+## 当前唯一入口
+
+- 安装包：`outputs/知客-5.1.0-WinUI桌面版.exe`
+- 交付目录：`outputs/知客-5.1.0-WinUI桌面版/`（安装包、bundle、完整源码、清单、校验值）
+- 运行时页面：`resources/app/`；WinUI 只提供窗口宿主、WebView2、WS 隔离和故障回退，不再与原版页面并列显示第二套业务导航。
+- 默认启动：显示 `resources/app` 原版顶栏、侧栏和页面；仅设置 `ZHIKE_DESKTOP_LEGACY_UI_HOST=0` 才进入原生兼容回退壳。
 
 本版本在现有知客客户库和 WS 工作台基础上增加 VIP 编号管理、客户分类联动、AI 客户档案自动建档、字段补全、来源/年龄/职业识别、字段证据、跟进任务联动和数据治理删除接口。VIP 编号可从客户中心、快速录入和 CSV/Excel 导入维护，并在群组管理下方独立查看；AI 只补齐空字段，已有人工内容不覆盖；AI 自动删除只进入回收站，永久删除需要二次确认。
 
@@ -13,21 +20,7 @@
 - `tests/`：WS、备份、HTTP、安装和项目回归测试。
 - `docs/`：项目检查、使用、故障排查、回滚和测试说明。
 - `scripts/`：统一测试入口与可复现的 Windows 安装包构建脚本。
-- `releases/知客-4.2-WS工作台版.exe`：Windows 安装包，通过 Git LFS 保存。
-- `releases/知客-4.2.1-WS工作台完善版.exe`：历史 WS 完善版安装包，通过 Git LFS 保存。
-- `releases/知客-4.2.2-WS工作台完善版.exe`：历史多账号 WS 工作台安装包，通过 Git LFS 保存。
-- `releases/知客-4.4.1-WS工作台智能录入版.exe`：当前 AI 跟进、列表级 WS 自动采集、手机/工作台同步轮询、日期迁移和混合导入优化安装包，通过 Git LFS 保存。
-- `releases/知客-4.4.2-WS工作台智能录入版.exe`：修复 GPT 运营助手导航状态竞争，确保实际安装版 AI 配置、分析和跟进入口可达，通过 Git LFS 保存。
-- `releases/知客-4.4.3-WS工作台智能录入版.exe`：修复列表刷新把已完成 AI 分析重新标成待分析，并让手动分析同步采集任务计数，通过 Git LFS 保存。
-- `releases/知客-4.4.4-WS工作台智能录入版.exe`：修复手机端新消息列表中的凌晨时间、未读提示和自动消失提示污染客户标题与 AI 预览的问题。
-- `releases/知客-4.4.5-WS工作台智能录入版.exe`：兼容 WhatsApp 无障碍文本把预览放在时间之前的结构，进一步剥离标题末尾消息文本。
-- `releases/知客-4.4.6-WS工作台智能录入版.exe`：在服务端再次规范化列表预览，防止未读数量和自动消失提示落库并污染 AI 分析。
-- `releases/知客-4.4.7-WS工作台智能录入版.exe`：补齐历史客户标题迁移，清除旧版把消息预览粘连到客户名称的问题。
-- `releases/知客-4.4.8-WS工作台智能录入版.exe`：修复升级启动时仅在消息更新后检查标题的条件遗漏，确保已清洗消息的历史标题也会迁移。
-- `releases/知客-4.4.11-WS工作台智能录入版.exe`：修复顶部连接状态与账号卡状态不同步的问题。
-- `work/legacy-installer-output/知客-4.4.24-WS工作台智能录入版.exe`：跟票多股票独立记录、旧股票字段兼容、VIP 编号管理、客户分类联动、AI 客户档案自动建档、字段补全、治理审计、回收站和安全删除接口。
-- `releases/知客-4.4.24-WS工作台智能录入版.exe`：当前兼容回滚安装包，通过 Git LFS 保存。
-- `releases/知客-5.0.0-WinUI桌面版.exe`：WinUI 3 + WebView2 桌面壳和 Docker 服务端连接页，通过 Git LFS 保存。
+- `releases/`：历史 4.2–4.4.x/5.0.0 安装包归档，仅用于回滚，不是当前启动入口。
 - `zhike-setup.iss`：Windows Inno Setup 安装脚本。
 - `desktop/`：WinUI 3 原生桌面壳；WebView2 仅承载 WS 登录/聊天/账号 Profile。
 - `server/`、`infra/`、`connectors/ws-worker/`：PostgreSQL/API/AI Worker/可选 WS 连接器和版本化迁移。
@@ -48,17 +41,17 @@
 
 历史 4.2.1 WS 完善版安装包 SHA-256：`146C5A320BDA660BBC5D3F40F9A0B181EC389C4B173E1B27F878DF6AF7E1AD5B`，大小 173,901,747 字节。
 
-当前 4.2.2 多账号 WS 工作台安装包 SHA-256：`11408056AE239637020F91ECBC89A505F77CCE74C09CDC088590DFCE9AE4A62C`，大小 173,915,466 字节。
+历史 4.2.2 多账号 WS 工作台安装包 SHA-256：`11408056AE239637020F91ECBC89A505F77CCE74C09CDC088590DFCE9AE4A62C`，大小 173,915,466 字节。
 
-当前 4.4.1 安装包 SHA-256：`E6B00666256BB8B92BB9A1B80570C0F34C35D82C2E2EDFA8DB3AC4BFA43C3B60`，大小 `173,938,768` 字节。
+历史 4.4.1 安装包 SHA-256：`E6B00666256BB8B92BB9A1B80570C0F34C35D82C2E2EDFA8DB3AC4BFA43C3B60`，大小 `173,938,768` 字节。
 
-当前 4.4.24 兼容安装包 SHA-256：`08A02641DFD3BCA35306B3F27BBF56EEC10A7F9A236D5F2CCD5943830D76A039`，大小 `173,976,589` 字节（对应 `work/legacy-installer-final`）。
+历史 4.4.24 兼容安装包 SHA-256：`08A02641DFD3BCA35306B3F27BBF56EEC10A7F9A236D5F2CCD5943830D76A039`，大小 `173,976,589` 字节（对应 `work/legacy-installer-final`）。
 
-v5 交付目录中的 WinUI 安装包、Docker 服务端 bundle、源码压缩包和校验值以 `outputs/知客-5.0.0-最终交付/交付清单.json` 为准；当前源码提交为本文件对应的 Git 提交（以清单 `commit` 字段为准）。
+当前 WinUI 安装包、Docker 服务端 bundle、完整源码压缩包和校验值以 `outputs/知客-5.1.0-WinUI桌面版/` 中的 `bundle-manifest.json` 与 `SHA256SUMS.txt` 为准。
 
 4.4.1 在 4.4.0 基础上补充无需打开会话的列表级 WS 自动采集、预览消息幂等同步、手机与工作台的 12 秒增量轮询、列表预览 AI 分析排队和跟进提醒刷新；原有知客业务数据和统计口径保持不变。
 
-克隆仓库前请安装 Git LFS；历史 `releases/*.exe` 是 LFS 管理的旧版二进制。当前 v5 安装包以交付目录单独提供，源码压缩包包含全部可构建源码、迁移、测试和 Docker 配置，不把历史发布二进制指针误当作源码。
+克隆仓库前请安装 Git LFS；`releases/*.exe` 是 LFS 管理的历史回滚二进制。当前 5.1.0 安装包以交付目录单独提供，源码压缩包包含全部可构建源码、迁移、测试和 Docker 配置，不把历史发布二进制指针误当作源码。
 
 ## 安全边界
 
@@ -70,14 +63,14 @@ WS 页面使用每个账号独立的持久化 BrowserView 分区，用户自行�
 
 ## 开发与测试
 
-开发和测试使用 Node.js 24 或更高版本。当前桌面运行时固定为 Electron 45.2.1、Node.js 24.22.1。
+开发和测试使用 Node.js 24 或更高版本；当前生产桌面入口为 WinUI 3 / .NET 10 / WebView2，自包含 Windows App SDK 运行时随安装包提供。
 
 ```powershell
 npm --prefix resources/app run test:ws
 npm --prefix resources/app run test:all
 ```
 
-安装测试默认使用 `releases/` 中最新已知安装包；4.1.3 旧安装包不存在时，升级测试会明确显示 `SKIP`，不会误报通过。也可以显式指定经过校验的构件：
+安装测试默认使用 `outputs/知客-5.1.0-WinUI桌面版.exe`；历史 `releases/` 包只用于显式回滚测试，不作为默认入口。
 
 ```powershell
 $env:ZHIKE_INSTALLER='C:\path\知客-4.4.1-WS工作台智能录入版.exe'
@@ -100,21 +93,21 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-server-bundle.
 WinUI 原生桌面 bundle/安装包：
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-bundle.ps1 -Version 5.0.0
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installer.ps1 -AppVersion 5.0.0
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-bundle.ps1 -Version 5.1.0
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installer.ps1 -AppVersion 5.1.0
 ```
 
 本机已完成 WinUI 3 Release 构建及安装/启动/卸载隔离冒烟；MSIX 签名、Docker Compose/PostgreSQL 实机和真实 WS 登录仍需相应环境门禁。
 
-## 可复现构建
+## 历史 Electron 兼容构建（仅回滚）
 
-构建脚本只把白名单中的 Electron 运行时和 `resources/app` 源码复制到 `work/staging/zhike-win-x64`，并拒绝打包真实 `data`、数据库、日志、凭据、`.git`、`releases`、`tests` 和 `docs`。它优先使用本地已校验为 Electron 45.2.1 / Node.js 24.22.1 的运行时；缺少时从 Electron 和 Node.js 官方发布地址下载到 `work/cache`，并用官方 `SHASUMS256.txt` 校验。
+`scripts/build-winui-bundle.ps1` 与 `scripts/build-winui-installer.ps1` 是当前唯一生产构建入口，使用 WinUI 3 / .NET 10 自包含 bundle。根目录的 `scripts/build-installer.ps1` 仅用于历史 Electron 兼容回滚，不生成当前生产入口。
 
 ```powershell
 # 只生成并验证干净 staging
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-installer.ps1 -StageOnly
 
-# 生成 work/output/知客-4.4.1-WS工作台智能录入版.exe
+# 历史 Electron 兼容包（仅回滚，不作为当前入口）
 npm --prefix resources/app run build:installer
 ```
 

@@ -4,6 +4,10 @@
 
 5.1 采用 WinUI 3 原生窗口 + WebView2 页面宿主。桌面窗口、导航、DPI、窗口记忆、WS 隔离 WebView 和故障回退由原生壳负责；业务页面继续使用仓库中的 `resources/app` 原版页面、CSS、路由和数据口径。PostgreSQL/Docker API 是配对工作区的权威数据源，不新增第二套 SQLite 权威库。
 
+## 单一界面壳原则
+
+生产默认路径只显示 `resources/app` 的原版顶栏、侧栏和业务页面。WinUI 的原生顶栏与 `NavigationView` 只在兼容回退模式（`ZHIKE_DESKTOP_LEGACY_UI_HOST=0`）显示；默认模式会同时收起原生顶栏、顶部占位和侧栏，避免两套导航叠加。原生页面代码保留为故障诊断回退，不作为第二套日常业务界面。
+
 本次收口内容：
 
 - 保留原版全部导航标签和页面体系，WinUI 只作为稳定宿主，不重写业务页面。

@@ -26,6 +26,12 @@ public sealed partial class MainWindow : Window
             ?? Environment.GetEnvironmentVariable("ZHIKE_LEGACY_UI_HOST");
         _legacyHostEnabled = !string.Equals(legacyFlag, "0", StringComparison.OrdinalIgnoreCase)
             && !string.Equals(legacyFlag, "false", StringComparison.OrdinalIgnoreCase);
+        // The legacy host already renders the complete original shell
+        // (topbar, sidebar, grouping and route switching). Showing any part
+        // of the native shell at the same time creates the duplicated layout
+        // seen in the desktop build. Keep the native shell available only for
+        // the explicit compatibility fallback.
+        ApplyShellChrome();
         ContentFrame.Navigated += OnContentFrameNavigated;
         Closed += OnClosed;
         SetBrandTitle();
@@ -122,7 +128,16 @@ public sealed partial class MainWindow : Window
     {
         if (sender is LegacyUiHostPage host) host.FallbackRequested -= OnLegacyFallbackRequested;
         _legacyHostEnabled = false;
+        ApplyShellChrome();
         ShowRoute(route);
+    }
+
+    private void ApplyShellChrome()
+    {
+        var showNativeChrome = !_legacyHostEnabled;
+        NativeHeader.Visibility = showNativeChrome ? Visibility.Visible : Visibility.Collapsed;
+        HeaderRow.Height = showNativeChrome ? new GridLength(57) : new GridLength(0);
+        RootNavigation.IsPaneVisible = showNativeChrome;
     }
 
     private void OnContentFrameNavigated(object sender, Microsoft.UI.Xaml.Navigation.NavigationEventArgs args)
