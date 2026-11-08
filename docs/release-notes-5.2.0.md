@@ -60,7 +60,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installe
 
 本次隔离回归已通过：
 
-- `node scripts/run-tests.cjs all`：59/59 Node 合约与恢复检查通过；
+- `node scripts/run-tests.cjs all`：60/60 Node 合约与恢复检查通过；
 - `node tests/task6-stability.test.cjs`：关闭刷盘、轮询退避、容量、WS 错误分类、Docker/安装门禁通过；
 - `docker compose -f infra/compose.yaml -f infra/compose.prod.yaml config --quiet`：Compose 配置通过；
 - 两个安装脚本 PowerShell 语法解析通过。
