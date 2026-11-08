@@ -1,6 +1,6 @@
 # 知客桌面 v5.1 兼容桥契约（冻结草案）
 
-所有页面请求都必须带 `requestId`、`bridgeVersion` 和 `timeoutMs`；涉及 WS 时还必须带 `accountId`。响应固定包含 `ok`、`errorCode`、`message`，成功时才包含 `data`。错误不得把 password、cookie、二维码、token 或完整聊天原文写入日志。
+所有页面请求都必须带 `requestId`、`bridgeVersion` 和 `timeoutMs`；涉及 WS 时还必须带 `accountId`。响应固定包含 `ok`、`errorCode`、`message`，成功时才包含 `data`。写入必须使用明确的 idempotency key（幂等键）。错误不得把 password、cookie、二维码、token 或完整聊天原文写入日志。
 
 | 旧调用 | v2 适配方向 | 幂等/分页 | 失败语义 |
 | --- | --- | --- | --- |

@@ -53,6 +53,39 @@ public sealed class ApiClient(HttpClient http)
 
     public string? SessionToken => _sessionToken;
 
+    public async Task<RawApiResponse> SendJsonAsync(
+        string path,
+        HttpMethod method,
+        JsonElement? payload = null,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(method, path);
+            if (payload.HasValue && method != HttpMethod.Get && method != HttpMethod.Head)
+                request.Content = JsonContent.Create(payload.Value, options: JsonOptions);
+            using var response = await http.SendAsync(request, cancellationToken);
+            var text = await response.Content.ReadAsStringAsync(cancellationToken);
+            JsonElement? data = null;
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                try { data = JsonDocument.Parse(text).RootElement.Clone(); }
+                catch { /* preserve the status/error without exposing response text */ }
+            }
+            return response.IsSuccessStatusCode
+                ? new RawApiResponse(true, (int)response.StatusCode, "ok", data)
+                : new RawApiResponse(false, (int)response.StatusCode, "upstream request failed", data);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return new RawApiResponse(false, 0, "upstream request timed out", null);
+        }
+        catch
+        {
+            return new RawApiResponse(false, 0, "upstream request unavailable", null);
+        }
+    }
+
     public void SetPairingApprovalCode(string? code)
         => _pairingApprovalCode = string.IsNullOrWhiteSpace(code) ? null : code.Trim();
 

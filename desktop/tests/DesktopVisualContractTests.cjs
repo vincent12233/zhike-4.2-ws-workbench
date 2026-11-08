@@ -10,6 +10,7 @@ const index = read('resources/app/index.html');
 const styles = read('resources/app/styles.css');
 const v41 = read('resources/app/modules/v41-ui.css');
 const main = read('desktop/src/Zhike.Desktop/MainWindow.xaml');
+const mainCode = read('desktop/src/Zhike.Desktop/MainWindow.xaml.cs');
 
 const expectedRoutes = [
   'home', 'intake', 'operations', 'stage-board', 'customers', 'segments', 'hot', 'groups', 'vip',
@@ -23,7 +24,7 @@ for (const route of expectedRoutes) {
 for (const token of ['--navy:#172033', '--navy-2:#202b40', '--teal:#13a892', '--text:#202939', '--line:#e8edf2'])
   assert.match(styles, new RegExp(token.replace('#', '\\#')), `missing original visual token ${token}`);
 assert.match(v41, /page-heading|metric-card|table-toolbar/, 'legacy page component system must remain available');
-assert.match(main, /LegacyUiHost|LegacyUiHostPage/, 'WinUI shell must host the original page system');
+assert.match(main + mainCode, /LegacyUiHost|LegacyUiHostPage/, 'WinUI shell must host the original page system');
 assert.match(main, /PaneDisplayMode="LeftCompact"/, 'desktop shell must keep compact left navigation');
 
 console.log('desktop visual contract: legacy routes, tokens and host boundary are present');
