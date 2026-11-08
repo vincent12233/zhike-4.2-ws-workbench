@@ -4,13 +4,14 @@ param(
   # prevents an AppVersion override from silently packaging the previous
   # version's binaries.
   [string]$StageDir = '',
-  [string]$OutputDir = (Join-Path $PSScriptRoot '..\work\winui-installer-output'),
+  [string]$OutputDir = '',
   [string]$AppVersion = '5.1.0'
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$OutputDir = if ([string]::IsNullOrWhiteSpace($OutputDir)) { Join-Path $repo 'work\winui-installer-output' } else { $OutputDir }
 $stageInput = if ([string]::IsNullOrWhiteSpace($StageDir)) {
   Join-Path $PSScriptRoot "..\work\winui-bundle\zhike-winui-$AppVersion-win-x64"
 } else {

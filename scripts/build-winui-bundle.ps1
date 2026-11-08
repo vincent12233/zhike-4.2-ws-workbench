@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-  [string]$OutputDir = (Join-Path $PSScriptRoot '..\work\winui-bundle'),
+  [string]$OutputDir = '',
   [string]$Version = '5.1.0',
   [ValidateSet('Debug','Release')]
   [string]$Configuration = 'Release',
@@ -16,6 +16,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$OutputDir = if ([string]::IsNullOrWhiteSpace($OutputDir)) { Join-Path $repo 'work\winui-bundle' } else { $OutputDir }
 $out = [IO.Path]::GetFullPath($OutputDir)
 $stage = Join-Path $out "zhike-winui-$Version-$RuntimeIdentifier"
 $archive = Join-Path $out "zhike-winui-$Version-$RuntimeIdentifier.zip"
