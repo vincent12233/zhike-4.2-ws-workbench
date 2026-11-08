@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Npgsql;
 using NpgsqlTypes;
 using Zhike.Infrastructure.Database;
@@ -50,6 +51,87 @@ public sealed class LegacyStateRepository(PostgresConnectionFactory connections)
             write.Parameters.AddWithValue(owner);
             var stateParameter = write.Parameters.Add("$2", NpgsqlDbType.Jsonb);
             stateParameter.Value = state.GetRawText();
+            write.Parameters.AddWithValue(nextRevision);
+            await write.ExecuteNonQueryAsync(cancellationToken);
+        }
+        await transaction.CommitAsync(cancellationToken);
+        return new LegacySaveResult(true, false, nextRevision);
+    }
+
+    /// <summary>
+    /// Applies the legacy Electron delta wire format without replacing the
+    /// complete workspace document. Treating a delta as a full state would
+    /// silently discard collections not included in the edit.
+    /// </summary>
+    public async Task<LegacySaveResult> SaveDeltaAsync(string ownerId, JsonElement delta, long? expectedRevision, CancellationToken cancellationToken = default)
+    {
+        var owner = NormalizeOwner(ownerId);
+        await using var connection = connections.Create();
+        await connection.OpenAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        var currentJson = "{}";
+        long currentRevision = 0;
+        await using (var read = new NpgsqlCommand("SELECT state::text, revision FROM legacy_workspace_state WHERE owner_id = $1 FOR UPDATE", connection, transaction))
+        {
+            read.Parameters.AddWithValue(owner);
+            await using var reader = await read.ExecuteReaderAsync(cancellationToken);
+            if (await reader.ReadAsync(cancellationToken))
+            {
+                currentJson = reader.GetString(0);
+                currentRevision = reader.GetInt64(1);
+            }
+        }
+        if (expectedRevision.HasValue && expectedRevision.Value != currentRevision)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new LegacySaveResult(false, true, currentRevision);
+        }
+
+        var current = JsonNode.Parse(string.IsNullOrWhiteSpace(currentJson) ? "{}" : currentJson) as JsonObject ?? new JsonObject();
+        var customers = current["customers"] as JsonArray ?? new JsonArray();
+        current["customers"] = customers;
+        if (delta.TryGetProperty("upsert", out var upsert) && upsert.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in upsert.EnumerateArray())
+            {
+                if (item.ValueKind != JsonValueKind.Object) continue;
+                var id = item.TryGetProperty("id", out var idValue) ? idValue.ToString() : string.Empty;
+                if (string.IsNullOrWhiteSpace(id)) continue;
+                var index = -1;
+                for (var i = 0; i < customers.Count; i++)
+                {
+                    if (customers[i] is JsonObject existing && string.Equals(existing["id"]?.ToString(), id, StringComparison.Ordinal)) { index = i; break; }
+                }
+                var clone = JsonNode.Parse(item.GetRawText());
+                if (index >= 0) customers[index] = clone;
+                else customers.Add(clone);
+            }
+        }
+        if (delta.TryGetProperty("remove", out var remove) && remove.ValueKind == JsonValueKind.Array)
+        {
+            var ids = remove.EnumerateArray().Select(value => value.ToString()).Where(value => !string.IsNullOrWhiteSpace(value)).ToHashSet(StringComparer.Ordinal);
+            for (var i = customers.Count - 1; i >= 0; i--)
+                if (customers[i] is JsonObject existing && ids.Contains(existing["id"]?.ToString() ?? string.Empty)) customers.RemoveAt(i);
+        }
+        if (delta.TryGetProperty("fields", out var fields) && fields.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in fields.EnumerateObject())
+            {
+                if (property.NameEquals("initialized") || property.NameEquals("version")) continue;
+                current[property.Name] = JsonNode.Parse(property.Value.GetRawText());
+            }
+        }
+
+        var nextRevision = currentRevision + 1;
+        await using (var write = new NpgsqlCommand("""
+            INSERT INTO legacy_workspace_state(owner_id, state, revision, updated_at)
+            VALUES ($1, $2, $3, now())
+            ON CONFLICT(owner_id) DO UPDATE SET state = EXCLUDED.state, revision = EXCLUDED.revision, updated_at = now()
+            """, connection, transaction))
+        {
+            write.Parameters.AddWithValue(owner);
+            var stateParameter = write.Parameters.Add("$2", NpgsqlDbType.Jsonb);
+            stateParameter.Value = current.ToJsonString();
             write.Parameters.AddWithValue(nextRevision);
             await write.ExecuteNonQueryAsync(cancellationToken);
         }

@@ -80,9 +80,9 @@
     collectionRefreshTimer = setInterval(() => { if (!document.hidden) void refreshCollectionSummary(); }, 12000);
     autoCaptureTimer = setInterval(() => { if (!document.hidden) void autoCaptureCurrentConversation(); }, 15000);
   }
-  document.addEventListener('visibilitychange', () => {
-    if (state.active) restartBackgroundPolling();
-  });
+  const refreshPollingVisibility = () => { if (state.active) restartBackgroundPolling(); };
+  if (window.ZhikeDesktopPerformance?.pauseHiddenPolling) window.ZhikeDesktopPerformance.pauseHiddenPolling(refreshPollingVisibility, refreshPollingVisibility);
+  else document.addEventListener('visibilitychange', refreshPollingVisibility);
 
   function activeAccount() {
     return state.accounts.find(item => String(item.id) === String(state.activeAccountId)) || null;
@@ -322,12 +322,18 @@
         const version = getHost()?.getStateVersion?.();
         if (version !== undefined) requestHeaders['X-State-Version'] = String(version || '');
       }
-      const response = await fetch(url.pathname + url.search + url.hash, {
+      const execute = async () => fetch(url.pathname + url.search + url.hash, {
         cache: 'no-store',
         ...nextInit,
-        signal: controller.signal,
+        ...(canCoalesce ? {} : { signal: controller.signal }),
         headers: requestHeaders,
       });
+      const coalescer = window.ZhikeDesktopPerformance?.requestCoalescer;
+      const canCoalesce = !nextInit.method || String(nextInit.method).toUpperCase() === 'GET';
+      const response = canCoalesce && coalescer
+        ? await coalescer(`${accountId}:${url.pathname}${url.search}${url.hash}`, execute)
+        : await execute();
+      if (controller.signal.aborted) throw new DOMException('The operation was aborted.', 'AbortError');
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || 'WS 本机数据服务暂不可用。');
       return body;

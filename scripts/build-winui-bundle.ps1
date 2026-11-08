@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
   [string]$OutputDir = (Join-Path $PSScriptRoot '..\work\winui-bundle'),
-  [string]$Version = '5.0.0',
+  [string]$Version = '5.1.0',
   [ValidateSet('Debug','Release')]
   [string]$Configuration = 'Release',
   [string]$RuntimeIdentifier = 'win-x64',
@@ -19,7 +19,16 @@ $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $out = [IO.Path]::GetFullPath($OutputDir)
 $stage = Join-Path $out "zhike-winui-$Version-$RuntimeIdentifier"
 $archive = Join-Path $out "zhike-winui-$Version-$RuntimeIdentifier.zip"
+$sourceArchive = Join-Path $out "zhike-source-$Version.zip"
 $project = Join-Path $repo 'desktop\src\Zhike.Desktop\Zhike.Desktop.csproj'
+$resourcesRoot = Join-Path $repo 'resources\app'
+$resourceAllowList = @(
+  'index.html',
+  'app.js',
+  'styles.css',
+  'modules',
+  'vendor\xlsx'
+)
 $dotnetCandidates = @(
   (Join-Path $repo '.tools\dotnet10\dotnet.exe'),
   (Get-Command dotnet -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue)
@@ -35,6 +44,7 @@ function Assert-ChildPath([string]$Path, [string]$Parent, [string]$Label) {
 
 Assert-ChildPath $out (Join-Path $repo 'work') 'output path'
 if (-not (Test-Path -LiteralPath $project)) { throw "missing WinUI project: $project" }
+if (-not (Test-Path -LiteralPath (Join-Path $resourcesRoot 'index.html'))) { throw "missing original page resources: $resourcesRoot" }
 if (Test-Path -LiteralPath $out) { Remove-Item -LiteralPath $out -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
 
@@ -58,10 +68,36 @@ if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed with exit code $LASTEXIT
 
 $exe = Join-Path $stage 'Zhike.Desktop.exe'
 if (-not (Test-Path -LiteralPath $exe)) { throw "publish output missing Zhike.Desktop.exe: $exe" }
+New-Item -ItemType Directory -Force -Path (Join-Path $stage 'resources') | Out-Null
+$resourceDestination = Join-Path $stage 'resources\app'
+$blockedResourceNames = @('data', 'backups', 'logs', 'user-data', 'ai-credentials.json', 'desktop-tools.json', 'workspace.sqlite', 'node.exe', 'main.cjs', 'preload.cjs', 'ws-preload.cjs', 'server.mjs', 'migrate-data.cjs', 'package.json', 'package-lock.json', 'migrations')
+$isAllowedResource = {
+  param([string]$RelativePath)
+  $normalized = $RelativePath.Replace('/', '\').TrimStart('\')
+  foreach ($entry in $resourceAllowList) {
+    $allow = $entry.Replace('/', '\').TrimEnd('\')
+    if ($normalized.Equals($allow, [StringComparison]::OrdinalIgnoreCase) -or $normalized.StartsWith($allow + '\', [StringComparison]::OrdinalIgnoreCase)) { return $true }
+  }
+  return $false
+}
+foreach ($item in Get-ChildItem -LiteralPath $resourcesRoot -Recurse -Force) {
+  $relative = $item.FullName.Substring($resourcesRoot.Length).TrimStart('\')
+  if (-not (& $isAllowedResource $relative)) { continue }
+  $parts = $relative -split '[\\/]'
+  if ($parts | Where-Object { $blockedResourceNames -contains $_ -or $_ -match '(?i)^(.*credentials.*|.*\.sqlite|.*\.db|.*\.log)$' }) { continue }
+  $destination = Join-Path $resourceDestination $relative
+  if ($item.PSIsContainer) { New-Item -ItemType Directory -Force -Path $destination | Out-Null }
+  else { New-Item -ItemType Directory -Force -Path (Split-Path -Parent $destination) | Out-Null; Copy-Item -LiteralPath $item.FullName -Destination $destination -Force }
+}
+foreach ($required in @('index.html', 'app.js', 'styles.css', 'vendor\xlsx\xlsx.js')) {
+  if (-not (Test-Path -LiteralPath (Join-Path $stage "resources\app\$required") -PathType Leaf)) { throw "bundle is missing resources/app/$required" }
+}
+if (Get-ChildItem -LiteralPath $resourceDestination -Recurse -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -in $blockedResourceNames -or $_.Name -match '(?i)^(.*credentials.*|.*\.sqlite|.*\.db|.*\.log)$' }) { throw 'resource bundle contains blocked user data or credential files' }
 Copy-Item -LiteralPath (Join-Path $repo 'desktop\src\Zhike.Desktop\README.md') -Destination (Join-Path $stage 'README-desktop.md') -Force
 Copy-Item -LiteralPath (Join-Path $repo 'docs\server-version-deployment.md') -Destination (Join-Path $stage 'server-version-deployment.md') -Force
 Copy-Item -LiteralPath (Join-Path $repo 'docs\server-version-troubleshooting.md') -Destination (Join-Path $stage 'server-version-troubleshooting.md') -Force
 
+$sourceCommit = try { (& git -C $repo rev-parse HEAD).Trim() } catch { 'unavailable' }
 $manifest = @(
   Get-ChildItem -LiteralPath $stage -File -Recurse | ForEach-Object {
     [ordered]@{
@@ -71,7 +107,14 @@ $manifest = @(
     }
   }
 )
-$manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $stage 'bundle-manifest.json') -Encoding UTF8
+$manifestDocument = [ordered]@{ sourceCommit = $sourceCommit; version = $Version; runtime = $RuntimeIdentifier; selfContained = [bool]$useSelfContained; files = $manifest }
+$manifestDocument | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $stage 'bundle-manifest.json') -Encoding UTF8
 Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $archive -CompressionLevel Optimal
+$sourceCommit = if ([string]::IsNullOrWhiteSpace($sourceCommit)) { 'unavailable' } else { $sourceCommit }
+if ($sourceCommit -ne 'unavailable') {
+  & git -C $repo archive --format=zip --output=$sourceArchive $sourceCommit
+  if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $sourceArchive)) { throw 'source archive generation failed' }
+}
 $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash
-Write-Output (ConvertTo-Json @{ version = $Version; runtime = $RuntimeIdentifier; selfContained = [bool]$useSelfContained; archive = $archive; sha256 = $hash; stage = $stage })
+$sourceHash = if (Test-Path -LiteralPath $sourceArchive) { (Get-FileHash -LiteralPath $sourceArchive -Algorithm SHA256).Hash } else { $null }
+Write-Output (ConvertTo-Json @{ version = $Version; runtime = $RuntimeIdentifier; selfContained = [bool]$useSelfContained; archive = $archive; sha256 = $hash; sourceArchive = $sourceArchive; sourceSha256 = $sourceHash; stage = $stage })

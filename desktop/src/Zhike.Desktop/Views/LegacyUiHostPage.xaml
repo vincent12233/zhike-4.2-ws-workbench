@@ -11,10 +11,21 @@
                 Background="{StaticResource ZhikeSurfaceBrush}"
                 BorderBrush="{StaticResource ZhikeLineBrush}"
                 BorderThickness="1" CornerRadius="8">
-            <Grid x:Name="WebViewHost" />
+            <Grid x:Name="WebViewHost">
+                <Canvas x:Name="WsOverlayLayer" Visibility="Collapsed" IsHitTestVisible="True">
+                    <Border x:Name="WsOverlayBorder" Background="White" BorderBrush="{StaticResource ZhikeLineBrush}" BorderThickness="1" CornerRadius="6">
+                        <Grid x:Name="WsOverlayHost" />
+                    </Border>
+                </Canvas>
+            </Grid>
         </Border>
         <InfoBar x:Name="HostStatus" Grid.Row="1" IsOpen="False"
                  Severity="Informational" IsClosable="False"
                  Message="知客页面正在连接本机服务。" />
+        <StackPanel x:Name="HostActions" Grid.Row="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" Visibility="Collapsed">
+            <Button Content="重试加载" Click="RetryHost" />
+            <Button Content="查看诊断" Click="ShowHostDiagnostics" />
+            <Button Content="打开兼容页面" Click="OpenNativeFallback" />
+        </StackPanel>
     </Grid>
 </Page>

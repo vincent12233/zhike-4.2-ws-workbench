@@ -11,4 +11,9 @@
   window.zhikeDesktop?.on?.('ws.message', refresh);
   window.zhikeDesktop?.on?.('ai.followup', refresh);
   window.addEventListener('zhike:desktop-sync', refresh);
+  window.addEventListener('visibilitychange', () => {
+    window.dispatchEvent(new CustomEvent('zhike:desktop-visibility', {
+      detail: { hidden: Boolean(document.hidden) },
+    }));
+  });
 })();

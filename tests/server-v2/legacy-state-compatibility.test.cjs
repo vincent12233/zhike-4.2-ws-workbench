@@ -12,7 +12,11 @@ const repository = fs.readFileSync(path.join(repo, 'server', 'src', 'Zhike.Infra
 assert.match(routes, /MapGroup\("\/api\/v2\/legacy"\)/);
 assert.match(routes, /MapGet\("\/state"/);
 assert.match(routes, /MapPost\("\/snapshot"/);
+assert.match(routes, /X-Zhike-State-Format/);
+assert.match(routes, /SaveDeltaAsync/);
 assert.match(repository, /X-State-Version|revision/);
 assert.match(repository, /JSONB|Jsonb/i);
+assert.match(repository, /upsert/);
+assert.match(repository, /remove/);
 
 console.log('legacy state compatibility contract: Postgres-backed state and snapshots are present');

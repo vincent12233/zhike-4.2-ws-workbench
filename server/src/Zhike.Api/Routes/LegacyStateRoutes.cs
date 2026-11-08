@@ -24,7 +24,14 @@ public static class LegacyStateRoutes
         {
             using var document = await JsonDocument.ParseAsync(context.Request.Body, cancellationToken: cancellationToken);
             var expected = ParseRevision(context.Request.Headers["X-State-Version"].ToString());
-            var result = await repository.SaveAsync(Owner(context), document.RootElement.Clone(), expected, cancellationToken);
+            var root = document.RootElement.Clone();
+            var result = string.Equals(context.Request.Headers["X-Zhike-State-Format"].ToString(), "delta-v1", StringComparison.OrdinalIgnoreCase)
+                && root.ValueKind == JsonValueKind.Object
+                && root.TryGetProperty("upsert", out _)
+                && root.TryGetProperty("remove", out _)
+                && root.TryGetProperty("fields", out _)
+                ? await repository.SaveDeltaAsync(Owner(context), root, expected, cancellationToken)
+                : await repository.SaveAsync(Owner(context), root, expected, cancellationToken);
             return result.Conflict
                 ? Results.Conflict(new { error = "版本冲突，请刷新后重试。", version = result.Revision })
                 : Results.Ok(new { ok = true, version = result.Revision.ToString() });

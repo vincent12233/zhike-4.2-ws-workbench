@@ -13,8 +13,9 @@ public sealed partial class HomePage : Page
     public HomePage()
     {
         InitializeComponent();
-        ApiUrlBox.Text = Environment.GetEnvironmentVariable("ZHIKE_API_BASE_URL") ?? string.Empty;
-        PairingProofBox.Password = Environment.GetEnvironmentVariable("ZHIKE_PAIRING_APPROVAL_CODE") ?? string.Empty;
+        var saved = DesktopConnectionStore.Load();
+        ApiUrlBox.Text = Environment.GetEnvironmentVariable("ZHIKE_API_BASE_URL") ?? saved?.BaseUrl ?? string.Empty;
+        PairingProofBox.Password = Environment.GetEnvironmentVariable("ZHIKE_PAIRING_APPROVAL_CODE") ?? saved?.PairingApprovalCode ?? string.Empty;
     }
 
     private async void CheckServer(object sender, RoutedEventArgs args)
@@ -40,6 +41,7 @@ public sealed partial class HomePage : Page
             _api.SetSessionToken(complete.Token);
             Environment.SetEnvironmentVariable("ZHIKE_API_BASE_URL", ApiUrlBox.Text.Trim());
             Environment.SetEnvironmentVariable("ZHIKE_API_TOKEN", complete.Token);
+            DesktopConnectionStore.Save(new DesktopConnection(ApiUrlBox.Text.Trim(), complete.Token, PairingProofBox.Password));
             SetStatus(InfoBarSeverity.Success, "已连接", "本机配对完成；后续页面会自动使用当前会话。");
         }
         catch (Exception error) { SetStatus(InfoBarSeverity.Error, "配对失败", error.Message); }

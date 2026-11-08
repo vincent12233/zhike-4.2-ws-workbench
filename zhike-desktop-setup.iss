@@ -1,8 +1,8 @@
 #ifndef AppVersion
-#define AppVersion "5.0.0"
+#define AppVersion "5.1.0"
 #endif
 #ifndef StageDir
-#define StageDir "work\\winui-bundle\\zhike-winui-5.0.0-win-x64"
+#define StageDir "work\\winui-bundle\\zhike-winui-5.1.0-win-x64"
 #endif
 #ifndef BuildOutputDir
 #define BuildOutputDir "work\\winui-installer-output"
@@ -46,3 +46,48 @@ Name: "{autodesktop}\知客原生桌面版"; Filename: "{app}\Zhike.Desktop.exe"
 Filename: "{app}\Zhike.Desktop.exe"; Description: "启动知客原生桌面版"; Flags: nowait postinstall skipifsilent
 
 ; User data is stored below %LOCALAPPDATA%\\Zhike and is intentionally not removed on uninstall.
+
+[Code]
+function HasWebView2Runtime(): Boolean;
+var
+  SubKeys: TArrayOfString;
+  I: Integer;
+  ClientKey: String;
+  ProductName: String;
+begin
+  Result := False;
+  if RegGetSubkeyNames(HKCU, 'Software\Microsoft\EdgeUpdate\Clients', SubKeys) then
+    for I := 0 to GetArrayLength(SubKeys) - 1 do begin
+      ClientKey := 'Software\Microsoft\EdgeUpdate\Clients\' + SubKeys[I];
+      if RegQueryStringValue(HKCU, ClientKey, 'name', ProductName) and
+         (Pos('WebView2', ProductName) > 0) and RegValueExists(HKCU, ClientKey, 'pv') then begin
+        Result := True;
+        Exit;
+      end;
+    end;
+  if RegGetSubkeyNames(HKLM, 'Software\Microsoft\EdgeUpdate\Clients', SubKeys) then
+    for I := 0 to GetArrayLength(SubKeys) - 1 do begin
+      ClientKey := 'Software\Microsoft\EdgeUpdate\Clients\' + SubKeys[I];
+      if RegQueryStringValue(HKLM, ClientKey, 'name', ProductName) and
+         (Pos('WebView2', ProductName) > 0) and RegValueExists(HKLM, ClientKey, 'pv') then begin
+        Result := True;
+        Exit;
+      end;
+    end;
+  if RegGetSubkeyNames(HKLM, 'Software\WOW6432Node\Microsoft\EdgeUpdate\Clients', SubKeys) then
+    for I := 0 to GetArrayLength(SubKeys) - 1 do begin
+      ClientKey := 'Software\WOW6432Node\Microsoft\EdgeUpdate\Clients\' + SubKeys[I];
+      if RegQueryStringValue(HKLM, ClientKey, 'name', ProductName) and
+         (Pos('WebView2', ProductName) > 0) and RegValueExists(HKLM, ClientKey, 'pv') then begin
+        Result := True;
+        Exit;
+      end;
+    end;
+end;
+
+function InitializeSetup(): Boolean;
+begin
+  Result := True;
+  if not HasWebView2Runtime() then
+    MsgBox('知客桌面版需要 Microsoft Edge WebView2 Evergreen Runtime。安装程序会继续，但首次启动前请先安装 WebView2 Runtime。', mbInformation, MB_OK);
+end;

@@ -325,7 +325,7 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
       if(state.extraFilters.registered) list=list.filter(c=>c.registered===state.extraFilters.registered);
     }
     const q=(mode==='segment'?state.search:state.customerSearch).trim().toLocaleLowerCase();
-     if(q) list=list.filter(c=>{const signature=[c.name,c.phone,c.rawPhone,c.group,c.vipNumber,c.note,c.channel,c.assistant].join('\u0001');if(c.__searchSignature!==signature){Object.defineProperty(c,'__searchSignature',{value:signature,writable:true,configurable:true});Object.defineProperty(c,'__searchText',{value:signature.toLocaleLowerCase(),writable:true,configurable:true});}return c.__searchText.includes(q);});
+     if(q) list=window.ZhikeDesktopPerformance?.searchIndex ? window.ZhikeDesktopPerformance.searchIndex(list,q,['name','phone','rawPhone','group','vipNumber','note','channel','assistant']) : list.filter(c=>[c.name,c.phone,c.rawPhone,c.group,c.vipNumber,c.note,c.channel,c.assistant].join('\u0001').toLocaleLowerCase().includes(q));
      return list.map(customer=>({customer,profile:crmProfile(customer,business)})).sort((a,b)=>Number(Boolean(b.customer.favorite))-Number(Boolean(a.customer.favorite))||b.profile.score-a.profile.score||String(b.customer.registered||'').localeCompare(String(a.customer.registered||''))).map(item=>item.customer);
   }
   function renderSegmentTabs() {

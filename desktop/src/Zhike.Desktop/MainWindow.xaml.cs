@@ -12,13 +12,18 @@ namespace Zhike.Desktop;
 public sealed partial class MainWindow : Window
 {
     private readonly WindowLayoutService _layout = new();
-    private readonly bool _legacyHostEnabled;
+    private bool _legacyHostEnabled;
+    private string _pendingLegacyRoute = "home";
     private DispatcherQueueTimer? _layoutSaveTimer;
 
     public MainWindow()
     {
         InitializeComponent();
-        _legacyHostEnabled = !string.Equals(Environment.GetEnvironmentVariable("ZHIKE_LEGACY_UI_HOST"), "0", StringComparison.OrdinalIgnoreCase);
+        var legacyFlag = Environment.GetEnvironmentVariable("ZHIKE_DESKTOP_LEGACY_UI_HOST")
+            ?? Environment.GetEnvironmentVariable("ZHIKE_LEGACY_UI_HOST");
+        _legacyHostEnabled = !string.Equals(legacyFlag, "0", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(legacyFlag, "false", StringComparison.OrdinalIgnoreCase);
+        ContentFrame.Navigated += OnContentFrameNavigated;
         SetBrandTitle();
         RootNavigation.SelectedItem = RootNavigation.MenuItems.OfType<NavigationViewItem>().First(item => Equals(item.Tag, "home"));
         ShowRoute("home");
@@ -46,6 +51,7 @@ public sealed partial class MainWindow : Window
     {
         if (_legacyHostEnabled)
         {
+            _pendingLegacyRoute = route;
             if (ContentFrame.Content is not LegacyUiHostPage)
                 ContentFrame.Navigate(typeof(LegacyUiHostPage));
             if (ContentFrame.Content is LegacyUiHostPage host)
@@ -63,6 +69,23 @@ public sealed partial class MainWindow : Window
             _ => typeof(HomePage),
         };
         if (ContentFrame.CurrentSourcePageType != pageType) ContentFrame.Navigate(pageType);
+    }
+
+    private void OnLegacyFallbackRequested(object? sender, string route)
+    {
+        if (sender is LegacyUiHostPage host) host.FallbackRequested -= OnLegacyFallbackRequested;
+        _legacyHostEnabled = false;
+        ShowRoute(route);
+    }
+
+    private void OnContentFrameNavigated(object sender, Microsoft.UI.Xaml.Navigation.NavigationEventArgs args)
+    {
+        if (args.Content is LegacyUiHostPage host)
+        {
+            host.FallbackRequested -= OnLegacyFallbackRequested;
+            host.FallbackRequested += OnLegacyFallbackRequested;
+            _ = host.NavigateRouteAsync(_pendingLegacyRoute);
+        }
     }
 
     private static string RouteForTag(string tag) => tag switch
@@ -83,7 +106,7 @@ public sealed partial class MainWindow : Window
             _layoutSaveTimer.Tick += async (_, _) =>
             {
                 _layoutSaveTimer.Stop();
-                var state = _layout.ApplyLayout(RootShell.ActualWidth, RootShell.ActualHeight, 1, false, false);
+                var state = _layout.ApplyLayout(RootShell.ActualWidth, RootShell.ActualHeight, CurrentRasterizationScale(), false, false);
                 await _layout.SaveAsync(state);
             };
         }
@@ -101,4 +124,6 @@ public sealed partial class MainWindow : Window
         _layoutSaveTimer?.Stop();
         _layoutSaveTimer?.Start();
     }
+
+    private double CurrentRasterizationScale() => RootShell.XamlRoot?.RasterizationScale ?? 1d;
 }

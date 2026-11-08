@@ -32,12 +32,7 @@ public sealed partial class WsWorkbenchPage : Page
     public WsWorkbenchPage()
     {
         InitializeComponent();
-        var apiUrl = Environment.GetEnvironmentVariable("ZHIKE_API_BASE_URL");
-        if (Uri.TryCreate(apiUrl, UriKind.Absolute, out var baseUri))
-        {
-            _api = new ApiClient(new HttpClient { BaseAddress = new Uri(baseUri.ToString().TrimEnd('/') + "/") });
-            _api.SetSessionToken(Environment.GetEnvironmentVariable("ZHIKE_API_TOKEN"));
-        }
+        _api = ApiClient.TryCreateFromEnvironment();
         AccountsList.ItemsSource = _accounts;
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
@@ -61,7 +56,12 @@ public sealed partial class WsWorkbenchPage : Page
 
     private async void OnLoaded(object sender, RoutedEventArgs args)
     {
-        if (_loaded) return;
+        if (_loaded)
+        {
+            _statusTimer?.Start();
+            ApplyResponsiveLayout();
+            return;
+        }
         _loaded = true;
         _statusTimer?.Start();
         await RestoreLayoutAsync();
@@ -70,7 +70,11 @@ public sealed partial class WsWorkbenchPage : Page
         await SwitchAccountAsync(_accounts.FirstOrDefault());
     }
 
-    private void OnUnloaded(object sender, RoutedEventArgs args) => _statusTimer?.Stop();
+    private void OnUnloaded(object sender, RoutedEventArgs args)
+    {
+        _statusTimer?.Stop();
+        _loaded = false;
+    }
 
     private async Task LoadAccountsAsync()
     {
@@ -135,7 +139,7 @@ public sealed partial class WsWorkbenchPage : Page
 
     private void ApplyResponsiveLayout()
     {
-        var state = _layout.CalculateLayout(WorkbenchRoot.ActualWidth, WorkbenchRoot.ActualHeight, 1, _leftCollapsed, _rightCollapsed);
+        var state = _layout.CalculateLayout(WorkbenchRoot.ActualWidth, WorkbenchRoot.ActualHeight, WorkbenchRoot.XamlRoot?.RasterizationScale ?? 1d, _leftCollapsed, _rightCollapsed);
         LeftPaneColumn.Width = new GridLength(state.LeftPaneWidth);
         RightPaneColumn.Width = new GridLength(state.RightPaneWidth);
         LeftPane.Visibility = state.LeftCollapsed ? Visibility.Collapsed : Visibility.Visible;
@@ -162,7 +166,7 @@ public sealed partial class WsWorkbenchPage : Page
     {
         try
         {
-            var state = _layout.ApplyLayout(WorkbenchRoot.ActualWidth, WorkbenchRoot.ActualHeight, 1, _leftCollapsed, _rightCollapsed);
+            var state = _layout.ApplyLayout(WorkbenchRoot.ActualWidth, WorkbenchRoot.ActualHeight, WorkbenchRoot.XamlRoot?.RasterizationScale ?? 1d, _leftCollapsed, _rightCollapsed);
             await _layout.SaveAsync(state);
         }
         catch { }

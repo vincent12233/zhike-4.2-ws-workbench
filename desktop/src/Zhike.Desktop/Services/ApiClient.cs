@@ -35,11 +35,13 @@ public sealed class ApiClient(HttpClient http)
 
     public static ApiClient? TryCreateFromEnvironment()
     {
-        var apiUrl = Environment.GetEnvironmentVariable("ZHIKE_API_BASE_URL");
+        var saved = DesktopConnectionStore.Load();
+        var apiUrl = Environment.GetEnvironmentVariable("ZHIKE_API_BASE_URL") ?? saved?.BaseUrl;
         if (!Uri.TryCreate(apiUrl, UriKind.Absolute, out var baseUri)) return null;
         var baseAddress = new Uri(baseUri.ToString().TrimEnd('/') + "/");
         var client = new ApiClient(new HttpClient { BaseAddress = baseAddress });
-        client.SetSessionToken(Environment.GetEnvironmentVariable("ZHIKE_API_TOKEN"));
+        client.SetSessionToken(Environment.GetEnvironmentVariable("ZHIKE_API_TOKEN") ?? saved?.Token);
+        client.SetPairingApprovalCode(Environment.GetEnvironmentVariable("ZHIKE_PAIRING_APPROVAL_CODE") ?? saved?.PairingApprovalCode);
         return client;
     }
 
@@ -57,13 +59,21 @@ public sealed class ApiClient(HttpClient http)
         string path,
         HttpMethod method,
         JsonElement? payload = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IReadOnlyDictionary<string, string>? headers = null,
+        byte[]? rawBody = null)
     {
         try
         {
             using var request = new HttpRequestMessage(method, path);
-            if (payload.HasValue && method != HttpMethod.Get && method != HttpMethod.Head)
+            if (rawBody is not null && method != HttpMethod.Get && method != HttpMethod.Head)
+                request.Content = new ByteArrayContent(rawBody);
+            else if (payload.HasValue && method != HttpMethod.Get && method != HttpMethod.Head)
                 request.Content = JsonContent.Create(payload.Value, options: JsonOptions);
+            if (headers is not null)
+                foreach (var header in headers)
+                    if (!request.Headers.TryAddWithoutValidation(header.Key, header.Value))
+                        request.Content?.Headers.TryAddWithoutValidation(header.Key, header.Value);
             using var response = await http.SendAsync(request, cancellationToken);
             var text = await response.Content.ReadAsStringAsync(cancellationToken);
             JsonElement? data = null;

@@ -18,4 +18,12 @@ assert.match(bridge, /InvokeAsync\(/);
 assert.match(bridge, /Publish\(/);
 assert.match(bridge, /redact|sensitive|secret/i);
 
+const adapter = fs.readFileSync(path.join(root, 'LegacyApiAdapter.cs'), 'utf8');
+assert.match(adapter, /ExplicitlyUnsupportedPrefixes/);
+assert.match(adapter, /UNSUPPORTED/);
+assert.match(adapter, /api\/ws\/checkpoints/);
+assert.match(adapter, /api\/ws\/heartbeat/);
+assert.doesNotMatch(adapter, /StartsWith\("\/api\/ws\/"[^\n]*\)\s*\)\s*\n\s*v2Path\s*=/,
+  'adapter must not blindly forward every legacy WS route to v2');
+
 console.log('legacy bridge contract: versioned request/response and compatibility mappings are present');
