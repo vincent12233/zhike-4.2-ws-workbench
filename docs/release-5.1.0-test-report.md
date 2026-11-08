@@ -5,7 +5,7 @@
 - WinUI 3 / WebView2 桌面端 Release（`win-x64`）：0 警告、0 错误。
 - PostgreSQL API Release：0 警告、0 错误。
 - 原版页面与桌面桥接契约、WS 多账号/隔离/折叠布局、备份与回滚契约通过。
-- 业务回归套件：`node scripts/run-tests.cjs all`，50/50 通过。
+- 业务回归套件：`node scripts/run-tests.cjs all`，54/54 通过（含启动、单壳视觉、原生 smoke 和响应式契约）。
 - PostgreSQL/API 回归套件：`node tests/server-v2/run-all.cjs`，19/19 通过。
 - 10,000/50,000 条隔离合成数据性能契约通过；本机参考耗时由测试输出记录，未使用真实业务数据。
 - 安装包脚本已验证覆盖 Windows PowerShell 5.1 中文路径，且会校验实际生成的 Unicode 文件名。
