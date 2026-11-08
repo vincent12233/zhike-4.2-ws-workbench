@@ -20,6 +20,8 @@ assert.match(provider, /requiresConfirmation|previewOnly/, 'reply suggestions mu
 assert.match(provider, /敏感|password|验证码|付款|退款|金融|法律|医疗/, 'sensitive reply guard must be explicit');
 assert.match(provider, /429|quota|Timeout|timeout|格式|schema/i, 'provider must classify quota/timeout/schema errors');
 assert.match(provider, /HasStructuredShape|IsStructured\s*=\s*HasStructuredShape/, 'semantically incomplete AI objects must remain pending instead of syncing CRM');
+assert.match(provider, /ContextMessages\(payload\)/, 'AI requests must include bounded conversation context when the connector supplies it');
+assert.match(provider, /text = Redact\(body\)/, 'AI request text must redact obvious secrets before leaving the desktop');
 
 // Dispatcher must stop malformed/low-confidence results before customer or
 // follow-up side effects, while keeping the job retryable/dead-letterable.

@@ -58,7 +58,10 @@ public sealed class HttpAiAnalysisProvider(HttpClient http, IConfiguration confi
             messages = new[]
             {
                 new { role = "system", content = BuildPrompt(payload) },
-                new { role = "user", content = JsonSerializer.Serialize(new { conversationId, messageId, text = body, context = Context(payload) }) },
+                // Keep the current message and at most twenty recent context
+                // items together. Context is optional for legacy connectors;
+                // when absent the provider still analyzes the current text.
+                new { role = "user", content = JsonSerializer.Serialize(new { conversationId, messageId, text = Redact(body), context = ContextMessages(payload) }) },
             },
         }), Encoding.UTF8, "application/json");
 
@@ -269,6 +272,41 @@ public sealed class HttpAiAnalysisProvider(HttpClient http, IConfiguration confi
     {
         if (!payload.TryGetProperty("context", out var value)) return "当前消息";
         return value.ValueKind switch { JsonValueKind.Array => $"上下文消息 {Math.Min(20, value.GetArrayLength())} 条", JsonValueKind.Object => "包含有限会话上下文", _ => "当前消息" };
+    }
+
+    private static IReadOnlyList<object> ContextMessages(JsonElement payload)
+    {
+        if (!payload.TryGetProperty("context", out var value)) return [];
+        if (value.ValueKind == JsonValueKind.Array)
+        {
+            var items = new List<object>();
+            foreach (var item in value.EnumerateArray().Take(20))
+            {
+                if (item.ValueKind == JsonValueKind.Object)
+                {
+                    var text = Redact(String(item, "body", "text", "content"));
+                    if (string.IsNullOrWhiteSpace(text)) continue;
+                    items.Add(new
+                    {
+                        text,
+                        direction = Redact(String(item, "direction", "senderType")),
+                        sentAt = Redact(String(item, "sentAt", "timestamp")),
+                    });
+                }
+                else if (item.ValueKind == JsonValueKind.String)
+                {
+                    var text = Redact(item.GetString() ?? string.Empty);
+                    if (!string.IsNullOrWhiteSpace(text)) items.Add(new { text });
+                }
+            }
+            return items;
+        }
+        if (value.ValueKind == JsonValueKind.Object)
+        {
+            var text = Redact(String(value, "body", "text", "content"));
+            return string.IsNullOrWhiteSpace(text) ? [] : [new { text }];
+        }
+        return [];
     }
 
     private static JsonElement Sanitize(JsonElement value)
