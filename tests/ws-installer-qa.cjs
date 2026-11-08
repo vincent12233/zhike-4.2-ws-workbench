@@ -21,7 +21,7 @@ try {
   const versionInName = path.basename(installer).match(/-(\d+\.\d+(?:\.\d+)?)-/)?.[1];
   if (process.env.ZHIKE_EXPECTED_VERSION) assert.equal(manifest.version, process.env.ZHIKE_EXPECTED_VERSION);
   else if (versionInName) assert(manifest.version === versionInName || manifest.version.startsWith(`${versionInName}.`), `installer name/version mismatch: ${versionInName} vs ${manifest.version}`);
-  for (const asset of ['migrations/005-ws-workbench.sql', 'migrations/008-ws-accounts.sql', 'modules/ws-workbench-core.js', 'modules/ws-workbench.js', 'modules/ws-workbench.css', 'ws-preload.cjs']) {
+  for (const asset of ['migrations/005-ws-workbench.sql', 'migrations/008-ws-accounts.sql', 'modules/ws-workbench-core.js', 'modules/ws-crm-sync-core.js', 'modules/hot-chat-profile-core.js', 'modules/ws-workbench.js', 'modules/ws-workbench.css', 'ws-preload.cjs']) {
     assert(existsSync(path.join(appRoot, asset)), `missing installed asset ${asset}`);
   }
   const data = path.join(appRoot, 'data');

@@ -1,5 +1,6 @@
 (() => {
   const core = window.ZhikeWsCore;
+  const hotProfileCore = window.ZhikeHotChatProfile || {};
   const getHost = () => window.__zhikeRegistryHost;
   const readPanelCollapsed = panel => {
     try { return localStorage.getItem(`zhike.ws.${panel}.collapsed`) === 'true'; } catch { return false; }
@@ -32,6 +33,11 @@
     wsDetail: '',
     analysis: null,
     analysisMeta: null,
+    hotProfile: null,
+    hotProfileError: '',
+    hotProfileBusy: false,
+    hotProfileEdits: Object.create(null),
+    hotProfileColorDraft: '',
     crmSyncStatus: '',
     aiBusy: false,
     translationBusy: new Set(),
@@ -289,6 +295,82 @@
     if (!state.drafts.has(key)) state.drafts.set(key, blankDraft());
     return state.drafts.get(key);
   }
+  const HOT_PROFILE_LABELS = Object.freeze({
+    preferred_name: '客户姓名或称呼',
+    age: '客户年龄',
+    gender: '客户性别',
+    occupation: '职业及工作情况',
+    work_context: '工作背景',
+    is_investor: '是否为股民',
+    investment_years: '股龄 / 投资经验',
+    holdings: '当前持仓情况',
+    investment_habits: '投资习惯',
+    investment_preferences: '投资偏好',
+    family_context: '家庭状况',
+    life_interests: '生活兴趣',
+    future_plans: '未来规划',
+  });
+  const HOT_PROFILE_STATE_LABELS = Object.freeze({ known: '已了解', missing: '待了解', pending: '待确认', declined: '客户暂不愿透露' });
+  const HOT_PROFILE_COLORS = Object.freeze({ green: '资料完整', blue: '正常维护', amber: '重点了解', red: '优先跟进', gray: '暂缓打扰' });
+  function hotProfileFieldValue(value) {
+    if (Array.isArray(value)) return value.join('、');
+    if (value === true) return '是';
+    if (value === false) return '否';
+    return text(value);
+  }
+  function hotProfileProfileFields(profile) {
+    const fields = profile?.fields && typeof profile.fields === 'object' ? profile.fields : {};
+    const keys = Array.isArray(hotProfileCore.PROFILE_FIELDS) && hotProfileCore.PROFILE_FIELDS.length ? hotProfileCore.PROFILE_FIELDS : Object.keys(HOT_PROFILE_LABELS);
+    return keys.map(field => ({ field, ...(fields[field] || { field, value: null, state: 'missing', confidence: 0, evidence: [], manualLocked: false }) }));
+  }
+  function hotProfileDerived(profile) {
+    const fields = Object.fromEntries(hotProfileProfileFields(profile).map(item => [item.field, item]));
+    const missingFields = hotProfileProfileFields(profile).filter(item => item.state !== 'known' && item.state !== 'declined').map(item => item.field);
+    const nextTopics = hotProfileCore.deriveNextTopics?.({ profile: fields, missingFields, naturalNextTopics: state.analysis?.naturalNextTopics }) || missingFields.slice(0, 3);
+    const messages = Array.isArray(state.messages) ? state.messages : [];
+    const lastInbound = messages.filter(item => item.direction !== 'send').at(-1)?.createdAt || '';
+    const lastOutbound = messages.filter(item => item.direction === 'send').at(-1)?.createdAt || '';
+    const noReply = hotProfileCore.assessNoReply?.({ lastInboundAt: lastInbound, lastOutboundAt: lastOutbound, followupCount: state.followupAlerts?.length || 0 }) || { reason: '可在自然话题中适度跟进。', cooldown: false };
+    return { fields, missingFields, nextTopics, noReply };
+  }
+  function hotProfileEditValue(item) {
+    if (Object.hasOwn(state.hotProfileEdits, item.field)) return state.hotProfileEdits[item.field];
+    return hotProfileFieldValue(item.value);
+  }
+  function hotProfileEvidence(item) {
+    const evidence = Array.isArray(item.evidence) ? item.evidence : [];
+    const latest = evidence.at(-1);
+    return text(latest?.text || latest?.evidence || '') || '尚未记录可核验聊天依据';
+  }
+  function renderHotProfile() {
+    const profile = state.hotProfile;
+    if (!profile) return `<section class="ws-card ws-hot-profile-card"><div class="ws-card-heading"><div><strong>热聊客户档案</strong><span>从自然聊天逐步补齐，不连续盘问客户</span></div><button class="btn small" data-ws-action="refresh-hot-profile">刷新</button></div><div class="ws-empty">当前会话还没有热聊档案。完成一次 AI 分析或点击刷新后，会显示已了解、待确认和待了解内容。</div>${state.hotProfileError ? `<p class="ws-error-line">${esc(state.hotProfileError)}</p>` : ''}</section>`;
+    const derived = hotProfileDerived(profile);
+    const color = HOT_PROFILE_COLORS[state.hotProfileColorDraft] ? state.hotProfileColorDraft : (HOT_PROFILE_COLORS[profile.statusColor] ? profile.statusColor : 'gray');
+    const colorOptions = Object.entries(HOT_PROFILE_COLORS).map(([value, label]) => `<option value="${value}" ${value === color ? 'selected' : ''}>${label}</option>`).join('');
+    const fields = hotProfileProfileFields(profile).map(item => {
+      const stateLabel = HOT_PROFILE_STATE_LABELS[item.state] || item.state || '待了解';
+      const locked = Boolean(item.manualLocked);
+      const value = hotProfileEditValue(item);
+      return `<div class="ws-hot-profile-field" data-state="${esc(item.state || 'missing')}">
+        <div class="ws-hot-profile-field-head"><strong>${esc(HOT_PROFILE_LABELS[item.field] || item.field)}</strong><span class="ws-hot-profile-state state-${esc(item.state || 'missing')}">${esc(stateLabel)}</span></div>
+        <input class="ws-hot-profile-input" data-hot-profile-field="${esc(item.field)}" value="${esc(value)}" placeholder="${item.state === 'declined' ? '客户暂不愿透露' : '聊天中自然了解后再补充'}" ${locked ? 'aria-readonly="true" readonly' : ''}>
+        <small class="ws-hot-profile-evidence">${esc(hotProfileEvidence(item))}${locked ? ' · 已锁定' : ''}</small>
+        <div class="ws-hot-profile-actions"><button class="btn small" data-ws-action="confirm-hot-profile" data-field="${esc(item.field)}">确认</button><button class="btn small ${locked ? 'danger' : ''}" data-ws-action="lock-hot-profile" data-field="${esc(item.field)}" data-locked="${locked ? 'true' : 'false'}">${locked ? '解除锁定' : '确认并锁定'}</button></div>
+      </div>`;
+    }).join('');
+    const topics = derived.nextTopics.map(field => `<span class="ws-hot-profile-topic">${esc(HOT_PROFILE_LABELS[field] || field)}</span>`).join('');
+    const missing = derived.missingFields.length ? derived.missingFields.map(field => HOT_PROFILE_LABELS[field] || field).slice(0, 5).join('、') : '核心资料已基本完整';
+    return `<section class="ws-card ws-hot-profile-card" data-color="${esc(color)}">
+      <div class="ws-card-heading"><div><strong>热聊客户档案</strong><span>已完成 ${Number(profile.completeness || 0)}% · 只补空字段，冲突交给人工确认</span></div><button class="btn small" data-ws-action="refresh-hot-profile" ${state.hotProfileBusy ? 'disabled' : ''}>${state.hotProfileBusy ? '刷新中…' : '刷新'}</button></div>
+      <div class="ws-hot-profile-toolbar"><label>客户状态<select id="wsHotProfileColor" data-hot-profile-color>${colorOptions}</select></label><span class="ws-hot-profile-status status-${esc(color)}">${esc(HOT_PROFILE_COLORS[color])}</span><button class="btn small" data-ws-action="save-hot-profile-color">保存标记</button></div>
+      <div class="ws-hot-profile-progress"><span style="width:${Math.max(0, Math.min(100, Number(profile.completeness) || 0))}%"></span></div>
+      <div class="ws-hot-profile-overview"><span class="ws-hot-profile-missing">待了解：${esc(missing)}</span><span class="${derived.noReply.cooldown ? 'is-warning' : ''}">${esc(derived.noReply.reason)}</span></div>
+      ${topics ? `<div class="ws-hot-profile-topics"><strong>下一步自然话题</strong><div>${topics}</div></div>` : ''}
+      <div class="ws-hot-profile-fields">${fields}</div>
+      ${state.hotProfileError ? `<p class="ws-error-line">${esc(state.hotProfileError)}</p>` : ''}
+    </section>`;
+  }
   function seedDraftFromAnalysis() {
     const draft = currentDraft();
     const analysis = state.analysis || {};
@@ -318,7 +400,8 @@
         try { nextInit.body = JSON.stringify({ ...JSON.parse(nextInit.body), accountId }); } catch {}
       }
       const requestHeaders = { 'Content-Type': 'application/json', ...(nextInit.headers || {}) };
-      if (url.pathname === '/api/ws/crm-sync' && !Object.keys(requestHeaders).some(key => key.toLowerCase() === 'x-state-version')) {
+      const mutatingHotProfile = url.pathname.startsWith('/api/ws/hot-chat/profile') && String(nextInit.method || 'GET').toUpperCase() !== 'GET';
+      if ((url.pathname === '/api/ws/crm-sync' || mutatingHotProfile) && !Object.keys(requestHeaders).some(key => key.toLowerCase() === 'x-state-version')) {
         const version = getHost()?.getStateVersion?.();
         if (version !== undefined) requestHeaders['X-State-Version'] = String(version || '');
       }
@@ -870,6 +953,11 @@
     state.currentConversationId = conversationId;
     state.analysis = null;
     state.analysisMeta = null;
+    state.hotProfile = null;
+    state.hotProfileError = '';
+    state.hotProfileBusy = false;
+    state.hotProfileEdits = Object.create(null);
+    state.hotProfileColorDraft = '';
     state.crmSyncStatus = '';
     state.replies = [];
     state.matchCandidates = [];
@@ -896,6 +984,14 @@
       state.analysisMeta = Array.isArray(analyses.analyses) ? analyses.analyses[0] || null : analyses.analysis || null;
       state.analysis = state.analysisMeta?.result || null;
       state.replies = Array.isArray(replies.replies) ? replies.replies : [];
+      // The hot-chat profile is intentionally loaded independently of the CRM
+      // draft. It is scoped by account + conversation and may not have a
+      // customer id yet while the user is still deciding whether to link one.
+      const hot = await api(`/api/ws/hot-chat/profile/diagnostics?conversationId=${encoded}&customerId=${encodeURIComponent(text(activeConversation()?.customerId))}`, {}, context).catch(error => ({ profile: null, error: error.message }));
+      assertContext(context);
+      state.hotProfile = hot.profile || null;
+      state.hotProfileError = hot.error || '';
+      state.hotProfileEdits = Object.create(null);
       seedDraftFromAnalysis();
       state.translationStatus = state.settings.enabled ? `${core.translationMode(state.settings)} · 可按方向关闭` : '翻译已关闭 · 手动翻译仍可用';
       state.lastLoadedAt = nowIso();
@@ -903,6 +999,78 @@
       if (contextCurrent(context)) state.error = error.message;
     } finally {
       if (contextCurrent(context)) { state.loading = false; if (redraw) render(); }
+    }
+  }
+  async function loadHotProfile(context = captureContext(), redraw = true) {
+    const current = activeConversation();
+    if (!current) { state.hotProfile = null; state.hotProfileError = ''; if (redraw) render(); return; }
+    state.hotProfileBusy = true;
+    if (redraw) render();
+    try {
+      const encoded = encodeURIComponent(current.id);
+      const customerId = encodeURIComponent(text(current.customerId));
+      const result = await api(`/api/ws/hot-chat/profile/diagnostics?conversationId=${encoded}&customerId=${customerId}`, {}, context);
+      assertContext(context);
+      state.hotProfile = result.profile || null;
+      state.hotProfileError = '';
+      state.hotProfileEdits = Object.create(null);
+      state.hotProfileColorDraft = '';
+    } catch (error) {
+      if (contextCurrent(context)) {
+        state.hotProfileError = String(error?.message || '热聊档案读取失败').slice(0, 240);
+        // Keep the last good snapshot visible when a refresh is transiently
+        // unavailable; this is safer than replacing a useful profile with an
+        // empty state during an offline/WS reconnect.
+      }
+    } finally {
+      if (contextCurrent(context)) { state.hotProfileBusy = false; if (redraw) render(); }
+    }
+  }
+  async function saveHotProfileFact(element, locked = false) {
+    const current = activeConversation();
+    if (!current || state.hotProfileBusy) return;
+    const field = text(element?.dataset?.field);
+    if (!field) return;
+    const value = Object.hasOwn(state.hotProfileEdits, field) ? state.hotProfileEdits[field] : hotProfileFieldValue(state.hotProfile?.fields?.[field]?.value);
+    if (!value && !['is_investor'].includes(field)) { toast('请先填写或从聊天分析中得到该资料，再确认。', 'x'); return; }
+    const context = captureContext(current.id);
+    state.hotProfileBusy = true;
+    render();
+    try {
+      const result = await api('/api/ws/hot-chat/profile/confirm', {
+        method: 'POST',
+        body: JSON.stringify({ conversationId: current.id, customerId: text(current.customerId), field, value, confidence: 1, evidence: locked ? '人工确认并锁定' : '人工确认', locked }),
+      }, context);
+      assertContext(context);
+      state.hotProfile = result.profile || state.hotProfile;
+      state.hotProfileError = '';
+      state.hotProfileColorDraft = '';
+      delete state.hotProfileEdits[field];
+      toast(locked ? `${HOT_PROFILE_LABELS[field] || field}已确认并锁定` : `${HOT_PROFILE_LABELS[field] || field}已确认`);
+    } catch (error) {
+      if (contextCurrent(context)) { state.hotProfileError = error.message || '热聊资料保存失败'; toast(state.hotProfileError, 'x'); }
+    } finally {
+      if (contextCurrent(context)) { state.hotProfileBusy = false; render(); }
+    }
+  }
+  async function saveHotProfileColor() {
+    const current = activeConversation();
+    const color = text($('#wsHotProfileColor')?.value || state.hotProfile?.statusColor || 'gray');
+    if (!current || !HOT_PROFILE_COLORS[color]) return;
+    const context = captureContext(current.id);
+    state.hotProfileBusy = true;
+    render();
+    try {
+      const result = await api('/api/ws/hot-chat/profile/confirm', { method: 'POST', body: JSON.stringify({ conversationId: current.id, customerId: text(current.customerId), color, locked: true }) }, context);
+      assertContext(context);
+      state.hotProfile = result.profile || state.hotProfile;
+      state.hotProfileError = '';
+      state.hotProfileColorDraft = '';
+      toast(`客户状态已标记为“${HOT_PROFILE_COLORS[color]}”`);
+    } catch (error) {
+      if (contextCurrent(context)) { state.hotProfileError = error.message || '客户状态保存失败'; toast(state.hotProfileError, 'x'); }
+    } finally {
+      if (contextCurrent(context)) { state.hotProfileBusy = false; render(); }
     }
   }
   async function createConversation() {
@@ -1095,6 +1263,7 @@
               <div class="ws-analysis-content">${renderAnalysis()}</div>
             </section>
             ${renderCollectionCard()}
+            ${renderHotProfile()}
             <section class="ws-card">
               <div class="ws-card-heading"><div><strong>客户资料</strong><span>所有 AI 字段均可人工修改后再保存</span></div></div>
               <div class="ws-customer-fields">
@@ -1563,6 +1732,7 @@
       assertContext(context);
       current.customerId = customer.id;
       if (linked) Object.assign(current, linked);
+      void loadHotProfile({ ...context, conversationId: current.id }, false);
       if (contextCurrent(context)) toast(created ? 'WS 客户已保存到客户中心' : '客户档案已更新并关联当前会话');
     } catch (error) {
       if (created) host.state.customers = beforeCustomers;
@@ -1769,6 +1939,10 @@
     if (action === 'done-followup-alert') return updateFollowupAlert(element, 'done');
     if (action === 'snooze-followup-alert') return updateFollowupAlert(element, 'snoozed');
     if (action === 'dismiss-followup-alert') return updateFollowupAlert(element, 'dismissed');
+    if (action === 'refresh-hot-profile') return loadHotProfile();
+    if (action === 'confirm-hot-profile') return saveHotProfileFact(element, false);
+    if (action === 'lock-hot-profile') return saveHotProfileFact(element, element?.dataset?.locked !== 'true');
+    if (action === 'save-hot-profile-color') return saveHotProfileColor();
     if (action === 'select-conversation') { state.mobilePanel = 'center'; return loadConversationData(element.dataset.id); }
     if (action === 'clear-capture') { currentDraft().captureText = ''; render(); return; }
     if (action === 'import-visible') return importVisible();
@@ -1802,6 +1976,7 @@
     if (target.matches('#wsTargetLanguage')) state.settings.targetLanguage = target.value;
     if (target.matches('#wsSendLanguage')) state.settings.sendLanguage = target.value;
     if (target.matches('#wsAiEnabled')) state.aiEnabled = target.checked;
+    if (target.matches('[data-hot-profile-color]')) { state.hotProfileColorDraft = target.value; return; }
     if (target.matches('#wsTopTranslationMode, #wsTopTranslateEnabled, #wsTranslateEnabled, #wsReceiveEnabled, #wsSendEnabled, #wsShowOriginal, #wsTargetLanguage, #wsSendLanguage, #wsAiEnabled')) {
       state.settings = core.normalizeTranslationSettings(state.settings);
       state.translationStatus = state.settings.enabled ? core.translationMode(state.settings) + ' · 正在保存设置' : '翻译已关闭 · 手动翻译仍可用';
@@ -1819,6 +1994,7 @@
     if (target.matches('#wsConversationExternalId')) { state.createExternalId = target.value; return; }
     if (target.matches('#wsConversationTitle')) { state.createTitle = target.value; return; }
     if (target.matches('#wsAccountDisplayName')) { state.accountFormName = target.value; state.accountFormError = ''; return; }
+    if (target.matches('[data-hot-profile-field]')) { state.hotProfileEdits[target.dataset.hotProfileField] = target.value; return; }
     const draft = currentDraft();
     const fields = {
       wsVisibleChat: 'captureText',
