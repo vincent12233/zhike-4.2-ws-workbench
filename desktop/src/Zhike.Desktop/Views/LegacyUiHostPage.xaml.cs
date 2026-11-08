@@ -7,6 +7,7 @@ using Windows.ApplicationModel.DataTransfer;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Text.Json;
+using System.Runtime.InteropServices.WindowsRuntime;
 using Zhike.Desktop.Services;
 
 namespace Zhike.Desktop.Views;
@@ -103,7 +104,7 @@ public sealed partial class LegacyUiHostPage : Page
 
     public async Task<bool> FlushBeforeCloseAsync(bool snapshot)
     {
-        using var closeTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        using var closeTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         var wsClosed = true;
         try { wsClosed = await CloseWsOverlayAsync(false, cancellationToken: closeTimeout.Token); }
         catch (OperationCanceledException) when (closeTimeout.IsCancellationRequested)
@@ -122,23 +123,51 @@ public sealed partial class LegacyUiHostPage : Page
         try
         {
             var options = snapshot ? "{snapshot:true}" : "{snapshot:false}";
-            // Keep shutdown bounded even if a fetch in the page never
-            // resolves.  The host awaits ExecuteScriptAsync directly because
-            // the WinRT IAsyncOperation projection does not expose Task's
-            // WaitAsync on every supported SDK target.
-            var script = "(async()=>{try{const fn=window.__flushLocalWrites;if(typeof fn!=='function')return true;const result=await Promise.race([Promise.resolve(fn(" + options + ")),new Promise(resolve=>setTimeout(()=>resolve(false),3500))]);return result!==false;}catch{return false;}})()";
-            // WebView2's WinRT IAsyncOperation does not expose Task.WaitAsync
-            // on all Windows App SDK target frameworks. The script itself has
-            // a bounded page-side operation; awaiting it directly keeps the
-            // desktop build portable across the supported SDKs.
-            var result = await webView.CoreWebView2.ExecuteScriptAsync(script);
-            var ok = string.Equals(result, "true", StringComparison.OrdinalIgnoreCase);
-            if (!ok) Debug.WriteLine("Legacy page flush did not complete before desktop shutdown.");
-            return ok;
+            // ExecuteScriptAsync serializes the immediate JavaScript return
+            // value; it does not reliably await a returned Promise. Start the
+            // async flush and publish a small boolean acknowledgement instead.
+            var startScript = "(()=>{window.__zhikeFlushResult=null;Promise.resolve().then(async()=>{try{const fn=window.__flushLocalWrites;if(typeof fn!=='function'){window.__zhikeFlushResult=true;return;}const result=await fn(" + options + ");window.__zhikeFlushResult=result!==false;}catch{window.__zhikeFlushResult=false;}});return true;})()";
+            var started = await ExecuteScriptBoundedAsync(webView.CoreWebView2, startScript, TimeSpan.FromSeconds(1), closeTimeout.Token);
+            if (!string.Equals(started, "true", StringComparison.OrdinalIgnoreCase))
+            {
+                Debug.WriteLine("Legacy page flush could not start before desktop shutdown.");
+                return false;
+            }
+            var deadline = DateTimeOffset.UtcNow.AddSeconds(4);
+            while (DateTimeOffset.UtcNow < deadline && !closeTimeout.IsCancellationRequested)
+            {
+                var result = await ExecuteScriptBoundedAsync(webView.CoreWebView2, "window.__zhikeFlushResult === null ? null : Boolean(window.__zhikeFlushResult)", TimeSpan.FromSeconds(1), closeTimeout.Token);
+                if (result is null) return false;
+                if (string.Equals(result, "true", StringComparison.OrdinalIgnoreCase)) return true;
+                if (string.Equals(result, "false", StringComparison.OrdinalIgnoreCase)) return false;
+                await Task.Delay(50, closeTimeout.Token);
+            }
+            Debug.WriteLine("Legacy page flush did not complete before desktop shutdown.");
+            return false;
         }
         catch
         {
             return false;
+        }
+    }
+
+    private static async Task<string?> ExecuteScriptBoundedAsync(CoreWebView2 core, string script, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await core.ExecuteScriptAsync(script).AsTask().WaitAsync(timeout, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return null;
+        }
+        catch (TimeoutException)
+        {
+            return null;
+        }
+        catch
+        {
+            return null;
         }
     }
 

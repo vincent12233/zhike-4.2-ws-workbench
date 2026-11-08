@@ -48,9 +48,21 @@ public sealed partial class MainWindow : Window
             var windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
             _appWindow = AppWindow.GetFromWindowId(windowId);
             _appWindow.Title = "知客工作台";
+            var iconPath = ResolveIconPath();
+            if (iconPath is not null) _appWindow.SetIcon(iconPath);
             _appWindow.Closing += OnAppWindowClosing;
         }
         catch { }
+    }
+
+    private static string? ResolveIconPath()
+    {
+        var candidates = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "zhike.ico"),
+            Path.Combine(AppContext.BaseDirectory, "Assets", "zhike.ico"),
+        };
+        return candidates.FirstOrDefault(File.Exists);
     }
 
     private void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)
@@ -78,18 +90,25 @@ public sealed partial class MainWindow : Window
                 return;
             }
         }
-        catch
+        catch (Exception error)
         {
             flushed = false;
+            System.Diagnostics.Debug.WriteLine($"Desktop close flush failed: {error.GetType().Name}");
             _flushBeforeCloseInProgress = false;
         }
         finally
         {
-            if (flushed)
+            if (!flushed)
+                System.Diagnostics.Debug.WriteLine("Desktop close continued after a best-effort flush failure.");
+            // A failed or stalled best-effort flush must never leave the
+            // native window permanently unclosable. The page keeps its own
+            // retry/recovery state; the shell always completes the user's
+            // explicit close request after the bounded attempt above.
+            _allowCloseAfterFlush = true;
+            _flushBeforeCloseInProgress = false;
+            if (!DispatcherQueue.TryEnqueue(Close))
             {
-                _allowCloseAfterFlush = true;
-                _flushBeforeCloseInProgress = false;
-                DispatcherQueue.TryEnqueue(Close);
+                try { _appWindow?.Destroy(); } catch { }
             }
         }
     }
