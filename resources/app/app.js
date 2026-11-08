@@ -77,7 +77,7 @@
   function resolveSavedFilters(view){const filters={...(view.filters||{})};for(const [key,value] of Object.entries(filters))if(value==='@today')filters[key]=today;return filters;}
   function applySavedView(id){const view=state.savedViews.find(item=>item.id===id);if(!view){toast('找不到此保存视图','x');return;}if(view.scope==='customer'){state.extraFilters=resolveSavedFilters(view);state.customerSearch=view.search||'';state.showFilters=Object.keys(state.extraFilters).length>0;setView('customers');}else{state.segment={...segmentFilterDefaults(),...resolveSavedFilters(view)};state.search=view.search||'';setView('segments');}toast(`已应用视图：${view.name}`);}
   const esc = (v='') => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let dbWriteTimer, dbWriteWarned=false, dbWritePromise=Promise.resolve(), pendingStateData=null, dbWriteFailure=null, syncReadFailure=null, intakeBatchPhones=null, intakeBatchVipNumbers=null, intakePhoneIndex=null, intakeVipIndex=null, syncTimer=null, syncBusy=false, dataSyncStarted=false, destructiveWriteBusy=false, stateVersion='', lastCommittedState=null, writeConflict=null;
+  let dbWriteTimer, dbWriteWarned=false, dbWritePromise=Promise.resolve(), pendingStateData=null, dbWriteFailure=null, syncReadFailure=null, intakeBatchPhones=null, intakeBatchVipNumbers=null, intakePhoneIndex=null, intakeVipIndex=null, syncTimer=null, syncBusy=false, syncPollDelay=5000, syncPollMaxDelay=60000, dataSyncStarted=false, syncVisibilityHandler=null, destructiveWriteBusy=false, stateVersion='', lastCommittedState=null, writeConflict=null;
   const cloneStateData=data=>JSON.parse(JSON.stringify(data));
   function statePayload(){return {schemaVersion:4,customers:state.customers,savedViews:state.savedViews,activities:state.activities,tickets:state.tickets.flatMap(record=>window.ZhikeTicketRecords?.expandTicketRecord?.(record)||(window.ZhikeTicketRecords?.normalizeTicketRecord?.(record)||record)),deposits:state.deposits,followups:state.followups,registrations:state.registrations,phoneRegistry:state.phoneRegistry,batchOperations:state.batchOperations,settings:state.settings,channelAliases:state.channelAliases,importIssues:state.importIssues,qualityDecisions:state.qualityDecisions};}
   function markSyncVersion(version){if(version)stateVersion=String(version);const badge=$('#syncStatus');if(badge){const status=writeConflict?'error':dbWriteFailure?'error':syncReadFailure?'error':'online';badge.className=`sync-status ${status}`;badge.textContent=writeConflict?'数据冲突':dbWriteFailure?'保存异常':syncReadFailure?'同步异常':'已保存到本机';badge.title=writeConflict?'检测到同一记录在多个窗口被修改，点击查看恢复选项':dbWriteFailure?'本机数据库写入失败，点击重试':syncReadFailure?'共享数据库同步失败，点击重试':'数据已保存到本机；多窗口会自动共享最新状态';}}
@@ -94,7 +94,7 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
   window.addEventListener('focus',()=>syncFromBackend(false));
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncFromBackend(false);});
   async function syncFromBackend(force=false){
-    if(!window.__LOCAL_DB__||syncBusy||destructiveWriteBusy||pendingStateData||writeConflict||queuedWriteCount)return;
+    if(!window.__LOCAL_DB__||syncBusy||destructiveWriteBusy||pendingStateData||writeConflict||queuedWriteCount)return null;
     const revisionAtStart=localDataRevision;
     syncBusy=true;
     try{
@@ -102,19 +102,52 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
         const versionResponse=await fetch('/api/state/version',{cache:'no-store'});
         if(!versionResponse.ok)throw new Error('同步版本检查失败');
         const status=await versionResponse.json();
-        if(status.version===stateVersion){dbWriteFailure=null;markSyncVersion(status.version);return;}
+        if(status.version===stateVersion){syncReadFailure=null;dbWriteFailure=null;markSyncVersion(status.version);return true;}
         const modalOpen=!$('#modalBackdrop')?.classList.contains('hidden');
-        if(modalOpen){const badge=$('#syncStatus');if(badge){badge.className='sync-status pending';badge.textContent='有新数据';badge.title='当前编辑结束后自动同步其他窗口的数据';}return;}
+        if(modalOpen){const badge=$('#syncStatus');if(badge){badge.className='sync-status pending';badge.textContent='有新数据';badge.title='当前编辑结束后自动同步其他窗口的数据';}return null;}
       }
       const response=await fetch('/api/state',{cache:'no-store'});
       if(!response.ok)throw new Error('同步读取失败');
       const incoming=await response.json();
-      if(localDataRevision!==revisionAtStart||pendingStateData||queuedWriteCount||writeConflict)return;
-      if(!incoming.initialized)return;
-      if(stateVersion){applySharedData(incoming);lastCommittedState=cloneStateData(statePayload());dbWriteFailure=null;markSyncVersion(incoming.version);render();toast('已同步其他窗口的最新数据');}else markSyncVersion(incoming.version);
-    }catch(error){dbWriteFailure=error;markSyncVersion();}finally{syncBusy=false;}
+      if(localDataRevision!==revisionAtStart||pendingStateData||queuedWriteCount||writeConflict)return null;
+      if(!incoming.initialized){syncReadFailure=null;markSyncVersion(incoming.version);return true;}
+      if(stateVersion){applySharedData(incoming);lastCommittedState=cloneStateData(statePayload());dbWriteFailure=null;syncReadFailure=null;markSyncVersion(incoming.version);render();toast('已同步其他窗口的最新数据');}else{syncReadFailure=null;markSyncVersion(incoming.version);}
+      return true;
+    }catch(error){syncReadFailure=error;markSyncVersion();return false;}finally{syncBusy=false;}
   }
-  function startDataSync(){if(!window.__LOCAL_DB__||dataSyncStarted)return;dataSyncStarted=true;const poll=()=>{clearInterval(syncTimer);syncTimer=document.hidden?null:setInterval(()=>syncFromBackend(false),5000);};poll();document.addEventListener('visibilitychange',poll);$('#syncStatus')?.addEventListener('click',async()=>{if(writeConflict){if(!confirm('检测到双方同时修改了相同记录。先将本窗口当前完整数据导出为恢复副本，再载入共享最新数据？'))return;const localCopy=statePayload();download(`知客同步冲突恢复副本_${today}.json`,JSON.stringify({version:2,createdAt:new Date().toISOString(),...localCopy},null,2),'application/json');applySharedData(writeConflict.latest);lastCommittedState=cloneStateData(statePayload());stateVersion=String(writeConflict.latest.version||'');writeConflict=null;dbWriteFailure=null;markSyncVersion(stateVersion);render();toast('恢复副本已导出，共享数据已重新同步');return;}if(!dbWriteFailure)return;dbWriteFailure=null;markSyncVersion();try{await flushStateWrites();await syncFromBackend(true);toast('本机数据同步已恢复');}catch{dbWriteFailure=new Error('同步重试失败');markSyncVersion();toast('同步仍未恢复，请确认本机数据服务正常','x');}});}
+  function clearDataSyncTimer(){if(syncTimer){clearTimeout(syncTimer);syncTimer=null;}}
+  function scheduleDataSync(delay=syncPollDelay){
+    clearDataSyncTimer();
+    if(!dataSyncStarted||!window.__LOCAL_DB__||document.hidden)return;
+    syncTimer=setTimeout(async()=>{
+      syncTimer=null;
+      const result=await syncFromBackend(false);
+      if(result===false)syncPollDelay=Math.min(syncPollMaxDelay,Math.max(5000,syncPollDelay*2));
+      else if(result===true)syncPollDelay=5000;
+      scheduleDataSync(syncPollDelay);
+    },Math.max(1000,Number(delay)||5000));
+    syncTimer.unref?.();
+  }
+  function startDataSync(){
+    if(!window.__LOCAL_DB__||dataSyncStarted)return;
+    dataSyncStarted=true;
+    syncPollDelay=5000;
+    syncVisibilityHandler=()=>{
+      clearDataSyncTimer();
+      if(document.hidden)return;
+      syncPollDelay=5000;
+      void syncFromBackend(false).finally(()=>scheduleDataSync(syncPollDelay));
+    };
+    document.addEventListener('visibilitychange',syncVisibilityHandler);
+    scheduleDataSync();
+    $('#syncStatus')?.addEventListener('click',async()=>{
+      if(writeConflict){if(!confirm('检测到双方同时修改了相同记录。先将本窗口当前完整数据导出为恢复副本，再载入共享最新数据？'))return;const localCopy=statePayload();download(`知客同步冲突恢复副本_${today}.json`,JSON.stringify({version:2,createdAt:new Date().toISOString(),...localCopy},null,2),'application/json');applySharedData(writeConflict.latest);lastCommittedState=cloneStateData(statePayload());stateVersion=String(writeConflict.latest.version||'');writeConflict=null;dbWriteFailure=null;syncReadFailure=null;markSyncVersion(stateVersion);render();toast('恢复副本已导出，共享数据已重新同步');return;}
+      if(!dbWriteFailure&&!syncReadFailure)return;
+      dbWriteFailure=null;syncReadFailure=null;markSyncVersion();
+      try{await flushStateWrites();await syncFromBackend(true);syncPollDelay=5000;scheduleDataSync();toast('本机数据同步已恢复');}
+      catch{dbWriteFailure=new Error('同步重试失败');markSyncVersion();toast('同步仍未恢复，请确认本机数据服务正常','x');}
+    });
+  }
   async function snapshotBeforeWrite(reason){if(!window.__LOCAL_DB__)return true;try{await flushStateWrites();const response=await fetch('/api/snapshot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason})});if(!response.ok)throw new Error();return true;}catch{toast('无法完成保存或创建写入前快照，本次批量写入已取消','x');return false;}}
   async function commitCsvImportWithSnapshot(){const pending=state.pendingCsv;if(!pending)return;const batches=pending.batches||[pending];if(batches.some(batch=>batch.mapping.phone==null)){toast('有文件未识别到“手机号码”列，请检查表头','x');return;}if(!await snapshotBeforeWrite(`CSV 批量导入 ${batches.length} 个文件前自动快照`))return;await commitCsvImport();}
   let intakeSaving=false;
@@ -364,11 +397,19 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
   function statusTag(status){const cls={'已进群':'tag-green','在群':'tag-green','未进群':'tag-gray','已退群':'tag-amber','临时退群':'tag-amber','重粉':'tag-red'}[status]||'tag-gray';return `<span class="status-tag ${cls}">${esc(status)}</span>`;}
   function phaseTag(phase){const cls={'高意向':'tag-red','意向客户':'tag-blue','成交客户':'tag-green','潜在客户':'tag-amber'}[phase]||'tag-gray';return `<span class="status-tag ${cls}">${esc(phase)}</span>`;}
   function paginationButtons(pageCount){const wanted=new Set([1,pageCount,state.page-2,state.page-1,state.page,state.page+1,state.page+2].filter(page=>page>=1&&page<=pageCount)),ordered=[...wanted].sort((a,b)=>a-b);let previous=0;return ordered.map(page=>{const gap=previous&&page-previous>1?'<span class="page-gap">…</span>':'';previous=page;return `${gap}<button class="page-btn ${page===state.page?'active':''}" data-page="${page}">${page}</button>`;}).join('');}
+  function capacityWarning(count, label='客户'){
+    const total=Math.max(0,Number(count)||0);
+    if(total>=250000)return `${label}库已达到本机安全上限 250,000 条，请分批导出归档后再继续导入。`;
+    if(total>=50000)return `${label}库已超过 50,000 条，已启用分页与后台分批处理；建议按渠道或日期筛选，避免一次性全选。`;
+    if(total>=10000)return `${label}库已超过 10,000 条，当前使用大数据模式：搜索、筛选和导入会分批执行，不会静默截断。`;
+    return '';
+  }
   function tableBlock(list, mode='segment') {
     const pages=Math.max(1,Math.ceil(list.length/state.perPage)); if(state.page>pages)state.page=pages;
     const allSelected=state.selected.size>0&&list.length>0&&list.slice((state.page-1)*state.perPage,state.page*state.perPage).every(c=>state.selected.has(selectionKey(c.id)));
     const title=mode==='segment'?segmentTitle(): '客户列表';
-    return `<section class="panel table-panel"><div class="table-toolbar"><div class="table-context"><strong>${title}</strong><span>${list.length.toLocaleString()} 位客户</span>${state.selected.size?`<span class="status-tag tag-green">已选 ${state.selected.size}</span>`:''}</div><div class="toolbar-controls"><label class="input-search">${icons('search')}<input data-search="${mode}" value="${esc(mode==='segment'?state.search:state.customerSearch)}" placeholder="搜索姓名、号码、群编号"></label>${mode==='customer'?`<button class="btn small" data-action="toggle-filters">${icons('filter')}筛选</button>`:''}<button class="btn small" data-action="export-filtered">${icons('download')}导出</button><button class="btn small" data-action="columns" data-mode="${mode}">列设置</button></div></div>
+    const capacity=capacityWarning(Math.max(list.length,activeCustomers().length),mode==='segment'?'客户视图':'客户');
+    return `<section class="panel table-panel">${capacity?`<div class="performance-notice capacity-warning" role="status"><strong>容量提示</strong><span>${esc(capacity)}</span></div>`:''}<div class="table-toolbar"><div class="table-context"><strong>${title}</strong><span>${list.length.toLocaleString()} 位客户</span>${state.selected.size?`<span class="status-tag tag-green">已选 ${state.selected.size}</span>`:''}</div><div class="toolbar-controls"><label class="input-search">${icons('search')}<input data-search="${mode}" value="${esc(mode==='segment'?state.search:state.customerSearch)}" placeholder="搜索姓名、号码、群编号"></label>${mode==='customer'?`<button class="btn small" data-action="toggle-filters">${icons('filter')}筛选</button>`:''}<button class="btn small" data-action="export-filtered">${icons('download')}导出</button><button class="btn small" data-action="columns" data-mode="${mode}">列设置</button></div></div>
       ${mode==='customer'&&state.showFilters?renderCustomerFilters():''}
       ${renderActiveChips(mode)}
       <div class="table-scroll"><table class="data-table"><thead><tr>${customerColumnDefs.map(([key,label])=>`<th data-column="${key}" ${visibleCustomerColumns(mode).has(key)?'':'hidden'}${key==='select'?' class="check-cell"':''}>${key==='select'?`<input type="checkbox" data-select-page ${allSelected?'checked':''}>`:label}</th>`).join('')}</tr></thead><tbody>${customerRows(list,mode)}</tbody></table></div>
@@ -1199,12 +1240,13 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
   const legacySyncFromBackend=syncFromBackend;
   syncFromBackend=async function(force=false){
     const previousWriteFailure=dbWriteFailure;
-    await legacySyncFromBackend(force);
-    if(dbWriteFailure&&dbWriteFailure!==previousWriteFailure&&!pendingStateData&&!queuedWriteCount&&!writeConflict){
+    const result=await legacySyncFromBackend(force);
+    if(result===false&&dbWriteFailure&&dbWriteFailure!==previousWriteFailure&&!pendingStateData&&!queuedWriteCount&&!writeConflict){
       syncReadFailure=dbWriteFailure;
       dbWriteFailure=previousWriteFailure||null;
-    }else if(!dbWriteFailure)syncReadFailure=null;
+    }else if(result===true&&!dbWriteFailure)syncReadFailure=null;
     markSyncVersion();
+    return result;
   };
 
   // Replace the compact legacy writer after all declarations are loaded. The

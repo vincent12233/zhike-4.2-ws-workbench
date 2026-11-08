@@ -31,6 +31,7 @@
     aiEnabled: true,
     wsStatus: '未连接',
     wsDetail: '',
+    wsErrorCategory: '',
     analysis: null,
     analysisMeta: null,
     hotProfile: null,
@@ -439,14 +440,31 @@
   }
   function updateStatusDom() {
     const badge = $('#wsStatusBadge');
-    if (badge) { badge.textContent = state.wsStatus; badge.dataset.status = state.wsStatus; }
+    if (badge) { badge.textContent = state.wsStatus; badge.dataset.status = state.wsStatus; badge.dataset.errorCategory = state.wsErrorCategory || ''; }
     const detail = $('#wsStatusDetail');
     if (detail) detail.textContent = state.wsDetail || (state.wsStatus === '已连接' ? '已通过页面结构确认 WS 主界面；未读取 Cookie 或消息正文。' : '请在中栏自行完成扫码或登录。');
   }
   function setStatus(status, detail = '') {
     state.wsStatus = status || '未连接';
     state.wsDetail = detail;
+    if (!['连接失败', '会话过期'].includes(state.wsStatus)) state.wsErrorCategory = '';
     updateStatusDom();
+  }
+  function classifyWsError(error) {
+    const supplied = text(error?.errorCategory || error?.category || '');
+    if (['unpaired', 'network', 'session-expired', 'structure-changed', 'service'].includes(supplied)) return supplied;
+    const message = text(error?.message || error).toLocaleLowerCase();
+    if (/qr|scan|扫码|配对|pair|login|登录|未连接/.test(message)) return 'unpaired';
+    if (/network|net::|offline|dns|timeout|超时|网络|断开/.test(message)) return 'network';
+    if (/expired|session|logout|过期|会话/.test(message)) return 'session-expired';
+    if (/selector|dom|structure|页面结构|未识别|元素/.test(message)) return 'structure-changed';
+    return 'service';
+  }
+  function wsErrorDetail(error, fallback = 'WS 服务暂时不可用，请稍后重试。') {
+    const category = classifyWsError(error);
+    const labels = { unpaired: 'WS 尚未配对或等待登录', network: 'WS 网络连接异常', 'session-expired': 'WS 会话已过期', 'structure-changed': 'WS 页面结构变化，暂时无法识别', service: 'WS 服务异常' };
+    state.wsErrorCategory = category;
+    return `${labels[category] || labels.service}：${text(error?.message || error?.error || fallback).slice(0, 180)}`;
   }
   async function resizeWsView() {
     if (!state.active) return;
@@ -467,7 +485,7 @@
       else if (action === 'probe') toast('WS 登录状态已重新检测');
       else toast('WS 页面已打开，请自行扫码或登录');
     } catch (error) {
-      if (contextCurrent(context)) { setStatus('连接失败', error.message); toast(error.message, 'x'); }
+      if (contextCurrent(context)) { const detail = wsErrorDetail(error); setStatus(classifyWsError(error) === 'session-expired' ? '会话过期' : classifyWsError(error) === 'unpaired' ? '等待登录' : '连接失败', detail); toast(detail, 'x'); }
     } finally {
       if (contextCurrent(context)) { state.busy.connection = false; render(); }
     }

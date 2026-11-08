@@ -78,6 +78,11 @@ app.Use(async (context, next) =>
 
 var migrationRunner = app.Services.GetRequiredService<MigrationRunner>();
 var migrationReport = await migrationRunner.ApplyAsync(app.Lifetime.ApplicationStopping);
+var migrationDiagnostics = migrationRunner.LastDiagnostics;
+app.Logger.LogInformation("Migration startup diagnostics: lockWaitMs={LockWaitMs}, lockTimedOut={LockTimedOut}, availableMemoryBytes={AvailableMemoryBytes}, availableDiskBytes={AvailableDiskBytes}", migrationDiagnostics.LockWaitMs, migrationDiagnostics.LockTimedOut, migrationDiagnostics.AvailableMemoryBytes, migrationDiagnostics.AvailableDiskBytes);
+var storageMinimumMb = int.TryParse(app.Configuration["ZHike:StorageMinFreeMb"], out var configuredMinimumMb) ? Math.Max(0, configuredMinimumMb) : 2048;
+if (migrationDiagnostics.AvailableDiskBytes >= 0 && migrationDiagnostics.AvailableDiskBytes < storageMinimumMb * 1024L * 1024L)
+    app.Logger.LogWarning("Storage capacity is below the configured guardrail ({MinimumMb} MB); no files will be deleted automatically.", storageMinimumMb);
 if (migrationReport.Failed.Count > 0)
     throw new InvalidOperationException($"数据库迁移失败：{string.Join("; ", migrationReport.Failed)}");
 var migrationTargetVersion = migrationRunner.LatestVersion;

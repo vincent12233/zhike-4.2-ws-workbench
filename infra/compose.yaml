@@ -3,10 +3,16 @@ name: zhike-server
 services:
   postgres:
     image: postgres:18
+    # Desktop deployments should fail visibly before the host is exhausted;
+    # storage guardrails warn below the configured free-space threshold.
+    # These limits are configurable for synthetic 10k/50k load drills.
+    mem_limit: ${ZHike_POSTGRES_MEMORY_LIMIT:-2g}
+    shm_size: ${ZHike_POSTGRES_SHM_SIZE:-256m}
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-zhike}
       POSTGRES_USER: ${POSTGRES_USER:-zhike_app}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      ZHIKE_STORAGE_MIN_FREE_MB: ${ZHike_STORAGE_MIN_FREE_MB:-2048}
     volumes:
       - zhike_pgdata:/var/lib/postgresql
     healthcheck:
@@ -35,6 +41,9 @@ services:
       ZHike__PairingApprovalCode: ${ZHIKE_PAIRING_APPROVAL_CODE:-}
       ZHike__ConnectorToken: ${ZHIKE_API_TOKEN:-}
       ZHike__ConnectorTokenFile: ${ZHIKE_API_TOKEN_FILE:-}
+      ZHike__StorageMinFreeMb: ${ZHike_STORAGE_MIN_FREE_MB:-2048}
+      ZHike__MigrationLockTimeoutSeconds: ${ZHike_MIGRATION_LOCK_TIMEOUT_SECONDS:-30}
+    mem_limit: ${ZHike_API_MEMORY_LIMIT:-1g}
     ports:
       - "${ZHike_API_BIND:-127.0.0.1}:${ZHike_API_PORT:-48080}:8080"
     depends_on:
@@ -59,6 +68,8 @@ services:
       ZHike__BackupDirectory: /backups
       ZHike__BackupIntervalMinutes: ${ZHike_BACKUP_INTERVAL_MINUTES:-60}
       ZHike__BackupRetention: ${ZHike_BACKUP_RETENTION:-14}
+      ZHike__StorageMinFreeMb: ${ZHike_STORAGE_MIN_FREE_MB:-2048}
+    mem_limit: ${ZHike_AI_MEMORY_LIMIT:-1g}
     volumes:
       - zhike_backup:/backups
     depends_on:
@@ -80,6 +91,8 @@ services:
       ZHIKE_ACCOUNT_IDS: ${ZHIKE_ACCOUNT_IDS:-}
       ZHIKE_WS_URL: ${ZHIKE_WS_URL:-}
       ZHIKE_WS_HEADLESS: ${ZHIKE_WS_HEADLESS:-false}
+      ZHIKE_STORAGE_MIN_FREE_MB: ${ZHike_STORAGE_MIN_FREE_MB:-2048}
+    mem_limit: ${ZHike_WS_MEMORY_LIMIT:-1g}
     volumes:
       - zhike_ws_profiles:/profiles
     depends_on:
@@ -95,6 +108,8 @@ services:
     command: ["while true; do sleep 3600; done"]
     environment:
       PGPASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      ZHIKE_STORAGE_MIN_FREE_MB: ${ZHike_STORAGE_MIN_FREE_MB:-2048}
+    mem_limit: ${ZHike_BACKUP_MEMORY_LIMIT:-512m}
     volumes:
       - zhike_backup:/backup
     depends_on:

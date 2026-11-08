@@ -2,6 +2,8 @@
 param(
   [switch]$ForceDownload,
   [switch]$StageOnly,
+  [switch]$SkipWebView2Check,
+  [switch]$AllowUnsigned,
   [string]$CacheRoot,
   [string]$OutputDir
 )
@@ -52,6 +54,43 @@ function Relative-Path([string]$Base, [string]$Path) {
 function Test-NodeVersion([string]$NodePath, [string]$Expected) {
   if (-not (Test-Path -LiteralPath $NodePath)) { return $false }
   try { return ((& $NodePath --version 2>$null).TrimStart('v')) -eq $Expected } catch { return $false }
+}
+
+function Get-WebView2RuntimeVersion {
+  $keys = @(
+    'HKCU:\Software\Microsoft\EdgeUpdate\Clients',
+    'HKLM:\Software\Microsoft\EdgeUpdate\Clients',
+    'HKLM:\Software\WOW6432Node\Microsoft\EdgeUpdate\Clients'
+  )
+  foreach ($root in $keys) {
+    if (-not (Test-Path -LiteralPath $root)) { continue }
+    foreach ($child in (Get-ChildItem -LiteralPath $root -ErrorAction SilentlyContinue)) {
+      try {
+        $item = Get-ItemProperty -LiteralPath $child.PSPath -ErrorAction Stop
+        if ([string]$item.name -match 'WebView2' -and -not [string]::IsNullOrWhiteSpace([string]$item.pv)) { return [string]$item.pv }
+      } catch { }
+    }
+  }
+  return ''
+}
+
+function Test-InstallerRuntimeGates {
+  $webView2 = Get-WebView2RuntimeVersion
+  if ([string]::IsNullOrWhiteSpace($webView2)) {
+    $message = '未检测到 Microsoft Edge WebView2 Runtime；原生桌面版首次启动前必须安装它。'
+    if ($SkipWebView2Check) { Write-Warning "$message 已按参数跳过检查。" }
+    else { Write-Warning "$message Electron 版仍可打包，但 WinUI 包需在目标机补装运行时。" }
+  }
+  $requireSigning = $env:ZHike_REQUIRE_SIGNING -eq 'true'
+  $certificate = [string]$env:ZHike_SIGN_CERTIFICATE
+  if ($requireSigning -and -not $AllowUnsigned -and [string]::IsNullOrWhiteSpace($certificate)) {
+    throw 'ZHike_REQUIRE_SIGNING=true 但未提供 ZHike_SIGN_CERTIFICATE；请先完成签名或显式传入 -AllowUnsigned 生成未签名候选包。'
+  }
+  return [ordered]@{
+    webView2Version = if ($webView2) { $webView2 } else { 'not-detected' }
+    signingStatus = if ($certificate) { 'certificate-configured' } else { 'unsigned-placeholder' }
+    upgradePolicy = '覆盖升级保留 %LOCALAPPDATA%\Zhike；失败时使用旧安装包回滚，不删除用户数据。'
+  }
 }
 
 function Get-VerifiedArchive(
@@ -195,6 +234,7 @@ function Resolve-Iscc {
 Assert-ChildPath $StageRoot $WorkRoot 'staging path'
 Ensure-Directory $WorkRoot
 Ensure-Directory $CacheRoot
+ $runtimeGates = Test-InstallerRuntimeGates
 if (Test-Path -LiteralPath $StageRoot) { Remove-Item -LiteralPath $StageRoot -Recurse -Force }
 Ensure-Directory $StageRoot
 
@@ -236,6 +276,8 @@ $manifest = [ordered]@{
   nodeVersion = $NodeVersion
   sourceCommit = $commit
   createdAt = [DateTime]::UtcNow.ToString('o')
+  runtimeGates = $runtimeGates
+  rollback = '覆盖升级前保留用户数据与上一版安装包；安装失败时通过上一版安装包回滚。'
   files = $files
 }
 $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $StageRoot 'build-manifest.json') -Encoding UTF8

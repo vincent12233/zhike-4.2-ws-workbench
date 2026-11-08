@@ -19,6 +19,7 @@ for (const token of ['BuildPrompt', '自然聊天', '不要生成调查问卷', 
 assert.match(provider, /requiresConfirmation|previewOnly/, 'reply suggestions must be preview-only');
 assert.match(provider, /敏感|password|验证码|付款|退款|金融|法律|医疗/, 'sensitive reply guard must be explicit');
 assert.match(provider, /429|quota|Timeout|timeout|格式|schema/i, 'provider must classify quota/timeout/schema errors');
+assert.match(provider, /HasStructuredShape|IsStructured\s*=\s*HasStructuredShape/, 'semantically incomplete AI objects must remain pending instead of syncing CRM');
 
 // Dispatcher must stop malformed/low-confidence results before customer or
 // follow-up side effects, while keeping the job retryable/dead-letterable.

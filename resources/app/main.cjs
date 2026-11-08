@@ -41,6 +41,8 @@ const wsUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.3
 const wsPartition = 'persist:ws-workbench-isolated'; // legacy name retained for source compatibility
 let quitting = false;
 let flushingClose = false;
+let quitSequenceStarted = false;
+const RENDERER_FLUSH_TIMEOUT_MS = 4500;
 const activeAiRequests = new Map();
 const userDataPath = app.getPath('userData');
 const credentialPath = path.join(userDataPath, 'ai-credentials.json');
@@ -69,6 +71,28 @@ async function automaticBackup(force=false){
     for(const name of owned.slice(keep))unlinkSync(path.join(directory,name));
     config.backup.lastAt=createdAt;config.backup.lastError='';saveDesktopTools(config);return {ok:true,lastAt:createdAt};
   }catch(error){config.backup.lastError=error.message;saveDesktopTools(config);mainWindow?.webContents.send('zhike-tools-error','自动备份失败：'+error.message);throw error;}finally{backupBusy=false;}
+}
+
+// The renderer owns debounced writes, so closing the native window must give
+// it one bounded grace period.  A hung BrowserWindow must never hold the
+// process open forever; callers receive the timeout result and can continue a
+// best-effort shutdown without turning a transient renderer failure into a
+// desktop crash.
+async function flushRendererBeforeQuit() {
+  const target = mainWindow;
+  if (!target || target.isDestroyed?.() || target.webContents?.isDestroyed?.()) return { ok: true, skipped: true };
+  const flush = Promise.resolve()
+    .then(() => target.webContents.executeJavaScript(
+      'window.__flushLocalWrites ? window.__flushLocalWrites() : Promise.resolve()',
+      true,
+    ))
+    .then(() => ({ ok: true }))
+    .catch(error => ({ ok: false, error }));
+  const timeout = new Promise(resolve => {
+    const timer = setTimeout(() => resolve({ ok: false, timedOut: true, error: new Error('渲染器写入刷盘超时') }), RENDERER_FLUSH_TIMEOUT_MS);
+    timer.unref?.();
+  });
+  return Promise.race([flush, timeout]);
 }
 ipcMain.handle('zhike-desktop-tools',async(event,value={})=>{
   if(!trustedSender(event))throw Error('不受信任的请求来源');
@@ -200,6 +224,24 @@ function wsAllowedUrl(value) {
     return url.protocol === 'https:' && wsAllowedOrigins.has(url.origin);
   } catch { return false; }
 }
+function classifyWsError(error, fallback = '') {
+  const message = String(error?.message || error || fallback || '').toLocaleLowerCase();
+  if (/qr|scan|扫码|配对|pair|login|登录|未连接/.test(message)) return 'unpaired';
+  if (/net::|network|offline|dns|timeout|超时|网络|连接断开/.test(message)) return 'network';
+  if (/expired|session|logout|过期|会话|退出登录/.test(message)) return 'session-expired';
+  if (/selector|dom|structure|页面结构|未识别|元素变化/.test(message)) return 'structure-changed';
+  return 'service';
+}
+function wsErrorMessage(category, detail = '') {
+  const labels = {
+    unpaired: 'WS 尚未配对或等待登录',
+    network: 'WS 网络连接异常',
+    'session-expired': 'WS 会话已过期',
+    'structure-changed': 'WS 页面结构变化，暂时无法识别',
+    service: 'WS 服务异常',
+  };
+  return `${labels[category] || labels.service}${detail ? `：${String(detail).slice(0, 160)}` : ''}`;
+}
 function normalizeWsAccountId(value) {
   const id = String(value || 'default').trim() || 'default';
   if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,119}$/.test(id)) throw new Error('WS 账号标识无效。');
@@ -317,7 +359,10 @@ async function probeWsStatus(accountId = activeWsAccountId) {
     else if (probe.hasChatShell || (probe.hasAppShell && !probe.hasQrMarker && !probe.hasLoginMarker)) setWsStatus(id, '已连接', '已检测到 WS 聊天界面（HTTPS 443）。');
     else if (probe.hasQrMarker || probe.hasLoginMarker || probe.readyState === 'complete') setWsStatus(id, '等待登录', '请在 WS 页面自行扫码或登录。');
     else setWsStatus(id, '登录中', 'WS 页面正在加载。');
-  } catch { setWsStatus(id, '连接失败', '无法检查 WS 页面状态，请刷新后重试。'); }
+  } catch (error) {
+    const category = classifyWsError(error, 'probe');
+    setWsStatus(id, category === 'session-expired' ? '会话过期' : category === 'unpaired' ? '等待登录' : '连接失败', wsErrorMessage(category, error?.message));
+  }
   return { accountId: id, status: record.status, open: true };
 }
 function sameWsBounds(previous, next) {
@@ -394,7 +439,10 @@ function ensureWsView(account) {
     const rollback = record.reloadContext;
     record.reloadContext = null;
     if (rollback) { setWsStatus(id, '连接失败', errorDescription || 'WS 页面加载失败。'); restoreWsAccount(rollback.accountId, rollback.record, rollback.status); }
-    else if (errorCode !== -3) setWsStatus(id, '连接失败', errorDescription || 'WS 页面加载失败。');
+    else if (errorCode !== -3) {
+      const category = classifyWsError(errorDescription, errorCode === -105 ? 'network' : 'service');
+      setWsStatus(id, category === 'session-expired' ? '会话过期' : category === 'unpaired' ? '等待登录' : '连接失败', wsErrorMessage(category, errorDescription));
+    }
   });
   view.webContents.on('render-process-gone', () => setWsStatus(id, '连接失败', 'WS 页面进程已结束。'));
   view.webContents.on('destroyed', () => { if (record.view === view) record.view = null; if (id === activeWsAccountId) syncLegacyWsAlias(record); });
@@ -469,7 +517,7 @@ ipcMain.handle('zhike-ws', async (event, value = {}) => {
     if (!view || view.webContents.isDestroyed()) throw new Error('请先打开 WS 页面并完成登录。');
     const method = action === 'discover-conversations' ? 'discoverAllConversations' : 'captureVisibleMessages';
     const captured = await view.webContents.executeJavaScript(`window.zhikeWsPage?.${method}?.() ?? null`, true);
-    if (!captured?.supported) return { ok: false, supported: false, error: '当前页面结构未识别，未读取任何内容。' };
+    if (!captured?.supported) return { ok: false, supported: false, errorCategory: 'structure-changed', error: wsErrorMessage('structure-changed', '当前页面结构未识别，未读取任何内容。') };
     return { ok: true, ...captured };
   }
   if (action === 'hide') { if (accountId === activeWsAccountId) resizeWsView(accountId, { hidden: true }); return { ok: true, accountId, hidden: wsViews.get(accountId)?.hidden !== false }; }
@@ -738,25 +786,9 @@ function createWindow() {
   });
   mainWindow.on('closed', () => { for (const id of wsViews.keys()) destroyWsView(id); mainWindow = null; });
   mainWindow.on('close', event => {
-    if (quitting || flushingClose || !mainWindow) return;
+    if (quitting || quitSequenceStarted || flushingClose || !mainWindow) return;
     event.preventDefault();
-    flushingClose = true;
-    const closingWindow = mainWindow;
-    closingWindow.webContents.executeJavaScript('window.__flushLocalWrites ? window.__flushLocalWrites() : Promise.resolve()')
-      .then(() => { if (!closingWindow.isDestroyed()) closingWindow.close(); })
-      .catch(async () => {
-        const choice = await dialog.showMessageBox(closingWindow, {
-          type: 'warning',
-          title: '本机数据尚未保存',
-          message: '最近的修改暂时没有写入本机数据库。你可以返回工作台重试，或选择仍然退出。',
-          buttons: ['返回工作台', '仍然退出'],
-          defaultId: 0,
-          cancelId: 0,
-          noLink: true,
-        });
-        if (choice.response === 1) { quitting = true; closingWindow.close(); }
-      })
-      .finally(() => { flushingClose = false; });
+    void completeQuitSequence();
   });
   return mainWindow.loadURL(`http://127.0.0.1:${servicePort}/`);
 }
@@ -800,6 +832,29 @@ async function resetWsStatusesBeforeQuit() {
   }));
 }
 
+async function completeQuitSequence() {
+  if (quitSequenceStarted) return;
+  quitSequenceStarted = true;
+  flushingClose = true;
+  try {
+    const flushed = await flushRendererBeforeQuit();
+    if (!flushed.ok && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('zhike-tools-error', flushed.timedOut
+        ? '退出前保存等待超时，已继续关闭；下次启动请检查同步状态。'
+        : '退出前保存失败，已继续关闭；下次启动请检查同步状态。');
+    }
+    await resetWsStatusesBeforeQuit();
+    await stopOwnedService();
+  } finally {
+    flushingClose = false;
+    quitting = true;
+    // app.exit is intentionally the final operation. The bounded renderer
+    // flush above is what prevents this forceful finalization from skipping
+    // pending local writes.
+    app.exit(0);
+  }
+}
+
 app.whenReady().then(async () => {
   if (!singleInstance) return;
   try {
@@ -819,8 +874,7 @@ app.on('activate', () => {
 });
 
 app.on('before-quit', event => {
-  if (quitting) return;
+  if (quitting || quitSequenceStarted) return;
   event.preventDefault();
-  quitting = true;
-  resetWsStatusesBeforeQuit().finally(() => stopOwnedService()).finally(() => app.exit(0));
+  void completeQuitSequence();
 });

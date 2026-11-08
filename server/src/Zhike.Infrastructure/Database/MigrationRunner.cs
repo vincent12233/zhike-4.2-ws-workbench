@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Npgsql;
 
@@ -14,6 +15,8 @@ public sealed class MigrationRunner(PostgresConnectionFactory connections, strin
             .DefaultIfEmpty(0)
             .Max()
         : 0;
+
+    public MigrationDiagnostics LastDiagnostics { get; private set; } = MigrationDiagnostics.Empty;
 
     /// <summary>
     /// Returns the highest migration that is actually recorded in the
@@ -43,7 +46,22 @@ public sealed class MigrationRunner(PostgresConnectionFactory connections, strin
         // rolling deployment or an accidental second instance from applying
         // the same migration concurrently.
         await using var migrationLock = new NpgsqlCommand("SELECT pg_advisory_lock(hashtextextended('zhike:migrations', 0))", connection);
-        await migrationLock.ExecuteNonQueryAsync(cancellationToken);
+        var lockTimeoutSeconds = Math.Clamp(ParseInt(Environment.GetEnvironmentVariable("ZHike__MigrationLockTimeoutSeconds") ?? Environment.GetEnvironmentVariable("ZHike_MIGRATION_LOCK_TIMEOUT_SECONDS"), 30), 5, 300);
+        using var lockTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        lockTimeout.CancelAfter(TimeSpan.FromSeconds(lockTimeoutSeconds));
+        var lockTimer = Stopwatch.StartNew();
+        try
+        {
+            await migrationLock.ExecuteNonQueryAsync(lockTimeout.Token);
+        }
+        catch (OperationCanceledException) when (lockTimeout.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        {
+            lockTimer.Stop();
+            LastDiagnostics = CollectDiagnostics(lockTimer.ElapsedMilliseconds, true);
+            throw new TimeoutException($"等待数据库迁移锁超过 {lockTimeoutSeconds} 秒，请检查是否有另一个 API 实例正在执行迁移。");
+        }
+        lockTimer.Stop();
+        LastDiagnostics = CollectDiagnostics(lockTimer.ElapsedMilliseconds, false);
         try
         {
             return await ApplyLockedAsync(connection, applied, skipped, failed, cancellationToken);
@@ -99,4 +117,31 @@ public sealed class MigrationRunner(PostgresConnectionFactory connections, strin
 
         return new MigrationReport(applied, skipped, failed);
     }
+
+    private static int ParseInt(string? value, int fallback)
+        => int.TryParse(value, out var parsed) ? parsed : fallback;
+
+    private MigrationDiagnostics CollectDiagnostics(long lockWaitMs, bool lockTimedOut)
+    {
+        var memory = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes;
+        var storagePath = Environment.GetEnvironmentVariable("ZHike_STORAGE_PATH") ?? migrationsDirectory;
+        long freeDisk = -1;
+        try
+        {
+            var root = Path.GetPathRoot(Path.GetFullPath(storagePath));
+            if (!string.IsNullOrWhiteSpace(root)) freeDisk = new DriveInfo(root).AvailableFreeSpace;
+        }
+        catch { /* diagnostics must never block migrations */ }
+        return new MigrationDiagnostics(lockWaitMs, lockTimedOut, memory, freeDisk, DateTimeOffset.UtcNow);
+    }
+}
+
+public sealed record MigrationDiagnostics(
+    long LockWaitMs,
+    bool LockTimedOut,
+    long AvailableMemoryBytes,
+    long AvailableDiskBytes,
+    DateTimeOffset At)
+{
+    public static MigrationDiagnostics Empty { get; } = new(0, false, -1, -1, DateTimeOffset.MinValue);
 }

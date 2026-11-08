@@ -128,7 +128,7 @@ public sealed class HttpAiAnalysisProvider(HttpClient http, IConfiguration confi
             输出严格 JSON，字段必须包含：summary,intent,intentScore,emotion,urgency,language,productInterest,budget,
             contact,profile,confidence,profileFacts,missingFields,naturalNextTopics,customerTemperature,statusColor,noReply,replySuggestion,followup。
             profileFacts 的键只能是：{string.Join(',', ProfileFields)}。
-            每个 profileFacts 值必须是 {{value,state,confidence,evidence}}；state 只能是 known/missing/pending/declined。
+            每个 profileFacts 值必须包含 value、state、confidence、evidence；state 只能是 known/missing/pending/declined。
             known 必须有原文 evidence 且 confidence>=0.6；低置信度只能 pending；不确定不得猜测。
             replySuggestion 仅供人工预览，requiresConfirmation 必须为 true；涉及付款、退款、密码、验证码、身份、金融、法律、医疗、价格或交付保证时必须标记 sensitive=true。
             不得自动发送消息，不得输出密码、Cookie、Token、二维码或秘密。
@@ -176,8 +176,28 @@ public sealed class HttpAiAnalysisProvider(HttpClient http, IConfiguration confi
             ReplySuggestion = reply,
             CustomerTemperature = String(result, "customerTemperature"),
             StatusColor = NormalizeColor(String(result, "statusColor")),
-            IsStructured = true,
+            // A syntactically valid object can still violate the versioned
+            // profile contract (for example, a gateway returning only a
+            // summary). Keep such output as pending evidence rather than
+            // allowing it to create/update CRM records.
+            IsStructured = HasStructuredShape(result),
         };
+    }
+
+    private static bool HasStructuredShape(JsonElement root)
+    {
+        if (root.ValueKind != JsonValueKind.Object) return false;
+        if (!root.TryGetProperty("confidence", out var confidence) || confidence.ValueKind != JsonValueKind.Number) return false;
+        if (!root.TryGetProperty("profileFacts", out var facts) || facts.ValueKind != JsonValueKind.Object) return false;
+        if (!root.TryGetProperty("missingFields", out var missing) || missing.ValueKind != JsonValueKind.Array) return false;
+        if (!root.TryGetProperty("naturalNextTopics", out var topics) || topics.ValueKind != JsonValueKind.Array) return false;
+        // Optional values may be null, but when present they must retain their
+        // declared object shape so parser failures are not mistaken for an
+        // intentional empty assessment.
+        if (root.TryGetProperty("noReply", out var noReply) && noReply.ValueKind is not (JsonValueKind.Object or JsonValueKind.Null)) return false;
+        if (root.TryGetProperty("replySuggestion", out var reply) && reply.ValueKind is not (JsonValueKind.Object or JsonValueKind.String or JsonValueKind.Null)) return false;
+        if (root.TryGetProperty("followup", out var followup) && followup.ValueKind is not (JsonValueKind.Object or JsonValueKind.Null)) return false;
+        return true;
     }
 
     private static IReadOnlyDictionary<string, AiProfileFact> ParseFacts(JsonElement root, string messageId, double resultConfidence)

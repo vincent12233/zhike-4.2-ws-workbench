@@ -5,7 +5,9 @@ param(
   # version's binaries.
   [string]$StageDir = '',
   [string]$OutputDir = '',
-  [string]$AppVersion = '5.1.0'
+  [string]$AppVersion = '5.1.0',
+  [switch]$SkipWebView2Check,
+  [switch]$AllowUnsigned
 )
 
 Set-StrictMode -Version Latest
@@ -19,6 +21,24 @@ $stageInput = if ([string]::IsNullOrWhiteSpace($StageDir)) {
 }
 $stage = [IO.Path]::GetFullPath($stageInput)
 $out = [IO.Path]::GetFullPath($OutputDir)
+function Get-WebView2RuntimeVersion {
+  $keys = @('HKCU:\Software\Microsoft\EdgeUpdate\Clients','HKLM:\Software\Microsoft\EdgeUpdate\Clients','HKLM:\Software\WOW6432Node\Microsoft\EdgeUpdate\Clients')
+  foreach ($root in $keys) {
+    if (-not (Test-Path -LiteralPath $root)) { continue }
+    foreach ($child in (Get-ChildItem -LiteralPath $root -ErrorAction SilentlyContinue)) {
+      try { $item = Get-ItemProperty -LiteralPath $child.PSPath -ErrorAction Stop; if ([string]$item.name -match 'WebView2' -and -not [string]::IsNullOrWhiteSpace([string]$item.pv)) { return [string]$item.pv } } catch { }
+    }
+  }
+  return ''
+}
+$webView2Version = Get-WebView2RuntimeVersion
+if ([string]::IsNullOrWhiteSpace($webView2Version)) {
+  if ($SkipWebView2Check) { Write-Warning '未检测到 WebView2 Runtime，已按参数跳过检查。' }
+  else { Write-Warning '未检测到 WebView2 Runtime；安装包会保留运行时提示，目标机首次启动前需补装。' }
+}
+$signingRequired = $env:ZHike_REQUIRE_SIGNING -eq 'true'
+$certificate = [string]$env:ZHike_SIGN_CERTIFICATE
+if ($signingRequired -and -not $AllowUnsigned -and [string]::IsNullOrWhiteSpace($certificate)) { throw 'ZHike_REQUIRE_SIGNING=true 但未提供签名证书；请配置 ZHike_SIGN_CERTIFICATE 或传入 -AllowUnsigned。' }
 if (-not (Test-Path -LiteralPath (Join-Path $stage 'Zhike.Desktop.exe'))) { throw "WinUI stage is missing Zhike.Desktop.exe: $stage" }
 $requiredStageFiles = @(
   'resources\app\index.html',
@@ -90,4 +110,11 @@ if (-not $installerItem) {
 }
 if (-not $installerItem) { throw "installer not found in output directory: $out" }
 $installer = $installerItem.FullName
-Write-Output (ConvertTo-Json @{ installer = $installer; sha256 = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash; bytes = $installerItem.Length })
+Write-Output (ConvertTo-Json @{
+  installer = $installer
+  sha256 = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash
+  bytes = $installerItem.Length
+  webView2Version = if ($webView2Version) { $webView2Version } else { 'not-detected' }
+  signingStatus = if ($certificate) { 'certificate-configured' } else { 'unsigned-placeholder' }
+  rollback = '覆盖升级保留 %LOCALAPPDATA%\ZhikeNative 用户数据；安装失败时使用上一版安装包回滚。'
+})
