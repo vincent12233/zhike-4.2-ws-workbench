@@ -25,6 +25,7 @@ builder.Services.AddSingleton<WsRepository>();
 builder.Services.AddSingleton<CustomerRepository>();
 builder.Services.AddSingleton<BusinessRecordRepository>();
 builder.Services.AddSingleton<ImportRepository>();
+builder.Services.AddSingleton<LegacyStateRepository>();
 var app = builder.Build();
 
 app.UseExceptionHandler(handler => handler.Run(async context =>
@@ -95,6 +96,7 @@ app.MapWsRoutes();
 app.MapCustomerRoutes();
 app.MapBusinessRecordRoutes();
 app.MapImportRoutes();
+app.MapLegacyStateRoutes();
 app.MapAuthRoutes();
 
 app.Run();

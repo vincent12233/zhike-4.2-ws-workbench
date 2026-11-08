@@ -6,6 +6,8 @@ public static class LegacyBridgeScript
       (() => {
         const listeners = new Map();
         const pending = new Map();
+        window.__DESKTOP_APP__ = true;
+        window.__LOCAL_DB__ = true;
         const host = {
           version: '5.1',
           invoke(method, payload = {}, options = {}) {

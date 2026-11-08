@@ -16,6 +16,7 @@ const expected = [
   '007-business-date-separation.sql',
   '008-outbox-dedupe.sql',
   '009-worker-heartbeats.sql',
+  '010-legacy-workspace-state.sql',
 ];
 
 for (const file of expected) assert.equal(fs.existsSync(path.join(migrationsDir, file)), true, `missing ${file}`);
@@ -27,6 +28,7 @@ for (const table of [
   'ai_jobs', 'followup_tasks', 'sync_outbox', 'import_batches', 'import_rows',
   'ai_analysis_results', 'ai_field_observations',
   'worker_heartbeats',
+  'legacy_workspace_state', 'legacy_workspace_snapshots',
 ]) assert.match(sql, new RegExp(`CREATE TABLE IF NOT EXISTS ${table}`), `missing table ${table}`);
 
 for (const phrase of ['CREATE INDEX', 'UNIQUE', 'jsonb', 'FOR UPDATE SKIP LOCKED']) {
@@ -38,6 +40,7 @@ assert.doesNotMatch(sql, /^\s*(BEGIN|COMMIT);/im, 'migration runner owns transac
 assert.match(fs.readFileSync(path.join(migrationsDir, '007-business-date-separation.sql'), 'utf8'), /business_date/);
 assert.match(fs.readFileSync(path.join(migrationsDir, '008-outbox-dedupe.sql'), 'utf8'), /uq_sync_outbox_event/);
 assert.match(fs.readFileSync(path.join(migrationsDir, '009-worker-heartbeats.sql'), 'utf8'), /last_seen_at/);
+assert.match(fs.readFileSync(path.join(migrationsDir, '010-legacy-workspace-state.sql'), 'utf8'), /JSONB/i);
 
 for (const file of [
   'server/src/Zhike.Infrastructure/Database/PostgresConnectionFactory.cs',
