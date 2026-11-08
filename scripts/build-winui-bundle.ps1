@@ -22,6 +22,7 @@ $stage = Join-Path $out "zhike-winui-$Version-$RuntimeIdentifier"
 $archive = Join-Path $out "zhike-winui-$Version-$RuntimeIdentifier.zip"
 $sourceArchive = Join-Path $out "zhike-source-$Version.zip"
 $project = Join-Path $repo 'desktop\src\Zhike.Desktop\Zhike.Desktop.csproj'
+$iconSource = Join-Path $repo 'desktop\src\Zhike.Desktop\Assets\zhike.ico'
 $resourcesRoot = Join-Path $repo 'resources\app'
 $resourceAllowList = @(
   'index.html',
@@ -45,6 +46,7 @@ function Assert-ChildPath([string]$Path, [string]$Parent, [string]$Label) {
 
 Assert-ChildPath $out (Join-Path $repo 'work') 'output path'
 if (-not (Test-Path -LiteralPath $project)) { throw "missing WinUI project: $project" }
+if (-not (Test-Path -LiteralPath $iconSource -PathType Leaf)) { throw "missing WinUI application icon: $iconSource" }
 if (-not (Test-Path -LiteralPath (Join-Path $resourcesRoot 'index.html'))) { throw "missing original page resources: $resourcesRoot" }
 if (Test-Path -LiteralPath $out) { Remove-Item -LiteralPath $out -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
@@ -53,6 +55,10 @@ New-Item -ItemType Directory -Force -Path $stage | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "dotnet restore failed with exit code $LASTEXITCODE" }
 $useSelfContained = -not $FrameworkDependent -or $SelfContained
 $publishArgs = @('publish', $project, '-c', $Configuration, '-r', $RuntimeIdentifier, '--no-restore', '-o', $stage, '-v:minimal')
+$publishArgs += "-p:Version=$Version"
+$publishArgs += "-p:AssemblyVersion=$Version.0"
+$publishArgs += "-p:FileVersion=$Version.0"
+$publishArgs += "-p:InformationalVersion=$Version"
 if ($useSelfContained) {
   $publishArgs += '-p:WindowsAppSDKSelfContained=true'
   $publishArgs += '-p:WindowsPackageType=None'
@@ -69,6 +75,8 @@ if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed with exit code $LASTEXIT
 
 $exe = Join-Path $stage 'Zhike.Desktop.exe'
 if (-not (Test-Path -LiteralPath $exe)) { throw "publish output missing Zhike.Desktop.exe: $exe" }
+Copy-Item -LiteralPath $iconSource -Destination (Join-Path $stage 'zhike.ico') -Force
+if (-not (Test-Path -LiteralPath (Join-Path $stage 'zhike.ico') -PathType Leaf)) { throw 'bundle is missing zhike.ico' }
 New-Item -ItemType Directory -Force -Path (Join-Path $stage 'resources') | Out-Null
 $resourceDestination = Join-Path $stage 'resources\app'
 $blockedResourceNames = @('data', 'backups', 'logs', 'user-data', 'ai-credentials.json', 'desktop-tools.json', 'workspace.sqlite', 'node.exe', 'main.cjs', 'preload.cjs', 'ws-preload.cjs', 'server.mjs', 'migrate-data.cjs', 'package.json', 'package-lock.json', 'migrations')

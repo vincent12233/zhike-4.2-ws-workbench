@@ -60,6 +60,8 @@ assert.match(connector, /networks:\s*\[zhike_internal,\s*zhike_egress\]/,
   'WS connector needs internal API DNS plus outbound WhatsApp Web access');
 assert.match(api, /ports:[\s\S]*\$\{ZHike_API_BIND:-127\.0\.0\.1\}:\$\{ZHike_API_PORT:-48080\}:8080/,
   'API stays loopback-bound by default for a desktop deployment');
+assert.match(api, /ZHike__AppVersion:\s*\$\{ZHike_APP_VERSION:-5\.1\.0\}/,
+  'Docker API default version must match the current desktop release');
 for (const [name, block] of [['ai-worker', worker], ['ws-connector', connector], ['postgres', postgres], ['backup', backup]]) {
   assert.doesNotMatch(block, /ports:/, `${name} must not publish a host port`);
 }

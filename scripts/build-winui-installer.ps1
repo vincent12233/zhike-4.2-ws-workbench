@@ -25,6 +25,7 @@ $requiredStageFiles = @(
   'resources\app\app.js',
   'resources\app\styles.css',
   'resources\app\vendor\xlsx\xlsx.js',
+  'zhike.ico',
   'bundle-manifest.json'
 )
 foreach ($relative in $requiredStageFiles) {
@@ -60,10 +61,10 @@ Get-ChildItem -LiteralPath $out -File -ErrorAction SilentlyContinue |
 # passing the same strings directly to ISCC is interpreted as multiple script
 # filenames on Windows and can silently package stale files.
 $iss = [IO.Path]::GetFullPath((Join-Path $repo 'zhike-desktop-setup.iss'))
-foreach ($value in @($iscc, $stage, $out, $iss)) {
+foreach ($value in @($iscc, $stage, $out, $iss, (Join-Path $stage 'zhike.ico'))) {
   if ($value.Contains('"')) { throw "Installer path contains an unsupported quote: $value" }
 }
-$commandLine = '"' + $iscc + '" /DStageDir="' + $stage + '" /DBuildOutputDir="' + $out + '" /DAppVersion=' + $AppVersion + ' "' + $iss + '"'
+$commandLine = '"' + $iscc + '" /DStageDir="' + $stage + '" /DBuildOutputDir="' + $out + '" /DAppVersion=' + $AppVersion + ' /DIconFile="' + (Join-Path $stage 'zhike.ico') + '" "' + $iss + '"'
 & $env:ComSpec /d /s /c $commandLine
 $isccExitCode = $LASTEXITCODE
 if ($isccExitCode -ne 0) { throw "ISCC failed with exit code $isccExitCode" }

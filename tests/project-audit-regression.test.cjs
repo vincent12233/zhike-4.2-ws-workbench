@@ -160,6 +160,7 @@ assert.doesNotMatch(server, /latest\.original_text !== current\.last_message_tex
 assert.match(wsUi, /Keep the server's chronology[\s\S]{0,220}preview !== refreshedConversation\.lastMessageText/, 'WS list refresh keeps server chronology in the renderer');
 assert.match(wsUi, /state\.autoCaptureSignature = ''/, 'failed background AI capture remains eligible for retry');
 assert.match(wsUi, /document\.hidden[\s\S]*collectionRefreshTimer[\s\S]*autoCaptureTimer/, 'WS background pollers pause while the desktop window is hidden');
+assert.match(app, /dataSyncStarted[\s\S]*startDataSync\(\)\{if\(!window\.__LOCAL_DB__\|\|dataSyncStarted\)return/, 'shared-state polling is initialized once and does not multiply on route re-entry');
 assert.match(wsUi, /Keep a new preview unsigned while AI is disabled/, 'WS list previews remain pending until AI is enabled');
 assert.match(wsUi, /const switched = await switchAccount\(result\.account\.id\)/, 'adding a WS account reports a failed account switch instead of false success');
 assert.match(wsUi, /analysisStatus: analysisResult\.ok \? 'completed' : analysisResult\.disabled \? 'pending' : 'retryable'/, 'visible and background WS capture preserve AI retry status');

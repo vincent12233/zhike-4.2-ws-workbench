@@ -20,10 +20,12 @@ const required = [
 for (const relative of required) assert.equal(fs.existsSync(path.join(repo, relative)), true, `missing ${relative}`);
 
 const compose = fs.readFileSync(path.join(repo, 'infra/compose.yaml'), 'utf8');
+const envExample = fs.readFileSync(path.join(repo, 'infra/.env.example'), 'utf8');
 for (const service of ['postgres', 'api', 'ai-worker', 'ws-connector', 'backup']) {
   assert.match(compose, new RegExp(`^\\s{2}${service}:`, 'm'), `Compose must define ${service}`);
 }
 assert.doesNotMatch(compose, /ports:\s*\n\s*-\s*["']?5432:/, 'PostgreSQL must not be published directly');
+assert.match(envExample, /^ZHike_APP_VERSION=5\.1\.0$/m, 'Docker env example must match the current desktop release');
 
 const healthPath = path.join(repo, 'server/src/Zhike.Contracts/HealthContracts.cs');
 assert.equal(fs.existsSync(healthPath), true, 'health response contract is required');

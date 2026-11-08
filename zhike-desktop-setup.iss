@@ -7,6 +7,9 @@
 #ifndef BuildOutputDir
 #define BuildOutputDir "work\\winui-installer-output"
 #endif
+#ifndef IconFile
+#define IconFile "desktop\\src\\Zhike.Desktop\\Assets\\zhike.ico"
+#endif
 
 [Setup]
 AppId={{8A2E0A65-B5C8-4F74-9DD9-7AC4CE0A50B3}
@@ -23,11 +26,12 @@ SolidCompression=yes
 WizardStyle=modern
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
+SetupIconFile={#IconFile}
 CloseApplications=yes
 RestartApplications=no
 DisableProgramGroupPage=yes
 SetupLogging=yes
-UninstallDisplayIcon={app}\Zhike.Desktop.exe
+UninstallDisplayIcon={app}\zhike.ico
 
 [Languages]
 Name: "chinesesimp"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
@@ -39,8 +43,8 @@ Name: "desktopicon"; Description: "创建桌面快捷方式"; GroupDescription: 
 Source: "{#StageDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\知客原生桌面版"; Filename: "{app}\Zhike.Desktop.exe"; WorkingDir: "{app}"
-Name: "{autodesktop}\知客原生桌面版"; Filename: "{app}\Zhike.Desktop.exe"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{group}\知客原生桌面版"; Filename: "{app}\Zhike.Desktop.exe"; IconFilename: "{app}\zhike.ico"; IconIndex: 0; WorkingDir: "{app}"
+Name: "{autodesktop}\知客原生桌面版"; Filename: "{app}\Zhike.Desktop.exe"; IconFilename: "{app}\zhike.ico"; IconIndex: 0; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\Zhike.Desktop.exe"; Description: "启动知客原生桌面版"; Flags: nowait postinstall skipifsilent
