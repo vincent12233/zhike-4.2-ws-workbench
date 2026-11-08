@@ -74,3 +74,13 @@ After consolidating governance evidence through the shared redaction helper, all
 - `node --check resources/app/modules/customer-governance-core.js`
 
 The redaction now consumes secret key/value tokens and whitespace-separated numeric sequences while preserving ordinary profile text.
+
+## Review fix round 3
+
+### RED
+
+Added a supplied `result.evidence` regression with `password: hunter2 银行卡号 1234 5678`; it failed because that evidence branch used a narrower regex and leaked trailing values.
+
+### GREEN
+
+The supplied evidence branch now uses the complete shared redaction helper. Focused hot-chat, governance, WS core/CRM sync tests and syntax checks pass.

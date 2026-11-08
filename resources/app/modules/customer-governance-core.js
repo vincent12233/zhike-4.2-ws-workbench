@@ -67,7 +67,7 @@
       const field = text(item.field);
       if (!field || !fields[field] || text(item.value) === '') continue;
       const value = fields[field];
-      const sourceText = text(item.text || item.sourceText || result.summary).replace(/(?:password|passcode|token|cookie|secret|验证码|校验码|密码|银行卡|收款码|二维码)[^\s，。；;]*/ig, '[已脱敏]').slice(0, 2000);
+      const sourceText = redactSensitive(item.text || item.sourceText || result.summary).slice(0, 2000);
       const key = `${analysisId}:${field}`;
       if (seen.has(key)) continue;
       seen.add(key);
@@ -242,5 +242,6 @@
 
   return { normalizeAiProfile, mergeAiProfileSafely, shouldAutoSoftDelete, buildGovernanceAction, normalizePhone, normalizeAge };
 });
+
 
 
