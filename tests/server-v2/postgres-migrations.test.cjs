@@ -17,6 +17,7 @@ const expected = [
   '008-outbox-dedupe.sql',
   '009-worker-heartbeats.sql',
   '010-legacy-workspace-state.sql',
+  '011-hot-chat-profiles.sql',
 ];
 
 for (const file of expected) assert.equal(fs.existsSync(path.join(migrationsDir, file)), true, `missing ${file}`);
@@ -29,6 +30,7 @@ for (const table of [
   'ai_analysis_results', 'ai_field_observations',
   'worker_heartbeats',
   'legacy_workspace_state', 'legacy_workspace_snapshots',
+  'hot_chat_profiles', 'hot_chat_profile_fields', 'hot_chat_events', 'hot_chat_sync_outbox',
 ]) assert.match(sql, new RegExp(`CREATE TABLE IF NOT EXISTS ${table}`), `missing table ${table}`);
 
 for (const phrase of ['CREATE INDEX', 'UNIQUE', 'jsonb', 'FOR UPDATE SKIP LOCKED']) {
@@ -41,6 +43,8 @@ assert.match(fs.readFileSync(path.join(migrationsDir, '007-business-date-separat
 assert.match(fs.readFileSync(path.join(migrationsDir, '008-outbox-dedupe.sql'), 'utf8'), /uq_sync_outbox_event/);
 assert.match(fs.readFileSync(path.join(migrationsDir, '009-worker-heartbeats.sql'), 'utf8'), /last_seen_at/);
 assert.match(fs.readFileSync(path.join(migrationsDir, '010-legacy-workspace-state.sql'), 'utf8'), /JSONB/i);
+assert.match(fs.readFileSync(path.join(migrationsDir, '011-hot-chat-profiles.sql'), 'utf8'), /VALUES\s*\(11,/i);
+assert.match(fs.readFileSync(path.join(migrationsDir, '011-hot-chat-profiles.sql'), 'utf8'), /UNIQUE\s*\(\s*customer_id\s*,\s*account_id\s*,\s*conversation_id\s*\)/i);
 
 for (const file of [
   'server/src/Zhike.Infrastructure/Database/PostgresConnectionFactory.cs',

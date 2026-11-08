@@ -23,6 +23,7 @@ builder.Services.AddSingleton<SessionService>();
 builder.Services.AddSingleton<WorkspaceOwnerGuard>();
 builder.Services.AddSingleton<WsRepository>();
 builder.Services.AddSingleton<CustomerRepository>();
+builder.Services.AddSingleton<HotChatProfileRepository>();
 builder.Services.AddSingleton<BusinessRecordRepository>();
 builder.Services.AddSingleton<ImportRepository>();
 builder.Services.AddSingleton<LegacyStateRepository>();
@@ -103,6 +104,7 @@ app.MapGet("/api/v2/health", async (DatabaseHealthProbe probe, WorkerHeartbeatRe
 });
 app.MapWsRoutes();
 app.MapCustomerRoutes();
+app.MapHotChatRoutes();
 app.MapBusinessRecordRoutes();
 app.MapImportRoutes();
 app.MapLegacyStateRoutes();

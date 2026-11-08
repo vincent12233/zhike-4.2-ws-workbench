@@ -40,7 +40,12 @@ public sealed record CustomerRow(
     string ProductInterest,
     string Notes,
     string AiSummary,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    string StatusColor = "gray",
+    IReadOnlyList<string>? Tags = null,
+    string ProfileSummary = "",
+    double CompletenessScore = 0,
+    DateTimeOffset? NextFollowupAt = null);
 
 public sealed class CustomerRepository(PostgresConnectionFactory connections)
 {
@@ -50,12 +55,14 @@ public sealed class CustomerRepository(PostgresConnectionFactory connections)
         await using var connection = connections.Create();
         await connection.OpenAsync(cancellationToken);
         await using var command = new NpgsqlCommand("""
-            SELECT id, name, phone, country, language, source, stage, status, intent_level, occupation, age, budget, product_interest, notes, ai_summary, updated_at
-            FROM customers
-            WHERE deleted_at IS NULL
-              AND ($1 = '' OR name ILIKE '%' || $1 || '%' OR phone ILIKE '%' || $1 || '%' OR source ILIKE '%' || $1 || '%' OR product_interest ILIKE '%' || $1 || '%')
-              AND ($2 = '' OR id > $2)
-            ORDER BY id
+            SELECT c.id, c.name, c.phone, c.country, c.language, c.source, c.stage, c.status, c.intent_level, c.occupation, c.age, c.budget, c.product_interest, c.notes, c.ai_summary, c.updated_at,
+                   COALESCE(h.status_color, 'gray'), COALESCE(h.tags::text, '[]'), COALESCE(h.profile_summary, ''), COALESCE(h.completeness_score, 0), h.next_followup_at
+            FROM customers c
+            LEFT JOIN LATERAL (SELECT status_color, tags, profile_summary, completeness_score, next_followup_at FROM hot_chat_profiles hp WHERE hp.customer_id = c.id ORDER BY hp.updated_at DESC LIMIT 1) h ON true
+            WHERE c.deleted_at IS NULL
+              AND ($1 = '' OR c.name ILIKE '%' || $1 || '%' OR c.phone ILIKE '%' || $1 || '%' OR c.source ILIKE '%' || $1 || '%' OR c.product_interest ILIKE '%' || $1 || '%')
+              AND ($2 = '' OR c.id > $2)
+            ORDER BY c.id
             LIMIT $3
             """, connection);
         command.Parameters.AddWithValue(search?.Trim() ?? string.Empty);
@@ -181,14 +188,26 @@ public sealed class CustomerRepository(PostgresConnectionFactory connections)
     {
         await using var connection = connections.Create();
         await connection.OpenAsync(cancellationToken);
-        await using var command = new NpgsqlCommand("SELECT id, name, phone, country, language, source, stage, status, intent_level, occupation, age, budget, product_interest, notes, ai_summary, updated_at FROM customers WHERE id = $1", connection);
+        await using var command = new NpgsqlCommand("""
+            SELECT c.id, c.name, c.phone, c.country, c.language, c.source, c.stage, c.status, c.intent_level, c.occupation, c.age, c.budget, c.product_interest, c.notes, c.ai_summary, c.updated_at,
+                   COALESCE(h.status_color, 'gray'), COALESCE(h.tags::text, '[]'), COALESCE(h.profile_summary, ''), COALESCE(h.completeness_score, 0), h.next_followup_at
+            FROM customers c
+            LEFT JOIN LATERAL (SELECT status_color, tags, profile_summary, completeness_score, next_followup_at FROM hot_chat_profiles hp WHERE hp.customer_id = c.id ORDER BY hp.updated_at DESC LIMIT 1) h ON true
+            WHERE c.id = $1
+            """, connection);
         command.Parameters.AddWithValue(id);
         return (await ReadRowsAsync(command, cancellationToken)).FirstOrDefault();
     }
 
     private static async Task<CustomerRow?> GetAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string id, CancellationToken cancellationToken)
     {
-        await using var command = new NpgsqlCommand("SELECT id, name, phone, country, language, source, stage, status, intent_level, occupation, age, budget, product_interest, notes, ai_summary, updated_at FROM customers WHERE id = $1", connection, transaction);
+        await using var command = new NpgsqlCommand("""
+            SELECT c.id, c.name, c.phone, c.country, c.language, c.source, c.stage, c.status, c.intent_level, c.occupation, c.age, c.budget, c.product_interest, c.notes, c.ai_summary, c.updated_at,
+                   COALESCE(h.status_color, 'gray'), COALESCE(h.tags::text, '[]'), COALESCE(h.profile_summary, ''), COALESCE(h.completeness_score, 0), h.next_followup_at
+            FROM customers c
+            LEFT JOIN LATERAL (SELECT status_color, tags, profile_summary, completeness_score, next_followup_at FROM hot_chat_profiles hp WHERE hp.customer_id = c.id ORDER BY hp.updated_at DESC LIMIT 1) h ON true
+            WHERE c.id = $1
+            """, connection, transaction);
         command.Parameters.AddWithValue(id);
         return (await ReadRowsAsync(command, cancellationToken)).FirstOrDefault();
     }
@@ -211,9 +230,17 @@ public sealed class CustomerRepository(PostgresConnectionFactory connections)
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
         {
-            rows.Add(new CustomerRow(reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3), reader.GetString(4), reader.GetString(5), reader.GetString(6), reader.GetString(7), reader.GetString(8), reader.GetString(9), reader.IsDBNull(10) ? null : reader.GetInt32(10), reader.GetString(11), reader.GetString(12), reader.GetString(13), reader.GetString(14), reader.GetFieldValue<DateTimeOffset>(15)));
+            rows.Add(new CustomerRow(
+                reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3), reader.GetString(4), reader.GetString(5), reader.GetString(6), reader.GetString(7), reader.GetString(8), reader.GetString(9), reader.IsDBNull(10) ? null : reader.GetInt32(10), reader.GetString(11), reader.GetString(12), reader.GetString(13), reader.GetString(14), reader.GetFieldValue<DateTimeOffset>(15),
+                reader.GetString(16), ParseTags(reader.GetString(17)), reader.GetString(18), Convert.ToDouble(reader.GetValue(19)), reader.IsDBNull(20) ? null : reader.GetFieldValue<DateTimeOffset>(20)));
         }
         return rows;
+    }
+
+    private static IReadOnlyList<string> ParseTags(string json)
+    {
+        try { return JsonSerializer.Deserialize<string[]>(json) ?? []; }
+        catch (JsonException) { return []; }
     }
 
     private static string NormalizePhone(string value) => new(value.Where(char.IsDigit).ToArray());

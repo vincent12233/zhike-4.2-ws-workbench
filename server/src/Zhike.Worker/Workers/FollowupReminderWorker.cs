@@ -33,6 +33,15 @@ public sealed class FollowupReminderWorker(PostgresConnectionFactory connections
             SELECT id, customer_id, reason_key, title, detail, due_at, priority, source_message_id
             FROM followup_tasks
             WHERE state = 'pending' AND due_at IS NOT NULL AND due_at <= now()
+              -- Reminder cooldown: a transport retry or duplicate worker must
+              -- never publish the same due task more than once in the window.
+              AND NOT EXISTS (
+                  SELECT 1 FROM sync_outbox o
+                  WHERE o.aggregate_type = 'followup'
+                    AND o.aggregate_id = followup_tasks.id
+                    AND o.event_type = 'followup.reminder.due'
+                    AND o.created_at >= now() - interval '3 days'
+              )
             ORDER BY due_at, created_at
             FOR UPDATE SKIP LOCKED
             LIMIT 100

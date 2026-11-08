@@ -58,6 +58,9 @@ const version = async () => String((await (await request('/api/state/version')).
   assert.equal(saved.profile.fields.age.manualLocked, true);
   assert.equal(saved.profile.manualColor, 'blue');
   assert.equal(saved.profile.statusColor, 'blue');
+  const unlocked = await request('/api/ws/hot-chat/profile/confirm', { method: 'POST', body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', field: 'age', value: 36, confidence: 1, evidence: '人工解除锁定', locked: false }) });
+  assert.equal(unlocked.status, 200);
+  assert.equal((await unlocked.json()).profile.fields.age.manualLocked, false, 'unlock must clear field manual lock');
   const rejected = await request('/api/ws/hot-chat/profile/confirm', { method: 'POST', body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', field: 'gender', value: '女', confidence: 1, evidence: '我是女性', declined: true }) });
   assert.equal((await rejected.json()).profile.fields.gender.state, 'declined');
   const invalidColor = await request('/api/ws/hot-chat/profile/confirm', { method: 'POST', body: body({ accountId: 'default', conversationId: 'missing', customerId: 'C1', color: 'purple' }) });

@@ -25,7 +25,7 @@ services:
     environment:
       ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=${POSTGRES_DB:-zhike};Username=${POSTGRES_USER:-zhike_app};Password=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
       ZHike__AppVersion: ${ZHike_APP_VERSION:-5.1.0}
-      ZHike__SchemaVersion: ${ZHike_SCHEMA_VERSION:-10}
+      ZHike__SchemaVersion: ${ZHike_SCHEMA_VERSION:-11}
       ZHike__WorkspaceOwnerId: ${ZHike_WORKSPACE_OWNER_ID:-}
       ZHike__AllowRemotePairing: ${ZHike_ALLOW_REMOTE_PAIRING:-false}
       ZHike__AllowDockerLoopbackPairing: ${ZHike_ALLOW_DOCKER_LOOPBACK_PAIRING:-true}

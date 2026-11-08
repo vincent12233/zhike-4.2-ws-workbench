@@ -691,7 +691,11 @@ function saveHotProfile(identity, facts = [], options = {}) {
       merged.confidence = explicit.confidence;
     }
     const evidence = (Array.isArray(merged.observations) ? merged.observations : []).filter((item, index, all) => index === all.findIndex(other => other.evidence === item.evidence && JSON.stringify(other.value) === JSON.stringify(item.value))).map(item => ({ value: item.value, confidence: item.confidence, text: item.evidence }));
-    upsert.run(JSON.stringify(merged.value ?? null), merged.state, Number(merged.confidence || 0), JSON.stringify(evidence), options.manualLocked ? 1 : Number(prior?.manual_locked || 0), now, row.id, field);
+    // An explicit manual unlock must clear the field lock as well as the
+    // profile-level lock; otherwise the UI reports “解除锁定” but AI facts
+    // remain permanently blocked for this field.
+    const fieldManualLocked = Object.hasOwn(options, 'manualLocked') ? (options.manualLocked ? 1 : 0) : Number(prior?.manual_locked || 0);
+    upsert.run(JSON.stringify(merged.value ?? null), merged.state, Number(merged.confidence || 0), JSON.stringify(evidence), fieldManualLocked, now, row.id, field);
   }
   const fields = db.prepare('SELECT * FROM hot_chat_profile_fields WHERE profile_id=?').all(row.id);
   const profileObj = Object.fromEntries(fields.map(item => [item.field_key, { value: wsJson(item.value_json, null), state: item.state }]));
@@ -1758,7 +1762,7 @@ const server = createServer(async (req, res) => {
       res.end(body);
       return;
     }
-    if (!['/modules/productivity.js', '/modules/performance-enhancements.js', '/modules/smart-import.js', '/modules/business-enhancements.js', '/modules/business-enhancements.css', '/modules/accessibility-enhancements.js', '/modules/operations-upgrade.js', '/modules/operations-upgrade.css', '/modules/ui-refresh.css', '/index.html', '/styles.css', '/app.js', '/modules/v4-data-center.js', '/modules/v4.css', '/modules/gpt-assistant.js', '/modules/runtime-customizer.js', '/modules/gpt-assistant.css', '/modules/gpt-workbench.css', '/modules/gpt-modern.css', '/modules/gpt-upgrade.css', '/modules/gpt-management.css', '/modules/phone-registry.js', '/modules/phone-registry.css', '/modules/phone-registry-seed.json', '/modules/v41-ui.css', '/modules/operations-core.cjs', '/modules/operations-ui.js', '/modules/ticket-record-core.js', '/modules/ws-workbench-core.js', '/modules/ws-crm-sync-core.js', '/modules/ws-workbench.js', '/modules/ws-workbench.css'].includes(requestPath)) return json(res, 404, { error: '文件不存在。' });
+    if (!['/modules/productivity.js', '/modules/performance-enhancements.js', '/modules/smart-import.js', '/modules/business-enhancements.js', '/modules/business-enhancements.css', '/modules/accessibility-enhancements.js', '/modules/operations-upgrade.js', '/modules/operations-upgrade.css', '/modules/ui-refresh.css', '/index.html', '/styles.css', '/app.js', '/modules/v4-data-center.js', '/modules/v4.css', '/modules/gpt-assistant.js', '/modules/runtime-customizer.js', '/modules/gpt-assistant.css', '/modules/gpt-workbench.css', '/modules/gpt-modern.css', '/modules/gpt-upgrade.css', '/modules/gpt-management.css', '/modules/phone-registry.js', '/modules/phone-registry.css', '/modules/phone-registry-seed.json', '/modules/v41-ui.css', '/modules/operations-core.cjs', '/modules/operations-ui.js', '/modules/ticket-record-core.js', '/modules/ws-workbench-core.js', '/modules/ws-crm-sync-core.js', '/modules/hot-chat-profile-core.js', '/modules/ws-workbench.js', '/modules/ws-workbench.css'].includes(requestPath)) return json(res, 404, { error: '文件不存在。' });
     const filePath = resolve(root, `.${normalize(requestPath)}`);
     if (!filePath.startsWith(root + sep) || !existsSync(filePath) || !statSync(filePath).isFile()) return json(res, 404, { error: '文件不存在。' });
     const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.cjs': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml' };

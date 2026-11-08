@@ -8,6 +8,7 @@ const tests = [
   'ai-unconfigured.test.cjs',
   'ai-provider-lifetime.test.cjs',
   'postgres-migrations.test.cjs',
+  'hot-chat-profile.test.cjs',
   'sqlite-postgres-migration.test.cjs',
   'domain-record-identity.test.cjs',
   'import-classification.test.cjs',
