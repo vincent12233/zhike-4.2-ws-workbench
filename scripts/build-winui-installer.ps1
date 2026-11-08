@@ -47,9 +47,14 @@ foreach ($candidate in $candidates) {
 }
 if (-not $iscc) { throw 'Inno Setup compiler was not found.' }
 New-Item -ItemType Directory -Force -Path $out | Out-Null
-$expectedName = "知客-$AppVersion-WinUI桌面版.exe"
-$expectedPath = Join-Path $out $expectedName
-if (Test-Path -LiteralPath $expectedPath) { Remove-Item -LiteralPath $expectedPath -Force }
+# Keep the validation path ASCII-only. Windows PowerShell 5.1 may decode this
+# UTF-8 script without a BOM as the active system code page, while Inno Setup
+# still writes the correctly localized Chinese filename. Match by version and
+# product suffix instead of embedding the localized name in the script.
+$expectedPattern = "*-$AppVersion-WinUI*.exe"
+Get-ChildItem -LiteralPath $out -File -ErrorAction SilentlyContinue |
+  Where-Object { $_.Name -like $expectedPattern } |
+  Remove-Item -Force
 # ISCC parses /D values itself. Invoke it through cmd.exe so quotes around
 # paths containing spaces survive PowerShell's native argument marshalling;
 # passing the same strings directly to ISCC is interpreted as multiple script
@@ -62,6 +67,26 @@ $commandLine = '"' + $iscc + '" /DStageDir="' + $stage + '" /DBuildOutputDir="' 
 & $env:ComSpec /d /s /c $commandLine
 $isccExitCode = $LASTEXITCODE
 if ($isccExitCode -ne 0) { throw "ISCC failed with exit code $isccExitCode" }
-$installer = $expectedPath
-if ([string]::IsNullOrWhiteSpace($installer) -or -not (Test-Path -LiteralPath $installer)) { throw "installer not found in output directory: $out" }
-Write-Output (ConvertTo-Json @{ installer = $installer; sha256 = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash; bytes = (Get-Item -LiteralPath $installer).Length })
+$installer = ''
+# Inno can return immediately after the final write while the antivirus/file
+# system still publishes the Unicode-named output. Retry the existence check
+# briefly so a successful compile is not reported as a packaging failure.
+for ($attempt = 0; $attempt -lt 20 -and [string]::IsNullOrWhiteSpace($installer); $attempt++) {
+  $published = Get-ChildItem -LiteralPath $out -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -like $expectedPattern } | Select-Object -First 1
+  if ($published) { $installer = $published.FullName; break }
+  Start-Sleep -Milliseconds 250
+}
+if ([string]::IsNullOrWhiteSpace($installer) -or -not (Test-Path -LiteralPath $installer)) {
+  # Fall back to directory enumeration for Unicode/long-path providers that
+  # can transiently fail a literal existence probe immediately after ISCC
+  # closes the output handle.
+  $published = Get-ChildItem -LiteralPath $out -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -like $expectedPattern } | Select-Object -First 1
+  if ($published) { $installer = $published.FullName }
+}
+$installerItem = Get-Item -LiteralPath $installer -ErrorAction SilentlyContinue
+if (-not $installerItem) {
+  $installerItem = Get-ChildItem -LiteralPath $out -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -like $expectedPattern } | Select-Object -First 1
+}
+if (-not $installerItem) { throw "installer not found in output directory: $out" }
+$installer = $installerItem.FullName
+Write-Output (ConvertTo-Json @{ installer = $installer; sha256 = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash; bytes = $installerItem.Length })
