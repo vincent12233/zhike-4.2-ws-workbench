@@ -65,6 +65,18 @@
     catch { return { raw, parsed: null }; }
   }
 
+  function normalizeProfileFacts(value, overallConfidence = 0) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+    const output = {};
+    for (const [field, input] of Object.entries(value).slice(0, 13)) {
+      const fact = input && typeof input === 'object' && !Array.isArray(input) ? input : { value: input };
+      const confidence = Number.isFinite(Number(fact.confidence)) ? Math.max(0, Math.min(1, Number(fact.confidence))) : Number(overallConfidence) || 0;
+      const evidence = text(fact.evidence || fact.sourceText || fact.quote).slice(0, 2000);
+      output[field] = { value: fact.value ?? null, confidence, evidence, state: confidence >= 0.6 && evidence ? 'known' : (fact.value == null || fact.value === '' ? 'missing' : 'pending') };
+    }
+    return output;
+  }
+
   function parseAiResult(value) {
     const { raw, parsed } = parseJsonObject(value);
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
@@ -94,10 +106,16 @@
       nextStep: text(parsed.nextStep),
       followupTime: text(parsed.followupTime),
       replySuggestion: text(parsed.replySuggestion || parsed.reply),
+      profileFacts: normalizeProfileFacts(parsed.profileFacts, confidence),
+      missingFields: Array.isArray(parsed.missingFields) ? parsed.missingFields.map(text).filter(Boolean).slice(0, 13) : [],
+      naturalNextTopics: Array.isArray(parsed.naturalNextTopics) ? parsed.naturalNextTopics.map(text).filter(Boolean).slice(0, 5) : [],
+      customerTemperature: ['hot','warm','cool','silent'].includes(text(parsed.customerTemperature).toLowerCase()) ? text(parsed.customerTemperature).toLowerCase() : '',
+      statusColor: ['green','blue','amber','red','gray'].includes(text(parsed.statusColor).toLowerCase()) ? text(parsed.statusColor).toLowerCase() : '',
       confidence: Number.isFinite(confidence) ? Math.min(1, Math.max(0, confidence)) : 0,
       lowConfidence: !Number.isFinite(confidence) || confidence < 0.6,
       raw,
     };
+    result.profileFactsAutoFill = result.lowConfidence ? {} : Object.fromEntries(Object.entries(result.profileFacts).filter(([, fact]) => fact && fact.evidence && fact.confidence >= 0.6 && fact.value != null && fact.value !== ''));
     if (result.lowConfidence) result.warning = 'AI 判断置信度较低，请人工确认。';
     return result;
   }

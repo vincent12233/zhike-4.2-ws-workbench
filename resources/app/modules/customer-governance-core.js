@@ -24,6 +24,17 @@
     emotion: ['emotion'],
     customerStage: ['customerStage', 'stage'],
     aiSummary: ['summary'],
+    preferred_name: ['preferred_name', 'preferredName'],
+    gender: ['gender'],
+    work_context: ['work_context', 'workContext'],
+    is_investor: ['is_investor', 'isInvestor'],
+    investment_years: ['investment_years', 'investmentYears'],
+    holdings: ['holdings'],
+    investment_habits: ['investment_habits', 'investmentHabits'],
+    investment_preferences: ['investment_preferences', 'investmentPreferences'],
+    family_context: ['family_context', 'familyContext'],
+    life_interests: ['life_interests', 'lifeInterests'],
+    future_plans: ['future_plans', 'futurePlans'],
   });
 
   function readNested(result, key) {
@@ -64,6 +75,14 @@
       seen.add(key);
       rows.push({ key, field, value: fields[field], sourceText: text(result.summary).slice(0, 2000), confidence: Number(result.confidence) || 0, analysisId, conversationId });
     }
+    const profileFacts = result?.profileFacts && typeof result.profileFacts === 'object' ? result.profileFacts : {};
+    for (const [field, fact] of Object.entries(profileFacts)) {
+      if (!fact || fact.value == null || fact.value === '' || !text(fact.evidence)) continue;
+      const key = `${analysisId}:profile:${field}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      rows.push({ key, field, value: fact.value, sourceText: text(fact.evidence).slice(0, 2000), confidence: Number(fact.confidence ?? result.confidence) || 0, analysisId, conversationId });
+    }
     return rows;
   }
 
@@ -73,8 +92,10 @@
     const conversationId = text(conversation.id || conversation.conversationId);
     const rawPhone = readNested(result, 'phone');
     const productInterest = list(readNested(result, 'productInterest'));
+    const profileFacts = result.profileFacts && typeof result.profileFacts === 'object' ? result.profileFacts : {};
+    const factValue = key => profileFacts[key]?.value ?? readNested(result, key);
     const fields = {
-      name: text(readNested(result, 'name') || conversation.title || conversation.externalId || '未命名客户'),
+      name: text(readNested(result, 'name') || factValue('preferred_name') || conversation.title || conversation.externalId || '未命名客户'),
       phone: normalizePhone(rawPhone),
       rawPhone: text(rawPhone),
       country: text(readNested(result, 'country')),
@@ -82,6 +103,17 @@
       origin: text(readNested(result, 'origin')),
       age: normalizeAge(readNested(result, 'age')),
       occupation: text(readNested(result, 'occupation')),
+      preferred_name: text(factValue('preferred_name')),
+      gender: text(factValue('gender')),
+      work_context: text(factValue('work_context')),
+      is_investor: factValue('is_investor') ?? '',
+      investment_years: normalizeAge(factValue('investment_years')),
+      holdings: list(factValue('holdings')),
+      investment_habits: list(factValue('investment_habits')),
+      investment_preferences: list(factValue('investment_preferences')),
+      family_context: text(factValue('family_context')),
+      life_interests: list(factValue('life_interests')),
+      future_plans: text(factValue('future_plans')),
       productInterest: productInterest.join('、'),
       budget: text(readNested(result, 'budget')),
       intent: text(readNested(result, 'intent')),
@@ -127,13 +159,13 @@
       return !current || (field === 'name' && /^(未命名客户|未命名|未知客户|未知|—|-)$/.test(current));
     };
     const evidenceKeys = new Set(Array.isArray(customer.aiFieldEvidenceKeys) ? customer.aiFieldEvidenceKeys.map(text) : []);
-    const protectedFields = ['name', 'phone', 'rawPhone', 'country', 'language', 'origin', 'age', 'occupation', 'productInterest', 'budget', 'source', 'channel', 'assistant'];
+    const protectedFields = ['name', 'phone', 'rawPhone', 'country', 'language', 'origin', 'age', 'occupation', 'productInterest', 'budget', 'source', 'channel', 'assistant', 'preferred_name', 'gender', 'work_context', 'is_investor', 'investment_years', 'holdings', 'investment_habits', 'investment_preferences', 'family_context', 'life_interests', 'future_plans'];
     for (const field of protectedFields) {
       let value = profile[field];
       if (field === 'age') value = normalizeAge(value);
       if (field === 'phone') value = normalizePhone(value);
       if (field === 'rawPhone' && !value) value = profile.phone;
-      if (field === 'productInterest' && Array.isArray(value)) value = list(value).join('、');
+      if (Array.isArray(value)) value = list(value).join('、');
       if (value === '' || value == null) continue;
       if (missing(field, customer[field]) && !(field === 'age' && customer[field] !== '' && customer[field] != null && !missing(field, customer[field]))) {
         customer[field] = value;
@@ -142,7 +174,7 @@
         conflicts.push({ field, existing: customer[field], incoming: value, analysisId: profile.analysisId || '' });
       }
     }
-    const dynamic = { intent: profile.intent, intentScore: profile.intentScore, emotion: profile.emotion, aiSummary: profile.aiSummary };
+    const dynamic = { intent: profile.intent, intentScore: profile.intentScore, emotion: profile.emotion, aiSummary: profile.aiSummary, preferred_name: profile.preferred_name, gender: profile.gender, work_context: profile.work_context, is_investor: profile.is_investor, investment_years: profile.investment_years, holdings: profile.holdings, investment_habits: profile.investment_habits, investment_preferences: profile.investment_preferences, family_context: profile.family_context, life_interests: profile.life_interests, future_plans: profile.future_plans };
     for (const [field, value] of Object.entries(dynamic)) {
       if (value === '' || value == null) continue;
       if (JSON.stringify(customer[field]) !== JSON.stringify(value)) { customer[field] = value; changedFields.push(field); }
