@@ -144,7 +144,7 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
       if(writeConflict){if(!confirm('检测到双方同时修改了相同记录。先将本窗口当前完整数据导出为恢复副本，再载入共享最新数据？'))return;const localCopy=statePayload();download(`知客同步冲突恢复副本_${today}.json`,JSON.stringify({version:2,createdAt:new Date().toISOString(),...localCopy},null,2),'application/json');applySharedData(writeConflict.latest);lastCommittedState=cloneStateData(statePayload());stateVersion=String(writeConflict.latest.version||'');writeConflict=null;dbWriteFailure=null;syncReadFailure=null;markSyncVersion(stateVersion);render();toast('恢复副本已导出，共享数据已重新同步');return;}
       if(!dbWriteFailure&&!syncReadFailure)return;
       dbWriteFailure=null;syncReadFailure=null;markSyncVersion();
-      try{await flushStateWrites();await syncFromBackend(true);syncPollDelay=5000;scheduleDataSync();toast('本机数据同步已恢复');}
+      try{await flushStateWrites();const syncResult=await syncFromBackend(true);if(syncResult!==true)throw new Error('共享数据库同步未完成');syncPollDelay=5000;scheduleDataSync();toast('本机数据同步已恢复');}
       catch{dbWriteFailure=new Error('同步重试失败');markSyncVersion();toast('同步仍未恢复，请确认本机数据服务正常','x');}
     });
   }

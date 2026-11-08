@@ -31,6 +31,7 @@ assert.match(app, /scheduleDataSync/, 'shared state polling must use one schedul
 assert.match(app, /document\.hidden[\s\S]{0,180}syncPollDelay/, 'hidden windows must pause or back off polling');
 assert.match(app, /syncReadFailure/, 'read failures must stay separate from local write failures');
 assert.doesNotMatch(app, /dataSyncStarted[\s\S]{0,600}setInterval\(/, 'shared state sync must not create a perpetual duplicate interval');
+assert.match(app, /const\s+syncResult\s*=\s*await\s+syncFromBackend\(true\)[\s\S]{0,220}(?:syncResult\s*!==\s*true|syncResult\s*===\s*false)[\s\S]{0,220}本机数据同步已恢复/, 'manual sync retry must not report success when the shared read still fails');
 
 assert.match(app, /capacityWarning|容量告警|数据量较大/, 'large datasets must disclose capacity pressure');
 assert.match(app, /yieldToUi[\s\S]{0,2000}(?:500|1000|batch|批)/, 'large imports must yield between bounded batches');
