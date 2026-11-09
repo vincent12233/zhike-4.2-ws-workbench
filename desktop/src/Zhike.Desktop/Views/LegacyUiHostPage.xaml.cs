@@ -14,6 +14,8 @@ namespace Zhike.Desktop.Views;
 
 public sealed partial class LegacyUiHostPage : Page
 {
+    private const int MaxBridgeMessageChars = 50 * 1024 * 1024;
+    private const int MaxBridgePayloadChars = 48 * 1024 * 1024;
     private readonly WebViewProfileService _profiles = new();
     private readonly WebViewProfileService _wsProfiles = new();
     private readonly WsAccountStore _wsAccountStore = new();
@@ -332,7 +334,7 @@ public sealed partial class LegacyUiHostPage : Page
             if (_webView?.CoreWebView2 is null || !ReferenceEquals(sender, _webView.CoreWebView2)) return;
             if (!IsAllowedNavigation(args.Source, "zhike.local")) return;
             var rawMessage = args.TryGetWebMessageAsString();
-            if (rawMessage.Length > 1_200_000) return;
+            if (rawMessage.Length > MaxBridgeMessageChars) return;
             using var document = JsonDocument.Parse(rawMessage);
             var root = document.RootElement;
             if (!string.Equals(root.TryGetProperty("type", out var type) ? type.GetString() : null, "zhike.bridge.request", StringComparison.Ordinal)) return;
@@ -341,10 +343,19 @@ public sealed partial class LegacyUiHostPage : Page
             var bridgeVersion = StringValue(root, "bridgeVersion");
             using var emptyPayload = JsonDocument.Parse("{}");
             var payload = root.TryGetProperty("payload", out var payloadValue) ? payloadValue : emptyPayload.RootElement;
-            if (requestId.Length > 128 || string.IsNullOrWhiteSpace(method) || method.Length > 128 || payload.GetRawText().Length > 1_000_000)
+            if (requestId.Length > 128 || string.IsNullOrWhiteSpace(method) || method.Length > 128 || payload.GetRawText().Length > MaxBridgePayloadChars)
             {
                 var invalid = BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "INVALID_REQUEST", "bridge request is invalid");
-                sender.PostWebMessageAsJson(JsonSerializer.Serialize(new { type = "zhike.bridge.response", invalid.RequestId, invalid.BridgeVersion, invalid.Ok, invalid.ErrorCode, invalid.Message, invalid.Data }));
+                sender.PostWebMessageAsJson(JsonSerializer.Serialize(new
+                {
+                    type = "zhike.bridge.response",
+                    requestId = invalid.RequestId,
+                    bridgeVersion = invalid.BridgeVersion,
+                    ok = invalid.Ok,
+                    errorCode = invalid.ErrorCode,
+                    message = invalid.Message,
+                    data = invalid.Data,
+                }));
                 return;
             }
             var timeout = root.TryGetProperty("timeoutMs", out var timeoutValue) && timeoutValue.TryGetInt32(out var parsedTimeout) ? parsedTimeout : 15000;
@@ -357,7 +368,7 @@ public sealed partial class LegacyUiHostPage : Page
             }
             else
             {
-                using var requestCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(Math.Clamp(timeout, 250, 120000)));
+                using var requestCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(Math.Clamp(timeout, 250, 300000)));
                 try
                 {
                     response = await HandleNativeBridgeAsync(requestId, method, payload, timeout, accountId, requestCts.Token)
@@ -379,7 +390,16 @@ public sealed partial class LegacyUiHostPage : Page
                     }
                 }
             }
-            var message = new { type = "zhike.bridge.response", response.RequestId, response.BridgeVersion, response.Ok, response.ErrorCode, response.Message, response.Data };
+            var message = new
+            {
+                type = "zhike.bridge.response",
+                requestId = response.RequestId,
+                bridgeVersion = response.BridgeVersion,
+                ok = response.Ok,
+                errorCode = response.ErrorCode,
+                message = response.Message,
+                data = response.Data,
+            };
             sender.PostWebMessageAsJson(JsonSerializer.Serialize(message));
         }
         catch

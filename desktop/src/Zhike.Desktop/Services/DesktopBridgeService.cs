@@ -5,6 +5,7 @@ namespace Zhike.Desktop.Services;
 public sealed class DesktopBridgeService
 {
     public const string CurrentVersion = "5.1";
+    private const int MaxPayloadChars = 48 * 1024 * 1024;
     private readonly LegacyApiAdapter _legacyApi;
 
     public DesktopBridgeService(LegacyApiAdapter legacyApi) => _legacyApi = legacyApi;
@@ -25,9 +26,9 @@ public sealed class DesktopBridgeService
             return BridgeResponse.Failure(id, CurrentVersion, "UNSUPPORTED_VERSION", "desktop bridge version is not supported");
         if (id.Length > 128 || string.IsNullOrWhiteSpace(method) || method.Length > 128)
             return BridgeResponse.Failure(id, CurrentVersion, "INVALID_REQUEST", "bridge request is invalid");
-        if (payload.GetRawText().Length > 1_000_000)
+        if (payload.GetRawText().Length > MaxPayloadChars)
             return BridgeResponse.Failure(id, CurrentVersion, "INVALID_REQUEST", "bridge payload is too large");
-        var timeout = Math.Clamp(timeoutMs, 250, 120000);
+        var timeout = Math.Clamp(timeoutMs, 250, 300000);
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutCts.CancelAfter(timeout);
 

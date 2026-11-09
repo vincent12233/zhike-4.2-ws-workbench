@@ -6,20 +6,34 @@ public static class LegacyBridgeScript
       (() => {
         const listeners = new Map();
         const pending = new Map();
+        const DEFAULT_TIMEOUT_MS = 15000;
+        const WRITE_TIMEOUT_MS = 120000;
+        const SNAPSHOT_TIMEOUT_MS = 300000;
+        const MAX_MESSAGE_CHARS = 50 * 1024 * 1024;
         window.__DESKTOP_APP__ = true;
         window.__LOCAL_DB__ = __ZHikeLocalDbFlag__;
         const host = {
           version: '5.1',
           invoke(method, payload = {}, options = {}) {
             const requestId = (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+            const path = method === 'legacy.api' ? String(payload?.path || '') : '';
+            const verb = method === 'legacy.api' ? String(payload?.method || 'GET').toUpperCase() : 'GET';
+            const isSnapshotWrite = verb !== 'GET' && verb !== 'HEAD' && /^\/api\/snapshots?(?:\/.*\/restore)?$/i.test(path);
+            const isLargeWrite = verb !== 'GET' && verb !== 'HEAD' && (/^\/api\/state(?:\/|$)/i.test(path) || /^\/api\/import\//i.test(path));
+            const timeoutLimit = isSnapshotWrite ? SNAPSHOT_TIMEOUT_MS : WRITE_TIMEOUT_MS;
+            const timeoutMs = Math.min(timeoutLimit, Math.max(1000, Number(options.timeoutMs) || (isSnapshotWrite ? SNAPSHOT_TIMEOUT_MS : isLargeWrite ? WRITE_TIMEOUT_MS : DEFAULT_TIMEOUT_MS)));
+            const envelope = JSON.stringify({
+              type: 'zhike.bridge.request', requestId, bridgeVersion: '5.1',
+              method, payload, timeoutMs,
+              accountId: options.accountId || null
+            });
+            if (envelope.length > MAX_MESSAGE_CHARS)
+              return Promise.reject(Object.assign(new Error('desktop bridge payload is too large (limit 50 MB)'), { code: 'MESSAGE_TOO_LARGE' }));
             return new Promise((resolve, reject) => {
-              const timer = setTimeout(() => { pending.delete(requestId); reject(new Error('desktop bridge timeout')); }, options.timeoutMs || 15000);
+              const timer = setTimeout(() => { pending.delete(requestId); reject(new Error('desktop bridge timeout')); }, timeoutMs);
               pending.set(requestId, { resolve, reject, timer });
-              window.chrome.webview.postMessage(JSON.stringify({
-                type: 'zhike.bridge.request', requestId, bridgeVersion: '5.1',
-                method, payload, timeoutMs: options.timeoutMs || 15000,
-                accountId: options.accountId || null
-              }));
+              try { window.chrome.webview.postMessage(envelope); }
+              catch (error) { clearTimeout(timer); pending.delete(requestId); reject(error); }
             });
           },
           on(name, handler) {

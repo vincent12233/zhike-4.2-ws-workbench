@@ -3,6 +3,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const repo = path.resolve(__dirname, '..', '..');
 const root = path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Services');
@@ -42,4 +43,55 @@ assert.match(adapter, /importCommit/);
 assert.doesNotMatch(adapter, /StartsWith\("\/api\/ws\/"[^\n]*\)\s*\)\s*\n\s*v2Path\s*=/,
   'adapter must not blindly forward every legacy WS route to v2');
 
-console.log('legacy bridge contract: versioned request/response and compatibility mappings are present');
+const bridgeScript = fs.readFileSync(path.join(root, 'LegacyBridgeScript.cs'), 'utf8');
+const legacyHost = fs.readFileSync(path.join(repo, 'desktop/src/Zhike.Desktop/Views/LegacyUiHostPage.xaml.cs'), 'utf8');
+assert.match(legacyHost, /requestId\s*=\s*response\.RequestId/,
+  'bridge responses must serialize the lower camel-case requestId expected by the page');
+assert.match(legacyHost, /bridgeVersion\s*=\s*response\.BridgeVersion/);
+assert.match(legacyHost, /requestId\s*=\s*invalid\.RequestId/,
+  'invalid bridge requests must also receive a matching lower camel-case response');
+assert.match(bridgeScript, /DEFAULT_TIMEOUT_MS\s*=\s*15000/);
+assert.match(bridgeScript, /WRITE_TIMEOUT_MS\s*=\s*120000/);
+assert.match(bridgeScript, /SNAPSHOT_TIMEOUT_MS\s*=\s*300000/);
+assert.match(bridgeScript, /MAX_MESSAGE_CHARS\s*=\s*\d+/);
+assert.match(bridgeScript, /desktop bridge payload is too large/);
+assert.match(bridgeScript, /isLargeWrite\s*=\s*verb/);
+assert.match(bridgeScript, /api\\\/state/);
+assert.doesNotMatch(bridgeScript, /setTimeout\(\(\) => \{ pending\.delete\(requestId\); reject\(new Error\('desktop bridge timeout'\)\); \}, options\.timeoutMs \|\| 15000\)/,
+  'large state writes must not use the fixed 15 second bridge timeout');
+assert.match(legacyHost, /MaxBridgeMessageChars/);
+assert.match(legacyHost, /MaxBridgePayloadChars/);
+assert.match(bridgeScript, /MESSAGE_TOO_LARGE/);
+
+async function verifyRoundTrip() {
+  const template = bridgeScript.match(/SourceTemplate\s*=\s*"""([\s\S]*?)""";/)?.[1];
+  assert.ok(template, 'bridge source template must be extractable for a runtime contract test');
+  let posted;
+  let receive;
+  const webview = {
+    addEventListener(name, handler) { if (name === 'message') receive = handler; },
+    postMessage(raw) { posted = JSON.parse(raw); },
+  };
+  const window = { chrome: { webview }, fetch: globalThis.fetch };
+  vm.runInNewContext(template.replace('__ZHikeLocalDbFlag__', 'true'), {
+    window,
+    setTimeout,
+    clearTimeout,
+  });
+  const pending = window.zhikeDesktop.invoke('legacy.api', { path: '/api/state', method: 'PUT', body: {} });
+  assert.equal(posted.timeoutMs, 120000, 'large state writes need the extended bridge timeout');
+  receive({ data: { type: 'zhike.bridge.response', requestId: posted.requestId, bridgeVersion: '5.1', ok: true, data: { saved: true } } });
+  assert.equal((await pending).data.saved, true, 'lower camel-case response must resolve its matching request');
+
+  const importPending = window.zhikeDesktop.invoke('legacy.api', { path: '/api/import/commit', method: 'POST', body: {} });
+  assert.equal(posted.timeoutMs, 120000, 'import writes need the extended bridge timeout');
+  receive({ data: { type: 'zhike.bridge.response', requestId: posted.requestId, bridgeVersion: '5.1', ok: true, data: { imported: 1 } } });
+  assert.equal((await importPending).data.imported, 1);
+
+  const snapshotPending = window.zhikeDesktop.invoke('legacy.api', { path: '/api/snapshot', method: 'POST', body: {} });
+  assert.equal(posted.timeoutMs, 300000, 'pre-import snapshots need the long bridge timeout');
+  receive({ data: { type: 'zhike.bridge.response', requestId: posted.requestId, bridgeVersion: '5.1', ok: true, data: { snapshotCreated: true } } });
+  assert.equal((await snapshotPending).data.snapshotCreated, true);
+}
+
+verifyRoundTrip().then(() => console.log('legacy bridge contract: runtime request/response matching and import/state timeout pass'));

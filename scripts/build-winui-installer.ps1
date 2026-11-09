@@ -6,7 +6,7 @@ param(
   [string]$StageDir = '',
   [string]$OutputDir = '',
   [ValidatePattern('^\d+\.\d+\.\d+$')]
-  [string]$AppVersion = '5.3.0',
+  [string]$AppVersion = '5.3.2',
   [switch]$SkipWebView2Check,
   [switch]$AllowUnsigned
 )

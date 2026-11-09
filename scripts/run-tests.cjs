@@ -72,6 +72,7 @@ function runAll() {
   run('desktop startup XAML contract', [path.join(repo, 'tests', 'desktop-startup-contract.test.cjs')]);
   run('desktop visual single-shell contract', [path.join(repo, 'desktop', 'tests', 'DesktopVisualContractTests.cjs')]);
   run('desktop native smoke contract', [path.join(repo, 'desktop', 'tests', 'DesktopSmokeTests.cjs')]);
+  run('desktop bridge response matching and import timeout', [path.join(repo, 'desktop', 'tests', 'LegacyBridgeContractTests.cjs')]);
   run('desktop responsive contract', [path.join(repo, 'desktop', 'tests', 'DesktopResponsiveContractTests.cjs')]);
   run('desktop icon contract', [path.join(repo, 'tests', 'desktop-icon-contract.test.cjs')]);
   run('customer governance core', [path.join(repo, 'tests', 'customer-governance-core.test.cjs')]);

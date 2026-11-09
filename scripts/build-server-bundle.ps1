@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
   [string]$OutputDir = (Join-Path $PSScriptRoot '..\work\server-bundle'),
-  [string]$Version = '5.3.0'
+  [string]$Version = '5.3.2'
 )
 
 Set-StrictMode -Version Latest
@@ -14,7 +14,7 @@ if (-not ([IO.Path]::GetFullPath($stage)).StartsWith($out.TrimEnd('\') + '\', [S
 if (Test-Path -LiteralPath $out) { Remove-Item -LiteralPath $out -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
 
-$include = @('infra\compose.yaml', 'infra\compose.prod.yaml', 'infra\.env.example', 'infra\README.md', 'infra\backup\backup.ps1', 'server\Dockerfile', 'server\Directory.Build.props', 'server\migrations', 'server\src', 'connectors\ws-worker', 'docs\server-version-deployment.md', 'docs\server-version-troubleshooting.md', 'docs\server-version-rollback.md', 'docs\hot-chat-profile-usage.md', 'docs\release-notes-5.3.0.md', 'docs\v5-implementation-report.md')
+$include = @('infra\compose.yaml', 'infra\compose.prod.yaml', 'infra\.env.example', 'infra\README.md', 'infra\backup\backup.ps1', 'server\Dockerfile', 'server\Directory.Build.props', 'server\migrations', 'server\src', 'connectors\ws-worker', 'docs\server-version-deployment.md', 'docs\server-version-troubleshooting.md', 'docs\server-version-rollback.md', 'docs\hot-chat-profile-usage.md', 'docs\release-notes-5.3.2.md', 'docs\v5-implementation-report.md')
 
 function Copy-TreeWithoutGeneratedArtifacts([string]$Source, [string]$Target) {
   $excludedDirectoryNames = @('bin', 'obj', 'node_modules', '.git', '.vs', 'TestResults')

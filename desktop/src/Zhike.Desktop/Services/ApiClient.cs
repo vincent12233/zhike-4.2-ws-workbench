@@ -42,7 +42,7 @@ public sealed class ApiClient(HttpClient http)
         var apiUrl = FirstConfigured(Environment.GetEnvironmentVariable("ZHIKE_API_BASE_URL"), saved?.BaseUrl);
         if (!Uri.TryCreate(apiUrl, UriKind.Absolute, out var baseUri)) return null;
         var baseAddress = new Uri(baseUri.ToString().TrimEnd('/') + "/");
-        var client = new ApiClient(new HttpClient { BaseAddress = baseAddress });
+        var client = new ApiClient(new HttpClient { BaseAddress = baseAddress, Timeout = TimeSpan.FromMinutes(5.5) });
         client.SetSessionToken(FirstConfigured(Environment.GetEnvironmentVariable("ZHIKE_API_TOKEN"), saved?.Token));
         client.SetPairingApprovalCode(FirstConfigured(Environment.GetEnvironmentVariable("ZHIKE_PAIRING_APPROVAL_CODE"), saved?.PairingApprovalCode));
         return client;
