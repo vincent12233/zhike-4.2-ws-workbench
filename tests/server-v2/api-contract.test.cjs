@@ -22,6 +22,7 @@ const business = read('server/src/Zhike.Infrastructure/Repositories/BusinessReco
 assert.match(business, /ON CONFLICT \(business_key\)/);
 assert.match(business, /next_followup_at/);
 const imports = read('server/src/Zhike.Infrastructure/Repositories/ImportRepository.cs');
+const aiJobs = read('server/src/Zhike.Infrastructure/Repositories/AiJobRepository.cs');
 assert.match(imports, /registeredDate/);
 assert.match(imports, /nextFollowupDate/);
 const program = read('server/src/Zhike.Api/Program.cs');
@@ -47,4 +48,7 @@ assert.match(read('desktop/src/Zhike.Desktop/Services/ApiClient.cs'), /count > 0
 assert.match(read('server/src/Zhike.Infrastructure/Database/AuditWriter.cs'), /audit_events/);
 assert.match(customer, /AuditWriter\.AppendAsync/);
 assert.match(read('server/src/Zhike.Infrastructure/Repositories/ImportRepository.cs'), /import\.commit/);
+assert.match(aiJobs, /ListAsync\(string\? state/);
+assert.match(aiJobs, /RetryAsync\(IReadOnlyCollection<string> ids/);
+assert.match(read('server/src/Zhike.Api/Routes/AiRoutes.cs'), /api\/v2\/ai/);
 console.log('API/domain contract: customer fill-empty, soft delete/restore, separate business keys/dates, mixed import and WS account routes pass');

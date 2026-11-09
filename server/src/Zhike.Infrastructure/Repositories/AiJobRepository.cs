@@ -6,8 +6,47 @@ using Zhike.Infrastructure.Database;
 
 namespace Zhike.Infrastructure.Repositories;
 
+public sealed record AiJobStatusRow(string Id, string JobType, string State, int Attempts, DateTimeOffset AvailableAt, string LastError, DateTimeOffset UpdatedAt);
+
 public sealed class AiJobRepository(PostgresConnectionFactory connections)
 {
+    public async Task<IReadOnlyList<AiJobStatusRow>> ListAsync(string? state, int limit = 100, CancellationToken cancellationToken = default)
+    {
+        var normalizedState = string.IsNullOrWhiteSpace(state) ? null : state.Trim().ToLowerInvariant();
+        await using var connection = connections.Create();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = new NpgsqlCommand("""
+            SELECT id, job_type, state, attempts, available_at, last_error, updated_at
+            FROM ai_jobs
+            WHERE ($1 IS NULL OR state = $1)
+            ORDER BY CASE state WHEN 'dead' THEN 0 WHEN 'retrying' THEN 1 WHEN 'pending' THEN 2 WHEN 'running' THEN 3 ELSE 4 END,
+                     updated_at DESC
+            LIMIT $2
+            """, connection);
+        command.Parameters.AddWithValue((object?)normalizedState ?? DBNull.Value);
+        command.Parameters.AddWithValue(Math.Clamp(limit, 1, 500));
+        var rows = new List<AiJobStatusRow>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+            rows.Add(new AiJobStatusRow(reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetInt32(3), reader.GetFieldValue<DateTimeOffset>(4), reader.GetString(5), reader.GetFieldValue<DateTimeOffset>(6)));
+        return rows;
+    }
+
+    public async Task<int> RetryAsync(IReadOnlyCollection<string> ids, CancellationToken cancellationToken = default)
+    {
+        var safeIds = ids.Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id.Trim()).Distinct(StringComparer.Ordinal).Take(500).ToArray();
+        if (safeIds.Length == 0) return 0;
+        await using var connection = connections.Create();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = new NpgsqlCommand("""
+            UPDATE ai_jobs
+            SET state='pending', attempts=0, available_at=now(), locked_at=NULL, last_error='', updated_at=now()
+            WHERE id = ANY($1) AND state IN ('dead','retrying','pending')
+            """, connection);
+        command.Parameters.AddWithValue(safeIds);
+        return await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
     public async Task<string> EnqueueAsync(string jobType, string dedupeKey, object payload, CancellationToken cancellationToken = default)
     {
         var jobId = $"job-{Guid.NewGuid():N}";

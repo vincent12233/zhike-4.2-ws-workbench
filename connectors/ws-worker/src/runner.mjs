@@ -65,10 +65,10 @@ function enqueueCapture(capture) {
   }));
   accountQueues.set(accountId, next);
   next.then((response) => {
-    console.log(JSON.stringify({ service: 'ws-connector', status: 'flushed', accepted: response?.accepted || 0, deduplicated: response?.deduplicated || 0 }));
+    console.log(JSON.stringify({ service: 'ws-connector', status: 'flushed', accountId, accepted: response?.accepted || 0, deduplicated: response?.deduplicated || 0, conversationsAccepted: response?.conversationsAccepted || 0, previewAccepted: response?.previewAccepted || 0 }));
   }).catch((error) => {
     void publishHeartbeat(accountId, '连接失败');
-    console.error(JSON.stringify({ service: 'ws-connector', status: 'flush-failed', message: String(error?.message || error).slice(0, 300) }));
+    console.error(JSON.stringify({ service: 'ws-connector', status: 'flush-failed', accountId, message: String(error?.message || error).slice(0, 300) }));
   }).finally(() => {
     if (accountQueues.get(accountId) === next) accountQueues.delete(accountId);
   });

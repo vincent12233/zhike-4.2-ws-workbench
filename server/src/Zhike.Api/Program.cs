@@ -26,6 +26,7 @@ builder.Services.AddSingleton<CustomerRepository>();
 builder.Services.AddSingleton<HotChatProfileRepository>();
 builder.Services.AddSingleton<BusinessRecordRepository>();
 builder.Services.AddSingleton<ImportRepository>();
+builder.Services.AddSingleton<AiJobRepository>();
 builder.Services.AddSingleton<LegacyStateRepository>();
 var app = builder.Build();
 
@@ -112,6 +113,7 @@ app.MapCustomerRoutes();
 app.MapHotChatRoutes();
 app.MapBusinessRecordRoutes();
 app.MapImportRoutes();
+app.MapAiRoutes();
 app.MapLegacyStateRoutes();
 app.MapAuthRoutes();
 

@@ -9,13 +9,16 @@ public sealed partial class AiFollowupPage : Page
 {
     private readonly ApiClient? _api = ApiClient.TryCreateFromEnvironment();
     private readonly ObservableCollection<FollowupDto> _followups = [];
+    private readonly ObservableCollection<AiJobDto> _jobs = [];
     private bool _loaded;
 
     public AiFollowupPage()
     {
         InitializeComponent();
         FollowupsList.ItemsSource = _followups;
+        JobsList.ItemsSource = _jobs;
         StateFilter.SelectedIndex = 0;
+        JobStateFilter.SelectedIndex = 0;
         Loaded += OnLoaded;
     }
 
@@ -24,6 +27,7 @@ public sealed partial class AiFollowupPage : Page
         if (_loaded) return;
         _loaded = true;
         await LoadFollowupsAsync();
+        await LoadJobsAsync();
     }
 
     private async void RefreshFollowups(object sender, RoutedEventArgs args) => await LoadFollowupsAsync();
@@ -34,6 +38,43 @@ public sealed partial class AiFollowupPage : Page
     private async void OnHighIntentChanged(object sender, RoutedEventArgs args)
     {
         if (_loaded) await LoadFollowupsAsync();
+    }
+
+    private async void RefreshJobs(object sender, RoutedEventArgs args) => await LoadJobsAsync();
+    private async void OnJobStateChanged(object sender, SelectionChangedEventArgs args)
+    {
+        if (_loaded) await LoadJobsAsync();
+    }
+
+    private async void RetryFailedJobs(object sender, RoutedEventArgs args)
+    {
+        if (_api is null) return;
+        var ids = _jobs.Where(job => job.State is "dead" or "retrying").Select(job => job.Id).ToArray();
+        if (ids.Length == 0)
+        {
+            SetStatus(InfoBarSeverity.Informational, "没有失败任务", "当前列表没有可重试的 AI 任务。");
+            return;
+        }
+        var changed = await _api.RetryAiJobsAsync(ids);
+        SetStatus(InfoBarSeverity.Success, "已重新排队", $"{changed} 个 AI 任务已进入等待队列。");
+        await LoadJobsAsync();
+    }
+
+    private async Task LoadJobsAsync()
+    {
+        try
+        {
+            if (_api is null) throw new InvalidOperationException("未配置 ZHIKE_API_BASE_URL");
+            var state = (JobStateFilter.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            var rows = await _api.GetAiJobsAsync(state);
+            _jobs.Clear();
+            foreach (var row in rows ?? []) _jobs.Add(row);
+        }
+        catch (Exception error)
+        {
+            _jobs.Clear();
+            SetStatus(InfoBarSeverity.Error, "AI 任务加载失败", error.Message);
+        }
     }
 
     private async Task LoadFollowupsAsync()

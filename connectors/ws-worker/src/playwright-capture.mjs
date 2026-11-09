@@ -55,6 +55,8 @@ function collectVisibleDom(accountId) {
   const hasQr = Boolean(document.querySelector('[data-testid="qrcode"], canvas[aria-label*="QR" i]'));
   const loginRequired = hasQr || /scan to log in|use whatsapp on your computer|扫码登录/i.test(pageText);
   const sessionExpired = /session expired|会话已过期|重新登录/i.test(pageText) && !loginRequired;
+  const knownShell = Boolean(document.querySelector('[role="application"], [data-testid="chat-list"], [aria-label*="chat" i], [aria-label*="聊天"]'));
+  const structureRecognized = loginRequired || sessionExpired || knownShell || conversations.length > 0 || messages.length > 0;
   return {
     type: 'zhike.ws.capture',
     accountId,
@@ -63,6 +65,7 @@ function collectVisibleDom(accountId) {
     messages,
     loginRequired,
     sessionExpired,
+    structureRecognized,
   };
 }
 
@@ -86,6 +89,7 @@ export async function startPlaywrightCapture({
   await page.goto(url, { waitUntil: 'domcontentloaded' });
   let stopped = false;
   let running = false;
+  let mutationTimer;
   const capture = async () => {
     if (stopped || running || page.isClosed()) return;
     running = true;
@@ -99,6 +103,10 @@ export async function startPlaywrightCapture({
         onState({ state: '等待登录', accountId: String(accountId).trim() });
         return;
       }
+      if (!payload.structureRecognized) {
+        onState({ state: '连接失败', code: 'page-structure-changed', accountId: String(accountId).trim(), message: '无法识别当前 WhatsApp 页面结构，已暂停本轮写入。' });
+        return;
+      }
       await onCapture(payload);
       onState({ state: '已连接', accountId: String(accountId).trim() });
     } catch (error) {
@@ -107,14 +115,27 @@ export async function startPlaywrightCapture({
       running = false;
     }
   };
+  const triggerCapture = () => {
+    clearTimeout(mutationTimer);
+    mutationTimer = setTimeout(() => void capture(), 350);
+  };
+  await page.exposeBinding('__zhikeDomChanged', triggerCapture);
+  await page.evaluate(() => {
+    window.__zhikeCaptureObserver?.disconnect?.();
+    window.__zhikeCaptureObserver = new MutationObserver(() => window.__zhikeDomChanged?.());
+    window.__zhikeCaptureObserver.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+  });
   await capture();
-  const timer = setInterval(() => void capture(), Math.max(1000, Number(intervalMs) || 5000));
+  // DOM changes provide near-real-time capture. Keep a low-frequency poll for
+  // browser throttling, missed mutations and session-state transitions.
+  const timer = setInterval(() => void capture(), Math.max(30_000, Number(intervalMs) || 30_000));
   return {
     page,
     context,
     stop: async () => {
       stopped = true;
       clearInterval(timer);
+      clearTimeout(mutationTimer);
       await context.close();
     },
   };

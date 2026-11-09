@@ -10,9 +10,10 @@ public sealed record CustomerDto(string Id, string Name, string Phone, string Co
 public sealed record BusinessRecordDto(string Id, string CustomerId, string RecordType, string ProductCode, string Direction, string? RegisteredAt, string? BusinessDate, string? NextFollowupAt, string Channel, string Status, string VipCode, string Note, string BusinessKey, DateTimeOffset UpdatedAt);
 public sealed record ImportPreviewRequest(IReadOnlyList<string> Headers, IReadOnlyList<IReadOnlyList<string>> Rows, string Context = "", string SourceName = "");
 public sealed record ImportPreviewRowDto(int RowNumber, JsonElement Raw, JsonElement Classified, double Confidence, IReadOnlyList<string> Conflicts);
-public sealed record ImportPreviewResponse(string Id, string SourceHash, IReadOnlyList<ImportPreviewRowDto> Rows);
+public sealed record ImportPreviewResponse(string Id, string SourceHash, IReadOnlyList<ImportPreviewRowDto> Rows, string DuplicateOf = "");
 public sealed record WsAccountDto(string Id, string DisplayName, string Status, DateTimeOffset? LastSeen, string? RuntimeStatus = null, DateTimeOffset? UpdatedAt = null);
 public sealed record FollowupDto(string Id, string CustomerId, string ReasonKey, string Title, string Detail, DateTimeOffset? DueAt, string Priority, string State);
+public sealed record AiJobDto(string Id, string JobType, string State, int Attempts, DateTimeOffset AvailableAt, string LastError, DateTimeOffset UpdatedAt);
 public sealed record WsAccountRequest(string Id, string DisplayName, string Status = "未连接");
 public sealed record WsMessageEnvelopeDto(string ConnectorId, string AccountId, string ConversationKey, string? ExternalMessageId, DateTimeOffset? SentAt, string Direction, string Body, bool PreviewOnly, DateTimeOffset ObservedAt, string? Cursor = null);
 public sealed record WsCheckpointDto(string AccountId, string ConversationKey, string Cursor, string LastMessageFingerprint, DateTimeOffset UpdatedAt);
@@ -160,6 +161,20 @@ public sealed class ApiClient(HttpClient http)
     {
         var suffix = string.IsNullOrWhiteSpace(state) ? string.Empty : $"?state={Uri.EscapeDataString(state)}";
         return await http.GetFromJsonAsync<FollowupDto[]>($"api/v2/ws/followups{suffix}", JsonOptions, cancellationToken);
+    }
+
+    public async Task<AiJobDto[]?> GetAiJobsAsync(string? state = null, CancellationToken cancellationToken = default)
+    {
+        var suffix = string.IsNullOrWhiteSpace(state) ? string.Empty : $"?state={Uri.EscapeDataString(state)}";
+        return await http.GetFromJsonAsync<AiJobDto[]>($"api/v2/ai/jobs{suffix}", JsonOptions, cancellationToken);
+    }
+
+    public async Task<int> RetryAiJobsAsync(IReadOnlyList<string> ids, CancellationToken cancellationToken = default)
+    {
+        using var response = await http.PostAsJsonAsync("api/v2/ai/jobs/retry", new { Ids = ids }, JsonOptions, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        var payload = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions, cancellationToken);
+        return payload.TryGetProperty("changed", out var changed) && changed.TryGetInt32(out var count) ? count : 0;
     }
 
     public async Task<WsAccountDto[]?> GetWsAccountsAsync(CancellationToken cancellationToken = default)
