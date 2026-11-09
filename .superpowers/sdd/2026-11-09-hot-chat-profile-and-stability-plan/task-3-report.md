@@ -58,3 +58,26 @@
 - 复核发现旧版 `is_investor -> customers.status` 映射会污染原有业务状态；已移除该映射。`is_investor` 仍保存在热聊档案字段表及证据链中，旧客户表的 `status` 不再被 AI/热聊事实写入。
 - 新增 `tests/server-v2/hot-chat-customer-isolation.test.cjs`，覆盖旧状态安全、账号×会话×客户范围校验，以及电话号码多候选时拒绝自动合并。
 - AI 客户解析顺序保持为“已绑定会话 → 显式客户编号 → 电话身份/号码”；已有会话客户不会被替换，多个候选会进入人工确认路径。
+
+## 追加审查（WS 列表级采集与断点链路）
+
+### RED / GREEN 证据
+
+- RED：新增 `tests/server-v2/ws-list-capture-contract.test.cjs` 后首次运行在缺少 `WsConversationEnvelope` 契约处失败（证明原实现只生成列表，未把列表传入 v2 API）。
+- GREEN：该契约、`connectors/ws-worker/tests/transport-flush.test.cjs`、`connectors/ws-worker/tests/connector-protocol.test.cjs` 均通过；`node tests/server-v2/run-all.cjs` 通过 `24/24`。
+- GREEN：隔离 Docker 构建 `docker build --target api -t zhike-task3-api-test -f server/Dockerfile server` 完成 API/Worker net10 publish，0 error；宿主机无 .NET SDK，未修改真实部署容器。
+
+### 本轮实现
+
+- `WsConversationEnvelope`、批次 `Conversations` 和兼容的 `ConversationsAccepted` 响应字段；旧消息/断点位置参数保持不变。
+- Connector API 客户端转发可见会话列表，给每行补齐批次账号并拒绝跨账号行；list-only capture 不再因为空消息而丢失。
+- WS ingest 路由校验列表数量、账号、键/预览长度、未读数和 visible-only 范围，并在同一仓储事务中写入会话标题/最后消息时间。
+- PostgreSQL 会话自动创建的电话号码匹配改为“仅唯一候选自动绑定”；多个客户命中时保持 `customer_id = NULL`，不再使用 `LIMIT 1` 随机绑定。
+- AI 上下文排序改为 `COALESCE(sent_at, observed_at)`，避免 `sent_at` 为空的手机同步消息被最新窗口漏掉；账号与会话过滤保持不变。
+
+### 自审与边界
+
+- 提交：`4ad5240 fix: persist WS list captures and guard ambiguous phones`。
+- 当前轮的列表行已传递并持久化标题/时间；`unread_count`、`last_message_preview`、`visible_only`、`list_captured_at` 的新增列和预览 AI 触发由后续 012 元数据补丁负责，避免重复迁移。
+- 只读审计发现 Playwright `onState` 目前只写日志，Connector heartbeat 仅在 flush 成功后发送；若登录等待或连续采集失败，服务端状态可能滞后。后续应将状态事件接入按账号串行的 heartbeat/status 更新，并在启动时恢复运行态。
+- 本轮所有验证均使用静态 fixture、隔离测试文件和构建容器；未连接真实 WS、未读取或写入真实业务数据。
