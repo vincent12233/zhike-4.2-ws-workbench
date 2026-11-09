@@ -33,6 +33,15 @@ const path = require('node:path');
   const listOnlyClient = new ConnectorApiClient('http://api.test/', { apiToken: 'secret-token', fetchImpl: async (url, options) => { listOnlyCalls.push({ url, options }); return { ok: true, status: 200, json: async () => ({ accepted: 0 }) }; } });
   await new CaptureBatchFlusher({ apiClient: listOnlyClient, profileStore: new ProfileStore(root), connectorId: 'connector-1' }).flush({ accountId: 'acct-list-only', conversations: [{ id: 'chat-1', title: '列表客户' }] });
   assert.equal(listOnlyCalls.length, 1, 'list-only capture posts ingest without an invalid empty checkpoint');
+  const listPayload = JSON.parse(listOnlyCalls[0].options.body);
+  assert.equal(listPayload.conversations.length, 1, 'list-only capture forwards conversation rows');
+  assert.equal(listPayload.conversations[0].accountId, 'acct-list-only', 'conversation rows are fenced to the batch account');
+  assert.equal(listPayload.conversations[0].displayName, '列表客户');
+  await assert.rejects(
+    () => listOnlyClient.ingestBatch({ accountId: 'acct-list-only', conversations: [{ accountId: 'acct-other', conversationKey: 'chat-2' }] }),
+    /conversation account mismatch/i,
+    'conversation rows from another account are rejected before transport',
+  );
   await assert.rejects(() => new ConnectorApiClient('http://api.test', { fetchImpl }).ingestBatch({ accountId: 'acct-1', messages: [] }), /ZHIKE_API_TOKEN is required/i);
   fs.rmSync(root, { recursive: true, force: true });
   console.log('WS transport flush: bearer auth, atomic ingest/checkpoint and durable profile checkpoint pass');

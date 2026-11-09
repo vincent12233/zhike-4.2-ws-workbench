@@ -51,6 +51,10 @@ export class ConnectorApiClient extends CheckpointClient {
     for (const message of messages) {
       if (String(message?.accountId || '').trim() !== accountId) throw new Error('message account mismatch');
     }
+    const conversations = Array.isArray(batch.conversations) ? batch.conversations.map((conversation) => {
+      if (conversation?.accountId && String(conversation.accountId).trim() !== accountId) throw new Error('conversation account mismatch');
+      return { ...conversation, accountId };
+    }) : [];
     const payload = {
       protocol: String(batch.protocol || 'zhike.ws.ingest.batch.v1'),
       connectorId: String(batch.connectorId || '').trim(),
@@ -59,6 +63,7 @@ export class ConnectorApiClient extends CheckpointClient {
       scope: String(batch.scope || 'visible-authorized-content'),
       messages,
       checkpoints: Array.isArray(batch.checkpoints) ? batch.checkpoints : [],
+      conversations,
     };
     const response = await this.fetch(`${this.baseUrl}/api/v2/ws/ingest/batch`, {
       method: 'POST', headers: this.headers(), body: JSON.stringify(payload), signal,

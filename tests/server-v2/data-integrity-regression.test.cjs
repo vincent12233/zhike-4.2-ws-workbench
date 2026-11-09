@@ -15,7 +15,9 @@ const imports = read('server/src/Zhike.Infrastructure/Repositories/ImportReposit
 assert.match(ws, /INSERT INTO ws_accounts[\s\S]+ON CONFLICT \(id\) DO NOTHING/);
 assert.match(ws, /EnsureAccountAndConversationAsync/);
 assert.match(ws, /BeginTransactionAsync/);
-assert.match(ws, /regexp_replace\(\$3, '\\D'/);
+assert.match(ws, /ResolveConversationCustomerAsync/);
+assert.match(ws, /regexp_replace\(phone, '\\D'/, 'phone matching must normalize legacy customer numbers');
+assert.match(ws, /LIMIT 2/, 'phone matching must inspect a second candidate before binding');
 assert.match(customer, /pg_advisory_xact_lock/);
 assert.match(customer, /NULLIF\(BTRIM\(customers\.name\), ''\)/);
 assert.match(customer, /UPDATE customer_identities AS i/);

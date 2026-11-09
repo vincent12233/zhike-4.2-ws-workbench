@@ -68,7 +68,8 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
         string accountId,
         IReadOnlyList<MessageEnvelope> envelopes,
         IReadOnlyList<WsCheckpointInput> checkpoints,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IReadOnlyList<WsConversationInput>? conversations = null)
     {
         if (string.IsNullOrWhiteSpace(accountId)) throw new ArgumentException("accountId is required", nameof(accountId));
         var normalizedAccountId = accountId.Trim();
@@ -78,6 +79,15 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
         var messageIds = new List<string>();
         var conversationIds = new List<string>();
         var deduplicated = 0;
+        var conversationsAccepted = 0;
+        foreach (var conversation in conversations ?? Array.Empty<WsConversationInput>())
+        {
+            ArgumentNullException.ThrowIfNull(conversation);
+            if (!string.Equals(conversation.AccountId?.Trim(), normalizedAccountId, StringComparison.Ordinal))
+                throw new ArgumentException("batch account mismatch", nameof(conversations));
+            await UpsertConversationCoreAsync(conversation, connection, transaction, cancellationToken);
+            conversationsAccepted++;
+        }
         foreach (var envelope in envelopes ?? Array.Empty<MessageEnvelope>())
         {
             ArgumentNullException.ThrowIfNull(envelope);
@@ -95,7 +105,7 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
             await SaveCheckpointCoreAsync(checkpoint, connection, transaction, cancellationToken);
         }
         await transaction.CommitAsync(cancellationToken);
-        return new WsBatchIngestResult(messageIds.Count - deduplicated, deduplicated, messageIds, conversationIds);
+        return new WsBatchIngestResult(messageIds.Count - deduplicated, deduplicated, messageIds, conversationIds, conversationsAccepted);
     }
 
     private static async Task<IngestResult> IngestCoreAsync(
@@ -189,7 +199,7 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
             SELECT id, body, direction, COALESCE(sent_at, observed_at) AS occurred_at
             FROM messages
             WHERE account_id = $1 AND conversation_id = $2
-            ORDER BY sent_at DESC NULLS LAST, observed_at DESC, id DESC
+            ORDER BY COALESCE(sent_at, observed_at) DESC, observed_at DESC, id DESC
             LIMIT {MaxContextMessages}
             """, connection, transaction);
         command.Parameters.AddWithValue(accountId);
@@ -315,6 +325,78 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
 
     private static string ShortHash(string value) => MessageFingerprint.Create(new MessageFingerprintInput(value, string.Empty, string.Empty, string.Empty, DateTimeOffset.UnixEpoch, string.Empty))[..24];
 
+    private static async Task UpsertConversationCoreAsync(
+        WsConversationInput input,
+        NpgsqlConnection connection,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(input.AccountId) || string.IsNullOrWhiteSpace(input.ConversationKey))
+            throw new ArgumentException("WS account and conversation are required", nameof(input));
+        var accountId = input.AccountId.Trim();
+        var conversationKey = input.ConversationKey.Trim();
+        var lastMessageAt = input.LastMessageAt?.ToUniversalTime();
+        await EnsureAccountAndConversationAsync(connection, transaction, accountId, conversationKey, lastMessageAt, cancellationToken);
+        var conversationId = $"conv-{ShortHash($"{accountId}\u001f{conversationKey}")}";
+        await using var update = new NpgsqlCommand("""
+            UPDATE conversations
+            SET title = CASE
+                    WHEN NULLIF(BTRIM(conversations.title), '') IS NULL THEN $4
+                    ELSE conversations.title
+                END,
+                last_message_at = CASE
+                    WHEN $5 IS NULL THEN conversations.last_message_at
+                    ELSE GREATEST(COALESCE(conversations.last_message_at, $5), $5)
+                END,
+                updated_at = now()
+            WHERE id = $1 AND account_id = $2 AND external_key = $3
+            """, connection, transaction);
+        update.Parameters.AddWithValue(conversationId);
+        update.Parameters.AddWithValue(accountId);
+        update.Parameters.AddWithValue(conversationKey);
+        update.Parameters.AddWithValue(input.DisplayName?.Trim() ?? string.Empty);
+        update.Parameters.AddWithValue((object?)lastMessageAt ?? DBNull.Value);
+        await update.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Resolves a phone conversation only when exactly one non-deleted customer
+    /// matches.  A duplicate phone is deliberately left unbound so a list-level
+    /// capture can never silently attach messages to the wrong customer.
+    /// </summary>
+    private static async Task<string?> ResolveConversationCustomerAsync(
+        NpgsqlConnection connection,
+        NpgsqlTransaction transaction,
+        string conversationKey,
+        CancellationToken cancellationToken)
+    {
+        if (!conversationKey.StartsWith("phone:", StringComparison.OrdinalIgnoreCase)) return null;
+        var normalizedPhone = new string(conversationKey.Where(char.IsDigit).ToArray());
+        if (normalizedPhone.Length == 0) return null;
+        await using var command = new NpgsqlCommand("""
+            SELECT customer_id
+            FROM (
+                SELECT DISTINCT i.customer_id
+                FROM customer_identities i
+                JOIN customers c ON c.id = i.customer_id AND c.deleted_at IS NULL
+                WHERE i.identity_type = 'phone' AND i.normalized_value = $1
+                UNION
+                SELECT id AS customer_id
+                FROM customers
+                WHERE deleted_at IS NULL AND regexp_replace(phone, '\D', '', 'g') = $1
+            ) candidates
+            ORDER BY customer_id
+            LIMIT 2
+            """, connection, transaction);
+        command.Parameters.AddWithValue(normalizedPhone);
+        var candidates = new List<string>(2);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+            if (!reader.IsDBNull(0)) candidates.Add(reader.GetString(0));
+        // Zero matches and ambiguous (>1) matches are both intentionally null.
+        return candidates.Count == 1 ? candidates[0] : null;
+    }
+
     private static async Task EnsureAccountAndConversationAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string accountId, string conversationKey, DateTimeOffset? lastMessageAt, CancellationToken cancellationToken)
     {
         await using (var account = new NpgsqlCommand("INSERT INTO ws_accounts(id, display_name, status, runtime_status) VALUES ($1, $1, '未连接', '未连接') ON CONFLICT (id) DO NOTHING", connection, transaction))
@@ -324,14 +406,10 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
         }
 
         var conversationId = $"conv-{ShortHash($"{accountId}\u001f{conversationKey}")}";
+        var customerId = await ResolveConversationCustomerAsync(connection, transaction, conversationKey, cancellationToken);
         await using var conversation = new NpgsqlCommand("""
             INSERT INTO conversations(id, account_id, external_key, customer_id, last_message_at, updated_at)
-            VALUES ($1, $2, $3,
-                (SELECT i.customer_id FROM customer_identities i
-                 JOIN customers c ON c.id = i.customer_id AND c.deleted_at IS NULL
-                 WHERE i.identity_type = 'phone' AND $3 LIKE 'phone:%' AND i.normalized_value = regexp_replace($3, '\D', '', 'g')
-                 UNION ALL SELECT id FROM customers WHERE deleted_at IS NULL AND $3 LIKE 'phone:%' AND phone = regexp_replace($3, '\D', '', 'g') LIMIT 1),
-                $4, now())
+            VALUES ($1, $2, $3, $4, $5, now())
             ON CONFLICT (account_id, external_key) DO UPDATE
             SET customer_id = COALESCE(conversations.customer_id, EXCLUDED.customer_id),
                 last_message_at = CASE WHEN EXCLUDED.last_message_at IS NULL THEN conversations.last_message_at ELSE GREATEST(COALESCE(conversations.last_message_at, EXCLUDED.last_message_at), EXCLUDED.last_message_at) END,
@@ -340,6 +418,7 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
         conversation.Parameters.AddWithValue(conversationId);
         conversation.Parameters.AddWithValue(accountId);
         conversation.Parameters.AddWithValue(conversationKey);
+        conversation.Parameters.AddWithValue((object?)customerId ?? DBNull.Value);
         conversation.Parameters.AddWithValue((object?)lastMessageAt ?? DBNull.Value);
         await conversation.ExecuteNonQueryAsync(cancellationToken);
     }
@@ -358,4 +437,17 @@ public sealed record FollowupRow(
 
 public sealed record WsAccountRow(string Id, string DisplayName, string Status, DateTimeOffset? LastSeen, string RuntimeStatus, DateTimeOffset UpdatedAt);
 public sealed record WsCheckpointInput(string AccountId, string ConversationKey, string Cursor, string LastMessageFingerprint, DateTimeOffset UpdatedAt);
-public sealed record WsBatchIngestResult(int Accepted, int Deduplicated, IReadOnlyList<string> MessageIds, IReadOnlyList<string> ConversationIds);
+public sealed record WsConversationInput(
+    string AccountId,
+    string ConversationKey,
+    string DisplayName,
+    int UnreadCount,
+    string LastMessagePreview,
+    DateTimeOffset? LastMessageAt,
+    bool VisibleOnly = true);
+public sealed record WsBatchIngestResult(
+    int Accepted,
+    int Deduplicated,
+    IReadOnlyList<string> MessageIds,
+    IReadOnlyList<string> ConversationIds,
+    int ConversationsAccepted = 0);

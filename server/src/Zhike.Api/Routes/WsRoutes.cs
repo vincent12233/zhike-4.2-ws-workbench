@@ -62,9 +62,10 @@ public static class WsRoutes
         if (!string.Equals(request.Protocol?.Trim(), Protocol, StringComparison.Ordinal)) return TypedResults.BadRequest("unsupported ingest protocol");
         if (string.IsNullOrWhiteSpace(request.ConnectorId) || request.ConnectorId.Trim().Length > MaxConnectorIdLength) return TypedResults.BadRequest("connectorId is required and must be <= 160 characters");
         if (!string.Equals(request.Scope?.Trim(), Scope, StringComparison.Ordinal)) return TypedResults.BadRequest("unsupported capture scope");
-        if (request.Messages is { Count: > 5000 } || request.Checkpoints is { Count: > 5000 }) return TypedResults.BadRequest("单批次最多 5000 条消息和 5000 个断点");
+        if (request.Messages is { Count: > 5000 } || request.Checkpoints is { Count: > 5000 } || request.Conversations is { Count: > 5000 }) return TypedResults.BadRequest("单批次最多 5000 条消息、会话和断点");
         var messages = request.Messages ?? Array.Empty<WsMessageEnvelope>();
         var checkpoints = request.Checkpoints ?? Array.Empty<WsCheckpoint>();
+        var conversations = request.Conversations ?? Array.Empty<WsConversationEnvelope>();
         foreach (var item in messages)
         {
             if (item is null || !string.Equals(item.AccountId?.Trim(), request.AccountId.Trim(), StringComparison.Ordinal)) return TypedResults.BadRequest("batch account mismatch");
@@ -79,6 +80,22 @@ public static class WsRoutes
             if (checkpoint.ConversationKey is null || checkpoint.ConversationKey.Length > 512 || checkpoint.Cursor is { Length: > 512 } || checkpoint.LastMessageFingerprint is { Length: > 256 }) return TypedResults.BadRequest("checkpoint field exceeds the allowed length");
             checkpointInputs.Add(new WsCheckpointInput(checkpoint.AccountId!, checkpoint.ConversationKey!, checkpoint.Cursor ?? string.Empty, checkpoint.LastMessageFingerprint ?? string.Empty, checkpoint.UpdatedAt));
         }
+        var conversationInputs = new List<WsConversationInput>(conversations.Count);
+        foreach (var conversation in conversations)
+        {
+            if (conversation is null || !string.Equals(conversation.AccountId?.Trim(), request.AccountId.Trim(), StringComparison.Ordinal)) return TypedResults.BadRequest("conversation account mismatch");
+            if (string.IsNullOrWhiteSpace(conversation.ConversationKey) || conversation.ConversationKey.Length > 512) return TypedResults.BadRequest("conversationKey is required and must be <= 512 characters");
+            if (conversation.DisplayName is { Length: > MaxDisplayNameLength } || conversation.LastMessagePreview is { Length: > 12000 }) return TypedResults.BadRequest("conversation field exceeds the allowed length");
+            if (conversation.UnreadCount < 0) return TypedResults.BadRequest("unreadCount must be >= 0");
+            conversationInputs.Add(new WsConversationInput(
+                conversation.AccountId!,
+                conversation.ConversationKey!,
+                conversation.DisplayName ?? string.Empty,
+                conversation.UnreadCount,
+                conversation.LastMessagePreview ?? string.Empty,
+                conversation.LastMessageAt,
+                conversation.VisibleOnly));
+        }
         var result = await repository.IngestBatchAsync(
             request.AccountId.Trim(),
             messages.Select(item => new MessageEnvelope(
@@ -92,8 +109,9 @@ public static class WsRoutes
                 item.ObservedAt == default ? DateTimeOffset.UtcNow : item.ObservedAt,
                 item.Cursor ?? string.Empty)).ToArray(),
             checkpointInputs,
-            cancellationToken);
-        return TypedResults.Ok(new WsIngestBatchResponse(result.Accepted, result.Deduplicated, result.MessageIds, DateTimeOffset.UtcNow));
+            cancellationToken,
+            conversationInputs);
+        return TypedResults.Ok(new WsIngestBatchResponse(result.Accepted, result.Deduplicated, result.MessageIds, DateTimeOffset.UtcNow, result.ConversationsAccepted));
     }
 
     private static async Task<Results<Ok<object>, BadRequest<string>>> SaveCheckpointsAsync(

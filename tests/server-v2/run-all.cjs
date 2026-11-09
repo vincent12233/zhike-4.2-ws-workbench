@@ -24,6 +24,7 @@ const tests = [
   'e2e-migration.test.cjs',
   'performance-postgres.test.cjs',
   'ws-authorized-smoke.test.cjs',
+  'ws-list-capture-contract.test.cjs',
   'ws-routes-checkpoint-atomicity.test.cjs',
   'installer-cutover.test.cjs',
 ];
