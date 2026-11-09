@@ -25,7 +25,7 @@ for (const service of ['postgres', 'api', 'ai-worker', 'ws-connector', 'backup']
   assert.match(compose, new RegExp(`^\\s{2}${service}:`, 'm'), `Compose must define ${service}`);
 }
 assert.doesNotMatch(compose, /ports:\s*\n\s*-\s*["']?5432:/, 'PostgreSQL must not be published directly');
-assert.match(envExample, /^ZHike_APP_VERSION=5\.2\.0$/m, 'Docker env example must match the current desktop release');
+assert.match(envExample, /^ZHike_APP_VERSION=5\.3\.0$/m, 'Docker env example must match the current desktop release');
 
 const healthPath = path.join(repo, 'server/src/Zhike.Contracts/HealthContracts.cs');
 assert.equal(fs.existsSync(healthPath), true, 'health response contract is required');
