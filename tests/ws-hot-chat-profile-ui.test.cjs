@@ -19,6 +19,7 @@ for (const selector of ['ws-hot-profile-card', 'ws-hot-profile-field', 'ws-hot-p
   assert.match(css, new RegExp(`\\.${selector}`), `CSS should define ${selector}`);
 }
 assert.match(ui, /profile\/diagnostics/, 'UI should load profile diagnostics from the local API');
+assert.match(ui, /buildNaturalChatAnalysisPrompt\(transcript\.text/, 'WS analysis must use the natural-chat profile prompt for local AI');
 for (const field of ['conversationProgress', 'customerTemperature', 'profileSummary', 'nextTopics', 'noReply', 'tags']) {
   assert.match(ui, new RegExp(field), `hot-chat progress metadata ${field} should be rendered and restored`);
 }

@@ -50,6 +50,14 @@ assert.deepEqual(visible.map(item => item.direction), ['receive', 'send', 'recei
 assert.equal(core.visibleChatFingerprint(visible), core.visibleChatFingerprint(visible));
 const transcript = core.buildTranscript(visible.map((item, index) => ({ direction: item.direction, originalText: item.text.repeat(500), order: index })), { maxChars: 1000 });
 assert(transcript.text.length <= 1000);
+const naturalPrompt = core.buildNaturalChatAnalysisPrompt(transcript.text, { conversationId: 'conv-natural' });
+for (const field of ['preferred_name', 'age', 'gender', 'occupation', 'work_context', 'is_investor', 'investment_years', 'holdings', 'investment_habits', 'investment_preferences', 'family_context', 'life_interests', 'future_plans']) {
+  assert.match(naturalPrompt, new RegExp(field), `natural chat prompt must request ${field}`);
+}
+assert.match(naturalPrompt, /不要生成调查问卷|不要连续追问/, 'natural chat prompt must avoid survey-style questioning');
+assert.match(naturalPrompt, /evidence|证据/, 'natural chat prompt must require evidence');
+assert.match(naturalPrompt, /requiresConfirmation|人工确认/, 'natural chat prompt must keep replies human-confirmed');
+assert.match(core.redactSensitiveText('密码: secret123 api_key=abc123 API Key: def456'), /已脱敏/);
 const tomorrow = new Date();
 tomorrow.setDate(tomorrow.getDate() + 1);
 assert.equal(core.suggestedDate('请明天跟进'), new Date(tomorrow.getTime() - tomorrow.getTimezoneOffset() * 60000).toISOString().slice(0, 10));

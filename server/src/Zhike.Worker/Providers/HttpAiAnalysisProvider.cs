@@ -28,7 +28,7 @@ public sealed class HttpAiAnalysisProvider(HttpClient http, IConfiguration confi
         "investment_preferences", "family_context", "life_interests", "future_plans",
     ];
     private static readonly Regex SensitiveText = new(
-        "password|passcode|token|cookie|secret|api[_-]?key|验证码|校验码|密码|银行卡|收款码|二维码|身份证|护照|付款|退款|金融承诺|法律承诺|医疗建议|价格保证|交付保证",
+        "password|passcode|token|cookie|secret|api[\\s_-]?key|验证码|校验码|密码|银行卡|收款码|二维码|身份证|护照|付款|退款|金融承诺|法律承诺|医疗建议|价格保证|交付保证",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     public async Task<AiAnalysisResult> AnalyzeAsync(JsonElement payload, CancellationToken cancellationToken)
@@ -333,7 +333,7 @@ public sealed class HttpAiAnalysisProvider(HttpClient http, IConfiguration confi
     private static string Redact(string value)
     {
         if (string.IsNullOrWhiteSpace(value)) return string.Empty;
-        var redacted = Regex.Replace(value, "(?i)(password|passcode|token|cookie|secret|api[_-]?key|验证码|校验码|密码|银行卡(?:号)?|收款码|二维码|身份证(?:号)?|护照(?:号)?)\\s*[:：]?\\s*[^\\s，。；;]+", "[已脱敏]");
+        var redacted = Regex.Replace(value, "(?i)(password|passcode|token|cookie|secret|api[\\s_-]?key|验证码|校验码|密码|银行卡(?:号)?|收款码|二维码|身份证(?:号)?|护照(?:号)?)\\s*[:：]?\\s*[^\\s，。；;]+", "[已脱敏]");
         return redacted.Length > 4000 ? redacted[..4000] : redacted;
     }
 

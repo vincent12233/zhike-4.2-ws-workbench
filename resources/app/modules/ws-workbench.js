@@ -714,7 +714,7 @@
       const result = await window.zhikeAI.request({
         assistantMode: 'operations',
         analysisDepth: 'standard',
-        input: '只分析下面当前 WS 会话文本。只返回一个 JSON 对象，不要 Markdown，不要编造未出现的资料。字段必须包含 summary、intent、intentScore、emotion、urgency、language、needs（数组）、productInterest（数组）、budget、contact（对象，含 name/phone/country/account）、tags（数组）、customerStage、nextStep、followupTime、replySuggestion、confidence（0 到 1）。\n' + transcript.text,
+        input: core.buildNaturalChatAnalysisPrompt(transcript.text, { conversationId: conversation.id }),
         context: { feature: 'ws-list-preview-analysis', conversationId: conversation.id, title: conversation.title || '', includedMessages: transcript.included, truncated: transcript.truncated },
       });
       const analysis = core.parseAiResult(result?.text || '');
@@ -1619,7 +1619,7 @@
       const result = await window.zhikeAI.request({
         assistantMode: 'operations',
         analysisDepth: 'standard',
-        input: '只分析下面当前用户选择的 WS 会话文本。只返回一个 JSON 对象，不要 Markdown，不要编造未出现的资料。字段必须包含 summary、intent、intentScore、emotion、urgency、language、needs（数组）、productInterest（数组）、budget、contact（对象，含 name/phone/country/account）、tags（数组）、customerStage、nextStep、followupTime、replySuggestion、confidence（0 到 1）。\n' + transcript.text,
+        input: core.buildNaturalChatAnalysisPrompt(transcript.text, { conversationId: current.id }),
         context: { feature: 'ws-analysis', conversationId: current.id, title: current.title || '', includedMessages: transcript.included, truncated: transcript.truncated },
       });
       assertContext(context);
