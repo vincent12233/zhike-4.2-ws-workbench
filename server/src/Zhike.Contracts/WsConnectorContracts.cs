@@ -32,7 +32,8 @@ public sealed record WsConversationEnvelope(
     int UnreadCount,
     string LastMessagePreview,
     DateTimeOffset? LastMessageAt,
-    bool VisibleOnly = true);
+    bool VisibleOnly = true,
+    DateTimeOffset? CapturedAt = null);
 
 public sealed record WsIngestBatchRequest(
     string ConnectorId,
@@ -49,4 +50,5 @@ public sealed record WsIngestBatchResponse(
     int Deduplicated,
     IReadOnlyList<string> MessageIds,
     DateTimeOffset ProcessedAt,
-    int ConversationsAccepted = 0);
+    int ConversationsAccepted = 0,
+    int PreviewAccepted = 0);

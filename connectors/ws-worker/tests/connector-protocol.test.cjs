@@ -58,6 +58,7 @@ const assert = require('node:assert/strict');
 
   const listOnly = protocol.buildIngestBatch({ accountId: 'acct-list-only', conversations: [{ id: 'chat-1', title: '列表客户' }] });
   assert.deepEqual(listOnly.checkpoints, [], 'list-only capture must not emit an empty checkpoint');
+  assert.match(listOnly.conversations[0].capturedAt, /^\d{4}-\d{2}-\d{2}T/, 'list-only rows carry a capture timestamp for stale-batch fencing');
 
   const batch = protocol.buildIngestBatch({
     accountId: 'acct-1',

@@ -80,6 +80,7 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
         var conversationIds = new List<string>();
         var deduplicated = 0;
         var conversationsAccepted = 0;
+        var previewAccepted = 0;
         foreach (var conversation in conversations ?? Array.Empty<WsConversationInput>())
         {
             ArgumentNullException.ThrowIfNull(conversation);
@@ -87,6 +88,11 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
                 throw new ArgumentException("batch account mismatch", nameof(conversations));
             await UpsertConversationCoreAsync(conversation, connection, transaction, cancellationToken);
             conversationsAccepted++;
+            if (!string.IsNullOrWhiteSpace(conversation.LastMessagePreview))
+            {
+                var preview = await IngestPreviewCoreAsync(conversation, connection, transaction, cancellationToken);
+                if (!preview.Deduplicated) previewAccepted++;
+            }
         }
         foreach (var envelope in envelopes ?? Array.Empty<MessageEnvelope>())
         {
@@ -105,7 +111,7 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
             await SaveCheckpointCoreAsync(checkpoint, connection, transaction, cancellationToken);
         }
         await transaction.CommitAsync(cancellationToken);
-        return new WsBatchIngestResult(messageIds.Count - deduplicated, deduplicated, messageIds, conversationIds, conversationsAccepted);
+        return new WsBatchIngestResult(messageIds.Count - deduplicated, deduplicated, messageIds, conversationIds, conversationsAccepted, previewAccepted);
     }
 
     private static async Task<IngestResult> IngestCoreAsync(
@@ -119,13 +125,16 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
 
         var accountId = envelope.AccountId.Trim();
         var conversationKey = envelope.ConversationKey.Trim();
-        var sentAt = envelope.SentAt?.ToUniversalTime() ?? envelope.ObservedAt.ToUniversalTime();
+        var observedAt = envelope.ObservedAt.ToUniversalTime();
+        var sentAt = envelope.SentAt?.ToUniversalTime() ?? (envelope.PreviewOnly ? null : observedAt);
+        // Preview rows may not expose a WhatsApp message timestamp.  Keep the
+        // database sent_at NULL in that case, but use a stable epoch value for
+        // the fingerprint so repeated list polling cannot create duplicates.
+        var fingerprintAt = sentAt ?? (envelope.PreviewOnly ? DateTimeOffset.UnixEpoch : envelope.ObservedAt.ToUniversalTime());
         var fingerprint = MessageFingerprint.Create(new MessageFingerprintInput(
-            accountId, conversationKey, envelope.ExternalMessageId, envelope.Body, sentAt, envelope.Direction));
+            accountId, conversationKey, envelope.ExternalMessageId, envelope.Body, fingerprintAt, envelope.Direction));
         var conversationId = $"conv-{ShortHash($"{accountId}\u001f{conversationKey}")}";
         var messageId = $"msg-{ShortHash(fingerprint)}";
-        var observedAt = envelope.ObservedAt.ToUniversalTime();
-
         await EnsureAccountAndConversationAsync(connection, transaction, accountId, conversationKey, sentAt, cancellationToken);
         var inserted = false;
         await using (var message = new NpgsqlCommand("""
@@ -143,7 +152,7 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
             message.Parameters.AddWithValue(envelope.Direction.Equals("outgoing", StringComparison.OrdinalIgnoreCase) ? "outgoing" : "incoming");
             message.Parameters.AddWithValue(envelope.Body ?? string.Empty);
             message.Parameters.AddWithValue(envelope.PreviewOnly);
-            message.Parameters.AddWithValue(sentAt);
+            message.Parameters.Add(new NpgsqlParameter { NpgsqlDbType = NpgsqlDbType.TimestampTz, Value = (object?)sentAt ?? DBNull.Value });
             message.Parameters.AddWithValue(observedAt);
             message.Parameters.Add(new NpgsqlParameter { NpgsqlDbType = NpgsqlDbType.Jsonb, Value = JsonSerializer.Serialize(new { envelope.Cursor }) });
             inserted = await message.ExecuteScalarAsync(cancellationToken) is not null;
@@ -325,6 +334,33 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
 
     private static string ShortHash(string value) => MessageFingerprint.Create(new MessageFingerprintInput(value, string.Empty, string.Empty, string.Empty, DateTimeOffset.UnixEpoch, string.Empty))[..24];
 
+    private static async Task<IngestResult> IngestPreviewCoreAsync(
+        WsConversationInput input,
+        NpgsqlConnection connection,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        var accountId = input.AccountId.Trim();
+        var conversationKey = input.ConversationKey.Trim();
+        var preview = input.LastMessagePreview.Trim();
+        // Keep the synthetic list-preview identity stable across polling
+        // rounds.  When WhatsApp does not expose a message timestamp, use the
+        // epoch rather than the current clock so the same preview cannot enqueue
+        // a new AI job on every five-second poll.
+        var stableSentAt = input.LastMessageAt?.ToUniversalTime() ?? DateTimeOffset.UnixEpoch;
+        var externalId = $"list-preview-{ShortHash($"{accountId}\u001f{conversationKey}\u001f{preview}\u001f{stableSentAt:O}")}";
+        var observedAt = (input.CapturedAt ?? DateTimeOffset.UtcNow).ToUniversalTime();
+        return await IngestCoreAsync(new MessageEnvelope(
+            accountId,
+            conversationKey,
+            externalId,
+            input.LastMessageAt,
+            "incoming",
+            preview,
+            true,
+            observedAt), connection, transaction, cancellationToken);
+    }
+
     private static async Task UpsertConversationCoreAsync(
         WsConversationInput input,
         NpgsqlConnection connection,
@@ -336,6 +372,7 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
         var accountId = input.AccountId.Trim();
         var conversationKey = input.ConversationKey.Trim();
         var lastMessageAt = input.LastMessageAt?.ToUniversalTime();
+        var capturedAt = (input.CapturedAt ?? DateTimeOffset.UtcNow).ToUniversalTime();
         await EnsureAccountAndConversationAsync(connection, transaction, accountId, conversationKey, lastMessageAt, cancellationToken);
         var conversationId = $"conv-{ShortHash($"{accountId}\u001f{conversationKey}")}";
         await using var update = new NpgsqlCommand("""
@@ -345,8 +382,25 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
                     ELSE conversations.title
                 END,
                 last_message_at = CASE
-                    WHEN $5 IS NULL THEN conversations.last_message_at
-                    ELSE GREATEST(COALESCE(conversations.last_message_at, $5), $5)
+                    WHEN $6 IS NULL THEN conversations.last_message_at
+                    ELSE GREATEST(COALESCE(conversations.last_message_at, $6), $6)
+                END,
+                unread_count = CASE
+                    WHEN conversations.list_captured_at IS NULL OR $8 >= conversations.list_captured_at THEN $7
+                    ELSE conversations.unread_count
+                END,
+                last_message_preview = CASE
+                    WHEN (conversations.list_captured_at IS NULL OR $8 >= conversations.list_captured_at)
+                         AND NULLIF(BTRIM($5::text), '') IS NOT NULL THEN $5
+                    ELSE conversations.last_message_preview
+                END,
+                visible_only = CASE
+                    WHEN conversations.list_captured_at IS NULL OR $8 >= conversations.list_captured_at THEN $9
+                    ELSE conversations.visible_only
+                END,
+                list_captured_at = CASE
+                    WHEN conversations.list_captured_at IS NULL OR $8 > conversations.list_captured_at THEN $8
+                    ELSE conversations.list_captured_at
                 END,
                 updated_at = now()
             WHERE id = $1 AND account_id = $2 AND external_key = $3
@@ -355,7 +409,11 @@ public sealed class WsRepository(PostgresConnectionFactory connections)
         update.Parameters.AddWithValue(accountId);
         update.Parameters.AddWithValue(conversationKey);
         update.Parameters.AddWithValue(input.DisplayName?.Trim() ?? string.Empty);
+        update.Parameters.AddWithValue(input.LastMessagePreview?.Trim() ?? string.Empty);
         update.Parameters.AddWithValue((object?)lastMessageAt ?? DBNull.Value);
+        update.Parameters.AddWithValue(Math.Max(0, input.UnreadCount));
+        update.Parameters.AddWithValue(capturedAt);
+        update.Parameters.AddWithValue(input.VisibleOnly);
         await update.ExecuteNonQueryAsync(cancellationToken);
     }
 
@@ -444,10 +502,12 @@ public sealed record WsConversationInput(
     int UnreadCount,
     string LastMessagePreview,
     DateTimeOffset? LastMessageAt,
-    bool VisibleOnly = true);
+    bool VisibleOnly = true,
+    DateTimeOffset? CapturedAt = null);
 public sealed record WsBatchIngestResult(
     int Accepted,
     int Deduplicated,
     IReadOnlyList<string> MessageIds,
     IReadOnlyList<string> ConversationIds,
-    int ConversationsAccepted = 0);
+    int ConversationsAccepted = 0,
+    int PreviewAccepted = 0);

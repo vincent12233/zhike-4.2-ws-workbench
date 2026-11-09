@@ -25,6 +25,7 @@ const tests = [
   'performance-postgres.test.cjs',
   'ws-authorized-smoke.test.cjs',
   'ws-list-capture-contract.test.cjs',
+  'ws-list-metadata-contract.test.cjs',
   'ws-routes-checkpoint-atomicity.test.cjs',
   'installer-cutover.test.cjs',
 ];

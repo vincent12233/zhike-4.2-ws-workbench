@@ -29,9 +29,11 @@ public static class WsRoutes
         {
             if (request is null || string.IsNullOrWhiteSpace(request.AccountId) || request.AccountId.Trim().Length > MaxAccountIdLength || !AccountStatuses.Contains(request.Status?.Trim() ?? string.Empty)) return (IResult)Results.BadRequest("accountId and a supported status are required");
             var changed = await repository.UpdateAccountStatusAsync(request.AccountId, request.Status!, cancellationToken);
-            return changed > 0
-                ? Results.Ok(new { changed, status = request.Status, at = DateTimeOffset.UtcNow })
-                : Results.NotFound(new { error = "WS 账号不存在。", accountId = request.AccountId });
+            if (changed > 0) return Results.Ok(new { changed, status = request.Status, at = DateTimeOffset.UtcNow, created = false });
+            var created = await repository.UpsertAccountAsync(request.AccountId, request.AccountId, request.Status!, cancellationToken);
+            return created is null
+                ? Results.NotFound(new { error = "WS 账号状态无法保存。", accountId = request.AccountId })
+                : Results.Ok(new { changed = 0, status = created.Status, at = DateTimeOffset.UtcNow, created = true });
         });
         group.MapGet("/followups", GetFollowupsAsync);
         group.MapGet("/accounts", async (WsRepository repository, CancellationToken cancellationToken) => Results.Ok(await repository.ListAccountsAsync(cancellationToken)));
@@ -87,6 +89,7 @@ public static class WsRoutes
             if (string.IsNullOrWhiteSpace(conversation.ConversationKey) || conversation.ConversationKey.Length > 512) return TypedResults.BadRequest("conversationKey is required and must be <= 512 characters");
             if (conversation.DisplayName is { Length: > MaxDisplayNameLength } || conversation.LastMessagePreview is { Length: > 12000 }) return TypedResults.BadRequest("conversation field exceeds the allowed length");
             if (conversation.UnreadCount < 0) return TypedResults.BadRequest("unreadCount must be >= 0");
+            if (!conversation.VisibleOnly) return TypedResults.BadRequest("only visible authorized conversation rows are accepted");
             conversationInputs.Add(new WsConversationInput(
                 conversation.AccountId!,
                 conversation.ConversationKey!,
@@ -94,7 +97,8 @@ public static class WsRoutes
                 conversation.UnreadCount,
                 conversation.LastMessagePreview ?? string.Empty,
                 conversation.LastMessageAt,
-                conversation.VisibleOnly));
+                conversation.VisibleOnly,
+                conversation.CapturedAt));
         }
         var result = await repository.IngestBatchAsync(
             request.AccountId.Trim(),
@@ -111,7 +115,7 @@ public static class WsRoutes
             checkpointInputs,
             cancellationToken,
             conversationInputs);
-        return TypedResults.Ok(new WsIngestBatchResponse(result.Accepted, result.Deduplicated, result.MessageIds, DateTimeOffset.UtcNow, result.ConversationsAccepted));
+        return TypedResults.Ok(new WsIngestBatchResponse(result.Accepted, result.Deduplicated, result.MessageIds, DateTimeOffset.UtcNow, result.ConversationsAccepted, result.PreviewAccepted));
     }
 
     private static async Task<Results<Ok<object>, BadRequest<string>>> SaveCheckpointsAsync(

@@ -60,6 +60,10 @@ function runWs() {
   run('WS multi-account BrowserView contract', [path.join(repo, 'tests', 'ws-multi-account-main.test.cjs')]);
   run('WS ChatKnow UI contract', [path.join(repo, 'tests', 'ws-workbench-ui.test.cjs')]);
   run('WS collection and CRM sync contract', [path.join(repo, 'tests', 'ws-workbench-sync.test.cjs')]);
+  run('WS connector protocol', [path.join(repo, 'connectors', 'ws-worker', 'tests', 'connector-protocol.test.cjs')]);
+  run('WS connector transport flush', [path.join(repo, 'connectors', 'ws-worker', 'tests', 'transport-flush.test.cjs')]);
+  run('WS connector fixtures', [path.join(repo, 'connectors', 'ws-worker', 'tests', 'collector-fixtures.test.cjs')]);
+  run('WS connector heartbeat', [path.join(repo, 'connectors', 'ws-worker', 'tests', 'runner-heartbeat.test.cjs')]);
 }
 
 function runAll() {

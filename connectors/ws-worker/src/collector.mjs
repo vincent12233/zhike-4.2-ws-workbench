@@ -91,6 +91,7 @@ export function normalizeVisibleConversation(input = {}) {
     unreadCount: asUnreadCount(firstValue(input, ['unreadCount', 'unread', 'badge'])),
     lastMessagePreview: asText(firstValue(input, ['lastMessagePreview', 'lastMessage', 'preview', 'snippet'])),
     lastMessageAt: stableDate(firstValue(input, ['lastMessageAt', 'updatedAt', 'timestamp', 'time'])),
+    capturedAt: stableDate(firstValue(input, ['capturedAt', 'observedAt', 'collectedAt'])),
     visibleOnly: input.visibleOnly !== false,
   };
 }
@@ -168,13 +169,18 @@ export function buildIngestBatch({ accountId = '', conversations = [], messages 
     lastMessageFingerprint: nextCheckpoint.lastMessageFingerprint,
     updatedAt: nextCheckpoint.updatedAt,
   } : null;
+  const capturedAt = new Date().toISOString();
+  const normalizedConversations = collectConversationList(conversations).map((conversation) => ({
+    ...conversation,
+    capturedAt: conversation.capturedAt || capturedAt,
+  }));
   return {
     protocol: PROTOCOL,
     connectorId: asText(connectorId),
     accountId: normalizedAccountId,
-    capturedAt: new Date().toISOString(),
+    capturedAt,
     scope: 'visible-authorized-content',
-    conversations: collectConversationList(conversations),
+    conversations: normalizedConversations,
     messages: uniqueMessages,
     checkpoint: nextCheckpoint,
     // A list-only capture can legitimately contain no message/conversation

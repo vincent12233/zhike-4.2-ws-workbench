@@ -53,7 +53,7 @@ export class ConnectorApiClient extends CheckpointClient {
     }
     const conversations = Array.isArray(batch.conversations) ? batch.conversations.map((conversation) => {
       if (conversation?.accountId && String(conversation.accountId).trim() !== accountId) throw new Error('conversation account mismatch');
-      return { ...conversation, accountId };
+      return { ...conversation, accountId, capturedAt: conversation?.capturedAt || batch.capturedAt || null };
     }) : [];
     const payload = {
       protocol: String(batch.protocol || 'zhike.ws.ingest.batch.v1'),

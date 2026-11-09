@@ -21,4 +21,5 @@ assert.match(saveBody, /var inputs = new List<WsCheckpointInput>\(normalized\.Co
 assert.match(saveBody, /SaveCheckpointsBatchAsync\(inputs, cancellationToken\)/, 'route should persist all accounts through one repository transaction');
 assert.doesNotMatch(saveBody, /foreach \(var group in groups\)[\s\S]*?IngestBatchAsync\(group\.Key/, 'route must not commit each account group independently');
 assert.match(repository, /public async Task SaveCheckpointsBatchAsync\([\s\S]*?BeginTransactionAsync\(cancellationToken\)/, 'repository should provide a transaction spanning every checkpoint account');
+assert.match(routes, /if \(changed > 0\)[\s\S]*?UpsertAccountAsync\(request\.AccountId/, 'heartbeat should create an account before reporting a state for a new connector');
 console.log('WS checkpoint route validates every group before one transactional write');

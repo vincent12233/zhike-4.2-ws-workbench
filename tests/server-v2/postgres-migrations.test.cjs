@@ -18,6 +18,7 @@ const expected = [
   '009-worker-heartbeats.sql',
   '010-legacy-workspace-state.sql',
   '011-hot-chat-profiles.sql',
+  '012-ws-list-capture-metadata.sql',
 ];
 
 for (const file of expected) assert.equal(fs.existsSync(path.join(migrationsDir, file)), true, `missing ${file}`);
@@ -45,6 +46,9 @@ assert.match(fs.readFileSync(path.join(migrationsDir, '009-worker-heartbeats.sql
 assert.match(fs.readFileSync(path.join(migrationsDir, '010-legacy-workspace-state.sql'), 'utf8'), /JSONB/i);
 assert.match(fs.readFileSync(path.join(migrationsDir, '011-hot-chat-profiles.sql'), 'utf8'), /VALUES\s*\(11,/i);
 assert.match(fs.readFileSync(path.join(migrationsDir, '011-hot-chat-profiles.sql'), 'utf8'), /UNIQUE\s*\(\s*customer_id\s*,\s*account_id\s*,\s*conversation_id\s*\)/i);
+assert.match(fs.readFileSync(path.join(migrationsDir, '012-ws-list-capture-metadata.sql'), 'utf8'), /unread_count/i);
+assert.match(fs.readFileSync(path.join(migrationsDir, '012-ws-list-capture-metadata.sql'), 'utf8'), /last_message_preview/i);
+assert.match(fs.readFileSync(path.join(migrationsDir, '012-ws-list-capture-metadata.sql'), 'utf8'), /VALUES\s*\(12\s*,/i);
 
 for (const file of [
   'server/src/Zhike.Infrastructure/Database/PostgresConnectionFactory.cs',

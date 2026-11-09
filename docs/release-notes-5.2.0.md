@@ -11,7 +11,7 @@ PostgreSQL/API/AI Worker/可选 WS Connector 由 Docker 提供后台能力。4.4
 | WinUI 桌面端 | 5.2.0 | 自包含 Windows App SDK，WebView2 用于 WS |
 | API / Worker | 5.2.0 | 默认配置由 `ZHike_APP_VERSION` 注入 |
 | WS Connector | 5.2.0 | 可选，仅处理用户授权的可见内容 |
-| PostgreSQL schema | 011 | 热聊客户档案、证据、事件和 outbox |
+| PostgreSQL schema | 012 | 热聊客户档案、WS 列表采集元数据、预览分析和 outbox |
 | Electron 回滚包 | 4.4.24 | 历史兼容入口，不作为当前入口 |
 
 ## 本次交付
@@ -20,9 +20,13 @@ PostgreSQL/API/AI Worker/可选 WS Connector 由 Docker 提供后台能力。4.4
   保存证据和置信度；只补空字段，冲突待人工确认。
 - AI 跟进闭环：摘要、意向、情绪、下一话题、回复建议和跟进提醒与客户库、任务中心
   幂等同步，失败可重试，不误报成功。
+- WS 断点采集：不打开会话也会保存可见列表的标题、预览、未读数和采集时间；列表摘要
+  进入稳定去重的预览分析任务，旧批次不会覆盖新状态，重复轮询不会重复写入。
+- WS 状态同步：登录等待、连接失败、会话过期和已连接状态都会通过连接器心跳落库，
+  新账号首次上报状态时自动建档。
 - 稳定性：关闭窗口前有界刷盘，WS 状态和共享状态轮询可见性退避，大数据量显示容量提示，
   Docker 增加内存/磁盘/迁移锁诊断，安装脚本增加 WebView2、签名和回滚门禁。
-- 数据兼容：保留 4.4.24 客户、跟票、入金、VIP、统计口径；迁移目标为 PostgreSQL 011，
+- 数据兼容：保留 4.4.24 客户、跟票、入金、VIP、统计口径；迁移目标为 PostgreSQL 012，
   不把登记日期改写为当前日期。
 
 ## 升级前备份
@@ -43,14 +47,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installe
 ```
 
 安装器只替换程序目录，默认保留 `%LOCALAPPDATA%\Zhike`。首次连接前确认
-`/api/v2/health` 返回 `schemaVersion=11`、`databaseStatus=healthy` 和可接受的 Worker 状态；
+`/api/v2/health` 返回 `schemaVersion=12`、`databaseStatus=healthy` 和可接受的 Worker 状态；
 若返回 `schema-mismatch`，先完成迁移，不要强行写入业务数据。
 
 ## 回滚
 
 1. 停止 5.2.0 桌面端和 Docker 服务，但保留 PostgreSQL 卷、dump、日志和用户目录。
 2. 使用上一版安装包（5.1.0；必要时使用 4.4.24 Electron）恢复程序文件。
-3. 不自动降级 PostgreSQL schema；若旧版无法读取 011，使用升级前 dump 在隔离数据库恢复并对账，
+3. 不自动降级 PostgreSQL schema；若旧版无法读取 012，使用升级前 dump 在隔离数据库恢复并对账，
    再决定是否切回旧数据库。确认客户、跟票/入金、VIP、任务和提醒后才恢复写入。
 4. 发生版本冲突时使用页面提供的恢复副本/快照，不直接删除表或 Docker 卷。
 
@@ -60,14 +64,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installe
 
 本次隔离回归已通过：
 
-- `node scripts/run-tests.cjs all`：60/60 Node 合约与恢复检查通过；
-- `node tests/server-v2/run-all.cjs`：23/23 服务端契约与数据隔离检查通过；
+- `node scripts/run-tests.cjs all`：65/65 Node 合约、桌面门禁和恢复检查通过；
+- `node tests/server-v2/run-all.cjs`：25/25 服务端契约与数据隔离检查通过；
 - `node tests/task6-stability.test.cjs`：关闭刷盘、轮询退避、容量、WS 错误分类、Docker/安装门禁通过；
 - `docker compose --env-file infra/.env.example -f infra/compose.yaml config --quiet`：Compose 配置通过；
 - 使用仓库 `.tools/dotnet10` SDK 完成 WinUI 5.2.0 self-contained Release bundle，Inno Setup 7.1.1
   成功生成安装包；安装包为 unsigned-placeholder，哈希见交付清单；
 - 使用独立项目名、独立卷和 `172.31.250.0/24` 隔离子网启动 PostgreSQL/API/AI Worker，
-  `/api/v2/health` 返回 `200`、`appVersion=5.2.0`、`schemaVersion=11`、`databaseStatus=healthy`、
+  `/api/v2/health` 返回 `200`、`appVersion=5.2.0`、`schemaVersion=12`、`databaseStatus=healthy`、
   `workerStatus=running`，随后已完整清理测试卷和容器。
 
 以下项目没有在本次隔离环境伪造为“已通过”：

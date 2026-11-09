@@ -11,6 +11,7 @@ const contracts = read('server/src/Zhike.Contracts/WsConnectorContracts.cs');
 const routes = read('server/src/Zhike.Api/Routes/WsRoutes.cs');
 const repository = read('server/src/Zhike.Infrastructure/Repositories/WsRepository.cs');
 const transport = read('connectors/ws-worker/src/checkpoint-client.mjs');
+const migration = read('server/migrations/012-ws-list-capture-metadata.sql');
 
 assert.match(contracts, /record\s+WsConversationEnvelope\s*\(/, 'WS ingest contract exposes conversation-list rows');
 assert.match(contracts, /IReadOnlyList<WsConversationEnvelope>\?\s+Conversations/, 'batch request carries conversation list');
@@ -24,5 +25,13 @@ assert.match(repository, /ConversationsAccepted/, 'batch result reports conversa
 assert.match(repository, /candidate|ambigu|多候选|Count\s*==\s*1/, 'phone matching has an ambiguity guard');
 assert.doesNotMatch(repository, /UNION ALL\s+SELECT id FROM customers[\s\S]{0,240}LIMIT 1/, 'phone matching must not arbitrarily bind one duplicate customer');
 assert.match(repository, /ORDER BY\s+COALESCE\(sent_at,\s*observed_at\)\s+DESC/, 'AI context ordering includes undated messages');
+assert.match(migration, /ADD COLUMN IF NOT EXISTS\s+last_message_preview/i, 'list preview has a durable column');
+assert.match(migration, /ADD COLUMN IF NOT EXISTS\s+unread_count/i, 'list unread count has a durable column');
+assert.match(repository, /input\.UnreadCount/, 'list unread count is written');
+assert.match(repository, /input\.LastMessagePreview/, 'list preview is written');
+assert.match(repository, /list-preview-\{ShortHash/, 'preview message identity is stable across polling rounds');
+assert.match(repository, /fingerprintAt\s*=\s*sentAt\s*\?\?\s*\(envelope\.PreviewOnly/, 'preview fingerprint does not depend on polling time when no message timestamp exists');
+assert.match(repository, /PreviewAccepted/, 'response reports list-only preview processing');
+assert.match(routes, /!conversation\.VisibleOnly/, 'non-visible rows are rejected');
 
 console.log('WS list capture contract: conversation forwarding, persistence, ambiguity guard and context ordering pass');

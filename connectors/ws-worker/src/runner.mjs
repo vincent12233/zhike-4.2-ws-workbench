@@ -14,6 +14,9 @@ const apiClient = new ConnectorApiClient();
 const flusher = new CaptureBatchFlusher({ apiClient, profileStore: profiles, connectorId: process.env.ZHIKE_CONNECTOR_ID || 'docker-default' });
 const accountQueues = new Map();
 const lastHeartbeatAt = new Map();
+const heartbeatQueues = new Map();
+const lastHeartbeatState = new Map();
+const heartbeatStates = new Set(['未连接', '等待登录', '登录中', '已连接', '会话过期', '连接失败', '正在重连']);
 const accountIds = String(process.env.ZHIKE_ACCOUNT_IDS || '').split(',').map((value) => value.trim()).filter(Boolean);
 for (const accountId of accountIds) await profiles.ensure(accountId);
 console.log(JSON.stringify({
@@ -24,6 +27,31 @@ console.log(JSON.stringify({
   apiAuthConfigured: Boolean(process.env.ZHIKE_API_TOKEN || process.env.ZHIKE_API_TOKEN_FILE),
 }));
 
+function publishHeartbeat(accountId, status) {
+  const normalizedAccountId = String(accountId || '').trim();
+  const normalizedStatus = String(status || '').trim();
+  if (!normalizedAccountId || !heartbeatStates.has(normalizedStatus) || typeof apiClient.heartbeat !== 'function') return Promise.resolve(null);
+  const now = Date.now();
+  const lastAt = lastHeartbeatAt.get(normalizedAccountId) || 0;
+  const previousState = lastHeartbeatState.get(normalizedAccountId) || '';
+  const quietWindow = normalizedStatus === '已连接' ? 30_000 : 5_000;
+  if (previousState === normalizedStatus && now - lastAt < quietWindow) return Promise.resolve(null);
+  const previous = heartbeatQueues.get(normalizedAccountId) || Promise.resolve();
+  const next = previous.catch(() => {}).then(async () => {
+    const response = await apiClient.heartbeat(normalizedAccountId, normalizedStatus);
+    lastHeartbeatAt.set(normalizedAccountId, Date.now());
+    lastHeartbeatState.set(normalizedAccountId, normalizedStatus);
+    return response;
+  }).catch((error) => {
+    console.error(JSON.stringify({ service: 'ws-connector', status: 'heartbeat-failed', accountId: normalizedAccountId, heartbeatState: normalizedStatus, message: String(error?.message || error).slice(0, 300) }));
+    return null;
+  });
+  heartbeatQueues.set(normalizedAccountId, next);
+  return next.finally(() => {
+    if (heartbeatQueues.get(normalizedAccountId) === next) heartbeatQueues.delete(normalizedAccountId);
+  });
+}
+
 function enqueueCapture(capture) {
   const accountId = String(capture?.accountId || '').trim();
   if (!accountId) {
@@ -32,19 +60,14 @@ function enqueueCapture(capture) {
   }
   const previous = accountQueues.get(accountId) || Promise.resolve();
   const next = previous.catch(() => {}).then(() => flusher.flush(capture).then(async ({ response }) => {
-    const now = Date.now();
-    if (now - (lastHeartbeatAt.get(accountId) || 0) >= 30_000 && typeof apiClient.heartbeat === 'function') {
-      try { await apiClient.heartbeat(accountId, '已连接'); } catch (error) {
-        console.error(JSON.stringify({ service: 'ws-connector', status: 'heartbeat-failed', message: String(error?.message || error).slice(0, 300) }));
-      }
-      lastHeartbeatAt.set(accountId, now);
-    }
+    await publishHeartbeat(accountId, '已连接');
     return response;
   }));
   accountQueues.set(accountId, next);
   next.then((response) => {
     console.log(JSON.stringify({ service: 'ws-connector', status: 'flushed', accepted: response?.accepted || 0, deduplicated: response?.deduplicated || 0 }));
   }).catch((error) => {
+    void publishHeartbeat(accountId, '连接失败');
     console.error(JSON.stringify({ service: 'ws-connector', status: 'flush-failed', message: String(error?.message || error).slice(0, 300) }));
   }).finally(() => {
     if (accountQueues.get(accountId) === next) accountQueues.delete(accountId);
@@ -82,7 +105,10 @@ if (process.env.ZHIKE_WS_URL && accountIds.length > 0) {
       profileDirectory,
       url: process.env.ZHIKE_WS_URL,
       onCapture: (capture) => new Promise((resolve) => { enqueueCapture(capture); resolve(); }),
-      onState: (state) => console.log(JSON.stringify({ service: 'ws-connector', ...state })),
+      onState: (state) => {
+        void publishHeartbeat(accountId, state?.state);
+        console.log(JSON.stringify({ service: 'ws-connector', ...state }));
+      },
     }).catch((error) => console.error(JSON.stringify({ service: 'ws-connector', status: 'playwright-start-failed', accountId, message: String(error?.message || error).slice(0, 300) })));
   }
 }
