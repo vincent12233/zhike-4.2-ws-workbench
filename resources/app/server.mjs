@@ -1150,7 +1150,18 @@ const server = createServer(async (req, res) => {
       let task = null;
       let duplicate = false;
       if (followupPlan.shouldCreate) {
-        const existing = state.followups.find(item => String(item.wsFollowupKey || '') === followupPlan.dedupeKey);
+        const closedFollowup = item => Boolean(item?.done)
+          || ['done', 'dismissed', 'completed', 'closed'].includes(String(item?.status || '').toLowerCase());
+        // Analysis ids are intentionally unique, but an active reminder is a
+        // conversation-level action. Reusing the open AI follow-up prevents a
+        // newer analysis (or a no-reply poll) from multiplying task-center
+        // records. Closed/manual history remains untouched and can be opened
+        // again by a later analysis as a new action.
+        const existing = state.followups.find(item => String(item.wsFollowupKey || '') === followupPlan.dedupeKey)
+          || state.followups.find(item => item?.aiGenerated
+            && !closedFollowup(item)
+            && String(item.wsConversationId || '') === String(conversation.id)
+            && String(item.customerId || '') === String(customer.id));
         const now = new Date().toISOString();
         followup = existing || {
           id: `FWS-${wsCore.stableHash(followupPlan.dedupeKey)}`,
