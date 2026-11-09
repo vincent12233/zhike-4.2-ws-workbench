@@ -16,7 +16,8 @@ public sealed partial class WsWorkbenchPage : Page
     private bool _leftCollapsed;
     private bool _rightCollapsed;
     private readonly WebViewProfileService _profiles = new();
-    private readonly WindowLayoutService _layout = new();
+    private readonly WindowLayoutService _layout = new("ws-workbench");
+    private string _mobilePanel = "center";
     private readonly WsAccountStore _accountStore = new();
     private readonly LocalQueue _localQueue = new();
     private readonly ObservableCollection<WsAccountItem> _accounts = [];
@@ -133,6 +134,12 @@ public sealed partial class WsWorkbenchPage : Page
 
     private void ToggleLeftPane(object sender, RoutedEventArgs args)
     {
+        if (IsMobileLayout())
+        {
+            _mobilePanel = _mobilePanel == "left" ? "center" : "left";
+            ApplyResponsiveLayout();
+            return;
+        }
         _leftCollapsed = !_leftCollapsed;
         ApplyResponsiveLayout();
         _ = PersistLayoutAsync();
@@ -140,6 +147,12 @@ public sealed partial class WsWorkbenchPage : Page
 
     private void ToggleRightPane(object sender, RoutedEventArgs args)
     {
+        if (IsMobileLayout())
+        {
+            _mobilePanel = _mobilePanel == "right" ? "center" : "right";
+            ApplyResponsiveLayout();
+            return;
+        }
         _rightCollapsed = !_rightCollapsed;
         ApplyResponsiveLayout();
         _ = PersistLayoutAsync();
@@ -151,11 +164,31 @@ public sealed partial class WsWorkbenchPage : Page
     {
         if (WorkbenchRoot.ActualWidth <= 0 || WorkbenchRoot.ActualHeight <= 0) return;
         var state = _layout.CalculateLayout(WorkbenchRoot.ActualWidth, WorkbenchRoot.ActualHeight, WorkbenchRoot.XamlRoot?.RasterizationScale ?? 1d, _leftCollapsed, _rightCollapsed);
+        if (state.UseMobileTabs)
+        {
+            LeftPaneColumn.Width = _mobilePanel == "left" ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+            CenterPaneColumn.Width = _mobilePanel == "center" ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+            RightPaneColumn.Width = _mobilePanel == "right" ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+            LeftPane.Visibility = _mobilePanel == "left" ? Visibility.Visible : Visibility.Collapsed;
+            CenterPane.Visibility = _mobilePanel == "center" ? Visibility.Visible : Visibility.Collapsed;
+            RightPane.Visibility = _mobilePanel == "right" ? Visibility.Visible : Visibility.Collapsed;
+            LeftPaneButton.Content = _mobilePanel == "left" ? "返回聊天" : "显示会话";
+            RightPaneButton.Content = _mobilePanel == "right" ? "返回聊天" : "显示辅助";
+            return;
+        }
+        CenterPaneColumn.Width = new GridLength(1, GridUnitType.Star);
+        CenterPane.Visibility = Visibility.Visible;
         LeftPaneColumn.Width = new GridLength(state.LeftPaneWidth);
         RightPaneColumn.Width = new GridLength(state.RightPaneWidth);
         LeftPane.Visibility = state.LeftCollapsed ? Visibility.Collapsed : Visibility.Visible;
         RightPane.Visibility = state.RightCollapsed ? Visibility.Collapsed : Visibility.Visible;
+        LeftPaneButton.Content = state.LeftCollapsed ? "显示会话" : "收起会话";
+        RightPaneButton.Content = state.RightCollapsed ? "显示辅助" : "收起辅助";
     }
+
+    private bool IsMobileLayout()
+        => WorkbenchRoot.ActualWidth > 0
+           && _layout.CalculateLayout(WorkbenchRoot.ActualWidth, WorkbenchRoot.ActualHeight, WorkbenchRoot.XamlRoot?.RasterizationScale ?? 1d, _leftCollapsed, _rightCollapsed).UseMobileTabs;
 
     private async Task RestoreLayoutAsync()
     {

@@ -11,7 +11,7 @@ namespace Zhike.Desktop;
 
 public sealed partial class MainWindow : Window
 {
-    private readonly WindowLayoutService _layout = new();
+    private readonly WindowLayoutService _layout = new("main");
     private bool _legacyHostEnabled;
     private string _pendingLegacyRoute = "home";
     private DispatcherQueueTimer? _layoutSaveTimer;
@@ -187,7 +187,11 @@ public sealed partial class MainWindow : Window
             _layoutSaveTimer.Tick += async (_, _) =>
             {
                 _layoutSaveTimer.Stop();
+                if (_appWindow is null) return;
                 var state = _layout.ApplyLayout(RootShell.ActualWidth, RootShell.ActualHeight, CurrentRasterizationScale(), false, false);
+                var maximized = _appWindow.Presenter is OverlappedPresenter presenter
+                    && presenter.State == OverlappedPresenterState.Maximized;
+                state = _layout.WithWindowBounds(state, _appWindow.Position.X, _appWindow.Position.Y, _appWindow.Size.Width, _appWindow.Size.Height, maximized);
                 await _layout.SaveAsync(state);
             };
         }
@@ -196,7 +200,19 @@ public sealed partial class MainWindow : Window
 
     private async Task RestoreLayoutAsync()
     {
-        try { _ = await _layout.LoadAsync(); }
+        try
+        {
+            var saved = await _layout.LoadAsync();
+            if (saved is null || _appWindow is null || saved.Width < 820 || saved.Height < 540) return;
+            var display = DisplayArea.GetFromWindowId(_appWindow.Id, DisplayAreaFallback.Primary);
+            var work = display.WorkArea;
+            var width = Math.Clamp((int)Math.Round(saved.Width), 820, work.Width);
+            var height = Math.Clamp((int)Math.Round(saved.Height), 540, work.Height);
+            var x = Math.Clamp(saved.X, work.X, work.X + Math.Max(0, work.Width - width));
+            var y = Math.Clamp(saved.Y, work.Y, work.Y + Math.Max(0, work.Height - height));
+            _appWindow.MoveAndResize(new Windows.Graphics.RectInt32(x, y, width, height));
+            if (saved.IsMaximized && _appWindow.Presenter is OverlappedPresenter presenter) presenter.Maximize();
+        }
         catch { }
     }
 

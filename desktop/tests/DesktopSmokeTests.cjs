@@ -76,7 +76,7 @@ assert.match(homeCode, /ComputePairingProof/);
 assert.match(homeCode, /SetPairingApprovalCode/);
 const layout = fs.readFileSync(path.join(desktopRoot, 'Services', 'WindowLayoutService.cs'), 'utf8');
 assert.doesNotMatch(layout, /Math\.Max\(820|Math\.Max\(540/);
-assert.match(layout, /Math\.Max\(0d?,\s*width\s*\/\s*scale\)/);
+assert.doesNotMatch(layout, /width\s*\/\s*scale/);
 assert.match(layout, /DpiScale/);
 assert.match(layout, /SaveAsync/);
 assert.match(layout, /LoadAsync/);

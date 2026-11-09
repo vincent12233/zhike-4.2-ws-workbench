@@ -8,12 +8,12 @@
                 <TextBlock Text="个人账号 · 实时采集与 AI 跟进" VerticalAlignment="Center" FontSize="10" Opacity="0.64" />
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5">
-                <Button Content="收起会话" Click="ToggleLeftPane" />
-                <Button Grid.Column="2" Content="收起辅助" Click="ToggleRightPane" />
+                <Button x:Name="LeftPaneButton" Content="收起会话" Click="ToggleLeftPane" />
+                <Button x:Name="RightPaneButton" Grid.Column="2" Content="收起辅助" Click="ToggleRightPane" />
             </StackPanel>
         </Grid>
         <Grid Grid.Row="1" ColumnSpacing="8">
-            <Grid.ColumnDefinitions><ColumnDefinition x:Name="LeftPaneColumn" Width="224"/><ColumnDefinition Width="*"/><ColumnDefinition x:Name="RightPaneColumn" Width="340"/></Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions><ColumnDefinition x:Name="LeftPaneColumn" Width="224"/><ColumnDefinition x:Name="CenterPaneColumn" Width="*"/><ColumnDefinition x:Name="RightPaneColumn" Width="340"/></Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" x:Name="LeftPane" Spacing="8">
                 <TextBlock Text="WS 账号" FontSize="18" FontWeight="SemiBold" />
                 <Button Content="添加账号" Click="AddAccount" />
@@ -22,7 +22,7 @@
                 <TextBlock x:Name="AccountStatusText" Text="未连接" Opacity="0.72" />
                 <TextBlock Text="会话列表由账号级 checkpoint 持续采集，不需要逐个打开会话。" TextWrapping="Wrap" Opacity="0.72" />
             </StackPanel>
-            <Border Grid.Column="1" BorderBrush="Gray" BorderThickness="1" CornerRadius="8">
+            <Border Grid.Column="1" x:Name="CenterPane" BorderBrush="Gray" BorderThickness="1" CornerRadius="8">
                 <Grid x:Name="WebViewHost" />
             </Border>
             <ScrollViewer Grid.Column="2" x:Name="RightPane">
