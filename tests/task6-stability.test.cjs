@@ -44,7 +44,7 @@ for (const category of ['unpaired', 'network', 'session-expired', 'structure-cha
 assert.match(main, /wsViews\.get\(accountId\)[\s\S]{0,900}(?:runtime|status)[\s\S]{0,900}wsAccounts\.set/, 'WS account runtime status must overlay persisted state per account');
 assert.match(ws, /errorCategory|错误分类|未配对|页面结构/, 'WS renderer must show actionable bridge error categories');
 
-assert.match(compose, /ZHike__SchemaVersion:\s*\$\{ZHike_SCHEMA_VERSION:-11\}/, 'Docker defaults must target migration 011');
+assert.match(compose, /ZHike__SchemaVersion:\s*\$\{ZHike_SCHEMA_VERSION:-13\}/, 'Docker defaults must target the latest migration');
 assert.match(compose, /healthcheck:[\s\S]{0,500}(?:pg_isready|migration|schema)/, 'Docker services must expose startup health diagnostics');
 assert.match(compose, /mem_limit|deploy:[\s\S]{0,300}memory:/, 'Docker compose must declare memory capacity limits');
 assert.match(compose, /disk|Disk|磁盘|storage/, 'Docker compose must expose disk/storage diagnostics or guardrails');

@@ -11,7 +11,7 @@ using Zhike.Infrastructure.Database;
 namespace Zhike.Infrastructure.Repositories;
 
 public sealed record ImportPreviewRow(int RowNumber, JsonElement Raw, JsonElement Classified, double Confidence, IReadOnlyList<string> Conflicts);
-public sealed record ImportBatchPreview(string Id, string SourceHash, IReadOnlyList<ImportPreviewRow> Rows);
+public sealed record ImportBatchPreview(string Id, string SourceHash, IReadOnlyList<ImportPreviewRow> Rows, string DuplicateOf = "");
 
 public sealed class ImportRepository(
     PostgresConnectionFactory connections,
@@ -25,12 +25,19 @@ public sealed class ImportRepository(
         await using var connection = connections.Create();
         await connection.OpenAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
-        await using (var batch = new NpgsqlCommand("INSERT INTO import_batches(id, source_name, source_hash, state, row_count) VALUES ($1, $2, $3, 'preview', $4)", connection, transaction))
+        var duplicateOf = string.Empty;
+        await using (var duplicate = new NpgsqlCommand("SELECT id FROM import_batches WHERE source_hash=$1 AND state='committed' ORDER BY committed_at DESC NULLS LAST, created_at DESC LIMIT 1", connection, transaction))
+        {
+            duplicate.Parameters.AddWithValue(sourceHash);
+            duplicateOf = Convert.ToString(await duplicate.ExecuteScalarAsync(cancellationToken)) ?? string.Empty;
+        }
+        await using (var batch = new NpgsqlCommand("INSERT INTO import_batches(id, source_name, source_hash, state, row_count, duplicate_of) VALUES ($1, $2, $3, 'preview', $4, $5)", connection, transaction))
         {
             batch.Parameters.AddWithValue(batchId);
             batch.Parameters.AddWithValue(sourceName?.Trim() ?? string.Empty);
             batch.Parameters.AddWithValue(sourceHash);
             batch.Parameters.AddWithValue(rows.Count);
+            batch.Parameters.AddWithValue(duplicateOf);
             await batch.ExecuteNonQueryAsync(cancellationToken);
         }
         var preview = new List<ImportPreviewRow>();
@@ -52,7 +59,7 @@ public sealed class ImportRepository(
             preview.Add(new ImportPreviewRow(rowNumber, row, classified, confidence, conflicts));
         }
         await transaction.CommitAsync(cancellationToken);
-        return new ImportBatchPreview(batchId, sourceHash, preview);
+        return new ImportBatchPreview(batchId, sourceHash, preview, duplicateOf);
     }
 
     public async Task<int> CommitAsync(string batchId, CancellationToken cancellationToken = default)
@@ -112,6 +119,7 @@ public sealed class ImportRepository(
                     var recordType = Value(fields, "recordType");
                     var product = Value(fields, "product");
                     var direction = Value(fields, "direction");
+                    var tradeRef = Value(fields, "tradeRef");
                     var registered = DateValue(fields, "registeredDate");
                     var businessDate = DateValue(fields, "businessDate");
                     var followup = DateValue(fields, "nextFollowupDate");
@@ -123,10 +131,10 @@ public sealed class ImportRepository(
                         var currency = Value(fields, "currency");
                         var key = recordType.Equals("deposit", StringComparison.OrdinalIgnoreCase)
                             ? BusinessRecordKey.Deposit(customer.Id, businessDate?.ToString("yyyy-MM-dd") ?? registered?.ToString("yyyy-MM-dd") ?? string.Empty, amount, currency, note)
-                            : BusinessRecordKey.Ticket(customer.Id, (businessDate ?? registered)?.ToString("yyyy-MM-dd") ?? string.Empty, product, direction, note);
+                            : BusinessRecordKey.Ticket(customer.Id, (businessDate ?? registered)?.ToString("yyyy-MM-dd") ?? string.Empty, product, direction, note, tradeRef);
                         await businessRecords.UpsertAsync(connection, transaction, new BusinessRecordInput(
                             null, customer.Id, recordType, product, direction, registered, businessDate, followup,
-                            Value(fields, "channel"), Value(fields, "status"), Value(fields, "vipCode"), note, key, normalizedBatchId), cancellationToken);
+                            Value(fields, "channel"), Value(fields, "status"), Value(fields, "vipCode"), note, key, normalizedBatchId, tradeRef), cancellationToken);
                     }
 
                     await using var mark = new NpgsqlCommand("UPDATE import_rows SET state = 'committed', error_message = '' WHERE id = $1", connection, transaction);
@@ -181,6 +189,7 @@ public sealed class ImportRepository(
             else if (key.Contains("来源") || key.Contains("source")) result["source"] = NormalizeSource(value);
             else if (key.Contains("状态") || key.Contains("status")) result["status"] = NormalizeStatus(value);
             else if (key.Contains("vip")) result["vipCode"] = value;
+            else if (key.Contains("流水") || key.Contains("批次号") || key.Contains("成交编号") || key.Contains("traderef") || key.Contains("orderid")) result["tradeRef"] = value;
             else if (key.Contains("电话") || key.Contains("手机") || key.Contains("phone")) result["phone"] = value;
             else if (key.Contains("姓名") || key.Contains("客户") || key.Contains("name")) result["name"] = value;
             else if (key.Contains("类型") || key.Contains("recordtype") || key.Contains("业务类型")) result["recordType"] = NormalizeRecordType(value);

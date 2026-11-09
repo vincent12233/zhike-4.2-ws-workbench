@@ -11,7 +11,7 @@ PostgreSQL/API/AI Worker/可选 WS Connector 由 Docker 提供后台能力。4.4
 | WinUI 桌面端 | 5.2.0 | 自包含 Windows App SDK，WebView2 用于 WS |
 | API / Worker | 5.2.0 | 默认配置由 `ZHike_APP_VERSION` 注入 |
 | WS Connector | 5.2.0 | 可选，仅处理用户授权的可见内容 |
-| PostgreSQL schema | 012 | 热聊客户档案、WS 列表采集元数据、预览分析和 outbox |
+| PostgreSQL schema | 013 | 客户模糊搜索、重复导入提示、跟票交易流水及 WS/AI 数据 |
 | Electron 回滚包 | 4.4.24 | 历史兼容入口，不作为当前入口 |
 
 ## 本次交付
@@ -27,7 +27,7 @@ PostgreSQL/API/AI Worker/可选 WS Connector 由 Docker 提供后台能力。4.4
   新账号首次上报状态时自动建档。
 - 稳定性：关闭窗口前有界刷盘，WS 状态和共享状态轮询可见性退避，大数据量显示容量提示，
   Docker 增加内存/磁盘/迁移锁诊断，安装脚本增加 WebView2、签名和回滚门禁。
-- 数据兼容：保留 4.4.24 客户、跟票、入金、VIP、统计口径；迁移目标为 PostgreSQL 012，
+- 数据兼容：保留 4.4.24 客户、跟票、入金、VIP、统计口径；迁移目标为 PostgreSQL 013，
   不把登记日期改写为当前日期。
 
 ## 升级前备份
@@ -48,14 +48,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installe
 ```
 
 安装器只替换程序目录，默认保留 `%LOCALAPPDATA%\Zhike`。首次连接前确认
-`/api/v2/health` 返回 `schemaVersion=12`、`databaseStatus=healthy` 和可接受的 Worker 状态；
+`/api/v2/health` 返回 `schemaVersion=13`、`databaseStatus=healthy` 和可接受的 Worker 状态；
 若返回 `schema-mismatch`，先完成迁移，不要强行写入业务数据。
 
 ## 回滚
 
 1. 停止 5.2.0 桌面端和 Docker 服务，但保留 PostgreSQL 卷、dump、日志和用户目录。
 2. 使用上一版安装包（5.1.0；必要时使用 4.4.24 Electron）恢复程序文件。
-3. 不自动降级 PostgreSQL schema；若旧版无法读取 012，使用升级前 dump 在隔离数据库恢复并对账，
+3. 不自动降级 PostgreSQL schema；若旧版无法读取 013，使用升级前 dump 在隔离数据库恢复并对账，
    再决定是否切回旧数据库。确认客户、跟票/入金、VIP、任务和提醒后才恢复写入。
 4. 发生版本冲突时使用页面提供的恢复副本/快照，不直接删除表或 Docker 卷。
 
@@ -72,7 +72,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installe
 - 使用仓库 `.tools/dotnet10` SDK 完成 WinUI 5.2.0 self-contained Release bundle，Inno Setup 7.1.1
   成功生成安装包；安装包为 unsigned-placeholder，哈希见交付清单；
 - 使用独立项目名、独立卷和 `172.31.250.0/24` 隔离子网启动 PostgreSQL/API/AI Worker，
-  `/api/v2/health` 返回 `200`、`appVersion=5.2.0`、`schemaVersion=12`、`databaseStatus=healthy`、
+  `/api/v2/health` 返回 `200`、`appVersion=5.2.0`、`schemaVersion=13`、`databaseStatus=healthy`、
   `workerStatus=running`，随后已完整清理测试卷和容器。
 
 以下项目没有在本次隔离环境伪造为“已通过”：

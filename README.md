@@ -16,7 +16,7 @@
 ## 目录
 
 - `resources/app/`：Electron 渲染层、主进程、本机 API、SQLite 迁移和前端模块。
-- `resources/app/migrations/005-ws-workbench.sql`–`010-ai-customer-governance.sql` 与 `server/migrations/012-ws-list-capture-metadata.sql`：WS 工作台、断点采集、跟进提醒、热聊客户档案和列表级采集元数据迁移。
+- `resources/app/migrations/005-ws-workbench.sql`–`010-ai-customer-governance.sql` 与 `server/migrations/013-search-import-trade-hardening.sql`：WS 工作台、断点采集、热聊客户档案、搜索索引、重复导入提示和交易流水迁移。
 - `tests/`：WS、备份、HTTP、安装和项目回归测试。
 - `docs/`：项目检查、使用、故障排查、回滚和测试说明。
 - `scripts/`：统一测试入口与可复现的 Windows 安装包构建脚本。
@@ -31,7 +31,7 @@
 1. 安装并启动 Docker Desktop。
 2. 复制 `infra/.env.example` 为 `infra/.env`，至少修改 `POSTGRES_PASSWORD` 和随机的 `ZHIKE_PAIRING_APPROVAL_CODE`。
 3. 在 `infra` 目录执行 `docker compose up -d --build`；桌面端“服务器连接”页填写同一个 API 地址和审批码。
-4. 先检查 `/api/v2/health` 返回数据库健康、`schemaVersion=12`、`workerStatus=running`，再登录桌面端。
+4. 先检查 `/api/v2/health` 返回数据库健康、`schemaVersion=13`、`workerStatus=running`，再登录桌面端。
 
 详细迁移、备份、回滚和故障排查见 `infra/README.md` 与 `docs/server-version-*.md`。
 

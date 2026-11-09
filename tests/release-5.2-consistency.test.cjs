@@ -27,7 +27,7 @@ const activeVersionSources = {
 };
 
 assert.match(activeVersionSources.readme, /知客 5\.2\.0 桌面版/);
-assert.match(activeVersionSources.readme, /schemaVersion=12/);
+assert.match(activeVersionSources.readme, /schemaVersion=13/);
 assert.match(activeVersionSources.env, /^ZHike_APP_VERSION=5\.2\.0$/m);
 assert.match(activeVersionSources.compose, /ZHike__AppVersion:\s*\$\{ZHike_APP_VERSION:-5\.2\.0\}/);
 assert.match(activeVersionSources.api, /ZHike:AppVersion[^\n]*\?\?\s*"5\.2\.0"/);
@@ -51,6 +51,6 @@ const releaseNotes = read('docs/release-notes-5.2.0.md');
 assert.match(releaseNotes, /^# 知客 5\.2\.0 发布说明/m);
 assert.match(releaseNotes, /回滚|Rollback/i);
 assert.match(releaseNotes, /已知限制/);
-assert.match(releaseNotes, /schema.*012|012.*迁移/i);
+assert.match(releaseNotes, /schema.*013|013.*迁移/i);
 
 console.log('release 5.2 consistency: active desktop, Docker, connector and release docs use one version');

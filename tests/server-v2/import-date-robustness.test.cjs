@@ -19,6 +19,7 @@ assert.match(importRepo, /LooksLikePhone/);
 assert.match(importRepo, /LooksLikeSource/);
 assert.match(importRepo, /result\["channel"\]/);
 assert.match(importRepo, /result\["recordType"\] = "deposit"/);
+assert.match(importRepo, /成交编号|traderef|orderid/, 'trade reference headers must be recognized regardless of column order');
 assert.ok(importRepo.indexOf('lower.Contains("单导")') < importRepo.indexOf('lower.Contains("群")'), 'single-lead labels must win over generic group markers');
 assert.ok(classifier.indexOf('lower.Contains("单导")') < classifier.indexOf('lower.Contains("群")'), 'domain classifier must keep single-lead group labels as 单导');
 console.log('import date/value inference: reordered dates, Excel serials, channel/status and mixed business detection contracts pass');
