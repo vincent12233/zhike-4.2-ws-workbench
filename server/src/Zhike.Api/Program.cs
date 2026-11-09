@@ -100,7 +100,7 @@ app.MapGet("/api/v2/health", async (DatabaseHealthProbe probe, WorkerHeartbeatRe
         ? await heartbeats.GetStatusAsync("ai-worker", TimeSpan.FromSeconds(30), cancellationToken)
         : "unavailable";
     var response = HealthResponseFactory.Create(
-        app.Configuration["ZHike:AppVersion"] ?? "5.2.0",
+        app.Configuration["ZHike:AppVersion"] ?? "5.3.0",
         schemaVersion,
         databaseHealthy ? "healthy" : "degraded",
         workerStatus);

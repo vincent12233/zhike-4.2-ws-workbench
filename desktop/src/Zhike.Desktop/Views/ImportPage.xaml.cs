@@ -61,7 +61,15 @@ public sealed partial class ImportPage : Page
             _batchId = response?.Id;
             CommitButton.IsEnabled = !string.IsNullOrWhiteSpace(_batchId);
             ImportEmptyState.Visibility = _preview.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-            SetStatus(InfoBarSeverity.Success, "预览完成", $"识别 {_preview.Count} 行，低置信度或冲突行请人工确认后再提交。");
+            if (!string.IsNullOrWhiteSpace(response?.DuplicateOf))
+            {
+                SetStatus(InfoBarSeverity.Warning, "发现重复导入文件", $"该文件与批次 {response.DuplicateOf} 内容一致。为避免重复写入，提交按钮已关闭；请核对后更换文件。");
+                CommitButton.IsEnabled = false;
+            }
+            else
+            {
+                SetStatus(InfoBarSeverity.Success, "预览完成", $"识别 {_preview.Count} 行，低置信度或冲突行请人工确认后再提交。");
+            }
         }
         catch (Exception error)
         {

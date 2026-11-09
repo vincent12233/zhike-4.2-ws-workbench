@@ -1,11 +1,11 @@
-# 知客 5.2.0 桌面版 + Docker 服务端（4.4.24 业务兼容基线）
+# 知客 5.3.0 桌面版 + Docker 服务端（4.4.24 业务兼容基线）
 
 > 当前唯一生产入口是 WinUI 3 + WebView2 桌面版；PostgreSQL/API/AI Worker/可选 WS Connector 仅作为 Docker 后台服务。旧 Electron/4.4.x 包只作为归档回滚，不再作为日常启动入口。
 
 ## 当前唯一入口
 
-- 安装包：`outputs/知客-5.2.0-WinUI桌面版.exe`
-- 交付目录：`outputs/知客-5.2.0-WinUI桌面版/`（安装包、bundle、完整源码、清单、校验值）
+- 安装包：`outputs/知客-5.3.0-WinUI桌面版.exe`
+- 交付目录：`outputs/知客-5.3.0-WinUI桌面版/`（安装包、bundle、完整源码、清单、校验值）
 - 运行时页面：`resources/app/`；WinUI 只提供窗口宿主、WebView2、WS 隔离和故障回退，不再与原版页面并列显示第二套业务导航。
 - 默认启动：显示 `resources/app` 原版顶栏、侧栏和页面；仅设置 `ZHIKE_DESKTOP_LEGACY_UI_HOST=0` 才进入原生兼容回退壳。
 
@@ -47,11 +47,11 @@
 
 历史 4.4.24 兼容安装包 SHA-256：`08A02641DFD3BCA35306B3F27BBF56EEC10A7F9A236D5F2CCD5943830D76A039`，大小 `173,976,589` 字节（对应 `work/legacy-installer-final`）。
 
-当前 WinUI 安装包、Docker 服务端 bundle、完整源码压缩包和校验值以 `outputs/知客-5.2.0-WinUI桌面版/` 中的 `bundle-manifest.json` 与 `SHA256SUMS.txt` 为准。
+当前 WinUI 安装包、Docker 服务端 bundle、完整源码压缩包和校验值以 `outputs/知客-5.3.0-WinUI桌面版/` 中的 `bundle-manifest.json` 与 `SHA256SUMS.txt` 为准。
 
 4.4.1 在 4.4.0 基础上补充无需打开会话的列表级 WS 自动采集、预览消息幂等同步、手机与工作台的 12 秒增量轮询、列表预览 AI 分析排队和跟进提醒刷新；原有知客业务数据和统计口径保持不变。
 
-克隆仓库前请安装 Git LFS；`releases/*.exe` 是 LFS 管理的历史回滚二进制。当前 5.2.0 安装包以交付目录单独提供，源码压缩包包含全部可构建源码、迁移、测试和 Docker 配置，不把历史发布二进制指针误当作源码。
+克隆仓库前请安装 Git LFS；`releases/*.exe` 是 LFS 管理的历史回滚二进制。当前 5.3.0 安装包以交付目录单独提供，源码压缩包包含全部可构建源码、迁移、测试和 Docker 配置，不把历史发布二进制指针误当作源码。
 
 ## 安全边界
 
@@ -70,7 +70,7 @@ npm --prefix resources/app run test:ws
 npm --prefix resources/app run test:all
 ```
 
-安装测试默认使用 `outputs/知客-5.2.0-WinUI桌面版.exe`；历史 `releases/` 包只用于显式回滚测试，不作为默认入口。
+安装测试默认使用 `outputs/知客-5.3.0-WinUI桌面版.exe`；历史 `releases/` 包只用于显式回滚测试，不作为默认入口。
 
 ```powershell
 $env:ZHIKE_INSTALLER='C:\path\知客-4.4.1-WS工作台智能录入版.exe'
@@ -93,8 +93,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-server-bundle.
 WinUI 原生桌面 bundle/安装包：
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-bundle.ps1 -Version 5.2.0
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installer.ps1 -AppVersion 5.2.0
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-bundle.ps1 -Version 5.3.0
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installer.ps1 -AppVersion 5.3.0
 ```
 
 本机已完成 WinUI 3 Release 构建及安装/启动/卸载隔离冒烟；MSIX 签名、Docker Compose/PostgreSQL 实机和真实 WS 登录仍需相应环境门禁。
@@ -113,6 +113,6 @@ npm --prefix resources/app run build:installer
 
 完整编译需要 Inno Setup 6。可安装到默认位置，或用 `INNO_SETUP_COMPILER` 指向 `ISCC.exe`。`zhike-setup.iss` 只允许从构建脚本生成的 staging 目录打包，不应改回递归仓库根目录。
 
-多账号使用、热聊档案和采集边界见 `docs/ws-workbench-multi-account.md`、`docs/hot-chat-profile-usage.md`；本次 5.2.0 交付的安装、回归、回滚与未验证门禁见 `docs/release-notes-5.2.0.md`、`docs/release-notes-v5-server-desktop.md` 和 `docs/v5-implementation-report.md`。`docs/ws-workbench-测试报告.md` 是 4.4.1 历史报告，不代表本次版本结果。
+多账号使用、热聊档案和采集边界见 `docs/ws-workbench-multi-account.md`、`docs/hot-chat-profile-usage.md`；本次 5.3.0 交付的安装、回归、回滚与未验证门禁见 `docs/release-notes-5.3.0.md`、`docs/release-notes-v5-server-desktop.md` 和 `docs/v5-implementation-report.md`。`docs/ws-workbench-测试报告.md` 是 4.4.1 历史报告，不代表本次版本结果。
 
 

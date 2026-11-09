@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param(
   # Leave empty to use the stage directory that matches -AppVersion. This
   # prevents an AppVersion override from silently packaging the previous
@@ -6,7 +6,7 @@ param(
   [string]$StageDir = '',
   [string]$OutputDir = '',
   [ValidatePattern('^\d+\.\d+\.\d+$')]
-  [string]$AppVersion = '5.2.0',
+  [string]$AppVersion = '5.3.0',
   [switch]$SkipWebView2Check,
   [switch]$AllowUnsigned
 )
@@ -40,6 +40,31 @@ if ([string]::IsNullOrWhiteSpace($webView2Version)) {
 $signingRequired = $env:ZHike_REQUIRE_SIGNING -eq 'true'
 $certificate = [string]$env:ZHike_SIGN_CERTIFICATE
 if ($signingRequired -and -not $AllowUnsigned -and [string]::IsNullOrWhiteSpace($certificate)) { throw 'ZHike_REQUIRE_SIGNING=true 但未提供签名证书；请配置 ZHike_SIGN_CERTIFICATE 或传入 -AllowUnsigned。' }
+function Get-SignToolPath {
+  if (-not [string]::IsNullOrWhiteSpace([string]$env:ZHike_SIGNTOOL) -and (Test-Path -LiteralPath $env:ZHike_SIGNTOOL)) { return [IO.Path]::GetFullPath($env:ZHike_SIGNTOOL) }
+  $kits = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\bin'
+  if (Test-Path -LiteralPath $kits) {
+    $found = Get-ChildItem -LiteralPath $kits -Filter signtool.exe -Recurse -ErrorAction SilentlyContinue |
+      Where-Object { $_.FullName -match '\\x64\\signtool\.exe$' } |
+      Sort-Object FullName -Descending | Select-Object -First 1
+    if ($found) { return $found.FullName }
+  }
+  return ''
+}
+function Invoke-CodeSign([string]$Path) {
+  if ([string]::IsNullOrWhiteSpace($certificate)) { return }
+  if (-not (Test-Path -LiteralPath $certificate -PathType Leaf)) { throw "signing certificate not found: $certificate" }
+  $signTool = Get-SignToolPath
+  if ([string]::IsNullOrWhiteSpace($signTool)) { throw 'signtool.exe was not found; install the Windows SDK or configure ZHike_SIGNTOOL.' }
+  $arguments = @('sign', '/fd', 'SHA256', '/f', $certificate)
+  if (-not [string]::IsNullOrWhiteSpace([string]$env:ZHike_SIGN_PASSWORD)) { $arguments += @('/p', [string]$env:ZHike_SIGN_PASSWORD) }
+  $timestamp = if ([string]::IsNullOrWhiteSpace([string]$env:ZHike_TIMESTAMP_URL)) { 'http://timestamp.digicert.com' } else { [string]$env:ZHike_TIMESTAMP_URL }
+  $arguments += @('/tr', $timestamp, '/td', 'SHA256', $Path)
+  & $signTool @arguments
+  if ($LASTEXITCODE -ne 0) { throw "code signing failed: $Path" }
+  & $signTool verify /pa /all $Path
+  if ($LASTEXITCODE -ne 0) { throw "signature verification failed: $Path" }
+}
 if (-not (Test-Path -LiteralPath (Join-Path $stage 'Zhike.Desktop.exe'))) { throw "WinUI stage is missing Zhike.Desktop.exe: $stage" }
 $requiredStageFiles = @(
   'resources\app\index.html',
@@ -68,6 +93,7 @@ if (-not $stagedIndex.Contains(" &middot; v$AppVersion<!-- ZHIKE_BUILD_VERSION -
 }
 $executableVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $stage 'Zhike.Desktop.exe')).FileVersion
 if ($executableVersion -ne "$AppVersion.0") { throw "staged executable version mismatch: executable=$executableVersion expected=$AppVersion.0" }
+Invoke-CodeSign (Join-Path $stage 'Zhike.Desktop.exe')
 $manifestRuntime = if ($bundleManifest.PSObject.Properties.Name -contains 'runtime') { [string]$bundleManifest.runtime } else { '' }
 if (-not [string]::IsNullOrWhiteSpace($manifestRuntime) -and $manifestRuntime -ne 'win-x64') {
   throw "staged bundle runtime mismatch: manifest=$manifestRuntime expected=win-x64"
@@ -130,11 +156,12 @@ if (-not $installerItem) {
 }
 if (-not $installerItem) { throw "installer not found in output directory: $out" }
 $installer = $installerItem.FullName
+Invoke-CodeSign $installer
 Write-Output (ConvertTo-Json @{
   installer = $installer
   sha256 = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash
   bytes = $installerItem.Length
   webView2Version = if ($webView2Version) { $webView2Version } else { 'not-detected' }
-  signingStatus = if ($certificate) { 'certificate-configured' } else { 'unsigned-placeholder' }
+  signingStatus = if ($certificate) { 'signed-and-verified' } else { 'unsigned' }
   rollback = '覆盖升级保留 %LOCALAPPDATA%\Zhike 用户数据；安装失败时使用上一版安装包回滚。'
 })

@@ -1,21 +1,25 @@
-# 知客 5.2.0 发布说明
+# 知客 5.3.0 发布说明
 
 ## 发布定位
 
-5.2.0 是当前唯一的生产桌面版本：WinUI 3 + WebView2 承载原版知客页面和 WS 工作台，
+5.3.0 是当前唯一的生产桌面版本：WinUI 3 + WebView2 承载原版知客页面和 WS 工作台，
 PostgreSQL/API/AI Worker/可选 WS Connector 由 Docker 提供后台能力。4.4.24 Electron
-仍保留为业务兼容与回滚基线，不与 5.2.0 并列作为日常入口。
+仍保留为业务兼容与回滚基线，不与 5.3.0 并列作为日常入口。
 
 | 组件 | 版本/目标 | 说明 |
 | --- | --- | --- |
-| WinUI 桌面端 | 5.2.0 | 自包含 Windows App SDK，WebView2 用于 WS |
-| API / Worker | 5.2.0 | 默认配置由 `ZHike_APP_VERSION` 注入 |
-| WS Connector | 5.2.0 | 可选，仅处理用户授权的可见内容 |
+| WinUI 桌面端 | 5.3.0 | 自包含 Windows App SDK，WebView2 用于 WS |
+| API / Worker | 5.3.0 | 默认配置由 `ZHike_APP_VERSION` 注入 |
+| WS Connector | 5.3.0 | 可选，仅处理用户授权的可见内容 |
 | PostgreSQL schema | 013 | 客户模糊搜索、重复导入提示、跟票交易流水及 WS/AI 数据 |
 | Electron 回滚包 | 4.4.24 | 历史兼容入口，不作为当前入口 |
 
 ## 本次交付
 
+- 小窗口与 DPI：主窗口和 WS 工作台分别记忆布局，修复重复缩放；820×540 下左右栏和聊天区均可触达。
+- 搜索与导入：增加 PostgreSQL 模糊搜索索引、源文件哈希重复提示、乱序字段/历史日期识别和交易流水号；同一客户同一股票的分批买卖不再错误合并。
+- WS 与 AI：采集由高频轮询改为页面变化触发并保留低频兜底；页面结构变化时暂停写入并明确报错；新增 AI 任务查看和失败重试。
+- 故障与交付：不支持的页面不再错误回退首页；WebView2 缺失时可直达微软下载页；签名配置后实际执行并验证程序和安装包签名。
 - 修复原生桌面版侧栏误显示 v4.4.5：从 WinUI 打包版本生成侧栏版本，安装器检查侧栏、程序和包清单一致。
 - 热聊客户档案：AI 从自然聊天提取姓名、年龄、职业、投资经验、兴趣、预算等字段，
   保存证据和置信度；只补空字段，冲突待人工确认。
@@ -43,8 +47,8 @@ PostgreSQL/API/AI Worker/可选 WS Connector 由 Docker 提供后台能力。4.4
 Copy-Item infra/.env.example infra/.env
 # 编辑 POSTGRES_PASSWORD、ZHIKE_PAIRING_APPROVAL_CODE 和 AI/WS 连接参数
 docker compose -f infra/compose.yaml -f infra/compose.prod.yaml up -d --build --wait
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-bundle.ps1 -Version 5.2.0
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installer.ps1 -AppVersion 5.2.0
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-bundle.ps1 -Version 5.3.0
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installer.ps1 -AppVersion 5.3.0
 ```
 
 安装器只替换程序目录，默认保留 `%LOCALAPPDATA%\Zhike`。首次连接前确认
@@ -53,13 +57,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installe
 
 ## 回滚
 
-1. 停止 5.2.0 桌面端和 Docker 服务，但保留 PostgreSQL 卷、dump、日志和用户目录。
+1. 停止 5.3.0 桌面端和 Docker 服务，但保留 PostgreSQL 卷、dump、日志和用户目录。
 2. 使用上一版安装包（5.1.0；必要时使用 4.4.24 Electron）恢复程序文件。
 3. 不自动降级 PostgreSQL schema；若旧版无法读取 013，使用升级前 dump 在隔离数据库恢复并对账，
    再决定是否切回旧数据库。确认客户、跟票/入金、VIP、任务和提醒后才恢复写入。
 4. 发生版本冲突时使用页面提供的恢复副本/快照，不直接删除表或 Docker 卷。
 
-回滚包只能回滚程序，不代表已经回滚数据库。保留 5.2.0 的新库和迁移报告直到业务核对完成。
+回滚包只能回滚程序，不代表已经回滚数据库。保留 5.3.0 的新库和迁移报告直到业务核对完成。
 
 ## 验证结果与未验证门禁
 
@@ -69,10 +73,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installe
 - `node tests/server-v2/run-all.cjs`：25/25 服务端契约与数据隔离检查通过；
 - `node tests/task6-stability.test.cjs`：关闭刷盘、轮询退避、容量、WS 错误分类、Docker/安装门禁通过；
 - `docker compose --env-file infra/.env.example -f infra/compose.yaml config --quiet`：Compose 配置通过；
-- 使用仓库 `.tools/dotnet10` SDK 完成 WinUI 5.2.0 self-contained Release bundle，Inno Setup 7.1.1
+- 使用仓库 `.tools/dotnet10` SDK 完成 WinUI 5.3.0 self-contained Release bundle，Inno Setup 7.1.1
   成功生成安装包；安装包为 unsigned-placeholder，哈希见交付清单；
 - 使用独立项目名、独立卷和 `172.31.250.0/24` 隔离子网启动 PostgreSQL/API/AI Worker，
-  `/api/v2/health` 返回 `200`、`appVersion=5.2.0`、`schemaVersion=13`、`databaseStatus=healthy`、
+  `/api/v2/health` 返回 `200`、`appVersion=5.3.0`、`schemaVersion=13`、`databaseStatus=healthy`、
   `workerStatus=running`，随后已完整清理测试卷和容器。
 
 以下项目没有在本次隔离环境伪造为“已通过”：

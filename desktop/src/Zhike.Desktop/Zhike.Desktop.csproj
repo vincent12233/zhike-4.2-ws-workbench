@@ -10,10 +10,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\zhike.ico</ApplicationIcon>
-    <Version>5.2.0</Version>
-    <AssemblyVersion>5.2.0.0</AssemblyVersion>
-    <FileVersion>5.2.0.0</FileVersion>
-    <InformationalVersion>5.2.0</InformationalVersion>
+    <Version>5.3.0</Version>
+    <AssemblyVersion>5.3.0.0</AssemblyVersion>
+    <FileVersion>5.3.0.0</FileVersion>
+    <InformationalVersion>5.3.0</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.4" />

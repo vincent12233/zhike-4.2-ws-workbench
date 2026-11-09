@@ -24,6 +24,7 @@ const windowCode = fs.readFileSync(path.join(desktopRoot, 'MainWindow.xaml.cs'),
 assert.match(windowCode, /知客工作台/, 'native window title must use Zhike branding');
 assert.match(windowCode, /OnAppWindowClosing/);
 assert.match(windowCode, /FlushThenCloseAsync/);
+assert.match(windowCode, /NativeFallbackRoutes\.Contains\(route\)/, 'unsupported legacy routes must never silently fall back to Home');
 for (const tag of ['customers', 'import', 'operations', 'ws', 'ai']) assert.match(windowXaml, new RegExp(`Tag="${tag}"`));
 const wsXaml = fs.readFileSync(path.join(desktopRoot, 'Views', 'WsWorkbenchPage.xaml'), 'utf8');
 assert.doesNotMatch(wsXaml, /Microsoft\.Web\.WebView2\.WinUI/);
@@ -63,6 +64,8 @@ assert.match(legacyHostCode, /Math\.Clamp\(GetDouble\(bounds,\s*"width"|Math\.Cl
 assert.match(windowCode, /SetIcon\(/, 'the branded icon must be applied to the native title bar');
 assert.match(windowCode, /if\s*\(!flushed\)[\s\S]*_allowCloseAfterFlush\s*=\s*true/, 'a failed best-effort flush must not permanently block the close button');
 assert.match(windowCode, /if \(!flushed\)/);
+const importCode = fs.readFileSync(path.join(desktopRoot, 'Views', 'ImportPage.xaml.cs'), 'utf8');
+assert.match(importCode, /发现重复导入文件/);
 assert.match(wsCode, /WebViewHost\.Children\.Clear\(\)/);
 assert.match(wsCode, /view\?\.Close\(\)/);
 assert.match(wsCode, /staleView/);

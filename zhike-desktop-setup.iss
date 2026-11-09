@@ -1,8 +1,8 @@
 #ifndef AppVersion
-#define AppVersion "5.2.0"
+#define AppVersion "5.3.0"
 #endif
 #ifndef StageDir
-#define StageDir "work\\winui-bundle\\zhike-winui-5.2.0-win-x64"
+#define StageDir "work\\winui-bundle\\zhike-winui-5.3.0-win-x64"
 #endif
 #ifndef BuildOutputDir
 #define BuildOutputDir "work\\winui-installer-output"
@@ -90,8 +90,14 @@ begin
 end;
 
 function InitializeSetup(): Boolean;
+var
+  Choice: Integer;
+  ErrorCode: Integer;
 begin
   Result := True;
-  if not HasWebView2Runtime() then
-    MsgBox('知客桌面版需要 Microsoft Edge WebView2 Evergreen Runtime。安装程序会继续，但首次启动前请先安装 WebView2 Runtime。', mbInformation, MB_OK);
+  if not HasWebView2Runtime() then begin
+    Choice := MsgBox('未检测到 Microsoft Edge WebView2 Evergreen Runtime。知客可以继续安装，但 WS 与业务页面需要此运行时。是否现在打开微软官方下载页？', mbConfirmation, MB_YESNO);
+    if Choice = IDYES then
+      ShellExec('open', 'https://developer.microsoft.com/microsoft-edge/webview2/', '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
+  end;
 end;

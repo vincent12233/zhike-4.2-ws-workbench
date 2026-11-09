@@ -145,11 +145,20 @@ public sealed partial class MainWindow : Window
 
     private void OnLegacyFallbackRequested(object? sender, string route)
     {
+        // Never disguise a failed business route as a successful Home-page
+        // fallback. Only routes with a complete native implementation may
+        // leave the original UI host.
+        if (!NativeFallbackRoutes.Contains(route)) return;
         if (sender is LegacyUiHostPage host) host.FallbackRequested -= OnLegacyFallbackRequested;
         _legacyHostEnabled = false;
         ApplyShellChrome();
         ShowRoute(route);
     }
+
+    private static readonly HashSet<string> NativeFallbackRoutes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "home", "customers", "import", "operations", "ws-workbench", "ai"
+    };
 
     private void ApplyShellChrome()
     {

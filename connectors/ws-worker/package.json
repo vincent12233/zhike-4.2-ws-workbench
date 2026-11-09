@@ -1,7 +1,7 @@
 {
   "name": "zhike-ws-connector-worker",
   "private": true,
-  "version": "5.2.0",
+  "version": "5.3.0",
   "type": "module",
   "engines": { "node": ">=22" },
   "scripts": { "test": "node tests/collector-fixtures.test.cjs && node tests/connector-protocol.test.cjs && node tests/session-state.test.cjs && node tests/profile-store.test.cjs && node tests/transport-flush.test.cjs", "start": "node src/runner.mjs" },

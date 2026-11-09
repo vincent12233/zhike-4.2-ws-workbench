@@ -2,7 +2,7 @@
 param(
   [string]$OutputDir = '',
   [ValidatePattern('^\d+\.\d+\.\d+$')]
-  [string]$Version = '5.2.0',
+  [string]$Version = '5.3.0',
   [ValidateSet('Debug','Release')]
   [string]$Configuration = 'Release',
   [string]$RuntimeIdentifier = 'win-x64',
@@ -112,7 +112,7 @@ Copy-Item -LiteralPath (Join-Path $repo 'desktop\src\Zhike.Desktop\README.md') -
 Copy-Item -LiteralPath (Join-Path $repo 'docs\server-version-deployment.md') -Destination (Join-Path $stage 'server-version-deployment.md') -Force
 Copy-Item -LiteralPath (Join-Path $repo 'docs\server-version-troubleshooting.md') -Destination (Join-Path $stage 'server-version-troubleshooting.md') -Force
 Copy-Item -LiteralPath (Join-Path $repo 'docs\hot-chat-profile-usage.md') -Destination (Join-Path $stage 'hot-chat-profile-usage.md') -Force
-Copy-Item -LiteralPath (Join-Path $repo 'docs\release-notes-5.2.0.md') -Destination (Join-Path $stage 'release-notes-5.2.0.md') -Force
+Copy-Item -LiteralPath (Join-Path $repo 'docs\release-notes-5.3.0.md') -Destination (Join-Path $stage 'release-notes-5.3.0.md') -Force
 
 $sourceCommit = try { (& git -C $repo rev-parse HEAD).Trim() } catch { 'unavailable' }
 $manifest = @(
