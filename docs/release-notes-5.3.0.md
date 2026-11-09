@@ -74,7 +74,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installe
 - `node tests/task6-stability.test.cjs`：关闭刷盘、轮询退避、容量、WS 错误分类、Docker/安装门禁通过；
 - `docker compose --env-file infra/.env.example -f infra/compose.yaml config --quiet`：Compose 配置通过；
 - 使用仓库 `.tools/dotnet10` SDK 完成 WinUI 5.3.0 self-contained Release bundle，Inno Setup 7.1.1
-  成功生成安装包；安装包为 unsigned-placeholder，哈希见交付清单；
+  成功生成安装包；本机未配置正式证书，当前安装包为未签名候选包，哈希见交付清单；
 - 使用独立项目名、独立卷和 `172.31.250.0/24` 隔离子网启动 PostgreSQL/API/AI Worker，
   `/api/v2/health` 返回 `200`、`appVersion=5.3.0`、`schemaVersion=13`、`databaseStatus=healthy`、
   `workerStatus=running`，随后已完整清理测试卷和容器。

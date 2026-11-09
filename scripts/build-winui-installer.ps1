@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
   # Leave empty to use the stage directory that matches -AppVersion. This
   # prevents an AppVersion override from silently packaging the previous
