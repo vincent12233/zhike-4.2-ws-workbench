@@ -52,6 +52,19 @@ foreach ($relative in $requiredStageFiles) {
   $requiredPath = Join-Path $stage $relative
   if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) { throw "WinUI stage is missing required file: $requiredPath" }
 }
+$manifestPath = Join-Path $stage 'bundle-manifest.json'
+try {
+  $bundleManifest = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+} catch {
+  throw "invalid WinUI bundle manifest: $manifestPath ($($_.Exception.Message))"
+}
+$manifestVersion = if ($bundleManifest.PSObject.Properties.Name -contains 'version') { [string]$bundleManifest.version } else { '' }
+if ([string]::IsNullOrWhiteSpace($manifestVersion)) { throw "WinUI bundle manifest missing version: $manifestPath" }
+if ($manifestVersion -ne $AppVersion) { throw "staged bundle version mismatch: manifest=$manifestVersion expected=$AppVersion" }
+$manifestRuntime = if ($bundleManifest.PSObject.Properties.Name -contains 'runtime') { [string]$bundleManifest.runtime } else { '' }
+if (-not [string]::IsNullOrWhiteSpace($manifestRuntime) -and $manifestRuntime -ne 'win-x64') {
+  throw "staged bundle runtime mismatch: manifest=$manifestRuntime expected=win-x64"
+}
 $blockedStageNames = @('node.exe', 'main.cjs', 'preload.cjs', 'ws-preload.cjs', 'server.mjs', 'migrate-data.cjs', 'ai-credentials.json', 'workspace.sqlite', 'package.json', 'migrations')
 $blockedStageFiles = Get-ChildItem -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -in $blockedStageNames -or $_.Name -match '(?i)credentials|\.sqlite$|\.db$|\.log$' }
 if ($blockedStageFiles) { throw "WinUI stage contains blocked runtime or user-data files: $($blockedStageFiles[0].FullName)" }
