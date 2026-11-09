@@ -5,6 +5,7 @@ param(
   # version's binaries.
   [string]$StageDir = '',
   [string]$OutputDir = '',
+  [ValidatePattern('^\d+\.\d+\.\d+$')]
   [string]$AppVersion = '5.2.0',
   [switch]$SkipWebView2Check,
   [switch]$AllowUnsigned
@@ -61,6 +62,12 @@ try {
 $manifestVersion = if ($bundleManifest.PSObject.Properties.Name -contains 'version') { [string]$bundleManifest.version } else { '' }
 if ([string]::IsNullOrWhiteSpace($manifestVersion)) { throw "WinUI bundle manifest missing version: $manifestPath" }
 if ($manifestVersion -ne $AppVersion) { throw "staged bundle version mismatch: manifest=$manifestVersion expected=$AppVersion" }
+$stagedIndex = [IO.File]::ReadAllText((Join-Path $stage 'resources\app\index.html'))
+if (-not $stagedIndex.Contains(" &middot; v$AppVersion<!-- ZHIKE_BUILD_VERSION --></span>")) {
+  throw "staged sidebar version mismatch: expected v$AppVersion in resources/app/index.html; rebuild the WinUI bundle."
+}
+$executableVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $stage 'Zhike.Desktop.exe')).FileVersion
+if ($executableVersion -ne "$AppVersion.0") { throw "staged executable version mismatch: executable=$executableVersion expected=$AppVersion.0" }
 $manifestRuntime = if ($bundleManifest.PSObject.Properties.Name -contains 'runtime') { [string]$bundleManifest.runtime } else { '' }
 if (-not [string]::IsNullOrWhiteSpace($manifestRuntime) -and $manifestRuntime -ne 'win-x64') {
   throw "staged bundle runtime mismatch: manifest=$manifestRuntime expected=win-x64"

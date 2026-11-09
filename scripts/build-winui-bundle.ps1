@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
   [string]$OutputDir = '',
+  [ValidatePattern('^\d+\.\d+\.\d+$')]
   [string]$Version = '5.2.0',
   [ValidateSet('Debug','Release')]
   [string]$Configuration = 'Release',
@@ -102,6 +103,11 @@ foreach ($required in @('index.html', 'app.js', 'styles.css', 'vendor\xlsx\xlsx.
   if (-not (Test-Path -LiteralPath (Join-Path $stage "resources\app\$required") -PathType Leaf)) { throw "bundle is missing resources/app/$required" }
 }
 if (Get-ChildItem -LiteralPath $resourceDestination -Recurse -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -in $blockedResourceNames -or $_.Name -match '(?i)^(.*credentials.*|.*\.sqlite|.*\.db|.*\.log)$' }) { throw 'resource bundle contains blocked user data or credential files' }
+$indexPath = Join-Path $resourceDestination 'index.html'
+$versionMarker = '<!-- ZHIKE_BUILD_VERSION -->'
+$index = [IO.File]::ReadAllText($indexPath)
+if ([regex]::Matches($index, [regex]::Escape($versionMarker)).Count -ne 1) { throw 'WinUI sidebar version marker must appear exactly once in index.html' }
+[IO.File]::WriteAllText($indexPath, $index.Replace($versionMarker, " &middot; v$Version$versionMarker"))
 Copy-Item -LiteralPath (Join-Path $repo 'desktop\src\Zhike.Desktop\README.md') -Destination (Join-Path $stage 'README-desktop.md') -Force
 Copy-Item -LiteralPath (Join-Path $repo 'docs\server-version-deployment.md') -Destination (Join-Path $stage 'server-version-deployment.md') -Force
 Copy-Item -LiteralPath (Join-Path $repo 'docs\server-version-troubleshooting.md') -Destination (Join-Path $stage 'server-version-troubleshooting.md') -Force
