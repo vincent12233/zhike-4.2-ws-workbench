@@ -67,26 +67,39 @@ function runWs() {
 }
 
 function runAll() {
+  run('local-first migration contract', [path.join(repo, 'tests', 'local-first-migration-contract.test.cjs')]);
+  run('local-first backup contract', [path.join(repo, 'tests', 'local-first-backup-contract.test.cjs')]);
   run('design system contract', [path.join(repo, 'tests', 'design-system-contract.test.cjs')]);
   run('save error regression', [path.join(repo, 'tests', 'save-error-regression.test.cjs')]);
   run('desktop startup XAML contract', [path.join(repo, 'tests', 'desktop-startup-contract.test.cjs')]);
   run('desktop visual single-shell contract', [path.join(repo, 'desktop', 'tests', 'DesktopVisualContractTests.cjs')]);
   run('desktop native smoke contract', [path.join(repo, 'desktop', 'tests', 'DesktopSmokeTests.cjs')]);
+  run('desktop server connection flow', [path.join(repo, 'desktop', 'tests', 'ServerConnectionFlowTests.cjs')]);
+  run('desktop local/Docker storage mode', [path.join(repo, 'desktop', 'tests', 'StorageModeContractTests.cjs')]);
   run('desktop bridge response matching and import timeout', [path.join(repo, 'desktop', 'tests', 'LegacyBridgeContractTests.cjs')]);
   run('desktop responsive contract', [path.join(repo, 'desktop', 'tests', 'DesktopResponsiveContractTests.cjs')]);
   run('desktop icon contract', [path.join(repo, 'tests', 'desktop-icon-contract.test.cjs')]);
   run('customer governance core', [path.join(repo, 'tests', 'customer-governance-core.test.cjs')]);
   run('customer governance API', [path.join(repo, 'tests', 'customer-governance-api.test.cjs')]);
   run('customer governance UI', [path.join(repo, 'tests', 'customer-governance-ui.test.cjs')]);
+  run('settings option synchronization', [path.join(repo, 'tests', 'settings-option-sync.test.cjs')]);
   runWs();
-  run('operations core', [path.join(app, 'modules', 'operations-core.test.cjs')]);
+  run('operations core', [path.join(repo, 'tests', 'operations-core.test.cjs')]);
   run('smart import classification', [path.join(repo, 'tests', 'smart-import-classification.test.cjs')]);
+  run('customer import routing (163 rows)', [path.join(repo, 'tests', 'customer-import-routing.test.cjs')]);
   run('ticket record separation', [path.join(repo, 'tests', 'ticket-record-separation.test.cjs')]);
   run('10k/50k performance scale', [path.join(repo, 'tests', 'performance-scale.test.cjs')]);
   run('automatic backup isolation', [path.join(repo, 'tests', 'automatic-backup-test.cjs'), path.join(app, 'main.cjs')]);
   run('Task 6 stability and operations contract', [path.join(repo, 'tests', 'task6-stability.test.cjs')]);
   run('release 5.3 version consistency', [path.join(repo, 'tests', 'release-5.3-consistency.test.cjs')]);
   run('HTTP asset smoke', [path.join(repo, 'tests', 'upgrade-http-smoke.test.cjs'), app]);
+  run('static assets contract', [path.join(repo, 'tests', 'static-assets-contract.test.cjs')]);
+  run('CSS cleanup contract', [path.join(repo, 'tests', 'css-cleanup-contract.test.cjs')]);
+  run('current docs consistency', [path.join(repo, 'tests', 'current-docs-consistency.test.cjs')]);
+  run('session persistence contract', [path.join(repo, 'tests', 'session-persistence-contract.test.cjs')]);
+  run('legacy state delta performance', [path.join(repo, 'tests', 'server-v2', 'legacy-state-delta-performance.test.cjs')]);
+  run('AI jobs nullable state contract', [path.join(repo, 'tests', 'server-v2', 'ai-jobs-list-contract.test.cjs')]);
+  run('WS follow-ups nullable state contract', [path.join(repo, 'tests', 'server-v2', 'ws-followups-list-contract.test.cjs')]);
   run('backup and restore drill', [path.join(repo, 'tests', 'backup-restore-drill.cjs'), app]);
   run('project audit regression', [
     path.join(repo, 'tests', 'project-audit-regression.test.cjs'),
@@ -95,6 +108,7 @@ function runAll() {
     path.join(app, 'index.html'),
     path.join(app, 'package.json'),
     path.join(repo, 'zhike-setup.iss'),
+    path.join(repo, 'zhike-desktop-setup.iss'),
     path.join(app, 'README.md'),
   ]);
 }
