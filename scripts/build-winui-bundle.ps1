@@ -1,8 +1,8 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
   [string]$OutputDir = '',
   [ValidatePattern('^\d+\.\d+\.\d+$')]
-  [string]$Version = '5.3.2',
+  [string]$Version = '5.3.6',
   [ValidateSet('Debug','Release')]
   [string]$Configuration = 'Release',
   [string]$RuntimeIdentifier = 'win-x64',
@@ -29,6 +29,11 @@ $resourceAllowList = @(
   'index.html',
   'app.js',
   'styles.css',
+  'node.exe',
+  'server.mjs',
+  'state-delta.cjs',
+  'migrate-data.cjs',
+  'migrations',
   'modules',
   'vendor\xlsx'
 )
@@ -80,7 +85,7 @@ Copy-Item -LiteralPath $iconSource -Destination (Join-Path $stage 'zhike.ico') -
 if (-not (Test-Path -LiteralPath (Join-Path $stage 'zhike.ico') -PathType Leaf)) { throw 'bundle is missing zhike.ico' }
 New-Item -ItemType Directory -Force -Path (Join-Path $stage 'resources') | Out-Null
 $resourceDestination = Join-Path $stage 'resources\app'
-$blockedResourceNames = @('data', 'backups', 'logs', 'user-data', 'ai-credentials.json', 'desktop-tools.json', 'workspace.sqlite', 'node.exe', 'main.cjs', 'preload.cjs', 'ws-preload.cjs', 'server.mjs', 'migrate-data.cjs', 'package.json', 'package-lock.json', 'migrations')
+$blockedResourceNames = @('data', 'backups', 'logs', 'user-data', 'ai-credentials.json', 'desktop-tools.json', 'workspace.sqlite', 'main.cjs', 'preload.cjs', 'ws-preload.cjs', 'package.json', 'package-lock.json')
 $isAllowedResource = {
   param([string]$RelativePath)
   $normalized = $RelativePath.Replace('/', '\').TrimStart('\')
@@ -112,7 +117,7 @@ Copy-Item -LiteralPath (Join-Path $repo 'desktop\src\Zhike.Desktop\README.md') -
 Copy-Item -LiteralPath (Join-Path $repo 'docs\server-version-deployment.md') -Destination (Join-Path $stage 'server-version-deployment.md') -Force
 Copy-Item -LiteralPath (Join-Path $repo 'docs\server-version-troubleshooting.md') -Destination (Join-Path $stage 'server-version-troubleshooting.md') -Force
 Copy-Item -LiteralPath (Join-Path $repo 'docs\hot-chat-profile-usage.md') -Destination (Join-Path $stage 'hot-chat-profile-usage.md') -Force
-Copy-Item -LiteralPath (Join-Path $repo 'docs\release-notes-5.3.2.md') -Destination (Join-Path $stage 'release-notes-5.3.2.md') -Force
+Copy-Item -LiteralPath (Join-Path $repo "docs\release-notes-$Version.md") -Destination (Join-Path $stage "release-notes-$Version.md") -Force
 
 $sourceCommit = try { (& git -C $repo rev-parse HEAD).Trim() } catch { 'unavailable' }
 $manifest = @(
@@ -129,9 +134,29 @@ $manifestDocument | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Pat
 Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $archive -CompressionLevel Optimal
 $sourceCommit = if ([string]::IsNullOrWhiteSpace($sourceCommit)) { 'unavailable' } else { $sourceCommit }
 if ($sourceCommit -ne 'unavailable') {
+  $baseSourceArchive = Join-Path $out "zhike-source-$Version-base.zip"
+  $sourceStage = Join-Path $out "zhike-source-$Version-staging"
+  if (Test-Path -LiteralPath $sourceStage) { Remove-Item -LiteralPath $sourceStage -Recurse -Force }
+  & git -C $repo archive --format=zip --output=$baseSourceArchive $sourceCommit
+  if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $baseSourceArchive)) { throw 'source archive generation failed' }
+  Expand-Archive -LiteralPath $baseSourceArchive -DestinationPath $sourceStage -Force
+  $statusLines = & git -C $repo -c core.quotepath=false status --short --untracked-files=all
+  foreach ($line in $statusLines) {
+    if ($line.Length -lt 4) { continue }
+    $relative = $line.Substring(3).Trim('"')
+    $source = Join-Path $repo $relative
+    $target = Join-Path $sourceStage $relative
+    if (Test-Path -LiteralPath $source -PathType Leaf) {
+      New-Item -ItemType Directory -Force -Path (Split-Path $target -Parent) | Out-Null
+      Copy-Item -LiteralPath $source -Destination $target -Force
+    } elseif (Test-Path -LiteralPath $target -PathType Leaf) {
+      Remove-Item -LiteralPath $target -Force
+    }
+  }
   if (Test-Path -LiteralPath $sourceArchive) { Remove-Item -LiteralPath $sourceArchive -Force }
-  & git -C $repo archive --format=zip --output=$sourceArchive $sourceCommit
-  if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $sourceArchive)) { throw 'source archive generation failed' }
+  Compress-Archive -Path (Join-Path $sourceStage '*') -DestinationPath $sourceArchive -CompressionLevel Optimal
+  Remove-Item -LiteralPath $baseSourceArchive -Force
+  Remove-Item -LiteralPath $sourceStage -Recurse -Force
   # Release installers are kept in Git LFS and are delivered separately; they
   # are artifacts rather than source.  Refuse an unexpectedly expanded archive
   # so a smudge/filter regression cannot silently produce a multi-gigabyte

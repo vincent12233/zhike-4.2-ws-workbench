@@ -22,7 +22,7 @@ public sealed partial class LegacyUiHostPage : Page
     private readonly LocalQueue _wsQueue = new();
     private readonly SemaphoreSlim _wsGate = new(1, 1);
     private readonly AiBridgeService _ai = new();
-    private readonly ApiClient? _api;
+    private ApiClient? _api;
     private DesktopBridgeService? _bridge;
     private WebView2? _webView;
     private WebView2? _wsView;
@@ -34,13 +34,16 @@ public sealed partial class LegacyUiHostPage : Page
     private bool _initialized;
     private bool _fallbackRaised;
     private string _currentRoute = "home";
+    private long _routeGeneration;
 
     public event EventHandler<string>? FallbackRequested;
 
     public LegacyUiHostPage()
     {
         InitializeComponent();
-        _api = ApiClient.TryCreateFromEnvironment();
+        // The legacy shell now always uses the guarded local SQLite service.
+        // Remote/Docker connection profiles are not part of the runtime path.
+        _api = null;
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         _wsSyncTimer = DispatcherQueue.GetForCurrentThread()?.CreateTimer();
@@ -64,16 +67,18 @@ public sealed partial class LegacyUiHostPage : Page
 
     public async Task NavigateRouteAsync(string route, CancellationToken cancellationToken = default)
     {
-        _currentRoute = string.IsNullOrWhiteSpace(route) ? "home" : route;
+        var requestedRoute = string.IsNullOrWhiteSpace(route) ? "home" : route;
+        var generation = Interlocked.Increment(ref _routeGeneration);
+        _currentRoute = requestedRoute;
         await EnsureInitializedAsync(cancellationToken);
-        if (_webView?.CoreWebView2 is null) return;
+        if (_webView?.CoreWebView2 is null || generation != Volatile.Read(ref _routeGeneration)) return;
 
-        var selector = _currentRoute == "gpt"
+        var selector = requestedRoute == "gpt"
             ? "#gptAssistantNav"
-            : $"[data-view=\"{EscapeJs(_currentRoute)}\"]";
+            : $"[data-view=\"{EscapeJs(requestedRoute)}\"]";
         var script = $"document.querySelector({JsonSerializer.Serialize(selector)})?.click(); void 0;";
         await _webView.CoreWebView2.ExecuteScriptAsync(script);
-        if (!string.Equals(_currentRoute, "ws-workbench", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(requestedRoute, "ws-workbench", StringComparison.OrdinalIgnoreCase))
         {
             // Leaving the WS route must stop the collector and release the
             // WebView. Hiding the canvas alone would keep a logged-in page
@@ -243,6 +248,11 @@ public sealed partial class LegacyUiHostPage : Page
 
     private async Task EnsureInitializedAsync(CancellationToken cancellationToken = default)
     {
+        if (_api is null)
+        {
+            await App.EnsureLocalServiceAsync(cancellationToken);
+            _api = App.LocalService?.CreateApiClient() ?? throw new InvalidOperationException("本机数据服务不可用。");
+        }
         if (_initialized && _webView?.CoreWebView2 is not null)
         {
             AttachLegacyHandlers(_webView.CoreWebView2);
@@ -265,7 +275,7 @@ public sealed partial class LegacyUiHostPage : Page
         core.Settings.AreDevToolsEnabled = false;
         core.Settings.AreDefaultContextMenusEnabled = true;
         AttachLegacyHandlers(core);
-        await core.AddScriptToExecuteOnDocumentCreatedAsync(LegacyBridgeScript.Build(_api?.SessionToken is { Length: > 0 }));
+        await core.AddScriptToExecuteOnDocumentCreatedAsync(LegacyBridgeScript.Build(true));
         core.SetVirtualHostNameToFolderMapping("zhike.local", ResolveResourcesRoot(), CoreWebView2HostResourceAccessKind.Allow);
         _initialized = true;
         HostStatus.IsOpen = false;
@@ -329,10 +339,20 @@ public sealed partial class LegacyUiHostPage : Page
 
     private async void OnWebMessageReceived(CoreWebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
     {
+        var bridgeRequestId = string.Empty;
+        var bridgeMethod = string.Empty;
         try
         {
-            if (_webView?.CoreWebView2 is null || !ReferenceEquals(sender, _webView.CoreWebView2)) return;
-            if (!IsAllowedNavigation(args.Source, "zhike.local")) return;
+            // WebView2 can surface a different managed wrapper for the same
+            // native CoreWebView2 in event callbacks. This handler is attached
+            // only to the legacy WebView and the source origin is validated
+            // below, so reference equality can reject valid bridge requests.
+            if (_webView?.CoreWebView2 is null) return;
+            if (!IsAllowedNavigation(args.Source, "zhike.local"))
+            {
+                Debug.WriteLine("Desktop bridge message rejected: source origin is not allowed.");
+                return;
+            }
             var rawMessage = args.TryGetWebMessageAsString();
             if (rawMessage.Length > MaxBridgeMessageChars) return;
             using var document = JsonDocument.Parse(rawMessage);
@@ -340,6 +360,8 @@ public sealed partial class LegacyUiHostPage : Page
             if (!string.Equals(root.TryGetProperty("type", out var type) ? type.GetString() : null, "zhike.bridge.request", StringComparison.Ordinal)) return;
             var requestId = root.TryGetProperty("requestId", out var request) ? request.GetString() ?? string.Empty : string.Empty;
             var method = root.TryGetProperty("method", out var methodValue) ? methodValue.GetString() ?? string.Empty : string.Empty;
+            bridgeRequestId = requestId;
+            bridgeMethod = method;
             var bridgeVersion = StringValue(root, "bridgeVersion");
             using var emptyPayload = JsonDocument.Parse("{}");
             var payload = root.TryGetProperty("payload", out var payloadValue) ? payloadValue : emptyPayload.RootElement;
@@ -402,9 +424,25 @@ public sealed partial class LegacyUiHostPage : Page
             };
             sender.PostWebMessageAsJson(JsonSerializer.Serialize(message));
         }
-        catch
+        catch (Exception error)
         {
-            // Malformed page messages must not crash the desktop shell.
+            Debug.WriteLine($"Desktop bridge message failed: method={bridgeMethod}; error={error.GetType().Name}.");
+            if (sender is null || string.IsNullOrWhiteSpace(bridgeRequestId)) return;
+            try
+            {
+                var failure = BridgeResponse.Failure(bridgeRequestId, DesktopBridgeService.CurrentVersion, "BRIDGE_ERROR", "桌面操作未完成，请重试；本机数据未更改。");
+                sender.PostWebMessageAsJson(JsonSerializer.Serialize(new
+                {
+                    type = "zhike.bridge.response",
+                    requestId = failure.RequestId,
+                    bridgeVersion = failure.BridgeVersion,
+                    ok = failure.Ok,
+                    errorCode = failure.ErrorCode,
+                    message = failure.Message,
+                    data = failure.Data,
+                }));
+            }
+            catch { }
         }
     }
 
@@ -449,6 +487,8 @@ public sealed partial class LegacyUiHostPage : Page
             return method switch
             {
                 "ws.accounts" => await HandleWsAccountsAsync(requestId, payload, cancellationToken),
+                "legacy.api" => await HandleLegacyApiAsync(requestId, payload, cancellationToken),
+                "server.connection" => OpenServerConnection(requestId),
                 "ws" => await HandleWsActionAsync(requestId, payload, accountId, cancellationToken),
                 "tools" => await HandleToolsAsync(requestId, payload, cancellationToken),
                 "ai" => await HandleAiBridgeAsync(requestId, "request", payload, timeout, cancellationToken),
@@ -465,6 +505,55 @@ public sealed partial class LegacyUiHostPage : Page
         catch
         {
             return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "BRIDGE_ERROR", "desktop WS operation failed");
+        }
+    }
+
+    private async Task<BridgeResponse> HandleLegacyApiAsync(string requestId, JsonElement payload, CancellationToken cancellationToken)
+    {
+        // Route all legacy fetch calls through the same adapter used by the
+        // central desktop bridge.  The adapter maps browser paths such as
+        // /api/state and /api/snapshot to their versioned Postgres API routes
+        // and preserves server status/error details.  Calling ApiClient
+        // directly here bypassed that mapping, so writes never reached the
+        // legacy state endpoint and the UI reported a generic save failure.
+        var result = await GetBridge().InvokeAsync(
+            requestId,
+            "legacy.api",
+            payload,
+            timeoutMs: 300000,
+            bridgeVersion: DesktopBridgeService.CurrentVersion,
+            cancellationToken: cancellationToken);
+        return result;
+    }
+
+    private BridgeResponse OpenServerConnection(string requestId)
+    {
+        if (!DispatcherQueue.TryEnqueue(() => _ = OpenServerConnectionAfterFlushAsync()))
+            return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "NAVIGATION_UNAVAILABLE", "无法打开服务器连接页，请重启知客后重试。原有数据未更改。");
+        return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { opened = true }));
+    }
+
+    private async Task OpenServerConnectionAfterFlushAsync()
+    {
+        try
+        {
+            await Task.Delay(100);
+            if (!await FlushBeforeCloseAsync(snapshot: true))
+            {
+                GetBridge().Publish("server.connection.blocked", JsonSerializer.SerializeToElement(new { message = "本机保存或快照未完成，已取消切换；原有数据保持不变。请稍后重试。" }));
+                return;
+            }
+            if (App.MainWindowInstance is null)
+            {
+                GetBridge().Publish("server.connection.blocked", JsonSerializer.SerializeToElement(new { message = "桌面窗口暂不可用，服务器连接页未打开；原有数据保持不变。" }));
+                return;
+            }
+            App.MainWindowInstance.OpenServerConnection();
+        }
+        catch
+        {
+            try { GetBridge().Publish("server.connection.blocked", JsonSerializer.SerializeToElement(new { message = "保存检查未能完成，服务器连接页未打开；原有数据保持不变。请重试。" })); }
+            catch { }
         }
     }
 
@@ -505,7 +594,7 @@ public sealed partial class LegacyUiHostPage : Page
         }
         catch (Exception error)
         {
-            var message = error.Message.Contains("Key", StringComparison.OrdinalIgnoreCase) || error.Message.Contains("API", StringComparison.OrdinalIgnoreCase)
+            var message = error.Message.Contains("Key", StringComparison.OrdinalIgnoreCase) || error.Message.Contains("API", StringComparison.OrdinalIgnoreCase) || error.Message.Contains("请求失败", StringComparison.OrdinalIgnoreCase) || error.Message.Contains("额度", StringComparison.OrdinalIgnoreCase) || error.Message.Contains("不可用", StringComparison.OrdinalIgnoreCase)
                 ? error.Message
                 : "AI 服务暂时不可用，请检查配置或网络后重试。";
             return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "AI_ERROR", message);
@@ -677,12 +766,34 @@ public sealed partial class LegacyUiHostPage : Page
                 }
                 view.CoreWebView2.Settings.AreDevToolsEnabled = false;
                 view.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
+                view.CoreWebView2.Settings.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36";
                 view.CoreWebView2.WebMessageReceived += OnWsWebMessageReceived;
                 view.CoreWebView2.NavigationStarting += OnWsNavigationStarting;
                 await view.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(BuildWsCollectorScript(accountId));
+                var retriedAfterNavigationFailure = false;
                 view.CoreWebView2.NavigationCompleted += async (_, navigation) =>
                 {
-                    if (generation != _wsGeneration || !navigation.IsSuccess) return;
+                    if (generation != _wsGeneration) return;
+                    if (!navigation.IsSuccess)
+                    {
+                        // A stale WebView2 cache can make WhatsApp render its
+                        // generic "page has a problem" fallback.  Clear only
+                        // cache data (never cookies/session) and retry once so
+                        // an existing QR/login session is preserved.
+                        if (!retriedAfterNavigationFailure)
+                        {
+                            retriedAfterNavigationFailure = true;
+                            try
+                            {
+                                await view.CoreWebView2.Profile.ClearBrowsingDataAsync(CoreWebView2BrowsingDataKinds.DiskCache | CoreWebView2BrowsingDataKinds.CacheStorage);
+                                view.CoreWebView2.Navigate("https://web.whatsapp.com/");
+                                return;
+                            }
+                            catch { }
+                        }
+                        await SetWsStatusAsync(accountId, "连接失败", CancellationToken.None);
+                        return;
+                    }
                     await ProbeWsLoginStateAsync(accountId, view, generation);
                 };
                 _activeWsAccountId = accountId;

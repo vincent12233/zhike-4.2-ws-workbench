@@ -69,6 +69,8 @@ function runWs() {
 function runAll() {
   run('local-first migration contract', [path.join(repo, 'tests', 'local-first-migration-contract.test.cjs')]);
   run('local-first backup contract', [path.join(repo, 'tests', 'local-first-backup-contract.test.cjs')]);
+  run('local-first sidecar contract', [path.join(repo, 'tests', 'local-first-sidecar-contract.test.cjs')]);
+  run('local service manager contract', [path.join(repo, 'desktop', 'tests', 'LocalServiceManagerContractTests.cjs')]);
   run('design system contract', [path.join(repo, 'tests', 'design-system-contract.test.cjs')]);
   run('save error regression', [path.join(repo, 'tests', 'save-error-regression.test.cjs')]);
   run('desktop startup XAML contract', [path.join(repo, 'tests', 'desktop-startup-contract.test.cjs')]);

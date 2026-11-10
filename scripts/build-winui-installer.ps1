@@ -6,7 +6,7 @@ param(
   [string]$StageDir = '',
   [string]$OutputDir = '',
   [ValidatePattern('^\d+\.\d+\.\d+$')]
-  [string]$AppVersion = '5.3.2',
+  [string]$AppVersion = '5.3.6',
   [switch]$SkipWebView2Check,
   [switch]$AllowUnsigned
 )
@@ -98,7 +98,7 @@ $manifestRuntime = if ($bundleManifest.PSObject.Properties.Name -contains 'runti
 if (-not [string]::IsNullOrWhiteSpace($manifestRuntime) -and $manifestRuntime -ne 'win-x64') {
   throw "staged bundle runtime mismatch: manifest=$manifestRuntime expected=win-x64"
 }
-$blockedStageNames = @('node.exe', 'main.cjs', 'preload.cjs', 'ws-preload.cjs', 'server.mjs', 'migrate-data.cjs', 'ai-credentials.json', 'workspace.sqlite', 'package.json', 'migrations')
+$blockedStageNames = @('main.cjs', 'preload.cjs', 'ws-preload.cjs', 'ai-credentials.json', 'workspace.sqlite', 'package.json')
 $blockedStageFiles = Get-ChildItem -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -in $blockedStageNames -or $_.Name -match '(?i)credentials|\.sqlite$|\.db$|\.log$' }
 if ($blockedStageFiles) { throw "WinUI stage contains blocked runtime or user-data files: $($blockedStageFiles[0].FullName)" }
 $candidates = @(

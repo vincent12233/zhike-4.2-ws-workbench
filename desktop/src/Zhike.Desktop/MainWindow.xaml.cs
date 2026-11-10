@@ -40,6 +40,22 @@ public sealed partial class MainWindow : Window
         ConfigureLayoutPersistence();
     }
 
+    public void OpenServerConnection()
+    {
+        _legacyHostEnabled = false;
+        ApplyShellChrome();
+        ContentFrame.Navigate(typeof(HomePage));
+    }
+
+    public void ReturnToLegacyHost()
+    {
+        _legacyHostEnabled = true;
+        ApplyShellChrome();
+        _pendingLegacyRoute = "settings";
+        if (ContentFrame.Content is not LegacyUiHostPage) ContentFrame.Navigate(typeof(LegacyUiHostPage));
+        if (ContentFrame.Content is LegacyUiHostPage host) _ = host.NavigateRouteAsync("settings");
+    }
+
     private void SetBrandTitle()
     {
         try
@@ -237,5 +253,6 @@ public sealed partial class MainWindow : Window
     {
         if (ContentFrame.Content is LegacyUiHostPage host && !_allowCloseAfterFlush)
             await host.FlushBeforeCloseAsync(snapshot: true);
+        await App.StopLocalServiceAsync();
     }
 }

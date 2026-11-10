@@ -12,6 +12,7 @@ public static class LegacyBridgeScript
         const MAX_MESSAGE_CHARS = 50 * 1024 * 1024;
         window.__DESKTOP_APP__ = true;
         window.__LOCAL_DB__ = __ZHikeLocalDbFlag__;
+        window.__ZHIKE_STORAGE_MODE__ = __ZhikeStorageMode__;
         const host = {
           version: '5.1',
           invoke(method, payload = {}, options = {}) {
@@ -30,7 +31,7 @@ public static class LegacyBridgeScript
             if (envelope.length > MAX_MESSAGE_CHARS)
               return Promise.reject(Object.assign(new Error('desktop bridge payload is too large (limit 50 MB)'), { code: 'MESSAGE_TOO_LARGE' }));
             return new Promise((resolve, reject) => {
-              const timer = setTimeout(() => { pending.delete(requestId); reject(new Error('desktop bridge timeout')); }, timeoutMs);
+              const timer = setTimeout(() => { pending.delete(requestId); reject(new Error(`desktop bridge timeout (${method})`)); }, timeoutMs);
               pending.set(requestId, { resolve, reject, timer });
               try { window.chrome.webview.postMessage(envelope); }
               catch (error) { clearTimeout(timer); pending.delete(requestId); reject(error); }
@@ -55,7 +56,10 @@ public static class LegacyBridgeScript
         window.zhikeWs = window.zhikeWs || proxy('ws');
         window.zhikeAi = window.zhikeAi || proxy('ai');
         window.zhikeAI = window.zhikeAI || window.zhikeAi;
-        if (!window.zhikeAI.parseExcel) window.zhikeAI.parseExcel = async ({ bytes } = {}) => {
+        // Excel import is a local parsing operation, not an AI request. The
+        // generic proxy exposes unknown properties as bridge calls, so this
+        // method must always override the proxy's `ai.parseExcel` fallback.
+        window.zhikeAI.parseExcel = async ({ bytes } = {}) => {
           if (!window.XLSX) throw new Error('当前桌面资源未加载 Excel 解析器，请重新安装资源包。');
           const source = bytes instanceof ArrayBuffer ? bytes : (bytes?.buffer instanceof ArrayBuffer ? bytes.buffer : bytes);
           if (!source) throw new Error('Excel 内容为空。');
@@ -111,7 +115,12 @@ public static class LegacyBridgeScript
       """;
 
     public static string Build(bool apiConfigured)
-        => SourceTemplate.Replace("__ZHikeLocalDbFlag__", apiConfigured ? "true" : "false", StringComparison.Ordinal);
+        // The parameter is kept for source compatibility with older callers,
+        // but the production WinUI shell now has one storage path: the
+        // guarded loopback SQLite service. Never fall back to localStorage.
+        => SourceTemplate
+            .Replace("__ZHikeLocalDbFlag__", "true", StringComparison.Ordinal)
+            .Replace("__ZhikeStorageMode__", "'local'", StringComparison.Ordinal);
 
     public static string Source => Build(true);
 }
