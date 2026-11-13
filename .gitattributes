@@ -1,2 +1,21 @@
 releases/*.exe filter=lfs diff=lfs merge=lfs -text
+# The formal source archive is the local-first WinUI project.  Docker/PostgreSQL
+# and Electron rollback material is preserved in the external migration archive
+# and must not silently re-enter current source packages.
+infra/ export-ignore
+server/ export-ignore
+connectors/ws-worker/ export-ignore
+tools/sqlite-to-postgres/ export-ignore
+resources/app/main.cjs export-ignore
+resources/app/preload.cjs export-ignore
+resources/app/ws-preload.cjs export-ignore
+scripts/build-server-bundle.ps1 export-ignore
+scripts/build-installer.ps1 export-ignore
+zhike-setup.iss export-ignore
+docs/archive/ export-ignore
+tests/server-v2/ export-ignore
+tests/automatic-backup-test.cjs export-ignore
+tests/ws-multi-account-main.test.cjs export-ignore
+tests/ws-installer-qa.cjs export-ignore
+tests/ws-upgrade-qa.cjs export-ignore
 releases/*.exe export-ignore

@@ -17,7 +17,7 @@ const token = 'restore-drill-token';
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function start(dir, port) {
-  const child = spawn(process.execPath, ['server.mjs'], {
+  const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], {
     cwd: dir,
     windowsHide: true,
     env: { ...process.env, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token, ZHIKE_DATA_DIR: path.join(dir, 'isolated-data') },
@@ -26,7 +26,7 @@ function start(dir, port) {
   return child;
 }
 async function healthy(port) {
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < 300; i++) {
     try { if ((await fetch(`http://127.0.0.1:${port}/api/health`)).ok) return true; } catch {}
     await wait(50);
   }

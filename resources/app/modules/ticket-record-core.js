@@ -101,7 +101,9 @@
     const normalized = normalizeTicketRecord(record);
     const clean = value => String(value ?? '').trim().toLocaleLowerCase();
     const owner = clean(normalized.customerId || normalized.customer || normalized.phone);
-    return [owner, effectiveTicketDate(normalized), clean(productValue(normalized) || '未指定'), clean(normalized.direction), clean(normalized.note)].join('|');
+    const base = [owner, effectiveTicketDate(normalized), clean(productValue(normalized) || '未指定'), clean(normalized.direction)];
+    const tradeRef = clean(normalized.tradeRef || normalized.trade_ref || normalized.externalRef || normalized.external_ref);
+    return tradeRef ? [...base, 'ref', tradeRef].join('|') : base.join('|');
   }
 
   const api = { normalizeDate, normalizeDirection, normalizeProduct, ticketProducts, normalizeTicketRecord, expandTicketRecord, effectiveTicketDate, ticketRecordKey };

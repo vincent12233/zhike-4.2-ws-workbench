@@ -1,8 +1,9 @@
 /*
  * Zhike visual system
  *
- * Loaded last as a reversible presentation layer. Existing DOM, routes,
- * data contracts and event selectors remain unchanged.
+ * Compatibility design primitives loaded before Horizon Atelier. Existing
+ * DOM, routes, data contracts and event selectors remain unchanged; the 6.0
+ * product skin and final scroll contract intentionally load after this file.
  */
 :root{
   --zk-bg:#f4f7fb;--zk-surface:#ffffff;--zk-surface-soft:#f5f8fc;--zk-surface-elevated:#ffffff;

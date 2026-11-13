@@ -6,7 +6,7 @@ const path = require('node:path');
 const app = path.join(__dirname, '..', 'resources', 'app');
 const dataDir = mkdtempSync(path.join(os.tmpdir(), 'zhike-hot-profile-'));
 const port = 4476, token = 'hot-profile-test-token';
-const child = spawn(process.execPath, ['server.mjs'], { cwd: app, windowsHide: true, env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token }, stdio: ['ignore','pipe','pipe'] });
+const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], { cwd: app, windowsHide: true, env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token }, stdio: ['ignore','pipe','pipe'] });
 child.stderr.on('data', d => process.stderr.write(d));
 const headers = { 'content-type': 'application/json', 'x-zhike-api-token': token, origin: `http://127.0.0.1:${port}` };
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));

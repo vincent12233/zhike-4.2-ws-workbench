@@ -12,3 +12,12 @@
 [data-theme="dark"] .gpt-modern,[data-theme="dark"] .gpt-modern .gpt-chat,[data-theme="dark"] .gpt-composer-shell{background:#111827}[data-theme="dark"] .gpt-modern .gpt-context{background:#0d1420}[data-theme="dark"] .gpt-new-chat,[data-theme="dark"] .gpt-provider-card,[data-theme="dark"] .gpt-capabilities span,[data-theme="dark"] .gpt-starter-grid button,[data-theme="dark"] .gpt-modern .gpt-composer{background:#182231}
 @media(max-width:1050px){.gpt-modern{grid-template-columns:210px minmax(0,1fr);height:calc(100vh - 190px)}.gpt-modern .gpt-messages{padding-left:16px;padding-right:16px}.gpt-composer-shell{padding-left:16px;padding-right:16px}}
 @media(max-width:760px){.gpt-modern{display:block;width:100%;height:auto;min-height:620px}.gpt-modern .gpt-context{display:none}.gpt-modern .gpt-chat{min-height:620px}.gpt-starter-grid{grid-template-columns:1fr}.gpt-composer-tools span{display:none}}
+
+/* Workspace controls formerly carried by the retired upgrade-only sheet. */
+.gpt-workspace-btn{height:34px;border:1px dashed #89aaa3;border-radius:9px;background:rgba(255,255,255,.72);color:#176b5c;font-size:9px;font-weight:650;cursor:pointer}
+.gpt-workspace-btn:hover{background:#eaf7f3;border-color:#10a37f}
+.gpt-send-round[data-gpt-action="cancel"]{background:#d92d20;font-size:12px}
+.gpt-local-import{height:36px;border:1px solid #10a37f;border-radius:9px;background:#eaf7f3;color:#08765f;font-size:9px;font-weight:750;cursor:pointer}
+.gpt-local-import:hover{background:#d8f2eb}
+[data-theme="dark"] .gpt-workspace-btn{background:#182231;color:#9ed7cf;border-color:#39756d}
+[data-theme="dark"] .gpt-local-import{background:#173a3b;color:#9ed7cf;border-color:#39756d}

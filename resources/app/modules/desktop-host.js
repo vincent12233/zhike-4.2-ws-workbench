@@ -2,13 +2,36 @@
   'use strict';
   document.documentElement.dataset.desktopHost = 'true';
   window.__desktopHostReady = true;
-  const refresh = () => {
-    try { window.__zhikeWsFollowups?.refresh?.(); } catch (_) {}
-    try { window.__refreshSharedState?.(); } catch (_) {}
+  let refreshPromise = null, wantsWsRefresh = false, wantsSharedRefresh = false;
+  const queueRefresh = (includeSharedState) => {
+    wantsWsRefresh = true;
+    if (includeSharedState) wantsSharedRefresh = true;
+    if (refreshPromise) return refreshPromise;
+    refreshPromise = (async () => {
+      while (wantsWsRefresh || wantsSharedRefresh) {
+        const refreshWs = wantsWsRefresh, refreshShared = wantsSharedRefresh;
+        wantsWsRefresh = false;
+        wantsSharedRefresh = false;
+        const jobs = [];
+        if (refreshWs) jobs.push(Promise.resolve().then(() => window.__zhikeWsFollowups?.refresh?.()));
+        if (refreshShared) jobs.push(Promise.resolve().then(() => window.__refreshSharedState?.()));
+        await Promise.allSettled(jobs);
+      }
+    })().finally(() => {
+      refreshPromise = null;
+      if (wantsWsRefresh || wantsSharedRefresh) queueRefresh(false);
+    });
+    return refreshPromise;
   };
+  const refresh = () => queueRefresh(true);
+  const refreshWsOnly = () => queueRefresh(false);
   window.__desktopHostRefresh = refresh;
   window.zhikeDesktop?.on?.('sync.updated', refresh);
   window.zhikeDesktop?.on?.('ws.message', refresh);
+  // The 10-second native heartbeat only advances the WS/AI pipeline. Pulling
+  // and rendering the whole CRM here would steal focus from forms on every
+  // tick even when the shared state version has not changed.
+  window.zhikeDesktop?.on?.('ws.background-tick', refreshWsOnly);
   window.zhikeDesktop?.on?.('ai.followup', refresh);
   window.addEventListener('zhike:desktop-sync', refresh);
   window.addEventListener('visibilitychange', () => {

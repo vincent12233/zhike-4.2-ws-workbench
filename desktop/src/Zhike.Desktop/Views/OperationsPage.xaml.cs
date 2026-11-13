@@ -48,7 +48,7 @@ public sealed partial class OperationsPage : Page
         OperationsStatus.IsOpen = false;
         try
         {
-            if (_api is null) throw new InvalidOperationException("未配置 ZHIKE_API_BASE_URL");
+            if (_api is null) throw new InvalidOperationException("本机数据服务尚未就绪，请返回工作台后重试。");
             var type = (OperationsPivot.SelectedItem as PivotItem)?.Tag?.ToString() ?? "ticket";
             var direction = (DirectionFilter.SelectedItem as ComboBoxItem)?.Tag?.ToString();
             _records.Clear();

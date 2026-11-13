@@ -6,7 +6,7 @@ namespace Zhike.Desktop.Services;
 
 public sealed class WebViewProfileService(string? root = null)
 {
-    private readonly string _root = root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Zhike", "ws-profiles");
+    private readonly string _root = root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Zhike6", "ws-profiles");
 
     public async Task<CoreWebView2Environment> GetOrCreateProfileAsync(string accountId)
     {

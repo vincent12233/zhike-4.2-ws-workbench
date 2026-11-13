@@ -101,14 +101,14 @@
     const factList = key => { const value = factValue(key); const values = list(value); return values.length ? values : ''; };
     const factValue = key => { const fact = profileFacts[key]; if (fact && (fact.state === 'declined' || Number(fact.confidence || 0) < 0.6 || !text(fact.evidence || fact.sourceText))) return ''; return fact?.value ?? readNested(result, key); };
     const fields = {
-      name: text(readNested(result, 'name') || factValue('preferred_name') || conversation.title || conversation.externalId || '未命名客户'),
+      name: text(readNested(result, 'name') || factValue('preferred_name')),
       phone: normalizePhone(rawPhone),
       rawPhone: text(rawPhone),
       country: text(readNested(result, 'country')),
       language: text(readNested(result, 'language')),
       origin: text(readNested(result, 'origin')),
-      age: normalizeAge(readNested(result, 'age')),
-      occupation: text(readNested(result, 'occupation')),
+      age: normalizeAge(readNested(result, 'age') || factValue('age')),
+      occupation: text(readNested(result, 'occupation') || factValue('occupation')),
       preferred_name: text(factValue('preferred_name')),
       gender: text(factValue('gender')),
       work_context: text(factValue('work_context')),
@@ -160,6 +160,11 @@
   function mergeAiProfileSafely(customer, profile = {}) {
     if (!customer || typeof customer !== 'object') return { customer, changedFields: [], conflicts: [], evidenceRows: [] };
     const changedFields = [], conflicts = [], evidenceRows = [];
+    const lockedFields = new Set([
+      ...(Array.isArray(customer.manualLockedFields) ? customer.manualLockedFields : []),
+      ...(Array.isArray(customer.aiLockedFields) ? customer.aiLockedFields : []),
+    ].map(text));
+    const isLocked = field => lockedFields.has(field);
     const missing = (field, value) => {
       const current = text(value);
       return !current || (field === 'name' && /^(未命名客户|未命名|未知客户|未知|—|-)$/.test(current));
@@ -173,6 +178,10 @@
       if (field === 'rawPhone' && !value) value = profile.phone;
       if (Array.isArray(value)) value = list(value).join('、');
       if (value === '' || value == null) continue;
+      if (isLocked(field)) {
+        if (!sameValue(field, customer[field], value)) conflicts.push({ field, existing: customer[field], incoming: value, analysisId: profile.analysisId || '', locked: true });
+        continue;
+      }
       if (missing(field, customer[field]) && !(field === 'age' && customer[field] !== '' && customer[field] != null && !missing(field, customer[field]))) {
         customer[field] = value;
         changedFields.push(field);
@@ -183,21 +192,31 @@
     const dynamic = { intent: profile.intent, intentScore: profile.intentScore, emotion: profile.emotion, aiSummary: profile.aiSummary };
     for (const [field, value] of Object.entries(dynamic)) {
       if (value === '' || value == null) continue;
-      if (JSON.stringify(customer[field]) !== JSON.stringify(value)) { customer[field] = value; changedFields.push(field); }
+      if (isLocked(field)) {
+        if (JSON.stringify(customer[field]) !== JSON.stringify(value)) conflicts.push({ field, existing: customer[field], incoming: value, analysisId: profile.analysisId || '', locked: true });
+        continue;
+      }
+      if (JSON.stringify(customer[field]) === JSON.stringify(value)) continue;
+      const priorAiValue = customer.aiProfile && typeof customer.aiProfile === 'object' ? customer.aiProfile[field] : undefined;
+      const aiManaged = Boolean(customer.aiFieldSources?.[field])
+        || (priorAiValue !== undefined && JSON.stringify(priorAiValue) === JSON.stringify(customer[field]));
+      if (missing(field, customer[field]) || aiManaged) { customer[field] = value; changedFields.push(field); }
+      else conflicts.push({ field, existing: customer[field], incoming: value, analysisId: profile.analysisId || '', manual: true });
     }
-    if (profile.customerStage && (!text(customer.phase) || customer.phase === '新客户')) { customer.phase = profile.customerStage; changedFields.push('phase'); }
-    if (profile.summary && !text(customer.note)) { customer.note = profile.summary; changedFields.push('note'); }
-    if (Array.isArray(profile.tags) && profile.tags.length) {
+    if (!isLocked('phase') && profile.customerStage && (!text(customer.phase) || customer.phase === '新客户')) { customer.phase = profile.customerStage; changedFields.push('phase'); }
+    if (!isLocked('note') && profile.summary && !text(customer.note)) { customer.note = profile.summary; changedFields.push('note'); }
+    if (!isLocked('tags') && Array.isArray(profile.tags) && profile.tags.length) {
       const tags = [...new Set([...(Array.isArray(customer.tags) ? customer.tags : []), ...profile.tags.map(text).filter(Boolean)])];
       if (JSON.stringify(tags) !== JSON.stringify(customer.tags || [])) { customer.tags = tags; changedFields.push('tags'); }
     }
     const ids = [['wsExternalIds', profile.wsExternalId], ['wsAccountIds', profile.wsAccountId], ['wsConversationIds', profile.conversationId]];
     for (const [field, value] of ids) {
+      if (isLocked(field)) continue;
       const next = text(value); if (!next) continue;
       const values = Array.isArray(customer[field]) ? customer[field].map(text).filter(Boolean) : [];
       if (!values.includes(next)) { customer[field] = [...values, next].slice(-100); changedFields.push(field); }
     }
-    if (!text(customer.wsContactAccount) && text(profile.contactAccount)) { customer.wsContactAccount = text(profile.contactAccount); changedFields.push('wsContactAccount'); }
+    if (!isLocked('wsContactAccount') && !text(customer.wsContactAccount) && text(profile.contactAccount)) { customer.wsContactAccount = text(profile.contactAccount); changedFields.push('wsContactAccount'); }
     customer.aiProfile = { ...(customer.aiProfile && typeof customer.aiProfile === 'object' ? customer.aiProfile : {}), lastAnalysisId: profile.analysisId || '', updatedAt: new Date().toISOString() };
     for (const row of Array.isArray(profile.evidence) ? profile.evidence : []) {
       if (!row.key || evidenceKeys.has(row.key)) continue;
@@ -205,13 +224,29 @@
     }
     customer.aiFieldEvidenceKeys = [...evidenceKeys].slice(-500);
     const fieldSources = customer.aiFieldSources && typeof customer.aiFieldSources === 'object' ? customer.aiFieldSources : {};
+    const conflictFields = new Set(conflicts.map(item => text(item.field)));
+    const sourceAccepted = row => {
+      const field = text(row.field);
+      if (!field || conflictFields.has(field) || isLocked(field)) return false;
+      if (![...protectedFields, ...Object.keys(dynamic)].includes(field)) return false;
+      let incoming = profile[field];
+      if (field === 'age') incoming = normalizeAge(incoming);
+      if (field === 'phone') incoming = normalizePhone(incoming);
+      if (field === 'rawPhone' && !incoming) incoming = profile.phone;
+      if (Array.isArray(incoming)) incoming = list(incoming).join('、');
+      return incoming !== '' && incoming != null && sameValue(field, customer[field], incoming);
+    };
     for (const row of evidenceRows) {
+      if (!sourceAccepted(row)) continue;
       fieldSources[row.field] = { value: row.value, sourceText: row.sourceText, confidence: row.confidence, analysisId: row.analysisId, conversationId: row.conversationId, updatedAt: new Date().toISOString() };
     }
     customer.aiFieldSources = fieldSources;
+    const acceptedProfileFields = Object.fromEntries(Object.entries(profile).filter(([key, value]) =>
+      ['name', 'phone', 'country', 'language', 'origin', 'age', 'occupation', 'productInterest', 'budget', 'intent', 'intentScore', 'emotion', 'customerStage', 'aiSummary'].includes(key)
+      && value !== '' && value != null && !conflictFields.has(key) && !isLocked(key)));
     customer.aiProfile = {
       ...(customer.aiProfile && typeof customer.aiProfile === 'object' ? customer.aiProfile : {}),
-      ...Object.fromEntries(Object.entries(profile).filter(([key, value]) => ['name', 'phone', 'country', 'language', 'origin', 'age', 'occupation', 'productInterest', 'budget', 'intent', 'intentScore', 'emotion', 'customerStage', 'aiSummary'].includes(key) && value !== '' && value != null)),
+      ...acceptedProfileFields,
       confidence: Number(profile.confidence) || 0,
       lastAnalysisId: profile.analysisId || '',
       updatedAt: new Date().toISOString(),

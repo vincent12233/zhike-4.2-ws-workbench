@@ -43,7 +43,7 @@ public sealed partial class CustomersPage : Page
         CustomersStatus.IsOpen = false;
         try
         {
-            if (_api is null) throw new InvalidOperationException("未配置 ZHIKE_API_BASE_URL");
+            if (_api is null) throw new InvalidOperationException("本机数据服务尚未就绪，请返回工作台后重试。");
             var rows = await _api.GetCustomersAsync(SearchBox.Text);
             var stage = (StageFilter.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? string.Empty;
             _customers.Clear();

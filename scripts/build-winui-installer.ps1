@@ -6,9 +6,12 @@ param(
   [string]$StageDir = '',
   [string]$OutputDir = '',
   [ValidatePattern('^\d+\.\d+\.\d+$')]
-  [string]$AppVersion = '5.3.6',
+  [string]$AppVersion = '6.0.0',
   [switch]$SkipWebView2Check,
-  [switch]$AllowUnsigned
+  [switch]$AllowUnsigned,
+  # A publishable installer must come from a bundle built with -ReleaseGate.
+  # Omit this only for local development/install smoke tests.
+  [switch]$ReleaseGate
 )
 
 Set-StrictMode -Version Latest
@@ -70,6 +73,8 @@ $requiredStageFiles = @(
   'resources\app\index.html',
   'resources\app\app.js',
   'resources\app\styles.css',
+  'resources\app\server.mjs',
+  'resources\app\modules\horizon-atelier.css',
   'resources\app\vendor\xlsx\xlsx.js',
   'zhike.ico',
   'bundle-manifest.json'
@@ -87,9 +92,31 @@ try {
 $manifestVersion = if ($bundleManifest.PSObject.Properties.Name -contains 'version') { [string]$bundleManifest.version } else { '' }
 if ([string]::IsNullOrWhiteSpace($manifestVersion)) { throw "WinUI bundle manifest missing version: $manifestPath" }
 if ($manifestVersion -ne $AppVersion) { throw "staged bundle version mismatch: manifest=$manifestVersion expected=$AppVersion" }
+$manifestGate = if ($bundleManifest.PSObject.Properties.Name -contains 'releaseGate') { [string]$bundleManifest.releaseGate } else { '' }
+if ($ReleaseGate -and $manifestGate -ne 'passed') { throw "release gate rejected this stage: manifest releaseGate=$manifestGate; rebuild the bundle with -ReleaseGate." }
+if ($ReleaseGate -and [bool]$bundleManifest.sourceWorktreeDirty) { throw 'release gate rejected a stage built from a dirty worktree.' }
 $stagedIndex = [IO.File]::ReadAllText((Join-Path $stage 'resources\app\index.html'))
 if (-not $stagedIndex.Contains(" &middot; v$AppVersion<!-- ZHIKE_BUILD_VERSION --></span>")) {
   throw "staged sidebar version mismatch: expected v$AppVersion in resources/app/index.html; rebuild the WinUI bundle."
+}
+if (-not $stagedIndex.Contains('<title>知客 6.0 · Horizon Atelier</title>')) { throw 'staged UI title is not Horizon Atelier 6.0; refusing an old UI stage.' }
+$stagedScrollIndex = $stagedIndex.IndexOf('scroll-system.css', [StringComparison]::Ordinal)
+$stagedHorizonIndex = $stagedIndex.IndexOf('horizon-atelier.css', [StringComparison]::Ordinal)
+if ($stagedScrollIndex -lt 0 -or $stagedHorizonIndex -le $stagedScrollIndex) { throw 'staged Horizon Atelier visual layer is missing or ordered before an older override.' }
+$stagedServer = [IO.File]::ReadAllText((Join-Path $stage 'resources\app\server.mjs'))
+if ($stagedServer -notmatch "const APP_VERSION = '$([regex]::Escape($AppVersion))'") { throw "staged server version mismatch: expected $AppVersion" }
+if (-not $stagedServer.Contains("'/modules/horizon-atelier.css'")) { throw 'staged local service does not allow the Horizon Atelier resource.' }
+
+function Assert-ManifestFileHash([string]$RelativePath) {
+  $normalized = $RelativePath.Replace('\','/')
+  $entry = $bundleManifest.files | Where-Object { [string]$_.path -eq $normalized } | Select-Object -First 1
+  if (-not $entry) { throw "bundle manifest is missing $normalized" }
+  $filePath = Join-Path $stage $RelativePath
+  $actualHash = (Get-FileHash -LiteralPath $filePath -Algorithm SHA256).Hash
+  if ($actualHash -ne [string]$entry.sha256) { throw "bundle file hash mismatch: $normalized" }
+}
+foreach ($relative in @('Zhike.Desktop.exe','resources\app\index.html','resources\app\server.mjs','resources\app\modules\horizon-atelier.css')) {
+  Assert-ManifestFileHash $relative
 }
 $executableVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $stage 'Zhike.Desktop.exe')).FileVersion
 if ($executableVersion -ne "$AppVersion.0") { throw "staged executable version mismatch: executable=$executableVersion expected=$AppVersion.0" }
@@ -119,6 +146,16 @@ New-Item -ItemType Directory -Force -Path $out | Out-Null
 # still writes the correctly localized Chinese filename. Match by version and
 # product suffix instead of embedding the localized name in the script.
 $expectedPattern = "*-$AppVersion-WinUI*.exe"
+if ($ReleaseGate) {
+  # A formal publish directory is a single-version hand-off.  Remove only
+  # installer artifacts that match Zhike's versioned WinUI filename shape;
+  # never recurse and never touch unrelated files supplied by the user.
+  Get-ChildItem -LiteralPath $out -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -match '-\d+\.\d+\.\d+-WinUI[^\\/]*\.exe$' -and $_.Name -notlike $expectedPattern } |
+    ForEach-Object { Remove-Item -LiteralPath $_.FullName -Force }
+  $previousOutputManifest = Join-Path $out 'release-output-manifest.json'
+  if (Test-Path -LiteralPath $previousOutputManifest -PathType Leaf) { Remove-Item -LiteralPath $previousOutputManifest -Force }
+}
 Get-ChildItem -LiteralPath $out -File -ErrorAction SilentlyContinue |
   Where-Object { $_.Name -like $expectedPattern } |
   Remove-Item -Force
@@ -157,11 +194,28 @@ if (-not $installerItem) {
 if (-not $installerItem) { throw "installer not found in output directory: $out" }
 $installer = $installerItem.FullName
 Invoke-CodeSign $installer
+$installerHash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash
+if ($ReleaseGate) {
+  $formalInstallers = @(Get-ChildItem -LiteralPath $out -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -match '-\d+\.\d+\.\d+-WinUI[^\\/]*\.exe$' })
+  if ($formalInstallers.Count -ne 1 -or $formalInstallers[0].FullName -ne $installer) {
+    throw "formal release output must contain exactly one versioned installer: $out"
+  }
+  [ordered]@{
+    product = 'Zhike Desktop'
+    version = $AppVersion
+    installer = $installerItem.Name
+    sha256 = $installerHash
+    bytes = $installerItem.Length
+    releaseGate = 'passed'
+    generatedAtUtc = [DateTime]::UtcNow.ToString('o')
+  } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $out 'release-output-manifest.json') -Encoding UTF8
+}
 Write-Output (ConvertTo-Json @{
   installer = $installer
-  sha256 = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash
+  sha256 = $installerHash
   bytes = $installerItem.Length
   webView2Version = if ($webView2Version) { $webView2Version } else { 'not-detected' }
   signingStatus = if ($certificate) { 'signed-and-verified' } else { 'unsigned' }
-  rollback = '覆盖升级保留 %LOCALAPPDATA%\Zhike 用户数据；安装失败时使用上一版安装包回滚。'
+  recovery = '6.0 仅使用 %LOCALAPPDATA%\Zhike6；不读取、迁移或删除旧 %LOCALAPPDATA%\Zhike。程序恢复使用 6.0 安装包和 6.0 本机备份，不重新启用旧客户端。'
 })

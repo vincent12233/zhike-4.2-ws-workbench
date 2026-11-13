@@ -4,7 +4,11 @@ namespace Zhike.Desktop.Services;
 
 public sealed class DesktopBridgeService
 {
-    public const string CurrentVersion = "5.1";
+    // This is the production bridge contract shipped with Zhike 6.0.  The
+    // renderer and native host are bundled together, so accepting an older
+    // protocol would hide a mixed-resource installation instead of providing
+    // useful compatibility.
+    public const string CurrentVersion = "6.0";
     private const int MaxPayloadChars = 48 * 1024 * 1024;
     private readonly LegacyApiAdapter _legacyApi;
 

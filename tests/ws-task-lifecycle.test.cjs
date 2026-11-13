@@ -1,0 +1,140 @@
+'use strict';
+const assert = require('node:assert/strict');
+const { spawn } = require('node:child_process');
+const { mkdtempSync, rmSync } = require('node:fs');
+const path = require('node:path');
+const data = mkdtempSync(path.join(require('node:os').tmpdir(), 'zhike-task-life-'));
+const port = 30000 + (process.pid % 20000), token = 'isolated-task-lifecycle';
+const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], { cwd:path.join(__dirname,'../resources/app'), env:{...process.env,ZHIKE_DATA_DIR:data,ZHIKE_PORT:String(port),ZHIKE_API_TOKEN:token,ZHIKE_SHUTDOWN_TOKEN:token}, windowsHide:true, stdio:'ignore' });
+const headers = {'content-type':'application/json','x-zhike-api-token':token};
+const wait = ms => new Promise(r=>setTimeout(r,ms));
+async function api(route, body, method='POST') {
+  const version = await fetch(`http://127.0.0.1:${port}/api/state/version`,{headers}).then(r=>r.json());
+  const response = await fetch(`http://127.0.0.1:${port}${route}`,{method:body===undefined?'GET':method,headers:{...headers,'x-state-version':version.version},body:body===undefined?undefined:JSON.stringify(body)});
+  const result=await response.json(); assert.equal(response.ok,true,JSON.stringify(result)); return result;
+}
+async function rawApi(route, body, method='POST') {
+  const version = await fetch(`http://127.0.0.1:${port}/api/state/version`,{headers}).then(r=>r.json());
+  const response = await fetch(`http://127.0.0.1:${port}${route}`,{method:body===undefined?'GET':method,headers:{...headers,'x-state-version':version.version},body:body===undefined?undefined:JSON.stringify(body)});
+  return { status:response.status, body:await response.json() };
+}
+(async()=>{try{
+  let serviceReady=false;for(let i=0;i<200;i++){try{await api('/api/health');serviceReady=true;break;}catch{await wait(50);}}assert.equal(serviceReady,true,'isolated lifecycle service must start');
+  await api('/api/state',{customers:[{id:'C1',name:'Existing',phone:'9876543210',deleted:false}],settings:{operatingTasks:[]},followups:[],activities:[],tickets:[],deposits:[]});
+  await api('/api/ws/accounts',{id:'test-account',displayName:'Test'});
+  const conv=await api('/api/ws/conversations',{accountId:'test-account',externalId:'919876543210',title:'Existing',customerId:'C1',bindingSource:'manual'});
+  const run=await api('/api/ws/collection-runs',{accountId:'test-account'});
+  await api('/api/ws/collection-items?accountId=test-account',{accountId:'test-account',runId:run.run.id,conversationId:conv.id,status:'queued'});
+  await api('/api/ws/ingest/batch',{accountId:'test-account',checkpoints:[{conversationType: 'direct', conversationKey:'919876543210',historyLoaded:false,collectionStatus:'retryable',coverage:'read-history-identity-unconfirmed'}],messages:[]});
+  const failures=await api(`/api/ws/collection-items?accountId=test-account&runId=${run.run.id}`);assert.equal(failures.items[0].status,'retryable');assert.match(failures.items[0].lastError,/身份/);
+  const job=await api('/api/ws/ai-jobs',{accountId:'test-account',conversationId:conv.id,idempotencyKey:'multi-account-job'});
+  assert.equal(job.job.accountId,'test-account','POST AI jobs must use the active account rather than default');
+  const claim=await api('/api/ws/ai-jobs',{accountId:'test-account',action:'claim',jobId:job.job.id});assert.equal(claim.claimed,true);
+  await api('/api/ws/ai-jobs',{accountId:'test-account',action:'checkpoint',jobId:job.job.id,completedChunks:2,chunkCount:4,result:{summary:'saved evidence',profileFacts:{occupation:{value:'engineer',state:'known',confidence:.9,evidence:'I am an engineer'}}}});
+  const queue=await api('/api/ws/ai-jobs?accountId=test-account');assert.equal(queue.jobs[0].payload.checkpoint.completedChunks,2,'segment progress must persist for retry/restart');
+  async function ingest(offset, count, final){return api('/api/ws/ingest/batch',{accountId:'test-account',capturedAt:'2026-11-13T10:00:00Z',checkpoints:[{conversationType: 'direct', conversationKey:'919876543210',displayName:'Existing',unreadCount:0,historyLoaded:final,historyMessageCount:700,coverage:'read-history',lastMessageFingerprint:'history-700',directionVersion:4,directionUnresolvedCount:0}],messages:Array.from({length:count},(_,i)=>({conversationType: 'direct', conversationKey:'919876543210',externalMessageId:`msg-${offset+i}`,body:`Message ${offset+i}`,direction:'incoming',directionSource:'class-message-in',order:offset+i,sentAt:'2026-10-01T10:00:00Z'}))});}
+  await ingest(1,250,false);await ingest(251,250,false);
+  let conversations=await api('/api/ws/conversations?accountId=test-account');assert.notEqual(conversations.conversations[0].data.historyLoaded,true,'partial chunks must not trigger complete history');
+  await ingest(501,200,true);await ingest(501,200,true);
+  conversations=await api('/api/ws/conversations?accountId=test-account');assert.equal(conversations.conversations[0].unreadCount,0);assert.equal(conversations.conversations[0].data.historyLoaded,true);
+  const historyH1=conversations.conversations[0].data.historyFingerprint;
+  assert.match(historyH1,/^[a-f0-9]{64}$/,'server must compute the authoritative full-history hash');
+  assert.equal(conversations.conversations[0].data.lastMessageFingerprint,historyH1);
+  const messages=await api(`/api/ws/messages?accountId=test-account&conversationId=${conv.id}&limit=1000`);assert.equal(messages.total,700);assert.equal(messages.messages[0].originalText,'Message 1');assert.equal(messages.messages[699].originalText,'Message 700');assert.match(messages.messages[0].createdAt,/2026-10-01/);
+  await api('/api/ws/collection-items?accountId=test-account',{accountId:'test-account',runId:run.run.id,conversationId:conv.id,status:'completed',analysisStatus:'completed',coverageStatus:'full-history',checkpoint:`full-history:700:${historyH1}`});
+  await api('/api/ws/ingest/batch',{accountId:'test-account',capturedAt:'2026-11-13T10:02:00Z',checkpoints:[{conversationType: 'direct', conversationKey:'919876543210',displayName:'Existing',unreadCount:0,historyLoaded:false,historyMessageCount:700,coverage:'read-history',lastMessageFingerprint:'same-list-rescan',directionVersion:4,directionUnresolvedCount:0}],messages:[{conversationType: 'direct', conversationKey:'919876543210',externalMessageId:'msg-700',body:'Message 700',direction:'incoming',directionSource:'class-message-in',order:700,sentAt:'2026-10-01T10:00:00Z'}]});
+  conversations=await api('/api/ws/conversations?accountId=test-account');
+  assert.equal(conversations.conversations[0].data.historyLoaded,false,'an interrupted re-scan must remain explicitly pending');
+  assert.equal(conversations.conversations[0].data.historyFingerprint,historyH1,'a partial re-scan must retain the last confirmed authoritative hash');
+  await api('/api/ws/ingest/batch',{accountId:'test-account',capturedAt:'2026-11-13T10:03:00Z',checkpoints:[{conversationType: 'direct', conversationKey:'919876543210',displayName:'Existing',unreadCount:0,historyLoaded:true,historyMessageCount:700,coverage:'read-history',lastMessageFingerprint:'same-list-rescan-final',directionVersion:4,directionUnresolvedCount:0}],messages:[{conversationType: 'direct', conversationKey:'919876543210',externalMessageId:'msg-700',body:'Message 700',direction:'incoming',directionSource:'class-message-in',order:700,sentAt:'2026-10-01T10:00:00Z'}]});
+  conversations=await api('/api/ws/conversations?accountId=test-account');
+  assert.equal(conversations.conversations[0].data.historyLoaded,true);
+  assert.equal(conversations.conversations[0].data.historyFingerprint,historyH1,'an identical final replay must restore completion without changing the authoritative hash');
+  const sameReplayItem=await api(`/api/ws/collection-items?accountId=test-account&runId=${run.run.id}`);
+  assert.equal(sameReplayItem.items[0].analysisStatus,'completed','an identical resumed replay must not queue duplicate AI work');
+  const staleRendererPatch=await api('/api/ws/collection-items?accountId=test-account',{accountId:'test-account',runId:run.run.id,conversationId:conv.id,status:'completed',analysisStatus:'pending',coverageStatus:'list-preview',checkpoint:'renderer-preview-fingerprint'});
+  assert.equal(staleRendererPatch.item.coverageStatus,'full-history','renderer list refresh must not downgrade complete history coverage');
+  assert.equal(staleRendererPatch.item.analysisStatus,'completed','renderer list refresh must not invalidate a current completed analysis');
+  assert.equal(staleRendererPatch.item.checkpoint,`full-history:700:${historyH1}`,'renderer list refresh must preserve the full-history checkpoint');
+  await api('/api/ws/ingest/batch',{accountId:'test-account',checkpoints:[{conversationType: 'direct', conversationKey:'919876543210',displayName:'Existing',lastMessagePreview:'Message 700…',lastMessageAt:'昨天',unreadCount:1,coverage:'list-preview',lastMessageFingerprint:'layout-narrow-relative-time'}],messages:[]});
+  conversations=await api('/api/ws/conversations?accountId=test-account');
+  assert.equal(conversations.conversations[0].data.historyLoaded,true,'layout/preview/unread changes must retain complete history');
+  assert.equal(conversations.conversations[0].data.historyFingerprint,historyH1,'list metadata must not replace authoritative history hash');
+  assert.equal(conversations.conversations[0].data.lastMessageFingerprint,historyH1,'list metadata must not make successful AI stale');
+  assert.equal(conversations.conversations[0].data.listFingerprint,'layout-narrow-relative-time');
+  assert.equal(conversations.conversations[0].data.coverage,'full-history','list refresh must retain full-history coverage');
+  let ready=await api(`/api/ws/collection-items?accountId=test-account&runId=${run.run.id}&historyReady=1`);
+  assert.equal(ready.items.length,0,'unread state alone may pause AI selection without invalidating history');
+  await api('/api/ws/ingest/batch',{accountId:'test-account',checkpoints:[{conversationType: 'direct', conversationKey:'919876543210',displayName:'Existing',lastMessagePreview:'Message 700',lastMessageAt:'2026年11月13日',unreadCount:0,coverage:'list-preview',lastMessageFingerprint:'layout-wide-absolute-time'}],messages:[]});
+  conversations=await api('/api/ws/conversations?accountId=test-account');
+  assert.equal(conversations.conversations[0].data.historyLoaded,true,'restoring unread/layout state must not invalidate history');
+  assert.equal(conversations.conversations[0].data.historyFingerprint,historyH1);
+  assert.equal(conversations.conversations[0].data.lastMessageFingerprint,historyH1);
+  ready=await api(`/api/ws/collection-items?accountId=test-account&runId=${run.run.id}&historyReady=1`);
+  assert.equal(ready.items.length,1,'unchanged authoritative history remains eligible after list-only changes');
+  async function analyze(label,fingerprint=historyH1){const a=await api('/api/ws/analyses',{accountId:'test-account',conversationId:conv.id,result:{summary:label,confidence:.9,language:'English',nextStep:'Discuss preferences',followupTime:'2026-11-13',transcriptInfo:{sourceFingerprint:fingerprint,directionVersion:4},followupStrategy:{shouldFollowUp:true,priorityScore:80,reason:'Customer replied'}}});const synced=await api('/api/ws/crm-sync',{accountId:'test-account',conversationId:conv.id,analysisId:a.id});return {...synced,analysisId:a.id};}
+  const first=await analyze('First'); assert.ok(first.task); let s=await api('/api/state');
+  assert.equal(s.followups.length,0,'AI plans must not count as completed contacts');
+  let alerts=await api('/api/ws/followup-alerts?allAccounts=1&limit=20'); assert.equal(alerts.alerts.length,1,'home must include non-default accounts');
+  const taskId=first.task.id;
+  await api('/api/ws/followup-action',{action:'snooze',taskId,due:'2026-11-15'});
+  s=await api('/api/state');assert.equal(s.settings.operatingTasks[0].due,'2026-11-15');assert.equal(s.followups.length,0);
+  await api('/api/ws/followup-action',{action:'reopen',taskId});
+  alerts=await api('/api/ws/followup-alerts?allAccounts=1&limit=20');assert.equal(alerts.alerts[0].followupTime,'2026-11-15','radar must display postponed task date, not original AI date');
+  const beforeBlankComplete=JSON.stringify(await api('/api/state'));
+  const blankComplete=await rawApi('/api/ws/followup-action',{action:'complete',taskId,result:'   '});
+  assert.equal(blankComplete.status,400,'complete without an actual result must be rejected before task mutation');
+  assert.equal(JSON.stringify(await api('/api/state')),beforeBlankComplete,'rejected empty completion must not change task, customer or followups');
+  await api('/api/ws/followup-action',{action:'complete',taskId,result:'Discussed preferences',nextDate:'2026-11-20'});
+  await api('/api/ws/followup-action',{action:'complete',taskId,result:'Discussed preferences'});
+  s=await api('/api/state');assert.equal(s.followups.length,1,'duplicate complete must be idempotent');assert.ok(s.customers[0].lastFollow);assert.equal(s.customers[0].due,'2026-11-20');
+  alerts=await api('/api/ws/followup-alerts?allAccounts=1');assert.equal(alerts.alerts.length,0,'completed task must clear home radar');
+  await api('/api/ws/ingest/batch',{accountId:'test-account',capturedAt:'2026-11-13T10:05:00Z',checkpoints:[{conversationType: 'direct', conversationKey:'919876543210',displayName:'Existing',unreadCount:0,historyLoaded:true,historyMessageCount:701,coverage:'read-history',lastMessageFingerprint:'layout-wide-absolute-time',directionVersion:4,directionUnresolvedCount:0}],messages:[{conversationType: 'direct', conversationKey:'919876543210',externalMessageId:'msg-701',body:'Message 700',direction:'incoming',directionSource:'class-message-in',order:701,sentAt:'2026-10-01T10:01:00Z'}]});
+  conversations=await api('/api/ws/conversations?accountId=test-account');
+  const historyH2=conversations.conversations[0].data.historyFingerprint;
+  assert.notEqual(historyH2,historyH1,'a real new external message changes the authoritative transcript hash even when the preview text repeats');
+  const staleVersion=await api('/api/state/version');
+  const staleFirst=await fetch(`http://127.0.0.1:${port}/api/ws/crm-sync`,{method:'POST',headers:{...headers,'x-state-version':staleVersion.version},body:JSON.stringify({accountId:'test-account',conversationId:conv.id,analysisId:first.analysisId})});
+  assert.equal(staleFirst.status,409,'an analysis of H1 must become stale only after final H2 is confirmed');
+  const second=await analyze('New reply',historyH2);assert.equal(second.task.id,taskId);assert.equal(second.task.done,false);
+  s=await api('/api/state');assert.equal(s.settings.operatingTasks.length,1);assert.equal(s.followups.length,1);
+  s.settings.operatingTasks[0].directionInvalidated=true;
+  s.settings.operatingTasks[0].invalidationReason='v3 direction evidence was withdrawn';
+  await api('/api/state',s);
+  const invalidatedSnapshot=JSON.stringify(await api('/api/state'));
+  const invalidatedAlerts=await api('/api/ws/followup-alerts?allAccounts=1&limit=20');
+  const alertBefore=JSON.stringify(invalidatedAlerts.alerts[0]);
+  const blockedAlertAction=await rawApi('/api/ws/followup-alerts',{accountId:'test-account',id:invalidatedAlerts.alerts[0].id,status:'open'},'PATCH');
+  assert.equal(blockedAlertAction.status,409,'legacy alert endpoint must not bypass an invalidated task guard');
+  assert.equal(JSON.stringify((await api('/api/ws/followup-alerts?allAccounts=1&limit=20')).alerts[0]),alertBefore,'blocked alert action must not mutate the alert');
+  for (const invalidAction of [
+    {action:'complete',taskId,result:'must not be recorded'},
+    {action:'snooze',taskId,due:'2026-11-18'},
+    {action:'reopen',taskId},
+  ]) {
+    const blocked=await rawApi('/api/ws/followup-action',invalidAction);
+    assert.equal(blocked.status,409,`invalidated task must reject ${invalidAction.action}`);
+    assert.equal(JSON.stringify(await api('/api/state')),invalidatedSnapshot,'blocked invalidated action must not mutate state');
+  }
+  await api('/api/ws/followup-action',{action:'dismiss',taskId});
+  alerts=await api('/api/ws/followup-alerts?allAccounts=1');assert.equal(alerts.alerts.length,0);
+  const corrected=await analyze('Direction-corrected transcript',historyH2);
+  assert.equal(corrected.task.id,taskId,'new verified analysis must replace the withdrawn plan in place');
+  assert.equal(corrected.task.directionInvalidated,false,'new verified analysis must clear invalidation flag');
+  assert.equal(corrected.task.invalidationReason,'','new verified analysis must clear invalidation reason');
+  const errored=await api('/api/ws/analyses',{accountId:'test-account',conversationId:conv.id,errorMessage:'provider failed after partial result',result:{summary:'invalid partial result',confidence:.9,transcriptInfo:{sourceFingerprint:historyH2,directionVersion:4}}});
+  s=await api('/api/state');
+  s.settings.operatingTasks[0].wsAnalysisId=errored.id;
+  s.settings.operatingTasks[0].directionInvalidated=false;
+  s.settings.operatingTasks[0].invalidationReason='';
+  await api('/api/state',s);
+  const failedAnalysisSnapshot=JSON.stringify(await api('/api/state'));
+  const failedAnalysisAction=await rawApi('/api/ws/followup-action',{action:'reopen',taskId});
+  assert.equal(failedAnalysisAction.status,409,'a task tied to a failed analysis must not be reopened');
+  assert.equal(JSON.stringify(await api('/api/state')),failedAnalysisSnapshot,'failed-analysis guard must return before state mutation');
+  const stale=await api('/api/ws/analyses',{accountId:'test-account',conversationId:conv.id,result:{confidence:.9,summary:'outdated',language:'English',transcriptInfo:{sourceFingerprint:'old-history',directionVersion:4}}});
+  const currentVersion=await api('/api/state/version');
+  const staleResponse=await fetch(`http://127.0.0.1:${port}/api/ws/crm-sync`,{method:'POST',headers:{...headers,'x-state-version':currentVersion.version},body:JSON.stringify({accountId:'test-account',conversationId:conv.id,analysisId:stale.id})});
+  assert.equal(staleResponse.status,409,'older transcript must not override newer conversation intelligence');
+  console.log('WS lifecycle: multi-account radar, plan/statistics separation, snooze, completion idempotency, reopen and dismiss pass');
+}finally{try{await fetch(`http://127.0.0.1:${port}/api/shutdown`,{method:'POST',headers:{...headers,'x-zhike-shutdown-token':token}});}catch{}await wait(100);child.kill();await wait(100);try{rmSync(data,{recursive:true,force:true});}catch{}}})().catch(e=>{console.error(e);process.exitCode=1;});

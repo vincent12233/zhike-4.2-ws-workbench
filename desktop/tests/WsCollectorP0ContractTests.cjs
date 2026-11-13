@@ -1,0 +1,59 @@
+'use strict';
+
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+
+const repo = path.resolve(__dirname, '..', '..');
+const host = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Views', 'LegacyUiHostPage.xaml.cs'), 'utf8');
+const api = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Services', 'ApiClient.cs'), 'utf8');
+const queue = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Services', 'LocalQueue.cs'), 'utf8');
+const match = host.match(/return \$\$"""([\s\S]*?)""";/);
+assert.ok(match, 'WS collector raw script must remain embedded in the native host');
+const script = match[1].replace(/\{\{encodedAccount\}\}/g, JSON.stringify('default'));
+assert.doesNotThrow(() => new Function(script), 'embedded collector must remain valid JavaScript');
+
+assert.match(script, /container\.scrollTop\s*=\s*0/, 'all-list and history scans must begin at the physical top');
+assert.match(script, /matchesCurrentConversation|waitForConversationIdentity/, 'collector must verify the opened chat before assigning messages');
+assert.match(script, /HISTORY_TOP_QUIET_MS\s*=\s*4000/, 'history completion must require the four-second top quiet window');
+assert.match(script, /isHistoryTopBusy/, 'an explicit history loader must block a full-history acknowledgement');
+assert.match(script, /lastHistoryGrowthAt/, 'message or scroll-height growth must restart the top quiet window');
+assert.doesNotMatch(script, /topStableRounds/, 'the former three-poll heuristic must not acknowledge slow-loading history');
+assert.match(script, /before\s*>=\s*max\s*-\s*1/, 'the final virtualized list window must be rendered before completion');
+assert.match(script, /historyLoaded:\s*isFinal/, 'only the final message packet may claim complete history');
+assert.match(script, /unreadCount:\s*Number\(row\.unreadCount\s*\|\|\s*0\)/, 'every history packet must preserve authoritative unread state');
+assert.match(script, /order:\s*Number\(item\.order/, 'collector transport must preserve a monotonic message order');
+assert.match(script, /parseMessageTimestamp/, 'collector must parse the original WhatsApp message timestamp');
+assert.match(script, /HISTORY_BODY_LIMIT\s*=\s*128000/, 'full message bodies must support the 128,000-character boundary');
+assert.match(script, /rawText/, 'history capture must preserve multiline message text');
+assert.doesNotMatch(script, /body:\s*clean\(item\.body\)\.slice\(0,\s*6000\)/, 'full-history transport must not collapse or truncate message bodies');
+assert.match(script, /read-history-body-too-large/, 'oversized bodies must leave a retryable checkpoint instead of claiming completion');
+assert.match(script, /checkpointMatches/, 'completed unchanged conversations must be skipped after restart');
+assert.match(script, /scheduleIncrementalReadHistory/, 'list changes must schedule incremental history collection');
+assert.match(script, /uncertainUnread/, 'unknown unread state must be skipped conservatively');
+assert.match(script, /resolveMessageDirection/, 'incoming/outgoing roles must come from explicit DOM evidence');
+assert.match(script, /current\s*=\s*current\.parentElement/, 'direction lookup must walk through inner wrappers to the outer WhatsApp bubble');
+assert.match(script, /depth\s*<\s*12/, 'direction ancestor traversal must remain bounded');
+assert.match(script, /\^\(\?:true\|false\)_/, 'direction lookup must inspect explicit WhatsApp data-id prefixes at every ancestor');
+assert.match(script, /read-history-direction-unresolved/, 'unknown direction must keep the conversation retryable instead of defaulting to customer');
+assert.match(script, /stableJid[\s\S]*senderIdentitySource:senderId \? 'sender-jid' : senderPhone \? 'sender-phone' : 'unresolved'/, 'VIP member identity must normalize only a stable JID or phone into the server trusted-source contract');
+assert.doesNotMatch(script, /senderIdentityTrusted:Boolean\(senderId \|\| authorLooksPhone\)/, 'a display-name-like DOM attribute must never become a trusted VIP member identity');
+assert.match(script, /zhike\.ws\.history\.v7/, 'v7 must invalidate acknowledgements created before explicit VIP-group and sender-identity isolation');
+assert.match(script, /collectibleConversationType\(conversationType\)/, 'only a confirmed direct chat or explicitly whitelisted VIP group may reuse a completed history checkpoint');
+assert.match(script, /legacyExternalMessageId/, 'v4 capture must carry the exact v3 synthetic alias for in-place repair');
+
+assert.match(host, /eventName[\s\S]*collection-complete/, 'native host must forward collector completion events');
+assert.match(host, /__zhikeWsAcknowledgeHistory/, 'host must acknowledge history only after the packet is durable in the local queue');
+assert.match(host, /_wsMessageGate\.WaitAsync\(\)/, 'history packets and completion events must be processed in source order');
+assert.match(api, /long\s+Order\s*=\s*0/, 'native DTO must carry stable order across message chunks');
+assert.match(api, /string\s+LegacyExternalMessageId\s*=\s*""/, 'native DTO must preserve the exact legacy synthetic id');
+assert.match(api, /string\s+DirectionSource\s*=\s*""/, 'native DTO must preserve explicit direction evidence');
+assert.match(api, /int\s+DirectionVersion\s*=\s*0/, 'checkpoint DTO must carry the v4 direction version');
+assert.match(queue, /MarkFailureAsync/, 'failed native packets must have a bounded durable retry path');
+assert.match(queue, /dead-letter\.json/, 'permanently failing packets must be preserved for recovery instead of blocking the queue forever');
+assert.match(queue, /SharedGates/, 'all native pages sharing pending.json must serialize queue writes');
+assert.doesNotMatch(queue, /\bTrim\s*\(/, 'queue reads must never silently age out or truncate pending WS packets');
+assert.match(queue, /QueueSizeBytes\(items\)\s*\+\s*itemBytes\s*>\s*MaxQueueBytes/, 'a full queue must reject the new packet while preserving existing packets');
+assert.match(queue, /原有待同步数据已完整保留/, 'queue-capacity failure must be explicit and recoverable');
+
+console.log('WS collector P0 contract: top-first scan, identity guard, durable checkpoints, final-packet semantics and incremental recapture are wired');

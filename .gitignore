@@ -44,4 +44,6 @@ Thumbs.db
 tmp/
 *.tmp
 .superpowers/
+.codex-backups/
+**/.backups/
 *.bak

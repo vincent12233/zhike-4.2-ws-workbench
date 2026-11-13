@@ -64,6 +64,40 @@ const conflictCustomer = { preferred_name: '人工称呼' };
 const conflict = core.mergeAiProfileSafely(conflictCustomer, { preferred_name: 'AI称呼', evidence: [] });
 assert.equal(conflict.customer.preferred_name, '人工称呼');
 assert.equal(conflict.conflicts.some(item => item.field === 'preferred_name'), true);
+const factsOnly = core.normalizeAiProfile({ confidence: 0.92, profileFacts: {
+  age: { value: 31, state: 'known', confidence: 0.91, evidence: '我今年31岁' },
+  occupation: { value: '采购经理', state: 'known', confidence: 0.91, evidence: '我做采购工作' },
+} }, { id: 'c-facts', analysisId: 'a-facts' }, 'a2');
+assert.equal(factsOnly.age, 31, 'profileFacts.age 应映射到客户年龄');
+assert.equal(factsOnly.occupation, '采购经理', 'profileFacts.occupation 应映射到客户职业');
+
+const lockedProfileCustomer = {
+  preferred_name: '人工称呼', gender: '人工锁定', intent: '人工阶段', aiSummary: '人工摘要',
+  manualLockedFields: ['preferred_name', 'gender', 'intent', 'aiSummary'],
+  aiFieldSources: { preferred_name: { value: '人工称呼', sourceText: '旧的已确认证据', analysisId: 'old' } },
+};
+const lockedIncoming = core.normalizeAiProfile({ confidence: 0.95, intent: 'AI 高意向', summary: 'AI 新摘要', profileFacts: {
+  preferred_name: { value: 'AI 称呼', confidence: 0.95, evidence: '叫我 AI 称呼' },
+  gender: { value: '男', confidence: 0.95, evidence: '我是男性' },
+} }, { id: 'c-locked', analysisId: 'a-locked' }, 'a2');
+const lockedMerge = core.mergeAiProfileSafely(lockedProfileCustomer, lockedIncoming);
+assert.equal(lockedProfileCustomer.preferred_name, '人工称呼');
+assert.equal(lockedProfileCustomer.gender, '人工锁定');
+assert.equal(lockedProfileCustomer.intent, '人工阶段');
+assert.equal(lockedProfileCustomer.aiSummary, '人工摘要');
+assert.equal(lockedProfileCustomer.aiFieldSources.preferred_name.analysisId, 'old', '冲突或锁定证据不得覆盖已确认字段来源');
+assert.ok(lockedMerge.conflicts.some(item => item.field === 'preferred_name' && item.locked));
+
+const sourceCustomer = { name: '已确认姓名', aiFieldSources: { name: { value: '已确认姓名', sourceText: '上次证据', analysisId: 'old-analysis' } } };
+const conflictingSource = core.normalizeAiProfile({ confidence: 0.95, contact: { name: 'AI 冲突姓名' }, summary: '客户似乎使用另一名称' }, { id: 'c-source', analysisId: 'new-analysis' }, 'a2');
+const sourceMerge = core.mergeAiProfileSafely(sourceCustomer, conflictingSource);
+assert.ok(sourceMerge.conflicts.some(item => item.field === 'name'));
+assert.equal(sourceCustomer.aiFieldSources.name.analysisId, 'old-analysis', '冲突候选值只记录审计证据，不能成为当前字段来源');
+
+const manualSummaryCustomer = { aiSummary: '人工编辑摘要' };
+const manualSummaryMerge = core.mergeAiProfileSafely(manualSummaryCustomer, { aiSummary: 'AI 新摘要', analysisId: 'a-summary', evidence: [] });
+assert.equal(manualSummaryCustomer.aiSummary, '人工编辑摘要', '未标记为 AI 来源的已有摘要必须视为人工数据');
+assert.ok(manualSummaryMerge.conflicts.some(item => item.field === 'aiSummary'));
 const sensitive = core.normalizeAiProfile({ confidence: 0.9, profileFacts: { family_context: { value: '密码 token-abc', confidence: 0.9, evidence: '密码 token-abc' } } }, { id: 'c3' }, 'a3');
 assert.equal(JSON.stringify(sensitive.evidence).includes('token-abc'), false);
 const leakProfile = core.normalizeAiProfile({ confidence: 0.9, profileFacts: { family_context: { value: 'password: hunter2 银行卡号 1234 5678', confidence: 0.9, evidence: 'password: hunter2 银行卡号 1234 5678' } } }, { id: 'c4' }, 'a4');

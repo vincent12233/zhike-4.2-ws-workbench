@@ -21,6 +21,8 @@ assert.notEqual(buyKey, core.ticketRecordKey(sameBuyDifferentDate), 'same direct
 
 const otherStock = core.normalizeTicketRecord({ customerId: 'C1', product: 'TSLA', direction: '买入', date: '2026-11-01' });
 assert.notEqual(buyKey, core.ticketRecordKey(otherStock), 'same customer/date/direction with a different stock must remain a separate record');
+assert.equal(core.ticketRecordKey({ ...legacyBuy, note: '第一条备注' }), core.ticketRecordKey({ ...legacyBuy, note: '第二条备注' }), 'notes must not change ticket identity');
+assert.notEqual(core.ticketRecordKey({ ...legacyBuy, tradeRef: 'TR-1' }), core.ticketRecordKey({ ...legacyBuy, tradeRef: 'TR-2' }), 'trade references must separate same-structure trades');
 
 const legacyStockField = core.normalizeTicketRecord({ customerId: 'C1', stock_code: 'TSLA', direction: '买入', date: '2026-11-01' });
 assert.equal(legacyStockField.product, 'TSLA', 'legacy stock_code fields must be promoted to the canonical product field');

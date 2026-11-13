@@ -9,10 +9,10 @@ const app = path.join(__dirname, '..', 'resources', 'app');
 const headersFor = token => ({ 'content-type': 'application/json', 'x-zhike-api-token': token });
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function startServer(dataDir, port, token) {
-  const child = spawn(process.execPath, ['server.mjs'], { cwd: app, windowsHide: true, env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token }, stdio: 'ignore' });
+  const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], { cwd: app, windowsHide: true, env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token }, stdio: 'ignore' });
   const headers = { ...headersFor(token), origin: `http://127.0.0.1:${port}` };
   async function request(pathname, init = {}) {
-    for (let attempt = 0; attempt < 120; attempt++) {
+    for (let attempt = 0; attempt < 300; attempt++) {
       try { return await fetch(`http://127.0.0.1:${port}${pathname}`, { ...init, headers: { ...headers, ...(init.headers || {}) } }); }
       catch { await wait(50); }
     }

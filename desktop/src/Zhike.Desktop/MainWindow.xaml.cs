@@ -12,8 +12,7 @@ namespace Zhike.Desktop;
 public sealed partial class MainWindow : Window
 {
     private readonly WindowLayoutService _layout = new("main");
-    private bool _legacyHostEnabled;
-    private string _pendingLegacyRoute = "home";
+    private string _pendingRoute = "home";
     private DispatcherQueueTimer? _layoutSaveTimer;
     private AppWindow? _appWindow;
     private bool _flushBeforeCloseInProgress;
@@ -22,38 +21,21 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        var legacyFlag = Environment.GetEnvironmentVariable("ZHIKE_DESKTOP_LEGACY_UI_HOST")
-            ?? Environment.GetEnvironmentVariable("ZHIKE_LEGACY_UI_HOST");
-        _legacyHostEnabled = !string.Equals(legacyFlag, "0", StringComparison.OrdinalIgnoreCase)
-            && !string.Equals(legacyFlag, "false", StringComparison.OrdinalIgnoreCase);
-        // The legacy host already renders the complete original shell
-        // (topbar, sidebar, grouping and route switching). Showing any part
-        // of the native shell at the same time creates the duplicated layout
-        // seen in the desktop build. Keep the native shell available only for
-        // the explicit compatibility fallback.
-        ApplyShellChrome();
+        // 6.0 has one production surface: the complete WebView2 workbench.
+        // Environment flags can no longer switch the process back to the
+        // retired native fallback pages or create a second navigation shell.
         ContentFrame.Navigated += OnContentFrameNavigated;
         Closed += OnClosed;
         SetBrandTitle();
-        RootNavigation.SelectedItem = RootNavigation.MenuItems.OfType<NavigationViewItem>().First(item => Equals(item.Tag, "home"));
         ShowRoute("home");
         ConfigureLayoutPersistence();
     }
 
-    public void OpenServerConnection()
+    public void OpenWorkspaceRoute(string route)
     {
-        _legacyHostEnabled = false;
-        ApplyShellChrome();
-        ContentFrame.Navigate(typeof(HomePage));
-    }
-
-    public void ReturnToLegacyHost()
-    {
-        _legacyHostEnabled = true;
-        ApplyShellChrome();
-        _pendingLegacyRoute = "settings";
+        _pendingRoute = string.IsNullOrWhiteSpace(route) ? "home" : route;
         if (ContentFrame.Content is not LegacyUiHostPage) ContentFrame.Navigate(typeof(LegacyUiHostPage));
-        if (ContentFrame.Content is LegacyUiHostPage host) _ = host.NavigateRouteAsync("settings");
+        if (ContentFrame.Content is LegacyUiHostPage host) _ = host.NavigateRouteAsync(_pendingRoute);
     }
 
     private void SetBrandTitle()
@@ -67,8 +49,18 @@ public sealed partial class MainWindow : Window
             var iconPath = ResolveIconPath();
             if (iconPath is not null) _appWindow.SetIcon(iconPath);
             _appWindow.Closing += OnAppWindowClosing;
+            _appWindow.Changed += OnAppWindowChanged;
         }
         catch { }
+    }
+
+    private void OnAppWindowChanged(AppWindow sender, AppWindowChangedEventArgs args)
+    {
+        if (!args.DidPresenterChange && !args.DidSizeChange && !args.DidPositionChange) return;
+        var renderable = sender.Presenter is not OverlappedPresenter presenter
+            || presenter.State != OverlappedPresenterState.Minimized;
+        if (ContentFrame.Content is LegacyUiHostPage host)
+            host.NotifyHostWindowState(renderable, refreshBounds: renderable);
     }
 
     private static string? ResolveIconPath()
@@ -129,78 +121,25 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void OnNavigationChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
-    {
-        if (args.SelectedItem is not NavigationViewItem item || item.Tag is not string tag) return;
-        ShowRoute(RouteForTag(tag));
-    }
-
     private void ShowRoute(string route)
     {
-        if (_legacyHostEnabled)
-        {
-            _pendingLegacyRoute = route;
-            if (ContentFrame.Content is not LegacyUiHostPage)
-                ContentFrame.Navigate(typeof(LegacyUiHostPage));
-            if (ContentFrame.Content is LegacyUiHostPage host)
-                _ = host.NavigateRouteAsync(route);
-            return;
-        }
-
-        var pageType = route switch
-        {
-            "customers" => typeof(CustomersPage),
-            "import" => typeof(ImportPage),
-            "operations" => typeof(OperationsPage),
-            "ws-workbench" => typeof(WsWorkbenchPage),
-            "ai" => typeof(AiFollowupPage),
-            _ => typeof(HomePage),
-        };
-        if (ContentFrame.CurrentSourcePageType != pageType) ContentFrame.Navigate(pageType);
-    }
-
-    private void OnLegacyFallbackRequested(object? sender, string route)
-    {
-        // Never disguise a failed business route as a successful Home-page
-        // fallback. Only routes with a complete native implementation may
-        // leave the original UI host.
-        if (!NativeFallbackRoutes.Contains(route)) return;
-        if (sender is LegacyUiHostPage host) host.FallbackRequested -= OnLegacyFallbackRequested;
-        _legacyHostEnabled = false;
-        ApplyShellChrome();
-        ShowRoute(route);
-    }
-
-    private static readonly HashSet<string> NativeFallbackRoutes = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "home", "customers", "import", "operations", "ws-workbench", "ai"
-    };
-
-    private void ApplyShellChrome()
-    {
-        var showNativeChrome = !_legacyHostEnabled;
-        NativeHeader.Visibility = showNativeChrome ? Visibility.Visible : Visibility.Collapsed;
-        HeaderRow.Height = showNativeChrome ? new GridLength(52) : new GridLength(0);
-        RootNavigation.IsPaneVisible = showNativeChrome;
+        _pendingRoute = string.IsNullOrWhiteSpace(route) ? "home" : route;
+        if (ContentFrame.Content is not LegacyUiHostPage)
+            ContentFrame.Navigate(typeof(LegacyUiHostPage));
+        if (ContentFrame.Content is LegacyUiHostPage host)
+            _ = host.NavigateRouteAsync(_pendingRoute);
     }
 
     private void OnContentFrameNavigated(object sender, Microsoft.UI.Xaml.Navigation.NavigationEventArgs args)
     {
         if (args.Content is LegacyUiHostPage host)
         {
-            host.FallbackRequested -= OnLegacyFallbackRequested;
-            host.FallbackRequested += OnLegacyFallbackRequested;
-            _ = host.NavigateRouteAsync(_pendingLegacyRoute);
+            var renderable = _appWindow?.Presenter is not OverlappedPresenter presenter
+                || presenter.State != OverlappedPresenterState.Minimized;
+            host.NotifyHostWindowState(renderable, refreshBounds: renderable);
+            _ = host.NavigateRouteAsync(_pendingRoute);
         }
     }
-
-    private static string RouteForTag(string tag) => tag switch
-    {
-        "ws" => "ws-workbench",
-        "gpt" => "gpt",
-        "ai" => "ai",
-        _ => tag,
-    };
 
     private void ConfigureLayoutPersistence()
     {
@@ -251,6 +190,11 @@ public sealed partial class MainWindow : Window
 
     private async void OnClosed(object sender, WindowEventArgs args)
     {
+        if (_appWindow is not null)
+        {
+            _appWindow.Changed -= OnAppWindowChanged;
+            _appWindow.Closing -= OnAppWindowClosing;
+        }
         if (ContentFrame.Content is LegacyUiHostPage host && !_allowCloseAfterFlush)
             await host.FlushBeforeCloseAsync(snapshot: true);
         await App.StopLocalServiceAsync();

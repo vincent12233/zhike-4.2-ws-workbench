@@ -26,7 +26,7 @@ db.close();
 
 const port = 4472;
 const token = 'ws-v6-migration-token';
-const child = spawn(process.execPath, ['server.mjs'], {
+const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], {
   cwd: app,
   windowsHide: true,
   env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token },
@@ -35,7 +35,7 @@ const child = spawn(process.execPath, ['server.mjs'], {
 const headers = { 'x-zhike-api-token': token, origin: `http://127.0.0.1:${port}` };
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function request(pathname, init = {}) {
-  for (let attempt = 0; attempt < 120; attempt++) {
+  for (let attempt = 0; attempt < 300; attempt++) {
     try { return await fetch(`http://127.0.0.1:${port}${pathname}`, { ...init, headers: { ...headers, ...(init.headers || {}) } }); }
     catch { await wait(50); }
   }

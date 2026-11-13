@@ -13,7 +13,7 @@ const app = path.join(__dirname, '..', 'resources', 'app');
 const dataDir = mkdtempSync(path.join(os.tmpdir(), 'zhike-followup-chain-'));
 const port = 4477;
 const token = 'followup-chain-test-token';
-const child = spawn(process.execPath, ['server.mjs'], {
+const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], {
   cwd: app,
   windowsHide: true,
   env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token },
@@ -52,8 +52,8 @@ const analysis = (summary, followupTime, extra = {}) => ({
 (async () => {
   try {
     await wait(800);
-    const conversation = await json(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'chain-test-contact', title: '链路测试客户' }) }));
-    const initial = await request('/api/state', { method: 'POST', headers: { ...headers, 'x-state-version': '' }, body: JSON.stringify({ schemaVersion: 4, customers: [], savedViews: [], activities: [], tickets: [], deposits: [], followups: [], registrations: [], phoneRegistry: [], batchOperations: [], settings: { operatingTasks: [] }, channelAliases: {}, importIssues: [], qualityDecisions: {} }) });
+    const conversation = await json(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: '+91 98765 43210', title: '链路测试客户' }) }));
+    const initial = await request('/api/state', { method: 'POST', headers: { ...headers, 'x-state-version': '' }, body: JSON.stringify({ schemaVersion: 4, customers: [{ id: 'C-chain', name: '链路测试客户', rawPhone: '+91 98765 43210', phone: '9876543210', origin: '', deleted: false }], savedViews: [], activities: [], tickets: [], deposits: [], followups: [], registrations: [], phoneRegistry: [], batchOperations: [], settings: { operatingTasks: [] }, channelAliases: {}, importIssues: [], qualityDecisions: {} }) });
     assert.equal(initial.status, 200);
 
     const first = await json(await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, result: analysis('第一次分析', '2099-01-01') }) }));
@@ -69,7 +69,7 @@ const analysis = (summary, followupTime, extra = {}) => ({
     const state = await json(await request('/api/state'));
     const activeFollowups = (state.followups || []).filter(item => String(item.wsConversationId || '') === String(conversation.id) && !item.done && item.status !== 'dismissed');
     const activeTasks = (state.settings?.operatingTasks || []).filter(item => String(item.wsConversationId || '') === String(conversation.id) && !item.done);
-    assert.equal(activeFollowups.length, 1, 'repeated WS analyses must not create duplicate active follow-up records');
+    assert.equal(activeFollowups.length, 0, 'AI plans must not be counted as actual completed follow-up records');
     assert.equal(activeTasks.length, 1, 'repeated WS analyses must keep one active task-center reminder');
     assert.equal(activeTasks[0].due, '2099-01-02', 'newer analysis should refresh the active task date');
 

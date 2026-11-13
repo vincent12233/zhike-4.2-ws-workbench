@@ -12,7 +12,8 @@
                 BorderBrush="{StaticResource ZhikeLineBrush}"
                 BorderThickness="1" CornerRadius="8">
             <Grid x:Name="WebViewHost" SizeChanged="OnWebViewHostSizeChanged">
-                <Canvas x:Name="WsOverlayLayer" Visibility="Collapsed" IsHitTestVisible="True">
+                <Canvas x:Name="WsOverlayLayer" Visibility="Collapsed" IsHitTestVisible="False"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch" UseLayoutRounding="True">
                     <Border x:Name="WsOverlayBorder" Background="Transparent" BorderThickness="0" CornerRadius="0">
                         <Grid x:Name="WsOverlayHost" />
                     </Border>
@@ -25,7 +26,6 @@
         <StackPanel x:Name="HostActions" Grid.Row="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" Visibility="Collapsed">
             <Button Content="重试加载" Click="RetryHost" />
             <Button Content="查看诊断" Click="ShowHostDiagnostics" />
-            <Button Content="打开兼容页面" Click="OpenNativeFallback" />
         </StackPanel>
     </Grid>
 </Page>

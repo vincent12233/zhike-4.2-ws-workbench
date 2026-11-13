@@ -4,6 +4,13 @@
             <TextBlock Text="快速录入与智能导入" FontSize="28" FontWeight="SemiBold" />
             <TextBlock Text="列顺序可以变化；系统根据表头、样例值和页面上下文识别渠道、状态、登记日期、下次跟进日期、股票、方向、跟票、入金、群组与 VIP。" TextWrapping="Wrap" />
             <TextBox x:Name="SourceNameBox" Header="来源名称" PlaceholderText="例如：客户清单.csv" />
+            <ComboBox x:Name="ImportTargetBox" Header="导入目标（默认自动识别）" SelectedIndex="0">
+                <ComboBoxItem Content="自动识别（推荐）" Tag="auto" />
+                <ComboBoxItem Content="客户中心（只写客户资料）" Tag="customer" />
+                <ComboBoxItem Content="跟票业务" Tag="ticket" />
+                <ComboBoxItem Content="入金业务" Tag="deposit" />
+                <ComboBoxItem Content="混合业务（按行分流）" Tag="mixed" />
+            </ComboBox>
             <TextBox x:Name="CsvInput" Header="CSV 内容（可粘贴）" PlaceholderText="姓名,手机号码,登记日期&#x0a;张三,13800000000,2026-11-08" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="120" />
             <Grid ColumnSpacing="12">
                 <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>

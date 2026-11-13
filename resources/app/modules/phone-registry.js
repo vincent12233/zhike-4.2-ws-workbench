@@ -1,7 +1,6 @@
 (()=>{
 const h=window.__zhikeRegistryHost;if(!h)return;const D=['多开手机1','多开手机2','多开手机3','多开手机4','多开手机5','多开手机6','多开手机7','多开手机8','多开手机9','手机10号'];
-let q='',df='全部',cf='全部',rf='全部',page=1,size=20,seeding=false,pending=null,searchTimer=null;const selected=new Set(),now=()=>new Date().toISOString(),uid=()=>'PR-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),clone=x=>JSON.parse(JSON.stringify(x)),clean=x=>String(x||'').replace(/\D/g,'').slice(0,15),pkey=x=>{x=clean(x);return x.length===12&&x.startsWith('91')?x.slice(2):x};
-async function seed(){return;}
+let q='',df='全部',cf='全部',rf='全部',page=1,size=20,pending=null,searchTimer=null;const selected=new Set(),now=()=>new Date().toISOString(),uid=()=>'PR-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),clone=x=>JSON.parse(JSON.stringify(x)),clean=x=>String(x||'').replace(/\D/g,'').slice(0,15),pkey=x=>{x=clean(x);return x.length===12&&x.startsWith('91')?x.slice(2):x};
 const opts=(a,v,all=false)=>(all?['全部',...a]:a).map(x=>'<option value="'+h.esc(x)+'" '+(x===v?'selected':'')+'>'+h.esc(x)+'</option>').join('');
 function filtered(){const s=q.trim().toLowerCase();return h.state.phoneRegistry.filter(x=>(df==='全部'||x.device===df)&&(cf==='全部'||x.channel===cf)&&(rf==='全部'||x.role===rf)&&(!s||[x.device,x.code,x.phone,x.role,x.channel].some(v=>String(v||'').toLowerCase().includes(s))))}
 function dups(){const m=new Map;for(const x of h.state.phoneRegistry){const k=pkey(x.phone);if(k){if(!m.has(k))m.set(k,[]);m.get(k).push(x)}}return[...m].filter(([,a])=>a.length>1)}

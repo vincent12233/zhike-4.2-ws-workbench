@@ -7,7 +7,7 @@ namespace Zhike.Desktop.Views;
 
 public sealed partial class AiFollowupPage : Page
 {
-    private readonly ApiClient? _api = ApiClient.TryCreateFromEnvironment();
+    private ApiClient? _api;
     private readonly ObservableCollection<FollowupDto> _followups = [];
     private readonly ObservableCollection<AiJobDto> _jobs = [];
     private bool _loaded;
@@ -26,6 +26,16 @@ public sealed partial class AiFollowupPage : Page
     {
         if (_loaded) return;
         _loaded = true;
+        try
+        {
+            await App.EnsureLocalServiceAsync();
+            _api = App.LocalService?.CreateApiClient();
+        }
+        catch (Exception error)
+        {
+            _api = null;
+            SetStatus(InfoBarSeverity.Error, "本机服务未就绪", error.Message);
+        }
         await LoadFollowupsAsync();
         await LoadJobsAsync();
     }
@@ -64,7 +74,7 @@ public sealed partial class AiFollowupPage : Page
     {
         try
         {
-            if (_api is null) throw new InvalidOperationException("未配置 ZHIKE_API_BASE_URL");
+            if (_api is null) throw new InvalidOperationException("本机数据服务尚未就绪，请返回工作台后重试。");
             var state = (JobStateFilter.SelectedItem as ComboBoxItem)?.Tag?.ToString();
             var rows = await _api.GetAiJobsAsync(state);
             _jobs.Clear();
@@ -84,7 +94,7 @@ public sealed partial class AiFollowupPage : Page
         FollowupStatus.IsOpen = false;
         try
         {
-            if (_api is null) throw new InvalidOperationException("未配置 ZHIKE_API_BASE_URL");
+            if (_api is null) throw new InvalidOperationException("本机数据服务尚未就绪，请返回工作台后重试。");
             var state = (StateFilter.SelectedItem as ComboBoxItem)?.Tag?.ToString();
             var rows = await _api.GetFollowupsAsync(state);
             _followups.Clear();

@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk.Worker">
-  <ItemGroup>
-    <ProjectReference Include="../Zhike.Contracts/Zhike.Contracts.csproj" />
-    <ProjectReference Include="../Zhike.Domain/Zhike.Domain.csproj" />
-    <ProjectReference Include="../Zhike.Infrastructure/Zhike.Infrastructure.csproj" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
-  </ItemGroup>
-</Project>

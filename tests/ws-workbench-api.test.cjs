@@ -8,7 +8,7 @@ const app = path.join(__dirname, '..', 'resources', 'app');
 const dataDir = mkdtempSync(path.join(os.tmpdir(), 'zhike-ws-api-'));
 const port = 4471;
 const token = 'ws-api-test-token';
-const child = spawn(process.execPath, ['server.mjs'], {
+const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], {
   cwd: app,
   windowsHide: true,
   env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token },
@@ -17,7 +17,7 @@ const child = spawn(process.execPath, ['server.mjs'], {
 const headers = { 'content-type': 'application/json', 'x-zhike-api-token': token, origin: `http://127.0.0.1:${port}` };
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function request(pathname, init = {}) {
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < 300; i++) {
     try {
       const nextHeaders = { ...headers, ...(init.headers || {}) };
       if (String(init.method || 'GET').toUpperCase() !== 'GET' && pathname !== '/api/state' && !Object.keys(nextHeaders).some(key => key.toLowerCase() === 'x-state-version')) {
@@ -60,7 +60,7 @@ async function json(response) { return response.json(); }
     assert.equal(settingsBody.sendLanguage, 'English');
     assert.equal(settingsBody.aiEnabled, false);
 
-    const partialUpdate = await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-001', customerId: 'C-1' }) });
+    const partialUpdate = await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-001', customerId: 'C-1', bindingSource: 'manual' }) });
     const partialBody = await json(partialUpdate);
     assert.equal(partialBody.title, '张三', '未提供标题时不得覆盖已有标题');
     assert.equal(partialBody.customerId, 'C-1');
@@ -106,6 +106,18 @@ async function json(response) { return response.json(); }
 
     const collectionItem = await json(await request('/api/ws/collection-items', { method: 'POST', body: JSON.stringify({ runId: collectionRun.run.id, conversationId: conversationBody.id, status: 'completed', coverageStatus: 'visible', checkpoint: '3' }) }));
     assert.equal(collectionItem.item.coverageStatus, 'visible');
+    assert.equal(collectionItem.run.total, 1, '采集项写入后服务端应立即重算任务总数');
+    assert.equal(collectionItem.run.completed, 1, '采集项完成后服务端应立即重算完成数');
+    // A renderer can be interrupted after writing an item and before its
+    // summary PATCH. GET must reconcile from durable item rows so the card
+    // cannot regress to a stale 0/1 (or 3/7) progress display.
+    const staleSummary = await request('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: collectionRun.run.id, total: 0, discovered: 0, completed: 0, analyzed: 0 }) });
+    assert.equal(staleSummary.status, 200);
+    const reconciledSummary = await json(await request(`/api/ws/collection-runs?id=${encodeURIComponent(collectionRun.run.id)}`));
+    assert.equal(reconciledSummary.run.total, 1, '读取采集任务时应从采集项重算总数');
+    assert.equal(reconciledSummary.run.completed, 1, '读取采集任务时应从采集项重算完成数');
+    const repeatedDiscovery = await json(await request('/api/ws/collection-items', { method: 'POST', body: JSON.stringify({ runId: collectionRun.run.id, conversationId: conversationBody.id, status: 'queued' }) }));
+    assert.equal(repeatedDiscovery.item.status, 'completed', '重复发现不能把已完成采集项降回 queued');
     const retryableItem = await json(await request('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: collectionRun.run.id, conversationId: conversationBody.id, status: 'completed', analysisStatus: 'retryable', lastError: 'AI 服务未配置，请先配置 TeamoRouter。' }) }));
     assert.equal(retryableItem.item.analysisStatus, 'retryable');
     assert.match(retryableItem.item.lastError, /AI 服务未配置/);
@@ -113,15 +125,20 @@ async function json(response) { return response.json(); }
     const analysis = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, result: { summary: '咨询产品', intent: '高意向', intentScore: 90, urgency: '高', nextStep: '今天联系客户确认预算', followupTime: '2026-11-05', language: 'English', confidence: 0.8, contact: { name: '张三', phone: '+91 98765 43210' }, profile: { origin: '展会', age: 36, occupation: '采购经理' }, evidence: [{ field: 'age', value: 36, text: '我今年36岁' }] }, providerName: 'test', model: 'test-model' }) });
     assert.equal(analysis.status, 200);
     const analysisBody = await json(analysis);
-    const initializeCrm = await request('/api/state', { method: 'POST', headers: { 'x-state-version': '' }, body: JSON.stringify({ schemaVersion: 4, customers: [], savedViews: [], activities: [], tickets: [], deposits: [], followups: [], registrations: [], phoneRegistry: [], batchOperations: [], settings: { operatingTasks: [] }, channelAliases: {}, importIssues: [], qualityDecisions: {} }) });
+    const initializeCrm = await request('/api/state', { method: 'POST', headers: { 'x-state-version': '' }, body: JSON.stringify({ schemaVersion: 4, customers: [{ id: 'C-existing', name: '张三旧档案', rawPhone: '+91 98765 43210', phone: '9876543210', origin: '历史导入', age: '', occupation: '', tags: [], deleted: false }], savedViews: [], activities: [], tickets: [], deposits: [], followups: [], registrations: [], phoneRegistry: [], batchOperations: [], settings: { operatingTasks: [] }, channelAliases: {}, importIssues: [], qualityDecisions: {} }) });
     assert.equal(initializeCrm.status, 200);
+    const bindExisting = await json(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-001', customerId: 'C-existing', bindingSource: 'manual' }) }));
+    assert.equal(bindExisting.customerId, 'C-existing', 'fixture must model an explicit operator-confirmed customer association');
+    assert.equal(bindExisting.data.customerBindingSource, 'manual');
     const staleCrmSync = await request('/api/ws/crm-sync', { method: 'POST', headers: { 'x-state-version': 'stale-version' }, body: JSON.stringify({ conversationId: conversationBody.id, analysisId: analysisBody.id }) });
     assert.equal(staleCrmSync.status, 409, 'WS AI 同步必须拒绝过期数据版本');
     const crmSync = await json(await request('/api/ws/crm-sync', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, analysisId: analysisBody.id }) }));
     assert.equal(crmSync.ok, true);
-    assert.equal(crmSync.created, true);
+    assert.equal(crmSync.created, false, 'WS AI 同步只补充已有客户，不自动创建客户主档案');
+    assert.equal(crmSync.matched, true);
+    assert.equal(crmSync.customer.id, 'C-existing');
     assert.equal(crmSync.followup.aiGenerated, true);
-    assert.equal(crmSync.customer.origin, '展会');
+    assert.equal(crmSync.customer.origin, '历史导入', '已有客户来源不被 AI 覆盖');
     assert.equal(crmSync.customer.age, 36);
     assert.equal(crmSync.customer.occupation, '采购经理');
     assert.ok(crmSync.updatedFields.includes('age'));
@@ -137,8 +154,8 @@ async function json(response) { return response.json(); }
     assert.equal(afterRepeatedProfile.profile.version, beforeRepeatedProfile.profile.version, '重复分析不递增热聊档案版本');
     assert.equal(afterRepeatedProfile.events.length, beforeRepeatedProfile.events.length, '重复分析不追加热聊事件');
     const crmState = await json(await request('/api/state'));
-    assert.equal(crmState.customers.length, 1, 'AI 同步按 WS 会话只创建一个客户');
-    assert.equal(crmState.followups.length, 1, 'AI 同步按分析幂等创建一个跟进');
+    assert.equal(crmState.customers.length, 1, 'AI 同步不会新增客户主档案');
+    assert.equal(crmState.followups.length, 0, 'AI 建议只创建任务，不伪造已完成跟进记录');
     assert.equal(crmState.settings.operatingTasks.length, 1, 'AI 同步创建一个待跟进任务');
 
 
@@ -147,6 +164,25 @@ async function json(response) { return response.json(); }
     assert.equal(analysisList.analysis.result.summary, '咨询产品');
     const preservedAnalysisItem = await json(await request('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: collectionRun.run.id, conversationId: conversationBody.id, status: 'completed', analysisStatus: 'pending', checkpoint: '3' }) }));
     assert.equal(preservedAnalysisItem.item.analysisStatus, 'completed', 'unchanged preview refresh keeps a successful AI analysis completed');
+    const fullHistoryCheckpoint = await request('/api/ws/ingest/batch', { method: 'POST', body: JSON.stringify({
+      protocol: 'zhike.ws.ingest.batch.v1', connectorId: 'desktop-webview2', accountId: 'default',
+      capturedAt: '2026-11-06T09:00:00Z', scope: 'visible-authorized-content', messages: [],
+      checkpoints: [{ accountId: 'default', conversationType: 'direct', conversationKey: 'wa-001', displayName: '张三', coverage: 'read-history', historyLoaded: true, historyMessageCount: 3, cursor: 'history-3', updatedAt: '2026-11-06T09:00:00Z' }],
+    }) });
+    assert.equal(fullHistoryCheckpoint.status, 200, 'native full-history checkpoint must be accepted');
+    const fullHistoryConversations = await json(await request('/api/ws/conversations?limit=20'));
+    const fullHistoryConversation = fullHistoryConversations.conversations.find(item => item.id === conversationBody.id);
+    assert.equal(fullHistoryConversation.data.historyLoaded, true, 'customer conversation must record full-history coverage');
+    assert.equal(fullHistoryConversation.data.historyMessageCount, 3);
+    const pagedHistory = await json(await request(`/api/ws/messages?conversationId=${encodeURIComponent(conversationBody.id)}&limit=2&offset=2`));
+    assert.equal(pagedHistory.total, 3, 'message API must report the full stored history total');
+    assert.equal(pagedHistory.offset, 2);
+    assert.equal(pagedHistory.messages.length, 1);
+    const fullHistoryItems = await json(await request(`/api/ws/collection-items?runId=${encodeURIComponent(collectionRun.run.id)}`));
+    const refreshedFullHistoryItem = fullHistoryItems.items.find(item => item.conversationId === conversationBody.id);
+    assert.equal(refreshedFullHistoryItem.coverageStatus, 'full-history', 'full history must upgrade collection coverage');
+    assert.equal(refreshedFullHistoryItem.status, 'queued', 'full history must requeue AI analysis');
+    assert.equal(refreshedFullHistoryItem.analysisStatus, 'pending');
     const conversations = await json(await request('/api/ws/conversations'));
     const refreshedConversation = conversations.conversations.find(item => item.id === conversationBody.id);
     assert.equal(refreshedConversation.intentLevel, '高意向');
@@ -157,7 +193,7 @@ async function json(response) { return response.json(); }
     const firstAlerts = await json(await request('/api/ws/followup-alerts?limit=8'));
     assert.equal(firstAlerts.alerts.length, 1);
     assert.equal(firstAlerts.alerts[0].conversationId, conversationBody.id);
-    assert.equal(firstAlerts.alerts[0].priority, 'urgent');
+    assert.equal(firstAlerts.alerts[0].priority, 'overdue');
     assert.match(firstAlerts.alerts[0].reason, /高意向/);
     assert.ok(firstAlerts.alerts[0].alertKey);
     assert.ok(firstAlerts.alerts[0].analysisId);
@@ -215,21 +251,22 @@ async function json(response) { return response.json(); }
     assert.equal(afterV5.counts.messages, 3);
     assert.equal(afterV5.counts.batches, 0);
 
-    // 同一 WS 登录账号下的另一联系人必须创建独立客户，不能因 wsAccountId 相同而合并。
+    // 同一 WS 登录账号下的另一联系人没有现有客户匹配时不得自动建档。
     const secondConversation = await json(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-002', title: '李四', customerId: '', language: 'English' }) }));
     const secondAnalysisResponse = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: secondConversation.id, result: { summary: '另一位客户咨询', intent: '高意向', intentScore: 85, urgency: '中', nextStep: '明天联系确认', followupTime: '2026-11-06', language: 'English', confidence: 0.9 }, providerName: 'test', model: 'test-model' }) });
     assert.equal(secondAnalysisResponse.status, 200);
     const secondAnalysis = await json(secondAnalysisResponse);
     const secondCrmSync = await json(await request('/api/ws/crm-sync', { method: 'POST', body: JSON.stringify({ conversationId: secondConversation.id, analysisId: secondAnalysis.id }) }));
-    assert.equal(secondCrmSync.created, true);
+    assert.equal(secondCrmSync.created, false);
+    assert.equal(secondCrmSync.matched, false);
+    assert.equal(secondCrmSync.skipped, true);
     const crmStateAfterSecond = await json(await request('/api/state'));
-    assert.equal(crmStateAfterSecond.customers.length, 2, '同一 WS 登录账号下的不同联系人不得合并为一个客户');
-    assert.notEqual(crmStateAfterSecond.customers[0].id, crmStateAfterSecond.customers[1].id);
+    assert.equal(crmStateAfterSecond.customers.length, 1, '未匹配到现有客户时不得新增客户');
     const wsConversationsAfterSecond = await json(await request('/api/ws/conversations'));
     const firstLinked = wsConversationsAfterSecond.conversations.find(item => item.id === conversationBody.id);
     const secondLinked = wsConversationsAfterSecond.conversations.find(item => item.id === secondConversation.id);
-    assert.ok(firstLinked.customerId && secondLinked.customerId);
-    assert.notEqual(firstLinked.customerId, secondLinked.customerId, '不同 WS 联系人应关联不同客户');
+    assert.ok(firstLinked.customerId);
+    assert.equal(secondLinked.customerId || '', '', '未匹配客户的会话不得伪造客户关联');
 
     const invalidShape = await request('/api/ws/import', { method: 'POST', body: JSON.stringify({ schemaVersion: 6, conversations: {} }) });
     assert.equal(invalidShape.status, 400);

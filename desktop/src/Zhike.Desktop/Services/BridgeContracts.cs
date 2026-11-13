@@ -2,14 +2,6 @@ using System.Text.Json;
 
 namespace Zhike.Desktop.Services;
 
-public sealed record BridgeRequest(
-    string RequestId,
-    string BridgeVersion,
-    string Method,
-    JsonElement Payload,
-    int TimeoutMs = 15000,
-    string? AccountId = null);
-
 public sealed record BridgeResponse(
     bool Ok,
     string ErrorCode,

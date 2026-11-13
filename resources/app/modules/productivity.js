@@ -102,5 +102,9 @@
   }
   desktop?.onCustomer(open);desktop?.onError(message=>host()?.toast(message,'x'));
   let queued=false;function refresh(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;if(!host())return;batches();duplicates();homeLayout();stageDrag();columnSizes();settings();businessEditButtons();intakeGuard();});}
-  new MutationObserver(refresh).observe(view,{childList:true,subtree:true});let reminderTimer;const startReminderTimer=()=>{clearInterval(reminderTimer);reminderTimer=setInterval(()=>{if(document.hidden)return;reminders().catch(()=>{});},30000);};startReminderTimer();document.addEventListener('visibilitychange',startReminderTimer);refresh();
+  new MutationObserver(refresh).observe(view,{childList:true,subtree:true});
+  // The production WinUI host polls due reminders on its native timer, so
+  // minimizing the window or switching routes cannot pause notifications.
+  // The browser fallback retains the old timer for development only.
+  let reminderTimer;const startReminderTimer=()=>{clearInterval(reminderTimer);if(desktop)return;reminderTimer=setInterval(()=>reminders().catch(()=>{}),30000);};startReminderTimer();document.addEventListener('visibilitychange',startReminderTimer);refresh();
 })();

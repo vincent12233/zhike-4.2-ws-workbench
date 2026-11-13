@@ -1,4 +1,0 @@
-.gpt-workspace-btn{height:34px;border:1px dashed #89aaa3;border-radius:9px;background:rgba(255,255,255,.72);color:#176b5c;font-size:9px;font-weight:650;cursor:pointer}
-.gpt-workspace-btn:hover{background:#eaf7f3;border-color:#10a37f}.gpt-send-round[data-gpt-action="cancel"]{background:#d92d20;font-size:12px}
-[data-theme="dark"] .gpt-workspace-btn{background:#182231;color:#9ed7cf;border-color:#39756d}
-.gpt-local-import{height:36px;border:1px solid #10a37f;border-radius:9px;background:#eaf7f3;color:#08765f;font-size:9px;font-weight:750;cursor:pointer}.gpt-local-import:hover{background:#d8f2eb}[data-theme="dark"] .gpt-local-import{background:#173a3b;color:#9ed7cf;border-color:#39756d}

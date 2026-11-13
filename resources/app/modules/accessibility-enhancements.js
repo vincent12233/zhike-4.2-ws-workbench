@@ -26,8 +26,9 @@
         const heading = table.closest('.panel')?.querySelector('.panel-title,h2,h3')?.textContent?.trim();
         if (heading) table.setAttribute('aria-label', heading);
       }
-      table.querySelectorAll('thead th').forEach((th, index) => { if (!th.id) th.id = `${tablePrefix}-${index}`; });
-      table.querySelectorAll('tbody tr').forEach(row => row.querySelectorAll('td').forEach((cell, index) => { if (!cell.getAttribute('headers')) { const th = table.querySelectorAll('thead th')[index]; if (th?.id) cell.setAttribute('headers', th.id); } }));
+      const headers = [...table.querySelectorAll('thead th')];
+      headers.forEach((th, index) => { if (!th.id) th.id = `${tablePrefix}-${index}`; });
+      table.querySelectorAll('tbody tr').forEach(row => row.querySelectorAll('td').forEach((cell, index) => { if (!cell.getAttribute('headers')) { const th = headers[index]; if (th?.id) cell.setAttribute('headers', th.id); } }));
     });
   }
   function syncNavigation() {
@@ -77,15 +78,29 @@
   document.addEventListener('keydown', trapModalFocus, true);
   document.addEventListener('keydown', keyboardNavigation, true);
   let queued = false;
-  const refresh = () => { if (queued) return; queued = true; queueMicrotask(() => { queued = false; labelControls(document.querySelector('#viewContainer') || document); syncNavigation(); syncModal(); }); };
-  // The application re-renders the view frequently. Observing every
-  // attribute mutation on <body> made accessibility repair work compete with
-  // large table renders and could create a feedback loop of needless scans.
-  // Child-list changes cover page renders; the two small targeted observers
-  // cover modal visibility and navigation state changes.
-  new MutationObserver(refresh).observe(document.body, { childList: true, subtree: true });
+  const refresh = () => {
+    if (queued) return;
+    queued = true;
+    const run = () => {
+      queued = false;
+      // A full accessibility pass is intentionally limited to the active
+      // view. The shell, embedded WS page and toast region can mutate without
+      // requiring a rescan of every customer/table row.
+      labelControls(document.querySelector('#viewContainer') || document);
+      syncNavigation();
+      syncModal();
+    };
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run);
+    else queueMicrotask(run);
+  };
+  // Observe only owned DOM roots. Watching document.body made every WS
+  // overlay/status mutation trigger a complete page scan while scrolling.
+  const viewRoot = document.querySelector('#viewContainer');
+  if (viewRoot) new MutationObserver(refresh).observe(viewRoot, { childList: true, subtree: true });
   const backdrop = modalBackdrop();
   if (backdrop) new MutationObserver(refresh).observe(backdrop, { attributes: true, attributeFilter: ['class', 'hidden'] });
+  const dialog = modal();
+  if (dialog) new MutationObserver(refresh).observe(dialog, { childList: true, subtree: true });
   const nav = document.querySelector('#mainNav');
   if (nav) new MutationObserver(refresh).observe(nav, { attributes: true, attributeFilter: ['class', 'hidden'] });
 })();

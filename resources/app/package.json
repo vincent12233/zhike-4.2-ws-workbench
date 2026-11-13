@@ -1,21 +1,21 @@
 {
   "name": "zhike-offline-desktop",
-  "version": "4.4.24",
-  "description": "知客 4.1 本机客户运营与 GPT 助手桌面版",
-  "main": "main.cjs",
+  "version": "6.0.0",
+  "description": "知客 6.0 Horizon Atelier 本机客户运营与 WS/AI 工作台资源",
   "private": true,
   "engines": {
     "node": ">=24"
   },
   "zhikeRuntime": {
-    "electron": "45.2.1",
-    "node": "24.22.1"
+    "host": "WinUI 3 + WebView2",
+    "sidecar": "server.mjs",
+    "node": "24.22.1",
+    "storage": "SQLite"
   },
   "scripts": {
     "test:ws": "node ../../scripts/run-tests.cjs ws",
     "test:all": "node ../../scripts/run-tests.cjs all",
-    "test:installer": "node ../../scripts/run-tests.cjs installer",
-    "build:installer": "powershell -NoProfile -ExecutionPolicy Bypass -File ../../scripts/build-installer.ps1"
+    "test:installer": "node ../../scripts/run-tests.cjs installer"
   }
 }
 

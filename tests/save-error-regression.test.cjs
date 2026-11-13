@@ -12,18 +12,17 @@ const client = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop'
 const home = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Views', 'HomePage.xaml.cs'), 'utf8');
 const app = fs.readFileSync(path.join(repo, 'resources', 'app', 'app.js'), 'utf8');
 
-// Regression: an unpaired desktop app must use the existing localStorage
-// persistence path. It must not force the API bridge and then show “保存异常”
-// merely because no Docker pairing has been configured yet.
-assert.match(bridge, /public static string Build\(bool apiConfigured\)/, 'desktop bridge exposes a connection-aware script builder');
-assert.match(bridge, /window\.__LOCAL_DB__\s*=\s*__ZHikeLocalDbFlag__;/, 'bridge local-db mode is injected instead of hard-coded');
-assert.doesNotMatch(bridge, /window\.__LOCAL_DB__\s*=\s*true;/, 'bridge does not force API persistence when unpaired');
-assert.match(bridge, /!url\.startsWith\('\/api\/'\) \|\| !window\.__LOCAL_DB__/, 'offline mode bypasses the remote API bridge');
-assert.match(host, /AddScriptToExecuteOnDocumentCreatedAsync\(LegacyBridgeScript\.Build\(_api\?\.SessionToken is \{ Length: > 0 \}\)\)/, 'legacy host injects the correct persistence mode');
+// Regression: the WinUI shell has one authoritative local SQLite path. It
+// must not fall back to browser localStorage or wait for a remote pairing.
+assert.match(bridge, /public static string Build\(bool apiConfigured\)/, 'desktop bridge keeps source compatibility for older callers');
+assert.match(bridge, /Replace\("__ZHikeLocalDbFlag__", "true"/, 'bridge always selects the local SQLite API');
+assert.match(bridge, /Replace\("__ZhikeStorageMode__", "'local'"/, 'bridge advertises the local storage mode');
+assert.match(bridge, /if\s*\(!url\.startsWith\('\/api\/'\) \|\| !window\.__LOCAL_DB__/, 'non-API browser requests bypass the bridge');
+assert.match(host, /AddScriptToExecuteOnDocumentCreatedAsync\(LegacyBridgeScript\.Build\(true\)\)/, 'legacy host injects local persistence mode');
 assert.match(adapter, /raw\.Data[\s\S]*TryGetProperty\("error"/, 'native bridge preserves the API error reason');
-assert.match(client, /FirstConfigured\(Environment\.GetEnvironmentVariable\("ZHIKE_API_BASE_URL"\), saved\?\.BaseUrl\)/, 'blank environment values do not hide the saved server URL');
-assert.match(client, /string\.IsNullOrWhiteSpace\(preferred\) \? fallback : preferred\.Trim\(\)/, 'connection values are trimmed and fall back safely');
-assert.match(home, /FirstConfigured\(Environment\.GetEnvironmentVariable\("ZHIKE_API_BASE_URL"\), saved\?\.BaseUrl\)/, 'pairing page uses the same connection fallback');
+assert.match(client, /App\.LocalService\?\.IsRunning == true/, 'native API client is created only from the local service');
+assert.match(client, /ConfigureLocalSidecar\(\)/, 'local sidecar client is explicitly marked');
+assert.match(home, /EnsureLocalServiceAsync\(\)/, 'diagnostic page waits for the local service');
 
 // Regression: server-side validation errors must reach the user instead of
 // being collapsed into the misleading generic “写入失败” message.

@@ -22,7 +22,7 @@ public sealed class WindowLayoutService
 
     public WindowLayoutService(string scope = "shared", string? root = null)
     {
-        var basePath = root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Zhike", "window");
+        var basePath = root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Zhike6", "window");
         Directory.CreateDirectory(basePath);
         var safeScope = new string((scope ?? "shared").Where(character => char.IsLetterOrDigit(character) || character is '-' or '_').ToArray());
         _statePath = Path.Combine(basePath, $"layout-{(safeScope.Length == 0 ? "shared" : safeScope)}.json");

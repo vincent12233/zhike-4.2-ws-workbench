@@ -39,7 +39,9 @@ assert.match(css, /\.sidebar:not\(\.collapsed\)\{[^}]*width:224px[^}]*flex-basis
 assert.match(css, /\.sidebar:not\(\.collapsed\) \.nav-item\{[^}]*justify-content:flex-start/, 'expanded sidebar must restore text alignment');
 assert.match(css, /prefers-reduced-motion/, 'motion preferences must be respected');
 assert.match(css, /animation:\s*none\s*!important/, 'continuous visual animation must be disabled by default');
-assert.match(html, /modules\/design-system\.css/, 'index must load the unified design system last');
+assert.match(html, /modules\/design-system\.css/, 'index must load the unified compatibility primitives');
+assert.ok(html.indexOf('modules/design-system.css') < html.indexOf('modules/horizon-atelier.css'), 'compatibility primitives must load before the 6.0 product skin');
+assert.ok(html.indexOf('modules/horizon-atelier.css') < html.indexOf('modules/scroll-system.css'), 'the interaction contract must remain the final stylesheet');
 assert.match(server, /['"]\/modules\/design-system\.css['"]/, 'server must allow the unified design system asset');
 
 console.log('design-system contract: tokens, typography, breakpoints, motion and asset wiring are present');

@@ -162,7 +162,19 @@
     const button = event.target.closest('[data-business-enhance]'); if (button) { const action = button.dataset.businessEnhance; if (action === 'batch') openBatchSelector(button.dataset.kind); else if (action === 'undo') undoBatch(button.dataset.kind); else if (action === 'merge') openMergeWizard(); else if (action === 'undo-merge') undoMerge(); return; }
     const enhanced = event.target.closest('[data-be-action]'); if (!enhanced) return; const action = enhanced.dataset.beAction; if (action === 'batch-preview-business') previewBatch(enhanced.dataset.kind); else if (action === 'batch-apply-business') applyBatch(enhanced.dataset.kind); else if (action === 'merge-apply') applyMerge();
   });
-  let queued = false; const refresh = () => { if (queued) return; queued = true; queueMicrotask(() => { queued = false; mount(); }); };
+  let queued = false;
+  const refresh = () => {
+    if (queued) return;
+    queued = true;
+    const run = () => {
+      queued = false;
+      const currentView = host()?.state?.view;
+      if (!['tickets', 'deposits', 'quality'].includes(currentView)) return;
+      mount();
+    };
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run);
+    else queueMicrotask(run);
+  };
   new MutationObserver(refresh).observe(view, { childList: true, subtree: true }); refresh();
   window.ZhikeBusinessEnhancements = Object.freeze({ businessSignature, duplicateGroups });
 })();

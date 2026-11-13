@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace Zhike.Desktop.Services;
 
-public sealed record StoredWsAccount(string Id, string DisplayName, string Status, DateTimeOffset? LastSeen = null);
+public sealed record StoredWsAccount(string Id, string DisplayName, string Status, DateTimeOffset? LastSeen = null, string? LastKnownStatus = null);
 
 /// <summary>
 /// Small local account index used before/without the API.  It stores only
@@ -17,7 +17,7 @@ public sealed class WsAccountStore
 
     public WsAccountStore(string? root = null)
     {
-        var basePath = root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Zhike", "ws-accounts");
+        var basePath = root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Zhike6", "ws-accounts");
         Directory.CreateDirectory(basePath);
         _path = Path.Combine(basePath, "accounts.json");
     }

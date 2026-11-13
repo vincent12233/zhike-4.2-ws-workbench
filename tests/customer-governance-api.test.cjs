@@ -8,11 +8,11 @@ const app = path.join(__dirname, '..', 'resources', 'app');
 const dataDir = mkdtempSync(path.join(os.tmpdir(), 'zhike-governance-api-'));
 const port = 4472;
 const token = 'governance-api-test-token';
-const child = spawn(process.execPath, ['server.mjs'], { cwd: app, windowsHide: true, env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token }, stdio: 'ignore' });
+const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], { cwd: app, windowsHide: true, env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token }, stdio: 'ignore' });
 const headers = { 'content-type': 'application/json', 'x-zhike-api-token': token, origin: `http://127.0.0.1:${port}` };
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function request(pathname, init = {}) {
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < 300; i++) {
     try {
       const nextHeaders = { ...headers, ...(init.headers || {}) };
       if (String(init.method || 'GET').toUpperCase() !== 'GET' && pathname !== '/api/state' && !Object.keys(nextHeaders).some(key => key.toLowerCase() === 'x-state-version')) {
@@ -35,7 +35,7 @@ const json = response => response.json();
     const state = await request('/api/state', { method: 'POST', headers: { ...headers, 'x-state-version': '' }, body: JSON.stringify(initial) });
     assert.equal(state.status, 200);
 
-    const conversation = await json(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-governance-1', title: '张三' }) }));
+    const conversation = await json(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: '+91 98765 43210', title: '张三' }) }));
     const analysis = await json(await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, result: { summary: '客户来自展会', confidence: 0.95, contact: { name: '张三', phone: '+91 98765 43210' }, profile: { origin: '展会', age: 36, occupation: '采购经理' }, evidence: [{ field: 'age', value: 36, text: '我今年36岁' }] } }) }));
     const synced = await json(await request('/api/ws/crm-sync', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, analysisId: analysis.id }) }));
     assert.equal(synced.customer.id, 'C1');

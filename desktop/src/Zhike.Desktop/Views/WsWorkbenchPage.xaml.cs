@@ -20,8 +20,10 @@ public sealed partial class WsWorkbenchPage : Page
     private string _mobilePanel = "center";
     private readonly WsAccountStore _accountStore = new();
     private readonly LocalQueue _localQueue = new();
+    private readonly SemaphoreSlim _flushGate = new(1, 1);
+    private readonly SemaphoreSlim _messageGate = new(1, 1);
     private readonly ObservableCollection<WsAccountItem> _accounts = [];
-    private readonly ApiClient? _api;
+    private ApiClient? _api;
     private WebView2? _webView;
     private readonly DispatcherQueueTimer? _statusTimer;
     private long _switchGeneration;
@@ -33,7 +35,7 @@ public sealed partial class WsWorkbenchPage : Page
     public WsWorkbenchPage()
     {
         InitializeComponent();
-        _api = ApiClient.TryCreateFromEnvironment();
+        NavigationCacheMode = Microsoft.UI.Xaml.Navigation.NavigationCacheMode.Required;
         AccountsList.ItemsSource = _accounts;
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
@@ -43,6 +45,8 @@ public sealed partial class WsWorkbenchPage : Page
             _statusTimer.Interval = TimeSpan.FromSeconds(5);
             _statusTimer.Tick += async (_, _) =>
             {
+                await App.RecoverLocalServiceAsync();
+                _api = App.LocalService?.CreateApiClient();
                 if (_api is not null && DateTimeOffset.UtcNow >= _nextSessionRotation)
                 {
                     await _api.TryRotateSessionAsync();
@@ -50,7 +54,16 @@ public sealed partial class WsWorkbenchPage : Page
                 }
                 await FlushQueuedBatchesAsync();
                 if (AccountsList.SelectedItem is WsAccountItem account && _webView is not null)
-                    await ProbeLoginStateAsync(account, _webView, _switchGeneration);
+                {
+                    var view = _webView;
+                    var generation = Volatile.Read(ref _switchGeneration);
+                    await ProbeLoginStateAsync(account, view, generation);
+                    if (generation == Volatile.Read(ref _switchGeneration) && ReferenceEquals(view, _webView) && view.CoreWebView2 is not null)
+                    {
+                        try { await view.CoreWebView2.ExecuteScriptAsync("window.__zhikeWsBackgroundTick?.(); void 0;"); }
+                        catch { /* account navigation/reconnect will reinstall the collector */ }
+                    }
+                }
             };
         }
     }
@@ -65,6 +78,15 @@ public sealed partial class WsWorkbenchPage : Page
         }
         _loaded = true;
         _statusTimer?.Start();
+        try
+        {
+            await App.EnsureLocalServiceAsync();
+            _api = App.LocalService?.CreateApiClient();
+        }
+        catch
+        {
+            _api = null;
+        }
         await RestoreLayoutAsync();
         ApplyResponsiveLayout();
         await LoadAccountsAsync();
@@ -73,25 +95,17 @@ public sealed partial class WsWorkbenchPage : Page
 
     private void OnUnloaded(object sender, RoutedEventArgs args)
     {
-        Interlocked.Increment(ref _switchGeneration);
-        var view = _webView;
-        _webView = null;
-        if (view?.CoreWebView2 is not null)
-        {
-            view.CoreWebView2.WebMessageReceived -= OnWebMessageReceived;
-            view.CoreWebView2.NavigationStarting -= OnNavigationStarting;
-        }
-        try { view?.Close(); } catch { }
-        WebViewHost.Children.Clear();
-        _statusTimer?.Stop();
-        _loaded = false;
+        // Native fallback navigation is not a user-requested WS shutdown.
+        // Keep the cached WebView/profile, collector and durable queue alive
+        // while another knowledge-work page is displayed. Account switching,
+        // explicit session close and process shutdown still own disposal.
     }
 
     private async Task LoadAccountsAsync()
     {
         var local = await LoadLocalAccountsWithRetryAsync();
         _accounts.Clear();
-        foreach (var stored in local) _accounts.Add(new WsAccountItem(stored.Id, stored.DisplayName, stored.Status, stored.LastSeen));
+        foreach (var stored in local) _accounts.Add(new WsAccountItem(stored.Id, stored.DisplayName, stored.Status, stored.LastSeen, stored.LastKnownStatus));
         if (_api is not null)
         {
             try
@@ -102,8 +116,8 @@ public sealed partial class WsWorkbenchPage : Page
                     foreach (var account in remote)
                     {
                         var existing = _accounts.FirstOrDefault(item => item.Id.Equals(account.Id, StringComparison.OrdinalIgnoreCase));
-                        if (existing is null) _accounts.Add(new WsAccountItem(account.Id, account.DisplayName, account.RuntimeStatusOrStatus(), account.LastSeen));
-                        else existing.Apply(account.DisplayName, account.RuntimeStatusOrStatus(), account.LastSeen);
+                        if (existing is null) _accounts.Add(new WsAccountItem(account.Id, account.DisplayName, account.RuntimeStatusOrStatus(), account.LastSeen, account.LastKnownStatus));
+                        else existing.Apply(account.DisplayName, account.RuntimeStatusOrStatus(), account.LastSeen, account.LastKnownStatus);
                     }
                     await SaveAccountsAsync();
                 }
@@ -240,7 +254,7 @@ public sealed partial class WsWorkbenchPage : Page
             try
             {
                 var remote = await _api.UpsertWsAccountAsync(new WsAccountRequest(account.Id, account.DisplayName, account.Status));
-                if (remote is not null) account.Apply(remote.DisplayName, remote.RuntimeStatusOrStatus(), remote.LastSeen);
+                if (remote is not null) account.Apply(remote.DisplayName, remote.RuntimeStatusOrStatus(), remote.LastSeen, remote.LastKnownStatus);
                 await SaveAccountsAsync();
             }
             catch
@@ -318,8 +332,11 @@ public sealed partial class WsWorkbenchPage : Page
             }
             view.CoreWebView2.Settings.AreDevToolsEnabled = false;
             view.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
+            // Use WebView2's supported runtime user-agent.  A hard-coded
+            // future Chrome version is rejected by WhatsApp Web.
             view.CoreWebView2.WebMessageReceived += OnWebMessageReceived;
             view.CoreWebView2.NavigationStarting += OnNavigationStarting;
+            await view.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync("(()=>{const apply=()=>{if(document.documentElement)document.documentElement.style.zoom='80%';};apply();document.addEventListener('DOMContentLoaded',apply,{once:true});})();");
             await view.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(BuildCollectorScript(account.Id));
             view.CoreWebView2.NavigationCompleted += async (_, navigation) =>
             {
@@ -357,7 +374,7 @@ public sealed partial class WsWorkbenchPage : Page
     }
 
     private async Task SaveAccountsAsync()
-        => await _accountStore.SaveAsync(_accounts.Select(item => new StoredWsAccount(item.Id, item.DisplayName, item.Status, item.LastSeen)));
+        => await _accountStore.SaveAsync(_accounts.Select(item => new StoredWsAccount(item.Id, item.DisplayName, item.Status, item.LastSeen, item.LastKnownStatus)));
 
     private async Task SyncStatusAsync(WsAccountItem account)
     {
@@ -369,15 +386,25 @@ public sealed partial class WsWorkbenchPage : Page
     private async Task FlushQueuedBatchesAsync()
     {
         if (_api is null) return;
+        if (!await _flushGate.WaitAsync(0)) return;
         try
         {
             foreach (var item in await _localQueue.PeekAsync())
             {
-                if (!string.Equals(item.Route, "api/v2/ws/ingest/batch", StringComparison.Ordinal)) continue;
-                var request = JsonSerializer.Deserialize<WsIngestBatchRequestDto>(item.PayloadJson);
-                if (request is null) { await _localQueue.RemoveAsync(item.Id); continue; }
-                await _api.IngestWsBatchAsync(request);
-                await _localQueue.RemoveAsync(item.Id);
+                if (!string.Equals(item.Route, "api/ws/ingest/batch", StringComparison.Ordinal)) continue;
+                try
+                {
+                    var request = LocalQueue.DeserializePayload<WsIngestBatchRequestDto>(item.PayloadJson)
+                        ?? throw new InvalidDataException("WS 待同步数据无法反序列化。");
+                    using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+                    await _api.IngestWsBatchAsync(request, timeout.Token);
+                    await _localQueue.RemoveAsync(item.Id);
+                }
+                catch (Exception error)
+                {
+                    await _localQueue.MarkFailureAsync(item.Id, error);
+                    break;
+                }
             }
         }
         catch
@@ -385,10 +412,15 @@ public sealed partial class WsWorkbenchPage : Page
             // Keep the first failed item for the next timer tick; ordering is
             // important for checkpoint monotonicity.
         }
+        finally
+        {
+            _flushGate.Release();
+        }
     }
 
     private async void OnWebMessageReceived(CoreWebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
     {
+        await _messageGate.WaitAsync();
         try
         {
             if (_webView?.CoreWebView2 is null || !ReferenceEquals(sender, _webView.CoreWebView2)) return;
@@ -402,40 +434,111 @@ public sealed partial class WsWorkbenchPage : Page
             var selected = AccountsList.SelectedItem as WsAccountItem;
             if (selected is null || !string.Equals(selected.Id, accountId, StringComparison.Ordinal)) return;
             var capturedAt = root.TryGetProperty("capturedAt", out var captured) && DateTimeOffset.TryParse(captured.GetString(), out var parsedCaptured) ? parsedCaptured : DateTimeOffset.UtcNow;
+            var eventName = StringValue(root, "eventName");
+            if (!string.IsNullOrWhiteSpace(eventName))
+            {
+                if (string.Equals(eventName, "direction-unresolved-structure", StringComparison.Ordinal))
+                {
+                    if (root.TryGetProperty("directionSignals", out var directionSignals))
+                        await WsCollectorDiagnosticLog.WriteDirectionStructureAsync(directionSignals, capturedAt);
+                    return;
+                }
+                await WsCollectorDiagnosticLog.WriteAsync(
+                    eventName,
+                    StringValue(root, "coverage"),
+                    StringValue(root, "reason"),
+                    LongValue(root, "discovered"),
+                    LongValue(root, "processed"),
+                    LongValue(root, "attempted"),
+                    LongValue(root, "retryable"),
+                    LongValue(root, "skippedUnreadCount"),
+                    LongValue(root, "rowCount"),
+                    LongValue(root, "readCount"),
+                    LongValue(root, "skipCount"),
+                    LongValue(root, "pendingCount"),
+                    LongValue(root, "domNodeKnownCount"),
+                    capturedAt);
+                var isComplete = string.Equals(eventName, "collection-complete", StringComparison.Ordinal);
+                AccountStatusText.Text = isComplete
+                    ? $"{selected.DisplayName} · 历史采集完成（{LongValue(root, "processed")}/{LongValue(root, "discovered")}）"
+                    : $"{selected.DisplayName} · {eventName}";
+                return;
+            }
             var messages = new List<WsMessageEnvelopeDto>();
             if (root.TryGetProperty("messages", out var messageArray) && messageArray.ValueKind == JsonValueKind.Array)
             {
                 foreach (var item in messageArray.EnumerateArray())
                 {
                     var conversationKey = StringValue(item, "conversationKey");
-                    var body = StringValue(item, "body");
+                    var body = RawStringValue(item, "body");
                     if (string.IsNullOrWhiteSpace(conversationKey) || string.IsNullOrWhiteSpace(body)) continue;
                     var sentAt = DateTimeOffset.TryParse(StringValue(item, "sentAt"), out var sent) ? sent : (DateTimeOffset?)null;
                     messages.Add(new WsMessageEnvelopeDto(
                         "desktop-webview2", accountId, conversationKey, StringValue(item, "externalMessageId"), sent,
-                        StringValue(item, "direction"), body, false, capturedAt, StringValue(item, "cursor")));
+                        StringValue(item, "direction"), body, false, capturedAt, StringValue(item, "cursor"), LongValue(item, "order"),
+                        RawStringValue(item, "timestampText"), StringValue(item, "timestampSource"), StringValue(item, "legacyExternalMessageId"), StringValue(item, "directionSource")));
                 }
             }
             var checkpoints = new List<WsCheckpointDto>();
+            var historyAcks = new List<object>();
             if (root.TryGetProperty("conversations", out var conversationArray) && conversationArray.ValueKind == JsonValueKind.Array)
             {
                 foreach (var item in conversationArray.EnumerateArray())
                 {
                     var key = StringValue(item, "conversationKey");
-                    if (!string.IsNullOrWhiteSpace(key)) checkpoints.Add(new WsCheckpointDto(accountId, key, StringValue(item, "cursor"), StringValue(item, "lastMessageFingerprint"), capturedAt));
+                    if (!string.IsNullOrWhiteSpace(key))
+                    {
+                        var preview = StringValue(item, "lastMessagePreview");
+                        if (string.IsNullOrWhiteSpace(preview)) preview = StringValue(item, "previewText");
+                        if (string.IsNullOrWhiteSpace(preview)) preview = StringValue(item, "preview");
+                        int? unreadCount = null;
+                        if (item.TryGetProperty("unreadCount", out var unread) && unread.TryGetInt32(out var parsedUnread) && parsedUnread >= 0)
+                            unreadCount = parsedUnread;
+                        var historyMessageCount = item.TryGetProperty("historyMessageCount", out var historyCount) && historyCount.TryGetInt32(out var parsedHistoryCount) && parsedHistoryCount >= 0 ? parsedHistoryCount : 0;
+                        var historyLoaded = item.TryGetProperty("historyLoaded", out var loaded) && loaded.ValueKind == JsonValueKind.True;
+                        var directionVersion = (int)Math.Clamp(LongValue(item, "directionVersion"), 0, int.MaxValue);
+                        var directionUnresolvedCount = (int)Math.Clamp(LongValue(item, "directionUnresolvedCount"), 0, int.MaxValue);
+                        var conversationType = StringValue(item, "conversationType").ToLowerInvariant();
+                        bool? isGroup = item.TryGetProperty("isGroup", out var groupValue) && groupValue.ValueKind is JsonValueKind.True or JsonValueKind.False
+                            ? groupValue.GetBoolean()
+                            : null;
+                        checkpoints.Add(new WsCheckpointDto(
+                            accountId,
+                            key,
+                            StringValue(item, "cursor"),
+                            StringValue(item, "lastMessageFingerprint"),
+                            capturedAt,
+                            StringValue(item, "displayName"),
+                            preview,
+                            StringValue(item, "lastMessageAt"),
+                            unreadCount,
+                            StringValue(item, "coverage"),
+                            historyLoaded,
+                            StringValue(item, "collectionStatus"),
+                            historyMessageCount,
+                            directionVersion,
+                            directionUnresolvedCount,
+                            conversationType,
+                            isGroup));
+                        if (historyLoaded && directionVersion >= 4 && directionUnresolvedCount == 0 && conversationType == "direct")
+                            historyAcks.Add(new { conversationKey = key, fingerprint = StringValue(item, "lastMessageFingerprint"), historyMessageCount, conversationType = "direct" });
+                    }
                 }
             }
+            var directConversationKeys = checkpoints
+                .Where(item => string.Equals(item.ConversationType, "direct", StringComparison.OrdinalIgnoreCase))
+                .Select(item => item.ConversationKey)
+                .ToHashSet(StringComparer.Ordinal);
+            messages.RemoveAll(item => !directConversationKeys.Contains(item.ConversationKey));
             if (messages.Count == 0 && checkpoints.Count == 0) return;
             var request = new WsIngestBatchRequestDto("zhike.ws.ingest.batch.v1", "desktop-webview2", accountId, capturedAt, "visible-authorized-content", messages, checkpoints);
-            try
+            await _localQueue.EnqueueAsync("api/ws/ingest/batch", request);
+            if (historyAcks.Count > 0 && _webView?.CoreWebView2 is not null)
             {
-                if (_api is null) throw new InvalidOperationException("API 未配置");
-                await _api.IngestWsBatchAsync(request);
+                var ackJson = JsonSerializer.Serialize(historyAcks);
+                try { await _webView.CoreWebView2.ExecuteScriptAsync($"window.__zhikeWsAcknowledgeHistory?.({ackJson}); void 0;"); } catch { }
             }
-            catch
-            {
-                await _localQueue.EnqueueAsync("api/v2/ws/ingest/batch", request);
-            }
+            _ = FlushQueuedBatchesAsync();
             if (selected.Status != "已连接")
             {
                 selected.SetStatus("已连接");
@@ -445,10 +548,17 @@ public sealed partial class WsWorkbenchPage : Page
                 await SaveAccountsAsync();
             }
         }
-        catch
+        catch (Exception error)
         {
-            // A DOM shape change or malformed page message must not stop WS.
+            // Keep the page alive, but do not report success when the durable
+            // local queue rejected a packet (for example because disk/capacity
+            // is exhausted). The JS checkpoint remains unacknowledged and the
+            // collector can safely retry it.
+            var detail = string.Join(" ", (error.Message ?? error.GetType().Name).Split(new[] { '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries));
+            if (detail.Length > 240) detail = detail[..240];
+            AccountStatusText.Text = $"WS 数据暂存失败：{detail}";
         }
+        finally { _messageGate.Release(); }
     }
 
     private static void OnNavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs args)
@@ -467,61 +577,30 @@ public sealed partial class WsWorkbenchPage : Page
     private static string StringValue(JsonElement element, string name)
         => element.TryGetProperty(name, out var value) && value.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined ? value.ToString().Trim() : string.Empty;
 
+    private static string RawStringValue(JsonElement element, string name)
+        => element.TryGetProperty(name, out var value) && value.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined
+            ? value.ValueKind == JsonValueKind.String ? value.GetString() ?? string.Empty : value.ToString()
+            : string.Empty;
+
     private static string BuildCollectorScript(string accountId)
-    {
-        var encodedAccount = JsonSerializer.Serialize(accountId);
-        return $$"""
-(() => {
-  const accountId = {{encodedAccount}};
-  const clean = value => String(value ?? '').replace(/\s+/g, ' ').trim();
-  const text = node => clean(node?.innerText || node?.textContent || '');
-  const emit = () => {
-    if (!window.chrome?.webview || !document.body) return;
-    const conversations = [];
-    const seenConversations = new Set();
-    const rows = document.querySelectorAll('[role="listitem"], [data-testid="cell-frame-container"]');
-    for (const row of rows) {
-      const conversationKey = clean(row.getAttribute('data-id') || row.getAttribute('data-chat-id') || row.getAttribute('aria-label') || '');
-      const displayName = clean(row.querySelector('[title], span[dir="auto"]')?.getAttribute('title') || row.querySelector('span[dir="auto"]')?.textContent || '');
-      if (!conversationKey || seenConversations.has(conversationKey)) continue;
-      seenConversations.add(conversationKey);
-      conversations.push({ conversationKey, displayName, lastMessagePreview: text(row).slice(-500), lastMessageAt: '', unreadCount: Number(row.querySelector('[aria-label*="unread" i]')?.textContent || 0) || 0, visibleOnly: true });
-    }
-    const messages = [];
-    const seenMessages = new Set();
-    for (const node of document.querySelectorAll('[data-testid="msg-container"], [data-pre-plain-text]')) {
-      const externalMessageId = clean(node.getAttribute('data-id') || node.getAttribute('data-message-id') || '');
-      const body = text(node.querySelector('span.selectable-text') || node);
-      if (!body || /scan to log in|扫码登录/i.test(body)) continue;
-      const conversationKey = clean(node.closest('[data-id]')?.getAttribute('data-id') || document.querySelector('[data-testid="conversation-header"] [title]')?.getAttribute('title') || 'visible');
-      const key = externalMessageId + '\u001f' + conversationKey + '\u001f' + body;
-      if (seenMessages.has(key)) continue;
-      seenMessages.add(key);
-      messages.push({ conversationKey, externalMessageId, body, direction: /message-out|data-pre-plain-text="\[.*\] you:/i.test(node.outerHTML || '') ? 'outgoing' : 'incoming', sentAt: '', cursor: externalMessageId });
-    }
-    window.chrome.webview.postMessage(JSON.stringify({ type: 'zhike.ws.capture', accountId, capturedAt: new Date().toISOString(), conversations, messages }));
-  };
-  if (window.__zhikeCaptureTimer) clearInterval(window.__zhikeCaptureTimer);
-  window.__zhikeCaptureTimer = setInterval(emit, 5000);
-  emit();
-})();
-""";
-    }
+        => LegacyUiHostPage.BuildWsCollectorScript(accountId);
+
+    private static long LongValue(JsonElement element, string name)
+        => element.TryGetProperty(name, out var value) && value.TryGetInt64(out var result) && result >= 0 ? result : 0;
 
     private async Task ProbeLoginStateAsync(WsAccountItem account, WebView2 view, long generation)
     {
         try
         {
-            var json = await view.CoreWebView2.ExecuteScriptAsync("document.body ? document.body.innerText : ''");
-            var text = JsonSerializer.Deserialize<string>(json) ?? string.Empty;
-            var next = text.Contains("搜索或开始新聊天", StringComparison.OrdinalIgnoreCase)
-                || text.Contains("Search or start new chat", StringComparison.OrdinalIgnoreCase)
-                || text.Contains("Archived", StringComparison.OrdinalIgnoreCase)
-                ? "已连接"
-                : text.Contains("Scan to log in", StringComparison.OrdinalIgnoreCase)
-                    || text.Contains("扫码", StringComparison.OrdinalIgnoreCase)
-                    ? "等待登录"
-                    : account.Status;
+            var json = await view.CoreWebView2.ExecuteScriptAsync("(() => { const body=document.body; const text=(body?.innerText||'').slice(0,12000); const login=!!document.querySelector('[data-testid=\\\"qrcode\\\"], canvas[aria-label*=\\\"QR\\\" i], [data-ref]'); const chatText=/搜索或开始新聊天|Search or start new chat|已归档|Archived/i.test(text); const chat=!!document.querySelector('#pane-side') || (!!document.querySelector('[data-testid=\\\"chat-list\\\"], [aria-label=\\\"Chat list\\\"], [aria-label=\\\"聊天列表\\\"], [role=\\\"grid\\\"]') && !!document.querySelector('[data-testid=\\\"search-input\\\"], [contenteditable=\\\"true\\\"], [role=\\\"textbox\\\"]')) || chatText; const problem=/此页面存在问题|page has a problem|update your browser|更新浏览器/i.test(text); return JSON.stringify({login,chat,problem,text:text.slice(0,2000)}); })()");
+            var probeText = JsonSerializer.Deserialize<string>(json) ?? "{}";
+            using var probe = JsonDocument.Parse(probeText);
+            var root = probe.RootElement;
+            var login = root.TryGetProperty("login", out var loginValue) && loginValue.ValueKind == JsonValueKind.True;
+            var chat = root.TryGetProperty("chat", out var chatValue) && chatValue.ValueKind == JsonValueKind.True;
+            var problem = root.TryGetProperty("problem", out var problemValue) && problemValue.ValueKind == JsonValueKind.True;
+            var text = root.TryGetProperty("text", out var textValue) ? textValue.ToString() : string.Empty;
+            var next = problem ? "连接失败" : chat ? "已连接" : login || text.Contains("Scan to log in", StringComparison.OrdinalIgnoreCase) || text.Contains("扫码", StringComparison.OrdinalIgnoreCase) ? "等待登录" : account.Status;
             if (generation != _switchGeneration || string.Equals(next, account.Status, StringComparison.Ordinal)) return;
             account.SetStatus(next);
             AccountStatusText.Text = $"{account.DisplayName} · {account.Status}";
@@ -541,28 +620,33 @@ public sealed partial class WsWorkbenchPage : Page
         private string _displayName;
         private string _status;
         private DateTimeOffset? _lastSeen;
-        public WsAccountItem(string id, string displayName, string status, DateTimeOffset? lastSeen = null)
+        private string? _lastKnownStatus;
+        public WsAccountItem(string id, string displayName, string status, DateTimeOffset? lastSeen = null, string? lastKnownStatus = null)
         {
             Id = id;
             _displayName = displayName;
             _status = status;
             _lastSeen = lastSeen;
+            _lastKnownStatus = lastKnownStatus;
         }
         public string Id { get; }
         public string DisplayName => _displayName;
         public string Status => _status;
         public DateTimeOffset? LastSeen => _lastSeen;
+        public string? LastKnownStatus => _lastKnownStatus;
         public event PropertyChangedEventHandler? PropertyChanged;
-        public void Apply(string displayName, string status, DateTimeOffset? lastSeen)
+        public void Apply(string displayName, string status, DateTimeOffset? lastSeen, string? lastKnownStatus = null)
         {
             _displayName = string.IsNullOrWhiteSpace(displayName) ? _displayName : displayName;
             _status = string.IsNullOrWhiteSpace(status) ? _status : status;
             _lastSeen = lastSeen ?? _lastSeen;
+            _lastKnownStatus = string.IsNullOrWhiteSpace(lastKnownStatus) ? _lastKnownStatus : lastKnownStatus;
             OnPropertyChanged(nameof(DisplayName));
             OnPropertyChanged(nameof(Status));
             OnPropertyChanged(nameof(LastSeen));
+            OnPropertyChanged(nameof(LastKnownStatus));
         }
-        public void SetStatus(string value) { _status = value; OnPropertyChanged(nameof(Status)); }
+        public void SetStatus(string value) { _status = value; if (!string.Equals(value, "未连接", StringComparison.Ordinal)) _lastKnownStatus = value; OnPropertyChanged(nameof(Status)); OnPropertyChanged(nameof(LastKnownStatus)); }
         public void SetLastSeen(DateTimeOffset? value) { _lastSeen = value; OnPropertyChanged(nameof(LastSeen)); }
         private void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }

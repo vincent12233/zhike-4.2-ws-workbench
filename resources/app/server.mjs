@@ -1,9 +1,9 @@
 import { createServer } from 'node:http';
-import { closeSync, createReadStream, existsSync, mkdirSync, mkdtempSync, openSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { closeSync, createReadStream, existsSync, mkdirSync, openSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { basename, dirname, extname, join, normalize, resolve, sep } from 'node:path';
-import { hostname, tmpdir, uptime } from 'node:os';
+import { dirname, extname, join, normalize, resolve, sep } from 'node:path';
+import { hostname, uptime } from 'node:os';
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 
 const require = createRequire(import.meta.url);
@@ -14,6 +14,7 @@ const customerGovernance = require('./modules/customer-governance-core.js');
 const hotChatProfile = require('./modules/hot-chat-profile-core.js');
 const { DatabaseSync } = require('node:sqlite');
 const root = dirname(fileURLToPath(import.meta.url));
+const APP_VERSION = '6.0.0';
 const configuredDataDir = String(process.env.ZHIKE_DATA_DIR || '').trim();
 const dataDir = configuredDataDir ? resolve(configuredDataDir) : join(root, 'data');
 const dbPath = join(dataDir, 'workspace.sqlite');
@@ -179,11 +180,71 @@ if (Number(db.prepare('PRAGMA user_version').get().user_version || 0) < 11) {
     db.exec('PRAGMA user_version = 11; COMMIT');
   } catch (error) { db.exec('ROLLBACK'); throw error; }
 }
+if (Number(db.prepare('PRAGMA user_version').get().user_version || 0) < 12) {
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    // Version 12 is intentionally a schema marker only. Zhike 6.0 owns an
+    // isolated data root and never reads, imports or mutates an older Zhike
+    // workspace during startup.
+    db.prepare('INSERT OR IGNORE INTO schema_migrations(version,applied_at,description) VALUES(?,?,?)').run(12, new Date().toISOString(), '6.0 独立空白数据空间');
+    db.exec('PRAGMA user_version = 12; COMMIT');
+  } catch (error) { db.exec('ROLLBACK'); throw error; }
+}
+if (Number(db.prepare('PRAGMA user_version').get().user_version || 0) < 13) {
+  const migrationPath = join(root, 'migrations', '013-ws-account-runtime.sql');
+  if (!existsSync(migrationPath)) throw new Error('缺少 WS 账号运行状态迁移文件。');
+  const migration = readFileSync(migrationPath, 'utf8');
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    db.exec(migration);
+    db.prepare('INSERT OR IGNORE INTO schema_migrations(version,applied_at,description) VALUES(?,?,?)').run(13, new Date().toISOString(), '5.3 WS 账号运行状态与上次连接记录分离');
+    db.exec('PRAGMA user_version = 13; COMMIT');
+  } catch (error) { db.exec('ROLLBACK'); throw error; }
+}
+
+// Durable AI work items live in the same local SQLite workspace as WS
+// messages.  The queue is intentionally created inline so older desktop data
+// directories upgrade without a separate migration package.  Only analysis
+// request metadata is retained; provider credentials never enter this table.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_jobs (
+    id TEXT PRIMARY KEY,
+    account_id TEXT NOT NULL DEFAULT 'default',
+    conversation_id TEXT NOT NULL,
+    idempotency_key TEXT NOT NULL,
+    payload_json TEXT NOT NULL DEFAULT '{}',
+    status TEXT NOT NULL DEFAULT 'queued',
+    attempts INTEGER NOT NULL DEFAULT 0,
+    max_attempts INTEGER NOT NULL DEFAULT 5,
+    next_attempt_at TEXT NOT NULL,
+    locked_at TEXT NOT NULL DEFAULT '',
+    last_error TEXT NOT NULL DEFAULT '',
+    analysis_id TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    UNIQUE(account_id, idempotency_key)
+  );
+  CREATE INDEX IF NOT EXISTS idx_ai_jobs_claim ON ai_jobs(account_id,status,next_attempt_at,updated_at);
+  CREATE INDEX IF NOT EXISTS idx_ai_jobs_conversation ON ai_jobs(account_id,conversation_id,created_at);
+`);
+// A desktop process may exit while a browser-side AI request is in flight.
+// Returning those jobs to queued makes restart recovery deterministic and
+// keeps the original idempotency key available for the next attempt.
+const aiRecoveryNow = new Date().toISOString();
+db.prepare("UPDATE ai_jobs SET status='queued',locked_at='',last_error=CASE WHEN last_error='' THEN 'recovered_after_restart' ELSE last_error END,updated_at=? WHERE status='running'").run(aiRecoveryNow);
 
 // BrowserViews do not survive a process restart. Any persisted "connected"
 // state from the previous process is therefore stale until the new view is
-// opened and probed by the Electron main process.
-db.prepare("UPDATE ws_accounts SET status='未连接', updated_at=? WHERE status <> '未连接'").run(new Date().toISOString());
+// opened and probed by the WinUI host process. Preserve the last observation
+// separately so the desktop UI can explain why reconnect is expected.
+{
+  const now = new Date().toISOString();
+  db.prepare(`UPDATE ws_accounts
+    SET last_status=CASE WHEN status <> '未连接' AND last_status='' THEN status ELSE last_status END,
+        last_seen_at=CASE WHEN status='已连接' AND last_seen_at='' THEN updated_at ELSE last_seen_at END,
+        status='未连接', updated_at=?
+    WHERE status <> '未连接'`).run(now);
+}
 // Create the default account before the first renderer request so the initial
 // account list cannot be empty while the service is still warming up.
 ensureDefaultWsAccount();
@@ -311,15 +372,24 @@ function writeState(value, manageTransaction = true, delta = null) {
 }
 
 function saveSnapshot(reason) {
-  const current = readState();
-  if (!current) return false;
+  // A write-before-snapshot can happen while the sidecar is still creating
+  // the initial app_state row. Preserve an empty, valid workspace baseline so
+  // the first destructive or batch operation is still recoverable.
+  const current = readState() || emptyCrmState();
   const retention = Math.min(100, Math.max(1, Number(current.settings?.snapshotRetention) || 20));
-  db.exec('BEGIN IMMEDIATE');
+  // Use a savepoint instead of BEGIN/COMMIT. Snapshot creation is called by
+  // several guarded write paths and must also work when the caller already
+  // owns an IMMEDIATE transaction.
+  db.exec('SAVEPOINT zhike_snapshot');
   try {
     db.prepare('INSERT INTO state_snapshots(created_at,reason,json) VALUES(?,?,?)').run(new Date().toISOString(), reason, JSON.stringify(current));
     db.prepare('DELETE FROM state_snapshots WHERE id NOT IN (SELECT id FROM state_snapshots ORDER BY id DESC LIMIT ?)').run(retention);
-    db.exec('COMMIT');
-  } catch (error) { db.exec('ROLLBACK'); throw error; }
+    db.exec('RELEASE SAVEPOINT zhike_snapshot');
+  } catch (error) {
+    try { db.exec('ROLLBACK TO SAVEPOINT zhike_snapshot'); } catch {}
+    try { db.exec('RELEASE SAVEPOINT zhike_snapshot'); } catch {}
+    throw error;
+  }
   return true;
 }
 
@@ -334,111 +404,22 @@ async function readBody(req, limit = 25 * 1024 * 1024) {
   return Buffer.concat(chunks);
 }
 
-function openLegacy(path) {
-  const source = new DatabaseSync(path, { readOnly: true, enableForeignKeyConstraints: true });
-  const tables = new Set(source.prepare('SELECT name FROM sqlite_master WHERE type=?').all('table').map(x => x.name));
-  if (!tables.has('customers')) throw new Error('所选数据库没有可识别的客户表。');
-  const columns = new Set(source.prepare('PRAGMA table_info(customers)').all().map(x => x.name));
-  for (const needed of ['id', 'phone_raw', 'phone_normalized']) if (!columns.has(needed)) throw new Error(`旧数据库缺少必要字段：${needed}`);
-  return { source, tables, columns };
-}
-
-function value(row, key, fallback = '') { return Object.hasOwn(row, key) && row[key] != null ? String(row[key]) : fallback; }
-function cleanPhone(raw, normalized) {
-  const standard = String(normalized || '').replace(/\D/g, '');
-  if (standard) return standard;
-  const digits = String(raw || '').replace(/\D/g, '');
-  return digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits;
-}
-
-function convertLegacy(path) {
-  const { source, tables, columns } = openLegacy(path);
-  try {
-    const legacyRows = source.prepare('SELECT * FROM customers ORDER BY id').all();
-    const customers = [];
-    const idMap = new Map();
-    const activeRows = legacyRows.filter(row => !Number(row.archived || 0) && !row.merged_into);
-    for (const row of activeRows) {
-      const id = `legacy-${row.id}`;
-      idMap.set(String(row.id), id);
-      const sourceSheet = value(row, 'source_sheet', '');
-      const sourceType = /群粉/.test(sourceSheet) ? '群粉' : '单导';
-      const rawPhone = value(row, 'phone_raw');
-      const phone = cleanPhone(rawPhone, value(row, 'phone_normalized'));
-      const customer = {
-        id, name: value(row, 'customer_name').trim() || '未命名客户', rawPhone, phone,
-        source: sourceType, page: '', importSource: sourceSheet,
-        channel: value(row, 'channel', sourceType) || sourceType, assistant: value(row, 'assistant', '未分配') || '未分配',
-        thirdParty: value(row, 'third_party_followup'), status: value(row, 'group_status', '未进群') || '未进群',
-        phase: value(row, 'customer_stage', '新客户') || '新客户', qualification: value(row, 'qualification') || value(row, 'customer_value'),
-        hot: /^(热聊|是|有)$/i.test(value(row, 'hot_chat_status').trim()), investor: /^(是|股民|有)$/i.test(value(row, 'is_investor').trim()),
-        phoneFollowup: value(row, 'phone_followup'), group: value(row, 'group_code') || '—', vipGroup: value(row, 'vip_group'),
-        age: value(row, 'age'), registered: value(row, 'registered_at').slice(0, 10), lastFollow: value(row, 'last_followup').slice(0, 10),
-        due: value(row, 'next_followup').slice(0, 10), note: value(row, 'notes'), ticket: false, deposit: false, amount: 0,
-        deleted: false, touched: Boolean(value(row, 'modified_fields', '[]') !== '[]'), importedFrom: '3.28.0',
-        legacyFields: Object.fromEntries([...columns].filter(k => !['id'].includes(k)).map(k => [k, row[k] ?? null])),
-      };
-      customer.ticket = value(row, 'customer_stage') === '已跟票';
-      customers.push(customer);
-    }
-    const customerByPhone = new Map();
-    for (const customer of customers) if (customer.phone && !customerByPhone.has(customer.phone)) customerByPhone.set(customer.phone, customer);
-    for (const row of legacyRows) {
-      if (!row.merged_into) continue;
-      const survivingId = idMap.get(String(row.merged_into));
-      if (survivingId) idMap.set(String(row.id), survivingId);
-    }
-    const legacyById = new Map(legacyRows.map(row => [String(row.id), row]));
-
-    const tickets = [];
-    if (tables.has('stock_records')) {
-      for (const row of source.prepare('SELECT * FROM stock_records ORDER BY id').all()) {
-        const phone = cleanPhone(value(row, 'phone_raw'), value(row, 'phone_normalized'));
-        const customer = customerByPhone.get(phone);
-        tickets.push({ id: `legacy-stock-${row.id}`, customer: customer?.name || '', phone: value(row, 'phone_raw'), customerId: customer?.id || '', date: value(row, 'record_date'), channel: value(row, 'channel'), group: value(row, 'group_code') || '—', assistant: value(row, 'assistant'), product: value(row, 'stock_code'), shares: value(row, 'shares'), price: value(row, 'buy_price'), direction: '买入', note: value(row, 'notes'), status: '已确认' });
-        if (customer) customer.ticket = true;
-      }
-    }
-    const deposits = [];
-    if (tables.has('deposits')) {
-      for (const row of source.prepare('SELECT * FROM deposits ORDER BY id').all()) {
-        const phone = cleanPhone(value(row, 'phone_raw'), value(row, 'phone_normalized'));
-        const customer = customerByPhone.get(phone);
-        const amount = Number(value(row, 'amount').replace(/[^\d.-]/g, '')) || 0;
-        deposits.push({ id: `legacy-deposit-${row.id}`, customer: customer?.name || '', phone: value(row, 'phone_raw'), customerId: customer?.id || '', date: value(row, 'deposit_date'), channel: value(row, 'channel'), group: value(row, 'group_code') || '—', assistant: value(row, 'assistant'), amount, currency: 'INR', note: value(row, 'notes'), status: '已确认' });
-        if (customer) { customer.deposit = true; customer.amount += amount; }
-      }
-    }
-    const followups = [];
-    if (tables.has('followup_history')) {
-      for (const row of source.prepare('SELECT * FROM followup_history ORDER BY id').all()) {
-        const legacyCustomer = legacyById.get(String(row.customer_id));
-        const customerId = idMap.get(String(row.customer_id)) || '';
-        followups.push({ id: `legacy-followup-${row.id}`, customerId, customer: value(legacyCustomer || {}, 'customer_name', '未关联客户'), phone: value(legacyCustomer || {}, 'phone_raw'), legacyCustomerId: String(row.customer_id ?? ''), date: value(row, 'followup_date'), method: value(row, 'method'), result: value(row, 'result'), note: value(row, 'note'), nextDate: value(row, 'next_date') });
-      }
-    }
-    const settings = {};
-    if (tables.has('settings')) for (const row of source.prepare('SELECT key,value FROM settings').all()) settings[`legacy:${row.key}`] = row.value;
-    const result = { schemaVersion: 4, customers, tickets, deposits, followups, registrations: [], batchOperations: [], settings, activities: [], savedViews: ['全部客户','今日新增','已进群','热聊客户'], channelAliases: {} };
-    const statusCounts = {};
-    const pageCounts = {};
-    for (const customer of customers) {
-      statusCounts[customer.status] = (statusCounts[customer.status] || 0) + 1;
-      pageCounts[customer.page] = (pageCounts[customer.page] || 0) + 1;
-    }
-    const archivedCustomers = legacyRows.filter(row => Number(row.archived || 0)).length;
-    const mergedCustomers = legacyRows.filter(row => Boolean(row.merged_into)).length;
-    return { result, preview: { customers: customers.length, tickets: tickets.length, deposits: deposits.length, followups: followups.length, archivedCustomers, mergedCustomers, excludedCustomers: legacyRows.length - activeRows.length, unlinkedFollowups: followups.filter(item => !item.customerId).length, statusCounts, pageCounts, duplicatePhones: customers.length - new Set(customers.map(c => c.phone).filter(Boolean)).size } };
-  } finally {
-    source.close();
-  }
-}
-
 const WS_STATUSES = new Set(['未连接', '等待登录', '登录中', '已连接', '会话过期', '连接失败', '正在重连']);
 const WS_DIRECTIONS = new Set(['receive', 'send']);
+const WS_NATIVE_DIRECTION_SOURCE_MAP = new Map([
+  ['class-message-out', 'send'], ['class-message-in', 'receive'],
+  ['data-id-outgoing', 'send'], ['data-id-incoming', 'receive'],
+  ['icon-tail-out', 'send'], ['icon-tail-in', 'receive'],
+  ['palette-outgoing', 'send'], ['palette-incoming', 'receive'],
+]);
+const WS_NATIVE_DIRECTION_SOURCES = new Set(WS_NATIVE_DIRECTION_SOURCE_MAP.keys());
 const WS_REPLY_STATUSES = new Set(['draft', 'copied', 'confirmed']);
 const WS_TRANSLATION_STATUSES = new Set(['none', 'pending', 'translated', 'failed', 'skipped']);
+const WS_MESSAGE_MAX_CHARS = 128000;
+const WS_MESSAGE_BATCH_MAX_BYTES = 72 * 1024 * 1024;
 function wsText(value, max = 12000) { return String(value ?? '').trim().slice(0, max); }
+function wsMessageText(value) { return String(value ?? ''); }
+function wsMessageTextTooLong(value) { return wsMessageText(value).length > WS_MESSAGE_MAX_CHARS; }
 function wsObject(value, maxBytes = 64 * 1024) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   const textValue = JSON.stringify(value);
@@ -446,13 +427,49 @@ function wsObject(value, maxBytes = 64 * 1024) {
   return value;
 }
 function wsIso(value) { const date = value ? new Date(value) : new Date(); return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString(); }
+function wsStrictIso(value) {
+  const raw = wsText(value, 80);
+  if (!raw) return '';
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? '' : date.toISOString();
+}
+function wsMaybeIso(value) {
+  const raw = wsText(value, 80);
+  if (!raw) return '';
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? raw : date.toISOString();
+}
+function wsMessageTimeMetadata(input = {}, fallbackObservedAt = '') {
+  const embedded = input?.data && typeof input.data === 'object' && !Array.isArray(input.data) ? input.data : {};
+  const sentAt = wsStrictIso(input?.sentAt || embedded.sentAt);
+  const observedAt = wsStrictIso(input?.observedAt || embedded.observedAt || fallbackObservedAt) || wsStrictIso(fallbackObservedAt) || new Date().toISOString();
+  const timestampText = wsText(input?.timestampText ?? embedded.timestampText, 500);
+  const suppliedSource = wsText(input?.timestampSource ?? embedded.timestampSource, 40);
+  const timestampSource = sentAt && suppliedSource !== 'unparsed' ? 'whatsapp-preamble' : 'unparsed';
+  return { sentAt, observedAt, timestampText, timestampSource, sentAtKnown: Boolean(sentAt) && timestampSource === 'whatsapp-preamble' };
+}
+function wsMessageDataWithTime(value, metadata) {
+  return {
+    ...wsObject(value, 32 * 1024),
+    observedAt: metadata.observedAt,
+    sentAt: metadata.sentAt,
+    sentAtKnown: metadata.sentAtKnown,
+    timestampText: metadata.timestampText,
+    timestampSource: metadata.timestampSource,
+  };
+}
+function wsOptionalCount(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const count = Number(value);
+  return Number.isFinite(count) && count >= 0 ? Math.min(1000000, Math.floor(count)) : null;
+}
 function wsAccountId(value) { return wsText(value, 120) || 'default'; }
 function wsAccountRow(id) { return db.prepare('SELECT * FROM ws_accounts WHERE id=?').get(wsAccountId(id)); }
 function wsRequireAccount(id) { const row = wsAccountRow(id); if (!row) throw new Error('WS 账号不存在或已被删除。'); return row; }
 function ensureDefaultWsAccount() {
   const now = new Date().toISOString();
-  db.prepare(`INSERT OR IGNORE INTO ws_accounts(id,display_name,provider,origin,partition_key,status,enabled,created_at,updated_at)
-    VALUES('default','默认账号','WhatsApp Web','https://web.whatsapp.com','persist:default','未连接',1,?,?)`).run(now, now);
+  db.prepare(`INSERT OR IGNORE INTO ws_accounts(id,display_name,provider,origin,partition_key,status,last_status,last_seen_at,enabled,created_at,updated_at)
+    VALUES('default','默认账号','WhatsApp Web','https://web.whatsapp.com','persist:default','未连接','','',1,?,?)`).run(now, now);
   db.prepare(`INSERT OR IGNORE INTO ws_account_settings(account_id,created_at,updated_at) VALUES('default',?,?)`).run(now, now);
 }
 function wsAccountPayload(row) {
@@ -465,6 +482,11 @@ function wsAccountPayload(row) {
     origin: row.origin,
     partitionKey: row.partition_key,
     status: WS_STATUSES.has(String(row.status || '')) ? row.status : '未连接',
+    runtimeStatus: WS_STATUSES.has(String(row.status || '')) ? row.status : '未连接',
+    lastKnownStatus: WS_STATUSES.has(String(row.last_status || '')) ? row.last_status : '',
+    // Use JSON null (not an empty string) so the WinUI DateTimeOffset?
+    // property can deserialize accounts that have never connected.
+    lastSeen: row.last_seen_at || null,
     enabled: Boolean(row.enabled),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -492,7 +514,84 @@ function wsSettingsPayload(row) {
 }
 function wsJson(value, fallback = {}) { try { return JSON.parse(value || '{}'); } catch { return fallback; } }
 function wsConversationPayload(row) { return { id: row.id, accountId: row.account_id || 'default', externalId: row.external_id, title: row.title, customerId: row.customer_id, lastMessageText: row.last_message_text, lastMessageAt: row.last_message_at, unreadCount: Number(row.unread_count || 0), language: row.language, intentLevel: row.intent_level, data: wsJson(row.data_json), createdAt: row.created_at, updatedAt: row.updated_at }; }
-function wsMessagePayload(row) { return { id: row.id, accountId: row.account_id || 'default', conversationId: row.conversation_id, externalId: row.external_id, direction: row.direction, originalText: row.original_text, translatedText: row.translated_text, sourceLanguage: row.source_language, targetLanguage: row.target_language, order: row.order_no, translationStatus: row.translation_status || (row.translated_text ? 'translated' : 'none'), translationError: row.translation_error || '', translationAttempts: Number(row.translation_attempts || 0), lastAttemptAt: row.last_attempt_at || '', data: wsJson(row.data_json), createdAt: row.created_at, updatedAt: row.updated_at }; }
+function wsStoredMessageTime(row, data = wsJson(row?.data_json)) {
+  const sentAt = wsStrictIso(data.sentAt);
+  const observedAt = wsStrictIso(data.observedAt);
+  const createdAt = wsStrictIso(row?.created_at);
+  const oldWebViewFallback = data.source === 'ws-webview2' && !sentAt && observedAt && createdAt === observedAt;
+  const explicitlyUnknown = data.sentAtKnown === false || data.timestampSource === 'unparsed' || oldWebViewFallback;
+  const sentAtKnown = Boolean(sentAt) && !explicitlyUnknown;
+  return {
+    sentAt: sentAtKnown ? sentAt : '',
+    observedAt,
+    timestampText: wsText(data.timestampText, 500),
+    timestampSource: sentAtKnown ? 'whatsapp-preamble' : (data.source === 'ws-webview2' || data.timestampSource ? 'unparsed' : ''),
+    sentAtKnown,
+  };
+}
+function wsMessagePayload(row) {
+  const data = wsJson(row.data_json);
+  const time = wsStoredMessageTime(row, data);
+  return { id: row.id, accountId: row.account_id || 'default', conversationId: row.conversation_id, externalId: row.external_id, direction: row.direction, originalText: row.original_text, translatedText: row.translated_text, sourceLanguage: row.source_language, targetLanguage: row.target_language, order: row.order_no, translationStatus: row.translation_status || (row.translated_text ? 'translated' : 'none'), translationError: row.translation_error || '', translationAttempts: Number(row.translation_attempts || 0), lastAttemptAt: row.last_attempt_at || '', sentAt: time.sentAt, observedAt: time.observedAt, timestampText: time.timestampText, timestampSource: time.timestampSource, sentAtKnown: time.sentAtKnown, data, createdAt: row.created_at, updatedAt: row.updated_at };
+}
+function wsRepairCollectedMessageTime(row, incoming, now) {
+  if (!row || !incoming?.externalId || incoming?.data?.source !== 'ws-webview2' || incoming?.data?.sentAtKnown !== true || !incoming?.data?.sentAt) return null;
+  const previousData = wsJson(row.data_json);
+  if (previousData.source !== 'ws-webview2') return null;
+  const previousObservedAt = wsStrictIso(previousData.observedAt);
+  const previousCreatedAt = wsStrictIso(row.created_at);
+  const wasFallback = previousData.sentAtKnown === false
+    || previousData.timestampSource === 'unparsed'
+    || (!wsStrictIso(previousData.sentAt) && previousObservedAt && previousCreatedAt === previousObservedAt);
+  if (!wasFallback) return null;
+  const repairedData = {
+    ...previousData,
+    observedAt: previousObservedAt || incoming.data.observedAt,
+    sentAt: incoming.data.sentAt,
+    sentAtKnown: true,
+    timestampText: incoming.data.timestampText,
+    timestampSource: 'whatsapp-preamble',
+  };
+  db.prepare('UPDATE ws_messages SET created_at=?,data_json=?,updated_at=? WHERE id=? AND account_id=?')
+    .run(incoming.data.sentAt, JSON.stringify(repairedData), now, row.id, row.account_id || 'default');
+  return db.prepare('SELECT * FROM ws_messages WHERE id=? AND account_id=?').get(row.id, row.account_id || 'default');
+}
+function wsCanRepairCollectedMessageDirection(row, incoming, allowLegacyAlias = false) {
+  if (!row || !incoming || incoming?.data?.source !== 'ws-webview2') return false;
+  const directionSource = wsText(incoming?.data?.directionSource, 40);
+  if (!WS_NATIVE_DIRECTION_SOURCES.has(directionSource) || WS_NATIVE_DIRECTION_SOURCE_MAP.get(directionSource) !== incoming.direction) return false;
+  const previousData = wsJson(row.data_json);
+  if (previousData.source !== 'ws-webview2' || wsMessageText(row.original_text) !== wsMessageText(incoming.originalText)) return false;
+  if (allowLegacyAlias) {
+    const oldId = wsText(row.external_id, 200), alias = wsText(incoming.legacyExternalMessageId, 200), canonical = wsText(incoming.externalId, 200);
+    if (oldId !== alias || !canonical || oldId === canonical || !/^wa-row-[a-z0-9]+$/i.test(oldId)) return false;
+    return row.direction === incoming.direction || (row.direction === 'receive' && incoming.direction === 'send');
+  }
+  return row.direction === incoming.direction || (row.direction === 'receive' && incoming.direction === 'send');
+}
+function wsRepairCollectedMessageDirection(row, incoming, now, allowLegacyAlias = false) {
+  if (!wsCanRepairCollectedMessageDirection(row, incoming, allowLegacyAlias)) return null;
+  const previousData = wsJson(row.data_json);
+  const directionSource = wsText(incoming.data.directionSource, 40);
+  const canonicalExternalMessageId = wsText(incoming.externalId, 200);
+  const directionChanged = row.direction !== incoming.direction;
+  const externalIdChanged = allowLegacyAlias && row.external_id !== canonicalExternalMessageId;
+  if (!directionChanged && !externalIdChanged && Number(previousData.directionVersion || 0) >= 4
+      && previousData.directionSource === directionSource && previousData.canonicalExternalMessageId === canonicalExternalMessageId) return null;
+  const repairedData = {
+    ...previousData,
+    directionVersion: 4,
+    directionSource,
+    canonicalExternalMessageId,
+    legacyExternalMessageId: wsText(incoming.legacyExternalMessageId, 200),
+    directionVerifiedAt: now,
+    ...(directionChanged ? { previousDirection: row.direction, directionCorrectedAt: now } : {}),
+    ...(externalIdChanged ? { previousExternalMessageId: row.external_id } : {}),
+  };
+  db.prepare('UPDATE ws_messages SET external_id=?,direction=?,data_json=?,updated_at=? WHERE id=? AND account_id=?')
+    .run(externalIdChanged ? canonicalExternalMessageId : row.external_id, incoming.direction, JSON.stringify(repairedData), now, row.id, row.account_id || 'default');
+  return db.prepare('SELECT * FROM ws_messages WHERE id=? AND account_id=?').get(row.id, row.account_id || 'default');
+}
 function wsAnalysisPayload(row) { return { id: row.id, accountId: row.account_id || 'default', conversationId: row.conversation_id, result: wsJson(row.result_json), confidence: Number(row.confidence || 0), providerName: row.provider_name, model: row.model, errorMessage: row.error_message, createdAt: row.created_at, updatedAt: row.updated_at }; }
 function wsReplyPayload(row) { return { id: row.id, accountId: row.account_id || 'default', conversationId: row.conversation_id, originalText: row.original_text, translatedText: row.translated_text, status: row.status, idempotencyKey: row.idempotency_key || '', createdAt: row.created_at, updatedAt: row.updated_at }; }
 function wsCleanListPreviewText(value) {
@@ -515,7 +614,7 @@ function wsCanonicalListPreviewTitle(title, lastMessageText, data = {}) {
   return cleanTitle;
 }
 function wsListPreviewOriginal(item, data) {
-  const original = wsText(item?.originalText, 12000);
+  const original = wsMessageText(item?.originalText);
   if (data?.source !== 'ws-list-preview' || data?.previewOnly !== true) return original;
   const listText = wsCleanListPreviewText(data?.listText);
   const cleanedOriginal = wsCleanListPreviewText(original);
@@ -525,7 +624,7 @@ function wsListPreviewOriginal(item, data) {
     const remainder = listText.slice(cleanedOriginal.length).trim()
       .replace(/^(?:(?:上午|下午|AM|PM)\s*\d{1,2}:?\d{2}|星期[一二三四五六日天]|昨天|今天|前天)\s+/i, '')
       .trim();
-    if (remainder && remainder !== cleanedOriginal) return remainder.slice(0, 12000);
+    if (remainder && remainder !== cleanedOriginal) return remainder.slice(0, WS_MESSAGE_MAX_CHARS);
   }
   return cleanedOriginal || original;
 }
@@ -572,9 +671,163 @@ normalizeStoredWsListPreviews();
 function wsBatchPayload(row) { return { id: row.id, accountId: row.account_id || 'default', conversationId: row.conversation_id, fingerprint: row.fingerprint, messageCount: Number(row.message_count || 0), insertedCount: Number(row.inserted_count || 0), messageIds: wsJson(row.message_ids_json, []), createdAt: row.created_at, updatedAt: row.updated_at }; }
 function wsCollectionRunPayload(row) { return { id: row.id, accountId: row.account_id || 'default', status: row.status, total: Number(row.total||0), discovered: Number(row.discovered||0), completed: Number(row.completed||0), analyzing: Number(row.analyzing||0), analyzed: Number(row.analyzed||0), failed: Number(row.failed||0), skipped: Number(row.skipped||0), retryable: Number(row.retryable||0), lastError: row.last_error||'', checkpoint: row.checkpoint||'', cursor: row.cursor||'', resumeCount: Number(row.resume_count||0), lastSuccessAt: row.last_success_at||'', createdAt: row.created_at, updatedAt: row.updated_at }; }
 function wsCollectionItemPayload(row) { return { id: row.id, accountId: row.account_id || 'default', runId: row.run_id, conversationId: row.conversation_id, status: row.status, attempts: Number(row.attempts||0), analysisStatus: row.analysis_status, followupStatus: row.followup_status, nextFollowupAt: row.next_followup_at||'', coverageStatus: row.coverage_status||'unknown', lastError: row.last_error||'', checkpoint: row.checkpoint||'', createdAt: row.created_at, updatedAt: row.updated_at }; }
+function refreshWsCollectionRunCounters(accountId, runId) {
+  const run = db.prepare('SELECT * FROM ws_collection_runs WHERE id=? AND account_id=?').get(runId, accountId);
+  if (!run) return null;
+  const counts = db.prepare(`SELECT
+      COUNT(*) AS total,
+      SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) AS completed,
+       SUM(CASE WHEN status IN ('skipped','skipped_unread') THEN 1 ELSE 0 END) AS skipped,
+      SUM(CASE WHEN status IN ('analyzing','running') THEN 1 ELSE 0 END) AS analyzing,
+      SUM(CASE WHEN analysis_status='completed' THEN 1 ELSE 0 END) AS analyzed,
+      SUM(CASE WHEN status='failed' THEN 1 ELSE 0 END) AS failed,
+      SUM(CASE WHEN status='retryable' OR analysis_status IN ('retryable','failed') THEN 1 ELSE 0 END) AS retryable
+    FROM ws_collection_items WHERE account_id=? AND run_id=?`).get(accountId, runId);
+  const total = Number(counts?.total || 0);
+  const now = new Date().toISOString();
+  db.prepare(`UPDATE ws_collection_runs SET total=?,discovered=?,completed=?,analyzing=?,analyzed=?,failed=?,skipped=?,retryable=?,updated_at=? WHERE id=? AND account_id=?`)
+    .run(total, total, Number(counts?.completed || 0), Number(counts?.analyzing || 0), Number(counts?.analyzed || 0), Number(counts?.failed || 0), Number(counts?.skipped || 0), Number(counts?.retryable || 0), now, runId, accountId);
+  return wsCollectionRunPayload(db.prepare('SELECT * FROM ws_collection_runs WHERE id=? AND account_id=?').get(runId, accountId));
+}
 function wsFollowupAlertPayload(row) { return { id: row.id, accountId: row.account_id || 'default', conversationId: row.conversation_id, analysisId: row.analysis_id, alertKey: row.alert_key, priority: row.priority, reason: row.reason, followupTime: row.followup_time || '', status: row.status || 'open', snoozedUntil: row.snoozed_until || '', data: wsJson(row.data_json, {}), createdAt: row.created_at, updatedAt: row.updated_at }; }
+const AI_JOB_STATUSES = new Set(['queued', 'running', 'retryable', 'completed', 'failed', 'cancelled']);
+function aiJobPayload(row) {
+  return {
+    id: row.id,
+    accountId: row.account_id || 'default',
+    conversationId: row.conversation_id,
+    idempotencyKey: row.idempotency_key,
+    payload: wsJson(row.payload_json, {}),
+    status: row.status,
+    attempts: Number(row.attempts || 0),
+    maxAttempts: Number(row.max_attempts || 5),
+    nextAttemptAt: row.next_attempt_at || '',
+    lockedAt: row.locked_at || '',
+    lastError: row.last_error || '',
+    analysisId: row.analysis_id || '',
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+function aiJobStats(accountId) {
+  const rows = db.prepare('SELECT status,COUNT(*) AS count FROM ai_jobs WHERE account_id=? GROUP BY status').all(accountId);
+  const stats = Object.fromEntries([...AI_JOB_STATUSES].map(status => [status, 0]));
+  for (const row of rows) if (AI_JOB_STATUSES.has(String(row.status))) stats[row.status] = Number(row.count || 0);
+  stats.total = Object.values(stats).reduce((sum, count) => sum + Number(count || 0), 0);
+  return stats;
+}
+function supersedeStaleAiJobs(accountId, conversationId, sourceFingerprint, now) {
+  const fingerprint = wsText(sourceFingerprint, 500);
+  if (!fingerprint) return 0;
+  const result = db.prepare(`UPDATE ai_jobs
+    SET status='failed',locked_at='',next_attempt_at='',last_error='聊天历史已更新，已由新分析替代',updated_at=?
+    WHERE account_id=? AND conversation_id=?
+      AND status IN ('queued','retryable','running')
+      AND json_valid(payload_json)
+      AND COALESCE(json_extract(payload_json,'$.sourceFingerprint'),'')<>''
+      AND json_extract(payload_json,'$.sourceFingerprint')<>?`)
+    .run(now, accountId, conversationId, fingerprint);
+  return Number(result?.changes || 0);
+}
+function aiJobBackoff(attempts) { return Math.min(15 * 60 * 1000, 1000 * (2 ** Math.max(0, Math.min(10, Number(attempts || 1) - 1)))); }
 function wsConversationRow(id, accountId = 'default') { return db.prepare('SELECT * FROM ws_conversations WHERE id=? AND account_id=?').get(String(id || ''), wsAccountId(accountId)); }
-function wsRequireConversation(id, accountId = 'default') { const row = wsConversationRow(id, accountId); if (!row) throw new Error('WS 会话不存在或已被清理。'); return row; }
+function wsConversationPolicyError(code, message) { const error = new Error(message); error.code = code; error.status = 422; return error; }
+function wsIsVipGroup(value) { return wsCore.isVipGroupConversation(value); }
+function wsIsExcludedGroup(value) { return wsCore.isExcludedGroupConversation(value); }
+const WS_TRUSTED_GROUP_SENDER_SOURCES = new Set(['data-jid','data-contact-id','message-author-jid','message-preamble','sender-phone','sender-jid']);
+function wsVipMemberIdentity(value = {}) {
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  const nested = source.memberIdentity && typeof source.memberIdentity === 'object' && !Array.isArray(source.memberIdentity) ? source.memberIdentity : {};
+  const senderId = wsText(nested.senderId || nested.wsId || source.senderId || source.wsId, 200);
+  const senderPhone = wsCrmSync.normalizePhone(nested.senderPhone || nested.phone || source.senderPhone || source.phone);
+  const senderName = wsText(nested.senderName || nested.name || source.senderName || source.name, 200);
+  const identitySource = wsText(nested.identitySource || nested.senderIdentitySource || source.identitySource || source.senderIdentitySource, 40).toLowerCase();
+  const idTrusted = /@(?:c\.us|s\.whatsapp\.net|lid)$/i.test(senderId);
+  const phoneTrusted = /^\d{8,15}$/.test(senderPhone);
+  const trustedSource = WS_TRUSTED_GROUP_SENDER_SOURCES.has(identitySource);
+  return {
+    senderId,
+    senderPhone,
+    senderName,
+    identitySource,
+    trusted: source.senderIdentityTrusted === true || nested.trusted === true
+      ? trustedSource && (idTrusted || phoneTrusted)
+      : trustedSource && (idTrusted || phoneTrusted),
+  };
+}
+function wsSameVipMemberIdentity(left, right) {
+  const a = wsVipMemberIdentity(left), b = wsVipMemberIdentity(right);
+  if (a.senderId && b.senderId && a.senderId.toLowerCase() === b.senderId.toLowerCase()) return true;
+  return Boolean(a.senderPhone && b.senderPhone && a.senderPhone === b.senderPhone);
+}
+function wsVipMemberEvidence(conversation, value = {}) {
+  if (!wsIsVipGroup(conversation)) return { required:false, valid:true, identity:null, messageCount:0 };
+  const identity = wsVipMemberIdentity(value);
+  if (!identity.trusted) return { required:true, valid:false, identity, messageCount:0, reason:'VIP 群分析缺少可信发言人 WS 标识或手机号。' };
+  const rows = db.prepare("SELECT data_json FROM ws_messages WHERE account_id=? AND conversation_id=? AND direction='receive'").all(conversation.account_id, conversation.id);
+  const messageCount = rows.reduce((count, row) => {
+    const data = wsJson(row.data_json, {});
+    return count + (data.senderIdentityTrusted === true && wsSameVipMemberIdentity(data, identity) ? 1 : 0);
+  }, 0);
+  if (!messageCount) return { required:true, valid:false, identity, messageCount:0, reason:'VIP 群内没有找到该发言人的可信原始消息，已拒绝跨客户写入。' };
+  return { required:true, valid:true, identity, messageCount };
+}
+function wsVipScopedAnalysis(conversation, analysis, identity) {
+  if (!wsIsVipGroup(conversation)) return analysis;
+  const targetTexts = db.prepare("SELECT original_text,data_json FROM ws_messages WHERE account_id=? AND conversation_id=? AND direction='receive'").all(conversation.account_id, conversation.id)
+    .filter(row => { const data = wsJson(row.data_json, {}); return data.senderIdentityTrusted === true && wsSameVipMemberIdentity(data, identity); })
+    .map(row => wsMessageText(row.original_text).toLocaleLowerCase()).filter(Boolean);
+  const facts = analysis?.profileFacts && typeof analysis.profileFacts === 'object' && !Array.isArray(analysis.profileFacts) ? analysis.profileFacts : {};
+  const profileFacts = {};
+  for (const [field, fact] of Object.entries(facts)) {
+    if (!fact || typeof fact !== 'object' || Array.isArray(fact)) continue;
+    const role = wsText(fact.sourceRole || fact.source_role, 40).toLowerCase();
+    const evidence = wsText(fact.evidence || fact.sourceText || fact.quote, 2000).toLocaleLowerCase();
+    if (!['customer','client','contact','客户','顾客','对方'].includes(role) || evidence.length < 2) continue;
+    if (targetTexts.some(source => source.includes(evidence) || (source.length >= 8 && evidence.includes(source)))) profileFacts[field] = fact;
+  }
+  // Group-wide model output may use another member's biography. Keep the
+  // target member's scoring/summary, but profile persistence is sourced only
+  // from evidence-backed profileFacts above.
+  return {
+    ...analysis,
+    profileFacts,
+    contact:{}, profile:{},
+    name:'', customerName:'', phone:'', country:'', origin:'', age:'', occupation:'', job:'', work:'',
+    budget:'', productInterest:[],
+    memberIdentity:identity,
+    transcriptInfo:{ ...(analysis?.transcriptInfo || {}), memberScoped:true, memberIdentity:identity },
+  };
+}
+function wsRequireConversation(id, accountId = 'default') {
+  const row = wsConversationRow(id, accountId);
+  if (!row) throw new Error('WS 会话不存在或已被清理。');
+  if (wsIsExcludedGroup(row)) throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '普通群聊未列入 VIP 白名单，不采集、不分析，也不生成跟进提醒。');
+  return row;
+}
+function wsRequireAiConversation(id, accountId = 'default') {
+  const row = wsRequireConversation(id, accountId);
+  const data = wsJson(row.data_json, {});
+  const nativeHistory = data.source === 'ws-list-discovery' || data.source === 'ws-webview2'
+    || db.prepare("SELECT 1 FROM ws_messages WHERE account_id=? AND conversation_id=? AND json_valid(data_json) AND json_extract(data_json,'$.source')='ws-webview2' LIMIT 1").get(accountId, id);
+  if (nativeHistory && !['direct', 'vip_group'].includes(wsCore.conversationType(row))) throw wsConversationPolicyError('WS_CONVERSATION_TYPE_UNCONFIRMED', '尚未确认是一对一或白名单 VIP 群会话，请等待 WS 重新识别后分析。');
+  return row;
+}
+function wsAiEligible(id, accountId) { try { wsRequireAiConversation(id, accountId); return true; } catch { return false; } }
+function wsQuiesceGroup(row, now = new Date().toISOString()) {
+  if (!wsIsExcludedGroup(row)) return;
+  db.prepare("UPDATE ai_jobs SET status='cancelled',locked_at='',next_attempt_at='',last_error='群聊已排除',updated_at=? WHERE account_id=? AND conversation_id=? AND status IN ('queued','running','retryable')").run(now, row.account_id, row.id);
+  db.prepare("UPDATE ws_followup_alerts SET status='dismissed',snoozed_until='',updated_at=? WHERE account_id=? AND conversation_id=? AND status IN ('open','snoozed')").run(now, row.account_id, row.id);
+  db.prepare("UPDATE ws_collection_items SET status='skipped-group',analysis_status='excluded',followup_status='dismissed',coverage_status='excluded-group',last_error='群聊已排除',updated_at=? WHERE account_id=? AND conversation_id=? AND coverage_status<>'excluded-group'").run(now, row.account_id, row.id);
+  const state = governanceState();
+  let changed = false;
+  for (const task of state.settings.operatingTasks) {
+    if (!task.aiGenerated || String(task.wsConversationId || '') !== row.id || String(task.wsAccountId || 'default') !== row.account_id || task.groupExcluded === true) continue;
+    Object.assign(task, { status:'dismissed', done:true, groupExcluded:true, dismissedReason:'群聊已排除', updatedAt:now });
+    changed = true;
+  }
+  if (changed) writeState(state, false);
+}
 function wsCreateId(prefix) { return `${prefix}-${Date.now().toString(36)}-${randomBytes(5).toString('hex')}`; }
 function governanceActionId() { return wsCreateId('cga'); }
 function governanceEvidenceId() { return wsCreateId('cge'); }
@@ -758,12 +1011,39 @@ function wsTranslationFields(body, existing = null) {
 function wsBatchFingerprint(conversationId, messages, value) {
   const supplied = wsText(value, 160);
   if (supplied) return supplied;
-  const canonical = messages.map(item => ({ externalId: wsText(item?.externalId, 200), direction: wsText(item?.direction, 16), originalText: wsText(item?.originalText, 12000), order: Number.isFinite(Number(item?.order)) ? Number(item.order) : 0 }));
+  const canonical = messages.map(item => ({ externalId: wsText(item?.externalId, 200), direction: wsText(item?.direction, 16), senderId:wsText(item?.data?.senderId || item?.senderId, 200), senderPhone:wsCrmSync.normalizePhone(item?.data?.senderPhone || item?.senderPhone), originalText: wsMessageText(item?.originalText), order: Number.isFinite(Number(item?.order)) ? Number(item.order) : 0 }));
   return createHash('sha256').update(JSON.stringify([conversationId, canonical])).digest('hex');
 }
+function wsAuthoritativeHistoryFingerprint(accountId, conversationId) {
+  const rows = db.prepare(`SELECT external_id,direction,original_text,order_no,data_json,created_at
+    FROM ws_messages
+    WHERE account_id=? AND conversation_id=? AND COALESCE(json_extract(data_json,'$.previewOnly'),0)<>1
+    ORDER BY order_no ASC,external_id ASC,direction ASC,original_text ASC`).all(accountId, conversationId);
+  const canonical = rows.map(row => {
+    const data = wsJson(row.data_json, {});
+    const time = wsStoredMessageTime(row, data);
+    return {
+      externalId: wsText(row.external_id, 200),
+      direction: wsText(row.direction, 16),
+      senderId: wsText(data.senderId, 200),
+      senderPhone: wsCrmSync.normalizePhone(data.senderPhone),
+      sentAtKnown: time.sentAtKnown === true,
+      sentAt: time.sentAtKnown === true ? time.sentAt : '',
+      originalText: wsMessageText(row.original_text),
+      order: Number.isFinite(Number(row.order_no)) ? Number(row.order_no) : 0,
+    };
+  });
+  return createHash('sha256').update(JSON.stringify(['zhike-ws-history-v1', canonical])).digest('hex');
+}
 
-let pendingImport = null;
-let pendingImportTimer = null;
+// Metadata-only retirement. Original messages and customer business records
+// remain intact; previously scheduled group work cannot resume on restart.
+db.exec('BEGIN IMMEDIATE');
+try {
+  for (const row of db.prepare('SELECT * FROM ws_conversations').all()) if (wsIsExcludedGroup(row)) wsQuiesceGroup(row);
+  db.exec('COMMIT');
+} catch (error) { db.exec('ROLLBACK'); throw error; }
+
 const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://127.0.0.1:${port}`);
@@ -803,8 +1083,8 @@ const server = createServer(async (req, res) => {
         db.exec('BEGIN IMMEDIATE');
         try {
           const status = WS_STATUSES.has(wsText(body.status, 32)) ? wsText(body.status, 32) : '未连接';
-          db.prepare('INSERT INTO ws_accounts(id,display_name,provider,origin,partition_key,status,enabled,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)')
-            .run(id, wsText(body.displayName, 200) || id, wsText(body.provider, 120), wsText(body.origin, 500), wsText(body.partitionKey, 200) || `persist:${id}`, status, body.enabled === false ? 0 : 1, now, now);
+          db.prepare('INSERT INTO ws_accounts(id,display_name,provider,origin,partition_key,status,last_status,last_seen_at,enabled,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)')
+            .run(id, wsText(body.displayName, 200) || id, wsText(body.provider, 120), wsText(body.origin, 500), wsText(body.partitionKey, 200) || `persist:${id}`, status, status === '未连接' ? '' : status, status === '已连接' ? now : '', body.enabled === false ? 0 : 1, now, now);
           wsSaveAccountSettings(id, body.settings || body, now);
           db.exec('COMMIT');
         } catch (error) { db.exec('ROLLBACK'); throw error; }
@@ -823,8 +1103,10 @@ const server = createServer(async (req, res) => {
         db.exec('BEGIN IMMEDIATE');
         try {
           const status = Object.hasOwn(body, 'status') && WS_STATUSES.has(wsText(body.status, 32)) ? wsText(body.status, 32) : (WS_STATUSES.has(String(account.status || '')) ? account.status : '未连接');
-          db.prepare('UPDATE ws_accounts SET display_name=?,provider=?,origin=?,partition_key=?,status=?,enabled=?,updated_at=? WHERE id=?')
-            .run(Object.hasOwn(body, 'displayName') ? wsText(body.displayName, 200) : account.display_name, Object.hasOwn(body, 'provider') ? wsText(body.provider, 120) : account.provider, Object.hasOwn(body, 'origin') ? wsText(body.origin, 500) : account.origin, Object.hasOwn(body, 'partitionKey') ? wsText(body.partitionKey, 200) : account.partition_key, status, body.enabled === false ? 0 : (body.enabled === true ? 1 : account.enabled), now, accountId);
+          const lastStatus = status === '未连接' ? (account.last_status || '') : status;
+          const lastSeenAt = status === '已连接' ? now : (account.last_seen_at || '');
+          db.prepare('UPDATE ws_accounts SET display_name=?,provider=?,origin=?,partition_key=?,status=?,last_status=?,last_seen_at=?,enabled=?,updated_at=? WHERE id=?')
+            .run(Object.hasOwn(body, 'displayName') ? wsText(body.displayName, 200) : account.display_name, Object.hasOwn(body, 'provider') ? wsText(body.provider, 120) : account.provider, Object.hasOwn(body, 'origin') ? wsText(body.origin, 500) : account.origin, Object.hasOwn(body, 'partitionKey') ? wsText(body.partitionKey, 200) : account.partition_key, status, lastStatus, lastSeenAt, body.enabled === false ? 0 : (body.enabled === true ? 1 : account.enabled), now, accountId);
           if (body.settings || Object.hasOwn(body, 'translationEnabled') || Object.hasOwn(body, 'aiEnabled') || Object.hasOwn(body, 'autoCollectionEnabled')) wsSaveAccountSettings(accountId, body.settings || body, now);
           db.exec('COMMIT');
         } catch (error) { db.exec('ROLLBACK'); throw error; }
@@ -837,6 +1119,315 @@ const server = createServer(async (req, res) => {
         return json(res, 200, { ok: true, accountId });
       }
       return json(res, 405, { error: 'WS 账号只支持 PATCH/DELETE。' });
+    }
+    // Desktop WebView2 collector endpoint. The retired remote connector used a
+    // versioned server route whose payload assumed a server
+    // generated conversation id.  The local-first collector only knows the
+    // WhatsApp conversation key, so this adapter creates/updates the local
+    // conversation and then performs an idempotent message insert in one
+    // SQLite transaction.  It deliberately accepts list-only checkpoints so
+    // background collection can register every visible contact without
+    // opening each chat.
+    if (url.pathname === '/api/ws/ingest/batch' && req.method === 'POST') {
+      const body = JSON.parse((await readBody(req, WS_MESSAGE_BATCH_MAX_BYTES)).toString('utf8'));
+      const accountId = wsAccountId(body.accountId);
+      wsRequireAccount(accountId);
+      const capturedAt = wsStrictIso(body.capturedAt) || new Date().toISOString();
+      const inputMessages = Array.isArray(body.messages) ? body.messages.slice(0, 1000) : [];
+      const inputCheckpoints = Array.isArray(body.checkpoints) ? body.checkpoints.slice(0, 5000) : [];
+      const grouped = new Map();
+      const addConversation = key => {
+        const normalized = wsText(key, 200);
+        if (!normalized) return null;
+        if (!grouped.has(normalized)) grouped.set(normalized, { messages: [], checkpoints: [] });
+        return grouped.get(normalized);
+      };
+      for (const item of inputCheckpoints) {
+        const key = wsText(item?.conversationKey, 200);
+        const group = addConversation(key);
+        if (group) group.checkpoints.push(item);
+      }
+      for (const item of inputMessages) {
+        const key = wsText(item?.conversationKey, 200);
+        const checkpoints = grouped.get(key)?.checkpoints || [];
+        const checkpointIsVip = checkpoints.some(cp => wsIsVipGroup(cp));
+        const checkpointIsOrdinaryGroup = !checkpointIsVip && checkpoints.some(cp => wsIsExcludedGroup(cp));
+        const itemType = wsCore.conversationType(item);
+        if (checkpointIsOrdinaryGroup || (itemType === 'group' && !checkpointIsVip)
+          || (!checkpointIsVip && checkpoints.some(cp => cp?.conversationType === 'unknown'))) continue;
+        if (wsMessageTextTooLong(item?.body)) return json(res, 413, { error: `WS 原文超过 ${WS_MESSAGE_MAX_CHARS} 字符，未保存且原值未修改。` });
+        const bodyText = wsMessageText(item?.body);
+        if (!key || !bodyText.trim()) continue;
+        const group = addConversation(key);
+        const rawDirection = String(item?.direction || '').toLowerCase();
+        const direction = ['outgoing', 'send', 'sent'].includes(rawDirection)
+          ? 'send'
+          : ['incoming', 'receive', 'received'].includes(rawDirection) ? 'receive' : '';
+        if (!direction) return json(res, 422, { error: 'WS 消息方向无法确认，批次已拒绝并保留等待重试。' });
+        const directionSource = wsText(item?.directionSource, 40);
+        if (directionSource && !WS_NATIVE_DIRECTION_SOURCES.has(directionSource)) return json(res, 422, { error: 'WS 消息方向证据无效，批次已拒绝并保留等待重试。' });
+        if (directionSource && WS_NATIVE_DIRECTION_SOURCE_MAP.get(directionSource) !== direction) return json(res, 422, { error: 'WS 消息方向与页面证据不一致，批次已拒绝并保留等待重试。' });
+        const legacyExternalMessageId = directionSource ? wsText(item?.legacyExternalMessageId, 200) : '';
+        const time = wsMessageTimeMetadata(item, capturedAt);
+        const senderIdentity = wsVipMemberIdentity(item);
+        group.messages.push({
+          externalId: wsText(item?.externalMessageId || item?.externalId, 200),
+          legacyExternalMessageId,
+          direction,
+          originalText: bodyText,
+          sentAt: time.sentAt,
+          createdAt: time.sentAt || time.observedAt,
+          order: Number.isFinite(Number(item?.order)) ? Number(item.order) : group.messages.length + 1,
+          data: wsMessageDataWithTime({
+            source: item?.previewOnly === true ? 'ws-list-preview' : 'ws-webview2',
+            previewOnly: item?.previewOnly === true,
+            cursor: wsText(item?.cursor, 500),
+            ...(checkpointIsVip || itemType === 'vip_group' ? { conversationType:'vip_group', vipGroup:true, isGroup:true } : {}),
+            ...(senderIdentity.senderId ? { senderId:senderIdentity.senderId } : {}),
+            ...(senderIdentity.senderPhone ? { senderPhone:senderIdentity.senderPhone } : {}),
+            ...(senderIdentity.senderName ? { senderName:senderIdentity.senderName } : {}),
+            ...(senderIdentity.identitySource ? { senderIdentitySource:senderIdentity.identitySource } : {}),
+            senderIdentityTrusted: direction === 'send' ? true : senderIdentity.trusted,
+            ...(directionSource ? { directionSource, directionVersion: 4, canonicalExternalMessageId: wsText(item?.externalMessageId || item?.externalId, 200), legacyExternalMessageId } : {}),
+          }, time),
+        });
+      }
+      if (!grouped.size) return json(res, 200, { accepted: 0, deduplicated: 0, repairedTimestamps: 0, repairedDirections: 0, messageIds: [], processedAt: new Date().toISOString() });
+      let accepted = 0, deduplicated = 0, repairedTimestamps = 0, repairedDirections = 0;
+      const messageIds = [];
+      const now = new Date().toISOString();
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        for (const [externalKey, group] of grouped) {
+          let conversation = db.prepare('SELECT * FROM ws_conversations WHERE account_id=? AND external_id=?').get(accountId, externalKey);
+          const checkpoint = group.checkpoints.at(-1) || {};
+          const checkpointTypes = group.checkpoints.map(item => wsCore.conversationType(item));
+          const type = checkpointTypes.includes('vip_group')
+            ? 'vip_group'
+            : checkpointTypes.includes('group')
+              ? 'group'
+              : (checkpointTypes.includes('direct') ? 'direct' : wsCore.conversationType({ ...checkpoint, externalId:externalKey }) === 'unknown' && conversation ? wsCore.conversationType(conversation) : wsCore.conversationType({ ...checkpoint, externalId:externalKey }));
+          if (type === 'group') {
+            if (conversation) {
+              db.prepare('UPDATE ws_conversations SET data_json=?,updated_at=? WHERE id=? AND account_id=?').run(JSON.stringify({ ...wsJson(conversation.data_json, {}), conversationType:'group', isGroup:true, coverage:'excluded-group', collectionStatus:'skipped-group', historyLoaded:false }), now, conversation.id, accountId);
+              wsQuiesceGroup(conversation, now);
+            }
+            continue;
+          }
+          const typeUnresolved = type === 'unknown';
+          if (typeUnresolved) { group.messages = []; Object.assign(checkpoint, {historyLoaded:false, coverage:'conversation-type-unresolved', collectionStatus:'retryable'}); }
+          const last = group.messages.at(-1);
+          const checkpointPreview = wsCleanListPreviewText(checkpoint.lastMessagePreview || checkpoint.previewText || checkpoint.preview);
+          const checkpointLastAt = wsMaybeIso(checkpoint.lastMessageAt || checkpoint.lastMessageTime);
+          const checkpointUnread = wsOptionalCount(checkpoint.unreadCount);
+          const hasCheckpointPreview = Boolean(checkpointPreview);
+          const hasCheckpointLastAt = Boolean(checkpointLastAt);
+          const hasCheckpointUnread = checkpointUnread !== null;
+          const previousData = conversation ? wsJson(conversation.data_json, {}) : {};
+          const previousWasPreviewOnly = previousData.lastMessageSource === 'ws-list-preview' || previousData.previewOnly === true;
+          const checkpointCoverage = wsText(checkpoint.coverage, 40);
+          const isReadHistoryCheckpoint = /read-history/.test(checkpointCoverage);
+          const historyLoaded = checkpoint.historyLoaded === true;
+          const historyMessageCount = Number.isFinite(Number(checkpoint.historyMessageCount)) ? Math.max(0, Math.floor(Number(checkpoint.historyMessageCount))) : 0;
+          const checkpointDirectionVersion = Math.max(0, Math.floor(Number(checkpoint.directionVersion) || 0));
+          const directionUnresolvedCount = Math.max(0, Math.floor(Number(checkpoint.directionUnresolvedCount) || 0));
+          // The row fingerprint is deliberately separate from the full-chat
+          // fingerprint. WhatsApp list previews, relative time labels and
+          // unread badges change with layout/time even when the transcript is
+          // identical; they may schedule a native re-open but must never make
+          // a completed AI result stale by themselves.
+          const listFingerprint = wsText(checkpoint.listFingerprint || checkpoint.lastMessageFingerprint || checkpoint.cursor, 500);
+          const previousHistoryFingerprint = wsText(previousData.historyFingerprint, 500);
+          const checkpointSource = last?.originalText
+            ? 'ws-message'
+            : (hasCheckpointPreview || hasCheckpointLastAt || hasCheckpointUnread
+              ? (conversation && !previousWasPreviewOnly && wsText(conversation.last_message_text, 4000) ? 'ws-message' : 'ws-list-preview')
+              : previousData.lastMessageSource || '');
+          const checkpointData = {
+            source: 'ws-list-discovery',
+            ...(type === 'direct' || typeUnresolved ? { conversationType:type, isGroup:false, vipGroup:false } : {}),
+            ...(type === 'vip_group' ? { conversationType:'vip_group', isGroup:true, vipGroup:true } : {}),
+            visibleOnly: true,
+            displayName: wsText(checkpoint.displayName, 200),
+            cursor: wsText(checkpoint.cursor, 500),
+            ...(listFingerprint ? { listFingerprint } : {}),
+            ...(checkpointCoverage && !(previousData.historyLoaded === true && !isReadHistoryCheckpoint) ? { coverage: checkpointCoverage } : {}),
+            ...(Object.hasOwn(checkpoint, 'historyLoaded') && isReadHistoryCheckpoint ? { historyLoaded: false, historyStale: true } : {}),
+            ...(isReadHistoryCheckpoint && Number.isFinite(Number(checkpoint.historyMessageCount)) && Number(checkpoint.historyMessageCount) >= 0 ? { historyMessageCount: Math.floor(Number(checkpoint.historyMessageCount)) } : {}),
+            ...(checkpointDirectionVersion ? { directionCaptureVersion: checkpointDirectionVersion, directionUnresolvedCount } : {}),
+            ...(wsText(checkpoint.collectionStatus, 30) ? { collectionStatus: wsText(checkpoint.collectionStatus, 30) } : {}),
+            ...(hasCheckpointPreview ? { lastMessagePreview: checkpointPreview } : {}),
+            ...(hasCheckpointLastAt ? { lastMessageAt: checkpointLastAt } : {}),
+            ...(hasCheckpointUnread ? { unreadCount: checkpointUnread } : {}),
+            ...(checkpointSource ? { lastMessageSource: checkpointSource } : {}),
+            capturedAt,
+          };
+          if (typeUnresolved) Object.assign(checkpointData, { historyLoaded:false, historyStale:true, coverage:'conversation-type-unresolved' });
+          if (!conversation) {
+            const id = wsCreateId('wsc');
+            const initialText = last?.originalText?.slice(0, 4000) || checkpointPreview;
+            const initialAt = last?.sentAt || checkpointLastAt;
+            const initialUnread = hasCheckpointUnread ? checkpointUnread : 0;
+            db.prepare(`INSERT INTO ws_conversations(id,account_id,external_id,title,customer_id,last_message_text,intent_level,data_json,created_at,updated_at,last_message_at,unread_count,language)
+              VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+            .run(id, accountId, externalKey, wsText(checkpoint.displayName, 200) || externalKey, '', initialText, '', JSON.stringify(checkpointData), now, now, initialAt, initialUnread, '');
+            conversation = db.prepare('SELECT * FROM ws_conversations WHERE id=? AND account_id=?').get(id, accountId);
+          } else {
+            const mergedData = { ...wsJson(conversation.data_json, {}), ...checkpointData };
+            const currentText = wsText(conversation.last_message_text, 4000);
+            const nextText = last?.originalText
+              ? last.originalText.slice(0, 4000)
+              : (hasCheckpointPreview && (previousWasPreviewOnly || !currentText) ? checkpointPreview : currentText);
+            const currentAt = wsText(conversation.last_message_at, 80);
+            const nextAt = last?.sentAt || (hasCheckpointLastAt && (previousWasPreviewOnly || !currentAt) ? checkpointLastAt : currentAt);
+            const nextUnread = hasCheckpointUnread ? checkpointUnread : Number(conversation.unread_count || 0);
+            const title = wsText(checkpoint.displayName, 200) || conversation.title || externalKey;
+            db.prepare('UPDATE ws_conversations SET title=?,last_message_text=?,last_message_at=?,unread_count=?,data_json=?,updated_at=? WHERE id=? AND account_id=?')
+              .run(title, nextText, nextAt, nextUnread, JSON.stringify(mergedData), now, conversation.id, accountId);
+          }
+          if (checkpoint.collectionStatus === 'retryable') {
+            const coverage = wsText(checkpoint.coverage, 40);
+            const reason = /identity/.test(coverage) ? '打开后的聊天身份未能确认，已跳过并等待重试。' : /click/.test(coverage) ? '会话打开失败，已继续下一个客户。' : /pane/.test(coverage) ? '聊天消息区域暂时无法识别，已继续下一个客户。' : '历史聊天尚未采集完整，断点已保留。';
+            db.prepare("UPDATE ws_collection_items SET status='retryable',coverage_status=?,last_error=?,updated_at=? WHERE account_id=? AND conversation_id=?").run(coverage, reason, now, accountId, conversation.id);
+          }
+          if (!group.messages.length && !historyLoaded) continue;
+          const findCollectedMessage = item => {
+            let row = item.externalId ? db.prepare('SELECT * FROM ws_messages WHERE account_id=? AND conversation_id=? AND external_id=?').get(accountId, conversation.id, item.externalId) : null;
+            let allowLegacyAlias = false;
+            if (!row && item.legacyExternalMessageId && item.legacyExternalMessageId !== item.externalId) {
+              const candidate = db.prepare('SELECT * FROM ws_messages WHERE account_id=? AND conversation_id=? AND external_id=?').get(accountId, conversation.id, item.legacyExternalMessageId);
+              if (wsCanRepairCollectedMessageDirection(candidate, item, true)) { row = candidate; allowLegacyAlias = true; }
+            }
+            if (!row && item.externalId) {
+              // A v3 packet may already be in the durable queue when v4
+              // changes the exact same row to its canonical native id. Resolve
+              // only the recorded alias plus byte-identical original; never
+              // search by message text alone and never downgrade v4 direction.
+              const candidates = db.prepare(`SELECT * FROM ws_messages
+                WHERE account_id=? AND conversation_id=? AND original_text=?
+                  AND json_extract(data_json,'$.legacyExternalMessageId')=?`).all(accountId, conversation.id, item.originalText, item.externalId);
+              if (candidates.length === 1) {
+                const data = wsJson(candidates[0].data_json);
+                if (data.source === 'ws-webview2' && Number(data.directionVersion || 0) >= 4
+                    && wsText(data.canonicalExternalMessageId, 200) === wsText(candidates[0].external_id, 200)) row = candidates[0];
+              }
+            }
+            return { row, allowLegacyAlias };
+          };
+          const fingerprint = wsBatchFingerprint(conversation.id, group.messages, '');
+          const previous = db.prepare('SELECT * FROM ws_ingest_batches WHERE account_id=? AND conversation_id=? AND fingerprint=?').get(accountId, conversation.id, fingerprint);
+          if (previous) {
+            deduplicated += group.messages.length;
+            for (const item of group.messages) {
+              const found = findCollectedMessage(item);
+              let existing = found.row;
+              const directionRepaired = wsRepairCollectedMessageDirection(existing, item, now, found.allowLegacyAlias);
+              if (directionRepaired) { existing = directionRepaired; repairedDirections += 1; }
+              if (wsRepairCollectedMessageTime(existing, item, now)) repairedTimestamps += 1;
+            }
+            const previousIds = wsJson(previous.message_ids_json, []);
+            for (const id of previousIds) messageIds.push(String(id));
+            // A retried final packet still needs to finalize the checkpoint.
+          }
+          const batchId = previous?.id || wsCreateId('wsb');
+          let batchInserted = 0;
+          if (!previous && group.messages.length) db.prepare('INSERT INTO ws_ingest_batches(id,account_id,conversation_id,fingerprint,message_count,inserted_count,message_ids_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)')
+            .run(batchId, accountId, conversation.id, fingerprint, group.messages.length, 0, '[]', now, now);
+          const ids = [];
+          for (const item of (previous ? [] : group.messages)) {
+            const found = findCollectedMessage(item);
+            let row = found.row;
+            if (row) {
+              const directionRepaired = wsRepairCollectedMessageDirection(row, item, now, found.allowLegacyAlias);
+              if (directionRepaired) { row = directionRepaired; repairedDirections += 1; }
+              const repaired = wsRepairCollectedMessageTime(row, item, now);
+              if (repaired) { row = repaired; repairedTimestamps += 1; }
+              deduplicated += 1;
+              ids.push(row.id);
+              messageIds.push(row.id);
+              continue;
+            }
+            const id = wsCreateId('wsm');
+            db.prepare(`INSERT INTO ws_messages(id,account_id,conversation_id,external_id,direction,original_text,translated_text,source_language,target_language,order_no,data_json,created_at,updated_at,translation_status,translation_error,translation_attempts,last_attempt_at)
+              VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+              .run(id, accountId, conversation.id, item.externalId, item.direction, item.originalText, '', '', '', item.order, JSON.stringify(item.data), item.createdAt, now, 'none', '', 0, '');
+            ids.push(id);
+            messageIds.push(id);
+            accepted += 1;
+            batchInserted += 1;
+          }
+          if (!previous && group.messages.length) db.prepare('UPDATE ws_ingest_batches SET inserted_count=?,message_ids_json=?,updated_at=? WHERE id=? AND account_id=?')
+            .run(batchInserted, JSON.stringify(ids), now, batchId, accountId);
+          if (last && batchInserted > 0) {
+            const nextUnread = hasCheckpointUnread ? checkpointUnread : Number(conversation.unread_count || 0);
+            const currentConversation = db.prepare('SELECT last_message_at FROM ws_conversations WHERE id=? AND account_id=?').get(conversation.id, accountId);
+            const lastMessageAt = last.sentAt || currentConversation?.last_message_at || '';
+            db.prepare('UPDATE ws_conversations SET last_message_text=?,last_message_at=?,unread_count=?,updated_at=? WHERE id=? AND account_id=?')
+              .run(last.originalText.slice(0, 4000), lastMessageAt, nextUnread, now, conversation.id, accountId);
+          }
+          if (historyLoaded) {
+            const storedCount = Number(db.prepare("SELECT count(*) count FROM ws_messages WHERE account_id=? AND conversation_id=? AND COALESCE(json_extract(data_json,'$.previewOnly'),0)<>1").get(accountId, conversation.id).count || 0);
+            if (storedCount >= historyMessageCount) {
+              if (checkpointDirectionVersion >= 4) {
+                const unverifiedDirectionCount = Number(db.prepare(`SELECT COUNT(*) count FROM ws_messages
+                  WHERE account_id=? AND conversation_id=?
+                    AND COALESCE(json_extract(data_json,'$.previewOnly'),0)<>1
+                    AND json_extract(data_json,'$.source')='ws-webview2'
+                    AND (COALESCE(json_extract(data_json,'$.directionVersion'),0)<4
+                      OR COALESCE(json_extract(data_json,'$.directionSource'),'') NOT IN ('class-message-out','class-message-in','data-id-outgoing','data-id-incoming','icon-tail-out','icon-tail-in','palette-outgoing','palette-incoming')
+                      OR (direction='send' AND json_extract(data_json,'$.directionSource') NOT IN ('class-message-out','data-id-outgoing','icon-tail-out','palette-outgoing'))
+                      OR (direction='receive' AND json_extract(data_json,'$.directionSource') NOT IN ('class-message-in','data-id-incoming','icon-tail-in','palette-incoming')))`).get(accountId, conversation.id).count || 0);
+                if (directionUnresolvedCount > 0 || unverifiedDirectionCount > 0) {
+                  const saved = db.prepare('SELECT data_json FROM ws_conversations WHERE id=? AND account_id=?').get(conversation.id, accountId);
+                  const data = {
+                    ...wsJson(saved.data_json, {}),
+                    historyLoaded: false,
+                    historyStale: true,
+                    directionCaptureVersion: checkpointDirectionVersion,
+                    directionUnresolvedCount: directionUnresolvedCount + unverifiedDirectionCount,
+                    coverage: 'read-history-direction-unresolved',
+                  };
+                  db.prepare('UPDATE ws_conversations SET data_json=?,updated_at=? WHERE id=? AND account_id=?').run(JSON.stringify(data), now, conversation.id, accountId);
+                  db.prepare("UPDATE ws_collection_items SET status='retryable',analysis_status='pending',coverage_status='read-history-direction-unresolved',last_error='消息方向尚未全部验证，已保留原文并等待安全重采。',updated_at=? WHERE account_id=? AND conversation_id=?").run(now, accountId, conversation.id);
+                  continue;
+                }
+              }
+              const historyFingerprint = wsAuthoritativeHistoryFingerprint(accountId, conversation.id);
+              // A resumable re-scan temporarily marks the conversation as
+              // collecting.  That state transition is not a transcript
+              // change: only the final authoritative content hash may
+              // invalidate completed AI work.  The empty previous hash still
+              // identifies the first confirmed snapshot.
+              const historyAdvanced = !previousHistoryFingerprint || historyFingerprint !== previousHistoryFingerprint;
+              const saved = db.prepare('SELECT data_json FROM ws_conversations WHERE id=? AND account_id=?').get(conversation.id, accountId);
+              const data = {
+                ...wsJson(saved.data_json, {}),
+                historyLoaded: true,
+                historyStale: false,
+                historyInvalidatedAt: '',
+                staleHistoryFingerprint: '',
+                previewOnly: false,
+                historyMessageCount: storedCount,
+                historyFingerprint,
+                ...(listFingerprint ? { listFingerprint } : {}),
+                ...(historyFingerprint ? { lastMessageFingerprint: historyFingerprint } : {}),
+                ...(checkpointDirectionVersion >= 4 ? { directionVersion: checkpointDirectionVersion, directionCaptureVersion: checkpointDirectionVersion, directionUnresolvedCount: 0 } : {}),
+                coverage: 'full-history',
+              };
+              db.prepare('UPDATE ws_conversations SET data_json=?,updated_at=? WHERE id=? AND account_id=?').run(JSON.stringify(data), now, conversation.id, accountId);
+              if (historyAdvanced) {
+                db.prepare("UPDATE ws_collection_items SET status='queued',analysis_status='pending',coverage_status='full-history',last_error='',checkpoint=?,updated_at=? WHERE account_id=? AND conversation_id=?").run(`full-history:${storedCount}:${historyFingerprint}`, now, accountId, conversation.id);
+                supersedeStaleAiJobs(accountId, conversation.id, historyFingerprint, now);
+              }
+            }
+          }
+        }
+        db.exec('COMMIT');
+      } catch (error) {
+        try { db.exec('ROLLBACK'); } catch {}
+        throw error;
+      }
+      return json(res, 200, { accepted, deduplicated, repairedTimestamps, repairedDirections, messageIds, processedAt: new Date().toISOString() });
     }
     if (url.pathname === '/api/ws/settings') {
       const conversationId = wsText(url.searchParams.get('conversationId'), 160);
@@ -869,7 +1460,7 @@ const server = createServer(async (req, res) => {
         wsRequireAccount(accountId);
         const limit = Math.min(5000, Math.max(1, Number(url.searchParams.get('limit')) || 50));
         const rows = db.prepare(`SELECT * FROM ws_conversations WHERE account_id=? ORDER BY updated_at DESC LIMIT ${limit}`).all(accountId);
-        return json(res, 200, { conversations: rows.map(wsConversationPayload) });
+        return json(res, 200, { conversations: rows.filter(row => !wsIsExcludedGroup(row)).map(wsConversationPayload) });
       }
       if (req.method === 'POST') {
         const body = JSON.parse((await readBody(req, 512 * 1024)).toString('utf8'));
@@ -879,10 +1470,31 @@ const server = createServer(async (req, res) => {
         if (!externalId) return json(res, 400, { error: 'WS 会话缺少外部会话标识。' });
         const now = new Date().toISOString();
         const existing = db.prepare('SELECT * FROM ws_conversations WHERE account_id=? AND external_id=?').get(accountId, externalId);
+        const hasTypeDirective = ['conversationType','isGroup','vipGroup'].some(key => Object.hasOwn(body, key))
+          || (body.data && typeof body.data === 'object' && ['conversationType','isGroup','vipGroup'].some(key => Object.hasOwn(body.data, key)));
+        const requestedType = existing && wsIsVipGroup(existing) && !hasTypeDirective ? 'vip_group' : wsCore.conversationType(body);
+        if (requestedType === 'group') throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '普通群聊未列入 VIP 白名单，不保存群聊导入。');
+        const effectiveType = requestedType === 'unknown' && existing ? wsCore.conversationType(existing) : requestedType;
         if (existing) {
-          const customerId = Object.hasOwn(body, 'customerId') ? wsText(body.customerId, 128) : existing.customer_id;
+          const customerId = effectiveType === 'vip_group' ? '' : (wsText(body.customerId, 128) || existing.customer_id);
           const lastMessageText = Object.hasOwn(body, 'lastMessageText') ? wsText(body.lastMessageText, 4000) : existing.last_message_text;
-          const data = Object.hasOwn(body, 'data') ? wsObject(body.data, 32 * 1024) : wsJson(existing.data_json);
+          const previousData = wsJson(existing.data_json, {});
+          const data = { ...previousData, ...(Object.hasOwn(body, 'data') ? wsObject(body.data, 32 * 1024) : {}), ...(effectiveType === 'direct' ? {conversationType:'direct',isGroup:false,vipGroup:false} : {}), ...(effectiveType === 'vip_group' ? {conversationType:'vip_group',isGroup:true,vipGroup:true} : {}) };
+          const requestedBindingSource = wsText(body.bindingSource || body.customerBindingSource || body.data?.customerBindingSource, 40).toLowerCase();
+          // The current desktop customer editor posts the known conversation
+          // id when the operator explicitly saves a customer link. Preserve
+          // that compatibility while requiring an unambiguous marker for new
+          // API consumers. Background discovery/phone matching never sends
+          // the conversation id and therefore cannot silently become manual.
+          const explicitManualBinding = Boolean(wsText(body.customerId, 128)) && (
+            requestedBindingSource === 'manual'
+            || (wsText(body.id, 160) === existing.id && !Object.hasOwn(body, 'data'))
+          );
+          if (explicitManualBinding) Object.assign(data, { customerMatch:'manual', customerBindingSource:'manual', customerBindingVerifiedAt:now });
+          else if (previousData.customerBindingSource === 'manual' && previousData.customerMatch === 'manual') {
+            Object.assign(data, { customerMatch:'manual', customerBindingSource:'manual', customerBindingVerifiedAt:previousData.customerBindingVerifiedAt || existing.updated_at || now });
+          }
+          if (body.data?.previewOnly && previousData.historyLoaded) Object.assign(data, { historyLoaded: true, previewOnly: false });
           const title = Object.hasOwn(body, 'title') ? wsCanonicalListPreviewTitle(body.title, lastMessageText, data) : existing.title;
           const lastMessageAt = Object.hasOwn(body, 'lastMessageAt') ? wsIso(body.lastMessageAt) : existing.last_message_at;
           const unreadCount = Object.hasOwn(body, 'unreadCount') ? Math.max(0, Math.floor(Number(body.unreadCount) || 0)) : Number(existing.unread_count || 0);
@@ -894,9 +1506,12 @@ const server = createServer(async (req, res) => {
           const id = wsText(body.id, 160) || wsCreateId('wsc');
           const lastMessageText = wsText(body.lastMessageText, 4000);
           const lastMessageAt = Object.hasOwn(body, 'lastMessageAt') ? wsIso(body.lastMessageAt) : (lastMessageText ? now : '');
+          const data = { ...wsObject(body.data, 32 * 1024), ...(requestedType === 'direct' ? {conversationType:'direct',isGroup:false,vipGroup:false} : {}), ...(requestedType === 'vip_group' ? {conversationType:'vip_group',isGroup:true,vipGroup:true} : {}) };
+          const requestedBindingSource = wsText(body.bindingSource || body.customerBindingSource || body.data?.customerBindingSource, 40).toLowerCase();
+          if (wsText(body.customerId, 128) && requestedBindingSource === 'manual') Object.assign(data, { customerMatch:'manual', customerBindingSource:'manual', customerBindingVerifiedAt:now });
           db.prepare(`INSERT INTO ws_conversations(id,account_id,external_id,title,customer_id,last_message_text,intent_level,data_json,created_at,updated_at,last_message_at,unread_count,language)
             VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-            .run(id, accountId, externalId, wsCanonicalListPreviewTitle(body.title, lastMessageText, body.data), wsText(body.customerId, 128), lastMessageText, wsText(body.intentLevel, 40), JSON.stringify(wsObject(body.data, 32 * 1024)), now, now, lastMessageAt, Math.max(0, Math.floor(Number(body.unreadCount) || 0)), wsText(body.language, 40));
+            .run(id, accountId, externalId, wsCanonicalListPreviewTitle(body.title, lastMessageText, data), requestedType === 'vip_group' ? '' : wsText(body.customerId, 128), lastMessageText, wsText(body.intentLevel, 40), JSON.stringify(data), now, now, lastMessageAt, Math.max(0, Math.floor(Number(body.unreadCount) || 0)), wsText(body.language, 40));
         }
         const row = db.prepare('SELECT * FROM ws_conversations WHERE account_id=? AND external_id=?').get(accountId, externalId);
         return json(res, 200, wsConversationPayload(row));
@@ -904,7 +1519,7 @@ const server = createServer(async (req, res) => {
       return json(res, 405, { error: 'WS 会话只支持 GET/POST。' });
     }
     if (url.pathname === '/api/ws/messages/batch' && req.method === 'POST') {
-      const body = JSON.parse((await readBody(req, 12 * 1024 * 1024)).toString('utf8'));
+      const body = JSON.parse((await readBody(req, WS_MESSAGE_BATCH_MAX_BYTES)).toString('utf8'));
       const conversationId = wsText(body.conversationId, 160);
       const accountId = wsAccountId(body.accountId);
       wsRequireConversation(conversationId, accountId);
@@ -912,7 +1527,8 @@ const server = createServer(async (req, res) => {
       if (body.messages.length > 500) return json(res, 413, { error: '单次最多保存 500 条 WS 消息，请拆分批次。' });
       const messages = body.messages;
       for (const item of messages) {
-        if (!item || typeof item !== 'object' || !WS_DIRECTIONS.has(wsText(item.direction, 16)) || !wsText(item.originalText, 12000)) return json(res, 400, { error: 'WS 批次包含无效的消息方向或空原文。' });
+        if (item && typeof item === 'object' && wsMessageTextTooLong(item.originalText)) return json(res, 413, { error: `WS 原文超过 ${WS_MESSAGE_MAX_CHARS} 字符，未保存且原值未修改。` });
+        if (!item || typeof item !== 'object' || !WS_DIRECTIONS.has(wsText(item.direction, 16)) || !wsMessageText(item.originalText).trim()) return json(res, 400, { error: 'WS 批次包含无效的消息方向或空原文。' });
       }
       const fingerprint = wsBatchFingerprint(conversationId, messages, body.fingerprint || body.batchFingerprint || body.idempotencyKey);
       const previous = db.prepare('SELECT * FROM ws_ingest_batches WHERE account_id=? AND conversation_id=? AND fingerprint=?').get(accountId, conversationId, fingerprint);
@@ -1006,9 +1622,11 @@ const server = createServer(async (req, res) => {
         const accountId = wsAccountId(url.searchParams.get('accountId'));
         if (!conversationId) return json(res, 400, { error: '读取 WS 消息缺少会话编号。' });
         const limit = Math.min(1000, Math.max(1, Number(url.searchParams.get('limit')) || 500));
+        const offset = Math.max(0, Math.floor(Number(url.searchParams.get('offset')) || 0));
         wsRequireConversation(conversationId, accountId);
-        const rows = db.prepare(`SELECT * FROM ws_messages WHERE account_id=? AND conversation_id=? ORDER BY order_no ASC,created_at ASC LIMIT ${limit}`).all(accountId, conversationId);
-        return json(res, 200, { messages: rows.map(wsMessagePayload) });
+        const total = Number(db.prepare('SELECT COUNT(*) AS count FROM ws_messages WHERE account_id=? AND conversation_id=?').get(accountId, conversationId)?.count || 0);
+        const rows = db.prepare('SELECT * FROM ws_messages WHERE account_id=? AND conversation_id=? ORDER BY order_no ASC,created_at ASC,id ASC LIMIT ? OFFSET ?').all(accountId, conversationId, limit, offset);
+        return json(res, 200, { messages: rows.map(wsMessagePayload), total, limit, offset, hasMore: offset + rows.length < total });
       }
       if (req.method === 'POST') {
         const body = JSON.parse((await readBody(req, 2 * 1024 * 1024)).toString('utf8'));
@@ -1019,8 +1637,9 @@ const server = createServer(async (req, res) => {
         const id = wsText(body.id, 160) || wsCreateId('wsm');
         if (!WS_DIRECTIONS.has(wsText(body.direction, 16))) return json(res, 400, { error: 'WS 消息方向无效。' });
         const direction = wsText(body.direction, 16);
-        const originalText = wsText(body.originalText, 12000);
-        if (!originalText) return json(res, 400, { error: 'WS 原文不能为空。' });
+        if (wsMessageTextTooLong(body.originalText)) return json(res, 413, { error: `WS 原文超过 ${WS_MESSAGE_MAX_CHARS} 字符，未保存且原值未修改。` });
+        const originalText = wsMessageText(body.originalText);
+        if (!originalText.trim()) return json(res, 400, { error: 'WS 原文不能为空。' });
         if (externalId) {
           const existing = db.prepare('SELECT * FROM ws_messages WHERE account_id=? AND conversation_id=? AND external_id=?').get(accountId, conversationId, externalId);
           if (existing) {
@@ -1048,12 +1667,93 @@ const server = createServer(async (req, res) => {
       }
       return json(res, 405, { error: 'WS 消息只支持 GET/POST。' });
     }
+    if (url.pathname === '/api/ws/ai-jobs') {
+      const body = req.method === 'POST' ? JSON.parse((await readBody(req, 256 * 1024)).toString('utf8') || '{}') : {};
+      const accountId = wsAccountId(body.accountId || url.searchParams.get('accountId'));
+      wsRequireAccount(accountId);
+      const leaseExpiredAt = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      db.prepare("UPDATE ai_jobs SET status=CASE WHEN attempts>=max_attempts THEN 'failed' ELSE 'retryable' END,locked_at='',next_attempt_at=?,last_error='上次分析中断，已恢复队列',updated_at=? WHERE account_id=? AND status='running' AND (locked_at='' OR locked_at<?)").run(new Date().toISOString(), new Date().toISOString(), accountId, leaseExpiredAt);
+      if (req.method === 'GET') {
+        const conversationId = wsText(url.searchParams.get('conversationId'), 160);
+        const statuses = String(url.searchParams.get('status') || '').split(',').map(value => wsText(value, 24)).filter(value => AI_JOB_STATUSES.has(value));
+        const limit = Math.min(200, Math.max(1, Number(url.searchParams.get('limit')) || 50));
+        const where = ['account_id=?'];
+        const params = [accountId];
+        if (conversationId) { where.push('conversation_id=?'); params.push(conversationId); }
+        if (statuses.length) { where.push(`status IN (${statuses.map(() => '?').join(',')})`); params.push(...statuses); }
+        if (statuses.length && statuses.every(status => ['queued', 'retryable'].includes(status))) { where.push("(next_attempt_at='' OR next_attempt_at<=?)"); params.push(new Date().toISOString()); }
+        const rows = db.prepare(`SELECT * FROM ai_jobs WHERE ${where.join(' AND ')} ORDER BY created_at ASC,id ASC LIMIT ${limit}`).all(...params);
+        return json(res, 200, { jobs: rows.filter(row => wsAiEligible(row.conversation_id, accountId)).map(aiJobPayload), stats: aiJobStats(accountId), generatedAt: new Date().toISOString() });
+      }
+      if (req.method !== 'POST') return json(res, 405, { error: 'AI 队列只支持 GET/POST。' });
+      const action = wsText(body.action || 'enqueue', 24) || 'enqueue';
+      const now = new Date().toISOString();
+      if (action === 'enqueue') {
+        const conversationId = wsText(body.conversationId, 160);
+        const idempotencyKey = wsText(body.idempotencyKey, 320);
+        if (!conversationId || !idempotencyKey) return json(res, 400, { error: 'AI 入队缺少会话编号或幂等键。' });
+        wsRequireAiConversation(conversationId, accountId);
+        const existing = db.prepare('SELECT * FROM ai_jobs WHERE account_id=? AND idempotency_key=?').get(accountId, idempotencyKey);
+        if (existing) return json(res, 200, { job: aiJobPayload(existing), existed: true, stats: aiJobStats(accountId) });
+        const id = wsText(body.id, 160) || wsCreateId('aij');
+        const maxAttempts = Math.min(10, Math.max(1, Math.floor(Number(body.maxAttempts) || 5)));
+        const payload = wsObject(body.payload, 128 * 1024);
+        db.prepare('INSERT INTO ai_jobs(id,account_id,conversation_id,idempotency_key,payload_json,status,attempts,max_attempts,next_attempt_at,locked_at,last_error,analysis_id,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+          .run(id, accountId, conversationId, idempotencyKey, JSON.stringify(payload), 'queued', 0, maxAttempts, now, '', '', '', now, now);
+        return json(res, 201, { job: aiJobPayload(db.prepare('SELECT * FROM ai_jobs WHERE id=? AND account_id=?').get(id, accountId)), existed: false, stats: aiJobStats(accountId) });
+      }
+      const jobId = wsText(body.jobId || body.id, 160);
+      if (!jobId) return json(res, 400, { error: 'AI 队列操作缺少任务编号。' });
+      const existing = db.prepare('SELECT * FROM ai_jobs WHERE id=? AND account_id=?').get(jobId, accountId);
+      if (!existing) return json(res, 404, { error: 'AI 队列任务不存在。' });
+      wsRequireAiConversation(existing.conversation_id, accountId);
+      if (action === 'claim') {
+        const eligible = ['queued', 'retryable'].includes(existing.status) && (!existing.next_attempt_at || existing.next_attempt_at <= now);
+        if (!eligible) return json(res, 200, { claimed: false, job: aiJobPayload(existing), stats: aiJobStats(accountId) });
+        const attempts = Number(existing.attempts || 0) + 1;
+        if (attempts > Number(existing.max_attempts || 5)) {
+          db.prepare("UPDATE ai_jobs SET status='failed',updated_at=?,last_error=CASE WHEN last_error='' THEN '超过最大重试次数' ELSE last_error END WHERE id=? AND account_id=?").run(now, jobId, accountId);
+          const failed = db.prepare('SELECT * FROM ai_jobs WHERE id=? AND account_id=?').get(jobId, accountId);
+          return json(res, 200, { claimed: false, job: aiJobPayload(failed), stats: aiJobStats(accountId) });
+        }
+        const claimed = db.prepare("UPDATE ai_jobs SET status='running',attempts=?,locked_at=?,updated_at=?,last_error='' WHERE id=? AND account_id=? AND status IN ('queued','retryable') AND (next_attempt_at='' OR next_attempt_at<=?)").run(attempts, now, now, jobId, accountId, now);
+        const row = db.prepare('SELECT * FROM ai_jobs WHERE id=? AND account_id=?').get(jobId, accountId);
+        return json(res, 200, { claimed: Number(claimed?.changes || 0) > 0, job: aiJobPayload(row), stats: aiJobStats(accountId) });
+      }
+      if (action === 'checkpoint') {
+        if (existing.status !== 'running') return json(res, 409, { error: 'AI 任务未在运行，分段进度未保存。' });
+        const completedChunks = Math.max(0, Math.floor(Number(body.completedChunks) || 0));
+        const chunkCount = Math.max(1, Math.floor(Number(body.chunkCount) || 1));
+        const payload = { ...wsJson(existing.payload_json, {}), checkpoint: { completedChunks, chunkCount, result: wsObject(body.result, 128 * 1024) } };
+        db.prepare('UPDATE ai_jobs SET payload_json=?,locked_at=?,updated_at=? WHERE id=? AND account_id=?').run(JSON.stringify(payload), now, now, jobId, accountId);
+        return json(res, 200, { ok: true, job: aiJobPayload(db.prepare('SELECT * FROM ai_jobs WHERE id=? AND account_id=?').get(jobId, accountId)) });
+      }
+      if (action === 'complete') {
+        const analysisId = wsText(body.analysisId, 160);
+        db.prepare("UPDATE ai_jobs SET status='completed',locked_at='',analysis_id=?,next_attempt_at='',last_error='',updated_at=? WHERE id=? AND account_id=? AND status IN ('queued','running','retryable','completed')").run(analysisId, now, jobId, accountId);
+        const row = db.prepare('SELECT * FROM ai_jobs WHERE id=? AND account_id=?').get(jobId, accountId);
+        return json(res, 200, { completed: true, job: aiJobPayload(row), stats: aiJobStats(accountId) });
+      }
+      if (action === 'fail') {
+        const retryable = body.retryable !== false;
+        const attempts = Number(existing.attempts || 0);
+        const maxAttempts = Number(existing.max_attempts || 5);
+        const shouldRetry = retryable && attempts < maxAttempts;
+        const nextAttemptAt = shouldRetry ? new Date(Date.now() + aiJobBackoff(attempts)).toISOString() : '';
+        const nextStatus = shouldRetry ? 'retryable' : 'failed';
+        db.prepare('UPDATE ai_jobs SET status=?,locked_at=\'\',next_attempt_at=?,last_error=?,updated_at=? WHERE id=? AND account_id=?').run(nextStatus, nextAttemptAt, wsText(body.error || 'AI 分析失败', 1000), now, jobId, accountId);
+        const row = db.prepare('SELECT * FROM ai_jobs WHERE id=? AND account_id=?').get(jobId, accountId);
+        return json(res, 200, { failed: true, job: aiJobPayload(row), stats: aiJobStats(accountId) });
+      }
+      return json(res, 400, { error: '不支持的 AI 队列操作。' });
+    }
     if (url.pathname === '/api/ws/analyses') {
       if (req.method === 'GET') {
         const conversationId = wsText(url.searchParams.get('conversationId'), 160);
         const accountId = wsAccountId(url.searchParams.get('accountId'));
         if (!conversationId) return json(res, 400, { error: '读取 WS 分析缺少会话编号。' });
         wsRequireConversation(conversationId, accountId);
+        if (!wsAiEligible(conversationId, accountId)) return json(res, 200, {analysis:null, analyses:[], total:0, awaitingConversationType:true});
         const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit')) || 20));
         const offset = Math.max(0, Math.floor(Number(url.searchParams.get('offset')) || 0));
         const rows = db.prepare(`SELECT * FROM ws_ai_analyses WHERE account_id=? AND conversation_id=? ORDER BY created_at DESC,id DESC LIMIT ${limit} OFFSET ${offset}`).all(accountId, conversationId).map(wsAnalysisPayload);
@@ -1064,19 +1764,28 @@ const server = createServer(async (req, res) => {
         const body = JSON.parse((await readBody(req, 1024 * 1024)).toString('utf8'));
         const conversationId = wsText(body.conversationId, 160);
         const accountId = wsAccountId(body.accountId);
-        wsRequireConversation(conversationId, accountId);
+        wsRequireAiConversation(conversationId, accountId);
         const result = wsObject(body.result, 128 * 1024);
         const confidence = Math.min(1, Math.max(0, Number(body.confidence ?? result.confidence) || 0));
         const now = new Date().toISOString(), id = wsCreateId('wsa');
+        const jobId = wsText(body.jobId, 160);
+        const linkedJob = jobId ? db.prepare('SELECT * FROM ai_jobs WHERE id=? AND account_id=? AND conversation_id=?').get(jobId, accountId, conversationId) : null;
+        if (jobId && !linkedJob) return json(res, 409, { error: 'AI 分析任务不存在或会话不匹配。' });
+        if (linkedJob?.analysis_id) {
+          const prior = db.prepare('SELECT * FROM ws_ai_analyses WHERE id=? AND account_id=?').get(linkedJob.analysis_id, accountId);
+          if (prior) return json(res, 200, { ...wsAnalysisPayload(prior), existed: true, job: aiJobPayload(linkedJob) });
+        }
         const intentLevel = wsText(body.intentLevel ?? result.intentLevel ?? result.intent, 40);
         const language = wsText(body.language ?? result.language, 40);
         db.exec('BEGIN IMMEDIATE');
         try {
           db.prepare('INSERT INTO ws_ai_analyses(id,account_id,conversation_id,result_json,confidence,provider_name,model,error_message,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)').run(id, accountId, conversationId, JSON.stringify(result), confidence, wsText(body.providerName, 120), wsText(body.model, 120), wsText(body.errorMessage, 1000), now, now);
           db.prepare(`UPDATE ws_conversations SET intent_level=CASE WHEN ?<>'' THEN ? ELSE intent_level END,language=CASE WHEN ?<>'' THEN ? ELSE language END,updated_at=? WHERE id=? AND account_id=?`).run(intentLevel, intentLevel, language, language, now, conversationId, accountId);
+          if (linkedJob) db.prepare("UPDATE ai_jobs SET status='completed',locked_at='',next_attempt_at='',last_error='',analysis_id=?,updated_at=? WHERE id=? AND account_id=?").run(id, now, jobId, accountId);
           db.exec('COMMIT');
         } catch (error) { db.exec('ROLLBACK'); throw error; }
-        return json(res, 200, wsAnalysisPayload(db.prepare('SELECT * FROM ws_ai_analyses WHERE id=? AND account_id=?').get(id, accountId)));
+        const saved = wsAnalysisPayload(db.prepare('SELECT * FROM ws_ai_analyses WHERE id=? AND account_id=?').get(id, accountId));
+        return json(res, 200, { ...saved, job: linkedJob ? aiJobPayload(db.prepare('SELECT * FROM ai_jobs WHERE id=? AND account_id=?').get(jobId, accountId)) : null });
       }
       return json(res, 405, { error: 'WS 分析只支持 GET/POST/PUT。' });
     }
@@ -1086,51 +1795,142 @@ const server = createServer(async (req, res) => {
       const body = JSON.parse((await readBody(req, 512 * 1024)).toString('utf8'));
       const accountId = wsAccountId(body.accountId);
       const conversationId = wsText(body.conversationId, 160);
-      const conversation = wsRequireConversation(conversationId, accountId);
+      const conversation = wsRequireAiConversation(conversationId, accountId);
       const analysisId = wsText(body.analysisId, 160);
       const analysisRow = analysisId
         ? db.prepare('SELECT * FROM ws_ai_analyses WHERE id=? AND account_id=? AND conversation_id=?').get(analysisId, accountId, conversationId)
         : db.prepare('SELECT * FROM ws_ai_analyses WHERE account_id=? AND conversation_id=? ORDER BY created_at DESC,id DESC LIMIT 1').get(accountId, conversationId);
       if (!analysisRow) return json(res, 404, { error: '找不到要同步的 WS 分析结果。' });
-      const analysis = wsJson(analysisRow.result_json, {});
-      const confidence = Number(analysisRow.confidence || analysis.confidence || 0);
-      const existingHotEvent = db.prepare("SELECT * FROM hot_chat_events WHERE account_id=? AND analysis_id=? AND event_type='analysis_profile' ORDER BY created_at DESC LIMIT 1").get(accountId, analysisRow.id);
-      if (existingHotEvent) {
-        const existingState = readState() || emptyCrmState();
-        const existingCustomer = (existingState.customers || []).find(item => String(item.id) === String(existingHotEvent.customer_id)) || null;
-        const existingFollowup = (existingState.followups || []).find(item => String(item.wsAnalysisId || '') === String(analysisRow.id)) || null;
-        const existingTask = existingState.settings?.operatingTasks?.find(item => String(item.wsFollowupKey || '') === String(existingFollowup?.wsFollowupKey || '')) || null;
-        return json(res, 200, { ok: true, skipped: false, created: false, duplicate: true, softDeleted: Boolean(existingCustomer?.deleted), conflicts: [], customer: existingCustomer, followup: existingFollowup, task: existingTask, updatedFields: [], revision: readStateEnvelope().version });
+      let analysis = wsJson(analysisRow.result_json, {});
+      const analyzedFingerprint = wsText(analysis.transcriptInfo?.sourceFingerprint, 500);
+      const conversationData = wsJson(conversation.data_json, {});
+      const vipGroup = wsIsVipGroup(conversation);
+      const memberScope = wsVipMemberEvidence(conversation, body.memberIdentity || analysis.memberIdentity || analysis.transcriptInfo?.memberIdentity || {});
+      if (vipGroup && (analysis.transcriptInfo?.memberScoped !== true || !memberScope.valid)) {
+        return json(res, 200, {
+          ok:true, skipped:true, matched:false, created:false, identityPending:true,
+          reason: memberScope.reason || 'VIP 群分析必须按单一发言人生成；其他成员消息只能作为上下文，不能写入个人客户档案或跟进评分。',
+          confidence:Number(analysisRow.confidence || analysis.confidence || 0),
+        });
       }
-      if (!wsCrmSync.shouldAutoSync({ ...analysis, confidence })) return json(res, 200, { ok: true, skipped: true, reason: 'AI 置信度不足，未自动写入客户资料。', confidence });
-      const conversationRef = { id: conversation.id, externalId: conversation.external_id, title: conversation.title, analysisId: analysisRow.id };
-      const profile = {
-        ...wsCrmSync.deriveCustomerProfile({ ...analysis, confidence }, conversationRef, accountId),
-        ...customerGovernance.normalizeAiProfile({ ...analysis, confidence }, conversationRef, accountId),
+      if (vipGroup) analysis = wsVipScopedAnalysis(conversation, analysis, memberScope.identity);
+      const currentFingerprint = wsText(conversationData.historyFingerprint, 500);
+      const latestFingerprint = wsText(conversationData.lastMessageFingerprint, 500);
+      const nativeHistoryCount = Number(db.prepare("SELECT COUNT(*) count FROM ws_messages WHERE account_id=? AND conversation_id=? AND json_extract(data_json,'$.source')='ws-webview2' AND COALESCE(json_extract(data_json,'$.previewOnly'),0)<>1").get(accountId, conversationId).count || 0);
+      if (nativeHistoryCount > 0 && (Number(conversationData.directionVersion || 0) < 4 || Number(analysis.transcriptInfo?.directionVersion || 0) < 4)) {
+        return json(res, 409, { error: '历史消息方向尚未通过 v4 双向校验，旧分析已保留但不会写入客户档案；请等待安全重采。', stale: true, directionRecollectionRequired: true });
+      }
+      if (analyzedFingerprint && (
+        conversationData.historyLoaded !== true ||
+        !currentFingerprint ||
+        !latestFingerprint ||
+        currentFingerprint !== latestFingerprint ||
+        analyzedFingerprint !== currentFingerprint
+      )) return json(res, 409, { error: '采集期间聊天已更新，旧分析已保留；将使用最新聊天重新分析。', stale: true });
+      const confidence = Number(analysisRow.confidence || analysis.confidence || 0);
+      if (!wsCrmSync.shouldAutoSync({ ...analysis, confidence })) return json(res, 200, { ok: true, skipped: true, matched: false, created: false, reason: 'AI 没有可用于补齐客户档案的结构化证据。', confidence });
+      const memberIdentity = memberScope.identity;
+      const conversationRef = {
+        id: conversation.id,
+        externalId: vipGroup ? (memberIdentity.senderId || memberIdentity.senderPhone) : conversation.external_id,
+        title: vipGroup ? (memberIdentity.senderName || memberIdentity.senderPhone || memberIdentity.senderId) : conversation.title,
+        customerId: '', analysisId: analysisRow.id,
       };
+      const derivedProfile = wsCrmSync.deriveCustomerProfile({ ...analysis, confidence }, conversationRef, accountId);
+      const normalizedProfile = customerGovernance.normalizeAiProfile({ ...analysis, confidence }, conversationRef, accountId);
+      const profile = { ...derivedProfile, ...Object.fromEntries(Object.entries(normalizedProfile).filter(([, value]) => value !== '' && value != null && (!Array.isArray(value) || value.length))) };
+      if (vipGroup) Object.assign(profile, {
+        customerId:'', customer_id:'',
+        wsExternalId:memberIdentity.senderId,
+        phone:memberIdentity.senderPhone,
+        phoneVerified:Boolean(memberIdentity.senderPhone),
+        phoneSource:memberIdentity.senderPhone ? 'vip-group-sender' : '',
+        conversationId:'',
+      });
       const followupPlan = wsCrmSync.deriveFollowupPlan({ ...analysis, confidence }, { id: analysisRow.id }, { id: conversation.id, externalId: conversation.external_id }, accountId);
       let state = readState() || emptyCrmState();
       for (const key of ['customers', 'tickets', 'deposits', 'followups', 'registrations', 'phoneRegistry', 'batchOperations', 'activities', 'importIssues']) if (!Array.isArray(state[key])) state[key] = [];
       if (!state.settings || typeof state.settings !== 'object' || Array.isArray(state.settings)) state.settings = {};
       if (!Array.isArray(state.settings.operatingTasks)) state.settings.operatingTasks = [];
-      // 自动同步不得按 WS 登录账号匹配客户：同一账号下的多个联系人必须保持独立。
-      // 仅使用 WS 联系人标识、电话号码、联系人账号或会话标识进行匹配。
-      const match = wsCrmSync.matchCustomerForAutoSync(state.customers, profile);
-      if (match.kind === 'ambiguous') return json(res, 409, { error: 'AI 识别到多个候选客户，未自动合并。', needsConfirmation: true, candidates: match.candidates.map(item => ({ id: item.id, name: item.name, phone: item.rawPhone || item.phone || '' })) });
-      let customer = match.customer;
-      const created = !customer;
-      if (!customer) {
-        if (!profile.wsExternalId && !profile.phone && !profile.conversationId) return json(res, 200, { ok: true, skipped: true, reason: '缺少 WS 标识、电话和会话标识，未自动创建客户。' });
-        customer = {
-          id: `CWS-${Date.now().toString(36)}-${wsCore.normalizePhone(profile.phone) || wsCrmSync.deriveFollowupPlan(analysis, { id: analysisRow.id }, conversation, accountId).dedupeKey.split(':').at(-1)}`,
-          name: profile.name || conversation.title || '未命名客户', rawPhone: profile.phone, phone: wsCore.normalizePhone(profile.phone),
-          source: 'WhatsApp', channel: 'WhatsApp', assistant: '未分配', status: '未进群', phase: '新客户', qualification: '待评估',
-          hot: false, investor: false, group: '—', ticket: false, deposit: false, amount: 0,
-          registered: new Date().toISOString().slice(0, 10), lastFollow: '', due: '', note: '', deleted: false, touched: true,
-        };
-        state.customers.unshift(customer);
+      // A legacy/pending customer_id is only a hint. Never let it bypass the
+      // independent identity matcher: otherwise one stale link can cause AI
+      // facts and follow-up tasks to be written to the wrong existing person.
+      // Shared WS login accounts are scope only, never customer evidence.
+      const associatedCustomerId = vipGroup ? '' : wsText(conversation.customer_id, 128);
+      const associatedCustomer = associatedCustomerId
+        ? state.customers.find(item => String(item?.id || '') === associatedCustomerId) || null
+        : null;
+      const manualBinding = !vipGroup && Boolean(associatedCustomer) && conversationData.customerMatch === 'manual' && conversationData.customerBindingSource === 'manual';
+      // AI-extracted phone numbers can describe a relative, payment recipient
+      // or quoted message. They remain usable as profile evidence after a
+      // customer is independently identified, but never establish identity.
+      // Only a phone-shaped visible conversation identity is eligible here.
+      const conversationIdentityPhone = vipGroup ? memberIdentity.senderPhone : [conversation.external_id, conversation.title].map(value => {
+        const raw = wsText(value, 200);
+        const digits = raw.replace(/\D/g, '');
+        return digits.length >= 8 && digits.length <= 15 && /^\+?[\d\s().-]+$/.test(raw) ? raw : '';
+      }).find(Boolean) || '';
+      const independentProfile = {
+        ...profile,
+        customerId:'', customer_id:'',
+        wsExternalId:vipGroup ? memberIdentity.senderId : profile.wsExternalId,
+        wsAccountId:accountId,
+        phone:conversationIdentityPhone,
+        phoneVerified:Boolean(conversationIdentityPhone),
+        phoneSource:conversationIdentityPhone ? (vipGroup ? 'vip-group-sender' : 'conversation') : '',
+        conversationId:vipGroup ? '' : profile.conversationId,
+      };
+      const independentMatch = wsCrmSync.matchCustomerForAutoSync(state.customers, independentProfile);
+      const independentKinds = new Set(vipGroup ? ['ws-id', 'phone'] : ['ws-id', 'phone', 'conversation']);
+      const independentlyVerified = independentKinds.has(independentMatch.kind) && Boolean(independentMatch.customer);
+      if (associatedCustomer && !manualBinding && !independentlyVerified) {
+        return json(res, 200, {
+          ok: true, skipped: true, matched: false, created: false, identityPending: true,
+          reason: '当前会话的历史客户关联尚未由独立 WS 标识、会话标识或电话号码确认；AI 分析已保留，但不会自动修改客户档案或创建提醒。',
+          confidence,
+        });
       }
-      const customerBefore = created ? {} : JSON.parse(JSON.stringify(customer));
+      if (!manualBinding && independentMatch.customer && !independentKinds.has(independentMatch.kind)) {
+        return json(res, 200, {
+          ok: true, skipped: true, matched: false, created: false, identityPending: true,
+          reason: '当前会话缺少独立 WS 标识、会话标识或电话号码证据；AI 分析已保留，但不会按共享账号或联系人别名自动补档。',
+          confidence,
+        });
+      }
+      if (manualBinding) profile.customerId = associatedCustomerId;
+      else profile.customerId = '';
+      const match = manualBinding
+        ? { kind:'explicit-manual', customer:associatedCustomer, candidates:[associatedCustomer] }
+        : independentMatch;
+      const associationCorrected = !vipGroup && Boolean(
+        associatedCustomer && !manualBinding && independentlyVerified
+        && String(independentMatch.customer.id) !== associatedCustomerId
+      );
+      if (match.kind === 'ambiguous') return json(res, 200, { ok: true, skipped: true, matched: false, created: false, conflict: true, reason: 'AI 识别到多个候选客户，保留原档案并记录未关联结果，不自动新增或合并。', candidates: match.candidates.map(item => ({ id: item.id, name: item.name, phone: item.rawPhone || item.phone || '' })), confidence });
+      let customer = match.customer;
+      if (!customer) {
+        return json(res, 200, { ok: true, skipped: true, matched: false, created: false, reason: '未匹配到现有客户档案，已保留 WS 分析结果但不会新增客户。', confidence, profile: { wsExternalId: profile.wsExternalId, phone: profile.phone, contactAccount: profile.contactAccount, conversationId: profile.conversationId } });
+      }
+      // Idempotent duplicate responses must pass the same live identity gate.
+      // A historical event is not proof that a pending legacy association was
+      // correct; returning matched:true before this point could falsely imply
+      // that an unsafe customer link remained eligible for future automation.
+      const existingHotEvent = db.prepare("SELECT * FROM hot_chat_events WHERE account_id=? AND analysis_id=? AND event_type='analysis_profile' ORDER BY created_at DESC LIMIT 1").get(accountId, analysisRow.id);
+      if (existingHotEvent) {
+        if (String(existingHotEvent.customer_id || '') !== String(customer.id || '')) {
+          return json(res, 200, {
+            ok: true, skipped: true, matched: false, created: false, identityPending: true,
+            reason: '当前分析的历史联动记录与最新独立身份校验结果不一致；旧记录已保留，但不会自动修改客户档案或创建提醒。',
+            confidence,
+          });
+        }
+        const existingCustomer = (state.customers || []).find(item => String(item.id) === String(existingHotEvent.customer_id)) || null;
+        const existingFollowup = (state.followups || []).find(item => String(item.wsAnalysisId || '') === String(analysisRow.id)) || null;
+        const existingTask = state.settings?.operatingTasks?.find(item => item.aiGenerated && String(item.customerId || '') === String(existingCustomer?.id || '') && item.done !== true && !['done','dismissed','cancelled'].includes(String(item.status || '').toLowerCase()))
+          || state.settings?.operatingTasks?.find(item => String(item.wsConversationId || '') === conversationId && String(item.wsAccountId || accountId) === accountId) || null;
+        return json(res, 200, { ok: true, skipped: false, matched: Boolean(existingCustomer), created: false, duplicate: true, softDeleted: Boolean(existingCustomer?.deleted), conflicts: [], customer: existingCustomer, followup: existingFollowup, task: existingTask, updatedFields: [], revision: readStateEnvelope().version });
+      }
+      const customerBefore = JSON.parse(JSON.stringify(customer));
       const beforeCustomer = JSON.stringify(customer);
       const profileMerge = wsCrmSync.mergeCustomerProfileSafely(customer, profile);
       const governanceMerge = customerGovernance.mergeAiProfileSafely(customer, profile);
@@ -1139,45 +1939,46 @@ const server = createServer(async (req, res) => {
       if (profile.origin && !customer.origin) customer.origin = profile.origin;
       if (profile.age !== '' && (customer.age === '' || customer.age == null)) customer.age = profile.age;
       if (profile.occupation && !customer.occupation) customer.occupation = profile.occupation;
-      const softDeleted = customerGovernance.shouldAutoSoftDelete({ confidence, deletionSignal: profile.deletionSignal || analysis.deletionSignal || analysis.contactStatus });
-      if (softDeleted && !customer.deleted) {
-        customer.deleted = true;
-        customer.deletedAt = new Date().toISOString();
-        customer.aiDeletedAt = customer.deletedAt;
-        customer.aiDeleteReason = profile.deletionSignal || analysis.deletionSignal || analysis.contactStatus || 'AI 识别为无效或拒绝联系';
-      }
+      // WS analysis may supplement an existing customer and may suppress a
+      // follow-up recommendation, but it must never delete that customer.
+      // Deletion remains an explicit data-governance operation with its own
+      // snapshot, audit trail and user action.
+      const softDeleted = false;
       let followup = null;
       let task = null;
       let duplicate = false;
       if (followupPlan.shouldCreate) {
-        const closedFollowup = item => Boolean(item?.done)
-          || ['done', 'dismissed', 'completed', 'closed'].includes(String(item?.status || '').toLowerCase());
-        // Analysis ids are intentionally unique, but an active reminder is a
-        // conversation-level action. Reusing the open AI follow-up prevents a
-        // newer analysis (or a no-reply poll) from multiplying task-center
-        // records. Closed/manual history remains untouched and can be opened
-        // again by a later analysis as a new action.
-        const existing = state.followups.find(item => String(item.wsFollowupKey || '') === followupPlan.dedupeKey)
-          || state.followups.find(item => item?.aiGenerated
-            && !closedFollowup(item)
-            && String(item.wsConversationId || '') === String(conversation.id)
-            && String(item.customerId || '') === String(customer.id));
+        // Return the proposed plan for existing consumers; only the task is
+        // persisted until an actual contact result is registered.
         const now = new Date().toISOString();
-        followup = existing || {
+        followup = {
           id: `FWS-${wsCore.stableHash(followupPlan.dedupeKey)}`,
           customerId: customer.id, customer: customer.name, phone: customer.rawPhone || customer.phone || '', date: now,
           method: 'WhatsApp', registration: '', wsConversationId: conversation.id, wsAnalysisId: analysisRow.id,
           wsFollowupKey: followupPlan.dedupeKey, aiGenerated: true,
         };
-        Object.assign(followup, { customerId: customer.id, customer: customer.name, phone: customer.rawPhone || customer.phone || '', result: followupPlan.note, note: followupPlan.note, nextDate: followupPlan.nextDate || '', wsConversationId: conversation.id, wsAnalysisId: analysisRow.id, wsFollowupKey: followupPlan.dedupeKey, aiGenerated: true, priority: followupPlan.priority, updatedAt: now });
-        if (existing) duplicate = true;
-        else state.followups.unshift(followup);
-        if (followupPlan.nextDate) customer.due = followupPlan.nextDate;
+        Object.assign(followup, {
+          customerId: customer.id, customer: customer.name, phone: customer.rawPhone || customer.phone || '',
+          result: followupPlan.note, note: followupPlan.note, nextDate: followupPlan.nextDate || '',
+          wsConversationId: conversation.id, wsAnalysisId: analysisRow.id, wsFollowupKey: followupPlan.dedupeKey,
+          aiGenerated: true, status: 'planned', recordType: 'ai-plan', priority: followupPlan.priority, priorityScore: followupPlan.priorityScore,
+          aiReason: followupPlan.reason, aiObjective: followupPlan.objective, aiOpener: followupPlan.opener,
+          aiTalkingPoints: followupPlan.talkingPoints, aiAvoidTopics: followupPlan.avoidTopics,
+          aiReanalyzeWhen: followupPlan.reanalyzeWhen, updatedAt: now,
+        });
+        // A proposed action is a task, not an interaction that already happened.
+        // Keep manual CRM due dates and completed-contact statistics intact.
         const tasks = state.settings.operatingTasks;
-        const existingTask = tasks.find(item => !item.done && (String(item.wsFollowupKey || '') === followupPlan.dedupeKey || String(item.wsConversationId || '') === String(conversation.id)));
-        const taskInput = { title: `跟进 ${customer.name || customer.rawPhone || customer.phone}`, due: followupPlan.nextDate || '', customerId: customer.id, owner: customer.assistant || '未分配', priority: followupPlan.priority, note: followupPlan.note, wsConversationId: conversation.id, wsFollowupKey: followupPlan.dedupeKey, aiGenerated: true };
-        if (existingTask) { Object.assign(existingTask, taskInput, { updatedAt: now }); task = existingTask; }
+        const activeAiTask = item => item?.aiGenerated && item.done !== true && !['done','dismissed','cancelled'].includes(String(item.status || '').toLowerCase());
+        const existingTask = tasks.find(item => activeAiTask(item) && String(item.customerId || '') === String(customer.id))
+          || tasks.find(item => item?.aiGenerated && String(item.customerId || '') === String(customer.id))
+          || tasks.find(item => activeAiTask(item) && String(item.wsConversationId || '') === String(conversation.id) && String(item.wsAccountId || accountId) === accountId)
+          || tasks.find(item => item?.aiGenerated && String(item.wsConversationId || '') === String(conversation.id) && String(item.wsAccountId || accountId) === accountId);
+        const scoreSummary = `AI 综合 ${followupPlan.priorityScore}/100（资金实力 ${followupPlan.qualificationScore}/100，聊天粘度 ${followupPlan.engagementScore}/100）`;
+        const taskInput = { title: `跟进 ${customer.name || customer.rawPhone || customer.phone}`, due: followupPlan.nextDate || '', customerId: customer.id, customerName: customer.name || '', phone: customer.rawPhone || customer.phone || '', wsAccountId: accountId, wsAnalysisId: analysisRow.id, wsMemberIdentity: vipGroup ? memberIdentity : null, owner: customer.assistant || '未分配', priority: followupPlan.priority, priorityBand: followupPlan.priorityBand, priorityScore: followupPlan.priorityScore, qualificationScore: followupPlan.qualificationScore, qualificationReason: followupPlan.qualificationReason, engagementScore: followupPlan.engagementScore, engagementReason: followupPlan.engagementReason, scoreReason: followupPlan.scoreReason, scoreConfidence: followupPlan.scoreConfidence, scoringVersion: followupPlan.scoringVersion, evidenceGate: followupPlan.evidenceGate, scoringWeights: followupPlan.scoringWeights, note: [scoreSummary, followupPlan.scoreReason, followupPlan.note].filter(Boolean).join('；'), objective: followupPlan.objective, suggestedOpener: followupPlan.opener, talkingPoints: followupPlan.talkingPoints, avoidTopics: followupPlan.avoidTopics, wsConversationId: conversation.id, wsFollowupKey: followupPlan.dedupeKey, aiGenerated: true, directionInvalidated: false, invalidationReason: '' };
+        if (existingTask) { duplicate = !existingTask.done; Object.assign(existingTask, taskInput, { done: false, status: 'open', completedAt: '', snoozedUntil: '', updatedAt: now }); task = existingTask; }
         else { task = { id: `TWS-${wsCore.stableHash(followupPlan.dedupeKey)}`, ...taskInput, done: false, createdAt: now, updatedAt: now }; tasks.unshift(task); }
+        for (const other of tasks) if (other !== task && activeAiTask(other) && String(other.customerId || '') === String(customer.id)) Object.assign(other, { status:'dismissed', dismissed:true, dismissedReason:'superseded-by-newer-ai-reminder', updatedAt:now });
       }
       const activity = { id: `AWS-${Date.now().toString(36)}`, text: `AI 自动同步 WS 客户${followupPlan.shouldCreate ? '并生成跟进提醒' : ''}：${customer.name || customer.id}`, time: new Date().toISOString(), color: 'blue', source: 'ws-ai-sync', conversationId: conversation.id, analysisId: analysisRow.id };
       state.activities.unshift(activity);
@@ -1202,19 +2003,42 @@ const server = createServer(async (req, res) => {
         const hotEventResult = db.prepare('INSERT OR IGNORE INTO hot_chat_events(id,profile_id,customer_id,account_id,conversation_id,event_type,payload_json,source,analysis_id,idempotency_key,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)').run(hotEventId, hotUpdated.id, customer.id, accountId, conversation.id, 'analysis_profile', JSON.stringify({ facts: hotFacts }), 'AI', analysisRow.id, `analysis:${analysisRow.id}`, new Date().toISOString());
         if (Number(hotEventResult?.changes || 0) > 0) enqueueHotOutbox(hotUpdated, hotEventId, { facts: hotFacts, customerId: customer.id }, 'crm_sync');
         writeState(state, false);
-        if (created || profileMerge.changedFields.length || governanceMerge.changedFields.length || softDeleted) {
-          recordGovernanceAction(created ? 'create' : 'update', customer.id, customerBefore, customer, { analysisId: analysisRow.id, source: 'WS AI', confidence, reason: created ? 'AI 自动建档' : 'AI 自动补充客户档案' });
+        if (profileMerge.changedFields.length || governanceMerge.changedFields.length || softDeleted) {
+          recordGovernanceAction('update', customer.id, customerBefore, customer, { analysisId: analysisRow.id, source: 'WS AI', confidence, reason: 'AI 自动补充现有客户档案' });
         }
         recordAiFieldEvidence(customer.id, governanceMerge.evidenceRows, governanceMerge.conflicts);
         for (const conflict of governanceMerge.conflicts) {
           const row = { key: `${analysisRow.id}:${conflict.field}`, field: conflict.field, value: conflict.incoming, conversationId: conversation.id, analysisId: analysisRow.id, confidence, sourceText: `AI 识别值与现有值冲突：${String(conflict.existing).slice(0, 200)}` };
           recordAiFieldEvidence(customer.id, [row], [conflict]);
         }
-        if (softDeleted) recordGovernanceAction('soft_delete', customer.id, customerBefore, customer, { analysisId: analysisRow.id, source: 'WS AI', confidence, reason: customer.aiDeleteReason });
-        db.prepare('UPDATE ws_conversations SET customer_id=?,updated_at=? WHERE id=? AND account_id=?').run(customer.id, new Date().toISOString(), conversation.id, accountId);
+        const bindingTime = new Date().toISOString();
+        const latestConversationData = wsJson(db.prepare('SELECT data_json FROM ws_conversations WHERE id=? AND account_id=?').get(conversation.id, accountId)?.data_json, {});
+        const memberBindingKey = vipGroup ? (memberIdentity.senderId || memberIdentity.senderPhone) : '';
+        const verifiedBindingData = vipGroup
+          ? {
+              ...latestConversationData,
+              vipMemberBindings:{
+                ...(latestConversationData.vipMemberBindings && typeof latestConversationData.vipMemberBindings === 'object' ? latestConversationData.vipMemberBindings : {}),
+                [memberBindingKey]:{ customerId:customer.id, senderId:memberIdentity.senderId, senderPhone:memberIdentity.senderPhone, verifiedAt:bindingTime, analysisId:analysisRow.id },
+              },
+            }
+          : manualBinding
+          ? latestConversationData
+          : {
+              ...latestConversationData,
+              customerMatch:match.kind,
+              customerBindingSource:'verified-identity',
+              customerBindingVerifiedAt:bindingTime,
+              ...(associationCorrected ? {
+                previousCustomerAssociationInvalidated:true,
+                previousCustomerId:associatedCustomerId,
+                associationCorrectionAnalysisId:analysisRow.id,
+              } : {}),
+            };
+        db.prepare('UPDATE ws_conversations SET customer_id=?,data_json=?,updated_at=? WHERE id=? AND account_id=?').run(vipGroup ? '' : customer.id, JSON.stringify(verifiedBindingData), bindingTime, conversation.id, accountId);
         db.exec('COMMIT');
       } catch (error) { db.exec('ROLLBACK'); throw error; }
-      return json(res, 200, { ok: true, skipped: false, created, duplicate, softDeleted, conflicts: governanceMerge.conflicts, customer, followup, task, updatedFields: [...new Set([...profileMerge.changedFields, ...governanceMerge.changedFields, ...(beforeCustomer === JSON.stringify(customer) ? [] : ['aiSyncedAt'])])], revision: readStateEnvelope().version });
+      return json(res, 200, { ok: true, skipped: false, matched: true, created: false, duplicate, associationCorrected, softDeleted, conflicts: governanceMerge.conflicts, customer, followup, task, updatedFields: [...new Set([...profileMerge.changedFields, ...governanceMerge.changedFields, ...(beforeCustomer === JSON.stringify(customer) ? [] : ['aiSyncedAt'])])], revision: readStateEnvelope().version });
     }
     if (url.pathname === '/api/ws/replies') {
       if (req.method === 'GET') {
@@ -1248,7 +2072,19 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/ws/collection-runs') {
       const accountId = wsAccountId(url.searchParams.get('accountId'));
       wsRequireAccount(accountId);
-      if (req.method === 'GET') { const row = url.searchParams.get('id') ? db.prepare('SELECT * FROM ws_collection_runs WHERE id=? AND account_id=?').get(url.searchParams.get('id'), accountId) : db.prepare('SELECT * FROM ws_collection_runs WHERE account_id=? ORDER BY created_at DESC LIMIT 1').get(accountId); return json(res,200,{run:row?wsCollectionRunPayload(row):null}); }
+      if (req.method === 'GET') {
+        const row = url.searchParams.get('id')
+          ? db.prepare('SELECT * FROM ws_collection_runs WHERE id=? AND account_id=?').get(url.searchParams.get('id'), accountId)
+          : db.prepare('SELECT * FROM ws_collection_runs WHERE account_id=? ORDER BY created_at DESC LIMIT 1').get(accountId);
+        // A renderer refresh can be interrupted between the item write and
+        // its summary PATCH (for example when WebView2 is backgrounded or the
+        // desktop is resumed from sleep).  Reconcile on every read so the UI
+        // never shows a stale 3/7-style summary when the durable items already
+        // contain the completed records.  This is intentionally idempotent and
+        // scoped to the selected account/run.
+        const refreshed = row ? refreshWsCollectionRunCounters(accountId, row.id) : null;
+        return json(res,200,{run:refreshed || (row ? wsCollectionRunPayload(row) : null)});
+      }
       if (req.method === 'POST') { const body=JSON.parse((await readBody(req,64*1024)).toString('utf8')); const scopedAccountId=wsAccountId(body.accountId || accountId); wsRequireAccount(scopedAccountId); const now=new Date().toISOString(), id=wsText(body.id,160)||wsCreateId('wsr'); db.prepare('INSERT INTO ws_collection_runs(id,account_id,status,created_at,updated_at) VALUES(?,?,?,?,?)').run(id,scopedAccountId,'created',now,now); return json(res,201,{run:wsCollectionRunPayload(db.prepare('SELECT * FROM ws_collection_runs WHERE id=? AND account_id=?').get(id,scopedAccountId))}); }
       if (req.method === 'PATCH') { const body=JSON.parse((await readBody(req,64*1024)).toString('utf8')); const id=wsText(body.id,160), existing=db.prepare('SELECT * FROM ws_collection_runs WHERE id=? AND account_id=?').get(id, accountId); if(!existing)return json(res,404,{error:'采集任务不存在。'}); const n=k=>Math.max(0,Math.floor(Number(body[k] ?? existing[k])||0)); const now=new Date().toISOString(),status=wsText(body.status,30)||existing.status,lastSuccessAt=Object.hasOwn(body,'lastSuccessAt')?wsText(body.lastSuccessAt,80):existing.last_success_at,cursor=Object.hasOwn(body,'cursor')?wsText(body.cursor,500):existing.cursor,resumeCount=Object.hasOwn(body,'resumeCount')?Math.max(0,Math.floor(Number(body.resumeCount)||0)):existing.resume_count+(status==='running'&&existing.status==='paused'?1:0); db.prepare('UPDATE ws_collection_runs SET status=?,total=?,discovered=?,completed=?,analyzing=?,analyzed=?,failed=?,skipped=?,retryable=?,last_error=?,checkpoint=?,cursor=?,resume_count=?,last_success_at=?,updated_at=? WHERE id=? AND account_id=?').run(status,n('total'),n('discovered'),n('completed'),n('analyzing'),n('analyzed'),n('failed'),n('skipped'),n('retryable'),wsText(body.lastError??existing.last_error,1000),wsText(body.checkpoint??existing.checkpoint,500),cursor,resumeCount,lastSuccessAt,now,id,accountId); return json(res,200,{run:wsCollectionRunPayload(db.prepare('SELECT * FROM ws_collection_runs WHERE id=? AND account_id=?').get(id,accountId))}); }
       return json(res,405,{error:'采集任务只支持 GET/POST/PATCH。'});
@@ -1256,27 +2092,124 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/ws/collection-items') {
       const accountId = wsAccountId(url.searchParams.get('accountId'));
       wsRequireAccount(accountId);
-      if (req.method === 'GET') { const runId=wsText(url.searchParams.get('runId'),160); return json(res,200,{items:db.prepare('SELECT * FROM ws_collection_items WHERE account_id=? AND run_id=? ORDER BY updated_at DESC').all(accountId, runId).map(wsCollectionItemPayload)}); }
+      if (req.method === 'GET') {
+        const runId = wsText(url.searchParams.get('runId'), 160);
+        if (!runId) return json(res, 400, { error: '采集项缺少任务编号。' });
+        const limit = Math.min(5000, Math.max(1, Number(url.searchParams.get('limit')) || 5000));
+        const statuses = String(url.searchParams.get('status') || '').split(',').map(value => wsText(value, 30)).filter(Boolean);
+        const analysisStatuses = String(url.searchParams.get('analysisStatus') || '').split(',').map(value => wsText(value, 30)).filter(Boolean);
+        const where = ['account_id=?', 'run_id=?'];
+        const params = [accountId, runId];
+        if (statuses.length) { where.push(`status IN (${statuses.map(() => '?').join(',')})`); params.push(...statuses); }
+        if (analysisStatuses.length) { where.push(`analysis_status IN (${analysisStatuses.map(() => '?').join(',')})`); params.push(...analysisStatuses); }
+        if (url.searchParams.get('historyReady') === '1') {
+          where.push("conversation_id IN (SELECT id FROM ws_conversations WHERE account_id=? AND json_extract(data_json,'$.historyLoaded')=1 AND COALESCE(json_extract(data_json,'$.historyFingerprint'),'')<>'' AND json_extract(data_json,'$.historyFingerprint')=json_extract(data_json,'$.lastMessageFingerprint') AND unread_count=0)");
+          params.push(accountId);
+        }
+        const rows = db.prepare(`SELECT * FROM ws_collection_items WHERE ${where.join(' AND ')} ORDER BY updated_at ASC,id ASC LIMIT ${limit}`).all(...params);
+        return json(res, 200, { items: rows.filter(row => !wsIsExcludedGroup(wsConversationRow(row.conversation_id, accountId) || {}) && (url.searchParams.get('historyReady') !== '1' || wsAiEligible(row.conversation_id, accountId))).map(wsCollectionItemPayload) });
+      }
       if (req.method === 'POST' || req.method === 'PATCH') {
         const body = JSON.parse((await readBody(req, 128 * 1024)).toString('utf8'));
         const scopedAccountId = wsAccountId(body.accountId || accountId);
         const runId = wsText(body.runId, 160), conversationId = wsText(body.conversationId, 160);
         if (!db.prepare('SELECT 1 FROM ws_collection_runs WHERE id=? AND account_id=?').get(runId, scopedAccountId)) return json(res, 404, { error: '采集任务不存在。' });
-        wsRequireConversation(conversationId, scopedAccountId);
+        const conversationRow = wsRequireConversation(conversationId, scopedAccountId);
         const now = new Date().toISOString();
         const existing = db.prepare('SELECT * FROM ws_collection_items WHERE account_id=? AND run_id=? AND conversation_id=?').get(scopedAccountId, runId, conversationId);
         const id = existing?.id || wsText(body.id, 160) || wsCreateId('wsi');
         const val = (key, old, max = 1000) => wsText(body[key] ?? old, max);
-        const requestedCheckpoint = val('checkpoint', existing?.checkpoint || '', 500);
-        const requestedAnalysisStatus = val('analysisStatus', existing?.analysis_status || 'pending', 30);
+        const conversationData = wsJson(conversationRow.data_json, {});
+        const historyFingerprint = wsText(conversationData.historyFingerprint, 500);
+        const latestFingerprint = wsText(conversationData.lastMessageFingerprint, 500);
+        const fullHistoryCurrent = conversationData.historyLoaded === true && Boolean(historyFingerprint) && historyFingerprint === latestFingerprint;
+        const listRefreshCoverage = ['list-preview', 'list-only'].includes(wsText(body.coverageStatus, 30));
+        // Renderer list refreshes are discovery metadata.  If the service has
+        // already verified a current full transcript, preserve its item state
+        // even if an older renderer tries to PATCH list-preview/pending.
+        const protectFullHistory = Boolean(existing && fullHistoryCurrent && listRefreshCoverage);
+        const requestedStatus = protectFullHistory ? existing.status : val('status', existing?.status || 'queued', 30);
+        // Re-discovering a chat is idempotent.  A repeated list scan posts the
+        // same item with the initial `queued` status; it must never downgrade
+        // an item that was already collected (or explicitly skipped).
+        const nextStatus = existing && req.method === 'POST' && requestedStatus === 'queued' && ['completed', 'skipped', 'skipped_unread'].includes(existing.status)
+          ? existing.status
+          : requestedStatus;
+        const requestedCheckpoint = protectFullHistory ? existing.checkpoint : val('checkpoint', existing?.checkpoint || '', 500);
+        const requestedAnalysisStatus = protectFullHistory ? existing.analysis_status : val('analysisStatus', existing?.analysis_status || 'pending', 30);
         const sameCheckpoint = Boolean(existing && requestedCheckpoint && requestedCheckpoint === existing.checkpoint);
         const successfulAnalysis = Boolean(db.prepare("SELECT 1 FROM ws_ai_analyses WHERE account_id=? AND conversation_id=? AND confidence>0 AND error_message='' LIMIT 1").get(scopedAccountId, conversationId));
         const analysisStatus = requestedAnalysisStatus === 'pending' && sameCheckpoint && successfulAnalysis ? 'completed' : requestedAnalysisStatus;
-        if (existing) db.prepare('UPDATE ws_collection_items SET status=?,attempts=?,analysis_status=?,followup_status=?,next_followup_at=?,coverage_status=?,last_error=?,checkpoint=?,updated_at=? WHERE id=? AND account_id=?').run(val('status', existing.status, 30), Math.max(0, Math.floor(Number(body.attempts ?? existing.attempts) || 0)), analysisStatus, val('followupStatus', existing.followup_status, 30), val('nextFollowupAt', existing.next_followup_at, 80), val('coverageStatus', existing.coverage_status, 30), val('lastError', existing.last_error), requestedCheckpoint, now, id, scopedAccountId);
+        if (existing) db.prepare('UPDATE ws_collection_items SET status=?,attempts=?,analysis_status=?,followup_status=?,next_followup_at=?,coverage_status=?,last_error=?,checkpoint=?,updated_at=? WHERE id=? AND account_id=?').run(nextStatus, Math.max(0, Math.floor(Number(body.attempts ?? existing.attempts) || 0)), analysisStatus, val('followupStatus', existing.followup_status, 30), val('nextFollowupAt', existing.next_followup_at, 80), protectFullHistory ? existing.coverage_status : val('coverageStatus', existing.coverage_status, 30), protectFullHistory ? existing.last_error : val('lastError', existing.last_error), requestedCheckpoint, now, id, scopedAccountId);
         else db.prepare('INSERT INTO ws_collection_items(id,account_id,run_id,conversation_id,status,attempts,analysis_status,followup_status,next_followup_at,coverage_status,last_error,checkpoint,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)').run(id, scopedAccountId, runId, conversationId, val('status', 'queued', 30), Math.max(0, Math.floor(Number(body.attempts) || 0)), analysisStatus, val('followupStatus', 'none', 30), val('nextFollowupAt', '', 80), val('coverageStatus', 'unknown', 30), val('lastError', ''), requestedCheckpoint, now, now);
-        return json(res, 200, { item: wsCollectionItemPayload(db.prepare('SELECT * FROM ws_collection_items WHERE id=? AND account_id=?').get(id,scopedAccountId)) });
+        // Keep the run summary authoritative at the service boundary.  The
+        // renderer may be backgrounded or interrupted between item writes;
+        // deriving counters here prevents a stale 3/7 display after the
+        // individual list-only items have already completed.
+        const refreshedRun = refreshWsCollectionRunCounters(scopedAccountId, runId);
+        return json(res, 200, { item: wsCollectionItemPayload(db.prepare('SELECT * FROM ws_collection_items WHERE id=? AND account_id=?').get(id,scopedAccountId)), run: refreshedRun });
       }
       return json(res,405,{error:'采集项只支持 GET/POST/PATCH。'});
+    }
+    if (url.pathname === '/api/ws/followup-action' && req.method === 'POST') {
+      const failure = stateVersionFailure(req);
+      if (failure) return json(res, failure.status, failure.body);
+      const body = JSON.parse((await readBody(req, 64 * 1024)).toString('utf8'));
+      const action = wsText(body.action, 30);
+      if (!['complete', 'snooze', 'dismiss', 'reopen'].includes(action)) return json(res, 400, { error: '不支持的跟进操作。' });
+      const state = governanceState();
+      const task = state.settings.operatingTasks.find(item => body.taskId
+        ? String(item.id) === String(body.taskId)
+        : item.aiGenerated && String(item.wsConversationId) === String(body.conversationId) && String(item.wsAccountId || 'default') === wsAccountId(body.accountId));
+      if (!task?.aiGenerated) return json(res, 404, { error: '关联的 AI 跟进任务不存在，请刷新后重试。' });
+      const accountId = wsAccountId(task.wsAccountId || body.accountId);
+      const conversationId = wsText(task.wsConversationId, 160);
+      if (task.groupExcluded === true || wsIsExcludedGroup(wsConversationRow(conversationId, accountId) || {})) throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '普通群聊跟进已排除，不能重新开启或记为完成。');
+      const customer = governanceCustomer(state, task.customerId);
+      if (!customer || customer.deleted) return json(res, 409, { error: '关联客户已失效，请刷新任务。' });
+      const result = wsText(body.result, 2000);
+      if (action === 'complete' && !result) return json(res, 400, { error: '完成跟进前请填写实际沟通结果。' });
+      const linkedAnalysis = task.wsAnalysisId
+        ? db.prepare('SELECT error_message FROM ws_ai_analyses WHERE id=? AND account_id=? AND conversation_id=?').get(wsText(task.wsAnalysisId, 160), accountId, conversationId)
+        : null;
+      if (action !== 'dismiss' && (task.directionInvalidated === true || wsText(linkedAnalysis?.error_message, 1000))) {
+        return json(res, 409, { error: '该跟进建议来自已失效的聊天方向或失败分析，只能忽略；请等待最新双向聊天重新分析。', directionInvalidated: true });
+      }
+      const now = new Date().toISOString();
+      const due = wsCrmSync.normalizeDate(body.due);
+      if (action === 'snooze' && !due) return json(res, 400, { error: '请选择有效的延期日期。' });
+      const closed = action === 'complete' || action === 'dismiss';
+      const status = action === 'complete' ? 'done' : action === 'dismiss' ? 'dismissed' : action === 'snooze' ? 'snoozed' : 'open';
+      const previousStatus = task.status || (task.done ? 'done' : 'open');
+      task.done = closed;
+      task.status = status;
+      task.updatedAt = now;
+      task.completedAt = closed ? (task.completedAt || now) : '';
+      task.snoozedUntil = action === 'snooze' ? `${due}T00:00:00` : '';
+      if (action === 'snooze') task.due = due;
+      task.history = [...(task.history || []), { action, at: now, due: task.due || '', reason: wsText(body.reason, 500) }].slice(-100);
+      let followup = null;
+      if (action === 'complete' && result) {
+        const recordId = `F-${wsCore.stableHash(`${task.id}:${task.wsAnalysisId || ''}`)}`;
+        followup = state.followups.find(item => item.id === recordId);
+        if (!followup) {
+          followup = { id: recordId, customerId: customer.id, date: now, method: 'WhatsApp', result, note: result, nextDate: wsCrmSync.normalizeDate(body.nextDate), taskId: task.id, wsAnalysisId: task.wsAnalysisId || '', status: 'completed', aiGenerated: false };
+          state.followups.unshift(followup);
+          customer.lastFollow = now.slice(0, 10);
+          if (followup.nextDate) customer.due = followup.nextDate;
+        }
+      }
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        const taskMember = wsVipMemberIdentity(task.wsMemberIdentity || {});
+        const alertKey = `${accountId}:${conversationId}${taskMember.trusted ? `:${taskMember.senderId || taskMember.senderPhone}` : ''}`;
+        db.prepare('UPDATE ws_followup_alerts SET status=?,snoozed_until=?,followup_time=CASE WHEN ?<>\'\' THEN ? ELSE followup_time END,updated_at=? WHERE account_id=? AND alert_key=?').run(status, task.snoozedUntil, action === 'snooze' ? due : '', due, now, accountId, alertKey);
+        db.prepare('UPDATE ws_collection_items SET followup_status=?,next_followup_at=CASE WHEN ?<>\'\' THEN ? ELSE next_followup_at END,updated_at=? WHERE account_id=? AND conversation_id=?').run(status, action === 'snooze' ? due : '', due, now, accountId, conversationId);
+        if (previousStatus !== status || followup) state.activities.unshift({ id: wsCreateId('act'), text: `${action === 'complete' ? '完成' : action === 'dismiss' ? '忽略' : action === 'snooze' ? '延期' : '恢复'} AI 跟进：${customer.name || customer.id}`, time: now, source: 'ws-followup-action', taskId: task.id });
+        writeState(state, false);
+        db.exec('COMMIT');
+      } catch (error) { db.exec('ROLLBACK'); throw error; }
+      return json(res, 200, { ok: true, task, followup, revision: readStateEnvelope().version });
     }
     if (url.pathname === '/api/ws/followup-alerts' && req.method !== 'GET') {
       const body = JSON.parse((await readBody(req, 64 * 1024)).toString('utf8'));
@@ -1285,19 +2218,37 @@ const server = createServer(async (req, res) => {
       const id = wsText(body.id, 160), conversationId = wsText(body.conversationId, 160), alertKey = wsText(body.alertKey, 320);
       const existing = id ? db.prepare('SELECT * FROM ws_followup_alerts WHERE id=? AND account_id=?').get(id, accountId) : alertKey ? db.prepare('SELECT * FROM ws_followup_alerts WHERE account_id=? AND alert_key=?').get(accountId, alertKey) : null;
       if (!existing) return json(res, 404, { error: '跟进提醒不存在。' });
+      wsRequireConversation(existing.conversation_id, accountId);
       if (conversationId && conversationId !== existing.conversation_id) return json(res, 409, { error: '跟进提醒会话不匹配。' });
       const allowed = new Set(['open','snoozed','done','dismissed']);
       const status = allowed.has(wsText(body.status, 20)) ? wsText(body.status, 20) : existing.status;
       const snoozedUntil = wsText(body.snoozedUntil ?? existing.snoozed_until, 80);
       const now = new Date().toISOString();
-      db.prepare('UPDATE ws_followup_alerts SET status=?,snoozed_until=?,updated_at=? WHERE id=? AND account_id=?').run(status, snoozedUntil, now, existing.id, accountId);
+      const state = governanceState();
+      const task = state.settings.operatingTasks.find(item => item.aiGenerated && String(item.wsConversationId || '') === existing.conversation_id && String(item.wsAccountId || accountId) === accountId);
+      const linkedAnalysis = task?.wsAnalysisId
+        ? db.prepare('SELECT error_message FROM ws_ai_analyses WHERE id=? AND account_id=? AND conversation_id=?').get(wsText(task.wsAnalysisId, 160), accountId, existing.conversation_id)
+        : null;
+      if (task && status !== 'dismissed' && (task.directionInvalidated === true || wsText(linkedAnalysis?.error_message, 1000))) {
+        return json(res, 409, { error: '该跟进建议已失效，只能忽略；请等待最新双向聊天重新分析。', directionInvalidated: true });
+      }
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        db.prepare('UPDATE ws_followup_alerts SET status=?,snoozed_until=?,updated_at=? WHERE id=? AND account_id=?').run(status, snoozedUntil, now, existing.id, accountId);
+        if (task) { task.done = ['done', 'dismissed'].includes(status); task.status = status; task.snoozedUntil = snoozedUntil; task.updatedAt = now; if (status === 'snoozed' && wsCrmSync.normalizeDate(snoozedUntil)) task.due = wsCrmSync.normalizeDate(snoozedUntil); writeState(state, false); }
+        db.exec('COMMIT');
+      } catch(error) { db.exec('ROLLBACK'); throw error; }
       return json(res, 200, { alert: wsFollowupAlertPayload(db.prepare('SELECT * FROM ws_followup_alerts WHERE id=? AND account_id=?').get(existing.id,accountId)) });
     }
     if (req.method === 'GET' && url.pathname === '/api/ws/followup-alerts') {
+      const allAccounts = url.searchParams.get('allAccounts') === '1';
       const accountId = wsAccountId(url.searchParams.get('accountId'));
-      wsRequireAccount(accountId);
+      if (!allAccounts) wsRequireAccount(accountId);
       const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit')) || 30));
-      const rows = db.prepare(`SELECT a.*, c.title, c.external_id, c.customer_id FROM ws_ai_analyses a JOIN ws_conversations c ON c.id=a.conversation_id AND c.account_id=a.account_id WHERE a.account_id=? ORDER BY a.created_at DESC LIMIT ${limit * 3}`).all(accountId);
+      const rows = db.prepare(`SELECT a.*, c.title, c.external_id, c.customer_id FROM ws_ai_analyses a JOIN ws_conversations c ON c.id=a.conversation_id AND c.account_id=a.account_id WHERE ${allAccounts ? '1=1' : 'a.account_id=?'} AND a.confidence>=0.3 AND NOT EXISTS (SELECT 1 FROM ws_ai_analyses newer WHERE newer.account_id=a.account_id AND newer.conversation_id=a.conversation_id AND newer.confidence>=0.3 AND (newer.created_at>a.created_at OR (newer.created_at=a.created_at AND newer.id>a.id))) ORDER BY a.created_at DESC`).all(...(allAccounts ? [] : [accountId]));
+      const currentCrm = governanceState();
+      const currentTasks = currentCrm.settings.operatingTasks;
+      const activeCustomerIds = new Set(currentCrm.customers.filter(customer => !customer.deleted).map(customer => String(customer.id)));
       const localDateKey = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
       const today = localDateKey(new Date());
       const upcomingLimitDate = new Date(); upcomingLimitDate.setDate(upcomingLimitDate.getDate() + 7);
@@ -1305,37 +2256,68 @@ const server = createServer(async (req, res) => {
       const alerts = [];
       const seenConversations = new Set();
       for (const row of rows) {
-        if (seenConversations.has(row.conversation_id)) continue;
+        if (!wsAiEligible(row.conversation_id, row.account_id)) continue;
         const result = wsJson(row.result_json, {});
+        const alertConversation = wsConversationRow(row.conversation_id, row.account_id);
+        const alertVipMember = wsVipMemberEvidence(alertConversation, result.memberIdentity || result.transcriptInfo?.memberIdentity || {});
+        if (wsIsVipGroup(alertConversation) && (result.transcriptInfo?.memberScoped !== true || !alertVipMember.valid)) continue;
+        const alertMemberKey = wsIsVipGroup(alertConversation) ? (alertVipMember.identity.senderId || alertVipMember.identity.senderPhone) : '';
+        const seenKey = `${row.conversation_id}:${alertMemberKey}`;
+        if (seenConversations.has(seenKey)) continue;
         const confidence = Number(row.confidence || 0);
         if (result.error || confidence < 0.3) continue;
         // A newer failed or low-confidence analysis must not hide an older
         // valid analysis that still contains an actionable follow-up date.
-        seenConversations.add(row.conversation_id);
-        const due = wsCrmSync.normalizeDate(result.followupTime);
-        const urgent = /高|紧急|urgent|hot/i.test(String(result.urgency || '')) || Number(result.intentScore || 0) >= 80;
+        seenConversations.add(seenKey);
+        const strategy = result.followupStrategy && typeof result.followupStrategy === 'object' ? result.followupStrategy : {};
+        const alertPlan = wsCrmSync.deriveFollowupPlan({ ...result, confidence }, { id: row.id }, { id: row.conversation_id, externalId: row.external_id }, row.account_id);
+        if (!alertPlan.shouldCreate) continue;
+        const scopedAccountId = row.account_id;
+        const task = currentTasks.find(item => item.aiGenerated && String(item.wsAnalysisId || '') === String(row.id))
+          || (!wsIsVipGroup(alertConversation) ? currentTasks.find(item => item.aiGenerated && String(item.wsConversationId || '') === String(row.conversation_id) && String(item.wsAccountId || scopedAccountId) === scopedAccountId) : null);
+        if (!task || !activeCustomerIds.has(String(task.customerId)) || (task.wsAnalysisId && task.wsAnalysisId !== row.id)) continue;
+        const due = wsCrmSync.normalizeDate(task?.due || alertPlan.nextDate);
+        const priorityScore = alertPlan.priorityScore;
+        const urgent = /高|紧急|urgent|hot/i.test(String(result.urgency || '')) || priorityScore >= 80;
         const overdue = Boolean(due && due < today);
         const dueToday = Boolean(due && due === today);
         const upcoming = Boolean(due && due > today && due <= upcomingLimit);
         if (!urgent && !overdue && !dueToday && !upcoming) continue;
-        const alertKey = `${row.account_id}:${row.conversation_id}`;
-        const existingAlert = db.prepare('SELECT * FROM ws_followup_alerts WHERE account_id=? AND alert_key=?').get(accountId, alertKey);
-        const priority = urgent ? 'urgent' : overdue ? 'overdue' : dueToday ? 'today' : 'upcoming';
-        const reason = urgent && overdue ? '高意向且已逾期' : urgent ? '高意向客户' : overdue ? '跟进已逾期' : dueToday ? '今日应跟进' : '未来 7 天内应跟进';
+        const alertKey = `${row.account_id}:${row.conversation_id}${alertMemberKey ? `:${alertMemberKey}` : ''}`;
+        if (task?.done && (!task.wsAnalysisId || task.wsAnalysisId === row.id)) continue;
+        const existingAlert = db.prepare('SELECT * FROM ws_followup_alerts WHERE account_id=? AND alert_key=?').get(scopedAccountId, alertKey);
+        const priority = overdue ? 'overdue' : dueToday ? 'today' : urgent ? 'urgent' : 'upcoming';
+        const reason = wsText(strategy.reason, 500) || (urgent && overdue ? '高意向且已逾期' : urgent ? '高意向客户' : overdue ? '跟进已逾期' : dueToday ? '今日应跟进' : '未来 7 天内应跟进');
         const alertData = {
           title: row.title,
           externalId: row.external_id,
-          customerId: row.customer_id,
+          customerId: task.customerId,
+          memberIdentity: wsIsVipGroup(alertConversation) ? alertVipMember.identity : null,
           summary: result.summary || '',
           nextStep: result.nextStep || '',
-          followupTime: result.followupTime || '',
+          followupTime: due || '',
+          priorityScore,
+          qualificationScore: alertPlan.qualificationScore,
+          qualificationReason: alertPlan.qualificationReason,
+          engagementScore: alertPlan.engagementScore,
+          engagementReason: alertPlan.engagementReason,
+          scoreReason: alertPlan.scoreReason,
+          scoreConfidence: alertPlan.scoreConfidence,
+          priorityBand: alertPlan.priorityBand,
+          scoringVersion: alertPlan.scoringVersion,
+          reminderCadence: alertPlan.reminderCadence,
+          objective: alertPlan.objective || '',
+          opener: alertPlan.opener || '',
+          talkingPoints: alertPlan.talkingPoints || [],
+          avoidTopics: alertPlan.avoidTopics || [],
+          reanalyzeWhen: alertPlan.reanalyzeWhen || [],
           urgency: result.urgency || '',
           intent: result.intent || '',
           confidence,
           needsConfirmation: true,
         };
         const now = new Date().toISOString();
-        if (!existingAlert) db.prepare('INSERT INTO ws_followup_alerts(id,account_id,conversation_id,analysis_id,alert_key,priority,reason,followup_time,status,snoozed_until,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)').run(wsCreateId('wfa'), accountId, row.conversation_id, row.id, alertKey, priority, reason, result.followupTime || '', 'open', '', JSON.stringify(alertData), now, now);
+        if (!existingAlert) db.prepare('INSERT INTO ws_followup_alerts(id,account_id,conversation_id,analysis_id,alert_key,priority,reason,followup_time,status,snoozed_until,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)').run(wsCreateId('wfa'), scopedAccountId, row.conversation_id, row.id, alertKey, priority, reason, due || '', 'open', '', JSON.stringify(alertData), now, now);
         else {
           // A newer analysis is a new reminder decision. Reopen an alert that
           // was completed, dismissed, or snoozed for the older analysis so a
@@ -1343,24 +2325,40 @@ const server = createServer(async (req, res) => {
           const newAnalysis = String(existingAlert.analysis_id || '') !== String(row.id);
           const nextStatus = newAnalysis && ['done', 'dismissed', 'snoozed'].includes(String(existingAlert.status || '')) ? 'open' : existingAlert.status;
           const nextSnoozedUntil = newAnalysis ? '' : existingAlert.snoozed_until;
-          db.prepare('UPDATE ws_followup_alerts SET analysis_id=?,priority=?,reason=?,followup_time=?,status=?,snoozed_until=?,data_json=?,updated_at=? WHERE id=? AND account_id=?').run(row.id, priority, reason, result.followupTime || '', nextStatus, nextSnoozedUntil, JSON.stringify(alertData), now, existingAlert.id, accountId);
+          db.prepare('UPDATE ws_followup_alerts SET analysis_id=?,priority=?,reason=?,followup_time=?,status=?,snoozed_until=?,data_json=?,updated_at=? WHERE id=? AND account_id=?').run(row.id, priority, reason, due || '', nextStatus, nextSnoozedUntil, JSON.stringify(alertData), now, existingAlert.id, scopedAccountId);
         }
-        const savedAlert = db.prepare('SELECT * FROM ws_followup_alerts WHERE account_id=? AND alert_key=?').get(accountId, alertKey);
+        const savedAlert = db.prepare('SELECT * FROM ws_followup_alerts WHERE account_id=? AND alert_key=?').get(scopedAccountId, alertKey);
         if (savedAlert.status === 'done' || savedAlert.status === 'dismissed') continue;
         if (savedAlert.status === 'snoozed' && savedAlert.snoozed_until && savedAlert.snoozed_until > new Date().toISOString()) continue;
         alerts.push({
-          alertKey: `${row.account_id}:${row.conversation_id}`,
+          alertKey,
           id: savedAlert.id,
+          taskId: task?.id || '',
           analysisId: row.id,
           analyzedAt: row.created_at,
           accountId: row.account_id,
           conversationId: row.conversation_id,
           title: row.title,
           externalId: row.external_id,
-          customerId: row.customer_id,
+          customerId: task.customerId,
           summary: result.summary || '',
           nextStep: result.nextStep || '',
-          followupTime: result.followupTime || '',
+          followupTime: due || '',
+          priorityScore,
+          qualificationScore: alertPlan.qualificationScore,
+          qualificationReason: alertPlan.qualificationReason,
+          engagementScore: alertPlan.engagementScore,
+          engagementReason: alertPlan.engagementReason,
+          scoreReason: alertPlan.scoreReason,
+          scoreConfidence: alertPlan.scoreConfidence,
+          priorityBand: alertPlan.priorityBand,
+          scoringVersion: alertPlan.scoringVersion,
+          reminderCadence: alertPlan.reminderCadence,
+          objective: alertPlan.objective || '',
+          opener: alertPlan.opener || '',
+          talkingPoints: alertPlan.talkingPoints || [],
+          avoidTopics: alertPlan.avoidTopics || [],
+          reanalyzeWhen: alertPlan.reanalyzeWhen || [],
           urgency: result.urgency || '',
           intent: result.intent || '',
           confidence,
@@ -1370,13 +2368,16 @@ const server = createServer(async (req, res) => {
           snoozedUntil: savedAlert.snoozed_until || '',
           needsConfirmation: true,
         });
-        if (alerts.length >= limit) break;
       }
-      return json(res, 200, { alerts, generatedAt: new Date().toISOString() });
+      const priorityRank = { overdue: 0, today: 1, urgent: 2, upcoming: 3 };
+      alerts.sort((a, b) => (priorityRank[a.priority] ?? 9) - (priorityRank[b.priority] ?? 9)
+        || Number(b.priorityScore || 0) - Number(a.priorityScore || 0)
+        || String(a.followupTime || '9999-12-31').localeCompare(String(b.followupTime || '9999-12-31')));
+      return json(res, 200, { alerts: alerts.slice(0, limit), generatedAt: new Date().toISOString() });
     }
     if (req.method === 'GET' && url.pathname === '/api/ws/diagnostics') {
       const accountId = wsAccountId(url.searchParams.get('accountId')); wsRequireAccount(accountId);
-      return json(res, 200, { schemaVersion: Number(db.prepare('PRAGMA user_version').get().user_version || 0), counts: { settings: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_settings WHERE account_id=?').get(accountId).count || 0), conversations: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_conversations WHERE account_id=?').get(accountId).count || 0), messages: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_messages WHERE account_id=?').get(accountId).count || 0), analyses: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_ai_analyses WHERE account_id=?').get(accountId).count || 0), replies: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_replies WHERE account_id=?').get(accountId).count || 0), batches: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_ingest_batches WHERE account_id=?').get(accountId).count || 0), collectionRuns: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_collection_runs WHERE account_id=?').get(accountId).count || 0), collectionItems: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_collection_items WHERE account_id=?').get(accountId).count || 0) } });
+      return json(res, 200, { schemaVersion: Number(db.prepare('PRAGMA user_version').get().user_version || 0), counts: { settings: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_settings WHERE account_id=?').get(accountId).count || 0), conversations: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_conversations WHERE account_id=?').get(accountId).count || 0), messages: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_messages WHERE account_id=?').get(accountId).count || 0), analyses: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_ai_analyses WHERE account_id=?').get(accountId).count || 0), aiJobs: aiJobStats(accountId), replies: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_replies WHERE account_id=?').get(accountId).count || 0), batches: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_ingest_batches WHERE account_id=?').get(accountId).count || 0), collectionRuns: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_collection_runs WHERE account_id=?').get(accountId).count || 0), collectionItems: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_collection_items WHERE account_id=?').get(accountId).count || 0) } });
     }
     if (req.method === 'GET' && url.pathname === '/api/ws/export') {
       const accountId = wsAccountId(url.searchParams.get('accountId')); wsRequireAccount(accountId);
@@ -1414,7 +2415,8 @@ const server = createServer(async (req, res) => {
       if (conversations.some(item => !wsText(item.id, 160) || !wsText(item.externalId, 160)) || conversationIds.size !== conversations.length || externalIds.size !== conversations.length) return json(res, 400, { error: 'WS 备份中的会话编号或外部标识缺失或重复。' });
       if (settings.some(item => !conversationIds.has(wsText(item.conversationId, 160)))) return json(res, 400, { error: 'WS 备份中的设置关联了不存在的会话。' });
       if (new Set(settings.map(item => wsText(item.conversationId, 160))).size !== settings.length) return json(res, 400, { error: 'WS 备份中同一会话存在重复设置。' });
-      if (messages.some(item => !conversationIds.has(wsText(item.conversationId, 160)) || !WS_DIRECTIONS.has(wsText(item.direction, 16)) || !wsText(item.originalText, 12000))) return json(res, 400, { error: 'WS 备份中的消息格式无效。' });
+      if (messages.some(item => wsMessageTextTooLong(item.originalText))) return json(res, 413, { error: `WS 备份中的消息原文超过 ${WS_MESSAGE_MAX_CHARS} 字符，未恢复且现有数据未修改。` });
+      if (messages.some(item => !conversationIds.has(wsText(item.conversationId, 160)) || !WS_DIRECTIONS.has(wsText(item.direction, 16)) || !wsMessageText(item.originalText).trim())) return json(res, 400, { error: 'WS 备份中的消息格式无效。' });
       if (analyses.some(item => !conversationIds.has(wsText(item.conversationId, 160)))) return json(res, 400, { error: 'WS 备份中的 AI 分析关联无效。' });
       if (replies.some(item => !conversationIds.has(wsText(item.conversationId, 160)))) return json(res, 400, { error: 'WS 备份中的回复关联无效。' });
       if (batches.some(item => !conversationIds.has(wsText(item.conversationId, 160)) || !wsText(item.fingerprint, 160))) return json(res, 400, { error: 'WS 备份中的消息批次关联或指纹无效。' });
@@ -1445,6 +2447,11 @@ const server = createServer(async (req, res) => {
       if (followupAlerts.some(item => !conversationIds.has(wsText(item.conversationId, 160)) || !wsText(item.alertKey, 240) || (wsText(item.analysisId, 160) && !analysisIds.has(wsText(item.analysisId, 160))))) return json(res, 400, { error: 'WS 备份中的跟进提醒关联无效。' });
       const alertKeys = followupAlerts.map(item => wsText(item.alertKey, 240));
       if (new Set(alertKeys).size !== alertKeys.length) return json(res, 400, { error: 'WS 备份中存在重复跟进提醒标识。' });
+      const knownGroups = db.prepare('SELECT id,external_id,data_json FROM ws_conversations WHERE account_id=?').all(accountId).filter(wsCore.isGroupConversation);
+      const vipGroupExternalIds = new Set(knownGroups.filter(wsIsVipGroup).map(row => row.external_id));
+      const vipGroupIds = new Set(knownGroups.filter(wsIsVipGroup).map(row => row.id));
+      const groupExternalIds = new Set(knownGroups.filter(wsIsExcludedGroup).map(row => row.external_id));
+      const groupIds = new Set(knownGroups.filter(wsIsExcludedGroup).map(row => row.id));
       db.exec('BEGIN IMMEDIATE');
       try {
         db.prepare('DELETE FROM ws_followup_alerts WHERE account_id=?').run(accountId);
@@ -1458,11 +2465,31 @@ const server = createServer(async (req, res) => {
         db.prepare('DELETE FROM ws_conversations WHERE account_id=?').run(accountId);
         const now = new Date().toISOString();
         const addConversation = db.prepare('INSERT INTO ws_conversations(id,account_id,external_id,title,customer_id,last_message_text,intent_level,data_json,created_at,updated_at,last_message_at,unread_count,language) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)');
-        for (const item of conversations) { const lastMessage = wsText(item.lastMessageText, 4000); addConversation.run(wsText(item.id, 160), accountId, wsText(item.externalId, 160), wsText(item.title, 200), wsText(item.customerId, 128), lastMessage, wsText(item.intentLevel, 40), JSON.stringify(wsObject(item.data, 32 * 1024)), wsIso(item.createdAt || now), wsIso(item.updatedAt || now), item.lastMessageAt ? wsIso(item.lastMessageAt) : (lastMessage ? wsIso(item.updatedAt || now) : ''), Math.max(0, Math.floor(Number(item.unreadCount) || 0)), wsText(item.language, 40)); }
+        for (const item of conversations) {
+          const type = vipGroupExternalIds.has(wsText(item.externalId, 160)) || vipGroupIds.has(wsText(item.id, 160))
+            ? 'vip_group'
+            : groupExternalIds.has(wsText(item.externalId, 160)) || groupIds.has(wsText(item.id, 160))
+              ? 'group'
+              : wsCore.conversationType(item);
+          const data = { ...wsObject(item.data, 32 * 1024), ...(type !== 'unknown' ? {conversationType:type, isGroup:['group','vip_group'].includes(type), vipGroup:type === 'vip_group'} : {}) };
+          const lastMessage = wsText(item.lastMessageText, 4000);
+          addConversation.run(wsText(item.id, 160), accountId, wsText(item.externalId, 160), wsText(item.title, 200), type === 'vip_group' ? '' : wsText(item.customerId, 128), lastMessage, wsText(item.intentLevel, 40), JSON.stringify(data), wsIso(item.createdAt || now), wsIso(item.updatedAt || now), item.lastMessageAt ? wsIso(item.lastMessageAt) : (lastMessage ? wsIso(item.updatedAt || now) : ''), Math.max(0, Math.floor(Number(item.unreadCount) || 0)), wsText(item.language, 40));
+        }
         const addSetting = db.prepare('INSERT INTO ws_settings(conversation_id,account_id,enabled,receive_enabled,send_enabled,target_language,send_language,show_original,ai_enabled,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)');
         for (const item of settings) addSetting.run(wsText(item.conversationId, 160), accountId, item.enabled === false ? 0 : 1, item.receive === false ? 0 : 1, item.send === false ? 0 : 1, wsText(item.targetLanguage, 40) || '中文', wsText(item.sendLanguage, 40), item.showOriginal === false ? 0 : 1, item.aiEnabled === false ? 0 : 1, WS_STATUSES.has(wsText(item.status, 32)) ? wsText(item.status, 32) : '未连接', wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
         const addMessage = db.prepare('INSERT INTO ws_messages(id,account_id,conversation_id,external_id,direction,original_text,translated_text,source_language,target_language,order_no,data_json,created_at,updated_at,translation_status,translation_error,translation_attempts,last_attempt_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
-        for (const item of messages) { const translation = wsTranslationFields(item); addMessage.run(wsText(item.id, 160) || wsCreateId('wsm'), accountId, wsText(item.conversationId, 160), wsText(item.externalId, 200), wsText(item.direction, 16), wsText(item.originalText, 12000), translation.translatedText, wsText(item.sourceLanguage, 40), wsText(item.targetLanguage, 40), Number.isFinite(Number(item.order)) ? Number(item.order) : 0, JSON.stringify(wsObject(item.data, 32 * 1024)), wsIso(item.createdAt || now), wsIso(item.updatedAt || now), translation.translationStatus, translation.translationError, translation.translationAttempts, translation.lastAttemptAt); }
+        for (const item of messages) {
+          const translation = wsTranslationFields(item);
+          const rawData = wsObject(item.data, 32 * 1024);
+          const hasTimestampMetadata = rawData.source === 'ws-webview2'
+            || ['sentAt','observedAt','timestampText','timestampSource','sentAtKnown'].some(key => Object.hasOwn(rawData, key))
+            || Boolean(item.sentAt || item.observedAt || item.timestampText || item.timestampSource)
+            || item.sentAtKnown === true;
+          const time = wsMessageTimeMetadata({ ...item, data: rawData }, item.observedAt || rawData.observedAt || item.createdAt || now);
+          const data = hasTimestampMetadata ? wsMessageDataWithTime(rawData, time) : rawData;
+          const createdAt = rawData.source === 'ws-webview2' && time.sentAtKnown ? time.sentAt : wsIso(item.createdAt || now);
+          addMessage.run(wsText(item.id, 160) || wsCreateId('wsm'), accountId, wsText(item.conversationId, 160), wsText(item.externalId, 200), wsText(item.direction, 16), wsMessageText(item.originalText), translation.translatedText, wsText(item.sourceLanguage, 40), wsText(item.targetLanguage, 40), Number.isFinite(Number(item.order)) ? Number(item.order) : 0, JSON.stringify(data), createdAt, wsIso(item.updatedAt || now), translation.translationStatus, translation.translationError, translation.translationAttempts, translation.lastAttemptAt);
+        }
         const addAnalysis = db.prepare('INSERT INTO ws_ai_analyses(id,account_id,conversation_id,result_json,confidence,provider_name,model,error_message,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)');
         for (const item of analyses) addAnalysis.run(wsText(item.id, 160) || wsCreateId('wsa'), accountId, wsText(item.conversationId, 160), JSON.stringify(wsObject(item.result, 128 * 1024)), Math.min(1, Math.max(0, Number(item.confidence) || 0)), wsText(item.providerName, 120), wsText(item.model, 120), wsText(item.errorMessage, 1000), wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
         const addReply = db.prepare('INSERT INTO ws_replies(id,account_id,conversation_id,original_text,translated_text,status,created_at,updated_at,idempotency_key) VALUES(?,?,?,?,?,?,?,?,?)');
@@ -1475,6 +2502,7 @@ const server = createServer(async (req, res) => {
          for (const item of collectionItems) addItem.run(wsText(item.id, 160) || wsCreateId('wsi'), accountId, wsText(item.runId, 160), wsText(item.conversationId, 160), wsText(item.status, 30) || 'queued', Math.max(0, Math.floor(Number(item.attempts) || 0)), wsText(item.analysisStatus, 30) || 'pending', wsText(item.followupStatus, 30) || 'none', wsText(item.nextFollowupAt, 80), wsText(item.lastError, 1000), wsText(item.checkpoint, 500), wsIso(item.createdAt || now), wsIso(item.updatedAt || now), wsText(item.coverageStatus, 30) || 'unknown');
          const addAlert = db.prepare('INSERT INTO ws_followup_alerts(id,account_id,conversation_id,analysis_id,alert_key,priority,reason,followup_time,status,snoozed_until,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)');
          for (const item of followupAlerts) addAlert.run(wsText(item.id, 160) || wsCreateId('wfa'), accountId, wsText(item.conversationId, 160), wsText(item.analysisId, 160), wsText(item.alertKey, 240), wsText(item.priority, 20) || 'today', wsText(item.reason, 500), wsText(item.followupTime, 80), wsText(item.status, 20) || 'open', wsText(item.snoozedUntil, 80), JSON.stringify(wsObject(item.data, 32 * 1024)), wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
+        for (const row of db.prepare('SELECT * FROM ws_conversations WHERE account_id=?').all(accountId)) if (wsIsExcludedGroup(row)) wsQuiesceGroup(row, now);
         db.exec('COMMIT');
       } catch (error) { db.exec('ROLLBACK'); throw error; }
       return json(res, 200, { ok: true, schemaVersion: 6, counts: { settings: settings.length, conversations: conversations.length, messages: messages.length, analyses: analyses.length, replies: replies.length, batches: batches.length, collectionRuns: collectionRuns.length, collectionItems: collectionItems.length, followupAlerts: followupAlerts.length } });
@@ -1487,6 +2515,7 @@ const server = createServer(async (req, res) => {
         wsRequireAccount(identity.accountId);
         const knownConversation = identity.conversationId ? db.prepare('SELECT account_id FROM ws_conversations WHERE id=?').get(identity.conversationId) : null;
         if (knownConversation && String(knownConversation.account_id || 'default') !== identity.accountId) return json(res, 409, { error: 'WS 会话属于另一个账号。' });
+        if (knownConversation) wsRequireConversation(identity.conversationId, identity.accountId);
         const row = hotProfileRow(identity);
         const profile = row ? hotProfilePayload(row) : hotProfileDefaultPayload(identity);
         if (subpath === 'diagnostics') {
@@ -1504,6 +2533,7 @@ const server = createServer(async (req, res) => {
       wsRequireAccount(identity.accountId);
       const knownConversation = identity.conversationId ? db.prepare('SELECT account_id FROM ws_conversations WHERE id=?').get(identity.conversationId) : null;
       if (knownConversation && String(knownConversation.account_id || 'default') !== identity.accountId) return json(res, 409, { error: 'WS 会话属于另一个账号。' });
+      if (knownConversation) wsRequireConversation(identity.conversationId, identity.accountId);
       db.exec('BEGIN IMMEDIATE');
       try {
         let row;
@@ -1732,66 +2762,18 @@ const server = createServer(async (req, res) => {
       const body = bodyBytes.length ? JSON.parse(bodyBytes.toString('utf8')) : {};
       return json(res, 200, { ok: true, snapshotCreated: saveSnapshot(String(body.reason || '用户恢复备份前自动快照').slice(0, 120)) });
     }
-    if (req.method === 'POST' && url.pathname === '/api/import/legacy/preview') {
-      const bytes = await readBody(req, 20 * 1024 * 1024);
-      const workDir = mkdtempSync(join(tmpdir(), 'zhike-legacy-preview-'));
-      const tempPath = join(workDir, 'selected.sqlite');
-      let converted;
-      try {
-        writeFileSync(tempPath, bytes, { flag: 'wx' });
-        converted = convertLegacy(tempPath);
-      } catch (error) {
-        rmSync(workDir, { recursive: true, force: true });
-        throw error;
-      }
-      clearTimeout(pendingImportTimer);
-      if (pendingImport?.workDir) rmSync(pendingImport.workDir, { recursive: true, force: true });
-      const token = randomUUID();
-      pendingImport = { workDir, converted, token, expiresAt: Date.now() + 10 * 60 * 1000 };
-      pendingImportTimer = setTimeout(() => {
-        if (pendingImport?.token !== token) return;
-        rmSync(pendingImport.workDir, { recursive: true, force: true });
-        pendingImport = null;
-      }, 10 * 60 * 1000);
-      pendingImportTimer.unref();
-      return json(res, 200, { ...converted.preview, token: pendingImport.token, filename: basename(req.headers['x-filename'] || 'selected database') });
-    }
-    if (req.method === 'POST' && url.pathname === '/api/import/legacy/commit') {
-      const body = JSON.parse((await readBody(req, 1024 * 1024)).toString('utf8'));
-      const expectedVersion = req.headers['x-state-version'];
-      if (expectedVersion === undefined) return json(res, 428, { error: '迁移必须提供数据版本，请刷新后重试。' });
-      const currentVersion = readStateEnvelope().version;
-      if (expectedVersion !== undefined && String(expectedVersion) !== currentVersion) return json(res, 409, { error: '共享数据已在其他窗口更新，请重新同步后再迁移。', version: currentVersion });
-      if (!pendingImport || body.token !== pendingImport.token) return json(res, 409, { error: '迁移预览已失效，请重新选择数据库。' });
-      if (pendingImport.expiresAt <= Date.now()) {
-        clearTimeout(pendingImportTimer);
-        rmSync(pendingImport.workDir, { recursive: true, force: true });
-        pendingImport = null;
-        return json(res, 409, { error: '迁移预览已过期，请重新选择数据库。' });
-      }
-      const previous = readState();
-      const nextState = pendingImport.converted.result;
-      try { validateState(nextState); } catch (error) { return json(res, 400, { error: `迁移数据验证失败：${error.message}` }); }
-      db.exec('BEGIN IMMEDIATE');
-      let snapshotCreated = false;
-      try {
-        if (previous) {
-          db.prepare('INSERT INTO state_snapshots(created_at,reason,json) VALUES(?,?,?)').run(new Date().toISOString(), '旧版数据库迁移前自动快照', JSON.stringify(previous));
-          const retention = Math.min(100, Math.max(1, Number(previous.settings?.snapshotRetention) || 20));
-          db.prepare('DELETE FROM state_snapshots WHERE id NOT IN (SELECT id FROM state_snapshots ORDER BY id DESC LIMIT ?)').run(retention);
-          snapshotCreated = true;
-        }
-        writeState(nextState, false);
-        db.exec('COMMIT');
-      } catch (error) { db.exec('ROLLBACK'); throw error; }
-      const count = pendingImport.converted.preview.customers;
-      clearTimeout(pendingImportTimer);
-      rmSync(pendingImport.workDir, { recursive: true, force: true });
-      pendingImport = null;
-      return json(res, 200, { ok: true, customers: count, snapshotCreated, version: readStateEnvelope().version });
-    }
     if (req.method === 'GET' && url.pathname === '/api/diagnostics') return json(res, 200, databaseDiagnostics());
-    if (req.method === 'GET' && url.pathname === '/api/health') return json(res, 200, { ok: true, storage: 'sqlite', workspace: root });
+    if (req.method === 'GET' && url.pathname === '/api/health') {
+      return json(res, 200, {
+        ok: true,
+        appVersion: APP_VERSION,
+        schemaVersion: Number(db.prepare('SELECT COALESCE(MAX(version), 0) AS version FROM schema_migrations').get()?.version || 0),
+        databaseStatus: 'healthy',
+        workerStatus: 'running',
+        storage: 'sqlite',
+        workspace: root,
+      });
+    }
 
     const requestPath = decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname);
     if (requestPath === '/modules/customer-governance-ui.js') {
@@ -1810,7 +2792,7 @@ const server = createServer(async (req, res) => {
       res.end(body);
       return;
     }
-    if (!['/modules/productivity.js', '/modules/performance-enhancements.js', '/modules/smart-import.js', '/modules/business-enhancements.js', '/modules/business-enhancements.css', '/modules/accessibility-enhancements.js', '/modules/operations-upgrade.js', '/modules/operations-upgrade.css', '/modules/ui-refresh.css', '/index.html', '/styles.css', '/app.js', '/modules/v4-data-center.js', '/modules/v4.css', '/modules/gpt-assistant.js', '/modules/runtime-customizer.js', '/modules/gpt-assistant.css', '/modules/gpt-workbench.css', '/modules/gpt-modern.css', '/modules/gpt-upgrade.css', '/modules/gpt-management.css', '/modules/phone-registry.js', '/modules/phone-registry.css', '/modules/phone-registry-seed.json', '/modules/v41-ui.css', '/modules/operations-core.cjs', '/modules/operations-ui.js', '/modules/ticket-record-core.js', '/modules/ws-workbench-core.js', '/modules/ws-crm-sync-core.js', '/modules/hot-chat-profile-core.js', '/modules/ws-workbench.js', '/modules/ws-workbench.css'].includes(requestPath)) return json(res, 404, { error: '文件不存在。' });
+    if (!['/modules/productivity.js', '/modules/performance-enhancements.js', '/modules/desktop-performance.js', '/modules/smart-import.js', '/modules/business-rule-core.js', '/modules/business-enhancements.js', '/modules/business-enhancements.css', '/modules/accessibility-enhancements.js', '/modules/operations-upgrade.js', '/modules/operations-upgrade.css', '/modules/ui-refresh.css', '/modules/horizon-atelier.css', '/modules/scroll-system.css', '/modules/scroll-coordinator.js', '/modules/desktop-host.js', '/index.html', '/styles.css', '/app.js', '/vendor/xlsx/xlsx.js', '/modules/v4-data-center.js', '/modules/v4.css', '/modules/gpt-assistant.js', '/modules/runtime-customizer.js', '/modules/gpt-assistant.css', '/modules/gpt-workbench.css', '/modules/gpt-modern.css', '/modules/gpt-management.css', '/modules/phone-registry.js', '/modules/phone-registry.css', '/modules/v41-ui.css', '/modules/operations-core.cjs', '/modules/operations-ui.js', '/modules/ticket-record-core.js', '/modules/ws-workbench-core.js', '/modules/ws-crm-sync-core.js', '/modules/hot-chat-profile-core.js', '/modules/ws-workbench.js', '/modules/ws-workbench.css'].includes(requestPath)) return json(res, 404, { error: '文件不存在。' });
     const filePath = resolve(root, `.${normalize(requestPath)}`);
     if (!filePath.startsWith(root + sep) || !existsSync(filePath) || !statSync(filePath).isFile()) return json(res, 404, { error: '文件不存在。' });
     const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.cjs': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml' };
@@ -1822,7 +2804,7 @@ const server = createServer(async (req, res) => {
       res.end(html);
     } else createReadStream(filePath).pipe(res);
   } catch (error) {
-    json(res, 400, { error: error.message || '本地操作失败。' });
+    json(res, error.status || 400, { error: error.message || '本地操作失败。', ...(error.code ? {code:error.code} : {}) });
   }
 });
 
@@ -1844,11 +2826,14 @@ server.on('listening', () => {
   }
 });
 server.on('error', error => {
-  if (error.code === 'EADDRINUSE' && port < 4199) return startListening(port + 1);
+  // Do not silently move to another port.  The desktop owner waits on the
+  // exact port it assigned and retries the complete startup handshake when a
+  // race or stale process has claimed it; changing ports here causes a false
+  // bridge timeout and leaves an orphan sidecar behind.
   console.error(`本地服务无法启动：${error.message}`);
   process.exit(1);
 });
 startListening(port);
-server.on('close', () => { clearTimeout(pendingImportTimer); if (parentMonitor) clearInterval(parentMonitor); if (pendingImport?.workDir) rmSync(pendingImport.workDir, { recursive: true, force: true }); db.close(); releaseWorkspaceLock(); });
+server.on('close', () => { if (parentMonitor) clearInterval(parentMonitor); db.close(); releaseWorkspaceLock(); });
 process.on('SIGINT', () => server.close(() => process.exit(0)));
 process.on('SIGTERM', () => server.close(() => process.exit(0)));

@@ -9,32 +9,71 @@ public static class LegacyBridgeScript
         const DEFAULT_TIMEOUT_MS = 15000;
         const WRITE_TIMEOUT_MS = 120000;
         const SNAPSHOT_TIMEOUT_MS = 300000;
+        const AI_REQUEST_TIMEOUT_MS = 115000;
+        const AI_CONTROL_TIMEOUT_MS = 60000;
+        const AI_CANCEL_TIMEOUT_MS = 5000;
         const MAX_MESSAGE_CHARS = 50 * 1024 * 1024;
+        const createRequestId = () => (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+        const postAiCancellation = (targetRequestId) => {
+          if (!targetRequestId) return;
+          try {
+            const envelope = JSON.stringify({
+              type: 'zhike.bridge.request', requestId: createRequestId(), bridgeVersion: '6.0',
+              method: 'ai.cancel', payload: { requestId: targetRequestId }, timeoutMs: AI_CANCEL_TIMEOUT_MS,
+              accountId: null
+            });
+            if (envelope.length <= MAX_MESSAGE_CHARS) window.chrome.webview.postMessage(envelope);
+          } catch (_) {}
+        };
         window.__DESKTOP_APP__ = true;
         window.__LOCAL_DB__ = __ZHikeLocalDbFlag__;
         window.__ZHIKE_STORAGE_MODE__ = __ZhikeStorageMode__;
         const host = {
-          version: '5.1',
+          version: '6.0',
           invoke(method, payload = {}, options = {}) {
-            const requestId = (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+            const requestId = createRequestId();
+            const normalizedOptions = options && typeof options === 'object' ? options : {};
+            const isAiRequest = method === 'ai.request' || method === 'ai';
+            const isAiNetworkControl = /^ai\.(?:testconnection|test|listmodels|models)$/i.test(method);
+            const aiPayload = isAiRequest && payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : {};
+            const aiOperationId = isAiRequest ? String(aiPayload.requestId || requestId).slice(0, 128) : '';
+            const bridgePayload = isAiRequest ? { ...aiPayload, requestId: aiOperationId } : payload;
             const path = method === 'legacy.api' ? String(payload?.path || '') : '';
             const verb = method === 'legacy.api' ? String(payload?.method || 'GET').toUpperCase() : 'GET';
             const isSnapshotWrite = verb !== 'GET' && verb !== 'HEAD' && /^\/api\/snapshots?(?:\/.*\/restore)?$/i.test(path);
             const isLargeWrite = verb !== 'GET' && verb !== 'HEAD' && (/^\/api\/state(?:\/|$)/i.test(path) || /^\/api\/import\//i.test(path));
             const timeoutLimit = isSnapshotWrite ? SNAPSHOT_TIMEOUT_MS : WRITE_TIMEOUT_MS;
-            const timeoutMs = Math.min(timeoutLimit, Math.max(1000, Number(options.timeoutMs) || (isSnapshotWrite ? SNAPSHOT_TIMEOUT_MS : isLargeWrite ? WRITE_TIMEOUT_MS : DEFAULT_TIMEOUT_MS)));
+            const defaultTimeout = isSnapshotWrite ? SNAPSHOT_TIMEOUT_MS : isLargeWrite ? WRITE_TIMEOUT_MS : isAiRequest ? AI_REQUEST_TIMEOUT_MS : isAiNetworkControl ? AI_CONTROL_TIMEOUT_MS : DEFAULT_TIMEOUT_MS;
+            const timeoutMs = Math.min(timeoutLimit, Math.max(1000, Number(normalizedOptions.timeoutMs) || defaultTimeout));
             const envelope = JSON.stringify({
-              type: 'zhike.bridge.request', requestId, bridgeVersion: '5.1',
-              method, payload, timeoutMs,
-              accountId: options.accountId || null
+              type: 'zhike.bridge.request', requestId, bridgeVersion: '6.0',
+              method, payload: bridgePayload, timeoutMs,
+              accountId: normalizedOptions.accountId || null
             });
             if (envelope.length > MAX_MESSAGE_CHARS)
               return Promise.reject(Object.assign(new Error('desktop bridge payload is too large (limit 50 MB)'), { code: 'MESSAGE_TOO_LARGE' }));
+            const signal = normalizedOptions.signal;
+            if (signal?.aborted)
+              return Promise.reject(Object.assign(new Error(`desktop bridge cancelled (${method})`), { code: 'CANCELLED' }));
             return new Promise((resolve, reject) => {
-              const timer = setTimeout(() => { pending.delete(requestId); reject(new Error(`desktop bridge timeout (${method})`)); }, timeoutMs);
-              pending.set(requestId, { resolve, reject, timer });
+              const item = { resolve, reject, timer: null, signal: null, abortHandler: null };
+              const fail = (error, cancelNative) => {
+                if (pending.get(requestId) !== item) return;
+                clearTimeout(item.timer); pending.delete(requestId);
+                if (item.signal && item.abortHandler) item.signal.removeEventListener('abort', item.abortHandler);
+                if (cancelNative && isAiRequest) postAiCancellation(aiOperationId);
+                reject(error);
+              };
+              item.timer = setTimeout(() => fail(Object.assign(new Error(`desktop bridge timeout (${method})`), { code: 'TIMEOUT' }), true), timeoutMs);
+              pending.set(requestId, item);
+              if (signal?.addEventListener) {
+                item.signal = signal;
+                item.abortHandler = () => fail(Object.assign(new Error(`desktop bridge cancelled (${method})`), { code: 'CANCELLED' }), true);
+                signal.addEventListener('abort', item.abortHandler, { once: true });
+                if (signal.aborted) { item.abortHandler(); return; }
+              }
               try { window.chrome.webview.postMessage(envelope); }
-              catch (error) { clearTimeout(timer); pending.delete(requestId); reject(error); }
+              catch (error) { fail(error, false); }
             });
           },
           on(name, handler) {
@@ -51,7 +90,7 @@ public static class LegacyBridgeScript
           onError: (handler) => host.on('tools.error', handler),
         };
         window.zhikeDesktop = host;
-        const proxy = prefix => new Proxy({}, { get: (target, name) => target[name] || ((...args) => host.invoke(`${prefix}.${String(name)}`, args[0] || {}).then(result => result.data ?? result)) });
+        const proxy = prefix => new Proxy({}, { get: (target, name) => target[name] || ((payload = {}, options = {}) => host.invoke(`${prefix}.${String(name)}`, payload, options).then(result => result.data ?? result)) });
         window.zhikeTools = window.zhikeTools || proxy('tools');
         window.zhikeWs = window.zhikeWs || proxy('ws');
         window.zhikeAi = window.zhikeAi || proxy('ai');
@@ -103,6 +142,7 @@ public static class LegacyBridgeScript
           if (message.type === 'zhike.bridge.response') {
             const item = pending.get(message.requestId); if (!item) return;
             clearTimeout(item.timer); pending.delete(message.requestId);
+            if (item.signal && item.abortHandler) item.signal.removeEventListener('abort', item.abortHandler);
             message.ok ? item.resolve(message) : item.reject(Object.assign(new Error(message.message || 'bridge error'), { code: message.errorCode }));
           }
           if (message.type === 'zhike.bridge.event') window.__zhikeDesktopDispatch?.(message);
