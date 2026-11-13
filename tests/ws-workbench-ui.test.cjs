@@ -19,6 +19,13 @@ assert.match(ui, /detail\.title = statusDetail/);
 assert.match(ui, /ws-toolbar-open[^"\n]*" data-ws-action="open"/);
 assert.match(ui, /ws-toolbar-collect[^"\n]*" data-ws-action="collect-all-read"/);
 assert.match(ui, /未读会话永不自动打开/);
+assert.match(ui, /系统设置中明确绑定的 VIP 群按成员身份进入同一采集与分析链/,
+  'WS collection copy must describe the current VIP-group rule instead of the removed all-groups exclusion');
+assert.match(ui, /class="ws-runtime-strip"/,
+  'the workbench must expose the live background collection and AI pipeline state without opening a conversation');
+for (const marker of ['后台持续运行', '完整历史', '待分析', '跳过未读']) assert.match(ui, new RegExp(marker));
+for (const action of ['open-home', 'open-tasks']) assert.match(ui, new RegExp(`data-ws-action="${action}"`),
+  `WS runtime overview must provide the ${action} cross-workspace entry`);
 assert.match(ui, /置信度较低.*只补空字段策略自动处理/);
 assert.match(ui, /冲突保留原值并记录证据/);
 assert.match(ui, /core\.messageSentAt\?\.\(message\)/, 'message cards must use the authoritative WhatsApp sent time helper');
@@ -44,6 +51,10 @@ assert.match(css, /\.ws-message-list\{[^}]*max-height:clamp\(88px,12vh,120px\)[^
   'desktop local messages must remain independently scrollable without shrinking the WS browser');
 assert.match(css, /@media \(max-width:900px\)[\s\S]*?\.ws-message-list\{max-height:min\(120px,22vh\);min-height:72px;overflow:auto/,
   '820px/mobile layout must keep the local message pane reachable through its own scroll area');
+assert.match(css, /body\.ws-mode \.ws-runtime-strip\{[^}]*display:grid/,
+  'the 6.0 WS cockpit must give its runtime overview a stable responsive layout');
+assert.match(css, /body\.ws-mode \.ws-browser-host\{[^}]*min-height:250px/,
+  'the embedded WhatsApp surface must remain the dominant center workspace on desktop');
 assert.match(host, /discover-conversations/);
 assert.match(host, /__zhikeWsDiscoverAll/);
 assert.match(host, /capture-visible-messages/);

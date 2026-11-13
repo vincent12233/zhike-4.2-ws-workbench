@@ -48,7 +48,7 @@ public sealed partial class LegacyUiHostPage : Page
     public LegacyUiHostPage()
     {
         InitializeComponent();
-        // The legacy shell now always uses the guarded local SQLite service.
+        // The 6.0 workbench shell always uses the guarded local SQLite service.
         // There is one production storage path; old connection profiles are
         // intentionally ignored instead of creating a second data source.
         _api = null;
@@ -309,7 +309,7 @@ public sealed partial class LegacyUiHostPage : Page
         Canvas.SetZIndex(_webView, 0);
         Canvas.SetZIndex(WsOverlayLayer, 20);
 
-        var environment = await _profiles.GetOrCreateProfileAsync("legacy-ui");
+        var environment = await _profiles.GetOrCreateProfileAsync("workbench-ui");
         cancellationToken.ThrowIfCancellationRequested();
         await _webView.EnsureCoreWebView2Async(environment);
         var core = _webView.CoreWebView2;

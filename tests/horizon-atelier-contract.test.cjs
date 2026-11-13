@@ -24,6 +24,7 @@ for (const label of requiredNav) {
 
 assert.ok(index.indexOf('horizon-atelier.css') < index.indexOf('scroll-system.css'), '6.0 visual layer must load immediately before the final scroll contract');
 assert.match(app, /function renderHorizonHero\(items,kpis\)/);
+assert.match(app, /document\.documentElement\.dataset\.view=view/, 'each business route must expose a stable 6.0 visual styling hook');
 assert.match(app, /horizonLocalPriorityItems\(list,business\)/);
 assert.match(app, /horizonAlertItems\(alerts,customerIndex,taskIndex\)/);
 assert.match(app, /当前没有客户数据或可执行提醒，不会预置演示客户/);
@@ -32,6 +33,11 @@ assert.match(app, /聊天粘度 <b>45%<\/b>/);
 assert.match(app, /投资经验仅补充档案，不计入提醒权重/);
 assert.match(css, /--hz-sidebar-expanded:246px/);
 assert.match(css, /\.sidebar\.collapsed/);
+assert.match(index, /<img src="\.\/assets\/zhike-horizon-logo\.png" alt="" draggable="false" \/>/, '6.0 shell must use the Horizon logo instead of the legacy text tile');
+assert.match(css, /\.brand-mark img\{[^}]*object-fit:contain/, 'Horizon brand asset must stay proportionally contained');
+assert.match(css, /border-radius:46px 78px 94px 36px \/ 52px 82px 126px 42px/, 'expanded sidebar must keep the approved sculptural silhouette');
+assert.match(css, /border:1px solid rgba\(231,199,136,\.27\)!important/, 'sidebar needs the restrained gold material edge from the approved preview');
+assert.match(css, /\.nav-item\.active\{[\s\S]*?border-color:rgba\(240,210,151,\.5\)!important/, 'active navigation must use the approved gold-and-teal focus treatment');
 assert.match(css, /\.horizon-workbench-hero/);
 assert.match(css, /@media \(max-width:820px\)/);
 assert.match(css, /@media \(max-width:560px\)/, '200% scaling needs a compact effective-width layout');

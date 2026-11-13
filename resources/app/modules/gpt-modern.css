@@ -21,3 +21,188 @@
 .gpt-local-import:hover{background:#d8f2eb}
 [data-theme="dark"] .gpt-workspace-btn{background:#182231;color:#9ed7cf;border-color:#39756d}
 [data-theme="dark"] .gpt-local-import{background:#173a3b;color:#9ed7cf;border-color:#39756d}
+
+/* Zhike 6.0 Horizon AI workspace. This layer only changes presentation and
+   responsive hierarchy; prompts, data scopes and confirmation rules remain
+   owned by gpt-assistant.js. */
+.gpt-page{
+  --gpt-line:rgba(137,205,207,.2);
+  --gpt-line-strong:rgba(137,218,211,.35);
+  --gpt-surface:linear-gradient(151deg,rgba(16,35,46,.98),rgba(7,20,28,.98));
+  --gpt-surface-soft:linear-gradient(145deg,rgba(20,44,55,.82),rgba(11,27,36,.92));
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-width:0;
+  min-height:0;
+  height:100%;
+  overflow:hidden;
+  container-type:inline-size;
+}
+.view-container:has(>.gpt-page){display:flex;flex-direction:column;overflow:hidden!important}
+.view-container:has(>.gpt-page)>.gpt-page{flex:1 1 auto}
+.gpt-page .gpt-page-heading{position:relative;flex:0 0 auto;margin:0;padding:3px 2px 10px;border-bottom:1px solid var(--gpt-line)}
+.gpt-page .gpt-page-heading:after{content:"";position:absolute;left:0;bottom:-1px;width:164px;height:1px;background:linear-gradient(90deg,var(--hz-teal,#51e1cc),rgba(231,199,136,.72),transparent);box-shadow:0 0 15px rgba(81,225,204,.25)}
+.gpt-page .gpt-page-heading .page-title{font-family:"Segoe UI Variable Display","Microsoft YaHei UI",sans-serif;font-size:25px;font-weight:720;letter-spacing:.02em}
+.gpt-page .gpt-page-heading .page-subtitle{font-size:10px;color:var(--hz-muted,#8da5aa)}
+.gpt-heading-status{display:inline-flex;align-items:center;gap:7px;height:31px;padding:0 10px;border:1px solid var(--gpt-line);border-radius:999px;background:rgba(12,31,41,.72);color:#a6bec0;font-size:10px}
+.gpt-heading-status i{width:7px;height:7px;border-radius:50%;background:#7b898b}
+.gpt-heading-status[data-ready="true"]{color:#8be4bd;border-color:rgba(99,214,168,.25);background:rgba(67,170,125,.1)}
+.gpt-heading-status[data-ready="true"] i{background:var(--hz-green,#63d6a8);box-shadow:0 0 10px rgba(99,214,168,.55)}
+
+.gpt-page .gpt-modern{
+  grid-template-columns:minmax(224px,258px) minmax(0,1fr);
+  width:100%;
+  max-width:none;
+  height:auto;
+  min-height:0;
+  flex:1 1 auto;
+  margin:0;
+  border:1px solid var(--gpt-line);
+  border-radius:24px;
+  background:var(--gpt-surface);
+  box-shadow:inset 0 1px rgba(255,255,255,.04),0 20px 48px rgba(0,0,0,.22);
+  isolation:isolate;
+}
+.gpt-page .gpt-modern>.panel{min-height:0;background:transparent}
+.gpt-page .gpt-modern .gpt-context{
+  gap:11px;
+  padding:15px 13px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  border-right:1px solid var(--gpt-line);
+  background:radial-gradient(110% 42% at 0 0,rgba(81,225,204,.11),transparent 66%),linear-gradient(165deg,rgba(15,34,44,.97),rgba(7,20,28,.98));
+  scrollbar-color:rgba(111,185,185,.45) transparent;
+  scrollbar-width:thin;
+  overscroll-behavior:contain;
+}
+.gpt-page .gpt-context-brand{padding:1px 3px 6px}
+.gpt-page .gpt-context-brand strong{font-size:13px;color:var(--hz-text,#edf7f5)}
+.gpt-page .gpt-context-brand span{font-size:9px;color:var(--hz-muted,#8da5aa)}
+.gpt-page .gpt-mini-logo,.gpt-page .gpt-hero-logo,.gpt-page .gpt-avatar{background:linear-gradient(145deg,#36bcae,#477ecf);color:#06171c;box-shadow:0 7px 20px rgba(45,173,174,.2)}
+.gpt-page .gpt-mini-logo{border:1px solid rgba(141,232,219,.35)}
+.gpt-page .gpt-new-chat{height:38px;border-color:var(--gpt-line);border-radius:12px;background:rgba(4,17,24,.48);color:var(--hz-text,#edf7f5)}
+.gpt-page .gpt-new-chat:hover{border-color:var(--gpt-line-strong);background:rgba(81,225,204,.075)}
+.gpt-page .gpt-context-section{gap:8px;padding:3px}
+.gpt-page .gpt-context-section>small,.gpt-page .gpt-history-head small{color:#91a9ad;letter-spacing:.14em}
+.gpt-page .gpt-context-section label{color:#9eb4b6}
+.gpt-page .gpt-context-section select{border-color:var(--gpt-line);background:rgba(2,13,19,.7);color:var(--hz-text,#edf7f5)}
+.gpt-page .gpt-context-section .gpt-check{color:#c7d8d8}
+.gpt-page .gpt-capabilities span{border:1px solid rgba(137,205,207,.12);background:rgba(5,19,26,.35);color:#b8cdce}
+.gpt-page .gpt-privacy{margin:0 3px;padding:9px 10px;border-color:rgba(81,225,204,.24);background:rgba(81,225,204,.055);color:#9acdc7}
+.gpt-page .gpt-manage-toggle{margin:0;padding:8px!important;border-color:rgba(231,199,136,.3);background:rgba(231,199,136,.07);color:#dcc99d!important}
+.gpt-page .gpt-local-import,.gpt-page .gpt-workspace-btn{height:34px;border-radius:10px;border-color:var(--gpt-line-strong);background:rgba(81,225,204,.065);color:#a9e0d7}
+
+.gpt-history{display:grid;gap:5px;padding:8px 3px 3px;border-top:1px solid rgba(137,205,207,.12)}
+.gpt-history-head{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-bottom:2px}
+.gpt-history-head small{font-size:8px;text-transform:uppercase;font-weight:700}
+.gpt-history-head span{font-size:8px;color:var(--hz-muted,#8da5aa)}
+.gpt-history>button{display:grid;grid-template-columns:23px minmax(0,1fr);align-items:center;gap:7px;width:100%;padding:6px;border:1px solid transparent;border-radius:9px;background:transparent;color:#adbec0;text-align:left;cursor:pointer}
+.gpt-history>button:hover{border-color:rgba(81,225,204,.17);background:rgba(81,225,204,.055);color:#e5f5f2}
+.gpt-history>button b{display:grid;place-items:center;width:22px;height:22px;border-radius:7px;background:rgba(112,189,245,.09);color:#8ebee4;font-size:8px}
+.gpt-history>button span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px}
+.gpt-history>p{margin:2px 0 0;padding:8px;border:1px dashed rgba(137,205,207,.14);border-radius:9px;color:var(--hz-muted,#8da5aa);font-size:9px;line-height:1.45}
+.gpt-page .gpt-provider-card{margin-top:auto;border-color:var(--gpt-line);border-radius:12px;background:rgba(3,15,22,.56)}
+.gpt-page .gpt-provider-card strong{color:#d8e7e6}.gpt-page .gpt-provider-card button{color:#78d9ca}
+.gpt-page .gpt-gateway{margin:0 3px;padding:6px 8px;border-color:rgba(231,199,136,.2);background:rgba(231,199,136,.055);color:#cdbb91}
+
+.gpt-page .gpt-modern .gpt-chat{position:relative;min-width:0;min-height:0;background:radial-gradient(80% 54% at 78% -12%,rgba(231,199,136,.06),transparent 65%),linear-gradient(150deg,rgba(10,27,36,.96),rgba(5,17,24,.98))}
+.gpt-page .gpt-chat-head{height:58px;flex:0 0 58px;padding:0 18px;border-color:var(--gpt-line)}
+.gpt-page .gpt-chat-head strong{font-size:14px;color:var(--hz-text,#edf7f5)}
+.gpt-page .gpt-chat-head em{background:rgba(81,225,204,.1);color:#8ce1d3}
+.gpt-page .gpt-chat-head span{color:var(--hz-muted,#8da5aa)}
+.gpt-page .gpt-live-dot{background:var(--hz-green,#63d6a8);box-shadow:0 0 10px rgba(99,214,168,.55)}
+.gpt-page .gpt-icon-btn{color:#9eb2b5}.gpt-page .gpt-icon-btn:hover{background:rgba(81,225,204,.07);color:#d9efeb}
+.gpt-status-strip{display:grid;grid-template-columns:1.15fr repeat(4,minmax(72px,.72fr));gap:6px;flex:0 0 auto;padding:8px 18px;border-bottom:1px solid rgba(137,205,207,.12)}
+.gpt-status-strip>span{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0;padding:6px 8px;border:1px solid rgba(137,205,207,.13);border-radius:10px;background:rgba(2,13,19,.3)}
+.gpt-status-strip small{font-size:8px;color:var(--hz-muted,#8da5aa);white-space:nowrap}.gpt-status-strip b{font-size:10px;color:#d9e7e6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gpt-status-strip .is-online{justify-content:flex-start}.gpt-status-strip .is-online i{width:7px;height:7px;flex:none;border-radius:50%;background:var(--hz-green,#63d6a8);box-shadow:0 0 9px rgba(99,214,168,.55)}.gpt-status-strip .is-online small{margin-right:auto}
+.gpt-page .gpt-messages{min-height:0;padding:20px 24px 12px;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;scrollbar-color:rgba(111,185,185,.45) transparent;scrollbar-width:thin}
+.gpt-page .gpt-message-column{gap:20px}
+.gpt-page .gpt-message{grid-template-columns:32px minmax(0,1fr)}
+.gpt-page .gpt-message .gpt-avatar{width:30px;height:30px;border-radius:10px;font-size:9px}
+.gpt-page .gpt-message.user .gpt-avatar{border:1px solid rgba(231,199,136,.25);background:rgba(231,199,136,.1);color:#e1cc9d;box-shadow:none}
+.gpt-page .gpt-message-body{color:#dbe7e6}
+.gpt-page .gpt-message-body>strong{color:#8fa8ab;text-transform:uppercase;letter-spacing:.06em}
+.gpt-page .gpt-message-body>div{font-size:12px;line-height:1.72}
+.gpt-page .gpt-message.is-error .gpt-message-body{padding:10px 12px;border:1px solid rgba(239,143,130,.28);border-radius:12px;background:rgba(133,48,45,.12);color:#f1aaa1}
+.gpt-page .gpt-welcome{max-width:720px;color:var(--hz-muted,#8da5aa)}
+.gpt-page .gpt-welcome h2{font-size:25px;color:var(--hz-text,#edf7f5)}
+.gpt-page .gpt-starter-grid{gap:9px}
+.gpt-page .gpt-starter-grid button{border-color:var(--gpt-line);border-radius:14px;background:rgba(13,33,43,.64);color:var(--hz-text,#edf7f5)}
+.gpt-page .gpt-starter-grid button:hover{border-color:var(--gpt-line-strong);background:rgba(81,225,204,.065)}
+.gpt-page .gpt-starter-grid span{color:var(--hz-muted,#8da5aa)}
+.gpt-page .gpt-composer-shell{flex:0 0 auto;padding:8px 24px 14px;background:linear-gradient(180deg,transparent,rgba(5,17,24,.98) 22%)}
+.gpt-page .gpt-modern .gpt-composer{border-color:rgba(137,205,207,.3);border-radius:19px;background:rgba(9,27,36,.96);box-shadow:0 10px 28px rgba(0,0,0,.2)}
+.gpt-page .gpt-modern .gpt-composer:focus-within{border-color:rgba(81,225,204,.52);box-shadow:0 0 0 3px rgba(81,225,204,.07),0 10px 28px rgba(0,0,0,.2)}
+.gpt-page .gpt-composer textarea{color:var(--hz-text,#edf7f5)}
+.gpt-page .gpt-composer textarea::placeholder{color:#71898e}
+.gpt-page .gpt-attach-btn{border-color:var(--gpt-line);background:rgba(18,41,51,.8);color:#b8cecf}
+.gpt-page .gpt-send-round{background:linear-gradient(135deg,#35c5b1,#418fe0);color:#06171c;box-shadow:0 7px 18px rgba(58,174,184,.2)}
+.gpt-page .gpt-file-chip{border-color:var(--gpt-line);background:rgba(16,39,49,.92);color:#d9e7e6}
+.gpt-page .gpt-disclaimer{color:#748d91}
+.gpt-page .gpt-plan{border-color:rgba(231,199,136,.3);border-radius:13px;background:rgba(231,199,136,.07)}
+.gpt-page .gpt-plan>b{color:#e1ca98}.gpt-page .gpt-plan>span{background:rgba(4,17,23,.46);color:#d9d0b6}.gpt-page .gpt-plan small{color:#aa9d7d}
+
+.gpt-page .gpt-setup{position:relative;grid-template-columns:170px minmax(0,620px);justify-content:center;gap:30px;flex:1;min-height:0;margin:0;padding:42px;border:1px solid var(--gpt-line);border-radius:26px;background:radial-gradient(42% 65% at 25% 45%,rgba(81,225,204,.12),transparent 70%),radial-gradient(38% 50% at 80% 0,rgba(231,199,136,.08),transparent 70%),var(--gpt-surface);overflow:auto}
+.gpt-setup-orbit{position:relative;display:grid;place-items:center;width:150px;height:150px;border:1px solid rgba(81,225,204,.18);border-radius:50%;background:radial-gradient(circle,rgba(81,225,204,.1),transparent 64%)}
+.gpt-setup-orbit:before,.gpt-setup-orbit:after{content:"";position:absolute;border:1px solid rgba(112,189,245,.14);border-radius:50%}.gpt-setup-orbit:before{inset:16px}.gpt-setup-orbit:after{inset:32px;border-color:rgba(231,199,136,.17)}
+.gpt-setup-orbit .gpt-logo{z-index:1;width:62px;height:62px;margin:0;border-radius:19px;background:linear-gradient(145deg,#43d1bd,#4b82d6);color:#07161c;font-size:17px;box-shadow:0 12px 34px rgba(53,187,187,.28)}
+.gpt-setup-orbit>i{position:absolute;right:18px;top:27px;width:9px;height:9px;border-radius:50%;background:var(--hz-gold,#e7c788);box-shadow:0 0 12px rgba(231,199,136,.7)}
+.gpt-setup-copy{display:grid;align-content:center;justify-items:start;gap:12px}.gpt-eyebrow{font-size:9px;font-weight:700;letter-spacing:.18em;color:#83cfc5}.gpt-setup-copy h2{margin:0;color:var(--hz-text,#edf7f5);font-size:25px}.gpt-setup-copy>p{max-width:590px;margin:0;color:#95aaad;line-height:1.7}
+.gpt-setup-points{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:100%}.gpt-setup-points span{display:flex;align-items:center;gap:7px;padding:9px;border:1px solid rgba(137,205,207,.14);border-radius:11px;background:rgba(4,17,24,.3);color:#b9cccd;font-size:10px}.gpt-setup-points b{display:grid;place-items:center;width:24px;height:24px;border-radius:8px;background:rgba(81,225,204,.09);color:#77d9ca;font-size:8px}
+.gpt-setup-error{display:grid;gap:4px;width:100%;padding:10px 12px;border:1px solid rgba(239,143,130,.27);border-radius:12px;background:rgba(133,48,45,.12)}.gpt-setup-error strong{font-size:9px;color:#f0a39a}.gpt-setup-error span{font-size:10px;color:#d7a39e;line-height:1.5}
+.gpt-error-state{display:grid;place-items:center;align-content:center;gap:10px;flex:1;border:1px solid rgba(239,143,130,.24);border-radius:24px;background:linear-gradient(145deg,rgba(34,27,31,.9),rgba(10,20,27,.96));text-align:center}.gpt-error-state>span{display:grid;place-items:center;width:48px;height:48px;border:1px solid rgba(239,143,130,.35);border-radius:50%;color:#ef9a8f;font-size:24px}.gpt-error-state h2{margin:0;color:#edf7f5}.gpt-error-state p{max-width:500px;margin:0;color:#9eb0b2}.gpt-error-state .btn{margin-top:6px}
+
+#modal:has(#gptProvider){width:min(640px,calc(100vw - 24px));border-color:rgba(137,205,207,.25);border-radius:24px;background:radial-gradient(75% 55% at 100% 0,rgba(81,225,204,.08),transparent 70%),linear-gradient(155deg,#10242f,#071720);box-shadow:0 30px 80px rgba(0,0,0,.48)}
+#modal:has(#gptProvider) .modal-header{border-color:rgba(137,205,207,.18);background:transparent}
+#modal:has(#gptProvider) .modal-header h2{color:#edf7f5}
+#modal:has(#gptProvider) .modal-header p{color:#879fa3}
+#modal:has(#gptProvider) .modal-body{display:grid;gap:13px;overscroll-behavior:contain}
+#modal:has(#gptProvider) .filter-field span{color:#a9bec0}
+#modal:has(#gptProvider) .filter-field :is(input,select){height:38px;border-color:rgba(137,205,207,.25);border-radius:10px;background:rgba(2,13,19,.68);color:#e4efed}
+#modal:has(#gptProvider) .filter-field :is(input,select):focus{border-color:rgba(81,225,204,.55);box-shadow:0 0 0 3px rgba(81,225,204,.07)}
+#modal:has(#gptProvider) #gptSettingsStatus{border-color:rgba(231,199,136,.22);border-radius:12px;background:rgba(231,199,136,.065);color:#cdbd98;line-height:1.55}
+#modal:has(#gptProvider) .modal-footer{gap:7px;border-color:rgba(137,205,207,.18);background:rgba(3,14,20,.6)}
+
+@container (max-width:760px){
+  .gpt-page .gpt-modern{display:flex;flex-direction:column}
+  .gpt-page .gpt-modern .gpt-context{display:grid!important;grid-template-columns:minmax(140px,.8fr) minmax(210px,1.2fr);max-height:174px;flex:0 0 auto;padding:10px 12px;border-right:0;border-bottom:1px solid var(--gpt-line)}
+  .gpt-page .gpt-context-brand,.gpt-page .gpt-new-chat{grid-column:1}
+  .gpt-page .gpt-context-section{grid-column:2;grid-row:1/span 4}
+  .gpt-page .gpt-context-section.gpt-capabilities,.gpt-page .gpt-privacy,.gpt-page .gpt-history,.gpt-page .gpt-provider-card,.gpt-page .gpt-gateway,.gpt-page .gpt-local-import,.gpt-page .gpt-workspace-btn{display:none}
+  .gpt-status-strip{grid-template-columns:repeat(5,minmax(0,1fr));padding:6px 10px}
+  .gpt-status-strip>span{padding:5px 6px}
+  .gpt-page .gpt-messages{padding:14px 14px 8px}
+  .gpt-page .gpt-composer-shell{padding:7px 14px 10px}
+}
+@container (max-width:520px){
+  .gpt-page .gpt-page-heading .page-subtitle{display:none}
+  .gpt-page .gpt-modern .gpt-context{grid-template-columns:1fr;max-height:140px}
+  .gpt-page .gpt-context-brand,.gpt-page .gpt-new-chat{display:none}
+  .gpt-page .gpt-context-section{grid-column:1;grid-row:auto}
+  .gpt-status-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.gpt-status-strip>span:first-child{grid-column:1/-1}
+  .gpt-page .gpt-starter-grid{grid-template-columns:1fr}
+  .gpt-page .gpt-welcome h2{font-size:21px}
+  .gpt-page .gpt-composer-tools span{display:none}
+  .gpt-page .gpt-setup{grid-template-columns:1fr;padding:24px 18px}.gpt-setup-orbit{width:110px;height:110px;margin:auto}.gpt-setup-copy{justify-items:center;text-align:center}.gpt-setup-points{grid-template-columns:1fr}
+}
+@media (max-height:620px){
+  .gpt-page{gap:7px}.gpt-page .gpt-page-heading{padding-bottom:6px}.gpt-page .gpt-page-heading .page-title{font-size:21px}
+  .gpt-page .gpt-chat-head{height:48px;flex-basis:48px}.gpt-status-strip{padding-top:5px;padding-bottom:5px}.gpt-status-strip>span{padding-top:4px;padding-bottom:4px}
+  .gpt-page .gpt-messages{padding-top:10px}.gpt-page .gpt-composer textarea{height:42px;min-height:42px}
+}
+@media (max-height:620px){
+  @container (max-width:760px){
+    .gpt-page .gpt-page-heading .page-subtitle{display:none}
+    .gpt-page .gpt-modern .gpt-context{display:flex!important;flex-direction:row;align-items:center;max-height:66px;padding:7px 10px;overflow-x:auto;overflow-y:hidden}
+    .gpt-page .gpt-context-brand,.gpt-page .gpt-new-chat{display:none}
+    .gpt-page .gpt-context-section{display:flex;grid-column:auto;grid-row:auto;align-items:center;gap:7px;width:max-content;min-width:max-content;padding:0}
+    .gpt-page .gpt-context-section>small{display:none}
+    .gpt-page .gpt-context-section label{display:flex;align-items:center;gap:5px;white-space:nowrap}
+    .gpt-page .gpt-context-section select{width:130px;height:32px}
+    .gpt-page .gpt-context-section .gpt-check{min-height:32px;padding:6px!important;border:1px solid rgba(137,205,207,.13);border-radius:9px;background:rgba(4,17,24,.3)}
+    .gpt-page .gpt-context-section .gpt-check span{display:none}
+  }
+}
+@media (prefers-reduced-motion:reduce){.gpt-page *{scroll-behavior:auto!important;transition:none!important}}

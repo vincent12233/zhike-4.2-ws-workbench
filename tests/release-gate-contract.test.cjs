@@ -58,6 +58,7 @@ if (process.platform === 'win32') {
       'resources/app/app.js',
       'resources/app/styles.css',
       'resources/app/server.mjs',
+      'resources/app/assets/zhike-horizon-logo.png',
       'resources/app/modules/horizon-atelier.css',
       'resources/app/vendor/xlsx/xlsx.js',
       'zhike.ico',

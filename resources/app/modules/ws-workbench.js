@@ -1830,10 +1830,10 @@
     const discovered=Math.max(0,Number(run?.discovered||0)),skipped=Math.max(0,Number(run?.skipped||0)),analyzed=Math.max(0,Number(run?.analyzed||0)),retryable=Math.max(0,Number(run?.retryable||0));
     const pendingHistory=Math.max(0,discovered-fullHistoryCount-skipped),pipeline=[['列表级自动采集',discovered,run?'已同步':'等待登录'],['完整历史',fullHistoryCount,pendingHistory?`待补采 ${pendingHistory}`:'已完成'],['AI 分析',analyzed,fullHistoryCount>analyzed?`队列 ${fullHistoryCount-analyzed}`:'已同步'],['档案与任务',Math.min(analyzed,Number(run?.completed||analyzed)),state.aiEnabled?'自动联动':'AI 已关闭']];
     const pipelineHtml=`<div class="ws-collection-pipeline">${pipeline.map(([label,value,detail],index)=>`<div class="ws-pipeline-stage ${value?'has-progress':''}"><span class="ws-pipeline-index">${index+1}</span><div><strong>${esc(label)}</strong><b>${Number(value).toLocaleString()}</b><small>${esc(detail)}</small></div></div>`).join('')}</div><p class="ws-coverage-warning">会话列表只代表已发现；只有“完整历史”计数才表示该客户双方聊天已采集、方向已核实并成功落库。</p>`;
-    if (!run) return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>登录即采集</strong><span>扫码登录后自动同步会话列表与实时单聊；后台逐个补采已读会话完整历史，前台仍可正常聊天</span></div></div>${pipelineHtml}<p class="ws-muted">未读会话永不自动打开；群聊和类型不明会话不采集、不分析、不补档、不提醒。AI 结果统一进入任务中心和今日工作台。</p><button class="btn small primary ws-full-button" data-ws-action="create-collection-run">立即启动后台采集</button></section>`;
+    if (!run) return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>登录即采集</strong><span>扫码登录后自动同步会话列表与实时消息；后台逐个补采已读会话完整历史，前台仍可正常聊天</span></div></div>${pipelineHtml}<p class="ws-muted">未读会话永不自动打开；普通群和类型不明会话不进入分析，系统设置中明确绑定的 VIP 群按成员身份进入同一采集与分析链。AI 结果统一进入任务中心和今日工作台。</p><button class="btn small primary ws-full-button" data-ws-action="create-collection-run">立即启动后台采集</button></section>`;
     const pending = Math.max(0, run.total - run.completed - run.failed - run.skipped);
     const controls = run.status === 'paused' ? '<button class="btn small" data-ws-action="resume-collection">继续</button>' : ['created','running','discovering'].includes(run.status) ? '<button class="btn small" data-ws-action="pause-collection">暂停</button><button class="btn small danger" data-ws-action="stop-collection">停止</button>' : '';
-    return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>登录即采集</strong><span>${esc(run.status)} · 后台运行 · 更新于 ${esc(displayTime(run.updatedAt))}${run.lastSuccessAt ? ` · 最近成功 ${esc(displayTime(run.lastSuccessAt))}` : ''}</span></div><div>${controls}${['running','discovering','paused'].includes(run.status) ? '<button class="btn small" data-ws-action="resume-collection-checkpoint">从断点继续</button>' : ''}<button class="btn small" data-ws-action="collect-all-read" ${state.busy.readHistory ? 'disabled' : ''}>${state.busy.readHistory ? '采集中…' : '补采完整聊天'}</button><button class="btn small" data-ws-action="create-collection-run">新建任务</button></div></div>${pipelineHtml}<div class="ws-collection-stats"><b>${run.completed}/${run.total || run.discovered}</b><span>列表已同步</span><b>${run.analyzed}</b><span>已分析</span><b>${fullHistoryCount}</b><span>完整历史</span><b>${run.skipped || 0}</b><span>跳过未读</span><b>${run.retryable}</b><span>待重试</span><b>${pending}</b><span>待处理</span><b>${run.resumeCount || 0}</b><span>续采次数</span></div>${run.lastError ? `<p class="ws-error-line">${esc(run.lastError)}</p>` : ''}<p class="ws-muted">你可以离开 WS 页面或最小化知客；只要应用仍打开且账号未退出，后台采集与 AI 队列会继续。正式提醒统一同步到任务中心与今日工作台。</p></section>`;
+    return `<section class="ws-card ws-collection-card" data-run-status="${esc(run.status)}"><div class="ws-card-heading"><div><strong>登录即采集</strong><span>${esc(run.status)} · 后台运行 · 更新于 ${esc(displayTime(run.updatedAt))}${run.lastSuccessAt ? ` · 最近成功 ${esc(displayTime(run.lastSuccessAt))}` : ''}</span></div><div>${controls}${['running','discovering','paused'].includes(run.status) ? '<button class="btn small" data-ws-action="resume-collection-checkpoint">从断点继续</button>' : ''}<button class="btn small" data-ws-action="collect-all-read" ${state.busy.readHistory ? 'disabled' : ''}>${state.busy.readHistory ? '采集中…' : '补采完整聊天'}</button><button class="btn small" data-ws-action="create-collection-run">新建任务</button></div></div>${pipelineHtml}<div class="ws-collection-stats"><b>${run.completed}/${run.total || run.discovered}</b><span>列表已同步</span><b>${run.analyzed}</b><span>已分析</span><b>${fullHistoryCount}</b><span>完整历史</span><b>${run.skipped || 0}</b><span>跳过未读</span><b>${run.retryable}</b><span>待重试</span><b>${pending}</b><span>待处理</span><b>${run.resumeCount || 0}</b><span>续采次数</span></div>${run.lastError ? `<p class="ws-error-line">${esc(run.lastError)}</p>` : ''}<p class="ws-muted">你可以离开 WS 页面或最小化知客；只要应用仍打开且账号未退出，后台采集与 AI 队列会继续。普通群不参与；已绑定 VIP 群按成员身份采集分析。正式提醒统一同步到任务中心与今日工作台。</p></section>`;
   }
   async function loadConversationData(id, redraw = true, parentContext = null) {
     const conversationId = String(id || '');
@@ -2052,7 +2052,7 @@
     return counts;
   }
   function renderMessageRows() {
-    if (!state.messages.length) return '<div class="ws-empty ws-message-empty">导入当前可见聊天后，原文和译文会显示在这里。</div>';
+    if (!state.messages.length) return '<div class="ws-empty ws-message-empty">后台采集或手动导入完成后，客户与我方双方的原文、译文和发送方向会显示在这里。</div>';
     return state.messages.map(message => {
       const busy = state.translationBusy.has(translationBusyKey(message.id));
       const failed = message.translationStatus === 'failed' || Boolean(message.translationError);
@@ -2117,10 +2117,22 @@
     const failedTranslations = state.messages.filter(item => item.translationStatus === 'failed' || item.translationError).length;
     const loadedDirections = loadedMessageDirectionCounts();
     const statusDetail = state.wsDetail || (state.wsStatus === '已连接' ? '已通过页面结构确认 WS 主界面；未读取 Cookie 或消息正文。' : '请在中栏自行完成扫码或登录。');
+    const collectionRun = state.collectionRun;
+    const fullHistoryCount = state.conversations.filter(item => item.data?.historyLoaded === true && Number(item.data?.directionVersion || 0) >= 4 && Boolean(fullHistorySourceFingerprint(item))).length;
+    const runtimeStatus = state.backgroundActive ? (state.wsStatus === '已连接' ? '后台持续运行' : '后台等待连接') : '后台未启动';
+    const runtimeTone = state.backgroundActive && state.wsStatus === '已连接' ? 'running' : state.backgroundActive ? 'waiting' : 'idle';
+    const runtimeOverview = `<div class="ws-runtime-strip" aria-label="WS 后台运行概览">
+      <span class="ws-runtime-primary" data-tone="${runtimeTone}"><i></i><b>${runtimeStatus}</b></span>
+      <span><small>列表</small><b>${Number(collectionRun?.discovered || state.conversations.length || 0).toLocaleString()}</b></span>
+      <span><small>完整历史</small><b>${fullHistoryCount.toLocaleString()}</b></span>
+      <span><small>待分析</small><b>${Number(state.aiQueueStats.queued || 0).toLocaleString()}</b></span>
+      <span><small>跳过未读</small><b>${Number(collectionRun?.skipped || state.readHistorySkipped.length || 0).toLocaleString()}</b></span>
+      <div class="ws-runtime-actions"><button type="button" data-ws-action="open-home">今日工作台</button><button type="button" data-ws-action="open-tasks">任务中心</button></div>
+    </div>`;
     target.innerHTML = `
       <div class="ws-workbench-page">
         <div class="page-heading ws-page-heading">
-          <div><h1 class="page-title">WS 工作台</h1><p class="page-subtitle">个人 WS 登录、可见聊天翻译与客户运营辅助 · 不保存密码、Cookie、二维码或秘密 Token</p></div>
+          <div><h1 class="page-title">WS 工作台</h1><p class="page-subtitle">多账号后台采集、完整历史与 AI 客户运营 · 前台聊天不受影响 · 不保存密码、Cookie、二维码或秘密 Token</p></div>
           <div class="heading-actions">
             <span id="wsStatusBadge" class="ws-status-badge" data-status="${esc(state.wsStatus)}">${esc(state.wsStatus)}</span>
             <select id="wsTopAccount" class="ws-top-account" title="切换 WS 账号">${state.accounts.map(account => `<option value="${esc(account.id)}" ${String(account.id) === String(state.activeAccountId) ? 'selected' : ''}>${esc(accountDisplayName(account))}</option>`).join('')}</select>
@@ -2159,6 +2171,7 @@
           <section class="ws-center-panel">
             <div class="ws-login-toolbar">
               <div class="ws-login-summary"><strong>${esc(accountDisplayName(activeAccount()) || 'WS 登录入口')}</strong><span id="wsStatusDetail" class="ws-login-status" title="${esc(statusDetail)}">${esc(statusDetail)}</span></div>
+              ${runtimeOverview}
               <div class="ws-toolbar-actions">
                 <button class="btn small primary ws-toolbar-open" data-ws-action="open" ${state.busy.connection ? 'disabled' : ''}>${state.wsStatus === '已连接' ? '已打开 WS' : '打开 WS'}</button>
                 <button class="btn small" data-ws-action="probe">检测状态</button>
@@ -2987,6 +3000,11 @@
     if (action === 'translate-message') return translateMessage(element.dataset.id);
     if (action === 'retry-failed') return retryFailedTranslations();
     if (action === 'resume-ai-queue') { state.aiBackgroundError = ''; render(); return scheduleAiQueuePump(captureContext('')); }
+    if (action === 'open-home' || action === 'open-tasks') {
+      const route = action === 'open-home' ? 'home' : 'operations';
+      document.querySelector(`.nav-item[data-view="${route}"]`)?.click();
+      return;
+    }
     if (action === 'analyze') return analyzeConversation();
     if (action === 'use-ai-reply') return useAiReply();
     if (action === 'save-customer') return saveCustomerTo();

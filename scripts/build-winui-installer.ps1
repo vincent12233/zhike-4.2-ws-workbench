@@ -75,6 +75,7 @@ $requiredStageFiles = @(
   'resources\app\styles.css',
   'resources\app\server.mjs',
   'resources\app\modules\horizon-atelier.css',
+  'resources\app\assets\zhike-horizon-logo.png',
   'resources\app\vendor\xlsx\xlsx.js',
   'zhike.ico',
   'bundle-manifest.json'

@@ -25,6 +25,9 @@ assert.match(mainXaml, /<Frame x:Name="ContentFrame"/);
 
 assert.doesNotMatch(host, /FallbackRequested|OpenNativeFallback|TryFallbackAsync/);
 assert.doesNotMatch(hostXaml, /打开兼容页面|OpenNativeFallback/);
+assert.match(host, /GetOrCreateProfileAsync\("workbench-ui"\)/,
+  '6.0 must own a fresh workbench WebView profile instead of reusing the retired UI profile');
+assert.doesNotMatch(host, /GetOrCreateProfileAsync\("legacy-ui"\)/);
 assert.match(host, /NewWindowRequested/);
 assert.match(host, /args\.Handled\s*=\s*true/);
 assert.doesNotMatch(host, /Process\.Start|Launcher\.LaunchUriAsync/,

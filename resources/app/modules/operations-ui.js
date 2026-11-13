@@ -141,17 +141,21 @@
     const completed = all.filter(task => core.taskCompleted(task)).length;
     const dismissed = all.filter(task => core.taskDismissed(task)).length;
     const ownerOptions = [...new Set(all.map(task => String(task.owner || '未分配')).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
+    const overdue = all.filter(task => !core.taskDone(task) && core.taskBucket(task, currentDay) === 'overdue').length;
+    const dueToday = all.filter(task => !core.taskDone(task) && core.taskBucket(task, currentDay) === 'today').length;
+    const aiOpen = all.filter(task => task.aiGenerated && !core.taskDone(task)).length;
+    const primaryTask = filtered.find(task => !core.taskDone(task));
+    const primaryCustomer = primaryTask ? customerIndex.get(String(primaryTask.customerId || '')) : null;
     const statusButton = (key, label) => `<button class="btn small ${status === key ? 'primary active' : ''}" aria-pressed="${status === key}" data-ops-filter="${key}">${label}</button>`;
     const bucketButton = (key, label) => `<button class="btn small ${bucket === key ? 'primary active' : ''}" aria-pressed="${bucket === key}" data-ops-bucket="${key}">${label}</button>`;
 
-    view.innerHTML = `<div class="page-heading"><div><h1 class="page-title">任务中心</h1><p class="page-subtitle">处理回访、报名跟进和 AI 建议待办；与客户阶段看板职责分离。</p></div><div class="heading-actions"><button class="btn primary" data-ops="new">新建任务</button></div></div>
-      <section class="ops-metrics">
-        <div class="metric-card"><span>全部任务</span><strong>${all.length}</strong></div>
-        <div class="metric-card"><span>待处理</span><strong>${open}</strong></div>
-        <div class="metric-card"><span>已完成 / 已忽略</span><strong>${completed} / ${dismissed}</strong></div>
-        <div class="metric-card"><span>今日 / 逾期</span><strong>${all.filter(task => ['today', 'overdue'].includes(core.taskBucket(task, currentDay))).length}</strong></div>
+    view.innerHTML = `<div class="page-heading ops6-page-heading"><div><span class="ops6-eyebrow">ACTION ORCHESTRATION</span><h1 class="page-title">任务中心</h1><p class="page-subtitle">统一处理人工任务和 AI 跟进提醒；完成结果实时回写客户档案、首页和统计。</p></div><div class="heading-actions"><button class="btn primary" data-ops="new">新建任务</button></div></div>
+      <section class="ops6-command-deck" aria-label="任务执行控制面">
+        <div class="ops6-command-copy"><span>今日执行焦点</span><strong>${primaryTask ? esc(primaryTask.title) : '当前没有待处理任务'}</strong><p>${primaryTask ? esc(primaryTask.objective || primaryTask.note || '按优先级开始处理，并在完成后登记实际结果。') : '可以新建人工任务；WS 与 AI 产生的跟进提醒也会自动进入这里。'}</p>${primaryTask ? `<div class="ops6-primary-actions"><button class="btn small primary" data-ops-focus="${esc(primaryTask.id)}">定位首要任务</button>${primaryCustomer ? `<button class="btn small" data-ops-customer="${esc(primaryCustomer.id)}">打开客户档案</button>` : ''}</div>` : '<button class="btn small primary" data-ops="new">新建第一项任务</button>'}</div>
+        <div class="ops6-signal-grid"><div><span>待处理</span><strong>${open}</strong><small>全部未关闭任务</small></div><div class="urgent"><span>今日 / 逾期</span><strong>${dueToday} / ${overdue}</strong><small>优先处理时间风险</small></div><div><span>AI 跟进</span><strong>${aiOpen}</strong><small>由聊天分析生成</small></div><div><span>已完成 / 已忽略</span><strong>${completed} / ${dismissed}</strong><small>统计口径独立</small></div></div>
+        <aside class="ops6-command-rule"><span>执行链路</span><p>打开客户 → 实际跟进 → 登记结果 → 更新档案与下次计划。</p><em><i></i>跨页状态实时同步</em></aside>
       </section>
-      <section class="panel">
+      <section class="panel ops6-task-workspace">
         <div class="table-toolbar">
           <label class="input-search"><input data-ops-search placeholder="搜索客户、号码、任务、话术或评分依据" value="${esc(query)}"></label>
           ${statusButton('', '全部')}${statusButton('open', '未完成')}${statusButton('done', '已完成')}${statusButton('dismissed', '已忽略')}
@@ -172,12 +176,12 @@
           const actions = task.aiGenerated
             ? `<div class="ops-task-actions">${customer ? `<button class="btn small" data-ops-customer="${esc(customer.id)}">客户档案</button>` : ''}${!isDone ? `<button class="btn small primary" data-ops-ai-action="complete" data-id="${esc(task.id)}" ${busy ? 'disabled' : ''}>完成</button><button class="btn small" data-ops-ai-action="snooze" data-id="${esc(task.id)}" ${busy ? 'disabled' : ''}>延期明日</button><button class="btn small danger-text" data-ops-ai-action="dismiss" data-id="${esc(task.id)}" ${busy ? 'disabled' : ''}>忽略</button>` : `<button class="btn small" data-ops-ai-action="reopen" data-id="${esc(task.id)}" ${busy ? 'disabled' : ''}>重新打开</button>`}</div>`
             : `<button class="ops-check" data-ops="toggle" data-id="${esc(task.id)}" aria-label="${isDone ? '恢复任务' : '完成任务'}">${isDone ? '✓' : '○'}</button>`;
-          return `<article class="ops-task ${isDone ? 'done' : ''} ${task.aiGenerated ? 'ai-generated' : ''}">
+          return `<article class="ops-task ${isDone ? 'done' : ''} ${task.aiGenerated ? 'ai-generated' : ''}" data-ops-task-id="${esc(task.id)}">
             ${task.aiGenerated ? '' : actions}
             <div class="ops-task-copy"><strong>${esc(task.title)}${task.aiGenerated ? ' · AI' : ''}${bucketName ? ` · ${bucketName}` : ''}${resolutionLabel}</strong>${contactLine ? `<small class="ops-task-contact">客户：${esc(contactLine)}</small>` : ''}<p>${esc(task.objective || task.note || '')}</p>${task.suggestedOpener ? `<p><b>建议开场：</b>${esc(task.suggestedOpener)}</p>` : ''}${Array.isArray(task.talkingPoints) && task.talkingPoints.length ? `<small>话题推进：${task.talkingPoints.map(esc).join(' → ')}</small>` : ''}${Array.isArray(task.avoidTopics) && task.avoidTopics.length ? `<small class="ws-error-line">避免：${task.avoidTopics.map(esc).join('；')}</small>` : ''}<span class="ops-task-meta">${esc(task.due || '无截止日期')} · ${esc(task.owner || '未分配')}${task.priorityScore != null ? ` · ${Number(task.priorityScore)}/100` : ''}</span>${task.aiGenerated ? actions : ''}</div>
             <span class="ops-priority ${esc(task.priority)}">${priority}</span>
           </article>`;
-        }).join('') || '<div class="ops-empty">暂无符合条件的任务</div>'}</div>
+        }).join('') || '<div class="ops-empty ops6-empty"><strong>当前筛选没有任务</strong><span>调整筛选条件，或新建一项人工任务。</span><button class="btn small primary" data-ops="new">新建任务</button></div>'}</div>
         ${visible.length < filtered.length ? `<div class="table-footer"><span>已显示 ${visible.length} / ${filtered.length} 条</span><button class="btn small" data-ops="load-more">加载更多</button></div>` : filtered.length ? `<div class="table-footer"><span>已显示全部 ${filtered.length} 条</span></div>` : ''}
       </section>`;
 
@@ -193,7 +197,13 @@
         });
       }, 160);
     });
-    view.querySelector('[data-ops="new"]')?.addEventListener('click', newTask);
+    view.querySelectorAll('[data-ops="new"]').forEach(button => button.addEventListener('click', newTask));
+    view.querySelector('[data-ops-focus]')?.addEventListener('click', event => {
+      const target = [...view.querySelectorAll('[data-ops-task-id]')].find(item => item.dataset.opsTaskId === event.currentTarget.dataset.opsFocus);
+      target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target?.classList.add('ops6-focused');
+      setTimeout(() => target?.classList.remove('ops6-focused'), 1400);
+    });
     view.querySelector('[data-ops="load-more"]')?.addEventListener('click', () => { host.state.opsTaskLimit = pageSize + 50; render(true); });
     view.querySelectorAll('[data-ops-filter]').forEach(button => button.addEventListener('click', () => { host.state.opsTaskFilter = button.dataset.opsFilter; host.state.opsTaskLimit = 50; render(true); }));
     view.querySelectorAll('[data-ops-bucket]').forEach(button => button.addEventListener('click', () => { host.state.opsTaskBucket = bucket === button.dataset.opsBucket ? '' : button.dataset.opsBucket; host.state.opsTaskLimit = 50; render(true); }));
@@ -205,11 +215,24 @@
 
   function boardPage(view) {
     const columns = core.stageColumns(host.state.customers || [], host.state.settings?.optionLists?.phases || ['新客户', '潜在客户', '意向客户', '高意向', '成交客户', '暂停跟进']);
-    view.innerHTML = '<div class="page-heading"><div><h1 class="page-title">客户阶段看板</h1><p class="page-subtitle">点击阶段查看完整名单，点击客户查看档案。</p></div></div><div class="ops-board">' + columns.map((column, index) => '<section class="ops-column"><button class="ops-stage-open" data-stage-index="' + index + '"><strong>' + esc(column.name) + '</strong><span>' + column.customers.length + ' 位 · 查看全部 →</span></button><div class="ops-cards">' + (column.customers.slice(0, 80).map(customer => '<button type="button" class="ops-card ops-customer-open" data-ops-customer="' + esc(customer.id) + '"><header><strong>' + esc(customer.name || '未命名客户') + '</strong><span>' + esc(customer.source || '') + '</span></header><div class="ops-card-meta">' + esc(customer.assistant || '未分配') + ' · ' + esc(customer.due || '未排期') + '</div><span class="ops-card-link">查看客户档案 →</span></button>').join('') || '<div class="ops-empty">暂无客户</div>') + '</div></section>').join('') + '</div>';
+    const allCustomers = columns.flatMap(column => column.customers);
+    const total = allCustomers.length;
+    const todayKey = today();
+    const withoutPlan = allCustomers.filter(customer => !customer.due || customer.due === '—').length;
+    const overdue = allCustomers.filter(customer => customer.due && customer.due !== '—' && customer.due < todayKey).length;
+    const assigned = allCustomers.filter(customer => customer.assistant && customer.assistant !== '未分配').length;
+    const focusIndex = columns.reduce((best, column, index) => column.customers.length > columns[best]?.customers.length ? index : best, 0);
+    const focusColumn = columns[focusIndex];
+    const stageFlow = columns.map((column, index) => `<button data-stage-index="${index}" style="--ops-stage-share:${Math.max(4, Math.round(column.customers.length / Math.max(1, total) * 100))}%"><span>${esc(column.name)}</span><strong>${column.customers.length}</strong><i></i></button>`).join('');
+    const boardColumns = columns.map((column, index) => `<section class="ops-column" data-stage-name="${esc(column.name)}"><button class="ops-stage-open" data-stage-index="${index}"><span><small>STAGE ${String(index + 1).padStart(2, '0')}</small><strong>${esc(column.name)}</strong></span><em>${column.customers.length} 位 · 查看全部 →</em></button><div class="ops-cards">${column.customers.slice(0, 80).map(customer => {const badges=[customer.hot?'热聊':'',customer.vipNumber?'VIP':'',customer.qualification||''].filter(Boolean).slice(0,2);return `<button type="button" class="ops-card ops-customer-open" data-ops-customer="${esc(customer.id)}"><header><strong>${esc(customer.name || '未命名客户')}</strong><span>${esc(customer.source || '未分类')}</span></header>${badges.length?`<div class="ops6-card-tags">${badges.map(badge=>`<i>${esc(badge)}</i>`).join('')}</div>`:''}<div class="ops-card-meta"><span>${esc(customer.assistant || '未分配')}</span><span class="${customer.due && customer.due < todayKey ? 'overdue' : ''}">${esc(customer.due || '未排期')}</span></div><span class="ops-card-link">打开统一客户档案 →</span></button>`;}).join('') || '<div class="ops-empty ops6-stage-empty"><strong>此阶段暂无客户</strong><span>客户阶段更新后会自动出现在这里。</span></div>'}</div>${column.customers.length > 80 ? `<button class="ops6-column-more" data-stage-index="${index}">还有 ${column.customers.length - 80} 位 · 查看完整名单</button>` : ''}</section>`).join('');
+    view.innerHTML = `<div class="page-heading ops6-page-heading"><div><span class="ops6-eyebrow">CUSTOMER JOURNEY BOARD</span><h1 class="page-title">客户阶段看板</h1><p class="page-subtitle">阶段保留现有业务规则；名单、客户档案和任务状态使用同一份实时数据。</p></div><div class="heading-actions"><button class="btn" data-stage-open-customers>打开客户中心</button></div></div>
+      <section class="ops6-stage-command" aria-label="客户阶段控制面"><div class="ops6-stage-overview"><span>当前客户旅程</span><strong>${total} 位客户 · ${columns.length} 个阶段</strong><p>系统设置中的阶段名称直接驱动看板列；客户资料修改后立即重排，不生成副本。</p>${focusColumn ? `<button class="btn small primary" data-stage-index="${focusIndex}">查看主要阶段 · ${esc(focusColumn.name)}</button>` : ''}</div><div class="ops6-stage-stats"><div><span>已分配助理</span><strong>${assigned}</strong></div><div class="urgent"><span>逾期计划</span><strong>${overdue}</strong></div><div><span>尚未排期</span><strong>${withoutPlan}</strong></div></div><div class="ops6-stage-flow">${stageFlow}</div></section>
+      <div class="ops-board">${boardColumns}</div>`;
     view.querySelectorAll('[data-stage-index]').forEach(button => button.addEventListener('click', () => {
       const column = columns[Number(button.dataset.stageIndex)];
       host.openModal(column.name + ' · 客户名单', column.customers.length + ' 位客户', column.customers.length ? '<div class="ops-stage-list">' + column.customers.map(customer => '<button class="btn ops-customer-open" data-ops-customer="' + esc(customer.id) + '">' + esc(customer.name || '未命名客户') + ' · ' + esc(customer.assistant || '未分配') + ' →</button>').join('') + '</div>' : '<div class="ops-empty">当前阶段暂无客户</div>', '<button class="btn" data-action="close-modal">关闭</button>');
     }));
+    view.querySelector('[data-stage-open-customers]')?.addEventListener('click', () => document.querySelector('.nav-item[data-view="customers"]')?.click());
   }
 
   document.addEventListener('click', event => {

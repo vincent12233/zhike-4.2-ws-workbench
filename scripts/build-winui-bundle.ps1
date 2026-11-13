@@ -37,6 +37,7 @@ $resourceAllowList = @(
   'server.mjs',
   'state-delta.cjs',
   'migrate-data.cjs',
+  'assets',
   'migrations',
   'modules',
   'vendor\xlsx'

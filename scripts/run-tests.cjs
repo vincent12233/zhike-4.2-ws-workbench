@@ -128,6 +128,10 @@ function runAll() {
   run('local bridge contract', [path.join(repo, 'desktop', 'tests', 'LocalBridgeContractTests.cjs')]);
   run('design system contract', [path.join(repo, 'tests', 'design-system-contract.test.cjs')]);
   run('Horizon Atelier 6.0 dynamic UI contract', [path.join(repo, 'tests', 'horizon-atelier-contract.test.cjs')]);
+  run('GPT Horizon 6.0 workspace contract', [path.join(repo, 'tests', 'gpt-horizon-workspace.test.cjs')]);
+  run('Horizon Atelier governance/settings UI contract', [path.join(repo, 'tests', 'governance-horizon-contract.test.cjs')]);
+  run('6.0 linked business workspace shell', [path.join(repo, 'tests', 'business-6-shell-contract.test.cjs')]);
+  run('6.0 global Horizon visual finish', [path.join(repo, 'tests', 'global-6-visual-contract.test.cjs')]);
   run('save error regression', [path.join(repo, 'tests', 'save-error-regression.test.cjs')]);
   run('snapshot before write regression', [path.join(repo, 'tests', 'snapshot-before-write-regression.test.cjs')]);
   run('local health contract', [path.join(repo, 'tests', 'local-health-contract.test.cjs')]);
@@ -168,9 +172,11 @@ function runAll() {
   run('customer governance API', [path.join(repo, 'tests', 'customer-governance-api.test.cjs')]);
   run('customer governance UI', [path.join(repo, 'tests', 'customer-governance-ui.test.cjs')]);
   run('settings option synchronization', [path.join(repo, 'tests', 'settings-option-sync.test.cjs')]);
+  run('cross-workspace business chain', [path.join(repo, 'tests', 'cross-workspace-chain-contract.test.cjs')]);
   runWs();
   run('operations core', [path.join(repo, 'tests', 'operations-core.test.cjs')]);
   run('operations task center UI contract', [path.join(repo, 'tests', 'operations-ui-contract.test.cjs')]);
+  run('operations and stage-board 6.0 workspace', [path.join(repo, 'tests', 'operations-6-workspace-contract.test.cjs')]);
   run('group management malformed-data regression', [path.join(repo, 'tests', 'group-management-regression.test.cjs')]);
   run('smart import classification', [path.join(repo, 'tests', 'smart-import-classification.test.cjs')]);
   run('customer center registration date column', [path.join(repo, 'tests', 'customer-center-date-column.test.cjs')]);
