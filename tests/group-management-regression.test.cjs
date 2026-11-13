@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(__dirname, '..', 'resources', 'app', 'a
 
 assert.match(
   source,
-  /const activeCustomers\s*=\s*\(\)\s*=>\s*\(Array\.isArray\(state\.customers\)\s*\?\s*state\.customers\s*:\s*\[\]\)\.filter\(c\s*=>\s*c\s*&&\s*typeof c\s*===\s*['"]object['"][\s\S]*?&&\s*!c\.deleted\)/,
+  /const activeCustomers\s*=\s*\(\)\s*=>\s*\{[\s\S]*?const source\s*=\s*Array\.isArray\(state\.customers\)\s*\?\s*state\.customers\s*:\s*\[\][\s\S]*?const value\s*=\s*source\.filter\(c\s*=>\s*c\s*&&\s*typeof c\s*===\s*['"]object['"][\s\S]*?&&\s*!c\.deleted\)/,
   'activeCustomers must ignore malformed customer rows and a transient non-array state before group aggregation',
 );
 

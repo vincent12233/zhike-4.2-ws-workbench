@@ -10,7 +10,13 @@ const host = read('desktop/src/Zhike.Desktop/Views/LegacyUiHostPage.xaml.cs');
 for (const marker of ['accounts:', 'activeAccountId', 'create-account', 'switch-account', 'leftCollapsed', 'rightCollapsed', 'ResizeObserver', 'refreshCollectionSummary', 'analyzeStoredConversation', 'syncAnalysisToCrm']) assert.match(ui, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 assert.doesNotMatch(ui, /\bprompt\s*\(/);
 assert.match(ui, /window\.__zhikeWsFollowups/);
-assert.match(ui, /conversations\?limit=5000/);
+assert.match(ui, /function requestAccountPipelineRefresh\(accountId/,
+  'native events must route background collection and AI refresh by account');
+assert.match(ui, /payloadAccountId !== String\(state\.activeAccountId/,
+  'a background account status must not overwrite the visible account status');
+assert.match(ui, /function loadAllConversationPages\(context/);
+assert.match(ui, /conversations\?limit=1000/);
+assert.match(ui, /nextCursor/);
 assert.match(ui, /\/api\/ws\/crm-sync/);
 assert.match(ui, /自动采集已读会话/);
 assert.match(ui, /class="ws-login-summary"/);
@@ -21,6 +27,22 @@ assert.match(ui, /ws-toolbar-collect[^"\n]*" data-ws-action="collect-all-read"/)
 assert.match(ui, /未读会话永不自动打开/);
 assert.match(ui, /系统设置中明确绑定的 VIP 群按成员身份进入同一采集与分析链/,
   'WS collection copy must describe the current VIP-group rule instead of the removed all-groups exclusion');
+assert.match(ui, /function isConfiguredVipGroupIdentifier\(\.\.\.values\)/,
+  'manual group entry must consult the same configured VIP-group bindings as native discovery');
+assert.match(ui, /const vipGroup = groupJid && isConfiguredVipGroupIdentifier\(externalId, title\)/,
+  'a manually opened @g.us conversation is accepted only when it is an explicitly configured VIP group');
+assert.match(ui, /conversationType = vipGroup \? 'vip_group' : 'direct'/,
+  'manual VIP-group entry must retain the VIP-group type at the service boundary');
+assert.match(ui, /const conversationType = isAutomaticVipGroupConversation\(normalized\) \? 'vip_group' : 'direct'/,
+  'native list discovery must retain configured VIP-group identity');
+assert.match(ui, /customerId: vipGroup \? '' : matchedCustomerId/,
+  'a VIP group may never bind the entire conversation to one customer');
+assert.match(ui, /importType\.type === 'group' && !vipGroup/,
+  'manual transcript import excludes ordinary groups but permits a configured VIP group');
+assert.match(ui, /senderIdentityTrusted:false/,
+  'a pasted VIP-group sender label must never become trusted customer identity evidence');
+assert.doesNotMatch(ui, /'群聊不纳入(?:采集| WS 客户采集| AI 分析)/,
+  'group policy messages must distinguish excluded ordinary groups from configured VIP groups');
 assert.match(ui, /class="ws-runtime-strip"/,
   'the workbench must expose the live background collection and AI pipeline state without opening a conversation');
 for (const marker of ['后台持续运行', '完整历史', '待分析', '跳过未读']) assert.match(ui, new RegExp(marker));

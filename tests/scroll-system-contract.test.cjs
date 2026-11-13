@@ -34,6 +34,8 @@ assert.match(coordinator, /selector: '\.v4-dimension-table', mode: 'contain'/, '
 assert.match(coordinator, /sessionStorage\.setItem\(STORAGE_KEY/, 'route/region scroll positions survive DOM replacement in the session');
 assert.match(coordinator, /document\.addEventListener\('wheel',[\s\S]*passive: false/, 'wheel routing can contain boundary gestures');
 assert.match(coordinator, /document\.addEventListener\('keydown', onKeyDown/, 'keyboard scrolling uses the same ownership model');
+assert.match(coordinator, /function containedScrollOwner[\s\S]*parent\.dataset\.scrollMode !== 'contain'/,
+  'nested bounded panes hand wheel input only to a contained parent instead of swallowing it or moving the page');
 assert.match(coordinator, /new MutationObserver\(records =>[\s\S]*observer\.observe\(view, \{ childList: true \}\)/, 'only direct page replacement is observed');
 assert.doesNotMatch(coordinator, /observe\([^)]*,\s*\{[^}]*subtree:\s*true/, 'the scroll coordinator must not scan every WS/table mutation');
 const modalFingerprint = coordinator.match(/function safeModalFingerprint\(modal\) \{[\s\S]*?\n  \}/)?.[0] || '';

@@ -13,6 +13,7 @@
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const nowIso = () => new Date().toISOString();
   const text = value => String(value == null ? '' : value).trim();
+  const CONVERSATION_RENDER_BATCH = 120;
   const VERIFIED_NATIVE_DIRECTION_SOURCE_MAP = new Map([
     ['class-message-out', 'send'], ['class-message-in', 'receive'],
     ['data-id-outgoing', 'send'], ['data-id-incoming', 'receive'],
@@ -37,6 +38,7 @@
     currentConversationId: '',
     conversationSelectionManual: false,
     conversations: [],
+    conversationWatermarks: new Map(),
     messages: [],
     historyCoverage: { loaded: 0, total: 0, complete: false },
     replies: [],
@@ -62,6 +64,7 @@
     mobilePanel: 'center',
     captureDirection: 'receive',
     conversationQuery: '',
+    conversationWindowStart: 0,
     translationStatus: '翻译服务未检测',
     loading: false,
     accountsLoading: false,
@@ -112,6 +115,9 @@
   let resizeInFlight = false;
   let resizePending = false;
   let lastResizeBounds = '';
+  let conversationLoadFrame = 0;
+  const backgroundAccountRefreshQueue = new Set();
+  let backgroundAccountRefreshPromise = null;
 
   function restartBackgroundPolling() {
     clearInterval(collectionRefreshTimer);
@@ -194,6 +200,7 @@
   function stopBackgroundRuntime() {
     if (!state.backgroundActive && !collectionRefreshTimer && !autoCaptureTimer) return;
     state.backgroundActive = false;
+    backgroundAccountRefreshQueue.clear();
     backgroundGeneration += 1;
     ++state.accountLoadSequence;
     ++loadSequence;
@@ -351,6 +358,7 @@
     state.activeAccountId = id;
     state.currentConversationId = '';
     state.conversationSelectionManual = false;
+    state.conversationWindowStart = 0;
     state.conversations = []; state.messages = []; state.historyCoverage = { loaded: 0, total: 0, complete: false }; state.analysis = null; state.analysisMeta = null; state.replies = [];
     writeStoredAccountId(id); render();
     try {
@@ -394,6 +402,9 @@
   function canManuallyProcessConversation(conversation) {
     if (!conversation || (isExplicitGroupConversation(conversation) && !isAutomaticVipGroupConversation(conversation))) return false;
     return isAutomaticCollectibleConversation(conversation) || !isNativeManagedConversation(conversation);
+  }
+  function ordinaryGroupExclusionMessage(action = '采集、AI 分析或跟进提醒') {
+    return `普通群聊未绑定为 VIP 群，不纳入${action}；系统设置中已绑定的 VIP 群会按可信成员身份分别处理。`;
   }
   function personalConversationRows(rows) {
     return (Array.isArray(rows) ? rows : []).filter(row => !isExplicitGroupConversation(row) || isAutomaticVipGroupConversation(row));
@@ -680,6 +691,98 @@
       throw error;
     } finally { clearTimeout(timer); }
   }
+  async function loadAllConversationPages(context = captureContext('')) {
+    const conversations = [], seen = new Set(), seenCursors = new Set();
+    let cursor = '', newest = null;
+    // The service page is intentionally bounded; this loop is the product's
+    // all-conversations contract. A cursor cycle is treated as corruption
+    // rather than silently returning a partial account.
+    for (let page = 0; page < 1000; page += 1) {
+      const suffix = cursor ? `&cursor=${encodeURIComponent(cursor)}` : '';
+      const result = await api(`/api/ws/conversations?limit=1000${suffix}`, {}, context);
+      assertContext(context);
+      for (const item of Array.isArray(result.conversations) ? result.conversations : []) {
+        const id = String(item?.id || '');
+        if (!id || seen.has(id)) continue;
+        seen.add(id);
+        conversations.push(item);
+      }
+      newest = newestConversationWatermark([result.scannedNewest], newest);
+      const nextCursor = text(result.nextCursor);
+      if (!nextCursor) return { conversations, pages: page + 1, watermark: newest || newestConversationWatermark(conversations) };
+      if (seenCursors.has(nextCursor)) throw new Error('WS 会话分页游标重复，已停止加载以避免遗漏或死循环。');
+      seenCursors.add(nextCursor);
+      cursor = nextCursor;
+    }
+    throw new Error('WS 会话数量超过单次安全加载范围，未返回不完整结果。');
+  }
+  function conversationWatermark(value) {
+    const updatedAt = text(value?.updatedAt || value?.updated_at);
+    const id = text(value?.id);
+    return updatedAt && id ? { updatedAt, id } : null;
+  }
+  function compareConversationWatermarks(left, right) {
+    if (!left && !right) return 0;
+    if (!left) return -1;
+    if (!right) return 1;
+    const timeOrder = String(left.updatedAt).localeCompare(String(right.updatedAt));
+    return timeOrder || String(left.id).localeCompare(String(right.id));
+  }
+  function newestConversationWatermark(rows, fallback = null) {
+    let newest = fallback;
+    for (const row of Array.isArray(rows) ? rows : []) {
+      const candidate = conversationWatermark(row);
+      if (compareConversationWatermarks(candidate, newest) > 0) newest = candidate;
+    }
+    return newest;
+  }
+  function mergeConversationInventory(current, changed, excludedIds = []) {
+    const merged = new Map((Array.isArray(current) ? current : []).map(row => [String(row.id), row]));
+    for (const id of excludedIds || []) merged.delete(String(id));
+    for (const row of Array.isArray(changed) ? changed : []) if (row?.id) merged.set(String(row.id), row);
+    return [...merged.values()].sort((left, right) => -compareConversationWatermarks(conversationWatermark(left), conversationWatermark(right)));
+  }
+  async function loadConversationDeltaPages(context = captureContext('')) {
+    const accountId = String(context.accountId || state.activeAccountId || 'default');
+    const previousWatermark = state.conversationWatermarks.get(accountId);
+    if (!previousWatermark || !state.conversations.length) return loadAllConversationPages(context);
+    const conversations = [], excludedIds = new Set(), seen = new Set(), seenCursors = new Set();
+    let cursor = '', newest = previousWatermark;
+    for (let page = 0; page < 1000; page += 1) {
+      const suffix = cursor ? `&cursor=${encodeURIComponent(cursor)}` : '';
+      const result = await api(`/api/ws/conversations?limit=250${suffix}`, {}, context);
+      assertContext(context);
+      const rows = Array.isArray(result.conversations) ? result.conversations : [];
+      for (const item of rows) {
+        const id = String(item?.id || '');
+        if (!id || seen.has(id)) continue;
+        seen.add(id);
+        conversations.push(item);
+      }
+      for (const id of Array.isArray(result.excludedConversationIds) ? result.excludedConversationIds : []) excludedIds.add(String(id));
+      newest = newestConversationWatermark([result.scannedNewest, ...rows], newest);
+      const scannedThrough = conversationWatermark(result.scannedThrough) || conversationWatermark(rows.at(-1));
+      const crossedPreviousWatermark = Boolean(scannedThrough) && compareConversationWatermarks(scannedThrough, previousWatermark) <= 0;
+      const nextCursor = text(result.nextCursor);
+      if (crossedPreviousWatermark || !nextCursor) {
+        return { conversations, excludedIds: [...excludedIds], pages: page + 1, watermark: newest, incremental: true };
+      }
+      if (seenCursors.has(nextCursor)) throw new Error('WS 会话增量分页游标重复，已停止加载以避免遗漏或死循环。');
+      seenCursors.add(nextCursor);
+      cursor = nextCursor;
+    }
+    throw new Error('WS 会话增量超过单次安全加载范围，未更新水位。');
+  }
+  function applyConversationInventory(result, accountId = state.activeAccountId) {
+    const scopedAccountId = String(accountId || 'default');
+    const nextRows = result?.incremental
+      ? mergeConversationInventory(state.conversations, result.conversations, result.excludedIds)
+      : (Array.isArray(result?.conversations) ? result.conversations : state.conversations);
+    state.conversations = personalConversationRows(nextRows);
+    const watermark = result?.watermark || newestConversationWatermark(state.conversations, state.conversationWatermarks.get(scopedAccountId));
+    if (watermark) state.conversationWatermarks.set(scopedAccountId, watermark);
+    return state.conversations;
+  }
   function boundsForBrowserView() {
     const node = $('#wsBrowserHost');
     if (!node) return { hidden: true };
@@ -701,6 +804,11 @@
         if (text(value)) values.push(text(value));
     }
     return [...new Set(values)].slice(0, 500);
+  }
+  function isConfiguredVipGroupIdentifier(...values) {
+    const normalize = value => text(value).normalize('NFKC').toLocaleLowerCase();
+    const configured = new Set(configuredVipGroups().map(normalize).filter(Boolean));
+    return values.some(value => configured.has(normalize(value)));
   }
   async function wsBridge(action, context = null, extra = null) {
     if (!window.zhikeDesktop?.ws) throw new Error('当前页面没有桌面 WS 视图能力，请从知客安装版打开。');
@@ -820,7 +928,7 @@
     render();
     try {
       const [result, runResult, alertResult, aiQueueResult] = await Promise.all([
-        api('/api/ws/conversations?limit=5000', {}, context),
+        loadAllConversationPages(context),
         api('/api/ws/collection-runs', {}, context).catch(() => null),
         api('/api/ws/followup-alerts?limit=8', {}, context).catch(() => null),
         api('/api/ws/ai-jobs?limit=20', {}, context).catch(() => null),
@@ -829,7 +937,7 @@
       if (runResult) { assertContext(context); state.collectionRun = runResult.run || null; }
       if (alertResult) { assertContext(context); state.followupAlerts = alertResult.alerts || []; }
       if (aiQueueResult?.stats) { assertContext(context); state.aiQueueStats = aiQueueResult.stats; }
-      state.conversations = Array.isArray(result.conversations) ? personalConversationRows(result.conversations) : [];
+      applyConversationInventory(result, accountId);
       const previousConversationId = String(state.currentConversationId || '');
       if (state.conversationSelectionManual && !state.conversations.some(item => String(item.id) === previousConversationId)) state.conversationSelectionManual = false;
       state.currentConversationId = resolveInitialConversationId(state.conversations, previousConversationId, state.conversationSelectionManual);
@@ -927,13 +1035,13 @@
     try {
       await syncVipGroupAllowlist(context).catch(() => null);
       const [result, run, alerts, aiQueue] = await Promise.all([
-        api('/api/ws/conversations?limit=5000', {}, context),
+        loadConversationDeltaPages(context),
         api('/api/ws/collection-runs', {}, context),
         api('/api/ws/followup-alerts?limit=8', {}, context),
         api('/api/ws/ai-jobs?limit=20', {}, context).catch(() => null),
       ]);
       assertContext(context);
-      state.conversations = Array.isArray(result.conversations) ? personalConversationRows(result.conversations) : state.conversations;
+      applyConversationInventory(result, context.accountId);
       selectedConversationId = reconcilePersonalConversationSelection();
       state.collectionRun = run.run || null;
       state.followupAlerts = alerts.alerts || [];
@@ -965,9 +1073,9 @@
       await refreshSelectedConversationState(context, selectedConversationId, previousConversationSignature, previousQueueSignature);
       assertContext(context);
       scheduleAiQueuePump({ ...context, conversationId: '' });
-      // A safety poll may return the same 5,000-row list every time. Avoid
-      // replacing the whole WS workbench DOM (and resetting scroll/layout
-      // state) unless data visible in the workbench actually changed.
+      // The safety poll reads one small page when the account is unchanged and
+      // walks further only while rows remain newer than the saved watermark.
+      // Avoid replacing the workbench DOM unless visible data actually changed.
       if (collectionRenderSignature() !== beforeRenderSignature) renderPreservingScroll();
     } catch (error) {
       if (contextCurrent(context) && error?.message && !/过期操作/.test(error.message)) {
@@ -984,14 +1092,75 @@
       }
     }
   }
+  function requestAccountPipelineRefresh(accountId = '') {
+    const targetId = text(accountId) || String(state.activeAccountId || 'default');
+    if (!state.backgroundActive) return Promise.resolve({ skipped: true });
+    if (targetId === String(state.activeAccountId || 'default')) return refreshCollectionSummary();
+    backgroundAccountRefreshQueue.add(targetId);
+    // Never take the foreground WhatsApp account away while the operator is
+    // chatting. The durable native collector keeps ingesting; queued AI/CRM
+    // work is drained as soon as the user leaves the WS route.
+    if (state.active) return Promise.resolve({ deferred: true, accountId: targetId });
+    if (backgroundAccountRefreshPromise) return backgroundAccountRefreshPromise;
+    const returnAccountId = String(state.activeAccountId || 'default');
+    backgroundAccountRefreshPromise = (async () => {
+      while (backgroundAccountRefreshQueue.size && state.backgroundActive && !state.active) {
+        const nextAccountId = backgroundAccountRefreshQueue.values().next().value;
+        backgroundAccountRefreshQueue.delete(nextAccountId);
+        if (!state.accounts.some(item => String(item.id) === String(nextAccountId))) continue;
+        if (String(state.activeAccountId) !== String(nextAccountId)) {
+          const switched = await switchAccount(nextAccountId);
+          if (!switched) continue;
+        }
+        if (state.active || !state.backgroundActive) break;
+        const context = captureContext('');
+        const status = await wsBridge('status', context).catch(() => null);
+        if (status?.status) { updateAccountStatus(status); setStatus(status.status, status.detail || ''); }
+        await refreshCollectionSummary();
+        // refreshCollectionSummary schedules the durable AI pump. Wait for the
+        // current bounded batch before rotating so account-switch cancellation
+        // cannot strand a claimed job in the running state.
+        scheduleAiQueuePump(context);
+        await Promise.resolve();
+        if (aiPumpPromise) await aiPumpPromise;
+      }
+    })().finally(async () => {
+      try {
+        let restoredBySwitch = false;
+        if (returnAccountId && String(state.activeAccountId) !== returnAccountId && state.accounts.some(item => String(item.id) === returnAccountId)) {
+          restoredBySwitch = await switchAccount(returnAccountId);
+        }
+        if (returnAccountId && String(state.activeAccountId) === returnAccountId) {
+          const restoreContext = captureContext('');
+          const restoredStatus = await wsBridge('status', restoreContext).catch(() => null);
+          if (restoredStatus?.status && contextCurrent(restoreContext)) {
+            updateAccountStatus({ ...restoredStatus, accountId: returnAccountId });
+            setStatus(restoredStatus.status, restoredStatus.detail || '');
+          }
+          // switchAccount already restores the account list. If the queue
+          // rotated back to the original account by itself, restore it here.
+          if (!restoredBySwitch && contextCurrent(restoreContext)) await loadConversations();
+        }
+      } finally {
+        backgroundAccountRefreshPromise = null;
+        if (backgroundAccountRefreshQueue.size && state.backgroundActive && !state.active) void requestAccountPipelineRefresh(backgroundAccountRefreshQueue.values().next().value);
+      }
+    });
+    return backgroundAccountRefreshPromise;
+  }
   function collectionRenderSignature() {
     const conversations = state.conversations || [];
-    // Updated-at plus the small preview fields are enough to detect a list
-    // change without serialising message bodies or rebuilding the page.
-    const list = conversations.map(row => {
+    const start = Math.max(0, Math.min(Number(state.conversationWindowStart) || 0, Math.max(0, conversations.length - 1)));
+    const visibleRows = conversations.slice(start, start + CONVERSATION_RENDER_BATCH);
+    const selected = conversations.find(row => String(row.id) === String(state.currentConversationId || ''));
+    // Only the rendered window participates in the paint signature. Total,
+    // newest and selected rows preserve correctness without mapping all 50k
+    // conversations on every 12-second safety poll.
+    const rowSignature = row => {
       const data = row.data || {};
       return [row.id, row.updatedAt || row.updated_at, row.unreadCount, String(row.lastMessageText || '').slice(0, 120), row.collectionStatus, data.historyLoaded === true ? 1 : 0, data.historyStale === true ? 1 : 0, Number(data.historyMessageCount || 0), Number(data.directionCaptureVersion || 0), Number(data.directionVersion || 0), text(data.historyFingerprint), text(data.lastMessageFingerprint)].join('\u0001');
-    }).join('\u0002');
+    };
+    const list = [conversations.length, start, rowSignature(conversations[0] || {}), rowSignature(selected || {}), visibleRows.map(rowSignature).join('\u0002')].join('\u0003');
     const run = state.collectionRun ? [state.collectionRun.id, state.collectionRun.status, state.collectionRun.total, state.collectionRun.discovered, state.collectionRun.collecting, state.collectionRun.completed, state.collectionRun.analyzed, state.collectionRun.skipped, state.collectionRun.failed, state.collectionRun.retryable, state.collectionRun.updatedAt || state.collectionRun.updated_at].join('\u0001') : '';
     const alerts = (state.followupAlerts || []).map(row => [row.id, row.status, row.nextFollow, row.updatedAt || row.updated_at].join('\u0001')).join('\u0002');
     const queue = aiQueueSignature();
@@ -1119,14 +1288,17 @@
       assertContext(context);
       state.collectionRun = runResult.run;
     }
+    const legacyByExternalId = new Map((state.conversations || []).map(row => [String(row.externalId || ''), row]));
     let queued = 0;
     const enqueueOne = async item => {
       const normalized = normalizeListItem(item);
       if (!isAutomaticCollectibleConversation(normalized)) return 0;
-      const legacy = state.conversations.find(row => [`list-item-${normalized.index}`, `visible-${normalized.index}`].includes(String(row.externalId || '')));
+      const conversationType = isAutomaticVipGroupConversation(normalized) ? 'vip_group' : 'direct';
+      const vipGroup = conversationType === 'vip_group';
+      const legacy = legacyByExternalId.get(`list-item-${normalized.index}`) || legacyByExternalId.get(`visible-${normalized.index}`);
       const externalId = text(normalized.externalId || legacy?.externalId || `visible-${normalized.index}`); const title = text(normalized.title || externalId);
       const preview = listPreviewText(normalized);
-      const match = core.matchCustomer(getHost()?.state?.customers || [], {
+      const match = vipGroup ? null : core.matchCustomer(getHost()?.state?.customers || [], {
         wsExternalId: externalId,
         wsAccountId: context.accountId,
         // Conversation identity must come from the contact row itself.  A
@@ -1136,7 +1308,17 @@
       });
       const matchedCustomerId = match?.kind === 'phone' || match?.kind === 'ws-id' || match?.kind === 'conversation' ? String(match.customer?.id || '') : '';
       assertContext(context);
-      const conversation = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId, title, conversationType: 'direct', isGroup: false, customerId: matchedCustomerId, lastMessageText: preview, unreadCount: Number(item.unreadCount || 0), data: { discovery: 'visible-page', conversationType: 'direct', isGroup: false, previewOnly: true, historyLoaded: false, customerMatch: matchedCustomerId ? 'automatic' : 'pending' } }) }, context);
+      const conversation = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({
+        externalId,
+        title,
+        conversationType,
+        isGroup: vipGroup,
+        vipGroup,
+        customerId: vipGroup ? '' : matchedCustomerId,
+        lastMessageText: preview,
+        unreadCount: Number(item.unreadCount || 0),
+        data: { discovery: 'visible-page', conversationType, isGroup: vipGroup, vipGroup, previewOnly: true, historyLoaded: false, customerMatch: vipGroup ? 'member-scoped' : (matchedCustomerId ? 'automatic' : 'pending') },
+      }) }, context);
       assertContext(context);
       await api('/api/ws/collection-items', { method: 'POST', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: conversation.id, status: 'queued' }) }, context);
       assertContext(context);
@@ -1148,11 +1330,11 @@
       queued += results.reduce((sum, value) => sum + value, 0);
     }
     assertContext(context);
-    const refreshed = await api('/api/ws/conversations?limit=5000', {}, context);
+    const refreshed = await loadConversationDeltaPages(context);
     assertContext(context);
-    state.conversations = Array.isArray(refreshed.conversations) ? personalConversationRows(refreshed.conversations) : state.conversations;
+    applyConversationInventory(refreshed, context.accountId);
     reconcilePersonalConversationSelection();
-    if (announce) toast(`已发现 ${directItems.length} 个一对一会话，入队 ${queued} 个`);
+    if (announce) toast(`已发现 ${directItems.length} 个可采集会话，入队 ${queued} 个`);
     return queued;
   }
   function splitListPreview(value) {
@@ -1634,9 +1816,9 @@
           const runResult = await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', total: items.length, discovered: items.length, completed, analyzed: Math.max(analyzedItems, analyzed), failed, retryable, cursor: JSON.stringify({ mode: 'list-preview', synced, progressed, analyzed, syncedAt: nowIso() }), lastSuccessAt: nowIso() }) }, context);
           if (runResult?.run) state.collectionRun = runResult.run;
         }
-        const refreshed = await api('/api/ws/conversations?limit=5000', {}, context);
+        const refreshed = await loadConversationDeltaPages(context);
         assertContext(context);
-        state.conversations = Array.isArray(refreshed.conversations) ? personalConversationRows(refreshed.conversations) : state.conversations;
+        applyConversationInventory(refreshed, context.accountId);
         reconcilePersonalConversationSelection();
       }
       if (analyzed && getHost()?.refreshState) await getHost().refreshState().catch(() => {});
@@ -1746,7 +1928,7 @@
   }
   async function captureVisibleMessages() {
     const current = activeConversation(); if (!current) { toast('请先选择一个本机会话', 'x'); return; }
-    if (!canManuallyProcessConversation(current)) { toast(isExplicitGroupConversation(current) ? '群聊不纳入采集、AI 分析或跟进提醒。' : '当前聊天类型尚未确认是一对一会话，已停止读取。', 'x'); return; }
+    if (!canManuallyProcessConversation(current)) { toast(isExplicitGroupConversation(current) ? ordinaryGroupExclusionMessage() : '当前聊天类型尚未确认是一对一会话，已停止读取。', 'x'); return; }
     const context = captureContext(current.id);
     try {
       const result = await wsBridge('capture-visible-messages'); assertContext(context); if (!result?.supported || !result.messages?.length) throw new Error(result?.error || '当前页面没有可识别的可见消息');
@@ -1975,12 +2157,15 @@
     const externalId = text($('#wsConversationExternalId')?.value || state.createExternalId);
     const title = text($('#wsConversationTitle')?.value || state.createTitle);
     if (!externalId) { toast('请输入 WS 会话标识；不读取平台账号或 Cookie。', 'x'); return; }
-    if (/@g\.us$/i.test(externalId)) { toast('群聊不纳入 WS 客户采集、AI 分析或跟进提醒。', 'x'); return; }
+    const groupJid = /@g\.us$/i.test(externalId);
+    const vipGroup = groupJid && isConfiguredVipGroupIdentifier(externalId, title);
+    if (groupJid && !vipGroup) { toast(ordinaryGroupExclusionMessage(' WS 客户采集、AI 分析或跟进提醒'), 'x'); return; }
     const context = captureContext();
     state.busy.customer = true;
     render();
     try {
-      const item = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId, title, conversationType: 'direct', isGroup: false, data: { source: 'user-local-manual', conversationType: 'direct', isGroup: false } }) }, context);
+      const conversationType = vipGroup ? 'vip_group' : 'direct';
+      const item = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId, title, conversationType, isGroup:vipGroup, vipGroup, data: { source: 'user-local-manual', conversationType, isGroup:vipGroup, vipGroup } }) }, context);
       assertContext(context);
       const existing = state.conversations.find(row => String(row.id) === String(item.id));
       state.conversations = existing ? state.conversations.map(row => String(row.id) === String(item.id) ? item : row) : [item, ...state.conversations];
@@ -2003,7 +2188,12 @@
   }
   function renderConversationList() {
     const query = state.conversationQuery.trim().toLocaleLowerCase();
-    const rows = state.conversations.filter(item => !query || `${item.title || ''} ${item.externalId || ''} ${item.lastMessageText || ''}`.toLocaleLowerCase().includes(query)).map(item => {
+    const matches = state.conversations.filter(item => !query || `${item.title || ''} ${item.externalId || ''} ${item.lastMessageText || ''}`.toLocaleLowerCase().includes(query));
+    const lastWindowStart = Math.max(0, Math.floor(Math.max(0, matches.length - 1) / CONVERSATION_RENDER_BATCH) * CONVERSATION_RENDER_BATCH);
+    const windowStart = Math.min(lastWindowStart, Math.max(0, Number(state.conversationWindowStart) || 0));
+    if (windowStart !== state.conversationWindowStart) state.conversationWindowStart = windowStart;
+    const windowEnd = Math.min(matches.length, windowStart + CONVERSATION_RENDER_BATCH);
+    const rows = matches.slice(windowStart, windowEnd).map(item => {
       const stamp = displayTime(item.lastMessageAt || item.updatedAt);
       const rawHistoryLoaded = item.data?.historyLoaded === true;
       const historyLoaded = rawHistoryLoaded && Number(item.data?.directionVersion || 0) >= 4;
@@ -2011,7 +2201,15 @@
       const coverage = historyLoaded ? `完整聊天 ${historyCount || ''} 条` : (rawHistoryLoaded ? '待重采校验消息方向' : (item.data?.previewOnly ? '列表预览' : '已导入消息'));
       return `<button class="ws-session-row ${String(item.id) === String(state.currentConversationId) ? 'active' : ''}" data-ws-action="select-conversation" data-id="${esc(item.id)}"><span class="ws-session-avatar">${esc((item.title || 'WS').slice(0, 1))}</span><span class="ws-session-copy"><strong>${esc(item.title || item.externalId)}</strong><small>${esc(item.lastMessageText || '尚未导入聊天内容')}</small><time>${esc(stamp || '暂无消息时间')} · ${esc(coverage)}</time></span><span class="ws-session-side"><em>${esc(item.intentLevel || '待分析')}</em>${Number(item.unreadCount) > 0 ? `<b>${Math.min(99, Number(item.unreadCount))}</b>` : ''}</span></button>`;
     }).join('');
-    if (rows) return rows;
+    if (rows) {
+      const previous = windowStart > 0
+        ? '<button class="btn small ws-session-page" data-ws-action="previous-conversations">上一页</button>'
+        : '';
+      const next = windowEnd < matches.length
+        ? '<button class="btn small ws-session-page" data-ws-action="next-conversations">下一页</button>'
+        : '';
+      return `${rows}<div class="ws-session-pagination">${previous}<span>${windowStart + 1}–${windowEnd} / ${matches.length}</span>${next}</div>`;
+    }
     return `<div class="ws-empty">${state.conversations.length ? '没有匹配的会话。' : '还没有本机会话。输入会话标识后建立记录，不会预置演示数据。'}</div>`;
   }
   function renderAccountList() {
@@ -2464,9 +2662,10 @@
     const importType = core.detectChatImportType?.(draft.captureText) || { type: 'unknown', reason: 'insufficient-group-evidence', senderCount: 0 };
     const rows = core.parseVisibleChat(draft.captureText, state.captureDirection);
     if (!current) { toast('请先建立或选择本机会话。', 'x'); return; }
-    if (!canManuallyProcessConversation(current)) { toast(isExplicitGroupConversation(current) ? '群聊不纳入采集、AI 分析或跟进提醒。' : '当前聊天类型尚未确认是一对一会话，已停止导入。', 'x'); return; }
-    if (importType.type === 'group') { toast('检测到明确的 WhatsApp 群聊导出；群聊不纳入客户采集、AI 分析或提醒。', 'x'); return; }
-    if (importType.reason === 'multiple-senders') { toast(`检测到 ${Number(importType.senderCount || 0)} 位发言人，无法确认为一对一聊天；请导入单个客户的一对一记录。`, 'x'); return; }
+    const vipGroup = isAutomaticVipGroupConversation(current);
+    if (!canManuallyProcessConversation(current)) { toast(isExplicitGroupConversation(current) ? ordinaryGroupExclusionMessage() : '当前聊天类型尚未确认是一对一会话，已停止导入。', 'x'); return; }
+    if (importType.type === 'group' && !vipGroup) { toast(`检测到明确的 WhatsApp 群聊导出；${ordinaryGroupExclusionMessage('客户采集、AI 分析或提醒')}`, 'x'); return; }
+    if (importType.reason === 'multiple-senders' && !vipGroup) { toast(`检测到 ${Number(importType.senderCount || 0)} 位发言人，无法确认为一对一聊天；请导入单个客户的一对一记录。`, 'x'); return; }
     if (!rows.length) { toast('请先选择或粘贴当前可见聊天文本。', 'x'); return; }
     // Only contact identity fields may auto-fill the customer phone. Numbers
     // mentioned in chat content can belong to a third party. A phone entered
@@ -2497,7 +2696,7 @@
         originalText: row.text,
         order: baseOrder + index + 1,
         translationStatus: core.shouldTranslate(state.settings, row.direction) ? 'pending' : 'none',
-        data: { source: 'user-visible-selection', batchFingerprint: fingerprint, timestamp: row.timestamp, sender: row.sender },
+        data: { source: 'user-visible-selection', batchFingerprint: fingerprint, timestamp: row.timestamp, sender: row.sender, ...(vipGroup ? { conversationType:'vip_group', isGroup:true, vipGroup:true, senderName:row.sender, senderIdentityTrusted:false, senderIdentitySource:'manual-visible-label' } : {}) },
       }));
       const result = await api('/api/ws/messages/batch', {
         method: 'POST',
@@ -2529,7 +2728,7 @@
   async function captureSelection() {
     if (state.busy.capture) return;
     const current = activeConversation();
-    if (current && !canManuallyProcessConversation(current)) { toast(isExplicitGroupConversation(current) ? '群聊不纳入采集、AI 分析或跟进提醒。' : '当前聊天类型尚未确认是一对一会话，已停止读取。', 'x'); return; }
+    if (current && !canManuallyProcessConversation(current)) { toast(isExplicitGroupConversation(current) ? ordinaryGroupExclusionMessage() : '当前聊天类型尚未确认是一对一会话，已停止读取。', 'x'); return; }
     state.busy.capture = true;
     render();
     try {
@@ -2554,7 +2753,7 @@
     if (state.aiBusy) return { ok: false, reason: 'AI 分析正在进行。' };
     if (!current || !state.messages.length) { toast('请先建立会话并导入可见聊天。', 'x'); return { ok: false, reason: '当前会话暂无可分析消息。' }; }
     if (!canManuallyProcessConversation(current)) {
-      const reason = isExplicitGroupConversation(current) ? '群聊不纳入 AI 分析、客户补档或跟进提醒。' : '当前聊天类型尚未确认是一对一会话，已停止 AI 分析。';
+      const reason = isExplicitGroupConversation(current) ? ordinaryGroupExclusionMessage('AI 分析、客户补档或跟进提醒') : '当前聊天类型尚未确认是一对一会话，已停止 AI 分析。';
       toast(reason, 'x');
       return { ok: false, reason, group: isExplicitGroupConversation(current), pending: !isExplicitGroupConversation(current) };
     }
@@ -2977,6 +3176,13 @@
     if (action === 'toggle-right') { state.rightCollapsed = !state.rightCollapsed; writePanelCollapsed('right', state.rightCollapsed); render(); return; }
     if (action === 'mobile-left' || action === 'mobile-center' || action === 'mobile-right') { state.mobilePanel = action.slice(7); render(); return; }
     if (action === 'new-conversation') { state.mobilePanel = 'left'; render(); requestAnimationFrame(() => $('#wsConversationExternalId')?.focus()); return; }
+    if (action === 'next-conversations' || action === 'previous-conversations') {
+      const delta = action === 'next-conversations' ? CONVERSATION_RENDER_BATCH : -CONVERSATION_RENDER_BATCH;
+      state.conversationWindowStart = Math.max(0, state.conversationWindowStart + delta);
+      const list = $('.ws-session-list');
+      if (list) { list.innerHTML = renderConversationList(); list.scrollTop = 0; }
+      return;
+    }
     if (action === 'create-conversation') return createConversation();
     if (action === 'create-collection-run') return createCollectionRun();
     if (action === 'pause-collection') return updateCollectionRun('paused');
@@ -3053,6 +3259,7 @@
   function applyInput(target) {
     if (target.matches('#wsConversationSearch')) {
       state.conversationQuery = target.value;
+      state.conversationWindowStart = 0;
       const list = $('.ws-session-list');
       if (list) list.innerHTML = renderConversationList();
       return;
@@ -3148,6 +3355,7 @@
     browserResizeObserver = undefined;
     document.body.classList.remove('ws-mode');
     wsBridge('hide').catch(() => {});
+    if (backgroundAccountRefreshQueue.size) void requestAccountPipelineRefresh(backgroundAccountRefreshQueue.values().next().value);
   }
   async function exportWsData(accountId = '') { return api('/api/ws/export'+(accountId?'?accountId='+encodeURIComponent(accountId):''), { timeout: 30000 }); }
   async function importWsData(value, accountId = '') {
@@ -3161,9 +3369,7 @@
     // refresh entry point explicit so newly collected messages trigger the
     // same list-sync → AI analysis → CRM/follow-up refresh path immediately,
     // instead of waiting for the 12-second safety poll.
-    refresh: () => state.backgroundActive
-      ? refreshCollectionSummary()
-      : Promise.resolve({ skipped: true }),
+    refresh: accountId => requestAccountPipelineRefresh(accountId),
     load: async (limit = 8) => {
       const safeLimit = Math.min(30, Math.max(1, Number(limit) || 8));
       const result = await api(`/api/ws/followup-alerts?allAccounts=1&limit=${safeLimit}`);
@@ -3215,6 +3421,26 @@
         importVisible();
       }
     }, true);
+    // Windowed rendering keeps the DOM bounded even after browsing an account
+    // with tens of thousands of conversations. Reaching the rail end advances
+    // to the next fixed-size window instead of rebuilding every prior row.
+    view?.addEventListener('scroll', event => {
+      const list = event.target;
+      if (!(list instanceof Element) || !list.classList.contains('ws-session-list')) return;
+      if (list.scrollHeight - list.scrollTop - list.clientHeight > 240) return;
+      const query = state.conversationQuery.trim().toLocaleLowerCase();
+      const matchCount = query
+        ? state.conversations.reduce((count, item) => count + (`${item.title || ''} ${item.externalId || ''} ${item.lastMessageText || ''}`.toLocaleLowerCase().includes(query) ? 1 : 0), 0)
+        : state.conversations.length;
+      if (state.conversationWindowStart + CONVERSATION_RENDER_BATCH >= matchCount || conversationLoadFrame) return;
+      conversationLoadFrame = requestAnimationFrame(() => {
+        conversationLoadFrame = 0;
+        if (!state.active || !list.isConnected) return;
+        state.conversationWindowStart += CONVERSATION_RENDER_BATCH;
+        list.innerHTML = renderConversationList();
+        list.scrollTop = 0;
+      });
+    }, true);
     // WS BrowserView is docked to the workbench viewport; page scrolling is
     // disabled in ws-mode, so it must not chase nested scroll containers.
     window.zhikeDesktop?.onWsStatus?.(payload => {
@@ -3229,6 +3455,7 @@
         state.busy.import = false; state.busy.customer = false; state.busy.followup = false; state.busy.connection = false; state.busy.reply = false; state.busy.capture = false; state.busy.readHistory = false; state.aiBusy = false; state.translationBusy.clear();
         state.currentConversationId = '';
         state.conversationSelectionManual = false;
+        state.conversationWindowStart = 0;
         state.conversations = [];
         state.analysisRefreshPending.clear();
         updateAccountStatus({ ...payload, accountId: state.activeAccountId, status: payload.status || '连接失败' });
@@ -3240,6 +3467,11 @@
         return;
       }
       updateAccountStatus(payload);
+      const payloadAccountId = text(payload.accountId);
+      if (payloadAccountId && payloadAccountId !== String(state.activeAccountId || 'default')) {
+        if (state.backgroundActive && (payload.status === '已连接' || payload.eventName || payload.accepted != null || payload.queuedForRetry)) void requestAccountPipelineRefresh(payloadAccountId);
+        return;
+      }
       if (payload.eventName === 'collection-complete' || payload.coverage === 'read-history-complete') state.readHistoryAutoStarted = false;
       setStatus(payload.status || '未连接', payload.detail || '');
       if (state.backgroundActive && payload.status === '已连接') {

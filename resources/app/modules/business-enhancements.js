@@ -175,6 +175,6 @@
     if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run);
     else queueMicrotask(run);
   };
-  new MutationObserver(refresh).observe(view, { childList: true, subtree: true }); refresh();
+  new MutationObserver(refresh).observe(view, { childList: true }); refresh();
   window.ZhikeBusinessEnhancements = Object.freeze({ businessSignature, duplicateGroups });
 })();

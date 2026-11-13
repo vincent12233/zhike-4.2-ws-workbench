@@ -36,9 +36,6 @@ UninstallDisplayIcon={app}\zhike-horizon-6.ico
 [Languages]
 Name: "chinesesimp"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 
-[Tasks]
-Name: "desktopicon"; Description: "创建桌面快捷方式"; GroupDescription: "快捷方式："
-
 [Files]
 Source: "{#StageDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; A versioned shortcut icon path prevents Windows Explorer from reusing the
@@ -46,6 +43,21 @@ Source: "{#StageDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs c
 Source: "{#StageDir}\zhike.ico"; DestDir: "{app}"; DestName: "zhike-horizon-6.ico"; Flags: ignoreversion
 
 [InstallDelete]
+; All business data and credentials live outside {app}, under the isolated
+; %LOCALAPPDATA%\Zhike6 data root. Replacing these application-only payloads
+; prevents removed 4.x/5.x modules or runtime assemblies from surviving an
+; in-place upgrade and being mistaken for part of the current product.
+Type: filesandordirs; Name: "{app}\resources"
+Type: filesandordirs; Name: "{app}\migrations"
+Type: files; Name: "{app}\Zhike.Desktop.exe"
+Type: files; Name: "{app}\node.exe"
+Type: files; Name: "{app}\*.dll"
+Type: files; Name: "{app}\*.deps.json"
+Type: files; Name: "{app}\*.runtimeconfig.json"
+Type: files; Name: "{app}\*.pdb"
+Type: files; Name: "{app}\*.pri"
+Type: files; Name: "{app}\*.winmd"
+Type: files; Name: "{app}\zhike*.ico"
 ; 6.0.0 keeps a single desktop entry. These names were created by earlier
 ; WinUI packages and point to the same executable, so retaining them makes one
 ; installed product look like multiple clients.
@@ -53,6 +65,10 @@ Type: files; Name: "{autodesktop}\知客原生桌面版.lnk"
 Type: files; Name: "{autodesktop}\知客桌面版.lnk"
 Type: files; Name: "{autodesktop}\知客兼容回滚（旧版）.lnk"
 Type: files; Name: "{autodesktop}\知客运营工作台.lnk"
+Type: files; Name: "{userprograms}\知客兼容回滚（旧版）.lnk"
+Type: files; Name: "{userprograms}\知客原生桌面版\知客工作台.lnk"
+Type: files; Name: "{userprograms}\知客原生桌面版\知客原生桌面版.lnk"
+Type: dirifempty; Name: "{userprograms}\知客原生桌面版"
 Type: files; Name: "{userprograms}\知客运营工作台\知客运营工作台.lnk"
 Type: dirifempty; Name: "{userprograms}\知客运营工作台"
 ; Remove application-only debris left by older packages before copying the
@@ -155,8 +171,8 @@ begin
     Exit;
   SplitUninstallCommand(CommandLine, Filename, Parameters);
   if (Filename = '') or (not FileExists(Filename)) then begin
-    Log('Previous Electron uninstall entry exists but its uninstaller is missing.');
-    Result := False;
+    Log('Previous Electron uninstall entry is orphaned; no executable remains to retire, so 6.0 installation will continue.');
+    Result := True;
     Exit;
   end;
   if Pos('/VERYSILENT', Uppercase(Parameters)) = 0 then

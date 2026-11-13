@@ -147,10 +147,23 @@ wheel({ target: sidebarChrome, deltaX: 0, deltaY: 1600, deltaMode: 0, shiftKey: 
 assert.equal(prevented, true, 'a sidebar wheel remains contained after navigation reaches its boundary');
 assert.equal(view.scrollTop, 0, 'navigation boundary does not hand the gesture to the page');
 
+const nestedPane = new FakeElement({ classes: ['ws-account-list'], parent: nav, clientHeight: 80, scrollHeight: 80 });
+nestedPane.dataset.scrollMode = 'contain';
+nav.scrollTop = 0;
+prevented = false;
+wheel({ target: nestedPane, deltaX: 0, deltaY: 60, deltaMode: 0, shiftKey: false, preventDefault() { prevented = true; }, stopPropagation() {} });
+assert.equal(prevented, true, 'a nested contained pane keeps the gesture inside its rail');
+assert.equal(nav.scrollTop, 60, 'a non-scrollable contained child hands the gesture to its contained parent');
+
 prevented = false;
 table.scrollLeft = 0;
 wheel({ target: table, deltaX: 0, deltaY: 40, deltaMode: 0, shiftKey: false, preventDefault() { prevented = true; }, stopPropagation() {} });
 assert.equal(prevented, false, 'a normal vertical wheel over a table remains owned by the page');
+table.scrollHeight = 500;
+table.clientHeight = 100;
+wheel({ target: table, deltaX: 0, deltaY: 40, deltaMode: 0, shiftKey: false, preventDefault() { prevented = true; }, stopPropagation() {} });
+assert.equal(prevented, true, 'a deliberately bounded table owns its vertical wheel');
+assert.equal(table.scrollTop, 40, 'bounded table vertical movement is applied without moving the page');
 wheel({ target: table, deltaX: 40, deltaY: 0, deltaMode: 0, shiftKey: false, preventDefault() { prevented = true; }, stopPropagation() {} });
 assert.equal(prevented, true, 'horizontal table gestures remain in the table');
 assert.equal(table.scrollLeft, 40);

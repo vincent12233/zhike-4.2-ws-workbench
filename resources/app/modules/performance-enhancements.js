@@ -26,6 +26,6 @@
     // WebView2/WS status mutation to schedule a layout pass while the user
     // was scrolling, which produced intermittent frame drops.
     const target=document.querySelector('#viewContainer')||document.body;
-    new MutationObserver(scheduleMount).observe(target,{childList:true,subtree:true});
+    new MutationObserver(scheduleMount).observe(target,{childList:true});
   }
 })();

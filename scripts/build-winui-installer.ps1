@@ -17,7 +17,14 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$OutputDir = if ([string]::IsNullOrWhiteSpace($OutputDir)) { Join-Path $repo 'work\winui-installer-output' } else { $OutputDir }
+$OutputDir = if ([string]::IsNullOrWhiteSpace($OutputDir)) {
+  # A gated build is the formal hand-off, so it must land in the single
+  # release directory unless the caller deliberately chooses another path.
+  # Development/smoke builds remain isolated below work/.
+  if ($ReleaseGate) { Join-Path $repo 'releases' } else { Join-Path $repo 'work\winui-installer-output' }
+} else {
+  $OutputDir
+}
 $stageInput = if ([string]::IsNullOrWhiteSpace($StageDir)) {
   Join-Path $PSScriptRoot "..\work\winui-bundle\zhike-winui-$AppVersion-win-x64"
 } else {
@@ -75,6 +82,10 @@ $requiredStageFiles = @(
   'resources\app\styles.css',
   'resources\app\server.mjs',
   'resources\app\modules\horizon-atelier.css',
+  'resources\app\modules\business-6.css',
+  'resources\app\modules\operations-6.css',
+  'resources\app\modules\global-6.css',
+  'resources\app\modules\scroll-system.css',
   'resources\app\assets\zhike-horizon-logo.png',
   'resources\app\vendor\xlsx\xlsx.js',
   'zhike.ico',
@@ -96,6 +107,15 @@ if ($manifestVersion -ne $AppVersion) { throw "staged bundle version mismatch: m
 $manifestGate = if ($bundleManifest.PSObject.Properties.Name -contains 'releaseGate') { [string]$bundleManifest.releaseGate } else { '' }
 if ($ReleaseGate -and $manifestGate -ne 'passed') { throw "release gate rejected this stage: manifest releaseGate=$manifestGate; rebuild the bundle with -ReleaseGate." }
 if ($ReleaseGate -and [bool]$bundleManifest.sourceWorktreeDirty) { throw 'release gate rejected a stage built from a dirty worktree.' }
+if ($ReleaseGate) {
+  $manifestSourceCommit = if ($bundleManifest.PSObject.Properties.Name -contains 'sourceCommit') { [string]$bundleManifest.sourceCommit } else { '' }
+  $headLines = @(& git -C $repo rev-parse --verify HEAD 2>$null)
+  if ($LASTEXITCODE -ne 0 -or $headLines.Count -eq 0) { throw 'release gate requires the current Git HEAD to verify the staged source commit.' }
+  $currentSourceCommit = ([string]$headLines[0]).Trim()
+  if ([string]::IsNullOrWhiteSpace($manifestSourceCommit) -or $manifestSourceCommit -ne $currentSourceCommit) {
+    throw "staged source commit mismatch: manifest=$manifestSourceCommit current=$currentSourceCommit; rebuild the bundle from the current committed source."
+  }
+}
 $stagedIndex = [IO.File]::ReadAllText((Join-Path $stage 'resources\app\index.html'))
 if (-not $stagedIndex.Contains(" &middot; v$AppVersion<!-- ZHIKE_BUILD_VERSION --></span>")) {
   throw "staged sidebar version mismatch: expected v$AppVersion in resources/app/index.html; rebuild the WinUI bundle."
@@ -110,18 +130,54 @@ if (-not $stagedServer.Contains("'/modules/horizon-atelier.css'")) { throw 'stag
 
 function Assert-ManifestFileHash([string]$RelativePath) {
   $normalized = $RelativePath.Replace('\','/')
+  if ([string]::IsNullOrWhiteSpace($normalized) -or [IO.Path]::IsPathRooted($normalized) -or $normalized.Split('/') -contains '..') {
+    throw "bundle manifest contains an unsafe path: $normalized"
+  }
   $entry = $bundleManifest.files | Where-Object { [string]$_.path -eq $normalized } | Select-Object -First 1
   if (-not $entry) { throw "bundle manifest is missing $normalized" }
   $filePath = Join-Path $stage $RelativePath
+  $fileItem = Get-Item -LiteralPath $filePath -ErrorAction SilentlyContinue
+  if (-not $fileItem -or $fileItem.PSIsContainer) { throw "bundle manifest file is missing: $normalized" }
+  if ($fileItem.Length -ne [long]$entry.bytes) { throw "bundle file size mismatch: $normalized" }
   $actualHash = (Get-FileHash -LiteralPath $filePath -Algorithm SHA256).Hash
   if ($actualHash -ne [string]$entry.sha256) { throw "bundle file hash mismatch: $normalized" }
 }
-foreach ($relative in @('Zhike.Desktop.exe','resources\app\index.html','resources\app\server.mjs','resources\app\modules\horizon-atelier.css')) {
-  Assert-ManifestFileHash $relative
+$manifestEntries = @($bundleManifest.files)
+if ($manifestEntries.Count -eq 0) { throw 'bundle manifest does not contain any files.' }
+$manifestPaths = @{}
+foreach ($entry in $manifestEntries) {
+  $normalizedEntryPath = ([string]$entry.path).Replace('\','/')
+  $manifestKey = $normalizedEntryPath.ToLowerInvariant()
+  if ($manifestPaths.ContainsKey($manifestKey)) { throw "bundle manifest contains a duplicate path: $normalizedEntryPath" }
+  $manifestPaths[$manifestKey] = $true
+}
+$actualStageFiles = @(
+  Get-ChildItem -LiteralPath $stage -File -Recurse -Force | Where-Object { $_.FullName -ne $manifestPath } | ForEach-Object {
+    $_.FullName.Substring($stage.Length + 1).Replace('\','/')
+  }
+)
+foreach ($actualPath in $actualStageFiles) {
+  if (-not $manifestPaths.ContainsKey($actualPath.ToLowerInvariant())) { throw "WinUI stage contains an unmanifested file: $actualPath" }
+}
+if ($actualStageFiles.Count -ne $manifestPaths.Count) { throw 'WinUI stage file set does not exactly match the bundle manifest.' }
+foreach ($entry in $manifestEntries) {
+  Assert-ManifestFileHash ([string]$entry.path)
 }
 $executableVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $stage 'Zhike.Desktop.exe')).FileVersion
 if ($executableVersion -ne "$AppVersion.0") { throw "staged executable version mismatch: executable=$executableVersion expected=$AppVersion.0" }
 Invoke-CodeSign (Join-Path $stage 'Zhike.Desktop.exe')
+if (-not [string]::IsNullOrWhiteSpace($certificate)) {
+  # Authenticode changes both the executable length and digest. Persist the
+  # signed values so the manifest installed beside the application describes
+  # the exact payload that was packaged, then verify the complete set again.
+  $signedExecutable = Get-Item -LiteralPath (Join-Path $stage 'Zhike.Desktop.exe')
+  $signedEntry = $manifestEntries | Where-Object { ([string]$_.path).Replace('\','/') -eq 'Zhike.Desktop.exe' } | Select-Object -First 1
+  if (-not $signedEntry) { throw 'bundle manifest is missing Zhike.Desktop.exe after signing.' }
+  $signedEntry.bytes = $signedExecutable.Length
+  $signedEntry.sha256 = (Get-FileHash -LiteralPath $signedExecutable.FullName -Algorithm SHA256).Hash
+  $bundleManifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
+  foreach ($entry in $manifestEntries) { Assert-ManifestFileHash ([string]$entry.path) }
+}
 $manifestRuntime = if ($bundleManifest.PSObject.Properties.Name -contains 'runtime') { [string]$bundleManifest.runtime } else { '' }
 if (-not [string]::IsNullOrWhiteSpace($manifestRuntime) -and $manifestRuntime -ne 'win-x64') {
   throw "staged bundle runtime mismatch: manifest=$manifestRuntime expected=win-x64"
@@ -195,6 +251,7 @@ if (-not $installerItem) {
 if (-not $installerItem) { throw "installer not found in output directory: $out" }
 $installer = $installerItem.FullName
 Invoke-CodeSign $installer
+$installerItem = Get-Item -LiteralPath $installer
 $installerHash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash
 if ($ReleaseGate) {
   $formalInstallers = @(Get-ChildItem -LiteralPath $out -File -ErrorAction SilentlyContinue |

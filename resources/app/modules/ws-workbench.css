@@ -172,6 +172,9 @@ body.ws-mode .ws-coverage-warning{background:rgba(231,199,136,.055)}
 body.ws-mode .ws-account-list,body.ws-mode .ws-session-list,body.ws-mode .ws-capture-panel,body.ws-mode .ws-message-list,body.ws-mode .ws-assist-panel,body.ws-mode .ws-hot-profile-fields{scrollbar-color:rgba(111,185,185,.5) transparent;scrollbar-width:thin}
 body.ws-mode .ws-account-list::-webkit-scrollbar,body.ws-mode .ws-session-list::-webkit-scrollbar,body.ws-mode .ws-capture-panel::-webkit-scrollbar,body.ws-mode .ws-message-list::-webkit-scrollbar,body.ws-mode .ws-assist-panel::-webkit-scrollbar,body.ws-mode .ws-hot-profile-fields::-webkit-scrollbar{width:7px;height:7px}
 body.ws-mode .ws-account-list::-webkit-scrollbar-thumb,body.ws-mode .ws-session-list::-webkit-scrollbar-thumb,body.ws-mode .ws-capture-panel::-webkit-scrollbar-thumb,body.ws-mode .ws-message-list::-webkit-scrollbar-thumb,body.ws-mode .ws-assist-panel::-webkit-scrollbar-thumb,body.ws-mode .ws-hot-profile-fields::-webkit-scrollbar-thumb{background:rgba(111,185,185,.44);border:2px solid transparent;background-clip:padding-box;border-radius:999px}
+.ws-session-pagination{position:sticky;bottom:0;z-index:2;display:flex;align-items:center;justify-content:center;gap:8px;margin:8px;padding:7px;border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(12px)}
+.ws-session-pagination span{min-width:92px;text-align:center;color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.ws-session-page{min-width:68px}
 
 @media (max-width:1320px){
   body.ws-mode .ws-layout{grid-template-columns:204px minmax(380px,1fr) 300px}

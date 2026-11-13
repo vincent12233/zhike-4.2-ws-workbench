@@ -23,6 +23,10 @@ for (const source of [app, server]) {
 assert.doesNotMatch(server, /local_migrations|localFirstMigration|convertLegacy|openLegacy|pendingImportTimer/);
 assert.equal(fs.existsSync(path.join(repo, 'resources/app/modules/local-first-migration.js')), false);
 assert.equal(fs.existsSync(path.join(repo, 'resources/app/migrations/012-local-first-migration.sql')), false);
+assert.equal(fs.existsSync(path.join(repo, 'resources/app/migrate-data.cjs')), false,
+  '6.0 must not ship an unused old-database migration executable');
+assert.doesNotMatch(read('scripts/build-winui-bundle.ps1'), /^\s*'migrate-data\.cjs'\s*,?\s*$/m,
+  'the formal bundle allow-list must not reintroduce the retired migration executable');
 assert.match(app, /const stored\s*=\s*null/,
   '6.0 startup must ignore any old WebView localStorage business state');
 assert.doesNotMatch(app, /zhike-offline-crm-v1|localStorage\.setItem\(dbKey/);

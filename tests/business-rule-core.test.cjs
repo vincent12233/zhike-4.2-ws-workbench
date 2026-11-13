@@ -6,6 +6,7 @@ const rules = require('../resources/app/modules/business-rule-core.js');
 assert.equal(rules.BUSINESS_RULES.customerMaster.aiMayCreate, false);
 assert.equal(rules.BUSINESS_RULES.import.phoneRegistryUsesAi, false);
 assert.equal(rules.BUSINESS_RULES.whatsapp.directOnly, true);
+assert.equal(rules.BUSINESS_RULES.whatsapp.vipGroupMemberException, true);
 assert.equal(rules.BUSINESS_RULES.whatsapp.skipUnread, true);
 assert.equal(rules.BUSINESS_RULES.whatsapp.collectBothDirections, true);
 assert.equal(rules.BUSINESS_RULES.reminders.investmentYearsWeight, 0);

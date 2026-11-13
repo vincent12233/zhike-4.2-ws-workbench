@@ -172,6 +172,25 @@
     return target.closest('[data-scroll-mode]');
   }
 
+  // A bounded component can contain another bounded component (for example
+  // the WS account list inside the WS session rail, or an import preview
+  // inside a modal).  The old wheel router always stopped at the innermost
+  // node, so a non-scrollable child swallowed the gesture and made the UI
+  // appear frozen.  Walk only through contained ancestors; never hand the
+  // gesture to the page behind a modal/rail.
+  function containedScrollOwner(region, axis, delta, boundary = null) {
+    let node = region;
+    while (node) {
+      if (canConsume(node, axis, delta)) return node;
+      const parent = node.parentElement?.closest?.('[data-scroll-mode]');
+      if (!parent || parent === node) return null;
+      if (boundary && !boundary.contains(parent)) return null;
+      if (parent.dataset.scrollMode !== 'contain') return null;
+      node = parent;
+    }
+    return null;
+  }
+
   function registerRegions(root = document) {
     for (const definition of definitions) {
       const nodes = [];
@@ -274,12 +293,15 @@
     const horizontalIntent = event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY);
     const mode = region.dataset.scrollMode;
     if (mode === 'horizontal') {
-      if (!horizontalIntent) return; // A normal wheel belongs to the page.
-      const delta = normalizedDelta(event, 'x', region.clientWidth);
-      if (!canConsume(region, 'x', delta)) return;
+      // Tables own their vertical wheel only when they are deliberately
+      // bounded and actually have vertical overflow. Chip strips/boards have
+      // no vertical range, so their normal wheel still belongs to the page.
+      const axis = horizontalIntent ? 'x' : 'y';
+      const delta = normalizedDelta(event, axis, axis === 'x' ? region.clientWidth : region.clientHeight);
+      if (!canConsume(region, axis, delta)) return;
       event.preventDefault();
       event.stopPropagation();
-      region.scrollLeft += delta;
+      applyDelta(region, axis, delta);
       savePosition(region);
       return;
     }
@@ -288,7 +310,8 @@
     if (mode === 'contain') {
       event.preventDefault();
       event.stopPropagation();
-      if (applyDelta(region, 'y', delta)) savePosition(region);
+      const owner = containedScrollOwner(region, 'y', delta, modalOpen ? modal : null);
+      if (owner && applyDelta(owner, 'y', delta)) savePosition(owner);
       return;
     }
     // Handoff regions keep native behaviour until reaching their boundary.
@@ -395,6 +418,7 @@
     canConsume,
     applyDelta,
     normalizedDelta,
+    containedScrollOwner,
     safeModalFingerprint,
     positionCount: () => positions.size,
   });

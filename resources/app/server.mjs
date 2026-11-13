@@ -258,8 +258,11 @@ function databaseDiagnostics() {
   const state = readState();
   const activeCustomers = (state?.customers || []).filter(customer => !customer.deleted);
   const duplicatePhones = activeCustomers.length - new Set(activeCustomers.map(customer => String(customer.phone || '')).filter(Boolean)).size;
-  const activeIds = new Set(activeCustomers.map(customer => String(customer.id)));
-  const orphaned = Object.fromEntries(['tickets','deposits','followups','registrations'].map(key => [key, (state?.[key] || []).filter(row => row.customerId && !activeIds.has(String(row.customerId))).length]));
+  // Soft deletion deliberately keeps the customer master and its independent
+  // business records so a restore can recover the complete timeline. Those
+  // records are not orphaned merely because the customer is currently hidden.
+  const customerIds = new Set((state?.customers || []).filter(Boolean).map(customer => String(customer.id)));
+  const orphaned = Object.fromEntries(['tickets','deposits','followups','registrations'].map(key => [key, (state?.[key] || []).filter(row => row.customerId && !customerIds.has(String(row.customerId))).length]));
   const wsCounts = {
     settings: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_settings').get().count || 0),
     conversations: Number(db.prepare('SELECT COUNT(*) AS count FROM ws_conversations').get().count || 0),
@@ -464,6 +467,20 @@ function wsOptionalCount(value) {
   return Number.isFinite(count) && count >= 0 ? Math.min(1000000, Math.floor(count)) : null;
 }
 function wsAccountId(value) { return wsText(value, 120) || 'default'; }
+function wsConversationCursor(row) {
+  if (!row) return '';
+  return Buffer.from(JSON.stringify([String(row.updated_at || ''), String(row.id || '')]), 'utf8').toString('base64url');
+}
+function wsDecodeConversationCursor(value) {
+  const raw = wsText(value, 2048);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(Buffer.from(raw, 'base64url').toString('utf8'));
+    if (!Array.isArray(parsed) || parsed.length !== 2) return null;
+    const updatedAt = wsText(parsed[0], 80), id = wsText(parsed[1], 160);
+    return updatedAt && id ? { updatedAt, id } : null;
+  } catch { return null; }
+}
 function wsAccountRow(id) { return db.prepare('SELECT * FROM ws_accounts WHERE id=?').get(wsAccountId(id)); }
 function wsRequireAccount(id) { const row = wsAccountRow(id); if (!row) throw new Error('WS 账号不存在或已被删除。'); return row; }
 function ensureDefaultWsAccount() {
@@ -1458,9 +1475,27 @@ const server = createServer(async (req, res) => {
       if (req.method === 'GET') {
         const accountId = wsAccountId(url.searchParams.get('accountId'));
         wsRequireAccount(accountId);
-        const limit = Math.min(5000, Math.max(1, Number(url.searchParams.get('limit')) || 50));
-        const rows = db.prepare(`SELECT * FROM ws_conversations WHERE account_id=? ORDER BY updated_at DESC LIMIT ${limit}`).all(accountId);
-        return json(res, 200, { conversations: rows.filter(row => !wsIsExcludedGroup(row)).map(wsConversationPayload) });
+        // Keep every response bounded while allowing the desktop workbench to
+        // walk an account of any size.  The stable (updated_at,id) keyset avoids
+        // offset drift when real-time messages update rows during pagination.
+        const limit = Math.min(1000, Math.max(1, Number(url.searchParams.get('limit')) || 200));
+        const suppliedCursor = url.searchParams.get('cursor');
+        const cursor = wsDecodeConversationCursor(suppliedCursor);
+        if (suppliedCursor && !cursor) return json(res, 400, { error: 'WS 会话分页游标无效。' });
+        const rows = cursor
+          ? db.prepare(`SELECT * FROM ws_conversations WHERE account_id=? AND (updated_at<? OR (updated_at=? AND id<?)) ORDER BY updated_at DESC,id DESC LIMIT ${limit + 1}`).all(accountId, cursor.updatedAt, cursor.updatedAt, cursor.id)
+          : db.prepare(`SELECT * FROM ws_conversations WHERE account_id=? ORDER BY updated_at DESC,id DESC LIMIT ${limit + 1}`).all(accountId);
+        const scanned = rows.slice(0, limit);
+        const excludedRows = scanned.filter(wsIsExcludedGroup);
+        const nextCursor = rows.length > limit && scanned.length ? wsConversationCursor(scanned.at(-1)) : '';
+        return json(res, 200, {
+          conversations: scanned.filter(row => !wsIsExcludedGroup(row)).map(wsConversationPayload),
+          excludedConversationIds: excludedRows.map(row => row.id),
+          scannedNewest: scanned.length ? { updatedAt: scanned[0].updated_at, id: scanned[0].id } : null,
+          scannedThrough: scanned.length ? { updatedAt: scanned.at(-1).updated_at, id: scanned.at(-1).id } : null,
+          nextCursor,
+          hasMore: Boolean(nextCursor),
+        });
       }
       if (req.method === 'POST') {
         const body = JSON.parse((await readBody(req, 512 * 1024)).toString('utf8'));

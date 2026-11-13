@@ -27,7 +27,10 @@ assert.doesNotMatch(host, /action, "directory"[\s\S]{0,420}"UNSUPPORTED"/);
 assert.match(host, /DispatcherQueueTimer\? _desktopBackupTimer/);
 assert.match(host, /TryRunScheduledBackupAsync/);
 assert.match(host, /PollDueRemindersAsync/);
-assert.match(productivity, /if\(desktop\)return;reminderTimer=setInterval/);
+// The browser fallback is only allowed when there is no native desktop host
+// and the page is visible. Hidden pages must not keep a second reminder poller
+// alive while the native host owns the durable timer.
+assert.match(productivity, /if\(desktop\|\|document\.hidden\)return;reminderTimer=setInterval/);
 
 // Backup safety: state and every WS account are included, the file is first
 // written to a temporary sibling, and retention only touches the exact prefix

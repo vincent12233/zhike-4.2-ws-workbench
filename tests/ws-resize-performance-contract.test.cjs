@@ -9,6 +9,18 @@ const native = fs.readFileSync(path.join(repo, 'desktop/src/Zhike.Desktop/Views/
 const web = fs.readFileSync(path.join(repo, 'resources/app/modules/ws-workbench.js'), 'utf8');
 const accessibility = fs.readFileSync(path.join(repo, 'resources/app/modules/accessibility-enhancements.js'), 'utf8');
 const businessEnhancements = fs.readFileSync(path.join(repo, 'resources/app/modules/business-enhancements.js'), 'utf8');
+const runtimeCustomizer = fs.readFileSync(path.join(repo, 'resources/app/modules/runtime-customizer.js'), 'utf8');
+const dataCenter = fs.readFileSync(path.join(repo, 'resources/app/modules/v4-data-center.js'), 'utf8');
+const gptAssistant = fs.readFileSync(path.join(repo, 'resources/app/modules/gpt-assistant.js'), 'utf8');
+const productivity = fs.readFileSync(path.join(repo, 'resources/app/modules/productivity.js'), 'utf8');
+const directViewObservers = [
+  'accessibility-enhancements.js',
+  'business-enhancements.js',
+  'customer-governance-ui.js',
+  'operations-upgrade.js',
+  'performance-enhancements.js',
+  'productivity.js',
+].map(name => [name, fs.readFileSync(path.join(repo, 'resources/app/modules', name), 'utf8')]);
 
 // Resizing the embedded WS view is a high-frequency UI path. It must only
 // move the native overlay; probing the entire WhatsApp DOM on every resize
@@ -34,5 +46,24 @@ assert.match(businessEnhancements, /requestAnimationFrame\(run\)/,
   'business enhancement observer must coalesce DOM mutations to a frame');
 assert.match(businessEnhancements, /currentView.*tickets.*deposits.*quality/s,
   'business enhancement observer must skip unrelated routes');
+assert.doesNotMatch(runtimeCustomizer, /observe\(document\.body\s*,\s*\{[^}]*subtree:\s*true/,
+  'runtime customization must not rescan the full WS subtree');
+assert.match(runtimeCustomizer, /observe\(viewRoot,\{childList:true\}\)/,
+  'runtime customization watches only direct route replacements');
+assert.doesNotMatch(dataCenter, /observe\(document\.body\s*,\s*\{[^}]*subtree:\s*true/,
+  'data-center enhancements must not run for every WS message mutation');
+assert.match(dataCenter, /observe\(view,\{childList:true\}\)/,
+  'data-center enhancements watch only the surfaces they own');
+for (const [name, source] of directViewObservers)
+  assert.doesNotMatch(source, /observe\([^)]*,\s*\{[^}]*subtree:\s*true/,
+    `${name} must not rescan nested WS/table mutations`);
+assert.doesNotMatch(gptAssistant, /observe\(document\.body,\{[^}]*subtree:\s*true/,
+  'GPT customer shortcut must never observe the full document subtree');
+assert.match(gptAssistant, /customerDrawerObserver\.observe\(drawer,\{childList:true\}\)/,
+  'GPT customer shortcut must bind to its owned drawer after lazy creation');
+assert.match(gptAssistant, /drawerBootstrapObserver\.disconnect\(\)/,
+  'the direct-body drawer bootstrap observer must detach after first use');
+assert.match(productivity, /if\(desktop\|\|document\.hidden\)return/,
+  'browser reminder fallback must stop polling while hidden');
 
 console.log('ws resize performance contract: native resize is probe-free and web resize calls are coalesced');

@@ -126,6 +126,11 @@
     const reason=!source?'missing':route?.sourceAmbiguous?'ambiguous':confidence<0.72?'low-confidence':'';
     return {source,confidence,candidates,reason,needsReview:Boolean(reason),defaultApplied};
   }
+  function shouldReviewSource(sourceReview={},context={}){
+    if(!sourceReview?.needsReview)return false;
+    const type=importHint(context.recordType||context.type||'')||clean(context.recordType||context.type||'').toLowerCase();
+    return !(context.existingCustomer&&type&&type!=='customer');
+  }
   function looksLikePhone(value){const raw=clean(value),digits=raw.replace(/\D/g,'');if(digits.length<8||digits.length>15||date(raw))return false;if(/^\d{1,6}(?:\.\d+)?$/.test(raw))return false;return /^\+?\d[\d\s().-]{7,}$/.test(raw);}
   function looksLikeAmount(value){const raw=clean(value).replace(/[,$￥₹€£\s]/g,'');return /^-?\d+(?:\.\d+)?$/.test(raw)&&!date(raw)&&!looksLikePhone(value);}
   function valuesFor(rows,index){return (Array.isArray(rows)?rows:[]).map(row=>Array.isArray(row)?row[index]:row?.[index]).map(clean).filter(Boolean).slice(0,30);}
@@ -156,6 +161,8 @@
     if(/customer|客户|客户资料|客户中心/.test(raw))return 'customer';
     if(/ticket|跟票|股票|买卖|stock/.test(raw))return 'ticket';
     if(/deposit|入金|充值|付款|payment/.test(raw))return 'deposit';
+    if(/registration|register|报名/.test(raw))return 'registration';
+    if(/followup|follow|跟进|回访/.test(raw))return 'followup';
     if(/mixed|混合/.test(raw))return 'mixed';
     return '';
   }
@@ -186,7 +193,10 @@
     const explicit=importHint(mappedValue(row,mapping,'recordType')),ticketHeader=field=>isBusinessHeader(field,headers?.[mapping?.[field]]),
       product=mappedValue(row,mapping,'product'),direction=mappedValue(row,mapping,'direction'),amount=mappedValue(row,mapping,'amount'),
       followDate=mappedValue(row,mapping,'followDate'),buyDate=mappedValue(row,mapping,'buyDate'),sellDate=mappedValue(row,mapping,'sellDate');
-    let ticket=explicit==='ticket'&&ticketHeader('recordType'),deposit=explicit==='deposit'&&ticketHeader('recordType');
+    let ticket=explicit==='ticket'&&ticketHeader('recordType'),deposit=explicit==='deposit'&&ticketHeader('recordType'),registration=explicit==='registration'&&ticketHeader('recordType'),followup=explicit==='followup'&&ticketHeader('recordType');
+    // An explicit row type is authoritative. A shared "business date/note"
+    // column must not turn a registration or follow-up row into a stock row.
+    if(registration||followup)return {ticket:false,deposit:false,registration,followup};
     if(ticketHeader('product')&&looksLikeProductCode(product))ticket=true;
     if(ticketHeader('direction')&&direction)ticket=true;
     if(ticketHeader('buyDate')&&buyDate)ticket=true;
@@ -196,7 +206,7 @@
     if(ticketHeader('externalRef')&&mappedValue(row,mapping,'externalRef'))ticket=true;
     if(ticketHeader('businessNote')&&mappedValue(row,mapping,'businessNote'))ticket=true;
     if(ticketHeader('amount')&&/^[-+]?\d[\d,]*(?:\.\d+)?$/.test(amount.replace(/,/g,''))&&Number(amount.replace(/,/g,''))>0)deposit=true;
-    return {ticket,deposit};
+    return {ticket,deposit,registration,followup};
   }
   function inferRowClassification(row,mapping={},headers=[],options={}){
     const aliases=options.aliases||{},values=Array.isArray(row)?row:(row&&typeof row==='object'?Object.values(row):[]),headerList=Array.isArray(headers)?headers:[],mappedValueFor=field=>mappedValue(row,mapping,field),sourceCandidates=[],statusCandidates=[];
@@ -225,18 +235,18 @@
     // business values win (prevents a bad AI hint from hiding real tickets).
     if(hint==='customer'&&customerExport)return 'customer';
     if(customerExport)return 'customer';
-    let ticket=false,deposit=false;
+    let ticket=false,deposit=false,registration=false,followup=false;
     for(const row of Array.isArray(batch?.rows)?batch.rows.slice(1):[]){
       const signals=businessSignals(row,batch.mapping||{},headers);
-      ticket=ticket||signals.ticket;deposit=deposit||signals.deposit;
-      if(ticket&&deposit)return 'mixed';
+      ticket=ticket||signals.ticket;deposit=deposit||signals.deposit;registration=registration||signals.registration;followup=followup||signals.followup;
+      if([ticket,deposit,registration,followup].filter(Boolean).length>1)return 'mixed';
     }
-    if(!ticket&&!deposit){
+    if(!ticket&&!deposit&&!registration&&!followup){
       // An AI hint is advisory only. It cannot turn a customer export into a
       // business batch without a concrete business value in the mapped rows.
       return 'customer';
     }
-    return ticket&&deposit?'mixed':ticket?'ticket':'deposit';
+    return ticket?'ticket':deposit?'deposit':registration?'registration':'followup';
   }
   function detectImportDomain(headers=[]){
     const values=(headers||[]).map(clean),joined=values.join('|');
@@ -249,7 +259,9 @@
     if(domain==='phone-registry')target='phone-registry';
     else if(batchMode==='ticket'||classification.type==='ticket'&&signals.ticket)target='ticket';
     else if(batchMode==='deposit'||classification.type==='deposit'&&signals.deposit)target='deposit';
-    else if(batchMode==='mixed')target=signals.ticket&&signals.deposit?'mixed':signals.ticket?'ticket':signals.deposit?'deposit':'customer';
+    else if(batchMode==='registration'||classification.type==='registration'&&signals.registration)target='registration';
+    else if(batchMode==='followup'||classification.type==='followup'&&signals.followup)target='followup';
+    else if(batchMode==='mixed')target=[['ticket',signals.ticket],['deposit',signals.deposit],['registration',signals.registration],['followup',signals.followup]].find(([,matched])=>matched)?.[0]||'customer';
     reasons.push(domain==='phone-registry'?'手机号登记表头命中，固定走本地登记导入，不调用 AI':`批次模式 ${batchMode||'customer'}，本行路由到 ${target}`);
     if(route.source)reasons.push(`渠道 ${route.source}（${route.sourceOrigin||'内容识别'}，置信度 ${Math.round((route.sourceConfidence||0)*100)}%）`);
     if(route.status)reasons.push(`状态 ${route.status}（${route.statusOrigin||'内容识别'}）`);
@@ -263,7 +275,7 @@
   }
   function inferImportMode(headers=[],rows=[],mapping={},hint=''){return importBatchMode({headers,rows:[headers,...(rows||[])],mapping:{...(mapping||{}),recordTypeHint:hint}});}
   function summarizeImportBatch(batch={}){
-    const headers=batch.headers||batch.rows?.[0]||[],rows=Array.isArray(batch.rows)?batch.rows.slice(1):[],mode=importBatchMode(batch),summary={mode,total:rows.length,customerRows:0,ticketRows:0,depositRows:0,ambiguousRows:0,invalidRows:0,sourceCounts:{},statusCounts:{}};
+    const headers=batch.headers||batch.rows?.[0]||[],rows=Array.isArray(batch.rows)?batch.rows.slice(1):[],mode=importBatchMode(batch),summary={mode,total:rows.length,customerRows:0,ticketRows:0,depositRows:0,registrationRows:0,followupRows:0,ambiguousRows:0,invalidRows:0,sourceCounts:{},statusCounts:{}};
     for(const row of rows){
       const phone=mappedValue(row,batch.mapping||{},'phone');
       if(phone&&!looksLikePhone(phone)){summary.invalidRows++;continue;}
@@ -274,7 +286,9 @@
       const signals=businessSignals(row,batch.mapping||{},headers);
       if(signals.ticket)summary.ticketRows++;
       if(signals.deposit)summary.depositRows++;
-      if(!signals.ticket&&!signals.deposit)summary.ambiguousRows++;
+      if(signals.registration)summary.registrationRows++;
+      if(signals.followup)summary.followupRows++;
+      if(!signals.ticket&&!signals.deposit&&!signals.registration&&!signals.followup)summary.ambiguousRows++;
     }
     return summary;
   }
@@ -284,7 +298,22 @@
     const signals=businessSignals(row,mapping||{},headers);
     if(mode==='ticket')return signals.ticket;
     if(mode==='deposit')return signals.deposit;
-    return signals.ticket||signals.deposit;
+    if(mode==='registration')return signals.registration;
+    if(mode==='followup')return signals.followup;
+    return signals.ticket||signals.deposit||signals.registration||signals.followup;
+  }
+  // Customer summary dates are projections of the independent follow-up
+  // ledger.  Imports may be sorted newest-first, oldest-first or mixed, so a
+  // later loop iteration must never move the customer summary backwards.  For
+  // two records on the same day, keep the furthest valid next-follow date so
+  // the result is deterministic regardless of row order.
+  function latestFollowSummary(current={},incoming={}){
+    const currentLast=date(current.lastFollow),incomingDate=date(incoming.date),currentDue=date(current.due),incomingDue=date(incoming.nextDate);
+    const fallbackLast=currentLast||clean(current.lastFollow),fallbackDue=currentDue||clean(current.due);
+    if(!incomingDate||(currentLast&&incomingDate<currentLast))return {lastFollow:fallbackLast,due:fallbackDue,accepted:false};
+    const newer=!currentLast||incomingDate>currentLast;
+    const due=incomingDue&&(newer||!currentDue||incomingDue>currentDue)?incomingDue:fallbackDue;
+    return {lastFollow:incomingDate,due,accepted:true};
   }
   // Merge imported profile data into an existing customer without overwriting
   // information that is already present.  This is deliberately conservative:
@@ -321,5 +350,5 @@
   function mappingSuggestions(headers,mapping){const suggestions=[];if(mapping?.phone==null)suggestions.push('未识别手机号码列，请确认号码字段或检查样本值');if(mapping?.name==null)suggestions.push('未识别姓名列，可选择客户姓名或联系人');if(mapping?.source==null)suggestions.push('未识别渠道列，将从文件名、工作表名和内容自动推断');if(mapping?.status==null)suggestions.push('未识别状态列，将按渠道和状态关键词自动推断');return suggestions;}
   function rowSuggestions(row){const suggestions=[];if(!row?.phone)suggestions.push('补充手机号码');else if(String(row.phone).length!==10)suggestions.push('检查号码位数');if(row?.confidence!=null&&row.confidence<70)suggestions.push('补充姓名、渠道或登记日期');if(row?.source&&/[\/|或、]/.test(row.source))suggestions.push('渠道存在多个候选值');if(row?.status&&/[\/|或、]/.test(row.status))suggestions.push('状态存在多个候选值');return unique(suggestions);}
   function csvRowSuggestions(row){const suggestions=[];if(!row?.name)suggestions.push('缺少姓名');if(row?.source&&/[\/|或、]/.test(row.source))suggestions.push('渠道有多个候选值');if(row?.status&&/[\/|或、]/.test(row.status))suggestions.push('状态有多个候选值');if(row?.recordType&&/[\/|或、]/.test(row.recordType))suggestions.push('业务类型有多个候选值');return unique(suggestions);}
-  window.ZhikeSmartImport={date,normalizeValue,normalizeSource,resolveImportSource,sourceSignal,looksLikePhone,looksLikeAmount,canonicalImportField,inferHeaderMapping,detectHeaderRow,detectImportDomain,explainImportDecision,normalizeImportTarget:importHint,inferImportMode,inferRecordType,classifyImportRow,classifyRow,importBatchMode,summarizeImportBatch,shouldWriteBusinessRow,looksLikeCustomerExport,mergeCustomerFields,inferRowClassification,parseNaturalLine,headerSignature,mappingConfidence,applyMappingProfile,rememberMappingProfile,saveMappingProfile,mappingSuggestions,rowSuggestions,csvRowSuggestions};
+  window.ZhikeSmartImport={date,normalizeValue,normalizeSource,resolveImportSource,shouldReviewSource,sourceSignal,looksLikePhone,looksLikeAmount,canonicalImportField,inferHeaderMapping,detectHeaderRow,detectImportDomain,explainImportDecision,normalizeImportTarget:importHint,inferImportMode,inferRecordType,classifyImportRow,classifyRow,importBatchMode,summarizeImportBatch,shouldWriteBusinessRow,latestFollowSummary,looksLikeCustomerExport,mergeCustomerFields,inferRowClassification,parseNaturalLine,headerSignature,mappingConfidence,applyMappingProfile,rememberMappingProfile,saveMappingProfile,mappingSuggestions,rowSuggestions,csvRowSuggestions};
 })();

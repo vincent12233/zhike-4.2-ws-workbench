@@ -2,6 +2,7 @@
 
 const assert = require('node:assert/strict');
 const childProcess = require('node:child_process');
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -29,6 +30,13 @@ assert.match(installer, /release gate rejected this stage/);
 assert.match(installer, /staged UI title is not Horizon Atelier 6\.0/);
 assert.match(installer, /Assert-ManifestFileHash/);
 assert.match(installer, /bundle file hash mismatch/);
+assert.match(installer, /bundle file size mismatch/);
+assert.match(installer, /\$manifestEntries = @\(\$bundleManifest\.files\)[\s\S]*foreach \(\$entry in \$manifestEntries\)/, 'installer must verify every staged manifest file, not a small allow-list');
+assert.match(installer, /staged source commit mismatch/, 'formal installer must reject a stage built from an older commit of the same version');
+assert.match(installer, /bundle manifest contains a duplicate path/);
+assert.match(installer, /WinUI stage contains an unmanifested file/);
+assert.match(installer, /actualStageFiles\.Count -ne \$manifestPaths\.Count/);
+assert.match(installer, /signedEntry\.bytes = \$signedExecutable\.Length[\s\S]*signedEntry\.sha256/, 'signing must refresh the staged manifest');
 assert.match(installer, /modules\\horizon-atelier\.css/);
 
 if (process.platform === 'win32') {
@@ -60,6 +68,10 @@ if (process.platform === 'win32') {
       'resources/app/server.mjs',
       'resources/app/assets/zhike-horizon-logo.png',
       'resources/app/modules/horizon-atelier.css',
+      'resources/app/modules/business-6.css',
+      'resources/app/modules/operations-6.css',
+      'resources/app/modules/global-6.css',
+      'resources/app/modules/scroll-system.css',
       'resources/app/vendor/xlsx/xlsx.js',
       'zhike.ico',
     ];
@@ -108,6 +120,39 @@ if (process.platform === 'win32') {
     const developmentOutput = `${developmentStage.stdout}\n${developmentStage.stderr}`;
     assert.notEqual(developmentStage.status, 0, 'a development snapshot must not be publishable through the release gate');
     assert.match(developmentOutput, /release gate rejected this stage/);
+
+    const currentHead = childProcess.execFileSync('git', ['-C', repo, 'rev-parse', '--verify', 'HEAD'], { encoding: 'utf8' }).trim();
+    fs.writeFileSync(path.join(stage, 'resources/app/index.html'), '<title>知客 6.0 · Horizon Atelier</title><link href="horizon-atelier.css"><link href="scroll-system.css"><span> &middot; v6.0.0<!-- ZHIKE_BUILD_VERSION --></span>');
+    fs.writeFileSync(path.join(stage, 'resources/app/server.mjs'), "const APP_VERSION = '6.0.0'; const assets = ['/modules/horizon-atelier.css'];");
+    const manifestFiles = requiredFiles.map(relative => {
+      const payload = fs.readFileSync(path.join(stage, ...relative.split('/')));
+      return { path: relative, bytes: payload.length, sha256: crypto.createHash('sha256').update(payload).digest('hex').toUpperCase() };
+    });
+
+    fs.writeFileSync(manifestPath, JSON.stringify({
+      version: '6.0.0', releaseGate: 'passed', sourceWorktreeDirty: false,
+      sourceCommit: '0000000000000000000000000000000000000000', files: manifestFiles,
+    }));
+    const oldCommitStage = runInstallerGate();
+    assert.notEqual(oldCommitStage.status, 0, 'a same-version stage from another commit must be rejected');
+    assert.match(`${oldCommitStage.stdout}\n${oldCommitStage.stderr}`, /staged source commit mismatch/);
+
+    fs.writeFileSync(manifestPath, JSON.stringify({
+      version: '6.0.0', releaseGate: 'passed', sourceWorktreeDirty: false,
+      sourceCommit: currentHead, files: [...manifestFiles, { ...manifestFiles[0] }],
+    }));
+    const duplicateManifestStage = runInstallerGate();
+    assert.notEqual(duplicateManifestStage.status, 0, 'duplicate manifest paths must be rejected');
+    assert.match(`${duplicateManifestStage.stdout}\n${duplicateManifestStage.stderr}`, /bundle manifest contains a duplicate path/);
+
+    fs.writeFileSync(manifestPath, JSON.stringify({
+      version: '6.0.0', releaseGate: 'passed', sourceWorktreeDirty: false,
+      sourceCommit: currentHead, files: manifestFiles,
+    }));
+    fs.writeFileSync(path.join(stage, 'retired-runtime.bin'), 'must-not-ship');
+    const unmanifestedStage = runInstallerGate();
+    assert.notEqual(unmanifestedStage.status, 0, 'unmanifested stage debris must be rejected');
+    assert.match(`${unmanifestedStage.stdout}\n${unmanifestedStage.stderr}`, /WinUI stage contains an unmanifested file/);
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
   }

@@ -101,4 +101,33 @@ assert.match(app, /registration-page'\)\{state\.registrationPage[^}]*render\(\)/
 assert.equal((app.match(/renderRegistrations\(\)/g) || []).length, 2,
   'registration renderer may only be declared and called by the shared render switch');
 
+// Backup restore must not be able to create orphaned downstream records or
+// AI tasks.  A present customerId is valid only when its customer master is
+// part of the same backup (deleted masters are still valid restore targets).
+assert.match(app, /\['tickets','deposits','followups','registrations'\][\s\S]{0,500}!ids\.has\(customerId\)/);
+assert.match(app, /const operatingTasks=backup\.settings\?\.operatingTasks[\s\S]{0,500}!ids\.has\(String\(task\.customerId\)\)/);
+
+// Explicit registration/follow-up file rows must not disappear after the
+// classifier: both are independent ledgers linked to the same customer ID.
+assert.match(app, /newRegistrations=\[\],newFollowups=\[\]/);
+assert.match(app, /type==='registration'[\s\S]{0,800}newRegistrations\.push\(record\)/);
+assert.match(app, /type==='followup'[\s\S]{0,900}newFollowups\.push\(record\)/);
+assert.match(app, /state\.registrations=\[\.\.\.newRegistrations,\.\.\.state\.registrations\]/);
+assert.match(app, /state\.followups=\[\.\.\.newFollowups,\.\.\.state\.followups\]/);
+assert.match(app, /registrationCount:newRegistrations\.length,followupCount:newFollowups\.length/);
+assert.match(app, /normalizedCustomerStatus=statuses\.includes\(normalizedStatus\)\?normalizedStatus:''/, 'business-row status must not leak into the customer group-status field');
+assert.match(app, /shouldReviewSource\?\.\(sourceReview,\{existingCustomer:Boolean\(existingCustomer\),recordType:classification\.type\}\)/, 'a uniquely matched business row may inherit its existing customer source instead of being rejected');
+assert.match(app, /inheritedBusinessSource=existingCustomer&&classification\.type!=='customer'/);
+assert.match(app, /for\(const customer of \[\.\.\.state\.customers,\.\.\.newCustomers\]\)[\s\S]{0,220}customerPhoneKeys\(customer\)/, 'the business pass must link phone, rawPhone and legacyPhones through one canonical index');
+assert.match(app, /kind==='registration'[\s\S]{0,500}record\?\.externalRef\|\|record\?\.tradeRef[\s\S]{0,260}clean\(record\?\.note\)/, 'registration dedupe must preserve distinct same-day activities while still rejecting exact replays');
+assert.match(app, /type==='registration'[\s\S]{0,800}externalRef,tradeRef,createdAt/, 'stable registration references must survive import');
+assert.match(app, /latestFollowSummary\?\.\(customer,record\)[\s\S]{0,260}advanceCrm\(customer,'follow'\)[\s\S]{0,180}customer\.lastFollow=summary\.lastFollow/, 'the independent follow-up ledger must project the newest imported date after CRM promotion');
+
+// A soft-deleted customer retains all downstream records for restoration.
+// Diagnostics must distinguish that valid hidden master from a genuinely
+// missing customer instead of reporting false orphan anomalies.
+assert.match(server, /const customerIds\s*=\s*new Set\(\(state\?\.customers \|\| \[\]\)\.filter\(Boolean\)\.map\(customer => String\(customer\.id\)\)\)/);
+assert.match(server, /!customerIds\.has\(String\(row\.customerId\)\)/);
+assert.doesNotMatch(server, /const activeIds\s*=.*?[\r\n]+\s*const orphaned/s);
+
 console.log('cross-workspace chain contract: customer master, settings taxonomy, WS AI tasks and shared refresh are connected');

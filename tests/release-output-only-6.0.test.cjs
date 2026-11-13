@@ -10,6 +10,7 @@ const bundle = fs.readFileSync(path.join(repo, 'scripts/build-winui-bundle.ps1')
 
 assert.match(installer, /\[switch\]\$ReleaseGate/);
 assert.ok(installer.includes('if ($ReleaseGate) {'));
+assert.match(installer, /if \(\$ReleaseGate\) \{ Join-Path \$repo 'releases' \} else \{ Join-Path \$repo 'work\\winui-installer-output' \}/, 'formal gated builds must default to releases while development builds remain under work');
 assert.ok(installer.includes("-\\d+\\.\\d+\\.\\d+-WinUI"));
 assert.match(installer, /release-output-manifest\.json/);
 assert.match(installer, /formal release output must contain exactly one versioned installer/);

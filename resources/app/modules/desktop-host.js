@@ -3,17 +3,25 @@
   document.documentElement.dataset.desktopHost = 'true';
   window.__desktopHostReady = true;
   let refreshPromise = null, wantsWsRefresh = false, wantsSharedRefresh = false;
-  const queueRefresh = (includeSharedState) => {
+  const pendingWsAccounts = new Set();
+  const queueRefresh = (includeSharedState, payload = null) => {
     wantsWsRefresh = true;
     if (includeSharedState) wantsSharedRefresh = true;
+    const accountId = String(payload?.accountId || '').trim();
+    if (accountId) pendingWsAccounts.add(accountId);
     if (refreshPromise) return refreshPromise;
     refreshPromise = (async () => {
       while (wantsWsRefresh || wantsSharedRefresh) {
         const refreshWs = wantsWsRefresh, refreshShared = wantsSharedRefresh;
+        const accountIds = [...pendingWsAccounts];
+        pendingWsAccounts.clear();
         wantsWsRefresh = false;
         wantsSharedRefresh = false;
         const jobs = [];
-        if (refreshWs) jobs.push(Promise.resolve().then(() => window.__zhikeWsFollowups?.refresh?.()));
+        if (refreshWs) {
+          if (accountIds.length) for (const id of accountIds) jobs.push(Promise.resolve().then(() => window.__zhikeWsFollowups?.refresh?.(id)));
+          else jobs.push(Promise.resolve().then(() => window.__zhikeWsFollowups?.refresh?.()));
+        }
         if (refreshShared) jobs.push(Promise.resolve().then(() => window.__refreshSharedState?.()));
         await Promise.allSettled(jobs);
       }
@@ -23,8 +31,8 @@
     });
     return refreshPromise;
   };
-  const refresh = () => queueRefresh(true);
-  const refreshWsOnly = () => queueRefresh(false);
+  const refresh = payload => queueRefresh(true, payload);
+  const refreshWsOnly = payload => queueRefresh(false, payload);
   window.__desktopHostRefresh = refresh;
   window.zhikeDesktop?.on?.('sync.updated', refresh);
   window.zhikeDesktop?.on?.('ws.message', refresh);

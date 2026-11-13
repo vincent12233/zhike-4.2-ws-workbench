@@ -96,11 +96,11 @@
   // Observe only owned DOM roots. Watching document.body made every WS
   // overlay/status mutation trigger a complete page scan while scrolling.
   const viewRoot = document.querySelector('#viewContainer');
-  if (viewRoot) new MutationObserver(refresh).observe(viewRoot, { childList: true, subtree: true });
+  if (viewRoot) new MutationObserver(refresh).observe(viewRoot, { childList: true });
   const backdrop = modalBackdrop();
   if (backdrop) new MutationObserver(refresh).observe(backdrop, { attributes: true, attributeFilter: ['class', 'hidden'] });
   const dialog = modal();
-  if (dialog) new MutationObserver(refresh).observe(dialog, { childList: true, subtree: true });
+  if (dialog) new MutationObserver(refresh).observe(dialog, { childList: true });
   const nav = document.querySelector('#mainNav');
   if (nav) new MutationObserver(refresh).observe(nav, { attributes: true, attributeFilter: ['class', 'hidden'] });
 })();

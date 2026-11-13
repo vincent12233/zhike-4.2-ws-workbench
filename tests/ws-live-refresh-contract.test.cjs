@@ -11,8 +11,8 @@ const workbench = read('resources/app/modules/ws-workbench.js');
 const host = read('resources/app/modules/desktop-host.js');
 const app = read('resources/app/app.js');
 
-assert.match(host, /window\.__zhikeWsFollowups\?\.refresh\?\.\(\)/,
-  'desktop host must ask the WS workbench to refresh after native ingestion');
+assert.match(host, /window\.__zhikeWsFollowups\?\.refresh\?\.\(id\)/,
+  'desktop host must preserve the source account when refreshing after native ingestion');
 assert.match(host, /on\?\.\('\s*ws\.message\s*'/,
   'desktop host must listen for native WS message events');
 assert.match(host, /on\?\.\('\s*sync\.updated\s*'/,
@@ -21,8 +21,10 @@ assert.match(host, /on\?\.\('\s*ws\.background-tick\s*'/,
   'native heartbeat must wake the parent WS/AI refresh path while minimized');
 assert.match(workbench, /window\.__zhikeWsFollowups\s*=\s*Object\.freeze\(/,
   'WS follow-up bridge must be exposed');
-assert.match(workbench, /refresh:\s*\(\)\s*=>\s*state\.backgroundActive\s*\?\s*refreshCollectionSummary\(\)/,
-  'WS follow-up bridge must remain available while the WS route is hidden');
+assert.match(workbench, /refresh:\s*accountId\s*=>\s*requestAccountPipelineRefresh\(accountId\)/,
+  'WS follow-up bridge must route hidden refreshes to the originating account');
+assert.match(workbench, /restoredStatus = await wsBridge\('status', restoreContext\)[\s\S]*?setStatus\(restoredStatus\.status/,
+  'background account rotation must explicitly restore the original account status');
 assert.match(workbench, /function deactivate\(\)[\s\S]*?state\.active = false;[\s\S]*?wsBridge\('hide'\)/,
   'route deactivation must hide the WebView without stopping the background session');
 assert.match(workbench, /async function refreshCollectionSummary\(\)/,
@@ -37,11 +39,13 @@ assert.match(workbench, /addEventListener\('beforeunload',[\s\S]*?stopBackground
   let releaseFirstRefresh;
   const firstRefresh = new Promise(resolve => { releaseFirstRefresh = resolve; });
   let followupRefreshes = 0;
+  const refreshedAccounts = [];
   let sharedRefreshes = 0;
   const window = {
     __zhikeWsFollowups: {
-      refresh() {
+      refresh(accountId) {
         followupRefreshes += 1;
+        refreshedAccounts.push(accountId || '');
         return followupRefreshes === 1 ? firstRefresh : Promise.resolve();
       },
     },
@@ -70,10 +74,11 @@ assert.match(workbench, /addEventListener\('beforeunload',[\s\S]*?stopBackground
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(followupRefreshes, 2, 'coalesced heartbeat must schedule exactly one follow-up refresh');
   assert.equal(sharedRefreshes, 0, 'heartbeat must not pull/render the whole CRM when no business version changed');
-  nativeHandlers.get('ws.message')();
+  nativeHandlers.get('ws.message')({ accountId: 'alpha' });
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(followupRefreshes, 3, 'a real native ingestion event still refreshes the WS/AI pipeline');
   assert.equal(sharedRefreshes, 1, 'a real native ingestion event still checks shared business state');
+  assert.equal(refreshedAccounts.at(-1), 'alpha', 'native ingestion refresh remains scoped to its WS account');
 
   const refreshStart = app.indexOf('async function refreshSharedState()');
   const refreshEnd = app.indexOf('  async function followupAction', refreshStart);

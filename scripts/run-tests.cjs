@@ -59,6 +59,8 @@ function runWs() {
   run('WS CRM customer-link trust boundary', [path.join(repo, 'tests', 'ws-crm-link-trust.test.cjs')]);
   run('WS workbench initialization', [path.join(repo, 'tests', 'ws-workbench-init.test.cjs')]);
   run('WS API and SQLite', [path.join(repo, 'tests', 'ws-workbench-api.test.cjs')]);
+  run('WS conversation cursor pagination', [path.join(repo, 'tests', 'ws-conversation-pagination.test.cjs')]);
+  run('WS conversation incremental watermark runtime', [path.join(repo, 'tests', 'ws-conversation-delta-runtime.test.cjs')]);
   run('WS list preview update', [path.join(repo, 'tests', 'ws-list-preview-update.test.cjs')]);
   run('WS follow-up chain dedupe and refresh', [path.join(repo, 'tests', 'ws-followup-chain.test.cjs')]);
   run('WS task lifecycle and multi-account history ingest', [path.join(repo, 'tests', 'ws-task-lifecycle.test.cjs')]);
@@ -108,6 +110,7 @@ function runWs() {
   run('WS chunked full-history AI and checkpoint contract', [path.join(repo, 'tests', 'ws-chunked-ai-analysis.test.cjs')]);
   run('WS durable AI queue contract', [path.join(repo, 'tests', 'ai-queue-contract.test.cjs')]);
   run('WS resize performance contract', [path.join(repo, 'tests', 'ws-resize-performance-contract.test.cjs')]);
+  run('WS 50k conversation list render budget', [path.join(repo, 'tests', 'ws-conversation-list-performance.test.cjs')]);
   run('WS bridge recovery contract', [path.join(repo, 'tests', 'ws-bridge-recovery-contract.test.cjs')]);
   run('WS scroll routing contract', [path.join(repo, 'tests', 'ws-scroll-routing-contract.test.cjs')]);
   run('unified scroll system contract', [path.join(repo, 'tests', 'scroll-system-contract.test.cjs')]);
@@ -183,6 +186,8 @@ function runAll() {
   run('customer import routing (163 rows)', [path.join(repo, 'tests', 'customer-import-routing.test.cjs')]);
   run('ticket record separation', [path.join(repo, 'tests', 'ticket-record-separation.test.cjs')]);
   run('10k/50k performance scale', [path.join(repo, 'tests', 'performance-scale.test.cjs')]);
+  run('50k customer list cached ordering budget', [path.join(repo, 'tests', 'customer-list-performance-contract.test.cjs')]);
+  run('50k analytics aggregation budget', [path.join(repo, 'tests', 'analytics-performance-contract.test.cjs')]);
   run('desktop packaging contract', [path.join(repo, 'tests', 'desktop-packaging-contract.test.cjs')]);
   run('6.0 publish anti-rollback gate', [path.join(repo, 'tests', 'release-gate-contract.test.cjs')]);
   run('legacy Electron installation retirement', [path.join(repo, 'tests', 'legacy-install-retirement.test.cjs')]);

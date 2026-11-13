@@ -36,11 +36,14 @@ $resourceAllowList = @(
   'node.exe',
   'server.mjs',
   'state-delta.cjs',
-  'migrate-data.cjs',
   'assets',
   'migrations',
   'modules',
-  'vendor\xlsx'
+  # The browser loads only the UMD build. Shipping the complete development
+  # package added source maps, alternate runtimes and duplicate bundles to the
+  # installed application without providing another product capability.
+  'vendor\xlsx\xlsx.js',
+  'vendor\xlsx\LICENSE'
 )
 $dotnetCandidates = @(
   (Join-Path $repo '.tools\dotnet10\dotnet.exe'),

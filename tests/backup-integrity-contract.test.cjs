@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { createBackupManifest, sha256File } = require('../resources/app/modules/backup-integrity.js');
+const { createBackupManifest, sha256File } = require('./helpers/backup-integrity.cjs');
 
 const app = fs.readFileSync(path.resolve(__dirname, '../resources/app/app.js'), 'utf8');
 assert.match(app, /backupFormat:'zhike-6-workspace'/);

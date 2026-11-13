@@ -100,6 +100,6 @@
   }
 
   const observer = new MutationObserver(mount);
-  observer.observe(root, { childList: true, subtree: true });
+  observer.observe(root, { childList: true });
   mount();
 })();

@@ -283,4 +283,43 @@ const depositBatch = {
 assert.equal(api.importBatchMode(depositBatch), 'deposit');
 assert.equal(api.shouldWriteBusinessRow(depositBatch.rows[1], depositBatch.mapping, 'deposit', depositBatch.rows[0]), true);
 
+const registrationBatch = {
+  rows: [['客户号码', '记录类型', '业务日期', '业务备注'], ['9876543996', '报名', '2026-11-03', '确认报名']],
+  mapping: { phone: 0, recordType: 1, followDate: 2, businessNote: 3 },
+};
+assert.equal(api.importBatchMode(registrationBatch), 'registration', 'explicit registration rows must route to the independent registration ledger');
+assert.equal(api.shouldWriteBusinessRow(registrationBatch.rows[1], registrationBatch.mapping, 'registration', registrationBatch.rows[0]), true);
+assert.equal(api.classifyImportRow({ recordType: '报名' }, { target: 'registration' }).type, 'registration');
+
+const followupBatch = {
+  rows: [['客户号码', '记录类型', '业务日期', '下次跟进', '业务备注'], ['9876543995', '跟进', '2026-11-04', '2026-11-08', '已电话沟通']],
+  mapping: { phone: 0, recordType: 1, followDate: 2, nextFollow: 3, businessNote: 4 },
+};
+assert.equal(api.importBatchMode(followupBatch), 'followup', 'explicit follow-up rows must route to the independent follow-up ledger');
+assert.equal(api.shouldWriteBusinessRow(followupBatch.rows[1], followupBatch.mapping, 'followup', followupBatch.rows[0]), true);
+assert.equal(api.classifyImportRow({ recordType: '跟进' }, { target: 'followup' }).type, 'followup');
+
+const newestFirst = api.latestFollowSummary(
+  { lastFollow: '2026-11-10', due: '2026-11-15' },
+  { date: '2026-10-01', nextDate: '2026-10-05' },
+);
+assert.equal(newestFirst.lastFollow, '2026-11-10', 'an older imported follow-up cannot move the last-follow summary backwards');
+assert.equal(newestFirst.due, '2026-11-15', 'an older imported follow-up cannot replace the current due date');
+assert.equal(newestFirst.accepted, false);
+const newestLast = api.latestFollowSummary(
+  { lastFollow: '2026-10-01', due: '2026-10-05' },
+  { date: '2026-11-10', nextDate: '2026-11-15' },
+);
+assert.equal(newestLast.lastFollow, '2026-11-10', 'the newest imported follow-up owns the customer summary regardless of file order');
+assert.equal(newestLast.due, '2026-11-15');
+assert.equal(newestLast.accepted, true);
+const sameDay = api.latestFollowSummary({ lastFollow: '2026-11-10', due: '2026-11-15' }, { date: '2026-11-10', nextDate: '2026-11-12' });
+assert.equal(sameDay.lastFollow, '2026-11-10');
+assert.equal(sameDay.due, '2026-11-15', 'same-day imports deterministically keep the furthest next-follow date');
+assert.equal(sameDay.accepted, true);
+assert.equal(api.shouldReviewSource({ needsReview: true }, { existingCustomer: true, recordType: 'ticket' }), false, 'a uniquely matched ticket row inherits the customer source');
+assert.equal(api.shouldReviewSource({ needsReview: true }, { existingCustomer: true, recordType: 'registration' }), false, 'a uniquely matched registration row inherits the customer source');
+assert.equal(api.shouldReviewSource({ needsReview: true }, { existingCustomer: false, recordType: 'ticket' }), true, 'a new business customer still requires a reliable source');
+assert.equal(api.shouldReviewSource({ needsReview: true }, { existingCustomer: true, recordType: 'customer' }), true, 'customer-profile rows do not silently inherit a missing source');
+
 console.log('smart import classification: explicit single-group and group-fan sources normalize correctly');

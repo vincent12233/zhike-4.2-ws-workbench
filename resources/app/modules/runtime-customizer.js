@@ -22,7 +22,10 @@
     if(!confirm('恢复工作台默认内容？客户资料和业务数据不会改变，恢复前会创建快照。'))return;
     try{const response=await fetch('/api/state',{cache:'no-store'});if(!response.ok)throw new Error('读取本机数据失败');const state=await response.json(),version=String(state.version||'');const snapshot=await fetch('/api/snapshot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:'恢复工作台默认内容前自动快照'})});if(!snapshot.ok)throw new Error('快照创建失败');state.settings=state.settings||{};delete state.settings.runtimeCustomization;delete state.version;delete state.initialized;const saved=await fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json','X-State-Version':version},body:JSON.stringify(state)});if(!saved.ok)throw new Error('默认内容保存失败');location.reload();}catch(error){notify(`恢复失败：${error.message}`);}
   }
-  window.addEventListener('zhike-runtime-config-updated',load);new MutationObserver(()=>{schedule();renderSettingsPanel();}).observe(document.body,{childList:true,subtree:true});load();
+  window.addEventListener('zhike-runtime-config-updated',load);
+  const viewRoot=document.querySelector('#viewContainer');
+  if(viewRoot)new MutationObserver(()=>{schedule();renderSettingsPanel();}).observe(viewRoot,{childList:true});
+  load();
 })();
 
 // Transfer guidance reuses the established export/restore actions.
@@ -41,7 +44,7 @@
     view.append(panel);const input=panel.querySelector('select');input.value=read();
     input.addEventListener('change',()=>{apply(input.value);try{localStorage.setItem(key,input.value);}catch{}});
   }
-  new MutationObserver(mount).observe(view,{childList:true,subtree:true});mount();
+  new MutationObserver(mount).observe(view,{childList:true});mount();
 })();
 
 // Transfer guidance reuses the established export/restore actions.
@@ -72,6 +75,6 @@
       } catch (error) { status.textContent = error.message; }
     });
   }
-  new MutationObserver(mount).observe(view, {childList:true,subtree:true});
+  new MutationObserver(mount).observe(view, {childList:true});
   mount();
 })();

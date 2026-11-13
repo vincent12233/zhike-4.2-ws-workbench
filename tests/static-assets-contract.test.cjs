@@ -12,4 +12,8 @@ for (const asset of localAssets) {
   assert(serverRoutes.has(asset), `index.html asset is not served by server allowlist: ${asset}`);
   assert(fs.existsSync(path.join(repo, 'resources', 'app', asset.slice(1))), `index.html asset is missing on disk: ${asset}`);
 }
+assert.equal(fs.existsSync(path.join(repo, 'resources', 'app', 'modules', 'backup-integrity.js')), false,
+  'Node-only backup test helpers must not ship in the desktop runtime module directory');
+assert.equal(fs.existsSync(path.join(repo, 'tests', 'helpers', 'backup-integrity.cjs')), true,
+  'backup integrity helper belongs with the isolated tests');
 console.log(`static assets contract: ${localAssets.length} local assets are served and present`);

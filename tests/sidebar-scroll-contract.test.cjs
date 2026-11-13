@@ -23,6 +23,7 @@ assert.match(finalCss, /#sidebar\.collapsed[^}]*--zhike-sidebar-collapsed/);
 assert.match(index, /<aside class="sidebar" id="sidebar">[\s\S]*?<nav class="nav-groups" id="mainNav">[\s\S]*?<div class="sidebar-bottom">/, 'the real sidebar DOM keeps #mainNav between fixed chrome regions');
 assert.match(finalCss, /#sidebar>#mainNav\s*\{[\s\S]*?flex:1 1 auto!important;[\s\S]*?min-height:0!important;[\s\S]*?overflow-y:auto!important;/, 'the final CSS makes #mainNav the real shrinkable WebView scroll owner');
 assert.match(coordinator, /target\.closest\('#sidebar'\)\) return document\.querySelector\('#mainNav'\)/, 'all wheel targets inside visible sidebar chrome resolve to #mainNav');
-assert.match(coordinator, /if \(mode === 'contain'\) \{[\s\S]*?event\.preventDefault\(\);[\s\S]*?applyDelta\(region, 'y', delta\)/, 'contained regions are programmatically scrolled and never hand a boundary wheel to the page');
+assert.match(coordinator, /function containedScrollOwner\(region, axis, delta, boundary = null\)[\s\S]*?if \(canConsume\(node, axis, delta\)\) return node;[\s\S]*?parent\.dataset\.scrollMode !== 'contain'/, 'nested contained regions resolve a scrollable owner only inside their bounded rail');
+assert.match(coordinator, /if \(mode === 'contain'\) \{[\s\S]*?event\.preventDefault\(\);[\s\S]*?const owner = containedScrollOwner\(region, 'y', delta,[\s\S]*?applyDelta\(owner, 'y', delta\)/, 'contained regions stay isolated from the page while non-scrollable children hand the wheel to a contained parent');
 
 console.log('sidebar layout contract: consolidated viewport shell, independent nav scroll and collapse rules present');
