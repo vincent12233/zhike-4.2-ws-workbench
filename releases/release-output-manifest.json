@@ -1,0 +1,9 @@
+﻿{
+    "product":  "Zhike Desktop",
+    "version":  "6.0.0",
+    "installer":  "知客-6.0.0-WinUI桌面版.exe",
+    "sha256":  "4A31C82DAB510925D2ED1D62C7A137BB3AD81C03D8673ECB5497F0CE0D4929A7",
+    "bytes":  110604196,
+    "releaseGate":  "passed",
+    "generatedAtUtc":  "2026-11-13T22:09:53.8720602Z"
+}
