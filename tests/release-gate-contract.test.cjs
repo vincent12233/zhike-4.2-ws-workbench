@@ -15,7 +15,7 @@ assert.match(bundle, /\[switch\]\$ReleaseGate/);
 assert.match(bundle, /Assert-SourceReleaseContract/);
 assert.match(bundle, /package\.json=\$packageVersion expected=\$Version/);
 assert.match(bundle, /server\.mjs expected \$Version/);
-assert.match(bundle, /Horizon Atelier must be the final product visual layer/);
+assert.match(bundle, /scroll-system\.css must remain the final interaction layer after Horizon Atelier/);
 assert.match(bundle, /release gate rejected a dirty worktree/);
 assert.match(bundle, /releaseGate = if \(\$ReleaseGate\) \{ 'passed' \} else \{ 'development-snapshot' \}/);
 assert.ok(

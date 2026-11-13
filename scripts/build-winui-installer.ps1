@@ -102,7 +102,7 @@ if (-not $stagedIndex.Contains(" &middot; v$AppVersion<!-- ZHIKE_BUILD_VERSION -
 if (-not $stagedIndex.Contains('<title>知客 6.0 · Horizon Atelier</title>')) { throw 'staged UI title is not Horizon Atelier 6.0; refusing an old UI stage.' }
 $stagedScrollIndex = $stagedIndex.IndexOf('scroll-system.css', [StringComparison]::Ordinal)
 $stagedHorizonIndex = $stagedIndex.IndexOf('horizon-atelier.css', [StringComparison]::Ordinal)
-if ($stagedScrollIndex -lt 0 -or $stagedHorizonIndex -le $stagedScrollIndex) { throw 'staged Horizon Atelier visual layer is missing or ordered before an older override.' }
+if ($stagedHorizonIndex -lt 0 -or $stagedScrollIndex -le $stagedHorizonIndex) { throw 'staged scroll interaction layer is missing or ordered before Horizon Atelier.' }
 $stagedServer = [IO.File]::ReadAllText((Join-Path $stage 'resources\app\server.mjs'))
 if ($stagedServer -notmatch "const APP_VERSION = '$([regex]::Escape($AppVersion))'") { throw "staged server version mismatch: expected $AppVersion" }
 if (-not $stagedServer.Contains("'/modules/horizon-atelier.css'")) { throw 'staged local service does not allow the Horizon Atelier resource.' }

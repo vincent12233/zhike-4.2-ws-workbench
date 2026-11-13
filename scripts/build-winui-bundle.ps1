@@ -82,7 +82,7 @@ function Assert-SourceReleaseContract {
   if (-not $indexSource.Contains("<title>知客 $displayVersion · Horizon Atelier</title>")) { throw "index title does not identify Horizon Atelier $displayVersion" }
   $scrollIndex = $indexSource.IndexOf('scroll-system.css', [StringComparison]::Ordinal)
   $horizonIndex = $indexSource.IndexOf('horizon-atelier.css', [StringComparison]::Ordinal)
-  if ($scrollIndex -lt 0 -or $horizonIndex -le $scrollIndex) { throw 'Horizon Atelier must be the final product visual layer after scroll-system.css.' }
+  if ($horizonIndex -lt 0 -or $scrollIndex -le $horizonIndex) { throw 'scroll-system.css must remain the final interaction layer after Horizon Atelier.' }
 
   $setupText = [IO.File]::ReadAllText($setupPath)
   $setupVersionPattern = '#define AppVersion "' + [regex]::Escape($Version) + '"'
