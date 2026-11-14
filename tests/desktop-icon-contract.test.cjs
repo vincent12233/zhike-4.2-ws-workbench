@@ -30,4 +30,10 @@ for (let index = 0; index < count; index += 1) {
 }
 
 assert.deepEqual(sizes, expectedSizes);
+const nativeWindow = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'MainWindow.xaml.cs'), 'utf8');
+const installer = fs.readFileSync(path.join(repo, 'zhike-desktop-setup.iss'), 'utf8');
+const iconName = 'zhike-horizon-6-0-1.ico';
+assert.ok(nativeWindow.includes(iconName) && installer.includes(iconName), 'the installed icon name must be resolved by the running window');
+assert.match(nativeWindow, /ConfigureTitleBar\(_appWindow\)/, 'the running window must apply its 6.0 dark title bar');
+assert.match(nativeWindow, /titleBar\.ButtonBackgroundColor = background/, 'native caption buttons must stay themed without replacing Windows controls');
 console.log(`desktop icon contract: ${count} PNG-backed sizes (${sizes.join(', ')}) are valid`);

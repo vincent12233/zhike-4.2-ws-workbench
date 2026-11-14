@@ -9,6 +9,7 @@ const read = relative => fs.readFileSync(path.join(repo, relative), 'utf8');
 const index = read('resources/app/index.html');
 const app = read('resources/app/app.js');
 const css = read('resources/app/modules/horizon-atelier.css');
+const homeCss = read('resources/app/modules/home-6.css');
 
 const requiredNav = [
   '今日工作台','快速录入','任务中心','阶段看板','客户中心','分类视图','热聊管理','群组管理','VIP 管理',
@@ -23,15 +24,28 @@ for (const label of requiredNav) {
 }
 
 assert.ok(index.indexOf('horizon-atelier.css') < index.indexOf('scroll-system.css'), '6.0 visual layer must load immediately before the final scroll contract');
+assert.ok(index.indexOf('global-6.css') < index.indexOf('home-6.css') && index.indexOf('home-6.css') < index.indexOf('scroll-system.css'), 'the compact home layer must load before the final scroll contract');
 assert.match(app, /function renderHorizonHero\(items,kpis\)/);
 assert.match(app, /document\.documentElement\.dataset\.view=view/, 'each business route must expose a stable 6.0 visual styling hook');
-assert.match(app, /horizonLocalPriorityItems\(list,business\)/);
+assert.doesNotMatch(app, /horizonLocalPriorityItems/, 'local CRM scores must never be presented as AI chat analysis');
+assert.match(app, /renderHorizonHero\(\[\],horizonKpis\)/, 'the AI hero starts in a truthful loading state');
 assert.match(app, /horizonAlertItems\(alerts,customerIndex,taskIndex\)/);
-assert.match(app, /当前没有客户数据或可执行提醒，不会预置演示客户/);
+assert.match(app, /正在读取最新聊天分析；不会使用本地排序冒充 AI 结论/);
+assert.match(app, /home-dashboard-grid/, 'the first screen keeps activity, trend and business status together');
+assert.match(app, /home-detail-sections/, 'full business controls remain accessible below the compact dashboard');
 assert.match(app, /资金实力 <b>55%<\/b>/);
 assert.match(app, /聊天粘度 <b>45%<\/b>/);
 assert.match(app, /投资经验仅补充档案，不计入提醒权重/);
 assert.match(css, /--hz-sidebar-expanded:246px/);
+assert.match(homeCss, /--hz-sidebar-expanded:clamp\(176px,15\.2vw,214px\)/, 'expanded navigation must retain the reference panel width while leaving the work surface usable');
+assert.match(homeCss, /#sidebar #mainNav\{order:1;[^}]*padding:15px 14px 4px 12px/, 'sections must begin at the top while leaving room for full labels at Windows display scaling');
+assert.match(homeCss, /#sidebar:not\(\.collapsed\)\{[\s\S]*?mask-image:url\("\.\.\/assets\/horizon-sidebar-shell-6\.svg"\)/, 'expanded sidebar must use the actual S-curve silhouette, not a rounded rectangle');
+assert.match(homeCss, /#sidebar \.workspace-switch\{[\s\S]*?order:2;/, 'workspace control must stay reachable below the navigation rather than displacing the reference section header');
+assert.match(homeCss, /#sidebar \.nav-item\{[\s\S]*?height:24px!important/, 'reference navigation spacing must remain readable and scrollable');
+assert.match(homeCss, /\.home-dashboard-grid\{[\s\S]*?grid-template-columns:\s*(?:minmax\(0,[^)]+\)\s*){3}/, 'activity, trend and status must share the first screen');
+assert.match(homeCss, /html\[data-view="home"\] #viewContainer>\.page-heading\{display:none!important\}/, 'home must not spend a second row on the page title');
+assert.match(homeCss, /html\[data-view="home"\] \.home-top-title\{/, 'the title must occupy the topbar with search and status');
+assert.match(homeCss, /@media \(max-width:939px\)/, 'small-window layout must reflow instead of clipping the AI card');
 assert.match(css, /\.sidebar\.collapsed/);
 assert.match(index, /<img src="\.\/assets\/zhike-horizon-logo\.png" alt="" draggable="false" \/>/, '6.0 shell must use the Horizon logo instead of the legacy text tile');
 assert.match(css, /\.brand-mark img\{[^}]*object-fit:contain/, 'Horizon brand asset must stay proportionally contained');
@@ -56,7 +70,7 @@ for (const sheet of ['v4.css','gpt-assistant.css','phone-registry.css','business
 }
 
 for (const forbidden of ['陈先生','王先生','李女士','赵先生','268,000','286,000']) {
-  assert.doesNotMatch(index + app + css, new RegExp(forbidden), `preview sample leaked into production: ${forbidden}`);
+  assert.doesNotMatch(index + app + css + homeCss, new RegExp(forbidden), `preview sample leaked into production: ${forbidden}`);
 }
 
 console.log('Horizon Atelier contract: dynamic data, exact navigation, collapsible/responsive shell and no preview samples');

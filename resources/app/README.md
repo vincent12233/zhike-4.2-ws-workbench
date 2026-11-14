@@ -44,8 +44,8 @@ AI 只补现有客户的空字段，人工值优先且不会被覆盖。低置�
 ```powershell
 node scripts/run-tests.cjs all
 dotnet build desktop/src/Zhike.Desktop/Zhike.Desktop.csproj -c Release -r win-x64 --no-restore
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-bundle.ps1 -Version 6.0.0 -Configuration Release -RuntimeIdentifier win-x64 -SelfContained
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installer.ps1 -AppVersion 6.0.0 -AllowUnsigned -SkipWebView2Check
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-bundle.ps1 -Version 6.0.1 -Configuration Release -RuntimeIdentifier win-x64 -SelfContained
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installer.ps1 -AppVersion 6.0.1 -AllowUnsigned -SkipWebView2Check
 ```
 
 正式验收还必须覆盖真实 WS 登录、手机端消息同步、后台完整历史采集、VIP 群成员归属、AI 补档、任务提醒、备份恢复、覆盖安装和 1 万/5 万客户性能；不能以编译成功代替验收。

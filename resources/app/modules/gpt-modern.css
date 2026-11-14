@@ -206,3 +206,42 @@
   }
 }
 @media (prefers-reduced-motion:reduce){.gpt-page *{scroll-behavior:auto!important;transition:none!important}}
+
+/* Horizon 6.0 GPT finish. The conversation and settings remain in their
+   existing DOM; narrow windows expose controls through the context scroller. */
+.gpt-page .gpt-page-heading .page-title{color:#f0e3c5;text-shadow:0 6px 24px rgba(0,0,0,.18)}
+.gpt-page .gpt-modern{border-color:rgba(160,207,207,.23);box-shadow:inset 0 1px rgba(255,255,255,.045),0 18px 44px rgba(0,0,0,.2)}
+.gpt-page .gpt-context-brand strong{color:#f0e1bf}
+.gpt-page .gpt-history>button:focus-visible,.gpt-page .gpt-new-chat:focus-visible,.gpt-page .gpt-icon-btn:focus-visible,.gpt-page .gpt-starter-grid button:focus-visible,.gpt-page .gpt-send-round:focus-visible,.gpt-page .gpt-attach-btn:focus-visible,.gpt-page .gpt-context :is(input,select,button):focus-visible{outline:2px solid rgba(81,225,204,.78);outline-offset:2px}
+.gpt-page .gpt-context select option{background:#0d2029;color:#e5efec}
+.gpt-page .gpt-message:not(.is-error) .gpt-message-body{padding:11px 14px;border:1px solid rgba(137,205,207,.15);border-radius:15px 19px 17px 12px;background:linear-gradient(145deg,rgba(22,48,58,.63),rgba(11,30,39,.72));box-shadow:inset 0 1px rgba(255,255,255,.025)}
+.gpt-page .gpt-message.user .gpt-message-body{border-color:rgba(228,196,135,.23);background:linear-gradient(145deg,rgba(107,84,54,.16),rgba(31,39,43,.66))}
+.gpt-page .gpt-message-body>div{overflow-wrap:anywhere}
+.gpt-page .gpt-message-body>strong{color:#a8bfbe}
+.gpt-page .gpt-message.user .gpt-message-body>strong{color:#e3c997}
+.gpt-page .gpt-setup-points span{border-color:rgba(228,196,135,.16);background:rgba(18,38,46,.46)}
+.gpt-page .gpt-setup-points b{background:rgba(228,196,135,.11);color:#e9d19d}
+.gpt-page .gpt-plan{box-shadow:inset 3px 0 rgba(228,196,135,.43)}
+.gpt-page .gpt-file-chip button:hover{color:#f0d3a4}
+.gpt-page .gpt-privacy{line-height:1.5}
+#modal:has(#gptProvider) :is(button,input,select):focus-visible{outline:2px solid rgba(81,225,204,.75);outline-offset:2px}
+
+@container (max-width:760px){
+  .gpt-page .gpt-modern .gpt-context{display:flex!important;flex-direction:column;align-items:stretch;gap:8px;max-height:min(30dvh,210px);overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+  .gpt-page .gpt-modern .gpt-context .gpt-context-section{display:grid;width:auto;min-width:0}
+  .gpt-page .gpt-modern .gpt-context .gpt-context-section.gpt-capabilities,.gpt-page .gpt-modern .gpt-context .gpt-history,.gpt-page .gpt-modern .gpt-context .gpt-privacy{display:grid}
+  .gpt-page .gpt-modern .gpt-context .gpt-provider-card{display:flex}
+  .gpt-page .gpt-modern .gpt-context .gpt-gateway,.gpt-page .gpt-modern .gpt-context .gpt-local-import,.gpt-page .gpt-modern .gpt-context .gpt-workspace-btn{display:block}
+  .gpt-page .gpt-modern .gpt-context .gpt-context-section>small{display:block}
+  .gpt-page .gpt-modern .gpt-context .gpt-context-section label{display:grid;white-space:normal}
+  .gpt-page .gpt-modern .gpt-context .gpt-context-section .gpt-check{display:flex;min-height:34px}
+}
+@container (max-width:520px){
+  .gpt-page .gpt-modern .gpt-context{max-height:min(28dvh,170px)}
+  .gpt-page .gpt-modern .gpt-context .gpt-context-section{gap:7px}
+}
+@media (max-height:620px){
+  @container (max-width:760px){
+    .gpt-page .gpt-modern .gpt-context{max-height:min(25dvh,140px)}
+  }
+}

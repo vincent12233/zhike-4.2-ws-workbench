@@ -11,7 +11,7 @@ const readme = read('README.md');
 const deployment = read('docs/local-desktop-deployment.md');
 const troubleshooting = read('docs/local-desktop-troubleshooting.md');
 
-assert.match(index, /6\.0\.0/);
+assert.match(index, /6\.0\.1/);
 assert.match(readme, /docs\/current-release-index\.md/);
 assert.match(index, /local-desktop-deployment\.md/);
 assert.match(index, /local-desktop-troubleshooting\.md/);
@@ -26,8 +26,8 @@ const currentDocs = [
   'hot-chat-profile-usage.md',
   'local-desktop-deployment.md',
   'local-desktop-troubleshooting.md',
-  'release-notes-6.0.0.md',
-  'test-report-6.0.0.md',
+  'release-notes-6.0.1.md',
+  'test-report-6.0.1.md',
 ].sort();
 const actualDocs = fs.readdirSync(path.join(repo, 'docs'), { withFileTypes: true })
   .filter(file => file.isFile() && file.name.endsWith('.md'))
@@ -49,7 +49,9 @@ for (const file of actualDocs) {
 const releasesDir = path.join(repo, 'releases');
 if (fs.existsSync(releasesDir)) {
   const installers = fs.readdirSync(releasesDir).filter(name => /\.exe$/i.test(name));
-  assert.ok(installers.every(name => /6\.0\.0/.test(name)), `releases/ contains retired installers: ${installers.join(', ')}`);
+  // A previously published 6.0.0 installer may remain while 6.0.1 is still
+  // a source candidate. The formal release gate clears it when 6.0.1 ships.
+  assert.ok(installers.every(name => /^知客-6\.0\.(?:0|1)-WinUI桌面版\.exe$/.test(name)), `releases/ contains retired installers: ${installers.join(', ')}`);
 }
 
 assert.match(index, /反回滚边界/);

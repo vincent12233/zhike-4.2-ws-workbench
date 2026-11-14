@@ -1,8 +1,8 @@
 #ifndef AppVersion
-#define AppVersion "6.0.0"
+#define AppVersion "6.0.1"
 #endif
 #ifndef StageDir
-#define StageDir "work\\winui-bundle\\zhike-winui-6.0.0-win-x64"
+#define StageDir "work\\winui-bundle\\zhike-winui-6.0.1-win-x64"
 #endif
 #ifndef BuildOutputDir
 #define BuildOutputDir "work\\winui-installer-output"
@@ -31,7 +31,7 @@ CloseApplications=yes
 RestartApplications=no
 DisableProgramGroupPage=yes
 SetupLogging=yes
-UninstallDisplayIcon={app}\zhike-horizon-6.ico
+UninstallDisplayIcon={app}\zhike-horizon-6-0-1.ico
 
 [Languages]
 Name: "chinesesimp"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
@@ -40,7 +40,7 @@ Name: "chinesesimp"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 Source: "{#StageDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; A versioned shortcut icon path prevents Windows Explorer from reusing the
 ; cached blue pre-6.0 tile after an in-place upgrade.
-Source: "{#StageDir}\zhike.ico"; DestDir: "{app}"; DestName: "zhike-horizon-6.ico"; Flags: ignoreversion
+Source: "{#StageDir}\zhike.ico"; DestDir: "{app}"; DestName: "zhike-horizon-6-0-1.ico"; Flags: ignoreversion
 
 [InstallDelete]
 ; All business data and credentials live outside {app}, under the isolated
@@ -58,7 +58,7 @@ Type: files; Name: "{app}\*.pdb"
 Type: files; Name: "{app}\*.pri"
 Type: files; Name: "{app}\*.winmd"
 Type: files; Name: "{app}\zhike*.ico"
-; 6.0.0 keeps a single desktop entry. These names were created by earlier
+; 6.0.1 keeps a single desktop entry. These names were created by earlier
 ; WinUI packages and point to the same executable, so retaining them makes one
 ; installed product look like multiple clients.
 Type: files; Name: "{autodesktop}\知客原生桌面版.lnk"
@@ -104,11 +104,11 @@ Type: files; Name: "{app}\resources\app\modules\operations-core.test.cjs"
 Type: files; Name: "{app}\resources\app\modules\phone-registry-seed.json"
 
 [Icons]
-Name: "{group}\知客工作台"; Filename: "{app}\Zhike.Desktop.exe"; IconFilename: "{app}\zhike-horizon-6.ico"; IconIndex: 0; WorkingDir: "{app}"
+Name: "{group}\知客工作台"; Filename: "{app}\Zhike.Desktop.exe"; IconFilename: "{app}\zhike-horizon-6-0-1.ico"; IconIndex: 0; WorkingDir: "{app}"
 ; The formal desktop build always creates a desktop shortcut.  The previous
 ; optional task defaulted to unchecked, which made users think installation
 ; had failed even though the app was installed under LocalAppData.
-Name: "{autodesktop}\知客工作台"; Filename: "{app}\Zhike.Desktop.exe"; IconFilename: "{app}\zhike-horizon-6.ico"; IconIndex: 0; WorkingDir: "{app}"
+Name: "{autodesktop}\知客工作台"; Filename: "{app}\Zhike.Desktop.exe"; IconFilename: "{app}\zhike-horizon-6-0-1.ico"; IconIndex: 0; WorkingDir: "{app}"
 
 [Run]
 Filename: "{app}\Zhike.Desktop.exe"; Description: "启动知客工作台"; Flags: nowait postinstall skipifsilent

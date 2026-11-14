@@ -7,8 +7,8 @@ const native = fs.readFileSync(path.join(__dirname, '..', 'src', 'Zhike.Desktop'
 
 for (const [name, source] of [['兼容主界面', legacy], ['原生工作台', native]]) {
   assert.match(source, /querySelector\(['"]#pane-side['"]\)/, `${name} 必须用当前 WhatsApp 会话栏识别已登录状态`);
-  assert.match(source, /documentElement\.style\.zoom='80%'/, `${name} 必须缩放 WS 页面以完整显示登录二维码和聊天界面`);
 }
+assert.doesNotMatch(legacy, /documentElement\.style\.zoom\s*=/, '生产工作台不得缩放 WhatsApp 根节点，否则 WebView 底部留下空白并裁切二维码');
 
 assert.match(legacy, /SetWsStatusAsync\(accountId,\s*"已连接"\)[\s\S]{0,500}_wsQueue\.EnqueueAsync/, '收到授权页面采集后应先更新连接状态并持久化队列');
 const wsMessageHandler = legacy.match(/private async void OnWsWebMessageReceived[\s\S]*?\n    }\n\n    private async Task FlushWsQueueAsync/)?.[0] || '';

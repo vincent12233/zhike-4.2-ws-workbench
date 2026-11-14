@@ -2,7 +2,7 @@
 
 ## 适用版本
 
-本说明适用于知客 6.0.0 Horizon Atelier WinUI 3 + WebView2 本机版。客户、业务记录、WS 消息、AI
+本说明适用于知客 6.0.1 Horizon Atelier WinUI 3 + WebView2 本机版。客户、业务记录、WS 消息、AI
 分析和跟进提醒统一保存在随包 SQLite 本机服务中；当前产品没有 Docker/PostgreSQL
 或 Electron 日常入口。版本、安装包和验证边界以
 [`docs/current-release-index.md`](current-release-index.md) 为准。

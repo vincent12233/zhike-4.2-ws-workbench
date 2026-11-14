@@ -2,13 +2,14 @@
 
 更新时间：2026-11-14
 
-## 唯一日常入口
+## 唯一产品线
 
-- 产品版本：知客 6.0.0 Horizon Atelier WinUI 桌面版
-- 安装包：`outputs/知客-6.0.0-WinUI桌面版/知客-6.0.0-WinUI桌面版.exe`
-- 交付清单：`outputs/知客-6.0.0-WinUI桌面版/bundle-manifest.json`
-- 校验值：`outputs/知客-6.0.0-WinUI桌面版/SHA256SUMS.txt`
-- 安装包、运行文件与完整源码的校验值以同目录 `SHA256SUMS.txt` 为准，发布时重新计算。
+- 当前源码版本：知客 6.0.1 Horizon Atelier WinUI 桌面版候选版
+- 预期安装包：`outputs/知客-6.0.1-WinUI桌面版/知客-6.0.1-WinUI桌面版.exe`（尚未生成）
+- 预期交付清单：`outputs/知客-6.0.1-WinUI桌面版/bundle-manifest.json`（尚未生成）
+- 预期校验值：`outputs/知客-6.0.1-WinUI桌面版/SHA256SUMS.txt`（尚未生成）
+- 安装包、运行文件与完整源码的校验值必须在正式构建后重新计算，不能沿用 6.0.0 的清单或哈希。
+- 发布说明与测试状态：`docs/release-notes-6.0.1.md`、`docs/test-report-6.0.1.md`
 - 本机部署说明：`docs/local-desktop-deployment.md`
 - 故障排查：`docs/local-desktop-troubleshooting.md`
 
@@ -25,8 +26,8 @@ WS 工作台会扫描当前已登录页面的聊天列表；“自动采集已�
 ```powershell
 node scripts/run-tests.cjs all
 dotnet build desktop/src/Zhike.Desktop/Zhike.Desktop.csproj -c Release -r win-x64 --no-restore
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-bundle.ps1 -Version 6.0.0 -Configuration Release -RuntimeIdentifier win-x64 -SelfContained
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installer.ps1 -AppVersion 6.0.0 -AllowUnsigned -SkipWebView2Check
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-bundle.ps1 -Version 6.0.1 -Configuration Release -RuntimeIdentifier win-x64 -SelfContained
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installer.ps1 -AppVersion 6.0.1 -AllowUnsigned -SkipWebView2Check
 ```
 
 ## 反回滚边界
@@ -35,8 +36,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installe
 
 ## 验收边界
 
-6.0.0 运行规则：扫码登录并启用采集后，会话列表、联系人索引和实时消息由隔离采集器持续同步；切换知客页面、最小化仅隐藏画面，不停止采集/AI。完整历史由后台逐会话补采，用户无需手工打开；未读会话不自动激活，普通群与类型不明会话不进入分析和提醒，只有系统设置中明确绑定的 VIP 群按成员身份进入与一对一会话相同的分析链。显式关闭 WS、清会话、退出应用、关机或休眠会停止。
+6.0.1 待验收运行规则：扫码登录并启用采集后，会话列表、联系人索引和实时消息由隔离采集器持续同步；切换知客页面、最小化仅隐藏画面，不停止采集/AI。完整历史由后台逐会话补采，用户无需手工打开；未读会话不自动激活，普通群与类型不明会话不进入分析和提醒，只有系统设置中明确绑定的 VIP 群按成员身份进入与一对一会话相同的分析链。显式关闭 WS、清会话、退出应用、关机或休眠会停止。
 
 自动化回归覆盖本机 sidecar、导入/保存/恢复、WS 列表采集、消息幂等、AI/CRM 联动、跟进提醒、性能和 WinUI 打包。真实 WhatsApp 登录、手机端实时消息和外部 AI 额度必须在目标机完成手工验收；不以编译成功代替验收。
 
-6.0.0 安装验收：安装后本机服务应返回 `appVersion=6.0.0`、`databaseStatus=healthy`、`workerStatus=running`、`storage=sqlite`；首次安装必须创建空数据空间，同一 6.0 数据空间的覆盖升级才允许保留业务数据。AI 仅对唯一匹配的现有客户补齐有证据的空字段。WS 会话列表同步、实时消息监听和完整历史补采必须分开计数；完整历史成功落库后才允许 AI 补档。提醒优先级严格按资金实力 55% 与聊天粘度 45% 复算，投资经验不计分。
+6.0.1 安装验收门槛：安装后本机服务应返回 `appVersion=6.0.1`、`databaseStatus=healthy`、`workerStatus=running`、`storage=sqlite`；首次安装必须创建空数据空间，同一 6.0 数据空间的覆盖升级才允许保留业务数据。AI 仅对唯一匹配的现有客户补齐有证据的空字段。WS 会话列表同步、实时消息监听和完整历史补采必须分开计数；完整历史成功落库后才允许 AI 补档。提醒优先级严格按资金实力 55% 与聊天粘度 45% 复算，投资经验不计分。上述项目当前均待本轮验证。

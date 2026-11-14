@@ -25,6 +25,7 @@
   let modalPositionScope = '';
   let modalPositionPrefix = '';
   let modalSequence = 0;
+  let activePageRoute = routeName();
 
   const definitions = [
     { selector: '#viewContainer', mode: 'page', id: 'page' },
@@ -212,7 +213,18 @@
       const nodes = [];
       if (root instanceof Element && root.matches('[data-scroll-mode]')) nodes.push(root);
       nodes.push(...root.querySelectorAll('[data-scroll-mode]'));
+      const pageRoute = routeName();
+      const pageChanged = nodes.some(node => node.id === 'viewContainer') && activePageRoute && activePageRoute !== pageRoute;
+      if (nodes.some(node => node.id === 'viewContainer')) activePageRoute = pageRoute;
       for (const node of nodes) {
+        if (pageChanged && node.id === 'viewContainer') {
+          // A new business page must start at its heading. Reusing the previous
+          // page's scroll offset made routes appear to open halfway down.
+          positions.delete(positionKey(node));
+          node.scrollTop = 0;
+          node.scrollLeft = 0;
+          continue;
+        }
         const saved = positions.get(positionKey(node));
         if (!saved) continue;
         const maxTop = Math.max(0, node.scrollHeight - node.clientHeight);

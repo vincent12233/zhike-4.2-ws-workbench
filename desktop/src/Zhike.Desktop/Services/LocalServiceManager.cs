@@ -19,7 +19,7 @@ public sealed class LocalServiceManager : IAsyncDisposable
     private static readonly string ExpectedAppVersion =
         (typeof(LocalServiceManager).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
             ?? typeof(LocalServiceManager).Assembly.GetName().Version?.ToString(3)
-            ?? "6.0.0").Split('+', 2)[0];
+            ?? "6.0.1").Split('+', 2)[0];
     private readonly string _resourceRoot;
     private readonly string _dataRoot;
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(2) };

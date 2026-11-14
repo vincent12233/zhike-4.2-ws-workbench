@@ -14,7 +14,7 @@ const customerGovernance = require('./modules/customer-governance-core.js');
 const hotChatProfile = require('./modules/hot-chat-profile-core.js');
 const { DatabaseSync } = require('node:sqlite');
 const root = dirname(fileURLToPath(import.meta.url));
-const APP_VERSION = '6.0.0';
+const APP_VERSION = '6.0.1';
 const configuredDataDir = String(process.env.ZHIKE_DATA_DIR || '').trim();
 const dataDir = configuredDataDir ? resolve(configuredDataDir) : join(root, 'data');
 const dbPath = join(dataDir, 'workspace.sqlite');
@@ -822,15 +822,21 @@ function wsRequireConversation(id, accountId = 'default') {
   if (wsIsExcludedGroup(row)) throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '普通群聊未列入 VIP 白名单，不采集、不分析，也不生成跟进提醒。');
   return row;
 }
-function wsRequireAiConversation(id, accountId = 'default') {
-  const row = wsRequireConversation(id, accountId);
+function wsRequireAiConversation(id, accountId = 'default', joinedRow = null) {
+  const row = joinedRow || wsRequireConversation(id, accountId);
+  if (joinedRow && wsIsExcludedGroup(row)) throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '普通群聊未列入 VIP 白名单，不采集、不分析，也不生成跟进提醒。');
   const data = wsJson(row.data_json, {});
-  const nativeHistory = data.source === 'ws-list-discovery' || data.source === 'ws-webview2'
-    || db.prepare("SELECT 1 FROM ws_messages WHERE account_id=? AND conversation_id=? AND json_valid(data_json) AND json_extract(data_json,'$.source')='ws-webview2' LIMIT 1").get(accountId, id);
-  if (nativeHistory && !['direct', 'vip_group'].includes(wsCore.conversationType(row))) throw wsConversationPolicyError('WS_CONVERSATION_TYPE_UNCONFIRMED', '尚未确认是一对一或白名单 VIP 群会话，请等待 WS 重新识别后分析。');
+  // Confirmed conversation types do not need a message-table probe. The
+  // native-history guard only applies while the type remains unconfirmed.
+  if (!['direct', 'vip_group'].includes(wsCore.conversationType(row))) {
+    const nativeHistory = data.source === 'ws-list-discovery' || data.source === 'ws-webview2'
+      || db.prepare("SELECT 1 FROM ws_messages WHERE account_id=? AND conversation_id=? AND json_valid(data_json) AND json_extract(data_json,'$.source')='ws-webview2' LIMIT 1").get(accountId, id);
+    if (nativeHistory) throw wsConversationPolicyError('WS_CONVERSATION_TYPE_UNCONFIRMED', '尚未确认是一对一或白名单 VIP 群会话，请等待 WS 重新识别后分析。');
+  }
   return row;
 }
 function wsAiEligible(id, accountId) { try { wsRequireAiConversation(id, accountId); return true; } catch { return false; } }
+function wsAiEligibleConversation(id, accountId, joinedRow) { try { return wsRequireAiConversation(id, accountId, joinedRow); } catch { return null; } }
 function wsQuiesceGroup(row, now = new Date().toISOString()) {
   if (!wsIsExcludedGroup(row)) return;
   db.prepare("UPDATE ai_jobs SET status='cancelled',locked_at='',next_attempt_at='',last_error='群聊已排除',updated_at=? WHERE account_id=? AND conversation_id=? AND status IN ('queued','running','retryable')").run(now, row.account_id, row.id);
@@ -1962,7 +1968,7 @@ const server = createServer(async (req, res) => {
         const existingCustomer = (state.customers || []).find(item => String(item.id) === String(existingHotEvent.customer_id)) || null;
         const existingFollowup = (state.followups || []).find(item => String(item.wsAnalysisId || '') === String(analysisRow.id)) || null;
         const existingTask = state.settings?.operatingTasks?.find(item => item.aiGenerated && String(item.customerId || '') === String(existingCustomer?.id || '') && item.done !== true && !['done','dismissed','cancelled'].includes(String(item.status || '').toLowerCase()))
-          || state.settings?.operatingTasks?.find(item => String(item.wsConversationId || '') === conversationId && String(item.wsAccountId || accountId) === accountId) || null;
+          || (!vipGroup ? state.settings?.operatingTasks?.find(item => String(item.wsConversationId || '') === conversationId && String(item.wsAccountId || accountId) === accountId) : null) || null;
         return json(res, 200, { ok: true, skipped: false, matched: Boolean(existingCustomer), created: false, duplicate: true, softDeleted: Boolean(existingCustomer?.deleted), conflicts: [], customer: existingCustomer, followup: existingFollowup, task: existingTask, updatedFields: [], revision: readStateEnvelope().version });
       }
       const customerBefore = JSON.parse(JSON.stringify(customer));
@@ -2007,8 +2013,10 @@ const server = createServer(async (req, res) => {
         const activeAiTask = item => item?.aiGenerated && item.done !== true && !['done','dismissed','cancelled'].includes(String(item.status || '').toLowerCase());
         const existingTask = tasks.find(item => activeAiTask(item) && String(item.customerId || '') === String(customer.id))
           || tasks.find(item => item?.aiGenerated && String(item.customerId || '') === String(customer.id))
-          || tasks.find(item => activeAiTask(item) && String(item.wsConversationId || '') === String(conversation.id) && String(item.wsAccountId || accountId) === accountId)
-          || tasks.find(item => item?.aiGenerated && String(item.wsConversationId || '') === String(conversation.id) && String(item.wsAccountId || accountId) === accountId);
+          // A VIP room can contain many existing customers. Its conversation
+          // alone is never enough to reuse another member's reminder task.
+          || (!vipGroup ? tasks.find(item => activeAiTask(item) && String(item.wsConversationId || '') === String(conversation.id) && String(item.wsAccountId || accountId) === accountId) : null)
+          || (!vipGroup ? tasks.find(item => item?.aiGenerated && String(item.wsConversationId || '') === String(conversation.id) && String(item.wsAccountId || accountId) === accountId) : null);
         const scoreSummary = `AI 综合 ${followupPlan.priorityScore}/100（资金实力 ${followupPlan.qualificationScore}/100，聊天粘度 ${followupPlan.engagementScore}/100）`;
         const taskInput = { title: `跟进 ${customer.name || customer.rawPhone || customer.phone}`, due: followupPlan.nextDate || '', customerId: customer.id, customerName: customer.name || '', phone: customer.rawPhone || customer.phone || '', wsAccountId: accountId, wsAnalysisId: analysisRow.id, wsMemberIdentity: vipGroup ? memberIdentity : null, owner: customer.assistant || '未分配', priority: followupPlan.priority, priorityBand: followupPlan.priorityBand, priorityScore: followupPlan.priorityScore, qualificationScore: followupPlan.qualificationScore, qualificationReason: followupPlan.qualificationReason, engagementScore: followupPlan.engagementScore, engagementReason: followupPlan.engagementReason, scoreReason: followupPlan.scoreReason, scoreConfidence: followupPlan.scoreConfidence, scoringVersion: followupPlan.scoringVersion, evidenceGate: followupPlan.evidenceGate, scoringWeights: followupPlan.scoringWeights, note: [scoreSummary, followupPlan.scoreReason, followupPlan.note].filter(Boolean).join('；'), objective: followupPlan.objective, suggestedOpener: followupPlan.opener, talkingPoints: followupPlan.talkingPoints, avoidTopics: followupPlan.avoidTopics, wsConversationId: conversation.id, wsFollowupKey: followupPlan.dedupeKey, aiGenerated: true, directionInvalidated: false, invalidationReason: '' };
         if (existingTask) { duplicate = !existingTask.done; Object.assign(existingTask, taskInput, { done: false, status: 'open', completedAt: '', snoozedUntil: '', updatedAt: now }); task = existingTask; }
@@ -2280,38 +2288,68 @@ const server = createServer(async (req, res) => {
       const accountId = wsAccountId(url.searchParams.get('accountId'));
       if (!allAccounts) wsRequireAccount(accountId);
       const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit')) || 30));
-      const rows = db.prepare(`SELECT a.*, c.title, c.external_id, c.customer_id FROM ws_ai_analyses a JOIN ws_conversations c ON c.id=a.conversation_id AND c.account_id=a.account_id WHERE ${allAccounts ? '1=1' : 'a.account_id=?'} AND a.confidence>=0.3 AND NOT EXISTS (SELECT 1 FROM ws_ai_analyses newer WHERE newer.account_id=a.account_id AND newer.conversation_id=a.conversation_id AND newer.confidence>=0.3 AND (newer.created_at>a.created_at OR (newer.created_at=a.created_at AND newer.id>a.id))) ORDER BY a.created_at DESC`).all(...(allAccounts ? [] : [accountId]));
+      // Deduplicate after reading the member identity from each result. A
+      // conversation-level SQL anti-join would hide every other VIP member.
+      const rows = db.prepare(`SELECT a.*, c.title, c.external_id, c.customer_id, c.data_json AS conversation_data_json, c.unread_count AS conversation_unread_count FROM ws_ai_analyses a JOIN ws_conversations c ON c.id=a.conversation_id AND c.account_id=a.account_id WHERE ${allAccounts ? '1=1' : 'a.account_id=?'} AND a.confidence>=0.3 ORDER BY a.created_at DESC,a.id DESC`).iterate(...(allAccounts ? [] : [accountId]));
       const currentCrm = governanceState();
       const currentTasks = currentCrm.settings.operatingTasks;
       const activeCustomerIds = new Set(currentCrm.customers.filter(customer => !customer.deleted).map(customer => String(customer.id)));
+      const taskByAnalysis = new Map(), taskByConversation = new Map();
+      for (const item of currentTasks) {
+        if (!item?.aiGenerated) continue;
+        const analysisKey = String(item.wsAnalysisId || '');
+        if (analysisKey && !taskByAnalysis.has(analysisKey)) taskByAnalysis.set(analysisKey, item);
+        const conversationKey = String(item.wsConversationId || '');
+        if (conversationKey) {
+          if (!taskByConversation.has(conversationKey)) taskByConversation.set(conversationKey, []);
+          taskByConversation.get(conversationKey).push(item);
+        }
+      }
+      const existingAlerts = new Map(db.prepare(`SELECT * FROM ws_followup_alerts ${allAccounts ? '' : 'WHERE account_id=?'}`).all(...(allAccounts ? [] : [accountId])).map(row => [`${row.account_id}:${row.alert_key}`, row]));
       const localDateKey = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
       const today = localDateKey(new Date());
       const upcomingLimitDate = new Date(); upcomingLimitDate.setDate(upcomingLimitDate.getDate() + 7);
       const upcomingLimit = localDateKey(upcomingLimitDate);
       const alerts = [];
       const seenConversations = new Set();
+      const conversationChecks = new Map(), vipMemberChecks = new Map(), dueDateCache = new Map();
       for (const row of rows) {
-        if (!wsAiEligible(row.conversation_id, row.account_id)) continue;
+        const conversationKey = `${row.account_id}:${row.conversation_id}`;
+        if (!conversationChecks.has(conversationKey)) {
+          const conversation = wsAiEligibleConversation(row.conversation_id, row.account_id, { id:row.conversation_id, account_id:row.account_id, external_id:row.external_id, title:row.title, customer_id:row.customer_id, data_json:row.conversation_data_json, unread_count:row.conversation_unread_count });
+          conversationChecks.set(conversationKey, conversation ? { row:conversation, vipGroup:wsIsVipGroup(conversation) } : null);
+        }
+        const alertContext = conversationChecks.get(conversationKey);
+        if (!alertContext) continue;
+        const alertConversation = alertContext.row, alertVipGroup = alertContext.vipGroup;
         const result = wsJson(row.result_json, {});
-        const alertConversation = wsConversationRow(row.conversation_id, row.account_id);
-        const alertVipMember = wsVipMemberEvidence(alertConversation, result.memberIdentity || result.transcriptInfo?.memberIdentity || {});
-        if (wsIsVipGroup(alertConversation) && (result.transcriptInfo?.memberScoped !== true || !alertVipMember.valid)) continue;
-        const alertMemberKey = wsIsVipGroup(alertConversation) ? (alertVipMember.identity.senderId || alertVipMember.identity.senderPhone) : '';
-        const seenKey = `${row.conversation_id}:${alertMemberKey}`;
+        let alertVipMember = null, alertMemberKey = '';
+        if (alertVipGroup) {
+          if (result.transcriptInfo?.memberScoped !== true) continue;
+          const rawMemberIdentity = result.memberIdentity || result.transcriptInfo?.memberIdentity || {};
+          const memberCheckKey = `${conversationKey}:${JSON.stringify(wsVipMemberIdentity(rawMemberIdentity))}`;
+          if (!vipMemberChecks.has(memberCheckKey)) vipMemberChecks.set(memberCheckKey, wsVipMemberEvidence(alertConversation, rawMemberIdentity));
+          alertVipMember = vipMemberChecks.get(memberCheckKey);
+          if (!alertVipMember.valid) continue;
+          alertMemberKey = alertVipMember.identity.senderId || alertVipMember.identity.senderPhone;
+        }
+        const seenKey = `${row.account_id}:${row.conversation_id}:${alertMemberKey}`;
         if (seenConversations.has(seenKey)) continue;
         const confidence = Number(row.confidence || 0);
         if (result.error || confidence < 0.3) continue;
         // A newer failed or low-confidence analysis must not hide an older
         // valid analysis that still contains an actionable follow-up date.
         seenConversations.add(seenKey);
+        const scopedAccountId = row.account_id;
+        const task = taskByAnalysis.get(String(row.id))
+          || (!alertVipGroup ? taskByConversation.get(String(row.conversation_id))?.find(item => String(item.wsAccountId || scopedAccountId) === scopedAccountId) : null);
+        if (!task || !activeCustomerIds.has(String(task.customerId)) || (task.wsAnalysisId && task.wsAnalysisId !== row.id)) continue;
         const strategy = result.followupStrategy && typeof result.followupStrategy === 'object' ? result.followupStrategy : {};
         const alertPlan = wsCrmSync.deriveFollowupPlan({ ...result, confidence }, { id: row.id }, { id: row.conversation_id, externalId: row.external_id }, row.account_id);
         if (!alertPlan.shouldCreate) continue;
-        const scopedAccountId = row.account_id;
-        const task = currentTasks.find(item => item.aiGenerated && String(item.wsAnalysisId || '') === String(row.id))
-          || (!wsIsVipGroup(alertConversation) ? currentTasks.find(item => item.aiGenerated && String(item.wsConversationId || '') === String(row.conversation_id) && String(item.wsAccountId || scopedAccountId) === scopedAccountId) : null);
-        if (!task || !activeCustomerIds.has(String(task.customerId)) || (task.wsAnalysisId && task.wsAnalysisId !== row.id)) continue;
-        const due = wsCrmSync.normalizeDate(task?.due || alertPlan.nextDate);
+        const dueInput = task?.due || alertPlan.nextDate;
+        if (!dueDateCache.has(dueInput)) dueDateCache.set(dueInput, wsCrmSync.normalizeDate(dueInput));
+        const due = dueDateCache.get(dueInput);
         const priorityScore = alertPlan.priorityScore;
         const urgent = /高|紧急|urgent|hot/i.test(String(result.urgency || '')) || priorityScore >= 80;
         const overdue = Boolean(due && due < today);
@@ -2320,14 +2358,14 @@ const server = createServer(async (req, res) => {
         if (!urgent && !overdue && !dueToday && !upcoming) continue;
         const alertKey = `${row.account_id}:${row.conversation_id}${alertMemberKey ? `:${alertMemberKey}` : ''}`;
         if (task?.done && (!task.wsAnalysisId || task.wsAnalysisId === row.id)) continue;
-        const existingAlert = db.prepare('SELECT * FROM ws_followup_alerts WHERE account_id=? AND alert_key=?').get(scopedAccountId, alertKey);
+        const existingAlert = existingAlerts.get(`${scopedAccountId}:${alertKey}`);
         const priority = overdue ? 'overdue' : dueToday ? 'today' : urgent ? 'urgent' : 'upcoming';
         const reason = wsText(strategy.reason, 500) || (urgent && overdue ? '高意向且已逾期' : urgent ? '高意向客户' : overdue ? '跟进已逾期' : dueToday ? '今日应跟进' : '未来 7 天内应跟进');
         const alertData = {
           title: row.title,
           externalId: row.external_id,
           customerId: task.customerId,
-          memberIdentity: wsIsVipGroup(alertConversation) ? alertVipMember.identity : null,
+          memberIdentity: alertVipGroup ? alertVipMember.identity : null,
           summary: result.summary || '',
           nextStep: result.nextStep || '',
           followupTime: due || '',
@@ -2352,17 +2390,25 @@ const server = createServer(async (req, res) => {
           needsConfirmation: true,
         };
         const now = new Date().toISOString();
-        if (!existingAlert) db.prepare('INSERT INTO ws_followup_alerts(id,account_id,conversation_id,analysis_id,alert_key,priority,reason,followup_time,status,snoozed_until,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)').run(wsCreateId('wfa'), scopedAccountId, row.conversation_id, row.id, alertKey, priority, reason, due || '', 'open', '', JSON.stringify(alertData), now, now);
-        else {
+        const dataJson = JSON.stringify(alertData);
+        let savedAlert = existingAlert;
+        if (!existingAlert) {
+          savedAlert = { id:wsCreateId('wfa'), account_id:scopedAccountId, conversation_id:row.conversation_id, analysis_id:row.id, alert_key:alertKey, priority, reason, followup_time:due || '', status:'open', snoozed_until:'', data_json:dataJson, created_at:now, updated_at:now };
+          db.prepare('INSERT INTO ws_followup_alerts(id,account_id,conversation_id,analysis_id,alert_key,priority,reason,followup_time,status,snoozed_until,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)').run(savedAlert.id, scopedAccountId, row.conversation_id, row.id, alertKey, priority, reason, due || '', 'open', '', dataJson, now, now);
+          existingAlerts.set(`${scopedAccountId}:${alertKey}`, savedAlert);
+        } else {
           // A newer analysis is a new reminder decision. Reopen an alert that
           // was completed, dismissed, or snoozed for the older analysis so a
           // fresh incoming message cannot silently suppress the next action.
           const newAnalysis = String(existingAlert.analysis_id || '') !== String(row.id);
           const nextStatus = newAnalysis && ['done', 'dismissed', 'snoozed'].includes(String(existingAlert.status || '')) ? 'open' : existingAlert.status;
           const nextSnoozedUntil = newAnalysis ? '' : existingAlert.snoozed_until;
-          db.prepare('UPDATE ws_followup_alerts SET analysis_id=?,priority=?,reason=?,followup_time=?,status=?,snoozed_until=?,data_json=?,updated_at=? WHERE id=? AND account_id=?').run(row.id, priority, reason, due || '', nextStatus, nextSnoozedUntil, JSON.stringify(alertData), now, existingAlert.id, scopedAccountId);
+          if (String(existingAlert.analysis_id || '') !== String(row.id) || existingAlert.priority !== priority || existingAlert.reason !== reason || existingAlert.followup_time !== (due || '') || existingAlert.status !== nextStatus || existingAlert.snoozed_until !== nextSnoozedUntil || existingAlert.data_json !== dataJson) {
+            db.prepare('UPDATE ws_followup_alerts SET analysis_id=?,priority=?,reason=?,followup_time=?,status=?,snoozed_until=?,data_json=?,updated_at=? WHERE id=? AND account_id=?').run(row.id, priority, reason, due || '', nextStatus, nextSnoozedUntil, dataJson, now, existingAlert.id, scopedAccountId);
+            savedAlert = { ...existingAlert, analysis_id:row.id, priority, reason, followup_time:due || '', status:nextStatus, snoozed_until:nextSnoozedUntil, data_json:dataJson, updated_at:now };
+            existingAlerts.set(`${scopedAccountId}:${alertKey}`, savedAlert);
+          }
         }
-        const savedAlert = db.prepare('SELECT * FROM ws_followup_alerts WHERE account_id=? AND alert_key=?').get(scopedAccountId, alertKey);
         if (savedAlert.status === 'done' || savedAlert.status === 'dismissed') continue;
         if (savedAlert.status === 'snoozed' && savedAlert.snoozed_until && savedAlert.snoozed_until > new Date().toISOString()) continue;
         alerts.push({
@@ -2827,7 +2873,7 @@ const server = createServer(async (req, res) => {
       res.end(body);
       return;
     }
-    if (!['/modules/productivity.js', '/modules/performance-enhancements.js', '/modules/desktop-performance.js', '/modules/smart-import.js', '/modules/business-rule-core.js', '/modules/business-enhancements.js', '/modules/business-enhancements.css', '/modules/accessibility-enhancements.js', '/modules/operations-upgrade.js', '/modules/operations-upgrade.css', '/modules/ui-refresh.css', '/modules/horizon-atelier.css', '/modules/business-6.css', '/modules/operations-6.css', '/modules/global-6.css', '/modules/scroll-system.css', '/modules/scroll-coordinator.js', '/modules/desktop-host.js', '/assets/zhike-horizon-logo.png', '/index.html', '/styles.css', '/app.js', '/vendor/xlsx/xlsx.js', '/modules/v4-data-center.js', '/modules/v4.css', '/modules/gpt-assistant.js', '/modules/runtime-customizer.js', '/modules/gpt-assistant.css', '/modules/gpt-workbench.css', '/modules/gpt-modern.css', '/modules/gpt-management.css', '/modules/phone-registry.js', '/modules/phone-registry.css', '/modules/v41-ui.css', '/modules/operations-core.cjs', '/modules/operations-ui.js', '/modules/ticket-record-core.js', '/modules/ws-workbench-core.js', '/modules/ws-crm-sync-core.js', '/modules/hot-chat-profile-core.js', '/modules/ws-workbench.js', '/modules/ws-workbench.css'].includes(requestPath)) return json(res, 404, { error: '文件不存在。' });
+    if (!['/modules/productivity.js', '/modules/performance-enhancements.js', '/modules/desktop-performance.js', '/modules/smart-import.js', '/modules/business-rule-core.js', '/modules/business-enhancements.js', '/modules/business-enhancements.css', '/modules/accessibility-enhancements.js', '/modules/operations-upgrade.js', '/modules/operations-upgrade.css', '/modules/ui-refresh.css', '/modules/horizon-atelier.css', '/modules/business-6.css', '/modules/operations-6.css', '/modules/global-6.css', '/modules/home-6.css', '/modules/scroll-system.css', '/modules/scroll-coordinator.js', '/modules/desktop-host.js', '/assets/zhike-horizon-logo.png', '/assets/horizon-ridge-6.png', '/assets/horizon-flow-6.png', '/assets/horizon-topline-6.png', '/assets/horizon-rock-6.png', '/assets/horizon-sidebar-shell-6.svg', '/index.html', '/styles.css', '/app.js', '/vendor/xlsx/xlsx.js', '/modules/v4-data-center.js', '/modules/v4.css', '/modules/gpt-assistant.js', '/modules/runtime-customizer.js', '/modules/gpt-assistant.css', '/modules/gpt-workbench.css', '/modules/gpt-modern.css', '/modules/gpt-management.css', '/modules/phone-registry.js', '/modules/phone-registry.css', '/modules/v41-ui.css', '/modules/operations-core.cjs', '/modules/operations-ui.js', '/modules/ticket-record-core.js', '/modules/ws-workbench-core.js', '/modules/ws-crm-sync-core.js', '/modules/hot-chat-profile-core.js', '/modules/ws-workbench.js', '/modules/ws-workbench.css'].includes(requestPath)) return json(res, 404, { error: '文件不存在。' });
     const filePath = resolve(root, `.${normalize(requestPath)}`);
     if (!filePath.startsWith(root + sep) || !existsSync(filePath) || !statSync(filePath).isFile()) return json(res, 404, { error: '文件不存在。' });
     const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.cjs': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png' };

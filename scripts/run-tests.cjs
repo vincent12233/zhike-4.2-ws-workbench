@@ -55,6 +55,8 @@ function runWs() {
   runSyntax();
   run('WS core rules', [path.join(repo, 'tests', 'ws-workbench-core.test.cjs')]);
   run('WS direct-only collection and AI policy', [path.join(repo, 'tests', 'ws-direct-only-policy.test.cjs')]);
+  run('WS VIP member task and alert isolation', [path.join(repo, 'tests', 'ws-vip-member-alerts.test.cjs')]);
+  run('WS and GPT Horizon visual reachability', [path.join(repo, 'tests', 'ws-gpt-horizon-visual.test.cjs')]);
   run('WS AI CRM sync rules', [path.join(repo, 'tests', 'ws-crm-sync-core.test.cjs')]);
   run('WS CRM customer-link trust boundary', [path.join(repo, 'tests', 'ws-crm-link-trust.test.cjs')]);
   run('WS workbench initialization', [path.join(repo, 'tests', 'ws-workbench-init.test.cjs')]);
@@ -131,6 +133,7 @@ function runAll() {
   run('local bridge contract', [path.join(repo, 'desktop', 'tests', 'LocalBridgeContractTests.cjs')]);
   run('design system contract', [path.join(repo, 'tests', 'design-system-contract.test.cjs')]);
   run('Horizon Atelier 6.0 dynamic UI contract', [path.join(repo, 'tests', 'horizon-atelier-contract.test.cjs')]);
+  run('Horizon Atelier AI alert ordering', [path.join(repo, 'tests', 'home-horizon-alert-order.test.cjs')]);
   run('GPT Horizon 6.0 workspace contract', [path.join(repo, 'tests', 'gpt-horizon-workspace.test.cjs')]);
   run('Horizon Atelier governance/settings UI contract', [path.join(repo, 'tests', 'governance-horizon-contract.test.cjs')]);
   run('6.0 linked business workspace shell', [path.join(repo, 'tests', 'business-6-shell-contract.test.cjs')]);

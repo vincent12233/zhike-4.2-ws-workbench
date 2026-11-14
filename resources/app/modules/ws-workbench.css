@@ -229,3 +229,81 @@ body.ws-mode .ws-account-list::-webkit-scrollbar-thumb,body.ws-mode .ws-session-
 }
 @media (prefers-reduced-motion:reduce){body.ws-mode .ws-account-row,body.ws-mode .ws-session-row,body.ws-mode .ws-sidebar-collapse{transition:none}}
 .ws-hot-profile-card{display:grid;gap:8px}.ws-hot-profile-card[data-color="green"]{border-top:3px solid #2eaa78}.ws-hot-profile-card[data-color="blue"]{border-top:3px solid #4b83d4}.ws-hot-profile-card[data-color="amber"]{border-top:3px solid #d39b39}.ws-hot-profile-card[data-color="red"]{border-top:3px solid #d55a52}.ws-hot-profile-card[data-color="gray"]{border-top:3px solid #98a3b3}.ws-hot-profile-toolbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:10px;color:var(--muted,#77839a)}.ws-hot-profile-toolbar label{display:flex;align-items:center;gap:5px}.ws-hot-profile-toolbar select{border:1px solid var(--line,#dfe5ee);border-radius:6px;padding:4px 6px;background:var(--input,#fff);color:inherit;font-size:10px}.ws-hot-profile-status{padding:3px 7px;border-radius:999px;font-size:10px}.ws-hot-profile-status.status-green{background:#e2f5ea;color:#18734a}.ws-hot-profile-status.status-blue{background:#e7effd;color:#3e5ca3}.ws-hot-profile-status.status-amber{background:#fff1d9;color:#9a6410}.ws-hot-profile-status.status-red{background:#ffe6e3;color:#a3332e}.ws-hot-profile-status.status-gray{background:#edf1f6;color:#5f6b7d}.ws-hot-profile-progress{height:5px;background:#eef2f6;border-radius:99px;overflow:hidden}.ws-hot-profile-progress span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#39b8aa,#5b7de2);transition:width .2s ease}.ws-hot-profile-overview{display:grid;gap:3px;font-size:10px;color:var(--muted,#77839a);line-height:1.45}.ws-hot-profile-overview .is-warning{color:#a3332e}.ws-hot-profile-topics{display:grid;gap:5px;font-size:10px}.ws-hot-profile-topics strong{font-size:10px}.ws-hot-profile-topics>div{display:flex;flex-wrap:wrap;gap:4px}.ws-hot-profile-topic{padding:3px 6px;border-radius:999px;background:#e8eefb;color:#3e5ca3;font-size:9px}.ws-hot-profile-fields{display:grid;gap:6px;max-height:420px;overflow:auto;padding-right:2px}.ws-hot-profile-field{display:grid;gap:4px;padding:7px;border:1px solid var(--line,#e7ebf2);border-radius:8px;background:var(--soft,#f7f9fb)}.ws-hot-profile-field[data-state="pending"]{border-color:#e7c374;background:#fffaf0}.ws-hot-profile-field[data-state="declined"]{border-color:#cfd6e0}.ws-hot-profile-field-head{display:flex;align-items:center;justify-content:space-between;gap:6px}.ws-hot-profile-field-head strong{font-size:10px}.ws-hot-profile-state{padding:2px 5px;border-radius:999px;font-size:9px;white-space:nowrap}.ws-hot-profile-state.state-known{background:#e2f5ea;color:#18734a}.ws-hot-profile-state.state-missing{background:#edf1f6;color:#5f6b7d}.ws-hot-profile-state.state-pending{background:#fff1d9;color:#9a6410}.ws-hot-profile-state.state-declined{background:#f0edf7;color:#67558f}.ws-hot-profile-input{width:100%;box-sizing:border-box;border:1px solid var(--line,#dfe5ee);border-radius:6px;padding:5px 6px;background:var(--input,#fff);color:inherit;font:inherit;font-size:10px}.ws-hot-profile-input[aria-readonly="true"]{background:#f1f3f7}.ws-hot-profile-evidence{font-size:9px;color:var(--muted,#77839a);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ws-hot-profile-actions{display:flex;gap:4px}.ws-hot-profile-actions .btn{font-size:9px;padding:3px 6px;height:22px}
+
+/* Horizon 6.0 detail finish. Scope every override to WS so the embedded
+   WhatsApp surface and the rest of Zhike keep their own rendering rules. */
+body.ws-mode .ws-workbench-page{--ws-detail-gold:#e4c487;--ws-detail-teal:#65d8c7}
+body.ws-mode .ws-error-banner{border:1px solid rgba(239,143,130,.34);background:linear-gradient(110deg,rgba(103,39,38,.28),rgba(37,25,31,.68));color:#f0b4a9}
+body.ws-mode .ws-loading-banner{border:1px solid rgba(101,216,199,.24);background:rgba(39,118,111,.13);color:#a9e7dc}
+body.ws-mode .ws-capture-preview{color:#8dd7cb}
+body.ws-mode .ws-account-form label{color:#a7c2c2}
+body.ws-mode .ws-account-form-error,body.ws-mode .ws-error-line,body.ws-mode .ws-reply-warning{color:#f2a79c}
+body.ws-mode .ws-status-badge{border-color:rgba(137,205,207,.18);background:rgba(12,31,41,.8);color:#9cb5b7}
+body.ws-mode .ws-status-badge[data-status="等待登录"],body.ws-mode .ws-status-badge[data-status="登录中"],body.ws-mode .ws-status-badge[data-status="正在重连"]{border-color:rgba(228,196,135,.28);background:rgba(157,114,51,.14);color:#efd39f}
+body.ws-mode .ws-session-pagination{margin:8px 2px 2px;border-color:var(--ws-cockpit-line);background:linear-gradient(145deg,rgba(17,41,51,.97),rgba(8,23,31,.97));box-shadow:0 10px 24px rgba(0,0,0,.17)}
+body.ws-mode .ws-session-pagination span{color:#a9c2c4}
+body.ws-mode .ws-followup-alert{border-color:rgba(137,205,207,.18);border-left-color:var(--ws-detail-gold);background:linear-gradient(145deg,rgba(18,43,53,.94),rgba(9,25,34,.97));color:#d9e7e4}
+body.ws-mode .ws-followup-alert.urgent{border-left-color:#ef8f82}
+body.ws-mode .ws-followup-alert.overdue{border-left-color:#e9aa72}
+body.ws-mode .ws-followup-alert.today{border-left-color:#65d8c7}
+body.ws-mode .ws-followup-alert-head span{border:1px solid rgba(239,143,130,.2);background:rgba(142,53,49,.18);color:#f0a99f}
+body.ws-mode .ws-followup-alert-meta{color:#8ea9ac}
+body.ws-mode .ws-hot-profile-card{border-top:3px solid rgba(137,205,207,.35);background:linear-gradient(155deg,rgba(18,42,52,.94),rgba(9,25,34,.97))}
+body.ws-mode .ws-hot-profile-card[data-color="green"]{border-top-color:#63d6a8}
+body.ws-mode .ws-hot-profile-card[data-color="blue"]{border-top-color:#70bdf5}
+body.ws-mode .ws-hot-profile-card[data-color="amber"]{border-top-color:var(--ws-detail-gold)}
+body.ws-mode .ws-hot-profile-card[data-color="red"]{border-top-color:#ef8f82}
+body.ws-mode .ws-hot-profile-card[data-color="gray"]{border-top-color:#839ba0}
+body.ws-mode .ws-hot-profile-toolbar,body.ws-mode .ws-hot-profile-overview,body.ws-mode .ws-hot-profile-evidence{color:#91aeb0}
+body.ws-mode .ws-hot-profile-overview .is-warning{color:#e9be87}
+body.ws-mode .ws-hot-profile-topics strong,body.ws-mode .ws-hot-profile-field-head strong{color:#dceae7}
+body.ws-mode .ws-hot-profile-field[data-state="pending"]{border-color:rgba(228,196,135,.36);background:rgba(145,111,56,.12)}
+body.ws-mode .ws-hot-profile-field[data-state="declined"]{border-color:rgba(135,153,164,.24);background:rgba(64,76,88,.13)}
+body.ws-mode .ws-hot-profile-input[aria-readonly="true"]{border-color:rgba(137,205,207,.1);background:rgba(2,13,19,.36);color:#afc1c0}
+body.ws-mode .ws-hot-profile-progress{background:rgba(137,205,207,.13)}
+body.ws-mode .ws-hot-profile-progress span{background:linear-gradient(90deg,#51e1cc,#e4c487)}
+body.ws-mode .ws-hot-profile-status.status-green,body.ws-mode .ws-hot-profile-state.state-known{border:1px solid rgba(99,214,168,.22);background:rgba(70,160,116,.15);color:#a1eac5}
+body.ws-mode .ws-hot-profile-status.status-blue{border:1px solid rgba(112,189,245,.23);background:rgba(73,125,176,.16);color:#b3d9f3}
+body.ws-mode .ws-hot-profile-status.status-amber,body.ws-mode .ws-hot-profile-state.state-pending{border:1px solid rgba(228,196,135,.23);background:rgba(159,121,58,.16);color:#edd6a9}
+body.ws-mode .ws-hot-profile-status.status-red{border:1px solid rgba(239,143,130,.23);background:rgba(144,59,55,.17);color:#efada4}
+body.ws-mode .ws-hot-profile-status.status-gray,body.ws-mode .ws-hot-profile-state.state-missing{border:1px solid rgba(137,160,170,.18);background:rgba(86,105,116,.15);color:#b2c1c2}
+body.ws-mode .ws-hot-profile-state.state-declined{border:1px solid rgba(165,145,205,.22);background:rgba(103,83,144,.16);color:#cbbce5}
+body.ws-mode .ws-hot-profile-topic{background:rgba(160,138,220,.12);color:#d1c4ec;border:1px solid rgba(160,138,220,.17)}
+body.ws-mode .ws-hot-profile-actions .btn{min-height:28px;height:auto;padding:5px 8px;font-size:10px}
+body.ws-mode .ws-workbench-page :is(button,input,select,textarea):focus-visible{outline:2px solid rgba(101,216,199,.75);outline-offset:2px}
+
+/* Keep the native WhatsApp login/chat surface large on a desktop window.
+   Later global Horizon rules use !important for page chrome, so this scoped
+   override gives that space back without changing WhatsApp's own zoom. */
+@media (min-width:901px){
+  body.ws-mode .view-container{min-height:0;padding:5px 10px 6px!important;overflow:hidden}
+  body.ws-mode .ws-workbench-page{gap:4px}
+  body.ws-mode .ws-page-heading{display:flex;flex:0 0 auto;flex-wrap:nowrap;align-items:center;gap:8px;min-height:34px;margin:0!important;padding:0 2px 3px!important;overflow:hidden}
+  body.ws-mode .ws-page-heading>div:first-child{display:flex;flex:1 1 auto;align-items:center;gap:10px;min-width:0;overflow:hidden}
+  body.ws-mode .ws-page-heading .page-title{flex:none;font-size:18px!important;line-height:1.15!important;white-space:nowrap;letter-spacing:.015em!important}
+  body.ws-mode .ws-page-heading .page-title:after{display:none!important}
+  body.ws-mode .ws-page-heading .page-subtitle{flex:1;min-width:0;max-width:none;margin:0!important;font-size:9px!important;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  body.ws-mode .ws-page-heading .heading-actions{flex:0 1 auto;align-self:center;justify-content:flex-end;gap:4px;width:auto!important;max-width:70%;min-width:0;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
+  body.ws-mode .ws-page-heading .heading-actions>*{flex:none}
+  body.ws-mode .ws-page-heading .heading-actions .btn,body.ws-mode .ws-page-heading .ws-status-badge,body.ws-mode .ws-page-heading select,body.ws-mode .ws-page-heading .ws-top-switch{height:26px;min-height:26px;box-sizing:border-box;padding-block:2px;font-size:9px}
+  body.ws-mode .ws-center-panel{gap:4px}
+  body.ws-mode .ws-login-toolbar{display:grid;grid-template-columns:minmax(130px,1fr) minmax(0,2fr);gap:4px 7px;padding:5px 7px;border-radius:13px}
+  body.ws-mode .ws-login-summary{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden}
+  body.ws-mode .ws-login-summary strong{flex:none;font-size:12px;white-space:nowrap}
+  body.ws-mode .ws-login-summary .ws-login-status{flex:1;min-width:0;margin:0;font-size:9px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  body.ws-mode .ws-runtime-strip{display:flex;align-items:center;gap:3px;min-width:0;min-height:24px;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
+  body.ws-mode .ws-runtime-strip>span{flex:0 0 auto;gap:4px;min-height:22px;padding:2px 5px;border-radius:7px}
+  body.ws-mode .ws-runtime-strip small{font-size:8px}
+  body.ws-mode .ws-runtime-strip b{font-size:9px}
+  body.ws-mode .ws-runtime-actions{flex:0 0 auto;grid-column:auto!important;gap:3px;justify-content:flex-start}
+  body.ws-mode .ws-runtime-actions button{min-height:22px;padding:0 5px;border-radius:7px;font-size:8px}
+  body.ws-mode .ws-toolbar-actions{grid-column:1/-1;display:flex;flex-wrap:nowrap;justify-content:flex-start;gap:4px;min-height:27px;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
+  body.ws-mode .ws-toolbar-actions .btn,body.ws-mode .ws-login-toolbar .ws-toolbar-actions .btn{flex:0 0 auto;height:26px;min-height:26px;padding:2px 7px;font-size:9px;white-space:nowrap}
+  body.ws-mode .ws-browser-host{flex:1 1 0;min-height:min(320px,calc(100dvh - 300px))}
+  body.ws-mode .ws-capture-panel.is-collapsed{max-height:32px;padding:2px 8px}
+  body.ws-mode .ws-capture-panel.is-collapsed .ws-capture-heading-actions .btn{height:25px;min-height:25px}
+}
+@media (min-width:901px) and (max-width:1060px){
+  body.ws-mode .ws-page-heading .page-subtitle{display:none}
+  body.ws-mode .ws-page-heading .heading-actions{max-width:calc(100% - 130px)}
+}

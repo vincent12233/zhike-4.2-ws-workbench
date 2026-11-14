@@ -9,8 +9,8 @@ const manager = fs.readFileSync(path.join(repo, 'desktop/src/Zhike.Desktop/Servi
 const project = fs.readFileSync(path.join(repo, 'desktop/src/Zhike.Desktop/Zhike.Desktop.csproj'), 'utf8');
 const server = fs.readFileSync(path.join(repo, 'resources/app/server.mjs'), 'utf8');
 
-assert.match(project, /<InformationalVersion>6\.0\.0<\/InformationalVersion>/);
-assert.match(server, /const APP_VERSION = '6\.0\.0'/);
+assert.match(project, /<InformationalVersion>6\.0\.1<\/InformationalVersion>/);
+assert.match(server, /const APP_VERSION = '6\.0\.1'/);
 assert.match(manager, /ExpectedAppVersion/);
 assert.match(manager, /TryGetProperty\("appVersion"/);
 assert.match(manager, /string\.Equals\(actual, ExpectedAppVersion/);

@@ -45,11 +45,12 @@ public sealed partial class MainWindow : Window
             var hWnd = WindowNative.GetWindowHandle(this);
             var windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
             _appWindow = AppWindow.GetFromWindowId(windowId);
-            _appWindow.Title = "知客工作台";
+            _appWindow.Title = "知客 6.0.1  Horizon Atelier";
             var iconPath = ResolveIconPath();
             if (iconPath is not null) _appWindow.SetIcon(iconPath);
             _appWindow.Closing += OnAppWindowClosing;
             _appWindow.Changed += OnAppWindowChanged;
+            ConfigureTitleBar(_appWindow);
         }
         catch { }
     }
@@ -67,10 +68,35 @@ public sealed partial class MainWindow : Window
     {
         var candidates = new[]
         {
+            Path.Combine(AppContext.BaseDirectory, "zhike-horizon-6-0-1.ico"),
+            Path.Combine(AppContext.BaseDirectory, "zhike-horizon-6.ico"),
             Path.Combine(AppContext.BaseDirectory, "zhike.ico"),
             Path.Combine(AppContext.BaseDirectory, "Assets", "zhike.ico"),
         };
         return candidates.FirstOrDefault(File.Exists);
+    }
+
+    private static void ConfigureTitleBar(AppWindow window)
+    {
+        // Color the system title bar without replacing its native caption buttons
+        // or the Windows drag, snap, minimize, maximize, and close behavior.
+        if (!AppWindowTitleBar.IsCustomizationSupported()) return;
+
+        var titleBar = window.TitleBar;
+        var background = Windows.UI.Color.FromArgb(255, 8, 21, 29);
+        var foreground = Windows.UI.Color.FromArgb(255, 237, 246, 244);
+        titleBar.BackgroundColor = background;
+        titleBar.ForegroundColor = foreground;
+        titleBar.InactiveBackgroundColor = background;
+        titleBar.InactiveForegroundColor = Windows.UI.Color.FromArgb(255, 150, 171, 177);
+        titleBar.ButtonBackgroundColor = background;
+        titleBar.ButtonForegroundColor = foreground;
+        titleBar.ButtonHoverBackgroundColor = Windows.UI.Color.FromArgb(255, 25, 50, 61);
+        titleBar.ButtonHoverForegroundColor = foreground;
+        titleBar.ButtonPressedBackgroundColor = Windows.UI.Color.FromArgb(255, 34, 72, 82);
+        titleBar.ButtonPressedForegroundColor = foreground;
+        titleBar.ButtonInactiveBackgroundColor = background;
+        titleBar.ButtonInactiveForegroundColor = Windows.UI.Color.FromArgb(255, 150, 171, 177);
     }
 
     private void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)

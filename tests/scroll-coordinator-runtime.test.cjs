@@ -147,6 +147,16 @@ wheel({ target: sidebarChrome, deltaX: 0, deltaY: 1600, deltaMode: 0, shiftKey: 
 assert.equal(prevented, true, 'a sidebar wheel remains contained after navigation reaches its boundary');
 assert.equal(view.scrollTop, 0, 'navigation boundary does not hand the gesture to the page');
 
+view.scrollTop = 230;
+coordinator.savePosition(view);
+context.window.__zhikeRegistryHost.state.view = 'groups';
+mutationCallback([{ target: view }]);
+assert.equal(view.scrollTop, 0, 'opening a different page starts at its heading instead of inheriting the previous scroll offset');
+view.scrollTop = 85;
+coordinator.savePosition(view);
+mutationCallback([{ target: view }]);
+assert.equal(view.scrollTop, 85, 'a redraw of the same page preserves its own scroll position');
+
 const nestedPane = new FakeElement({ classes: ['ws-account-list'], parent: nav, clientHeight: 80, scrollHeight: 80 });
 nestedPane.dataset.scrollMode = 'contain';
 nav.scrollTop = 0;

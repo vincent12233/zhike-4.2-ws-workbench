@@ -3,7 +3,10 @@
   const hotProfileCore = window.ZhikeHotChatProfile || {};
   const getHost = () => window.__zhikeRegistryHost;
   const readPanelCollapsed = panel => {
-    try { return localStorage.getItem(`zhike.ws.${panel}.collapsed`) === 'true'; } catch { return false; }
+    try {
+      const saved = localStorage.getItem(`zhike.ws.${panel}.collapsed`);
+      return saved == null ? panel === 'capture' : saved === 'true';
+    } catch { return panel === 'capture'; }
   };
   const writePanelCollapsed = (panel, value) => {
     try { localStorage.setItem(`zhike.ws.${panel}.collapsed`, String(Boolean(value))); } catch {}
@@ -3308,6 +3311,7 @@
     const firstBackgroundStart = startBackgroundRuntime();
     state.active = true;
     host.state.view = 'ws-workbench';
+    document.documentElement.dataset.view = 'ws-workbench';
     state.error = '';
     $('#crumbCurrent').textContent = 'WS 工作台';
     $$('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.view === 'ws-workbench'));

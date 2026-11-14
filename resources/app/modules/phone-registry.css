@@ -1,7 +1,8 @@
 .registry-summary{grid-template-columns:repeat(5,minmax(0,1fr))}
 .registry-panel{margin-top:14px}
-.registry-table{min-width:1050px}
-.registry-table th:first-child{min-width:135px}
+.registry-table{min-width:960px}
+.registry-table th:first-child{width:42px;min-width:42px;max-width:42px;text-align:center}
+.registry-table td:first-child{text-align:center}
 .registry-table th:nth-child(2){min-width:135px}
 .registry-table th:nth-child(3){min-width:155px}
 .registry-table th:nth-child(4){min-width:160px}
@@ -17,4 +18,22 @@
 .registry-pagination label{display:flex;align-items:center;gap:6px}
 .registry-pagination select{border:1px solid var(--border,#dce4ef);border-radius:7px;padding:5px 8px;background:var(--surface,#fff);color:inherit}
 @media(max-width:1100px){.registry-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Editable rows stay legible and keep their controls inside the table scroll. */
+:root[data-view="phone-registry"] .registry-panel{margin-top:11px;border-radius:20px 27px 22px 17px}
+:root[data-view="phone-registry"] .registry-toolbar{min-height:48px;align-items:center;gap:7px;padding:8px 12px}
+:root[data-view="phone-registry"] .registry-toolbar .toolbar-controls{display:flex;flex:1 1 490px;gap:7px;min-width:0;flex-wrap:wrap}
+:root[data-view="phone-registry"] .registry-toolbar .toolbar-controls>*{max-width:100%}
+:root[data-view="phone-registry"] .registry-toolbar .input-search{flex:1 1 210px;min-width:180px}
+:root[data-view="phone-registry"] .registry-toolbar select{flex:0 1 130px;min-width:100px}
+:root[data-view="phone-registry"] .registry-batch-actions{gap:6px;margin-left:0;justify-content:flex-end}
+:root[data-view="phone-registry"] .registry-batch-actions>span{font-size:11px;color:#90a5a5}
+:root[data-view="phone-registry"] .registry-table input,:root[data-view="phone-registry"] .registry-table select{min-height:31px;padding:5px 8px;border:1px solid transparent!important;border-radius:9px 13px 10px 7px;background:transparent!important;color:#d9e4df!important}
+:root[data-view="phone-registry"] .registry-table input:hover,:root[data-view="phone-registry"] .registry-table select:hover{border-color:rgba(128,180,183,.22)!important;background:rgba(255,255,255,.025)!important}
+:root[data-view="phone-registry"] .registry-table input:focus,:root[data-view="phone-registry"] .registry-table select:focus{outline:0;border-color:rgba(81,225,204,.6)!important;background:rgba(81,225,204,.045)!important;box-shadow:0 0 0 3px rgba(81,225,204,.1)!important}
+:root[data-view="phone-registry"] .registry-table th:first-child,:root[data-view="phone-registry"] .registry-table td:first-child{padding-left:7px!important;padding-right:7px!important}
+:root[data-view="phone-registry"] .registry-time{color:#8ca2a2;font-size:11px}
+:root[data-view="phone-registry"] .registry-pagination{min-height:43px;flex-wrap:wrap;gap:7px;padding:8px 12px;border-color:rgba(128,180,183,.13);color:#8ca2a2;font-size:11px}
+:root[data-view="phone-registry"] .registry-pagination select{border-color:rgba(128,180,183,.22);border-radius:9px 12px 10px 7px;background:rgba(255,255,255,.025);color:#d8e4e0}
+@media(max-width:820px){:root[data-view="phone-registry"] .registry-toolbar .toolbar-controls{flex-basis:100%}:root[data-view="phone-registry"] .registry-batch-actions{justify-content:flex-start}:root[data-view="phone-registry"] .registry-pagination{justify-content:flex-start}}
 

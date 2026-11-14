@@ -1,14 +1,14 @@
-# 知客 6.0.0 Horizon Atelier 本机桌面版部署
+# 知客 6.0.1 Horizon Atelier 本机桌面版部署
 
 当前正式版本只有一套运行链：WinUI 3 + WebView2 + 随包 Node SQLite 本机服务。安装后不需要 Docker、PostgreSQL、远程 API 或配对码。
 
 ## 安装
 
-运行 `知客-6.0.0-WinUI桌面版.exe`，默认安装到 `%LOCALAPPDATA%\Programs\ZhikeNative`。安装器会创建开始菜单和桌面快捷方式，并在安装结束后启动知客。
+6.0.1 安装包尚未生成和验收。待发布后运行 `知客-6.0.1-WinUI桌面版.exe`，默认安装到 `%LOCALAPPDATA%\Programs\ZhikeNative`。安装器应创建开始菜单和桌面快捷方式，并在安装结束后启动知客；最终结果以实机验收记录为准。
 
 目标电脑需要 Microsoft Edge WebView2 Evergreen Runtime。安装器检测不到时会提示打开官方安装页。
 
-当前个人分发安装包未做数字签名。若 Windows 拦截安装，先使用交付目录中的 `SHA256SUMS.txt` 核对安装包 SHA256；校验不一致时不要运行。不要关闭或绕过 Windows 安全保护。
+若最终个人分发安装包未做数字签名，Windows 拦截时先使用交付目录中的 `SHA256SUMS.txt` 核对安装包 SHA256；校验不一致时不要运行。不要关闭或绕过 Windows 安全保护。
 
 ## 数据目录
 

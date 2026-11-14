@@ -38,6 +38,11 @@ assert.match(installer, /WinUI stage contains an unmanifested file/);
 assert.match(installer, /actualStageFiles\.Count -ne \$manifestPaths\.Count/);
 assert.match(installer, /signedEntry\.bytes = \$signedExecutable\.Length[\s\S]*signedEntry\.sha256/, 'signing must refresh the staged manifest');
 assert.match(installer, /modules\\horizon-atelier\.css/);
+assert.match(installer, /modules\\home-6\.css/);
+for (const artwork of ['horizon-ridge-6.png', 'horizon-flow-6.png', 'horizon-topline-6.png', 'horizon-rock-6.png']) {
+  assert.ok(bundle.includes('assets\\' + artwork), 'bundle must require ' + artwork);
+  assert.ok(installer.includes('resources\\app\\assets\\' + artwork), 'installer must require ' + artwork);
+}
 
 if (process.platform === 'win32') {
   const powershell = `${process.env.SystemRoot || 'C:\\Windows'}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe`;
@@ -67,10 +72,15 @@ if (process.platform === 'win32') {
       'resources/app/styles.css',
       'resources/app/server.mjs',
       'resources/app/assets/zhike-horizon-logo.png',
+      'resources/app/assets/horizon-ridge-6.png',
+      'resources/app/assets/horizon-flow-6.png',
+      'resources/app/assets/horizon-topline-6.png',
+      'resources/app/assets/horizon-rock-6.png',
       'resources/app/modules/horizon-atelier.css',
       'resources/app/modules/business-6.css',
       'resources/app/modules/operations-6.css',
       'resources/app/modules/global-6.css',
+      'resources/app/modules/home-6.css',
       'resources/app/modules/scroll-system.css',
       'resources/app/vendor/xlsx/xlsx.js',
       'zhike.ico',
@@ -99,7 +109,7 @@ if (process.platform === 'win32') {
       '-OutputDir',
       output,
       '-AppVersion',
-      '6.0.0',
+      '6.0.1',
       '-ReleaseGate',
       '-SkipWebView2Check',
       '-AllowUnsigned',
@@ -111,7 +121,7 @@ if (process.platform === 'win32') {
     assert.match(staleOutput, /staged bundle version mismatch/);
 
     fs.writeFileSync(manifestPath, JSON.stringify({
-      version: '6.0.0',
+      version: '6.0.1',
       releaseGate: 'development-snapshot',
       sourceWorktreeDirty: true,
       files: [],
@@ -122,15 +132,16 @@ if (process.platform === 'win32') {
     assert.match(developmentOutput, /release gate rejected this stage/);
 
     const currentHead = childProcess.execFileSync('git', ['-C', repo, 'rev-parse', '--verify', 'HEAD'], { encoding: 'utf8' }).trim();
-    fs.writeFileSync(path.join(stage, 'resources/app/index.html'), '<title>知客 6.0 · Horizon Atelier</title><link href="horizon-atelier.css"><link href="scroll-system.css"><span> &middot; v6.0.0<!-- ZHIKE_BUILD_VERSION --></span>');
-    fs.writeFileSync(path.join(stage, 'resources/app/server.mjs'), "const APP_VERSION = '6.0.0'; const assets = ['/modules/horizon-atelier.css'];");
+    fs.writeFileSync(path.join(stage, 'resources/app/index.html'), '<title>知客 6.0 · Horizon Atelier</title><link href="horizon-atelier.css"><link href="home-6.css"><link href="scroll-system.css"><span> &middot; v6.0.1<!-- ZHIKE_BUILD_VERSION --></span>');
+    fs.writeFileSync(path.join(stage, 'resources/app/modules/home-6.css'), 'url("../assets/horizon-ridge-6.png"); url("../assets/horizon-flow-6.png"); url("../assets/horizon-topline-6.png"); url("../assets/horizon-rock-6.png");');
+    fs.writeFileSync(path.join(stage, 'resources/app/server.mjs'), "const APP_VERSION = '6.0.1'; const assets = ['/modules/horizon-atelier.css', '/modules/home-6.css', '/assets/horizon-ridge-6.png', '/assets/horizon-flow-6.png', '/assets/horizon-topline-6.png', '/assets/horizon-rock-6.png'];");
     const manifestFiles = requiredFiles.map(relative => {
       const payload = fs.readFileSync(path.join(stage, ...relative.split('/')));
       return { path: relative, bytes: payload.length, sha256: crypto.createHash('sha256').update(payload).digest('hex').toUpperCase() };
     });
 
     fs.writeFileSync(manifestPath, JSON.stringify({
-      version: '6.0.0', releaseGate: 'passed', sourceWorktreeDirty: false,
+      version: '6.0.1', releaseGate: 'passed', sourceWorktreeDirty: false,
       sourceCommit: '0000000000000000000000000000000000000000', files: manifestFiles,
     }));
     const oldCommitStage = runInstallerGate();
@@ -138,7 +149,7 @@ if (process.platform === 'win32') {
     assert.match(`${oldCommitStage.stdout}\n${oldCommitStage.stderr}`, /staged source commit mismatch/);
 
     fs.writeFileSync(manifestPath, JSON.stringify({
-      version: '6.0.0', releaseGate: 'passed', sourceWorktreeDirty: false,
+      version: '6.0.1', releaseGate: 'passed', sourceWorktreeDirty: false,
       sourceCommit: currentHead, files: [...manifestFiles, { ...manifestFiles[0] }],
     }));
     const duplicateManifestStage = runInstallerGate();
@@ -146,9 +157,15 @@ if (process.platform === 'win32') {
     assert.match(`${duplicateManifestStage.stdout}\n${duplicateManifestStage.stderr}`, /bundle manifest contains a duplicate path/);
 
     fs.writeFileSync(manifestPath, JSON.stringify({
-      version: '6.0.0', releaseGate: 'passed', sourceWorktreeDirty: false,
+      version: '6.0.1', releaseGate: 'passed', sourceWorktreeDirty: false,
       sourceCommit: currentHead, files: manifestFiles,
     }));
+    const artworkPath = path.join(stage, 'resources/app/assets/horizon-flow-6.png');
+    fs.unlinkSync(artworkPath);
+    const missingArtworkStage = runInstallerGate();
+    assert.notEqual(missingArtworkStage.status, 0, 'installer must reject a stage without the home artwork');
+    assert.match(missingArtworkStage.stdout + '\n' + missingArtworkStage.stderr, /WinUI stage is missing required file/);
+    fs.writeFileSync(artworkPath, 'release-gate-fixture');
     fs.writeFileSync(path.join(stage, 'retired-runtime.bin'), 'must-not-ship');
     const unmanifestedStage = runInstallerGate();
     assert.notEqual(unmanifestedStage.status, 0, 'unmanifested stage debris must be rejected');

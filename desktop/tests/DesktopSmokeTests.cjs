@@ -23,7 +23,7 @@ for (const token of ['ZhikePageBackgroundBrush', 'ZhikeNavyBrush', 'ZhikeTealBru
   assert.match(appXaml, new RegExp(token), `App.xaml missing visual token ${token}`);
 assert.match(windowXaml, /<Frame x:Name="ContentFrame"/);
 assert.doesNotMatch(windowXaml, /<NavigationView\b|NativeHeader/);
-assert.match(windowCode, /知客工作台/);
+assert.match(windowCode, /知客 6\.0\.1  Horizon Atelier/, 'native window title must show the installed release version');
 assert.match(windowCode, /OnAppWindowClosing/);
 assert.match(windowCode, /FlushThenCloseAsync/);
 assert.match(windowCode, /ContentFrame\.Navigate\(typeof\(LegacyUiHostPage\)\)/);

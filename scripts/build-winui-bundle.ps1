@@ -2,7 +2,7 @@
 param(
   [string]$OutputDir = '',
   [ValidatePattern('^\d+\.\d+\.\d+$')]
-  [string]$Version = '6.0.0',
+  [string]$Version = '6.0.1',
   [ValidateSet('Debug','Release')]
   [string]$Configuration = 'Release',
   [string]$RuntimeIdentifier = 'win-x64',
@@ -63,9 +63,17 @@ function Assert-SourceReleaseContract {
   $serverPath = Join-Path $resourcesRoot 'server.mjs'
   $indexSourcePath = Join-Path $resourcesRoot 'index.html'
   $horizonPath = Join-Path $resourcesRoot 'modules\horizon-atelier.css'
+  $homePath = Join-Path $resourcesRoot 'modules\home-6.css'
+  $homeArtwork = @('horizon-ridge-6.png', 'horizon-flow-6.png', 'horizon-topline-6.png', 'horizon-rock-6.png')
   $setupPath = Join-Path $repo 'zhike-desktop-setup.iss'
-  foreach ($requiredPath in @($packagePath, $project, $serverPath, $indexSourcePath, $horizonPath, $setupPath)) {
+  foreach ($requiredPath in @($packagePath, $project, $serverPath, $indexSourcePath, $horizonPath, $homePath, $setupPath)) {
     if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) { throw "release source is incomplete: $requiredPath" }
+  }
+  $homeCss = [IO.File]::ReadAllText($homePath)
+  foreach ($artwork in $homeArtwork) {
+    $artworkPath = Join-Path $resourcesRoot "assets\$artwork"
+    if (-not (Test-Path -LiteralPath $artworkPath -PathType Leaf)) { throw "release home artwork is missing: $artworkPath" }
+    if (-not $homeCss.Contains("../assets/$artwork")) { throw "release home artwork is not referenced by home-6.css: $artwork" }
   }
 
   $packageVersion = [string]((Get-Content -LiteralPath $packagePath -Raw -Encoding UTF8 | ConvertFrom-Json).version)
@@ -79,6 +87,10 @@ function Assert-SourceReleaseContract {
   $serverText = [IO.File]::ReadAllText($serverPath)
   if ($serverText -notmatch "const APP_VERSION = '$([regex]::Escape($Version))'") { throw "source version mismatch: server.mjs expected $Version" }
   if (-not $serverText.Contains("'/modules/horizon-atelier.css'")) { throw 'Horizon Atelier is not present in the local static-resource allowlist.' }
+  if (-not $serverText.Contains("'/modules/home-6.css'")) { throw 'The compact Horizon home stylesheet is not present in the local static-resource allowlist.' }
+  foreach ($artwork in $homeArtwork) {
+    if (-not $serverText.Contains("'/assets/$artwork'")) { throw "Horizon home artwork is not present in the local static-resource allowlist: $artwork" }
+  }
 
   $parsedVersion = [Version]$Version
   $displayVersion = "$($parsedVersion.Major).$($parsedVersion.Minor)"
@@ -87,6 +99,8 @@ function Assert-SourceReleaseContract {
   $scrollIndex = $indexSource.IndexOf('scroll-system.css', [StringComparison]::Ordinal)
   $horizonIndex = $indexSource.IndexOf('horizon-atelier.css', [StringComparison]::Ordinal)
   if ($horizonIndex -lt 0 -or $scrollIndex -le $horizonIndex) { throw 'scroll-system.css must remain the final interaction layer after Horizon Atelier.' }
+  $homeIndex = $indexSource.IndexOf('home-6.css', [StringComparison]::Ordinal)
+  if ($homeIndex -le $horizonIndex -or $homeIndex -ge $scrollIndex) { throw 'home-6.css must load after Horizon Atelier and before the final scroll layer.' }
 
   $setupText = [IO.File]::ReadAllText($setupPath)
   $setupVersionPattern = '#define AppVersion "' + [regex]::Escape($Version) + '"'
@@ -168,7 +182,7 @@ foreach ($item in Get-ChildItem -LiteralPath $resourcesRoot -Recurse -Force) {
 foreach ($required in @('index.html', 'app.js', 'styles.css', 'vendor\xlsx\xlsx.js')) {
   if (-not (Test-Path -LiteralPath (Join-Path $stage "resources\app\$required") -PathType Leaf)) { throw "bundle is missing resources/app/$required" }
 }
-foreach ($required in @('server.mjs', 'modules\horizon-atelier.css')) {
+foreach ($required in @('server.mjs', 'modules\horizon-atelier.css', 'modules\home-6.css', 'assets\horizon-ridge-6.png', 'assets\horizon-flow-6.png', 'assets\horizon-topline-6.png', 'assets\horizon-rock-6.png')) {
   if (-not (Test-Path -LiteralPath (Join-Path $stage "resources\app\$required") -PathType Leaf)) { throw "bundle is missing resources/app/$required" }
 }
 if (Get-ChildItem -LiteralPath $resourceDestination -Recurse -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -in $blockedResourceNames -or $_.Name -match '(?i)^(.*credentials.*|.*\.sqlite|.*\.db|.*\.log)$' }) { throw 'resource bundle contains blocked user data or credential files' }

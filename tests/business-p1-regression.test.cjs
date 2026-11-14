@@ -97,4 +97,21 @@ assert.match(appSource, /if\(state\.customers\.length\+newCustomers\.length>2500
 assert.match(appSource, /if\(state\.importIssues\.length\+issues\.length>100000\)\{restoreImportStaging\(\);/);
 assert.match(appSource, /catch\{restoreImportStaging\(\);Object\.assign\(state,before\);/);
 
+// Editing an existing deposit keeps row counts and IDs unchanged. Persisted
+// data revision must still invalidate the customer/business summary cache.
+const cacheStart = appSource.indexOf('function businessSummaryIndex(){');
+const cacheEnd = appSource.indexOf('\n  function customerBusinessSummary', cacheStart);
+assert.ok(cacheStart >= 0 && cacheEnd > cacheStart);
+const cacheState = { dataRevision: 1, customers: [{ id: 'c-1' }], tickets: [], deposits: [{ id: 'd-1', amount: 100 }] };
+let cacheBuilds = 0;
+const cachedSummary = new Function('state', 'buildBusinessSummaryIndex', `let businessIndexCache=null;\n${appSource.slice(cacheStart, cacheEnd)}\nreturn businessSummaryIndex;`)(cacheState, () => {
+  cacheBuilds++;
+  return cacheState.deposits.reduce((sum, row) => sum + row.amount, 0);
+});
+assert.equal(cachedSummary(), 100);
+cacheState.deposits[0].amount = 200;
+cacheState.dataRevision++;
+assert.equal(cachedSummary(), 200, '同数量同 ID 的入金编辑后，业务汇总必须刷新');
+assert.equal(cacheBuilds, 2);
+
 console.log(`business P1 regression: 10k ${tenKMs.toFixed(1)}ms, 50k ${fiftyKMs.toFixed(1)}ms; rollback/source/ledger pass`);

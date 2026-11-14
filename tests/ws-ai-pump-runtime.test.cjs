@@ -160,6 +160,7 @@ async function fetchMock(input, init = {}) {
 }
 
 const documentStub = {
+  documentElement: { dataset: {} },
   hidden: false,
   body: { classList: { add() {}, remove() {}, toggle() {} } },
   addEventListener() {},

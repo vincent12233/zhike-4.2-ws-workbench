@@ -4,9 +4,9 @@
 
 ## 当前入口
 
-- 安装包：`outputs/知客-6.0.0-WinUI桌面版/知客-6.0.0-WinUI桌面版.exe`
-- 构建清单：`outputs/知客-6.0.0-WinUI桌面版/bundle-manifest.json`
-- 校验值：`outputs/知客-6.0.0-WinUI桌面版/SHA256SUMS.txt`
+- 当前源码版本：6.0.1（候选版，安装包与实机验收待完成）
+- 预期安装包：`outputs/知客-6.0.1-WinUI桌面版/知客-6.0.1-WinUI桌面版.exe`（尚未生成）
+- 发布说明与测试状态：`docs/release-notes-6.0.1.md`、`docs/test-report-6.0.1.md`
 - 当前索引：`docs/current-release-index.md`
 
 安装器会创建桌面快捷方式。6.0 业务数据独立保存在 `%LOCALAPPDATA%\Zhike6`，首次启动创建空 SQLite 库且不预置演示数据。6.0 不读取、不迁移旧 `%LOCALAPPDATA%\Zhike` 数据；安装和卸载也不会主动删除旧目录。
@@ -40,11 +40,11 @@ WhatsApp Web 没有适合个人账号的后台接口。知客可以扫描当前�
 ```powershell
 node scripts/run-tests.cjs all
 dotnet build desktop/src/Zhike.Desktop/Zhike.Desktop.csproj -c Release -r win-x64 --no-restore
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-bundle.ps1 -Version 6.0.0 -Configuration Release -RuntimeIdentifier win-x64 -SelfContained
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installer.ps1 -AppVersion 6.0.0 -AllowUnsigned -SkipWebView2Check
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-bundle.ps1 -Version 6.0.1 -Configuration Release -RuntimeIdentifier win-x64 -SelfContained
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installer.ps1 -AppVersion 6.0.1 -AllowUnsigned -SkipWebView2Check
 ```
 
-构建产物只写入 `work/`，交付文件放到 `outputs/知客-6.0.0-WinUI桌面版/`。不以“编译成功”代替验收；真实 WS 登录、手机新消息和外部 AI 服务需要在目标机由用户本人完成环境验证。
+构建产物只写入 `work/`，验收通过后的交付文件放到 `outputs/知客-6.0.1-WinUI桌面版/`。当前尚无 6.0.1 合格安装包。不以“编译成功”代替验收；真实 WS 登录、手机新消息和外部 AI 服务需要在目标机由用户本人完成环境验证。
 
 ## 安全边界
 

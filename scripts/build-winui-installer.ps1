@@ -6,7 +6,7 @@ param(
   [string]$StageDir = '',
   [string]$OutputDir = '',
   [ValidatePattern('^\d+\.\d+\.\d+$')]
-  [string]$AppVersion = '6.0.0',
+  [string]$AppVersion = '6.0.1',
   [switch]$SkipWebView2Check,
   [switch]$AllowUnsigned,
   # A publishable installer must come from a bundle built with -ReleaseGate.
@@ -85,8 +85,13 @@ $requiredStageFiles = @(
   'resources\app\modules\business-6.css',
   'resources\app\modules\operations-6.css',
   'resources\app\modules\global-6.css',
+  'resources\app\modules\home-6.css',
   'resources\app\modules\scroll-system.css',
   'resources\app\assets\zhike-horizon-logo.png',
+  'resources\app\assets\horizon-ridge-6.png',
+  'resources\app\assets\horizon-flow-6.png',
+  'resources\app\assets\horizon-topline-6.png',
+  'resources\app\assets\horizon-rock-6.png',
   'resources\app\vendor\xlsx\xlsx.js',
   'zhike.ico',
   'bundle-manifest.json'
@@ -124,9 +129,17 @@ if (-not $stagedIndex.Contains('<title>知客 6.0 · Horizon Atelier</title>')) 
 $stagedScrollIndex = $stagedIndex.IndexOf('scroll-system.css', [StringComparison]::Ordinal)
 $stagedHorizonIndex = $stagedIndex.IndexOf('horizon-atelier.css', [StringComparison]::Ordinal)
 if ($stagedHorizonIndex -lt 0 -or $stagedScrollIndex -le $stagedHorizonIndex) { throw 'staged scroll interaction layer is missing or ordered before Horizon Atelier.' }
+$stagedHomeIndex = $stagedIndex.IndexOf('home-6.css', [StringComparison]::Ordinal)
+if ($stagedHomeIndex -le $stagedHorizonIndex -or $stagedHomeIndex -ge $stagedScrollIndex) { throw 'staged compact home layer is missing or ordered incorrectly.' }
 $stagedServer = [IO.File]::ReadAllText((Join-Path $stage 'resources\app\server.mjs'))
 if ($stagedServer -notmatch "const APP_VERSION = '$([regex]::Escape($AppVersion))'") { throw "staged server version mismatch: expected $AppVersion" }
 if (-not $stagedServer.Contains("'/modules/horizon-atelier.css'")) { throw 'staged local service does not allow the Horizon Atelier resource.' }
+if (-not $stagedServer.Contains("'/modules/home-6.css'")) { throw 'staged local service does not allow the compact home resource.' }
+$stagedHomeCss = [IO.File]::ReadAllText((Join-Path $stage 'resources\app\modules\home-6.css'))
+foreach ($artwork in @('horizon-ridge-6.png', 'horizon-flow-6.png', 'horizon-topline-6.png', 'horizon-rock-6.png')) {
+  if (-not $stagedHomeCss.Contains("../assets/$artwork")) { throw "staged home stylesheet is missing artwork reference: $artwork" }
+  if (-not $stagedServer.Contains("'/assets/$artwork'")) { throw "staged local service does not allow home artwork: $artwork" }
+}
 
 function Assert-ManifestFileHash([string]$RelativePath) {
   $normalized = $RelativePath.Replace('\','/')

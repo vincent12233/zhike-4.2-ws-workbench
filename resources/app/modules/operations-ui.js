@@ -153,7 +153,7 @@
       <section class="ops6-command-deck" aria-label="任务执行控制面">
         <div class="ops6-command-copy"><span>今日执行焦点</span><strong>${primaryTask ? esc(primaryTask.title) : '当前没有待处理任务'}</strong><p>${primaryTask ? esc(primaryTask.objective || primaryTask.note || '按优先级开始处理，并在完成后登记实际结果。') : '可以新建人工任务；WS 与 AI 产生的跟进提醒也会自动进入这里。'}</p>${primaryTask ? `<div class="ops6-primary-actions"><button class="btn small primary" data-ops-focus="${esc(primaryTask.id)}">定位首要任务</button>${primaryCustomer ? `<button class="btn small" data-ops-customer="${esc(primaryCustomer.id)}">打开客户档案</button>` : ''}</div>` : '<button class="btn small primary" data-ops="new">新建第一项任务</button>'}</div>
         <div class="ops6-signal-grid"><div><span>待处理</span><strong>${open}</strong><small>全部未关闭任务</small></div><div class="urgent"><span>今日 / 逾期</span><strong>${dueToday} / ${overdue}</strong><small>优先处理时间风险</small></div><div><span>AI 跟进</span><strong>${aiOpen}</strong><small>由聊天分析生成</small></div><div><span>已完成 / 已忽略</span><strong>${completed} / ${dismissed}</strong><small>统计口径独立</small></div></div>
-        <aside class="ops6-command-rule"><span>执行链路</span><p>打开客户 → 实际跟进 → 登记结果 → 更新档案与下次计划。</p><em><i></i>跨页状态实时同步</em></aside>
+        <details class="ops6-command-rule"><summary>执行链路</summary><p>打开客户 → 实际跟进 → 登记结果 → 更新档案与下次计划。</p></details>
       </section>
       <section class="panel ops6-task-workspace">
         <div class="table-toolbar">

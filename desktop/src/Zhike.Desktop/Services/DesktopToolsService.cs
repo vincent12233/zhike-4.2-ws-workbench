@@ -158,7 +158,7 @@ public sealed class DesktopToolsService
             }
 
             var createdAt = DateTimeOffset.UtcNow;
-            state["appVersion"] = "6.0.0";
+            state["appVersion"] = "6.0.1";
             state["version"] = 5;
             state["schemaVersion"] = 5;
             state["createdAt"] = createdAt.ToString("O");

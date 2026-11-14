@@ -390,7 +390,9 @@ public sealed partial class LegacyUiHostPage : Page
             core.NavigationStarting += NavigationStarting;
             core.NavigationCompleted += NavigationCompleted;
             core.NewWindowRequested += NewWindowRequested;
-            await core.AddScriptToExecuteOnDocumentCreatedAsync("(()=>{const apply=()=>{if(document.documentElement)document.documentElement.style.zoom='80%';};apply();document.addEventListener('DOMContentLoaded',apply,{once:true});})();");
+            // Keep the embedded WS document at its natural viewport size.
+            // Zooming the html element shrinks WhatsApp's 100vh app shell and
+            // leaves an unusable strip at the bottom of the native WebView.
             await core.AddScriptToExecuteOnDocumentCreatedAsync(BuildWsCollectorScript(accountId));
             return new WsWebViewSessionRegistration(view, released =>
             {

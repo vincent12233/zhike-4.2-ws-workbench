@@ -9,3 +9,94 @@
 @media(max-width:850px){.ops6-command-deck,.ops6-stage-command{grid-template-columns:1fr;padding:16px;border-radius:20px}.ops6-command-rule{grid-column:auto}.ops6-stage-flow{grid-column:auto}.ops6-stage-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.ops-task-list{padding:7px}.ops-task{flex-wrap:wrap}.ops-priority{order:-1;margin-left:auto}}
 @media(max-width:560px){.ops6-signal-grid,.ops6-stage-stats{grid-template-columns:1fr 1fr}.ops6-stage-stats>div:last-child{grid-column:1/-1}.ops6-stage-flow{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){.ops-task{transition:none!important}.ops-task:hover{transform:none}}
+
+/* Task and stage command bands leave the live list/board visible on laptop
+   screens while retaining the real counters and the primary action. */
+.ops6-page-heading{min-height:48px!important;margin-bottom:10px!important;padding-bottom:10px!important}
+.ops6-command-deck,.ops6-stage-command{gap:10px;margin-bottom:10px;padding:13px 15px;border-radius:23px 32px 25px 19px;background:radial-gradient(105% 120% at 0 0,rgba(65,165,157,.11),transparent 52%),radial-gradient(75% 100% at 100% 0,rgba(231,199,136,.075),transparent 64%),linear-gradient(145deg,rgba(14,31,39,.96),rgba(7,18,25,.98));box-shadow:0 13px 30px rgba(0,0,0,.18),inset 0 1px rgba(255,255,255,.04)}
+.ops6-command-deck{grid-template-columns:minmax(220px,300px) minmax(0,1fr);grid-template-rows:auto auto;gap:4px 14px;min-height:100px;padding:10px 15px}
+.ops6-command-copy{grid-column:1;grid-row:1;align-self:end;min-width:0}
+.ops6-command-copy p{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.ops6-command-copy>span,.ops6-stage-overview>span,.ops6-command-rule>span{font-size:10px;letter-spacing:.09em}
+.ops6-command-copy>strong,.ops6-stage-overview>strong{margin-top:4px;font-size:15px;line-height:1.35}
+.ops6-command-copy p,.ops6-stage-overview p,.ops6-command-rule p{margin-top:4px;font-size:11px;line-height:1.45}
+.ops6-primary-actions{margin-top:6px}
+.ops6-signal-grid{grid-column:2;grid-row:1 / span 2;align-self:stretch;align-items:center;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.ops6-signal-grid>div,.ops6-stage-stats>div{min-height:68px;padding:9px 10px;border-radius:14px 19px 15px 11px}
+.ops6-signal-grid span,.ops6-stage-stats span{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ops6-signal-grid strong,.ops6-stage-stats strong{margin-top:5px;font-size:16px}
+.ops6-signal-grid small{font-size:9px}
+.ops6-command-rule{grid-column:1;grid-row:2;padding:3px 0 0;border-top:1px solid rgba(231,199,136,.13);border-left:0}
+.ops6-command-rule em{font-size:9px;margin-top:5px}
+.ops6-command-rule summary{display:flex;align-items:center;justify-content:space-between;gap:8px;list-style:none;color:#dac18d;font-size:11px;font-weight:650;cursor:pointer;user-select:none}
+.ops6-command-rule summary::-webkit-details-marker{display:none}
+.ops6-command-rule summary:after{content:"⌄";color:#81aaa6;font-size:14px;line-height:1;transition:transform .15s ease}
+.ops6-command-rule[open] summary:after{transform:rotate(180deg)}
+.ops6-command-rule summary:focus-visible{outline:2px solid rgba(81,225,204,.7);outline-offset:3px;border-radius:4px}
+.ops6-task-workspace>.table-toolbar{min-height:47px;padding:8px 12px}
+.ops-task-list{gap:7px;padding:8px}
+.ops-task{min-height:78px;padding:10px 12px!important;border-radius:15px 21px 16px 12px}
+.ops-task-copy>strong{font-size:12px}
+.ops-task-actions{margin-top:7px}
+.ops6-empty{min-height:105px;gap:4px}
+.ops6-empty strong,.ops6-stage-empty strong{font-size:12px}
+.ops6-empty span,.ops6-stage-empty span{font-size:10px}
+.ops6-stage-command{grid-template-columns:minmax(200px,.95fr) minmax(300px,1.05fr);align-items:center}
+.ops6-stage-stats{gap:6px}
+.ops6-stage-flow{gap:5px;padding-top:9px}
+.ops6-stage-flow button{min-height:42px;padding:7px 9px 9px;border-radius:10px 14px 11px 8px}
+.ops6-stage-flow button span{font-size:10px}
+.ops6-stage-flow button strong{font-size:11px}
+.ops-board{gap:9px!important;padding-bottom:9px}
+.ops-column{min-height:330px!important;padding:9px!important;border-radius:18px 25px 20px 15px!important}
+.ops-stage-open{padding:4px 3px 9px!important}
+.ops-stage-open small{font-size:9px}
+.ops-stage-open em{font-size:10px}
+.ops-cards{gap:6px;padding-top:7px}
+.ops-card{border-radius:13px 19px 15px 11px!important}
+.ops-card header span{font-size:10px}
+.ops6-card-tags i{font-size:9px}
+.ops6-stage-empty{min-height:95px}
+.ops6-column-more{font-size:10px}
+
+@media(max-width:1050px){
+  .ops6-command-deck{grid-template-columns:minmax(190px,260px) minmax(0,1fr)}
+  .ops6-command-rule{grid-column:1;grid-row:2;display:block;padding:5px 0 0;border-left:0;border-top:1px solid rgba(231,199,136,.12)}
+  .ops6-command-rule p{margin-top:6px}
+  .ops6-command-rule em{margin-top:5px}
+}
+@media(max-width:850px){
+  .ops6-command-deck,.ops6-stage-command{grid-template-columns:1fr;grid-template-rows:auto;gap:8px;padding:11px 12px}
+  .ops6-command-copy,.ops6-signal-grid,.ops6-command-rule{grid-column:1;grid-row:auto}
+  .ops6-command-rule em{display:none}
+  .ops6-stage-flow{grid-column:auto}
+  .ops6-stage-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:560px){
+  .ops6-signal-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ops6-stage-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .ops6-stage-stats>div:last-child{grid-column:auto}
+  .ops6-stage-flow{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* The task and journey routes use the same art direction as the home flow.
+   Static layers keep scrolling cheap; task order and stage data are unchanged. */
+.ops6-command-deck,.ops6-stage-command{isolation:isolate;border-color:rgba(231,199,136,.27);box-shadow:0 18px 38px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.07)}
+.ops6-command-deck:after,.ops6-stage-command:after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:url("../assets/horizon-flow-6.png") center 56%/cover no-repeat;opacity:.28;mask-image:linear-gradient(90deg,transparent 5%,#000 39%,#000 94%)}
+.ops6-command-deck>*,.ops6-stage-command>*{position:relative;z-index:1}
+.ops6-command-copy,.ops6-stage-overview{padding-left:8px;border-left:2px solid rgba(231,199,136,.66)}
+.ops6-signal-grid>div,.ops6-stage-stats>div{border-color:rgba(169,205,200,.18);border-radius:29px 17px 25px 15px / 23px 28px 19px 28px;background:radial-gradient(90% 120% at 68% 0,rgba(231,199,136,.09),transparent 67%),linear-gradient(135deg,rgba(255,255,255,.05),rgba(24,81,83,.04));box-shadow:0 8px 19px rgba(0,0,0,.12),inset 0 1px rgba(255,255,255,.065)}
+.ops6-signal-grid>div:nth-child(even),.ops6-stage-stats>div:nth-child(even){border-radius:17px 28px 18px 27px / 28px 22px 29px 20px;background:radial-gradient(100% 120% at 52% 0,rgba(140,143,224,.11),transparent 69%),linear-gradient(140deg,rgba(255,255,255,.045),rgba(25,54,76,.055))}
+.ops6-stage-flow{position:relative;isolation:isolate}
+.ops6-stage-flow:before{content:"";position:absolute;z-index:-1;left:1%;right:1%;top:calc(50% + 6px);height:1px;pointer-events:none;background:linear-gradient(90deg,rgba(81,225,204,.38),rgba(231,199,136,.42),rgba(145,130,219,.35))}
+.ops6-stage-flow button{border-radius:22px 14px 20px 15px / 17px 23px 16px 24px;background:linear-gradient(140deg,rgba(25,54,61,.93),rgba(8,24,33,.95));box-shadow:0 7px 16px rgba(0,0,0,.11),inset 0 1px rgba(255,255,255,.055)}
+.ops6-stage-flow button:nth-child(even){border-radius:14px 23px 16px 21px / 23px 17px 24px 17px}
+.ops6-task-workspace{border-color:rgba(128,180,183,.24)!important;background:radial-gradient(70% 100px at 0 0,rgba(81,225,204,.05),transparent),linear-gradient(155deg,rgba(12,31,39,.96),rgba(5,18,27,.98))!important;box-shadow:0 16px 38px rgba(0,0,0,.17),inset 0 1px rgba(255,255,255,.05)}
+.ops-task{border-radius:19px 29px 18px 25px / 17px 23px 24px 18px!important;background:radial-gradient(80% 120% at 0 0,rgba(81,225,204,.045),transparent 80%),linear-gradient(145deg,rgba(255,255,255,.035),rgba(19,50,59,.05))!important}
+.ops-task:nth-child(even){border-radius:28px 18px 27px 16px / 23px 18px 19px 24px!important}
+.ops-column{position:relative;overflow:hidden;border-radius:32px 19px 30px 21px / 23px 32px 22px 33px!important;box-shadow:0 14px 30px rgba(0,0,0,.14),inset 0 1px rgba(255,255,255,.05)}
+.ops-column:nth-child(even){border-radius:20px 34px 20px 32px / 32px 22px 31px 21px!important}
+.ops-column:before{content:"";position:absolute;left:8%;right:8%;top:0;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(81,225,204,.57),rgba(231,199,136,.4),transparent)}
+.ops-card{border-radius:20px 14px 19px 15px / 15px 22px 17px 22px!important;box-shadow:inset 0 1px rgba(255,255,255,.055)}
+@media(max-width:850px){.ops6-command-deck:after,.ops6-stage-command:after{opacity:.16}.ops6-stage-flow:before{display:none}}
+@media(prefers-reduced-transparency:reduce){.ops6-command-deck:after,.ops6-stage-command:after{opacity:.1}}
