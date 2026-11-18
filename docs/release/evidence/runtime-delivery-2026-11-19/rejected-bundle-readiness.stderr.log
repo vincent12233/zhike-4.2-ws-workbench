@@ -1,0 +1,4 @@
+Unhandled exception. System.Exception: Isolated readiness probe failed to initialize.
+   at Program.<Main>$(String[] args) in <repo>\scripts\stage51\NativeReadinessProbe\Program.cs:line 34
+   at Program.<Main>$(String[] args)
+   at Program.<Main>(String[] args)

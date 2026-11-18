@@ -1,0 +1,23 @@
+[
+  {
+    "name": "App.xbf",
+    "type": "EmbeddedData",
+    "bytes": 4625,
+    "sha256": "75A503E4271139DA0415442C6751DAFE9DC399D3E32ECFD787993C924245A01E",
+    "xbfMagic": true
+  },
+  {
+    "name": "MainWindow.xbf",
+    "type": "EmbeddedData",
+    "bytes": 629,
+    "sha256": "584C20F8CF3E129846C3B537128176E2E152E1BD36D565D74A207C48D54ADC28",
+    "xbfMagic": true
+  },
+  {
+    "name": "LegacyUiHostPage.xbf",
+    "type": "EmbeddedData",
+    "bytes": 1825,
+    "sha256": "6DC0B1A5F8216ED31E0A9CA7A8864CE96C10DCF73A300226AECAA235C2872202",
+    "xbfMagic": true
+  }
+]

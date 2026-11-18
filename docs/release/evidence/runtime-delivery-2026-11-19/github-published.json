@@ -1,0 +1,10 @@
+{
+  "prerelease": true,
+  "tag": "v6.1.0-rc.1",
+  "commit": "a451c403cc0c4960f720b0dc73771fdbb706edd1",
+  "url": "https://github.com/vincent12233/zhike-4.2-ws-workbench/releases/tag/v6.1.0-rc.1",
+  "assets": [
+    "zhike-6.1.0-win-x64-setup.exe",
+    "release-output-manifest.json"
+  ]
+}

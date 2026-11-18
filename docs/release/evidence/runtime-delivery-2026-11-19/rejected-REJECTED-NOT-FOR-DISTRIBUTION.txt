@@ -1,0 +1,1 @@
+REJECTED: packaged migration-runner.cjs was absent. Do not distribute this first candidate. See bundle-readiness.stderr.log and bundle-node-dependency-resolution.json.

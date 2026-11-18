@@ -1,0 +1,101 @@
+{
+  "node": "v24.22.1",
+  "arch": "x64",
+  "platform": "win32",
+  "sqlite": true,
+  "method": "Node resolution of transitive literal relative CommonJS imports from the sidecar, including lazy route imports",
+  "files": 15,
+  "edges": [
+    {
+      "file": "server.mjs",
+      "specifier": "./state-delta.cjs",
+      "resolved": "state-delta.cjs"
+    },
+    {
+      "file": "server.mjs",
+      "specifier": "./modules/ws-workbench-core.js",
+      "resolved": "modules/ws-workbench-core.js"
+    },
+    {
+      "file": "server.mjs",
+      "specifier": "./modules/ws-crm-sync-core.js",
+      "resolved": "modules/ws-crm-sync-core.js"
+    },
+    {
+      "file": "server.mjs",
+      "specifier": "./modules/ws-group-monitor-core.js",
+      "resolved": "modules/ws-group-monitor-core.js"
+    },
+    {
+      "file": "server.mjs",
+      "specifier": "./modules/ws-group-manager-core.js",
+      "resolved": "modules/ws-group-manager-core.js"
+    },
+    {
+      "file": "server.mjs",
+      "specifier": "./modules/customer-governance-core.js",
+      "resolved": "modules/customer-governance-core.js"
+    },
+    {
+      "file": "server.mjs",
+      "specifier": "./modules/hot-chat-profile-core.js",
+      "resolved": "modules/hot-chat-profile-core.js"
+    },
+    {
+      "file": "server.mjs",
+      "specifier": "./modules/ws-media-core.js",
+      "resolved": "modules/ws-media-core.js"
+    },
+    {
+      "file": "server.mjs",
+      "specifier": "./modules/ai-job-pipeline-core.js",
+      "resolved": "modules/ai-job-pipeline-core.js"
+    },
+    {
+      "file": "server.mjs",
+      "specifier": "./modules/ai-crm-suggestion-core.js",
+      "resolved": "modules/ai-crm-suggestion-core.js"
+    },
+    {
+      "file": "server.mjs",
+      "specifier": "./modules/ws-workspace-query.cjs",
+      "resolved": "modules/ws-workspace-query.cjs"
+    },
+    {
+      "file": "server.mjs",
+      "specifier": "./migration-runner.cjs",
+      "resolved": "migration-runner.cjs"
+    },
+    {
+      "file": "server.mjs",
+      "specifier": "./sidecar-write-coordinator.cjs",
+      "resolved": "sidecar-write-coordinator.cjs"
+    },
+    {
+      "file": "server.mjs",
+      "specifier": "./modules/ws-customer-reading-query.cjs",
+      "resolved": "modules/ws-customer-reading-query.cjs"
+    },
+    {
+      "file": "modules/ws-customer-reading-query.cjs",
+      "specifier": "./ws-group-monitor-core.js",
+      "resolved": "modules/ws-group-monitor-core.js"
+    },
+    {
+      "file": "modules/ws-workspace-query.cjs",
+      "specifier": "./ws-workbench-core.js",
+      "resolved": "modules/ws-workbench-core.js"
+    },
+    {
+      "file": "modules/ws-workspace-query.cjs",
+      "specifier": "./ws-crm-sync-core.js",
+      "resolved": "modules/ws-crm-sync-core.js"
+    },
+    {
+      "file": "modules/ws-group-manager-core.js",
+      "specifier": "./ws-group-monitor-core.js",
+      "resolved": "modules/ws-group-monitor-core.js"
+    }
+  ],
+  "missing": []
+}

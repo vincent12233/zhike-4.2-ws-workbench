@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "a451c403cc0c4960f720b0dc73771fdbb706edd1",
+  "publishedTag": "v6.1.0-rc.1",
+  "verifiedAsset": {
+    "file": "zhike-6.1.0-win-x64-setup.exe",
+    "bytes": 114276747,
+    "sha256": "26832f99664d0c90586034ce5c20b07cb1c228dd059665eeda0b6ba515c19d14",
+    "signingStatus": "unsigned"
+  },
+  "files": [
+    {
+      "file": "bundle-readiness.command.json",
+      "source": "work/release-6.1.0-f906f159f8e54d5894c56fdcb430cb91/bundle-readiness.command.json",
+      "sourceBytes": 1179,
+      "sourceSha256": "00569433597865d1b60bbe783b0eccecbde2533f0e82ff9fe7af8a5afeb309d8",
+      "archivedBytes": 846,
+      "archivedSha256": "673de95418d3ac29de4ea589eef446dbfb3d6e6ecd03d6e72f5f18847e08c859",
+      "treatment": "Text redacted"
+    },
+    {
+      "file": "bundle-readiness.stdout.log",
+      "source": "work/release-6.1.0-f906f159f8e54d5894c56fdcb430cb91/bundle-readiness.stdout.log",
+      "sourceBytes": 321,
+      "sourceSha256": "e94b97e9ece94d2b2f3bd28ee6e5112a5594a32b53e5151e2d80d1942e108dc1",
+      "archivedBytes": 321,
+      "archivedSha256": "e94b97e9ece94d2b2f3bd28ee6e5112a5594a32b53e5151e2d80d1942e108dc1",
+      "treatment": "Exact bytes"
+    },
+    {
+      "file": "bundle-readiness.stderr.log",
+      "source": "work/release-6.1.0-f906f159f8e54d5894c56fdcb430cb91/bundle-readiness.stderr.log",
+      "sourceBytes": 0,
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archivedBytes": 0,
+      "archivedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "treatment": "Exact bytes"
+    },
+    {
+      "file": "bundle-stage-audit.json",
+      "source": "work/release-6.1.0-f906f159f8e54d5894c56fdcb430cb91/bundle-stage-audit.json",
+      "sourceBytes": 3815,
+      "sourceSha256": "79dfa168b0198e06d420fe26d67f2ed9fa4fd27cb06e41aab1a1c545e2c409e4",
+      "archivedBytes": 3704,
+      "archivedSha256": "e1507c4b013518aa8f3650cac113b4ddc68ebcd8edb89c2a6e4b12326883b30f",
+      "treatment": "Text redacted"
+    },
+    {
+      "file": "bundle-node-dependency-resolution.json",
+      "source": "work/release-6.1.0-f906f159f8e54d5894c56fdcb430cb91/bundle-node-dependency-resolution.json",
+      "sourceBytes": 2929,
+      "sourceSha256": "7d134943db16da2b8b4c0a17735d0cf5617382715b7f5feffdef2457b2bccb11",
+      "archivedBytes": 2929,
+      "archivedSha256": "7d134943db16da2b8b4c0a17735d0cf5617382715b7f5feffdef2457b2bccb11",
+      "treatment": "Exact bytes"
+    },
+    {
+      "file": "bundle-xbf-verification.json",
+      "source": "work/release-6.1.0-f906f159f8e54d5894c56fdcb430cb91/bundle-xbf-verification.json",
+      "sourceBytes": 591,
+      "sourceSha256": "88aa2e06613367e1c03da72d2aeb3e3f697057191204095834afea88abf11117",
+      "archivedBytes": 591,
+      "archivedSha256": "88aa2e06613367e1c03da72d2aeb3e3f697057191204095834afea88abf11117",
+      "treatment": "Exact bytes"
+    },
+    {
+      "file": "release-output-manifest.json",
+      "source": "work/release-6.1.0-f906f159f8e54d5894c56fdcb430cb91/installer/release-output-manifest.json",
+      "sourceBytes": 442,
+      "sourceSha256": "0e3152fcb44a72b7b1fd1a41bf1cdc2e06e1e30288ee1bc17ab86c50cda6d659",
+      "archivedBytes": 442,
+      "archivedSha256": "0e3152fcb44a72b7b1fd1a41bf1cdc2e06e1e30288ee1bc17ab86c50cda6d659",
+      "treatment": "Exact bytes"
+    },
+    {
+      "file": "github-published.json",
+      "source": "work/release-6.1.0-f906f159f8e54d5894c56fdcb430cb91/github-published.json",
+      "sourceBytes": 298,
+      "sourceSha256": "4eec8d78cf9f51f2be9a8d3a98064885508b6cbcb699db7bd98134f3d93152be",
+      "archivedBytes": 298,
+      "archivedSha256": "4eec8d78cf9f51f2be9a8d3a98064885508b6cbcb699db7bd98134f3d93152be",
+      "treatment": "Exact bytes"
+    },
+    {
+      "file": "rejected-bundle-readiness.command.json",
+      "source": "work/release-6.1.0-2e5e1b2569f64208a4c1ea58c44e2d1c/bundle-readiness.command.json",
+      "sourceBytes": 1085,
+      "sourceSha256": "3e944eade5059c467f65de38963a7f619bccadb49f0c4ba0df9f6960eccfcbe4",
+      "archivedBytes": 752,
+      "archivedSha256": "dedc128f6b2fcd8557ae649a380d0843e93329c52548db61b5aba752cf2fcc46",
+      "treatment": "Text redacted"
+    },
+    {
+      "file": "rejected-bundle-readiness.stdout.log",
+      "source": "work/release-6.1.0-2e5e1b2569f64208a4c1ea58c44e2d1c/bundle-readiness.stdout.log",
+      "sourceBytes": 0,
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archivedBytes": 0,
+      "archivedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "treatment": "Exact bytes"
+    },
+    {
+      "file": "rejected-bundle-readiness.stderr.log",
+      "source": "work/release-6.1.0-2e5e1b2569f64208a4c1ea58c44e2d1c/bundle-readiness.stderr.log",
+      "sourceBytes": 367,
+      "sourceSha256": "a24703760b5b046b8cd41b77f638985ba4e7a91b4b446a59d10ab00e30b65edb",
+      "archivedBytes": 266,
+      "archivedSha256": "0363983cbffc04b2e2cd0fed4cc31248e2c4b2b0e006340071156ea8d7de8077",
+      "treatment": "Text redacted"
+    },
+    {
+      "file": "rejected-bundle-stage-audit.json",
+      "source": "work/release-6.1.0-2e5e1b2569f64208a4c1ea58c44e2d1c/bundle-stage-audit.json",
+      "sourceBytes": 3895,
+      "sourceSha256": "f6888655640d64fa94017933582f4bb71790e2044e7fd82f7c0ca40a37a31a5d",
+      "archivedBytes": 3784,
+      "archivedSha256": "a60f4429958ca2e778f00c2e1d9223131af862a3717ad4a8896b172572d63901",
+      "treatment": "Text redacted"
+    },
+    {
+      "file": "rejected-bundle-node-dependency-resolution.json",
+      "source": "work/release-6.1.0-2e5e1b2569f64208a4c1ea58c44e2d1c/bundle-node-dependency-resolution.json",
+      "sourceBytes": 202,
+      "sourceSha256": "7979a6716f0b81e3b5ed2ca17ad30adadf1f73b574c016806699d7801f255ba6",
+      "archivedBytes": 202,
+      "archivedSha256": "7979a6716f0b81e3b5ed2ca17ad30adadf1f73b574c016806699d7801f255ba6",
+      "treatment": "Exact bytes"
+    },
+    {
+      "file": "rejected-REJECTED-NOT-FOR-DISTRIBUTION.txt",
+      "source": "work/release-6.1.0-2e5e1b2569f64208a4c1ea58c44e2d1c/REJECTED-NOT-FOR-DISTRIBUTION.txt",
+      "sourceBytes": 169,
+      "sourceSha256": "f30879dc103b7b8c979776367ba075f34ae8324ede9701ce8087f4c0fd787ccb",
+      "archivedBytes": 169,
+      "archivedSha256": "f30879dc103b7b8c979776367ba075f34ae8324ede9701ce8087f4c0fd787ccb",
+      "treatment": "Exact bytes"
+    },
+    {
+      "file": "rejected-sidecar-packaging-contract-red.log",
+      "source": "work/release-6.1.0-2e5e1b2569f64208a4c1ea58c44e2d1c/sidecar-packaging-contract-red.log",
+      "sourceBytes": 948,
+      "sourceSha256": "1d30bdd9780ef68fb7dc9729d8bcdbc8beb95ca9a8a9cf5682cb110081e7c3c1",
+      "archivedBytes": 847,
+      "archivedSha256": "f42237955d8cc0a7f9ac7f74a3177c5e729e4b0878da30af8bafbd149bb690c8",
+      "treatment": "Text redacted"
+    },
+    {
+      "file": "rejected-sidecar-packaging-contract-green.log",
+      "source": "work/release-6.1.0-2e5e1b2569f64208a4c1ea58c44e2d1c/sidecar-packaging-contract-green.log",
+      "sourceBytes": 104,
+      "sourceSha256": "d69c581d82cfa6f7cb6fe36fc64460e853186d1c218c53c2c36da91a9c7263c1",
+      "archivedBytes": 104,
+      "archivedSha256": "d69c581d82cfa6f7cb6fe36fc64460e853186d1c218c53c2c36da91a9c7263c1",
+      "treatment": "Exact bytes"
+    },
+    {
+      "file": "rejected-sidecar-release-gate-contract.log",
+      "source": "work/release-6.1.0-2e5e1b2569f64208a4c1ea58c44e2d1c/sidecar-release-gate-contract.log",
+      "sourceBytes": 130,
+      "sourceSha256": "ba30c596845ba94e6aa5c165376420a450c1f0068f68bb619bd94096b0b3577f",
+      "archivedBytes": 130,
+      "archivedSha256": "ba30c596845ba94e6aa5c165376420a450c1f0068f68bb619bd94096b0b3577f",
+      "treatment": "Exact bytes"
+    }
+  ]
+}

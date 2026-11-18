@@ -1,0 +1,112 @@
+{
+  "stage": "<repo>\\work\\release-6.1.0-2e5e1b2569f64208a4c1ea58c44e2d1c\\bundle\\zhike-winui-6.1.0-win-x64",
+  "sourceCommit": "2c4d2370a3947df40ddd70f7b9928d737cd53f6c",
+  "sourceCommitMatches": true,
+  "sourceWorktreeDirty": false,
+  "releaseGate": "passed",
+  "version": "6.1.0",
+  "runtime": "win-x64",
+  "selfContained": true,
+  "dotnetRuntime": [
+    {
+      "name": "Microsoft.NETCore.App",
+      "version": "10.0.0"
+    }
+  ],
+  "manifestFiles": 620,
+  "verifiedFiles": 620,
+  "manifestVerified": true,
+  "manifestSha256": "EBA05CE43ED10E2094AFF0AA1931BB400ECFEB776DEA0BFD59F397426BB41E70",
+  "manifestMismatches": [],
+  "unmanifestedFiles": [],
+  "suspiciousPaths": [],
+  "reparsePointCount": 0,
+  "requiredFileVersions": [
+    {
+      "path": "Zhike.Desktop.exe",
+      "fileVersion": "6.1.0.0",
+      "productVersion": "6.1.0+2c4d2370a3947df40ddd70f7b9928d737cd53f6c",
+      "sha256": "5A0684A324B314E0E61208BFBEB2E0B9E52D19A60955908C2620D148A5ECDBB7"
+    },
+    {
+      "path": "Zhike.Desktop.dll",
+      "fileVersion": "6.1.0.0",
+      "productVersion": "6.1.0+2c4d2370a3947df40ddd70f7b9928d737cd53f6c",
+      "sha256": "041EF109390A5B24B9C1D711F65D844921B0837F2C41F7C0331DFC1554C04302"
+    },
+    {
+      "path": "coreclr.dll",
+      "fileVersion": "10,0,25,52411 @Commit: b0f34d51fccc69fd334253924abd8d6853fad7aa",
+      "productVersion": "10,0,25,52411 @Commit: b0f34d51fccc69fd334253924abd8d6853fad7aa",
+      "sha256": "5201734DB1EF225D23D8EFCA6198B47CC70EDDD5A12601E16D76A7DA68C5907D"
+    },
+    {
+      "path": "Microsoft.UI.Xaml.dll",
+      "fileVersion": "3.2.0.2511 (D98F5FF9B47F(ContainerAdministrator)-693f472aeaf89c6dff66256ee6fcd453e5d553b8)",
+      "productVersion": "2.0",
+      "sha256": "3FEB212DD3255F8B977F71197E692E4A4EF5D515EAFC9C8B3CAC49936783AA4B"
+    },
+    {
+      "path": "Microsoft.WindowsAppRuntime.dll",
+      "fileVersion": "2.6",
+      "productVersion": "2.6",
+      "sha256": "EC2BA8F8121F3F790F74E96E4085B792BD3A796EC23F74FE82236B39B663D0DB"
+    },
+    {
+      "path": "Microsoft.WindowsAppRuntime.Bootstrap.dll",
+      "fileVersion": "2.6",
+      "productVersion": "2.6",
+      "sha256": "EB4162430D1E5695F7DE3731D03E4BD9954C58087D5F373784B874A24CB5B9EA"
+    },
+    {
+      "path": "WebView2Loader.dll",
+      "fileVersion": "1.0.3719.77",
+      "productVersion": "1.0.3719.77",
+      "sha256": "AE69309C5E356350EA28D6B71A900BC43EE7E3F7A457D80A1F82EFE6C419CC08"
+    },
+    {
+      "path": "resources/app/node.exe",
+      "fileVersion": "24.22.1",
+      "productVersion": "24.22.1",
+      "sha256": "B59FEB2088F80E1FA431C8F9C316861E660E5936F968FD97B802E550FED356C5"
+    }
+  ],
+  "embeddedXbf": [
+    {
+      "name": "App.xbf",
+      "type": "EmbeddedData",
+      "bytes": 4625,
+      "sha256": "75A503E4271139DA0415442C6751DAFE9DC399D3E32ECFD787993C924245A01E",
+      "xbfMagic": true
+    },
+    {
+      "name": "MainWindow.xbf",
+      "type": "EmbeddedData",
+      "bytes": 629,
+      "sha256": "584C20F8CF3E129846C3B537128176E2E152E1BD36D565D74A207C48D54ADC28",
+      "xbfMagic": true
+    },
+    {
+      "name": "LegacyUiHostPage.xbf",
+      "type": "EmbeddedData",
+      "bytes": 1825,
+      "sha256": "6DC0B1A5F8216ED31E0A9CA7A8864CE96C10DCF73A300226AECAA235C2872202",
+      "xbfMagic": true
+    }
+  ],
+  "stageMigrationManifestEntryCount": 22,
+  "stageMigrationChecksumMismatches": [],
+  "unresolvedLiteralRelativeRequires": [
+    {
+      "file": "server.mjs",
+      "specifier": "./migration-runner.cjs"
+    },
+    {
+      "file": "vendor/xlsx/xlsx.js",
+      "specifier": "./dist/cpexcel.js"
+    }
+  ],
+  "readinessProbeExit": -532462766,
+  "leftoverStageNodeProcessCount": 0,
+  "productionDesktopStarted": false
+}

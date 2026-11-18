@@ -12,6 +12,14 @@
 | 资源包与发布门槛 `3e2a4f4`、`acb9279`、`18b0d25` | 阶段包校验随包 Node、实际主题插画与样式引用、完整文件清单、源提交和资产哈希。测试覆盖拒绝旧版本、同版本旧提交、缺文件、重复路径与清单外文件。候选安装器使用独立交付目录和 GitHub 发布附件。实际安装器的版本、SHA-256、签名状态和远端资产以本次交付清单为准。 |
 | 版本一致性 `34f5d42`、`139a0b2` | 4 项旧版硬编码断言改用应用包版本，并继续精确核对 Sidecar、桌面发行版本、原生标题和当前版本索引。四项专项复跑均通过。混装提示改为使用同一版本的安装包，版本锁、健康检查和端口专项均通过。 |
 
+## 实际交付包验收
+
+首个 6.1.0 安装候选的阶段包缺少 `migration-runner.cjs`。实际包内 Node 解析该启动依赖时返回 `MODULE_NOT_FOUND`，新临时 SQLite 的 Sidecar 就绪探针失败。该包被隔离标记并从发布中排除。[拒绝标记](evidence/runtime-delivery-2026-11-19/rejected-REJECTED-NOT-FOR-DISTRIBUTION.txt) · [失败探针](evidence/runtime-delivery-2026-11-19/rejected-bundle-readiness.stderr.log) · [依赖核查](evidence/runtime-delivery-2026-11-19/rejected-bundle-node-dependency-resolution.json)
+
+发布源码 `a451c403cc0c4960f720b0dc73771fdbb706edd1` 补齐迁移执行器并将它纳入阶段包和安装器门槛。实际随包 Node `v24.22.1` 在全新临时 SQLite 上通过 Sidecar 就绪、鉴权、取消和正常停止探针。记录的就绪耗时为 24,213 毫秒，探针与安装器压缩在同机并行，这次测量只用于记录这次启动。生产工作区未打开，未观察到留下阶段包 Node 进程。[探针命令](evidence/runtime-delivery-2026-11-19/bundle-readiness.command.json) · [探针结果](evidence/runtime-delivery-2026-11-19/bundle-readiness.stdout.log)
+
+最终阶段包逐项核对了 621 个清单文件的哈希、22 条迁移校验，以及 15 个文件间的 18 条 Sidecar 相对依赖。核查没有发现哈希不符、清单外文件、未解析的相对依赖或重解析点。清单内还核对了随包 Windows 运行时与 3 个嵌入的 XBF 资源。成品安装器已作为同一源码的私有 GitHub 预发行资产交付。归档保留原始与脱敏文件的 SHA-256。[阶段包审计](evidence/runtime-delivery-2026-11-19/bundle-stage-audit.json) · [交付报告](runtime-release-delivery.md)
+
 ## 渲染与全量回归
 
 正式视觉入口默认使用独立的 Windows WebView2 测试宿主。每次聚合运行先构建新的宿主，构建或产物检查失败即停止。隔离配置、实际成功导航、原有页面断言和各组视口结果齐备后，运行器要求同一浏览器 Core 正常退出，并确认宿主进程实际结束、输出流关闭。显式 Edge 模式仍可用于独立复查，正式套件会拒绝缩减验收范围的诊断开关。
@@ -21,7 +29,7 @@
 | 历史 Edge 退出加固 | 317/319。S1 主界面与 WS 两项在独占 Edge 进程退出阶段超时。原始失败仍适用原运行。[历史退出报告](edge-exit-hardening.md) |
 | 候选第一轮全量 | 316/322。四项失败源于仍期望 6.0.3 的契约，已修正并独立复跑。另有两个独立 WebView2 宿主超时，Stage 5.1 工作区布局在等待结果时达到期限，S1 主界面在等待宿主进程退出时达到期限。这两项仍计入第一轮失败。[结构化失败摘要](evidence/runtime-release-2026-11-19/first-regression-summary.json) |
 | Stage 5.1 布局单次复测 | 6 个合成视口模型和原有布局断言通过。实际后端为 Windows WebView2，宿主以代码 0 退出、输出流已关闭，所观察进程清理通过。该次旧日志用 Edge 称呼视口行，以首行的实际运行模式和生命周期为准。[专项日志](evidence/runtime-release-2026-11-19/layout-final.log) · [生命周期](evidence/runtime-release-2026-11-19/layout-final.lifecycle.json) |
-| 本轮冻结点最终全量 | **320/322**，退出状态为 1。四项版本契约已通过，S1 WS、S2 指标和 S3 客户表视觉检查通过。Stage 5.1 工作区布局和 S1 主界面仍失败。两项均已取得结果，在请求关闭后未能取得同一 WebView2 Core 的正常退出证明，清理状态均未验证。[全量日志](evidence/runtime-release-2026-11-19/full-regression-final.log) · [Stage 5.1 生命周期](evidence/runtime-release-2026-11-19/final-failed-stage51-layout.lifecycle.json) · [S1 主界面生命周期](evidence/runtime-release-2026-11-19/final-failed-s1-main.lifecycle.json) |
+| 本轮冻结点最终全量 | **320/322**，退出状态为 1，运行于 `18b0d25`。四项版本契约已通过，S1 WS、S2 指标和 S3 客户表视觉检查通过。Stage 5.1 工作区布局和 S1 主界面仍失败。两项均已取得结果，在请求关闭后未能取得同一 WebView2 Core 的正常退出证明，清理状态均未验证。发布提交的迁移打包修复另有专项和成品探针证据。[全量日志](evidence/runtime-release-2026-11-19/full-regression-final.log) · [Stage 5.1 生命周期](evidence/runtime-release-2026-11-19/final-failed-stage51-layout.lifecycle.json) · [S1 主界面生命周期](evidence/runtime-release-2026-11-19/final-failed-s1-main.lifecycle.json) |
 
 最终全量中，Stage 5.1 工作区布局在关闭期限内未取得正常退出证明，持久化生命周期未记录宿主退出。S1 主界面宿主在约 27.6 秒时已以 Windows 状态码 `0xC0000005` 退出，正常 Core 关闭证明仍未返回。根因待确认。两项均未走完全量中后置的页面断言，Stage 5.1 单次通过保留为独立证据。
 

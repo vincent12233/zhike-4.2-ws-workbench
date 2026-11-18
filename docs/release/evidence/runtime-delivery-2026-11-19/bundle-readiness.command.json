@@ -1,0 +1,17 @@
+{
+  "startedAtUtc": "2026-11-18T22:00:15.5372079Z",
+  "elapsedMs": 27367.5052,
+  "command": "<repo>\\.tools\\dotnet10\\dotnet.exe",
+  "arguments": [
+    "<repo>\\scripts\\stage51\\NativeReadinessProbe\\bin\\Release\\net10.0-windows\\NativeReadinessProbe.dll",
+    "<repo>\\work\\release-6.1.0-f906f159f8e54d5894c56fdcb430cb91\\bundle\\zhike-winui-6.1.0-win-x64\\resources\\app"
+  ],
+  "sourceCommit": "a451c403cc0c4960f720b0dc73771fdbb706edd1",
+  "probeSha256": "52667291E0CAE57B41DAC83D14C78F06608C10B4A5263FB640505289E9A6E630",
+  "exitCode": 0,
+  "productionDesktopStarted": false,
+  "leftoverNewProbeRootCount": 0,
+  "leftoverStageNodeProcessCount": 0,
+  "stdoutSha256": "E94B97E9ECE94D2B2F3BD28EE6E5112A5594A32B53E5151E2D80D1942E108DC1",
+  "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+}
