@@ -39,6 +39,7 @@ $resourceAllowList = @(
   'styles.css',
   'node.exe',
   'server.mjs',
+  'migration-runner.cjs',
   # The isolated fencing route is opt-in, but the coordinator is a runtime
   # dependency of server.mjs and must be present in every self-contained
   # bundle so the sidecar can start deterministically.
@@ -206,7 +207,14 @@ foreach ($item in Get-ChildItem -LiteralPath $resourcesRoot -Recurse -Force) {
 foreach ($required in @('index.html', 'app.js', 'styles.css', 'vendor\xlsx\xlsx.js')) {
   if (-not (Test-Path -LiteralPath (Join-Path $stage "resources\app\$required") -PathType Leaf)) { throw "bundle is missing resources/app/$required" }
 }
-foreach ($required in @('node.exe', 'server.mjs', 'sidecar-write-coordinator.cjs', 'modules\horizon-atelier.css', 'modules\home-6.css', 'modules\design-system.css', 'assets\atelier-dawn.svg', 'assets\horizon-ridge-6.png', 'assets\horizon-flow-6.png', 'assets\horizon-topline-6.png', 'assets\horizon-rock-6.png')) {
+$requiredRuntimeFiles = @(
+  'node.exe', 'server.mjs', 'migration-runner.cjs', 'sidecar-write-coordinator.cjs',
+  'state-delta.cjs', 'migrations\manifest.json',
+  'modules\horizon-atelier.css', 'modules\home-6.css', 'modules\design-system.css',
+  'assets\atelier-dawn.svg', 'assets\horizon-ridge-6.png', 'assets\horizon-flow-6.png',
+  'assets\horizon-topline-6.png', 'assets\horizon-rock-6.png'
+)
+foreach ($required in $requiredRuntimeFiles) {
   if (-not (Test-Path -LiteralPath (Join-Path $stage "resources\app\$required") -PathType Leaf)) { throw "bundle is missing resources/app/$required" }
 }
 if (Get-ChildItem -LiteralPath $resourceDestination -Recurse -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -in $blockedResourceNames -or $_.Name -match '(?i)^(.*credentials.*|.*\.sqlite|.*\.db|.*\.log)$' }) { throw 'resource bundle contains blocked user data or credential files' }

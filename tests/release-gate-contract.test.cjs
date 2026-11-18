@@ -124,6 +124,10 @@ if (process.platform === 'win32') {
       'resources/app/styles.css',
       'resources/app/server.mjs',
       'resources/app/node.exe',
+      'resources/app/migration-runner.cjs',
+      'resources/app/sidecar-write-coordinator.cjs',
+      'resources/app/state-delta.cjs',
+      'resources/app/migrations/manifest.json',
       'resources/app/assets/zhike-horizon-logo.png',
       ...homeArtwork.map(file => 'resources/app/assets/' + file),
       'resources/app/modules/design-system.css',
@@ -172,6 +176,13 @@ if (process.platform === 'win32') {
     assert.notEqual(missingInstallerNode.status, 0);
     assert.match(missingInstallerNode.stdout + '\n' + missingInstallerNode.stderr, /WinUI stage is missing required file:[\s\S]*node\.exe/);
     fs.writeFileSync(stageNode, 'release-gate-fixture');
+
+    const stageMigrationRunner = path.join(stage, 'resources/app/migration-runner.cjs');
+    fs.unlinkSync(stageMigrationRunner);
+    const missingMigrationRunner = runInstallerGate();
+    assert.notEqual(missingMigrationRunner.status, 0);
+    assert.match(`${missingMigrationRunner.stdout}\n${missingMigrationRunner.stderr}`, /WinUI stage is missing required file:[\s\S]*migration-runner\.cjs/);
+    fs.writeFileSync(stageMigrationRunner, 'release-gate-fixture');
 
     const staleStage = runInstallerGate();
     const staleOutput = `${staleStage.stdout}\n${staleStage.stderr}`;
