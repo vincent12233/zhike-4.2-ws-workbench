@@ -1,0 +1,22 @@
+Business 6.0 shell contract: linked records, settings-driven channels and redesigned dynamic workspaces
+✔ tests\business-6-shell-contract.test.cjs (97.2296ms)
+S3 drawer: first lazy creation, same-ID redraw, same-name A→B, close/invalid ID and lifecycle payload passed
+S3 customers: real filters/export, page selection, hidden columns and UI-only preview close/restore passed
+S3 list-first customer layout: native closed overview retains seven metrics; default filters fold without losing search/active predicates/export
+S3 selection identity: real SelectionSet add/has/delete and numeric-ID export retained
+S3 followups: original route/data/record export retained; nextDate header and customer-vs-task scope are explicit
+S3 home: source-first hierarchy, wide-trend/compact-empty hooks, original actions and one reminder load retained
+S3 home plan drilldown: every actual home button → existing open route, exact 13 IDs, stale filters ignored, title/route, open/completed exports retained
+S3 plan date parity: previous/today/leap valid, future/dash/empty/malformed excluded without mutating records
+S3 followup paging/export: 263 customers all reachable, last page/bounds/tab/reset, valid-date parity, unplanned and completed history retained
+✔ tests\delivery-s3-core-pages.test.cjs (242.1776ms)
+WS and GPT Horizon visual scope, dark states, narrow control reachability and scroll contract pass
+✔ tests\ws-gpt-horizon-visual.test.cjs (110.2649ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 271.1765

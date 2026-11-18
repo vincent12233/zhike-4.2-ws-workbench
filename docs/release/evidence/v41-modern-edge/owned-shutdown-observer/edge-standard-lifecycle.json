@@ -1,0 +1,36 @@
+{
+  "invocation": "1794988700812-10a61be4-a4ea-4a09-94ef-7066fc799d08",
+  "mode": "real-edge-synthetic-layout",
+  "rootPid": 29804,
+  "probePid": 19580,
+  "status": "Passed",
+  "elapsedMs": 16465,
+  "timeoutMs": 30000,
+  "cleanupSafe": true,
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "identityProbeClosed": true,
+  "forceTerminated": false,
+  "observedIdentities": 15,
+  "remainingIdentities": [],
+  "resultSha256": "42fb8dc57100f6e779167a2a7de6695462d5aeb5abab6a7c6c12a01a78cba231",
+  "screenshot": {
+    "filename": "operations-atelier-dawn.png",
+    "sha256": "ad67ffcf7f8b0aeb314ec72523c41049334988d528d7f8bbaf835e7dcaebfe27",
+    "bytes": 494446
+  },
+  "eventTimesMs": {
+    "result-verified": 3024,
+    "screenshot-written": 4614,
+    "result-ready": 4712,
+    "close-requested": 4712,
+    "browser-close-acknowledged": 4719,
+    "cdp-transport-closed": 4723,
+    "process-exit": 16373,
+    "streams-close": 16380,
+    "identity-probe-closed": 16465
+  }
+}

@@ -1,0 +1,3 @@
+
+DevTools listening on ws://127.0.0.1:52178/devtools/browser/a1e2655f-f7e8-48c3-976a-93adf7568e4c
+[33168:26604:1117/220215.954:ERROR:components\sync\engine\get_updates_processor.cc:426] PostClientToServerMessage() failed during GetUpdates with error Network error (ERR_ABORTED)

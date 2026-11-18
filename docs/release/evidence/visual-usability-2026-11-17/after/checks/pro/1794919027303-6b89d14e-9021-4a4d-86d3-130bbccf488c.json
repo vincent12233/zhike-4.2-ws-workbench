@@ -1,0 +1,260 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794919027303-6b89d14e-9021-4a4d-86d3-130bbccf488c",
+  "mode": "real-edge-synthetic-layout",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Passed",
+  "timeoutMs": 30000,
+  "launchedAt": "2026-11-17T12:37:07.303Z",
+  "events": [
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 756
+    },
+    {
+      "event": "cdp-readiness-wait",
+      "elapsedMs": 756,
+      "code": "ENOENT"
+    },
+    {
+      "event": "cdp-readiness-wait",
+      "elapsedMs": 855,
+      "code": "EBUSY"
+    },
+    {
+      "event": "cdp-ready",
+      "elapsedMs": 1074
+    },
+    {
+      "event": "owned-target-created",
+      "elapsedMs": 1763
+    },
+    {
+      "event": "owned-session-attached",
+      "elapsedMs": 1775
+    },
+    {
+      "event": "viewport-configured",
+      "elapsedMs": 1799,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "event": "navigation-started",
+      "elapsedMs": 1802
+    },
+    {
+      "event": "viewport-verified",
+      "elapsedMs": 2215,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "event": "result-verified",
+      "elapsedMs": 2223,
+      "cases": 1
+    },
+    {
+      "event": "screenshot-written",
+      "elapsedMs": 2558,
+      "bytes": 418900,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 3195
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 3195
+    },
+    {
+      "event": "owned-session-detached",
+      "elapsedMs": 3201
+    },
+    {
+      "event": "owned-target-close-confirmed",
+      "elapsedMs": 3202
+    },
+    {
+      "event": "owned-browser-close-requested",
+      "elapsedMs": 3202
+    },
+    {
+      "event": "browser-close-acknowledged",
+      "elapsedMs": 3203,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "cdp-transport-close-requested",
+      "elapsedMs": 3203
+    },
+    {
+      "event": "cdp-transport-closed",
+      "elapsedMs": 3203,
+      "code": 1000
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 3203,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 27985,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 27993
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 27993
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 27993
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 27993
+    }
+  ],
+  "identities": [
+    {
+      "pid": 33276,
+      "startedTicks": "639305158273133362",
+      "startedUtc": "2026-11-17T12:37:07.3133362Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 11648,
+      "startedTicks": "639305158283648141",
+      "startedUtc": "2026-11-17T12:37:08.3648141Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 20252,
+      "startedTicks": "639305158282746958",
+      "startedUtc": "2026-11-17T12:37:08.2746958Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 24488,
+      "startedTicks": "639305158280394120",
+      "startedUtc": "2026-11-17T12:37:08.0394120Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 9828,
+      "startedTicks": "639305158280474162",
+      "startedUtc": "2026-11-17T12:37:08.0474162Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 18788,
+      "startedTicks": "639305158280968784",
+      "startedUtc": "2026-11-17T12:37:08.0968784Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 34280,
+      "startedTicks": "639305158290968626",
+      "startedUtc": "2026-11-17T12:37:09.0968626Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 22988,
+      "startedTicks": "639305158290341853",
+      "startedUtc": "2026-11-17T12:37:09.0341853Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 21636,
+      "startedTicks": "639305158288723199",
+      "startedUtc": "2026-11-17T12:37:08.8723199Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 20048,
+      "startedTicks": "639305158283996544",
+      "startedUtc": "2026-11-17T12:37:08.3996544Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 15920,
+      "startedTicks": "639305158283992072",
+      "startedUtc": "2026-11-17T12:37:08.3992072Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 16804,
+      "startedTicks": "639305158283971880",
+      "startedUtc": "2026-11-17T12:37:08.3971880Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 10400,
+      "startedTicks": "639305158292146125",
+      "startedUtc": "2026-11-17T12:37:09.2146125Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 20912,
+      "startedTicks": "639305158283962742",
+      "startedUtc": "2026-11-17T12:37:08.3962742Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 25484,
+      "startedTicks": "639305158290150176",
+      "startedUtc": "2026-11-17T12:37:09.0150176Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 31356,
+      "startedTicks": "639305158292257405",
+      "startedUtc": "2026-11-17T12:37:09.2257405Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "pid": 33276,
+  "profile": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s1-main-style-6DyUTv\\edge-profile-7daf7829-b810-46c7-b53e-dbf95a2d1be7",
+  "resourceReleaseOrder": "owned-session-target-browser",
+  "devToolsReadiness": {
+    "polls": 6,
+    "enoent": 4,
+    "ebusy": 1,
+    "partial": 0
+  },
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "resultCases": 1,
+  "resultBytes": 23176,
+  "resultSha256": "962de79c63a546f98ca6de30552f5506ede2857c1e411d59d68b475629729c45",
+  "resultFile": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-usability\\pro-main-contrast-final\\1794919027303-6b89d14e-9021-4a4d-86d3-130bbccf488c.result.json",
+  "screenshot": {
+    "path": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-usability\\pro-main-contrast-final\\customers-atelier-dawn.png",
+    "bytes": 418900,
+    "width": 1920,
+    "height": 1080,
+    "sha256": "5d757e7caf89d7d693b97f1749e6d47e4698bd136cc88409f698a95cc3aa2f2a"
+  },
+  "resultReady": true,
+  "remainingIdentities": [],
+  "elapsedMs": 28503,
+  "stdoutBytes": 0,
+  "stderrBytes": 617
+}

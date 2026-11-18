@@ -1,0 +1,5 @@
+{
+  "matrixSha256": "f3c192687eca3efb570a460c81f6909941bb51bbf6c210722c034856023edbf9",
+  "layoutSha256": "da807236e8d33019c05299230db92ec2e2d87c70e79e4410d22e36fd84c24634",
+  "mode": "wait-owned-target-destroyed"
+}

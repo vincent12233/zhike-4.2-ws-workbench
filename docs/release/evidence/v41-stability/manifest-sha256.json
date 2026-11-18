@@ -1,0 +1,707 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "SHA-256",
+  "scope": "Synthetic isolated Edge tests only",
+  "fileCount": 65,
+  "transformationPolicy": "Archive contains selected timing, process identity and test logs. Paths and any matched endpoint or Windows SID are redacted. Evidence is UTF-8 with canonical line endings. Source hashes describe original bytes and archive hashes describe committed bytes.",
+  "files": [
+    {
+      "path": "baseline/invalid-overlap-batch-process-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/read-only-observed-process-audit.json",
+      "sourceBytes": 21273,
+      "sourceSha256": "bcfdbb7c95e8161c8e6aa1af44a6dfa9fbee4bb69c502deee4c03aac08d42ff8",
+      "archiveBytes": 19956,
+      "archiveSha256": "e777f624efaea9404dd32810718cb6333d28d235650e51c88c8fb19538ad8341",
+      "transformations": [
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "baseline/main-8-viewports.json",
+      "sourcePath": ".tools/visual-usability/main-visual/1794939240265-eebffa08-1276-4114-9f81-c0bd7672712b.json",
+      "sourceBytes": 6313,
+      "sourceSha256": "bbf2d7a8b2976680e52858f886e5c1d4c59c77cc94db4e15cc2a6e3cf06028f2",
+      "archiveBytes": 6133,
+      "archiveSha256": "e41ca2e779088dea409b2860cf2589d480d5eabc11fbe3bbc05f3e1ae9a61a28",
+      "transformations": [
+        "isolated-profile-path",
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "baseline/main-dawn-dark-legacy.json",
+      "sourcePath": ".tools/visual-usability/main-visual/1794939257064-2ae32473-95a4-49b2-9609-79347f12af8e.json",
+      "sourceBytes": 5971,
+      "sourceSha256": "3c8dbd41e249ffe1c289470d079f09e17c0849fec9b6d875f312d54c4dbaba5f",
+      "archiveBytes": 5791,
+      "archiveSha256": "44270d26700387852adf950d87f072355332558a3327f080f13aa9c831aea639",
+      "transformations": [
+        "isolated-profile-path",
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "baseline/main-first-screenshot-timeout.json",
+      "sourcePath": ".tools/visual-usability/main-visual/1794939262876-74b4baa2-2584-4e00-b564-c932b861167d.json",
+      "sourceBytes": 2982,
+      "sourceSha256": "ec3cdc62870327ef90c980377bd8c7cd738f8a583e6b7fefde6fac88dfda2d9e",
+      "archiveBytes": 2887,
+      "archiveSha256": "1438dbca8b921f655f111dfb572f6e8463b7e35fc9dc26f45f1b94f67d88a02e",
+      "transformations": [
+        "isolated-profile-path"
+      ]
+    },
+    {
+      "path": "baseline/main-night.json",
+      "sourcePath": ".tools/visual-usability/main-visual/1794939251996-fbcc0503-7a87-47ab-9391-82992153de6f.json",
+      "sourceBytes": 5876,
+      "sourceSha256": "0357d9b0ce3ff1ea97b085754b127d7229e8f4ee1dda6818da612e1b53b8eaf3",
+      "archiveBytes": 5696,
+      "archiveSha256": "17b1d6e69eec9cdca4ed8328a31a89a5ca9fea065f0082519bb63eb8937ad377",
+      "transformations": [
+        "isolated-profile-path",
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "baseline/main-original-failure.log",
+      "sourcePath": ".tools/v41-edge-investigation/baseline-main.log",
+      "sourceBytes": 2203,
+      "sourceSha256": "ccc91cb019ed4f879b1a15724418a75e896b2ae946a27d9145c3ecdc6d4d03a2",
+      "archiveBytes": 1798,
+      "archiveSha256": "d4b844eb04543cfff57bd60c549434a4d1e97dc7f5188c65e5cc27c16e868da4",
+      "transformations": [
+        "isolated-profile-path",
+        "workspace-and-temp-paths",
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "baseline/stage51-original-pass.json",
+      "sourcePath": ".tools/delivery-s1-edge-layout/1794939234851-4b89a1d3-be2f-4405-8337-393623ed7a67.json",
+      "sourceBytes": 5247,
+      "sourceSha256": "cab4bfe536da5e11e79e693bb229a8762431c4db4538b13fb965a8acbaeea56d",
+      "archiveBytes": 5066,
+      "archiveSha256": "61e32fe117e4e6ac7d51cec5129eb01a89ef4356cfbd5de565fb9df27148bcd4",
+      "transformations": [
+        "isolated-profile-path",
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "baseline/stage51-original-pass.log",
+      "sourcePath": ".tools/v41-edge-investigation/baseline-stage51.log",
+      "sourceBytes": 2620,
+      "sourceSha256": "f3159e9dffe5804396c91b8e20f57d93efa25a3a3240480cfe6ef50591875da7",
+      "archiveBytes": 2527,
+      "archiveSha256": "326ed6c33c1754a261098f97e595a6bdd47df1ba187895419a07a4048a711900",
+      "transformations": [
+        "workspace-and-temp-paths",
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "baseline/stage51-reproduced-timeout.json",
+      "sourcePath": ".tools/delivery-s1-edge-layout/1794939453259-2fa9e6c6-5290-47b6-99c4-27edb57575d8.json",
+      "sourceBytes": 4884,
+      "sourceSha256": "a986a20f3823cb6c0126873a02bbbc6a5ec855dd5588fe2eb14b6fc70537e4a9",
+      "archiveBytes": 4703,
+      "archiveSha256": "400b4a26d8748d68b3805fdd96fb918e985d3aa43b007db74ccc8070c2c0f967",
+      "transformations": [
+        "isolated-profile-path",
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "comparison/01-baseline/fixture-hash.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/baseline-kcGm9S/fixture-hash.json",
+      "sourceBytes": 196,
+      "sourceSha256": "cb16327e59f9ea2d80df83176a96df0adb80b29004491a0bc9f5918932f2a8e5",
+      "archiveBytes": 196,
+      "archiveSha256": "cb16327e59f9ea2d80df83176a96df0adb80b29004491a0bc9f5918932f2a8e5",
+      "transformations": []
+    },
+    {
+      "path": "comparison/01-baseline/read-only-identity-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/baseline-kcGm9S/read-only-identity-audit.json",
+      "sourceBytes": 42,
+      "sourceSha256": "9de3fb60c26b8933d449dfa1f01244b998a0752dc56d64bb4c2a31ff547249e5",
+      "archiveBytes": 42,
+      "archiveSha256": "9de3fb60c26b8933d449dfa1f01244b998a0752dc56d64bb4c2a31ff547249e5",
+      "transformations": []
+    },
+    {
+      "path": "comparison/01-baseline/summary.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/baseline-kcGm9S/summary.json",
+      "sourceBytes": 1409,
+      "sourceSha256": "1d168406e5f63378a4363b1f92b8a6d575df01439e253ee3aee24a8f3c792616",
+      "archiveBytes": 1324,
+      "archiveSha256": "71e671b49dd4137f71b608c3a52680d5088733f02059be5555054dc22a7773f3",
+      "transformations": [
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "comparison/02-launch-tab-guard/fixture-hash.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/close-launch-tab-first-ti5jfn/fixture-hash.json",
+      "sourceBytes": 210,
+      "sourceSha256": "3f4c09011c9a5ed52cdcbbacf20816771ec6a79844460f0e297ba419b423ad31",
+      "archiveBytes": 210,
+      "archiveSha256": "3f4c09011c9a5ed52cdcbbacf20816771ec6a79844460f0e297ba419b423ad31",
+      "transformations": []
+    },
+    {
+      "path": "comparison/02-launch-tab-guard/read-only-identity-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/close-launch-tab-first-ti5jfn/read-only-identity-audit.json",
+      "sourceBytes": 42,
+      "sourceSha256": "67748ba2c059cea9d4dba9dbdf23808f3de8b9a6635ba90d0b3fbaec86c3c8fa",
+      "archiveBytes": 42,
+      "archiveSha256": "67748ba2c059cea9d4dba9dbdf23808f3de8b9a6635ba90d0b3fbaec86c3c8fa",
+      "transformations": []
+    },
+    {
+      "path": "comparison/02-launch-tab-guard/summary.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/close-launch-tab-first-ti5jfn/summary.json",
+      "sourceBytes": 1257,
+      "sourceSha256": "c0fa21d383bc0e2c6438ad8c265b168254b98e48bfccd3e4416dc417ca2d422b",
+      "archiveBytes": 1172,
+      "archiveSha256": "b1c1e3029d580c56683e49f6fdf4a45fbea0789894ca5771f5c28403a6ad9711",
+      "transformations": [
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "comparison/03-zero-page-targets/fixture-hash.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/close-launch-tab-first-em3LT6/fixture-hash.json",
+      "sourceBytes": 210,
+      "sourceSha256": "3f4c09011c9a5ed52cdcbbacf20816771ec6a79844460f0e297ba419b423ad31",
+      "archiveBytes": 210,
+      "archiveSha256": "3f4c09011c9a5ed52cdcbbacf20816771ec6a79844460f0e297ba419b423ad31",
+      "transformations": []
+    },
+    {
+      "path": "comparison/03-zero-page-targets/invocation.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/close-launch-tab-first-em3LT6/1794940304415-9eeeae0f-3524-4600-9fa8-6a64a636a75f.json",
+      "sourceBytes": 6783,
+      "sourceSha256": "6d629a5f57a1578cc5a65092cc3050c934f2d98b7054358fd782ec4b5b5ce673",
+      "archiveBytes": 6602,
+      "archiveSha256": "090554977075a72512855f0984f63b01fe44040a5edcbd54b59d8bc3eb184d4f",
+      "transformations": [
+        "isolated-profile-path",
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "comparison/03-zero-page-targets/read-only-identity-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/close-launch-tab-first-em3LT6/read-only-identity-audit.json",
+      "sourceBytes": 42,
+      "sourceSha256": "14c7b0eaff29b68756e631fb79c4c72e61c8870fcbb80ac9ff7af5c58f246860",
+      "archiveBytes": 42,
+      "archiveSha256": "14c7b0eaff29b68756e631fb79c4c72e61c8870fcbb80ac9ff7af5c58f246860",
+      "transformations": []
+    },
+    {
+      "path": "comparison/03-zero-page-targets/summary.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/close-launch-tab-first-em3LT6/summary.json",
+      "sourceBytes": 1686,
+      "sourceSha256": "6a573f608926a92696e6b6b6d9a28313292ad5912afc642ebe063f1a5d5c6088",
+      "archiveBytes": 1601,
+      "archiveSha256": "6c18ec42bf4cde692e99a4a0b3825e76d0f306000d327a6253836e4e04f9d9d9",
+      "transformations": [
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "comparison/04-baseline-timeout/fixture-hash.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/baseline-GCEG23/fixture-hash.json",
+      "sourceBytes": 196,
+      "sourceSha256": "cb16327e59f9ea2d80df83176a96df0adb80b29004491a0bc9f5918932f2a8e5",
+      "archiveBytes": 196,
+      "archiveSha256": "cb16327e59f9ea2d80df83176a96df0adb80b29004491a0bc9f5918932f2a8e5",
+      "transformations": []
+    },
+    {
+      "path": "comparison/04-baseline-timeout/invocation.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/baseline-GCEG23/1794940343254-7090b22e-a58d-42b1-9f38-0d65dc81d401.json",
+      "sourceBytes": 6336,
+      "sourceSha256": "e219ad092e0d3c71cd04c28038718671ffedbf9aea1d889f9ec79c0d253e75c7",
+      "archiveBytes": 6155,
+      "archiveSha256": "ae7640d5857e6070bdda26e06283ff1be410c5dadbcb7e318823ce16cbe18c2a",
+      "transformations": [
+        "isolated-profile-path",
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "comparison/04-baseline-timeout/read-only-identity-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/baseline-GCEG23/read-only-identity-audit.json",
+      "sourceBytes": 42,
+      "sourceSha256": "21daab4a54934c95e34cc171de45e3806d96d01d11033d1ae08c45087d74b3e5",
+      "archiveBytes": 42,
+      "archiveSha256": "21daab4a54934c95e34cc171de45e3806d96d01d11033d1ae08c45087d74b3e5",
+      "transformations": []
+    },
+    {
+      "path": "comparison/04-baseline-timeout/summary.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/baseline-GCEG23/summary.json",
+      "sourceBytes": 1657,
+      "sourceSha256": "f3b6bbe3c742610dec5fb2589ee1ede5f0ed0bede253d20301da825846a8cef6",
+      "archiveBytes": 1572,
+      "archiveSha256": "158deac0cd309cc32fff5062e29d10e88e26a66b1c5f5361e6c33c5c87929402",
+      "transformations": [
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "comparison/05-observed-target-destruction/fixture-hash.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/wait-owned-target-destroyed-itzNj9/fixture-hash.json",
+      "sourceBytes": 215,
+      "sourceSha256": "ad10df74731e76049328e8d7c90c13244c695d1e003b773d926156fa00f915df",
+      "archiveBytes": 215,
+      "archiveSha256": "ad10df74731e76049328e8d7c90c13244c695d1e003b773d926156fa00f915df",
+      "transformations": []
+    },
+    {
+      "path": "comparison/05-observed-target-destruction/read-only-identity-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/wait-owned-target-destroyed-itzNj9/read-only-identity-audit.json",
+      "sourceBytes": 42,
+      "sourceSha256": "67748ba2c059cea9d4dba9dbdf23808f3de8b9a6635ba90d0b3fbaec86c3c8fa",
+      "archiveBytes": 42,
+      "archiveSha256": "67748ba2c059cea9d4dba9dbdf23808f3de8b9a6635ba90d0b3fbaec86c3c8fa",
+      "transformations": []
+    },
+    {
+      "path": "comparison/05-observed-target-destruction/summary.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/wait-owned-target-destroyed-itzNj9/summary.json",
+      "sourceBytes": 1886,
+      "sourceSha256": "d04eedaeaf2da54d207d24f68e76ceee2cb8cb16d6d3fdf0fbf55ac5911b7a62",
+      "archiveBytes": 1801,
+      "archiveSha256": "69b68395f23e55f3dbb22b62154e2d64ff18dd8a28efad73fac4f4f204d3bae7",
+      "transformations": [
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "comparison/06-baseline/fixture-hash.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/baseline-BDt88d/fixture-hash.json",
+      "sourceBytes": 196,
+      "sourceSha256": "cb16327e59f9ea2d80df83176a96df0adb80b29004491a0bc9f5918932f2a8e5",
+      "archiveBytes": 196,
+      "archiveSha256": "cb16327e59f9ea2d80df83176a96df0adb80b29004491a0bc9f5918932f2a8e5",
+      "transformations": []
+    },
+    {
+      "path": "comparison/06-baseline/read-only-identity-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/baseline-BDt88d/read-only-identity-audit.json",
+      "sourceBytes": 42,
+      "sourceSha256": "67748ba2c059cea9d4dba9dbdf23808f3de8b9a6635ba90d0b3fbaec86c3c8fa",
+      "archiveBytes": 42,
+      "archiveSha256": "67748ba2c059cea9d4dba9dbdf23808f3de8b9a6635ba90d0b3fbaec86c3c8fa",
+      "transformations": []
+    },
+    {
+      "path": "comparison/06-baseline/summary.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/baseline-BDt88d/summary.json",
+      "sourceBytes": 1757,
+      "sourceSha256": "74b211d0c3213e2ce76c5ef61037d64c5624bca9fc35aee4b87a353643019428",
+      "archiveBytes": 1672,
+      "archiveSha256": "9cb4226851b1b58bc0452179c6b07c7140d119b6557924a79f20efd2d294be06",
+      "transformations": [
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "comparison/07-minimal-html/fixture-hash.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/minimal-close-fWr6X2/fixture-hash.json",
+      "sourceBytes": 139,
+      "sourceSha256": "5c2a042b35917264d52b16f325a37957b8761f9c91d022e19bd3652c924d9196",
+      "archiveBytes": 139,
+      "archiveSha256": "5c2a042b35917264d52b16f325a37957b8761f9c91d022e19bd3652c924d9196",
+      "transformations": []
+    },
+    {
+      "path": "comparison/07-minimal-html/read-only-identity-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/minimal-close-fWr6X2/read-only-identity-audit.json",
+      "sourceBytes": 42,
+      "sourceSha256": "21daab4a54934c95e34cc171de45e3806d96d01d11033d1ae08c45087d74b3e5",
+      "archiveBytes": 42,
+      "archiveSha256": "21daab4a54934c95e34cc171de45e3806d96d01d11033d1ae08c45087d74b3e5",
+      "transformations": []
+    },
+    {
+      "path": "comparison/07-minimal-html/summary.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/minimal-close-fWr6X2/summary.json",
+      "sourceBytes": 1422,
+      "sourceSha256": "cb126372cfedf78abe025a41377c1de410af3aa17e9ba66b6df492e6f192db58",
+      "archiveBytes": 1337,
+      "archiveSha256": "09fe562a203a610a2431645c54f31c47dd08248224f949f115ae54269634ec44",
+      "transformations": [
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "comparison/08-baseline/fixture-hash.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/baseline-5pOCyL/fixture-hash.json",
+      "sourceBytes": 196,
+      "sourceSha256": "cb16327e59f9ea2d80df83176a96df0adb80b29004491a0bc9f5918932f2a8e5",
+      "archiveBytes": 196,
+      "archiveSha256": "cb16327e59f9ea2d80df83176a96df0adb80b29004491a0bc9f5918932f2a8e5",
+      "transformations": []
+    },
+    {
+      "path": "comparison/08-baseline/read-only-identity-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/baseline-5pOCyL/read-only-identity-audit.json",
+      "sourceBytes": 42,
+      "sourceSha256": "9de3fb60c26b8933d449dfa1f01244b998a0752dc56d64bb4c2a31ff547249e5",
+      "archiveBytes": 42,
+      "archiveSha256": "9de3fb60c26b8933d449dfa1f01244b998a0752dc56d64bb4c2a31ff547249e5",
+      "transformations": []
+    },
+    {
+      "path": "comparison/08-baseline/summary.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/baseline-5pOCyL/summary.json",
+      "sourceBytes": 1412,
+      "sourceSha256": "e11c20959fa4ab51a8a55d9ddea95f4a6c87e3f87881877731ede56a639380d7",
+      "archiveBytes": 1327,
+      "archiveSha256": "f25e362b3f0fc1a8108fbb5d06d0a08846f4111e4b86282f1bf5b8b7980c7398",
+      "transformations": [
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "comparison/09-peer-close/fixture-hash.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/await-peer-close-Utom7B/fixture-hash.json",
+      "sourceBytes": 204,
+      "sourceSha256": "5cd24f1b4c2957565147bbac850aa558c2524053ac5b1823f142546484902260",
+      "archiveBytes": 204,
+      "archiveSha256": "5cd24f1b4c2957565147bbac850aa558c2524053ac5b1823f142546484902260",
+      "transformations": []
+    },
+    {
+      "path": "comparison/09-peer-close/read-only-identity-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/await-peer-close-Utom7B/read-only-identity-audit.json",
+      "sourceBytes": 42,
+      "sourceSha256": "67748ba2c059cea9d4dba9dbdf23808f3de8b9a6635ba90d0b3fbaec86c3c8fa",
+      "archiveBytes": 42,
+      "archiveSha256": "67748ba2c059cea9d4dba9dbdf23808f3de8b9a6635ba90d0b3fbaec86c3c8fa",
+      "transformations": []
+    },
+    {
+      "path": "comparison/09-peer-close/summary.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/await-peer-close-Utom7B/summary.json",
+      "sourceBytes": 1870,
+      "sourceSha256": "f14695792dabe3b96d6f089f2197e896d344164dd423e033c8506d81812f2286",
+      "archiveBytes": 1785,
+      "archiveSha256": "9f85e0dec9f893e72a01692f7be68bee73f03ae7f83ac624fd037ae786f491e6",
+      "transformations": [
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "comparison/10-baseline/fixture-hash.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/baseline-dpXyGC/fixture-hash.json",
+      "sourceBytes": 196,
+      "sourceSha256": "cb16327e59f9ea2d80df83176a96df0adb80b29004491a0bc9f5918932f2a8e5",
+      "archiveBytes": 196,
+      "archiveSha256": "cb16327e59f9ea2d80df83176a96df0adb80b29004491a0bc9f5918932f2a8e5",
+      "transformations": []
+    },
+    {
+      "path": "comparison/10-baseline/read-only-identity-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/baseline-dpXyGC/read-only-identity-audit.json",
+      "sourceBytes": 42,
+      "sourceSha256": "67748ba2c059cea9d4dba9dbdf23808f3de8b9a6635ba90d0b3fbaec86c3c8fa",
+      "archiveBytes": 42,
+      "archiveSha256": "67748ba2c059cea9d4dba9dbdf23808f3de8b9a6635ba90d0b3fbaec86c3c8fa",
+      "transformations": []
+    },
+    {
+      "path": "comparison/10-baseline/summary.json",
+      "sourcePath": ".tools/v41-edge-investigation/targets/baseline-dpXyGC/summary.json",
+      "sourceBytes": 1758,
+      "sourceSha256": "e580b92eb39c4e64b82fcb2ad6146779fc85f00c05d938ea03557b54abec11be",
+      "archiveBytes": 1673,
+      "archiveSha256": "2e033bd2eab1f0c7a5b2a4e5721e4d95a087569069a1f0cd6a7c1376a6369ba8",
+      "transformations": [
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "comparison/pair-1.log",
+      "sourcePath": ".tools/v41-edge-investigation/targets/pair-1.log",
+      "sourceBytes": 2037,
+      "sourceSha256": "9c2cc8521730c6758cae687972caa133c285e9d54e9a481bce0f6245a913913a",
+      "archiveBytes": 1865,
+      "archiveSha256": "c7a824080032c2dc756c5de19fee8a31fdce67019309c698b828089c0f754e28",
+      "transformations": [
+        "workspace-and-temp-paths",
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "comparison/pair-2.log",
+      "sourcePath": ".tools/v41-edge-investigation/targets/pair-2.log",
+      "sourceBytes": 2486,
+      "sourceSha256": "6a9f9aba11402d13fb6dec83894baf823c3ff55f403b18574d067ddcfed5b1f7",
+      "archiveBytes": 2314,
+      "archiveSha256": "430c7faab1a8ff90814f084d9ebbcadf80ff4dc9b909e0f3bc20858c411ee6fd",
+      "transformations": [
+        "workspace-and-temp-paths",
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "comparison/pair-3.log",
+      "sourcePath": ".tools/v41-edge-investigation/targets/pair-3.log",
+      "sourceBytes": 2561,
+      "sourceSha256": "dde4c598a966a3a6923d53d56ff16413011dfb4451c498f298dd9c1a0c73ea97",
+      "archiveBytes": 2389,
+      "archiveSha256": "da70d651762f7789f95b5ae1a74eca55bd10eba1146e7ca786f432b55c6c931c",
+      "transformations": [
+        "workspace-and-temp-paths",
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "comparison/pair-4.log",
+      "sourcePath": ".tools/v41-edge-investigation/targets/pair-4.log",
+      "sourceBytes": 2070,
+      "sourceSha256": "da0e2c3428cc336cfb65443b91f4db38073fd4d7e8068b8e8b10043de8a3c31b",
+      "archiveBytes": 1898,
+      "archiveSha256": "73e15f1de4ebe89aeddbb5d00356e70b6ede0fc3afc8090bc4206ab551e1998a",
+      "transformations": [
+        "workspace-and-temp-paths",
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "comparison/pair-5.log",
+      "sourcePath": ".tools/v41-edge-investigation/targets/pair-5.log",
+      "sourceBytes": 2546,
+      "sourceSha256": "128ae3b05094100ffa5d86bbe1be585391ef67375122e7d86902068ff9c54b95",
+      "archiveBytes": 2374,
+      "archiveSha256": "b7fd4350e7b649dd0b870dcbf9cca963b5d7cdd114f80bf08bd67a540831a187",
+      "transformations": [
+        "workspace-and-temp-paths",
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "identity/95094e2-lifecycle.log",
+      "sourcePath": ".tools/v41-edge-investigation/identity-probe-lifecycle.log",
+      "sourceBytes": 4635,
+      "sourceSha256": "038a7f05b8fab52a8b08ef9040508c6915d1e03d594ac1436948d0381b07f303",
+      "archiveBytes": 3761,
+      "archiveSha256": "27357bdefa321d1981b068854c6d1a4320ae5830ca2d6d49a6b99dba4907985a",
+      "transformations": [
+        "workspace-and-temp-paths",
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "identity/95094e2-main-matrix.json",
+      "sourcePath": ".tools/v41-edge-investigation/real-main-matrix/1794939986328-6d09af33-1478-4723-a9bd-6daa6b1199ba.json",
+      "sourceBytes": 7332,
+      "sourceSha256": "f1f30cc0a71b7ae03bc997737991cd15e7ace7bd4bbcad87bb33a46775453a68",
+      "archiveBytes": 7152,
+      "archiveSha256": "ee315e50c6a59a694df25085f94a3e1c8a27d945474293876604070edf6327a6",
+      "transformations": [
+        "isolated-profile-path",
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "identity/95094e2-main-matrix.log",
+      "sourcePath": ".tools/v41-edge-investigation/real-main-matrix.log",
+      "sourceBytes": 79,
+      "sourceSha256": "2711d4ad9db068f6fc848c706c4f42d7f0aa76d07db29a55901dc26b7bfff653",
+      "archiveBytes": 78,
+      "archiveSha256": "5ba52199b34877ad66f13afe72e260358c1e39b5ee7bc3e50e83c65b2e169a9e",
+      "transformations": [
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "identity/95094e2-transport.log",
+      "sourcePath": ".tools/v41-edge-investigation/identity-probe-transport.log",
+      "sourceBytes": 845,
+      "sourceSha256": "618429f536317a014f10b71aef7bcb7785aff5bde7c1ec8290e7fe65307fafed",
+      "archiveBytes": 840,
+      "archiveSha256": "519e065aec6bcd7e8710dceb1b25d7a08b04d5718c5423b331bf48dbd7e399b7",
+      "transformations": [
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "identity/benchmark.log",
+      "sourcePath": ".tools/v41-edge-investigation/identity-benchmark.log",
+      "sourceBytes": 847,
+      "sourceSha256": "6e030573d40ea6340b533bcf5597f133430cc6413047f0676fbad05b62b124da",
+      "archiveBytes": 684,
+      "archiveSha256": "29512d6da6be8ce6fdba6b3542f002f16deb0d832a939ddfa3606a7e0ff0899f",
+      "transformations": [
+        "workspace-and-temp-paths",
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "integration/gpt-visual-fixed-read-only-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/gpt-visual-fixed-read-only-audit.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 592,
+      "sourceSha256": "1529af5eff8afc4fb94542d729e08c25d1455b9449ff78926f4bb295f4ce414e",
+      "archiveBytes": 576,
+      "archiveSha256": "396f7a474de18282f1dbceddc430fe2feadb2c35be5e12967c0d0ef13657ad19",
+      "transformations": [
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "integration/gpt-visual-fixed-timeout.log",
+      "sourcePath": ".tools/v41/gpt-visual-fixed.log",
+      "sourceLocation": "main-repository",
+      "sourceBytes": 2506,
+      "sourceSha256": "a2a928fe30121046ed317f8d138c8000d388fe363c041c520d623674b135bd4d",
+      "archiveBytes": 2309,
+      "archiveSha256": "8b74ef8997a521b510cee8baf782048da2704a6ab860c089c8647446f426d4b2",
+      "transformations": [
+        "workspace-and-temp-paths",
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "integration/stage51-second-full-read-only-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/integrated-stage51-final-observed-identity-audit.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 2429,
+      "sourceSha256": "eef5a30e7144a200b7bdfdcea0c9369af806fb3b21e4ea058ce401597b1a23c3",
+      "archiveBytes": 2339,
+      "archiveSha256": "f4d4df741d1f589acafb37d788d16d3089d0a51980d3d6f9c92e42a9e485443d",
+      "transformations": [
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "integration/stage51-second-full-timeout.json",
+      "sourcePath": ".tools/delivery-s1-edge-layout/1794944767849-becbeef9-9456-49ab-b0a7-64b4d2e69892.json",
+      "sourceLocation": "main-repository",
+      "sourceBytes": 6050,
+      "sourceSha256": "81cb4b6d332367aee55915bb4a448b5da9564ca05b0119545535cdfc5fdd6d46",
+      "archiveBytes": 5864,
+      "archiveSha256": "88e371fbf1dc9ef3b12ef5ce4d70864a1657fed5902cd7dbec5337a30833bb83",
+      "transformations": [
+        "isolated-profile-path",
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "integration/ws-r3-timeout-read-only-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/ws-r3-timeout-pid-audit.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 935,
+      "sourceSha256": "f5c49c450b7483a7173f1e1a81bb3b00b9615a4ea5ad69c130b0e424ce649729",
+      "archiveBytes": 910,
+      "archiveSha256": "ec97bde3299e4f61080c63f680f82d40f7582edcdac5074b2df5367acb5f4c94",
+      "transformations": [
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "review/3b7c25c-controlled-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/probe-review-controlled-audit.json",
+      "sourceBytes": 1478,
+      "sourceSha256": "b01a6461fc7d4c5b8beacf12af2c96e2824ccd8354f99540be0910c1d75bc146",
+      "archiveBytes": 1412,
+      "archiveSha256": "17f0d9f5ab1cb058a72142040c429a01ed8493508ded42c69f3eaa98e56ee5f5",
+      "transformations": [
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "review/3b7c25c-lifecycle.log",
+      "sourcePath": ".tools/v41-edge-investigation/probe-review-lifecycle.log",
+      "sourceBytes": 5322,
+      "sourceSha256": "72a3e657a3ce07d116eb776b86735c88aa3df4c0773024ece35352df40dce281",
+      "archiveBytes": 4276,
+      "archiveSha256": "936487b5f257ce683ae74d1f372f4aa7e528ad1da68391c1e7e225674086ce8e",
+      "transformations": [
+        "workspace-and-temp-paths",
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "review/3b7c25c-probe-termination-confirmed.json",
+      "sourcePath": ".tools/isolated-edge-runner-lifecycle/1794940878190-6fc6658e-09b4-4b07-96dc-bb10ff503ce0.json",
+      "sourceBytes": 2490,
+      "sourceSha256": "2d23488c3cbeaa5417a7b93d1b13d798799307a8eff7479810bda2705d406fae",
+      "archiveBytes": 2490,
+      "archiveSha256": "2d23488c3cbeaa5417a7b93d1b13d798799307a8eff7479810bda2705d406fae",
+      "transformations": []
+    },
+    {
+      "path": "review/3b7c25c-probe-termination-unknown.json",
+      "sourcePath": ".tools/isolated-edge-runner-lifecycle/1794940881520-43fed4b0-4273-4c83-9986-22654ed59090.json",
+      "sourceBytes": 2445,
+      "sourceSha256": "a294aaf0d9a2266ce29a3c43f84d6c3ebc9a710ac9ce4ad7e86a2776727e0b19",
+      "archiveBytes": 2445,
+      "archiveSha256": "a294aaf0d9a2266ce29a3c43f84d6c3ebc9a710ac9ce4ad7e86a2776727e0b19",
+      "transformations": []
+    },
+    {
+      "path": "review/3b7c25c-root-timeout.json",
+      "sourcePath": ".tools/isolated-edge-runner-lifecycle/1794940874698-2addc7f3-a26d-45d2-829c-d288d96d7dfb.json",
+      "sourceBytes": 1763,
+      "sourceSha256": "14f6a6a16bda95daf2757929c926d8cc0391222a1dd67f478384b01d815e29ff",
+      "archiveBytes": 1763,
+      "archiveSha256": "14f6a6a16bda95daf2757929c926d8cc0391222a1dd67f478384b01d815e29ff",
+      "transformations": []
+    },
+    {
+      "path": "review/3b7c25c-stage51-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/probe-review-stage51-audit.json",
+      "sourceBytes": 342,
+      "sourceSha256": "643ae6d2f67579644490843303c0fa700d6fa683f8cc4cae43ceacb29d38124c",
+      "archiveBytes": 256,
+      "archiveSha256": "9a38b68c229096bb0655e8263bbcc26fb0b9b7e434db593e17270f66547effe4",
+      "transformations": [
+        "workspace-and-temp-paths",
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "review/3b7c25c-stage51.json",
+      "sourcePath": ".tools/delivery-s1-edge-layout/1794940925763-978d0391-4bb2-4b30-aa62-30fbe6a947c3.json",
+      "sourceBytes": 6716,
+      "sourceSha256": "dbebfa8dd6c5b5d31bfdea299044155f8ce97df0b7497afebfc14b8e8f09a21c",
+      "archiveBytes": 6535,
+      "archiveSha256": "2e0ae2e616d4813283b35f65ca17c7b99f4e2f947fcf6130855532b141212952",
+      "transformations": [
+        "isolated-profile-path",
+        "workspace-and-temp-paths"
+      ]
+    },
+    {
+      "path": "review/3b7c25c-stage51.log",
+      "sourcePath": ".tools/v41-edge-investigation/probe-review-stage51.log",
+      "sourceBytes": 2620,
+      "sourceSha256": "27894688a0956099079d038fb019b694ac9a519c94aa87b421479ea2485d26c1",
+      "archiveBytes": 2527,
+      "archiveSha256": "1ab9cd83cec61d80b4f811c2dc15ac77d1a3fc728840b47a4addca34dcbcc94a",
+      "transformations": [
+        "workspace-and-temp-paths",
+        "lf-terminal-text"
+      ]
+    },
+    {
+      "path": "review/3b7c25c-transport.log",
+      "sourcePath": ".tools/v41-edge-investigation/probe-review-transport.log",
+      "sourceBytes": 845,
+      "sourceSha256": "618429f536317a014f10b71aef7bcb7785aff5bde7c1ec8290e7fe65307fafed",
+      "archiveBytes": 840,
+      "archiveSha256": "519e065aec6bcd7e8710dceb1b25d7a08b04d5718c5423b331bf48dbd7e399b7",
+      "transformations": [
+        "lf-terminal-text"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "status": "Passed",
+  "checkedAtUtc": "2026-11-18T18:48:13.1880389Z",
+  "isolationMarkerVerified": true,
+  "rootPid": 33964,
+  "rootState": "absent",
+  "identityCounts": {
+    "observed": 28,
+    "absent": 28,
+    "pidReused": 0,
+    "stillRunning": 0,
+    "unverified": 0
+  },
+  "binaryBasename": "Zhike.Stage51.Acceptance.exe",
+  "exactBinaryPathCount": 0,
+  "sameNamedExecutablePathUnverifiedCount": 0,
+  "exactRootCommandLineReferenceCount": 0,
+  "resources": {
+    "source": "usable-resource.jsonl",
+    "sha256": "f3e260022433e6eb8e67d34fd2649c71e12f5c30b46b058909800b91a3b8561b",
+    "sampleCount": 91,
+    "firstAtUtc": "2026-11-18T18:18:49.1877690Z",
+    "lastAtUtc": "2026-11-18T18:34:35.9263691Z",
+    "sampledRootExit": false
+  },
+  "nativeEvents": {
+    "events": 187,
+    "application-start": 1,
+    "application-stopping": 1,
+    "sidecar-stopped": 1,
+    "host-unloaded": 1,
+    "webview-created": 4,
+    "webview-navigation": 4,
+    "workspace-page": 30,
+    "ws-account-selected": 13,
+    "sidecarReportedRunningAtStop": false,
+    "firstEventUtc": "2026-11-18T18:17:40.4107088+00:00",
+    "lastEventUtc": "2026-11-18T18:44:45.6872603+00:00",
+    "coreRoles": {
+      "shell": 1,
+      "wsVisible": 3
+    },
+    "webviewNavigationSuccessCount": 4,
+    "teardown": [
+      {
+        "kind": "application-stopping",
+        "at": "2026-11-18T18:44:45.4540116+00:00"
+      },
+      {
+        "kind": "host-unloaded",
+        "at": "2026-11-18T18:44:45.6788825+00:00"
+      },
+      {
+        "kind": "sidecar-stopped",
+        "at": "2026-11-18T18:44:45.6872603+00:00"
+      }
+    ]
+  },
+  "scope": "Point-in-time PID and creation-time checks for sampled identities; exact executable-path and unique isolated command-line root checks. These observations do not establish the exact exit time or cover unobserved processes with no root reference.",
+  "diagnosticsOnly": true,
+  "processTerminatedByCheck": false,
+  "directoryRemovedByCheck": false,
+  "privateConnectionOrProfileRead": false,
+  "databaseRead": false
+}

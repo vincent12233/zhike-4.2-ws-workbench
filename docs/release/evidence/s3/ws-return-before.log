@@ -1,0 +1,27 @@
+node:assert:152
+  throw new AssertionError(obj);
+  ^
+
+AssertionError [ERR_ASSERTION]: WS rail return must restore the hidden followup route instead of hardcoding home.
++ actual - expected
+
++ 'home'
+- 'followups'
+
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\delivery-s1-workspace-shell-runtime.test.cjs:109:10)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'home',
+  expected: 'followups',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

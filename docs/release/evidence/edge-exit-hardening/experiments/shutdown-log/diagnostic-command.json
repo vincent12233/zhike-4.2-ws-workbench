@@ -1,0 +1,38 @@
+{
+  "runKind": "Full S1 with shutdown logging diagnostics",
+  "defaultOfficialRun": false,
+  "baseline": "3c35db1cb28715088916920acfc0fc2bde270522",
+  "command": "resources/app/node.exe .tools/edge-exit-fix/shutdown-log-harness.cjs shutdown-log-1",
+  "addedBrowserFlags": [
+    "--enable-logging=stderr",
+    "--vmodule=application_lifetime=1"
+  ],
+  "fixtureModes": "Unmodified default S1 matrix, both palette checks, and all four screenshots",
+  "originalPerBrowserDeadlineMs": 30000,
+  "exception": "Metadata includes passive startup discovery counts and an allowlisted root stderr marker. Full stderr and stdout are not saved by this overlay.",
+  "sourceFiles": [
+    {
+      "relativePath": "tests/helpers/isolated-edge-runner.cjs",
+      "gitBlob": "93cfa80916314b0645d88cb78d7d85ff356778d1",
+      "sourceSha256": "84d7ae4af1d286c1ae3df55cfdf2647149aadd6da9ce6cf90f98ae07f39b7526"
+    },
+    {
+      "relativePath": "scripts/delivery/s1-main-visual.test.cjs",
+      "gitBlob": "5c8bd6860d053065b69ce9f2df1c41bdc0658dd3",
+      "sourceSha256": "058f7435bdafe51056923ae35a5afa4d2fee8cbb220474a03206a2f8866a61c9"
+    },
+    {
+      "relativePath": "scripts/diagnostics/edge-exit-observer/invocation-observer.cjs",
+      "gitBlob": "76f41e81a2a010a9fcdb1ddee2db4a515bd490bc",
+      "sourceSha256": "95cb6dbc8bbe1b7983dfece9e0120a915cf0f0cfe30d583d565728dcce643a4a"
+    },
+    {
+      "relativePath": "scripts/diagnostics/edge-exit-observer/observer/Program.cs",
+      "gitBlob": "c08f395b7bb549e33e63007e14fe01fe83e916d7",
+      "sourceSha256": "b93f801d1e74e8b7de33ea35284cac9c565c3d3cff886861c53a528046bc7cd5"
+    }
+  ],
+  "runnerOverlaySha256": "616ddceddfbba543b25f560dd3dee01b3be808cea6a9b3bdc81d1df3961ceb20",
+  "observerAssemblySha256": "47986a2731d8a92bf13340c0c3e32145c3fffb37268818d52077453b1b36c4f6",
+  "harnessSha256": "3e2b328056f570a67a1192767373fee04a8a54423cf89b1c4c46d46034c43865"
+}

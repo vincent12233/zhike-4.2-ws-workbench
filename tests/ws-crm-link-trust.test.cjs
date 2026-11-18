@@ -34,7 +34,23 @@ async function request(pathname, init = {}) {
 }
 const body = value => JSON.stringify(value);
 const json = response => response.json();
-const post = (pathname, value) => request(pathname, { method:'POST', body:body(value) }).then(json);
+const post = (pathname, value) => {
+  // AI/CRM APIs now require an authoritative, read and direction-verified
+  // transcript. These identity tests focus on association trust, so create
+  // their synthetic direct conversations with that explicit fixture metadata.
+  const payload = pathname === '/api/ws/conversations' && value
+    ? { ...value, unreadCount: value.unreadCount ?? 0, data: {
+        conversationType: value.conversationType || 'direct', historyLoaded: true,
+        historyFingerprint: `trust-${value.externalId}`, lastMessageFingerprint: `trust-${value.externalId}`,
+        directionVersion: 4, ...(value.data || {}),
+        historyLoaded: value.data?.historyLoaded ?? true,
+        historyFingerprint: value.data?.historyFingerprint || `trust-${value.externalId}`,
+        lastMessageFingerprint: value.data?.lastMessageFingerprint || value.data?.historyFingerprint || `trust-${value.externalId}`,
+        directionVersion: value.data?.directionVersion || 4,
+      } }
+    : value;
+  return request(pathname, { method:'POST', body:body(payload) }).then(json);
+};
 
 (async () => {
   try {

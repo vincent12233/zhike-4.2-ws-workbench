@@ -1,0 +1,18 @@
+S3 drawer: first lazy creation, same-ID redraw, same-name A→B, close/invalid ID and lifecycle payload passed
+S3 customers: real filters/export, page selection, hidden columns and UI-only preview close/restore passed
+S3 selection identity: real SelectionSet add/has/delete and numeric-ID export retained
+S3 followups: original route/data/record export retained; nextDate header and customer-vs-task scope are explicit
+S3 home: source-first hierarchy, wide-trend/compact-empty hooks, original actions and one reminder load retained
+S3 home plan drilldown: every actual home button → existing open route, exact 13 IDs, stale filters ignored, title/route, open/completed exports retained
+AssertionError [ERR_ASSERTION]: open export must contain the same three valid plan dates as the existing list
+
+6 !== 4
+
+    at verifyPlanDateExportParity (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\delivery-s3-core-pages.test.cjs:111:721) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 6,
+  expected: 4,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

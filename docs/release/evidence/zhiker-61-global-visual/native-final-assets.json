@@ -1,0 +1,51 @@
+{
+  "codeCommit": "8da6fb2f8ce09c4c1560328a48b5f04bfd477244",
+  "excluded": "index.html has the existing test-only trusted input diagnostic injection; host executable retains d05b941 build metadata and has unchanged C#.",
+  "assets": [
+    {
+      "file": "app.js",
+      "sourceSha256": "d7702135f96d634293a58f3f5512397e8d50f2cbe17dcfe492cf1e87d377d3d2",
+      "nativeSha256": "d7702135f96d634293a58f3f5512397e8d50f2cbe17dcfe492cf1e87d377d3d2"
+    },
+    {
+      "file": "server.mjs",
+      "sourceSha256": "d927f37946e4730b56eb13ad24e5f4ec97f665b2fd324ec8d3e4df5c1391f953",
+      "nativeSha256": "d927f37946e4730b56eb13ad24e5f4ec97f665b2fd324ec8d3e4df5c1391f953"
+    },
+    {
+      "file": "modules/customer-avatar.js",
+      "sourceSha256": "57a4c2abec3cdb1fe16a01a6081c7f49d358144f321d0582826a161a65af4085",
+      "nativeSha256": "57a4c2abec3cdb1fe16a01a6081c7f49d358144f321d0582826a161a65af4085"
+    },
+    {
+      "file": "modules/design-system.css",
+      "sourceSha256": "9db9f09ac7a706ed5d6594056fad1488bb2bb4c2bc4d9ebb6dfa90692f7b8368",
+      "nativeSha256": "9db9f09ac7a706ed5d6594056fad1488bb2bb4c2bc4d9ebb6dfa90692f7b8368"
+    },
+    {
+      "file": "modules/business-6.css",
+      "sourceSha256": "d91988f46d69265efbb2827c2cbae9a5aedfd4e82e0b30f3a6e29c38548310fe",
+      "nativeSha256": "d91988f46d69265efbb2827c2cbae9a5aedfd4e82e0b30f3a6e29c38548310fe"
+    },
+    {
+      "file": "modules/productivity.js",
+      "sourceSha256": "0c83bae85a03af034af060555a6c31b2e6871cad0ce32e682cb9695c9709a10c",
+      "nativeSha256": "0c83bae85a03af034af060555a6c31b2e6871cad0ce32e682cb9695c9709a10c"
+    },
+    {
+      "file": "modules/ws-business-pages.js",
+      "sourceSha256": "b846f5e8dc7479b5a81c863f2715613b4d4bfdc40e3af225503c9ef1f61d988c",
+      "nativeSha256": "b846f5e8dc7479b5a81c863f2715613b4d4bfdc40e3af225503c9ef1f61d988c"
+    },
+    {
+      "file": "modules/ws-workbench.js",
+      "sourceSha256": "c72aa80bb0484675398daf60458696b975e5f4be902c120fec576e9d3a54d9f6",
+      "nativeSha256": "c72aa80bb0484675398daf60458696b975e5f4be902c120fec576e9d3a54d9f6"
+    },
+    {
+      "file": "modules/ws-workbench.css",
+      "sourceSha256": "8fa2ecc0e76033ee33bc28751a926074129af61652bbba0a0b8f68227972a9d1",
+      "nativeSha256": "8fa2ecc0e76033ee33bc28751a926074129af61652bbba0a0b8f68227972a9d1"
+    }
+  ]
+}

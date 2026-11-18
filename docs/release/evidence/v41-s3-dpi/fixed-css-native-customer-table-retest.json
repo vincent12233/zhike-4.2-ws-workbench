@@ -1,0 +1,136 @@
+{
+  "pid": 39916,
+  "scope": "Windows isolated short retest with the customer CSS fix at 125% in the visible dark palette",
+  "source": "Stage 5.1 isolated WinUI native-events.jsonl and local screenshots",
+  "cssIntegrationCommit": "d768550",
+  "cssSourceAndStagedSha256": "B51072D799C5D3226011B59AAE63416F69122BE1F4B8D0E926900CB6A50B04E1",
+  "hwndAwareness": "per-monitor-v2",
+  "hwndDpi": 120,
+  "xamlRootScale": 1.25,
+  "domDpr": 1.25,
+  "commonWheel": {
+    "windowsScreenPx": [
+      1150,
+      862
+    ],
+    "windowsClientPx": [
+      1150,
+      833
+    ],
+    "domClientCss": [
+      919,
+      665
+    ],
+    "nativeWheelDelta": -400,
+    "nativeHorizontal": false,
+    "domDeltaX": 0,
+    "domDeltaY": 333.3333,
+    "domTarget": "table",
+    "win32Hit": "child",
+    "nativeSource": "WebView2"
+  },
+  "tableGeometryCss": {
+    "clientHeight": 532,
+    "scrollHeight": 598,
+    "clientWidth": 838,
+    "scrollWidth": 1559
+  },
+  "pageGeometryCss": {
+    "clientHeight": 774,
+    "scrollHeight": 1450
+  },
+  "samples": [
+    {
+      "nativeSequence": 1,
+      "domWheelCount": 1,
+      "nativeAt": "2026-11-18T12:23:52.2546455+00:00",
+      "domAt": "2026-11-18T12:23:52.3057244+00:00",
+      "nativeTickMs": 251340531,
+      "domTickMs": 251340578,
+      "nativePointerTimestampUs": 251340544382,
+      "domPreviousPointerAgeMs": 0.2,
+      "domPreventedAfter": true,
+      "tableTopBeforeAfterTwoFrames": [
+        0,
+        66.4
+      ],
+      "tableLeftBeforeAfterTwoFrames": [
+        0,
+        0
+      ],
+      "pageTopBeforeAfterTwoFrames": [
+        0,
+        0
+      ],
+      "sidebarTopBeforeAfterTwoFrames": [
+        0,
+        0
+      ],
+      "documentTopBeforeAfterTwoFrames": [
+        0,
+        0
+      ]
+    },
+    {
+      "nativeSequence": 2,
+      "domWheelCount": 2,
+      "nativeAt": "2026-11-18T12:24:37.9773918+00:00",
+      "domAt": "2026-11-18T12:24:38.0031549+00:00",
+      "nativeTickMs": 251386250,
+      "domTickMs": 251386281,
+      "nativePointerTimestampUs": 251386279727,
+      "domPreviousPointerAgeMs": 45707.8,
+      "domPreventedAfter": false,
+      "tableTopBeforeAfterTwoFrames": [
+        66.4,
+        66.4
+      ],
+      "tableLeftBeforeAfterTwoFrames": [
+        0,
+        0
+      ],
+      "pageTopBeforeAfterTwoFrames": [
+        0,
+        0
+      ],
+      "sidebarTopBeforeAfterTwoFrames": [
+        0,
+        0
+      ],
+      "documentTopBeforeAfterTwoFrames": [
+        0,
+        0
+      ]
+    }
+  ],
+  "interpretation": {
+    "wheelDelivery": "The native pointer timestamps differ by 45.735345 s. The late DOM pointer age describes the previous pointermove sample. The logs do not show the exact timestamp reuse seen in PID 37872.",
+    "tableWhileScrollable": "The table consumed the first observed event and reached its vertical boundary. The page and horizontal offsets stayed at zero.",
+    "handoffAtBoundary": "The second observed event remained uncanceled at the table boundary. The two-frame snapshot precedes visible page movement. The settled screenshot shows the outer page shifted about 333 px, with the same first visible table row and the HUD's table offset still 66 px.",
+    "remainingScope": "The 100% case with zero table vertical range was not rerun. These injected events do not validate hardware input or close the no-duplicate gate. The local captures still show fragmented text."
+  },
+  "nativeCounters": {
+    "webviewCreated": 1,
+    "nativeWheelEmitted": 2,
+    "domWheelEmitted": 2
+  },
+  "shutdown": {
+    "applicationStoppingAt": "2026-11-18T12:25:26.6241195+00:00",
+    "sidecarStoppedAt": "2026-11-18T12:25:26.8604723+00:00",
+    "hostUnloadedAt": "2026-11-18T12:25:26.8812536+00:00"
+  },
+  "screenshots": [
+    {
+      "file": "14-fixed-css-customer-before.png",
+      "sha256": "E1858C01BFEC5C94A40403E55374EE2A8DC29CC12E0082CB823B41759F1A8D76"
+    },
+    {
+      "file": "15-fixed-css-inner-consumed.png",
+      "sha256": "20A02FD1FD85DCCBEC64A317848760935362F619752FBB9F341F34A7686EEBE7"
+    },
+    {
+      "file": "16-fixed-css-page-handoff.png",
+      "sha256": "D7A13AA06C464A09A9DA94807A57891F0B4F096A982E695969B9B748FD1A8766"
+    }
+  ]
+}

@@ -3,6 +3,7 @@
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
 const { mkdtempSync, rmSync, readFileSync } = require('node:fs');
+const { DatabaseSync } = require('node:sqlite');
 const os = require('node:os');
 const path = require('node:path');
 
@@ -33,7 +34,7 @@ function start() {
   });
 }
 async function request(pathname, init = {}) {
-  for (let i = 0; i < 300; i += 1) {
+  for (let i = 0; i < 1200; i += 1) {
     try {
       return await fetch(`http://127.0.0.1:${port}${pathname}`, { ...init, headers: { ...headers, ...(init.headers || {}) } });
     } catch { await wait(50); }
@@ -51,7 +52,7 @@ async function stop() {
 (async () => {
   try {
     start();
-    const conversation = await body(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'queue-contact', title: 'Queue Contact' }) }));
+    const conversation = await body(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'queue-contact', title: 'Queue Contact', conversationType: 'direct', data: { conversationType: 'direct', historyLoaded: true, historyFingerprint: 'queue-history', lastMessageFingerprint: 'queue-history', directionVersion: 4 }, unreadCount: 0 }) }));
     const enqueuePayload = { conversationId: conversation.id, idempotencyKey: 'queue-contact:fp-001', payload: { transcript: 'hello' }, maxAttempts: 3 };
     const first = await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify(enqueuePayload) });
     assert.equal(first.status, 201, 'new AI job must be created durably');
@@ -66,25 +67,50 @@ async function stop() {
     assert.equal(claimed.claimed, true);
     assert.equal(claimed.job.status, 'running');
     assert.equal(claimed.job.attempts, 1);
+    assert.match(claimed.job.leaseToken, /^[a-f0-9]{64}$/i, 'claim must return an unguessable lease token');
+    const staleCheckpoint = await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'checkpoint', jobId: firstBody.job.id, leaseToken: 'stale-worker-token', completedChunks: 1, chunkCount: 2, result: { summary: 'stale' } }) });
+    assert.equal(staleCheckpoint.status, 409, 'stale worker checkpoint must be rejected');
+    const staleComplete = await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'complete', jobId: firstBody.job.id, leaseToken: 'stale-worker-token', analysisId: 'stale-analysis' }) });
+    assert.equal(staleComplete.status, 409, 'stale worker completion must be rejected');
+    const staleFail = await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'fail', jobId: firstBody.job.id, leaseToken: 'stale-worker-token', error: 'stale', retryable: false }) });
+    assert.equal(staleFail.status, 409, 'stale worker failure must be rejected');
     const stats = await body(await request('/api/ws/ai-jobs?accountId=default'));
     assert.equal(stats.stats.running, 1);
 
     await stop();
+    // Simulate a genuinely stale lease in the isolated fixture. Immediate
+    // restart must preserve a live lease; only an expired lease is recovered.
+    const isolatedDb = new DatabaseSync(path.join(dataDir, 'workspace.sqlite'));
+    isolatedDb.prepare("UPDATE ai_jobs SET locked_at=? WHERE id=?").run(new Date(Date.now() - 11 * 60 * 1000).toISOString(), firstBody.job.id);
+    isolatedDb.close();
     start();
+    const readOnly = await body(await request('/api/ws/ai-jobs?accountId=default'));
+    assert.equal(readOnly.jobs.find(item => item.id === firstBody.job.id).status, 'running', 'GET must not recover or mutate expired jobs');
+    const recovery = await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'recover-expired', accountId: 'default' }) });
+    assert.equal(recovery.status, 200, 'only explicit old-consumer recovery mutates expired jobs');
     const recovered = await body(await request('/api/ws/ai-jobs?accountId=default'));
     const recoveredJob = recovered.jobs.find(item => item.id === firstBody.job.id);
-    assert.equal(recoveredJob.status, 'queued', 'running jobs must recover to queued after restart');
+    assert.equal(recoveredJob.status, 'retryable', 'running jobs must recover through the lease-aware retry state after restart');
     assert.match(recoveredJob.lastError, /restart|重启|恢复/i);
 
     const claimedAgain = await body(await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'claim', jobId: firstBody.job.id }) }));
     assert.equal(claimedAgain.claimed, true);
-    const failed = await body(await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'fail', jobId: firstBody.job.id, error: 'temporary outage', retryable: true }) }));
+    const failed = await body(await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'fail', jobId: firstBody.job.id, leaseToken: claimedAgain.job.leaseToken, error: 'temporary outage', retryable: true }) }));
     assert.equal(failed.job.status, 'retryable');
     assert.ok(new Date(failed.job.nextAttemptAt).getTime() > Date.now());
 
     const unavailableClaim = await body(await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'claim', jobId: firstBody.job.id }) }));
     assert.equal(unavailableClaim.claimed, false, 'backoff must prevent an immediate duplicate claim');
     assert.equal(unavailableClaim.job.status, 'retryable');
+
+    const deadLetterConversation = await body(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'queue-dead-letter', title: 'Dead Letter Contact', conversationType: 'direct', data: { conversationType: 'direct', historyLoaded: true, historyFingerprint: 'dead-history', lastMessageFingerprint: 'dead-history', directionVersion: 4 }, unreadCount: 0 }) }));
+    const deadLetterEnqueue = await body(await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ conversationId: deadLetterConversation.id, idempotencyKey: 'queue-dead-letter:fp-001', payload: { transcript: 'dead letter' }, maxAttempts: 1 }) }));
+    const deadLetterClaim = await body(await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'claim', jobId: deadLetterEnqueue.job.id }) }));
+    const deadLetterFail = await body(await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'fail', jobId: deadLetterEnqueue.job.id, leaseToken: deadLetterClaim.job.leaseToken, error: 'permanent outage', retryable: true }) }));
+    assert.equal(deadLetterFail.job.status, 'failed', 'max-attempt jobs must move to a terminal dead-letter state');
+    assert.equal(deadLetterFail.job.deadLetter, true, 'terminal max-attempt jobs must be marked as dead letters');
+    assert.ok(deadLetterFail.stats.deadLetter >= 1, 'queue stats must expose dead-letter count');
+    assert.ok(deadLetterFail.stats.retryCount >= 1, 'queue stats must expose retry attempts');
     console.log('AI durable queue contract: idempotent enqueue, restart recovery, claim, backoff and stats passed');
   } finally {
     await stop();

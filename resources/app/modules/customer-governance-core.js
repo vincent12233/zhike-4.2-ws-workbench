@@ -11,6 +11,7 @@
   const redactSensitive = value => text(value)
     .replace(/(?:password|passcode|token|cookie|secret|api[\s_-]?key)\s*[:：]?\s*[^\s，。；;]+/ig, '[已脱敏]')
     .replace(/(?:验证码|校验码|密码|银行卡(?:号)?|收款码|二维码)\s*[:：]?\s*[A-Za-z0-9_\-\s]+/ig, '[已脱敏]');
+  const AUTO_SYNC_CONFIDENCE_THRESHOLD = 0.6;
 
   const FIELD_MAP = Object.freeze({
     name: ['name', 'customerName'],
@@ -153,6 +154,7 @@
   function sameValue(field, left, right) {
     if (field === 'age') return normalizeAge(left) === normalizeAge(right);
     if (field === 'phone') return normalizePhone(left) === normalizePhone(right);
+    if (field === 'rawPhone') return normalizePhone(left) === normalizePhone(right);
     if (field === 'productInterest') return list(left).join('、') === list(right).join('、');
     return text(left).toLocaleLowerCase() === text(right).toLocaleLowerCase();
   }
@@ -178,6 +180,7 @@
       if (field === 'rawPhone' && !value) value = profile.phone;
       if (Array.isArray(value)) value = list(value).join('、');
       if (value === '' || value == null) continue;
+      if (field === 'name' && /^(未命名客户|未命名|未知客户|未知|—|-)$/.test(text(value))) continue;
       if (isLocked(field)) {
         if (!sameValue(field, customer[field], value)) conflicts.push({ field, existing: customer[field], incoming: value, analysisId: profile.analysisId || '', locked: true });
         continue;
@@ -275,7 +278,7 @@
     };
   }
 
-  return { normalizeAiProfile, mergeAiProfileSafely, shouldAutoSoftDelete, buildGovernanceAction, normalizePhone, normalizeAge };
+  return { normalizeAiProfile, mergeAiProfileSafely, shouldAutoSoftDelete, buildGovernanceAction, normalizePhone, normalizeAge, AUTO_SYNC_CONFIDENCE_THRESHOLD };
 });
 
 

@@ -1,0 +1,28 @@
+{
+  "pid": 15168,
+  "startedAtUtc": "2026-11-18T06:48:12.8881614Z",
+  "frontendAtLaunch": "9f175d8",
+  "reusedRun2IsolatedFixture": true,
+  "productionOpened": false,
+  "homeCssAfterReload": {
+    "revision": "1dbab88",
+    "sha256": "ed7278c318f49b3b794d4b5ca6c76e4656efaae5e94454f9bf975c7f6b69a662"
+  },
+  "excludedMisleadingNarrowCaptures": [
+    {
+      "file": "r3-02-home-narrow-0.png",
+      "width": 1902,
+      "height": 1131
+    },
+    {
+      "file": "r3-03-home-resized-0.png",
+      "width": 1902,
+      "height": 1132
+    },
+    {
+      "file": "r3-05-kpi-narrow-final-0.png",
+      "width": 1902,
+      "height": 1134
+    }
+  ]
+}

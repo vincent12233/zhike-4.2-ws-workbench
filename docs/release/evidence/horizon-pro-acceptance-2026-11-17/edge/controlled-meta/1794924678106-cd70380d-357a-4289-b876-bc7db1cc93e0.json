@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794924678106-cd70380d-357a-4289-b876-bc7db1cc93e0",
+  "mode": "controlled-powershell-exclusive-readiness",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Passed",
+  "timeoutMs": 10000,
+  "launchedAt": "2026-11-17T14:11:18.106Z",
+  "events": [
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 589
+    },
+    {
+      "event": "cdp-readiness-wait",
+      "elapsedMs": 592,
+      "code": "EBUSY"
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 627
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 627
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 627,
+      "acknowledgement": "stdin-request"
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 642
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 642
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 650,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 650
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 650
+    }
+  ],
+  "identities": [
+    {
+      "pid": 34964,
+      "startedTicks": "639305214781174957",
+      "startedUtc": "2026-11-17T14:11:18.1174957Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "pid": 34964,
+  "profile": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-edge-runner-test-kKizwp\\edge-profile-64a78573-8ea9-4ede-bfcf-09d656e7584d",
+  "devToolsReadiness": {
+    "polls": 2,
+    "enoent": 0,
+    "ebusy": 1,
+    "partial": 0
+  },
+  "resultReady": true,
+  "rootExitProof": "verified-spawn-handle-exit-and-streams",
+  "remainingIdentities": [],
+  "elapsedMs": 650,
+  "stdoutBytes": 18,
+  "stderrBytes": 0
+}

@@ -1,0 +1,6 @@
+{
+  "exitCode": 1,
+  "finishedUtc": "2026-11-17T13:54:10.7959368Z",
+  "command": "resources/app/node.exe scripts/run-tests.cjs all",
+  "baseline": "9aacf56"
+}

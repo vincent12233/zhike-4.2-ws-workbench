@@ -1,0 +1,18 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs'); const os = require('node:os'); const path = require('node:path');
+const { randomUUID } = require('node:crypto');
+const { copyIsolatedAppFixture } = require('../../tests/helpers/isolated-app-fixture.cjs');
+const repo = path.resolve(__dirname, '../..');
+const output = path.join(repo, '.tools/stage52-native');
+const binary = path.join(output, 'Zhike.Stage51.Acceptance.exe');
+assert.equal(process.argv.length, 2, 'This helper only prepares the named isolated output.');
+assert.ok(fs.existsSync(binary), 'Build Stage51IsolatedUi=true first.');
+assert.equal(fs.lstatSync(output).isSymbolicLink(), false);
+const resources = path.join(output, 'resources/app');
+copyIsolatedAppFixture(path.join(repo, 'resources/app'), resources);
+fs.copyFileSync(path.join(repo, 'resources/app/node.exe'), path.join(resources, 'node.exe'));
+assert.equal(fs.existsSync(path.join(resources, 'data')), false);
+const root = path.join(os.tmpdir(), 'zhike-stage51-native-' + randomUUID().replace(/-/g, ''));
+fs.mkdirSync(root); fs.writeFileSync(path.join(root, '.stage51-isolated'), 'zhike-stage51-isolated-ui-v1');
+console.log(JSON.stringify({ root, binary, isolationFlag: 'Stage51IsolatedUi=true', rootEnvironmentVariable: 'ZHIKE_STAGE51_ROOT', optionalOneTimeFactoryFailureVariable: 'ZHIKE_STAGE52_FAIL_WS_INIT_ONCE', productionOpened: false, wsNetwork: 'blocked', paidAiNetwork: 'blocked' }));

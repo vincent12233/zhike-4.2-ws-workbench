@@ -35,12 +35,13 @@ assert.doesNotMatch(installer, /zhike-setup|build-installer\.ps1|electron/i);
 
 // The formal delivery folder may contain only the current 6.0 product. Retired
 // installers and source bundles must not remain in outputs/ or releases/.
-const currentOutput = path.join(repo, 'outputs', '知客-6.0.1-WinUI桌面版');
-if (fs.existsSync(currentOutput)) {
+for (const version of new Set([packageJson.version, '6.0.3'])) {
+  const currentOutput = path.join(repo, 'outputs', `知客-${version}-WinUI桌面版`);
+  if (!fs.existsSync(currentOutput)) continue;
   const names = fs.readdirSync(currentOutput);
   assert.equal(names.some(name => /docker|postgres|electron/i.test(name)), false,
-    'current 6.0.1 delivery folder must not contain retired Docker/PostgreSQL/Electron artifacts');
-  const sourceZip = path.join(currentOutput, '知客-6.0.1-完整源码.zip');
+    `${version} delivery folder must not contain retired Docker/PostgreSQL/Electron artifacts`);
+  const sourceZip = path.join(currentOutput, `知客-${version}-完整源码.zip`);
   if (fs.existsSync(sourceZip)) {
     const listing = spawnSync('tar', ['-tf', sourceZip], { encoding: 'utf8', windowsHide: true });
     assert.equal(listing.status, 0, `unable to inspect source archive: ${listing.stderr || 'tar failed'}`);
@@ -48,7 +49,7 @@ if (fs.existsSync(currentOutput)) {
       /(^|\/)(infra|server|connectors\/ws-worker|tools\/sqlite-to-postgres)(\/|$)|(^|\/)resources\/app\/(main|preload|ws-preload)\.cjs$/i.test(entry));
     assert.deepEqual(retiredEntries, [], 'source archive must not ship retired Docker/Electron runtime trees');
   }
-  const bundleZip = path.join(currentOutput, '知客-6.0.1-WinUI桌面版-bundle.zip');
+  const bundleZip = path.join(currentOutput, `知客-${version}-WinUI桌面版-bundle.zip`);
   if (fs.existsSync(bundleZip)) {
     const listing = spawnSync('tar', ['-tf', bundleZip], { encoding: 'utf8', windowsHide: true });
     assert.equal(listing.status, 0, `unable to inspect WinUI bundle: ${listing.stderr || 'tar failed'}`);

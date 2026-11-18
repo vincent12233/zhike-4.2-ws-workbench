@@ -1,0 +1,5 @@
+{
+  "suite": "isolated-edge-transport",
+  "passed": 4,
+  "realBrowserAccepted": false
+}

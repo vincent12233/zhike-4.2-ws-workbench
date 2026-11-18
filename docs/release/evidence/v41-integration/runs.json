@@ -1,0 +1,35 @@
+{
+  "runner": "resources/app/node.exe scripts/run-tests.cjs all",
+  "testRuns": [
+    {
+      "round": "r1",
+      "commit": "dbc3709",
+      "checks": 292,
+      "passed": 289,
+      "failed": 3,
+      "exitCode": 1,
+      "log": "r1/full-regression.log",
+      "exit": "r1/full-regression.exit"
+    },
+    {
+      "round": "r2",
+      "commit": "906bb61",
+      "checks": 292,
+      "passed": 289,
+      "failed": 3,
+      "exitCode": 1,
+      "log": "r2/full-regression-final.log",
+      "exit": "r2/full-regression-final.exit"
+    },
+    {
+      "round": "r3",
+      "commit": "88cf98b",
+      "checks": 293,
+      "passed": 292,
+      "failed": 1,
+      "exitCode": 1,
+      "log": "r3/full-regression-r3.log",
+      "exit": "r3/full-regression-r3.exit"
+    }
+  ]
+}

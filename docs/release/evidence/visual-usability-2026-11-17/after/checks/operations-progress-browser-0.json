@@ -1,0 +1,247 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794915332094-83a1e58f-eeac-4802-a3ec-049b67af6c3e",
+  "mode": "real-edge-synthetic-layout",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Passed",
+  "timeoutMs": 30000,
+  "launchedAt": "2026-11-17T11:35:32.094Z",
+  "events": [
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 800
+    },
+    {
+      "event": "cdp-readiness-wait",
+      "elapsedMs": 801,
+      "code": "ENOENT"
+    },
+    {
+      "event": "cdp-ready",
+      "elapsedMs": 3082
+    },
+    {
+      "event": "owned-target-created",
+      "elapsedMs": 4015
+    },
+    {
+      "event": "owned-session-attached",
+      "elapsedMs": 4024
+    },
+    {
+      "event": "viewport-configured",
+      "elapsedMs": 5338,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "event": "navigation-started",
+      "elapsedMs": 5341
+    },
+    {
+      "event": "viewport-verified",
+      "elapsedMs": 11919,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "event": "result-verified",
+      "elapsedMs": 11922,
+      "cases": 1
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 12583
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 12583
+    },
+    {
+      "event": "owned-session-detached",
+      "elapsedMs": 12601
+    },
+    {
+      "event": "owned-target-close-confirmed",
+      "elapsedMs": 12602
+    },
+    {
+      "event": "owned-browser-close-requested",
+      "elapsedMs": 12602
+    },
+    {
+      "event": "browser-close-acknowledged",
+      "elapsedMs": 12602,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "cdp-transport-close-requested",
+      "elapsedMs": 12602
+    },
+    {
+      "event": "cdp-transport-closed",
+      "elapsedMs": 12603,
+      "code": 1000
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 12604,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 13737,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 13747
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 13747
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 13747
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 13747
+    }
+  ],
+  "identities": [
+    {
+      "pid": 5356,
+      "startedTicks": "639305121320994901",
+      "startedUtc": "2026-11-17T11:35:32.0994901Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 12768,
+      "startedTicks": "639305121332722655",
+      "startedUtc": "2026-11-17T11:35:33.2722655Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 34108,
+      "startedTicks": "639305121332789779",
+      "startedUtc": "2026-11-17T11:35:33.2789779Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 31008,
+      "startedTicks": "639305121334784612",
+      "startedUtc": "2026-11-17T11:35:33.4784612Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 23576,
+      "startedTicks": "639305121437412270",
+      "startedUtc": "2026-11-17T11:35:43.7412270Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 10404,
+      "startedTicks": "639305121417302991",
+      "startedUtc": "2026-11-17T11:35:41.7302991Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 33428,
+      "startedTicks": "639305121371208563",
+      "startedUtc": "2026-11-17T11:35:37.1208563Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 30408,
+      "startedTicks": "639305121370750949",
+      "startedUtc": "2026-11-17T11:35:37.0750949Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 6692,
+      "startedTicks": "639305121370740525",
+      "startedUtc": "2026-11-17T11:35:37.0740525Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 33364,
+      "startedTicks": "639305121370639210",
+      "startedUtc": "2026-11-17T11:35:37.0639210Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 23040,
+      "startedTicks": "639305121427559467",
+      "startedUtc": "2026-11-17T11:35:42.7559467Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 21188,
+      "startedTicks": "639305121370512279",
+      "startedUtc": "2026-11-17T11:35:37.0512279Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 17440,
+      "startedTicks": "639305121437514284",
+      "startedUtc": "2026-11-17T11:35:43.7514284Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 16612,
+      "startedTicks": "639305121370607105",
+      "startedUtc": "2026-11-17T11:35:37.0607105Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 29324,
+      "startedTicks": "639305121367364010",
+      "startedUtc": "2026-11-17T11:35:36.7364010Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 14580,
+      "startedTicks": "639305121400287138",
+      "startedUtc": "2026-11-17T11:35:40.0287138Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 25568,
+      "startedTicks": "639305121417558325",
+      "startedUtc": "2026-11-17T11:35:41.7558325Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "pid": 5356,
+  "profile": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s1-main-style-zjQ1JM\\edge-profile-f6430204-03cb-46d2-9faa-4ffd3b4b8eba",
+  "resourceReleaseOrder": "owned-session-target-browser",
+  "devToolsReadiness": {
+    "polls": 42,
+    "enoent": 41,
+    "ebusy": 0,
+    "partial": 0
+  },
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "resultCases": 1,
+  "resultBytes": 7105,
+  "resultSha256": "b2ded5e2ab2a0b37a6b5d89cc2ec623ef71d2ed91f6efedbe3cf35239db3fdfe",
+  "resultFile": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-usability\\main-visual\\1794915332094-83a1e58f-eeac-4802-a3ec-049b67af6c3e.result.json",
+  "resultReady": true,
+  "remainingIdentities": [],
+  "elapsedMs": 14244,
+  "stdoutBytes": 0,
+  "stderrBytes": 772
+}

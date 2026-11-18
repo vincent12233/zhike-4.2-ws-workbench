@@ -1,0 +1,414 @@
+Window: "知客 Stage 5.1 · ISOLATED 验收", App: Zhike.Stage51.Acceptance.exe.
+	0 window (窗口) 知客 Stage 5.1 · ISOLATED 验收 Secondary Actions: Raise
+		1 pane (窗格) Non Client Input Sink Window
+		2 pane (窗格) AppWindow Custom Title Bar
+			3 button (按钮) Minimize ID: Minimize
+			403 button (按钮) Restore ID: Restore
+			5 button (按钮) Close ID: Close
+		6 pane (窗格)
+			7 pane (窗格)
+				14 pane (窗格)
+			15 pane (窗格) 知客 6.0 · Horizon Atelier
+				16 pane (窗格) (disabled)
+				17 pane (区域) 知客 6.0 · Horizon Atelier - Web 内容
+					18 pane (区域)
+						19 pane (区域)
+						20 pane (区域)
+							21 pane (区域)
+								22 pane (区域)
+								23 pane (区域)
+									24 pane (区域)
+										25 pane (区域)
+											26 pane (区域)
+												27 pane (区域)
+												31 document (文档) 知客 6.0 · Horizon Atelier Value: <isolated-url> ID: RootWebArea
+													32 group (补充) ID: sidebar
+														387 text (文本) 知客 6.0
+														388 text (文本) Horizon Atelier
+														35 button (按钮) 收起导航 Description: 收起导航 ID: collapseNav
+															36 image (图形)
+														389 button (按钮) 设置工作区资料 Description: 设置工作区资料 ID: workspaceSwitch
+															390 image (图形)
+														39 group (导航) ID: mainNav
+															391 text (文本) 工作
+															41 button (按钮) 今日工作台 Description: 今日工作台
+																42 image (图形)
+															43 button (按钮) 快速录入 Description: 快速录入
+																44 image (图形)
+															45 button (按钮) 任务中心 Description: 任务中心
+																46 image (图形)
+															47 button (按钮) 阶段看板 Description: 阶段看板
+																48 image (图形)
+															392 text (文本) 客户
+															50 button (按钮) 客户中心 Description: 客户中心
+																51 image (图形)
+															52 button (按钮) 分类视图 Description: 分类视图
+																53 image (图形)
+															54 button (按钮) 热聊管理 Description: 热聊管理
+																55 image (图形)
+															56 button (按钮) 群组管理 Description: 群组管理
+																57 image (图形)
+															58 button (按钮) VIP 管理 Description: VIP 管理
+																59 image (图形)
+															393 text (文本) 业务数据
+															61 button (按钮) 跟票管理 Description: 跟票管理
+																62 image (图形)
+															63 button (按钮) 报名统计 Description: 报名统计
+																64 image (图形)
+															65 button (按钮) 入金管理 Description: 入金管理
+																66 image (图形)
+															67 button (按钮) 统计分析 Description: 统计分析
+																68 image (图形)
+															394 text (文本) 系统管理
+															70 button (按钮) WS 工作台 Description: WS 工作台 ID: wsWorkbenchNav
+																71 image (图形)
+															72 button (按钮) GPT 运营助手 Description: GPT 运营助手 ID: gptAssistantNav
+																73 image (图形)
+															74 button (按钮) 本地自动化 Description: 本地自动化
+																75 image (图形)
+															76 button (按钮) 数据治理 Description: 数据治理
+																77 image (图形)
+															78 button (按钮) 数据中心 Description: 数据中心
+																79 image (图形)
+															80 button (按钮) 操作记录 Description: 操作记录
+																81 image (图形)
+															82 button (按钮) 回收站 Description: 回收站
+																83 image (图形)
+															84 button (按钮) 系统设置 Description: 系统设置
+																85 image (图形)
+															86 button (按钮) 手机号登记 Description: 手机号登记
+																87 image (图形)
+														424 text (文本) DB
+														89 image (图形)
+														396 text (文本) 本机存储正常
+														397 text (文本) SQLite · 本机服务已启动
+														92 button (按钮) 管理本地管理员头像 Description: 管理本地管理员头像
+															398 image (图形)
+													94 group (主要)
+														95 group (章节标题)
+															96 group (导航) 工作台切换
+																97 button (切换按钮) 知客工作台
+																	98 image (图形)
+																	99 text (文本) 知客工作台
+																100 button (切换按钮) WS 工作台
+																	101 image (图形)
+																	102 text (文本) WS 工作台
+															108 button (按钮) 搜索客户、号码、群编号Ctrl K ID: globalSearch
+																109 image (图形)
+															112 button (按钮) 快捷键与使用帮助 Description: 快捷键与使用帮助 ID: shortcutButton
+															113 button (按钮) 外观偏好 Description: 外观偏好 ID: appearanceButton
+																114 image (图形)
+															115 button (按钮) 立即备份 Description: 立即备份 ID: backupButton
+																116 image (图形)
+															119 button (按钮) 本地提醒 Description: 本地提醒 ID: notificationButton
+																120 image (图形)
+															121 button (按钮) 管理本地管理员头像 Description: 管理本地管理员头像
+														128 group (组) ID: viewContainer
+															278 group (区域) 数字地平线 · 今日工作台
+																279 text (文本) HORIZON ATELIER PRO · 数字地平线
+																280 text (标题) 今日工作台
+																281 text (文本) 本地客户运营概览 · 今天先处理最重要的事
+																282 button (按钮) 自定义首页 ID: homeLayoutButton
+																283 text (time)
+																	284 text (文本) 2026-11-18
+																285 text (文本) 今日待跟进 0 位
+																286 status bar (状态)
+																	287 text (文本) 范围：全局客户主档与既有业务记录 · 本机业务数据 · 本机业务读取时间：
+																	288 text (time)
+																		289 text (文本) 2026/11/18 02:53:10
+															290 group (组) 业务关键指标
+																291 text (文本) 今日进群
+																292 text (文本) 0
+																293 text (文本) 按客户进群事件
+																294 text (文本) 本周报名
+																295 text (文本) 0
+																296 text (文本) 周一至今日
+																297 text (文本) 本周入金
+																298 text (文本) ¥0
+																299 text (文本) 周一至今日 · 含待确认
+																300 text (文本) 今日待跟进
+																301 text (文本) 0
+																302 text (文本) 包含逾期客户
+																303 text (文本) 高价值待安排
+																304 text (文本) 0
+																305 text (文本) 本地CRM规则
+																306 text (文本) 档案待补齐
+																307 text (文本) 2
+																308 text (文本) 姓名、地区或职业有缺口
+															309 text (文本) 智能客户运营
+															310 text (标题) AI 跟进流域
+															311 text (文本) 基于客户动态与业务进展，智能生成跟进优先级与下一步动作
+															312 text (文本) 当前无 AI 跟进提醒
+															313 group (组) 客户跟进流程
+																314 image (图形)
+																315 text (文本) 线索识别
+																316 text (文本) 捕捉新增机会
+																317 image (图形)
+																318 text (文本) 意向评估
+																319 text (文本) 动态评估意向
+																320 image (图形)
+																321 text (文本) 跟进建议
+																322 text (文本) 生成优先动作
+																323 image (图形)
+																324 text (文本) 任务安排
+																325 text (文本) 创建跟进计划
+																326 image (图形)
+																327 text (文本) 进度追踪
+																328 text (文本) 持续更新状态
+															329 text (文本) 当前没有可展示的优先客户。AI 完成有效聊天分析后会自动更新。
+															330 text (文本) 资金实力
+															331 text (文本) 55%
+															332 text (文本) 聊天粘度
+															333 text (文本) 45%
+															334 text (文本) 投资经验仅补充档案，不计入提醒权重
+															335 image (图形)
+															336 text (文本) 客户行动洞察
+															337 text (文本) 暂无优先跟进客户。完成聊天分析后，这里会呈现有依据的行动建议。
+															338 image (图形)
+															339 text (文本) 重点跟进
+															340 text (文本) 按真实聊天与客户动态排序
+															341 image (图形)
+															342 text (文本) 建议排期
+															343 text (文本) 结合意向与进度安排时间
+															344 image (图形)
+															345 text (文本) 沟通提醒
+															346 text (文本) 避免重复话题和机械问候
+															347 image (图形)
+															348 text (文本) 风险关注
+															349 text (文本) 识别需进一步核实的信息
+															350 button (按钮) 查看任务中心
+															351 group (组) 业务趋势与客户计划概况 ID: homeDashboardGrid
+																352 text (标题) 最近业务动态
+																	353 image (图形)
+																354 button (按钮) 全部动态 →
+																425 text (文本) ● ● ●
+																356 text (文本) 暂无业务动态，新增或跟进后显示。
+																357 text (标题) 近7日趋势
+																	358 image (图形)
+																426 text (文本) ● ● ●
+																360 group (区域) 近7日业务活动 ID: metrics-home-seven-day-activity-trend
+																	361 group (章节标题)
+																		362 text (标题) 近7日业务活动 ID: metrics-home-seven-day-activity-trend-heading
+																		363 text (文本) 全局客户主档与既有业务记录
+																	364 status bar (状态)
+																		365 text (文本) 当前范围暂无图表数据。
+																	366 list (列表)
+																		367 list item (列表项目) 新增客户按登记日期；跟进按记录日期，二者不是转化漏斗。
+																		368 list item (列表项目) 本周指标为周一至今日，与近7日趋势窗口不同。
+																427 text (文本) 7D TREND
+																370 text (标题) 客户计划概况
+																	371 image (图形)
+																428 text (文本) ● ● ●
+																373 button (按钮) 待跟进客户0逾期 0
+																374 button (按钮) 档案待补齐2有效客户 2
+																375 button (按钮) 今日进退群0 / 0进群 / 退群
+																376 button (按钮) 报名后未跟进0已报名 0
+															377 text (标题) AI 客户跟进雷达
+																378 image (图形)
+															379 button (按钮) 进入任务中心 →
+															380 text (文本) 当前没有由最新有效聊天分析触发的待跟进提醒。
+															381 group (详细信息)
+																382 button (开合三角标记) 完整业务数据与操作
+																	383 text (文本) 完整业务数据与操作
+														122 group (章节页脚)
+															233 text (文本) 本机运行 · 数据仅保存在本机
+															384 text (文本) 本地客户库 · 2 位客户
+															125 text (文本) 本地自动快照 · 保留数量可配置
+													126 group (组) ID: toastRegion
+								28 pane (区域)
+						29 pane (区域)
+		8 title bar (标题栏) (settable, string) Value: 知客 Stage 5.1 · ISOLATED 验收
+			9 menu bar (菜单栏) 系统 ID: MenuBar
+				10 menu item (菜单项) 系统
+			11 button (按钮) 最小化
+			12 button (按钮) 还原
+			13 button (按钮) 关闭
+
+Document text: ```
+知客 6.0
+Horizon Atelier
+￼
+本地客户库
+离线数据空间
+￼
+工作
+￼
+今日工作台
+￼
+快速录入
+￼
+任务中心
+￼
+阶段看板
+客户
+￼
+客户中心
+2
+￼
+分类视图
+￼
+热聊管理
+0
+￼
+群组管理
+￼
+VIP 管理
+0
+业务数据
+￼
+跟票管理
+0
+￼
+报名统计
+0
+￼
+入金管理
+￼
+统计分析
+系统管理
+￼
+WS 工作台
+￼
+GPT 运营助手
+￼
+本地自动化
+￼
+数据治理
+0
+￼
+数据中心
+￼
+操作记录
+￼
+回收站
+￼
+系统设置
+￼
+手机号登记
+0
+DB
+￼
+本机存储正常
+SQLite · 本机服务已启动
+本
+本地管理员
+个人工作区
+￼
+￼
+知客工作台
+￼
+WS 工作台
+￼
+搜索客户、号码、群编号
+Ctrl K
+?
+￼
+￼
+￼
+￼
+本
+HORIZON ATELIER PRO · 数字地平线
+今日工作台
+本地客户运营概览 · 今天先处理最重要的事
+自定义首页
+2026-11-18
+今日待跟进 0 位
+范围：全局客户主档与既有业务记录 · 本机业务数据 · 本机业务读取时间：2026/11/18 02:53:10
+今日进群
+0
+按客户进群事件
+本周报名
+0
+周一至今日
+本周入金
+¥0
+周一至今日 · 含待确认
+今日待跟进
+0
+包含逾期客户
+高价值待安排
+0
+本地CRM规则
+档案待补齐
+2
+姓名、地区或职业有缺口
+智能客户运营
+AI 跟进流域
+基于客户动态与业务进展，智能生成跟进优先级与下一步动作
+当前无 AI 跟进提醒
+￼
+线索识别
+捕捉新增机会
+￼
+意向评估
+动态评估意向
+￼
+跟进建议
+生成优先动作
+￼
+任务安排
+创建跟进计划
+￼
+进度追踪
+持续更新状态
+当前没有可展示的优先客户。AI 完成有效聊天分析后会自动更新。
+￼
+资金实力 55%
+￼
+聊天粘度 45%
+投资经验仅补充档案，不计入提醒权重
+￼
+客户行动洞察
+暂无优先跟进客户。完成聊天分析后，这里会呈现有依据的行动建议。
+￼
+重点跟进
+按真实聊天与客户动态排序
+￼
+建议排期
+结合意向与进度安排时间
+￼
+沟通提醒
+避免重复话题和机械问候
+￼
+风险关注
+识别需进一步核实的信息
+查看任务中心
+￼
+ 最近业务动态
+全部动态 →
+● ● ●
+暂无业务动态，新增或跟进后显示。
+￼
+ 近7日趋势
+● ● ●
+近7日业务活动
+全局客户主档与既有业务记录
+当前范围暂无图表数据。
+• 新增客户按登记日期；跟进按记录日期，二者不是转化漏斗。
+• 本周指标为周一至今日，与近7日趋势窗口不同。
+7D TREND
+￼
+ 客户计划概况
+● ● ●
+待跟进客户
+0
+逾期 0
+档案待补齐
+2
+有效客户 2
+今日进退群
+0 / 0
+进群 / 退群
+报名后未跟进
+0
+已报名 0
+￼
+ AI 客户跟进雷达
+进入任务中心 →
+当前没有由最新有效聊天分析触发的待跟进提醒。
+完整业务数据与操作
+本机运行 · 数据仅保存在本机
+本地客户库 · 2 位客户
+本地自动快照 · 保留数量可配置
+￼
+```

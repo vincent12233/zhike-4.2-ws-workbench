@@ -121,6 +121,56 @@
     }
   }
 
+  function taskCompletionChart(open, completed, dismissed) {
+    const total = open + completed;
+    const render = window.ZhikeMetricsCharts?.renderProgress;
+    if (typeof render !== 'function') return '<div class="panel-note" role="status">任务完成率图表模块未加载；现有任务列表与操作仍可使用。</div>';
+    return render({ id: 'operations-task-completion', title: '任务完成率', current: completed, total,
+      status: total ? 'available' : 'empty', scopeLabel: '全量现有任务 · 不随列表筛选变化',
+      notes: [total ? `已完成 ${completed} 项 /（未完成 ${open} 项 + 已完成 ${completed} 项）。` : '未完成与已完成合计为 0，暂无可计算的完成率。',
+        `已忽略 ${dismissed} 项不计入分母；完成、未完成与忽略沿用任务中心现有状态判定。`],
+    });
+  }
+
+  // A read-only count of recorded entries, not reconstructed customer history.
+  // Keep the board's active-customer scope and count each existing entry once.
+  function recordedStageActivity(customers, asOfDay, observedAt) {
+    const [year, month, day] = asOfDay.split('-').map(Number);
+    const dateKey = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const days = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(year, month - 1, day - 6 + index, 12);
+      return { date: dateKey(date), value: 0 };
+    });
+    const byDay = new Map(days.map(row => [row.date, row]));
+    let total = 0, invalid = 0, outsideWindow = 0;
+    const timestamp = /^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,9})?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/;
+    for (const customer of customers) for (const entry of Array.isArray(customer.phaseHistory) ? customer.phaseHistory : []) {
+      if (!entry || typeof entry.from !== 'string' || !entry.from.trim() || typeof entry.to !== 'string' || !entry.to.trim()
+          || entry.from === entry.to || typeof entry.at !== 'string' || !timestamp.test(entry.at) || !core.validDate(entry.at.slice(0, 10))) {
+        invalid++; continue;
+      }
+      const time = Date.parse(entry.at);
+      if (!Number.isFinite(time)) { invalid++; continue; }
+      const bucket = byDay.get(dateKey(new Date(time)));
+      if (!bucket || time > observedAt) { outsideWindow++; continue; }
+      bucket.value++; total++;
+    }
+    return { total, invalid, outsideWindow, from: days[0].date, to: asOfDay,
+      items: total ? days.map(row => ({ label: row.date.slice(5), value: row.value })) : [] };
+  }
+
+  function recordedStageChart(customers, asOfDay) {
+    const activity = recordedStageActivity(customers, asOfDay, Date.now());
+    const render = window.ZhikeMetricsCharts?.renderBars;
+    const chart = typeof render === 'function' ? render({ id: 'stage-recorded-activity', title: '近7天已记录流转', items: activity.items,
+      status: activity.total ? 'available' : 'empty', scopeLabel: `${activity.from} 至 ${activity.to} · 当前有效客户 · 单位：条`,
+      notes: [activity.total ? '仅统计现有阶段历史中时间与来源、目标阶段均可验证的条目；不代表完整历史，按条目计数，非去重人数。' : '近7天暂无可验证的阶段流转记录；不根据当前客户阶段推造历史或基线。',
+        '按本机日期归入日期桶；有记录时，无条目的日期表示现存已记录流转为 0，不代表当日没有实际流转。',
+        `未纳入：不完整或无效条目 ${activity.invalid} 条，窗口外或未来时间 ${activity.outsideWindow} 条。`],
+    }) : '<p class="panel-note" role="status">阶段记录图表模块未加载；现有阶段看板仍可使用。</p>';
+    return `<details class="panel ops6-stage-history" data-ops-stage-history><summary>近7天已记录流转 · ${activity.total ? `${activity.total} 条` : '暂无记录'}</summary>${chart}</details>`;
+  }
+
   function taskPage(view) {
     const all = tasks();
     const currentDay = today();
@@ -148,14 +198,26 @@
     const primaryCustomer = primaryTask ? customerIndex.get(String(primaryTask.customerId || '')) : null;
     const statusButton = (key, label) => `<button class="btn small ${status === key ? 'primary active' : ''}" aria-pressed="${status === key}" data-ops-filter="${key}">${label}</button>`;
     const bucketButton = (key, label) => `<button class="btn small ${bucket === key ? 'primary active' : ''}" aria-pressed="${bucket === key}" data-ops-bucket="${key}">${label}</button>`;
+    const stageNames = [...new Set([...(host.state.settings?.optionLists?.phases || ['新客户', '潜在客户', '意向客户', '高意向', '成交客户', '暂停跟进']), ...(host.state.customers || []).map(customer => String(customer.phase || '未设置'))].filter(Boolean))];
+    const stageCounts = new Map(stageNames.map(name => [name, 0]));
+    for (const customer of host.state.customers || []) if (!customer.deleted) stageCounts.set(String(customer.phase || '未设置'), (stageCounts.get(String(customer.phase || '未设置')) || 0) + 1);
+    const stagePreview = stageNames.map((name, index) => `<button type="button" data-ops-stage-open><span class="ops6-stage-dot" style="--ops6-stage-hue:${(index * 47 + 175) % 360}"></span><strong>${esc(name)}</strong><small>${stageCounts.get(name) || 0} 位客户</small></button>`).join('');
+    const topTab = bucket === 'overdue' ? 'overdue' : bucket === 'today' ? 'today' : status === 'done' ? 'done' : 'open';
+    const primaryAi = Boolean(primaryTask?.aiGenerated);
+    const insightTitle = primaryAi ? 'AI 跟进建议' : '任务详情';
+    const insightSource = primaryTask ? (primaryAi ? 'AI 生成' : '人工创建') : '未选择任务';
+    // The existing task contract provides a due date, not an inferred contact
+    // window. Keep provenance and missing advice explicit for both task types.
+    const adviceRows = !primaryTask ? [] : primaryAi
+      ? [['跟进原因', primaryTask.scoreReason || primaryTask.qualificationReason || primaryTask.note || '未提供'], ['建议话题', primaryTask.suggestedOpener || primaryTask.objective || '未提供'], ['避免重复', Array.isArray(primaryTask.avoidTopics) && primaryTask.avoidTopics.length ? primaryTask.avoidTopics.join('、') : '未提供'], ['截止日期', primaryTask.due || '未设置']]
+      : [['任务备注', primaryTask.note || '未填写'], ['任务目标', primaryTask.objective || '未填写'], ['截止日期', primaryTask.due || '未设置']];
 
     view.innerHTML = `<div class="page-heading ops6-page-heading"><div><span class="ops6-eyebrow">ACTION ORCHESTRATION</span><h1 class="page-title">任务中心</h1><p class="page-subtitle">统一处理人工任务和 AI 跟进提醒；完成结果实时回写客户档案、首页和统计。</p></div><div class="heading-actions"><button class="btn primary" data-ops="new">新建任务</button></div></div>
-      <section class="ops6-command-deck" aria-label="任务执行控制面">
-        <div class="ops6-command-copy"><span>今日执行焦点</span><strong>${primaryTask ? esc(primaryTask.title) : '当前没有待处理任务'}</strong><p>${primaryTask ? esc(primaryTask.objective || primaryTask.note || '按优先级开始处理，并在完成后登记实际结果。') : '可以新建人工任务；WS 与 AI 产生的跟进提醒也会自动进入这里。'}</p>${primaryTask ? `<div class="ops6-primary-actions"><button class="btn small primary" data-ops-focus="${esc(primaryTask.id)}">定位首要任务</button>${primaryCustomer ? `<button class="btn small" data-ops-customer="${esc(primaryCustomer.id)}">打开客户档案</button>` : ''}</div>` : '<button class="btn small primary" data-ops="new">新建第一项任务</button>'}</div>
-        <div class="ops6-signal-grid"><div><span>待处理</span><strong>${open}</strong><small>全部未关闭任务</small></div><div class="urgent"><span>今日 / 逾期</span><strong>${dueToday} / ${overdue}</strong><small>优先处理时间风险</small></div><div><span>AI 跟进</span><strong>${aiOpen}</strong><small>由聊天分析生成</small></div><div><span>已完成 / 已忽略</span><strong>${completed} / ${dismissed}</strong><small>统计口径独立</small></div></div>
-        <details class="ops6-command-rule"><summary>执行链路</summary><p>打开客户 → 实际跟进 → 登记结果 → 更新档案与下次计划。</p></details>
-      </section>
+      <nav class="ops6-task-tabs" aria-label="任务状态"><button type="button" class="${topTab === 'today' ? 'active' : ''}" data-ops-top-tab="today">今日任务 <span>${dueToday}</span></button><button type="button" class="${topTab === 'open' ? 'active' : ''}" data-ops-top-tab="open">待处理 <span>${open}</span></button><button type="button" class="${topTab === 'overdue' ? 'active' : ''}" data-ops-top-tab="overdue">已逾期 <span>${overdue}</span></button><button type="button" class="${topTab === 'done' ? 'active' : ''}" data-ops-top-tab="done">已完成 <span>${completed}</span></button><button type="button" data-ops-stage-open>阶段看板 →</button><small>已完成 / 已忽略：${completed} / ${dismissed} · 来源：WS 分析、人工创建、报名、跟票、入金与系统规则</small></nav>
+      <section class="panel ops6-task-completion" aria-label="全量任务完成率">${taskCompletionChart(open, completed, dismissed)}</section>
+      <div class="ops6-task-shell"><div class="ops6-task-main">
       <section class="panel ops6-task-workspace">
+        <div class="ops6-queue-heading"><div><span>✧</span><strong>AI 优先跟进队列</strong><small>${aiOpen} 项 AI 跟进 · ${open} 项未完成</small></div><span>资金实力 55% + 聊天粘度 45%</span></div>
         <div class="table-toolbar">
           <label class="input-search"><input data-ops-search placeholder="搜索客户、号码、任务、话术或评分依据" value="${esc(query)}"></label>
           ${statusButton('', '全部')}${statusButton('open', '未完成')}${statusButton('done', '已完成')}${statusButton('dismissed', '已忽略')}
@@ -183,7 +245,8 @@
           </article>`;
         }).join('') || '<div class="ops-empty ops6-empty"><strong>当前筛选没有任务</strong><span>调整筛选条件，或新建一项人工任务。</span><button class="btn small primary" data-ops="new">新建任务</button></div>'}</div>
         ${visible.length < filtered.length ? `<div class="table-footer"><span>已显示 ${visible.length} / ${filtered.length} 条</span><button class="btn small" data-ops="load-more">加载更多</button></div>` : filtered.length ? `<div class="table-footer"><span>已显示全部 ${filtered.length} 条</span></div>` : ''}
-      </section>`;
+      </section><section class="ops6-task-board" aria-label="客户阶段看板预览"><div class="ops6-task-board-heading"><div><span>◇</span><strong>阶段看板 · 客户流转</strong><small>按客户中心现有阶段实时显示</small></div><button type="button" class="btn small" data-ops-stage-open>打开完整看板</button></div><div class="ops6-task-stage-list">${stagePreview || '<span class="ops6-stage-empty">系统设置中尚未配置客户阶段</span>'}</div></section></div>
+      <aside class="ops6-task-insight"><div class="ops6-task-insight-head"><span>✦</span><strong>${insightTitle}</strong><small>${insightSource}</small></div>${primaryTask ? `<div class="ops6-task-insight-title"><span>${primaryAi ? 'AI 跟进' : '人工任务'}</span><strong>${esc(primaryTask.title)}</strong></div><div class="ops6-task-insight-rows">${adviceRows.map(([label,value])=>`<div><span>${label}</span><strong>${esc(value)}</strong></div>`).join('')}</div><div class="ops6-task-insight-actions"><button type="button" class="btn primary" data-ops-focus="${esc(primaryTask.id)}">定位任务</button>${primaryCustomer ? `<button type="button" class="btn" data-ops-customer="${esc(primaryCustomer.id)}">查看档案</button>` : ''}</div>` : '<div class="ops6-task-insight-empty"><strong>当前没有待处理任务</strong><p>新增人工任务，或在 WS 分析形成跟进建议后查看。</p><button class="btn primary" data-ops="new">新建任务</button></div>'}</aside></div>`;
 
     view.querySelector('[data-ops-search]')?.addEventListener('input', event => {
       host.state.opsTaskQuery = event.target.value;
@@ -198,6 +261,14 @@
       }, 160);
     });
     view.querySelectorAll('[data-ops="new"]').forEach(button => button.addEventListener('click', newTask));
+    view.querySelectorAll('[data-ops-top-tab]').forEach(button => button.addEventListener('click', () => {
+      const tab = button.dataset.opsTopTab;
+      host.state.opsTaskFilter = tab === 'done' ? 'done' : tab === 'open' ? 'open' : '';
+      host.state.opsTaskBucket = tab === 'today' || tab === 'overdue' ? tab : '';
+      host.state.opsTaskLimit = 50;
+      render(true);
+    }));
+    view.querySelectorAll('[data-ops-stage-open]').forEach(button => button.addEventListener('click', () => document.querySelector('.nav-item[data-view="stage-board"]')?.click()));
     view.querySelector('[data-ops-focus]')?.addEventListener('click', event => {
       const target = [...view.querySelectorAll('[data-ops-task-id]')].find(item => item.dataset.opsTaskId === event.currentTarget.dataset.opsFocus);
       target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -223,11 +294,11 @@
     const assigned = allCustomers.filter(customer => customer.assistant && customer.assistant !== '未分配').length;
     const focusIndex = columns.reduce((best, column, index) => column.customers.length > columns[best]?.customers.length ? index : best, 0);
     const focusColumn = columns[focusIndex];
-    const stageFlow = columns.map((column, index) => `<button data-stage-index="${index}" style="--ops-stage-share:${Math.max(4, Math.round(column.customers.length / Math.max(1, total) * 100))}%"><span>${esc(column.name)}</span><strong>${column.customers.length}</strong><i></i></button>`).join('');
+    const stageFlow = columns.map((column, index) => `<button data-stage-index="${index}" style="--ops-stage-share:${total > 0 ? Math.round(column.customers.length / total * 100) : 0}%"><span>${esc(column.name)}</span><strong>${column.customers.length}</strong><i></i></button>`).join('');
     const boardColumns = columns.map((column, index) => `<section class="ops-column" data-stage-name="${esc(column.name)}"><button class="ops-stage-open" data-stage-index="${index}"><span><small>STAGE ${String(index + 1).padStart(2, '0')}</small><strong>${esc(column.name)}</strong></span><em>${column.customers.length} 位 · 查看全部 →</em></button><div class="ops-cards">${column.customers.slice(0, 80).map(customer => {const badges=[customer.hot?'热聊':'',customer.vipNumber?'VIP':'',customer.qualification||''].filter(Boolean).slice(0,2);return `<button type="button" class="ops-card ops-customer-open" data-ops-customer="${esc(customer.id)}"><header><strong>${esc(customer.name || '未命名客户')}</strong><span>${esc(customer.source || '未分类')}</span></header>${badges.length?`<div class="ops6-card-tags">${badges.map(badge=>`<i>${esc(badge)}</i>`).join('')}</div>`:''}<div class="ops-card-meta"><span>${esc(customer.assistant || '未分配')}</span><span class="${customer.due && customer.due < todayKey ? 'overdue' : ''}">${esc(customer.due || '未排期')}</span></div><span class="ops-card-link">打开统一客户档案 →</span></button>`;}).join('') || '<div class="ops-empty ops6-stage-empty"><strong>此阶段暂无客户</strong><span>客户阶段更新后会自动出现在这里。</span></div>'}</div>${column.customers.length > 80 ? `<button class="ops6-column-more" data-stage-index="${index}">还有 ${column.customers.length - 80} 位 · 查看完整名单</button>` : ''}</section>`).join('');
     view.innerHTML = `<div class="page-heading ops6-page-heading"><div><span class="ops6-eyebrow">CUSTOMER JOURNEY BOARD</span><h1 class="page-title">客户阶段看板</h1><p class="page-subtitle">阶段保留现有业务规则；名单、客户档案和任务状态使用同一份实时数据。</p></div><div class="heading-actions"><button class="btn" data-stage-open-customers>打开客户中心</button></div></div>
       <section class="ops6-stage-command" aria-label="客户阶段控制面"><div class="ops6-stage-overview"><span>当前客户旅程</span><strong>${total} 位客户 · ${columns.length} 个阶段</strong><p>系统设置中的阶段名称直接驱动看板列；客户资料修改后立即重排，不生成副本。</p>${focusColumn ? `<button class="btn small primary" data-stage-index="${focusIndex}">查看主要阶段 · ${esc(focusColumn.name)}</button>` : ''}</div><div class="ops6-stage-stats"><div><span>已分配助理</span><strong>${assigned}</strong></div><div class="urgent"><span>逾期计划</span><strong>${overdue}</strong></div><div><span>尚未排期</span><strong>${withoutPlan}</strong></div></div><div class="ops6-stage-flow">${stageFlow}</div></section>
-      <div class="ops-board">${boardColumns}</div>`;
+      <div class="ops-board">${boardColumns}</div>${recordedStageChart(allCustomers, todayKey)}`;
     view.querySelectorAll('[data-stage-index]').forEach(button => button.addEventListener('click', () => {
       const column = columns[Number(button.dataset.stageIndex)];
       host.openModal(column.name + ' · 客户名单', column.customers.length + ' 位客户', column.customers.length ? '<div class="ops-stage-list">' + column.customers.map(customer => '<button class="btn ops-customer-open" data-ops-customer="' + esc(customer.id) + '">' + esc(customer.name || '未命名客户') + ' · ' + esc(customer.assistant || '未分配') + ' →</button>').join('') + '</div>' : '<div class="ops-empty">当前阶段暂无客户</div>', '<button class="btn" data-action="close-modal">关闭</button>');

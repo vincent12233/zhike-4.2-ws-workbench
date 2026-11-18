@@ -1,0 +1,14 @@
+{
+  "node": "v24.22.1",
+  "uv": "1.52.1",
+  "pid": 28556,
+  "status": "Passed",
+  "polls": 10,
+  "retainedHandleAliveBefore": true,
+  "retainedHandleAliveAfter": false,
+  "exitObservedAtHandleCheck": false,
+  "alreadyExitedTerminateReturned": false,
+  "exitCode": 0,
+  "signal": null,
+  "streamsClosed": true
+}

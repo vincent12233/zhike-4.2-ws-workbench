@@ -1,0 +1,32 @@
+[
+  {
+    "repeat": 2,
+    "exitCode": 0,
+    "errorCode": null,
+    "elapsedMs": 1485
+  },
+  {
+    "repeat": 3,
+    "exitCode": 0,
+    "errorCode": null,
+    "elapsedMs": 1464
+  },
+  {
+    "repeat": 4,
+    "exitCode": 0,
+    "errorCode": null,
+    "elapsedMs": 1601
+  },
+  {
+    "repeat": 5,
+    "exitCode": 0,
+    "errorCode": null,
+    "elapsedMs": 1848
+  },
+  {
+    "repeat": 6,
+    "exitCode": 0,
+    "errorCode": null,
+    "elapsedMs": 1535
+  }
+]

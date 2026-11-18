@@ -6,6 +6,7 @@ const { existsSync, mkdtempSync, rmSync } = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const wsCore = require('../resources/app/modules/ws-workbench-core.js');
+const { observeSidecarStartup, requestWithStartupDiagnostics } = require('./helpers/sidecar-startup-observer.cjs');
 
 const app = path.join(__dirname, '..', 'resources', 'app');
 const dataDir = mkdtempSync(path.join(os.tmpdir(), 'zhike-ws-ingest-'));
@@ -15,8 +16,9 @@ const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mj
   cwd: app,
   windowsHide: true,
   env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token, ZHIKE_PARENT_PID: String(process.pid), ZHIKE_STORAGE_MODE: 'local' },
-  stdio: 'ignore',
+  stdio: ['ignore', 'ignore', 'pipe'],
 });
+const startup = observeSidecarStartup(child, { secrets: [token], maxStderrBytes: 8192 });
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 const headers = { 'content-type': 'application/json', 'x-zhike-api-token': token, origin: `http://127.0.0.1:${port}` };
 async function stopSidecar() {
@@ -46,13 +48,10 @@ async function stopSidecar() {
   rmSync(dataDir, { recursive: true, force: true });
 }
 async function request(route, init = {}) {
-  for (let i = 0; i < 300; i += 1) {
-    try {
-      const response = await fetch(`http://127.0.0.1:${port}${route}`, { ...init, headers: { ...headers, ...(init.headers || {}) } });
-      return { response, body: await response.json().catch(() => ({})) };
-    } catch { await wait(50); }
-  }
-  throw new Error('isolated local sidecar did not start');
+  return requestWithStartupDiagnostics(async () => {
+    const response = await fetch(`http://127.0.0.1:${port}${route}`, { ...init, headers: { ...headers, ...(init.headers || {}) } });
+    return { response, body: await response.json().catch(() => ({})) };
+  }, startup, { attempts: 300, retryDelayMs: 50 });
 }
 
 (async () => {
@@ -215,8 +214,8 @@ async function request(route, init = {}) {
     const v3Analysis = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: directionConversationV3.id, result: { summary: '旧方向分析', confidence: 0.9, transcriptInfo: { sourceFingerprint: directionHashV3, directionVersion: 3 } } }) });
     let syncVersion = await request('/api/state/version');
     const v3Sync = await request('/api/ws/crm-sync', { method: 'POST', headers: { 'x-state-version': String(syncVersion.body.version) }, body: JSON.stringify({ conversationId: directionConversationV3.id, analysisId: v3Analysis.body.id }) });
-    assert.equal(v3Sync.response.status, 409, 'native v3 analysis must never write customer fields');
-    assert.equal(v3Sync.body.directionRecollectionRequired, true);
+    assert.equal(v3Sync.response.status, 422, 'native v3 analysis must never write customer fields');
+    assert.equal(v3Sync.body.code, 'WS_DIRECTION_UNVERIFIED');
 
     const correctedDirectionPayload = {
       ...legacyDirectionPayload,
@@ -300,8 +299,8 @@ async function request(route, init = {}) {
 
     const historyV2 = {
       protocol: 'zhike.ws.ingest.batch.v1', connectorId: 'desktop-webview2', accountId: 'default', capturedAt: '2026-11-13T11:00:00.000Z', scope: 'read-history',
-      checkpoints: [{ conversationType: 'direct', conversationKey: 'wa-history-versioned', displayName: '历史版本客户', coverage: 'read-history-full', historyLoaded: true, historyMessageCount: 1, lastMessageFingerprint: 'history-v2', cursor: 'history-v2', unreadCount: 0 }],
-      messages: [{ conversationType: 'direct', conversationKey: 'wa-history-versioned', externalMessageId: 'history-message-1', body: '第一条历史消息', direction: 'incoming', order: 1, sentAt: '2026-11-01T08:00:00.000Z', timestampText: '01/11/2026, 13:30', timestampSource: 'whatsapp-preamble' }],
+      checkpoints: [{ conversationType: 'direct', conversationKey: 'wa-history-versioned', displayName: '历史版本客户', coverage: 'read-history-full', historyLoaded: true, historyMessageCount: 1, lastMessageFingerprint: 'history-v2', cursor: 'history-v2', unreadCount: 0, directionVersion: 4, directionUnresolvedCount: 0 }],
+      messages: [{ conversationType: 'direct', conversationKey: 'wa-history-versioned', externalMessageId: 'history-message-1', body: '第一条历史消息', direction: 'incoming', directionSource: 'class-message-in', order: 1, sentAt: '2026-11-01T08:00:00.000Z', timestampText: '01/11/2026, 13:30', timestampSource: 'whatsapp-preamble' }],
     };
     assert.equal((await request('/api/ws/ingest/batch', { method: 'POST', body: JSON.stringify(historyV2) })).response.status, 200);
     const historyConversation = (await request('/api/ws/conversations?limit=50')).body.conversations.find(item => item.externalId === 'wa-history-versioned');
@@ -319,8 +318,8 @@ async function request(route, init = {}) {
     };
     await enqueue('old-queued-job', { sourceFingerprint: historyH1 });
     await enqueue('old-retryable-job', { sourceFingerprint: historyH1 });
-    await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'claim', accountId: 'default', jobId: 'old-retryable-job' }) });
-    await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'fail', accountId: 'default', jobId: 'old-retryable-job', error: '旧历史临时失败', retryable: true }) });
+    const retryClaim = await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'claim', accountId: 'default', jobId: 'old-retryable-job' }) });
+    await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'fail', accountId: 'default', jobId: 'old-retryable-job', leaseToken: retryClaim.body.job.leaseToken, error: '旧历史临时失败', retryable: true }) });
     await enqueue('old-running-job', { sourceFingerprint: historyH1 });
     await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'claim', accountId: 'default', jobId: 'old-running-job' }) });
     await enqueue('manual-no-fingerprint-job', { feature: 'manual-import' });
@@ -328,7 +327,7 @@ async function request(route, init = {}) {
     const historyV3 = structuredClone(historyV2);
     historyV3.capturedAt = '2026-11-13T11:05:00.000Z';
     historyV3.checkpoints[0] = { ...historyV3.checkpoints[0], historyMessageCount: 2, lastMessageFingerprint: 'history-v3', cursor: 'history-v3' };
-    historyV3.messages.push({ conversationType: 'direct', conversationKey: 'wa-history-versioned', externalMessageId: 'history-message-2', body: '第二条历史消息', direction: 'outgoing', order: 2, sentAt: '2026-11-02T09:00:00.000Z', timestampText: '02/11/2026, 14:30', timestampSource: 'whatsapp-preamble' });
+      historyV3.messages.push({ conversationType: 'direct', conversationKey: 'wa-history-versioned', externalMessageId: 'history-message-2', body: '第二条历史消息', direction: 'outgoing', directionSource: 'class-message-out', order: 2, sentAt: '2026-11-02T09:00:00.000Z', timestampText: '02/11/2026, 14:30', timestampSource: 'whatsapp-preamble' });
     assert.equal((await request('/api/ws/ingest/batch', { method: 'POST', body: JSON.stringify(historyV3) })).response.status, 200);
     const historyAfterV3 = (await request('/api/ws/conversations?limit=50')).body.conversations.find(item => item.externalId === 'wa-history-versioned');
     const historyH2 = historyAfterV3.data.historyFingerprint;

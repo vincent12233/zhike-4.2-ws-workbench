@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "visualReview": {
+    "checked": 16,
+    "result": "Passed for this synthetic capture selection",
+    "visibleIdentifiers": "Compared the displayed synthetic contact, group, member and CRM identifiers with the Stage 5.1, Stage 5.5B and S3 fixtures.",
+    "excluded": "No platform credentials, private connection file, access token, profile, SQLite data or accessibility transcript was archived."
+  },
+  "jpegReview": {
+    "checked": 16,
+    "app1ToApp15": 0,
+    "commentSegments": 0,
+    "app0": "JFIF only",
+    "trailingBytes": 0
+  },
+  "excludedCaptures": [
+    {
+      "source": "r2-31-stage-flow-chart-0.png",
+      "reason": "Chart is outside the captured window area."
+    },
+    {
+      "source": "r2-32-stage-flow-nonempty-1.png",
+      "reason": "The reviewed complete window is capture 0."
+    }
+  ]
+}

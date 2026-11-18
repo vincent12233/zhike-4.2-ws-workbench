@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794924549571-0dd8fc24-7f4d-4b85-b8a3-bed1f4cfda0e",
+  "mode": "controlled-node-nonzero-close",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 10000,
+  "launchedAt": "2026-11-17T14:09:09.571Z",
+  "events": [
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 535
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 535
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 535
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 535,
+      "acknowledgement": "stdin-request"
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 541
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 541
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 546,
+      "code": 9,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 546
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 546
+    }
+  ],
+  "identities": [
+    {
+      "pid": 35092,
+      "startedTicks": "639305213495795570",
+      "startedUtc": "2026-11-17T14:09:09.5795570Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 9,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "pid": 35092,
+  "resultReady": true,
+  "remainingIdentities": [],
+  "elapsedMs": 995,
+  "stdoutBytes": 37,
+  "stderrBytes": 0,
+  "failure": {
+    "code": "PROCESS_EXIT_NONZERO",
+    "phase": "process-exit",
+    "message": "Isolated process did not exit normally"
+  }
+}

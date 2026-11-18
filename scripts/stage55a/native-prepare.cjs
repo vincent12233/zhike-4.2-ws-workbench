@@ -1,0 +1,24 @@
+'use strict';
+// Opt-in native UI acceptance only. Never copy a data root or login profile.
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { randomUUID } = require('node:crypto');
+const { copyIsolatedAppFixture } = require('../../tests/helpers/isolated-app-fixture.cjs');
+const repo = path.resolve(__dirname, '../..');
+const suite = process.argv[2] || 'stage55a';
+assert.ok(['stage55a', 'stage55b'].includes(suite), 'Only explicitly supported isolated UI suites are allowed.');
+const output = path.join(repo, '.tools', suite + '-native');
+const binary = path.join(output, 'Zhike.Stage51.Acceptance.exe');
+assert.ok(process.argv.length <= 3);
+assert.ok(fs.existsSync(binary), 'Build Stage51IsolatedUi=true to the selected isolated output first.');
+assert.equal(fs.lstatSync(output).isSymbolicLink(), false);
+const resources = path.join(output, 'resources/app');
+copyIsolatedAppFixture(path.join(repo, 'resources/app'), resources);
+fs.copyFileSync(path.join(repo, 'resources/app/node.exe'), path.join(resources, 'node.exe'));
+assert.equal(fs.existsSync(path.join(resources, 'data')), false);
+const root = path.join(os.tmpdir(), 'zhike-stage51-native-' + randomUUID().replace(/-/g, ''));
+fs.mkdirSync(root);
+fs.writeFileSync(path.join(root, '.stage51-isolated'), 'zhike-stage51-isolated-ui-v1');
+console.log(JSON.stringify({ stage: suite === 'stage55b' ? '5.5B' : '5.5A', root, binary, productionOpened: false, wsNetwork: 'blocked', paidAiNetwork: 'blocked' }));

@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794939262876-74b4baa2-2584-4e00-b564-c932b861167d",
+  "mode": "real-edge-synthetic-layout",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 30000,
+  "launchedAt": "2026-11-17T18:14:22.876Z",
+  "events": [
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 1152
+    },
+    {
+      "event": "cdp-readiness-wait",
+      "elapsedMs": 1153,
+      "code": "ENOENT"
+    },
+    {
+      "event": "cdp-ready",
+      "elapsedMs": 1675
+    },
+    {
+      "event": "owned-target-created",
+      "elapsedMs": 2409
+    },
+    {
+      "event": "owned-session-attached",
+      "elapsedMs": 2419
+    },
+    {
+      "event": "viewport-configured",
+      "elapsedMs": 2446,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "event": "navigation-started",
+      "elapsedMs": 2448
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 28503
+    },
+    {
+      "event": "owned-session-detached",
+      "elapsedMs": 28508
+    },
+    {
+      "event": "owned-target-close-confirmed",
+      "elapsedMs": 28509
+    },
+    {
+      "event": "owned-browser-close-requested",
+      "elapsedMs": 28509
+    },
+    {
+      "event": "close-request-failed",
+      "elapsedMs": 30002,
+      "code": "EDGE_RUNNER_TIMEOUT"
+    },
+    {
+      "event": "failure-owned-handle-termination",
+      "elapsedMs": 30004,
+      "requested": true
+    }
+  ],
+  "identities": [
+    {
+      "pid": 28172,
+      "startedTicks": "639305360628792199",
+      "startedUtc": "2026-11-17T18:14:22.8792199Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 19172,
+      "startedTicks": "639305360644526076",
+      "startedUtc": "2026-11-17T18:14:24.4526076Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 20396,
+      "startedTicks": "639305360641171777",
+      "startedUtc": "2026-11-17T18:14:24.1171777Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 8900,
+      "startedTicks": "639305360641259874",
+      "startedUtc": "2026-11-17T18:14:24.1259874Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 19260,
+      "startedTicks": "639305360641787214",
+      "startedUtc": "2026-11-17T18:14:24.1787214Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": null,
+  "streamsClosed": false,
+  "forceTerminated": true,
+  "cleanupSafe": false,
+  "pid": 28172,
+  "profile": "[ISOLATED_PROFILE_PATH]",
+  "resourceReleaseOrder": "owned-session-target-browser",
+  "devToolsReadiness": {
+    "polls": 12,
+    "enoent": 11,
+    "ebusy": 0,
+    "partial": 0
+  },
+  "releaseFailure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "process-exit"
+  },
+  "elapsedMs": 30004,
+  "stdoutBytes": 0,
+  "stderrBytes": 100,
+  "failure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "result",
+    "message": "Isolated lifecycle deadline reached during result"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "stage": "5.1",
+  "session": "V4-late-native-reverification",
+  "status": "Passed",
+  "scope": "observed Core count and read-only resource absence after actual native Alt+F4; not normal WhatsApp performance acceptance",
+  "rootPid": 31928,
+  "processCreationUtc": "2026-11-16T13:26:58.6677573Z",
+  "sameBuildAsV3": true,
+  "normalCloseAccepted": true,
+  "closeActionEvidence": "Parent performed actual CUA Alt+F4 and a subsequent window inventory confirmed handle5112450 absent; no forced termination",
+  "startSnapshot": { "source": "native-late-start-snapshot.jsonl", "atUtc": "2026-11-16T13:27:24.4490958Z", "workingSetBytes": 865468416, "privateBytes": 491659264, "threads": 227, "handles": 5779, "processCount": 9, "webViewSubprocessCount": 6 },
+  "beforeCloseSnapshot": { "source": "native-late-before-close.jsonl", "atUtc": "2026-11-16T13:33:30.1419578Z", "workingSetBytes": 1707606016, "privateBytes": 901382144, "threads": 534, "handles": 12639, "processCount": 21, "webViewSubprocessCount": 18 },
+  "createdWebViewCores": [
+    { "atUtc": "2026-11-16T13:27:00.9252357Z", "role": "shell", "accountId": "workbench-ui", "browserProcessId": 28452 },
+    { "atUtc": "2026-11-16T13:27:52.2741523Z", "role": "ws-visible", "accountId": "native-b", "browserProcessId": 23984 },
+    { "atUtc": "2026-11-16T13:30:44.5985475Z", "role": "ws-visible", "accountId": "default", "browserProcessId": 19180 }
+  ],
+  "parentReportedInteraction": "Remaining tasks/logs/settings pages, trusted nav/content wheel with reverse scrolling and no outer movement, ten rapid account switches plus two isolated account-result checks completed; detailed acceptance belongs to parent native UI evidence",
+  "applicationStoppingUtc": "2026-11-16T13:33:47.6419029Z",
+  "sidecarStoppedUtc": "2026-11-16T13:33:47.7761993Z",
+  "sidecarRunningAfterStop": false,
+  "processCleanup": { "checkedAtUtc": "2026-11-16T13:34:18.3675788Z", "observedIdentities": 21, "remainingCount": 0, "unverifiedCount": 0, "status": "Passed" },
+  "endpointCleanup": { "checkedAtUtc": "2026-11-16T13:34:22.6692214Z", "isolatedPort": 56876, "listenerCount": 0, "workbenchLockCountUnderTestRoot": 0 },
+  "checkerTerminatedAnyProcess": false,
+  "checkerDeletedAnyFile": false,
+  "nativeRootsCleanupStatus": "Blocked",
+  "nativeRootsDisposition": "Three native test roots retained after prior policy rejection; deletion was not retried",
+  "navigationStormStatus": "Blocked: previously identified test-only navigation interference was not fixed before this session",
+  "limitations": "Two snapshots are not continuous performance sampling. No threshold or long-term memory-stability pass is inferred; exact Core count does not prove no repeat navigation or visual flicker. Historical V3 controlled-stop evidence remains separate."
+}

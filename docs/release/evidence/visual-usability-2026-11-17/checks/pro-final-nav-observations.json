@@ -1,0 +1,1199 @@
+{
+  "scope": "actual index sidebar and full shipped stylesheet order; enabled inactive labels; synthetic isolated Edge, not native WinUI",
+  "results": [
+    {
+      "viewport": {
+        "width": 820,
+        "height": 540
+      },
+      "palette": "atelier-dawn",
+      "theme": "light",
+      "rows": [
+        {
+          "label": "快速录入",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "任务中心",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "阶段看板",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "客户中心",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "分类视图",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "热聊管理",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "群组管理",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "VIP 管理",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "跟票管理",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "报名统计",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "入金管理",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "统计分析",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "WS 工作台",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "GPT 运营助手",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "本地自动化",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "数据治理",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "数据中心",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "操作记录",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "回收站",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "系统设置",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "手机号登记",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        }
+      ],
+      "sidebar": {
+        "background": "rgba(0, 0, 0, 0)",
+        "image": "linear-gradient(165deg, rgb(18, 37, 74), rgb(29, 49, 85))"
+      },
+      "navToken": "#e1ebff",
+      "navBackground": "#12254a",
+      "softBackground": "#1d3155"
+    },
+    {
+      "viewport": {
+        "width": 820,
+        "height": 540
+      },
+      "palette": "atelier-dawn",
+      "theme": "dark",
+      "rows": [
+        {
+          "label": "快速录入",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "任务中心",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "阶段看板",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "客户中心",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "分类视图",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "热聊管理",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "群组管理",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "VIP 管理",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "跟票管理",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "报名统计",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "入金管理",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "统计分析",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "WS 工作台",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "GPT 运营助手",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "本地自动化",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "数据治理",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "数据中心",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "操作记录",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "回收站",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "系统设置",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        },
+        {
+          "label": "手机号登记",
+          "color": "rgb(225, 235, 255)",
+          "parentColor": "rgb(225, 235, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 10.801985338949791
+        }
+      ],
+      "sidebar": {
+        "background": "rgba(0, 0, 0, 0)",
+        "image": "linear-gradient(165deg, rgb(18, 37, 74), rgb(29, 49, 85))"
+      },
+      "navToken": "#e1ebff",
+      "navBackground": "#12254a",
+      "softBackground": "#1d3155"
+    },
+    {
+      "viewport": {
+        "width": 820,
+        "height": 540
+      },
+      "palette": "horizon-night",
+      "theme": "light",
+      "rows": [
+        {
+          "label": "快速录入",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "任务中心",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "阶段看板",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "客户中心",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "分类视图",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "热聊管理",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "群组管理",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "VIP 管理",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "跟票管理",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "报名统计",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "入金管理",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "统计分析",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "WS 工作台",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "GPT 运营助手",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "本地自动化",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "数据治理",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "数据中心",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "操作记录",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "回收站",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "系统设置",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "手机号登记",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        }
+      ],
+      "sidebar": {
+        "background": "rgba(0, 0, 0, 0)",
+        "image": "linear-gradient(165deg, rgb(14, 28, 54), rgb(20, 39, 68))"
+      },
+      "navToken": "#e9efff",
+      "navBackground": "#0e1c36",
+      "softBackground": "#142744"
+    },
+    {
+      "viewport": {
+        "width": 820,
+        "height": 540
+      },
+      "palette": "horizon-night",
+      "theme": "dark",
+      "rows": [
+        {
+          "label": "快速录入",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "任务中心",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "阶段看板",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "客户中心",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "分类视图",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "热聊管理",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "群组管理",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "VIP 管理",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "跟票管理",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "报名统计",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "入金管理",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "统计分析",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "WS 工作台",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "GPT 运营助手",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "本地自动化",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "数据治理",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "数据中心",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "操作记录",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "回收站",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "系统设置",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        },
+        {
+          "label": "手机号登记",
+          "color": "rgb(233, 239, 255)",
+          "parentColor": "rgb(233, 239, 255)",
+          "font": "16px",
+          "opacity": "1",
+          "parentOpacity": "1",
+          "effectiveOpacity": 1,
+          "opacityChain": [],
+          "minimumContrast": 13.007715206839928
+        }
+      ],
+      "sidebar": {
+        "background": "rgba(0, 0, 0, 0)",
+        "image": "linear-gradient(165deg, rgb(14, 28, 54), rgb(20, 39, 68))"
+      },
+      "navToken": "#e9efff",
+      "navBackground": "#0e1c36",
+      "softBackground": "#142744"
+    }
+  ],
+  "lifecycle": {
+    "schemaVersion": 1,
+    "invocation": "1794919715559-71eecdfc-ccbf-451a-9672-dd5f3cb0f485",
+    "mode": "real-edge-synthetic-layout",
+    "scope": "process lifecycle; caller owns layout assertions",
+    "status": "Passed",
+    "timeoutMs": 30000,
+    "launchedAt": "2026-11-17T12:48:35.559Z",
+    "events": [
+      {
+        "event": "identity-confirmed",
+        "elapsedMs": 847
+      },
+      {
+        "event": "cdp-readiness-wait",
+        "elapsedMs": 850,
+        "code": "ENOENT"
+      },
+      {
+        "event": "cdp-ready",
+        "elapsedMs": 5054
+      },
+      {
+        "event": "owned-target-created",
+        "elapsedMs": 5905
+      },
+      {
+        "event": "owned-session-attached",
+        "elapsedMs": 5909
+      },
+      {
+        "event": "navigation-started",
+        "elapsedMs": 6369
+      },
+      {
+        "event": "result-verified",
+        "elapsedMs": 14847,
+        "cases": 4
+      },
+      {
+        "event": "result-ready",
+        "elapsedMs": 15964
+      },
+      {
+        "event": "close-requested",
+        "elapsedMs": 15964
+      },
+      {
+        "event": "owned-session-detached",
+        "elapsedMs": 15966
+      },
+      {
+        "event": "owned-target-close-confirmed",
+        "elapsedMs": 15967
+      },
+      {
+        "event": "owned-browser-close-requested",
+        "elapsedMs": 15967
+      },
+      {
+        "event": "browser-close-acknowledged",
+        "elapsedMs": 15998,
+        "acknowledgement": "protocol-response"
+      },
+      {
+        "event": "cdp-transport-close-requested",
+        "elapsedMs": 15999
+      },
+      {
+        "event": "cdp-transport-closed",
+        "elapsedMs": 16002,
+        "code": 1000
+      },
+      {
+        "event": "close-request-complete",
+        "elapsedMs": 16002,
+        "acknowledgement": "protocol-response"
+      },
+      {
+        "event": "process-exit",
+        "elapsedMs": 23455,
+        "code": 0,
+        "signal": null
+      },
+      {
+        "event": "stderr-close",
+        "elapsedMs": 23464
+      },
+      {
+        "event": "child-close",
+        "elapsedMs": 23464
+      },
+      {
+        "event": "stdout-close",
+        "elapsedMs": 23464
+      },
+      {
+        "event": "streams-close",
+        "elapsedMs": 23464
+      }
+    ],
+    "identities": [
+      {
+        "pid": 11236,
+        "startedTicks": "639305165155736011",
+        "startedUtc": "2026-11-17T12:48:35.5736011Z",
+        "source": "Windows-StartTime"
+      },
+      {
+        "pid": 32404,
+        "startedTicks": "639305165205920046",
+        "startedUtc": "2026-11-17T12:48:40.5920046Z",
+        "source": "Windows-StartTime"
+      },
+      {
+        "pid": 9176,
+        "startedTicks": "639305165189179034",
+        "startedUtc": "2026-11-17T12:48:38.9179034Z",
+        "source": "Windows-StartTime"
+      },
+      {
+        "pid": 11936,
+        "startedTicks": "639305165189240606",
+        "startedUtc": "2026-11-17T12:48:38.9240606Z",
+        "source": "Windows-StartTime"
+      },
+      {
+        "pid": 34552,
+        "startedTicks": "639305165193790729",
+        "startedUtc": "2026-11-17T12:48:39.3790729Z",
+        "source": "Windows-StartTime"
+      },
+      {
+        "pid": 23324,
+        "startedTicks": "639305165218095394",
+        "startedUtc": "2026-11-17T12:48:41.8095394Z",
+        "source": "Windows-StartTime"
+      },
+      {
+        "pid": 34724,
+        "startedTicks": "639305165218017267",
+        "startedUtc": "2026-11-17T12:48:41.8017267Z",
+        "source": "Windows-StartTime"
+      },
+      {
+        "pid": 9080,
+        "startedTicks": "639305165218015029",
+        "startedUtc": "2026-11-17T12:48:41.8015029Z",
+        "source": "Windows-StartTime"
+      },
+      {
+        "pid": 31624,
+        "startedTicks": "639305165218015056",
+        "startedUtc": "2026-11-17T12:48:41.8015056Z",
+        "source": "Windows-StartTime"
+      },
+      {
+        "pid": 34436,
+        "startedTicks": "639305165218007215",
+        "startedUtc": "2026-11-17T12:48:41.8007215Z",
+        "source": "Windows-StartTime"
+      },
+      {
+        "pid": 16188,
+        "startedTicks": "639305165218011700",
+        "startedUtc": "2026-11-17T12:48:41.8011700Z",
+        "source": "Windows-StartTime"
+      },
+      {
+        "pid": 25724,
+        "startedTicks": "639305165256450012",
+        "startedUtc": "2026-11-17T12:48:45.6450012Z",
+        "source": "Windows-StartTime"
+      }
+    ],
+    "exit": {
+      "code": 0,
+      "signal": null
+    },
+    "streamsClosed": true,
+    "forceTerminated": false,
+    "cleanupSafe": true,
+    "pid": 11236,
+    "profile": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-nav-contrast-0qc5dU\\edge-profile-09aa5449-c56d-4497-8139-4db79c5964f3",
+    "resourceReleaseOrder": "owned-session-target-browser",
+    "devToolsReadiness": {
+      "polls": 99,
+      "enoent": 98,
+      "ebusy": 0,
+      "partial": 0
+    },
+    "resultCases": 4,
+    "resultBytes": 15909,
+    "resultSha256": "f36fb39707673f88cd61fea007828e547846d5233127121b70830802e5989f60",
+    "resultFile": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-usability\\nav-contrast\\1794919715559-71eecdfc-ccbf-451a-9672-dd5f3cb0f485.result.json",
+    "resultReady": true,
+    "remainingIdentities": [],
+    "elapsedMs": 23956,
+    "stdoutBytes": 0,
+    "stderrBytes": 437,
+    "evidenceFile": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-usability\\nav-contrast\\1794919715559-71eecdfc-ccbf-451a-9672-dd5f3cb0f485.json"
+  }
+}

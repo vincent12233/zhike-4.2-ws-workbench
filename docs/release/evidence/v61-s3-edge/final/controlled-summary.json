@@ -1,0 +1,34 @@
+{
+  "baselineHead": "8cb12f4",
+  "baselineCommand": [
+    "node",
+    "--require",
+    "<local-baseline-loader>",
+    "tests/isolated-edge-runner-lifecycle.test.cjs",
+    "--result-evidence-only"
+  ],
+  "fixedFocusedCommand": [
+    "node",
+    "tests/isolated-edge-runner-lifecycle.test.cjs",
+    "--result-evidence-only"
+  ],
+  "fixedFocusedExitCode": 0,
+  "fixedFocusedCasesPassed": 3,
+  "baselineObservedFailurePhase": "request-close",
+  "baselineResultReady": true,
+  "fixedObservedFailurePhase": "result",
+  "fixedResultReady": false,
+  "lifecycle": {
+    "suite": "isolated-edge-runner-lifecycle",
+    "parameterChecks": 13,
+    "actualControlledChildCases": 15,
+    "passed": 15,
+    "realEdgeStarted": false,
+    "realBrowserAccepted": false
+  },
+  "transport": {
+    "suite": "isolated-edge-transport",
+    "passed": 5,
+    "realBrowserAccepted": false
+  }
+}

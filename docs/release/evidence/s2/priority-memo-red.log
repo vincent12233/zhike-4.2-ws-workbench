@@ -1,0 +1,16 @@
+S2 main metrics: loaded/unknown/error, original-owner equivalence, calendar/date/legacy/zero/nonfinite, cache/read-only/scope passed
+S2 correction Passed: first-read recovery and pending/revision guards
+S2 correction Passed: single asOfDay across midnight before existing tick
+S2 correction Passed: unknown/error coverage basis cannot leak numeric zero
+S2 correction Passed: out-of-order request cannot bless provenance or rewrite timestamp
+AssertionError [ERR_ASSERTION]: exact-priority-and-date-ties/all: priority evaluations 158 must not grow with sort comparisons for 80 selected rows
+    at verifyPriorityMemoSnapshot (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\delivery-s2-metrics-projection.test.cjs:158:37)
+    at C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\delivery-s2-metrics-projection.test.cjs:167:38
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}

@@ -1,0 +1,452 @@
+{
+  "schemaVersion": 2,
+  "invocation": "1794999433928-0e2e7d7b-e253-4c97-bbf6-225a1b306899",
+  "mode": "real-edge-synthetic-layout",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 30000,
+  "launchedAt": "2026-11-18T10:57:13.929Z",
+  "timebase": "node-monotonic-ms",
+  "startedMonotonicMs": 131.4043,
+  "events": [
+    {
+      "event": "process-spawned",
+      "elapsedMs": 14.476799999999997,
+      "pid": 38156
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 24.744100000000003,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 1171.1661000000001,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 1171.4304000000002
+    },
+    {
+      "event": "cdp-readiness-wait",
+      "elapsedMs": 1173.9408,
+      "code": "ENOENT"
+    },
+    {
+      "event": "cdp-readiness-wait",
+      "elapsedMs": 2993.6733,
+      "code": "EBUSY"
+    },
+    {
+      "event": "cdp-ready",
+      "elapsedMs": 3178.0222
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 3189.573,
+      "phase": "observation",
+      "count": 4
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 3213.9631,
+      "phase": "observation",
+      "count": 4
+    },
+    {
+      "event": "owned-target-created",
+      "elapsedMs": 3268.2949
+    },
+    {
+      "event": "owned-session-attached",
+      "elapsedMs": 3271.2367999999997
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 5760.5084,
+      "name": "DOMContentLoaded",
+      "loaderId": "77FD7B90B8A3C8F8DE5E1D716B039CAD",
+      "frameId": "7403ED58080E3060059A67CBC4D108CC"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 5760.6822,
+      "name": "load",
+      "loaderId": "77FD7B90B8A3C8F8DE5E1D716B039CAD",
+      "frameId": "7403ED58080E3060059A67CBC4D108CC"
+    },
+    {
+      "event": "navigation-started",
+      "elapsedMs": 5761.3931999999995
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 5761.5367,
+      "phase": "navigation-response"
+    },
+    {
+      "event": "navigation-request-sent",
+      "elapsedMs": 5761.864,
+      "commandId": 7
+    },
+    {
+      "event": "navigation-response-received",
+      "elapsedMs": 6339.9808,
+      "commandId": 7,
+      "loaderId": "7DE4ABC7E7D43B9F3592E71882AEA32D",
+      "frameId": "7403ED58080E3060059A67CBC4D108CC",
+      "protocolError": false,
+      "navigationError": false
+    },
+    {
+      "event": "cdp-work-completed",
+      "elapsedMs": 6340.0271,
+      "phase": "navigation-response"
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 6340.0383999999995,
+      "phase": "navigation-load"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 6344.773,
+      "name": "init",
+      "loaderId": "7DE4ABC7E7D43B9F3592E71882AEA32D",
+      "frameId": "7403ED58080E3060059A67CBC4D108CC"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 9942.619,
+      "name": "init",
+      "loaderId": "B387B9B907AB5DE5377278889431FD54",
+      "frameId": "FE5983DEAD8230AA9812501E602E7871"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 9949.7867,
+      "name": "init",
+      "loaderId": "C7832D560D705DD9C5BA67B51244E3FE",
+      "frameId": "6EC8756AC3999E5BB5698372149087C5"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 9955.4746,
+      "name": "init",
+      "loaderId": "ADA6D1DB6CE9742424792070F92DA5F9",
+      "frameId": "AD017636BF2C28C0CB513609B87F66DC"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 9960.7195,
+      "name": "init",
+      "loaderId": "A29E08D4238734BE408EDCBE98B1C4CA",
+      "frameId": "C0BE075F96D5BA9C2BC18638715791CE"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 9965.5868,
+      "name": "init",
+      "loaderId": "9ED399FF5052F4D82DD91BF0A20E68F2",
+      "frameId": "96D7BC17B2E8AEB3801ED82BF68B6D5E"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 9971.463099999999,
+      "name": "init",
+      "loaderId": "C754596D9AFA630416AB093DCCE16280",
+      "frameId": "CFB330B343197D5C32554E90A199ACF7"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 9978.0137,
+      "name": "init",
+      "loaderId": "5223133DEB0E4398E9C675F4DF48C595",
+      "frameId": "17E5EAD51C84AC55AF9819D92C850EC2"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 9983.3398,
+      "name": "init",
+      "loaderId": "F3BE865937EC4121C0ECADA0F3390B5C",
+      "frameId": "7820B6C79C42AB3250F9AE904919C5E9"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 9989.0505,
+      "name": "init",
+      "loaderId": "826D13CCBBAC6950A2A54773436D95F1",
+      "frameId": "AD3CA22B0ACEFB037CB2E5ACFBEF1A07"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 9994.4682,
+      "name": "init",
+      "loaderId": "7AB5717DEC635FC41AE74FE817B92690",
+      "frameId": "0E482B6C1A287CEE4F689C93A6FE5272"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 10003.1624,
+      "name": "DOMContentLoaded",
+      "loaderId": "7DE4ABC7E7D43B9F3592E71882AEA32D",
+      "frameId": "7403ED58080E3060059A67CBC4D108CC"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 10033.1215,
+      "name": "init",
+      "loaderId": "B93E4C0AE0A75C1026F8AA319AFF0D5A",
+      "frameId": "FE5983DEAD8230AA9812501E602E7871"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 10056.5681,
+      "name": "init",
+      "loaderId": "2541A523CC2E8B9B21C7031675E3D9BF",
+      "frameId": "6EC8756AC3999E5BB5698372149087C5"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 10063.209,
+      "name": "init",
+      "loaderId": "91E4B8435496CECC786E9213B47C0855",
+      "frameId": "AD017636BF2C28C0CB513609B87F66DC"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 10069.8248,
+      "name": "init",
+      "loaderId": "9BC983674982306A210C5158BBBC7E80",
+      "frameId": "C0BE075F96D5BA9C2BC18638715791CE"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 10081.9215,
+      "name": "init",
+      "loaderId": "7A16B8B527CF2C8259530356F3AC66DC",
+      "frameId": "96D7BC17B2E8AEB3801ED82BF68B6D5E"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 10101.315,
+      "name": "init",
+      "loaderId": "9E7CAEACDB7941A69B728A979F11B0E2",
+      "frameId": "CFB330B343197D5C32554E90A199ACF7"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 10122.511,
+      "name": "init",
+      "loaderId": "F1447B5E37DAA7A99F0F463B28F1CE0B",
+      "frameId": "17E5EAD51C84AC55AF9819D92C850EC2"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 10141.3919,
+      "name": "init",
+      "loaderId": "A314F63E4CF8A86BA1C02A312764EF04",
+      "frameId": "7820B6C79C42AB3250F9AE904919C5E9"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 10158.6795,
+      "name": "init",
+      "loaderId": "F7B72C06B101EA460A921D196D99752C",
+      "frameId": "AD3CA22B0ACEFB037CB2E5ACFBEF1A07"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 10175.459,
+      "name": "init",
+      "loaderId": "D0789E8C5216AB29FED94C664B7E8975",
+      "frameId": "0E482B6C1A287CEE4F689C93A6FE5272"
+    },
+    {
+      "event": "deadline-timeout",
+      "elapsedMs": 28501.630100000002,
+      "phase": "result",
+      "deadlineMs": 28500
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 28501.819000000003
+    },
+    {
+      "event": "cdp-work-pending-at-close",
+      "elapsedMs": 28502.0511,
+      "phase": "navigation-load"
+    },
+    {
+      "event": "deadline-timeout",
+      "elapsedMs": 28502.551300000003,
+      "phase": "navigation-load",
+      "deadlineMs": 28500
+    },
+    {
+      "event": "owned-session-detached",
+      "elapsedMs": 28504.073800000002
+    },
+    {
+      "event": "owned-target-close-confirmed",
+      "elapsedMs": 28504.986100000002
+    },
+    {
+      "event": "owned-browser-close-requested",
+      "elapsedMs": 28504.9903
+    },
+    {
+      "event": "browser-close-request-sent",
+      "elapsedMs": 28505.436700000002,
+      "commandId": 10
+    },
+    {
+      "event": "browser-close-response-received",
+      "elapsedMs": 28506.0871,
+      "commandId": 10,
+      "protocolError": false
+    },
+    {
+      "event": "browser-close-acknowledged",
+      "elapsedMs": 28506.126500000002,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "cdp-transport-close-requested",
+      "elapsedMs": 28506.202100000002
+    },
+    {
+      "event": "cdp-transport-closed",
+      "elapsedMs": 28511.3652,
+      "code": 1000
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 28511.497600000002,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "deadline-timeout",
+      "elapsedMs": 30005.4441,
+      "phase": "process-exit",
+      "deadlineMs": 30000
+    },
+    {
+      "event": "node-release-state",
+      "elapsedMs": 30005.634400000003,
+      "exitObserved": false,
+      "closeObserved": false,
+      "stdoutCloseObserved": false,
+      "stderrCloseObserved": false,
+      "exitCode": null,
+      "signalCode": null
+    },
+    {
+      "event": "failure-owned-handle-termination-started",
+      "elapsedMs": 30005.6487
+    },
+    {
+      "event": "failure-owned-handle-termination",
+      "elapsedMs": 30006.854000000003,
+      "requested": true
+    },
+    {
+      "event": "node-stdio-disposal",
+      "elapsedMs": 30006.8613
+    },
+    {
+      "event": "deadline-timeout",
+      "elapsedMs": 30007.3835,
+      "phase": "identity-probe-close",
+      "deadlineMs": 30000
+    },
+    {
+      "event": "identity-probe-termination-requested",
+      "elapsedMs": 30007.8089,
+      "attempted": true,
+      "requested": true
+    },
+    {
+      "event": "deadline-timeout",
+      "elapsedMs": 30007.865800000003,
+      "phase": "identity-probe-termination",
+      "deadlineMs": 30000
+    },
+    {
+      "event": "identity-probe-termination-unverified",
+      "elapsedMs": 30008.276700000002
+    },
+    {
+      "event": "runner-final",
+      "elapsedMs": 30008.558,
+      "status": "Failed",
+      "cleanupSafe": false,
+      "forceTerminated": true
+    }
+  ],
+  "identities": [
+    {
+      "pid": 38156,
+      "startedTicks": "639305962339418371",
+      "startedUtc": "2026-11-18T10:57:13.9418371Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 19440,
+      "startedTicks": "639305962358535353",
+      "startedUtc": "2026-11-18T10:57:15.8535353Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 1140,
+      "startedTicks": "639305962362750280",
+      "startedUtc": "2026-11-18T10:57:16.2750280Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 22824,
+      "startedTicks": "639305962366419085",
+      "startedUtc": "2026-11-18T10:57:16.6419085Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": null,
+  "streamsClosed": false,
+  "forceTerminated": true,
+  "cleanupSafe": false,
+  "profile": "<local-user>\\AppData\\Local\\Temp\\zhike-s3-customer-table-eIKRQL\\edge-profile-2eb641b1-e927-4a07-86a4-494e692cb5b6",
+  "pid": 38156,
+  "kernelObserver": {
+    "file": "<local-user>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\s3-worktrees\\edge\\.tools\\delivery-s3-customer-table\\1794999433928-0e2e7d7b-e253-4c97-bbf6-225a1b306899.kernel.jsonl",
+    "pid": 23176
+  },
+  "identityProbePid": 36972,
+  "resourceReleaseOrder": "owned-session-target-browser",
+  "devToolsReadiness": {
+    "polls": 15,
+    "enoent": 13,
+    "ebusy": 1,
+    "partial": 0
+  },
+  "releaseFailure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "process-exit"
+  },
+  "identityProbeTermination": {
+    "attempted": true,
+    "requested": true,
+    "observedClose": null,
+    "status": "unknown"
+  },
+  "elapsedMs": 30008.510700000003,
+  "stdoutBytes": 0,
+  "stderrBytes": 1111,
+  "failure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "result",
+    "message": "Isolated lifecycle deadline reached during result"
+  }
+}

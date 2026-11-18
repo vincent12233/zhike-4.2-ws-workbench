@@ -1,0 +1,2542 @@
+{
+  "schemaVersion": 2,
+  "invocation": "1795013061232-83bc2536-2651-4306-9898-0b49fbf7849f",
+  "mode": "real-edge-synthetic-layout",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Passed",
+  "timeoutMs": 30000,
+  "launchedAt": "2026-11-18T14:44:21.231Z",
+  "timebase": "node-monotonic-ms",
+  "startedMonotonicMs": 91.0794,
+  "events": [
+    {
+      "event": "process-spawned",
+      "elapsedMs": 14.339399999999998,
+      "pid": 19740
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 26.324799999999996,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 986.0722,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 986.3771
+    },
+    {
+      "event": "cdp-ready",
+      "elapsedMs": 1139.1795
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 1157.6363999999999,
+      "phase": "observation",
+      "count": 5
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 1207.9168,
+      "phase": "observation",
+      "count": 5
+    },
+    {
+      "event": "owned-target-created",
+      "elapsedMs": 1258.0366
+    },
+    {
+      "event": "owned-session-attached",
+      "elapsedMs": 1273.2252999999998
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1319.3009,
+      "state": "stopped",
+      "frameId": "063E72072472E685BDC0BDA7DC9343D9"
+    },
+    {
+      "event": "viewport-configured",
+      "elapsedMs": 1351.3155,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1357.0472,
+      "name": "DOMContentLoaded",
+      "loaderId": "F2E86C454C17E2A6FF0DFBD8E0C6D8A4",
+      "frameId": "063E72072472E685BDC0BDA7DC9343D9"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1357.2406999999998,
+      "name": "load",
+      "loaderId": "F2E86C454C17E2A6FF0DFBD8E0C6D8A4",
+      "frameId": "063E72072472E685BDC0BDA7DC9343D9"
+    },
+    {
+      "event": "navigation-started",
+      "elapsedMs": 1363.6522
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 1363.7294,
+      "phase": "navigation-response"
+    },
+    {
+      "event": "navigation-request-sent",
+      "elapsedMs": 1364.1582999999998,
+      "commandId": 9
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1375.6333,
+      "state": "started",
+      "frameId": "063E72072472E685BDC0BDA7DC9343D9"
+    },
+    {
+      "event": "navigation-response-received",
+      "elapsedMs": 1389.0088999999998,
+      "commandId": 9,
+      "loaderId": "188E8AE19F8701C82D8C85B1521F8F8E",
+      "frameId": "063E72072472E685BDC0BDA7DC9343D9",
+      "protocolError": false,
+      "navigationError": false
+    },
+    {
+      "event": "cdp-work-completed",
+      "elapsedMs": 1389.0559999999998,
+      "phase": "navigation-response"
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 1389.07,
+      "phase": "navigation-load"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1396.7504999999999,
+      "name": "init",
+      "loaderId": "188E8AE19F8701C82D8C85B1521F8F8E",
+      "frameId": "063E72072472E685BDC0BDA7DC9343D9"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1412.7742999999998,
+      "name": "init",
+      "loaderId": "4C84A651A2579A455E737979A71ADE94",
+      "frameId": "8A217BF940DB35FA4431582789BA366F"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1413.7764,
+      "state": "started",
+      "frameId": "8A217BF940DB35FA4431582789BA366F"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1417.4868,
+      "name": "init",
+      "loaderId": "D68565A5D36AB34426EB487CFB33BAD1",
+      "frameId": "0D640D7CC79F22E8FF12B31047DC65D6"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1418.7113,
+      "state": "started",
+      "frameId": "0D640D7CC79F22E8FF12B31047DC65D6"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1421.5274,
+      "name": "init",
+      "loaderId": "098C47FA7A7B18C7DF0B3D69FF1A2AB5",
+      "frameId": "0950DD384FE3CB448866348B4F9C0628"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1422.4723,
+      "state": "started",
+      "frameId": "0950DD384FE3CB448866348B4F9C0628"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1425.2959999999998,
+      "name": "init",
+      "loaderId": "FA7430BA5D29FA2C8E1C61546F64EC0A",
+      "frameId": "28B932212891BBD29F032470BEB7EC99"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1426.7784,
+      "state": "started",
+      "frameId": "28B932212891BBD29F032470BEB7EC99"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1429.9352,
+      "name": "init",
+      "loaderId": "C2B9BA42C7955010312EBFD5781269C6",
+      "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1431.581,
+      "state": "started",
+      "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1435.2383,
+      "name": "init",
+      "loaderId": "626408DF5FCB37F715E030103AAD8487",
+      "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1436.4695,
+      "state": "started",
+      "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1439.1477,
+      "name": "init",
+      "loaderId": "4CC00A11A732991A2DD57F133B886D29",
+      "frameId": "1DE8E58DF44C444A10B81637616A6FDD"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1440.5719,
+      "state": "started",
+      "frameId": "1DE8E58DF44C444A10B81637616A6FDD"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1443.8244,
+      "name": "init",
+      "loaderId": "DF5B06CD8E3C1B89955BF9A3A2F82558",
+      "frameId": "84B2A0F73F0E9192FCAE3759966155D8"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1445.2482,
+      "state": "started",
+      "frameId": "84B2A0F73F0E9192FCAE3759966155D8"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1447.9178,
+      "name": "DOMContentLoaded",
+      "loaderId": "188E8AE19F8701C82D8C85B1521F8F8E",
+      "frameId": "063E72072472E685BDC0BDA7DC9343D9"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1487.3165999999999,
+      "name": "init",
+      "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+      "frameId": "8A217BF940DB35FA4431582789BA366F"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1509.533,
+      "name": "init",
+      "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+      "frameId": "0D640D7CC79F22E8FF12B31047DC65D6"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1519.6807,
+      "name": "init",
+      "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+      "frameId": "0950DD384FE3CB448866348B4F9C0628"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1530.4227999999998,
+      "name": "init",
+      "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+      "frameId": "28B932212891BBD29F032470BEB7EC99"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1553.4407999999999,
+      "name": "init",
+      "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+      "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1671.3419999999999,
+      "name": "init",
+      "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+      "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1694.5854,
+      "name": "init",
+      "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+      "frameId": "1DE8E58DF44C444A10B81637616A6FDD"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1723.4379999999999,
+      "name": "init",
+      "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+      "frameId": "84B2A0F73F0E9192FCAE3759966155D8"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 7875.0868,
+      "name": "DOMContentLoaded",
+      "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+      "frameId": "0D640D7CC79F22E8FF12B31047DC65D6"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 7875.347900000001,
+      "name": "load",
+      "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+      "frameId": "0D640D7CC79F22E8FF12B31047DC65D6"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 7875.7736,
+      "state": "stopped",
+      "frameId": "0D640D7CC79F22E8FF12B31047DC65D6"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 7900.8064,
+      "name": "DOMContentLoaded",
+      "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+      "frameId": "0950DD384FE3CB448866348B4F9C0628"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 7901.2942,
+      "name": "load",
+      "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+      "frameId": "0950DD384FE3CB448866348B4F9C0628"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 7901.5739,
+      "state": "stopped",
+      "frameId": "0950DD384FE3CB448866348B4F9C0628"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 7920.3674,
+      "name": "DOMContentLoaded",
+      "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+      "frameId": "28B932212891BBD29F032470BEB7EC99"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 7920.9328000000005,
+      "name": "load",
+      "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+      "frameId": "28B932212891BBD29F032470BEB7EC99"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 7921.2282000000005,
+      "state": "stopped",
+      "frameId": "28B932212891BBD29F032470BEB7EC99"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 7942.373100000001,
+      "name": "DOMContentLoaded",
+      "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+      "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 7943.406400000001,
+      "name": "load",
+      "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+      "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 7943.784000000001,
+      "state": "stopped",
+      "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 7998.3952,
+      "name": "DOMContentLoaded",
+      "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+      "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 7998.734,
+      "name": "load",
+      "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+      "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 7998.9318,
+      "state": "stopped",
+      "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 8024.2466,
+      "name": "DOMContentLoaded",
+      "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+      "frameId": "1DE8E58DF44C444A10B81637616A6FDD"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 8024.5409,
+      "name": "load",
+      "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+      "frameId": "1DE8E58DF44C444A10B81637616A6FDD"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 8024.8613000000005,
+      "state": "stopped",
+      "frameId": "1DE8E58DF44C444A10B81637616A6FDD"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 8058.9357,
+      "name": "DOMContentLoaded",
+      "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+      "frameId": "84B2A0F73F0E9192FCAE3759966155D8"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 8059.4245,
+      "name": "load",
+      "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+      "frameId": "84B2A0F73F0E9192FCAE3759966155D8"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 8059.7131,
+      "state": "stopped",
+      "frameId": "84B2A0F73F0E9192FCAE3759966155D8"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 8061.7811,
+      "name": "DOMContentLoaded",
+      "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+      "frameId": "8A217BF940DB35FA4431582789BA366F"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 8062.503100000001,
+      "name": "load",
+      "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+      "frameId": "8A217BF940DB35FA4431582789BA366F"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 8062.8541000000005,
+      "state": "stopped",
+      "frameId": "8A217BF940DB35FA4431582789BA366F"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 8063.4116,
+      "name": "load",
+      "loaderId": "188E8AE19F8701C82D8C85B1521F8F8E",
+      "frameId": "063E72072472E685BDC0BDA7DC9343D9"
+    },
+    {
+      "event": "cdp-work-completed",
+      "elapsedMs": 8063.6284000000005,
+      "phase": "navigation-load"
+    },
+    {
+      "event": "navigation-load-matched",
+      "elapsedMs": 8063.675300000001,
+      "loaderId": "188E8AE19F8701C82D8C85B1521F8F8E",
+      "frameId": "063E72072472E685BDC0BDA7DC9343D9"
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 8063.6859,
+      "phase": "viewport-read"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 8065.9224,
+      "state": "stopped",
+      "frameId": "063E72072472E685BDC0BDA7DC9343D9"
+    },
+    {
+      "event": "cdp-work-completed",
+      "elapsedMs": 8105.6387,
+      "phase": "viewport-read"
+    },
+    {
+      "event": "viewport-verified",
+      "elapsedMs": 8106.8288999999995,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 8106.8404,
+      "phase": "matrix-result"
+    },
+    {
+      "event": "cdp-work-completed",
+      "elapsedMs": 8260.684299999999,
+      "phase": "matrix-result"
+    },
+    {
+      "event": "result-validation-started",
+      "elapsedMs": 8260.696
+    },
+    {
+      "event": "result-verified",
+      "elapsedMs": 8294.688199999999,
+      "cases": 8
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 8294.704099999999,
+      "phase": "result-process-identities"
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 8298.930499999999,
+      "phase": "observation",
+      "count": 18
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 8431.4154,
+      "phase": "observation",
+      "count": 18
+    },
+    {
+      "event": "cdp-work-completed",
+      "elapsedMs": 8431.495499999999,
+      "phase": "result-process-identities"
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 8431.5297
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 8431.5311
+    },
+    {
+      "event": "owned-session-detached",
+      "elapsedMs": 8438.3661
+    },
+    {
+      "event": "owned-target-close-confirmed",
+      "elapsedMs": 8439.401899999999
+    },
+    {
+      "event": "owned-browser-close-requested",
+      "elapsedMs": 8439.4057
+    },
+    {
+      "event": "browser-close-request-sent",
+      "elapsedMs": 8439.7398,
+      "commandId": 15
+    },
+    {
+      "event": "browser-close-response-received",
+      "elapsedMs": 8471.862,
+      "commandId": 15,
+      "protocolError": false
+    },
+    {
+      "event": "browser-close-acknowledged",
+      "elapsedMs": 8471.912699999999,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "cdp-transport-close-requested",
+      "elapsedMs": 8472.0063
+    },
+    {
+      "event": "cdp-transport-closed",
+      "elapsedMs": 8475.933799999999,
+      "code": 1000
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 8476.127199999999,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 9388.9812,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 9396.858199999999
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 9396.9141,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 9396.929399999999
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 9396.967499999999
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 9397.0453,
+      "phase": "release",
+      "count": 17
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 9441.213099999999,
+      "phase": "release",
+      "count": 0
+    },
+    {
+      "event": "node-release-state",
+      "elapsedMs": 9441.271799999999,
+      "exitObserved": true,
+      "closeObserved": true,
+      "stdoutCloseObserved": true,
+      "stderrCloseObserved": true,
+      "exitCode": 0,
+      "signalCode": null
+    },
+    {
+      "event": "identity-probe-closed",
+      "elapsedMs": 9474.310599999999
+    },
+    {
+      "event": "runner-lifecycle-complete",
+      "elapsedMs": 9474.7079,
+      "cleanupSafe": true,
+      "forceTerminated": false
+    },
+    {
+      "event": "runner-final",
+      "elapsedMs": 9487.171999999999,
+      "status": "Passed",
+      "cleanupSafe": true,
+      "forceTerminated": false
+    }
+  ],
+  "identities": [
+    {
+      "pid": 19740,
+      "startedTicks": "639306098612476962",
+      "startedUtc": "2026-11-18T14:44:21.2476962Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 37828,
+      "startedTicks": "639306098622533914",
+      "startedUtc": "2026-11-18T14:44:22.2533914Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 37312,
+      "startedTicks": "639306098620151012",
+      "startedUtc": "2026-11-18T14:44:22.0151012Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 33180,
+      "startedTicks": "639306098620181829",
+      "startedUtc": "2026-11-18T14:44:22.0181829Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 36644,
+      "startedTicks": "639306098620708829",
+      "startedUtc": "2026-11-18T14:44:22.0708829Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 4320,
+      "startedTicks": "639306098631777382",
+      "startedUtc": "2026-11-18T14:44:23.1777382Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 12720,
+      "startedTicks": "639306098631141110",
+      "startedUtc": "2026-11-18T14:44:23.1141110Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 37984,
+      "startedTicks": "639306098624549566",
+      "startedUtc": "2026-11-18T14:44:22.4549566Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 20676,
+      "startedTicks": "639306098624169559",
+      "startedUtc": "2026-11-18T14:44:22.4169559Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 18656,
+      "startedTicks": "639306098624171275",
+      "startedUtc": "2026-11-18T14:44:22.4171275Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 30904,
+      "startedTicks": "639306098624143128",
+      "startedUtc": "2026-11-18T14:44:22.4143128Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 31956,
+      "startedTicks": "639306098633617505",
+      "startedUtc": "2026-11-18T14:44:23.3617505Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 7148,
+      "startedTicks": "639306098623815682",
+      "startedUtc": "2026-11-18T14:44:22.3815682Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 40080,
+      "startedTicks": "639306098623970495",
+      "startedUtc": "2026-11-18T14:44:22.3970495Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 25052,
+      "startedTicks": "639306098630077272",
+      "startedUtc": "2026-11-18T14:44:23.0077272Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 16112,
+      "startedTicks": "639306098633724347",
+      "startedUtc": "2026-11-18T14:44:23.3724347Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 35940,
+      "startedTicks": "639306098645589691",
+      "startedUtc": "2026-11-18T14:44:24.5589691Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 36716,
+      "startedTicks": "639306098654253572",
+      "startedUtc": "2026-11-18T14:44:25.4253572Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "profile": "<temp>/zhike-s1-main-style-Ucrnsw/edge-profile-10a3a75f-b26a-4fca-b5ef-6e0ff7a807c0",
+  "pid": 19740,
+  "kernelObserver": {
+    "file": "<local-user>/Documents/Codex/2026-11-04/new-chat/work/project-review/知客 4.1 运营增强版/.tools/visual-usability/main-visual/1795013061232-83bc2536-2651-4306-9898-0b49fbf7849f.kernel.jsonl",
+    "pid": 33216
+  },
+  "identityProbePid": 35812,
+  "resourceReleaseOrder": "owned-session-target-browser",
+  "devToolsReadiness": {
+    "polls": 1,
+    "enoent": 0,
+    "ebusy": 0,
+    "partial": 0
+  },
+  "navigationResources": {
+    "limit": 512,
+    "omitted": 0,
+    "requests": [
+      {
+        "resource": "<fixture>/matrix.html",
+        "requestedMs": 1379.484,
+        "frameId": "063E72072472E685BDC0BDA7DC9343D9",
+        "loaderId": "188E8AE19F8701C82D8C85B1521F8F8E",
+        "responseMs": 1388.6361,
+        "status": 200,
+        "finishedMs": 1411.8709
+      },
+      {
+        "resource": "<fixture>/fixture.html",
+        "requestedMs": 1414.636,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1457.8803,
+        "status": 200,
+        "finishedMs": 1509.2311
+      },
+      {
+        "resource": "<fixture>/fixture.html",
+        "requestedMs": 1419.3601999999998,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1464.8666999999998,
+        "status": 200,
+        "finishedMs": 1691.3037
+      },
+      {
+        "resource": "<fixture>/fixture.html",
+        "requestedMs": 1422.9216,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1468.2179999999998,
+        "status": 200,
+        "finishedMs": 1748.8451
+      },
+      {
+        "resource": "<fixture>/fixture.html",
+        "requestedMs": 1427.2905999999998,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1471.4635999999998,
+        "status": 200,
+        "finishedMs": 1765.2316999999998
+      },
+      {
+        "resource": "<fixture>/fixture.html",
+        "requestedMs": 1432.4343999999999,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1474.7526,
+        "status": 200,
+        "finishedMs": 1790.9285
+      },
+      {
+        "resource": "<fixture>/fixture.html",
+        "requestedMs": 1436.9777,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1478.3273,
+        "status": 200,
+        "finishedMs": 1809.2386
+      },
+      {
+        "resource": "<fixture>/fixture.html",
+        "requestedMs": 1441.5852,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1481.7941999999998,
+        "status": 200,
+        "finishedMs": 1823.8565999999998
+      },
+      {
+        "resource": "<fixture>/fixture.html",
+        "requestedMs": 1445.7197999999999,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1484.8058999999998,
+        "status": 200,
+        "finishedMs": 1838.7450999999999
+      },
+      {
+        "resource": "<app>/styles.css",
+        "requestedMs": 1499.3595,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1540.3138,
+        "status": 200,
+        "finishedMs": 1592.7537
+      },
+      {
+        "resource": "<app>/modules/v4.css",
+        "requestedMs": 1500.1865,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1540.8031999999998,
+        "status": 200,
+        "finishedMs": 1593.0819
+      },
+      {
+        "resource": "<app>/modules/gpt-assistant.css",
+        "requestedMs": 1500.754,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1541.6641,
+        "status": 200,
+        "finishedMs": 1593.4091999999998
+      },
+      {
+        "resource": "<app>/modules/gpt-workbench.css",
+        "requestedMs": 1501.2077,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1543.3701999999998,
+        "status": 200,
+        "finishedMs": 1593.6342
+      },
+      {
+        "resource": "<app>/modules/gpt-modern.css",
+        "requestedMs": 1501.7264,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1545.4859,
+        "status": 200,
+        "finishedMs": 1593.8862
+      },
+      {
+        "resource": "<app>/modules/gpt-management.css",
+        "requestedMs": 1502.2446,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1548.1218,
+        "status": 200,
+        "finishedMs": 1548.8944999999999
+      },
+      {
+        "resource": "<app>/modules/phone-registry.css",
+        "requestedMs": 1502.7844,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1551.1977,
+        "status": 200,
+        "finishedMs": 1594.1364999999998
+      },
+      {
+        "resource": "<app>/modules/business-enhancements.css",
+        "requestedMs": 1503.2296,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1564.7684,
+        "status": 200,
+        "finishedMs": 1594.3879
+      },
+      {
+        "resource": "<app>/modules/v41-ui.css",
+        "requestedMs": 1503.7796999999998,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1567.6695,
+        "status": 200,
+        "finishedMs": 1594.6091999999999
+      },
+      {
+        "resource": "<app>/modules/operations-upgrade.css",
+        "requestedMs": 1504.2914999999998,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1569.5135,
+        "status": 200,
+        "finishedMs": 1594.8523
+      },
+      {
+        "resource": "<app>/modules/ui-refresh.css",
+        "requestedMs": 1504.6162,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1571.9137999999998,
+        "status": 200,
+        "finishedMs": 1595.0771
+      },
+      {
+        "resource": "<app>/modules/ws-workbench.css",
+        "requestedMs": 1505.224,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1574.3319999999999,
+        "status": 200,
+        "finishedMs": 1595.2749999999999
+      },
+      {
+        "resource": "<app>/modules/design-system.css",
+        "requestedMs": 1505.8665999999998,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1575.7809,
+        "status": 200,
+        "finishedMs": 1595.533
+      },
+      {
+        "resource": "<app>/modules/horizon-atelier.css",
+        "requestedMs": 1506.3174,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1578.0367999999999,
+        "status": 200,
+        "finishedMs": 1595.84
+      },
+      {
+        "resource": "<app>/modules/business-6.css",
+        "requestedMs": 1506.8145,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1579.6573999999998,
+        "status": 200,
+        "finishedMs": 1598.5249999999999
+      },
+      {
+        "resource": "<app>/modules/operations-6.css",
+        "requestedMs": 1507.3008,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1581.244,
+        "status": 200,
+        "finishedMs": 1600.2972
+      },
+      {
+        "resource": "<app>/modules/global-6.css",
+        "requestedMs": 1507.7119,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1583.9777,
+        "status": 200,
+        "finishedMs": 1602.3867
+      },
+      {
+        "resource": "<app>/modules/home-6.css",
+        "requestedMs": 1508.0627,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1586.1691999999998,
+        "status": 200,
+        "finishedMs": 1603.9296
+      },
+      {
+        "resource": "<app>/modules/scroll-system.css",
+        "requestedMs": 1508.4801,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1589.0507,
+        "status": 200,
+        "finishedMs": 1605.6633
+      },
+      {
+        "resource": "<app>/assets/zhike-horizon-logo.png",
+        "requestedMs": 1508.8928999999998,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 1591.9068,
+        "status": 200,
+        "finishedMs": 1610.0946
+      },
+      {
+        "resource": "<app>/styles.css",
+        "requestedMs": 1511.1108,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1541.2968999999998,
+        "status": 200,
+        "finishedMs": 1621.5102
+      },
+      {
+        "resource": "<app>/modules/v4.css",
+        "requestedMs": 1511.6164999999999,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1544.0446,
+        "status": 200,
+        "finishedMs": 1622.0176
+      },
+      {
+        "resource": "<app>/modules/gpt-assistant.css",
+        "requestedMs": 1512.1679,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1546.1445999999999,
+        "status": 200,
+        "finishedMs": 1622.2822999999999
+      },
+      {
+        "resource": "<app>/modules/gpt-workbench.css",
+        "requestedMs": 1512.7932999999998,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1549.4462999999998,
+        "status": 200,
+        "finishedMs": 1622.7721
+      },
+      {
+        "resource": "<app>/modules/gpt-modern.css",
+        "requestedMs": 1513.2033999999999,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1552.071,
+        "status": 200,
+        "finishedMs": 1623.1259
+      },
+      {
+        "resource": "<app>/modules/gpt-management.css",
+        "requestedMs": 1513.5488,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1565.25,
+        "status": 200,
+        "finishedMs": 1565.6858
+      },
+      {
+        "resource": "<app>/modules/phone-registry.css",
+        "requestedMs": 1513.9977,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1570.1120999999998,
+        "status": 200,
+        "finishedMs": 1623.3426
+      },
+      {
+        "resource": "<app>/modules/business-enhancements.css",
+        "requestedMs": 1514.3265,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1572.3865999999998,
+        "status": 200,
+        "finishedMs": 1623.8147
+      },
+      {
+        "resource": "<app>/modules/v41-ui.css",
+        "requestedMs": 1514.8448999999998,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1573.6462,
+        "status": 200,
+        "finishedMs": 1625.0948999999998
+      },
+      {
+        "resource": "<app>/modules/operations-upgrade.css",
+        "requestedMs": 1515.3027,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1576.6582999999998,
+        "status": 200,
+        "finishedMs": 1625.4842999999998
+      },
+      {
+        "resource": "<app>/modules/ui-refresh.css",
+        "requestedMs": 1515.6898999999999,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1578.6974,
+        "status": 200,
+        "finishedMs": 1626.9348
+      },
+      {
+        "resource": "<app>/modules/ws-workbench.css",
+        "requestedMs": 1516.1227,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1581.8617,
+        "status": 200,
+        "finishedMs": 1627.8020999999999
+      },
+      {
+        "resource": "<app>/modules/design-system.css",
+        "requestedMs": 1516.5386999999998,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1584.7053999999998,
+        "status": 200,
+        "finishedMs": 1627.9941
+      },
+      {
+        "resource": "<app>/modules/horizon-atelier.css",
+        "requestedMs": 1516.9607999999998,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1587.309,
+        "status": 200,
+        "finishedMs": 1628.2898
+      },
+      {
+        "resource": "<app>/modules/business-6.css",
+        "requestedMs": 1517.3081,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1590.0163,
+        "status": 200,
+        "finishedMs": 1628.6397
+      },
+      {
+        "resource": "<app>/modules/operations-6.css",
+        "requestedMs": 1517.73,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1592.3188,
+        "status": 200,
+        "finishedMs": 1628.8917999999999
+      },
+      {
+        "resource": "<app>/modules/global-6.css",
+        "requestedMs": 1518.1585,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1598.8535,
+        "status": 200,
+        "finishedMs": 1599.3248999999998
+      },
+      {
+        "resource": "<app>/modules/home-6.css",
+        "requestedMs": 1518.5663,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1609.1851,
+        "status": 200,
+        "finishedMs": 1609.5213999999999
+      },
+      {
+        "resource": "<app>/modules/scroll-system.css",
+        "requestedMs": 1518.9294,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1613.1852,
+        "status": 200,
+        "finishedMs": 1613.6524
+      },
+      {
+        "resource": "<app>/assets/zhike-horizon-logo.png",
+        "requestedMs": 1519.3143,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 1620.1227,
+        "status": 200,
+        "finishedMs": 1620.684
+      },
+      {
+        "resource": "<app>/styles.css",
+        "requestedMs": 1520.8391,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1542.7612,
+        "status": 200,
+        "finishedMs": 1617.6707
+      },
+      {
+        "resource": "<app>/modules/v4.css",
+        "requestedMs": 1521.3342,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1544.9804,
+        "status": 200,
+        "finishedMs": 1618.9370999999999
+      },
+      {
+        "resource": "<app>/modules/gpt-assistant.css",
+        "requestedMs": 1521.7802,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1547.3244,
+        "status": 200,
+        "finishedMs": 1619.0492
+      },
+      {
+        "resource": "<app>/modules/gpt-workbench.css",
+        "requestedMs": 1522.1988,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1550.6046999999999,
+        "status": 200,
+        "finishedMs": 1619.3747999999998
+      },
+      {
+        "resource": "<app>/modules/gpt-modern.css",
+        "requestedMs": 1522.4851999999998,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1564.2597999999998,
+        "status": 200,
+        "finishedMs": 1619.5987
+      },
+      {
+        "resource": "<app>/modules/gpt-management.css",
+        "requestedMs": 1522.9669,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1566.8668,
+        "status": 200,
+        "finishedMs": 1567.3382
+      },
+      {
+        "resource": "<app>/modules/phone-registry.css",
+        "requestedMs": 1523.466,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1571.2377999999999,
+        "status": 200,
+        "finishedMs": 1619.8867
+      },
+      {
+        "resource": "<app>/modules/business-enhancements.css",
+        "requestedMs": 1523.9591,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1572.7762,
+        "status": 200,
+        "finishedMs": 1620.9102
+      },
+      {
+        "resource": "<app>/modules/v41-ui.css",
+        "requestedMs": 1524.2855,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1574.9035,
+        "status": 200,
+        "finishedMs": 1621.1452
+      },
+      {
+        "resource": "<app>/modules/operations-upgrade.css",
+        "requestedMs": 1525.2945,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1577.4542,
+        "status": 200,
+        "finishedMs": 1621.7051999999999
+      },
+      {
+        "resource": "<app>/modules/ui-refresh.css",
+        "requestedMs": 1525.6947,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1579.1548,
+        "status": 200,
+        "finishedMs": 1622.4964
+      },
+      {
+        "resource": "<app>/modules/ws-workbench.css",
+        "requestedMs": 1526.0735,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1582.4624999999999,
+        "status": 200,
+        "finishedMs": 1622.9486
+      },
+      {
+        "resource": "<app>/modules/design-system.css",
+        "requestedMs": 1526.6116,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1584.3541,
+        "status": 200,
+        "finishedMs": 1623.6365999999998
+      },
+      {
+        "resource": "<app>/modules/horizon-atelier.css",
+        "requestedMs": 1526.9868999999999,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1586.8815,
+        "status": 200,
+        "finishedMs": 1624.0872
+      },
+      {
+        "resource": "<app>/modules/business-6.css",
+        "requestedMs": 1527.2332999999999,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1588.5803999999998,
+        "status": 200,
+        "finishedMs": 1624.7476
+      },
+      {
+        "resource": "<app>/modules/operations-6.css",
+        "requestedMs": 1527.6188,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1591.1579,
+        "status": 200,
+        "finishedMs": 1625.8836
+      },
+      {
+        "resource": "<app>/modules/global-6.css",
+        "requestedMs": 1528.0229,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1596.7694999999999,
+        "status": 200,
+        "finishedMs": 1597.3285999999998
+      },
+      {
+        "resource": "<app>/modules/home-6.css",
+        "requestedMs": 1528.4617999999998,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1606.1791999999998,
+        "status": 200,
+        "finishedMs": 1606.6333
+      },
+      {
+        "resource": "<app>/modules/scroll-system.css",
+        "requestedMs": 1529.1078,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1610.5541999999998,
+        "status": 200,
+        "finishedMs": 1611.1417
+      },
+      {
+        "resource": "<app>/assets/zhike-horizon-logo.png",
+        "requestedMs": 1529.9163999999998,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 1616.6461,
+        "status": 200,
+        "finishedMs": 1617.1061
+      },
+      {
+        "resource": "<app>/styles.css",
+        "requestedMs": 1531.9734999999998,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1542.1552,
+        "status": 200,
+        "finishedMs": 1550.3729999999998
+      },
+      {
+        "resource": "<app>/modules/v4.css",
+        "requestedMs": 1532.5687,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1544.5282,
+        "status": 200,
+        "finishedMs": 1612.7051999999999
+      },
+      {
+        "resource": "<app>/modules/gpt-assistant.css",
+        "requestedMs": 1532.8814,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1546.8809999999999,
+        "status": 200,
+        "finishedMs": 1612.8868
+      },
+      {
+        "resource": "<app>/modules/gpt-workbench.css",
+        "requestedMs": 1533.4501,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1549.9433999999999,
+        "status": 200,
+        "finishedMs": 1613.8799
+      },
+      {
+        "resource": "<app>/modules/gpt-modern.css",
+        "requestedMs": 1533.8834,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1552.6399,
+        "status": 200,
+        "finishedMs": 1614.0757999999998
+      },
+      {
+        "resource": "<app>/modules/gpt-management.css",
+        "requestedMs": 1534.2474,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1566.0875999999998,
+        "status": 200,
+        "finishedMs": 1566.6010999999999
+      },
+      {
+        "resource": "<app>/modules/phone-registry.css",
+        "requestedMs": 1534.7033,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1570.6862999999998,
+        "status": 200,
+        "finishedMs": 1614.3191
+      },
+      {
+        "resource": "<app>/modules/business-enhancements.css",
+        "requestedMs": 1535.1193999999998,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1573.1870999999999,
+        "status": 200,
+        "finishedMs": 1614.5873
+      },
+      {
+        "resource": "<app>/modules/v41-ui.css",
+        "requestedMs": 1535.5341999999998,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1575.3318,
+        "status": 200,
+        "finishedMs": 1614.8472
+      },
+      {
+        "resource": "<app>/modules/operations-upgrade.css",
+        "requestedMs": 1536.0567999999998,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1576.1707,
+        "status": 200,
+        "finishedMs": 1615.1151
+      },
+      {
+        "resource": "<app>/modules/ui-refresh.css",
+        "requestedMs": 1536.5595999999998,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1578.3343,
+        "status": 200,
+        "finishedMs": 1615.3978
+      },
+      {
+        "resource": "<app>/modules/ws-workbench.css",
+        "requestedMs": 1536.9372999999998,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1580.7139,
+        "status": 200,
+        "finishedMs": 1615.5963
+      },
+      {
+        "resource": "<app>/modules/design-system.css",
+        "requestedMs": 1537.2556,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1583.4661999999998,
+        "status": 200,
+        "finishedMs": 1615.8789
+      },
+      {
+        "resource": "<app>/modules/horizon-atelier.css",
+        "requestedMs": 1537.6531,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1585.7794,
+        "status": 200,
+        "finishedMs": 1616.2197999999999
+      },
+      {
+        "resource": "<app>/modules/business-6.css",
+        "requestedMs": 1538.0462,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1587.7499,
+        "status": 200,
+        "finishedMs": 1616.414
+      },
+      {
+        "resource": "<app>/modules/operations-6.css",
+        "requestedMs": 1538.3162,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1589.5245,
+        "status": 200,
+        "finishedMs": 1617.406
+      },
+      {
+        "resource": "<app>/modules/global-6.css",
+        "requestedMs": 1538.6033,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1591.4656,
+        "status": 200,
+        "finishedMs": 1617.914
+      },
+      {
+        "resource": "<app>/modules/home-6.css",
+        "requestedMs": 1538.9197,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1600.5517,
+        "status": 200,
+        "finishedMs": 1601.0195999999999
+      },
+      {
+        "resource": "<app>/modules/scroll-system.css",
+        "requestedMs": 1539.3234,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1608.3339999999998,
+        "status": 200,
+        "finishedMs": 1608.7816
+      },
+      {
+        "resource": "<app>/assets/zhike-horizon-logo.png",
+        "requestedMs": 1539.9107,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 1611.9902,
+        "status": 200,
+        "finishedMs": 1612.4596
+      },
+      {
+        "resource": "<app>/styles.css",
+        "requestedMs": 1555.887,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1580.2404,
+        "status": 200,
+        "finishedMs": 1636.801
+      },
+      {
+        "resource": "<app>/modules/v4.css",
+        "requestedMs": 1556.6344,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1582.9501,
+        "status": 200,
+        "finishedMs": 1637.0189
+      },
+      {
+        "resource": "<app>/modules/gpt-assistant.css",
+        "requestedMs": 1557.1229999999998,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1585.3240999999998,
+        "status": 200,
+        "finishedMs": 1637.2042999999999
+      },
+      {
+        "resource": "<app>/modules/gpt-workbench.css",
+        "requestedMs": 1557.4290999999998,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1588.1768,
+        "status": 200,
+        "finishedMs": 1637.4873
+      },
+      {
+        "resource": "<app>/modules/gpt-modern.css",
+        "requestedMs": 1557.9891,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1590.6716999999999,
+        "status": 200,
+        "finishedMs": 1637.6689999999999
+      },
+      {
+        "resource": "<app>/modules/gpt-management.css",
+        "requestedMs": 1558.4134,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1597.5861,
+        "status": 200,
+        "finishedMs": 1598.0807
+      },
+      {
+        "resource": "<app>/modules/phone-registry.css",
+        "requestedMs": 1559.038,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1607.2488999999998,
+        "status": 200,
+        "finishedMs": 1607.7075
+      },
+      {
+        "resource": "<app>/modules/business-enhancements.css",
+        "requestedMs": 1559.5920999999998,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1611.3835,
+        "status": 200,
+        "finishedMs": 1611.8378
+      },
+      {
+        "resource": "<app>/modules/v41-ui.css",
+        "requestedMs": 1560.1054,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1618.124,
+        "status": 200,
+        "finishedMs": 1618.6025
+      },
+      {
+        "resource": "<app>/modules/operations-upgrade.css",
+        "requestedMs": 1560.3982999999998,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1627.2034999999998,
+        "status": 200,
+        "finishedMs": 1627.5467999999998
+      },
+      {
+        "resource": "<app>/modules/ui-refresh.css",
+        "requestedMs": 1560.7141,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1629.1990999999998,
+        "status": 200,
+        "finishedMs": 1629.6795
+      },
+      {
+        "resource": "<app>/modules/ws-workbench.css",
+        "requestedMs": 1561.163,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1630.0539999999999,
+        "status": 200,
+        "finishedMs": 1630.4653999999998
+      },
+      {
+        "resource": "<app>/modules/design-system.css",
+        "requestedMs": 1561.4957,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1630.7432999999999,
+        "status": 200,
+        "finishedMs": 1631.1658
+      },
+      {
+        "resource": "<app>/modules/horizon-atelier.css",
+        "requestedMs": 1561.9132,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1631.3122999999998,
+        "status": 200,
+        "finishedMs": 1631.7574
+      },
+      {
+        "resource": "<app>/modules/business-6.css",
+        "requestedMs": 1562.2341999999999,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1631.9870999999998,
+        "status": 200,
+        "finishedMs": 1632.4483
+      },
+      {
+        "resource": "<app>/modules/operations-6.css",
+        "requestedMs": 1562.5798,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1632.5846999999999,
+        "status": 200,
+        "finishedMs": 1633.0067999999999
+      },
+      {
+        "resource": "<app>/modules/global-6.css",
+        "requestedMs": 1562.9158,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1633.2285,
+        "status": 200,
+        "finishedMs": 1633.7413
+      },
+      {
+        "resource": "<app>/modules/home-6.css",
+        "requestedMs": 1563.3455,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1634.001,
+        "status": 200,
+        "finishedMs": 1634.7042999999999
+      },
+      {
+        "resource": "<app>/modules/scroll-system.css",
+        "requestedMs": 1563.6490999999999,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1635.1444999999999,
+        "status": 200,
+        "finishedMs": 1635.779
+      },
+      {
+        "resource": "<app>/assets/zhike-horizon-logo.png",
+        "requestedMs": 1563.9644999999998,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 1636.0222999999999,
+        "status": 200,
+        "finishedMs": 1636.4605999999999
+      },
+      {
+        "resource": "<app>/styles.css",
+        "requestedMs": 1683.8305,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1690.7954,
+        "status": 200,
+        "finishedMs": 1715.1766
+      },
+      {
+        "resource": "<app>/modules/v4.css",
+        "requestedMs": 1684.3138999999999,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1691.5665,
+        "status": 200,
+        "finishedMs": 1717.5847999999999
+      },
+      {
+        "resource": "<app>/modules/gpt-assistant.css",
+        "requestedMs": 1684.7273,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1691.934,
+        "status": 200,
+        "finishedMs": 1717.7463
+      },
+      {
+        "resource": "<app>/modules/gpt-workbench.css",
+        "requestedMs": 1685.0372,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1692.403,
+        "status": 200,
+        "finishedMs": 1717.9674
+      },
+      {
+        "resource": "<app>/modules/gpt-modern.css",
+        "requestedMs": 1685.3419999999999,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1693.0304999999998,
+        "status": 200,
+        "finishedMs": 1718.0965999999999
+      },
+      {
+        "resource": "<app>/modules/gpt-management.css",
+        "requestedMs": 1685.6841,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1693.5493999999999,
+        "status": 200,
+        "finishedMs": 1694.2250999999999
+      },
+      {
+        "resource": "<app>/modules/phone-registry.css",
+        "requestedMs": 1686.1541,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1708.2112,
+        "status": 200,
+        "finishedMs": 1718.3104999999998
+      },
+      {
+        "resource": "<app>/modules/business-enhancements.css",
+        "requestedMs": 1686.5493,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1708.7236,
+        "status": 200,
+        "finishedMs": 1718.5825
+      },
+      {
+        "resource": "<app>/modules/v41-ui.css",
+        "requestedMs": 1686.9959999999999,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1709.1317,
+        "status": 200,
+        "finishedMs": 1718.8623
+      },
+      {
+        "resource": "<app>/modules/operations-upgrade.css",
+        "requestedMs": 1687.2781,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1709.6414,
+        "status": 200,
+        "finishedMs": 1719.0852
+      },
+      {
+        "resource": "<app>/modules/ui-refresh.css",
+        "requestedMs": 1687.6611,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1710.196,
+        "status": 200,
+        "finishedMs": 1719.2928
+      },
+      {
+        "resource": "<app>/modules/ws-workbench.css",
+        "requestedMs": 1688.0717,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1710.702,
+        "status": 200,
+        "finishedMs": 1719.4533
+      },
+      {
+        "resource": "<app>/modules/design-system.css",
+        "requestedMs": 1688.3635,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1711.3188,
+        "status": 200,
+        "finishedMs": 1719.6073999999999
+      },
+      {
+        "resource": "<app>/modules/horizon-atelier.css",
+        "requestedMs": 1688.6282999999999,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1711.7411,
+        "status": 200,
+        "finishedMs": 1719.8555999999999
+      },
+      {
+        "resource": "<app>/modules/business-6.css",
+        "requestedMs": 1688.9113,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1712.5066,
+        "status": 200,
+        "finishedMs": 1720.0457
+      },
+      {
+        "resource": "<app>/modules/operations-6.css",
+        "requestedMs": 1689.1947,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1713.1061,
+        "status": 200,
+        "finishedMs": 1720.2497999999998
+      },
+      {
+        "resource": "<app>/modules/global-6.css",
+        "requestedMs": 1689.5729999999999,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1713.6467,
+        "status": 200,
+        "finishedMs": 1720.4762999999998
+      },
+      {
+        "resource": "<app>/modules/home-6.css",
+        "requestedMs": 1689.9433999999999,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1714.7159,
+        "status": 200,
+        "finishedMs": 1721.2415999999998
+      },
+      {
+        "resource": "<app>/modules/scroll-system.css",
+        "requestedMs": 1690.2683,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1715.9492,
+        "status": 200,
+        "finishedMs": 1721.4936
+      },
+      {
+        "resource": "<app>/assets/zhike-horizon-logo.png",
+        "requestedMs": 1690.4653999999998,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 1716.9443999999999,
+        "status": 200,
+        "finishedMs": 1717.3869
+      },
+      {
+        "resource": "<app>/styles.css",
+        "requestedMs": 1701.809,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1714.2205999999999,
+        "status": 200,
+        "finishedMs": 1733.9202
+      },
+      {
+        "resource": "<app>/modules/v4.css",
+        "requestedMs": 1702.1541,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1715.4838,
+        "status": 200,
+        "finishedMs": 1738.6319999999998
+      },
+      {
+        "resource": "<app>/modules/gpt-assistant.css",
+        "requestedMs": 1702.483,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1716.4918,
+        "status": 200,
+        "finishedMs": 1738.8054
+      },
+      {
+        "resource": "<app>/modules/gpt-workbench.css",
+        "requestedMs": 1702.8705,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1720.6593,
+        "status": 200,
+        "finishedMs": 1738.9293
+      },
+      {
+        "resource": "<app>/modules/gpt-modern.css",
+        "requestedMs": 1703.1081,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1721.6115,
+        "status": 200,
+        "finishedMs": 1739.5327
+      },
+      {
+        "resource": "<app>/modules/gpt-management.css",
+        "requestedMs": 1703.3978,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1722.0536,
+        "status": 200,
+        "finishedMs": 1722.4302
+      },
+      {
+        "resource": "<app>/modules/phone-registry.css",
+        "requestedMs": 1703.7022,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1722.7387999999999,
+        "status": 200,
+        "finishedMs": 1739.6528999999998
+      },
+      {
+        "resource": "<app>/modules/business-enhancements.css",
+        "requestedMs": 1704.0674,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1731.2336,
+        "status": 200,
+        "finishedMs": 1739.8274
+      },
+      {
+        "resource": "<app>/modules/v41-ui.css",
+        "requestedMs": 1704.3998,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1731.6500999999998,
+        "status": 200,
+        "finishedMs": 1739.9801
+      },
+      {
+        "resource": "<app>/modules/operations-upgrade.css",
+        "requestedMs": 1704.6854999999998,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1732.1483999999998,
+        "status": 200,
+        "finishedMs": 1740.1553
+      },
+      {
+        "resource": "<app>/modules/ui-refresh.css",
+        "requestedMs": 1705.0711,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1732.6129999999998,
+        "status": 200,
+        "finishedMs": 1740.3238999999999
+      },
+      {
+        "resource": "<app>/modules/ws-workbench.css",
+        "requestedMs": 1705.4076,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1733.0164,
+        "status": 200,
+        "finishedMs": 1740.484
+      },
+      {
+        "resource": "<app>/modules/design-system.css",
+        "requestedMs": 1705.7195,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1733.3221999999998,
+        "status": 200,
+        "finishedMs": 1740.6169
+      },
+      {
+        "resource": "<app>/modules/horizon-atelier.css",
+        "requestedMs": 1706.0321,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1733.6535,
+        "status": 200,
+        "finishedMs": 1740.8201999999999
+      },
+      {
+        "resource": "<app>/modules/business-6.css",
+        "requestedMs": 1706.3463,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1734.1491999999998,
+        "status": 200,
+        "finishedMs": 1741.0205999999998
+      },
+      {
+        "resource": "<app>/modules/operations-6.css",
+        "requestedMs": 1706.7232999999999,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1734.4512,
+        "status": 200,
+        "finishedMs": 1741.1626999999999
+      },
+      {
+        "resource": "<app>/modules/global-6.css",
+        "requestedMs": 1707.0364,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1735.0240999999999,
+        "status": 200,
+        "finishedMs": 1735.4379
+      },
+      {
+        "resource": "<app>/modules/home-6.css",
+        "requestedMs": 1707.3140999999998,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1735.6337999999998,
+        "status": 200,
+        "finishedMs": 1736.0363
+      },
+      {
+        "resource": "<app>/modules/scroll-system.css",
+        "requestedMs": 1707.5839999999998,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1736.6110999999999,
+        "status": 200,
+        "finishedMs": 1737.0477999999998
+      },
+      {
+        "resource": "<app>/assets/zhike-horizon-logo.png",
+        "requestedMs": 1707.8966,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 1738.1671999999999,
+        "status": 200,
+        "finishedMs": 1738.4995999999999
+      },
+      {
+        "resource": "<app>/styles.css",
+        "requestedMs": 1724.5681,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1736.2142,
+        "status": 200,
+        "finishedMs": 1745.7567
+      },
+      {
+        "resource": "<app>/modules/v4.css",
+        "requestedMs": 1724.8917999999999,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1737.7748,
+        "status": 200,
+        "finishedMs": 1749.8849
+      },
+      {
+        "resource": "<app>/modules/gpt-assistant.css",
+        "requestedMs": 1725.2126999999998,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1739.1865,
+        "status": 200,
+        "finishedMs": 1750.1399999999999
+      },
+      {
+        "resource": "<app>/modules/gpt-workbench.css",
+        "requestedMs": 1725.5411,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1741.2946,
+        "status": 200,
+        "finishedMs": 1750.3357999999998
+      },
+      {
+        "resource": "<app>/modules/gpt-modern.css",
+        "requestedMs": 1725.9913999999999,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1741.6834,
+        "status": 200,
+        "finishedMs": 1750.5203999999999
+      },
+      {
+        "resource": "<app>/modules/gpt-management.css",
+        "requestedMs": 1726.3862,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1742.1272999999999,
+        "status": 200,
+        "finishedMs": 1742.5258999999999
+      },
+      {
+        "resource": "<app>/modules/phone-registry.css",
+        "requestedMs": 1726.7491,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1742.7736,
+        "status": 200,
+        "finishedMs": 1750.8995
+      },
+      {
+        "resource": "<app>/modules/business-enhancements.css",
+        "requestedMs": 1726.9567,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1743.182,
+        "status": 200,
+        "finishedMs": 1751.0603999999998
+      },
+      {
+        "resource": "<app>/modules/v41-ui.css",
+        "requestedMs": 1727.3755999999998,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1743.4899,
+        "status": 200,
+        "finishedMs": 1751.2433999999998
+      },
+      {
+        "resource": "<app>/modules/operations-upgrade.css",
+        "requestedMs": 1727.7433999999998,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1743.848,
+        "status": 200,
+        "finishedMs": 1751.4999
+      },
+      {
+        "resource": "<app>/modules/ui-refresh.css",
+        "requestedMs": 1728.067,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1744.3108,
+        "status": 200,
+        "finishedMs": 1751.6958
+      },
+      {
+        "resource": "<app>/modules/ws-workbench.css",
+        "requestedMs": 1728.4071999999999,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1744.7535,
+        "status": 200,
+        "finishedMs": 1751.8896
+      },
+      {
+        "resource": "<app>/modules/design-system.css",
+        "requestedMs": 1728.7667,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1745.2914999999998,
+        "status": 200,
+        "finishedMs": 1752.1064999999999
+      },
+      {
+        "resource": "<app>/modules/horizon-atelier.css",
+        "requestedMs": 1729.0506,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1746.0027,
+        "status": 200,
+        "finishedMs": 1752.3786
+      },
+      {
+        "resource": "<app>/modules/business-6.css",
+        "requestedMs": 1729.2858999999999,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1746.5821999999998,
+        "status": 200,
+        "finishedMs": 1752.6189
+      },
+      {
+        "resource": "<app>/modules/operations-6.css",
+        "requestedMs": 1729.4828,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1747.003,
+        "status": 200,
+        "finishedMs": 1752.8040999999998
+      },
+      {
+        "resource": "<app>/modules/global-6.css",
+        "requestedMs": 1729.705,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1747.4194,
+        "status": 200,
+        "finishedMs": 1752.9458
+      },
+      {
+        "resource": "<app>/modules/home-6.css",
+        "requestedMs": 1730.1262,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1747.7464,
+        "status": 200,
+        "finishedMs": 1753.1643
+      },
+      {
+        "resource": "<app>/modules/scroll-system.css",
+        "requestedMs": 1730.4837,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1748.2601,
+        "status": 200,
+        "finishedMs": 1753.4080999999999
+      },
+      {
+        "resource": "<app>/assets/zhike-horizon-logo.png",
+        "requestedMs": 1730.906,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 1749.1178,
+        "status": 200,
+        "finishedMs": 1749.5987
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 3230.196,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 3230.7942,
+        "status": 200,
+        "finishedMs": 3231.4114999999997
+      },
+      {
+        "resource": "<app>/assets/atelier-dawn.svg",
+        "requestedMs": 3231.7093999999997,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 3234.1217,
+        "status": 200,
+        "finishedMs": 3234.6816
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 3232.5802,
+        "frameId": "0D640D7CC79F22E8FF12B31047DC65D6",
+        "loaderId": "DC7F74508BC51E7680AC3D8468C41C6B",
+        "responseMs": 3233.2068,
+        "status": 200,
+        "finishedMs": 3233.5875
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 3906.4476999999997,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 3907.165,
+        "status": 200,
+        "finishedMs": 3907.6942
+      },
+      {
+        "resource": "<app>/assets/atelier-dawn.svg",
+        "requestedMs": 3907.9455,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 3909.8999,
+        "status": 200,
+        "finishedMs": 3910.3402
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 3908.4431,
+        "frameId": "0950DD384FE3CB448866348B4F9C0628",
+        "loaderId": "4A2A00C647DD06ACA9A1FA716E196584",
+        "responseMs": 3908.9818999999998,
+        "status": 200,
+        "finishedMs": 3909.5326
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 4554.037,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 4554.5185,
+        "status": 200,
+        "finishedMs": 4555.1529
+      },
+      {
+        "resource": "<app>/assets/atelier-dawn.svg",
+        "requestedMs": 4555.4521,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 4557.916700000001,
+        "status": 200,
+        "finishedMs": 4558.1642
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 4556.2667,
+        "frameId": "28B932212891BBD29F032470BEB7EC99",
+        "loaderId": "53AC9CFD4B3EF771A4CB68F9795A331C",
+        "responseMs": 4557.1616,
+        "status": 200,
+        "finishedMs": 4557.693200000001
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 5189.3251,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 5189.6675000000005,
+        "status": 200,
+        "finishedMs": 5190.1135
+      },
+      {
+        "resource": "<app>/assets/atelier-dawn.svg",
+        "requestedMs": 5190.3625,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 5192.1423,
+        "status": 200,
+        "finishedMs": 5192.702
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 5190.792100000001,
+        "frameId": "2A6228A6E9BC7F9DAA4CBD383A220025",
+        "loaderId": "46843AE3E1B9E61A8B137744F6924DE4",
+        "responseMs": 5191.172500000001,
+        "status": 200,
+        "finishedMs": 5191.740500000001
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 5832.1832,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 5832.9022,
+        "status": 200,
+        "finishedMs": 5833.3687
+      },
+      {
+        "resource": "<app>/assets/atelier-dawn.svg",
+        "requestedMs": 5833.798400000001,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 5835.8752,
+        "status": 200,
+        "finishedMs": 5836.5297
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 5834.5081,
+        "frameId": "8A217BF940DB35FA4431582789BA366F",
+        "loaderId": "336F74208E3AD5BFF19B030B8E15E4F4",
+        "responseMs": 5835.1071,
+        "status": 200,
+        "finishedMs": 5835.564
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 6520.4305,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 6521.072,
+        "status": 200,
+        "finishedMs": 6521.631200000001
+      },
+      {
+        "resource": "<app>/assets/atelier-dawn.svg",
+        "requestedMs": 6521.8966,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 6523.897400000001,
+        "status": 200,
+        "finishedMs": 6524.7819
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 6522.3562,
+        "frameId": "F1CCE9D70F06E9CE35C7451654B1C89B",
+        "loaderId": "C6AFF860509D37F8CEA0C364247F21B2",
+        "responseMs": 6523.002200000001,
+        "status": 200,
+        "finishedMs": 6523.6443
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 7206.0926,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 7206.9029,
+        "status": 200,
+        "finishedMs": 7207.515600000001
+      },
+      {
+        "resource": "<app>/assets/atelier-dawn.svg",
+        "requestedMs": 7207.7852,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 7209.9794,
+        "status": 200,
+        "finishedMs": 7210.4939
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 7208.3952,
+        "frameId": "1DE8E58DF44C444A10B81637616A6FDD",
+        "loaderId": "8707B5152E7A7AB3A92071398422F23F",
+        "responseMs": 7209.066500000001,
+        "status": 200,
+        "finishedMs": 7209.592900000001
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 7836.3028,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 7837.030900000001,
+        "status": 200,
+        "finishedMs": 7837.4781
+      },
+      {
+        "resource": "<app>/assets/atelier-dawn.svg",
+        "requestedMs": 7837.8112,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 7839.573200000001,
+        "status": 200,
+        "finishedMs": 7840.0545
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 7838.241300000001,
+        "frameId": "84B2A0F73F0E9192FCAE3759966155D8",
+        "loaderId": "A649D68C507963FAAE1CA2A851D7390E",
+        "responseMs": 7838.793500000001,
+        "status": 200,
+        "finishedMs": 7839.3432
+      }
+    ],
+    "captureEndedMs": 8431.8131,
+    "pendingCount": 0
+  },
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "resultCases": 8,
+  "resultBytes": 2099874,
+  "resultSha256": "ad5781788f5fd4736dd1af3595c4b2073972d45648f083592f4a159898359234",
+  "resultFile": "<local-user>/Documents/Codex/2026-11-04/new-chat/work/project-review/知客 4.1 运营增强版/.tools/visual-usability/main-visual/1795013061232-83bc2536-2651-4306-9898-0b49fbf7849f.result.json",
+  "resultReady": true,
+  "rootExitProof": "verified-spawn-handle-exit-and-streams",
+  "remainingIdentities": [],
+  "identityProbeClosed": true,
+  "elapsedMs": 9474.6732,
+  "stdoutBytes": 0,
+  "stderrBytes": 618
+}

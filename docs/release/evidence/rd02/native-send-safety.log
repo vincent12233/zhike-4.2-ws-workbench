@@ -1,0 +1,6 @@
+已成功生成。
+    0 个警告
+    0 个错误
+
+已用时间 00:00:02.12
+{"stage":"5.5C-1A","nativeHandlersFromProductionSource":true,"cases":[{"name":"media-await-cancel","passed":true},{"name":"media-await-account-switch","passed":true},{"name":"media-await-A-B-A","passed":true},{"name":"media-await-session-replaced","passed":true},{"name":"media-await-same-generation-session-replaced","passed":true},{"name":"media-await-core-replaced","passed":true},{"name":"media-await-close","passed":true},{"name":"media-await-window-hidden","passed":true},{"name":"text-local-attempt-only","passed":true},{"name":"media-local-attempt-only","passed":true},{"name":"dispatch-exception-is-unknown","passed":true},{"name":"invalid-dispatch-result-is-unknown","passed":true},{"name":"post-dispatch-cancel-is-unknown","passed":true},{"name":"page-pre-click-refusal-is-failed","passed":true},{"name":"missing-target-never-dispatches","passed":true},{"name":"in-flight-cancel-releases-wait-as-unknown","passed":true},{"name":"post-dispatch-A-B-A-remains-unknown","passed":true},{"name":"webview-string-wrapped-result-is-parsed","passed":true}],"productionOpened":false,"realWs":false,"network":false}

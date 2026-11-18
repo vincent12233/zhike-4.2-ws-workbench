@@ -1,0 +1,264 @@
+{
+  "baseline": "8b7dfd0",
+  "fix": "0181804241bbae5e53965ec644462cce05f79f7f",
+  "kind": "isolated Edge and synthetic fixture",
+  "nativeWindowsEvidence": false,
+  "runs": [
+    {
+      "run": "after-900-capture-atelier-dawn",
+      "case": "horizontal-capture-atelier-dawn",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "assertionPassed": true,
+      "maxBeforeScroll": null,
+      "historyBeforeScroll": null,
+      "historyAfterScroll": null,
+      "scrollTop": 2766,
+      "maxAfterScroll": 2766,
+      "lastSectionBottom": 742.9375,
+      "fixedFooterTop": 769,
+      "followups": [
+        "52",
+        "0",
+        "52",
+        "0"
+      ],
+      "edgeExit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "log": "after-900-capture-atelier-dawn/assertions.log",
+      "geometry": "after-900-capture-atelier-dawn/result.json",
+      "lifecycle": "after-900-capture-atelier-dawn/lifecycle.json",
+      "screenshot": "after-900-capture-atelier-dawn/horizontal.png"
+    },
+    {
+      "run": "after-900-default-atelier-dawn",
+      "case": "atelier-dawn-light-1280",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "assertionPassed": true,
+      "maxBeforeScroll": null,
+      "historyBeforeScroll": null,
+      "historyAfterScroll": null,
+      "scrollTop": 2766,
+      "maxAfterScroll": 2766,
+      "lastSectionBottom": 742.9375,
+      "fixedFooterTop": 769,
+      "followups": [
+        "52",
+        "0",
+        "52",
+        "0"
+      ],
+      "edgeExit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "log": "after-900-default-atelier-dawn/assertions.log",
+      "geometry": "after-900-default-atelier-dawn/result.json",
+      "lifecycle": "after-900-default-atelier-dawn/lifecycle.json",
+      "screenshot": null
+    },
+    {
+      "run": "after-800-capture-atelier-dawn",
+      "case": "horizontal-capture-atelier-dawn",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "assertionPassed": true,
+      "maxBeforeScroll": null,
+      "historyBeforeScroll": null,
+      "historyAfterScroll": null,
+      "scrollTop": 2866,
+      "maxAfterScroll": 2866,
+      "lastSectionBottom": 642.9375,
+      "fixedFooterTop": 669,
+      "followups": [
+        "52",
+        "0",
+        "52",
+        "0"
+      ],
+      "edgeExit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "log": "after-800-capture-atelier-dawn/assertions.log",
+      "geometry": "after-800-capture-atelier-dawn/result.json",
+      "lifecycle": "after-800-capture-atelier-dawn/lifecycle.json",
+      "screenshot": "after-800-capture-atelier-dawn/horizontal.png"
+    },
+    {
+      "run": "after-800-capture-horizon-night",
+      "case": "horizontal-capture-horizon-night",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "assertionPassed": true,
+      "maxBeforeScroll": null,
+      "historyBeforeScroll": null,
+      "historyAfterScroll": null,
+      "scrollTop": 2866,
+      "maxAfterScroll": 2866,
+      "lastSectionBottom": 642.9375,
+      "fixedFooterTop": 669,
+      "followups": [
+        "52",
+        "0",
+        "52",
+        "0"
+      ],
+      "edgeExit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "log": "after-800-capture-horizon-night/assertions.log",
+      "geometry": "after-800-capture-horizon-night/result.json",
+      "lifecycle": "after-800-capture-horizon-night/lifecycle.json",
+      "screenshot": "after-800-capture-horizon-night/horizontal.png"
+    },
+    {
+      "run": "before-800-capture-atelier-dawn",
+      "case": "horizontal-capture-atelier-dawn",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "assertionPassed": false,
+      "maxBeforeScroll": null,
+      "historyBeforeScroll": null,
+      "historyAfterScroll": null,
+      "scrollTop": 2695,
+      "maxAfterScroll": 2866,
+      "lastSectionBottom": 813.9375,
+      "fixedFooterTop": 669,
+      "followups": [
+        "52",
+        "52",
+        "0",
+        "0"
+      ],
+      "edgeExit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "log": "before-800-capture-atelier-dawn/assertions.log",
+      "geometry": "before-800-capture-atelier-dawn/result.json",
+      "lifecycle": "before-800-capture-atelier-dawn/lifecycle.json",
+      "screenshot": "before-800-capture-atelier-dawn/horizontal.png"
+    },
+    {
+      "run": "before-800-default-atelier-dawn",
+      "case": "atelier-dawn-light-1280",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "assertionPassed": false,
+      "maxBeforeScroll": null,
+      "historyBeforeScroll": null,
+      "historyAfterScroll": null,
+      "scrollTop": 2695,
+      "maxAfterScroll": 2866,
+      "lastSectionBottom": 813.9375,
+      "fixedFooterTop": 669,
+      "followups": [
+        "52",
+        "52",
+        "0",
+        "0"
+      ],
+      "edgeExit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "log": "before-800-default-atelier-dawn/assertions.log",
+      "geometry": "before-800-default-atelier-dawn/result.json",
+      "lifecycle": "before-800-default-atelier-dawn/lifecycle.json",
+      "screenshot": null
+    },
+    {
+      "run": "before-900-capture-atelier-dawn",
+      "case": "horizontal-capture-atelier-dawn",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "assertionPassed": false,
+      "maxBeforeScroll": 2595,
+      "historyBeforeScroll": null,
+      "historyAfterScroll": "loaded",
+      "scrollTop": 2595,
+      "maxAfterScroll": 2766,
+      "lastSectionBottom": 913.9375,
+      "fixedFooterTop": 769,
+      "followups": [
+        "52",
+        "52",
+        "0",
+        "0"
+      ],
+      "edgeExit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "log": "before-900-capture-atelier-dawn/assertions.log",
+      "geometry": "before-900-capture-atelier-dawn/result.json",
+      "lifecycle": "before-900-capture-atelier-dawn/lifecycle.json",
+      "screenshot": "before-900-capture-atelier-dawn/horizontal.png"
+    },
+    {
+      "run": "before-900-default-atelier-dawn",
+      "case": "atelier-dawn-light-1280",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "assertionPassed": false,
+      "maxBeforeScroll": 2595,
+      "historyBeforeScroll": null,
+      "historyAfterScroll": "loaded",
+      "scrollTop": 2595,
+      "maxAfterScroll": 2766,
+      "lastSectionBottom": 913.9375,
+      "fixedFooterTop": 769,
+      "followups": [
+        "52",
+        "52",
+        "0",
+        "0"
+      ],
+      "edgeExit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "log": "before-900-default-atelier-dawn/assertions.log",
+      "geometry": "before-900-default-atelier-dawn/result.json",
+      "lifecycle": "before-900-default-atelier-dawn/lifecycle.json",
+      "screenshot": null
+    }
+  ]
+}

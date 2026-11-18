@@ -1,0 +1,1 @@
+{"status":"Passed","checkedAtUtc":"2026-11-18T21:32:17.4243513Z","evidenceFile":"release-native-resource.jsonl","observedProcessIdentities":9,"remainingCount":0,"remainingProcesses":[],"unverifiedCount":0,"unverifiedProcesses":[],"processTerminatedByCheck":false,"scope":"read-only process identity checks after application close"}

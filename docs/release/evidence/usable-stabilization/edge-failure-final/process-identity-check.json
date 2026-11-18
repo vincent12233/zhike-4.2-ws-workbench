@@ -1,0 +1,229 @@
+{
+  "checkedAtUtc": "2026-11-18T19:06:21.431Z",
+  "method": "Read-only PID lookup. If a PID is present and expected creation ticks were recorded, compare the live process creation ticks. A missing PID establishes absence at the check time.",
+  "events": "The recheck kernel observer emitted stopped and observer-exit code 0. Neither run archived creation ticks for the identity probe or observer. No process was stopped and no fixture directory was opened.",
+  "invocations": [
+    {
+      "invocation": "1795028241746-e8df1168-1414-4cb6-bffc-891f3febd6db",
+      "syntheticRootName": "zhike-s1-main-style-UZJ3c3",
+      "identities": [
+        {
+          "role": "edge-root",
+          "pid": 36832,
+          "startedTicks": "639306250417492633",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 13804,
+          "startedTicks": "639306250428141150",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 38776,
+          "startedTicks": "639306250427964806",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 35036,
+          "startedTicks": "639306250427823628",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 39960,
+          "startedTicks": "639306250427863383",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 33844,
+          "startedTicks": "639306250427232821",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 40692,
+          "startedTicks": "639306250424285432",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 16128,
+          "startedTicks": "639306250424334086",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 38628,
+          "startedTicks": "639306250424885549",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 6872,
+          "startedTicks": "639306250436967118",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 11588,
+          "startedTicks": "639306250436886771",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 22420,
+          "startedTicks": "639306250430230836",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 37576,
+          "startedTicks": "639306250428143727",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 6896,
+          "startedTicks": "639306250442353430",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 39296,
+          "startedTicks": "639306250435141497",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 34188,
+          "startedTicks": "639306250442552349",
+          "status": "pid-absent"
+        },
+        {
+          "role": "identity-probe",
+          "pid": 9448,
+          "startedTicks": null,
+          "status": "pid-absent"
+        }
+      ]
+    },
+    {
+      "invocation": "1795028511745-f9edc775-832a-4ddd-8f6b-ad7a405831b1",
+      "syntheticRootName": "zhike-s1-main-style-stiPxF",
+      "identities": [
+        {
+          "role": "edge-root",
+          "pid": 34396,
+          "startedTicks": "639306253117599549",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 22452,
+          "startedTicks": "639306253125673192",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 32924,
+          "startedTicks": "639306253122427959",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 13276,
+          "startedTicks": "639306253122488547",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 11908,
+          "startedTicks": "639306253123066497",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 33008,
+          "startedTicks": "639306253143964889",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 26352,
+          "startedTicks": "639306253143876762",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 22268,
+          "startedTicks": "639306253127749283",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 40188,
+          "startedTicks": "639306253127334923",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 33836,
+          "startedTicks": "639306253127254718",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 35572,
+          "startedTicks": "639306253127254660",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 34188,
+          "startedTicks": "639306253148972055",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 15736,
+          "startedTicks": "639306253126573393",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 20240,
+          "startedTicks": "639306253126904387",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 7192,
+          "startedTicks": "639306253141924850",
+          "status": "pid-absent"
+        },
+        {
+          "role": "edge-descendant",
+          "pid": 37564,
+          "startedTicks": "639306253149084825",
+          "status": "pid-absent"
+        },
+        {
+          "role": "identity-probe",
+          "pid": 19796,
+          "startedTicks": null,
+          "status": "pid-absent"
+        },
+        {
+          "role": "kernel-observer",
+          "pid": 41964,
+          "startedTicks": null,
+          "status": "pid-absent"
+        }
+      ]
+    }
+  ]
+}

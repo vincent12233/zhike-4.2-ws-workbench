@@ -1,0 +1,183 @@
+{
+  "transformations": {
+    "r1/full-regression.log": {
+      "root": 22,
+      "sid": 2,
+      "localEndpoint": 0,
+      "removedAbsolutePathLines": 0,
+      "removedTestProfilePath": 0,
+      "removedTrailingSpaces": 3,
+      "originalEncoding": "UTF-8",
+      "archiveEncoding": "UTF-8"
+    },
+    "r1/full-regression.exit": {
+      "root": 0,
+      "sid": 0,
+      "localEndpoint": 0,
+      "removedAbsolutePathLines": 0,
+      "removedTestProfilePath": 0,
+      "removedTrailingSpaces": 0,
+      "originalEncoding": "UTF-8",
+      "archiveEncoding": "UTF-8"
+    },
+    "r2/full-regression-final.log": {
+      "root": 27,
+      "sid": 2,
+      "localEndpoint": 0,
+      "removedAbsolutePathLines": 0,
+      "removedTestProfilePath": 1,
+      "removedTrailingSpaces": 3,
+      "originalEncoding": "UTF-8",
+      "archiveEncoding": "UTF-8"
+    },
+    "r2/full-regression-final.exit": {
+      "root": 0,
+      "sid": 0,
+      "localEndpoint": 0,
+      "removedAbsolutePathLines": 0,
+      "removedTestProfilePath": 0,
+      "removedTrailingSpaces": 0,
+      "originalEncoding": "UTF-8",
+      "archiveEncoding": "UTF-8"
+    },
+    "diagnostics/main-visual-fixed.log": {
+      "root": 1,
+      "sid": 0,
+      "localEndpoint": 0,
+      "removedAbsolutePathLines": 0,
+      "removedTestProfilePath": 0,
+      "removedTrailingSpaces": 0,
+      "originalEncoding": "UTF-8",
+      "archiveEncoding": "UTF-8"
+    },
+    "diagnostics/ws-visual-fixed.log": {
+      "root": 0,
+      "sid": 0,
+      "localEndpoint": 0,
+      "removedAbsolutePathLines": 0,
+      "removedTestProfilePath": 0,
+      "removedTrailingSpaces": 0,
+      "originalEncoding": "UTF-8",
+      "archiveEncoding": "UTF-8"
+    },
+    "build/release-build.log": {
+      "root": 1,
+      "sid": 0,
+      "localEndpoint": 0,
+      "removedAbsolutePathLines": 0,
+      "removedTestProfilePath": 0,
+      "removedTrailingSpaces": 0,
+      "originalEncoding": "UTF-8",
+      "archiveEncoding": "UTF-8"
+    },
+    "build/release-build.exit": {
+      "root": 0,
+      "sid": 0,
+      "localEndpoint": 0,
+      "removedAbsolutePathLines": 0,
+      "removedTestProfilePath": 0,
+      "removedTrailingSpaces": 0,
+      "originalEncoding": "UTF-8",
+      "archiveEncoding": "UTF-8"
+    },
+    "build/native-build.log": {
+      "root": 1,
+      "sid": 0,
+      "localEndpoint": 0,
+      "removedAbsolutePathLines": 0,
+      "removedTestProfilePath": 0,
+      "removedTrailingSpaces": 0,
+      "originalEncoding": "UTF-8",
+      "archiveEncoding": "UTF-8"
+    },
+    "r3/full-regression-r3.log": {
+      "root": 22,
+      "sid": 2,
+      "localEndpoint": 0,
+      "removedAbsolutePathLines": 0,
+      "removedTestProfilePath": 0,
+      "removedTrailingSpaces": 1,
+      "originalEncoding": "UTF-8",
+      "archiveEncoding": "UTF-8"
+    },
+    "r3/full-regression-r3.exit": {
+      "root": 0,
+      "sid": 0,
+      "localEndpoint": 0,
+      "removedAbsolutePathLines": 0,
+      "removedTestProfilePath": 0,
+      "removedTrailingSpaces": 0,
+      "originalEncoding": "UTF-8",
+      "archiveEncoding": "UTF-8"
+    },
+    "r3/ws-suite-labels.json": {
+      "root": 0,
+      "sid": 0,
+      "localEndpoint": 0,
+      "removedAbsolutePathLines": 0,
+      "removedTestProfilePath": 0,
+      "removedTrailingSpaces": 0,
+      "originalEncoding": "UTF-8",
+      "archiveEncoding": "UTF-8"
+    },
+    "diagnostics/gpt-visual-fixed.log": {
+      "root": 3,
+      "sid": 0,
+      "localEndpoint": 0,
+      "removedAbsolutePathLines": 0,
+      "removedTestProfilePath": 0,
+      "removedTrailingSpaces": 0,
+      "originalEncoding": "UTF-8",
+      "archiveEncoding": "UTF-8"
+    },
+    "diagnostics/gpt-visual-diagnostic.log": {
+      "root": 0,
+      "sid": 0,
+      "localEndpoint": 0,
+      "removedAbsolutePathLines": 0,
+      "removedTestProfilePath": 0,
+      "removedTrailingSpaces": 0,
+      "originalEncoding": "UTF-8",
+      "archiveEncoding": "UTF-8"
+    },
+    "diagnostics/gpt-visual-diagnostic.exit": {
+      "root": 0,
+      "sid": 0,
+      "localEndpoint": 0,
+      "removedAbsolutePathLines": 0,
+      "removedTestProfilePath": 0,
+      "removedTrailingSpaces": 0,
+      "originalEncoding": "UTF-8",
+      "archiveEncoding": "UTF-8"
+    },
+    "build/release-build-final.log": {
+      "root": 1,
+      "sid": 0,
+      "localEndpoint": 0,
+      "removedAbsolutePathLines": 0,
+      "removedTestProfilePath": 0,
+      "removedTrailingSpaces": 0,
+      "originalEncoding": "UTF-8",
+      "archiveEncoding": "UTF-8"
+    },
+    "build/release-build-final.exit": {
+      "root": 0,
+      "sid": 0,
+      "localEndpoint": 0,
+      "removedAbsolutePathLines": 0,
+      "removedTestProfilePath": 0,
+      "removedTrailingSpaces": 0,
+      "originalEncoding": "UTF-8",
+      "archiveEncoding": "UTF-8"
+    }
+  },
+  "possibleCredentialMatches": 0,
+  "finalAbsolutePaths": 0,
+  "finalWindowsUserSids": 0,
+  "finalLoopbackEndpoints": 0,
+  "finalPageHtmlMarkers": 0,
+  "finalEmailShapes": 0,
+  "finalPhoneShapes": 0,
+  "finalWhatsAppIdShapes": 0,
+  "omittedR3FixtureOutputBytes": 6006
+}

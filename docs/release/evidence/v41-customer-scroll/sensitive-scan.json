@@ -1,0 +1,810 @@
+{
+  "scope": "Explicitly selected test artifacts only. All five Edge screenshots visually reviewed against the synthetic fixture. PNG chunk scan rejects metadata and appended data.",
+  "nativeWindowsEvidence": false,
+  "fixtureValues": "Synthetic customer names, numbers and relationships intentionally retained. Process IDs and creation times are retained as lifecycle evidence.",
+  "sourceSensitivePathsRedacted": 25,
+  "sourceCredentialAndTemporaryCdpMatches": 0,
+  "archivedCandidateSensitiveValueMatches": 0,
+  "patterns": [
+    "absoluteWindowsPath",
+    "windowsUserSid",
+    "cdpEndpointOrToken",
+    "openAiStyleKey",
+    "googleApiKey",
+    "googleOAuthToken",
+    "awsAccessKey",
+    "jwtCredential",
+    "bearerCredential",
+    "assignedCredential",
+    "privateKey"
+  ],
+  "details": [
+    {
+      "path": "after-900-capture-atelier-dawn/result.json",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "after-900-capture-atelier-dawn/assertions.log",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "after-900-capture-atelier-dawn/horizontal.png",
+      "kind": "PNG",
+      "chunks": [
+        "IHDR",
+        "IDAT",
+        "IEND"
+      ],
+      "visuallyReviewedSyntheticFixture": true
+    },
+    {
+      "path": "after-900-capture-atelier-dawn/lifecycle.json",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 3,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "after-900-default-atelier-dawn/result.json",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "after-900-default-atelier-dawn/assertions.log",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "after-900-default-atelier-dawn/lifecycle.json",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 2,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "after-800-capture-atelier-dawn/result.json",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "after-800-capture-atelier-dawn/assertions.log",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "after-800-capture-atelier-dawn/horizontal.png",
+      "kind": "PNG",
+      "chunks": [
+        "IHDR",
+        "IDAT",
+        "IEND"
+      ],
+      "visuallyReviewedSyntheticFixture": true
+    },
+    {
+      "path": "after-800-capture-atelier-dawn/lifecycle.json",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 3,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "after-800-capture-horizon-night/result.json",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "after-800-capture-horizon-night/assertions.log",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "after-800-capture-horizon-night/horizontal.png",
+      "kind": "PNG",
+      "chunks": [
+        "IHDR",
+        "IDAT",
+        "IEND"
+      ],
+      "visuallyReviewedSyntheticFixture": true
+    },
+    {
+      "path": "after-800-capture-horizon-night/lifecycle.json",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 3,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "before-800-capture-atelier-dawn/result.json",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "before-800-capture-atelier-dawn/assertions.log",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 1,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "before-800-capture-atelier-dawn/horizontal.png",
+      "kind": "PNG",
+      "chunks": [
+        "IHDR",
+        "IDAT",
+        "IEND"
+      ],
+      "visuallyReviewedSyntheticFixture": true
+    },
+    {
+      "path": "before-800-capture-atelier-dawn/lifecycle.json",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 3,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "before-800-default-atelier-dawn/result.json",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "before-800-default-atelier-dawn/assertions.log",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 1,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "before-800-default-atelier-dawn/lifecycle.json",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 2,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "before-900-capture-atelier-dawn/result.json",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "before-900-capture-atelier-dawn/assertions.log",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 1,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "before-900-capture-atelier-dawn/horizontal.png",
+      "kind": "PNG",
+      "chunks": [
+        "IHDR",
+        "IDAT",
+        "IEND"
+      ],
+      "visuallyReviewedSyntheticFixture": true
+    },
+    {
+      "path": "before-900-capture-atelier-dawn/lifecycle.json",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 3,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "before-900-default-atelier-dawn/result.json",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "before-900-default-atelier-dawn/assertions.log",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 1,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "before-900-default-atelier-dawn/lifecycle.json",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 2,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    },
+    {
+      "path": "runs.json",
+      "kind": "generated UTF-8 index",
+      "archiveMatches": {
+        "absoluteWindowsPath": 0,
+        "windowsUserSid": 0,
+        "cdpEndpointOrToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      }
+    }
+  ]
+}

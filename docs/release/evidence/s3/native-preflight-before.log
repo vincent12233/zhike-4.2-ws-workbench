@@ -1,0 +1,51 @@
+node:assert:885
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: The real prepare module must be import-safe before its preflight is tested.
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\scripts\stage51\native-prepare-preflight.test.cjs:10:8)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: "'use strict';\n" +
+    '// Prepares an opt-in development-only WinUI build. No production data or\n' +
+    '// installed application files are copied. The executable is built separately.\n' +
+    "const assert = require('node:assert/strict');\n" +
+    "const fs = require('node:fs');\n" +
+    "const os = require('node:os');\n" +
+    "const path = require('node:path');\n" +
+    "const { randomUUID } = require('node:crypto');\n" +
+    "const { copyIsolatedAppFixture } = require('../../tests/helpers/isolated-app-fixture.cjs');\n" +
+    "const repo = path.resolve(__dirname, '../..');\n" +
+    "const output = path.resolve(process.argv[2] || path.join(repo, '.tools/stage51-native-v2'));\n" +
+    "assert.ok(output === path.join(repo, '.tools/stage51-native-v2') || output === path.join(repo, 'stage51-native-output'), 'Only named test build directories are allowed');\n" +
+    "const binary = path.join(output, 'Zhike.Stage51.Acceptance.exe');\n" +
+    "assert.ok(fs.existsSync(binary), 'Build Stage51IsolatedUi=true to stage51-native-output first');\n" +
+    'const reused = process.argv[3] ? path.resolve(process.argv[3]) : null;\n' +
+    'if (reused) {\n' +
+    '  assert.equal(path.dirname(reused).toLowerCase(), path.resolve(os.tmpdir()).toLowerCase());\n' +
+    '  assert.match(path.basename(reused), /^zhike-stage51-native-[a-f0-9]{32}$/);\n' +
+    '  assert.equal(fs.lstatSync(reused).isSymbolicLink(), false);\n' +
+    "  assert.equal(fs.readFileSync(path.join(reused, '.stage51-isolated'), 'utf8'), 'zhike-stage51-isolated-ui-v1');\n" +
+    "  const prior = path.join(reused, 'connection.private.json');\n" +
+    "  if (fs.existsSync(prior)) { const pid = Number(JSON.parse(fs.readFileSync(prior, 'utf8')).pid); let alive = false; try { process.kill(pid, 0); alive = true; } catch {} assert.equal(alive, false, 'Close the exact prior isolated app before reusing its fixture'); }\n" +
+    '}\n' +
+    "const resources = path.join(output, 'resources/app');\n" +
+    "copyIsolatedAppFixture(path.join(repo, 'resources/app'), resources);\n" +
+    "fs.copyFileSync(path.join(repo, 'resources/app/node.exe'), path.join(resources, 'node.exe'));\n" +
+    "const root = reused || path.join(os.tmpdir(), 'zhike-stage51-native-' + randomUUID().replace(/-/g, ''));\n" +
+    "if (!reused) { fs.mkdirSync(root); fs.writeFileSync(path.join(root, '.stage51-isolated'), 'zhike-stage51-isolated-ui-v1'); }\n" +
+    "assert.equal(fs.existsSync(path.join(resources, 'data')), false);\n" +
+    "console.log(JSON.stringify({ root, reused: Boolean(reused), binary, buildProperty: 'Stage51IsolatedUi=true', productionOpened: false, wsNetwork: 'blocked', paidAiNetwork: 'blocked' }));\n",
+  expected: /if\s*\(require\.main\s*===\s*module\)\s*prepareNativeFixture\(\)/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

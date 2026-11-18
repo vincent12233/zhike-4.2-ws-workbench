@@ -1,0 +1,1131 @@
+{
+  "sourceHead": "af71fd9e2c7e9425e9def8463b1c39c5a150de45",
+  "startUtc": "2026-11-18T13:21:40.622Z",
+  "endUtc": "2026-11-18T13:23:19.009Z",
+  "edgeVersion": "157.0.4341.60",
+  "nodeVersion": "v24.22.1",
+  "visualEntryPointsPassed": 3,
+  "observerBuild": {
+    "command": [
+      "dotnet",
+      "build",
+      "scripts/diagnostics/edge-exit-observer/observer/Observer.csproj",
+      "-c",
+      "Release",
+      "--configfile",
+      "scripts/diagnostics/edge-exit-observer/observer/NuGet.Config",
+      "-p:UseSharedCompilation=false",
+      "--nologo"
+    ],
+    "exitCode": 0,
+    "warnings": 0,
+    "errors": 0
+  },
+  "visualEntryPointsRun": 4,
+  "browserCallsExpected": 10,
+  "browserCallsObserved": 10,
+  "completeSameInvocationEvidenceCount": 9,
+  "calibration": [
+    {
+      "timedOut": false,
+      "invocation": "1795008100736-ca58b9ce-8fb4-4fa0-b952-de3f56428731",
+      "kernel": "root-exited",
+      "bracketWidthMs": 2.2485999999998967
+    },
+    {
+      "timedOut": true,
+      "invocation": "1795008102805-b7503375-2496-4d8c-bbde-e8eaf25328a8",
+      "kernel": "original-deadline",
+      "bracketWidthMs": 0.5351999999998043
+    }
+  ],
+  "runs": [
+    {
+      "label": "s1-main-visual",
+      "command": [
+        "scripts/delivery/s1-main-visual.test.cjs"
+      ],
+      "exitCode": 0,
+      "outerTimeout": false,
+      "elapsedMs": 39353.4847,
+      "expectedCalls": 7,
+      "recordedCalls": 7,
+      "completeSameInvocationEvidenceCount": 7,
+      "calls": [
+        {
+          "invocation": "1795008106985-6c6ea590-bc7f-4a30-be64-e02c3eb8023c",
+          "pid": 27196,
+          "startedTicks": "639306049069902537",
+          "launchedAt": "2026-11-18T13:21:46.984Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "resultCases": 8,
+          "resultVerifiedInWorkBudget": true,
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "profileRetained": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultEvidenceFailure": null,
+          "navigation": {
+            "startedMs": 1698.0369,
+            "requestMs": 1698.6418,
+            "responseMs": 1728.9154,
+            "commandId": 8,
+            "loaderId": "BDA02DBBFBE952423BC545917B2CDC03",
+            "frameId": "28503D89ADD177D3D7789F958C536444",
+            "matchingDomContentLoadedMs": 1785.6354000000001,
+            "loadMs": 9193.4812,
+            "matchingLoaderAndFrame": true,
+            "lifecycleEventsReceived": {
+              "DOMContentLoaded": 10,
+              "load": 10,
+              "init": 17
+            },
+            "loadEvents": [
+              {
+                "elapsedMs": 1697.2520000000002,
+                "loaderId": "D6ADC7E790C91857F492BAA528E890C0",
+                "frameId": "28503D89ADD177D3D7789F958C536444"
+              },
+              {
+                "elapsedMs": 8976.572,
+                "loaderId": "BCCAB6838CFA92ECDDD63B71B7684954",
+                "frameId": "01165AE022C023759A2752A412C8444B"
+              },
+              {
+                "elapsedMs": 9003.0196,
+                "loaderId": "EFF28B7A4D29FFC1E06BFFD3751C036D",
+                "frameId": "88F6658516D0481CDCD5466A43C327F8"
+              },
+              {
+                "elapsedMs": 9026.447999999999,
+                "loaderId": "2BEA642F5757FEEF4FFCA57A7BAAC0B9",
+                "frameId": "0FDE5EE799349A226B5A3D0D5EE77DCB"
+              },
+              {
+                "elapsedMs": 9066.7061,
+                "loaderId": "5EEB91451B3F934EA07DA814667A37C3",
+                "frameId": "E283A277ADA085D0E6109DBD7C81308F"
+              },
+              {
+                "elapsedMs": 9116.1413,
+                "loaderId": "DCA1A9619107DCC2DC0849EF2CE1F6A0",
+                "frameId": "98750F591CCE0B6600C1B91E673540A4"
+              },
+              {
+                "elapsedMs": 9141.4174,
+                "loaderId": "B754434907CE80113D04469B4CB447CA",
+                "frameId": "43B7BE512936A7E0985B17EC5914889E"
+              },
+              {
+                "elapsedMs": 9188.2076,
+                "loaderId": "1EB78BB18EDAA0F784D61766F77C9227",
+                "frameId": "15144AB660863CF9597CE275C8A28EDA"
+              },
+              {
+                "elapsedMs": 9192.453899999999,
+                "loaderId": "B21D3E0E1BAE82D34E44E6E5BBD6FD5B",
+                "frameId": "9CDC3084F47281C7DA6D25886075487A"
+              },
+              {
+                "elapsedMs": 9193.3547,
+                "loaderId": "BDA02DBBFBE952423BC545917B2CDC03",
+                "frameId": "28503D89ADD177D3D7789F958C536444"
+              }
+            ],
+            "pendingWorkAtClose": null
+          },
+          "timings": {
+            "resultValidationStartedMs": 9380.618199999999,
+            "resultVerifiedMs": 9420.8519,
+            "resultValidationElapsedMs": 40.23370000000068,
+            "resultReadyMs": 9569.7114,
+            "visualAssertionsCompleteMs": 10757.4834,
+            "browserCloseRequestMs": 9579.058299999999,
+            "browserCloseResponseMs": 9618.903499999999,
+            "browserCloseAcknowledgementMs": 9618.9463,
+            "cdpTransportCloseMs": 9624.1397,
+            "nodeExitMs": 10465.9643,
+            "childCloseMs": 10473.644199999999,
+            "stdoutCloseMs": 10473.667899999999,
+            "stderrCloseMs": 10473.5633,
+            "streamsCloseMs": 10473.7086,
+            "identityProbeCloseMs": 10557.0576,
+            "lifecycleCompleteMs": 10557.8717,
+            "runnerFinalMs": 10570.7256,
+            "forcedTerminationRequestMs": null,
+            "localStdioDisposalMs": null
+          },
+          "browserClose": {
+            "commandId": 14,
+            "matchingProtocolResponse": true,
+            "acknowledgement": "protocol-response"
+          },
+          "kernel": {
+            "sameIdentity": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "exitCode": 0,
+            "lastRunningIntervalMs": [
+              10430.343800019025,
+              10433.046600019026
+            ],
+            "waitReturnedIntervalMs": [
+              10463.167600016593,
+              10465.870400016594
+            ],
+            "clockBracketMs": 2.7028000000000247,
+            "observerExitCode": 0,
+            "observerExitSignal": null
+          },
+          "nodeReleaseState": {
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true
+          },
+          "completeSameInvocationEvidence": true
+        },
+        {
+          "invocation": "1795008117745-e16da5f3-f360-418d-8dc3-a1bb1de5a06d",
+          "pid": 28764,
+          "startedTicks": "639306049177487325",
+          "launchedAt": "2026-11-18T13:21:57.745Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "resultCases": 1,
+          "resultVerifiedInWorkBudget": true,
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "profileRetained": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultEvidenceFailure": null,
+          "navigation": {
+            "startedMs": 1078.1931999999997,
+            "requestMs": 1078.5035000000007,
+            "responseMs": 1121.6771000000008,
+            "commandId": 8,
+            "loaderId": "EC3BEC0C96D82309BC4B83870CE452D3",
+            "frameId": "4C5F83AC8486D8E2FEE7E02965FF2595",
+            "matchingDomContentLoadedMs": 3470.9087999999992,
+            "loadMs": 3491.2934000000005,
+            "matchingLoaderAndFrame": true,
+            "lifecycleEventsReceived": {
+              "DOMContentLoaded": 2,
+              "load": 2,
+              "init": 1
+            },
+            "loadEvents": [
+              {
+                "elapsedMs": 1077.6167999999998,
+                "loaderId": "D6DAEF85FEF725A83E81FBCBA6ECC504",
+                "frameId": "4C5F83AC8486D8E2FEE7E02965FF2595"
+              },
+              {
+                "elapsedMs": 3491.1898999999994,
+                "loaderId": "EC3BEC0C96D82309BC4B83870CE452D3",
+                "frameId": "4C5F83AC8486D8E2FEE7E02965FF2595"
+              }
+            ],
+            "pendingWorkAtClose": null
+          },
+          "timings": {
+            "resultValidationStartedMs": 3519.9387000000006,
+            "resultVerifiedMs": 3524.3412000000008,
+            "resultValidationElapsedMs": 4.4025000000001455,
+            "resultReadyMs": 3654.711800000001,
+            "visualAssertionsCompleteMs": 4575.7019,
+            "browserCloseRequestMs": 3668.25,
+            "browserCloseResponseMs": 3671.2958,
+            "browserCloseAcknowledgementMs": 3671.3436999999994,
+            "cdpTransportCloseMs": 3672.4545,
+            "nodeExitMs": 4437.9385,
+            "childCloseMs": 4446.867,
+            "stdoutCloseMs": 4446.8706999999995,
+            "stderrCloseMs": 4446.8343,
+            "streamsCloseMs": 4446.8964,
+            "identityProbeCloseMs": 4553.176799999999,
+            "lifecycleCompleteMs": 4553.331899999999,
+            "runnerFinalMs": 4556.571,
+            "forcedTerminationRequestMs": null,
+            "localStdioDisposalMs": null
+          },
+          "browserClose": {
+            "commandId": 14,
+            "matchingProtocolResponse": true,
+            "acknowledgement": "protocol-response"
+          },
+          "kernel": {
+            "sameIdentity": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "exitCode": 0,
+            "lastRunningIntervalMs": [
+              4401.93720002036,
+              4402.466700020361
+            ],
+            "waitReturnedIntervalMs": [
+              4437.264800022649,
+              4437.79430002265
+            ],
+            "clockBracketMs": 0.529500000000553,
+            "observerExitCode": 0,
+            "observerExitSignal": null
+          },
+          "nodeReleaseState": {
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true
+          },
+          "completeSameInvocationEvidence": true
+        },
+        {
+          "invocation": "1795008122323-1f7fe84f-7528-4109-94bc-90b1e83ae56b",
+          "pid": 19148,
+          "startedTicks": "639306049223267504",
+          "launchedAt": "2026-11-18T13:22:02.323Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "resultCases": 1,
+          "resultVerifiedInWorkBudget": true,
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "profileRetained": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultEvidenceFailure": null,
+          "navigation": {
+            "startedMs": 1034.7885999999999,
+            "requestMs": 1035.0179000000026,
+            "responseMs": 1091.883600000001,
+            "commandId": 8,
+            "loaderId": "29FE2EB3D3D5E5382BEAD4663386559B",
+            "frameId": "51A395AFEBD016ADB0490C6AB9EC0E40",
+            "matchingDomContentLoadedMs": 3100.071,
+            "loadMs": 3100.600300000002,
+            "matchingLoaderAndFrame": true,
+            "lifecycleEventsReceived": {
+              "DOMContentLoaded": 2,
+              "load": 2,
+              "init": 1
+            },
+            "loadEvents": [
+              {
+                "elapsedMs": 1034.1643000000004,
+                "loaderId": "DDE1AC26FE770D51C06B6EFB2EF294E8",
+                "frameId": "51A395AFEBD016ADB0490C6AB9EC0E40"
+              },
+              {
+                "elapsedMs": 3100.5368000000017,
+                "loaderId": "29FE2EB3D3D5E5382BEAD4663386559B",
+                "frameId": "51A395AFEBD016ADB0490C6AB9EC0E40"
+              }
+            ],
+            "pendingWorkAtClose": null
+          },
+          "timings": {
+            "resultValidationStartedMs": 3129.0380000000005,
+            "resultVerifiedMs": 3132.639800000001,
+            "resultValidationElapsedMs": 3.6018000000003667,
+            "resultReadyMs": 3261.9315000000024,
+            "visualAssertionsCompleteMs": 4845.048699999999,
+            "browserCloseRequestMs": 3267.5414999999994,
+            "browserCloseResponseMs": 3268.083699999999,
+            "browserCloseAcknowledgementMs": 3268.122299999999,
+            "cdpTransportCloseMs": 3269.1104000000014,
+            "nodeExitMs": 4713.826000000001,
+            "childCloseMs": 4722.674000000003,
+            "stdoutCloseMs": 4722.6802000000025,
+            "stderrCloseMs": 4722.630000000001,
+            "streamsCloseMs": 4722.7163,
+            "identityProbeCloseMs": 4813.962100000001,
+            "lifecycleCompleteMs": 4814.1199000000015,
+            "runnerFinalMs": 4817.0596000000005,
+            "forcedTerminationRequestMs": null,
+            "localStdioDisposalMs": null
+          },
+          "browserClose": {
+            "commandId": 14,
+            "matchingProtocolResponse": true,
+            "acknowledgement": "protocol-response"
+          },
+          "kernel": {
+            "sameIdentity": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "exitCode": 0,
+            "lastRunningIntervalMs": [
+              4671.740499997759,
+              4672.296499997759
+            ],
+            "waitReturnedIntervalMs": [
+              4713.191500002766,
+              4713.747500002766
+            ],
+            "clockBracketMs": 0.5560000000004948,
+            "observerExitCode": 0,
+            "observerExitSignal": null
+          },
+          "nodeReleaseState": {
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true
+          },
+          "completeSameInvocationEvidence": true
+        },
+        {
+          "invocation": "1795008127173-18149bc1-d266-4bda-a1f4-d5c5eb0c6fb6",
+          "pid": 40632,
+          "startedTicks": "639306049271766249",
+          "launchedAt": "2026-11-18T13:22:07.173Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "resultCases": 1,
+          "resultVerifiedInWorkBudget": true,
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "profileRetained": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultEvidenceFailure": null,
+          "navigation": {
+            "startedMs": 1055.3953999999976,
+            "requestMs": 1055.630799999999,
+            "responseMs": 1131.598399999999,
+            "commandId": 8,
+            "loaderId": "6378E1C448318560C0BC870557B630F6",
+            "frameId": "4374645243521822B6C0B95C0D9BA95F",
+            "matchingDomContentLoadedMs": 2278.7684999999983,
+            "loadMs": 2279.4546999999984,
+            "matchingLoaderAndFrame": true,
+            "lifecycleEventsReceived": {
+              "DOMContentLoaded": 2,
+              "load": 2,
+              "init": 1
+            },
+            "loadEvents": [
+              {
+                "elapsedMs": 1054.5301999999974,
+                "loaderId": "282F5DFD25436F6C015F53A8AA23CB45",
+                "frameId": "4374645243521822B6C0B95C0D9BA95F"
+              },
+              {
+                "elapsedMs": 2279.372599999999,
+                "loaderId": "6378E1C448318560C0BC870557B630F6",
+                "frameId": "4374645243521822B6C0B95C0D9BA95F"
+              }
+            ],
+            "pendingWorkAtClose": null
+          },
+          "timings": {
+            "resultValidationStartedMs": 2306.869999999999,
+            "resultVerifiedMs": 2307.364999999998,
+            "resultValidationElapsedMs": 0.49499999999898137,
+            "resultReadyMs": 3242.2154999999984,
+            "visualAssertionsCompleteMs": 4732.923599999998,
+            "browserCloseRequestMs": 3247.8351999999977,
+            "browserCloseResponseMs": 3248.408199999998,
+            "browserCloseAcknowledgementMs": 3248.4492999999966,
+            "cdpTransportCloseMs": 3249.3691,
+            "nodeExitMs": 4635.485799999999,
+            "childCloseMs": 4644.052899999999,
+            "stdoutCloseMs": 4644.0193,
+            "stderrCloseMs": 4644.0569,
+            "streamsCloseMs": 4644.0867,
+            "identityProbeCloseMs": 4729.447999999997,
+            "lifecycleCompleteMs": 4729.568799999997,
+            "runnerFinalMs": 4731.209499999997,
+            "forcedTerminationRequestMs": null,
+            "localStdioDisposalMs": null
+          },
+          "browserClose": {
+            "commandId": 15,
+            "matchingProtocolResponse": true,
+            "acknowledgement": "protocol-response"
+          },
+          "kernel": {
+            "sameIdentity": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "exitCode": 0,
+            "lastRunningIntervalMs": [
+              4592.373399998807,
+              4592.812999998805
+            ],
+            "waitReturnedIntervalMs": [
+              4634.862599994802,
+              4635.3021999948
+            ],
+            "clockBracketMs": 0.43959999999788124,
+            "observerExitCode": 0,
+            "observerExitSignal": null
+          },
+          "nodeReleaseState": {
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true
+          },
+          "completeSameInvocationEvidence": true
+        },
+        {
+          "invocation": "1795008131909-b8735165-ed0b-4685-a4e7-9c7207e9021d",
+          "pid": 28428,
+          "startedTicks": "639306049319132675",
+          "launchedAt": "2026-11-18T13:22:11.909Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "resultCases": 1,
+          "resultVerifiedInWorkBudget": true,
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "profileRetained": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultEvidenceFailure": null,
+          "navigation": {
+            "startedMs": 1038.021499999999,
+            "requestMs": 1038.2410000000018,
+            "responseMs": 1084.6448999999993,
+            "commandId": 8,
+            "loaderId": "419DD30315DA1BCDBFF069FFCC61F88D",
+            "frameId": "D0FFBAD88F38924AA12719F4CBE9EE07",
+            "matchingDomContentLoadedMs": 2153.7988000000005,
+            "loadMs": 2154.2246000000014,
+            "matchingLoaderAndFrame": true,
+            "lifecycleEventsReceived": {
+              "DOMContentLoaded": 2,
+              "load": 2,
+              "init": 1
+            },
+            "loadEvents": [
+              {
+                "elapsedMs": 1037.3430000000008,
+                "loaderId": "9C4EAF155BDFD09A0D006E75D9C28B05",
+                "frameId": "D0FFBAD88F38924AA12719F4CBE9EE07"
+              },
+              {
+                "elapsedMs": 2154.16,
+                "loaderId": "419DD30315DA1BCDBFF069FFCC61F88D",
+                "frameId": "D0FFBAD88F38924AA12719F4CBE9EE07"
+              }
+            ],
+            "pendingWorkAtClose": null
+          },
+          "timings": {
+            "resultValidationStartedMs": 2202.257300000001,
+            "resultVerifiedMs": 2202.9838999999993,
+            "resultValidationElapsedMs": 0.7265999999981432,
+            "resultReadyMs": 2561.8266000000003,
+            "visualAssertionsCompleteMs": 4445.0815,
+            "browserCloseRequestMs": 2567.750100000001,
+            "browserCloseResponseMs": 2568.1829,
+            "browserCloseAcknowledgementMs": 2568.2214999999997,
+            "cdpTransportCloseMs": 2568.8940000000002,
+            "nodeExitMs": 4351.456300000002,
+            "childCloseMs": 4358.8598999999995,
+            "stdoutCloseMs": 4358.8305,
+            "stderrCloseMs": 4358.8629,
+            "streamsCloseMs": 4358.895,
+            "identityProbeCloseMs": 4441.2965,
+            "lifecycleCompleteMs": 4441.3698,
+            "runnerFinalMs": 4442.8855,
+            "forcedTerminationRequestMs": null,
+            "localStdioDisposalMs": null
+          },
+          "browserClose": {
+            "commandId": 15,
+            "matchingProtocolResponse": true,
+            "acknowledgement": "protocol-response"
+          },
+          "kernel": {
+            "sameIdentity": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "exitCode": 0,
+            "lastRunningIntervalMs": [
+              4298.249800010919,
+              4298.669000010919
+            ],
+            "waitReturnedIntervalMs": [
+              4351.044700011014,
+              4351.463900011015
+            ],
+            "clockBracketMs": 0.4192000000002736,
+            "observerExitCode": 0,
+            "observerExitSignal": null
+          },
+          "nodeReleaseState": {
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true
+          },
+          "completeSameInvocationEvidence": true
+        },
+        {
+          "invocation": "1795008136359-de3787c3-9fb5-4cb9-98ea-e9e85e3c6df6",
+          "pid": 40500,
+          "startedTicks": "639306049363626404",
+          "launchedAt": "2026-11-18T13:22:16.359Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "resultCases": 1,
+          "resultVerifiedInWorkBudget": true,
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "profileRetained": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultEvidenceFailure": null,
+          "navigation": {
+            "startedMs": 981.3474999999999,
+            "requestMs": 981.5713000000032,
+            "responseMs": 1029.3588000000018,
+            "commandId": 8,
+            "loaderId": "F8290F2B5984A79ED68EAAD6E6F7344E",
+            "frameId": "5FD6F84F742DB23142FCD2176086B3A1",
+            "matchingDomContentLoadedMs": 2120.5598000000027,
+            "loadMs": 2121.0373,
+            "matchingLoaderAndFrame": true,
+            "lifecycleEventsReceived": {
+              "DOMContentLoaded": 2,
+              "load": 2,
+              "init": 1
+            },
+            "loadEvents": [
+              {
+                "elapsedMs": 980.6915000000008,
+                "loaderId": "2D4108CB1AD58DD8E18257A804810519",
+                "frameId": "5FD6F84F742DB23142FCD2176086B3A1"
+              },
+              {
+                "elapsedMs": 2120.9869,
+                "loaderId": "F8290F2B5984A79ED68EAAD6E6F7344E",
+                "frameId": "5FD6F84F742DB23142FCD2176086B3A1"
+              }
+            ],
+            "pendingWorkAtClose": null
+          },
+          "timings": {
+            "resultValidationStartedMs": 2158.0239,
+            "resultVerifiedMs": 2158.2713000000003,
+            "resultValidationElapsedMs": 0.2474000000001979,
+            "resultReadyMs": 2654.6474000000017,
+            "visualAssertionsCompleteMs": 3849.8312000000005,
+            "browserCloseRequestMs": 2660.7237000000023,
+            "browserCloseResponseMs": 2661.4133,
+            "browserCloseAcknowledgementMs": 2661.450200000003,
+            "cdpTransportCloseMs": 2662.8231000000014,
+            "nodeExitMs": 3757.5797999999995,
+            "childCloseMs": 3765.795100000003,
+            "stdoutCloseMs": 3765.7989000000016,
+            "stderrCloseMs": 3765.7194999999992,
+            "streamsCloseMs": 3765.8237999999983,
+            "identityProbeCloseMs": 3847.0795,
+            "lifecycleCompleteMs": 3847.144100000005,
+            "runnerFinalMs": 3848.3799,
+            "forcedTerminationRequestMs": null,
+            "localStdioDisposalMs": null
+          },
+          "browserClose": {
+            "commandId": 15,
+            "matchingProtocolResponse": true,
+            "acknowledgement": "protocol-response"
+          },
+          "kernel": {
+            "sameIdentity": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "exitCode": 0,
+            "lastRunningIntervalMs": [
+              3697.7007000202684,
+              3698.1237000202673
+            ],
+            "waitReturnedIntervalMs": [
+              3757.069700008109,
+              3757.492700008108
+            ],
+            "clockBracketMs": 0.42299999999886495,
+            "observerExitCode": 0,
+            "observerExitSignal": null
+          },
+          "nodeReleaseState": {
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true
+          },
+          "completeSameInvocationEvidence": true
+        },
+        {
+          "invocation": "1795008140212-d603bd6f-5c7e-4a87-b8d4-6df0237ff4b4",
+          "pid": 21052,
+          "startedTicks": "639306049402160021",
+          "launchedAt": "2026-11-18T13:22:20.212Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "resultCases": 1,
+          "resultVerifiedInWorkBudget": true,
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "profileRetained": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultEvidenceFailure": null,
+          "navigation": {
+            "startedMs": 1695.5584999999992,
+            "requestMs": 1695.7377999999953,
+            "responseMs": 1751.9807999999975,
+            "commandId": 8,
+            "loaderId": "6B3B86DC712AC150ABBA32D9DF13CD7C",
+            "frameId": "A78FE06C40C068AFC272C64EEF7E5300",
+            "matchingDomContentLoadedMs": 2794.1555000000008,
+            "loadMs": 2794.7570999999953,
+            "matchingLoaderAndFrame": true,
+            "lifecycleEventsReceived": {
+              "DOMContentLoaded": 2,
+              "load": 2,
+              "init": 1
+            },
+            "loadEvents": [
+              {
+                "elapsedMs": 1694.746699999996,
+                "loaderId": "15D9A4ACDB230DA14A650487079B640E",
+                "frameId": "A78FE06C40C068AFC272C64EEF7E5300"
+              },
+              {
+                "elapsedMs": 2794.7039000000004,
+                "loaderId": "6B3B86DC712AC150ABBA32D9DF13CD7C",
+                "frameId": "A78FE06C40C068AFC272C64EEF7E5300"
+              }
+            ],
+            "pendingWorkAtClose": null
+          },
+          "timings": {
+            "resultValidationStartedMs": 2801.2932999999975,
+            "resultVerifiedMs": 2801.730899999995,
+            "resultValidationElapsedMs": 0.4375999999974738,
+            "resultReadyMs": 3758.835699999996,
+            "visualAssertionsCompleteMs": 5284.169099999999,
+            "browserCloseRequestMs": 3800.9648000000016,
+            "browserCloseResponseMs": 3801.702299999997,
+            "browserCloseAcknowledgementMs": 3801.7422000000006,
+            "cdpTransportCloseMs": 3802.6092999999964,
+            "nodeExitMs": 5195.264199999998,
+            "childCloseMs": 5203.706599999998,
+            "stdoutCloseMs": 5203.614499999996,
+            "stderrCloseMs": 5203.710299999999,
+            "streamsCloseMs": 5203.739600000001,
+            "identityProbeCloseMs": 5280.970699999998,
+            "lifecycleCompleteMs": 5281.094899999996,
+            "runnerFinalMs": 5282.637699999999,
+            "forcedTerminationRequestMs": null,
+            "localStdioDisposalMs": null
+          },
+          "browserClose": {
+            "commandId": 15,
+            "matchingProtocolResponse": true,
+            "acknowledgement": "protocol-response"
+          },
+          "kernel": {
+            "sameIdentity": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "exitCode": 0,
+            "lastRunningIntervalMs": [
+              5127.450299999327,
+              5127.9179999993285
+            ],
+            "waitReturnedIntervalMs": [
+              5194.769100001664,
+              5195.236800001665
+            ],
+            "clockBracketMs": 0.4677000000010594,
+            "observerExitCode": 0,
+            "observerExitSignal": null
+          },
+          "nodeReleaseState": {
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true
+          },
+          "completeSameInvocationEvidence": true
+        }
+      ]
+    },
+    {
+      "label": "s1-ws-visual",
+      "command": [
+        "scripts/delivery/s1-ws-visual.test.cjs"
+      ],
+      "exitCode": 0,
+      "outerTimeout": false,
+      "elapsedMs": 18074.338800000005,
+      "expectedCalls": 1,
+      "recordedCalls": 1,
+      "completeSameInvocationEvidenceCount": 1,
+      "calls": [
+        {
+          "invocation": "1795008146513-dceac4a0-a99a-40b4-874f-94e2af96d5f3",
+          "pid": 25520,
+          "startedTicks": "639306049465188149",
+          "launchedAt": "2026-11-18T13:22:26.512Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "resultCases": 7,
+          "resultVerifiedInWorkBudget": true,
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "profileRetained": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultEvidenceFailure": null,
+          "navigation": {
+            "startedMs": 4271.8243,
+            "requestMs": 4272.3138,
+            "responseMs": 4305.2173999999995,
+            "commandId": 7,
+            "loaderId": "C79F4D6BB27D3AD5B9CBBD5D4209B9D8",
+            "frameId": "48558B3D7AD83D1A98439F05D6D3810E",
+            "matchingDomContentLoadedMs": 4373.4162,
+            "loadMs": 5447.7696,
+            "matchingLoaderAndFrame": true,
+            "lifecycleEventsReceived": {
+              "DOMContentLoaded": 9,
+              "load": 9,
+              "init": 15
+            },
+            "loadEvents": [
+              {
+                "elapsedMs": 4270.9902,
+                "loaderId": "EC6F4640EAEB750EB5E5E088DEBB8407",
+                "frameId": "48558B3D7AD83D1A98439F05D6D3810E"
+              },
+              {
+                "elapsedMs": 5039.1489,
+                "loaderId": "4C7CCD39D7E7300F57A4437F44D3AC00",
+                "frameId": "A4816D5F7F6EA30C51A78AC27EAFC0D1"
+              },
+              {
+                "elapsedMs": 5208.1433,
+                "loaderId": "F3E497EAB6C106DDC0AC0E2F8EE581DD",
+                "frameId": "1B4663EB9A9D998CEE2EA27C6A4FDF0B"
+              },
+              {
+                "elapsedMs": 5387.2563,
+                "loaderId": "3384170B90FF1B68C4269960FBD0044C",
+                "frameId": "A801F968E85A45EF39FE9B040E2CD4FF"
+              },
+              {
+                "elapsedMs": 5392.2301,
+                "loaderId": "EEAB9C42FCDEE82A772E10B96DB9B00B",
+                "frameId": "75E62F6AA9C3B697E699D6ADB70CFD1D"
+              },
+              {
+                "elapsedMs": 5393.3196,
+                "loaderId": "BD37EBE9B5D080F0B2F7C253BF89642B",
+                "frameId": "C5F1F46BFD4B8E173473E12491A3B430"
+              },
+              {
+                "elapsedMs": 5445.7935,
+                "loaderId": "95A770E164B76EDD47CDC1EFE8AB916C",
+                "frameId": "082A46005E113D533545BCA718B3B2E7"
+              },
+              {
+                "elapsedMs": 5446.7497,
+                "loaderId": "DB1A18685136C54E9CE149E7905F2216",
+                "frameId": "D77CDE9CDD08333D72FB5A677A27228C"
+              },
+              {
+                "elapsedMs": 5447.6892,
+                "loaderId": "C79F4D6BB27D3AD5B9CBBD5D4209B9D8",
+                "frameId": "48558B3D7AD83D1A98439F05D6D3810E"
+              }
+            ],
+            "pendingWorkAtClose": null
+          },
+          "timings": {
+            "resultValidationStartedMs": 16479.2864,
+            "resultVerifiedMs": 16486.219,
+            "resultValidationElapsedMs": 6.932600000000093,
+            "resultReadyMs": 16634.7595,
+            "visualAssertionsCompleteMs": 17595.5649,
+            "browserCloseRequestMs": 16639.0197,
+            "browserCloseResponseMs": 16671.7527,
+            "browserCloseAcknowledgementMs": 16671.803900000003,
+            "cdpTransportCloseMs": 16676.409900000002,
+            "nodeExitMs": 17500.0793,
+            "childCloseMs": 17508.065100000003,
+            "stdoutCloseMs": 17508.080700000002,
+            "stderrCloseMs": 17508.016200000002,
+            "streamsCloseMs": 17508.111200000003,
+            "identityProbeCloseMs": 17584.8862,
+            "lifecycleCompleteMs": 17585.2459,
+            "runnerFinalMs": 17588.178900000003,
+            "forcedTerminationRequestMs": null,
+            "localStdioDisposalMs": null
+          },
+          "browserClose": {
+            "commandId": 12,
+            "matchingProtocolResponse": true,
+            "acknowledgement": "protocol-response"
+          },
+          "kernel": {
+            "sameIdentity": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "exitCode": 0,
+            "lastRunningIntervalMs": [
+              17462.965600002957,
+              17463.423900002956
+            ],
+            "waitReturnedIntervalMs": [
+              17499.237000007583,
+              17499.69530000758
+            ],
+            "clockBracketMs": 0.45830000000000837,
+            "observerExitCode": 0,
+            "observerExitSignal": null
+          },
+          "nodeReleaseState": {
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true
+          },
+          "completeSameInvocationEvidence": true
+        }
+      ]
+    },
+    {
+      "label": "s2-metrics-visual",
+      "command": [
+        "scripts/delivery/s2-metrics-visual.test.cjs"
+      ],
+      "exitCode": 0,
+      "outerTimeout": false,
+      "elapsedMs": 2820.205700000006,
+      "expectedCalls": 1,
+      "recordedCalls": 1,
+      "completeSameInvocationEvidenceCount": 1,
+      "calls": [
+        {
+          "invocation": "1795008164444-d8891b4f-e573-4992-aa2f-7292b368afa2",
+          "pid": 5188,
+          "startedTicks": "639306049644500117",
+          "launchedAt": "2026-11-18T13:22:44.443Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "resultCases": 4,
+          "resultVerifiedInWorkBudget": true,
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "profileRetained": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultEvidenceFailure": null,
+          "navigation": {
+            "startedMs": 1241.5381,
+            "requestMs": 1242.0378,
+            "responseMs": 1268.9459000000002,
+            "commandId": 7,
+            "loaderId": "C8E575AC596DC6D83335D3BB9CA7CF11",
+            "frameId": "73E7C79E3636E79ED910F5C5DD4F6D46",
+            "matchingDomContentLoadedMs": 1306.2584000000002,
+            "loadMs": 1691.9364,
+            "matchingLoaderAndFrame": true,
+            "lifecycleEventsReceived": {
+              "DOMContentLoaded": 2,
+              "load": 2,
+              "init": 9
+            },
+            "loadEvents": [
+              {
+                "elapsedMs": 1240.489,
+                "loaderId": "A1692444576A03E87511739299CCDB11",
+                "frameId": "73E7C79E3636E79ED910F5C5DD4F6D46"
+              },
+              {
+                "elapsedMs": 1691.8555000000001,
+                "loaderId": "C8E575AC596DC6D83335D3BB9CA7CF11",
+                "frameId": "73E7C79E3636E79ED910F5C5DD4F6D46"
+              }
+            ],
+            "pendingWorkAtClose": null
+          },
+          "timings": {
+            "resultValidationStartedMs": 1697.3771000000002,
+            "resultVerifiedMs": 1699.2826,
+            "resultValidationElapsedMs": 1.9054999999998472,
+            "resultReadyMs": 1785.9831000000001,
+            "visualAssertionsCompleteMs": 2570.9534,
+            "browserCloseRequestMs": 1789.159,
+            "browserCloseResponseMs": 1814.4441000000002,
+            "browserCloseAcknowledgementMs": 1814.4959000000001,
+            "cdpTransportCloseMs": 1818.0289,
+            "nodeExitMs": 2487.8126,
+            "childCloseMs": 2496.1268,
+            "stdoutCloseMs": 2496.1491,
+            "stderrCloseMs": 2496.0761,
+            "streamsCloseMs": 2496.1798,
+            "identityProbeCloseMs": 2565.8296,
+            "lifecycleCompleteMs": 2566.3225,
+            "runnerFinalMs": 2568.6087,
+            "forcedTerminationRequestMs": null,
+            "localStdioDisposalMs": null
+          },
+          "browserClose": {
+            "commandId": 12,
+            "matchingProtocolResponse": true,
+            "acknowledgement": "protocol-response"
+          },
+          "kernel": {
+            "sameIdentity": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "exitCode": 0,
+            "lastRunningIntervalMs": [
+              2451.2375000050542,
+              2451.9805000050546
+            ],
+            "waitReturnedIntervalMs": [
+              2486.8891999950883,
+              2487.6321999950887
+            ],
+            "clockBracketMs": 0.7429999999999382,
+            "observerExitCode": 0,
+            "observerExitSignal": null
+          },
+          "nodeReleaseState": {
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true
+          },
+          "completeSameInvocationEvidence": true
+        }
+      ]
+    },
+    {
+      "label": "s3-customer-table-visual",
+      "command": [
+        "scripts/delivery/s3-customer-table-visual.test.cjs"
+      ],
+      "exitCode": 1,
+      "outerTimeout": false,
+      "elapsedMs": 31896.326299999986,
+      "expectedCalls": 1,
+      "recordedCalls": 1,
+      "completeSameInvocationEvidenceCount": 0,
+      "calls": [
+        {
+          "invocation": "1795008167315-6c18f709-e9e2-47f1-b031-eb97532cfa19",
+          "pid": 31260,
+          "startedTicks": "639306049673204605",
+          "launchedAt": "2026-11-18T13:22:47.314Z",
+          "status": "Failed",
+          "timeoutMs": 30000,
+          "resultCases": null,
+          "resultVerifiedInWorkBudget": false,
+          "cleanupSafe": false,
+          "forceTerminated": true,
+          "profileRetained": true,
+          "failure": {
+            "code": "EDGE_RUNNER_TIMEOUT",
+            "phase": "result"
+          },
+          "releaseFailure": {
+            "code": "EDGE_RUNNER_TIMEOUT",
+            "phase": "process-exit"
+          },
+          "resultEvidenceFailure": null,
+          "navigation": {
+            "startedMs": 3084.9955999999997,
+            "requestMs": 3085.6029,
+            "responseMs": 3249.6139,
+            "commandId": 7,
+            "loaderId": "E7B023E99FF4D4ECD2B292458CE27C02",
+            "frameId": "9E215D7D2CEE4A97D826B12084B7738B",
+            "matchingDomContentLoadedMs": 3638.4757,
+            "loadMs": null,
+            "matchingLoaderAndFrame": false,
+            "lifecycleEventsReceived": {
+              "DOMContentLoaded": 2,
+              "load": 1,
+              "init": 21
+            },
+            "loadEvents": [
+              {
+                "elapsedMs": 3084.0217,
+                "loaderId": "5026C1FBE691EDA3F5A7D9B5E55D33FF",
+                "frameId": "9E215D7D2CEE4A97D826B12084B7738B"
+              }
+            ],
+            "pendingWorkAtClose": "navigation-load"
+          },
+          "timings": {
+            "resultValidationStartedMs": null,
+            "resultVerifiedMs": null,
+            "resultValidationElapsedMs": null,
+            "resultReadyMs": null,
+            "visualAssertionsCompleteMs": null,
+            "browserCloseRequestMs": 28503.8031,
+            "browserCloseResponseMs": 28504.491700000002,
+            "browserCloseAcknowledgementMs": 28504.536500000002,
+            "cdpTransportCloseMs": 28509.2644,
+            "nodeExitMs": null,
+            "childCloseMs": null,
+            "stdoutCloseMs": null,
+            "stderrCloseMs": null,
+            "streamsCloseMs": null,
+            "identityProbeCloseMs": null,
+            "lifecycleCompleteMs": 30010.2651,
+            "runnerFinalMs": 30010.376200000002,
+            "forcedTerminationRequestMs": 30007.0563,
+            "localStdioDisposalMs": 30008.0351
+          },
+          "browserClose": {
+            "commandId": 10,
+            "matchingProtocolResponse": true,
+            "acknowledgement": "protocol-response"
+          },
+          "kernel": {
+            "sameIdentity": true,
+            "ending": "original-deadline",
+            "waitStatus": 258,
+            "exitCode": null,
+            "lastRunningIntervalMs": [
+              30006.53019999862,
+              30007.008499998617
+            ],
+            "waitReturnedIntervalMs": [
+              30006.536000007392,
+              30007.01430000739
+            ],
+            "clockBracketMs": 0.4782999999999902,
+            "observerExitCode": 0,
+            "observerExitSignal": null
+          },
+          "nodeReleaseState": {
+            "exitObserved": false,
+            "closeObserved": false,
+            "stdoutCloseObserved": false,
+            "stderrCloseObserved": false
+          },
+          "completeSameInvocationEvidence": false
+        }
+      ]
+    }
+  ],
+  "diagnosticProbe": {
+    "archive": "s3-resource-probe.summary.json",
+    "head": "6fd74a570f4b47dbca89022dedbea02f6502d41e",
+    "exitCode": 0
+  }
+}

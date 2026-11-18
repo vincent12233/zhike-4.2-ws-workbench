@@ -7,7 +7,7 @@ const vm = require('node:vm');
 
 const repo = path.resolve(__dirname, '..', '..');
 const host = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Views', 'LegacyUiHostPage.xaml.cs'), 'utf8');
-const match = host.match(/return \$\$"""([\s\S]*?)""";/);
+const match = host.match(/internal static string BuildWsCollectorScript\(string accountId\)\s*\{[\s\S]*?return \$\$"""([\s\S]*?)""";/);
 assert.ok(match);
 const script = match[1].replace(/\{\{encodedAccount\}\}/g, JSON.stringify('default'));
 
@@ -114,7 +114,9 @@ const header = {
 const document = {
   body: {},
   querySelector(selector) {
-    if (selector.includes('conversation-header') || selector.includes('#main header')) return activeChat ? header : null;
+    // Exercise the non-semantic header variant used by current WhatsApp Web;
+    // the collector must not depend on a literal <header> element.
+    if (selector.includes('conversation-info-header')) return activeChat ? header : null;
     if (selector.includes('#pane-side') || selector.includes('chat-list') || selector === '[role="grid"]') return container;
     if (selector.includes('conversation-panel') || selector.includes('Messages') || selector.includes('消息') || selector.includes('copyable-area')) return pane;
     if (selector.includes('#main [data-pre-plain-text]')) return activeChat === 'chat-success' ? messageNode : null;

@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 2,
+  "invocation": "1795000061112-7f12757f-e36a-4811-9dd3-5567a7d04c20",
+  "mode": "controlled-result-evidence-write-error",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 6000,
+  "launchedAt": "2026-11-18T11:07:41.112Z",
+  "timebase": "node-monotonic-ms",
+  "startedMonotonicMs": 13258.3028,
+  "events": [
+    {
+      "event": "process-spawned",
+      "elapsedMs": 6.603900000000067,
+      "pid": 7560
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 6.621100000000297,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 498.6292000000012,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 498.66400000000067
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 498.72710000000006
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 498.72869999999966
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 498.8168000000005,
+      "acknowledgement": "requested"
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 504.8181000000004
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 504.83290000000125
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 508.64780000000064,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 508.7021999999997,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 508.8017
+    },
+    {
+      "event": "node-release-state",
+      "elapsedMs": 508.9392000000007,
+      "exitObserved": true,
+      "closeObserved": true,
+      "stdoutCloseObserved": true,
+      "stderrCloseObserved": true,
+      "exitCode": 0,
+      "signalCode": null
+    },
+    {
+      "event": "identity-probe-closed",
+      "elapsedMs": 604.392600000001
+    },
+    {
+      "event": "runner-lifecycle-complete",
+      "elapsedMs": 604.428100000001,
+      "cleanupSafe": true,
+      "forceTerminated": false
+    },
+    {
+      "event": "runner-final",
+      "elapsedMs": 604.5517,
+      "status": "Failed",
+      "cleanupSafe": true,
+      "forceTerminated": false
+    }
+  ],
+  "identities": [
+    {
+      "pid": 7560,
+      "startedTicks": "639305968611235956",
+      "startedUtc": "2026-11-18T11:07:41.1235956Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "pid": 7560,
+  "identityProbePid": 16964,
+  "resultFile": "<edge-worktree>\\.tools\\isolated-edge-runner-lifecycle\\1795000061112-7f12757f-e36a-4811-9dd3-5567a7d04c20.result.json",
+  "resultReady": true,
+  "rootExitProof": "verified-spawn-handle-exit-and-streams",
+  "remainingIdentities": [],
+  "identityProbeClosed": true,
+  "elapsedMs": 604.4027999999998,
+  "stdoutBytes": 6,
+  "stderrBytes": 0,
+  "resultEvidenceFailure": {
+    "code": "ENOSPC"
+  },
+  "failure": {
+    "code": "RESULT_EVIDENCE_WRITE_FAILED",
+    "phase": "evidence-write",
+    "message": "Cannot persist the verified result: ENOSPC"
+  }
+}

@@ -1,0 +1,8 @@
+S2 main metrics: loaded/unknown/error, original-owner equivalence, calendar/date/legacy/zero/nonfinite, cache/read-only/scope passed
+S2 correction Passed: first-read recovery and pending/revision guards
+S2 correction Passed: single asOfDay across midnight before existing tick
+S2 correction Passed: unknown/error coverage basis cannot leak numeric zero
+S2 correction Passed: out-of-order request cannot bless provenance or rewrite timestamp
+S2 priority memo: 33 actual-versus-old full-sort/digest vectors passed; all/today/overdue, 0/1/ties/legacy/fixed-clock boundaries and bounded calls
+S2 actual read lifecycle: initial success/empty/error, full-read recovery and discarded read guards, refresh/discard, unavailable static source passed
+S2 actual home rendering: loaded values preserved, unknown is dash, failed metrics unavailable, shared series renderer, zero-width coverage and reminder count passed

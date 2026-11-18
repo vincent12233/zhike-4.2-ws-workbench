@@ -1,0 +1,85 @@
+{
+  "invocation": "1794987122799-5e2d0993-a962-4536-ae31-d80c9a94145c",
+  "checkedAtUtc": "2026-11-18T07:36:50.6286137+00:00",
+  "observation": "exact previously recorded browser PID and Windows StartTime; probe PID only",
+  "browserIdentities": [
+    {
+      "expectedStartTicks": "639305839228072513",
+      "pid": 36548,
+      "state": "absent"
+    },
+    {
+      "expectedStartTicks": "639305839237562127",
+      "pid": 3492,
+      "state": "absent"
+    },
+    {
+      "expectedStartTicks": "639305839233903463",
+      "pid": 34448,
+      "state": "absent"
+    },
+    {
+      "expectedStartTicks": "639305839234186890",
+      "pid": 39840,
+      "state": "absent"
+    },
+    {
+      "expectedStartTicks": "639305839234729884",
+      "pid": 33552,
+      "state": "absent"
+    },
+    {
+      "expectedStartTicks": "639305839249574330",
+      "pid": 32540,
+      "state": "absent"
+    },
+    {
+      "expectedStartTicks": "639305839249526502",
+      "pid": 22764,
+      "state": "absent"
+    },
+    {
+      "expectedStartTicks": "639305839239203492",
+      "pid": 8624,
+      "state": "absent"
+    },
+    {
+      "expectedStartTicks": "639305839238329596",
+      "pid": 32924,
+      "state": "absent"
+    },
+    {
+      "expectedStartTicks": "639305839238300436",
+      "pid": 32580,
+      "state": "absent"
+    },
+    {
+      "expectedStartTicks": "639305839238258913",
+      "pid": 41268,
+      "state": "absent"
+    },
+    {
+      "expectedStartTicks": "639305839238113241",
+      "pid": 34588,
+      "state": "absent"
+    },
+    {
+      "expectedStartTicks": "639305839238177567",
+      "pid": 25396,
+      "state": "absent"
+    },
+    {
+      "expectedStartTicks": "639305839246301073",
+      "pid": 5280,
+      "state": "absent"
+    }
+  ],
+  "identityProbe": {
+    "expectedStartTicks": "",
+    "pid": 14896,
+    "state": "absent"
+  },
+  "unresolvedObservedBrowserIdentities": 0,
+  "processTerminatedByAudit": false,
+  "directoriesDeletedByAudit": false
+}

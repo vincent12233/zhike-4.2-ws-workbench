@@ -1,0 +1,983 @@
+{
+  "scope": "162 declared WS labels within the r3 all-mode run",
+  "independentRun": false,
+  "sourceLabels": "ws-suite-labels.json",
+  "runLog": "full-regression-r3.log",
+  "checks": 162,
+  "exactPasses": 162,
+  "failedS1VisualCheckOutsideSubset": "Delivery S1 WS computed layout and retained host",
+  "checksByLabel": [
+    {
+      "label": "syntax resources\\app\\app.js",
+      "runLine": 306,
+      "status": "PASS",
+      "outcomeLine": 307
+    },
+    {
+      "label": "syntax resources\\app\\migration-runner.cjs",
+      "runLine": 309,
+      "status": "PASS",
+      "outcomeLine": 310
+    },
+    {
+      "label": "syntax resources\\app\\modules\\accessibility-enhancements.js",
+      "runLine": 312,
+      "status": "PASS",
+      "outcomeLine": 313
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ai-crm-suggestion-core.js",
+      "runLine": 315,
+      "status": "PASS",
+      "outcomeLine": 316
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ai-job-pipeline-core.js",
+      "runLine": 318,
+      "status": "PASS",
+      "outcomeLine": 319
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ai-mock-provider.js",
+      "runLine": 321,
+      "status": "PASS",
+      "outcomeLine": 322
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ai-review-center-ui.js",
+      "runLine": 324,
+      "status": "PASS",
+      "outcomeLine": 325
+    },
+    {
+      "label": "syntax resources\\app\\modules\\business-enhancements.js",
+      "runLine": 327,
+      "status": "PASS",
+      "outcomeLine": 328
+    },
+    {
+      "label": "syntax resources\\app\\modules\\business-rule-core.js",
+      "runLine": 330,
+      "status": "PASS",
+      "outcomeLine": 331
+    },
+    {
+      "label": "syntax resources\\app\\modules\\customer-governance-core.js",
+      "runLine": 333,
+      "status": "PASS",
+      "outcomeLine": 334
+    },
+    {
+      "label": "syntax resources\\app\\modules\\customer-governance-ui.js",
+      "runLine": 336,
+      "status": "PASS",
+      "outcomeLine": 337
+    },
+    {
+      "label": "syntax resources\\app\\modules\\desktop-host.js",
+      "runLine": 339,
+      "status": "PASS",
+      "outcomeLine": 340
+    },
+    {
+      "label": "syntax resources\\app\\modules\\desktop-performance.js",
+      "runLine": 342,
+      "status": "PASS",
+      "outcomeLine": 343
+    },
+    {
+      "label": "syntax resources\\app\\modules\\gpt-assistant.js",
+      "runLine": 345,
+      "status": "PASS",
+      "outcomeLine": 346
+    },
+    {
+      "label": "syntax resources\\app\\modules\\hot-chat-profile-core.js",
+      "runLine": 348,
+      "status": "PASS",
+      "outcomeLine": 349
+    },
+    {
+      "label": "syntax resources\\app\\modules\\metrics-charts.js",
+      "runLine": 351,
+      "status": "PASS",
+      "outcomeLine": 352
+    },
+    {
+      "label": "syntax resources\\app\\modules\\operations-core.cjs",
+      "runLine": 354,
+      "status": "PASS",
+      "outcomeLine": 355
+    },
+    {
+      "label": "syntax resources\\app\\modules\\operations-ui.js",
+      "runLine": 357,
+      "status": "PASS",
+      "outcomeLine": 358
+    },
+    {
+      "label": "syntax resources\\app\\modules\\operations-upgrade.js",
+      "runLine": 360,
+      "status": "PASS",
+      "outcomeLine": 361
+    },
+    {
+      "label": "syntax resources\\app\\modules\\performance-enhancements.js",
+      "runLine": 363,
+      "status": "PASS",
+      "outcomeLine": 364
+    },
+    {
+      "label": "syntax resources\\app\\modules\\phone-registry.js",
+      "runLine": 366,
+      "status": "PASS",
+      "outcomeLine": 367
+    },
+    {
+      "label": "syntax resources\\app\\modules\\productivity.js",
+      "runLine": 369,
+      "status": "PASS",
+      "outcomeLine": 370
+    },
+    {
+      "label": "syntax resources\\app\\modules\\runtime-customizer.js",
+      "runLine": 372,
+      "status": "PASS",
+      "outcomeLine": 373
+    },
+    {
+      "label": "syntax resources\\app\\modules\\scroll-coordinator.js",
+      "runLine": 375,
+      "status": "PASS",
+      "outcomeLine": 376
+    },
+    {
+      "label": "syntax resources\\app\\modules\\smart-import.js",
+      "runLine": 378,
+      "status": "PASS",
+      "outcomeLine": 379
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ticket-record-core.js",
+      "runLine": 381,
+      "status": "PASS",
+      "outcomeLine": 382
+    },
+    {
+      "label": "syntax resources\\app\\modules\\v4-data-center.js",
+      "runLine": 384,
+      "status": "PASS",
+      "outcomeLine": 385
+    },
+    {
+      "label": "syntax resources\\app\\modules\\workspace-shell.js",
+      "runLine": 387,
+      "status": "PASS",
+      "outcomeLine": 388
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-business-pages.js",
+      "runLine": 390,
+      "status": "PASS",
+      "outcomeLine": 391
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-crm-sync-core.js",
+      "runLine": 393,
+      "status": "PASS",
+      "outcomeLine": 394
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-group-manager-core.js",
+      "runLine": 396,
+      "status": "PASS",
+      "outcomeLine": 397
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-group-mock-transport.js",
+      "runLine": 399,
+      "status": "PASS",
+      "outcomeLine": 400
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-group-monitor-core.js",
+      "runLine": 402,
+      "status": "PASS",
+      "outcomeLine": 403
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-media-core.js",
+      "runLine": 405,
+      "status": "PASS",
+      "outcomeLine": 406
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-scope.js",
+      "runLine": 408,
+      "status": "PASS",
+      "outcomeLine": 409
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-workbench-core.js",
+      "runLine": 411,
+      "status": "PASS",
+      "outcomeLine": 412
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-workbench.js",
+      "runLine": 414,
+      "status": "PASS",
+      "outcomeLine": 415
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-workspace-query.cjs",
+      "runLine": 417,
+      "status": "PASS",
+      "outcomeLine": 418
+    },
+    {
+      "label": "syntax resources\\app\\server.mjs",
+      "runLine": 420,
+      "status": "PASS",
+      "outcomeLine": 421
+    },
+    {
+      "label": "syntax resources\\app\\sidecar-write-coordinator.cjs",
+      "runLine": 423,
+      "status": "PASS",
+      "outcomeLine": 424
+    },
+    {
+      "label": "syntax resources\\app\\state-delta.cjs",
+      "runLine": 426,
+      "status": "PASS",
+      "outcomeLine": 427
+    },
+    {
+      "label": "syntax resources\\app\\worker-fencing-gate.cjs",
+      "runLine": 429,
+      "status": "PASS",
+      "outcomeLine": 430
+    },
+    {
+      "label": "syntax resources\\app\\worker-queue-adapter.cjs",
+      "runLine": 432,
+      "status": "PASS",
+      "outcomeLine": 433
+    },
+    {
+      "label": "Stage 3 group feature flags",
+      "runLine": 435,
+      "status": "PASS",
+      "outcomeLine": 437
+    },
+    {
+      "label": "Stage 3 Worker and group-manager isolation gate",
+      "runLine": 439,
+      "status": "PASS",
+      "outcomeLine": 441
+    },
+    {
+      "label": "Stage 3 group manager migration",
+      "runLine": 443,
+      "status": "PASS",
+      "outcomeLine": 445
+    },
+    {
+      "label": "Stage 3 group manager core",
+      "runLine": 447,
+      "status": "PASS",
+      "outcomeLine": 449
+    },
+    {
+      "label": "Stage 3 group manager isolated API and Mock Transport",
+      "runLine": 451,
+      "status": "PASS",
+      "outcomeLine": 453
+    },
+    {
+      "label": "Stage 3 WS workspace navigation",
+      "runLine": 455,
+      "status": "PASS",
+      "outcomeLine": 457
+    },
+    {
+      "label": "Stage 4 AI job pipeline core",
+      "runLine": 459,
+      "status": "PASS",
+      "outcomeLine": 461
+    },
+    {
+      "label": "Stage 4 CRM suggestion core",
+      "runLine": 463,
+      "status": "PASS",
+      "outcomeLine": 465
+    },
+    {
+      "label": "Stage 4 migration and schema",
+      "runLine": 467,
+      "status": "PASS",
+      "outcomeLine": 469
+    },
+    {
+      "label": "Stage 4 Worker AI flags",
+      "runLine": 471,
+      "status": "PASS",
+      "outcomeLine": 473
+    },
+    {
+      "label": "Stage 4 Mock AI provider",
+      "runLine": 475,
+      "status": "PASS",
+      "outcomeLine": 477
+    },
+    {
+      "label": "Stage 4 AI review center UI",
+      "runLine": 479,
+      "status": "PASS",
+      "outcomeLine": 481
+    },
+    {
+      "label": "Stage 4 desktop ApiClient queue and CRM contract",
+      "runLine": 483,
+      "status": "PASS",
+      "outcomeLine": 485
+    },
+    {
+      "label": "Stage 4 isolated AI pipeline API",
+      "runLine": 487,
+      "status": "PASS",
+      "outcomeLine": 489
+    },
+    {
+      "label": "WS core rules",
+      "runLine": 491,
+      "status": "PASS",
+      "outcomeLine": 493
+    },
+    {
+      "label": "WS direct-only collection and AI policy",
+      "runLine": 495,
+      "status": "PASS",
+      "outcomeLine": 497
+    },
+    {
+      "label": "WS VIP member task and alert isolation",
+      "runLine": 499,
+      "status": "PASS",
+      "outcomeLine": 501
+    },
+    {
+      "label": "WS and GPT Horizon visual reachability",
+      "runLine": 503,
+      "status": "PASS",
+      "outcomeLine": 505
+    },
+    {
+      "label": "V4.1 layered visual contrast regression",
+      "runLine": 507,
+      "status": "PASS",
+      "outcomeLine": 523
+    },
+    {
+      "label": "WS AI CRM sync rules",
+      "runLine": 525,
+      "status": "PASS",
+      "outcomeLine": 527
+    },
+    {
+      "label": "WS unified customer archive UI contract",
+      "runLine": 529,
+      "status": "PASS",
+      "outcomeLine": 531
+    },
+    {
+      "label": "WS CRM customer-link trust boundary",
+      "runLine": 533,
+      "status": "PASS",
+      "outcomeLine": 535
+    },
+    {
+      "label": "WS workbench initialization",
+      "runLine": 537,
+      "status": "PASS",
+      "outcomeLine": 539
+    },
+    {
+      "label": "WS API and SQLite",
+      "runLine": 541,
+      "status": "PASS",
+      "outcomeLine": 543
+    },
+    {
+      "label": "WS export streaming contract",
+      "runLine": 545,
+      "status": "PASS",
+      "outcomeLine": 547
+    },
+    {
+      "label": "WS export and media schema",
+      "runLine": 549,
+      "status": "PASS",
+      "outcomeLine": 550
+    },
+    {
+      "label": "WS complete export and export jobs",
+      "runLine": 552,
+      "status": "PASS",
+      "outcomeLine": 554
+    },
+    {
+      "label": "WS media staging and attachment broadcast",
+      "runLine": 556,
+      "status": "PASS",
+      "outcomeLine": 558
+    },
+    {
+      "label": "WS media send runtime contract",
+      "runLine": 560,
+      "status": "PASS",
+      "outcomeLine": 562
+    },
+    {
+      "label": "WS broadcast, translation and send audit",
+      "runLine": 564,
+      "status": "PASS",
+      "outcomeLine": 566
+    },
+    {
+      "label": "WS VIP customer and group-monitor scope separation",
+      "runLine": 568,
+      "status": "PASS",
+      "outcomeLine": 570
+    },
+    {
+      "label": "WS conversation cursor pagination",
+      "runLine": 572,
+      "status": "PASS",
+      "outcomeLine": 574
+    },
+    {
+      "label": "WS conversation incremental watermark runtime",
+      "runLine": 576,
+      "status": "PASS",
+      "outcomeLine": 578
+    },
+    {
+      "label": "WS list preview update",
+      "runLine": 580,
+      "status": "PASS",
+      "outcomeLine": 582
+    },
+    {
+      "label": "WS follow-up chain dedupe and refresh",
+      "runLine": 584,
+      "status": "PASS",
+      "outcomeLine": 586
+    },
+    {
+      "label": "WS task lifecycle and multi-account history ingest",
+      "runLine": 588,
+      "status": "PASS",
+      "outcomeLine": 590
+    },
+    {
+      "label": "WS complete original text and backup roundtrip",
+      "runLine": 592,
+      "status": "PASS",
+      "outcomeLine": 594
+    },
+    {
+      "label": "WS intelligent follow-up strategy and CRM persistence",
+      "runLine": 596,
+      "status": "PASS",
+      "outcomeLine": 598
+    },
+    {
+      "label": "WS live refresh event contract",
+      "runLine": 600,
+      "status": "PASS",
+      "outcomeLine": 602
+    },
+    {
+      "label": "WS non-blocking AI pump runtime",
+      "runLine": 604,
+      "status": "PASS",
+      "outcomeLine": 606
+    },
+    {
+      "label": "Home WS follow-up runtime",
+      "runLine": 608,
+      "status": "PASS",
+      "outcomeLine": 610
+    },
+    {
+      "label": "WS SQLite v6 migration",
+      "runLine": 612,
+      "status": "PASS",
+      "outcomeLine": 614
+    },
+    {
+      "label": "WS external-id uniqueness migration",
+      "runLine": 616,
+      "status": "PASS",
+      "outcomeLine": 618
+    },
+    {
+      "label": "WS local security contract",
+      "runLine": 620,
+      "status": "PASS",
+      "outcomeLine": 622
+    },
+    {
+      "label": "WS multi-account database isolation",
+      "runLine": 624,
+      "status": "PASS",
+      "outcomeLine": 626
+    },
+    {
+      "label": "WS account runtime recovery",
+      "runLine": 628,
+      "status": "PASS",
+      "outcomeLine": 630
+    },
+    {
+      "label": "WS native collector async full-list scan contract",
+      "runLine": 632,
+      "status": "PASS",
+      "outcomeLine": 634
+    },
+    {
+      "label": "WS native collector P0 durability contract",
+      "runLine": 636,
+      "status": "PASS",
+      "outcomeLine": 638
+    },
+    {
+      "label": "WS native collector diagnostics contract",
+      "runLine": 640,
+      "status": "PASS",
+      "outcomeLine": 642
+    },
+    {
+      "label": "WS native group monitor bridge contract",
+      "runLine": 644,
+      "status": "PASS",
+      "outcomeLine": 646
+    },
+    {
+      "label": "WS group monitor core",
+      "runLine": 648,
+      "status": "PASS",
+      "outcomeLine": 658
+    },
+    {
+      "label": "V4.1 opaque identities and atomic membership ledger",
+      "runLine": 660,
+      "status": "PASS",
+      "outcomeLine": 675
+    },
+    {
+      "label": "WS group monitor migration",
+      "runLine": 677,
+      "status": "PASS",
+      "outcomeLine": 679
+    },
+    {
+      "label": "WS group monitor sidecar API",
+      "runLine": 681,
+      "status": "PASS",
+      "outcomeLine": 683
+    },
+    {
+      "label": "WS group monitor ingest",
+      "runLine": 685,
+      "status": "PASS",
+      "outcomeLine": 687
+    },
+    {
+      "label": "WS customer group status projection",
+      "runLine": 689,
+      "status": "PASS",
+      "outcomeLine": 691
+    },
+    {
+      "label": "WS customer group status projection runtime",
+      "runLine": 693,
+      "status": "PASS",
+      "outcomeLine": 695
+    },
+    {
+      "label": "WS native background lifecycle and bounds contract",
+      "runLine": 697,
+      "status": "PASS",
+      "outcomeLine": 699
+    },
+    {
+      "label": "WS process runtime coordinator contract",
+      "runLine": 701,
+      "status": "PASS",
+      "outcomeLine": 703
+    },
+    {
+      "label": "WS process WebView session pool contract",
+      "runLine": 705,
+      "status": "PASS",
+      "outcomeLine": 707
+    },
+    {
+      "label": "WS process runtime coordinator scheduling",
+      "runLine": 709,
+      "status": "PASS",
+      "outcomeLine": 711
+    },
+    {
+      "label": "WS parent-route visibility runtime",
+      "runLine": 713,
+      "status": "PASS",
+      "outcomeLine": 715
+    },
+    {
+      "label": "WS hidden native scheduler runtime",
+      "runLine": 717,
+      "status": "PASS",
+      "outcomeLine": 719
+    },
+    {
+      "label": "WS native group exclusion runtime",
+      "runLine": 721,
+      "status": "PASS",
+      "outcomeLine": 723
+    },
+    {
+      "label": "WS native conversation identity runtime",
+      "runLine": 725,
+      "status": "PASS",
+      "outcomeLine": 727
+    },
+    {
+      "label": "WS durable queue Web JSON and API roundtrip",
+      "runLine": 729,
+      "status": "PASS",
+      "outcomeLine": 731
+    },
+    {
+      "label": "WS native collector chunk runtime",
+      "runLine": 733,
+      "status": "PASS",
+      "outcomeLine": 735
+    },
+    {
+      "label": "WS native collector physical-bottom runtime",
+      "runLine": 737,
+      "status": "PASS",
+      "outcomeLine": 739
+    },
+    {
+      "label": "WS native collector in-flight discovery runtime",
+      "runLine": 741,
+      "status": "PASS",
+      "outcomeLine": 743
+    },
+    {
+      "label": "WS native collector full-list stall runtime",
+      "runLine": 745,
+      "status": "PASS",
+      "outcomeLine": 747
+    },
+    {
+      "label": "WS native collector navigation/retry runtime",
+      "runLine": 749,
+      "status": "PASS",
+      "outcomeLine": 751
+    },
+    {
+      "label": "WS native collector history packet runtime",
+      "runLine": 753,
+      "status": "PASS",
+      "outcomeLine": 755
+    },
+    {
+      "label": "WS native collector foreground isolation runtime",
+      "runLine": 757,
+      "status": "PASS",
+      "outcomeLine": 759
+    },
+    {
+      "label": "WS native media bridge contract",
+      "runLine": 761,
+      "status": "PASS",
+      "outcomeLine": 763
+    },
+    {
+      "label": "WS unread skip contract",
+      "runLine": 765,
+      "status": "PASS",
+      "outcomeLine": 767
+    },
+    {
+      "label": "WS strict unread detection runtime",
+      "runLine": 769,
+      "status": "PASS",
+      "outcomeLine": 771
+    },
+    {
+      "label": "WS read-history collector runtime",
+      "runLine": 773,
+      "status": "PASS",
+      "outcomeLine": 775
+    },
+    {
+      "label": "WS ChatKnow UI contract",
+      "runLine": 777,
+      "status": "PASS",
+      "outcomeLine": 779
+    },
+    {
+      "label": "WS group monitor UI contract",
+      "runLine": 781,
+      "status": "PASS",
+      "outcomeLine": 783
+    },
+    {
+      "label": "WS group discovery contract",
+      "runLine": 785,
+      "status": "PASS",
+      "outcomeLine": 787
+    },
+    {
+      "label": "WS broadcast and translation UI contract",
+      "runLine": 789,
+      "status": "PASS",
+      "outcomeLine": 791
+    },
+    {
+      "label": "WS collection and CRM sync contract",
+      "runLine": 793,
+      "status": "PASS",
+      "outcomeLine": 795
+    },
+    {
+      "label": "WS complete per-customer history contract",
+      "runLine": 797,
+      "status": "PASS",
+      "outcomeLine": 799
+    },
+    {
+      "label": "WS chunked full-history AI and checkpoint contract",
+      "runLine": 801,
+      "status": "PASS",
+      "outcomeLine": 803
+    },
+    {
+      "label": "WS durable AI queue contract",
+      "runLine": 805,
+      "status": "PASS",
+      "outcomeLine": 807
+    },
+    {
+      "label": "WS AI queue UI metrics contract",
+      "runLine": 809,
+      "status": "PASS",
+      "outcomeLine": 811
+    },
+    {
+      "label": "WS resize performance contract",
+      "runLine": 813,
+      "status": "PASS",
+      "outcomeLine": 815
+    },
+    {
+      "label": "WS frontend high-priority fixes",
+      "runLine": 817,
+      "status": "PASS",
+      "outcomeLine": 819
+    },
+    {
+      "label": "project stability and lifecycle contract",
+      "runLine": 821,
+      "status": "PASS",
+      "outcomeLine": 823
+    },
+    {
+      "label": "WS 50k conversation list render budget",
+      "runLine": 825,
+      "status": "PASS",
+      "outcomeLine": 827
+    },
+    {
+      "label": "WS bridge recovery contract",
+      "runLine": 829,
+      "status": "PASS",
+      "outcomeLine": 831
+    },
+    {
+      "label": "WS scroll routing contract",
+      "runLine": 833,
+      "status": "PASS",
+      "outcomeLine": 835
+    },
+    {
+      "label": "WS A+ dual-layer layout contract",
+      "runLine": 837,
+      "status": "PASS",
+      "outcomeLine": 839
+    },
+    {
+      "label": "WS data archive customer bridge",
+      "runLine": 841,
+      "status": "PASS",
+      "outcomeLine": 843
+    },
+    {
+      "label": "WS data archive summary bridge",
+      "runLine": 845,
+      "status": "PASS",
+      "outcomeLine": 847
+    },
+    {
+      "label": "WS data archive UI bridge",
+      "runLine": 849,
+      "status": "PASS",
+      "outcomeLine": 851
+    },
+    {
+      "label": "WS data archive drilldown UI",
+      "runLine": 853,
+      "status": "PASS",
+      "outcomeLine": 855
+    },
+    {
+      "label": "WS group catalog runtime",
+      "runLine": 857,
+      "status": "PASS",
+      "outcomeLine": 859
+    },
+    {
+      "label": "WS background isolation runtime",
+      "runLine": 861,
+      "status": "PASS",
+      "outcomeLine": 863
+    },
+    {
+      "label": "WS multi-account detection contract",
+      "runLine": 865,
+      "status": "PASS",
+      "outcomeLine": 867
+    },
+    {
+      "label": "WS scroll stability contract",
+      "runLine": 869,
+      "status": "PASS",
+      "outcomeLine": 871
+    },
+    {
+      "label": "WS assistant drawer runtime",
+      "runLine": 873,
+      "status": "PASS",
+      "outcomeLine": 875
+    },
+    {
+      "label": "hot-chat profile API",
+      "runLine": 877,
+      "status": "PASS",
+      "outcomeLine": 879
+    },
+    {
+      "label": "hot-chat profile core",
+      "runLine": 881,
+      "status": "PASS",
+      "outcomeLine": 883
+    },
+    {
+      "label": "hot-chat profile migration",
+      "runLine": 885,
+      "status": "PASS",
+      "outcomeLine": 887
+    },
+    {
+      "label": "request coalescer cancellation",
+      "runLine": 889,
+      "status": "PASS",
+      "outcomeLine": 891
+    },
+    {
+      "label": "task6 stability contract",
+      "runLine": 893,
+      "status": "PASS",
+      "outcomeLine": 895
+    },
+    {
+      "label": "desktop performance contract",
+      "runLine": 897,
+      "status": "PASS",
+      "outcomeLine": 899
+    },
+    {
+      "label": "CRM phone index and archive diagnostics",
+      "runLine": 901,
+      "status": "PASS",
+      "outcomeLine": 903
+    },
+    {
+      "label": "unified scroll system contract",
+      "runLine": 905,
+      "status": "PASS",
+      "outcomeLine": 907
+    },
+    {
+      "label": "unified scroll coordinator runtime",
+      "runLine": 909,
+      "status": "PASS",
+      "outcomeLine": 911
+    },
+    {
+      "label": "WS route sidebar policy runtime",
+      "runLine": 913,
+      "status": "PASS",
+      "outcomeLine": 915
+    },
+    {
+      "label": "Stage 5.5C-1A real isolated send/media/AI risk API",
+      "runLine": 917,
+      "status": "PASS",
+      "outcomeLine": 947
+    },
+    {
+      "label": "Stage 5.5C-1A send UI evidence and async ownership",
+      "runLine": 949,
+      "status": "PASS",
+      "outcomeLine": 965
+    },
+    {
+      "label": "Stage 5.5C-1A production native send qualification",
+      "runLine": 967,
+      "status": "PASS",
+      "outcomeLine": 974
+    },
+    {
+      "label": "Stage 5.5C-1A actual send DOM and bridge outcomes",
+      "runLine": 976,
+      "status": "PASS",
+      "outcomeLine": 978
+    },
+    {
+      "label": "Stage 5.5C-1A provider modal generation and stale responses",
+      "runLine": 980,
+      "status": "PASS",
+      "outcomeLine": 993
+    },
+    {
+      "label": "RD02 actual Native authenticated-profile and hidden-collector boundary",
+      "runLine": 995,
+      "status": "PASS",
+      "outcomeLine": 1007
+    },
+    {
+      "label": "RD02 WS blocked collection capability and preserved foreground actions",
+      "runLine": 1009,
+      "status": "PASS",
+      "outcomeLine": 1030
+    }
+  ]
+}

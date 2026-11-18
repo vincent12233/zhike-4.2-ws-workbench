@@ -1,0 +1,334 @@
+{
+  "environment": "Isolated Edge CSS viewport/DPI model; synthetic records; not native WinUI acceptance",
+  "sourceTopLevelFields": [
+    "environment",
+    "cases",
+    "results"
+  ],
+  "routeOrder": [
+    "home",
+    "customers",
+    "intake",
+    "segments",
+    "vip",
+    "hot",
+    "groups",
+    "tickets",
+    "registrations",
+    "deposits",
+    "analytics",
+    "automation",
+    "quality",
+    "data",
+    "activity",
+    "recycle",
+    "settings",
+    "operations",
+    "stage-board",
+    "phone-registry"
+  ],
+  "viewports": [
+    {
+      "requestedPixels": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scale": 1,
+      "effectiveViewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "routes": 20,
+      "rendererErrors": 0,
+      "documentHorizontalOverflow": false,
+      "homeKpis": {
+        "workspaceWidth": 1664,
+        "columns": 6,
+        "cardCount": 6,
+        "ordinaryDeposit": "¥1,250",
+        "allOrdinaryValuesFitOneLine": true,
+        "font": "26px",
+        "whiteSpace": "nowrap",
+        "overflowX": "auto",
+        "overflowY": "hidden",
+        "lineHeightPx": 31.2,
+        "longAmount": {
+          "width": 188,
+          "scrollWidth": 1365,
+          "scrollLeft": 1177
+        }
+      }
+    },
+    {
+      "requestedPixels": {
+        "width": 2560,
+        "height": 1440
+      },
+      "scale": 1,
+      "effectiveViewport": {
+        "width": 2560,
+        "height": 1440
+      },
+      "routes": 20,
+      "rendererErrors": 0,
+      "documentHorizontalOverflow": false,
+      "homeKpis": {
+        "workspaceWidth": 2304,
+        "columns": 6,
+        "cardCount": 6,
+        "ordinaryDeposit": "¥1,250",
+        "allOrdinaryValuesFitOneLine": true,
+        "font": "26px",
+        "whiteSpace": "nowrap",
+        "overflowX": "auto",
+        "overflowY": "hidden",
+        "lineHeightPx": 31.2,
+        "longAmount": {
+          "width": 294,
+          "scrollWidth": 1365,
+          "scrollLeft": 1071
+        }
+      }
+    },
+    {
+      "requestedPixels": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scale": 1.25,
+      "effectiveViewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "routes": 20,
+      "rendererErrors": 0,
+      "documentHorizontalOverflow": false,
+      "homeKpis": {
+        "workspaceWidth": 1280,
+        "columns": 6,
+        "cardCount": 6,
+        "ordinaryDeposit": "¥1,250",
+        "allOrdinaryValuesFitOneLine": true,
+        "font": "26px",
+        "whiteSpace": "nowrap",
+        "overflowX": "auto",
+        "overflowY": "hidden",
+        "lineHeightPx": 31.2,
+        "longAmount": {
+          "width": 124,
+          "scrollWidth": 1365,
+          "scrollLeft": 1241
+        }
+      }
+    },
+    {
+      "requestedPixels": {
+        "width": 2560,
+        "height": 1440
+      },
+      "scale": 1.25,
+      "effectiveViewport": {
+        "width": 2048,
+        "height": 1152
+      },
+      "routes": 20,
+      "rendererErrors": 0,
+      "documentHorizontalOverflow": false,
+      "homeKpis": {
+        "workspaceWidth": 1792,
+        "columns": 6,
+        "cardCount": 6,
+        "ordinaryDeposit": "¥1,250",
+        "allOrdinaryValuesFitOneLine": true,
+        "font": "26px",
+        "whiteSpace": "nowrap",
+        "overflowX": "auto",
+        "overflowY": "hidden",
+        "lineHeightPx": 31.2,
+        "longAmount": {
+          "width": 209,
+          "scrollWidth": 1365,
+          "scrollLeft": 1156
+        }
+      }
+    },
+    {
+      "requestedPixels": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scale": 1.5,
+      "effectiveViewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "routes": 20,
+      "rendererErrors": 0,
+      "documentHorizontalOverflow": false,
+      "homeKpis": {
+        "workspaceWidth": 1024,
+        "columns": 3,
+        "cardCount": 6,
+        "ordinaryDeposit": "¥1,250",
+        "allOrdinaryValuesFitOneLine": true,
+        "font": "26px",
+        "whiteSpace": "nowrap",
+        "overflowX": "auto",
+        "overflowY": "hidden",
+        "lineHeightPx": 31.2,
+        "longAmount": {
+          "width": 243,
+          "scrollWidth": 1365,
+          "scrollLeft": 1122
+        }
+      }
+    },
+    {
+      "requestedPixels": {
+        "width": 2560,
+        "height": 1440
+      },
+      "scale": 1.5,
+      "effectiveViewport": {
+        "width": 1707,
+        "height": 960
+      },
+      "routes": 20,
+      "rendererErrors": 0,
+      "documentHorizontalOverflow": false,
+      "homeKpis": {
+        "workspaceWidth": 1451,
+        "columns": 6,
+        "cardCount": 6,
+        "ordinaryDeposit": "¥1,250",
+        "allOrdinaryValuesFitOneLine": true,
+        "font": "26px",
+        "whiteSpace": "nowrap",
+        "overflowX": "auto",
+        "overflowY": "hidden",
+        "lineHeightPx": 31.2,
+        "longAmount": {
+          "width": 152,
+          "scrollWidth": 1365,
+          "scrollLeft": 1213
+        }
+      }
+    },
+    {
+      "requestedPixels": {
+        "width": 820,
+        "height": 540
+      },
+      "scale": 1,
+      "effectiveViewport": {
+        "width": 820,
+        "height": 540
+      },
+      "routes": 20,
+      "rendererErrors": 0,
+      "documentHorizontalOverflow": false,
+      "homeKpis": {
+        "workspaceWidth": 740,
+        "columns": 3,
+        "cardCount": 6,
+        "ordinaryDeposit": "¥1,250",
+        "allOrdinaryValuesFitOneLine": true,
+        "font": "26px",
+        "whiteSpace": "nowrap",
+        "overflowX": "auto",
+        "overflowY": "hidden",
+        "lineHeightPx": 31.2,
+        "longAmount": {
+          "width": 152,
+          "scrollWidth": 1365,
+          "scrollLeft": 1213
+        }
+      }
+    },
+    {
+      "requestedPixels": {
+        "width": 1280,
+        "height": 720
+      },
+      "scale": 1.25,
+      "effectiveViewport": {
+        "width": 1024,
+        "height": 576
+      },
+      "routes": 20,
+      "rendererErrors": 0,
+      "documentHorizontalOverflow": false,
+      "homeKpis": {
+        "workspaceWidth": 944,
+        "columns": 3,
+        "cardCount": 6,
+        "ordinaryDeposit": "¥1,250",
+        "allOrdinaryValuesFitOneLine": true,
+        "font": "26px",
+        "whiteSpace": "nowrap",
+        "overflowX": "auto",
+        "overflowY": "hidden",
+        "lineHeightPx": 31.2,
+        "longAmount": {
+          "width": 216,
+          "scrollWidth": 1365,
+          "scrollLeft": 1149
+        }
+      }
+    }
+  ],
+  "additionalPaletteChecks": [
+    {
+      "artifact": "night-computed.json",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "routes": 20,
+      "rendererErrors": 0,
+      "homeKpis": {
+        "workspaceWidth": 1664,
+        "columns": 6,
+        "cardCount": 6,
+        "ordinaryDeposit": "¥1,250",
+        "allOrdinaryValuesFitOneLine": true,
+        "font": "26px",
+        "whiteSpace": "nowrap",
+        "overflowX": "auto",
+        "overflowY": "hidden",
+        "lineHeightPx": 31.2,
+        "longAmount": {
+          "width": 188,
+          "scrollWidth": 1365,
+          "scrollLeft": 1177
+        }
+      }
+    },
+    {
+      "artifact": "dawn-dark-legacy-computed.json",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "routes": 20,
+      "rendererErrors": 0,
+      "homeKpis": {
+        "workspaceWidth": 1664,
+        "columns": 6,
+        "cardCount": 6,
+        "ordinaryDeposit": "¥1,250",
+        "allOrdinaryValuesFitOneLine": true,
+        "font": "26px",
+        "whiteSpace": "nowrap",
+        "overflowX": "auto",
+        "overflowY": "hidden",
+        "lineHeightPx": 31.2,
+        "longAmount": {
+          "width": 188,
+          "scrollWidth": 1365,
+          "scrollLeft": 1177
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,917 @@
+Window: "知客 Stage 5.1 · ISOLATED 验收", App: Zhike.Stage51.Acceptance.exe.
+	0 window (窗口) 知客 Stage 5.1 · ISOLATED 验收 Secondary Actions: Raise
+		1 pane (窗格) Non Client Input Sink Window
+		2 pane (窗格) AppWindow Custom Title Bar
+			3 button (按钮) Minimize ID: Minimize
+			549 button (按钮) Restore ID: Restore
+			5 button (按钮) Close ID: Close
+		6 pane (窗格)
+			7 pane (窗格)
+				14 pane (窗格)
+			15 pane (窗格) 知客 6.0 · Horizon Atelier
+				29 pane (窗格) (disabled)
+				16 pane (区域) 知客 6.0 · Horizon Atelier - Web 内容
+					17 pane (区域)
+						18 pane (区域)
+						19 pane (区域)
+							20 pane (区域)
+								21 pane (区域)
+								22 pane (区域)
+									23 pane (区域)
+										24 pane (区域)
+											25 pane (区域)
+												26 pane (区域)
+												903 document (文档) 知客 6.0 · Horizon Atelier Value: https://zhike.local/index.html?desktop=1 ID: RootWebArea
+													904 group (补充) ID: sidebar
+														905 text (文本) 知客 6.0
+														906 text (文本) Horizon Atelier
+														907 button (按钮) 收起导航 Description: 收起导航 ID: collapseNav
+															908 image (图形)
+														909 button (按钮) 设置工作区资料 Description: 设置工作区资料 ID: workspaceSwitch
+															910 image (图形)
+														911 group (导航) ID: mainNav
+															912 text (文本) 工作
+															913 button (按钮) 今日工作台 Description: 今日工作台
+																914 image (图形)
+															915 button (按钮) 快速录入 Description: 快速录入
+																916 image (图形)
+															917 button (按钮) 任务中心 Description: 任务中心
+																918 image (图形)
+															919 button (按钮) 阶段看板 Description: 阶段看板
+																920 image (图形)
+															921 text (文本) 客户
+															922 button (按钮) 客户中心 Description: 客户中心
+																923 image (图形)
+															924 button (按钮) 分类视图 Description: 分类视图
+																925 image (图形)
+															926 button (按钮) 热聊管理 Description: 热聊管理
+																927 image (图形)
+															928 button (按钮) 群组管理 Description: 群组管理
+																929 image (图形)
+															930 button (按钮) VIP 管理 Description: VIP 管理
+																931 image (图形)
+															932 text (文本) 业务数据
+															933 button (按钮) 跟票管理 Description: 跟票管理
+																934 image (图形)
+															935 button (按钮) 报名统计 Description: 报名统计
+																936 image (图形)
+															937 button (按钮) 入金管理 Description: 入金管理
+																938 image (图形)
+															939 button (按钮) 统计分析 Description: 统计分析
+																940 image (图形)
+															941 text (文本) 系统管理
+															942 button (按钮) WS 工作台 Description: WS 工作台 ID: wsWorkbenchNav
+																943 image (图形)
+															944 button (按钮) GPT 运营助手 Description: GPT 运营助手 ID: gptAssistantNav
+																945 image (图形)
+															946 button (按钮) 本地自动化 Description: 本地自动化
+																947 image (图形)
+															948 button (按钮) 数据治理 Description: 数据治理
+																949 image (图形)
+															950 button (按钮) 数据中心 Description: 数据中心
+																951 image (图形)
+															952 button (按钮) 操作记录 Description: 操作记录
+																953 image (图形)
+															954 button (按钮) 回收站 Description: 回收站
+																955 image (图形)
+															956 button (按钮) 系统设置 Description: 系统设置
+																957 image (图形)
+															958 button (按钮) 手机号登记 Description: 手机号登记
+																959 image (图形)
+														1191 text (文本) DB
+														961 image (图形)
+														1000 text (文本) 本机存储正常
+														1001 text (文本) SQLite · 本机服务已启动
+														964 button (按钮) 管理本地管理员头像 Description: 管理本地管理员头像
+															965 image (图形)
+													966 group (主要)
+														967 group (章节标题)
+															968 group (导航) 工作台切换
+																969 button (切换按钮) 知客工作台
+																	970 image (图形)
+																	971 text (文本) 知客工作台
+																972 button (切换按钮) WS 工作台
+																	973 image (图形)
+																	974 text (文本) WS 工作台
+															980 button (按钮) 搜索客户、号码、群编号Ctrl K ID: globalSearch
+																981 image (图形)
+															984 button (按钮) 快捷键与使用帮助 Description: 快捷键与使用帮助 ID: shortcutButton
+															985 button (按钮) 外观偏好 Description: 外观偏好 ID: appearanceButton
+																986 image (图形)
+															987 button (按钮) 立即备份 Description: 立即备份 ID: backupButton
+																988 image (图形)
+															991 button (按钮) 本地提醒 Description: 本地提醒 ID: notificationButton
+																992 image (图形)
+															993 button (按钮) 管理本地管理员头像 Description: 管理本地管理员头像
+														1002 group (组) ID: viewContainer
+															1192 text (标题) 客户中心
+															1193 text (文本) 客户资料是唯一主档 · 52 位客户；跟票、报名和入金保持独立记录
+															1194 button (按钮) 删除重复值
+															1195 button (按钮) 导入客户
+																1196 image (图形)
+															1197 button (按钮) 新增客户
+																1198 image (图形)
+															1199 group (详细信息)
+																1200 button (开合三角标记) › 客户业务概览 全局 52 位 · 今日计划 13 位 · 逾期 13 位 展开7项指标
+																	1201 text (文本) ›
+																	1202 text (文本) 客户业务概览
+																	1203 text (文本) 全局 52 位 · 今日计划 13 位 · 逾期 13 位
+																	1204 text (文本) 展开7项指标
+															1205 text (文本) 搜索与筛选作用于客户列表；右侧预览可收起，完整档案仍可从客户行打开。
+															1206 button (按钮) 收起档案预览
+															1207 button (按钮) 全部客户
+															1208 button (按钮) 今日新增
+															1209 button (按钮) 已进群
+															1210 button (按钮) 热聊客户
+															1211 button (按钮) VIP 客户
+															1212 button (按钮) ＋ 保存视图
+															1213 text (文本) 客户列表
+															1214 text (文本) 52 位客户
+															1215 image (图形)
+															1216 text field (编辑) (settable, string) 搜索姓名、号码、群编号 Description: 搜索姓名、号码、群编号
+															1217 button (按钮) 展开高级筛选，当前 0 项
+																1218 image (图形)
+															1219 button (按钮) 导出当前筛选全部 52 位客户，不限当前页 Description: 导出当前筛选全部 52 位客户，不限当前页
+																1220 image (图形)
+															1221 button (按钮) 列设置
+															1222 status bar (状态) ID: customer-list-scope-customer
+																1223 text (文本) 生效条件 0 项 · 当前筛选 52 位客户 · 导出筛选结果包含全部匹配页。
+																1224 text (文本) 表头复选框仅选择本页；筛选与导出不受隐藏列影响。
+															1225 table (表格)
+																1226 data item (行)
+																	1227 data item (列标题) 选择本页客户 ID: a11y-th-mwl2ao38-0-0
+																		1228 checkbox (复选框) (settable, string) 选择本页客户
+																		1229 group (组) Description: 拖动调整列宽
+																	1230 data item (列标题) 客户 ID: a11y-th-mwl2ao38-0-1
+																		1231 group (组) Description: 拖动调整列宽
+																	1232 data item (列标题) 原始号码 ID: a11y-th-mwl2ao38-0-2
+																		1233 group (组) Description: 拖动调整列宽
+																	1234 data item (列标题) 标准号码 ID: a11y-th-mwl2ao38-0-3
+																		1235 group (组) Description: 拖动调整列宽
+																	1236 data item (列标题) 渠道 ID: a11y-th-mwl2ao38-0-4
+																		1237 group (组) Description: 拖动调整列宽
+																	1238 data item (列标题) 页面 ID: a11y-th-mwl2ao38-0-5
+																		1239 group (组) Description: 拖动调整列宽
+																	1240 data item (列标题) 助理 ID: a11y-th-mwl2ao38-0-6
+																		1241 group (组) Description: 拖动调整列宽
+																	1242 data item (列标题) 进群状态 ID: a11y-th-mwl2ao38-0-7
+																		1243 group (组) Description: 拖动调整列宽
+																	1244 data item (列标题) 客户阶段 ID: a11y-th-mwl2ao38-0-8
+																		1245 group (组) Description: 拖动调整列宽
+																	1246 data item (列标题) 热聊 ID: a11y-th-mwl2ao38-0-9
+																		1247 group (组) Description: 拖动调整列宽
+																	1248 data item (列标题) VIP ID: a11y-th-mwl2ao38-0-10
+																		1249 group (组) Description: 拖动调整列宽
+																	1250 data item (列标题) 群编号 ID: a11y-th-mwl2ao38-0-11
+																		1251 group (组) Description: 拖动调整列宽
+																	1252 data item (列标题) 跟票 ID: a11y-th-mwl2ao38-0-12
+																		1253 group (组) Description: 拖动调整列宽
+																	1254 data item (列标题) 入金 ID: a11y-th-mwl2ao38-0-13
+																		1255 group (组) Description: 拖动调整列宽
+																	1256 data item (列标题) 登记日期 ID: a11y-th-mwl2ao38-0-14
+																		1257 group (组) Description: 拖动调整列宽
+																	1258 data item (列标题) 操作 ID: a11y-th-mwl2ao38-0-15
+																		1259 group (组) Description: 拖动调整列宽
+																1260 data item (行)
+																	1261 data item (项)
+																		1262 checkbox (复选框) (settable, string)
+																	1263 data item (项) 标记为重点关注 I ISOLATED_S3_客户_001
+																		1264 button (按钮) 标记为重点关注 Description: 标记为重点关注
+																	1265 data item (项) +91 9006000000
+																	1266 data item (项) 9006000000
+																	1267 data item (项) 单导
+																	1268 data item (项) —
+																	1269 data item (项) 未分配
+																	1270 data item (项) 未进群
+																	1271 data item (项) 新客户
+																	1272 data item (项) 热聊
+																	1273 data item (项) —
+																	1274 data item (项) —
+																	1275 data item (项) —
+																	1276 data item (项) —
+																	1277 data item (项) 2026-11-18
+																	1278 data item (项) 移入回收站
+																		1279 button (按钮) 移入回收站
+																1280 data item (行)
+																	1281 data item (项)
+																		1282 checkbox (复选框) (settable, string)
+																	1283 data item (项) 标记为重点关注 I ISOLATED_S3_客户_008
+																		1284 button (按钮) 标记为重点关注 Description: 标记为重点关注
+																	1285 data item (项) +91 9006000007
+																	1286 data item (项) 9006000007
+																	1287 data item (项) 群粉
+																	1288 data item (项) —
+																	1289 data item (项) 未分配
+																	1290 data item (项) 在群
+																	1291 data item (项) 潜在客户
+																	1292 data item (项) —
+																	1293 data item (项) —
+																	1294 data item (项) —
+																	1295 data item (项) —
+																	1296 data item (项) —
+																	1297 data item (项) 2026-11-18
+																	1298 data item (项) 移入回收站
+																		1299 button (按钮) 移入回收站
+																1300 data item (行)
+																	1301 data item (项)
+																		1302 checkbox (复选框) (settable, string)
+																	1303 data item (项) 标记为重点关注 I ISOLATED_S3_客户_036
+																		1304 button (按钮) 标记为重点关注 Description: 标记为重点关注
+																	1305 data item (项) +91 9006000035
+																	1306 data item (项) 9006000035
+																	1307 data item (项) 群粉
+																	1308 data item (项) —
+																	1309 data item (项) 未分配
+																	1310 data item (项) 在群
+																	1311 data item (项) 暂停跟进
+																	1312 data item (项) 热聊
+																	1313 data item (项) —
+																	1314 data item (项) —
+																	1315 data item (项) —
+																	1316 data item (项) —
+																	1317 data item (项) 2026-11-18
+																	1318 data item (项) 移入回收站
+																		1319 button (按钮) 移入回收站
+																1320 data item (行)
+																	1321 data item (项)
+																		1322 checkbox (复选框) (settable, string)
+																	1323 data item (项) 标记为重点关注 I ISOLATED_S3_客户_044
+																		1324 button (按钮) 标记为重点关注 Description: 标记为重点关注
+																	1325 data item (项) +91 9006000043
+																	1326 data item (项) 9006000043
+																	1327 data item (项) 群粉
+																	1328 data item (项) —
+																	1329 data item (项) 未分配
+																	1330 data item (项) 在群
+																	1331 data item (项) 潜在客户
+																	1332 data item (项) —
+																	1333 data item (项) —
+																	1334 data item (项) —
+																	1335 data item (项) —
+																	1336 data item (项) —
+																	1337 data item (项) 2026-11-17
+																	1338 data item (项) 移入回收站
+																		1339 button (按钮) 移入回收站
+																1340 data item (行)
+																	1341 data item (项)
+																		1342 checkbox (复选框) (settable, string)
+																	1343 data item (项) 标记为重点关注 I ISOLATED_S3_客户_011
+																		1344 button (按钮) 标记为重点关注 Description: 标记为重点关注
+																	1345 data item (项) +91 9006000010
+																	1346 data item (项) 9006000010
+																	1347 data item (项) 单导
+																	1348 data item (项) —
+																	1349 data item (项) 未分配
+																	1350 data item (项) 在群
+																	1351 data item (项) 成交客户
+																	1352 data item (项) 热聊
+																	1353 data item (项) —
+																	1354 data item (项) —
+																	1355 data item (项) —
+																	1356 data item (项) —
+																	1357 data item (项) 2026-11-15
+																	1358 data item (项) 移入回收站
+																		1359 button (按钮) 移入回收站
+																1360 data item (行)
+																	1361 data item (项)
+																		1362 checkbox (复选框) (settable, string)
+																	1363 data item (项) 标记为重点关注 I ISOLATED_S3_客户_041
+																		1364 button (按钮) 标记为重点关注 Description: 标记为重点关注
+																	1365 data item (项) +91 9006000040
+																	1366 data item (项) 9006000040
+																	1367 data item (项) 单导
+																	1368 data item (项) —
+																	1369 data item (项) 未分配
+																	1370 data item (项) 在群
+																	1371 data item (项) 成交客户
+																	1372 data item (项) 热聊
+																	1373 data item (项) —
+																	1374 data item (项) —
+																	1375 data item (项) —
+																	1376 data item (项) —
+																	1377 data item (项) 2026-11-13
+																	1378 data item (项) 移入回收站
+																		1379 button (按钮) 移入回收站
+																1380 data item (行)
+																	1381 data item (项)
+																		1382 checkbox (复选框) (settable, string)
+																	1383 data item (项) 标记为重点关注 I ISOLATED_S3_客户_031
+																		1384 button (按钮) 标记为重点关注 Description: 标记为重点关注
+																	1385 data item (项) +91 9006000030
+																	1386 data item (项) 9006000030
+																	1387 data item (项) 单导
+																	1388 data item (项) —
+																	1389 data item (项) 未分配
+																	1390 data item (项) 未进群
+																	1391 data item (项) 新客户
+																	1392 data item (项) 热聊
+																	1393 data item (项) —
+																	1394 data item (项) —
+																	1395 data item (项) —
+																	1396 data item (项) —
+																	1397 data item (项) 2026-11-16
+																	1398 data item (项) 移入回收站
+																		1399 button (按钮) 移入回收站
+																1400 data item (行)
+																	1401 data item (项)
+																		1402 checkbox (复选框) (settable, string)
+																	1403 data item (项) 标记为重点关注 I ISOLATED_S3_客户_046
+																		1404 button (按钮) 标记为重点关注 Description: 标记为重点关注
+																	1405 data item (项) +91 9006000045
+																	1406 data item (项) 9006000045
+																	1407 data item (项) 群粉
+																	1408 data item (项) —
+																	1409 data item (项) 未分配
+																	1410 data item (项) 未进群
+																	1411 data item (项) 高意向
+																	1412 data item (项) 热聊
+																	1413 data item (项) —
+																	1414 data item (项) —
+																	1415 data item (项) —
+																	1416 data item (项) —
+																	1417 data item (项) 2026-11-15
+																	1418 data item (项) 移入回收站
+																		1419 button (按钮) 移入回收站
+																1420 data item (行)
+																	1421 data item (项)
+																		1422 checkbox (复选框) (settable, string)
+																	1423 data item (项) 标记为重点关注 I ISOLATED_S3_客户_003
+																		1424 button (按钮) 标记为重点关注 Description: 标记为重点关注
+																	1425 data item (项) +91 9006000002
+																	1426 data item (项) 9006000002
+																	1427 data item (项) 单导
+																	1428 data item (项) —
+																	1429 data item (项) 未分配
+																	1430 data item (项) 在群
+																	1431 data item (项) 意向客户
+																	1432 data item (项) —
+																	1433 data item (项) —
+																	1434 data item (项) —
+																	1435 data item (项) —
+																	1436 data item (项) —
+																	1437 data item (项) 2026-11-16
+																	1438 data item (项) 移入回收站
+																		1439 button (按钮) 移入回收站
+																1440 data item (行)
+																	1441 data item (项)
+																		1442 checkbox (复选框) (settable, string)
+																	1443 data item (项) 标记为重点关注 I ISOLATED_S3_客户_029
+																		1444 button (按钮) 标记为重点关注 Description: 标记为重点关注
+																	1445 data item (项) +91 9006000028
+																	1446 data item (项) 9006000028
+																	1447 data item (项) 单导
+																	1448 data item (项) —
+																	1449 data item (项) 未分配
+																	1450 data item (项) 在群
+																	1451 data item (项) 成交客户
+																	1452 data item (项) —
+																	1453 data item (项) —
+																	1454 data item (项) —
+																	1455 data item (项) —
+																	1456 data item (项) —
+																	1457 data item (项) 2026-11-18
+																	1458 data item (项) 移入回收站
+																		1459 button (按钮) 移入回收站
+															1460 text (文本) 显示 1–10 条，共 52 条
+															1461 button (按钮) ‹
+															1462 button (按钮) 1
+															1463 button (按钮) 2
+															1464 button (按钮) 3
+															1465 text (文本) …
+															1466 button (按钮) 6
+															1467 button (按钮) ›
+															1468 text (文本) 跳至
+															1469 spinner (调节按钮) (settable, float) 跳至 Value: 1
+															1470 combo box (组合框) (settable, string) Value: 10
+															1471 group (导航) 客户关联业务
+																1472 button (按钮) 群组查看关联记录 →
+																1473 button (按钮) VIP查看关联记录 →
+																1474 button (按钮) 跟票查看关联记录 →
+																1475 button (按钮) 报名查看关联记录 →
+																1476 button (按钮) 入金查看关联记录 →
+															1477 group (补充) 客户档案预览 ID: customerCenterPreview
+																1478 text (文本) 客户 360°
+																1479 text (文本) 当前列表首位
+																1480 text (文本) I
+																1481 text (文本) ISOLATED_S3_客户_001
+																1482 text (文本) +91 9006000000
+																1483 text (标题) 基础资料
+																1484 text (文本) 手机号码
+																1485 text (文本) +91 9006000000
+																1486 text (文本) 身份标识
+																1487 text (文本) —
+																1488 text (文本) 渠道
+																1489 text (文本) 单导
+																1490 text (文本) 页面分类
+																1491 text (文本) —
+																1492 text (文本) 资质评级
+																1493 text (文本) B级｜中等
+																1494 text (标题) 热聊资料
+																1495 text (文本) 热聊状态
+																1496 text (文本) 是
+																1497 text (文本) 客户阶段
+																1498 text (文本) 新客户
+																1499 text (标题) 业务概览
+																1500 text (文本) 群组
+																1501 text (文本) —
+																1502 text (文本) 跟票
+																1503 text (文本) 暂无记录
+																1504 text (文本) 入金
+																1505 text (文本) 暂无记录
+																1506 text (标题) 群组关系
+																1507 text (文本) 暂无 WS 群组关系记录
+																1508 text (标题) AI 摘要
+																1509 text (文本) 尚无聊天分析摘要
+																1510 text (标题) 跟进时间线
+																1511 text (文本) 上次跟进
+																1512 text (文本) —
+																1513 text (文本) 下次跟进
+																1514 text (文本) 2026-11-18
+																1515 text (文本) CRM 阶段
+																1516 text (文本) 重点培育
+																1517 button (按钮) 打开完整档案
+														994 group (章节页脚)
+															1135 text (文本) 本机运行 · 数据仅保存在本机
+															1518 text (文本) 本地客户库 · 52 位客户
+															997 text (文本) 本地自动快照 · 保留数量可配置
+													998 group (组) ID: toastRegion
+													1137 group (组) Isolated input diagnostic ID: stage51NativeInputHud
+														1521 text (文本) STAGE51 DIAGNOSTIC: trusted inputs only wheel=3 click=1 keydown=0 pointerdown=1 pointerup=1 dragstart=0 dragover=0 dragend=0 drop=0 last=click target=span last drag=- target=- ops-card=0 draggable=true=0 table scrollTop=67 thead.bottom=512 first text.top=527 first text point inViewport=true target=div.customer-list-scope wheel target=td.phone-cell deltaY=200 deltaX=0 mode=0 coordinator=true modal=false prevented=false/false owner=div.table-scroll.perf-table-viewport mode=horizontal before top=0 height=531/598 connected=true after top=0 height=531/598 connected=true frame top=67 height=531/598 connected=true current top=67 height=531/598 connected=true
+								27 pane (区域)
+						28 pane (区域)
+		8 title bar (标题栏) (settable, string) Value: 知客 Stage 5.1 · ISOLATED 验收
+			9 menu bar (菜单栏) 系统 ID: MenuBar
+				10 menu item (菜单项) 系统
+			11 button (按钮) 最小化
+			12 button (按钮) 还原
+			13 button (按钮) 关闭
+
+Document text: ```
+知客 6.0
+Horizon Atelier
+￼
+本地客户库
+离线数据空间
+￼
+工作
+￼
+今日工作台
+￼
+快速录入
+￼
+任务中心
+￼
+阶段看板
+客户
+￼
+客户中心
+52
+￼
+分类视图
+￼
+热聊管理
+10
+￼
+群组管理
+￼
+VIP 管理
+0
+业务数据
+￼
+跟票管理
+1
+￼
+报名统计
+3
+￼
+入金管理
+￼
+统计分析
+系统管理
+￼
+WS 工作台
+￼
+GPT 运营助手
+￼
+本地自动化
+￼
+数据治理
+0
+￼
+数据中心
+￼
+操作记录
+￼
+回收站
+￼
+系统设置
+￼
+手机号登记
+0
+DB
+￼
+本机存储正常
+SQLite · 本机服务已启动
+本
+本地管理员
+个人工作区
+￼
+￼
+知客工作台
+￼
+WS 工作台
+￼
+搜索客户、号码、群编号
+Ctrl K
+?
+￼
+￼
+￼
+￼
+本
+客户中心
+客户资料是唯一主档 · 52 位客户；跟票、报名和入金保持独立记录
+删除重复值
+￼
+导入客户
+￼
+新增客户
+›
+客户业务概览
+全局 52 位 · 今日计划 13 位 · 逾期 13 位
+展开7项指标
+搜索与筛选作用于客户列表；右侧预览可收起，完整档案仍可从客户行打开。
+收起档案预览
+全部客户
+今日新增
+已进群
+热聊客户
+VIP 客户
+＋ 保存视图
+客户列表
+52 位客户
+￼
+搜索姓名、号码、群编号
+￼
+筛选
+￼
+导出筛选结果
+列设置
+生效条件 0 项 · 当前筛选 52 位客户 · 导出筛选结果包含全部匹配页。表头复选框仅选择本页；筛选与导出不受隐藏列影响。
+选择本页客户
+￼
+￼
+客户
+￼
+￼
+原始号码
+￼
+￼
+标准号码
+￼
+￼
+渠道
+￼
+￼
+页面
+￼
+￼
+助理
+￼
+￼
+进群状态
+￼
+￼
+客户阶段
+￼
+￼
+热聊
+￼
+￼
+VIP
+￼
+￼
+群编号
+￼
+￼
+跟票
+￼
+￼
+入金
+￼
+￼
+登记日期
+￼
+￼
+操作
+￼
+￼
+￼
+1
+★
+I
+ISOLATED_S3_客户_001
++91 9006000000
+9006000000
+￼
+单导
+—
+未分配
+￼
+未进群
+￼
+新客户
+￼
+热聊
+—
+—
+—
+—
+2026-11-18
+移入回收站
+￼
+2
+★
+I
+ISOLATED_S3_客户_008
++91 9006000007
+9006000007
+￼
+群粉
+—
+未分配
+￼
+在群
+￼
+潜在客户
+—
+—
+—
+—
+—
+2026-11-18
+移入回收站
+￼
+3
+★
+I
+ISOLATED_S3_客户_036
++91 9006000035
+9006000035
+￼
+群粉
+—
+未分配
+￼
+在群
+￼
+暂停跟进
+￼
+热聊
+—
+—
+—
+—
+2026-11-18
+移入回收站
+￼
+4
+★
+I
+ISOLATED_S3_客户_044
++91 9006000043
+9006000043
+￼
+群粉
+—
+未分配
+￼
+在群
+￼
+潜在客户
+—
+—
+—
+—
+—
+2026-11-17
+移入回收站
+￼
+5
+★
+I
+ISOLATED_S3_客户_011
++91 9006000010
+9006000010
+￼
+单导
+—
+未分配
+￼
+在群
+￼
+成交客户
+￼
+热聊
+—
+—
+—
+—
+2026-11-15
+移入回收站
+￼
+6
+★
+I
+ISOLATED_S3_客户_041
++91 9006000040
+9006000040
+￼
+单导
+—
+未分配
+￼
+在群
+￼
+成交客户
+￼
+热聊
+—
+—
+—
+—
+2026-11-13
+移入回收站
+￼
+7
+★
+I
+ISOLATED_S3_客户_031
++91 9006000030
+9006000030
+￼
+单导
+—
+未分配
+￼
+未进群
+￼
+新客户
+￼
+热聊
+—
+—
+—
+—
+2026-11-16
+移入回收站
+￼
+8
+★
+I
+ISOLATED_S3_客户_046
++91 9006000045
+9006000045
+￼
+群粉
+—
+未分配
+￼
+未进群
+￼
+高意向
+￼
+热聊
+—
+—
+—
+—
+2026-11-15
+移入回收站
+￼
+9
+★
+I
+ISOLATED_S3_客户_003
++91 9006000002
+9006000002
+￼
+单导
+—
+未分配
+￼
+在群
+￼
+意向客户
+—
+—
+—
+—
+—
+2026-11-16
+移入回收站
+￼
+10
+★
+I
+ISOLATED_S3_客户_029
++91 9006000028
+9006000028
+￼
+单导
+—
+未分配
+￼
+在群
+￼
+成交客户
+—
+—
+—
+—
+—
+2026-11-18
+移入回收站
+显示 1–10 条，共 52 条
+‹
+1
+2
+3
+…
+6
+›
+跳至
+1
+￼
+群组
+查看关联记录 →
+VIP
+查看关联记录 →
+跟票
+查看关联记录 →
+报名
+查看关联记录 →
+入金
+查看关联记录 →
+客户 360°
+当前列表首位
+I
+ISOLATED_S3_客户_001ISOLATED_S3_客户_…
++91 9006000000
+基础资料
+手机号码
++91 9006000000
+身份标识
+—
+渠道
+单导
+页面分类
+—
+资质评级
+B级｜中等
+热聊资料
+热聊状态
+是
+客户阶段
+新客户
+业务概览
+群组
+—
+跟票
+暂无记录
+入金
+暂无记录
+群组关系
+暂无 WS 群组关系记录
+AI 摘要
+尚无聊天分析摘要
+跟进时间线
+上次跟进
+—
+下次跟进
+2026-11-18
+CRM 阶段
+重点培育
+打开完整档案
+本机运行 · 数据仅保存在本机
+本地客户库 · 52 位客户
+本地自动快照 · 保留数量可配置
+￼
+STAGE51 DIAGNOSTIC: trusted inputs only
+wheel=3 click=1 keydown=0
+pointerdown=1 pointerup=1
+dragstart=0 dragover=0 dragend=0 drop=0
+last=click target=span
+last drag=- target=-
+ops-card=0 draggable=true=0
+table scrollTop=67 thead.bottom=512 first text.top=527
+first text point inViewport=true target=div.customer-list-scope
+wheel target=td.phone-cell
+deltaY=200 deltaX=0 mode=0
+coordinator=true modal=false prevented=false/false
+owner=div.table-scroll.perf-table-viewport mode=horizontal
+before top=0 height=531/598 connected=true
+after top=0 height=531/598 connected=true
+frame top=67 height=531/598 connected=true
+current top=67 height=531/598 connected=true
+```

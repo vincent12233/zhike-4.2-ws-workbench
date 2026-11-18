@@ -307,9 +307,15 @@ public sealed class WsRuntimeCoordinator
             // A freshly restored 6.0 account index starts as Registered until
             // its isolated WebView profile is probed. Lease it once so a valid
             // persisted WhatsApp login can resume collection after restart;
-            // WaitingLogin/SessionExpired remain user-driven and are not spun
-            // in a hidden retry loop.
-            && account.State is WsAccountRuntimeState.Registered or WsAccountRuntimeState.Connected or WsAccountRuntimeState.Collecting or WsAccountRuntimeState.Paused or WsAccountRuntimeState.RetryScheduled
+            // WaitingLogin is also eligible: the persisted status can be stale
+            // after a QR login completed in another account tab. The hidden
+            // probe must be able to re-check every saved profile without
+            // requiring the operator to open each account manually.
+            // SessionExpired/Failed remain outside the rotation until the
+            // normal retry boundary or an explicit reconnect is requested.
+            // Paused is an explicit operator boundary. It must not be leased
+            // again by the background rotator until the account is resumed.
+            && account.State is WsAccountRuntimeState.Registered or WsAccountRuntimeState.WaitingLogin or WsAccountRuntimeState.Connected or WsAccountRuntimeState.Collecting or WsAccountRuntimeState.RetryScheduled
             && (account.NextRetryAt is null || account.NextRetryAt <= now);
 
     private WsRuntimeSnapshot SnapshotCore()

@@ -1,0 +1,16 @@
+{
+  "rootPid": 36892,
+  "category": "shutdown",
+  "totalTraceEvents": 141,
+  "exactRootCategoryEvents": 128,
+  "eventCounts": {
+    "RenderProcessHostImpl::Cleanup": 18,
+    "RenderProcessHostImpl::UnregisterHost": 8,
+    "Compositor::destructor": 2,
+    "WindowEventDispatcher::Destructor": 2,
+    "BrowserMainRunner": 0,
+    "BrowserMainLoop::ShutdownThreadsAndCleanUp": 0
+  },
+  "longestCompletedRootCategoryEventMs": 2.953,
+  "safety": "Only counts for fixed names and timing retained. Trace arguments, raw metadata, thread names and paths excluded."
+}

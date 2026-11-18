@@ -7,7 +7,7 @@ const vm = require('node:vm');
 
 const repo = path.resolve(__dirname, '..', '..');
 const host = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Views', 'LegacyUiHostPage.xaml.cs'), 'utf8');
-const match = host.match(/return \$\$"""([\s\S]*?)""";/);
+const match = host.match(/internal static string BuildWsCollectorScript\(string accountId\)\s*\{[\s\S]*?return \$\$"""([\s\S]*?)""";/);
 assert.ok(match, 'native WS collector script must remain embedded');
 const script = match[1].replace(/\{\{encodedAccount\}\}/g, JSON.stringify('group-test'));
 
@@ -51,7 +51,7 @@ const nestedGroupJid = leaf({ 'data-jid':'nested-789@g.us' });
 const defaultGroupIcon = leaf({ 'data-icon':'default-group' });
 const rows = [
   makeRow({ id:'direct-123@s.whatsapp.net', title:'Direct JID' }),
-  makeRow({ id:'group-456@g.us', title:'+91 99999 99999' }),
+  makeRow({ id:'group-456@g.us', title:'+91 99999 99999', preview:'+91 99999 99999 joined the group' }),
   makeRow({ id:'opaque-group', title:'Project Team', chatType:'group' }),
   makeRow({ id:'nested-group', title:'Nested Group', nested:[nestedGroupJid] }),
   makeRow({ id:'icon-group', title:'+91 96666 66666', nested:[defaultGroupIcon] }),
@@ -117,6 +117,21 @@ const vipGroup = discovery.conversations.find(item => item.title === '+91 99999 
 assert.equal(vipGroup?.conversationType, 'vip_group', 'a matching stable @g.us identity is promoted only by the explicit whitelist');
 assert.equal(vipGroup?.vipGroup, true);
 assert.equal(discovery.excludedConversations.find(item => item.title === '+91 96666 66666')?.conversationType, 'group', 'default-group icon evidence wins over a phone-looking title');
+
+// Group previews are observed from the virtualized list only. Starting the
+// fixed monitor must not click, focus, scroll, or open that VIP conversation.
+activeId = ''; activeTitle = ''; clicks.length = 0; posted.length = 0;
+const monitorConfig = sandbox.window.__zhikeWsConfigureGroupMonitor({
+  profileId:'monitor-profile', enabled:true, intervalSec:45,
+  targets:[{ targetId:'monitor-target', groupJid:'group-456@g.us', groupName:'+91 99999 99999', enabled:true }],
+});
+assert.equal(monitorConfig.configured, 1);
+const monitorStart = sandbox.window.__zhikeWsGroupMonitorStart();
+assert.equal(monitorStart.status, 'running');
+const previewEvents = posted.flatMap(packet => packet.groupEvents || []);
+assert.ok(previewEvents.some(event => event.type === 'joined' && event.memberPhone === '919999999999'), 'VIP group list preview emits a normalized member event');
+assert.equal(clicks.length, 0, 'group preview monitoring never opens a chat');
+sandbox.window.__zhikeWsGroupMonitorStop();
 
 const candidates = sandbox.window.__zhikeWsReadHistoryCandidates([...discovery.conversations, ...discovery.excludedConversations]);
 assert.equal(candidates.read.length, 4, 'confirmed direct chats and the VIP group enter automatic history collection');

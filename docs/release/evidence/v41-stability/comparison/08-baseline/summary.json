@@ -1,0 +1,61 @@
+{
+  "mode": "baseline",
+  "evidence": "[STABILITY_WORKTREE]\\.tools\\v41-edge-investigation\\targets\\baseline-5pOCyL",
+  "code": 0,
+  "status": "Passed",
+  "elapsedMs": 4114,
+  "timeoutMs": 30000,
+  "resultSha256": "9aa006d55d26f227de0b550e656066e44f30f3da72d1ed00641d87efd711675a",
+  "events": [
+    {
+      "event": "experiment-launch-pages",
+      "elapsedMs": 1236,
+      "count": 1,
+      "fixture": false,
+      "launchBlank": true,
+      "other": []
+    },
+    {
+      "event": "result-verified",
+      "elapsedMs": 3071,
+      "cases": 6
+    },
+    {
+      "event": "experiment-before-fixture-close",
+      "elapsedMs": 3166,
+      "count": 2,
+      "fixture": true,
+      "launchBlank": true,
+      "other": []
+    },
+    {
+      "event": "experiment-before-browser-close",
+      "elapsedMs": 3195,
+      "count": 1,
+      "fixture": false,
+      "launchBlank": true,
+      "other": []
+    },
+    {
+      "event": "browser-close-acknowledged",
+      "elapsedMs": 3197,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "cdp-transport-closed",
+      "elapsedMs": 3202,
+      "code": 1000
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 4026,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 4034
+    }
+  ],
+  "outstanding": 0
+}

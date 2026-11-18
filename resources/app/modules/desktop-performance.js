@@ -15,14 +15,24 @@
     });
   }
   const cloneResult = value => value instanceof Response ? value.clone() : value;
-  function requestCoalescer(key, factory) {
+  const abortError = () => { const error = new Error('The operation was aborted.'); error.name = 'AbortError'; return error; };
+  function raceWithAbort(promise, signal) {
+    if (!signal) return promise;
+    if (signal.aborted) return Promise.reject(abortError());
+    return new Promise((resolve, reject) => {
+      const onAbort = () => reject(abortError());
+      signal.addEventListener('abort', onAbort, { once: true });
+      promise.then(value => { signal.removeEventListener('abort', onAbort); resolve(value); }, error => { signal.removeEventListener('abort', onAbort); reject(error); });
+    });
+  }
+  function requestCoalescer(key, factory, signal = null) {
     const cacheKey = String(key || 'default');
     const current = inFlight.get(cacheKey);
-    if (current) return current.then(cloneResult);
+    if (current) return raceWithAbort(current.then(cloneResult), signal);
     const shared = Promise.resolve().then(factory);
     inFlight.set(cacheKey, shared);
     shared.finally(() => { if (inFlight.get(cacheKey) === shared) inFlight.delete(cacheKey); }).catch(() => {});
-    return shared.then(cloneResult);
+    return raceWithAbort(shared.then(cloneResult), signal);
   }
   function pauseHiddenPolling(onVisible, onHidden = () => {}) {
     const update = () => document.hidden ? onHidden() : onVisible();
@@ -48,7 +58,7 @@
       // their original cancellation semantics.
       const sharedInit = { ...init };
       delete sharedInit.signal;
-      return requestCoalescer(`global:${url}`, () => nativeFetch(input, sharedInit));
+      return requestCoalescer(`global:${url}`, () => nativeFetch(input, sharedInit), init.signal || null);
     };
   }
   window.ZhikeDesktopPerformance = Object.freeze({ budgets, requestCoalescer, pauseHiddenPolling, measure, searchIndex });

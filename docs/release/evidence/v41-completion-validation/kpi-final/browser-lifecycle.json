@@ -1,0 +1,258 @@
+{
+  "invocations": 7,
+  "passed": 7,
+  "rows": [
+    {
+      "invocation": "1794986398700-70c7d4e8-cf94-47d6-bb4f-5742e48942b6",
+      "case": "default-matrix",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 18097,
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "resultCases": 8,
+      "resultBytes": 2099874,
+      "resultSha256WithoutTrailingLf": "6e471c01f64feb7b191a8b06e7f96316928c4e0cd9187f7b34ace04a92efaacd",
+      "identitiesObserved": 17,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "identityProbeClosed": true,
+      "cleanupSafe": true,
+      "remainingIdentityCount": 0,
+      "forceTerminated": false,
+      "eventTimesMs": {
+        "result-verified": 10175,
+        "browser-close-acknowledged": 10390,
+        "cdp-transport-closed": 10395,
+        "process-exit": 18016,
+        "streams-close": 18025,
+        "identity-probe-closed": 18096
+      }
+    },
+    {
+      "invocation": "1794986416965-cc0918c5-9877-48af-bbf1-f6c037d4b4a7",
+      "case": "night-computed.json",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 4806,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "resultCases": 1,
+      "resultBytes": 265679,
+      "resultSha256WithoutTrailingLf": "dd1750896a7b1d029aec460f1770ee20d94f52bdea4afe3b7ed1602202633226",
+      "identitiesObserved": 14,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "identityProbeClosed": true,
+      "cleanupSafe": true,
+      "remainingIdentityCount": 0,
+      "forceTerminated": false,
+      "eventTimesMs": {
+        "result-verified": 2792,
+        "browser-close-acknowledged": 2951,
+        "cdp-transport-closed": 2952,
+        "process-exit": 4730,
+        "streams-close": 4739,
+        "identity-probe-closed": 4805
+      }
+    },
+    {
+      "invocation": "1794986421793-32c9c3bc-13be-42ec-8f99-8cee8e1cc1cf",
+      "case": "dawn-dark-legacy-computed.json",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 3895,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "resultCases": 1,
+      "resultBytes": 266390,
+      "resultSha256WithoutTrailingLf": "e4bd18f5a0e49e0868dfea9ba156331bdd1a4bd010486a1caded9701c9442aac",
+      "identitiesObserved": 14,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "identityProbeClosed": true,
+      "cleanupSafe": true,
+      "remainingIdentityCount": 0,
+      "forceTerminated": false,
+      "eventTimesMs": {
+        "result-verified": 2923,
+        "browser-close-acknowledged": 3035,
+        "cdp-transport-closed": 3036,
+        "process-exit": 3823,
+        "streams-close": 3831,
+        "identity-probe-closed": 3894
+      }
+    },
+    {
+      "invocation": "1794986425717-1933931d-5c5a-4bae-b018-f186e28bd0f6",
+      "case": "screenshot",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 5588,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "resultCases": 1,
+      "resultBytes": 23628,
+      "resultSha256WithoutTrailingLf": "b58d217ac93993665809cb4906b20f60577800001ac08c002535121261854048",
+      "identitiesObserved": 15,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "identityProbeClosed": true,
+      "cleanupSafe": true,
+      "remainingIdentityCount": 0,
+      "forceTerminated": false,
+      "eventTimesMs": {
+        "result-verified": 3723,
+        "browser-close-acknowledged": 4571,
+        "cdp-transport-closed": 4572,
+        "process-exit": 5473,
+        "streams-close": 5484,
+        "identity-probe-closed": 5588
+      },
+      "screenshot": {
+        "filename": "home-atelier-dawn.png",
+        "width": 1920,
+        "height": 1080,
+        "bytes": 896555,
+        "sha256": "7e6dac2613e45673ce7df42e931b1ebcff31d00def3977df0bc39151045cec50"
+      }
+    },
+    {
+      "invocation": "1794986431310-1a08e72f-d1c6-4a3f-8a86-efa694ebeb90",
+      "case": "screenshot",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 4454,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "resultCases": 1,
+      "resultBytes": 26846,
+      "resultSha256WithoutTrailingLf": "9cfc63488577644b427bcf4d24538f9cc7c31fdb2bbe7071fe16692a880b6367",
+      "identitiesObserved": 16,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "identityProbeClosed": true,
+      "cleanupSafe": true,
+      "remainingIdentityCount": 0,
+      "forceTerminated": false,
+      "eventTimesMs": {
+        "result-verified": 2322,
+        "browser-close-acknowledged": 2813,
+        "cdp-transport-closed": 2814,
+        "process-exit": 4358,
+        "streams-close": 4372,
+        "identity-probe-closed": 4453
+      },
+      "screenshot": {
+        "filename": "customers-atelier-dawn.png",
+        "width": 1920,
+        "height": 1080,
+        "bytes": 359856,
+        "sha256": "ae0f94ae34762207770a28bada78d962d1503debb8dab4fbbc28189b6d658cea"
+      }
+    },
+    {
+      "invocation": "1794986435766-0518e22e-e983-4452-98bc-286579fb454d",
+      "case": "screenshot",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 4368,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "resultCases": 1,
+      "resultBytes": 7890,
+      "resultSha256WithoutTrailingLf": "42fb8dc57100f6e779167a2a7de6695462d5aeb5abab6a7c6c12a01a78cba231",
+      "identitiesObserved": 14,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "identityProbeClosed": true,
+      "cleanupSafe": true,
+      "remainingIdentityCount": 0,
+      "forceTerminated": false,
+      "eventTimesMs": {
+        "result-verified": 2101,
+        "browser-close-acknowledged": 2749,
+        "cdp-transport-closed": 2750,
+        "process-exit": 4291,
+        "streams-close": 4301,
+        "identity-probe-closed": 4368
+      },
+      "screenshot": {
+        "filename": "operations-atelier-dawn.png",
+        "width": 1920,
+        "height": 1080,
+        "bytes": 494446,
+        "sha256": "ad67ffcf7f8b0aeb314ec72523c41049334988d528d7f8bbaf835e7dcaebfe27"
+      }
+    },
+    {
+      "invocation": "1794986440139-8831b3cf-2955-43f1-9b70-1811f7f84cd8",
+      "case": "screenshot",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 5166,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "resultCases": 1,
+      "resultBytes": 23198,
+      "resultSha256WithoutTrailingLf": "23ca3c8383ec3b533276cee9f72d1b4fe3596f7ebff3c5b7ee9562da3ac923f1",
+      "identitiesObserved": 17,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "identityProbeClosed": true,
+      "cleanupSafe": true,
+      "remainingIdentityCount": 0,
+      "forceTerminated": false,
+      "eventTimesMs": {
+        "result-verified": 2379,
+        "browser-close-acknowledged": 3346,
+        "cdp-transport-closed": 3347,
+        "process-exit": 5067,
+        "streams-close": 5075,
+        "identity-probe-closed": 5166
+      },
+      "screenshot": {
+        "filename": "home-horizon-night.png",
+        "width": 1920,
+        "height": 1080,
+        "bytes": 976995,
+        "sha256": "ddaa9640dd21ee267c7070e3e196c0a9a301a59ab161dad25eca0c8d2312bbba"
+      }
+    }
+  ]
+}

@@ -1,0 +1,837 @@
+{
+  "head": "260d29e0c42f40f77b7a96946088af6375d1f9a1",
+  "results": [
+    {
+      "label": "s1-main-visual",
+      "exitCode": 0,
+      "outerTimeout": false,
+      "elapsedMs": 42366.5048,
+      "calls": [
+        {
+          "label": "s1-main-visual",
+          "index": 1,
+          "invocation": "1795004012881-3c413f05-a494-4390-a9ce-7582953a7528",
+          "status": "Passed",
+          "elapsedMs": 10078.3891,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 8,
+          "pid": 28488,
+          "startedTicks": "639306008128867942",
+          "timeoutMs": 30000,
+          "profileExists": false,
+          "navigationRequestMs": 1423.5683,
+          "navigationResponseMs": 1472.6445999999999,
+          "matchingLoadMs": 8677.4308,
+          "receivedLoadEvents": 10,
+          "frameLoading": {
+            "started": 9,
+            "stopped": 9
+          },
+          "matrixResponseMs": 8833.8424,
+          "matrixVerificationStartMs": 8833.8537,
+          "matrixVerifiedMs": 8868.9851,
+          "pageAssertionsMs": 10251.0217,
+          "closeSentMs": 9066.8681,
+          "closeAcknowledgedMs": 9067.5122,
+          "transportClosedMs": 9071.455699999999,
+          "exitMs": 9988.165299999999,
+          "childCloseMs": 9996.507,
+          "stdoutCloseMs": 9996.528699999999,
+          "stderrCloseMs": 9996.4462,
+          "streamsClosedMs": 9996.564,
+          "terminationRequestMs": null,
+          "lifecycleCompleteMs": 10078.4211,
+          "runnerFinalMs": 10091.319899999999,
+          "nodeRelease": {
+            "event": "node-release-state",
+            "elapsedMs": 10044.5554,
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true,
+            "exitCode": 0,
+            "signalCode": null
+          },
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "kernel": {
+            "verified": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "lastRunning": {
+              "minMs": 9936.838400004483,
+              "maxMs": 9937.291900004482
+            },
+            "finalSample": {
+              "minMs": 9987.215800015307,
+              "maxMs": 9987.669300015306
+            },
+            "root": {
+              "pid": 28488,
+              "role": "root",
+              "state": "exited",
+              "exitUnixMs": 1795004022815,
+              "exitCode": 0,
+              "kernelTicks": 26093750,
+              "userTicks": 30468750
+            },
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "groupedSamples": [],
+            "clockBracketWidthMs": 0.4534999999999627
+          }
+        },
+        {
+          "label": "s1-main-visual",
+          "index": 2,
+          "invocation": "1795004023134-36752130-f839-4d77-b1ea-bf04f18afd90",
+          "status": "Passed",
+          "elapsedMs": 4705.984900000001,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 1,
+          "pid": 41340,
+          "startedTicks": "639306008231375501",
+          "timeoutMs": 30000,
+          "profileExists": false,
+          "navigationRequestMs": 1077.6661000000004,
+          "navigationResponseMs": 1125.6056000000008,
+          "matchingLoadMs": 3080.268400000001,
+          "receivedLoadEvents": 2,
+          "frameLoading": {
+            "started": 1,
+            "stopped": 1
+          },
+          "matrixResponseMs": 3105.748600000001,
+          "matrixVerificationStartMs": 3105.767,
+          "matrixVerifiedMs": 3109.0398000000005,
+          "pageAssertionsMs": 4726.677100000001,
+          "closeSentMs": 3282.754200000001,
+          "closeAcknowledgedMs": 3285.1702000000005,
+          "transportClosedMs": 3286.2515000000003,
+          "exitMs": 4622.939200000001,
+          "childCloseMs": 4631.5527,
+          "stdoutCloseMs": 4631.558200000001,
+          "stderrCloseMs": 4631.518,
+          "streamsClosedMs": 4631.590200000001,
+          "terminationRequestMs": null,
+          "lifecycleCompleteMs": 4706.0142,
+          "runnerFinalMs": 4708.7312,
+          "nodeRelease": {
+            "event": "node-release-state",
+            "elapsedMs": 4674.290500000001,
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true,
+            "exitCode": 0,
+            "signalCode": null
+          },
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "kernel": {
+            "verified": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "lastRunning": {
+              "minMs": 4583.529699992419,
+              "maxMs": 4585.731699992419
+            },
+            "finalSample": {
+              "minMs": 4620.746400009872,
+              "maxMs": 4622.948400009871
+            },
+            "root": {
+              "pid": 41340,
+              "role": "root",
+              "state": "exited",
+              "exitUnixMs": 1795004027708,
+              "exitCode": 0,
+              "kernelTicks": 18750000,
+              "userTicks": 20937500
+            },
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "groupedSamples": [],
+            "clockBracketWidthMs": 2.201999999999316
+          }
+        },
+        {
+          "label": "s1-main-visual",
+          "index": 3,
+          "invocation": "1795004027992-37e45ff3-04b6-429c-9eb0-0a6d2c2b6360",
+          "status": "Passed",
+          "elapsedMs": 5832.425799999999,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 1,
+          "pid": 23192,
+          "startedTicks": "639306008279962817",
+          "timeoutMs": 30000,
+          "profileExists": false,
+          "navigationRequestMs": 1100.2705999999998,
+          "navigationResponseMs": 1203.250900000001,
+          "matchingLoadMs": 4621.564799999998,
+          "receivedLoadEvents": 2,
+          "frameLoading": {
+            "started": 1,
+            "stopped": 1
+          },
+          "matrixResponseMs": 4651.593299999999,
+          "matrixVerificationStartMs": 4651.604300000001,
+          "matrixVerifiedMs": 4654.774499999998,
+          "pageAssertionsMs": 5858.419199999998,
+          "closeSentMs": 4851.7017,
+          "closeAcknowledgedMs": 4852.368099999998,
+          "transportClosedMs": 4853.6199,
+          "exitMs": 5745.331799999998,
+          "childCloseMs": 5753.7485,
+          "stdoutCloseMs": 5753.722100000001,
+          "stderrCloseMs": 5753.752899999998,
+          "streamsClosedMs": 5753.7806999999975,
+          "terminationRequestMs": null,
+          "lifecycleCompleteMs": 5832.459000000001,
+          "runnerFinalMs": 5836.599199999999,
+          "nodeRelease": {
+            "event": "node-release-state",
+            "elapsedMs": 5799.506799999997,
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true,
+            "exitCode": 0,
+            "signalCode": null
+          },
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "kernel": {
+            "verified": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "lastRunning": {
+              "minMs": 5685.32730002055,
+              "maxMs": 5685.972000020551
+            },
+            "finalSample": {
+              "minMs": 5744.615900018309,
+              "maxMs": 5745.26060001831
+            },
+            "root": {
+              "pid": 23192,
+              "role": "root",
+              "state": "exited",
+              "exitUnixMs": 1795004033686,
+              "exitCode": 0,
+              "kernelTicks": 22187500,
+              "userTicks": 26875000
+            },
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "groupedSamples": [],
+            "clockBracketWidthMs": 0.6447000000007392
+          }
+        },
+        {
+          "label": "s1-main-visual",
+          "index": 4,
+          "invocation": "1795004033931-e65a3708-3573-4116-952c-d51c9063acb4",
+          "status": "Passed",
+          "elapsedMs": 3897.3142000000007,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 1,
+          "pid": 40608,
+          "startedTicks": "639306008339348448",
+          "timeoutMs": 30000,
+          "profileExists": false,
+          "navigationRequestMs": 1290.8438999999998,
+          "navigationResponseMs": 1329.6332999999977,
+          "matchingLoadMs": 2143.3413999999975,
+          "receivedLoadEvents": 2,
+          "frameLoading": {
+            "started": 1,
+            "stopped": 1
+          },
+          "matrixResponseMs": 2165.1597999999976,
+          "matrixVerificationStartMs": 2165.1733999999997,
+          "matrixVerifiedMs": 2165.6011999999973,
+          "pageAssertionsMs": 3969.6479,
+          "closeSentMs": 2971.8440999999984,
+          "closeAcknowledgedMs": 2972.559799999999,
+          "transportClosedMs": 2973.7572,
+          "exitMs": 3810.785499999998,
+          "childCloseMs": 3819.1520999999993,
+          "stdoutCloseMs": 3819.127199999999,
+          "stderrCloseMs": 3819.157199999998,
+          "streamsClosedMs": 3819.1841999999997,
+          "terminationRequestMs": null,
+          "lifecycleCompleteMs": 3897.3454999999994,
+          "runnerFinalMs": 3968.0265,
+          "nodeRelease": {
+            "event": "node-release-state",
+            "elapsedMs": 3860.9015999999974,
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true,
+            "exitCode": 0,
+            "signalCode": null
+          },
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "kernel": {
+            "verified": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "lastRunning": {
+              "minMs": 3753.102900012207,
+              "maxMs": 3755.142400012206
+            },
+            "finalSample": {
+              "minMs": 3808.768899990988,
+              "maxMs": 3810.808399990987
+            },
+            "root": {
+              "pid": 40608,
+              "role": "root",
+              "state": "exited",
+              "exitUnixMs": 1795004037697,
+              "exitCode": 0,
+              "kernelTicks": 15625000,
+              "userTicks": 21406250
+            },
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "groupedSamples": [],
+            "clockBracketWidthMs": 2.0394999999989523
+          }
+        },
+        {
+          "label": "s1-main-visual",
+          "index": 5,
+          "invocation": "1795004037906-12bd7374-e19d-4dc4-af6b-f38f9a3cf7bf",
+          "status": "Passed",
+          "elapsedMs": 5336.380200000003,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 1,
+          "pid": 35884,
+          "startedTicks": "639306008379099191",
+          "timeoutMs": 30000,
+          "profileExists": false,
+          "navigationRequestMs": 1095.4391000000032,
+          "navigationResponseMs": 1138.7428,
+          "matchingLoadMs": 2448.3430000000008,
+          "receivedLoadEvents": 2,
+          "frameLoading": {
+            "started": 1,
+            "stopped": 1
+          },
+          "matrixResponseMs": 2456.590500000002,
+          "matrixVerificationStartMs": 2456.5996000000014,
+          "matrixVerifiedMs": 2457.048300000002,
+          "pageAssertionsMs": 5339.045300000002,
+          "closeSentMs": 2912.472800000003,
+          "closeAcknowledgedMs": 2922.0722000000023,
+          "transportClosedMs": 2923.041000000001,
+          "exitMs": 5262.219100000002,
+          "childCloseMs": 5270.671700000003,
+          "stdoutCloseMs": 5270.6754,
+          "stderrCloseMs": 5270.645800000002,
+          "streamsClosedMs": 5270.701700000001,
+          "terminationRequestMs": null,
+          "lifecycleCompleteMs": 5336.394800000002,
+          "runnerFinalMs": 5337.681200000003,
+          "nodeRelease": {
+            "event": "node-release-state",
+            "elapsedMs": 5302.265000000003,
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true,
+            "exitCode": 0,
+            "signalCode": null
+          },
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "kernel": {
+            "verified": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "lastRunning": {
+              "minMs": 5207.259199997094,
+              "maxMs": 5207.720299997094
+            },
+            "finalSample": {
+              "minMs": 5261.743300011065,
+              "maxMs": 5262.204400011065
+            },
+            "root": {
+              "pid": 35884,
+              "role": "root",
+              "state": "exited",
+              "exitUnixMs": 1795004043123,
+              "exitCode": 0,
+              "kernelTicks": 18125000,
+              "userTicks": 21250000
+            },
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "groupedSamples": [],
+            "clockBracketWidthMs": 0.4611000000004424
+          }
+        },
+        {
+          "label": "s1-main-visual",
+          "index": 6,
+          "invocation": "1795004043248-b84a54bf-3496-4e94-8980-a4b45cd1651a",
+          "status": "Passed",
+          "elapsedMs": 6115.620599999998,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 1,
+          "pid": 36204,
+          "startedTicks": "639306008432514692",
+          "timeoutMs": 30000,
+          "profileExists": false,
+          "navigationRequestMs": 2085.4992999999995,
+          "navigationResponseMs": 2120.678100000001,
+          "matchingLoadMs": 3158.9676,
+          "receivedLoadEvents": 2,
+          "frameLoading": {
+            "started": 1,
+            "stopped": 1
+          },
+          "matrixResponseMs": 3190.2131000000045,
+          "matrixVerificationStartMs": 3190.234800000002,
+          "matrixVerifiedMs": 3190.5449000000044,
+          "pageAssertionsMs": 6117.955100000003,
+          "closeSentMs": 3710.5758000000023,
+          "closeAcknowledgedMs": 3711.206500000004,
+          "transportClosedMs": 3712.193199999998,
+          "exitMs": 6025.718700000001,
+          "childCloseMs": 6034.225000000002,
+          "stdoutCloseMs": 6034.23,
+          "stderrCloseMs": 6034.194299999999,
+          "streamsClosedMs": 6034.257600000001,
+          "terminationRequestMs": null,
+          "lifecycleCompleteMs": 6115.634900000001,
+          "runnerFinalMs": 6116.7461,
+          "nodeRelease": {
+            "event": "node-release-state",
+            "elapsedMs": 6080.370200000001,
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true,
+            "exitCode": 0,
+            "signalCode": null
+          },
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "kernel": {
+            "verified": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "lastRunning": {
+              "minMs": 5976.986700000478,
+              "maxMs": 5979.185700000478
+            },
+            "finalSample": {
+              "minMs": 6023.580899985744,
+              "maxMs": 6025.779899985744
+            },
+            "root": {
+              "pid": 36204,
+              "role": "root",
+              "state": "exited",
+              "exitUnixMs": 1795004049226,
+              "exitCode": 0,
+              "kernelTicks": 18593750,
+              "userTicks": 24218750
+            },
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "groupedSamples": [],
+            "clockBracketWidthMs": 2.199000000000524
+          }
+        },
+        {
+          "label": "s1-main-visual",
+          "index": 7,
+          "invocation": "1795004049368-943f1037-4417-4a77-9022-660d68da260a",
+          "status": "Passed",
+          "elapsedMs": 4688.2936000000045,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 1,
+          "pid": 35956,
+          "startedTicks": "639306008493719917",
+          "timeoutMs": 30000,
+          "profileExists": false,
+          "navigationRequestMs": 1199.4190999999992,
+          "navigationResponseMs": 1326.1605000000054,
+          "matchingLoadMs": 2268.1623000000036,
+          "receivedLoadEvents": 2,
+          "frameLoading": {
+            "started": 1,
+            "stopped": 1
+          },
+          "matrixResponseMs": 2299.7805000000008,
+          "matrixVerificationStartMs": 2299.7950000000055,
+          "matrixVerifiedMs": 2300.2629000000015,
+          "pageAssertionsMs": 4691.036100000005,
+          "closeSentMs": 3245.1542000000045,
+          "closeAcknowledgedMs": 3249.9492000000027,
+          "transportClosedMs": 3251.709200000005,
+          "exitMs": 4593.107300000003,
+          "childCloseMs": 4601.9444,
+          "stdoutCloseMs": 4601.948400000001,
+          "stderrCloseMs": 4601.916100000002,
+          "streamsClosedMs": 4601.976300000002,
+          "terminationRequestMs": null,
+          "lifecycleCompleteMs": 4688.323499999999,
+          "runnerFinalMs": 4689.7327000000005,
+          "nodeRelease": {
+            "event": "node-release-state",
+            "elapsedMs": 4649.562600000005,
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true,
+            "exitCode": 0,
+            "signalCode": null
+          },
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "kernel": {
+            "verified": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "lastRunning": {
+              "minMs": 4552.93690000401,
+              "maxMs": 4553.399100004004
+            },
+            "finalSample": {
+              "minMs": 4592.612000002722,
+              "maxMs": 4593.074200002717
+            },
+            "root": {
+              "pid": 35956,
+              "role": "root",
+              "state": "exited",
+              "exitUnixMs": 1795004053912,
+              "exitCode": 0,
+              "kernelTicks": 21718750,
+              "userTicks": 23906250
+            },
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "groupedSamples": [],
+            "clockBracketWidthMs": 0.4621999999944819
+          }
+        }
+      ]
+    },
+    {
+      "label": "s1-ws-visual",
+      "exitCode": 0,
+      "outerTimeout": false,
+      "elapsedMs": 13561.7056,
+      "calls": [
+        {
+          "label": "s1-ws-visual",
+          "index": 1,
+          "invocation": "1795004055360-080cb399-c868-4a47-99b1-db2d9a3cf607",
+          "status": "Passed",
+          "elapsedMs": 12963.145900000001,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 7,
+          "pid": 35092,
+          "startedTicks": "639306008553654234",
+          "timeoutMs": 30000,
+          "profileExists": false,
+          "navigationRequestMs": 1261.3836999999999,
+          "navigationResponseMs": 1316.6392999999998,
+          "matchingLoadMs": 2553.7431,
+          "receivedLoadEvents": 9,
+          "frameLoading": {
+            "started": 8,
+            "stopped": 8
+          },
+          "matrixResponseMs": 11850.211700000002,
+          "matrixVerificationStartMs": 11850.2319,
+          "matrixVerifiedMs": 11855.2293,
+          "pageAssertionsMs": 13028.932900000002,
+          "closeSentMs": 12050.420100000001,
+          "closeAcknowledgedMs": 12080.2792,
+          "transportClosedMs": 12084.331900000001,
+          "exitMs": 12878.0077,
+          "childCloseMs": 12885.9128,
+          "stdoutCloseMs": 12885.9354,
+          "stderrCloseMs": 12885.85,
+          "streamsClosedMs": 12885.9752,
+          "terminationRequestMs": null,
+          "lifecycleCompleteMs": 12963.185500000001,
+          "runnerFinalMs": 12965.9577,
+          "nodeRelease": {
+            "event": "node-release-state",
+            "elapsedMs": 12930.243400000001,
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true,
+            "exitCode": 0,
+            "signalCode": null
+          },
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "kernel": {
+            "verified": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "lastRunning": {
+              "minMs": 12830.717999993276,
+              "maxMs": 12831.155299993276
+            },
+            "finalSample": {
+              "minMs": 12877.19580000491,
+              "maxMs": 12877.63310000491
+            },
+            "root": {
+              "pid": 35092,
+              "role": "root",
+              "state": "exited",
+              "exitUnixMs": 1795004068184,
+              "exitCode": 0,
+              "kernelTicks": 23750000,
+              "userTicks": 31875000
+            },
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "groupedSamples": [
+              {
+                "time": {
+                  "minMs": 10017.857699988794,
+                  "maxMs": 10018.294999988793
+                },
+                "root": {
+                  "pid": 35092,
+                  "role": "root",
+                  "state": "running",
+                  "exitUnixMs": null,
+                  "exitCode": null,
+                  "kernelTicks": 19843750,
+                  "userTicks": 26875000
+                },
+                "threads": {
+                  "status": "observed",
+                  "states": {
+                    "unnamed/Wait:EventPairLow": 18,
+                    "unnamed/Wait:ExecutionDelay": 2,
+                    "unnamed/Wait:Unknown": 12,
+                    "unnamed/Wait:UserRequest": 59
+                  }
+                }
+              }
+            ],
+            "clockBracketWidthMs": 0.4372999999999365
+          }
+        }
+      ]
+    },
+    {
+      "label": "s2-metrics-visual",
+      "exitCode": 0,
+      "outerTimeout": false,
+      "elapsedMs": 3422.663,
+      "calls": [
+        {
+          "label": "s2-metrics-visual",
+          "index": 1,
+          "invocation": "1795004068850-c977ab0b-c02f-45da-8b31-f817b9754634",
+          "status": "Passed",
+          "elapsedMs": 2944.5986000000003,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 4,
+          "pid": 41716,
+          "startedTicks": "639306008688554757",
+          "timeoutMs": 30000,
+          "profileExists": false,
+          "navigationRequestMs": 1397.6666,
+          "navigationResponseMs": 1428.9588999999999,
+          "matchingLoadMs": 1862.5524,
+          "receivedLoadEvents": 2,
+          "frameLoading": {
+            "started": 5,
+            "stopped": 5
+          },
+          "matrixResponseMs": 1868.3926,
+          "matrixVerificationStartMs": 1868.4025,
+          "matrixVerifiedMs": 1870.182,
+          "pageAssertionsMs": 3015.0731,
+          "closeSentMs": 1974.5925,
+          "closeAcknowledgedMs": 2003.2411,
+          "transportClosedMs": 2007.2218,
+          "exitMs": 2860.1076000000003,
+          "childCloseMs": 2869.2919,
+          "stdoutCloseMs": 2869.3136,
+          "stderrCloseMs": 2869.2343,
+          "streamsClosedMs": 2869.3459000000003,
+          "terminationRequestMs": null,
+          "lifecycleCompleteMs": 2944.6393000000003,
+          "runnerFinalMs": 2946.2471,
+          "nodeRelease": {
+            "event": "node-release-state",
+            "elapsedMs": 2912.5097,
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true,
+            "exitCode": 0,
+            "signalCode": null
+          },
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "kernel": {
+            "verified": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "lastRunning": {
+              "minMs": 2823.6983999940394,
+              "maxMs": 2824.3018999940396
+            },
+            "finalSample": {
+              "minMs": 2859.226199987793,
+              "maxMs": 2859.829699987793
+            },
+            "root": {
+              "pid": 41716,
+              "role": "root",
+              "state": "exited",
+              "exitUnixMs": 1795004071664,
+              "exitCode": 0,
+              "kernelTicks": 14843750,
+              "userTicks": 22656250
+            },
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "groupedSamples": [],
+            "clockBracketWidthMs": 0.60349999999994
+          }
+        }
+      ]
+    },
+    {
+      "label": "s3-customer-table-visual",
+      "exitCode": 0,
+      "outerTimeout": false,
+      "elapsedMs": 12366.6179,
+      "calls": [
+        {
+          "label": "s3-customer-table-visual",
+          "index": 1,
+          "invocation": "1795004072239-4d5e4620-49af-4d79-803e-b41b2cfa5044",
+          "status": "Passed",
+          "elapsedMs": 11831.974699999999,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 10,
+          "pid": 21540,
+          "startedTicks": "639306008722447895",
+          "timeoutMs": 30000,
+          "profileExists": false,
+          "navigationRequestMs": 2887.6423,
+          "navigationResponseMs": 2916.2900999999997,
+          "matchingLoadMs": 5349.1862,
+          "receivedLoadEvents": 12,
+          "frameLoading": {
+            "started": 11,
+            "stopped": 11
+          },
+          "matrixResponseMs": 10518.2316,
+          "matrixVerificationStartMs": 10518.2439,
+          "matrixVerifiedMs": 10524.6189,
+          "pageAssertionsMs": 11936.5759,
+          "closeSentMs": 10744.9744,
+          "closeAcknowledgedMs": 10809.371299999999,
+          "transportClosedMs": 10817.836099999999,
+          "exitMs": 11762.164799999999,
+          "childCloseMs": 11770.2822,
+          "stdoutCloseMs": 11770.3033,
+          "stderrCloseMs": 11770.2226,
+          "streamsClosedMs": 11770.337099999999,
+          "terminationRequestMs": null,
+          "lifecycleCompleteMs": 11832.006599999999,
+          "runnerFinalMs": 11835.625199999999,
+          "nodeRelease": {
+            "event": "node-release-state",
+            "elapsedMs": 11800.1999,
+            "exitObserved": true,
+            "closeObserved": true,
+            "stdoutCloseObserved": true,
+            "stderrCloseObserved": true,
+            "exitCode": 0,
+            "signalCode": null
+          },
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "kernel": {
+            "verified": true,
+            "ending": "root-exited",
+            "waitStatus": 0,
+            "lastRunning": {
+              "minMs": 11729.832199988985,
+              "maxMs": 11730.689899988985
+            },
+            "finalSample": {
+              "minMs": 11760.897399989986,
+              "maxMs": 11761.755099989987
+            },
+            "root": {
+              "pid": 21540,
+              "role": "root",
+              "state": "exited",
+              "exitUnixMs": 1795004083944,
+              "exitCode": 0,
+              "kernelTicks": 27656250,
+              "userTicks": 31250000
+            },
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "groupedSamples": [
+              {
+                "time": {
+                  "minMs": 10028.683999983692,
+                  "maxMs": 10029.541699983693
+                },
+                "root": {
+                  "pid": 21540,
+                  "role": "root",
+                  "state": "running",
+                  "exitUnixMs": null,
+                  "exitCode": null,
+                  "kernelTicks": 23593750,
+                  "userTicks": 26718750
+                },
+                "threads": {
+                  "status": "observed",
+                  "states": {
+                    "unnamed/Wait:EventPairLow": 19,
+                    "unnamed/Wait:ExecutionDelay": 2,
+                    "unnamed/Wait:Unknown": 6,
+                    "unnamed/Wait:UserRequest": 58
+                  }
+                }
+              }
+            ],
+            "clockBracketWidthMs": 0.8577000000000226
+          }
+        }
+      ]
+    }
+  ]
+}

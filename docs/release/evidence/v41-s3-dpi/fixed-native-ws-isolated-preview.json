@@ -1,0 +1,64 @@
+{
+  "pid": 37872,
+  "source": "Stage 5.1 isolated WinUI native-events.jsonl, selected fields for PID 37872",
+  "scope": "Blank presentation observed on the isolated WS chat surface at 100% DPI.",
+  "expectedIsolatedContent": "The acceptance build uses an unauthenticated about:blank preview for the WS visible Core.",
+  "observations": [
+    {
+      "at": "2026-11-18T17:25:53.1366908+05:30",
+      "kind": "ws-initialize",
+      "generation": 1,
+      "phase": "starting"
+    },
+    {
+      "at": "2026-11-18T17:25:53.7439525+05:30",
+      "kind": "webview-created",
+      "role": "ws-visible"
+    },
+    {
+      "at": "2026-11-18T17:25:53.7547435+05:30",
+      "kind": "ws-isolated-status",
+      "generation": 1,
+      "isolatedPreview": true
+    },
+    {
+      "at": "2026-11-18T17:25:53.7716638+05:30",
+      "kind": "navigation-starting",
+      "generation": 1,
+      "navigationId": 2,
+      "cancelled": false
+    },
+    {
+      "at": "2026-11-18T17:25:53.8825043+05:30",
+      "kind": "webview-navigation",
+      "role": "ws-visible",
+      "success": true,
+      "target": "about:blank"
+    },
+    {
+      "at": "2026-11-18T17:25:53.8884446+05:30",
+      "kind": "navigation-completed",
+      "generation": 1,
+      "navigationId": 2,
+      "success": true,
+      "outcome": "isolated-document",
+      "retries": 0
+    },
+    {
+      "at": "2026-11-18T17:26:35.9066694+05:30",
+      "kind": "ws-bounds-decision",
+      "page": "chat",
+      "accepted": true,
+      "hasNativeCore": true,
+      "hidden": false,
+      "overlayGeometryApplied": true,
+      "domBoundsCss": [
+        266,
+        187,
+        1572,
+        912
+      ]
+    }
+  ],
+  "assessment": "The observed isolated Core navigated successfully and its chat overlay became visible. The same-session events do not show a host navigation timeout. An authenticated WhatsApp surface was not exercised."
+}

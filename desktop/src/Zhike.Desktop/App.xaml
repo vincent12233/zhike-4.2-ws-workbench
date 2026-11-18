@@ -9,44 +9,86 @@
                 <controls:XamlControlsResources />
             </ResourceDictionary.MergedDictionaries>
 
-        <!-- Zhike visual tokens: keep the native shell close to the existing
-             Electron application instead of falling back to default WinUI
-             blue/gray controls.  These are intentionally local resources so
-             the desktop client can be restyled without changing business
-             pages or API behaviour. -->
-        <SolidColorBrush x:Key="ZhikePageBackgroundBrush" Color="#F4F7FB" />
-        <SolidColorBrush x:Key="ZhikeSurfaceBrush" Color="#FFFFFF" />
-        <SolidColorBrush x:Key="ZhikeSurfaceMutedBrush" Color="#F5F8FC" />
-        <SolidColorBrush x:Key="ZhikeNavyBrush" Color="#203449" />
-        <SolidColorBrush x:Key="ZhikeNavySecondaryBrush" Color="#29445D" />
-        <SolidColorBrush x:Key="ZhikeTealBrush" Color="#0EA991" />
-        <SolidColorBrush x:Key="ZhikeBlueBrush" Color="#2B79D3" />
-        <SolidColorBrush x:Key="ZhikeTextBrush" Color="#203449" />
-        <SolidColorBrush x:Key="ZhikeMutedTextBrush" Color="#6B7F92" />
-        <SolidColorBrush x:Key="ZhikeLineBrush" Color="#DCE6EF" />
-        <SolidColorBrush x:Key="ZhikeSuccessBrush" Color="#167A52" />
-        <SolidColorBrush x:Key="ZhikeSuccessBackgroundBrush" Color="#E7F6EE" />
-        <SolidColorBrush x:Key="ZhikeWarningBrush" Color="#9A6410" />
-        <SolidColorBrush x:Key="ZhikeWarningBackgroundBrush" Color="#FFF2D8" />
-        <SolidColorBrush x:Key="ZhikeDangerBrush" Color="#A23A32" />
-        <SolidColorBrush x:Key="ZhikeDangerBackgroundBrush" Color="#FFEAE7" />
-        <SolidColorBrush x:Key="ZhikeAiBrush" Color="#7357C7" />
-        <SolidColorBrush x:Key="ZhikeAiBackgroundBrush" Color="#F0EBFF" />
+        <!-- Native startup, host-error controls and surfaces use the Windows
+             theme. The embedded workspace retains its own existing palette
+             preference; this resource-only change adds no theme IPC. -->
+        <ResourceDictionary.ThemeDictionaries>
+            <ResourceDictionary x:Key="Light">
+                <SolidColorBrush x:Key="ZhikePageBackgroundBrush" Color="#F7F9FC" />
+                <SolidColorBrush x:Key="ZhikeSurfaceBrush" Color="#FFFFFF" />
+                <SolidColorBrush x:Key="ZhikeSurfaceMutedBrush" Color="#F1F4F9" />
+                <SolidColorBrush x:Key="ZhikeNavyBrush" Color="#1E2F50" />
+                <SolidColorBrush x:Key="ZhikeNavySecondaryBrush" Color="#4C6080" />
+                <SolidColorBrush x:Key="ZhikeTealBrush" Color="#006972" />
+                <SolidColorBrush x:Key="ZhikeBlueBrush" Color="#2854BE" />
+                <SolidColorBrush x:Key="ZhikeTextBrush" Color="#1E2F50" />
+                <SolidColorBrush x:Key="ZhikeMutedTextBrush" Color="#4C6080" />
+                <SolidColorBrush x:Key="ZhikeLineBrush" Color="#B9CEE8" />
+                <SolidColorBrush x:Key="ZhikeSuccessBrush" Color="#126842" />
+                <SolidColorBrush x:Key="ZhikeSuccessBackgroundBrush" Color="#D9F1E9" />
+                <SolidColorBrush x:Key="ZhikeWarningBrush" Color="#874304" />
+                <SolidColorBrush x:Key="ZhikeWarningBackgroundBrush" Color="#FFDFB8" />
+                <SolidColorBrush x:Key="ZhikeDangerBrush" Color="#9B2844" />
+                <SolidColorBrush x:Key="ZhikeDangerBackgroundBrush" Color="#FFE0E5" />
+                <SolidColorBrush x:Key="ZhikeAiBrush" Color="#5E2A9F" />
+                <SolidColorBrush x:Key="ZhikeAiBackgroundBrush" Color="#E3D6FF" />
+            </ResourceDictionary>
+            <ResourceDictionary x:Key="Dark">
+                <SolidColorBrush x:Key="ZhikePageBackgroundBrush" Color="#10182B" />
+                <SolidColorBrush x:Key="ZhikeSurfaceBrush" Color="#17233B" />
+                <SolidColorBrush x:Key="ZhikeSurfaceMutedBrush" Color="#1C2B46" />
+                <SolidColorBrush x:Key="ZhikeNavyBrush" Color="#EEF2FF" />
+                <SolidColorBrush x:Key="ZhikeNavySecondaryBrush" Color="#B0BDD8" />
+                <SolidColorBrush x:Key="ZhikeTealBrush" Color="#70D6CB" />
+                <SolidColorBrush x:Key="ZhikeBlueBrush" Color="#9CB7FF" />
+                <SolidColorBrush x:Key="ZhikeTextBrush" Color="#EEF2FF" />
+                <SolidColorBrush x:Key="ZhikeMutedTextBrush" Color="#B0BDD8" />
+                <SolidColorBrush x:Key="ZhikeLineBrush" Color="#344561" />
+                <SolidColorBrush x:Key="ZhikeSuccessBrush" Color="#7EE3AC" />
+                <SolidColorBrush x:Key="ZhikeSuccessBackgroundBrush" Color="#123A2D" />
+                <SolidColorBrush x:Key="ZhikeWarningBrush" Color="#FFD3A1" />
+                <SolidColorBrush x:Key="ZhikeWarningBackgroundBrush" Color="#4A3429" />
+                <SolidColorBrush x:Key="ZhikeDangerBrush" Color="#FFB9C9" />
+                <SolidColorBrush x:Key="ZhikeDangerBackgroundBrush" Color="#512D42" />
+                <SolidColorBrush x:Key="ZhikeAiBrush" Color="#E0C9FF" />
+                <SolidColorBrush x:Key="ZhikeAiBackgroundBrush" Color="#3E2C68" />
+            </ResourceDictionary>
+            <ResourceDictionary x:Key="HighContrast">
+                <SolidColorBrush x:Key="ZhikePageBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                <SolidColorBrush x:Key="ZhikeSurfaceBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                <SolidColorBrush x:Key="ZhikeSurfaceMutedBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                <SolidColorBrush x:Key="ZhikeNavyBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                <SolidColorBrush x:Key="ZhikeNavySecondaryBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                <SolidColorBrush x:Key="ZhikeTealBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                <SolidColorBrush x:Key="ZhikeBlueBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                <SolidColorBrush x:Key="ZhikeTextBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                <SolidColorBrush x:Key="ZhikeMutedTextBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                <SolidColorBrush x:Key="ZhikeLineBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                <SolidColorBrush x:Key="ZhikeSuccessBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                <SolidColorBrush x:Key="ZhikeSuccessBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                <SolidColorBrush x:Key="ZhikeWarningBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                <SolidColorBrush x:Key="ZhikeWarningBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                <SolidColorBrush x:Key="ZhikeDangerBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                <SolidColorBrush x:Key="ZhikeDangerBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                <SolidColorBrush x:Key="ZhikeAiBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                <SolidColorBrush x:Key="ZhikeAiBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+            </ResourceDictionary>
+        </ResourceDictionary.ThemeDictionaries>
 
         <Style TargetType="Page">
-            <Setter Property="Background" Value="{StaticResource ZhikePageBackgroundBrush}" />
-            <Setter Property="Foreground" Value="{StaticResource ZhikeTextBrush}" />
+            <Setter Property="Background" Value="{ThemeResource ZhikePageBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{ThemeResource ZhikeTextBrush}" />
         </Style>
 
         <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource ZhikeTextBrush}" />
+            <Setter Property="Foreground" Value="{ThemeResource ZhikeTextBrush}" />
             <Setter Property="FontFamily" Value="Microsoft YaHei UI" />
         </Style>
 
         <Style TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource ZhikeSurfaceBrush}" />
-            <Setter Property="Foreground" Value="{StaticResource ZhikeNavyBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource ZhikeLineBrush}" />
+            <Setter Property="Background" Value="{ThemeResource ZhikeSurfaceBrush}" />
+            <Setter Property="Foreground" Value="{ThemeResource ZhikeNavyBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource ZhikeLineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="9" />
             <Setter Property="Padding" Value="14,8" />
@@ -55,9 +97,9 @@
         </Style>
 
         <Style TargetType="TextBox">
-            <Setter Property="Background" Value="{StaticResource ZhikeSurfaceBrush}" />
-            <Setter Property="Foreground" Value="{StaticResource ZhikeTextBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource ZhikeLineBrush}" />
+            <Setter Property="Background" Value="{ThemeResource ZhikeSurfaceBrush}" />
+            <Setter Property="Foreground" Value="{ThemeResource ZhikeTextBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource ZhikeLineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="9" />
             <Setter Property="Padding" Value="12,7" />
@@ -66,9 +108,9 @@
         </Style>
 
         <Style TargetType="PasswordBox">
-            <Setter Property="Background" Value="{StaticResource ZhikeSurfaceBrush}" />
-            <Setter Property="Foreground" Value="{StaticResource ZhikeTextBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource ZhikeLineBrush}" />
+            <Setter Property="Background" Value="{ThemeResource ZhikeSurfaceBrush}" />
+            <Setter Property="Foreground" Value="{ThemeResource ZhikeTextBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource ZhikeLineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="9" />
             <Setter Property="Padding" Value="12,7" />
@@ -77,9 +119,9 @@
         </Style>
 
         <Style TargetType="ComboBox">
-            <Setter Property="Background" Value="{StaticResource ZhikeSurfaceBrush}" />
-            <Setter Property="Foreground" Value="{StaticResource ZhikeTextBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource ZhikeLineBrush}" />
+            <Setter Property="Background" Value="{ThemeResource ZhikeSurfaceBrush}" />
+            <Setter Property="Foreground" Value="{ThemeResource ZhikeTextBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource ZhikeLineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="9" />
             <Setter Property="MinHeight" Value="36" />
@@ -87,9 +129,9 @@
         </Style>
 
         <Style TargetType="ToggleButton">
-            <Setter Property="Background" Value="{StaticResource ZhikeSurfaceBrush}" />
-            <Setter Property="Foreground" Value="{StaticResource ZhikeNavyBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource ZhikeLineBrush}" />
+            <Setter Property="Background" Value="{ThemeResource ZhikeSurfaceBrush}" />
+            <Setter Property="Foreground" Value="{ThemeResource ZhikeNavyBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource ZhikeLineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="9" />
             <Setter Property="Padding" Value="12,7" />
@@ -97,8 +139,8 @@
         </Style>
 
         <Style TargetType="ListView">
-            <Setter Property="Background" Value="{StaticResource ZhikeSurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource ZhikeLineBrush}" />
+            <Setter Property="Background" Value="{ThemeResource ZhikeSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource ZhikeLineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="11" />
             <Setter Property="Padding" Value="6" />

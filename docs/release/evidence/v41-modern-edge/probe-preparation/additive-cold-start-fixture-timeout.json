@@ -1,0 +1,8 @@
+{
+  "status": "Failed",
+  "phase": "fixture-preparation",
+  "readinessDeadlineMs": 4750,
+  "fixtureDeadlineMs": 5000,
+  "lifecycleEntered": false,
+  "injectedStartupDelayMs": 2400
+}

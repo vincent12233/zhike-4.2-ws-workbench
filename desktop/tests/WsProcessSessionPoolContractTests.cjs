@@ -9,6 +9,7 @@ const read = relative => fs.readFileSync(path.join(repo, relative), 'utf8');
 const pool = read('desktop/src/Zhike.Desktop/Services/WsWebViewSessionPool.cs');
 const runtime = read('desktop/src/Zhike.Desktop/Services/WsRuntimeService.cs');
 const host = read('desktop/src/Zhike.Desktop/Views/LegacyUiHostPage.xaml.cs');
+const profiles = read('desktop/src/Zhike.Desktop/Services/WebViewProfileService.cs');
 const app = read('desktop/src/Zhike.Desktop/App.xaml.cs');
 
 const between = (source, start, end) => {
@@ -19,14 +20,13 @@ const between = (source, start, end) => {
   return source.slice(from, to);
 };
 
-// The process pool must have room for the visible chat plus at least one
-// background collector. A page-owned, single-WebView implementation cannot
-// satisfy multi-account continuity.
+// The process pool retains manually opened foreground account views. RD02
+// removes automatic hidden collection, not multi-account Core continuity.
 assert.match(pool, /WsWebViewSessionPool\(WsRuntimeCoordinator runtime, int capacity = 3\)/);
 assert.match(pool, /if \(capacity < 2\) throw new ArgumentOutOfRangeException/);
 assert.match(pool, /public int Capacity => _capacity/);
 assert.match(app, /new\(WsRuntime, capacity: 3\)/,
-  'the production process must provision at least a foreground and background session');
+  'the production process must retain bounded capacity for manually selected account sessions');
 
 const acquire = between(pool, 'public async Task<WsWebViewSessionAcquireResult> GetOrCreateAsync', 'public bool TryGet');
 assert.match(acquire, /runtime\.ForegroundAccountId[\s\S]*protectedIds\.Add\(runtime\.ForegroundAccountId\)/,
@@ -36,6 +36,10 @@ assert.match(acquire, /runtime\.BackgroundAccountId[\s\S]*protectedIds\.Add\(run
 assert.match(acquire, /SelectLruVictim\([\s\S]*protectedIds,[\s\S]*normalizedId\)/);
 assert.match(acquire, /session pool is busy with protected foreground\/background accounts/,
   'capacity pressure must defer instead of destroying either protected session');
+assert.doesNotMatch(acquire, /retired = _sessions\[victimId\];\s*_sessions\.Remove\(victimId\)/,
+  'the LRU victim must stay addressable while the asynchronous replacement is being built');
+assert.match(acquire, /var registration = await factory\(normalizedId, generation, cancellationToken\)[\s\S]*?ReferenceEquals\(current, retired\)/,
+  'the replacement must be published only after the factory succeeds and the victim identity is rechecked');
 
 const lru = between(pool, 'internal static string? SelectLruVictim', 'private static void ReleaseSession');
 assert.match(lru, /!string\.Equals\(item\.AccountId, requestedAccountId/);
@@ -75,48 +79,49 @@ assert.match(host, /App\.WsSessions\.IsCurrent\(sessionAccountId, sessionGenerat
   'message ingestion must be generation-fenced');
 
 // The runtime service, rather than a route, owns the 10-second scheduler. It
-// gives foreground chat a non-driving heartbeat and rotates a driving lease
-// through background accounts, then flushes durable capture state.
+// gives foreground chat a non-driving heartbeat and flushes existing durable
+// capture state; RD02 forbids automatic background leases/factory calls.
 const bind = between(runtime, 'public void BindHost', 'public async Task<WsWebViewSessionAcquireResult> ShowAccountAsync');
 assert.match(bind, /dispatcher\.CreateTimer\(\)/);
 assert.match(bind, /_timer\.Interval = TimeSpan\.FromSeconds\(10\)/);
-assert.match(bind, /_timer\.Tick \+= async \(_, _\) => await TickAsync\(\)/);
+assert.match(bind, /_timer\.Tick \+= async \(_, _\) =>\s*\{[\s\S]*?try \{ await TickAsync\(\); \}/,
+  'timer ticks must isolate transient async failures from the dispatcher pump');
 assert.match(bind, /_timer\.Start\(\)/);
 assert.match(host, /App\.WsService\.BindHost\(DispatcherQueue, CreatePooledWsSessionAsync, HeartbeatPooledWsSessionAsync, FlushWsQueueAsync\)/);
 
 const tick = between(runtime, 'public async Task TickAsync', 'public async Task ShutdownAsync');
 assert.match(tick, /RunHeartbeatAsync\(foreground, false/,
   'foreground WhatsApp must remain usable while still receiving a lightweight heartbeat');
-assert.match(tick, /LeaseNextBackgroundAccount\(\)/);
-assert.match(tick, /GetOrCreateAsync\(backgroundId, factory, cancellationToken\)/);
-assert.match(tick, /RunHeartbeatAsync\(acquired\.Session, true/,
-  'the background lease must actively drive list/history collection');
+assert.doesNotMatch(tick, /LeaseNextBackgroundAccount\(\)/, 'RD02 cannot lease an authenticated background collector');
+assert.doesNotMatch(tick, /GetOrCreateAsync\(backgroundId, factory, cancellationToken\)/, 'background ticks cannot create account views without manual selection');
+assert.doesNotMatch(tick, /RunHeartbeatAsync\([^\n]*true/, 'no periodic heartbeat may drive collection');
 assert.match(tick, /_flush\(cancellationToken\)/);
 
 const route = between(host, 'public async Task NavigateRouteAsync', 'public async Task<bool> TryReloadAsync');
 assert.match(route, /!string\.Equals\(requestedRoute, "ws-workbench"[\s\S]*App\.WsService\.HideForeground\(\)[\s\S]*HideWsOverlay\(\)/,
   'leaving the WS page must hide only the visual foreground');
 assert.doesNotMatch(route, /CloseWsOverlayAsync\s*\(|ForceDetachWsOverlay\s*\(|WsService\.ShutdownAsync\s*\(|WsService\.Abort\s*\(/,
-  'ordinary route changes must leave process-owned sessions and background collection alive');
+  'ordinary route changes must retain manually opened process-owned account sessions');
 const hideForeground = between(runtime, 'public void HideForeground', 'public async Task<bool> CloseAccountAsync');
 assert.match(hideForeground, /_coordinator\.SetForegroundAccount\(null\)/);
 assert.doesNotMatch(hideForeground, /Remove|Release|Close|Navigate/);
 const showAccount = between(runtime, 'public async Task<WsWebViewSessionAcquireResult> ShowAccountAsync', 'public void HideForeground');
 assert.match(showAccount, /_coordinator\.SetAccountEnabled\(accountId, true\)/,
-  'explicitly opening an account must resume a previously closed collector');
+  'explicitly opening an account must resume its foreground session');
 const closeAccount = between(runtime, 'public async Task<bool> CloseAccountAsync', 'public async Task TickAsync');
 assert.match(closeAccount, /_coordinator\.SetAccountEnabled\(accountId, false\)[\s\S]*_pool\.RemoveAsync/,
   'Close WS must disable the account before releasing its session so the scheduler cannot recreate it');
-assert.match(host, /driveCollection[\s\S]*__zhikeWsDiscoverAll[\s\S]*__zhikeWsCollectAllRead/,
-  'a background lease must drive both conversation discovery and full read-history collection');
+const heartbeat = between(host, 'private async Task HeartbeatPooledWsSessionAsync', 'private void SyncPooledWsPresentation');
+assert.match(heartbeat, /if \(driveCollection\) return;/);
+assert.doesNotMatch(heartbeat, /__zhikeWsDiscoverAll|__zhikeWsCollectAllRead|CollectorView|EnsureWsCollector/, 'foreground heartbeat cannot fall back to collection');
 const presentation = between(host, 'private void SyncPooledWsPresentation', 'private void AttachLegacyHandlers');
 assert.match(presentation, /var sessions = App\.WsService\.Sessions\(\)/);
 assert.match(presentation, /var layoutAnchor = active \?\? sessions\.FirstOrDefault\(\)/,
-  'a surviving background account must retain rendered DOM geometry after the foreground account closes');
+  'a surviving manually opened account must retain layout/Core identity after another foreground account closes');
 assert.match(presentation, /_wsView = layoutAnchor\.View[\s\S]*_wsViewAccountId = layoutAnchor\.AccountId/);
 
 // Graceful desktop close and the bounded emergency path must both release all
-// WebViews, stop their capture scripts and detach native event handlers.
+// WebViews and detach native event handlers without a capture-script fallback.
 const shutdown = between(runtime, 'public async Task ShutdownAsync', 'public void Abort');
 assert.match(shutdown, /_timer\?\.Stop\(\)/);
 assert.match(shutdown, /await _pool\.ReleaseAllAsync\(cancellationToken\)/);
@@ -129,11 +134,39 @@ assert.match(host, /ForceDetachWsOverlay\(\)[\s\S]*App\.WsService\.Abort\(\)/);
 const factory = between(host, 'private async Task<WsWebViewSessionRegistration> CreatePooledWsSessionAsync', 'private static void OnWsNewWindowRequested');
 assert.match(factory, /_wsProfiles\.GetOrCreateProfileAsync\(accountId\)/,
   'each account must use its isolated WebView2 profile');
+assert.doesNotMatch(factory, /PrepareCollectorProfileAsync|GetOrCreateCollectorProfileAsync|BuildWsCollectorScript|AddScriptToExecuteOnDocumentCreatedAsync|WsCollectorHost/,
+  'RD02 foreground factory cannot copy/bootstrap or inject a hidden/foreground collector');
+assert.equal((factory.match(/new WebView2\b/g) || []).length, 1, 'each explicit account factory creates exactly one foreground WebView');
+assert.match(host, /BuildWsVisibleCaptureScript\(accountId\)/, 'manual import retains its one-shot read-only capture');
+assert.doesNotMatch(runtime, /CollectorView\.Source\s*=/, 'runtime cannot navigate a hidden account page');
+assert.match(host, /fromBackgroundCollector = collectorRole == "background";[\s\S]{0,150}if \(fromBackgroundCollector\) return;/,
+  'RD02 rejects background packets instead of deriving collection authority from a foreground login');
+const collectorProfile = between(profiles, 'public Task<CoreWebView2Environment> GetOrCreateCollectorProfileAsync', 'public Task PrepareCollectorProfileAsync');
+const prepareProfile = between(profiles, 'public Task PrepareCollectorProfileAsync', 'private async Task<CoreWebView2Environment> GetOrCreateEnvironmentAsync');
+assert.match(collectorProfile, /Task\.FromException<CoreWebView2Environment>\(WsCollectionCapability\.Denied\(\)\)/);
+assert.match(prepareProfile, /Task\.FromException\(WsCollectionCapability\.Denied\(\)\)/);
+for (const deniedBody of [collectorProfile, prepareProfile]) {
+  assert.doesNotMatch(deniedBody, /Directory\.|File\.|_environments|GetOrCreateEnvironmentAsync|Task\.Run|if\s*\(/,
+    'compatibility collector entries deny before IO/environment/cache work, with no flag bypass');
+}
+assert.doesNotMatch(profiles, /CopyProfileDirectory|File\.Copy|Directory\.Move|stagingPath|backupPath/,
+  'authenticated copy/replacement code is removed, rather than protected by a filename exclusion list');
+const foregroundProfile = between(profiles, 'private async Task<CoreWebView2Environment> GetOrCreateEnvironmentAsync', 'public async Task<bool> ClearProfileAsync');
+assert.match(foregroundProfile, /var profileId = safeId;/, 'foreground cache uses the original account identity');
+assert.match(foregroundProfile, /CreateEnvironmentAsync\(id\)/, 'normal foreground environment creation remains');
+assert.match(profiles, /public async Task<bool> ClearProfileAsync/, 'explicit selected-session clearing remains available');
 assert.match(factory, /core\.NewWindowRequested \+= NewWindowRequested/);
 assert.match(factory, /released\.CoreWebView2\.NewWindowRequested -= NewWindowRequested/,
   'release must detach popup handling from every retired session');
-assert.match(factory, /window\.__zhikeStopCapture\?\.\(\)/);
-assert.match(factory, /released\.Close\(\)/);
+assert.doesNotMatch(factory, /window\.__zhikeStopCapture/, 'foreground release does not inject collector commands');
+assert.match(factory, /(?:released\.Close\(\)|target\.Close\(\))/);
+
+assert.doesNotMatch(host, /EnsureWsCollectorStartedAsync|WaitForWsCollectorReadyAsync|_wsCollectorBootstraps|WsCollectorHost\.Children\.Add/,
+  'RD02 has no hidden startup, readiness retry or registration path');
+const capture = between(host, 'private async Task<BridgeResponse> ExecuteWsCaptureAsync', 'private static JsonElement ParseWebViewJsonResult');
+assert.ok(capture.indexOf('WsCollectionBlocked(') < capture.indexOf('TryGetSession('), 'automatic collection is denied before session/Core access');
+assert.doesNotMatch(capture, /CollectorView|WaitForWsCollector|__zhikeWsDiscoverAll|__zhikeWsCollectAllRead/,
+  'manual import cannot activate a hidden collector or foreground automatic fallback');
 
 // Popup policy is deny-by-default: mark every request handled before any early
 // return, and navigate only a valid HTTPS web.whatsapp.com URI in the existing
@@ -152,4 +185,4 @@ assert.match(popupPolicy, /uri\.Host, "web\.whatsapp\.com"/);
 assert.doesNotMatch(popupPolicy, /about:blank|UriSchemeHttp\b/,
   'popup policy must not inherit about:blank or plain HTTP navigation allowances');
 
-console.log('WS process session pool contract: finite multi-account LRU, leases, generation fencing, background lifecycle, shutdown and popup isolation pass');
+console.log('WS process pool contract: manual multi-account LRU/Core/generation/shutdown/popup safety retained; RD02 copy/hidden/automatic leases forbidden');

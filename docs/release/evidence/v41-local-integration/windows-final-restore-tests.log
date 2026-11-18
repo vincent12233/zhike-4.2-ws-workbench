@@ -1,0 +1,20 @@
+✔ restores all 42 reviewed tables and derived owners from a real v2 package while keeping execution frozen (15497.4206ms)
+✔ does not edit an existing workspace or initialize a target with a pending queue (1013.6036ms)
+✔ a late real SQLite unique-index failure rolls back every candidate transaction write (7488.179ms)
+✔ media changes before publication leave the blank pointer and authenticated stage cleanup independent (32245.6691ms)
+✔ an unowned candidate file is preserved and its incomplete cleanup blocks a blind restart (8531.5448ms)
+✔ failed read-back after switch rolls the entire generation back before exposing any work (9696.1415ms)
+✔ actual process exit on either side of the active rename requires explicit, verified recovery (32459.6382ms)
+✔ a malformed journal slot fails closed without replacing the pointer (8917.6369ms)
+✔ active pointer replacement preserves a substituted destination (7771.2453ms)
+✔ active pointer replacement preserves a substituted temporary (18730.1127ms)
+✔ an initialized target without its lock refuses to acquire a replacement (2614.4603ms)
+✔ an independently connected process serializes access to a restore target (3822.0265ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 149002.1276

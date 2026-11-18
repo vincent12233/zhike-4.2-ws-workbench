@@ -1,0 +1,1 @@
+native prepare XBF preflight: 7/7 Passed; exact assets, malformed names, nonempty regular files, read-only failure and pre-mutation wiring; no shared output or acceptance root touched.

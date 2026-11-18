@@ -1,0 +1,11 @@
+{
+  "case": "control",
+  "observed": [
+    {
+      "atUnixMs": 1794977632238,
+      "event": "observer-ready"
+    }
+  ],
+  "observerIdentity": "unrecorded",
+  "kernelWait": "unavailable"
+}

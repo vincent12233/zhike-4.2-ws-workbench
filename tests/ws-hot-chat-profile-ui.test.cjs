@@ -19,7 +19,14 @@ for (const selector of ['ws-hot-profile-card', 'ws-hot-profile-field', 'ws-hot-p
   assert.match(css, new RegExp(`\\.${selector}`), `CSS should define ${selector}`);
 }
 assert.match(ui, /profile\/diagnostics/, 'UI should load profile diagnostics from the local API');
-assert.match(ui, /buildNaturalChatAnalysisPrompt\(transcript\.text/, 'WS analysis must use the natural-chat profile prompt for local AI');
+assert.match(ui, /renderDataArchiveSummary/, 'WS profile tab should render the unified data archive card');
+assert.match(ui, /data-archive\/customer/, 'WS profile tab should load the account-scoped archive projection');
+assert.match(ui, /统一数据档案/, 'WS profile tab should label the unified archive view');
+assert.match(css, /\.ws-data-archive-card/, 'CSS should define the unified archive card');
+// Full-history analysis is chunked to keep the renderer responsive. Each
+// chunk and the final synthesis must still use the natural-chat profile
+// prompt; older builds passed a single `transcript.text` value here.
+assert.match(ui, /buildNaturalChatAnalysisPrompt\((?:transcript|chunk|synthesis)\.text/, 'WS analysis must use the natural-chat profile prompt for local AI');
 for (const field of ['conversationProgress', 'customerTemperature', 'profileSummary', 'nextTopics', 'noReply', 'tags']) {
   assert.match(ui, new RegExp(field), `hot-chat progress metadata ${field} should be rendered and restored`);
 }
@@ -29,4 +36,4 @@ assert.doesNotMatch(ui, /data-hot-profile-color[^>]*onchange|matches\('\[data-ho
 assert.match(app, /renderCustomerHotProfileSummary/, 'customer 360 drawer should expose the hot-chat profile summary');
 assert.match(app, /customer\.investor===true\?'是':customer\.investor===false\?'否':''/, 'missing investor status must remain unknown instead of defaulting to no');
 assert.match(app, /__zhikeRegistryHost\.showCustomer=showCustomer/, 'host must expose the wrapped customer drawer renderer');
-console.log('ws-hot-chat-profile-ui: contract pending implementation');
+console.log('ws-hot-chat-profile-ui: source wiring contract passed; live UI behavior requires separate native acceptance');

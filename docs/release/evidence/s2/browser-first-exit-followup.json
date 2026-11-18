@@ -1,0 +1,11 @@
+{
+  "at": "2026-11-17T02:24:55.972Z",
+  "invocation": "1794881374425-fc3b9427-ed0d-478a-9133-c27bcde7d1ea",
+  "scope": "Read-only exact observed PID and creation identity; not an image-name search",
+  "sourceStatus": "Failed",
+  "observedIdentities": 14,
+  "remaining": [],
+  "reused": [],
+  "processesTerminated": false,
+  "sourceMetadataChanged": false
+}

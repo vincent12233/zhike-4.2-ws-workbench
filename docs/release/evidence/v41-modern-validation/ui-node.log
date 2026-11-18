@@ -1,0 +1,33 @@
+S3 drawer: first lazy creation, same-ID redraw, same-name A→B, close/invalid ID and lifecycle payload passed
+S3 customers: real filters/export, page selection, hidden columns and UI-only preview close/restore passed
+S3 list-first customer layout: native closed overview retains seven metrics; default filters fold without losing search/active predicates/export
+S3 selection identity: real SelectionSet add/has/delete and numeric-ID export retained
+S3 followups: original route/data/record export retained; nextDate header and customer-vs-task scope are explicit
+S3 home: source-first hierarchy, wide-trend/compact-empty hooks, original actions and one reminder load retained
+S3 home plan drilldown: every actual home button → existing open route, exact 13 IDs, stale filters ignored, title/route, open/completed exports retained
+S3 plan date parity: previous/today/leap valid, future/dash/empty/malformed excluded without mutating records
+S3 followup paging/export: 263 customers all reachable, last page/bounds/tab/reset, valid-date parity, unplanned and completed history retained
+✔ tests\delivery-s3-core-pages.test.cjs (249.0342ms)
+design-system contract: tokens, typography, breakpoints, motion and asset wiring are present
+✔ tests\design-system-contract.test.cjs (105.0411ms)
+Shared visual contract: explicit chrome/control/business ownership, guarded palettes, accessible targets and unchanged scroll ownership
+✔ tests\global-6-visual-contract.test.cjs (109.1827ms)
+Horizon Atelier contract: dynamic data, exact navigation, collapsible/responsive shell and no preview samples
+✔ tests\horizon-atelier-contract.test.cjs (98.5178ms)
+WS and GPT Horizon visual scope, dark states, narrow control reachability and scroll contract pass
+✔ tests\ws-gpt-horizon-visual.test.cjs (109.6631ms)
+✔ reproduces the reported 1.807438 ratio and resolves the WS blue KPI reflection (3.7631ms)
+✔ transparent and white gradients paint over the parent and all lower artwork layers (1.5733ms)
+✔ an opaque material 1 base blocks the impossible double night highlight (0.8096ms)
+✔ a genuinely low-contrast opaque stop still misses the 4.5 gate (0.2828ms)
+✔ both actual palette KPI and material 1 CSS stops exceed the existing 4.5 guard (5.1322ms)
+ℹ atelier-dawn conservative minimum KPI 5.303, material 1 5.830
+ℹ horizon-night conservative minimum KPI 6.070, material 1 4.848
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 266.6958

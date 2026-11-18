@@ -27,8 +27,8 @@ assert.match(runtime, /LeaseNextBackgroundAccount/);
 assert.match(runtime, /!string\.Equals\(item\.AccountId, _foregroundAccountId/,
   'background rotation must exclude the visible account');
 assert.match(runtime, /LastBackgroundLeaseAt/);
-assert.match(runtime, /account\.State is WsAccountRuntimeState\.Registered or WsAccountRuntimeState\.Connected/,
-  'a restored account must be probed once so a valid persisted login resumes after restart');
+assert.match(runtime, /account\.State is [^\n]*WsAccountRuntimeState\.Registered[^\n]*WsAccountRuntimeState\.WaitingLogin/,
+  'a restored account, including one with a stale WaitingLogin marker, must be probed so a valid persisted login resumes after restart');
 assert.match(runtime, /NextRetryAt/);
 assert.match(runtime, /ConsecutiveFailures/);
 assert.match(runtime, /Math\.Pow\(2d/);

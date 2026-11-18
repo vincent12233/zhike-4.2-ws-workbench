@@ -1,0 +1,50 @@
+FAIL native capability telemetry is account-scoped and never replaces connection state: Cannot read properties of undefined (reading 'code')
+FAIL collector-dependent native bridge actions fail closed before any native call: Missing expected rejection.
+PASS manual foreground bridge operations and safe monitor stop are preserved
+FAIL blocked collection never registers automatic polling or marks the background running: Expected values to be strictly equal:
+
+1 !== 0
+
+FAIL automatic refresh and delayed account refresh do not consume or mutate queues: Expected values to be strictly equal:
+
+24 !== 0
+
+FAIL create, collect, discover and resume are blocked before run API writes: createCollectionRun must not create or transition a persisted run
+
+3 !== 0
+
+FAIL automatic history scheduling and running transitions cannot bypass the capability: Expected values to be strictly equal:
+
+1 !== 0
+
+FAIL blocked group-monitor enable and scan actions never persist enabled configurations: createGroupMonitor must not write enabled=true before native rejects it
+
+3 !== 0
+
+FAIL allowlist synchronization is a harmless blocked result, not a login failure: Expected values to be strictly equal:
++ actual - expected
+
++ undefined
+- 'COLLECTION_CAPABILITY_BLOCKED'
+
+FAIL reading saved enabled monitor configuration cannot restart the native collector: Expected values to be strictly equal:
++ actual - expected
+
++ undefined
+- 'COLLECTION_CAPABILITY_BLOCKED'
+
+FAIL connected cockpit and collection views show the actual blocked capability: The input did not match the regular expression /COLLECTION_CAPABILITY_BLOCKED/. Input:
+
+'<div class="ws-command-rail" aria-label="WS 账号与采集控制舱"><div class="ws-cockpit-bar">\n' +
+  '      <div class="ws-cockpit-accounts" aria-label="WS 账号列表"><span class="ws-cockpit-label">账号</span><button class="ws-account-pill active" data-ws-action="switch-account" data-account-id="a" aria-pressed="true"><i></i><span>合成账号A</span><small>已连接</small></button><button class="ws-account-pill " data-ws-action="switch-account" data-account-id="b" aria-pressed="false"><i></i><span>合成账号B</span><small>未连接</small></button><button class="ws-account-pill add" data-ws-action="create-account" >＋ 添加账号</button></div>\n' +
+  '      <div class="ws-cockpit-controls" aria-label="WS 连接与采集控制"><button class="ws-cockpit-action primary" data-ws-action="open" >已打开 WS</button><span class="ws-cockpit-status is-online" title="WS 连接状态" aria-label="WS 连接状态"><i></i>已连接</span><span class="ws-cockpit-status is-running" title="后台采集状态" aria-label="后台采集状态"><i></i>后台采集中</span><button class="ws-cockpit-action" data-ws-action="pause-collection">暂停采集</button><button class="ws-cockpit-action" data-ws-action="reconnect">重新连接</button></div>\n' +
+  '    </div></div>'
+
+FAIL group-monitor UI cannot present historical enabled configuration as live monitoring: The input did not match the regular expression /COLLECTION_CAPABILITY_BLOCKED/. Input:
+
+'<div class="ws-group-monitor-toolbar"><div><span class="ws-group-monitor-status status-running"><i></i>监控中</span><small>0 个群组 · 最近心跳 暂无</small></div><div class="ws-group-monitor-actions"><button class="btn small" data-ws-action="group-monitor-scan" >扫描已配置群组</button><button class="btn small " data-ws-action="group-monitor-toggle" data-enabled="true">暂停监控</button></div></div><div class="ws-group-monitor-stats"><span>已写入 <b>0</b></span><span>自动登记 <b>0</b></span><span>待关联 <b>0</b></span><span>待确认 <b>0</b></span><span>已忽略 <b>0</b></span></div><div class="ws-group-monitor-targets"><div class="ws-group-monitor-section-title"><strong>监控群组</strong><small>只监测明确添加的 WS 群组</small></div><div class="ws-group-monitor-add"><div class="ws-group-monitor-picker"><select id="wsGroupMonitorPicker" aria-label="从当前 WS 群组选择"><option value="">登录 WS 后显示可选群组</option></select><button class="btn small" data-ws-action="group-monitor-add-selected" disabled>添加所选群组</button></div><div class="ws-group-monitor-manual"><input id="wsGroupMonitorJid" value="1203-synthetic@g.us" placeholder="高级入口：群组 JID（可选）" maxlength="180"><input id="wsGroupMonitorName" value="合成群组" placeholder="群组名称（可选）" maxlength="240"><button class="btn small primary" data-ws-action="group-monitor-add-target" >手动添加</button></div></div><p class="ws-muted">尚未添加监测群组；登录 WS 后从群组列表选择即可，无需查找 JID。</p></div><div class="ws-group-monitor-events"><div class="ws-group-monitor-section-title"><strong>最近进退群事件</strong><select id="wsGroupMonitorStatusFilter"><option value="all" selected>全部</option><option value="pending" >待关联</option><option value="review" >待确认</option><option value="applied" >已写入</option></select></div><p class="ws-muted">暂无进退群事件。后台监控会在发现变更后写入这里。</p></div><p class="ws-muted">监测群组绑定只决定 WS 监测范围，与 VIP 客户管理完全独立。确认进入群组的成员会自动登记客户档案并写入“已进群”状态；审核中、待批准和无法确认的事件不会建档，保留记录供人工处理。</p>'
+
+RD02 WS capability runtime: 1/13; real modules, synthetic boundaries, no profile/database/network/browser
+FAIL business run details retain checkpoint and identify historical status versus blocked execution: The input did not match the regular expression /COLLECTION_CAPABILITY_BLOCKED/. Input:
+
+'<section class="ws-workspace-card"><div class="ws-card-heading"><strong>任务详情与断点</strong><span class="ws-status-badge">处理中</span></div><dl class="ws-business-fields"><dt>任务 ID</dt><dd>run-kept</dd><dt>更新时间</dt><dd>2026-11-17T00:00:00Z</dd><dt>最近成功</dt><dd>未提供</dd><dt>重试次数</dt><dd>未提供</dd><dt>续采次数</dt><dd>未提供</dd><dt>失败原因</dt><dd>未提供</dd></dl><details><summary>查看 checkpoint / 游标</summary><pre>checkpoint-kept</pre></details><p class="ws-muted">本地采集项 1 条；任务切换不启动或停止消费者。</p></section>'

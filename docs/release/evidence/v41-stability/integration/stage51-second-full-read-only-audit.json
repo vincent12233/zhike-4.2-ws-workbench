@@ -1,0 +1,90 @@
+{
+  "invocation": "1794944767849-becbeef9-9456-49ab-b0a7-64b4d2e69892",
+  "checkedAtUtc": "2026-11-17T19:51:12.9268991Z",
+  "method": "Read-only GetProcessById and exact OS StartTime for recorded browser identities",
+  "originalStatus": "Failed",
+  "originalTimeoutMs": 30000,
+  "browserIdentitiesChecked": 12,
+  "identityProbePidsChecked": 1,
+  "remainingOrUnverified": 0,
+  "processes": [
+    {
+      "pid": 24328,
+      "role": "browser-root",
+      "expectedStartedTicks": "639305415678547427",
+      "status": "absent"
+    },
+    {
+      "pid": 38352,
+      "role": "observed-browser-process",
+      "expectedStartedTicks": "639305415714367856",
+      "status": "absent"
+    },
+    {
+      "pid": 26604,
+      "role": "observed-browser-process",
+      "expectedStartedTicks": "639305415714359612",
+      "status": "absent"
+    },
+    {
+      "pid": 39804,
+      "role": "observed-browser-process",
+      "expectedStartedTicks": "639305415714253168",
+      "status": "absent"
+    },
+    {
+      "pid": 8752,
+      "role": "observed-browser-process",
+      "expectedStartedTicks": "639305415708114878",
+      "status": "absent"
+    },
+    {
+      "pid": 40824,
+      "role": "observed-browser-process",
+      "expectedStartedTicks": "639305415683593351",
+      "status": "absent"
+    },
+    {
+      "pid": 27020,
+      "role": "observed-browser-process",
+      "expectedStartedTicks": "639305415683640568",
+      "status": "absent"
+    },
+    {
+      "pid": 12764,
+      "role": "observed-browser-process",
+      "expectedStartedTicks": "639305415689993743",
+      "status": "absent"
+    },
+    {
+      "pid": 41020,
+      "role": "observed-browser-process",
+      "expectedStartedTicks": "639305415716246247",
+      "status": "absent"
+    },
+    {
+      "pid": 40020,
+      "role": "observed-browser-process",
+      "expectedStartedTicks": "639305415714365210",
+      "status": "absent"
+    },
+    {
+      "pid": 18408,
+      "role": "observed-browser-process",
+      "expectedStartedTicks": "639305415714249715",
+      "status": "absent"
+    },
+    {
+      "pid": 34536,
+      "role": "observed-browser-process",
+      "expectedStartedTicks": "639305415738388464",
+      "status": "absent"
+    },
+    {
+      "pid": 23768,
+      "role": "owned-identity-probe",
+      "expectedStartedTicks": null,
+      "status": "absent"
+    }
+  ]
+}

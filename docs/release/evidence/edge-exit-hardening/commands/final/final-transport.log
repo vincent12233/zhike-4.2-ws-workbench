@@ -1,0 +1,11 @@
+{"mode":"ack-only","status":"Passed","actualLoopbackWebSocket":true,"realEdgeStarted":false,"realBrowserAccepted":false,"events":["browser-close-request-sent","browser-close-response-received","browser-close-acknowledged","cdp-transport-close-requested","cdp-transport-closed"]}
+{"mode":"peer-close","status":"Passed","actualLoopbackWebSocket":true,"realEdgeStarted":false,"realBrowserAccepted":false,"events":["browser-close-request-sent","cdp-transport-closed","browser-close-acknowledged"]}
+{"mode":"stall-close","status":"Passed","actualLoopbackWebSocket":true,"realEdgeStarted":false,"realBrowserAccepted":false,"events":["browser-close-request-sent","browser-close-response-received","browser-close-acknowledged","cdp-transport-close-requested"]}
+{"mode":"premature-disconnect","status":"Passed","actualLoopbackWebSocket":true,"realEdgeStarted":false,"realBrowserAccepted":false,"events":["cdp-transport-closed"]}
+{"mode":"work-phase-observation","status":"Passed","actualLoopbackWebSocket":true,"realEdgeStarted":false,"realBrowserAccepted":false,"events":["cdp-work-started","navigation-request-sent","navigation-response-received","navigation-lifecycle-received","cdp-work-completed","cdp-work-started"]}
+{"mode":"target-delayed","status":"Passed","actualLoopbackWebSocket":true,"events":["target-close-acknowledged","target-destroyed-observed","browser-close-request-sent","browser-close-response-received","browser-close-acknowledged","cdp-transport-close-requested","cdp-transport-closed"]}
+{"mode":"target-early","status":"Passed","actualLoopbackWebSocket":true,"events":["target-destroyed-observed","target-close-acknowledged","browser-close-request-sent","browser-close-response-received","browser-close-acknowledged","cdp-transport-close-requested","cdp-transport-closed"]}
+{"mode":"target-timeout","status":"Passed","actualLoopbackWebSocket":true,"events":["target-close-acknowledged"]}
+{"mode":"target-disconnect","status":"Passed","actualLoopbackWebSocket":true,"events":["target-close-acknowledged","cdp-transport-closed"]}
+{"mode":"target-rejected","status":"Passed","actualLoopbackWebSocket":true,"events":["target-destroyed-observed"]}
+{"suite":"isolated-edge-transport","passed":10,"diagnosticResourceChecks":1,"realBrowserAccepted":false}

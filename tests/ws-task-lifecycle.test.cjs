@@ -27,16 +27,18 @@ async function rawApi(route, body, method='POST') {
   await api('/api/ws/collection-items?accountId=test-account',{accountId:'test-account',runId:run.run.id,conversationId:conv.id,status:'queued'});
   await api('/api/ws/ingest/batch',{accountId:'test-account',checkpoints:[{conversationType: 'direct', conversationKey:'919876543210',historyLoaded:false,collectionStatus:'retryable',coverage:'read-history-identity-unconfirmed'}],messages:[]});
   const failures=await api(`/api/ws/collection-items?accountId=test-account&runId=${run.run.id}`);assert.equal(failures.items[0].status,'retryable');assert.match(failures.items[0].lastError,/身份/);
-  const job=await api('/api/ws/ai-jobs',{accountId:'test-account',conversationId:conv.id,idempotencyKey:'multi-account-job'});
-  assert.equal(job.job.accountId,'test-account','POST AI jobs must use the active account rather than default');
-  const claim=await api('/api/ws/ai-jobs',{accountId:'test-account',action:'claim',jobId:job.job.id});assert.equal(claim.claimed,true);
-  await api('/api/ws/ai-jobs',{accountId:'test-account',action:'checkpoint',jobId:job.job.id,completedChunks:2,chunkCount:4,result:{summary:'saved evidence',profileFacts:{occupation:{value:'engineer',state:'known',confidence:.9,evidence:'I am an engineer'}}}});
-  const queue=await api('/api/ws/ai-jobs?accountId=test-account');assert.equal(queue.jobs[0].payload.checkpoint.completedChunks,2,'segment progress must persist for retry/restart');
+  const blockedJob=await rawApi('/api/ws/ai-jobs',{accountId:'test-account',conversationId:conv.id,idempotencyKey:'multi-account-job'});
+  assert.equal(blockedJob.status,422,'AI must not start before complete history is confirmed');
   async function ingest(offset, count, final){return api('/api/ws/ingest/batch',{accountId:'test-account',capturedAt:'2026-11-13T10:00:00Z',checkpoints:[{conversationType: 'direct', conversationKey:'919876543210',displayName:'Existing',unreadCount:0,historyLoaded:final,historyMessageCount:700,coverage:'read-history',lastMessageFingerprint:'history-700',directionVersion:4,directionUnresolvedCount:0}],messages:Array.from({length:count},(_,i)=>({conversationType: 'direct', conversationKey:'919876543210',externalMessageId:`msg-${offset+i}`,body:`Message ${offset+i}`,direction:'incoming',directionSource:'class-message-in',order:offset+i,sentAt:'2026-10-01T10:00:00Z'}))});}
   await ingest(1,250,false);await ingest(251,250,false);
   let conversations=await api('/api/ws/conversations?accountId=test-account');assert.notEqual(conversations.conversations[0].data.historyLoaded,true,'partial chunks must not trigger complete history');
   await ingest(501,200,true);await ingest(501,200,true);
   conversations=await api('/api/ws/conversations?accountId=test-account');assert.equal(conversations.conversations[0].unreadCount,0);assert.equal(conversations.conversations[0].data.historyLoaded,true);
+  const job=await api('/api/ws/ai-jobs',{accountId:'test-account',conversationId:conv.id,idempotencyKey:'multi-account-job'});
+  assert.equal(job.job.accountId,'test-account','POST AI jobs must use the active account rather than default');
+  const claim=await api('/api/ws/ai-jobs',{accountId:'test-account',action:'claim',jobId:job.job.id});assert.equal(claim.claimed,true);
+  await api('/api/ws/ai-jobs',{accountId:'test-account',action:'checkpoint',jobId:job.job.id,leaseToken:claim.job.leaseToken,completedChunks:2,chunkCount:4,result:{summary:'saved evidence',profileFacts:{occupation:{value:'engineer',state:'known',confidence:.9,evidence:'I am an engineer'}}}});
+  const queue=await api('/api/ws/ai-jobs?accountId=test-account');assert.equal(queue.jobs[0].payload.checkpoint.completedChunks,2,'segment progress must persist for retry/restart');
   const historyH1=conversations.conversations[0].data.historyFingerprint;
   assert.match(historyH1,/^[a-f0-9]{64}$/,'server must compute the authoritative full-history hash');
   assert.equal(conversations.conversations[0].data.lastMessageFingerprint,historyH1);

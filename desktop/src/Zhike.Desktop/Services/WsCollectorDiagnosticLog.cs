@@ -158,6 +158,9 @@ public static class WsCollectorDiagnosticLog
         try
         {
             var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Zhike6", "diagnostics");
+#if STAGE51_ISOLATED_UI
+            directory = Stage51Isolation.MapDataPath(directory);
+#endif
             Directory.CreateDirectory(directory);
             var path = Path.Combine(directory, "ws-collector.jsonl");
             var currentLength = File.Exists(path) ? new FileInfo(path).Length : 0;

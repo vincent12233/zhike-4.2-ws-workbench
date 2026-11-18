@@ -64,13 +64,15 @@ function inspect(fn){const db=new DatabaseSync(path.join(data,'workspace.sqlite'
 (async()=>{try{
   await start();
   await call('/api/state',{customers:[{id:'C1',name:'Existing',phone:'9876543210'}],settings:{operatingTasks:[]},tickets:[],deposits:[],followups:[],activities:[]});
-  const mixed=await call('/api/ws/ingest/batch',{checkpoints:[{conversationKey:'123@g.us',conversationType:'group',displayName:'Group'},{conversationKey:'919876543210',conversationType:'direct',displayName:'Existing'}],messages:[{conversationKey:'123@g.us',externalMessageId:'group-new',body:'GROUP_BODY_MUST_NOT_SAVE',direction:'incoming'},{conversationKey:'919876543210',externalMessageId:'direct-new',body:'Direct original',direction:'incoming',directionSource:'class-message-in',sentAt:'2026-11-13T10:00:00Z'}]});
+  const mixed=await call('/api/ws/ingest/batch',{checkpoints:[{conversationKey:'123@g.us',conversationType:'group',displayName:'Group'},{conversationKey:'919876543210',conversationType:'direct',displayName:'Existing',unreadCount:0,historyLoaded:true,historyMessageCount:1,coverage:'read-history',directionVersion:4,directionUnresolvedCount:0,historyFingerprint:'direct-history',lastMessageFingerprint:'direct-history'}],messages:[{conversationKey:'123@g.us',externalMessageId:'group-new',body:'GROUP_BODY_MUST_NOT_SAVE',direction:'incoming'},{conversationKey:'919876543210',externalMessageId:'direct-new',body:'Direct original',direction:'incoming',directionSource:'class-message-in',sentAt:'2026-11-13T10:00:00Z'}]});
   assert.equal(mixed.accepted,1);
-  assert.equal(inspect(db=>db.prepare("SELECT COUNT(*) n FROM ws_conversations WHERE external_id='123@g.us'").get().n),0);
+  assert.equal(inspect(db=>db.prepare("SELECT COUNT(*) n FROM ws_conversations WHERE external_id='123@g.us'").get().n),1,'ordinary group identity is retained for fixed-seat monitoring');
   assert.equal(inspect(db=>db.prepare("SELECT COUNT(*) n FROM ws_messages WHERE original_text='GROUP_BODY_MUST_NOT_SAVE'").get().n),0);
   await call('/api/ws/ingest/batch',{checkpoints:[{conversationKey:'contradictory-group',conversationType:'group'},{conversationKey:'contradictory-group',conversationType:'direct'}],messages:[{conversationKey:'contradictory-group',externalMessageId:'contradictory-message',body:'GROUP_CONTRADICTORY_MUST_NOT_SAVE',direction:'incoming'}]});
-  assert.equal(inspect(db=>db.prepare("SELECT COUNT(*) n FROM ws_conversations WHERE external_id='contradictory-group'").get().n),0,'group evidence wins over a later contradictory direct checkpoint');
+  assert.equal(inspect(db=>db.prepare("SELECT COUNT(*) n FROM ws_conversations WHERE external_id='contradictory-group'").get().n),1,'group evidence wins over a later contradictory direct checkpoint while retaining monitor metadata');
   const list=await call('/api/ws/conversations');const direct=list.conversations.find(c=>c.externalId==='919876543210');assert.ok(direct);
+  assert.equal(list.conversations.some(c=>c.externalId==='123@g.us'),false,'ordinary groups stay out of personal inventory');
+  assert.ok(list.groupConversations.some(c=>c.externalId==='123@g.us'),'ordinary groups remain selectable by the monitor');
   await call('/api/ws/ai-jobs',{conversationId:direct.id,idempotencyKey:'direct-allowed'},201);
   const vipIngest=await call('/api/ws/ingest/batch',{
     checkpoints:[{conversationKey:'vip-room@g.us',conversationType:'vip_group',vipGroup:true,isGroup:true,displayName:'VIP Room',unreadCount:0,historyLoaded:true,historyMessageCount:3,coverage:'read-history',directionVersion:4,directionUnresolvedCount:0,lastMessageFingerprint:'vip-list'}],
@@ -109,8 +111,8 @@ function inspect(fn){const db=new DatabaseSync(path.join(data,'workspace.sqlite'
 
   // Create a genuine pre-upgrade fixture while the service is stopped. The old
   // message remains evidence and must survive retirement of pending group work.
-  const legacy=await call('/api/ws/conversations',{externalId:'legacy-before-upgrade',title:'Legacy',conversationType:'direct'});
-  await call('/api/ws/messages',{conversationId:legacy.id,externalId:'legacy-message',direction:'receive',originalText:'LEGACY_ORIGINAL_PRESERVED'});
+   const legacy=await call('/api/ws/conversations',{externalId:'legacy-before-upgrade',title:'Legacy',conversationType:'direct',unreadCount:0,data:{conversationType:'direct',historyLoaded:true,historyFingerprint:'legacy-history',lastMessageFingerprint:'legacy-history',directionVersion:4}});
+   await call('/api/ws/messages',{conversationId:legacy.id,externalId:'legacy-message',direction:'send',originalText:'LEGACY_ORIGINAL_PRESERVED'});
   const priorAnalysis=await call('/api/ws/analyses',{conversationId:legacy.id,result:{summary:'Historical pre-upgrade analysis',confidence:.9}});
   const job=await call('/api/ws/ai-jobs',{conversationId:legacy.id,idempotencyKey:'legacy-job'},201);
   await call('/api/ws/ai-jobs',{action:'claim',jobId:job.job.id});

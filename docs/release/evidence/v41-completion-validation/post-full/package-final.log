@@ -1,0 +1,20 @@
+✔ encrypted package round-trips an explicit schema 025 snapshot and multi-frame media (3299.7491ms)
+✔ wrong password, corrupt header or tags, truncation and trailing bytes preserve staging (8109.9432ms)
+✔ valid GCM cannot override scope, coverage, duplicate checks or entry digests (7258.7678ms)
+✔ source allowlist, account boundaries and size checks reject before creating a package (50.7396ms)
+✔ linked file or directory and changed media cannot redirect input or leave a partial package (1221.0015ms)
+✔ exclusive publication never replaces an existing package, and staging rejects junctions (3413.84ms)
+✔ media coverage stays partial with a legacy snapshot that has no indexed media section (1999.9429ms)
+✔ nested credential aliases fail closed without treating numeric usage as a credential (17.7571ms)
+✔ a replaced publication path cannot succeed or delete the replacement (730.6572ms)
+✔ a late staging-path change preserves other data and prevents a successful import result (1972.786ms)
+✔ a failure identifying a newly created destination reports pending cleanup and preserves it (470.197ms)
+✔ a failure identifying a newly created staging directory reports pending cleanup and preserves it (471.5977ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 29154.9008

@@ -1,0 +1,18 @@
+{
+  "entries": [
+    {
+      "path": "data-archive-summary.log",
+      "source": "isolated worktree:.tools/v41-archive-summary-replay/data-archive-summary.log",
+      "sourceSha256": "7fd25b5875ba57b32d2491d0cd7df8e4ee99143f662c3b1be38261154849fa04",
+      "archiveSha256": "7fd25b5875ba57b32d2491d0cd7df8e4ee99143f662c3b1be38261154849fa04",
+      "bytes": 87,
+      "preservesSourceBytes": true,
+      "sensitivePatterns": 0
+    },
+    {
+      "path": "run.json",
+      "archiveSha256": "2e283b6fe771339eb9a530426459a82ca71034078668b776f2e844f35beda4af",
+      "source": "post-run reconstruction from raw log and actual command exit"
+    }
+  ]
+}

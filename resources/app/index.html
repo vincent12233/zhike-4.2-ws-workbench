@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#071017" />
   <meta name="description" content="本机数据优先、可选 GPT 联网能力的客户运营工作台" />
-  <title>知客 6.0 · Horizon Atelier</title>
+  <title>知客 6.1 · Horizon Atelier</title>
   <link rel="stylesheet" href="./styles.css" />
   <link rel="stylesheet" href="./modules/v4.css" />
   <link rel="stylesheet" href="./modules/gpt-assistant.css" />
@@ -31,54 +31,59 @@
     <aside class="sidebar" id="sidebar">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><img src="./assets/zhike-horizon-logo.png" alt="" draggable="false" /></div>
-        <div class="brand-copy"><strong>知客 6.0</strong><span>Horizon Atelier<!-- ZHIKE_BUILD_VERSION --></span></div>
-        <button class="icon-button collapse-button" id="collapseNav" title="收起导航" aria-label="收起导航" aria-expanded="true"><svg><use href="#i-chevron-left"/></svg></button>
+        <div class="brand-copy"><strong>知客 6.1</strong><span>Horizon Atelier<!-- ZHIKE_BUILD_VERSION --></span></div>
+        <button class="icon-button collapse-button" id="collapseNav" title="收起导航" aria-label="收起导航" aria-expanded="true"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-chevron-left"/></svg></button>
       </div>
-      <button class="workspace-switch" id="workspaceSwitch" type="button" title="设置工作区资料"><div class="workspace-dot"></div><div><strong id="workspaceName">本地客户库</strong><span id="workspaceSubtitle">离线数据空间</span></div><svg><use href="#i-chevron-down"/></svg></button>
+      <button class="workspace-switch" id="workspaceSwitch" type="button" title="设置工作区资料"><div class="workspace-dot"></div><div><strong id="workspaceName">本地客户库</strong><span id="workspaceSubtitle">离线数据空间</span></div><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-chevron-down"/></svg></button>
       <nav class="nav-groups" id="mainNav">
         <div class="nav-group-label">工作</div>
-        <button class="nav-item active" data-view="home"><svg><use href="#i-home"/></svg><span>今日工作台</span></button>
-        <button class="nav-item" data-view="intake"><svg><use href="#i-zap"/></svg><span>快速录入</span></button>
-        <button class="nav-item" data-view="operations"><svg><use href="#i-calendar"/></svg><span>任务中心</span></button>
-        <button class="nav-item" data-view="stage-board"><svg><use href="#i-grid"/></svg><span>阶段看板</span></button>
+        <button class="nav-item active" data-view="home"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-home"/></svg><span>今日工作台</span></button>
+        <button class="nav-item" data-view="intake"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-zap"/></svg><span>快速录入</span></button>
+        <button class="nav-item" data-view="operations"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-clipboard-check"/></svg><span>任务中心</span></button>
+        <button class="nav-item" data-view="stage-board"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-kanban"/></svg><span>阶段看板</span></button>
         <div class="nav-group-label">客户</div>
-        <button class="nav-item" data-view="customers"><svg><use href="#i-users"/></svg><span>客户中心</span><b class="nav-count muted" id="navCustomerCount">0</b></button>
-        <button class="nav-item" data-view="segments"><svg><use href="#i-grid"/></svg><span>分类视图</span></button>
-        <button class="nav-item" data-view="hot"><svg><use href="#i-message"/></svg><span>热聊管理</span><b class="nav-count coral" id="navHotCount">0</b></button>
-        <button class="nav-item" data-view="groups"><svg><use href="#i-layers"/></svg><span>群组管理</span></button>
-        <button class="nav-item" data-view="vip"><svg><use href="#i-shield"/></svg><span>VIP 管理</span><b class="nav-count amber" id="navVipCount">0</b></button>
+        <button class="nav-item" data-view="customers"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-users"/></svg><span>客户中心</span><b class="nav-count muted" id="navCustomerCount">0</b></button>
+        <button class="nav-item" data-view="segments"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-grid"/></svg><span>分类视图</span></button>
+        <button class="nav-item" data-view="hot"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-message"/></svg><span>热聊管理</span><b class="nav-count coral" id="navHotCount">0</b></button>
+        <button class="nav-item" data-view="groups"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-users-group"/></svg><span>群组管理</span></button>
+        <button class="nav-item" data-view="vip"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-crown"/></svg><span>VIP 管理</span><b class="nav-count amber" id="navVipCount">0</b></button>
         <div class="nav-group-label">业务数据</div>
-        <button class="nav-item" data-view="tickets"><svg><use href="#i-trending"/></svg><span>跟票管理</span><b class="nav-count muted" id="navTicketCount">0</b></button>
-        <button class="nav-item" data-view="registrations"><svg><use href="#i-users"/></svg><span>报名统计</span><b class="nav-count muted" id="navRegistrationCount">0</b></button>
-        <button class="nav-item" data-view="deposits"><svg><use href="#i-wallet"/></svg><span>入金管理</span></button>
-        <button class="nav-item" data-view="analytics"><svg><use href="#i-chart"/></svg><span>统计分析</span></button>
+        <button class="nav-item" data-view="tickets"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-trending"/></svg><span>跟票管理</span><b class="nav-count muted" id="navTicketCount">0</b></button>
+        <button class="nav-item" data-view="registrations"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-calendar"/></svg><span>报名统计</span><b class="nav-count muted" id="navRegistrationCount">0</b></button>
+        <button class="nav-item" data-view="deposits"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-wallet"/></svg><span>入金管理</span></button>
+        <button class="nav-item" data-view="analytics"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-chart"/></svg><span>统计分析</span></button>
         <div class="nav-group-label">系统管理</div>
-        <button class="nav-item" data-view="ws-workbench" id="wsWorkbenchNav"><svg><use href="#i-message"/></svg><span>WS 工作台</span><i class="live-dot"></i></button>
-        <button class="nav-item" id="gptAssistantNav"><svg><use href="#i-spark"/></svg><span>GPT 运营助手</span><i class="live-dot"></i></button>
-        <button class="nav-item" data-view="automation"><svg><use href="#i-spark"/></svg><span>本地自动化</span><i class="live-dot"></i></button>
-        <button class="nav-item" data-view="quality"><svg><use href="#i-shield"/></svg><span>数据治理</span><b class="nav-count amber" id="navQualityCount">0</b></button>
-        <button class="nav-item" data-view="data"><svg><use href="#i-database"/></svg><span>数据中心</span></button>
-        <button class="nav-item" data-view="activity"><svg><use href="#i-history"/></svg><span>操作记录</span></button>
-        <button class="nav-item" data-view="recycle"><svg><use href="#i-x"/></svg><span>回收站</span></button>
-        <button class="nav-item" data-view="settings"><svg><use href="#i-settings"/></svg><span>系统设置</span></button>
-        <button class="nav-item" data-view="phone-registry"><svg><use href="#i-phone"/></svg><span>手机号登记</span><b class="nav-count muted" id="navPhoneRegistryCount">0</b></button>
+        <button class="nav-item" data-view="ws-workbench" id="wsWorkbenchNav"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-chat-stack"/></svg><span>WS 工作台</span><i class="live-dot"></i></button>
+        <button class="nav-item" data-view="gpt" id="gptAssistantNav"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-spark"/></svg><span>GPT 运营助手</span><i class="live-dot"></i></button>
+        <button class="nav-item" data-view="automation"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-workflow"/></svg><span>本地自动化</span><i class="live-dot"></i></button>
+        <button class="nav-item" data-view="quality"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-shield"/></svg><span>数据治理</span><b class="nav-count amber" id="navQualityCount">0</b></button>
+        <button class="nav-item" data-view="data"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-database"/></svg><span>数据中心</span></button>
+        <button class="nav-item" data-view="activity"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-history"/></svg><span>操作记录</span></button>
+        <button class="nav-item" data-view="recycle"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-trash"/></svg><span>回收站</span></button>
+        <button class="nav-item" data-view="settings"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-settings"/></svg><span>系统设置</span></button>
+        <button class="nav-item" data-view="phone-registry"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-phone"/></svg><span>手机号登记</span><b class="nav-count muted" id="navPhoneRegistryCount">0</b></button>
       </nav>
       <div class="sidebar-bottom">
-        <div class="storage-card"><div class="storage-icon"><svg><use href="#i-database"/></svg></div><div class="storage-copy"><strong id="storageModeTitle">本机存储正常</strong><span id="storageModeSubtitle">批量写入前自动快照</span></div><span class="status-dot"></span></div>
-        <button class="profile-button" title="管理本地管理员头像" aria-label="管理本地管理员头像"><div class="profile-avatar">管</div><div><strong id="adminName">本地管理员</strong><span>个人工作区</span></div><svg><use href="#i-more"/></svg></button>
+        <div class="storage-card"><div class="storage-icon"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-database"/></svg></div><div class="storage-copy"><strong id="storageModeTitle">本机存储正常</strong><span id="storageModeSubtitle">批量写入前自动快照</span></div><span class="status-dot"></span></div>
+        <button class="profile-button" title="管理本地管理员头像" aria-label="管理本地管理员头像"><div class="profile-avatar">管</div><div><strong id="adminName">本地管理员</strong><span>个人工作区</span></div><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-more"/></svg></button>
       </div>
     </aside>
 
     <main class="main-area">
       <header class="topbar">
-        <div class="breadcrumbs"><span>工作台</span><svg><use href="#i-chevron-right"/></svg><strong id="crumbCurrent">今日工作台</strong></div>
+        <nav class="workspace-switcher" aria-label="工作台切换">
+          <button type="button" class="workspace-tab active" data-workspace-target="main" aria-pressed="true"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-chart"/></svg><span>知客工作台</span></button>
+          <button type="button" class="workspace-tab" data-workspace-target="ws" aria-pressed="false"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-chat-stack"/></svg><span>WS 工作台</span></button>
+        </nav>
+        <div class="breadcrumbs"><span>工作台</span><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-chevron-right"/></svg><strong id="crumbCurrent">今日工作台</strong></div>
         <div class="home-top-title"><h1>今日工作台</h1><span>AI 驱动的客户跟进与业务增长工作台</span></div>
         <div class="top-actions">
-          <button class="global-search" id="globalSearch"><svg><use href="#i-search"/></svg><span>搜索客户、号码、群编号</span><kbd>Ctrl K</kbd></button>
+          <button class="global-search" id="globalSearch" aria-label="搜索客户、号码、群编号"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-search"/></svg><span>搜索客户、号码、群编号</span><kbd>Ctrl K</kbd></button>
           <div class="offline-pill"><span class="status-dot"></span><span id="storageModeBadge">本机优先</span></div>
-          <button class="top-icon" id="shortcutButton" title="快捷键与使用帮助" aria-label="快捷键与使用帮助">?</button>
-          <button class="top-icon" id="backupButton" title="立即备份"><svg><use href="#i-cloud-down"/></svg></button>
-          <span class="sync-status online" id="syncStatus" title="所有页面共享同一份本机数据库">已保存到本机</span><button class="top-icon notification-button" id="notificationButton" title="本地提醒" aria-label="本地提醒"><svg><use href="#i-bell"/></svg><i></i></button>
+          <button class="top-icon" id="shortcutButton" title="快捷键与使用帮助" aria-label="快捷键与使用帮助"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-help-circle"/></svg></button>
+          <button class="top-icon" id="appearanceButton" title="外观偏好" aria-label="外观偏好"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-sun"/></svg></button>
+          <button class="top-icon" id="backupButton" title="立即备份" aria-label="立即备份"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-cloud-down"/></svg></button>
+          <span class="sync-status online" id="syncStatus" title="所有页面共享同一份本机数据库">已保存到本机</span><button class="top-icon notification-button" id="notificationButton" title="本地提醒" aria-label="本地提醒"><svg class="zk-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-bell"/></svg><i></i></button>
           <button class="top-avatar" title="管理本地管理员头像" aria-label="管理本地管理员头像">管</button>
         </div>
       </header>
@@ -91,7 +96,15 @@
   <div class="modal-backdrop hidden" id="modalBackdrop">
     <section class="modal" id="modal" role="dialog" aria-modal="true"></section>
   </div>
-  <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a5 5 0 0 1 5-5h6a5 5 0 0 1 5 5v2"/></symbol>
+    <symbol id="i-users-group" viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M2 20v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2M16 4a3 3 0 0 1 0 6m2 4a4 4 0 0 1 4 4v2"/></symbol>
+    <symbol id="i-kanban" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 8v5m6-5v8"/></symbol>
+    <symbol id="i-clipboard-check" viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="4" rx="1.5"/><path d="M8 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2m-8 9 3 3 5-6"/></symbol>
+    <symbol id="i-crown" viewBox="0 0 24 24"><path d="m3 7 4.5 4L12 5l4.5 6L21 7l-2 10H5zM6 21h12"/></symbol>
+    <symbol id="i-workflow" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="6" rx="1.5"/><rect x="14" y="15" width="7" height="6" rx="1.5"/><path d="M10 6h5a3 3 0 0 1 3 3v3M6 9v6a3 3 0 0 0 3 3h2"/></symbol>
+    <symbol id="i-chat-stack" viewBox="0 0 24 24"><path d="M16 3H6a3 3 0 0 0-3 3v11l4-3h9a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3zM8 18h9l4 3v-8M7 8.5h8"/></symbol>
+    <symbol id="i-help-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.7 2.2c-.8.5-1.2 1-1.2 1.8m0 3h.01"/></symbol>
     <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1z"/></symbol>
     <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></symbol>
     <symbol id="i-zap" viewBox="0 0 24 24"><path d="m13 2-3 9h7L9 22l2-9H5z"/></symbol>
@@ -133,6 +146,10 @@
   <script src="./vendor/xlsx/xlsx.js"></script>
   <script src="./modules/ticket-record-core.js"></script>
   <script src="./modules/business-rule-core.js"></script>
+  <script src="./modules/ws-scope.js"></script>
+  <script src="./modules/workspace-shell.js"></script>
+  <script src="./modules/metrics-charts.js"></script>
+  <script src="./modules/customer-avatar.js"></script>
   <script src="./app.js"></script>
   <script src="./modules/operations-core.cjs"></script>
   <script src="./modules/operations-ui.js"></script>
@@ -148,8 +165,13 @@
   <script src="./modules/business-enhancements.js"></script>
   <script src="./modules/accessibility-enhancements.js"></script>
   <script src="./modules/ws-workbench-core.js"></script>
+  <script src="./modules/ai-job-pipeline-core.js"></script>
+  <script src="./modules/ai-crm-suggestion-core.js"></script>
+  <script src="./modules/ai-review-center-ui.js"></script>
   <script src="./modules/ws-crm-sync-core.js"></script>
   <script src="./modules/hot-chat-profile-core.js"></script>
+  <script src="./modules/ws-business-pages.js"></script>
+  <script src="./modules/ws-group-reading-ui.js"></script>
   <script src="./modules/ws-workbench.js"></script>
   <script src="./modules/desktop-host.js"></script>
   <script src="./modules/scroll-coordinator.js"></script>

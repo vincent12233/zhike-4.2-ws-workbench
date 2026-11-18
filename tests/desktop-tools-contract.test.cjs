@@ -6,7 +6,10 @@ const path = require('node:path');
 
 const repo = path.resolve(__dirname, '..');
 const service = fs.readFileSync(path.join(repo, 'desktop/src/Zhike.Desktop/Services/DesktopToolsService.cs'), 'utf8');
+const retention = fs.readFileSync(path.join(repo, 'desktop/src/Zhike.Desktop/Services/BackupRetention.cs'), 'utf8');
+const envelope = fs.readFileSync(path.join(repo, 'desktop/src/Zhike.Desktop/Services/NativeBackupEnvelope.cs'), 'utf8');
 const host = fs.readFileSync(path.join(repo, 'desktop/src/Zhike.Desktop/Views/LegacyUiHostPage.xaml.cs'), 'utf8');
+const accountStore = fs.readFileSync(path.join(repo, 'desktop/src/Zhike.Desktop/Services/WsAccountStore.cs'), 'utf8');
 const productivity = fs.readFileSync(path.join(repo, 'resources/app/modules/productivity.js'), 'utf8');
 const app = fs.readFileSync(path.join(repo, 'resources/app/app.js'), 'utf8');
 const ws = fs.readFileSync(path.join(repo, 'resources/app/modules/ws-workbench.js'), 'utf8');
@@ -39,18 +42,51 @@ assert.match(service, /SendJsonAsync\("api\/state"/);
 assert.match(service, /api\/ws\/export\?accountId=/);
 assert.match(service, /state\["wsAccounts"\] = wsAccounts/);
 assert.match(service, /state\["wsAccountMetadata"\] = wsAccountMetadata/);
+assert.match(service, /WS 会话导出失败，未生成不完整备份/);
+assert.doesNotMatch(service, /if \(!response\.Ok \|\| response\.Data is null\) continue/, 'account export failures must not write a partial backup');
+assert.match(service, /NativeBackupEnvelope\.ValidateWorkspace\(state\)/);
+assert.match(service, /NativeBackupEnvelope\.ValidateWsAccount\(node\)/);
+assert.match(service, /NativeBackupEnvelope\.ValidateAccountIds\(accounts\.Select/);
+assert.doesNotMatch(service, /GetWsAccountsAsync\(cancellationToken\) \?\? \[\]/);
+assert.match(service, /NativeBackupEnvelope\.Create\(state, _json\)/);
+assert.match(service, /state\["backupFormat"\] = "zhike-6-workspace"/);
+assert.match(envelope, /MaxWorkspaceBytes = 95 \* 1024 \* 1024/);
+assert.match(envelope, /MaxWsAccountBytes = 48 \* 1024 \* 1024/);
+assert.match(envelope, /"zhike-6-native-workspace"/);
+assert.match(app, /decodeWorkspaceBackupFile\(await file\.text\(\)\)/);
 assert.match(app, /Object\.entries\(backup\.wsAccounts\)/);
 assert.match(app, /wsAccountMetadata/);
 assert.match(app, /window\.zhikeDesktop\.wsAccounts\(\{action:'create'/);
+assert.match(app, /rollbackCreatedWsAccounts\(createdNativeIds,createdServerIds\)/);
+assert.match(app, /existingNativeIds=new Set\(nativeList\.accounts/);
+assert.doesNotMatch(app.slice(app.indexOf('  async function restoreBackupFile(file){'), app.indexOf('  function saveIntake(){')), /activity\(`从备份恢复/, 'restore must not enqueue a competing state write before its versioned PUT');
+const forgetStart = host.indexOf('if (action == "forget")');
+const forgetEnd = host.indexOf('if (action != "create")', forgetStart);
+assert.ok(forgetStart >= 0 && forgetEnd > forgetStart);
+const forget = host.slice(forgetStart, forgetEnd);
+assert.match(forget, /await ReleaseForgottenWsAccountAsync\(forgottenId, cancellationToken\);[\s\S]*await _wsAccountStore\.UpdateAsync\(rows => rows\.Where\(item => !item\.Id\.Equals\(forgottenId, StringComparison\.OrdinalIgnoreCase\)\), cancellationToken\);[\s\S]*App\.WsRuntime\.RemoveAccount\(forgottenId\);/,
+  'Restore rollback closes only the requested account, then removes its index entry and runtime registration');
+assert.doesNotMatch(forget, /File\.Delete|Directory\.Delete|ClearProfile|DeleteProfile/,
+  'Restore rollback must retain the account profile');
+const updateStart = accountStore.indexOf('Task<IReadOnlyList<StoredWsAccount>> UpdateAsync(');
+const updateEnd = accountStore.indexOf('private async Task<IReadOnlyList<StoredWsAccount>> ReadAsync(', updateStart);
+assert.ok(updateStart >= 0 && updateEnd > updateStart);
+assert.match(accountStore.slice(updateStart, updateEnd), /await _gate\.WaitAsync\(cancellationToken\);[\s\S]*await ReadAsync\(cancellationToken\)[\s\S]*Normalize\(change\(current\)\)[\s\S]*await WriteAsync\(updated, cancellationToken\)[\s\S]*finally \{ _gate\.Release\(\); \}/,
+  'Index rollback changes the latest account set while the store gate is held');
+assert.match(ws, /ensureWsBackupAccount\(accountId, displayName\)/);
+assert.match(ws, /deleteWsBackupAccount\(accountId\)/);
 assert.match(ws, /exportWsData\(accountId = ''\)/);
 assert.match(ws, /importWsData\(value, accountId = ''\)/);
 assert.match(service, /File\.WriteAllBytesAsync\(temporaryPath/);
 assert.match(service, /File\.Move\(temporaryPath, finalPath, overwrite: false\)/);
-assert.match(service, /SearchOption\.TopDirectoryOnly/);
-assert.match(service, /Path\.GetFileName\(path\)\.StartsWith\(BackupPrefix/);
+assert.match(service, /BackupRetention\.Retain\(directory, config\.Keep\)/);
+assert.match(retention, /SearchOption\.TopDirectoryOnly/);
+assert.match(retention, /ManagedName\.IsMatch\(Path\.GetFileName\(path\)\)/);
+assert.match(retention, /\[0-9\]\{8\}_\[0-9\]\{9\}\\\.json/);
+assert.match(retention, /CultureInfo\.InvariantCulture/);
 assert.match(service, /Math\.Clamp\(keep, 3, 100\)/);
 assert.match(service, /Math\.Clamp\(minutes, 15, 1440\)/);
-assert.doesNotMatch(service, /Directory\.Delete\([^\n]*recursive\s*:\s*true/);
+assert.doesNotMatch(retention, /Directory\.Delete\([^\n]*recursive\s*:\s*true/);
 
 // Notifications use the supported Windows App SDK path for an unpackaged
 // WinUI app and redact both compact and visually formatted phone numbers from

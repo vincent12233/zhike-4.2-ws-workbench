@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "source": "Windows Stage 5.1 isolated acceptance resource and event counters",
+  "sourceArchiveHashesMatch": true,
+  "scope": "Only resource samples, observation contexts, operation ledgers and bounded native event counters for the three named PIDs",
+  "files": [
+    {
+      "file": "s3-resource-41092.jsonl",
+      "bytes": 592656,
+      "sha256": "0b14365f946fecad93b6439985fed1b2a4d0d81cb1d5de0746096b9f8362c816"
+    },
+    {
+      "file": "s3-resource-41092.context.json",
+      "bytes": 1998,
+      "sha256": "6ca40457eb94e513874e0f95fa310dbf5796d903171b995586d72e63ffe253d9"
+    },
+    {
+      "file": "s3-resource-41092.operations.jsonl",
+      "bytes": 943,
+      "sha256": "91bcf1e2482abf9f6d6bcf274da4e5c7c1fa95c7b27325f557689a2a03104d19"
+    },
+    {
+      "file": "native-event-counts-41092.json",
+      "bytes": 1970,
+      "sha256": "c2be6316f4ba8819af6c1b10b04d037f6a812e67f664f055edb5be4f714e65ea"
+    },
+    {
+      "file": "s3-resource-37872.jsonl",
+      "bytes": 1050428,
+      "sha256": "6d3a2613f1fee6e2ff0fadf17bd8a876d0df6231fc78a5d06135c1548b72ec07"
+    },
+    {
+      "file": "s3-resource-37872.context.json",
+      "bytes": 2013,
+      "sha256": "dabc75d2e6c75f626f55b016021bdb4c18c521d1c664192c7c3cf433e23b93c1"
+    },
+    {
+      "file": "s3-resource-37872.operations.jsonl",
+      "bytes": 1881,
+      "sha256": "fd223b477fe1897a05efb6b960655d84c63880a9620edbfc621709dbcbd4614b"
+    },
+    {
+      "file": "native-event-counts-37872.json",
+      "bytes": 2035,
+      "sha256": "ccb82817fdac3b3cb38f6c1d13f69ba654a0542af16e2dc9626cad2c5bdd295c"
+    },
+    {
+      "file": "s3-resource-39916.jsonl",
+      "bytes": 138214,
+      "sha256": "bbe19dac6313ac96b09868ff4f9292150b64927c40084347e5d9508fb7dbaded"
+    },
+    {
+      "file": "s3-resource-39916.context.json",
+      "bytes": 1991,
+      "sha256": "8b531e937609cf4981f3aefd061833581754c9415c64074e2cadb2859e5207c1"
+    },
+    {
+      "file": "s3-resource-39916.operations.jsonl",
+      "bytes": 309,
+      "sha256": "61301f8bb07af18be2a67301e7211fa7bc5f321b2aeed25d06cc55eec3bc1306"
+    },
+    {
+      "file": "native-event-counts-39916.json",
+      "bytes": 1537,
+      "sha256": "f8abafc2c41678861c2cd978cd7cb1130726884490af9de59c2b1047940711db"
+    }
+  ]
+}

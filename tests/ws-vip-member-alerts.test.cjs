@@ -57,7 +57,7 @@ function inspect(fn) {
     settings:{ operatingTasks:[] }, tickets:[], deposits:[], followups:[], activities:[],
   });
   await call('/api/ws/ingest/batch', {
-    checkpoints:[{ conversationKey:'vip-two-members@g.us', conversationType:'vip_group', vipGroup:true, isGroup:true, displayName:'VIP Two Members', unreadCount:0, historyLoaded:true, historyMessageCount:2, coverage:'read-history', directionVersion:4, directionUnresolvedCount:0, lastMessageFingerprint:'vip-list' }],
+    checkpoints:[{ conversationKey:'vip-two-members@g.us', conversationType:'vip_group', vipGroup:true, isGroup:true, displayName:'VIP Two Members', unreadCount:0, historyLoaded:true, historyMessageCount:2, coverage:'read-history', directionVersion:4, directionUnresolvedCount:0, historyFingerprint:'vip-list', lastMessageFingerprint:'vip-list' }],
     messages:[
       { conversationKey:'vip-two-members@g.us', conversationType:'vip_group', externalMessageId:'member-one', body:'I manage a shop', direction:'incoming', directionSource:'class-message-in', senderId:'919876543210@c.us', senderPhone:'9876543210', senderName:'Member One', senderIdentitySource:'sender-jid', sentAt:'2026-11-13T10:01:00Z' },
       { conversationKey:'vip-two-members@g.us', conversationType:'vip_group', externalMessageId:'member-two', body:'I work in banking', direction:'incoming', directionSource:'class-message-in', senderId:'911111111111@c.us', senderPhone:'1111111111', senderName:'Member Two', senderIdentitySource:'sender-jid', sentAt:'2026-11-13T10:02:00Z' },
@@ -108,7 +108,7 @@ function inspect(fn) {
   assert.equal(alerts.find(item => item.customerId === 'C2').analysisId, second.analysis.id);
   assert.equal(alerts.find(item => item.customerId === 'C1').id, initialAlertIds.get('C1'), 'new analysis updates the member alert');
   assert.equal(alerts.find(item => item.customerId === 'C2').id, initialAlertIds.get('C2'), 'other member alert remains intact');
-  const direct = await call('/api/ws/conversations', { externalId:'9876000000', title:'Direct Customer', conversationType:'direct' });
+  const direct = await call('/api/ws/conversations', { externalId:'9876000000', title:'Direct Customer', conversationType:'direct', unreadCount:0, data:{ conversationType:'direct', historyLoaded:true, historyFingerprint:'direct-history', lastMessageFingerprint:'direct-history', directionVersion:4 } });
   await call('/api/ws/analyses', { conversationId:direct.id, result:{ summary:'Direct customer asks for a call', confidence:.9, followupStrategy:{ shouldFollowUp:true, priorityScore:55, reason:'Customer requested a call', objective:'Return call' } }, confidence:.9 });
   const directState = await call('/api/state');
   directState.settings.operatingTasks.unshift({ id:'legacy-direct-task', aiGenerated:true, wsAccountId:'default', wsConversationId:direct.id, customerId:'C3', due:'2020-01-01', done:false, status:'open' });

@@ -1,0 +1,1 @@
+{"status":"Passed","checkedAtUtc":"2026-11-18T07:19:10.3984214Z","evidenceFile":"completion-r3-close-identities.jsonl","observedProcessIdentities":9,"remainingCount":0,"remainingProcesses":[],"unverifiedCount":0,"unverifiedProcesses":[],"processTerminatedByCheck":false,"scope":"read-only process identity checks after application close"}

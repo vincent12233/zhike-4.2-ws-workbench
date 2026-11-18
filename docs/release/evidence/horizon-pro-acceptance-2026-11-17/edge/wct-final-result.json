@@ -1,0 +1,95 @@
+{
+  "scope": "Three bounded original-flags isolated Edge observations after full regression; native acceptance app may have been open but was not manipulated",
+  "records": [
+    {
+      "case": 1,
+      "invocation": "1794925832940-046f7586-3eed-4c39-9752-bcf69b0ebd33",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 5430,
+      "resultCases": 6,
+      "closeAcknowledgedMs": 3935,
+      "transportClosedMs": 3939,
+      "processExitMs": 4927,
+      "closeToExitMs": 992,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "forceTerminated": false,
+      "cleanupSafe": true,
+      "tempRootAbsent": true,
+      "waitChain": {
+        "status": "NotTested",
+        "reason": "No completed WCT output; browser naturally exited in this observation"
+      },
+      "metadataFile": ".tools\\acceptance-followup-edge\\1794925832940-046f7586-3eed-4c39-9752-bcf69b0ebd33.json"
+    },
+    {
+      "case": 2,
+      "invocation": "1794925838777-b7a8762f-0a95-4406-8bee-18447135359f",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 20887,
+      "resultCases": 6,
+      "closeAcknowledgedMs": 5224,
+      "transportClosedMs": 5229,
+      "processExitMs": 20348,
+      "closeToExitMs": 15124,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "forceTerminated": false,
+      "cleanupSafe": true,
+      "tempRootAbsent": true,
+      "waitChain": {
+        "status": "Blocked",
+        "elapsedMs": 7857,
+        "probeProcessExit": 1,
+        "reason": "Windows PowerShell script execution policy refused the diagnostic before WCT could execute"
+      },
+      "metadataFile": ".tools\\acceptance-followup-edge\\1794925838777-b7a8762f-0a95-4406-8bee-18447135359f.json"
+    },
+    {
+      "case": 3,
+      "invocation": "1794925860055-37815b50-cae8-4a16-85b3-84ffd2399133",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 6397,
+      "resultCases": 6,
+      "closeAcknowledgedMs": 4097,
+      "transportClosedMs": 4101,
+      "processExitMs": 5868,
+      "closeToExitMs": 1771,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "forceTerminated": false,
+      "cleanupSafe": true,
+      "tempRootAbsent": true,
+      "waitChain": {
+        "status": "Blocked",
+        "elapsedMs": 6567,
+        "probeProcessExit": 1,
+        "reason": "Windows PowerShell script execution policy refused the diagnostic before WCT could execute"
+      },
+      "metadataFile": ".tools\\acceptance-followup-edge\\1794925860055-37815b50-cae8-4a16-85b3-84ffd2399133.json"
+    }
+  ],
+  "waitChainSecurity": {
+    "recheckLog": "wct-interpreter-recheck.log",
+    "recheckTarget": "Own controlled PowerShell process, not application memory",
+    "result": "SecurityError / UnauthorizedAccess: running scripts is disabled",
+    "policyChanged": false,
+    "elevation": false,
+    "executionPolicyBypass": false
+  },
+  "conclusion": "3/3 browser lifecycle observations passed; one long close was observed, but no valid hung wait chain was obtained. Underlying intermittent Edge shutdown cause remains unverified.",
+  "production": "FROZEN",
+  "s3Gate": "No change inferred"
+}

@@ -37,7 +37,7 @@ assert.match(phoneRegistry, /flushStateWrites/);
 assert.match(index, /data-view="vip"/);
 assert.match(index, /data-view="groups"[\s\S]{0,300}data-view="vip"/);
 assert.match(app, /vipNumber/);
-assert.equal(pkg.version, '6.0.1');
+assert.equal(pkg.version, server.match(/const APP_VERSION = '([^']+)'/)?.[1]);
 assert.equal(pkg.zhikeRuntime.storage, 'SQLite');
 assert.match(setup, /OutputBaseFilename=知客-\{#AppVersion\}-WinUI桌面版/);
 assert.equal(exists('resources/app/modules/phone-registry-seed.json'), false);

@@ -1,0 +1,71 @@
+{
+  "mode": "close-launch-tab-first",
+  "evidence": "[STABILITY_WORKTREE]\\.tools\\v41-edge-investigation\\targets\\close-launch-tab-first-em3LT6",
+  "code": 0,
+  "status": "Passed",
+  "elapsedMs": 27083,
+  "timeoutMs": 30000,
+  "resultSha256": "9aa006d55d26f227de0b550e656066e44f30f3da72d1ed00641d87efd711675a",
+  "events": [
+    {
+      "event": "experiment-launch-pages",
+      "elapsedMs": 2752,
+      "count": 1,
+      "fixture": false,
+      "launchBlank": true,
+      "other": []
+    },
+    {
+      "event": "result-verified",
+      "elapsedMs": 10032,
+      "cases": 6
+    },
+    {
+      "event": "experiment-before-fixture-close",
+      "elapsedMs": 10129,
+      "count": 2,
+      "fixture": true,
+      "launchBlank": true,
+      "other": []
+    },
+    {
+      "event": "experiment-launch-tab-close-acknowledged",
+      "elapsedMs": 10130
+    },
+    {
+      "event": "experiment-before-browser-close",
+      "elapsedMs": 10281,
+      "count": 0,
+      "fixture": false,
+      "launchBlank": false,
+      "other": []
+    },
+    {
+      "event": "browser-close-acknowledged",
+      "elapsedMs": 10309,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "cdp-transport-closed",
+      "elapsedMs": 10313,
+      "code": 1000
+    },
+    {
+      "event": "experiment-owned-os-identity-sample",
+      "elapsedMs": 14960,
+      "exactCount": 1,
+      "rootAlive": true
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 27016,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 27023
+    }
+  ],
+  "outstanding": 0
+}

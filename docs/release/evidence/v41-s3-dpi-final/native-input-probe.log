@@ -1,0 +1,13 @@
+Commit: 8362d83
+Node: v24.22.1
+Command: node --test scripts/stage51/native-input-probe.test.cjs
+✔ isolated HUD correlates each trusted wheel, observes settled offsets, and reports controlled frames (9.9052ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 135.1615
+Exit code: 0

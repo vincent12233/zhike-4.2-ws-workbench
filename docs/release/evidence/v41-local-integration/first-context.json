@@ -1,0 +1,6 @@
+{
+  "Head": "22382a204bb5e29f3b474f6139df532b61cc96d6",
+  "StartUtc": "2026-11-18T09:43:33.1970491Z",
+  "Command": "resources/app/node.exe scripts/run-tests.cjs all",
+  "ParallelHeavyTests": false
+}

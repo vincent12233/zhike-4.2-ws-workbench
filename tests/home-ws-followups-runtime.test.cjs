@@ -17,7 +17,7 @@ const end = source.indexOf('\n  function renderHome()', start);
 assert.ok(start >= 0 && end > start, 'home follow-up loader must remain extractable for the runtime regression');
 
 const loaderSource = source.slice(start, end);
-const deeplinkStart = source.indexOf("  document.addEventListener('click',event=>{if(event.target.closest('[data-action=\"retry-home-ai\"]'))loadHomeWsFollowups();");
+const deeplinkStart = source.indexOf("  document.addEventListener('click',event=>{if(event.target.closest('[data-action=\"retry-home-ai\"]'))scheduleHomeWsFollowups({immediate:true});");
 const deeplinkEnd = source.indexOf('\n', deeplinkStart);
 assert.ok(deeplinkStart >= 0 && deeplinkEnd > deeplinkStart, 'home follow-up deep-link handler must remain extractable for the runtime regression');
 const deeplinkSource = source.slice(deeplinkStart, deeplinkEnd).trim();
@@ -67,6 +67,11 @@ function deferred() {
   return { promise, resolve, reject };
 }
 
+class TestAbortController {
+  constructor() { this.signal = { aborted: false }; }
+  abort() { this.signal.aborted = true; }
+}
+
 const state = { view: 'home', customers: [], settings: { operatingTasks: [] } };
 const windowObject = {};
 const sandbox = {
@@ -79,7 +84,7 @@ const sandbox = {
   },
   esc: value => String(value == null ? '' : value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character])),
   icons: name => `<i>${name}</i>`,
-  Promise, Number, Array, Error,
+  Promise, Number, Array, Error, AbortController: TestAbortController,
 };
 vm.runInNewContext(`${loaderSource}\n  globalThis.__loadHomeWsFollowups=loadHomeWsFollowups;`, sandbox, { filename: 'app-home-followups-runtime.js' });
 const loadHomeWsFollowups = sandbox.__loadHomeWsFollowups;
@@ -204,7 +209,7 @@ const loadHomeWsFollowups = sandbox.__loadHomeWsFollowups;
     document: { addEventListener(type, handler, capture) { assert.equal(type, 'click'); assert.equal(capture, true); deeplinkClick = handler; } },
     state,
     window: windowObject,
-    loadHomeWsFollowups() { throw new Error('task deep-link must not trigger retry loading'); },
+    scheduleHomeWsFollowups() { throw new Error('task deep-link must not trigger retry loading'); },
   }, { filename: 'app-home-followups-deeplink-runtime.js' });
   assert.equal(typeof deeplinkClick, 'function');
   const deepLinkButton = { dataset: { taskId: 'task-new' } };

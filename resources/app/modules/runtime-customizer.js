@@ -56,12 +56,12 @@
     const panel = document.createElement('section');
     panel.id = 'transferGuide';
     panel.className = 'panel transfer-guide';
-    panel.innerHTML = `<div class="panel-heading"><h2 class="panel-title">换机迁移</h2><span class="panel-note">随时更换 Windows 电脑</span></div>
+    panel.innerHTML = `<div class="panel-heading"><h2 class="panel-title">业务 JSON 备份与恢复</h2><span class="panel-note">业务记录备份 · 非完整设备迁移</span></div>
       <div class="transfer-steps">
-        <article><span class="transfer-number">1</span><h3>旧电脑：导出完整备份</h3><p>包含客户、跟进、报名、跟票、入金、任务及工作区设置。请保存到你能在新电脑访问的位置。</p><button class="btn primary" data-action="backup">导出完整 JSON 备份</button></article>
+        <article><span class="transfer-number">1</span><h3>旧电脑：导出业务备份</h3><p>备份客户、跟进、报名、跟票、入金等本地业务记录。此入口不覆盖全部 WS、AI 账本、媒体文件及设备设置。</p><button class="btn primary" data-action="backup">导出业务 JSON 备份</button></article>
         <article><span class="transfer-number">2</span><h3>新电脑：选择备份恢复</h3><p>打开工作台后选择 JSON 文件。系统会检查格式、展示数量差异，并在替换前保存当前工作区快照。</p><button class="btn" data-action="import-backup">选择备份并预览</button></article>
         <article><span class="transfer-number">3</span><h3>恢复后：核对资料</h3><p>核对客户与业务记录数量、任务和设置。GPT API Key 请重新填写；自动快照仅用于原工作区回退。</p><button class="btn" id="transferVerify">查看当前记录数量</button></article>
-      </div><div id="transferStatus" class="transfer-status" role="status" aria-live="polite">完整 JSON 备份用于换机，客户 CSV 仅用于表格交换。</div>`;
+      </div><div id="transferStatus" class="transfer-status" role="status" aria-live="polite">JSON 仅恢复其已包含的业务记录，客户 CSV 仅用于表格交换；完整设备迁移尚未启用。</div>`;
     view.querySelector('.business-summary')?.after(panel);
     panel.querySelector('#transferVerify').addEventListener('click', async () => {
       const status = panel.querySelector('#transferStatus');

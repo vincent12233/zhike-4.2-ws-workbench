@@ -1,0 +1,105 @@
+{"diagnosticRun":true,"runKind":"Full S1 with shutdown logging diagnostics","addedBrowserFlags":["--enable-logging=stderr","--vmodule=application_lifetime=1"],"evidenceFolder":"shutdown-log-1"}
+Isolated visual failure root retained: <USERPROFILE>\AppData\Local\Temp\<ISOLATED-FIXTURE-60>
+Error: Isolated lifecycle deadline reached during process-exit
+    at failure (<USERPROFILE>\Documents\Codex\2026-11-04\new-chat\work\project-review\visual-system-worktrees\integration\tests\helpers\isolated-edge-runner.cjs:17:57)
+    at noteTimeout (<USERPROFILE>\Documents\Codex\2026-11-04\new-chat\work\project-review\visual-system-worktrees\integration\tests\helpers\isolated-edge-runner.cjs:148:12)
+    at Timeout.<anonymous> (<USERPROFILE>\Documents\Codex\2026-11-04\new-chat\work\project-review\visual-system-worktrees\integration\tests\helpers\isolated-edge-runner.cjs:158:82)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7) {
+  code: 'EDGE_RUNNER_TIMEOUT',
+  phase: 'process-exit',
+  metadata: {
+    schemaVersion: 2,
+    invocation: '1795032268359-dac2e78a-cdc0-4340-b118-98359086b25d',
+    mode: 'real-edge-synthetic-layout',
+    scope: 'process lifecycle; caller owns layout assertions',
+    status: 'Failed',
+    timeoutMs: 30000,
+    launchedAt: '2026-11-18T20:04:28.359Z',
+    timebase: 'node-monotonic-ms',
+    startedMonotonicMs: 70623.5376,
+    events: [
+      [Object], [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object]
+    ],
+    identities: [
+      [Object], [Object],
+      [Object], [Object],
+      [Object], [Object],
+      [Object], [Object],
+      [Object], [Object],
+      [Object], [Object],
+      [Object], [Object],
+      [Object], [Object],
+      [Object]
+    ],
+    exit: null,
+    streamsClosed: false,
+    forceTerminated: true,
+    cleanupSafe: false,
+    profile: '<USERPROFILE>\\AppData\\Local\\Temp\\<ISOLATED-FIXTURE-60>\\<ISOLATED-EDGE-PROFILE>',
+    pid: 35240,
+    kernelObserver: {
+      file: '<USERPROFILE>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\edge-exit-fix\\shutdown-log-1\\1795032268359-dac2e78a-cdc0-4340-b118-98359086b25d.kernel.jsonl',
+      pid: 11784
+    },
+    identityProbePid: 18540,
+    resourceReleaseOrder: 'owned-session-target-browser',
+    devToolsReadiness: { polls: 98, enoent: 96, ebusy: 1, partial: 0 },
+    viewport: { width: 1920, height: 1080 },
+    resultCases: 1,
+    resultBytes: 7781,
+    resultSha256: '532b69d600dee5531704232493709dcec78e25b6b847955f0a8ba8e505b2d767',
+    resultFile: '<USERPROFILE>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\edge-exit-fix\\shutdown-log-1\\1795032268359-dac2e78a-cdc0-4340-b118-98359086b25d.result.json',
+    screenshot: {
+      path: '<USERPROFILE>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\edge-exit-fix\\shutdown-log-1\\operations-atelier-dawn.png',
+      bytes: 497403,
+      width: 1920,
+      height: 1080,
+      sha256: '8afdbfad72c211e77ce6531605237c640439992447e9adcfde0a295b985fc609'
+    },
+    resultReady: true,
+    releaseFailure: { code: 'EDGE_RUNNER_TIMEOUT', phase: 'process-exit' },
+    identityProbeTermination: {
+      attempted: true,
+      requested: true,
+      observedClose: null,
+      status: 'unknown'
+    },
+    elapsedMs: 30015.180000000008,
+    shutdownLogObservation: {
+      status: 'Unverified',
+      timebase: 'node-monotonic-ms at complete stderr line receipt',
+      markers: [],
+      scannedChars: 3162,
+      ignoredLongLines: 0,
+      extraMarkers: 0,
+      truncated: false,
+      incompleteLine: false,
+      maxScannedChars: 1048576,
+      maxLineChars: 4096,
+      maxMarkers: 8
+    },
+    stdoutBytes: 0,
+    stderrBytes: 3162,
+    failure: {
+      code: 'EDGE_RUNNER_TIMEOUT',
+      phase: 'process-exit',
+      message: 'Isolated lifecycle deadline reached during process-exit'
+    },
+    evidenceFile: '<USERPROFILE>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\edge-exit-fix\\shutdown-log-1\\1795032268359-dac2e78a-cdc0-4340-b118-98359086b25d.json'
+  },
+  cleanupSafe: false
+}

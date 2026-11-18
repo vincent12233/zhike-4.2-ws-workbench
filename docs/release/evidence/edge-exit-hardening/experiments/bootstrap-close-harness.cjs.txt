@@ -1,0 +1,134 @@
+'use strict';
+
+const assert = require('node:assert/strict');
+const { createHash } = require('node:crypto');
+const fs = require('node:fs');
+const path = require('node:path');
+const Module = require('node:module');
+const vm = require('node:vm');
+
+const repo = path.resolve(__dirname, '../..');
+const runnerPath = path.join(repo, 'tests/helpers/isolated-edge-runner.cjs');
+const fixturePath = path.join(repo, 'scripts/delivery/s1-main-visual.test.cjs');
+
+function baselineSource(filename, blob) {
+  const source = fs.readFileSync(filename, 'utf8').replace(/\r\n/g, '\n');
+  const checksum = createHash('sha1')
+    .update('blob ' + Buffer.byteLength(source) + '\0')
+    .update(source)
+    .digest('hex');
+  assert.equal(checksum, blob, 'Expected unchanged Git blob from 3c35db1: ' + filename);
+  return source;
+}
+
+function replaceOnce(source, anchor, replacement) {
+  const first = source.indexOf(anchor);
+  assert.ok(first !== -1 && source.lastIndexOf(anchor) === first, 'Expected one source anchor: ' + anchor);
+  return source.slice(0, first) + replacement + source.slice(first + anchor.length);
+}
+
+function runnerForExperiment(mode) {
+  let source = baselineSource(runnerPath, '93cfa80916314b0645d88cb78d7d85ff356778d1');
+  source = replaceOnce(source, "this.context.mark('target-destroyed-observed');",
+    'this.context.mark(destruction.destroyedEvent);');
+  source = replaceOnce(source, '  async closeTarget(targetId) {',
+    '  async closeTarget(targetId, bootstrap = false) {');
+  source = replaceOnce(source, '    this.targetDestruction = { targetId, ...destroyed };', [
+    '    const label = bootstrap ? \'bootstrap-target\' : \'target\';',
+    "    this.targetDestruction = { targetId, ...destroyed, destroyedEvent: label + '-destroyed-observed' };",
+  ].join('\n'));
+  source = replaceOnce(source, [
+    "      this.context.mark('target-close-acknowledged');",
+    "      await this.context.wait(destroyed.promise, 'target-destroyed', true);",
+  ].join('\n'), [
+    "      this.context.mark(label + '-close-acknowledged');",
+    "      await this.context.wait(destroyed.promise, label + '-destroyed', !bootstrap);",
+  ].join('\n'));
+
+  // This anchor follows the fresh-profile endpoint validation, PID check and discovery.
+  const createFixture = "      const target = await connection.send('Target.createTarget', { url: 'about:blank' });";
+  source = replaceOnce(source, createFixture, [
+    "      const initial = await connection.send('Target.getTargets');",
+    "      const initialPages = initial.targetInfos.filter(info => info.type === 'page');",
+    "      assert.equal(initialPages.length, 1, 'The owned fresh profile must start with exactly one page');",
+    '      const bootstrap = initialPages[0];',
+    "      assert.equal(bootstrap.url, 'about:blank', 'Only the initial blank page qualifies for this experiment');",
+    "      assert.ok(typeof bootstrap.targetId === 'string' && bootstrap.targetId, 'The initial page must have an exact target ID');",
+    "      context.mark('experiment-bootstrap-target', { targetId: bootstrap.targetId });",
+    createFixture,
+  ].join('\n'));
+  const fixtureCreated = "      context.mark('owned-target-created');";
+  source = replaceOnce(source, fixtureCreated, [
+    fixtureCreated,
+    "      assert.notEqual(ownedTargetId, bootstrap.targetId, 'The newly created fixture must be a distinct target');",
+    "      context.mark('experiment-fixture-target', { targetId: ownedTargetId });",
+    "      const before = await connection.send('Target.getTargets');",
+    "      assert.ok(before.targetInfos.some(info => info.targetId === ownedTargetId && info.type === 'page'), 'The exact fixture page must be live before the experiment');",
+    "      assert.ok(before.targetInfos.some(info => info.targetId === bootstrap.targetId && info.type === 'page' && info.url === 'about:blank'), 'The exact initial page must still be blank before the experiment');",
+    `      if (${JSON.stringify(mode)} === 'B') {`,
+    '        await connection.closeTarget(bootstrap.targetId, true);',
+    "        context.mark('experiment-bootstrap-close-confirmed', { targetId: bootstrap.targetId });",
+    '      }',
+    // The existing attach and fixture checks verify that the exact fixture target survived.
+  ].join('\n'));
+  const browserClose = "      context.mark('owned-browser-close-requested');";
+  return replaceOnce(source, browserClose, [
+    "      const remaining = await connection.send('Target.getTargets');",
+    "      context.mark('experiment-remaining-targets', { targets: remaining.targetInfos.map(({ targetId, type }) => ({ targetId, type })) });",
+    browserClose,
+  ].join('\n'));
+}
+function operationsFixture() {
+  let source = baselineSource(fixturePath, '5c8bd6860d053065b69ce9f2df1c41bdc0658dd3');
+  source = replaceOnce(source,
+    "[['home','atelier-dawn'],['customers','atelier-dawn'],['operations','atelier-dawn'],['home','horizon-night']]",
+    "[['operations','atelier-dawn']]");
+  source = replaceOnce(source, 'Final Pro screenshots: 4 real routes and actual topbar text contrast PASS',
+    'Operations / Atelier Dawn: original screenshot and topbar assertions passed');
+  return replaceOnce(source, 'main().catch(error=>{console.error(error);process.exitCode=1;});', 'module.exports = main();');
+}
+
+function compile(filename, source, dependencies = {}) {
+  const compiled = new Module(filename, module);
+  compiled.filename = filename;
+  compiled.paths = Module._nodeModulePaths(path.dirname(filename));
+  const originalRequire = compiled.require.bind(compiled);
+  compiled.require = name => Object.hasOwn(dependencies, name) ? dependencies[name] : originalRequire(name);
+  compiled._compile(source, filename);
+  return compiled.exports;
+}
+
+async function main() {
+  const [mode, output, dotnet = path.join(repo, '.tools/dotnet10/dotnet.exe')] = process.argv.slice(2);
+  assert.ok(mode === 'A' || mode === 'B' || mode === '--check-sources',
+    'Usage: bootstrap-close-harness.cjs <A|B> <new output directory under .tools/edge-exit-fix> [dotnet.exe]');
+  const fixtureSource = operationsFixture();
+  if (mode === '--check-sources') {
+    for (const arm of ['A', 'B']) new vm.Script(Module.wrap(runnerForExperiment(arm)), { filename: runnerPath });
+    new vm.Script(Module.wrap(fixtureSource), { filename: fixturePath });
+    console.log('Both overlays and the Operations fixture compile. Edge was not started.');
+    return;
+  }
+
+  assert.equal(process.platform, 'win32');
+  assert.ok(output, 'A separate new output directory is required for each invocation');
+  const evidence = path.resolve(repo, output);
+  const relative = path.relative(__dirname, evidence);
+  assert.ok(relative && !relative.startsWith('..') && !path.isAbsolute(relative),
+    'Output must be under .tools/edge-exit-fix');
+  const observerDotnet = path.resolve(repo, dotnet);
+  const observer = path.join(repo, 'scripts/diagnostics/edge-exit-observer/observer/bin/Release/net10.0/Observer.dll');
+  assert.ok(fs.statSync(observerDotnet).isFile() && fs.statSync(observer).isFile(),
+    'The independent Windows exit observer must already be built');
+  const runnerSource = runnerForExperiment(mode);
+  fs.mkdirSync(evidence);
+  process.env.ZHIKE_EDGE_OBSERVER_DOTNET = observerDotnet;
+  process.env.ZHIKE_VISUAL_EVIDENCE = evidence;
+  process.env.ZHIKE_VISUAL_ONLY = 'snapshots';
+  delete process.env.ZHIKE_VISUAL_SNAPSHOTS;
+
+  const runner = compile(runnerPath, runnerSource);
+  await compile(fixturePath, fixtureSource, { '../../tests/helpers/isolated-edge-runner.cjs': runner });
+}
+
+main().catch(error => { console.error(error); process.exitCode = 1; });

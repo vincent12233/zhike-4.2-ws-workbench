@@ -1,0 +1,30 @@
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"queued","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"sending","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"sent","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"failed","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"cancelled","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[PASS] R04 all attachment states retain bytes and references
+[PASS] R04 database failure leaves original bytes intact
+[PASS] R04 cleanup failure has a durable tombstone and explicit retry
+[PASS] R04 legacy audit references and post-cleanup database failure remain recoverable
+[PASS] R01 same-key changed full content is rejected without changing the old plan
+[PASS] R01 legacy rows and maximum-length idempotency keys remain compatible
+[PASS] R02 planning 30 targets does not reserve actual send quota
+[PASS] R03 begin token, per-attachment outcome, unknown blocking and untrusted receipt rejection
+[PASS] R03 concurrent begin grants one token and a proven preflight failure can retry safely
+[PASS] R03 partial attachment attempt plus later failure is unknown and cannot resend
+[OBSERVED] {"scenario":"local-evidence-consistency","httpStatus":200,"storedDeliveryState":"local_attempted"}
+[FAIL] R03 contradictory or missing local-attempt evidence cannot upgrade unknown intent: Expected values to be strictly equal:
+
+200 !== 422
+
+[OBSERVED] {"scenario":"failed-evidence-consistency","httpStatus":200,"retryAllowed":true}
+[FAIL] R03 contradictory or missing preflight evidence cannot authorize retry: Expected values to be strictly equal:
+
+200 !== 409
+
+[PASS] R02 actual attempt reservations are per account and bounded
+[PASS] R03 prepared unknown intent survives a real isolated sidecar restart
+[PASS] R05 24 MiB upper bound and executable signature or extension rejection
+[PASS] R07 AI GET is read-only and explicit legacy recovery does not touch Worker jobs
+{"stage":"5.5C-1A","checks":16,"passed":14,"failed":2,"results":[{"name":"R04 all attachment states retain bytes and references","result":"PASS"},{"name":"R04 database failure leaves original bytes intact","result":"PASS"},{"name":"R04 cleanup failure has a durable tombstone and explicit retry","result":"PASS"},{"name":"R04 legacy audit references and post-cleanup database failure remain recoverable","result":"PASS"},{"name":"R01 same-key changed full content is rejected without changing the old plan","result":"PASS"},{"name":"R01 legacy rows and maximum-length idempotency keys remain compatible","result":"PASS"},{"name":"R02 planning 30 targets does not reserve actual send quota","result":"PASS"},{"name":"R03 begin token, per-attachment outcome, unknown blocking and untrusted receipt rejection","result":"PASS"},{"name":"R03 concurrent begin grants one token and a proven preflight failure can retry safely","result":"PASS"},{"name":"R03 partial attachment attempt plus later failure is unknown and cannot resend","result":"PASS"},{"name":"R03 contradictory or missing local-attempt evidence cannot upgrade unknown intent","result":"FAIL","reason":"Expected values to be strictly equal:\n\n200 !== 422\n"},{"name":"R03 contradictory or missing preflight evidence cannot authorize retry","result":"FAIL","reason":"Expected values to be strictly equal:\n\n200 !== 409\n"},{"name":"R02 actual attempt reservations are per account and bounded","result":"PASS"},{"name":"R03 prepared unknown intent survives a real isolated sidecar restart","result":"PASS"},{"name":"R05 24 MiB upper bound and executable signature or extension rejection","result":"PASS"},{"name":"R07 AI GET is read-only and explicit legacy recovery does not touch Worker jobs","result":"PASS"}],"productionOpened":false,"realWs":false,"paidAi":false,"workerStarted":false}

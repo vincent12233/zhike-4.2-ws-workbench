@@ -1,0 +1,23 @@
+{
+  "codeCommit": "63404b4",
+  "sourceRunnerSha256": "8cfcad97052a8e7d60d3dc6a56d5172bd45bb2696967d5a1dfb007d478af5c86",
+  "total": 298,
+  "passed": 297,
+  "failed": [
+    "Delivery S1 actual main renderers and shared design system"
+  ],
+  "wsIncludedSubset": {
+    "note": "Results from this actual all run, classified by the WS driver; not a separate run.",
+    "total": 164,
+    "passed": 164,
+    "failed": []
+  },
+  "release": {
+    "exit": 0,
+    "warnings": 0,
+    "errors": 0,
+    "elapsedSeconds": 19.9
+  },
+  "production": "FROZEN",
+  "s3": "Blocked"
+}

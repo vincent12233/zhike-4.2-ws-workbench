@@ -1,5 +1,6 @@
 (() => {
   const core = window.ZhikeWsCore;
+  const businessPages = window.ZhikeWsBusinessPages;
   const hotProfileCore = window.ZhikeHotChatProfile || {};
   const getHost = () => window.__zhikeRegistryHost;
   const readPanelCollapsed = panel => {
@@ -11,17 +12,147 @@
   const writePanelCollapsed = (panel, value) => {
     try { localStorage.setItem(`zhike.ws.${panel}.collapsed`, String(Boolean(value))); } catch {}
   };
+  const ASSIST_DRAWER_TABS = new Set(['ai', 'profile', 'reply', 'broadcast', 'export', 'diagnostics']);
+  const WS_WORKSPACE_VIEW_META = Object.freeze([
+    { id: 'overview', label: '工作台首页', icon: 'home', hint: '账号、采集与工作入口' },
+    { id: 'accounts', label: '账号管理', icon: 'phone', hint: '多账号与连接状态' },
+    { id: 'chat', label: '前台聊天', icon: 'chat-stack', hint: '原生 WS 聊天与客户档案' },
+    { id: 'groups', label: '群组管理', icon: 'layers', hint: '群组目录与监测端口' },
+    { id: 'members', label: '群成员管理', icon: 'users-group', hint: '成员事件与 CRM 关系' },
+    { id: 'collection', label: '数据采集', icon: 'database', hint: '采集任务、断点与跳过规则' },
+    { id: 'contacts', label: '通讯录管理', icon: 'user', hint: '已同步联系人与号码核验' },
+    { id: 'ai', label: 'AI助手', icon: 'spark', hint: '队列、证据与分析结果' },
+    { id: 'crm', label: 'CRM客户', icon: 'user', hint: '客户主档匹配与冲突' },
+    { id: 'tasks', label: '任务中心', icon: 'clipboard-check', hint: '跟进任务与提醒' },
+    { id: 'logs', label: '操作日志', icon: 'history', hint: '审计记录、运行快照与关联查询' },
+    { id: 'settings', label: '工具与设置', icon: 'settings', hint: '翻译、导入、导出与安全开关' },
+  ]);
+  const WS_WORKSPACE_VIEW_IDS = new Set(WS_WORKSPACE_VIEW_META.map(item => item.id));
+  function readWsWorkspaceView() {
+    try {
+      const value = localStorage.getItem('zhike.ws.workspace-view');
+      return WS_WORKSPACE_VIEW_IDS.has(value) ? value : 'overview';
+    } catch { return 'overview'; }
+  }
+  function readWsWorkspaceCollapsed() {
+    try {
+      const saved = localStorage.getItem('zhike.ws.workspace-nav-collapsed');
+      return saved == null ? false : saved === 'true';
+    } catch { return false; }
+  }
+  function writeWsWorkspaceState(view, collapsed) {
+    try {
+      const normalized = WS_WORKSPACE_VIEW_IDS.has(view) ? view : 'overview';
+      localStorage.setItem('zhike.ws.workspace-view', normalized);
+      localStorage.setItem('zhike.ws.workspace-nav-collapsed', String(Boolean(collapsed)));
+    } catch {}
+  }
+  function wsWorkspacePageState(view = state?.wsWorkspaceView, accountId = state?.activeAccountId) {
+    const key = `${text(accountId || 'default')}:${WS_WORKSPACE_VIEW_IDS.has(view) ? view : 'overview'}`;
+    if (!state.wsWorkspacePageState[key]) state.wsWorkspacePageState[key] = { scrollTop: 0, filter: '', statusFilter: 'all', page: 1, busy: false, status: '尚未刷新', error: '' };
+    return state.wsWorkspacePageState[key];
+  }
+  function clampAssistDrawerWidth(value) {
+    const numeric = Number(value);
+    return Math.min(620, Math.max(360, Number.isFinite(numeric) ? Math.round(numeric) : 460));
+  }
+  function assistDrawerColumnWidth(layout = $('.ws-layout')) {
+    const desired = clampAssistDrawerWidth(state?.assistDrawerWidth ?? 460);
+    const viewportWidth = Number(window.innerWidth || 0);
+    if (viewportWidth > 0 && viewportWidth <= 900) return desired;
+    const layoutWidth = Number(layout?.getBoundingClientRect?.().width || layout?.clientWidth || viewportWidth || 1280);
+    const leftWidth = state?.wsWorkspaceView === 'chat' ? 0 : state?.leftCollapsed ? 48 : (viewportWidth > 0 && viewportWidth <= 1060 ? 180 : viewportWidth <= 1320 ? 204 : 232);
+    const centerMin = viewportWidth > 0 && viewportWidth <= 1060 ? 300 : 360;
+    const available = Math.floor(layoutWidth - leftWidth - centerMin - 16);
+    return Math.max(250, Math.min(desired, available > 0 ? available : desired));
+  }
+  function normalizeAssistDrawerOffset(value) {
+    const candidate = value && typeof value === 'object' ? value : {};
+    const y = Number(candidate.y);
+    const viewportHeight = Number(window.innerHeight || 900);
+    // The drawer fills its page column. Keep the persisted nudge deliberately
+    // small so its header and close button cannot be dragged off-screen.
+    const maxY = Math.min(64, Math.max(0, viewportHeight - 180));
+    return {
+      // Horizontal movement is intentionally disabled. The drawer must stay
+      // inside the right page column and never overlap the native WS surface.
+      x: 0,
+      y: Number.isFinite(y) ? Math.max(-maxY, Math.min(maxY, Math.round(y))) : 0,
+    };
+  }
+  function readAssistDrawerState(key) {
+    const defaults = { open: Number(window.innerWidth || 1440) >= 1200 && !readPanelCollapsed('right'), tab: 'profile', width: 360, offset: { x: 0, y: 0 } };
+    try {
+      const raw = localStorage.getItem(`zhike.ws.assist-drawer.${key}`);
+      if (raw == null) return defaults[key];
+      if (key === 'open') return raw === 'true';
+      if (key === 'tab') return ASSIST_DRAWER_TABS.has(raw) ? raw : defaults.tab;
+      if (key === 'width') return clampAssistDrawerWidth(raw);
+      if (key === 'offset') return normalizeAssistDrawerOffset(JSON.parse(raw));
+    } catch {}
+    return defaults[key];
+  }
+  function writeAssistDrawerState(key, value) {
+    try {
+      const normalized = key === 'width'
+        ? clampAssistDrawerWidth(value)
+        : key === 'tab'
+          ? (ASSIST_DRAWER_TABS.has(String(value)) ? String(value) : 'ai')
+          : key === 'offset'
+            ? normalizeAssistDrawerOffset(value)
+            : Boolean(value);
+      localStorage.setItem(`zhike.ws.assist-drawer.${key}`, key === 'offset' ? JSON.stringify(normalized) : String(normalized));
+    } catch {}
+  }
   const esc = value => getHost()?.esc?.(value) || String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const nowIso = () => new Date().toISOString();
   const text = value => String(value == null ? '' : value).trim();
+  const COLLECTION_CAPABILITY_BLOCKED = 'COLLECTION_CAPABILITY_BLOCKED';
+  const BLOCKED_COLLECTION_CAPABILITY = Object.freeze({ state: 'blocked', code: COLLECTION_CAPABILITY_BLOCKED, reason: '后台采集依赖复制认证状态，已按安全边界停用；前台聊天和手动导入可用。', backgroundCollection: false, automaticHistory: false, groupMonitoring: false, foregroundFallback: false, manualVisibleImport: true });
+  const BLOCKED_COLLECTOR_ACTIONS = new Set(['discover-conversations', 'collect-all-read', 'configure-group-monitor', 'start-group-monitor', 'configure-ws-groups', 'configure-vip-groups']);
+  function collectionCapability(accountId = state.activeAccountId) {
+    const native = state.accounts.find(account => String(account.id) === String(accountId))?.collectionCapability;
+    // This release has no independently authorized background provider. An
+    // omitted/unknown capability must never unlock the old profile collector.
+    return { ...BLOCKED_COLLECTION_CAPABILITY, reason: native?.state === 'blocked' && native?.code === COLLECTION_CAPABILITY_BLOCKED ? text(native.reason).slice(0, 500) || BLOCKED_COLLECTION_CAPABILITY.reason : BLOCKED_COLLECTION_CAPABILITY.reason };
+  }
+  function rememberCollectionCapability(payload, accountId = payload?.accountId) {
+    if (!payload?.collectionCapability || !accountId) return;
+    const received = payload.collectionCapability, recognized = received.state === 'blocked' && received.code === COLLECTION_CAPABILITY_BLOCKED;
+    const capability = { ...BLOCKED_COLLECTION_CAPABILITY, reason: recognized ? text(received.reason).slice(0, 500) || BLOCKED_COLLECTION_CAPABILITY.reason : BLOCKED_COLLECTION_CAPABILITY.reason };
+    const previous = state.accounts.find(account => String(account.id) === String(accountId))?.collectionCapability;
+    if (previous?.state === capability.state && previous.code === capability.code && previous.reason === capability.reason) return;
+    state.accounts = state.accounts.map(account => String(account.id) === String(accountId) ? { ...account, collectionCapability: capability } : account);
+  }
+  function collectionBlockedResult(accountId = state.activeAccountId) {
+    const capability = collectionCapability(accountId);
+    return { blocked: true, supported: false, started: false, retryable: false, code: capability.code, error: `${capability.code}：${capability.reason}`, collectionCapability: capability };
+  }
+  function rejectCollectionAction(context = captureContext('')) {
+    const result = collectionBlockedResult(context.accountId);
+    if (!contextCurrent(context)) return result;
+    state.error = result.error;toast(result.error, 'x');render();return result;
+  }
+  function collectionCapabilityNotice(accountId = state.activeAccountId) {
+    const result = collectionBlockedResult(accountId);
+    return `<p class="ws-coverage-warning" role="status" data-collection-capability="blocked">${esc(result.error)}</p>`;
+  }
+  function collectionControlAttributes() {
+    return `disabled aria-disabled="true" title="${esc(collectionBlockedResult().error)}"`;
+  }
+  function createGroupMonitorState(accountId = 'default') {
+    return { accountId: String(accountId || 'default'), profile: null, health: null, events: [], loading: false, busy: false, error: '', statusFilter: 'all', draftJid: '', draftName: '', lastLoadedAt: '', catalog: [] };
+  }
   const CONVERSATION_RENDER_BATCH = 120;
   const VERIFIED_NATIVE_DIRECTION_SOURCE_MAP = new Map([
     ['class-message-out', 'send'], ['class-message-in', 'receive'],
     ['data-id-outgoing', 'send'], ['data-id-incoming', 'receive'],
     ['icon-tail-out', 'send'], ['icon-tail-in', 'receive'],
     ['palette-outgoing', 'send'], ['palette-incoming', 'receive'],
+    ['geometry-align-outgoing', 'send'], ['geometry-align-incoming', 'receive'],
+    ['geometry-right', 'send'], ['geometry-left', 'receive'],
   ]);
   const state = {
     active: false,
@@ -35,8 +166,11 @@
     accountBusy: false,
     accountFormOpen: false,
     accountFormName: '',
+    accountFormId: '',
     accountFormError: '',
     accountLoadSequence: 0,
+    accountPresentationGeneration: 0,
+    connectionAttemptGeneration: 0,
     pendingRestoreAccountId: '',
     currentConversationId: '',
     conversationSelectionManual: false,
@@ -52,6 +186,8 @@
     wsErrorCategory: '',
     analysis: null,
     analysisMeta: null,
+    archive: null,
+    archiveError: '',
     hotProfile: null,
     hotProfileError: '',
     hotProfileBusy: false,
@@ -64,11 +200,45 @@
     leftCollapsed: readPanelCollapsed('left'),
     rightCollapsed: readPanelCollapsed('right'),
     captureCollapsed: readPanelCollapsed('capture'),
+    messageCollapsed: readPanelCollapsed('messages'),
+    // The manual import and local transcript are useful while reviewing a
+    // conversation, but they should not permanently consume the WS viewport.
+    // Keep their individual collapsed states and add a persisted master
+    // switch so the operator can hand the whole lower band back to WhatsApp.
+    localPanelsCollapsed: readPanelCollapsed('local-panels'),
+    manualToolsVisible: false,
+    assistDrawerOpen: readAssistDrawerState('open'),
+    assistDrawerTab: readAssistDrawerState('tab'),
+    assistDrawerWidth: readAssistDrawerState('width'),
+    assistDrawerOffset: readAssistDrawerState('offset'),
+    loginLayoutExpanded: false,
     mobilePanel: 'center',
+    // The WS route owns this secondary navigation. It is deliberately
+    // separate from the application's main sidebar and never controls the
+    // WebView/Worker lifecycle.
+    wsWorkspaceView: readWsWorkspaceView(),
+    wsWorkspaceNavCollapsed: readWsWorkspaceCollapsed(),
+    wsWorkspacePageState: Object.create(null),
     captureDirection: 'receive',
     conversationQuery: '',
     conversationWindowStart: 0,
     translationStatus: '翻译服务未检测',
+    // 群发始终先生成可审计的发送计划。只有当前台 WS 会话与队列目标
+    // 一致时才允许 native bridge 发送，避免后台采集或误切会话造成串发。
+    broadcast: {
+      selectedIds: new Set(),
+      originalText: '',
+      translatedText: '',
+      targetLanguage: '',
+      caption: '',
+      attachments: [],
+      uploading: false,
+      plan: null,
+      loading: false,
+      error: '',
+      lastBatchId: '',
+    },
+    export: { running: false, includeMedia: true, error: '', lastFileName: '' },
     loading: false,
     accountsLoading: false,
     lastLoadedAt: '',
@@ -81,29 +251,41 @@
     readHistorySkipped: [],
     readHistoryAutoStarted: false,
     followupAlerts: [],
+    summaryLoaded: { collection: false, followups: false, ai: false },
     discoveredConversations: [],
+    // Keep the raw group rows from the logged-in WS list separate from the
+    // customer/AI inventory. Ordinary groups remain excluded from collection,
+    // but the operator must be able to select one to explicitly bind it for
+    // group monitoring without first knowing its internal JID.
+    discoveredGroupConversations: [],
+    // Account-scoped catalog returned by the native collector. This is kept
+    // separate from the rendered conversation list so a virtualized/hidden
+    // group can still be selected for monitoring.
+    groupCatalog: [],
+    groupMembers: { accountId: '', rows: [], enabled: null, error: '' },
     visibleConversationFingerprint: '',
     collectionRefreshing: false,
     collectionRefreshQueued: false,
-    autoCaptureSignature: '',
     previewAnalysisSignatures: new Map(),
     analysisRefreshPending: new Set(),
     listSyncBusy: false,
-    aiQueueStats: { queued: 0, running: 0, retryable: 0, completed: 0, failed: 0, total: 0 },
+    aiQueueStats: { queued: 0, running: 0, retryable: 0, completed: 0, failed: 0, deadLetter: 0, retryCount: 0, total: 0 },
     aiBackgroundError: '',
     vipGroupConfigSignatures: new Map(),
+    groupMonitor: createGroupMonitorState(),
   };
   let rendering = false;
   let observer;
   let browserResizeObserver;
+  let browserResizeObservedHost;
   let settingsSaveTimer;
   let settingsSaveSequence = 0;
   let collectionRefreshTimer;
-  let autoCaptureTimer;
+  let groupMonitorRefreshTimer;
+  let groupMonitorNativeSignature = '';
   let backgroundStartPromise = null;
   let backgroundGeneration = 0;
   let backgroundStartGeneration = 0;
-  let autoCaptureNoticeAt = 0;
   let loadSequence = 0;
   let aiPumpPromise = null;
   let aiPumpController = null;
@@ -118,25 +300,53 @@
   let resizeInFlight = false;
   let resizePending = false;
   let lastResizeBounds = '';
+  let lastResizeGeometry = null;
   let conversationLoadFrame = 0;
   const backgroundAccountRefreshQueue = new Set();
   let backgroundAccountRefreshPromise = null;
+  let assistDrawerResize = null;
+  let assistDrawerMove = null;
+  let assistPointerListenersBound = false;
+  let bootRetryTimer = null;
+  let bootInitialized = false;
+  const assistPointerMoveHandler = event => { handleAssistDrawerResizeMove(event); handleAssistDrawerMove(event); };
+  const assistPointerUpHandler = event => { handleAssistDrawerResizeEnd(event); handleAssistDrawerMoveEnd(event); };
+  const assistPointerCancelHandler = event => { handleAssistDrawerResizeEnd(event); handleAssistDrawerMoveEnd(event); };
+  function bindAssistPointerListeners() {
+    if (assistPointerListenersBound) return;
+    assistPointerListenersBound = true;
+    document.addEventListener('pointermove', assistPointerMoveHandler, { passive: false });
+    document.addEventListener('pointerup', assistPointerUpHandler, { passive: true });
+    document.addEventListener('pointercancel', assistPointerCancelHandler, { passive: true });
+  }
+  function unbindAssistPointerListeners() {
+    if (!assistPointerListenersBound || assistDrawerResize || assistDrawerMove) return;
+    assistPointerListenersBound = false;
+    document.removeEventListener('pointermove', assistPointerMoveHandler);
+    document.removeEventListener('pointerup', assistPointerUpHandler);
+    document.removeEventListener('pointercancel', assistPointerCancelHandler);
+  }
+  let assistDrawerReturnFocus = null;
 
   function restartBackgroundPolling() {
     clearInterval(collectionRefreshTimer);
-    clearInterval(autoCaptureTimer);
     collectionRefreshTimer = undefined;
-    autoCaptureTimer = undefined;
+    clearInterval(groupMonitorRefreshTimer);
+    groupMonitorRefreshTimer = undefined;
     // The desktop WebView2 overlay can make the parent document report
     // `hidden` while the WS view is still visible and logged in.  Gating the
     // collection poll on document.hidden therefore stopped list-level
     // collection entirely in the native shell. Collection and the durable AI
     // queue remain active after the user leaves the WS route. Current-chat DOM
     // capture is a visible-page fallback only and must not run in the
-    // background (the native collector owns full-history capture there).
-    if (!state.backgroundActive) return;
-    collectionRefreshTimer = setInterval(() => { if (state.backgroundActive) void refreshCollectionSummary(); }, 12000);
-    autoCaptureTimer = setInterval(() => { if (state.active && !document.hidden) void autoCaptureCurrentConversation(); }, 15000);
+    // background (the native collector owns full-history capture there). The
+    // visible WebView has no persistent capture script and is never polled
+    // for message DOM while the operator is chatting.
+    if (!state.backgroundActive || !collectionCapability().backgroundCollection) return;
+    // Keep one background scheduler for both the collection pipeline and the
+    // fixed group seat. Two independent intervals race on account switches
+    // and make the runtime contract report duplicate hidden refresh timers.
+    collectionRefreshTimer = setInterval(() => { if (state.backgroundActive) { void refreshCollectionSummary({ background: true }); if (state.groupMonitor?.profile?.enabled) void loadGroupMonitor({ background: true, silent: true }); } }, 12000);
   }
   const refreshPollingVisibility = () => { if (state.backgroundActive) restartBackgroundPolling(); };
   if (window.ZhikeDesktopPerformance?.pauseHiddenPolling) window.ZhikeDesktopPerformance.pauseHiddenPolling(refreshPollingVisibility, refreshPollingVisibility);
@@ -201,7 +411,7 @@
     return started;
   }
   function stopBackgroundRuntime() {
-    if (!state.backgroundActive && !collectionRefreshTimer && !autoCaptureTimer) return;
+    if (!state.backgroundActive && !collectionRefreshTimer && !groupMonitorRefreshTimer) return;
     state.backgroundActive = false;
     backgroundAccountRefreshQueue.clear();
     backgroundGeneration += 1;
@@ -229,8 +439,11 @@
     state.translationBusy.clear();
     clearInterval(collectionRefreshTimer);
     collectionRefreshTimer = undefined;
-    clearInterval(autoCaptureTimer);
-    autoCaptureTimer = undefined;
+    clearInterval(groupMonitorRefreshTimer);
+    groupMonitorRefreshTimer = undefined;
+    groupMonitorNativeSignature = '';
+    state.groupMonitor.loading = false;
+    state.groupMonitor.busy = false;
   }
   async function loadAccounts() {
     const sequence = ++state.accountLoadSequence;
@@ -281,15 +494,48 @@
   function updateAccountStatus(payload) {
     const id = text(payload?.accountId);
     if (!id) return;
-    state.accounts = state.accounts.map(item => String(item.id) === id ? { ...item, status: payload.status || item.status, statusDetail: payload.detail || item.statusDetail } : item);
-    if (id === String(state.activeAccountId) && payload.status) setStatus(payload.status, payload.detail || '');
+    rememberCollectionCapability(payload, id);
+    // Native heartbeats are emitted by both the visible read-only probe and
+    // the isolated collector. They carry telemetry only; rebuilding the
+    // entire WS shell for every tick detaches the browser anchor long enough
+    // to make the live WhatsApp surface visibly shake.
+    const isBackgroundTick = payload?.eventName === 'background-tick' || payload?.background === true;
+    const current = state.accounts.find(item => String(item.id) === id);
+    const nextStatus = payload.status || current?.status;
+    const nextDetail = payload.detail || current?.statusDetail;
+    const isTelemetryTick = payload?.eventName === 'background-tick' && !text(payload?.detail);
+    const statusChanged = Boolean(current && current.status !== nextStatus);
+    const detailChanged = Boolean(current && current.statusDetail !== nextDetail);
+    if (statusChanged || detailChanged) state.accounts = state.accounts.map(item => String(item.id) === id ? { ...item, status: nextStatus, statusDetail: nextDetail } : item);
+    if (payload?.status) updateAccountStatusDom(id, nextStatus);
+    if (id === String(state.activeAccountId) && payload.status
+        && !(isTelemetryTick && payload.status === state.wsStatus)) setStatus(payload.status, payload.detail || '');
     const host = getHost();
-    if (state.active && host?.state?.view === 'ws-workbench') render();
+    if (!isBackgroundTick && statusChanged && id === String(state.activeAccountId) && state.active && host?.state?.view === 'ws-workbench') render();
+  }
+  // Background account probes must update only the account rail. Re-rendering
+  // the entire shell here would detach the native WebView anchor and recreate
+  // the visible WhatsApp surface, which is the source of the periodic shake
+  // users saw while another account was being inspected.
+  function updateAccountStatusDom(accountId, status) {
+    const id = text(accountId);
+    if (!id || !status) return;
+    const row = Array.from(document.querySelectorAll('.ws-account-row[data-account-id]'))
+      .find(node => String(node.getAttribute('data-account-id') || '') === id);
+    if (!row) return;
+    const statusNode = row.querySelector('.ws-account-status');
+    if (statusNode) {
+      statusNode.textContent = status;
+      statusNode.dataset.status = status;
+    }
+    const account = state.accounts.find(item => String(item.id) === id);
+    if (account?.lastSeen) row.title = `上次状态：${account.lastKnownStatus || status} · ${displayTime(account.lastSeen)}`;
   }
   function openAccountForm() {
     if (state.accountBusy) return;
     state.accountFormOpen = true;
     state.accountFormName = '';
+    state.accountFormId = '';
     state.accountFormError = '';
     state.error = '';
     render();
@@ -299,8 +545,65 @@
     if (state.accountBusy) return;
     state.accountFormOpen = false;
     state.accountFormName = '';
+    state.accountFormId = '';
     state.accountFormError = '';
     render();
+  }
+  function withWsAccountTimeout(task, timeoutMs = 12000) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error('WS 账号创建超时。')), timeoutMs);
+    });
+    return Promise.race([Promise.resolve().then(task), timeout]).finally(() => clearTimeout(timer));
+  }
+  async function createWsAccountRecord(account) {
+    let bridgeError = null;
+    async function confirmNativeIndex(created) {
+      if (typeof window.zhikeDesktop?.wsAccounts !== 'function') throw new Error('账号已保存到本机服务，桌面账号索引尚不可用；请刷新账号列表后重试。');
+      const listed = await withWsAccountTimeout(() => window.zhikeDesktop.wsAccounts({ action: 'list' }), 12000);
+      const indexed = (Array.isArray(listed?.accounts) ? listed.accounts : []).find(item => String(item?.id || '').toLowerCase() === String(created.id).toLowerCase());
+      if (!indexed) throw new Error('账号已保存到本机服务，但桌面索引尚未同步；请刷新账号列表后重试。');
+      return indexed;
+    }
+    // Prefer the native bridge because it also creates the isolated WebView2
+    // profile index. A transient bridge/startup failure must not make the
+    // account button appear broken while the loopback SQLite service is ready.
+    if (typeof window.zhikeDesktop?.wsAccounts === 'function') {
+      try {
+        const result = await withWsAccountTimeout(() => window.zhikeDesktop.wsAccounts({ action: 'create', account }), 12000);
+        if (result?.account?.id) return result.account;
+        bridgeError = new Error('WS 账号创建没有返回有效账号。');
+      } catch (error) {
+        if (error?.code === 'WS_ACCOUNT_INDEX_WRITE_FAILED') throw error;
+        bridgeError = error;
+      }
+    } else {
+      bridgeError = new Error('桌面 WS 账号桥接暂未注入。');
+    }
+    // The bundled sidecar is the source of truth. This fallback covers the
+    // short window in which the native bridge is reconnecting, and also makes
+    // account creation usable after a renderer-only reload.
+    try {
+      const result = await api('/api/ws/accounts', {
+        method: 'POST',
+        timeout: 30000,
+        body: JSON.stringify(account),
+      }, { accountId: 'default' });
+      if (result?.account?.id) return await confirmNativeIndex(result.account);
+      throw new Error('本机账号服务没有返回有效账号。');
+    } catch (apiError) {
+      // A bridge can finish its local write just after the timeout. Read back
+      // the account before reporting failure so the user never creates a
+      // hidden duplicate or loses a successfully committed account.
+      try {
+        const listed = await api('/api/ws/accounts', { timeout: 10000 }, { accountId: 'default' });
+        const existing = (Array.isArray(listed?.accounts) ? listed.accounts : [])
+          .find(item => String(item?.id || '').toLowerCase() === String(account?.id || '').toLowerCase());
+        if (existing?.id) return await confirmNativeIndex(existing);
+      } catch {}
+      const bridgeMessage = bridgeError?.message ? `（桌面桥接：${bridgeError.message}）` : '';
+      throw new Error(`${apiError?.message || 'WS 账号创建失败。'}${bridgeMessage}`);
+    }
   }
   async function createAccount() {
     if (state.accountBusy) return;
@@ -319,12 +622,17 @@
     }
     state.accountBusy = true; render();
     try {
-      const id = `ws-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-      const result = await window.zhikeDesktop.wsAccounts({ action: 'create', account: { id, displayName, provider: 'WhatsApp Web', origin: 'https://web.whatsapp.com', status: '未连接' } });
+      // A lost response may follow a committed account. Explicit form retries
+      // reuse the same identity instead of producing another account/profile.
+      const id = state.accountFormId || (state.accountFormId = `ws-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`);
+      const result = { account: await createWsAccountRecord({ id, displayName, provider: 'WhatsApp Web', origin: 'https://web.whatsapp.com', status: '未连接' }) };
       if (!result?.account?.id) throw new Error('WS 账号创建没有返回有效账号。');
-      state.accounts = [...state.accounts, result.account];
+      const accounts = new Map(state.accounts.map(item => [String(item.id), item]));
+      accounts.set(String(result.account.id), result.account);
+      state.accounts = [...accounts.values()];
       state.accountFormOpen = false;
       state.accountFormName = '';
+      state.accountFormId = '';
       state.accountFormError = '';
       const switched = await switchAccount(result.account.id);
       if (!switched) {
@@ -332,7 +640,9 @@
         toast(state.accountFormError, 'x');
         return;
       }
-      toast('已添加 WS 账号，请在中栏完成扫码或登录。');
+      state.wsWorkspaceView = 'chat';
+      writeWsWorkspaceState('chat', state.wsWorkspaceNavCollapsed);
+      toast('已添加 WS 账号，请在前台聊天完成扫码或登录。');
     } catch (error) {
       state.accountFormError = error.message || 'WS 账号创建失败。';
       toast(state.accountFormError, 'x');
@@ -345,11 +655,59 @@
     if (!state.accounts.some(item => String(item.id) === id)) return false;
     const previous = state.activeAccountId;
     const sequence = ++state.accountLoadSequence;
+    const ownsSwitch = () => sequence === state.accountLoadSequence;
     void cancelAllAiWork();
     state.accountBusy = true;
+    resetAccountPresentation(id);
+    writeStoredAccountId(id); render();
+    try {
+      await window.zhikeDesktop.ws({ action: 'open', accountId: id, bounds: boundsForBrowserView() });
+      if (!ownsSwitch()) return false;
+      await syncVipGroupAllowlist(captureContext(''), true);
+      if (!ownsSwitch()) return false;
+      await loadConversations();
+      if (!ownsSwitch()) return false;
+      await loadGroupMonitor({ silent: true });
+      if (!ownsSwitch()) return false;
+      if (state.wsWorkspaceView === 'members') {
+        await loadGroupMembers(captureContext(''));
+        if (!ownsSwitch()) return false;
+      }
+      state.error = '';
+      if (state.backgroundActive) void refreshCollectionSummary({ background: true });
+      return true;
+    } catch (error) {
+      if (!ownsSwitch()) return false;
+      resetAccountPresentation(previous);
+      writeStoredAccountId(previous);
+      state.error = error.message || 'WS 账号切换失败，已恢复原账号。';
+      try {
+        try { await window.zhikeDesktop.ws({ action: 'open', accountId: previous, bounds: boundsForBrowserView() }); } catch {}
+        if (!ownsSwitch()) return false;
+        await loadConversations();
+        if (!ownsSwitch()) return false;
+        await loadGroupMonitor({ silent: true });
+        if (!ownsSwitch()) return false;
+        if (state.wsWorkspaceView === 'members') {
+          await loadGroupMembers(captureContext(''));
+          if (!ownsSwitch()) return false;
+        }
+      } catch (restoreError) {
+        if (!ownsSwitch()) return false;
+        throw restoreError;
+      }
+      return false;
+    } finally { if (ownsSwitch()) { state.accountBusy = false; render(); } }
+  }
+
+  function resetAccountPresentation(accountId) {
+    ++state.accountPresentationGeneration;
+    // Clear only the account-scoped UI projection. Persisted tasks, leases,
+    // providers and native chat instances are owned by their existing services.
+    const id = String(accountId || 'default');
+    groupMonitorNativeSignature = '';
     state.collectionRefreshing = false;
     state.collectionRefreshQueued = false;
-    state.autoCaptureSignature = '';
     state.readHistoryAutoStarted = false;
     state.previewAnalysisSignatures.clear();
     state.analysisRefreshPending.clear();
@@ -359,31 +717,160 @@
     clearTimeout(settingsSaveTimer); settingsSaveTimer = undefined; ++settingsSaveSequence;
     state.busy.import = false; state.busy.customer = false; state.busy.followup = false; state.busy.connection = false; state.busy.reply = false; state.busy.capture = false; state.busy.readHistory = false; state.aiBusy = false; state.translationBusy.clear();
     state.activeAccountId = id;
+    state.lastLoadedAt = '';
+    state.collectionRun = null; state.followupAlerts = []; state.readHistorySkipped = [];
+    state.aiQueueStats = { queued: 0, running: 0, retryable: 0, completed: 0, failed: 0, deadLetter: 0, retryCount: 0, total: 0 };
+    state.summaryLoaded = { collection: false, followups: false, ai: false };
+    state.groupMonitor = createGroupMonitorState(id);
+    state.groupCatalog = [];
+    state.groupMembers = { accountId: id, rows: [], enabled: null, error: '' };
     state.currentConversationId = '';
     state.conversationSelectionManual = false;
     state.conversationWindowStart = 0;
-    state.conversations = []; state.messages = []; state.historyCoverage = { loaded: 0, total: 0, complete: false }; state.analysis = null; state.analysisMeta = null; state.replies = [];
-    writeStoredAccountId(id); render();
-    try {
-      await window.zhikeDesktop.ws({ action: 'open', accountId: id, bounds: boundsForBrowserView() });
-      if (sequence !== state.accountLoadSequence) return false;
-      await syncVipGroupAllowlist(captureContext(''), true);
-      await loadConversations();
-      state.error = '';
-      if (state.backgroundActive) void refreshCollectionSummary();
-      return true;
-    } catch (error) {
-      state.activeAccountId = previous;
-      writeStoredAccountId(previous);
-      state.error = error.message || 'WS 账号切换失败，已恢复原账号。';
-      try { await window.zhikeDesktop.ws({ action: 'open', accountId: previous, bounds: boundsForBrowserView() }); } catch {}
-      await loadConversations();
-      return false;
-    } finally { state.accountBusy = false; render(); }
+    state.conversations = []; state.discoveredConversations = []; state.discoveredGroupConversations = []; state.messages = []; state.historyCoverage = { loaded: 0, total: 0, complete: false }; state.analysis = null; state.analysisMeta = null; state.replies = [];
+    state.hotProfile = null; state.hotProfileError = ''; state.hotProfileBusy = false;
+    state.hotProfileEdits = Object.create(null); state.hotProfileColorDraft = '';
+    state.archive = null; state.archiveError = ''; state.crmSyncStatus = ''; state.matchCandidates = [];
+    state.broadcast = { selectedIds: new Set(), originalText: '', translatedText: '', targetLanguage: '', caption: '', attachments: [], uploading: false, plan: null, loading: false, error: '', lastBatchId: '' };
+    state.export = { running: false, includeMedia: true, error: '', lastFileName: '' };
   }
 
   function toast(message, icon = 'check') { getHost()?.toast?.(message, icon); }
   function activeConversation() { return state.conversations.find(item => String(item.id) === String(state.currentConversationId)) || null; }
+  function broadcastCandidates() {
+    return (Array.isArray(state.conversations) ? state.conversations : [])
+      .filter(item => explicitConversationType(item) === 'direct' && Number(item.unreadCount || 0) === 0)
+      .slice(0, 50);
+  }
+  function broadcastSelectedRows() {
+    const allowed = new Set(broadcastCandidates().map(item => String(item.id)));
+    return [...(state.broadcast?.selectedIds || [])]
+      .filter(id => allowed.has(String(id)))
+      .map(id => state.conversations.find(item => String(item.id) === String(id)))
+      .filter(Boolean);
+  }
+  function broadcastIdempotencyKey(payload = {}) {
+    // The server also checks a canonical content hash: a renderer hash collision
+    // must reject conflicting content, never recover an unrelated old plan.
+    const canonical = {
+      accountId: text(payload.accountId),
+      conversationIds: [...new Set((payload.conversationIds || []).map(String))].sort(),
+      originalText: text(payload.originalText), translatedText: text(payload.translatedText),
+      targetLanguage: text(payload.targetLanguage), caption: text(payload.caption),
+      payloadKind: text(payload.payloadKind),
+      attachments: (payload.attachments || []).map((item, index) => ({
+        mediaId: text(item.mediaId || item.id), orderNo: index,
+        fileName: text(item.fileName), mimeType: text(item.mimeType), sizeBytes: Number(item.sizeBytes || 0),
+      })),
+    };
+    return 'ws-broadcast-v2:' + canonical.accountId + ':' + stableHash(JSON.stringify(canonical));
+  }
+  function broadcastPlanRows() {
+    return Array.isArray(state.broadcast?.plan?.items) ? state.broadcast.plan.items : [];
+  }
+  function broadcastAttachmentKind(attachment) {
+    const mime = text(attachment?.mimeType || attachment?.type).toLocaleLowerCase();
+    if (mime.startsWith('image/')) return 'image';
+    if (mime.startsWith('video/')) return 'video';
+    if (mime.startsWith('audio/')) return 'audio';
+    return 'document';
+  }
+  function broadcastPayloadKind(attachments) {
+    const rows = Array.isArray(attachments) ? attachments : [];
+    if (!rows.length) return 'text';
+    const kinds = [...new Set(rows.map(broadcastAttachmentKind))];
+    return kinds.length === 1 ? kinds[0] : 'media';
+  }
+  function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+      if (!file || typeof FileReader !== 'function') { reject(new Error('当前环境不支持读取附件。')); return; }
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('附件读取失败，未加入发送队列。'));
+      reader.onload = () => {
+        const value = String(reader.result || '');
+        const comma = value.indexOf(',');
+        resolve(comma >= 0 ? value.slice(comma + 1) : value);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  async function addBroadcastFiles(fileList) {
+    const b = state.broadcast;
+    const files = [...(fileList || [])];
+    if (!files.length) return;
+    if (files.length + (Array.isArray(b.attachments) ? b.attachments.length : 0) > 10) {
+      toast('单次群发最多添加 10 个附件。', 'x');
+      return;
+    }
+    const context = captureContext('');
+    b.uploading = true;
+    b.error = '';
+    render();
+    try {
+      for (const file of files) {
+        assertContext(context);
+        const size = Number(file?.size || 0);
+        if (!size || size > 24 * 1024 * 1024) throw new Error(`附件“${text(file?.name) || '未命名'}”超过 24 MB，未加入队列。`);
+        const dataBase64 = await readFileAsBase64(file);
+        assertContext(context);
+        const uploaded = await api('/api/ws/media', {
+          method: 'POST',
+          timeout: 120000,
+          body: JSON.stringify({ accountId: state.activeAccountId, fileName: text(file.name) || 'attachment', mimeType: text(file.type) || 'application/octet-stream', dataBase64 }),
+        }, context);
+        assertContext(context);
+        const media = uploaded?.media || uploaded || {};
+        const mediaId = text(media.mediaId || media.id);
+        if (!mediaId) throw new Error('本机媒体服务没有返回媒体编号，附件未加入队列。');
+        b.attachments.push({
+          id: `attachment-${Date.now().toString(36)}-${stableHash(`${mediaId}:${file.name}`)}`,
+          mediaId,
+          fileName: text(media.fileName || file.name) || 'attachment',
+          mimeType: text(media.mimeType || file.type) || 'application/octet-stream',
+          sizeBytes: Number(media.sizeBytes || size),
+          size,
+          payloadKind: broadcastAttachmentKind(media),
+        });
+      }
+      toast(`已加入 ${files.length} 个附件，创建群发计划后仍需逐条确认发送。`);
+    } catch (error) {
+      if (contextCurrent(context)) { b.error = error.message || '附件上传失败。'; toast(b.error, 'x'); }
+    } finally {
+      if (contextCurrent(context)) { b.uploading = false; render(); }
+    }
+  }
+  function removeBroadcastAttachment(id) {
+    const key = text(id);
+    state.broadcast.attachments = (Array.isArray(state.broadcast.attachments) ? state.broadcast.attachments : []).filter(item => String(item.id || item.mediaId) !== key && String(item.mediaId) !== key);
+    state.broadcast.error = '';
+    render();
+  }
+  async function exportAllWsData() {
+    const exportState = state.export || (state.export = { running: false, includeMedia: true, error: '', lastFileName: '' });
+    if (exportState.running) return;
+    const context = captureContext('');
+    exportState.running = true;
+    exportState.error = '';
+    render();
+    try {
+      const query = new URLSearchParams({ accountId: String(state.activeAccountId || 'default'), includeMedia: exportState.includeMedia === false ? '0' : '1' });
+      const response = await fetch(`/api/ws/export?${query.toString()}`, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`导出失败（${response.status}）。`);
+      const blob = await response.blob();
+      assertContext(context);
+      const fileName = `zhike-ws-${state.activeAccountId}-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url; anchor.download = fileName; anchor.rel = 'noopener'; anchor.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      exportState.lastFileName = fileName;
+      toast('WS 客户、联系人、群组、消息和分析数据已开始下载。');
+    } catch (error) {
+      if (contextCurrent(context)) { exportState.error = error.message || '导出失败。'; toast(exportState.error, 'x'); }
+    } finally {
+      if (contextCurrent(context)) { exportState.running = false; render(); }
+    }
+  }
   function stableHash(value) { return core.stableHash(value); }
   function explicitConversationType(conversation) { return core.conversationType?.(conversation) || 'unknown'; }
   function isExplicitGroupConversation(conversation) { return core.isGroupConversation?.(conversation) === true; }
@@ -484,6 +971,8 @@
     state.historyCoverage = { loaded: 0, total: 0, complete: false };
     state.analysis = null;
     state.analysisMeta = null;
+    state.archive = null;
+    state.archiveError = '';
     state.replies = [];
     return String(state.currentConversationId || '');
   }
@@ -608,7 +1097,7 @@
   }
   function renderHotProfile() {
     const profile = state.hotProfile;
-    if (!profile) return `<section class="ws-card ws-hot-profile-card"><div class="ws-card-heading"><div><strong>热聊客户档案</strong><span>从自然聊天逐步补齐，不连续盘问客户</span></div><button class="btn small" data-ws-action="refresh-hot-profile">刷新</button></div><div class="ws-empty">当前会话还没有热聊档案。完成一次 AI 分析或点击刷新后，会显示已了解、待确认和待了解内容。</div>${state.hotProfileError ? `<p class="ws-error-line">${esc(state.hotProfileError)}</p>` : ''}</section>`;
+    if (!profile) return `<section class="ws-card ws-hot-profile-card" data-assist-section="profile"><div class="ws-card-heading"><div><strong>热聊客户档案</strong><span>从自然聊天逐步补齐，不连续盘问客户</span></div><button class="btn small" data-ws-action="refresh-hot-profile">刷新</button></div><div class="ws-empty">当前会话还没有热聊档案。完成一次 AI 分析或点击刷新后，会显示已了解、待确认和待了解内容。</div>${state.hotProfileError ? `<p class="ws-error-line">${esc(state.hotProfileError)}</p>` : ''}</section>`;
     const derived = hotProfileDerived(profile);
     const color = HOT_PROFILE_COLORS[state.hotProfileColorDraft] ? state.hotProfileColorDraft : (HOT_PROFILE_COLORS[profile.statusColor] ? profile.statusColor : 'gray');
     const colorOptions = Object.entries(HOT_PROFILE_COLORS).map(([value, label]) => `<option value="${value}" ${value === color ? 'selected' : ''}>${label}</option>`).join('');
@@ -625,7 +1114,7 @@
     }).join('');
     const topics = derived.nextTopics.map(field => `<span class="ws-hot-profile-topic">${esc(HOT_PROFILE_LABELS[field] || field)}</span>`).join('');
     const missing = derived.missingFields.length ? derived.missingFields.map(field => HOT_PROFILE_LABELS[field] || field).slice(0, 5).join('、') : '核心资料已基本完整';
-    return `<section class="ws-card ws-hot-profile-card" data-color="${esc(color)}">
+    return `<section class="ws-card ws-hot-profile-card" data-assist-section="profile" data-color="${esc(color)}">
       <div class="ws-card-heading"><div><strong>热聊客户档案</strong><span>已完成 ${Number(profile.completeness || 0)}% · 只补空字段，冲突保留原值并记录证据</span></div><button class="btn small" data-ws-action="refresh-hot-profile" ${state.hotProfileBusy ? 'disabled' : ''}>${state.hotProfileBusy ? '刷新中…' : '刷新'}</button></div>
       <div class="ws-hot-profile-toolbar"><label>客户状态<select id="wsHotProfileColor" data-hot-profile-color>${colorOptions}</select></label><span class="ws-hot-profile-status status-${esc(color)}">${esc(HOT_PROFILE_COLORS[color])}</span><button class="btn small" data-ws-action="save-hot-profile-color">保存标记</button></div>
       <div class="ws-hot-profile-progress"><span style="width:${Math.max(0, Math.min(100, Number(profile.completeness) || 0))}%"></span></div>
@@ -634,6 +1123,25 @@
       <div class="ws-hot-profile-fields">${fields}</div>
       ${state.hotProfileError ? `<p class="ws-error-line">${esc(state.hotProfileError)}</p>` : ''}
     </section>`;
+  }
+  function renderDataArchiveSummary() {
+    const archive = state.archive;
+    if (!state.currentConversationId) return '<section class="ws-card ws-data-archive-card zk-surface zk-surface--accent" data-assist-section="profile"><div class="ws-card-heading"><div><strong>统一数据档案</strong><span>客户主档与 WS 关联记录</span></div></div><div class="ws-empty">在前台聊天选择会话后，可查看关联客户档案。</div></section>';
+    if (!archive) return '<section class="ws-card ws-data-archive-card zk-surface zk-surface--accent" data-assist-section="profile"><div class="ws-card-heading"><div><strong>统一数据档案</strong><span>正在读取客户主档与 WS 关联记录…</span></div></div><div class="ws-empty">档案库连接中…</div></section>';
+    if (!archive.matched || !archive.customer) return `<section class="ws-card ws-data-archive-card zk-surface zk-surface--accent" data-assist-section="profile"><div class="ws-card-heading"><div><strong>统一数据档案</strong><span>当前会话暂未匹配客户主档</span></div></div><div class="ws-empty">${esc(archive.match?.kind === 'ambiguous' ? '检测到多个候选客户，已保留原档案并等待人工确认。' : '未找到现有客户档案；不会自动新增客户。')}</div>${state.archiveError ? `<p class="ws-error-line">${esc(state.archiveError)}</p>` : ''}</section>`;
+    const customer = archive.customer || {};
+    const records = archive.records || {};
+    const ws = archive.ws || {};
+    const conversation = archive.conversation;
+    const personalIdentity = String(archive.accountId) === String(state.activeAccountId)
+      && String(conversation?.accountId) === String(state.activeAccountId)
+      && String(conversation?.id || '') === String(state.currentConversationId)
+      && explicitConversationType(conversation) === 'direct';
+    const avatar = personalIdentity ? businessPages?.renderPersonAvatar?.({
+      name: customer.name, size: 'detail', vip: Boolean(text(customer.vipNumber)),
+    }) || '' : '';
+    const count = key => Number(Array.isArray(records[key]) ? records[key].length : 0);
+    return `<section class="ws-card ws-data-archive-card zk-surface zk-surface--accent" data-assist-section="profile"><div class="ws-card-heading"><div><strong>统一数据档案</strong><span>客户主档、业务记录与 WS 原文已连接</span></div><span class="ws-profile-status">${esc(customer.deleted ? '已归档' : '已关联')}</span></div><div class="ws-person-identity">${avatar}<div class="ws-person-copy"><strong title="${esc(customer.name || customer.phone || '未命名客户')}">${esc(customer.name || customer.phone || '未命名客户')}</strong><small>${esc(customer.phone || customer.rawPhone || '未登记号码')} · 登记 ${esc(customer.registered || '未记录')}</small></div></div>${personalIdentity ? businessPages?.renderAvatarAvailability?.() || '' : ''}<div class="ws-data-archive-stats"><span>完整消息 <b>${Number(ws.messageTotal || ws.messages?.length || 0).toLocaleString()}</b></span><span>跟票 <b>${count('tickets')}</b></span><span>报名 <b>${count('registrations')}</b></span><span>入金 <b>${count('deposits')}</b></span><span>跟进 <b>${count('followups') + count('tasks')}</b></span><span>群组事件 <b>${Number(ws.groupMembershipEvents?.length || 0)}</b></span></div><p class="ws-muted">档案库只读联动；AI 只补现有客户空字段，冲突和低置信度保留待确认。</p></section>`;
   }
   function seedDraftFromAnalysis() {
     const draft = currentDraft();
@@ -678,7 +1186,7 @@
       const coalescer = window.ZhikeDesktopPerformance?.requestCoalescer;
       const canCoalesce = !nextInit.method || String(nextInit.method).toUpperCase() === 'GET';
       const response = canCoalesce && coalescer
-        ? await coalescer(`${accountId}:${url.pathname}${url.search}${url.hash}`, execute)
+        ? await coalescer(`${accountId}:${url.pathname}${url.search}${url.hash}`, execute, controller.signal)
         : await execute();
       if (controller.signal.aborted) throw new DOMException('The operation was aborted.', 'AbortError');
       const body = await response.json().catch(() => ({}));
@@ -686,7 +1194,8 @@
         // Preserve the native bridge's actionable error (for example a
         // recovering sidecar or an expired local session) instead of hiding
         // every failure behind the same generic WS message.
-        throw new Error(body.error || body.message || body.errorCode || 'WS 本机数据服务暂不可用。');
+        const error = new Error(body.error || body.message || body.errorCode || 'WS 本机数据服务暂不可用。');
+        error.status = response.status; error.code = body.code || body.errorCode || ''; throw error;
       }
       return body;
     } catch (error) {
@@ -695,7 +1204,7 @@
     } finally { clearTimeout(timer); }
   }
   async function loadAllConversationPages(context = captureContext('')) {
-    const conversations = [], seen = new Set(), seenCursors = new Set();
+    const conversations = [], groupConversations = [], seen = new Set(), seenGroups = new Set(), seenCursors = new Set();
     let cursor = '', newest = null;
     // The service page is intentionally bounded; this loop is the product's
     // all-conversations contract. A cursor cycle is treated as corruption
@@ -710,9 +1219,15 @@
         seen.add(id);
         conversations.push(item);
       }
+      for (const item of Array.isArray(result.groupConversations) ? result.groupConversations : []) {
+        const id = String(item?.id || item?.externalId || '');
+        if (!id || seenGroups.has(id)) continue;
+        seenGroups.add(id);
+        groupConversations.push(item);
+      }
       newest = newestConversationWatermark([result.scannedNewest], newest);
       const nextCursor = text(result.nextCursor);
-      if (!nextCursor) return { conversations, pages: page + 1, watermark: newest || newestConversationWatermark(conversations) };
+      if (!nextCursor) return { conversations, groupConversations, pages: page + 1, watermark: newest || newestConversationWatermark(conversations) };
       if (seenCursors.has(nextCursor)) throw new Error('WS 会话分页游标重复，已停止加载以避免遗漏或死循环。');
       seenCursors.add(nextCursor);
       cursor = nextCursor;
@@ -749,7 +1264,7 @@
     const accountId = String(context.accountId || state.activeAccountId || 'default');
     const previousWatermark = state.conversationWatermarks.get(accountId);
     if (!previousWatermark || !state.conversations.length) return loadAllConversationPages(context);
-    const conversations = [], excludedIds = new Set(), seen = new Set(), seenCursors = new Set();
+    const conversations = [], groupConversations = [], excludedIds = new Set(), seen = new Set(), seenGroups = new Set(), seenCursors = new Set();
     let cursor = '', newest = previousWatermark;
     for (let page = 0; page < 1000; page += 1) {
       const suffix = cursor ? `&cursor=${encodeURIComponent(cursor)}` : '';
@@ -762,13 +1277,19 @@
         seen.add(id);
         conversations.push(item);
       }
+      for (const item of Array.isArray(result.groupConversations) ? result.groupConversations : []) {
+        const id = String(item?.id || item?.externalId || '');
+        if (!id || seenGroups.has(id)) continue;
+        seenGroups.add(id);
+        groupConversations.push(item);
+      }
       for (const id of Array.isArray(result.excludedConversationIds) ? result.excludedConversationIds : []) excludedIds.add(String(id));
       newest = newestConversationWatermark([result.scannedNewest, ...rows], newest);
       const scannedThrough = conversationWatermark(result.scannedThrough) || conversationWatermark(rows.at(-1));
       const crossedPreviousWatermark = Boolean(scannedThrough) && compareConversationWatermarks(scannedThrough, previousWatermark) <= 0;
       const nextCursor = text(result.nextCursor);
       if (crossedPreviousWatermark || !nextCursor) {
-        return { conversations, excludedIds: [...excludedIds], pages: page + 1, watermark: newest, incremental: true };
+        return { conversations, groupConversations, excludedIds: [...excludedIds], pages: page + 1, watermark: newest, incremental: true };
       }
       if (seenCursors.has(nextCursor)) throw new Error('WS 会话增量分页游标重复，已停止加载以避免遗漏或死循环。');
       seenCursors.add(nextCursor);
@@ -791,11 +1312,17 @@
     if (!node) return { hidden: true };
     const rect = node.getBoundingClientRect();
     const style = getComputedStyle(node);
-    const hidden = !state.active || style.display === 'none' || style.visibility === 'hidden' || rect.width < 40 || rect.height < 40;
+    const hidden = !state.active || state.wsWorkspaceView !== 'chat' || style.display === 'none' || style.visibility === 'hidden' || rect.width < 40 || rect.height < 40;
     return { hidden, x: Math.round(rect.left), y: Math.round(rect.top), width: Math.round(rect.width), height: Math.round(rect.height) };
   }
   function configuredVipGroups(accountId = state.activeAccountId) {
     const settings = getHost()?.state?.settings || {};
+    // WS 群组监测使用独立的绑定清单，不能从客户 VIP 编号推导群组。
+    // 保留旧字段只为兼容升级过来的工作区；规范化逻辑集中在 ws-scope.js。
+    const scoped = window.ZhikeWsScope?.normalizeWsGroupBindings?.(settings, accountId);
+    if (Array.isArray(scoped)) {
+      return [...new Set(scoped.flatMap(item => [item?.groupJid, item?.groupName].filter(value => text(value))))].slice(0, 500);
+    }
     const sources = [settings.wsVipGroupAllowlist, settings.wsVipGroups, settings.vipGroupBindings];
     const values = [];
     for (const source of sources) for (const item of Array.isArray(source) ? source : []) {
@@ -814,24 +1341,445 @@
     return values.some(value => configured.has(normalize(value)));
   }
   async function wsBridge(action, context = null, extra = null) {
+    if (BLOCKED_COLLECTOR_ACTIONS.has(action)) {
+      const result = collectionBlockedResult(context?.accountId || state.activeAccountId);
+      const error = new Error(result.error);Object.assign(error, result, { data: { collectionCapability: result.collectionCapability } });throw error;
+    }
     if (!window.zhikeDesktop?.ws) throw new Error('当前页面没有桌面 WS 视图能力，请从知客安装版打开。');
-    return window.zhikeDesktop.ws({ ...(extra && typeof extra === 'object' ? extra : {}), action, accountId: context?.accountId || state.activeAccountId || 'default', bounds: boundsForBrowserView() });
+    const result = await window.zhikeDesktop.ws({ ...(extra && typeof extra === 'object' ? extra : {}), action, accountId: context?.accountId || state.activeAccountId || 'default', bounds: boundsForBrowserView() });
+    const requestedId = String(context?.accountId || state.activeAccountId || 'default');
+    if (!result?.accountId || String(result.accountId) === requestedId) rememberCollectionCapability(result, requestedId);return result;
   }
   async function syncVipGroupAllowlist(context = captureContext(''), force = false) {
+    if (!collectionCapability(context.accountId).backgroundCollection) return collectionBlockedResult(context.accountId);
     const accountId = String(context?.accountId || state.activeAccountId || 'default');
     const vipGroups = configuredVipGroups(accountId);
     const signature = JSON.stringify(vipGroups);
     if (!force && state.vipGroupConfigSignatures.get(accountId) === signature) return { accepted:vipGroups.length, unchanged:true };
-    const result = await wsBridge('configure-vip-groups', { ...context, accountId }, { vipGroups });
+    const result = await wsBridge('configure-ws-groups', { ...context, accountId }, { wsGroups: vipGroups, vipGroups });
     state.vipGroupConfigSignatures.set(accountId, signature);
     return result;
   }
+  function groupMonitorContext() { return captureContext(''); }
+  function mergeDiscoveredGroupRows(rows = []) {
+    const merged = new Map();
+    for (const item of [...(Array.isArray(state.discoveredGroupConversations) ? state.discoveredGroupConversations : []), ...(Array.isArray(rows) ? rows : [])]) {
+      const normalized = normalizeListItem(item);
+      if (!isExplicitGroupConversation(normalized)) continue;
+      const key = text(normalized?.groupJid || normalized?.externalId || normalized?.id || normalized?.title).toLocaleLowerCase();
+      if (key) merged.set(key, normalized);
+    }
+    state.discoveredGroupConversations = [...merged.values()].slice(0, 500);
+    return state.discoveredGroupConversations;
+  }
+  function discoveryGroupRows(result = {}) {
+    return [
+      ...(Array.isArray(result?.groupConversations) ? result.groupConversations : []),
+      // Keep compatibility with a collector built before the separate field
+      // was introduced; only explicitly identified groups are admitted.
+      ...(Array.isArray(result?.excludedConversations) ? result.excludedConversations : []),
+    ];
+  }
+  function groupMonitorEventLabel(type) {
+    return type === 'joined' ? '进群' : type === 'removed' ? '被移除' : type === 'left' ? '退群' : '未知事件';
+  }
+  function groupMonitorStatusLabel(profile) {
+    if (!collectionCapability().groupMonitoring) return '群组监测不可用';
+    if (!profile) return '未配置';
+    if (!profile.enabled) return '已暂停';
+    if (profile.status === 'running') return '监控中';
+    if (profile.status === 'error') return '异常';
+    if (profile.status === 'starting') return '启动中';
+    return profile.status || '等待连接';
+  }
+  function groupMonitorDiscoveredGroups() {
+    const catalogRows = (Array.isArray(state.groupCatalog) ? state.groupCatalog : []).map(item => ({
+      groupJid: item.groupJid,
+      externalId: item.groupJid,
+      title: item.groupName,
+      data: { channelId: item.channelId, sourceId: item.channelId, discoverySource: item.discoverySource },
+    }));
+    const rows = [...catalogRows, ...(Array.isArray(state.conversations) ? state.conversations : []), ...(Array.isArray(state.discoveredConversations) ? state.discoveredConversations : []), ...(Array.isArray(state.discoveredGroupConversations) ? state.discoveredGroupConversations : [])];
+    const values = new Map();
+    for (const row of rows) {
+      const data = row?.data || {};
+      const groupJid = text(row?.groupJid || row?.externalId || data.groupJid || data.groupId || data.externalId);
+      if (!/@g\.us$/i.test(groupJid)) continue;
+      const groupName = text(row?.title || row?.name || data.groupName || groupJid);
+      const sourceId = text(data.sourceId || data.source_id || data.source || '');
+      const channelId = text(data.channelId || data.channel_id || sourceId);
+      const sourceName = text(data.sourceName || data.source_name || data.channelName || data.channel_name || data.sourceLabel || data.channel || '');
+      const channelName = text(data.channelName || data.channel_name || '');
+      const groupFanType = text(data.groupFanType || data.group_fan_type || data.groupFanSource || data.group_fan_source || (/(?:单导|群粉|群导|社群|group)/i.test(sourceName) ? sourceName : ''));
+      const key = groupJid.toLocaleLowerCase();
+      if (!values.has(key)) values.set(key, { groupJid, groupName, sourceId, channelId, sourceName, channelName, groupFanType, vipOnly: false, enabled: true });
+    }
+    return [...values.values()].slice(0, 500);
+  }
+  function groupMonitorCandidates() {
+    const rows = [
+      ...(Array.isArray(state.conversations) ? state.conversations : []),
+      ...(Array.isArray(state.discoveredConversations) ? state.discoveredConversations : []),
+      ...(Array.isArray(state.discoveredGroupConversations) ? state.discoveredGroupConversations : []),
+    ];
+    const values = new Map();
+    for (const row of rows) {
+      const data = row?.data || {};
+      const groupJid = text(row?.groupJid || row?.externalId || data.groupJid || data.groupId || data.externalId);
+      if (!/@g\.us$/i.test(groupJid)) continue;
+      const groupName = text(row?.title || row?.name || data.groupName || groupJid);
+      const sourceId = text(data.sourceId || data.source_id || data.source || '');
+      const channelId = text(data.channelId || data.channel_id || sourceId);
+      const sourceName = text(data.sourceName || data.source_name || data.channelName || data.channel_name || data.sourceLabel || data.channel || '');
+      const channelName = text(data.channelName || data.channel_name || '');
+      const groupFanType = text(data.groupFanType || data.group_fan_type || data.groupFanSource || data.group_fan_source || (/(?:单导|群粉|群导|社群|group)/i.test(sourceName) ? sourceName : ''));
+      values.set(groupJid.toLocaleLowerCase(), { groupJid, groupName, sourceId, channelId, sourceName, channelName, groupFanType, vipOnly: false, enabled: true });
+    }
+    for (const value of configuredVipGroups()) {
+      const groupJid = text(value);
+      if (!/@g\.us$/i.test(groupJid)) continue;
+      const key = groupJid.toLocaleLowerCase();
+      if (!values.has(key)) values.set(key, { groupJid, groupName: groupJid, sourceId: '', channelId: '', sourceName: '', channelName: '', groupFanType: '群粉', vipOnly: false, enabled: true });
+    }
+    return [...values.values()].slice(0, 500);
+  }
+  function groupMonitorCustomers() {
+    const customers = getHost()?.state?.customers;
+    return (Array.isArray(customers) ? customers : []).filter(item => item && item.deleted !== true).slice(0, 300);
+  }
+  function renderGroupMonitorBody() {
+    const capabilityBlocked = !collectionCapability().groupMonitoring;
+    const monitor = state.groupMonitor || {};
+    const profile = monitor.profile;
+    const health = monitor.health || {};
+    const eventCounts = health.eventCounts || {};
+    if (!profile) return `${collectionCapabilityNotice()}<div class="ws-group-monitor-empty"><p>固定席位尚未创建。当前后台群组监测不可用；已保存的群组、客户关系和历史事件保留。监测群组与 VIP 客户管理完全独立。</p><button class="btn small primary" data-ws-action="group-monitor-create" ${collectionControlAttributes()}>${monitor.busy ? '创建中…' : '创建固定席位'}</button></div>`;
+    const targetRows = (Array.isArray(profile.targets) ? profile.targets : []).map(target => { const channel = text(target.data?.channelName || target.data?.sourceName || ''); const groupFanType = text(target.data?.groupFanType || target.data?.groupFanSource || ''); return `<div class="ws-group-monitor-target"><div><strong>${esc(target.groupName || target.groupJid)}</strong><small>${esc(target.groupJid)}${channel ? ` · 渠道：${esc(channel)}` : ''}${groupFanType ? ` · 群粉类型：${esc(groupFanType)}` : ''} · ${target.enabled ? '历史配置已启用（当前不可采集）' : '未启用'}${target.lastSeenAt ? ` · ${esc(displayTime(target.lastSeenAt))}` : ''}</small></div><button class="btn small ${target.enabled ? '' : 'primary'}" data-ws-action="group-monitor-target-toggle" data-target-id="${esc(target.id)}" data-enabled="${target.enabled ? 'true' : 'false'}" ${!target.enabled ? collectionControlAttributes() : ''}>${target.enabled ? '停止' : '启用'}</button></div>`; }).join('');
+    const customers = groupMonitorCustomers();
+    const eventRows = (Array.isArray(monitor.events) ? monitor.events : []).map(event => {
+      const groupName = text(event.data?.groupName || event.groupJid);
+      const customer = customers.find(item => String(item.id) === String(event.customerId || ''));
+      const status = text(event.status || 'pending');
+      const autoRegistered = event.data?.autoRegistered === true;
+      const needsResolve = !customer && ['pending', 'review'].includes(status);
+      const options = [`<option value="">选择现有客户</option>`, ...customers.map(item => `<option value="${esc(item.id)}">${esc(item.name || item.rawPhone || item.phone || item.id)}</option>`)].join('');
+      return `<article class="ws-group-monitor-event" data-event-id="${esc(event.id)}"><div class="ws-group-monitor-event-head"><strong>${esc(groupMonitorEventLabel(event.eventType))} · ${esc(groupName)}</strong><span class="ws-group-monitor-badge status-${esc(status)}">${esc(status === 'applied' ? (autoRegistered ? '已自动登记' : '已写入档案') : status === 'review' ? '待人工确认' : status === 'pending' ? '待关联客户' : '已忽略')}</span></div><p>${esc(event.memberPhone || event.memberJid || '未知成员')} · ${esc(displayTime(event.eventAt || event.observedAt))} · 置信度 ${Math.round(Number(event.confidence || 0) * 100)}%</p>${customer ? `<small>${autoRegistered ? '已自动登记：' : '已关联：'}${esc(customer.name || customer.id)}</small>` : needsResolve ? `<div class="ws-group-monitor-event-actions"><select data-group-monitor-customer="${esc(event.id)}">${options}</select><button class="btn small primary" data-ws-action="group-monitor-resolve" data-event-id="${esc(event.id)}">关联并写入</button><button class="btn small" data-ws-action="group-monitor-ignore" data-event-id="${esc(event.id)}">忽略</button></div>` : `<small>${esc(event.reviewReason || '未匹配现有客户')}</small>`}</article>`;
+    }).join('');
+    const loadedAutoRegisteredCount = (Array.isArray(monitor.events) ? monitor.events : []).filter(event => event.status === 'applied' && event.data?.autoRegistered === true).length;
+    const autoRegisteredCount = Number.isFinite(Number(eventCounts.autoRegistered)) ? Number(eventCounts.autoRegistered) : loadedAutoRegisteredCount;
+    const filter = monitor.statusFilter || 'all';
+    const draft = monitor;
+    const discoveredGroups = groupMonitorDiscoveredGroups();
+    const pickerOptions = discoveredGroups.map(group => `<option value="${esc(group.groupJid)}">${esc(group.groupName || group.groupJid)}</option>`).join('');
+    const groupPicker = `<div class="ws-group-monitor-picker"><select id="wsGroupMonitorPicker" aria-label="从当前 WS 群组选择"><option value="">${discoveredGroups.length ? '从当前 WS 群组选择' : '登录 WS 后显示可选群组'}</option>${pickerOptions}</select><button class="btn small" data-ws-action="group-monitor-add-selected" ${monitor.busy || capabilityBlocked || !discoveredGroups.length ? 'disabled' : ''}>添加所选群组</button></div>`;
+    const addTargetForm = `<div class="ws-group-monitor-add">${groupPicker}<div class="ws-group-monitor-manual"><input id="wsGroupMonitorJid" value="${esc(draft.draftJid || '')}" placeholder="高级入口：群组 JID（可选）" maxlength="180"><input id="wsGroupMonitorName" value="${esc(draft.draftName || '')}" placeholder="群组名称（可选）" maxlength="240"><button class="btn small primary" data-ws-action="group-monitor-add-target" ${monitor.busy || capabilityBlocked ? 'disabled' : ''}>手动添加</button></div></div>`;
+    return `${collectionCapabilityNotice()}<div class="ws-group-monitor-toolbar"><div><span class="ws-group-monitor-status status-blocked"><i></i>${esc(groupMonitorStatusLabel(profile))}</span><small>${health.targetCount || (profile.targets || []).filter(item => item.enabled).length} 个群组 · 最近心跳 ${esc(displayTime(profile.lastHeartbeatAt) || '暂无')}</small></div><div class="ws-group-monitor-actions"><button class="btn small" data-ws-action="group-monitor-scan" ${monitor.busy || capabilityBlocked ? 'disabled' : ''}>${monitor.busy ? '扫描中…' : '扫描已配置群组'}</button><button class="btn small ${profile.enabled ? '' : 'primary'}" data-ws-action="group-monitor-toggle" data-enabled="${profile.enabled ? 'true' : 'false'}" ${!profile.enabled ? collectionControlAttributes() : ''}>${profile.enabled ? '暂停监控' : '启动监控'}</button></div></div><div class="ws-group-monitor-stats"><span>已写入 <b>${Number(eventCounts.applied || 0)}</b></span><span>自动登记 <b>${autoRegisteredCount}</b></span><span>待关联 <b>${Number(eventCounts.pending || 0)}</b></span><span>待确认 <b>${Number(eventCounts.review || 0)}</b></span><span>已忽略 <b>${Number(eventCounts.ignored || 0)}</b></span></div><div class="ws-group-monitor-targets"><div class="ws-group-monitor-section-title"><strong>监控群组</strong><small>只监测明确添加的 WS 群组</small></div>${addTargetForm}${targetRows || '<p class="ws-muted">尚未添加监测群组；登录 WS 后从群组列表选择即可，无需查找 JID。</p>'}</div><div class="ws-group-monitor-events"><div class="ws-group-monitor-section-title"><strong>最近进退群事件</strong><select id="wsGroupMonitorStatusFilter"><option value="all" ${filter === 'all' ? 'selected' : ''}>全部</option><option value="pending" ${filter === 'pending' ? 'selected' : ''}>待关联</option><option value="review" ${filter === 'review' ? 'selected' : ''}>待确认</option><option value="applied" ${filter === 'applied' ? 'selected' : ''}>已写入</option></select></div>${eventRows || '<p class="ws-muted">暂无本机已保存进退群事件；当前后台群组监测不可用。</p>'}</div>${monitor.error ? `<p class="ws-error-line">${esc(monitor.error)}</p>` : ''}<p class="ws-muted">监测群组绑定只决定 WS 监测范围，与 VIP 客户管理完全独立。确认进入群组的成员会自动登记客户档案并写入“已进群”状态；审核中、待批准和无法确认的事件不会建档，保留记录供人工处理。</p>`;
+  }
+  function renderGroupMonitorCard() {
+    return `<section id="wsGroupMonitorCard" class="ws-card ws-group-monitor-card" data-assist-section="diagnostics"><div class="ws-card-heading"><div><strong>固定 WS 群组监测端口</strong><span>本机历史群组与监测配置 · 后台采集不可用 · 前台聊天保留</span></div><button class="btn small" data-ws-action="group-monitor-refresh" ${state.groupMonitor?.loading ? 'disabled' : ''}>${state.groupMonitor?.loading ? '刷新中…' : '刷新'}</button></div><div data-group-monitor-body>${renderGroupMonitorBody()}</div></section>`;
+  }
+  function renderBroadcastCard() {
+    const b = state.broadcast || {};
+    const candidates = broadcastCandidates();
+    const selected = new Set([...b.selectedIds].map(String));
+    const attachments = Array.isArray(b.attachments) ? b.attachments : [];
+    const candidateRows = candidates.slice(0, 80).map(item => {
+      const id = String(item.id);
+      const title = text(item.title || item.externalId || id);
+      const preview = text(item.lastMessageText || '').slice(0, 46);
+      return `<label class="ws-broadcast-recipient"><input type="checkbox" data-ws-broadcast-select="${esc(id)}" ${selected.has(id) ? 'checked' : ''}><span><strong>${esc(title)}</strong><small>${esc(item.externalId || '')}${preview ? ` · ${esc(preview)}` : ''}</small></span></label>`;
+    }).join('');
+    const planRows = broadcastPlanRows().map(item => {
+      const target = state.conversations.find(row => String(row.id) === String(item.conversationId));
+      const title = text(target?.title || target?.externalId || item.conversationId);
+      const canSend = broadcastCanRetry(item);
+      const attachmentCount = Array.isArray(item.attachments) ? item.attachments.length : 0;
+      const payloadLabel = attachmentCount ? `媒体 ${attachmentCount} 个${item.caption || item.originalText ? ' · 含说明' : ''}` : '文本';
+      return `<div class="ws-broadcast-plan-row"><span><strong>${esc(title)}</strong><small>${esc(broadcastDeliveryLabel(item))} · ${esc(payloadLabel)}</small></span>${canSend ? `<button class="btn small" data-ws-action="send-broadcast-item" data-broadcast-audit-id="${esc(item.id)}" ${b.loading ? 'disabled' : ''}>在当前会话发送</button>` : '<span class="ws-broadcast-sent">已阻止重发</span>'}</div>`;
+    }).join('');
+    const attachmentRows = attachments.map(item => `<li class="ws-broadcast-attachment"><span class="ws-broadcast-attachment-kind">${esc(broadcastAttachmentKind(item).toUpperCase())}</span><span class="ws-broadcast-attachment-copy"><strong>${esc(item.fileName || 'attachment')}</strong><small>${esc(item.mimeType || 'application/octet-stream')} · ${Math.max(1, Math.round(Number(item.sizeBytes || item.size || 0) / 1024))} KB · ${esc(item.mediaId || '未上传')}</small></span><button class="icon-button" data-ws-action="remove-broadcast-attachment" data-attachment-id="${esc(item.id || item.mediaId)}" title="移除附件">×</button></li>`).join('');
+    return `<section id="wsBroadcastCard" class="ws-card ws-broadcast-card" data-assist-section="broadcast">
+      <div class="ws-card-heading"><div><strong>群发与翻译</strong><span>只面向已读一对一会话；文本、图片、视频、音频和文件均先入队再逐条确认</span></div><span class="ws-broadcast-count">已选 ${selected.size}/${candidates.length}</span></div>
+      <div class="ws-broadcast-toolbar"><button class="btn small" data-ws-action="broadcast-select-all" ${!candidates.length ? 'disabled' : ''}>全选已读</button><button class="btn small" data-ws-action="broadcast-clear-selection">清空</button><span class="ws-muted">未读会话、普通群聊和未确认目标不会加入群发。</span></div>
+      <div class="ws-broadcast-recipient-list">${candidateRows || '<p class="ws-muted">当前账号没有可群发的已读一对一会话。</p>'}</div>
+      <textarea id="wsBroadcastText" rows="3" placeholder="输入群发原文或媒体说明；发送前可以先生成译文预览。">${esc(b.originalText || '')}</textarea>
+      <div class="ws-broadcast-attachment-toolbar"><input id="wsBroadcastFiles" type="file" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip" hidden><button class="btn small" data-ws-action="pick-broadcast-files" ${b.uploading || b.loading ? 'disabled' : ''}>${b.uploading ? '上传中…' : '添加图片 / 文件'}</button><span class="ws-muted">最多 10 个附件，单个不超过 24 MB</span></div>
+      ${attachments.length ? `<ul class="ws-broadcast-attachments" aria-label="群发附件队列">${attachmentRows}</ul>` : '<p class="ws-broadcast-attachment-empty">尚未添加附件；纯文本群发仍可直接创建计划。</p>'}
+      <div class="ws-broadcast-compose"><label>译为<select id="wsBroadcastLanguage">${languageOptions(b.targetLanguage || state.settings.sendLanguage || state.settings.targetLanguage, true)}</select></label><button class="btn small" data-ws-action="translate-broadcast" ${b.loading || !text(b.originalText) ? 'disabled' : ''}>${b.loading ? '处理中…' : '翻译预览'}</button><button class="btn small primary" data-ws-action="create-broadcast-plan" ${b.loading || b.uploading ? 'disabled' : ''}>创建群发计划</button></div>
+      ${b.translatedText ? `<div class="ws-broadcast-preview"><small>译文预览 · ${esc(b.targetLanguage || '目标语言')}</small><p>${esc(b.translatedText)}</p></div>` : ''}
+      ${b.error ? `<p class="ws-error-line">${esc(b.error)}</p>` : ''}
+      ${b.plan ? `<div class="ws-broadcast-plan"><div class="ws-broadcast-plan-heading"><strong>发送队列 · ${esc(b.lastBatchId)}</strong><button class="btn small" data-ws-action="clear-broadcast-plan">清除视图</button></div>${planRows || '<p class="ws-muted">队列为空。</p>'}</div>` : ''}
+    </section>`;
+  }
+  function renderWsExportCard() {
+    const exportState = state.export || {};
+    return `<section id="wsExportCard" class="ws-card ws-export-card" data-assist-section="export">
+      <div class="ws-card-heading"><div><strong>导出全部 WS 数据</strong><span>联系人、客户、普通群组、VIP 群组、成员、完整消息、AI 分析、客户档案与媒体索引统一导出</span></div></div>
+      <label class="ws-export-option"><input id="wsExportIncludeMedia" type="checkbox" ${exportState.includeMedia !== false ? 'checked' : ''}> 包含媒体元数据与下载索引（不打包本地二进制）</label>
+      <p class="ws-muted">导出按当前账号隔离，服务端流式写出；前台 WS 页面保持原位，不会切换会话或滚动。</p>
+      <button class="btn small primary ws-full-button" data-ws-action="export-all" ${exportState.running ? 'disabled' : ''}>${exportState.running ? '准备导出…' : '导出当前账号全部资料'}</button>
+      ${exportState.lastFileName ? `<p class="ws-export-success">已生成：${esc(exportState.lastFileName)}</p>` : ''}
+      ${exportState.error ? `<p class="ws-error-line">${esc(exportState.error)}</p>` : ''}
+    </section>`;
+  }
+  async function syncGroupMonitorNative(profile, context = groupMonitorContext()) {
+    if (!window.zhikeDesktop?.ws) return { skipped: true };
+    assertContext(context);
+    if (!collectionCapability(context.accountId).groupMonitoring) {
+      if (!profile || !profile.enabled) return wsBridge(profile ? 'pause-group-monitor' : 'stop-group-monitor', context);
+      return collectionBlockedResult(context.accountId);
+    }
+    const signature = JSON.stringify(profile ? {
+      accountId: context.accountId,
+      profileId: profile.id,
+      enabled: Boolean(profile.enabled),
+      intervalSec: Number(profile.pollIntervalSec || 45),
+      targets: (Array.isArray(profile.targets) ? profile.targets : []).filter(item => item.enabled).map(item => ({
+        targetId: item.id,
+        groupJid: item.groupJid,
+        groupName: item.groupName,
+        sourceId: item.sourceId,
+        sourceName: item.sourceName,
+        channelName: item.channelName,
+        groupFanType: item.groupFanType,
+        vipOnly: item.vipOnly !== false,
+        enabled: true,
+      })),
+    } : { accountId: context.accountId, profileId: '', enabled: false });
+    if (signature === groupMonitorNativeSignature) return { unchanged: true };
+    try {
+      if (!profile) {
+        await wsBridge('stop-group-monitor', context);
+        assertContext(context);
+        groupMonitorNativeSignature = signature;
+        return { stopped: true };
+      }
+      const config = JSON.parse(signature);
+      await wsBridge('configure-group-monitor', context, {
+        profileId: config.profileId,
+        intervalSec: config.intervalSec,
+        enabled: config.enabled,
+        targets: config.targets,
+      });
+      assertContext(context);
+      await wsBridge(config.enabled ? 'start-group-monitor' : 'pause-group-monitor', context);
+      assertContext(context);
+      groupMonitorNativeSignature = signature;
+      return { configured: true };
+    } catch (error) {
+      if (/collector|后台群组监控|尚未就绪|WS 账号/i.test(String(error?.message || ''))) return { pending: true };
+      throw error;
+    }
+  }
+  function updateGroupMonitorDom() {
+    const card = $('#wsGroupMonitorCard');
+    const body = card?.querySelector('[data-group-monitor-body]');
+    if (body) body.innerHTML = renderGroupMonitorBody();
+    const refresh = card?.querySelector('[data-ws-action="group-monitor-refresh"]');
+    if (refresh) { refresh.disabled = Boolean(state.groupMonitor?.loading); refresh.textContent = state.groupMonitor?.loading ? '刷新中…' : '刷新'; }
+  }
+  async function loadGroupMonitor(options = {}) {
+    const background = options.background === true;
+    const context = groupMonitorContext();
+    const monitor = state.groupMonitor?.accountId === String(context.accountId)
+      ? state.groupMonitor : (state.groupMonitor = createGroupMonitorState(context.accountId));
+    // A slow sidecar response must not let the 15-second poller overlap and
+    // apply an older profile/event snapshot after a newer one.
+    if (monitor.loading) return;
+    monitor.loading = true;
+    if (!background && !options.silent) { updateGroupMonitorDom(); render(); }
+    try {
+      const catalog = await api(`/api/ws/accounts/${encodeURIComponent(context.accountId)}/groups?status=active&limit=1000`, {}, context);
+      assertContext(context);
+      monitor.catalog = Array.isArray(catalog.groups) ? catalog.groups : [];
+      state.groupCatalog = monitor.catalog.slice(0, 1000);
+      const list = await api('/api/ws/group-monitors/profiles', {}, context);
+      assertContext(context);
+      const profiles = Array.isArray(list.profiles) ? list.profiles : [];
+      const profile = profiles.find(item => String(item.accountId) === String(context.accountId) && /^fixed-group-seat(?:-|$)/i.test(String(item.slotKey || ''))) || profiles.find(item => String(item.accountId) === String(context.accountId)) || null;
+      if (!profile) {
+        monitor.profile = null; monitor.health = null; monitor.events = []; monitor.error = ''; monitor.lastLoadedAt = nowIso();
+      } else {
+        const detail = await api(`/api/ws/group-monitors/${encodeURIComponent(profile.id)}`, {}, context);
+        assertContext(context);
+        const status = text(monitor.statusFilter || 'all') || 'all';
+        const events = await api(`/api/ws/group-monitors/${encodeURIComponent(profile.id)}/events?status=${encodeURIComponent(status)}&limit=60`, {}, context);
+        assertContext(context);
+        monitor.profile = detail.profile || profile;
+        monitor.health = detail.health || null;
+        monitor.events = Array.isArray(events.events) ? events.events : [];
+        monitor.error = '';
+        monitor.lastLoadedAt = nowIso();
+        if (background) await getHost()?.refreshState?.();
+      }
+      assertContext(context);
+      await syncGroupMonitorNative(monitor.profile, context);
+    } catch (error) {
+      if (contextCurrent(context)) monitor.error = String(error?.message || '固定群组监控暂时不可用').slice(0, 240);
+    } finally {
+      // Always release this request's object. A stale account request must
+      // neither strand its old lock nor unlock/overwrite the new account.
+      monitor.loading = false;
+      if (state.groupMonitor === monitor && contextCurrent(context)) {
+        updateGroupMonitorDom();
+        if (!background && !options.silent) render();
+      }
+    }
+    return monitor;
+  }
+  async function createGroupMonitor() {
+    if (!collectionCapability().groupMonitoring) return rejectCollectionAction();
+    const monitor = state.groupMonitor;
+    if (monitor.busy) return;
+    monitor.busy = true; updateGroupMonitorDom();
+    try {
+      await api('/api/ws/group-monitors/profiles', { method: 'POST', body: JSON.stringify({ slotKey: 'fixed-group-seat', enabled: true, pollIntervalSec: 45 }) }, groupMonitorContext());
+      await loadGroupMonitor();
+      toast('固定 WS 群组监控席位已创建');
+    } catch (error) { monitor.error = error.message || '固定席位创建失败'; toast(monitor.error, 'x'); }
+    finally { monitor.busy = false; updateGroupMonitorDom(); render(); }
+  }
+  async function scanGroupMonitorTargets() {
+    if (!collectionCapability().groupMonitoring) return rejectCollectionAction();
+    const monitor = state.groupMonitor;
+    if (monitor.busy) return;
+    monitor.busy = true; updateGroupMonitorDom();
+    try {
+      if (!monitor.profile) {
+        await api('/api/ws/group-monitors/profiles', { method: 'POST', body: JSON.stringify({ slotKey: 'fixed-group-seat', enabled: true, pollIntervalSec: 45 }) }, groupMonitorContext());
+        await loadGroupMonitor({ silent: true });
+      }
+      const candidates = groupMonitorCandidates();
+      if (!candidates.length) throw new Error('当前账号尚未同步可扫描的 WS 群组；请先扫码登录并刷新会话列表，再从下方群组列表选择并添加监测群组。');
+      await api(`/api/ws/group-monitors/${encodeURIComponent(monitor.profile.id)}/targets/scan`, { method: 'POST', body: JSON.stringify({ targets: candidates }) }, groupMonitorContext());
+      await loadGroupMonitor();
+      toast(`已扫描 ${candidates.length} 个已配置群组`);
+    } catch (error) { monitor.error = error.message || '群组扫描失败'; toast(monitor.error, 'x'); }
+    finally { monitor.busy = false; updateGroupMonitorDom(); render(); }
+  }
+  async function addGroupMonitorTarget(selectedGroup = null) {
+    if (!collectionCapability().groupMonitoring) return rejectCollectionAction();
+    const monitor = state.groupMonitor;
+    if (monitor.busy) return;
+    const rawJid = text(selectedGroup?.groupJid || monitor.draftJid);
+    const groupName = text(selectedGroup?.groupName || monitor.draftName);
+    const groupJid = rawJid.toLocaleLowerCase();
+    if (!/@g\.us$/i.test(groupJid)) {
+      monitor.error = '请输入 WhatsApp 群组 JID（格式：数字或群组标识@g.us）。';
+      updateGroupMonitorDom();
+      return;
+    }
+    monitor.busy = true;
+    monitor.error = '';
+    updateGroupMonitorDom();
+    try {
+      if (!monitor.profile) {
+        await api('/api/ws/group-monitors/profiles', { method: 'POST', body: JSON.stringify({ slotKey: 'fixed-group-seat', enabled: true, pollIntervalSec: 45 }) }, groupMonitorContext());
+        await loadGroupMonitor({ silent: true });
+      }
+      await api(`/api/ws/group-monitors/${encodeURIComponent(monitor.profile.id)}/targets/scan`, {
+        method: 'POST',
+        body: JSON.stringify({ targets: [{ groupJid, groupName: groupName || groupJid, sourceId: text(selectedGroup?.sourceId) || 'manual-ws-monitor', channelId: text(selectedGroup?.channelId || selectedGroup?.sourceId), sourceName: text(selectedGroup?.sourceName), channelName: text(selectedGroup?.channelName), groupFanType: text(selectedGroup?.groupFanType), vipOnly: false, enabled: true }] }),
+      }, groupMonitorContext());
+      monitor.draftJid = '';
+      monitor.draftName = '';
+      await loadGroupMonitor();
+      toast('监测群组已添加');
+    } catch (error) {
+      monitor.error = error.message || '监测群组添加失败';
+      toast(monitor.error, 'x');
+    } finally {
+      monitor.busy = false;
+      updateGroupMonitorDom();
+      render();
+    }
+  }
+  async function addSelectedGroupMonitorTarget() {
+    const monitor = state.groupMonitor;
+    if (monitor.busy) return;
+    const groupJid = text($('#wsGroupMonitorPicker')?.value);
+    const selectedGroup = groupMonitorDiscoveredGroups().find(item => item.groupJid.toLocaleLowerCase() === groupJid.toLocaleLowerCase());
+    if (!selectedGroup) {
+      monitor.error = '请先登录 WS 并从当前群组列表选择一个群组。';
+      updateGroupMonitorDom();
+      return;
+    }
+    return addGroupMonitorTarget(selectedGroup);
+  }
+  async function toggleGroupMonitor(enabled) {
+    if (enabled && !collectionCapability().groupMonitoring) return rejectCollectionAction();
+    const monitor = state.groupMonitor;
+    if (!monitor.profile || monitor.busy) return;
+    monitor.busy = true; updateGroupMonitorDom();
+    try {
+      await api(`/api/ws/group-monitors/${encodeURIComponent(monitor.profile.id)}`, { method: 'PATCH', body: JSON.stringify({ enabled }) }, groupMonitorContext());
+      await loadGroupMonitor();
+      toast(enabled ? '群组监控已启动' : '群组监控已暂停');
+    } catch (error) { monitor.error = error.message || '群组监控状态保存失败'; toast(monitor.error, 'x'); }
+    finally { monitor.busy = false; updateGroupMonitorDom(); render(); }
+  }
+  async function toggleGroupMonitorTarget(element) {
+    const monitor = state.groupMonitor;
+    const targetId = text(element?.dataset?.targetId);
+    const enabled = element?.dataset?.enabled !== 'true';
+    if (enabled && !collectionCapability().groupMonitoring) return rejectCollectionAction();
+    if (!monitor.profile || !targetId || monitor.busy) return;
+    monitor.busy = true; updateGroupMonitorDom();
+    try {
+      await api(`/api/ws/group-monitors/${encodeURIComponent(monitor.profile.id)}/targets/${encodeURIComponent(targetId)}/${enabled ? 'enable' : 'disable'}`, { method: 'POST', body: JSON.stringify({}) }, groupMonitorContext());
+      await loadGroupMonitor();
+    } catch (error) { monitor.error = error.message || '群组监控目标保存失败'; toast(monitor.error, 'x'); }
+    finally { monitor.busy = false; updateGroupMonitorDom(); render(); }
+  }
+  async function resolveGroupMonitorEvent(element, action = 'resolve') {
+    const monitor = state.groupMonitor;
+    const eventId = text(element?.dataset?.eventId);
+    if (!monitor.profile || !eventId || monitor.busy) return;
+    const selected = $$('[data-group-monitor-customer]').find(node => String(node.dataset.groupMonitorCustomer || '') === eventId)?.value || '';
+    if (action !== 'ignore' && !selected) { toast('请选择客户中心中已有的客户。', 'x'); return; }
+    monitor.busy = true; updateGroupMonitorDom();
+    try {
+      await api(`/api/ws/group-monitors/${encodeURIComponent(monitor.profile.id)}/events/${encodeURIComponent(eventId)}/resolve`, { method: 'POST', body: JSON.stringify(action === 'ignore' ? { action: 'ignore', reason: '人工忽略' } : { customerId: selected, lock: true }) }, groupMonitorContext());
+      await loadGroupMonitor();
+      toast(action === 'ignore' ? '事件已忽略' : '已关联现有客户并写入群组关系');
+    } catch (error) { monitor.error = error.message || '群组事件处理失败'; toast(monitor.error, 'x'); }
+    finally { monitor.busy = false; updateGroupMonitorDom(); render(); }
+  }
+  function wsBackgroundStatus() {
+    if (!collectionCapability().backgroundCollection) return { label: '后台采集不可用', tone: 'blocked', code: COLLECTION_CAPABILITY_BLOCKED };
+    return {
+      label: state.backgroundActive ? (state.wsStatus === '已连接' ? '后台持续运行' : '后台等待连接') : '后台未启动',
+      tone: state.backgroundActive && state.wsStatus === '已连接' ? 'running' : state.backgroundActive ? 'waiting' : 'idle',
+    };
+  }
   function updateStatusDom() {
+    const backgroundStatus = $('.ws-chat-background-status');
+    if (backgroundStatus) {
+      const current = wsBackgroundStatus();
+      if (backgroundStatus.textContent !== current.label) backgroundStatus.textContent = current.label;
+      if (backgroundStatus.dataset.tone !== current.tone) backgroundStatus.dataset.tone = current.tone;
+    }
     const badge = $('#wsStatusBadge');
-    if (badge) { badge.textContent = state.wsStatus; badge.dataset.status = state.wsStatus; badge.dataset.errorCategory = state.wsErrorCategory || ''; }
+    if (badge) {
+      if (badge.textContent !== state.wsStatus) badge.textContent = state.wsStatus;
+      if (badge.dataset.status !== state.wsStatus) badge.dataset.status = state.wsStatus;
+      const errorCategory = state.wsErrorCategory || '';
+      if (badge.dataset.errorCategory !== errorCategory) badge.dataset.errorCategory = errorCategory;
+    }
     const detail = $('#wsStatusDetail');
     const statusDetail = state.wsDetail || (state.wsStatus === '已连接' ? '已通过页面结构确认 WS 主界面；未读取 Cookie 或消息正文。' : '请在中栏自行完成扫码或登录。');
-    if (detail) { detail.textContent = statusDetail; detail.title = statusDetail; }
+    if (detail) {
+      if (detail.textContent !== statusDetail) detail.textContent = statusDetail;
+      if (detail.title !== statusDetail) detail.title = statusDetail;
+    }
+  }
+  function updateAiBackgroundErrorDom() {
+    const node = $('#wsAiBackgroundError');
+    if (!node) return;
+    const message = String(state.aiBackgroundError || '').trim();
+    node.hidden = !message;
+    const textNode = node.querySelector('[data-ws-ai-error-text]');
+    if (textNode) textNode.textContent = message;
   }
   function setStatus(status, detail = '') {
     state.wsStatus = status || '未连接';
@@ -868,10 +1816,21 @@
     const bounds = boundsForBrowserView();
     const signature = JSON.stringify(bounds);
     if (signature === lastResizeBounds && !resizeInFlight) return;
+    // Scrollbars and fractional layout rounding can move the host by a pixel
+    // while the shell settles. Do not send a native resize for these cosmetic
+    // changes; repeated 1px bridge calls are what make the embedded WS page
+    // appear to shiver during polling and scrolling.
+    if (!bounds.hidden && lastResizeGeometry &&
+      Math.abs(bounds.x - lastResizeGeometry.x) < 2 &&
+      Math.abs(bounds.y - lastResizeGeometry.y) < 2 &&
+      Math.abs(bounds.width - lastResizeGeometry.width) < 2 &&
+      Math.abs(bounds.height - lastResizeGeometry.height) < 2 &&
+      !resizeInFlight) return;
     if (resizeInFlight) { resizePending = true; return; }
     resizeInFlight = true;
     resizePending = false;
     lastResizeBounds = signature;
+    lastResizeGeometry = bounds.hidden ? null : { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height };
     try { await wsBridge(bounds.hidden ? 'hide' : 'resize'); }
     catch { /* a transient bridge failure is retried on the next layout change */ }
     finally {
@@ -886,6 +1845,7 @@
   async function connectionAction(action) {
     if (state.busy.connection) return;
     if (action === 'clear-session' && !confirm('清除本机 WS 会话后需要重新扫码或登录。客户资料、翻译、AI 分析和跟进记录不会删除。确认继续？')) return;
+    ++state.connectionAttemptGeneration;
     const stopAfterAction = action === 'close' || action === 'clear-session';
     state.busy.connection = true;
     let context = null;
@@ -903,16 +1863,24 @@
       context = captureContext('');
       const result = await wsBridge(action, context);
       assertContext(context);
+      state.error = '';
       if (['open', 'login', 'reload', 'reconnect', 'probe'].includes(action))
         await syncVipGroupAllowlist(context, ['open', 'login', 'reload', 'reconnect'].includes(action));
       setStatus(result.status || (action === 'reconnect' ? '正在重连' : action === 'close' || action === 'clear-session' ? '未连接' : '等待登录'), result.detail || '');
       if (action === 'clear-session') toast('WS 隔离登录会话已清除，本地业务记录仍保留');
       else if (action === 'close') toast('WS 页面已关闭，本地业务记录仍保留');
+      else if (result.isolatedPreview === true) toast(result.detail);
       else if (action === 'probe') toast('WS 登录状态已重新检测');
       else toast('WS 页面已打开，请自行扫码或登录');
       if (!stopAfterAction && state.backgroundActive) {
-        if (!state.conversations.length) await loadConversations();
-        void refreshCollectionSummary();
+        // A connected account may already have direct-chat rows in the local
+        // inventory.  Do not use that as a reason to skip discovery: group
+        // rows are exposed through the separate groupConversations stream and
+        // must be refreshed after login/reload as well.  The previous
+        // `!state.conversations.length` guard left the group picker stale (or
+        // empty) whenever the account had any existing customer chats.
+        if (state.wsStatus === '已连接' || result.status === '已连接') await loadConversations();
+        void refreshCollectionSummary({ background: true });
       }
     } catch (error) {
       if (!context || contextCurrent(context)) { const detail = wsErrorDetail(error); setStatus(classifyWsError(error) === 'session-expired' ? '会话过期' : classifyWsError(error) === 'unpaired' ? '等待登录' : '连接失败', detail); toast(detail, 'x'); }
@@ -937,10 +1905,12 @@
         api('/api/ws/ai-jobs?limit=20', {}, context).catch(() => null),
       ]);
       if (sequence !== loadSequence || !contextCurrent(context)) return;
-      if (runResult) { assertContext(context); state.collectionRun = runResult.run || null; }
-      if (alertResult) { assertContext(context); state.followupAlerts = alertResult.alerts || []; }
+      state.summaryLoaded = { collection: Boolean(runResult), followups: Boolean(alertResult), ai: Boolean(aiQueueResult?.stats) };
+      state.collectionRun = runResult?.run || null;
+      state.followupAlerts = alertResult?.alerts || [];
       if (aiQueueResult?.stats) { assertContext(context); state.aiQueueStats = aiQueueResult.stats; }
       applyConversationInventory(result, accountId);
+      mergeDiscoveredGroupRows(result.groupConversations);
       const previousConversationId = String(state.currentConversationId || '');
       if (state.conversationSelectionManual && !state.conversations.some(item => String(item.id) === previousConversationId)) state.conversationSelectionManual = false;
       state.currentConversationId = resolveInitialConversationId(state.conversations, previousConversationId, state.conversationSelectionManual);
@@ -973,26 +1943,49 @@
     ].join('\u0001');
   }
   function aiQueueSignature(stats = state.aiQueueStats) {
-    return stats ? [stats.queued, stats.running, stats.retryable, stats.completed, stats.failed, stats.total].join('\u0001') : '';
+    return stats ? [stats.queued, stats.running, stats.retryable, stats.completed, stats.failed, stats.deadLetter, stats.retryCount, stats.total].join('\u0001') : '';
   }
   function captureWorkbenchScroll() {
     return ['.ws-session-list', '.ws-message-list', '.ws-assist-panel', '.ws-center-panel'].map(selector => {
       const node = $(selector);
-      return node ? { selector, top: Number(node.scrollTop || 0), left: Number(node.scrollLeft || 0) } : null;
+      if (!node) return null;
+      const maxTop = Math.max(0, Number(node.scrollHeight || 0) - Number(node.clientHeight || 0));
+      const maxLeft = Math.max(0, Number(node.scrollWidth || 0) - Number(node.clientWidth || 0));
+      return {
+        selector,
+        top: Number(node.scrollTop || 0),
+        left: Number(node.scrollLeft || 0),
+        // Preserve a pane that was pinned to its end when new cards/messages
+        // are added. Keeping the bottom anchor avoids the thumb jumping when
+        // the right assistant panel grows during AI/collector updates.
+        atBottom: maxTop > 0 && maxTop - Number(node.scrollTop || 0) < 8,
+        atRight: maxLeft > 0 && maxLeft - Number(node.scrollLeft || 0) < 8,
+      };
     }).filter(Boolean);
+  }
+  function restoreWorkbenchScroll(positions) {
+    for (const position of positions) {
+      const node = $(position.selector);
+      if (!node) continue;
+      const hasTopMetrics = Number.isFinite(Number(node.scrollHeight)) && Number.isFinite(Number(node.clientHeight));
+      const hasLeftMetrics = Number.isFinite(Number(node.scrollWidth)) && Number.isFinite(Number(node.clientWidth));
+      const maxTop = hasTopMetrics ? Math.max(0, Number(node.scrollHeight) - Number(node.clientHeight)) : Math.max(0, Number(position.top) || 0);
+      const maxLeft = hasLeftMetrics ? Math.max(0, Number(node.scrollWidth) - Number(node.clientWidth)) : Math.max(0, Number(position.left) || 0);
+      const targetTop = position.atBottom && hasTopMetrics ? maxTop : Math.min(Math.max(0, position.top), maxTop);
+      const targetLeft = position.atRight && hasLeftMetrics ? maxLeft : Math.min(Math.max(0, position.left), maxLeft);
+      // Assign only when the clamped target differs. A no-op write still emits
+      // scroll events in some WebView2 builds and can make the thumb flash.
+      if (Math.abs(Number(node.scrollTop || 0) - targetTop) > 0.5) node.scrollTop = targetTop;
+      if (Math.abs(Number(node.scrollLeft || 0) - targetLeft) > 0.5) node.scrollLeft = targetLeft;
+    }
   }
   function renderPreservingScroll() {
     const positions = captureWorkbenchScroll();
+    // Restore before the browser's next paint. Waiting for requestAnimationFrame
+    // leaves a blank/top-of-panel frame and lets the global scroll coordinator
+    // restore a competing position.
     render();
-    if (!positions.length) return;
-    requestAnimationFrame(() => {
-      for (const position of positions) {
-        const node = $(position.selector);
-        if (!node) continue;
-        node.scrollTop = position.top;
-        node.scrollLeft = position.left;
-      }
-    });
+    restoreWorkbenchScroll(positions);
   }
   async function refreshSelectedConversationState(context, expectedConversationId, previousConversationSignature, previousQueueSignature) {
     const conversationId = String(expectedConversationId || '');
@@ -1024,9 +2017,11 @@
       if (latest) state.analysisRefreshPending.delete(conversationId);
     }
   }
-  async function refreshCollectionSummary() {
+  async function refreshCollectionSummary(options = {}) {
+    if (!collectionCapability().backgroundCollection) return collectionBlockedResult();
     if (!state.backgroundActive) return;
     if (state.loading || state.collectionRefreshing) { state.collectionRefreshQueued = true; return; }
+    const backgroundRefresh = options?.background === true;
     // Collection refresh is account-scoped. Selecting another conversation
     // must not strand the global refresh lock or cancel list/run updates.
     const context = captureContext('');
@@ -1045,6 +2040,7 @@
       ]);
       assertContext(context);
       applyConversationInventory(result, context.accountId);
+      mergeDiscoveredGroupRows(result.groupConversations);
       selectedConversationId = reconcilePersonalConversationSelection();
       state.collectionRun = run.run || null;
       state.followupAlerts = alerts.alerts || [];
@@ -1052,12 +2048,26 @@
       let listSyncResult = { synced: 0, analyzed: 0 };
       if (state.wsStatus === '已连接' && (!state.collectionRun || !['paused', 'stopped', 'completed'].includes(state.collectionRun.status))) {
          const visible = await wsBridge('discover-conversations', context).catch(error => {
-           if (contextCurrent(context)) state.error = `WS 会话列表读取失败：${String(error?.message || '页面暂不可读').slice(0, 240)}`;
+          if (contextCurrent(context)) {
+            const message = String(error?.message || '页面暂不可读');
+            const warmupCollectorError = /后台采集视图(?:尚未就绪|仍在加载)/.test(message);
+            if (warmupCollectorError && state.backgroundActive && state.wsStatus === '已连接') {
+              // Collector startup/reconnect is an expected transient while the
+              // hidden profile is warming up. Keep the foreground chat usable
+              // and let the next polling cycle retry without a red error banner.
+              if (/WS 会话列表读取失败|后台采集视图尚未就绪/.test(String(state.error || ''))) state.error = '';
+            } else {
+              state.error = `WS 会话列表读取失败：${message.slice(0, 240)}`;
+            }
+          }
            return null;
          });
         assertContext(context);
         if (visible?.supported) {
-          const visibleConversations = (visible.conversations || []).map(normalizeListItem).filter(isAutomaticCollectibleConversation);
+          if (/WS 会话列表读取失败|后台采集视图尚未就绪/.test(String(state.error || ''))) state.error = '';
+          const visibleRows = (visible.conversations || []).map(normalizeListItem);
+          mergeDiscoveredGroupRows(discoveryGroupRows(visible));
+          const visibleConversations = visibleRows.filter(isAutomaticCollectibleConversation);
           const fingerprint = visibleConversationFingerprint(visibleConversations);
           if (fingerprint !== state.visibleConversationFingerprint) {
             if (visibleConversations.length) await enqueueDiscoveredConversations(visibleConversations, false, context);
@@ -1079,26 +2089,31 @@
       // The safety poll reads one small page when the account is unchanged and
       // walks further only while rows remain newer than the saved watermark.
       // Avoid replacing the workbench DOM unless visible data actually changed.
-      if (collectionRenderSignature() !== beforeRenderSignature) renderPreservingScroll();
+      if ((!backgroundRefresh || !state.active) && collectionRenderSignature() !== beforeRenderSignature) renderPreservingScroll();
     } catch (error) {
       if (contextCurrent(context) && error?.message && !/过期操作/.test(error.message)) {
         state.error = error.message;
-        renderPreservingScroll();
+        // A transient collector/API error must not rebuild the visible WS
+        // shell while the operator is chatting. Keep the error in state so a
+        // later route refresh can show it without stealing the WebView.
+        if (!backgroundRefresh || !state.active) renderPreservingScroll();
+        else updateStatusDom();
       }
     } finally {
       if (contextCurrent(context)) {
         state.collectionRefreshing = false;
         if (state.collectionRefreshQueued && state.backgroundActive && !state.loading) {
           state.collectionRefreshQueued = false;
-          queueMicrotask(() => { void refreshCollectionSummary(); });
+          queueMicrotask(() => { void refreshCollectionSummary({ background: backgroundRefresh }); });
         }
       }
     }
   }
   function requestAccountPipelineRefresh(accountId = '') {
+    if (!collectionCapability(accountId || state.activeAccountId).backgroundCollection) return Promise.resolve(collectionBlockedResult(accountId || state.activeAccountId));
     const targetId = text(accountId) || String(state.activeAccountId || 'default');
     if (!state.backgroundActive) return Promise.resolve({ skipped: true });
-    if (targetId === String(state.activeAccountId || 'default')) return refreshCollectionSummary();
+    if (targetId === String(state.activeAccountId || 'default')) return refreshCollectionSummary({ background: true });
     backgroundAccountRefreshQueue.add(targetId);
     // Never take the foreground WhatsApp account away while the operator is
     // chatting. The durable native collector keeps ingesting; queued AI/CRM
@@ -1119,7 +2134,7 @@
         const context = captureContext('');
         const status = await wsBridge('status', context).catch(() => null);
         if (status?.status) { updateAccountStatus(status); setStatus(status.status, status.detail || ''); }
-        await refreshCollectionSummary();
+        await refreshCollectionSummary({ background: true });
         // refreshCollectionSummary schedules the durable AI pump. Wait for the
         // current bounded batch before rotating so account-switch cancellation
         // cannot strand a claimed job in the running state.
@@ -1194,12 +2209,17 @@
           succeeded += Number(result?.succeeded || 0);
         } while (aiPumpQueued && !controller.signal.aborted && contextCurrent(pumpContext) && state.backgroundActive && state.aiEnabled && !state.aiBusy);
         if (contextCurrent(pumpContext)) state.aiBackgroundError = '';
+        updateAiBackgroundErrorDom();
         return { succeeded };
       })().catch(error => {
         if (!isAiCancellation(error, controller.signal) && contextCurrent(pumpContext)) {
           aiPumpQueued = false;
           state.aiBackgroundError = `后台 AI 分析待重试：${String(error?.message || 'AI 服务暂不可用').replace(/[\r\n\t]+/g, ' ').slice(0, 240)}`;
-          renderPreservingScroll();
+          // Background retries must never rebuild the visible WS shell. A
+          // full redraw replaces the right scroll container and restores its
+          // position one frame later, which makes the WebView and scrollbar
+          // visibly jump while the operator is chatting.
+          updateAiBackgroundErrorDom();
         }
         return { succeeded };
       }).finally(() => {
@@ -1212,7 +2232,7 @@
           // batch so Home or Task Center updates even while the WS route is
           // hidden. Never refresh once an account switch invalidates context.
           void Promise.resolve().then(() => getHost()?.refreshState?.()).catch(() => {}).then(() => {
-            if (state.backgroundActive && contextCurrent(pumpContext)) void refreshCollectionSummary();
+            if (state.backgroundActive && contextCurrent(pumpContext)) void refreshCollectionSummary({ background: true });
           });
         }
       });
@@ -1224,6 +2244,11 @@
     if (!state.aiEnabled || state.loading || state.aiBusy) return { processed: 0, succeeded: 0 };
     let processed = 0, succeeded = 0;
     throwIfAiCancelled(signal);
+    // Only the existing consumer performs recovery. Read-only queue views must
+    // not change leases or recover Worker-owned jobs just by refreshing.
+    await api('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'recover-expired', accountId: context.accountId }) }, context);
+    throwIfAiCancelled(signal);
+    assertContext(context);
     const queue = await api('/api/ws/ai-jobs?status=queued,retryable&limit=12', {}, context);
     throwIfAiCancelled(signal);
     assertContext(context);
@@ -1503,16 +2528,34 @@
   async function failAiJob(job, context, reason) {
     if (!job?.id) return;
     try {
-      const result = await api('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'fail', jobId: job.id, error: String(reason || 'AI 分析失败').slice(0, 1000), retryable: true }) }, context);
+      const result = await api('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'fail', jobId: job.id, leaseToken: job.leaseToken, error: String(reason || 'AI 分析失败').slice(0, 1000), retryable: true }) }, context);
       if (contextCurrent(context)) state.aiQueueStats = result.stats || state.aiQueueStats;
-    } catch {}
+      return true;
+    } catch (error) {
+      // Do not leave a claimed job looking healthy when the failure write
+      // itself was rejected. The durable queue will recover the lease, while
+      // the visible WS panel exposes an actionable retry state without a full
+      // shell redraw or a swallowed exception.
+      if (contextCurrent(context)) {
+        state.aiBackgroundError = `后台 AI 队列回写失败：${String(error?.message || '任务状态暂时无法保存').replace(/[\r\n\t]+/g, ' ').slice(0, 240)}`;
+        updateAiBackgroundErrorDom();
+      }
+      return false;
+    }
   }
   async function completeAiJob(job, analysisId, context) {
     if (!job?.id || !analysisId) return;
     try {
-      const result = await api('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'complete', jobId: job.id, analysisId }) }, context);
+      const result = await api('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'complete', jobId: job.id, leaseToken: job.leaseToken, analysisId }) }, context);
       if (contextCurrent(context)) state.aiQueueStats = result.stats || state.aiQueueStats;
-    } catch {}
+      return true;
+    } catch (error) {
+      if (contextCurrent(context)) {
+        state.aiBackgroundError = `后台 AI 队列完成状态未保存：${String(error?.message || '任务状态暂时无法保存').replace(/[\r\n\t]+/g, ' ').slice(0, 240)}`;
+        updateAiBackgroundErrorDom();
+      }
+      return false;
+    }
   }
   async function analyzeStoredConversation(conversation, context, options = {}) {
     const signal = options.signal;
@@ -1628,7 +2671,7 @@
       if (fullHistorySourceFingerprint(latestConversation) !== sourceFingerprint) throw new Error('分析期间聊天已更新，旧分析进度已保留；等待重新采集完整历史。');
       analysis.transcriptInfo = { ...transcript, text: undefined, analyzedChunks: chunks.length };
       if (vipGroup) analysis.memberIdentity = memberTranscript.memberIdentity;
-       const saved = await api('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, jobId: aiJob.job.id, memberIdentity: vipGroup ? memberTranscript.memberIdentity : null, result: analysis, confidence: analysis.confidence, providerName: analysis.providerName, model: analysis.model }) }, context);
+       const saved = await api('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, jobId: aiJob.job.id, leaseToken: aiJob.job.leaseToken, memberIdentity: vipGroup ? memberTranscript.memberIdentity : null, result: analysis, confidence: analysis.confidence, providerName: analysis.providerName, model: analysis.model }) }, context);
        throwIfAiCancelled(signal);
        await completeAiJob(aiJob.job, saved.id, context);
        throwIfAiCancelled(signal);
@@ -1677,7 +2720,7 @@
       if (parsed.error) throw new Error(parsed.error);
       parsed.providerName = result.providerName || ''; parsed.model = result.model || '';
       analyses.push(parsed);
-      if (job?.id) await api('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'checkpoint', jobId: job.id, completedChunks: chunk.chunkNumber, chunkCount: chunks.length, result: core.mergeAiAnalyses(analyses) }) }, context);
+      if (job?.id) await api('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'checkpoint', jobId: job.id, leaseToken: job.leaseToken, completedChunks: chunk.chunkNumber, chunkCount: chunks.length, result: core.mergeAiAnalyses(analyses) }) }, context);
     }
     const merged = core.mergeAiAnalyses(analyses);
     if (chunks.length > 1) {
@@ -1829,6 +2872,7 @@
     } finally { state.listSyncBusy = false; }
   }
   async function createCollectionRun() {
+    if (!collectionCapability().automaticHistory) return rejectCollectionAction();
     const context = captureContext();
     try {
       const result = await api('/api/ws/collection-runs', { method: 'POST', body: JSON.stringify({}) }, context);
@@ -1840,6 +2884,7 @@
     } catch (error) { if (contextCurrent(context)) { state.error = error.message; render(); } }
   }
   async function collectAllReadConversations() {
+    if (!collectionCapability().automaticHistory) return rejectCollectionAction();
     if (state.busy.readHistory) return;
     if (state.wsStatus !== '已连接') { toast('请先登录并保持 WS 已连接。', 'x'); return; }
     const context = captureContext();
@@ -1861,7 +2906,8 @@
       if (!result?.supported || !result.started) throw new Error(result?.error || '当前 WS 页面不支持已读会话自动采集。');
       state.readHistorySkipped = Array.isArray(result.skippedUnread) ? result.skippedUnread : [];
       toast(`已启动已读会话自动采集${state.readHistorySkipped.length ? `，当前窗口跳过未读 ${state.readHistorySkipped.length} 个` : ''}。`);
-      void refreshCollectionSummary();
+      void refreshCollectionSummary({ background: true });
+      void loadGroupMonitor({ background: true, silent: true });
     } catch (error) {
       state.readHistoryAutoStarted = false;
       if (contextCurrent(context)) { state.error = error.message || '已读会话自动采集失败。'; toast(state.error, 'x'); }
@@ -1870,6 +2916,7 @@
     }
   }
   function maybeStartAutomaticReadHistoryCollection(context = captureContext()) {
+    if (!collectionCapability(context.accountId).automaticHistory) return collectionBlockedResult(context.accountId);
     if (!state.backgroundActive || state.wsStatus !== '已连接' || state.readHistoryAutoStarted || state.busy.readHistory) return;
     if (state.collectionRun && ['paused', 'stopped', 'completed'].includes(state.collectionRun.status)) return;
     // List discovery and preview sync always happen first. Once the page is
@@ -1883,6 +2930,7 @@
     });
   }
   async function updateCollectionRun(status) {
+    if (['running', 'discovering'].includes(status) && !collectionCapability().automaticHistory) return rejectCollectionAction();
     if (!state.collectionRun?.id) return;
     const context = captureContext();
     const runId = state.collectionRun.id;
@@ -1895,12 +2943,15 @@
     } catch (error) { if (contextCurrent(context)) { state.error = error.message; render(); } }
   }
   async function resumeCollectionFromCheckpoint(context = captureContext()) {
+    if (!collectionCapability(context.accountId).automaticHistory) return rejectCollectionAction(context);
     if (!state.collectionRun?.id || !['running','discovering'].includes(state.collectionRun.status) || state.wsStatus !== '已连接') return;
     assertContext(context);
     const visible = await wsBridge('discover-conversations', context).catch(() => null);
     assertContext(context);
     if (!visible?.supported) return;
-    const items = (Array.isArray(visible.conversations) ? visible.conversations : []).map(normalizeListItem).filter(isAutomaticCollectibleConversation);
+    const visibleRows = (Array.isArray(visible.conversations) ? visible.conversations : []).map(normalizeListItem);
+    mergeDiscoveredGroupRows(discoveryGroupRows(visible));
+    const items = visibleRows.filter(isAutomaticCollectibleConversation);
     if (items.length) await enqueueDiscoveredConversations(items, false, context);
     const listSync = await syncConversationListPreviews(items, context);
     if (listSync.synced) state.followupAlerts = (await api('/api/ws/followup-alerts?limit=8', {}, context)).alerts || state.followupAlerts;
@@ -1915,9 +2966,10 @@
     await collectAllReadConversations();
   }
   async function discoverConversations() {
+    if (!collectionCapability().backgroundCollection) return rejectCollectionAction();
     const context = captureContext();
     try {
-      const result = await wsBridge('discover-conversations'); assertContext(context); if (!result?.supported) throw new Error(result?.error || '当前页面结构未识别'); state.discoveredConversations = (result.conversations || []).map(normalizeListItem).filter(isAutomaticCollectibleConversation);
+      const result = await wsBridge('discover-conversations'); assertContext(context); if (!result?.supported) throw new Error(result?.error || '当前页面结构未识别'); const visibleRows = (result.conversations || []).map(normalizeListItem); mergeDiscoveredGroupRows(discoveryGroupRows(result)); state.discoveredConversations = visibleRows.filter(isAutomaticCollectibleConversation);
       const queued = await enqueueDiscoveredConversations(state.discoveredConversations, false, context);
       const listSync = await syncConversationListPreviews(state.discoveredConversations, context);
       assertContext(context);
@@ -1947,42 +2999,7 @@
       if (contextCurrent(context)) { state.error = error.message; render(); }
     }
   }
-  async function autoCaptureCurrentConversation() {
-    if (!state.active || state.wsStatus !== '已连接' || state.loading || state.busy.import || state.aiBusy) return;
-    const current = activeConversation();
-    if (!current || !isAutomaticCollectibleConversation(current) || ['paused', 'stopped', 'completed'].includes(state.collectionRun?.status)) return;
-    const context = captureContext(current.id);
-    try {
-      const result = await wsBridge('capture-visible-messages');
-      if (!contextCurrent(context)) return;
-      if (!result?.supported || !result.messages?.length) return;
-      const capturedText = result.messages.map(item => item.text).join('\n').trim();
-      if (!capturedText || capturedText === state.autoCaptureSignature) return;
-      const draft = currentDraft();
-      draft.captureText = capturedText;
-      state.captureDirection = 'receive';
-      await importVisible(context);
-      if (!contextCurrent(context)) return;
-       const analysisResult = state.aiEnabled && state.messages.length ? await analyzeConversation(context) : { ok: false, disabled: !state.aiEnabled };
-       if (!contextCurrent(context)) return;
-       if (analysisResult.ok || analysisResult.disabled) state.autoCaptureSignature = capturedText;
-       else state.autoCaptureSignature = '';
-      if (state.collectionRun?.id) {
-        await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: current.id, status: 'completed', analysisStatus: analysisResult.ok ? 'completed' : analysisResult.disabled ? 'pending' : 'retryable', coverageStatus: 'visible', checkpoint: String(result.messages.length), lastError: analysisResult.ok || analysisResult.disabled ? '' : String(analysisResult.reason || '').slice(0, 500) }) }, context);
-        await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, cursor: JSON.stringify({ conversationId: current.id, messageCount: result.messages.length, capturedAt: nowIso() }), lastSuccessAt: nowIso() }) }, context);
-      }
-    } catch (error) {
-      if (!contextCurrent(context)) return;
-      state.error = `后台采集暂时失败：${String(error?.message || 'WS 页面暂不可读').slice(0, 240)}`;
-      if (Date.now() - autoCaptureNoticeAt > 60000) {
-        autoCaptureNoticeAt = Date.now();
-        toast(state.error, 'x');
-        render();
-      }
-    }
-  }
-  function renderFollowupAlerts() {
-    const alerts = state.followupAlerts || [];
+  function renderFollowupAlerts(alerts = state.followupAlerts || []) {
     if (!alerts.length) return '<p class="ws-muted">当前没有自动识别出的待跟进客户。</p>';
     return `<div class="ws-followup-alerts">${alerts.map(item => {
       const confidence = Math.round(Number(item.confidence || 0) * 100);
@@ -2009,16 +3026,388 @@
       toast(status === 'done' ? '已标记为已处理' : status === 'snoozed' ? '已安排明日提醒' : '已忽略本条提醒');
     } catch (error) { if (contextCurrent(context)) toast(error.message, 'x'); }
   }
-  function renderCollectionCard() {
+  function wsCollectionPipelineStages() {
     const run = state.collectionRun;
     const fullHistoryCount = state.conversations.filter(item => item.data?.historyLoaded === true && Number(item.data?.directionVersion || 0) >= 4 && Boolean(fullHistorySourceFingerprint(item))).length;
-    const discovered=Math.max(0,Number(run?.discovered||0)),skipped=Math.max(0,Number(run?.skipped||0)),analyzed=Math.max(0,Number(run?.analyzed||0)),retryable=Math.max(0,Number(run?.retryable||0));
-    const pendingHistory=Math.max(0,discovered-fullHistoryCount-skipped),pipeline=[['列表级自动采集',discovered,run?'已同步':'等待登录'],['完整历史',fullHistoryCount,pendingHistory?`待补采 ${pendingHistory}`:'已完成'],['AI 分析',analyzed,fullHistoryCount>analyzed?`队列 ${fullHistoryCount-analyzed}`:'已同步'],['档案与任务',Math.min(analyzed,Number(run?.completed||analyzed)),state.aiEnabled?'自动联动':'AI 已关闭']];
-    const pipelineHtml=`<div class="ws-collection-pipeline">${pipeline.map(([label,value,detail],index)=>`<div class="ws-pipeline-stage ${value?'has-progress':''}"><span class="ws-pipeline-index">${index+1}</span><div><strong>${esc(label)}</strong><b>${Number(value).toLocaleString()}</b><small>${esc(detail)}</small></div></div>`).join('')}</div><p class="ws-coverage-warning">会话列表只代表已发现；只有“完整历史”计数才表示该客户双方聊天已采集、方向已核实并成功落库。</p>`;
-    if (!run) return `<section class="ws-card ws-collection-card"><div class="ws-card-heading"><div><strong>登录即采集</strong><span>扫码登录后自动同步会话列表与实时消息；后台逐个补采已读会话完整历史，前台仍可正常聊天</span></div></div>${pipelineHtml}<p class="ws-muted">未读会话永不自动打开；普通群和类型不明会话不进入分析，系统设置中明确绑定的 VIP 群按成员身份进入同一采集与分析链。AI 结果统一进入任务中心和今日工作台。</p><button class="btn small primary ws-full-button" data-ws-action="create-collection-run">立即启动后台采集</button></section>`;
-    const pending = Math.max(0, run.total - run.completed - run.failed - run.skipped);
-    const controls = run.status === 'paused' ? '<button class="btn small" data-ws-action="resume-collection">继续</button>' : ['created','running','discovering'].includes(run.status) ? '<button class="btn small" data-ws-action="pause-collection">暂停</button><button class="btn small danger" data-ws-action="stop-collection">停止</button>' : '';
-    return `<section class="ws-card ws-collection-card" data-run-status="${esc(run.status)}"><div class="ws-card-heading"><div><strong>登录即采集</strong><span>${esc(run.status)} · 后台运行 · 更新于 ${esc(displayTime(run.updatedAt))}${run.lastSuccessAt ? ` · 最近成功 ${esc(displayTime(run.lastSuccessAt))}` : ''}</span></div><div>${controls}${['running','discovering','paused'].includes(run.status) ? '<button class="btn small" data-ws-action="resume-collection-checkpoint">从断点继续</button>' : ''}<button class="btn small" data-ws-action="collect-all-read" ${state.busy.readHistory ? 'disabled' : ''}>${state.busy.readHistory ? '采集中…' : '补采完整聊天'}</button><button class="btn small" data-ws-action="create-collection-run">新建任务</button></div></div>${pipelineHtml}<div class="ws-collection-stats"><b>${run.completed}/${run.total || run.discovered}</b><span>列表已同步</span><b>${run.analyzed}</b><span>已分析</span><b>${fullHistoryCount}</b><span>完整历史</span><b>${run.skipped || 0}</b><span>跳过未读</span><b>${run.retryable}</b><span>待重试</span><b>${pending}</b><span>待处理</span><b>${run.resumeCount || 0}</b><span>续采次数</span></div>${run.lastError ? `<p class="ws-error-line">${esc(run.lastError)}</p>` : ''}<p class="ws-muted">你可以离开 WS 页面或最小化知客；只要应用仍打开且账号未退出，后台采集与 AI 队列会继续。普通群不参与；已绑定 VIP 群按成员身份采集分析。正式提醒统一同步到任务中心与今日工作台。</p></section>`;
+    const discovered = Math.max(0, Number(run?.discovered || 0));
+    const skipped = Math.max(0, Number(run?.skipped || 0));
+    const analyzed = Math.max(0, Number(run?.analyzed || 0));
+    const retryable = Math.max(0, Number(run?.retryable || 0));
+    const pendingHistory = Math.max(0, discovered - fullHistoryCount - skipped);
+    const profileReady = Math.min(analyzed, Number(run?.completed || analyzed));
+    const pipeline = [
+      ['历史列表发现', discovered, run ? '已同步' : '等待登录'],
+      ['完整历史', fullHistoryCount, pendingHistory ? `待补采 ${pendingHistory}` : '已完成'],
+      ['AI 分析', analyzed, fullHistoryCount > analyzed ? `队列 ${fullHistoryCount - analyzed}` : '已同步'],
+      ['档案与任务', profileReady, state.aiEnabled ? '本机已有结果' : 'AI 已关闭'],
+    ];
+    return { run, fullHistoryCount, discovered, skipped, analyzed, retryable, pendingHistory, profileReady, pipeline };
+  }
+  function renderWsCockpit() {
+    const run = state.collectionRun;
+    const status = state.wsStatus === '已连接' ? '已连接' : state.wsStatus || '等待登录';
+    const background = '后台采集不可用';
+    const activeId = String(state.activeAccountId || '');
+    const accountPills = state.accounts.length
+      ? state.accounts.map(account => {
+        const active = String(account.id) === activeId;
+        const accountStatus = accountStatusLabel(account);
+        return `<button class="ws-account-pill ${active ? 'active' : ''}" data-ws-action="switch-account" data-account-id="${esc(account.id)}" aria-pressed="${active ? 'true' : 'false'}"><i></i><span>${esc(accountDisplayName(account))}</span><small>${esc(accountStatus)}</small></button>`;
+      }).join('')
+      : '<span class="ws-cockpit-empty">暂无账号</span>';
+    const collectionAction = `<button class="ws-cockpit-action" data-ws-action="create-collection-run" ${collectionControlAttributes()}>后台采集不可用</button>`;
+    return `<div class="ws-command-rail" aria-label="WS 账号与采集控制舱"><div class="ws-cockpit-bar">
+      <div class="ws-cockpit-accounts" aria-label="WS 账号列表"><span class="ws-cockpit-label">账号</span>${accountPills}<button class="ws-account-pill add" data-ws-action="create-account" ${state.accountBusy ? 'disabled' : ''}>＋ 添加账号</button></div>
+      <div class="ws-cockpit-controls" aria-label="WS 连接与采集控制"><button class="ws-cockpit-action primary" data-ws-action="open" ${state.busy.connection ? 'disabled' : ''}>${state.wsStatus === '已连接' ? '已打开 WS' : '扫码登录'}</button><span class="ws-cockpit-status ${state.wsStatus === '已连接' ? 'is-online' : ''}" title="WS 连接状态" aria-label="WS 连接状态"><i></i>${esc(status)}</span><span class="ws-cockpit-status" title="${esc(collectionBlockedResult().error)}" aria-label="后台采集能力不可用"><i></i>${esc(background)}</span>${collectionAction}<button class="ws-cockpit-action" data-ws-action="reconnect">重新连接</button></div>
+    </div></div>`;
+  }
+  function assistDrawerTabMeta(tab) {
+    const meta = {
+      ai: { title: 'AI 分析', subtitle: '从完整聊天提取客户意向、资质与下一步动作' },
+      profile: { title: '客户档案', subtitle: '只补齐已匹配客户的缺失资料，不创建重复客户' },
+      reply: { title: '回复建议', subtitle: '翻译与建议仅供预览，发送前由你确认' },
+      broadcast: { title: '群发中心', subtitle: '媒体先上传入队，逐个会话确认后发送并留审计' },
+      export: { title: '数据导出', subtitle: '导出客户、联系人、群组、消息、分析和媒体索引' },
+      diagnostics: { title: '采集诊断', subtitle: '当前后台能力、历史采集记录与翻译状态' },
+    };
+    return meta[ASSIST_DRAWER_TABS.has(String(tab)) ? String(tab) : 'ai'] || meta.ai;
+  }
+  function renderWsAssistTabs() {
+    // Accessible tab titles: title="AI 分析", title="客户档案", title="回复建议", title="采集诊断".
+    const tabs = [['ai', 'AI 分析'], ['profile', '客户档案'], ['reply', '回复建议'], ['broadcast', '群发中心'], ['export', '数据导出'], ['diagnostics', '采集诊断']];
+    return `<nav class="ws-assist-tabs" aria-label="WS 辅助面板" role="tablist">${tabs.map(([key, label]) => {
+      const active = state.assistDrawerTab === key;
+      return `<button class="ws-assist-tab ${active ? 'active' : ''}" data-ws-action="focus-assist" data-assist-target="${key}" data-assist-drawer-tab="${key}" title="${label}" role="tab" aria-selected="${active ? 'true' : 'false'}">${label}</button>`;
+    }).join('')}</nav>`;
+  }
+  function renderWsFlowStrip() {
+    const { run, fullHistoryCount, discovered, analyzed, profileReady } = wsCollectionPipelineStages();
+    const followupCount = Array.isArray(state.followupAlerts) ? state.followupAlerts.length : 0;
+    const stages = [
+      ['列表同步', discovered, run ? '会话列表已同步' : '等待登录'],
+      ['完整历史', fullHistoryCount, fullHistoryCount ? '双方消息已落库' : '后台采集不可用'],
+      ['AI 分析', analyzed, state.aiEnabled ? '本机历史分析' : 'AI 已关闭'],
+      ['档案补齐', profileReady, profileReady ? '只补现有客户空字段' : '等待分析结果'],
+      ['跟进任务', followupCount, followupCount ? '已进入任务中心' : '暂无待跟进'],
+    ];
+    return `<div class="ws-process-rail"><section class="ws-flow-strip" aria-label="采集与跟进流程"><div class="ws-flow-heading"><strong>采集与跟进流程</strong><span>本机历史与当前采集能力分开显示</span></div><div class="ws-flow-stages">${stages.map(([label, value, detail], index) => `<div class="ws-flow-node ${value ? 'has-progress' : ''}"><span class="ws-flow-index">${index + 1}</span><div><strong>${esc(label)}</strong><b>${Number(value).toLocaleString()}</b><small>${esc(detail)}</small></div></div>${index < stages.length - 1 ? '<span class="ws-flow-arrow" aria-hidden="true">›</span>' : ''}`).join('')}</div></section></div>`;
+  }
+  function captureWorkspaceNavScroll() {
+    const node = $('.ws-workspace-nav-list');
+    if (node) state.wsWorkspaceNavScroll = { top: Number(node.scrollTop || 0), left: Number(node.scrollLeft || 0) };
+  }
+  function restoreWorkspaceNavScroll() {
+    const node = $('.ws-workspace-nav-list'), saved = state.wsWorkspaceNavScroll;
+    if (!node || !saved) return;
+    const maxTop = Math.max(0, Number(node.scrollHeight || 0) - Number(node.clientHeight || 0));
+    const maxLeft = Math.max(0, Number(node.scrollWidth || 0) - Number(node.clientWidth || 0));
+    const top = Math.min(Math.max(0, saved.top), maxTop), left = Math.min(Math.max(0, saved.left), maxLeft);
+    if (Math.abs(Number(node.scrollTop || 0) - top) > 0.5) node.scrollTop = top;
+    if (Math.abs(Number(node.scrollLeft || 0) - left) > 0.5) node.scrollLeft = left;
+  }
+  function renderWsWorkspaceNav() {
+    // CSS contract: .ws-workspace-nav.is-collapsed keeps the WebView anchor
+    // mounted while only the secondary navigation rail changes width.
+    const collapsed = Boolean(state.wsWorkspaceNavCollapsed);
+    const active = WS_WORKSPACE_VIEW_IDS.has(state.wsWorkspaceView) ? state.wsWorkspaceView : 'overview';
+    return `<aside class="ws-workspace-nav ${collapsed ? 'is-collapsed' : ''}" aria-label="WS 工作台功能导航"><div class="ws-workspace-nav-heading"><span class="ws-workspace-nav-mark">WS</span><div><strong>WS 工作台</strong><small>知客 · 运营工作区</small></div><button type="button" class="ws-workspace-nav-toggle" data-ws-action="toggle-workspace-nav" aria-expanded="${collapsed ? 'false' : 'true'}" title="${collapsed ? '展开 WS 工作区导航' : '收起 WS 工作区导航'}">${collapsed ? '›' : '‹'}</button></div><nav class="ws-workspace-nav-list">${WS_WORKSPACE_VIEW_META.map(item => `<button type="button" class="ws-workspace-nav-item ${item.id === active ? 'active' : ''}" data-ws-workspace-view="${item.id}" aria-current="${item.id === active ? 'page' : 'false'}" title="${esc(item.label)} · ${esc(item.hint)}"><span class="ws-workspace-nav-icon" aria-hidden="true"><svg class="zk-icon" viewBox="0 0 24 24" focusable="false"><use href="#i-${esc(item.icon)}"/></svg></span><span class="ws-workspace-nav-copy"><strong>${esc(item.label)}</strong><small>${esc(item.hint)}</small></span></button>`).join('')}</nav><div class="ws-workspace-nav-foot"><span class="ws-workspace-nav-status" title="${esc(collectionBlockedResult().error)}"><i></i><span>后台采集不可用</span></span><button type="button" class="ws-workspace-return" data-ws-action="return-zhike" title="返回知客"><span aria-hidden="true">↩</span><span>返回知客</span></button></div></aside>`;
+  }
+  function groupDirectoryState() {
+    const page = wsWorkspacePageState('groups');
+    page.groupFilters ||= { memberCount: 'all', permission: 'all', collection: 'all' };
+    page.selectedGroupIds ||= [];
+    return page;
+  }
+  const groupReading = window.ZhikeWsGroupReading?.create({
+    getScope: () => {
+      if (!state.active || state.wsWorkspaceView !== 'groups' || getHost()?.state?.view !== 'ws-workbench') return null;
+      const selected = groupDirectoryState().detailGroupId;
+      if (!selected) return null;
+      const context = captureContext('');
+      const group = state.groupCatalog?.find(row => text(row.groupJid) === selected && String(row.accountId) === context.accountId);
+      return group ? { ...context, groupJid: selected } : null;
+    },
+    request: (pathname, scope) => api(pathname, {}, scope),
+    redraw: () => render({ skipNativeResize: true }),
+    download: csv => {
+      const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = 'zhike-group-reading-' + new Date().toISOString().slice(0, 10) + '.csv';
+      anchor.rel = 'noopener';
+      try { anchor.click(); } finally { setTimeout(() => URL.revokeObjectURL(url), 1000); }
+    },
+  });
+  function groupDirectoryRows() {
+    // The catalog is the existing account-scoped service snapshot. Do not
+    // derive permissions or collection progress from group membership/status.
+    const collectionByGroup = new Map((state.conversations || []).map(row => [text(row.externalId || row.groupJid), text(row.collectionStatus)]));
+    return (Array.isArray(state.groupCatalog) ? state.groupCatalog : [])
+      .filter(item => String(item.accountId || state.activeAccountId) === String(state.activeAccountId))
+      .map(item => {
+        const rawCount = item.participantCount ?? item.memberCount;
+        const count = rawCount != null && rawCount !== '' && Number.isFinite(Number(rawCount)) && Number(rawCount) > 0 ? Number(rawCount) : null;
+        const permission = typeof item.permissions === 'string' ? text(item.permissions) : text(item.sendPermission || item.messagePermission);
+        return { ...item, directoryId: text(item.groupJid || item.id), directoryCount: count, directoryPermission: permission || '未提供', directoryCollection: text(item.collectionStatus || item.data?.collectionStatus || collectionByGroup.get(text(item.groupJid))) || '未提供' };
+      }).filter(item => item.directoryId);
+  }
+  function groupDirectoryWindow() {
+    const page = groupDirectoryState(), allRows = groupDirectoryRows(), filters = page.groupFilters;
+    const selected = new Set(page.selectedGroupIds);
+    const rows = allRows.filter(item => {
+      if (page.showSelectedOnly && !selected.has(item.directoryId)) return false;
+      const count = item.directoryCount;
+      if (filters.memberCount === 'known' && count == null || filters.memberCount === 'unknown' && count != null) return false;
+      if (filters.memberCount === 'under50' && (count == null || count >= 50)) return false;
+      if (filters.memberCount === '50to199' && (count == null || count < 50 || count >= 200)) return false;
+      if (filters.memberCount === '200plus' && (count == null || count < 200)) return false;
+      if (filters.permission !== 'all' && item.directoryPermission !== filters.permission) return false;
+      if (filters.collection !== 'all' && item.directoryCollection !== filters.collection) return false;
+      return true;
+    });
+    return { ...workspaceListWindow(rows, 'groups'), allRows, selected };
+  }
+  function renderGroupDirectory() {
+    const page = groupDirectoryState(), windowed = groupDirectoryWindow(), filters = page.groupFilters;
+    const options = (values, selected) => values.map(([value, label]) => `<option value="${esc(value)}" ${selected === value ? 'selected' : ''}>${esc(label)}</option>`).join('');
+    const actualOptions = key => [['all', '全部'], ...[...new Set(windowed.allRows.map(row => row[key]))].sort().map(value => [value, value])];
+    const selectedCount = windowed.allRows.filter(row => windowed.selected.has(row.directoryId)).length;
+    const allVisibleSelected = windowed.rows.length > 0 && windowed.rows.every(row => windowed.selected.has(row.directoryId));
+    const detail = windowed.allRows.find(row => row.directoryId === page.detailGroupId);
+    return `<section class="ws-workspace-card ws-group-directory zk-surface"><div class="ws-card-heading"><div><strong>群组目录</strong><span>当前账号已加载 ${windowed.allRows.length} 条 · 未同步字段显示“未提供”</span></div><span class="ws-status-badge">${esc(state.groupMonitor?.lastLoadedAt ? '本地同步目录' : '等待刷新')}</span></div><div class="ws-group-filters ws-workspace-list-controls"><label>搜索群组<input id="wsWorkspaceSearch-groups" data-ws-workspace-search="groups" type="search" maxlength="160" value="${esc(page.filter)}" placeholder="群名称或群组标识"></label><label>所属账号<select data-ws-group-filter="accountId">${(state.accounts || []).map(account => `<option value="${esc(account.id)}" ${String(account.id) === String(state.activeAccountId) ? 'selected' : ''}>${esc(accountDisplayName(account))}</option>`).join('')}</select></label><label>成员数量<select data-ws-group-filter="memberCount">${options([['all', '全部'], ['known', '已提供'], ['unknown', '未提供'], ['under50', '50 人以下'], ['50to199', '50–199 人'], ['200plus', '200 人及以上']], filters.memberCount)}</select></label><label>发言权限<select data-ws-group-filter="permission">${options(actualOptions('directoryPermission'), filters.permission)}</select></label><label>采集状态<select data-ws-group-filter="collection">${options(actualOptions('directoryCollection'), filters.collection)}</select></label></div><div class="ws-group-batch-bar"><span role="status">已选择 <strong>${selectedCount}</strong> 个群组 · 匹配 ${windowed.matched} 条</span><div><button type="button" class="btn small" data-ws-action="group-directory-selected" ${selectedCount || page.showSelectedOnly ? '' : 'disabled'}>${page.showSelectedOnly ? '显示全部群组' : '仅查看已选'}</button><button type="button" class="btn small" data-ws-action="group-directory-copy" ${selectedCount ? '' : 'disabled'}>复制所选标识</button><button type="button" class="btn small" data-ws-action="group-directory-clear" ${selectedCount ? '' : 'disabled'}>清除选择</button></div></div><div class="ws-group-directory-body ${detail ? 'has-detail' : ''}"><div class="ws-group-directory-main"><div class="ws-group-table-wrap"><table class="ws-group-table"><thead><tr><th scope="col"><input type="checkbox" class="ws-group-selection" data-ws-group-select-all aria-label="选择当前页全部群组" ${allVisibleSelected ? 'checked' : ''} ${windowed.rows.length ? '' : 'disabled'}></th><th scope="col">群组名称</th><th scope="col">所属账号</th><th scope="col">成员数量</th><th scope="col">发言权限</th><th scope="col">采集状态</th><th scope="col">最近记录</th><th scope="col">详情</th></tr></thead><tbody>${windowed.rows.length ? windowed.rows.map(item => `<tr class="${windowed.selected.has(item.directoryId) ? 'is-selected' : ''}"><td><input type="checkbox" class="ws-group-selection" data-ws-group-select="${esc(item.directoryId)}" aria-label="选择 ${esc(item.groupName || item.name || item.groupJid)}" ${windowed.selected.has(item.directoryId) ? 'checked' : ''}></td><td><strong>${esc(item.groupName || item.name || '未命名群组')}</strong><small>${esc(item.groupJid || item.id)}</small></td><td>${esc(accountDisplayName(activeAccount()) || state.activeAccountId)}</td><td>${item.directoryCount == null ? '未提供' : item.directoryCount.toLocaleString()}</td><td>${esc(item.directoryPermission)}</td><td><span class="ws-group-state">${esc(item.directoryCollection)}</span></td><td>${esc(displayTime(item.lastSyncAt || item.lastSeenAt || item.updatedAt) || '未提供')}</td><td><button type="button" class="btn small" data-ws-action="group-directory-detail" data-group-id="${esc(item.directoryId)}" aria-expanded="${page.detailGroupId === item.directoryId ? 'true' : 'false'}">${page.detailGroupId === item.directoryId ? '收起' : '查看'}</button></td></tr>`).join('') : `<tr><td colspan="8"><div class="ws-empty">${windowed.allRows.length ? '当前筛选条件下没有群组。' : '暂无已同步群组。登录 WS 后刷新读取真实群组目录。'}</div></td></tr>`}</tbody></table></div><div class="ws-workspace-list-pagination"><span>每页 40 条 · 共 ${windowed.matched} 条</span><button type="button" class="btn small" data-ws-action="workspace-list-page" data-list-view="groups" data-page-delta="-1" ${windowed.page <= 1 ? 'disabled' : ''}>上一页</button><span>${windowed.page} / ${windowed.pageCount}</span><button type="button" class="btn small" data-ws-action="workspace-list-page" data-list-view="groups" data-page-delta="1" ${windowed.page >= windowed.pageCount ? 'disabled' : ''}>下一页</button></div></div>${detail ? `<aside class="ws-group-detail-panel" aria-label="群组详情"><div class="ws-card-heading"><strong>${esc(detail.groupName || detail.name || detail.groupJid)}</strong><button type="button" class="btn small" data-ws-action="group-directory-detail" data-group-id="${esc(detail.directoryId)}">收起详情</button></div><dl><dt>群组标识</dt><dd>${esc(detail.groupJid || detail.id)}</dd><dt>群组说明</dt><dd>${esc(detail.description || detail.data?.description || '未提供')}</dd><dt>成员数量</dt><dd>${detail.directoryCount ?? '未提供'}</dd><dt>发言权限</dt><dd>${esc(detail.directoryPermission)}</dd><dt>采集状态</dt><dd>${esc(detail.directoryCollection)}</dd><dt>目录状态</dt><dd>${esc(detail.status || '未提供')}</dd></dl></aside>` : ''}</div></section><details class="ws-group-details" data-ws-group-monitor-details ${page.monitorDetailsOpen ? 'open' : ''}><summary>群组监测设置与历史事件</summary>${page.monitorDetailsOpen ? renderGroupMonitorCard() : '<p class="ws-muted">展开后查看现有监测席位、绑定群组和真实事件。</p>'}</details>`;
+  }
+  function applyGroupDirectoryControl(target) {
+    if (state.wsWorkspaceView !== 'groups') return false;
+    const page = groupDirectoryState();
+    if (target.dataset.wsGroupFilter != null) {
+      const key = target.dataset.wsGroupFilter;
+      if (key === 'accountId') { void switchAccount(target.value); return true; }
+      if (!['memberCount', 'permission', 'collection'].includes(key)) return false;
+      page.groupFilters[key] = String(target.value || 'all');
+      page.page = 1;
+    } else if (target.dataset.wsGroupSelect != null || target.dataset.wsGroupSelectAll != null) {
+      const selected = new Set(page.selectedGroupIds);
+      const ids = target.dataset.wsGroupSelectAll != null ? groupDirectoryWindow().rows.map(row => row.directoryId) : [String(target.dataset.wsGroupSelect)];
+      const valid = new Set(groupDirectoryRows().map(row => row.directoryId));
+      for (const id of ids) if (valid.has(id)) { if (target.checked) selected.add(id); else selected.delete(id); }
+      page.selectedGroupIds = [...selected];
+    } else return false;
+    render({ skipNativeResize: true });
+    return true;
+  }
+  function workspaceListWindow(rows, view = state.wsWorkspaceView) {
+    const page = wsWorkspacePageState(view);
+    const source = Array.isArray(rows) ? rows : [];
+    const statusOf = item => String(item.status || item.collectionStatus || item.lastKnownStatus || item.priority || 'unknown');
+    const statuses = [...new Set(source.map(statusOf))].sort();
+    const query = String(page.filter || '').trim().toLocaleLowerCase();
+    const matches = source.filter(item => {
+      if (page.statusFilter && page.statusFilter !== 'all' && statusOf(item) !== page.statusFilter) return false;
+      if (!query) return true;
+      return [item.id, item.displayName, item.name, item.title, item.externalId, item.groupJid, item.groupName, item.memberJid, item.memberPhone, item.customerId, item.conversationId, item.lastError, item.reason, item.eventType, item.type, item.detail].some(value => String(value || '').toLocaleLowerCase().includes(query));
+    });
+    const pageSize = 40;
+    const pageCount = Math.max(1, Math.ceil(matches.length / pageSize));
+    page.page = Math.max(1, Math.min(pageCount, Math.floor(Number(page.page) || 1)));
+    return { rows: matches.slice((page.page - 1) * pageSize, page.page * pageSize), loaded: source.length, matched: matches.length, page: page.page, pageCount, statuses };
+  }
+  function renderWorkspaceList(view, rows, renderRows) {
+    const page = wsWorkspacePageState(view);
+    const windowed = workspaceListWindow(rows, view);
+    return `<section class="ws-workspace-list" data-ws-list="${esc(view)}"><div class="ws-workspace-list-controls"><label>搜索 <input id="wsWorkspaceSearch-${esc(view)}" data-ws-workspace-search="${esc(view)}" type="search" maxlength="160" value="${esc(page.filter)}" placeholder="搜索当前已加载记录"></label><label>状态 <select data-ws-workspace-status="${esc(view)}"><option value="all">全部</option>${windowed.statuses.map(value => `<option value="${esc(value)}" ${page.statusFilter === value ? 'selected' : ''}>${esc(value)}</option>`).join('')}</select></label><span role="status">已加载 ${windowed.loaded} 条 · 匹配 ${windowed.matched} 条</span></div><div class="ws-workspace-list-rows">${windowed.rows.length ? renderRows(windowed.rows) : '<p class="ws-muted">当前条件下没有匹配记录。</p>'}</div><div class="ws-workspace-list-pagination"><button type="button" class="btn small" data-ws-action="workspace-list-page" data-list-view="${esc(view)}" data-page-delta="-1" ${windowed.page <= 1 ? 'disabled' : ''}>上一页</button><span>${windowed.page} / ${windowed.pageCount}</span><button type="button" class="btn small" data-ws-action="workspace-list-page" data-list-view="${esc(view)}" data-page-delta="1" ${windowed.page >= windowed.pageCount ? 'disabled' : ''}>下一页</button></div></section>`;
+  }
+  function renderWorkspaceSummaryRows(rows, kind) {
+    const memberAvatar = kind === 'members' ? businessPages?.renderPersonAvatar?.({ size: 'xs' }) || '' : '';
+    return rows.map(item => {
+      const title = kind === 'groups' ? item.groupName || item.name || item.groupJid : kind === 'members' ? item.memberPhone || item.memberJid : item.title || item.externalId || item.name || item.id;
+      const detail = kind === 'groups' ? `${item.groupJid || ''} · ${Number(item.participantCount || 0)} 名成员` : kind === 'members' ? `${item.groupName || item.groupJid || ''} · ${item.eventType || item.type || (item.customerId ? '客户 ' + item.customerId : '未关联客户')} · ${displayTime(item.eventAt || item.observedAt || item.lastSeenAt || item.updatedAt)}` : item.detail || item.externalId || item.id || '';
+      const identity = `<span class="ws-person-copy"><strong>${esc(title || '未命名')}</strong><small>${esc(detail)}</small></span>`;
+      return `<div class="ws-workspace-row">${memberAvatar ? `<div class="ws-person-identity">${memberAvatar}${identity}</div>` : identity}<em>${esc(item.status || item.collectionStatus || 'unknown')}</em></div>`;
+    }).join('');
+  }
+  function applyWorkspaceListFilter(target) {
+    const view = target?.dataset?.wsWorkspaceSearch || target?.dataset?.wsWorkspaceStatus;
+    if (!WS_WORKSPACE_VIEW_IDS.has(view) || view !== state.wsWorkspaceView) return false;
+    const page = wsWorkspacePageState(view);
+    const search = target.dataset.wsWorkspaceSearch != null;
+    if (search) page.filter = String(target.value || '').slice(0, 160);
+    else page.statusFilter = String(target.value || 'all');
+    page.page = 1;
+    const caret = target.selectionStart;
+    render({ skipNativeResize: true });
+    if (search) {
+      const input = document.getElementById('wsWorkspaceSearch-' + view);
+      input?.focus();
+      if (Number.isInteger(caret)) input?.setSelectionRange?.(caret, caret);
+    }
+    return true;
+  }
+  function workspacePageHeader(meta, account) {
+    const page = wsWorkspacePageState(meta.id);
+    const status = page.error || page.status || '尚未刷新';
+    return `<div class="ws-workspace-page-heading"><div><span class="ws-workspace-eyebrow">WS 工作台</span><h2 id="wsWorkspacePageTitle">${esc(meta.label)}</h2><p>${esc(meta.hint)}</p></div><div class="ws-workspace-page-actions"><span class="ws-workspace-scope">当前账号：${esc(account)}</span><span class="ws-workspace-page-status" aria-live="polite">${esc(status)}</span><button type="button" class="btn small" data-ws-action="refresh-workspace-page" data-ws-page-refresh="${esc(meta.id)}" ${page.busy ? 'disabled' : ''}>${page.busy ? '刷新中…' : '刷新'}</button></div></div>`;
+  }
+  async function loadGroupMembers(context = captureContext('')) {
+    const accountId = String(context.accountId || 'default');
+    state.groupMembers = { accountId, rows: [], enabled: null, error: '' };
+    try {
+      const result = await api('/api/ws/group-manager/members?limit=1000', {}, context);
+      assertContext(context);
+      state.groupMembers = { accountId, rows: (Array.isArray(result.members) ? result.members : []).filter(row => String(row.accountId) === accountId), enabled: true, error: '' };
+    } catch (error) {
+      if (!contextCurrent(context)) return;
+      if (error.status === 404 && error.code === 'GROUP_MANAGER_DISABLED') { state.groupMembers = { accountId, rows: [], enabled: false, error: '' }; return; }
+      state.groupMembers = { accountId, rows: [], enabled: null, error: String(error.message || '群成员读取失败') }; throw error;
+    }
+  }
+  async function refreshWorkspacePage() {
+    const view = state.wsWorkspaceView;
+    if (view === 'chat') return;
+    const accountId = String(state.activeAccountId || 'default');
+    const page = wsWorkspacePageState(view, accountId);
+    const accountSequence = Number(state.accountLoadSequence || 0);
+    if (page.busy && page.refreshAccountSequence === accountSequence) return;
+    const refreshGeneration = Number(page.refreshGeneration || 0) + 1;
+    page.refreshGeneration = refreshGeneration;
+    page.refreshAccountSequence = accountSequence;
+    const context = captureContext('');
+    const ownsPage = () => page.refreshGeneration === refreshGeneration;
+    const currentPageRequest = () => ownsPage() && (view === 'accounts' ? String(state.activeAccountId || 'default') === accountId : contextCurrent(context));
+    page.busy = true;
+    page.error = '';
+    page.status = '正在刷新…';
+    render();
+    try {
+      if (view === 'contacts' || view === 'logs') {
+        if (!businessPages) throw new Error('业务页面模块未加载，请重新打开应用。');
+        const loading = businessPages.loadDirectory({ view, page, accountId, request: pathname => api(pathname, {}, context), isCurrent: () => contextCurrent(context) });
+        render();
+        const accepted = await loading;
+        assertContext(context);
+        if (!accepted) throw new Error(businessPages.directoryState(page).error || '数据已过期，请重新查询。');
+      } else if (view === 'accounts') {
+        await loadAccounts();
+        if (state.error) throw new Error(state.error);
+      } else if (view === 'members') {
+        await Promise.all([loadGroupMonitor(), loadGroupMembers(context)]);
+      } else if (view === 'groups') {
+        await loadGroupMonitor();
+        if (state.groupMonitor.error) throw new Error(state.groupMonitor.error);
+        if (currentPageRequest() && state.wsWorkspaceView === view) await groupReading?.open();
+      } else if (view === 'crm') {
+        await Promise.all([loadDataArchive(captureContext(), false), loadHotProfile(captureContext(), false)]);
+        if (state.archiveError || state.hotProfileError) throw new Error(state.archiveError || state.hotProfileError);
+        await window.ZhikeAiReviewCenter?.refresh?.();
+      } else if (view === 'settings') {
+        const settings = await api('/api/ws/settings?conversationId=' + encodeURIComponent(state.currentConversationId || ''), {}, context);
+        assertContext(context);
+        state.settings = core.normalizeTranslationSettings(settings);
+        state.aiEnabled = settings.aiEnabled !== false;
+      } else {
+        // A page refresh reads persisted status. It must not invoke the
+        // collection poller, scan WhatsApp or schedule an AI consumer.
+        const [run, alerts, queue] = await Promise.all([
+          api('/api/ws/collection-runs', {}, context),
+          api('/api/ws/followup-alerts?limit=8', {}, context),
+          api('/api/ws/ai-jobs?limit=20', {}, context),
+        ]);
+        assertContext(context);
+        state.collectionRun = run.run || null;
+        state.summaryLoaded = { collection: true, followups: true, ai: Boolean(queue.stats) };
+        if (view === 'collection') {
+          page.collectionItems = [];
+          page.collectionItemsLoaded = false;
+          if (state.collectionRun?.id) {
+            const items = await api('/api/ws/collection-items?runId=' + encodeURIComponent(state.collectionRun.id) + '&limit=1000', {}, context);
+            assertContext(context);
+            page.collectionItems = (items.items || []).filter(item => String(item.accountId) === accountId);
+          }
+          page.collectionItemsLoaded = true;
+        }
+        state.followupAlerts = alerts.alerts || [];
+        if (queue.stats) state.aiQueueStats = queue.stats;
+        if (view === 'ai') await window.ZhikeAiReviewCenter?.refresh?.();
+      }
+      if (!currentPageRequest()) return;
+      page.status = `已刷新 ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } catch (error) {
+      if (currentPageRequest()) { page.error = String(error?.message || '页面刷新失败，请重试。').slice(0, 240); page.status = '刷新失败'; }
+    } finally {
+      // Release the originating page even after an account/navigation change;
+      // a stale request must never strand its Refresh button in busy state.
+      if (ownsPage()) page.busy = false;
+      if (currentPageRequest() && state.wsWorkspaceView === view) render();
+    }
+  }
+  function renderWorkspaceOperationalOverview() {
+    const read = String(wsWorkspacePageState('overview').status || '').startsWith('已刷新');
+    const run = state.collectionRun;
+    const metrics = [
+      ['采集任务', run ? businessPages?.label(run.status) || run.status : '未提供', run ? `任务 ${run.id}` : '尚无任务或未读取'],
+      ['已加载跟进提醒', read && state.summaryLoaded?.followups ? state.followupAlerts.length : '—', '当前账号服务返回范围'],
+      ['AI 排队任务', read && state.summaryLoaded?.ai ? Number(state.aiQueueStats.queued || 0) : '—', '本机队列状态；不启动消费者'],
+    ];
+    return `<section class="ws-workspace-metrics" aria-label="真实业务状态">${metrics.map(([title, value, note]) => `<div><span>${esc(title)}</span><strong>${esc(value)}</strong><small>${esc(note)}</small></div>`).join('')}</section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>资料审核</strong><span>候选、冲突与审计从原 CRM 审核服务读取；本页未读取时不显示虚假计数。</span></div><button type="button" class="btn small" data-ws-workspace-view="crm">进入 CRM 审核</button></div></section>`;
+  }
+  function renderWorkspaceMembers() {
+    const memberState = state.groupMembers || {};
+    const rows = String(memberState.accountId) === String(state.activeAccountId) ? (memberState.rows || []).filter(row => String(row.accountId) === String(state.activeAccountId)) : [];
+    const page = wsWorkspacePageState('members');
+    const events = (state.groupMonitor?.events || []).filter(item => String(item.accountId || '') === String(state.activeAccountId));
+    return `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>群成员明细</strong><span>当前账号已同步的成员关系；同一成员跨群分别展示，不按显示名称合并。</span></div></div>${memberState.error ? `<p class="ws-error-line" role="alert">${esc(memberState.error)}</p>` : ''}${memberState.enabled === false ? '<p class="ws-muted">独立群管理未启用；下方仅显示旧监测历史。</p>' : businessPages ? businessPages.renderLocalFilters('members', rows, page) + businessPages.renderMembers(rows, page) : '<p class="ws-error-line">业务页面模块未加载。</p>'}</section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><strong>已加载进退事件</strong><span>仅为既有监测服务已返回的历史范围；审核中不计作确认入群。</span></div>${events.length ? renderWorkspaceSummaryRows(events, 'members') : '<p class="ws-muted">暂无已加载事件。</p>'}</section>`;
+  }
+  function renderWorkspaceCustomers() {
+    if (!businessPages) return '<p class="ws-error-line">业务页面模块未加载。</p>';
+    const page = wsWorkspacePageState('crm'), customers = getHost()?.state?.customers;
+    if (!Array.isArray(customers)) return '<section class="ws-workspace-card zk-surface"><p class="ws-muted">客户主档尚未加载；请先在知客客户中心读取本机资料。</p></section>';
+    const rows = businessPages.customerRows(customers, state.conversations, state.activeAccountId);
+    return businessPages.renderLocalFilters('crm', rows, page) + businessPages.renderCustomers(rows, page);
+  }
+  function renderWorkspaceTaskPage() {
+    if (!businessPages) return renderWorkspaceList('tasks', state.followupAlerts || [], rows => renderFollowupAlerts(rows));
+    const result = businessPages.renderTasks(state.followupAlerts || [], wsWorkspacePageState('tasks'));
+    return (!state.summaryLoaded?.followups ? '<p class="ws-muted" role="status">跟进摘要尚未成功读取；空列表不代表当前账号没有任务。</p>' : '') + result.html + (result.selected ? `<section class="ws-workspace-card zk-surface">${renderFollowupAlerts([result.selected])}</section>` : '');
+  }
+  function renderWorkspaceReadDirectory(view) {
+    return businessPages ? businessPages.renderDirectory(view, wsWorkspacePageState(view), state.accounts || [], String(state.activeAccountId || 'default')) : '<p class="ws-error-line" role="alert">业务页面模块未加载，请重新打开应用。</p>';
+  }
+  function renderWsWorkspacePage(view) {
+    const activeView = WS_WORKSPACE_VIEW_IDS.has(view) ? view : 'overview';
+    const meta = WS_WORKSPACE_VIEW_META.find(item => item.id === activeView) || WS_WORKSPACE_VIEW_META[0];
+    const account = accountDisplayName(activeAccount()) || state.activeAccountId || 'default';
+    const run = state.collectionRun || {};
+    const stats = state.aiQueueStats || {};
+    let body = '';
+    if (activeView === 'overview') body = `<section class="ws-workspace-card ws-workspace-welcome zk-surface zk-surface--accent"><span class="ws-workspace-eyebrow">WORKSPACE / OVERVIEW</span><h3>开始今天的客户运营</h3><p>在独立工作区管理账号、查看真实采集记录，并随时回到前台聊天。</p><button type="button" class="btn primary" data-ws-workspace-view="chat">进入前台聊天 <span aria-hidden="true">↗</span></button></section><section class="ws-workspace-metrics" aria-label="已加载工作区概况"><div><span>已加载账号</span><strong>${state.accounts.length || '—'}</strong><small>本机隔离会话</small></div><div><span>已加载会话</span><strong>${state.lastLoadedAt ? (state.conversations || []).length : '—'}</strong><small>${state.lastLoadedAt ? '当前账号本地记录' : '等待读取本地记录'}</small></div><div><span>已加载群组</span><strong>${state.groupMonitor?.lastLoadedAt ? groupDirectoryRows().length : '—'}</strong><small>${state.groupMonitor?.lastLoadedAt ? '当前账号同步目录' : '等待同步群组目录'}</small></div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>工作区入口</strong><span>每项功能拥有独立页面，页面切换保留账号会话。</span></div><span class="ws-status-badge">${esc(state.wsStatus)}</span></div><div class="ws-workspace-entry-grid">${WS_WORKSPACE_VIEW_META.filter(item => !['overview', 'chat'].includes(item.id)).map(item => `<button type="button" class="ws-workspace-entry zk-surface zk-surface--interactive" data-ws-workspace-view="${item.id}"><span class="ws-workspace-nav-icon" aria-hidden="true"><svg class="zk-icon" viewBox="0 0 24 24" focusable="false"><use href="#i-${esc(item.icon)}"/></svg></span><span><strong>${esc(item.label)}</strong><small>${esc(item.hint)}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>运行边界</strong><span>仅展示现有业务服务与账号状态。</span></div><span class="ws-status-badge" data-status="disabled">FROZEN</span></div><p class="ws-muted">生产 Worker、AI 自动处理和群组自动建档保持当前关闭配置。工作区导航不会启动新的消费者或付费 AI 请求。</p></section>`;
+    else if (activeView === 'accounts') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>账号与连接</strong><span>账号作用域独立，切换保留各账号隔离会话。</span></div><button class="btn small" data-ws-action="create-account">＋ 添加账号</button></div>${renderAccountForm()}<div class="ws-workspace-metrics"><div><span>已加载 WS 账号</span><strong>${state.accounts.length}</strong><small>本机隔离会话</small></div><div><span>当前账号</span><strong>${esc(account)}</strong><small>${esc(state.wsStatus)}</small></div><div><span>后台状态</span><strong>后台采集不可用</strong><small>页面切换不影响任务</small></div></div>${renderWorkspaceList('accounts', state.accounts, rows => renderAccountList(rows))}</section>`;
+    else if (activeView === 'groups') body = renderGroupDirectory() + (groupReading?.render() || '');
+    else if (activeView === 'members') body = renderWorkspaceMembers();
+    else if (activeView === 'collection') { const page = wsWorkspacePageState('collection'); body = `${renderCollectionCard()}${businessPages ? businessPages.renderRunDetails(state.collectionRun, page.collectionItems, collectionCapability()) : ''}<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>当前任务采集项</strong><span>当前账号、当前任务已读取的最多 1000 条采集项，保留失败原因与 checkpoint。</span></div><button type="button" class="btn small" data-ws-action="collection-history">查看任务历史</button></div>${renderWorkspaceList('collection', page.collectionItems || [], rows => businessPages ? businessPages.renderCollectionItems(rows) : renderWorkspaceSummaryRows(rows, 'collection'))}</section>${renderWsFlowStrip()}`; }
+    else if (activeView === 'contacts') body = renderWorkspaceReadDirectory('contacts');
+    else if (activeView === 'ai') body = `<section class="ws-workspace-card ws-workspace-disabled-card zk-surface"><div class="ws-card-heading"><div><strong>AI 智能分析队列</strong><span>阶段 4 切换前仅展示真实队列与来源证据。</span></div><span class="ws-status-badge" data-status="disabled">未启用</span></div><div class="ws-workspace-metrics"><div><span>待分析</span><strong>${state.summaryLoaded?.ai ? Number(stats.queued || 0) : '—'}</strong><small>只读队列状态</small></div><div><span>处理中</span><strong>${state.summaryLoaded?.ai ? Number(stats.running || 0) : '—'}</strong><small>正式消费者未启动</small></div><div><span>失败/死信</span><strong>${state.summaryLoaded?.ai ? Number(stats.failed || 0) : '—'}/${state.summaryLoaded?.ai ? Number(stats.deadLetter || 0) : '—'}</strong><small>保留错误证据</small></div></div><p class="ws-muted">正式 AI 自动处理未启用，不使用固定内容冒充分析结果。</p>${renderAnalysis()}</section>`;
+    else if (activeView === 'crm') body = `${renderWorkspaceCustomers()}<details class="ws-workspace-card zk-surface"><summary>当前会话关联档案与资料补全</summary>${renderDataArchiveSummary()}${renderHotProfile()}</details><section class="ws-workspace-card zk-surface"><p class="ws-muted">CRM 主档是唯一权威来源。普通聊天只匹配已有客户；多匹配进入冲突处理；人工字段不覆盖。AI 候选、来源证据、批准/拒绝及审计继续使用原审核中心。</p></section>`;
+    else if (activeView === 'tasks') body = `${renderWorkspaceTaskPage()}<section class="ws-workspace-card zk-surface"><div class="ws-workspace-metrics"><div><span>历史采集任务</span><strong>${esc(run.status || '未提供')}</strong><small>${run.id ? esc(run.id) : '尚无任务或未读取'}</small></div><div><span>已加载待跟进</span><strong>${state.summaryLoaded?.followups ? state.followupAlerts.length : '—'}</strong><small>当前服务返回范围</small></div><div><span>待重试</span><strong>${run.id ? Number(run.retryable || 0) : '—'}</strong><small>未读取不当作成功</small></div></div><button class="btn small" data-ws-action="open-tasks">打开知客任务中心</button></section>`;
+    else if (activeView === 'logs') body = renderWorkspaceReadDirectory('logs');
+    else if (activeView === 'settings') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>WS 工作区设置</strong><span>只管理当前账号与工作区偏好。</span></div></div><div class="ws-workspace-settings-grid"><div><strong>翻译</strong><p>${esc(state.translationStatus)}</p><button class="btn small" data-ws-action="focus-assist" data-assist-target="diagnostics">打开翻译设置</button></div><div><strong>群组监测</strong><p>${state.groupMonitor?.profile?.enabled ? '已启用固定席位' : '未启用固定席位'}</p><button class="btn small" data-ws-action="focus-assist" data-assist-target="diagnostics">打开群组设置</button></div><div><strong>生产 Gate</strong><p>Worker、AI 自动处理和群组自动建档默认关闭。</p><span class="ws-status-badge" data-status="disabled">FROZEN</span></div></div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>会话工具</strong><span>打开现有功能；发送与采集继续遵循原有确认和账号边界。</span></div></div><div class="ws-workspace-settings-grid"><div><strong>手动导入与本地消息</strong><p>使用现有导入、译文与本地消息记录。</p><button type="button" class="btn small" data-ws-action="open-local-tools">打开本地工具</button></div><div><strong>数据导出</strong><p>导出已有客户、群组、消息和媒体索引。</p><button type="button" class="btn small" data-ws-action="focus-assist" data-assist-target="export">打开导出工具</button></div><div><strong>群发中心</strong><p>先生成发送计划，逐个会话人工确认。</p><button type="button" class="btn small" data-ws-action="focus-assist" data-assist-target="broadcast">打开群发中心</button></div><div><strong>登录会话</strong><p>清除后需要重新扫码；本地业务记录保留。</p><button type="button" class="btn small" data-ws-action="clear-session">清除登录会话</button></div></div></section>`;
+    if (activeView === 'overview') body = body.replace('<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>工作区入口</strong>', renderWorkspaceOperationalOverview() + '<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>工作区入口</strong>');
+    if (activeView === 'settings') body += `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>AI 配置与本机诊断</strong><span>复用现有设置与加密密钥服务，不创建第二套凭据存储。</span></div></div><div class="ws-workspace-settings-grid"><div><strong>GPT / API Key 配置</strong><p>打开原 GPT 本机设置，只显示配置状态与尾号；本页不读取或展示明文密钥。</p><button type="button" class="btn small" data-gpt-action="settings">打开 GPT 本机设置</button></div><div><strong>采集与连接诊断</strong><p>使用原 WS 诊断面板查看实际服务状态；没有可用性能采样时不伪造 CPU 或内存数据。</p><button type="button" class="btn small" data-ws-action="focus-assist" data-assist-target="diagnostics">打开现有运行诊断</button></div></div></section>`;
+    const page = wsWorkspacePageState(activeView);
+    return activeView === 'chat' ? '' : `<section class="ws-workspace-page-content" data-ws-workspace-page="${esc(activeView)}" data-ws-account-id="${esc(state.activeAccountId || 'default')}" aria-busy="${page.busy ? 'true' : 'false'}" aria-labelledby="wsWorkspacePageTitle">${workspacePageHeader(meta, account)}${state.wsStatus === '连接失败' ? renderWsErrorBanner() : ''}${activeView === 'collection' ? '' : collectionCapabilityNotice()}${page.error ? `<p class="ws-error-line" role="alert">${esc(page.error)}</p>` : ''}${body}</section>`;
+  }
+  function renderWsErrorBanner() {
+    if (!state.error) return '';
+    const reconnect = state.wsStatus === '连接失败';
+    return `<div class="ws-error-banner" role="alert"><span>${esc(state.error)}</span><button class="btn small" data-ws-action="${reconnect ? 'open' : 'retry-load'}" ${state.busy.connection ? 'disabled' : ''}>${reconnect ? '重试打开 WS' : '重试加载'}</button></div>`;
+  }
+  function renderCollectionCard() {
+    const { run, fullHistoryCount, discovered, skipped, analyzed, retryable, pendingHistory, pipeline } = wsCollectionPipelineStages();
+    const disabled=collectionControlAttributes();
+    const pipelineHtml=`<div class="ws-collection-pipeline">${pipeline.map(([label,value],index)=>`<div class="ws-pipeline-stage ${value?'has-progress':''}"><span class="ws-pipeline-index">${index+1}</span><div><strong>${esc(label)}</strong><b>${Number(value).toLocaleString()}</b><small>本机历史记录</small></div></div>`).join('')}</div><p class="ws-coverage-warning">以下数量来自本机已保存记录；连接正常不代表后台采集可用。</p>`;
+    const notice=collectionCapabilityNotice();
+    if(!run)return `<section class="ws-card ws-collection-card" data-assist-section="diagnostics" data-collection-capability="blocked"><div class="ws-card-heading"><div><strong>采集任务与历史</strong><span>当前没有本机采集任务；前台聊天和手动导入仍可使用</span></div></div>${notice}${pipelineHtml}<button class="btn small primary ws-full-button" data-ws-action="create-collection-run" ${disabled}>后台采集不可用</button><button class="btn small" data-ws-action="collect-all-read" ${disabled}>补采完整聊天</button></section>`;
+    const pending=Math.max(0,run.total-run.completed-run.failed-run.skipped);
+    const controls=run.status==='paused'?`<button class="btn small" data-ws-action="resume-collection" ${disabled}>继续</button>`:['created','running','discovering'].includes(run.status)?`<button class="btn small" data-ws-action="pause-collection" ${disabled}>暂停</button><button class="btn small danger" data-ws-action="stop-collection" ${disabled}>停止</button>`:'';
+    return `<section class="ws-card ws-collection-card" data-assist-section="diagnostics" data-run-status="${esc(run.status)}" data-collection-capability="blocked"><div class="ws-card-heading"><div><strong>采集任务与历史</strong><span>历史保存状态：${esc(run.status)} · 更新于 ${esc(displayTime(run.updatedAt))}${run.lastSuccessAt?` · 上次成功 ${esc(displayTime(run.lastSuccessAt))}`:''}</span></div><div>${controls}<button class="btn small" data-ws-action="resume-collection-checkpoint" ${disabled}>从断点继续</button><button class="btn small" data-ws-action="collect-all-read" ${disabled}>补采完整聊天</button><button class="btn small" data-ws-action="create-collection-run" ${disabled}>新建任务</button></div></div>${notice}${pipelineHtml}<div class="ws-collection-stats"><b>${run.completed}/${run.total||run.discovered}</b><span>历史列表已同步</span><b>${run.analyzed}</b><span>历史已分析</span><b>${fullHistoryCount}</b><span>历史完整聊天</span><b>${run.skipped||0}</b><span>历史跳过未读</span><b>${run.retryable}</b><span>原待重试</span><b>${pending}</b><span>原待处理</span><b>${run.resumeCount||0}</b><span>历史续采次数</span></div>${run.lastError?`<p class="ws-error-line">${esc(run.lastError)}</p>`:''}<p class="ws-muted">任务、checkpoint、消息与原队列保留；本次能力停用不会自动改写其历史状态。前台手动聊天、切换账号和既有手动导入继续使用。</p></section>`;
   }
   async function loadConversationData(id, redraw = true, parentContext = null) {
     const conversationId = String(id || '');
@@ -2073,6 +3462,10 @@
       assertContext(context);
       state.hotProfile = hot.profile || null;
       state.hotProfileError = hot.error || '';
+      const archive = await api(`/api/data-archive/customer?accountId=${encodeURIComponent(state.activeAccountId)}&conversationId=${encoded}`, {}, context).catch(error => ({ matched: false, customer: null, records: {}, ws: {}, match: { kind: 'error' }, error: error.message }));
+      assertContext(context);
+      state.archive = archive;
+      state.archiveError = archive.error || '';
       state.hotProfileEdits = Object.create(null);
       seedDraftFromAnalysis();
       state.translationStatus = state.settings.enabled ? `${core.translationMode(state.settings)} · 可按方向关闭` : '翻译已关闭 · 手动翻译仍可用';
@@ -2097,6 +3490,10 @@
       state.hotProfileError = '';
       state.hotProfileEdits = Object.create(null);
       state.hotProfileColorDraft = '';
+      // Profile refreshes can follow an AI CRM sync. Refresh the read-only
+      // archive projection in the same account/conversation scope so the
+      // customer card never shows stale business/WS counts.
+      void loadDataArchive(context, false);
     } catch (error) {
       if (contextCurrent(context)) {
         state.hotProfileError = String(error?.message || '热聊档案读取失败').slice(0, 240);
@@ -2106,6 +3503,20 @@
       }
     } finally {
       if (contextCurrent(context)) { state.hotProfileBusy = false; if (redraw) render(); }
+    }
+  }
+  async function loadDataArchive(context = captureContext(), redraw = true) {
+    const current = activeConversation();
+    if (!current) { state.archive = null; state.archiveError = ''; if (redraw) render(); return; }
+    try {
+      const result = await api(`/api/data-archive/customer?accountId=${encodeURIComponent(state.activeAccountId)}&conversationId=${encodeURIComponent(current.id)}`, {}, context);
+      assertContext(context);
+      state.archive = result;
+      state.archiveError = '';
+    } catch (error) {
+      if (contextCurrent(context)) state.archiveError = String(error?.message || '统一数据档案读取失败').slice(0, 240);
+    } finally {
+      if (contextCurrent(context) && redraw) render();
     }
   }
   async function saveHotProfileFact(element, locked = false) {
@@ -2202,7 +3613,13 @@
       const historyLoaded = rawHistoryLoaded && Number(item.data?.directionVersion || 0) >= 4;
       const historyCount = Number(item.data?.historyMessageCount || 0);
       const coverage = historyLoaded ? `完整聊天 ${historyCount || ''} 条` : (rawHistoryLoaded ? '待重采校验消息方向' : (item.data?.previewOnly ? '列表预览' : '已导入消息'));
-      return `<button class="ws-session-row ${String(item.id) === String(state.currentConversationId) ? 'active' : ''}" data-ws-action="select-conversation" data-id="${esc(item.id)}"><span class="ws-session-avatar">${esc((item.title || 'WS').slice(0, 1))}</span><span class="ws-session-copy"><strong>${esc(item.title || item.externalId)}</strong><small>${esc(item.lastMessageText || '尚未导入聊天内容')}</small><time>${esc(stamp || '暂无消息时间')} · ${esc(coverage)}</time></span><span class="ws-session-side"><em>${esc(item.intentLevel || '待分析')}</em>${Number(item.unreadCount) > 0 ? `<b>${Math.min(99, Number(item.unreadCount))}</b>` : ''}</span></button>`;
+      const selected = String(item.id) === String(state.currentConversationId);
+      const kind = String(item.accountId) === String(state.activeAccountId) ? explicitConversationType(item) : 'unknown';
+      const group = kind === 'group' || kind === 'vip_group';
+      const name = text(item.title) === text(item.externalId) ? '' : item.title;
+      const avatar = kind === 'direct' ? businessPages?.renderPersonAvatar?.({ name, size: 'list', selected }) : '';
+      const glyph = avatar || `<span class="ws-session-glyph" ${group ? 'role="img" aria-label="群聊"' : 'aria-hidden="true"'}><svg class="zk-icon" viewBox="0 0 24 24" focusable="false" aria-hidden="true"><use href="#i-${group ? 'users-group' : 'message'}"/></svg></span>`;
+      return `<button class="ws-session-row ${selected ? 'active' : ''}" data-ws-action="select-conversation" data-id="${esc(item.id)}">${glyph}<span class="ws-session-copy"><strong>${esc(item.title || item.externalId)}</strong><small>${esc(item.lastMessageText || '尚未导入聊天内容')}</small><time>${esc(stamp || '暂无消息时间')} · ${esc(coverage)}</time></span><span class="ws-session-side"><em>${esc(item.intentLevel || '待分析')}</em>${Number(item.unreadCount) > 0 ? `<b>${Math.min(99, Number(item.unreadCount))}</b>` : ''}</span></button>`;
     }).join('');
     if (rows) {
       const previous = windowStart > 0
@@ -2215,10 +3632,10 @@
     }
     return `<div class="ws-empty">${state.conversations.length ? '没有匹配的会话。' : '还没有本机会话。输入会话标识后建立记录，不会预置演示数据。'}</div>`;
   }
-  function renderAccountList() {
+  function renderAccountList(accounts = state.accounts) {
     if (state.accountsLoading) return '<div class="ws-empty ws-loading">正在加载 WS 账号…</div>';
-    if (!state.accounts.length) return '<div class="ws-empty">暂无 WS 账号。点击“添加账号”创建本机登录页。</div>';
-    return state.accounts.map(account => {
+    if (!accounts.length) return '<div class="ws-empty">暂无 WS 账号。点击“添加账号”创建本机登录页。</div>';
+    return accounts.map(account => {
       const active = String(account.id) === String(state.activeAccountId);
       const status = accountStatusLabel(account);
       const initial = esc(accountDisplayName(account).slice(0, 1).toUpperCase());
@@ -2253,7 +3670,7 @@
     return counts;
   }
   function renderMessageRows() {
-    if (!state.messages.length) return '<div class="ws-empty ws-message-empty">后台采集或手动导入完成后，客户与我方双方的原文、译文和发送方向会显示在这里。</div>';
+    if (!state.messages.length) return '<div class="ws-empty ws-message-empty">手动导入后，客户与我方双方的原文、译文和发送方向会显示在这里。后台采集当前不可用。</div>';
     return state.messages.map(message => {
       const busy = state.translationBusy.has(translationBusyKey(message.id));
       const failed = message.translationStatus === 'failed' || Boolean(message.translationError);
@@ -2300,18 +3717,218 @@
     if (state.settings.send) return 'send';
     return 'manual';
   }
-  function render() {
+  function syncWorkbenchAttributes(current, next, preserveScrollAttributes = false) {
+    if (!current || !next) return;
+    for (const attribute of [...current.attributes]) {
+      if (preserveScrollAttributes && (attribute.name.startsWith('data-scroll-') || attribute.name === 'tabindex')) continue;
+      if (!next.hasAttribute(attribute.name)) current.removeAttribute(attribute.name);
+    }
+    for (const attribute of [...next.attributes]) {
+      if (preserveScrollAttributes && (attribute.name.startsWith('data-scroll-') || attribute.name === 'tabindex')) continue;
+      if (current.getAttribute(attribute.name) !== attribute.value) current.setAttribute(attribute.name, attribute.value);
+    }
+  }
+  function workbenchChildKey(node, occurrence = 0) {
+    if (node.id) return `id:${node.id}`;
+    const section = node.dataset?.assistSection;
+    if (section) return `assist:${section}:${occurrence}`;
+    const className = [...(node.classList || [])].find(value => String(value).startsWith('ws-')) || node.tagName;
+    return `class:${className || ''}:${occurrence}`;
+  }
+  function reconcileWorkbenchChildren(current, next, preservedIds = new Set(), preserveScrollAttributes = false) {
+    if (!current || !next) return;
+    const currentChildren = [...current.children];
+    const used = new Set();
+    const occurrences = new Map();
+    const nextChildren = [...next.children];
+    const keyFor = child => {
+      if (child.id) return `id:${child.id}`;
+      const base = child.dataset?.assistSection ? `assist:${child.dataset.assistSection}` : `class:${[...(child.classList || [])].find(value => String(value).startsWith('ws-')) || child.tagName}`;
+      const occurrence = occurrences.get(base) || 0;
+      occurrences.set(base, occurrence + 1);
+      return `${base}:${occurrence}`;
+    };
+    const desired = nextChildren.map(child => ({ child, key: keyFor(child) }));
+    for (const { child, key } of desired) {
+      const existing = currentChildren.find(candidate => !used.has(candidate) && workbenchChildKey(candidate, Number(key.split(':').at(-1)) || 0) === key);
+      if (existing) {
+        used.add(existing);
+        if (preservedIds.has(existing.id)) {
+          syncWorkbenchAttributes(existing, child, preserveScrollAttributes);
+        } else {
+          existing.replaceWith(child.cloneNode(true));
+        }
+      } else {
+        current.appendChild(child.cloneNode(true));
+      }
+    }
+    for (const child of currentChildren) if (!used.has(child) && !preservedIds.has(child.id)) child.remove();
+  }
+  function patchWorkbenchCenter(current, next, preservedBrowserHost) {
+    if (!current || !next) return;
+    syncWorkbenchAttributes(current, next);
+    const oldHost = current.querySelector('#wsBrowserHost');
+    const nextHost = next.querySelector('#wsBrowserHost');
+    reconcileWorkbenchChildren(current, next, new Set(['wsBrowserHost']));
+    if (oldHost && !current.contains(oldHost)) current.appendChild(oldHost);
+    if (!oldHost && nextHost) current.querySelector('#wsBrowserHost')?.replaceWith(nextHost.cloneNode(true));
+    // The native host is intentionally never replaced or moved. It remains at
+    // the same DOM anchor while the toolbar/capture/message siblings update.
+    if (preservedBrowserHost && oldHost && preservedBrowserHost !== oldHost) preservedBrowserHost.replaceWith(oldHost);
+  }
+  function patchWorkbenchAssist(current, next) {
+    if (!current || !next) return;
+    syncWorkbenchAttributes(current, next, true);
+    // Keep the drawer and its scroll body mounted while replacing only the
+    // header controls, tabs and cards. This avoids a scroll-top jump on every
+    // background AI/collection tick and keeps the native WebView untouched.
+    const currentDrawer = current.querySelector('#wsAssistDrawer');
+    const nextDrawer = next.querySelector('#wsAssistDrawer');
+    if (currentDrawer && nextDrawer) {
+      syncWorkbenchAttributes(currentDrawer, nextDrawer, true);
+      const currentHeader = currentDrawer.querySelector('.ws-assist-drawer-header');
+      const nextHeader = nextDrawer.querySelector('.ws-assist-drawer-header');
+      if (currentHeader && nextHeader) {
+        // Keep the live header mounted. Replacing it during a background
+        // collection tick disconnects the resize handle and drops keyboard
+        // focus while the operator is using the drawer.
+        syncWorkbenchAttributes(currentHeader, nextHeader, true);
+        const currentTitle = currentHeader.querySelector('#wsAssistDrawerTitle');
+        const nextTitle = nextHeader.querySelector('#wsAssistDrawerTitle');
+        const currentSubtitle = currentHeader.querySelector('.ws-assist-drawer-title span');
+        const nextSubtitle = nextHeader.querySelector('.ws-assist-drawer-title span');
+        if (currentTitle && nextTitle && currentTitle.textContent !== nextTitle.textContent) currentTitle.textContent = nextTitle.textContent;
+        if (currentSubtitle && nextSubtitle && currentSubtitle.textContent !== nextSubtitle.textContent) currentSubtitle.textContent = nextSubtitle.textContent;
+      }
+      const currentTabs = currentDrawer.querySelector('.ws-assist-tabs');
+      const nextTabs = nextDrawer.querySelector('.ws-assist-tabs');
+      if (currentTabs && nextTabs) {
+        syncWorkbenchAttributes(currentTabs, nextTabs, true);
+        const currentTabNodes = [...currentTabs.children];
+        const nextTabNodes = [...nextTabs.children];
+        nextTabNodes.forEach((nextTab, index) => {
+          const currentTab = currentTabNodes[index];
+          if (!currentTab) return;
+          syncWorkbenchAttributes(currentTab, nextTab, true);
+          if (currentTab.textContent !== nextTab.textContent) currentTab.textContent = nextTab.textContent;
+        });
+        for (const currentTab of currentTabNodes.slice(nextTabNodes.length)) currentTab.remove();
+        for (const nextTab of nextTabNodes.slice(currentTabNodes.length)) currentTabs.appendChild(nextTab.cloneNode(true));
+      }
+      const currentBody = currentDrawer.querySelector('#wsAssistDrawerBody');
+      const nextBody = nextDrawer.querySelector('#wsAssistDrawerBody');
+      if (currentBody && nextBody) {
+        const activeElement = document.activeElement;
+        const activeBodyId = activeElement && currentBody.contains(activeElement) ? String(activeElement.id || '') : '';
+        const activeSelection = activeBodyId && typeof activeElement.selectionStart === 'number'
+          ? { start: activeElement.selectionStart, end: activeElement.selectionEnd } : null;
+        syncWorkbenchAttributes(currentBody, nextBody, true);
+        reconcileWorkbenchChildren(currentBody, nextBody, new Set(), true);
+        if (activeBodyId) {
+          const restored = document.getElementById(activeBodyId);
+          if (restored && currentBody.contains(restored)) {
+            restored.focus?.({ preventScroll: true });
+            if (activeSelection && typeof restored.setSelectionRange === 'function') {
+              try { restored.setSelectionRange(activeSelection.start, activeSelection.end); } catch {}
+            }
+          }
+        }
+      }
+    }
+    reconcileWorkbenchChildren(current, next, new Set(['wsAssistDrawer']), true);
+  }
+  function mountWsWorkbenchShell(target, markup) {
+    // The desktop WebView always exposes template elements. Minimal contract
+    // harnesses may provide only innerHTML; retain that compatibility path
+    // without affecting the production incremental mount.
+    if (typeof document.createElement !== 'function') {
+      target.innerHTML = markup;
+      return;
+    }
+    const template = document.createElement('template');
+    template.innerHTML = String(markup || '').trim();
+    const nextShell = template.content.firstElementChild;
+    const nextPage = nextShell?.querySelector('.ws-workbench-page');
+    const currentShell = target.querySelector('.ws-workbench-shell');
+    const currentPage = target.querySelector('.ws-workbench-page');
+    if (!nextPage || !currentPage || !currentShell) {
+      target.innerHTML = markup;
+      return;
+    }
+    syncWorkbenchAttributes(currentShell, nextShell);
+    const currentNav = currentShell.querySelector('.ws-workspace-nav');
+    const nextNav = nextShell.querySelector('.ws-workspace-nav');
+    if (currentNav && nextNav) currentNav.replaceWith(nextNav.cloneNode(true));
+    syncWorkbenchAttributes(currentPage, nextPage);
+    const nextLayout = nextPage.querySelector('.ws-layout');
+    const currentLayout = currentPage.querySelector('.ws-layout');
+    if (!nextLayout || !currentLayout) {
+      target.innerHTML = markup;
+      return;
+    }
+    syncWorkbenchAttributes(currentLayout, nextLayout);
+    const currentSessions = currentLayout.querySelector('#wsSessionsPanel');
+    const nextSessions = nextLayout.querySelector('#wsSessionsPanel');
+    if (currentSessions && nextSessions) currentSessions.replaceWith(nextSessions.cloneNode(true));
+    const currentCenter = currentLayout.querySelector('.ws-center-panel');
+    const nextCenter = nextLayout.querySelector('.ws-center-panel');
+    const currentHost = currentCenter?.querySelector('#wsBrowserHost');
+    if (currentCenter && nextCenter) patchWorkbenchCenter(currentCenter, nextCenter, currentHost);
+    const currentAssist = currentLayout.querySelector('#wsAssistPanel');
+    const nextAssist = nextLayout.querySelector('#wsAssistPanel');
+    if (currentAssist && nextAssist) patchWorkbenchAssist(currentAssist, nextAssist);
+    // Update direct page chrome around the preserved layout without replacing
+    // the layout itself. This keeps the native WebView anchor mounted.
+    const pageChildren = [...currentPage.children];
+    const desiredChildren = [...nextPage.children];
+    const currentLayoutAfter = currentPage.querySelector('.ws-layout');
+    const desiredKeys = new Set(desiredChildren.filter(child => child !== nextLayout).map((child, index) => workbenchChildKey(child, index)));
+    for (const desired of desiredChildren) {
+      if (desired === nextLayout) continue;
+      const key = workbenchChildKey(desired, desiredChildren.indexOf(desired));
+      const existing = pageChildren.find(child => child !== currentLayoutAfter && workbenchChildKey(child, desiredChildren.indexOf(desired)) === key);
+      if (existing) existing.replaceWith(desired.cloneNode(true));
+      else currentPage.insertBefore(desired.cloneNode(true), currentLayoutAfter || null);
+    }
+    for (const child of pageChildren) {
+      if (child === currentLayoutAfter) continue;
+      const key = workbenchChildKey(child, pageChildren.indexOf(child));
+      if (!desiredKeys.has(key)) child.remove();
+    }
+  }
+  function render(options = {}) {
+    groupReading?.discardStale();
     const host = getHost();
     if (!host || !state.active || host.state.view !== 'ws-workbench') return;
     const target = $('#viewContainer');
     if (!target) return;
+    captureWorkspaceNavScroll();
+    const previousWorkspacePage = $('[data-ws-workspace-page]');
+    if (previousWorkspacePage) wsWorkspacePageState(previousWorkspacePage.dataset.wsWorkspacePage, previousWorkspacePage.dataset.wsAccountId).scrollTop = Number(previousWorkspacePage.scrollTop || 0);
+    // Keep the native WebView host node alive while the surrounding shell is
+    // refreshed.  Collection polling and AI queue updates can redraw this
+    // page frequently; replacing #wsBrowserHost on every redraw makes the
+    // native overlay detach/re-attach and produces a visible jump or flicker
+    // in the WhatsApp surface.  The host is reinserted into the new shell
+    // immediately after the markup is replaced, so the business state still
+    // renders normally while the native session keeps its anchor node.
+    const preservedBrowserHost = $('#wsBrowserHost');
+    // Keep the right assistant drawer alive across shell redraws. Its body is
+    // the only assistant scroll owner; replacing that node makes the browser
+    // briefly create a new scroll box at top before the old position can be
+    // restored. We still patch its children below so counters and AI results
+    // are rendered from current state without touching the native WebView.
+    const preservedAssistPanel = $('#wsAssistPanel');
+    const preservedAssistBody = $('#wsAssistDrawerBody');
+    const preservedAssistScrollTop = Number(preservedAssistBody?.scrollTop || 0);
+    const preservedAssistScrollLeft = Number(preservedAssistBody?.scrollLeft || 0);
     rendering = true;
     const current = activeConversation();
     const draft = currentDraft();
     const captureRows = core.parseVisibleChat(draft.captureText, state.captureDirection);
     const receiveCount = captureRows.filter(row => row.direction === 'receive').length;
     const sendCount = captureRows.length - receiveCount;
-    const errorBanner = state.error ? `<div class="ws-error-banner"><span>${esc(state.error)}</span><button class="btn small" data-ws-action="retry-load">重试加载</button></div>` : '';
+    const errorBanner = renderWsErrorBanner();
     const loadingBanner = state.loading ? '<div class="ws-loading-banner">正在读取本机会话数据…</div>' : '';
     const matchHtml = state.matchCandidates.length ? `<div class="ws-match-candidates"><strong>请选择要关联的客户：</strong>${state.matchCandidates.map(item => `<button class="btn small" data-ws-action="save-customer-to" data-id="${esc(item.id)}">${esc(item.name || item.rawPhone || item.id)}</button>`).join('')}</div>` : '';
     const replyHistory = state.replies.slice(0, 5).map(item => `<li><span>${esc((item.translatedText || item.originalText || '').slice(0, 80))}</span><time>${esc(displayTime(item.createdAt))}</time></li>`).join('');
@@ -2320,21 +3937,27 @@
     const statusDetail = state.wsDetail || (state.wsStatus === '已连接' ? '已通过页面结构确认 WS 主界面；未读取 Cookie 或消息正文。' : '请在中栏自行完成扫码或登录。');
     const collectionRun = state.collectionRun;
     const fullHistoryCount = state.conversations.filter(item => item.data?.historyLoaded === true && Number(item.data?.directionVersion || 0) >= 4 && Boolean(fullHistorySourceFingerprint(item))).length;
-    const runtimeStatus = state.backgroundActive ? (state.wsStatus === '已连接' ? '后台持续运行' : '后台等待连接') : '后台未启动';
-    const runtimeTone = state.backgroundActive && state.wsStatus === '已连接' ? 'running' : state.backgroundActive ? 'waiting' : 'idle';
+    const { label: runtimeStatus, tone: runtimeTone } = wsBackgroundStatus();
+    const loginFocus = state.wsStatus !== '已连接' && state.captureCollapsed && !state.loginLayoutExpanded;
     const runtimeOverview = `<div class="ws-runtime-strip" aria-label="WS 后台运行概览">
       <span class="ws-runtime-primary" data-tone="${runtimeTone}"><i></i><b>${runtimeStatus}</b></span>
       <span><small>列表</small><b>${Number(collectionRun?.discovered || state.conversations.length || 0).toLocaleString()}</b></span>
       <span><small>完整历史</small><b>${fullHistoryCount.toLocaleString()}</b></span>
       <span><small>待分析</small><b>${Number(state.aiQueueStats.queued || 0).toLocaleString()}</b></span>
+      <span><small>死信</small><b>${Number(state.aiQueueStats.deadLetter || 0).toLocaleString()}</b></span>
       <span><small>跳过未读</small><b>${Number(collectionRun?.skipped || state.readHistorySkipped.length || 0).toLocaleString()}</b></span>
       <div class="ws-runtime-actions"><button type="button" data-ws-action="open-home">今日工作台</button><button type="button" data-ws-action="open-tasks">任务中心</button></div>
     </div>`;
-    target.innerHTML = `
-      <div class="ws-workbench-page">
+    const assistPanelClosed = !state.assistDrawerOpen;
+    const markup = `
+      <div class="ws-workbench-shell ${state.wsWorkspaceNavCollapsed ? 'ws-nav-collapsed' : ''}">
+        ${renderWsWorkspaceNav()}
+      <div class="ws-workbench-page workspace-${WS_WORKSPACE_VIEW_IDS.has(state.wsWorkspaceView) ? state.wsWorkspaceView : 'overview'} ${loginFocus ? 'is-login-focus' : ''} ${state.manualToolsVisible ? 'ws-local-tools-open' : ''}" data-ws-account-id="${esc(state.activeAccountId || 'default')}">
+        ${renderWsWorkspacePage(state.wsWorkspaceView)}
         <div class="page-heading ws-page-heading">
-          <div><h1 class="page-title">WS 工作台</h1><p class="page-subtitle">多账号后台采集、完整历史与 AI 客户运营 · 前台聊天不受影响 · 不保存密码、Cookie、二维码或秘密 Token</p></div>
+          <div><h1 class="page-title">前台聊天</h1><p class="page-subtitle" title="不保存密码、Cookie、二维码或秘密 Token" aria-label="内嵌 WhatsApp Web；前台聊天可用；后台采集按安全边界停用；不保存密码、Cookie、二维码或秘密 Token">内嵌 WhatsApp Web · 前台聊天可用；后台采集按安全边界停用</p></div>
           <div class="heading-actions">
+            <span class="ws-chat-background-status" data-tone="${runtimeTone}" data-collection-capability="blocked" role="status" title="${esc(collectionBlockedResult().error)}" aria-label="${esc(collectionBlockedResult().error)}">${esc(runtimeStatus)}</span>
             <span id="wsStatusBadge" class="ws-status-badge" data-status="${esc(state.wsStatus)}">${esc(state.wsStatus)}</span>
             <select id="wsTopAccount" class="ws-top-account" title="切换 WS 账号">${state.accounts.map(account => `<option value="${esc(account.id)}" ${String(account.id) === String(state.activeAccountId) ? 'selected' : ''}>${esc(accountDisplayName(account))}</option>`).join('')}</select>
             <label class="ws-top-switch"><input id="wsTopTranslateEnabled" type="checkbox" ${state.settings.enabled ? 'checked' : ''}>翻译</label>
@@ -2345,17 +3968,18 @@
               <option value="manual" ${translationModeValue() === 'manual' ? 'selected' : ''}>仅手动</option>
               <option value="off" ${translationModeValue() === 'off' ? 'selected' : ''}>全部关闭</option>
             </select>
-            <button class="btn small ws-heading-collapse" data-ws-action="toggle-left" aria-expanded="${state.leftCollapsed ? 'false' : 'true'}" aria-controls="wsSessionsPanel">${state.leftCollapsed ? '显示会话' : '隐藏会话'}</button>
-            <button class="btn small ws-heading-collapse" data-ws-action="toggle-right" aria-expanded="${state.rightCollapsed ? 'false' : 'true'}" aria-controls="wsAssistPanel">${state.rightCollapsed ? '显示辅助' : '隐藏辅助'}</button>
+            <button class="btn small ws-heading-collapse ws-chat-advanced" data-ws-action="toggle-left" aria-expanded="${state.leftCollapsed ? 'false' : 'true'}" aria-controls="wsSessionsPanel">${state.leftCollapsed ? '显示会话' : '隐藏会话'}</button>
+            <button class="btn small ws-heading-collapse" data-ws-action="toggle-right" aria-expanded="${state.assistDrawerOpen ? 'true' : 'false'}" aria-controls="wsAssistPanel">${state.assistDrawerOpen ? '收起CRM' : '展开CRM'}</button>
           </div>
         </div>
         ${errorBanner}${loadingBanner}
+        ${renderWsCockpit()}
         <div class="ws-mobile-tabs">
           <button data-ws-action="mobile-left" class="${state.mobilePanel === 'left' ? 'active' : ''}">会话</button>
           <button data-ws-action="mobile-center" class="${state.mobilePanel === 'center' ? 'active' : ''}">聊天</button>
           <button data-ws-action="mobile-right" class="${state.mobilePanel === 'right' ? 'active' : ''}">翻译与 AI</button>
         </div>
-        <div class="ws-layout ${state.leftCollapsed ? 'left-collapsed' : ''} ${state.rightCollapsed ? 'right-collapsed' : ''} mobile-${state.mobilePanel}">
+        <div class="ws-layout ${state.leftCollapsed ? 'left-collapsed' : ''} ${assistPanelClosed ? 'right-collapsed assist-closed' : 'assist-open'} mobile-${state.mobilePanel}" style="--ws-assist-column-width:${assistDrawerColumnWidth()}px;--ws-assist-drawer-width:${state.assistDrawerWidth}px;--ws-assist-drawer-offset-x:${state.assistDrawerOffset.x}px;--ws-assist-drawer-offset-y:${state.assistDrawerOffset.y}px">
           <aside id="wsSessionsPanel" class="ws-sessions-panel" aria-label="WS 账号与会话">
             <button class="ws-sidebar-collapse ws-sidebar-collapse-left" data-ws-action="toggle-left" aria-expanded="${state.leftCollapsed ? 'false' : 'true'}" aria-controls="wsSessionsPanel" title="${state.leftCollapsed ? '展开会话栏' : '收起会话栏'}"><span aria-hidden="true">${state.leftCollapsed ? '›' : '‹'}</span><b>${state.leftCollapsed ? '会话' : '收起'}</b></button>
             <div class="ws-panel-heading"><div><strong>WS 账号</strong><span>${state.accounts.length} 个本机隔离会话</span></div><button class="btn small" data-ws-action="create-account" ${state.accountBusy ? 'disabled' : ''}>＋ 添加账号</button></div>
@@ -2369,22 +3993,26 @@
             </div>
             <div class="ws-session-list">${renderConversationList()}</div>
           </aside>
-          <section class="ws-center-panel">
-            <div class="ws-login-toolbar">
+          <section id="wsCenterPanel" class="ws-center-panel ${state.messageCollapsed ? 'messages-collapsed' : ''} ${state.localPanelsCollapsed ? 'local-panels-collapsed' : ''}">
+            <div class="ws-login-toolbar ws-command-rail">
               <div class="ws-login-summary"><strong>${esc(accountDisplayName(activeAccount()) || 'WS 登录入口')}</strong><span id="wsStatusDetail" class="ws-login-status" title="${esc(statusDetail)}">${esc(statusDetail)}</span></div>
               ${runtimeOverview}
               <div class="ws-toolbar-actions">
                 <button class="btn small primary ws-toolbar-open" data-ws-action="open" ${state.busy.connection ? 'disabled' : ''}>${state.wsStatus === '已连接' ? '已打开 WS' : '打开 WS'}</button>
+                ${state.wsStatus !== '已连接' ? `<button class="btn small" data-ws-action="toggle-login-layout">${loginFocus ? '显示工作区' : '扩大登录区'}</button>` : ''}
                 <button class="btn small" data-ws-action="probe">检测状态</button>
-                <button class="btn small" data-ws-action="discover-conversations">扫描全部会话列表</button>
-                <button class="btn small primary ws-toolbar-collect" data-ws-action="collect-all-read" ${state.busy.readHistory ? 'disabled' : ''}>${state.busy.readHistory ? '采集中…' : '自动采集已读会话'}</button>
+                <button class="btn small" data-ws-action="discover-conversations" ${collectionControlAttributes()}>扫描全部会话列表</button>
+                <button class="btn small primary ws-toolbar-collect" data-ws-action="collect-all-read" ${collectionControlAttributes()}>自动采集已停用</button>
                 <button class="btn small" data-ws-action="reconnect">重新连接</button>
                 <button class="btn small" data-ws-action="reload">刷新页面</button>
                 <button class="btn small danger" data-ws-action="close">关闭 WS</button>
                 <button class="btn small" data-ws-action="clear-session">清除登录会话</button>
+                <button class="btn small ws-local-panels-toggle" data-ws-action="toggle-local-panels" aria-expanded="${state.localPanelsCollapsed ? 'false' : 'true'}" aria-controls="wsCenterPanel">${state.localPanelsCollapsed ? '展开本地面板' : '收起本地面板'}</button>
               </div>
             </div>
             <div id="wsBrowserHost" class="ws-browser-host"><div class="ws-browser-placeholder"><strong>官方 WS 页面会显示在这里</strong><span>用户自行登录；知客不会读取密码、Cookie 或二维码。</span></div></div>
+            ${state.localPanelsCollapsed ? '' : `
+            <div class="ws-local-workspace">
             <div class="ws-capture-panel ${state.captureCollapsed ? 'is-collapsed' : ''}">
               <div class="ws-capture-heading">
                 <div><strong>导入当前可见聊天</strong><span>可先在 WS 页面选中文字，再点击读取；也可手动粘贴。</span></div>
@@ -2400,31 +4028,27 @@
                 <button class="btn small primary" data-ws-action="import-visible" ${!current || !captureRows.length || state.busy.import ? 'disabled' : ''}>${state.busy.import ? '保存处理中…' : '保存并处理'}</button>
               </div>`}
             </div>
-            <div class="ws-message-heading"><strong>本地消息</strong><span>${state.historyCoverage.complete ? '完整聊天采集已完成' : '完整历史采集中；列表预览不会代替完整聊天'} · 当前已加载：我方 ${loadedDirections.send} · 客户 ${loadedDirections.receive} · 待核实 ${loadedDirections.pending}</span>${failedTranslations ? `<button class="btn small" data-ws-action="retry-failed">重试 ${failedTranslations} 条失败翻译</button>` : ''}</div>
-            <div class="ws-message-list">${renderMessageRows()}</div>
+            <div class="ws-message-heading ${state.messageCollapsed ? 'is-collapsed' : ''}">
+              <div class="ws-message-heading-copy"><strong>本地消息</strong><span>${state.historyCoverage.complete ? '本机已保存的完整聊天记录' : '仅显示本机已保存消息；后台采集当前不可用'} · 当前已加载：我方 ${loadedDirections.send} · 客户 ${loadedDirections.receive} · 待核实 ${loadedDirections.pending}</span></div>
+              <div class="ws-message-heading-actions">${failedTranslations ? `<button class="btn small" data-ws-action="retry-failed">重试 ${failedTranslations} 条失败翻译</button>` : ''}<button class="btn small ws-message-toggle" data-ws-action="toggle-messages" aria-expanded="${state.messageCollapsed ? 'false' : 'true'}" aria-controls="wsMessagePanel">${state.messageCollapsed ? '展开本地消息' : '收起本地消息'}</button><button class="btn small ws-local-panels-toggle" data-ws-action="toggle-local-panels" aria-expanded="true" aria-controls="wsCenterPanel">彻底收起</button></div>
+            </div>
+            <div id="wsMessagePanel" class="ws-message-panel ${state.messageCollapsed ? 'is-collapsed' : ''}">${state.messageCollapsed ? '<div class="ws-message-collapsed-note">消息区已收起；本机历史保留，后台采集当前不可用。</div>' : `<div class="ws-message-list">${renderMessageRows()}</div>`}</div></div>`}
           </section>
-          <aside id="wsAssistPanel" class="ws-assist-panel" aria-label="翻译与 AI 辅助">
-            <button class="ws-sidebar-collapse ws-sidebar-collapse-right" data-ws-action="toggle-right" aria-expanded="${state.rightCollapsed ? 'false' : 'true'}" aria-controls="wsAssistPanel" title="${state.rightCollapsed ? '展开辅助栏' : '收起辅助栏'}"><span aria-hidden="true">${state.rightCollapsed ? '‹' : '›'}</span><b>${state.rightCollapsed ? '辅助' : '收起'}</b></button>
-            <section class="ws-card ws-translation-card">
-              <div class="ws-card-heading"><div><strong>翻译控制</strong><span id="wsTranslationStatus">${esc(state.translationStatus)}</span></div><label class="ws-switch"><input id="wsTranslateEnabled" type="checkbox" ${state.settings.enabled ? 'checked' : ''}><span>总开关</span></label></div>
-              <div class="ws-control-grid">
-                <label><input id="wsReceiveEnabled" type="checkbox" ${state.settings.receive ? 'checked' : ''}> 自动翻译客户消息</label>
-                <label><input id="wsSendEnabled" type="checkbox" ${state.settings.send ? 'checked' : ''}> 自动翻译发送内容</label>
-                <label><input id="wsShowOriginal" type="checkbox" ${state.settings.showOriginal ? 'checked' : ''}> 显示原文</label>
-                <label>接收译为<select id="wsTargetLanguage">${languageOptions(state.settings.targetLanguage)}</select></label>
-                <label class="ws-wide-control">发送译为<select id="wsSendLanguage">${languageOptions(state.settings.sendLanguage, true)}</select></label>
-              </div>
-              <p class="ws-muted">发送选择“自动识别”时使用当前会话 AI 识别语言；无法确定时会要求人工选择。关闭总开关只停止自动调用，不删除方向偏好或历史译文。</p>
-            </section>
-             <section class="ws-card ws-ai-card">
-              <div class="ws-card-heading"><div><strong>AI 分析</strong><span>${state.historyCoverage.complete ? `当前客户完整聊天 ${state.historyCoverage.loaded} 条` : '完整历史采集完成后分析全部客户聊天'} · 队列 ${Number(state.aiQueueStats.queued || 0)} 待处理 / ${Number(state.aiQueueStats.retryable || 0)} 待重试</span></div><label class="ws-switch"><input id="wsAiEnabled" type="checkbox" ${state.aiEnabled ? 'checked' : ''}><span>AI 开关</span></label></div>
-              ${state.aiBackgroundError ? `<div class="ws-error-line"><span>${esc(state.aiBackgroundError)}</span><button class="btn small" data-ws-action="resume-ai-queue">立即重试</button></div>` : ''}
-              <button class="btn small primary ws-full-button" data-ws-action="analyze" ${!current || !state.messages.length || !state.aiEnabled || state.aiBusy ? 'disabled' : ''}>${state.aiBusy ? '分析中…' : state.analysis ? '重新分析当前聊天' : '分析当前聊天'}</button>
-              <div class="ws-analysis-content">${renderAnalysis()}</div>
-            </section>
-            ${renderCollectionCard()}
+          <aside id="wsAssistPanel" class="ws-assist-panel ws-chat-crm ${state.assistDrawerOpen ? 'is-open' : 'is-closed'}" aria-label="CRM客户档案与辅助工具" style="--ws-assist-column-width:${assistDrawerColumnWidth()}px;--ws-assist-drawer-width:${state.assistDrawerWidth}px">
+            ${state.assistDrawerOpen ? '<button class="ws-assist-drawer-backdrop" data-ws-action="assist-backdrop" aria-label="关闭辅助面板" tabindex="-1"></button>' : ''}
+            <button class="ws-assist-launcher" data-ws-action="open-assist-drawer" aria-expanded="${state.assistDrawerOpen ? 'true' : 'false'}" aria-controls="wsAssistDrawer" title="展开CRM客户档案">CRM</button>
+            <div id="wsAssistDrawer" class="ws-assist-drawer ${state.assistDrawerOpen ? 'is-open' : 'is-closed'}" role="dialog" aria-modal="false" aria-labelledby="wsAssistDrawerTitle">
+              <header class="ws-assist-drawer-header" data-assist-drawer-drag="true">
+                <div class="ws-assist-drawer-title"><strong id="wsAssistDrawerTitle">${esc(assistDrawerTabMeta(state.assistDrawerTab).title)}</strong><span>${esc(assistDrawerTabMeta(state.assistDrawerTab).subtitle)}</span></div>
+                <button id="wsAssistDrawerHandle" class="ws-assist-drawer-handle" data-ws-action="assist-drawer-handle" aria-label="拖动调整辅助面板宽度" title="拖动调整宽度">⋮</button>
+                <button id="wsAssistDrawerClose" class="ws-assist-drawer-close" data-ws-action="close-assist-drawer" aria-label="关闭辅助面板">×</button>
+              </header>
+              ${renderWsAssistTabs()}
+              <div id="wsAssistDrawerBody" class="ws-assist-drawer-body">
+            <button class="ws-sidebar-collapse ws-sidebar-collapse-right" data-ws-action="toggle-right" aria-expanded="${state.assistDrawerOpen ? 'true' : 'false'}" aria-controls="wsAssistPanel" title="${state.assistDrawerOpen ? '收起辅助栏' : '展开辅助栏'}"><span aria-hidden="true">${state.assistDrawerOpen ? '›' : '‹'}</span><b>${state.assistDrawerOpen ? '收起' : '辅助'}</b></button>
+            ${renderDataArchiveSummary()}
             ${renderHotProfile()}
-            <section class="ws-card">
+            <section class="ws-card" data-assist-section="profile">
               <div class="ws-card-heading"><div><strong>客户资料</strong><span>所有 AI 字段均可人工修改后再保存</span></div></div>
               <div class="ws-customer-fields">
                 <input id="wsCustomerName" placeholder="客户姓名" value="${esc(draft.customerName)}">
@@ -2441,35 +4065,71 @@
               <button class="btn small ws-full-button" data-ws-action="save-customer" ${!current || state.busy.customer ? 'disabled' : ''}>${state.busy.customer ? '保存中…' : '确认并保存到客户中心'}</button>
               <div class="ws-customer-match" id="wsCustomerMatch">${matchHtml}</div>
             </section>
-            <section class="ws-card">
+            <section class="ws-card ws-translation-card" data-assist-section="diagnostics">
+              <div class="ws-card-heading"><div><strong>翻译控制</strong><span id="wsTranslationStatus">${esc(state.translationStatus)}</span></div><label class="ws-switch"><input id="wsTranslateEnabled" type="checkbox" ${state.settings.enabled ? 'checked' : ''}><span>总开关</span></label></div>
+              <div class="ws-control-grid">
+                <label><input id="wsReceiveEnabled" type="checkbox" ${state.settings.receive ? 'checked' : ''}> 自动翻译客户消息</label>
+                <label><input id="wsSendEnabled" type="checkbox" ${state.settings.send ? 'checked' : ''}> 自动翻译发送内容</label>
+                <label><input id="wsShowOriginal" type="checkbox" ${state.settings.showOriginal ? 'checked' : ''}> 显示原文</label>
+                <label>接收译为<select id="wsTargetLanguage">${languageOptions(state.settings.targetLanguage)}</select></label>
+                <label class="ws-wide-control">发送译为<select id="wsSendLanguage">${languageOptions(state.settings.sendLanguage, true)}</select></label>
+              </div>
+              <p class="ws-muted">发送选择“自动识别”时使用当前会话 AI 识别语言；无法确定时会要求人工选择。关闭总开关只停止自动调用，不删除方向偏好或历史译文。</p>
+            </section>
+             <section class="ws-card ws-ai-card" data-assist-section="ai">
+              <div class="ws-card-heading"><div><strong>AI 分析</strong><span>${state.historyCoverage.complete ? `当前客户完整聊天 ${state.historyCoverage.loaded} 条` : '完整历史采集完成后分析全部客户聊天'} · 队列 ${Number(state.aiQueueStats.queued || 0)} 待处理 / ${Number(state.aiQueueStats.retryable || 0)} 待重试 / ${Number(state.aiQueueStats.deadLetter || 0)} 死信</span></div><label class="ws-switch"><input id="wsAiEnabled" type="checkbox" ${state.aiEnabled ? 'checked' : ''}><span>AI 开关</span></label></div>
+              <div id="wsAiBackgroundError" class="ws-error-line" ${state.aiBackgroundError ? '' : 'hidden'}><span data-ws-ai-error-text>${esc(state.aiBackgroundError || '')}</span><button class="btn small" data-ws-action="resume-ai-queue">立即重试</button></div>
+              <button class="btn small primary ws-full-button" data-ws-action="analyze" ${!current || !state.messages.length || !state.aiEnabled || state.aiBusy ? 'disabled' : ''}>${state.aiBusy ? '分析中…' : state.analysis ? '重新分析当前聊天' : '分析当前聊天'}</button>
+              <div class="ws-analysis-content">${renderAnalysis()}</div>
+            </section>
+            ${renderCollectionCard()}
+            ${renderGroupMonitorCard()}
+            ${renderBroadcastCard()}
+            ${renderWsExportCard()}
+            <section class="ws-card" data-assist-section="reply">
               <div class="ws-card-heading"><div><strong>跟进记录</strong><span>保存前创建本机快照，失败自动回滚</span></div></div>
               <textarea id="wsFollowupNote" rows="3" placeholder="本次跟进结果">${esc(draft.followupNote)}</textarea>
               <label class="ws-follow-date">下次跟进 <input id="wsNextFollow" type="date" value="${esc(draft.nextFollow)}"></label>
               <button class="btn small ws-full-button" data-ws-action="save-followup" ${!current || state.busy.followup ? 'disabled' : ''}>${state.busy.followup ? '保存中…' : '保存跟进'}</button>
             </section>
-            <section class="ws-card">
+            <section class="ws-card" data-assist-section="reply">
               <div class="ws-card-heading"><div><strong>回复建议</strong><span>默认只预览或复制，绝不自动发送</span></div></div>
               <textarea id="wsReplyInput" rows="3" placeholder="输入或采用 AI 回复建议">${esc(draft.replyInput)}</textarea>
               <div class="ws-reply-actions"><button class="btn small" data-ws-action="translate-reply" ${!current || state.busy.reply ? 'disabled' : ''}>手动翻译预览</button><button class="btn small primary" data-ws-action="copy-reply" ${!current || state.busy.reply ? 'disabled' : ''}>${state.busy.reply ? '处理中…' : '确认并复制'}</button></div>
               <div id="wsReplyPreview" class="ws-reply-preview">${draft.replyError ? `<p class="ws-error-line">${esc(draft.replyError)}</p>` : draft.replyPreview ? `<div class="ws-reply-warning">发送前请人工确认译文。</div><strong>预览 · ${esc(draft.replyPreviewLanguage || '原文')}</strong><p>${esc(draft.replyPreview)}</p>` : '<span class="ws-muted">尚未生成预览。</span>'}</div>
               ${replyHistory ? `<div class="ws-reply-history"><strong>最近复制记录</strong><ul>${replyHistory}</ul></div>` : ''}
             </section>
+              </div>
+            </div>
           </aside>
         </div>
+        ${renderWsFlowStrip()}
+      </div>
       </div>
     `;
+    mountWsWorkbenchShell(target, markup);
+    restoreWorkspaceNavScroll();
+    const mountedWorkspacePage = $('[data-ws-workspace-page]');
+    if (mountedWorkspacePage) mountedWorkspacePage.scrollTop = wsWorkspacePageState().scrollTop;
+    const mountedAssistBody = $('#wsAssistDrawerBody');
+    if (mountedAssistBody) {
+      const maxTop = Math.max(0, Number(mountedAssistBody.scrollHeight || 0) - Number(mountedAssistBody.clientHeight || 0));
+      const maxLeft = Math.max(0, Number(mountedAssistBody.scrollWidth || 0) - Number(mountedAssistBody.clientWidth || 0));
+      mountedAssistBody.scrollTop = Math.min(Math.max(0, preservedAssistScrollTop), maxTop);
+      mountedAssistBody.scrollLeft = Math.min(Math.max(0, preservedAssistScrollLeft), maxLeft);
+    }
     updateStatusDom();
     rendering = false;
-    browserResizeObserver?.disconnect?.();
-    browserResizeObserver = undefined;
     const browserHost = $('#wsBrowserHost');
-    if (browserHost && typeof ResizeObserver === 'function') {
+    if (browserHost && typeof ResizeObserver === 'function' && browserResizeObservedHost !== browserHost) {
+      browserResizeObserver?.disconnect?.();
       browserResizeObserver = new ResizeObserver(() => {
         if (state.active) queueResizeWsView();
       });
+      browserResizeObservedHost = browserHost;
       browserResizeObserver.observe(browserHost);
     }
-    queueResizeWsView();
+    if (options.skipNativeResize !== true) queueResizeWsView();
   }
 
   async function saveSettings(sequence, context, snapshot) {
@@ -2845,7 +4505,7 @@
         state.analysis.transcriptInfo = { ...transcript, text: undefined, analyzedChunks: chunks.length };
         const saved = await api('/api/ws/analyses', {
           method: 'POST',
-          body: JSON.stringify({ conversationId: current.id, jobId: aiJob.job.id, result: state.analysis, confidence: state.analysis.confidence, providerName: state.analysis.providerName, model: state.analysis.model }),
+          body: JSON.stringify({ conversationId: current.id, jobId: aiJob.job.id, leaseToken: aiJob.job.leaseToken, result: state.analysis, confidence: state.analysis.confidence, providerName: state.analysis.providerName, model: state.analysis.model }),
         }, context);
         assertContext(context);
         state.analysisMeta = saved;
@@ -2984,6 +4644,7 @@
       current.customerId = customer.id;
       if (linked) Object.assign(current, linked);
       void loadHotProfile({ ...context, conversationId: current.id }, false);
+      void loadDataArchive({ ...context, conversationId: current.id }, false);
       if (contextCurrent(context)) toast(created ? 'WS 客户已保存到客户中心' : '客户档案已更新并关联当前会话');
     } catch (error) {
       if (created) host.state.customers = beforeCustomers;
@@ -3145,7 +4806,8 @@
       }
       if (!window.zhikeDesktop?.tools) throw new Error('当前环境没有本机剪贴板能力。');
       const copied = await window.zhikeDesktop.tools({ action: 'copy', text: output });
-      if (!copied?.ok || copied.truncated || Number(copied.length) !== output.length) throw new Error('回复复制不完整，已停止并保留原文。');
+      const copyConfirmed = copied?.copied === true || (copied?.ok === true && Number(copied.length) === output.length);
+      if (!copyConfirmed || copied.truncated || (copied.length != null && Number(copied.length) !== output.length)) throw new Error('回复复制不完整，已停止并保留原文。');
       assertContext(context);
       draft.replyOperationId ||= 'ws-reply-' + Date.now().toString(36) + '-' + stableHash(current.id + input + output);
       const saved = await api('/api/ws/replies', {
@@ -3163,11 +4825,397 @@
     }
   }
 
+  async function translateBroadcast() {
+    const b = state.broadcast;
+    const input = text(b.originalText || $('#wsBroadcastText')?.value);
+    if (!input) { toast('请先输入群发原文。', 'x'); return; }
+    const context = captureContext('');
+    b.loading = true; b.error = '';
+    render();
+    try {
+      const result = await translateText(input, 'send', context);
+      assertContext(context);
+      b.originalText = input;
+      b.translatedText = result.translated;
+      b.targetLanguage = result.destination;
+      toast('群发译文已生成，原文保持不变。');
+    } catch (error) {
+      if (contextCurrent(context)) { b.error = `${error.message || '翻译失败'} 原文仍保留。`; toast(b.error, 'x'); }
+    } finally {
+      if (contextCurrent(context)) { b.loading = false; render(); }
+    }
+  }
+
+  async function createBroadcastPlan() {
+    const b = state.broadcast;
+    const recipients = broadcastSelectedRows();
+    const originalText = text(b.originalText || $('#wsBroadcastText')?.value);
+    const attachments = Array.isArray(b.attachments) ? b.attachments.filter(item => text(item.mediaId || item.id)) : [];
+    if (!recipients.length) { toast('请至少选择一个已读的一对一会话；群聊和未读会话不会加入群发。', 'x'); return; }
+    if (!originalText && !attachments.length) { toast('请先输入群发原文或添加附件。', 'x'); return; }
+    if (!confirm(`将为 ${recipients.length} 个已读一对一会话创建群发计划。创建后仍需在对应会话中逐条确认发送，是否继续？`)) return;
+    const context = captureContext('');
+    b.loading = true; b.error = '';
+    render();
+    try {
+      let translatedText = text(b.translatedText);
+      let targetLanguage = text(b.targetLanguage);
+      if (originalText && !translatedText && core.shouldTranslate(state.settings, 'send')) {
+        const result = await translateText(originalText, 'send', context);
+        translatedText = result.translated;
+        targetLanguage = result.destination;
+      }
+      assertContext(context);
+      const payload = {
+          accountId: context.accountId,
+          conversationIds: recipients.map(item => item.id),
+          payloadKind: broadcastPayloadKind(attachments),
+          caption: text(b.caption || originalText),
+          attachments: attachments.map((item, index) => ({ mediaId: text(item.mediaId || item.id), fileName: text(item.fileName), mimeType: text(item.mimeType), sizeBytes: Number(item.sizeBytes || item.size || 0), orderNo: Number(item.orderNo || index) })),
+          originalText,
+          translatedText: translatedText || originalText,
+          targetLanguage,
+          confirm: true,
+      };
+      payload.idempotencyKey = broadcastIdempotencyKey(payload);
+      const result = await api('/api/ws/broadcast', { method: 'POST', body: JSON.stringify(payload) }, context);
+      assertContext(context);
+      b.originalText = originalText;
+      b.translatedText = translatedText || originalText;
+      b.targetLanguage = targetLanguage;
+      b.plan = result.dispatch || null;
+      b.lastBatchId = text(result.dispatch?.batchId);
+      toast(result.existed ? '已恢复原群发计划，未重复创建发送记录。' : '群发计划已创建，请按队列逐条确认发送。');
+    } catch (error) {
+      if (contextCurrent(context)) { b.error = error.message || '群发计划创建失败。'; toast(b.error, 'x'); }
+    } finally {
+      if (contextCurrent(context)) { b.loading = false; render(); }
+    }
+  }
+
+  function broadcastDeliveryState(item) {
+    const value = text(item?.deliveryState || item?.nativeResult?.deliveryState);
+    if (['local_attempted', 'platform_accepted', 'delivered', 'unknown', 'failed'].includes(value)) return value;
+    // Historical "sent" without platform evidence must never mean delivered.
+    return item?.status === 'queued' ? 'queued' : 'unknown';
+  }
+  function broadcastCanRetry(item) {
+    const delivery = broadcastDeliveryState(item);
+    if (['local_attempted', 'platform_accepted', 'delivered', 'unknown'].includes(delivery)) return false;
+    if (item?.status === 'queued' && !item?.attemptId) return item.retryAllowed !== false;
+    return delivery === 'failed' && item?.retryAllowed === true;
+  }
+  function broadcastDeliveryLabel(item) {
+    const labels = { queued: '待当前会话确认', local_attempted: '本地已尝试 · 平台结果待核实',
+      platform_accepted: '平台已接受 · 尚未确认送达', delivered: '已送达',
+      unknown: '结果未知 · 已阻止重发', failed: '明确失败 · 未产生发送动作' };
+    return labels[broadcastDeliveryState(item)] || labels.unknown;
+  }
+  async function sendBroadcastItem(element) {
+    const b = state.broadcast;
+    if (b.loading) return;
+    const auditId = text(element?.dataset?.broadcastAuditId);
+    const item = broadcastPlanRows().find(row => String(row.id) === auditId);
+    if (!item) { toast('发送队列项不存在，请刷新群发计划。', 'x'); return; }
+    if (!broadcastCanRetry(item)) { toast('该项已有发送尝试或结果待核实，已阻止重复发送。', 'x'); return; }
+    const current = activeConversation();
+    if (!current || String(current.id) !== String(item.conversationId) ||
+        (item.accountId && String(item.accountId) !== String(state.activeAccountId))) {
+      toast('为避免误发，请先在 WS 前台打开该队列对应的会话；知客不会自动切换聊天窗口。', 'x');
+      return;
+    }
+    if (!confirm('确认向“' + text(current.title || current.externalId || current.id) + '”尝试发送？本地点击不代表平台接受或送达，未知结果不会自动重发。')) return;
+    const context = captureContext(current.id);
+    const mediaItems = Array.isArray(item.attachments) && item.attachments.length ? item.attachments
+      : (item.payloadKind && item.payloadKind !== 'text' ? [{ mediaId: item.mediaId, fileName: item.fileName, mimeType: item.mimeType }] : []);
+    let attemptId = '', authorizationRequested = false, externalEffectPossible = false, bridgeInFlight = false;
+    const outcomes = [];
+    const publish = audit => {
+      if (!audit || !contextCurrent(context) || state.broadcast !== b) return;
+      b.plan = { ...b.plan, items: (b.plan?.items || []).map(row => String(row.id) === auditId ? audit : row) };
+    };
+    const record = async (deliveryState, extra = {}) => {
+      const acknowledged = await api('/api/ws/send', {
+        method: 'POST',
+        body: JSON.stringify({ accountId: context.accountId, auditId, attemptId,
+          status: deliveryState === 'failed' ? 'failed' : 'sending', deliveryState,
+          nativeConfirmed: deliveryState === 'local_attempted',
+          nativeResult: { deliveryState, dispatchAttempted: externalEffectPossible, items: outcomes }, ...extra }),
+      }, context);
+      publish(acknowledged?.audit);
+      return acknowledged;
+    };
+    b.loading = true; b.error = '';
+    render();
+    try {
+      authorizationRequested = true;
+      const begun = await api('/api/ws/send', {
+        method: 'POST', body: JSON.stringify({ accountId: context.accountId, auditId, action: 'begin-attempt' }),
+      }, context);
+      attemptId = text(begun.attemptId || begun.audit?.attemptId);
+      if (!attemptId) throw new Error('发送服务未授权本次尝试；未调用 WS。');
+      publish(begun.audit);
+      assertContext(context);
+      const commands = mediaItems.length ? mediaItems : [null];
+      for (const [index, media] of commands.entries()) {
+        assertContext(context);
+        const local = media && (b.attachments || []).find(candidate => text(candidate.mediaId || candidate.id) === text(media.mediaId || media.id));
+        const attachmentId = media ? text(media.id || media.attachmentId) : '';
+        bridgeInFlight = true;
+        let bridge;
+        try { bridge = await wsBridge(media ? 'send-media' : 'send-text', context, media ? {
+          confirmed: true, conversationId: current.id, conversationKey: current.externalId || current.id,
+          mediaId: text(media.mediaId || media.id), fileName: text(media.fileName || local?.fileName) || 'attachment',
+          mimeType: text(media.mimeType || local?.mimeType) || 'application/octet-stream',
+          caption: Object.hasOwn(media, 'caption') ? text(media.caption)
+            : index === 0 ? text(item.caption || item.originalText || b.originalText) : '',
+        } : { confirmed: true, conversationId: current.id, conversationKey: current.externalId || current.id,
+          text: text(item.translatedText || item.originalText) }); }
+        catch (error) {
+          const preflight = error?.deliveryState === 'failed' && error?.dispatchAttempted === false &&
+            (error?.notAttempted === true || error?.phase === 'preflight');
+          bridgeInFlight = !preflight;
+          externalEffectPossible ||= !preflight;
+          const deliveryState = preflight ? 'failed' : 'unknown';
+          const proof = { ok: false, deliveryState, dispatchAttempted: !preflight,
+            ...(preflight ? { notAttempted: true, phase: 'preflight' } : {}) };
+          outcomes.push({ attachmentId, mediaId: media ? text(media.mediaId || media.id) : '', deliveryState, result: proof });
+          await record(deliveryState, { attachmentId, phase: 'in-progress', nativeResult: proof,
+            errorMessage: String(error?.message || '发送结果未知').slice(0, 1000) });
+          throw error;
+        }
+        bridgeInFlight = false;
+        const deliveryState = bridge?.ok === false && bridge?.deliveryState === 'failed' && bridge?.dispatchAttempted === false &&
+          (bridge?.notAttempted === true || bridge?.phase === 'preflight') ? 'failed'
+          : bridge?.ok === true && bridge?.deliveryState === 'local_attempted' && bridge?.dispatchAttempted === true ? 'local_attempted' : 'unknown';
+        externalEffectPossible ||= deliveryState !== 'failed';
+        outcomes.push({ attachmentId, mediaId: media ? text(media.mediaId || media.id) : '', deliveryState, result: bridge });
+        // Persist each attachment before proceeding. Even a late result belongs
+        // to the captured account, but must not mutate the new account's UI.
+        await record(deliveryState, { attachmentId, phase: 'in-progress', nativeResult: bridge });
+        if (deliveryState !== 'local_attempted') {
+          const error = new Error(bridge?.error || '本次发送没有可靠的本地尝试确认。');
+          error.deliveryState = deliveryState; error.dispatchAttempted = deliveryState !== 'failed';
+          throw error;
+        }
+        assertContext(context);
+        if (commands.length > 1 && index < commands.length - 1) await new Promise(resolve => setTimeout(resolve, 350));
+      }
+      await record('local_attempted', { phase: 'completed' });
+      if (contextCurrent(context)) toast('本地已尝试，平台接受与送达尚未确认；不会自动重发。');
+    } catch (error) {
+      const explicitlyNotDispatched = error?.deliveryState === 'failed' && error?.dispatchAttempted === false;
+      const authorizationUnknown = authorizationRequested && !attemptId;
+      const deliveryState = !authorizationUnknown && !externalEffectPossible && (explicitlyNotDispatched || !bridgeInFlight) ? 'failed' : 'unknown';
+      if (authorizationUnknown) publish({ ...item, status: 'sending', deliveryState: 'unknown', retryAllowed: false });
+      if (attemptId) {
+        // If acknowledgement fails, the durable prepared intent and this local
+        // fallback still prevent a blind retry after uncertain external effects.
+        publish({ ...item, status: deliveryState === 'failed' ? 'failed' : 'sending', deliveryState,
+          retryAllowed: deliveryState === 'failed', attemptId });
+        try { await record(deliveryState, { phase: 'completed', errorMessage: String(error?.message || '发送结果未知').slice(0, 1000),
+          ...(deliveryState === 'failed' ? { nativeResult: { ok: false, notAttempted: true, phase: 'preflight', dispatchAttempted: false, deliveryState, items: outcomes } } : {}) }); } catch {}
+      }
+      if (contextCurrent(context)) {
+        b.error = authorizationUnknown ? '发送授权响应未确认，未调用 WS；请刷新计划核对，已阻止重复尝试。'
+          : deliveryState === 'unknown' ? '发送结果未知，已阻止重发；请先核实平台记录。' : (error.message || '发送前被拒绝，未产生发送动作。');
+        toast(b.error, 'x');
+      }
+    } finally {
+      if (contextCurrent(context) && state.broadcast === b) { b.loading = false; render(); }
+    }
+  }
+
+  function clearBroadcastPlan() {
+    state.broadcast.plan = null;
+    state.broadcast.lastBatchId = '';
+    state.broadcast.error = '';
+    render();
+  }
+
+  function assistDrawerBody() {
+    return $('#wsAssistDrawerBody');
+  }
+
+  function focusAssistDrawerTab(tab, open = true) {
+    const nextTab = ASSIST_DRAWER_TABS.has(String(tab)) ? String(tab) : 'ai';
+    state.assistDrawerTab = nextTab;
+    writeAssistDrawerState('tab', nextTab);
+    if (open && !state.assistDrawerOpen) {
+      state.assistDrawerOpen = true;
+      writeAssistDrawerState('open', true);
+      render({ skipNativeResize: true });
+    }
+    requestAnimationFrame(() => {
+      const meta = assistDrawerTabMeta(nextTab);
+      const title = $('#wsAssistDrawerTitle');
+      const subtitle = $('#wsAssistDrawer .ws-assist-drawer-title span');
+      if (title && title.textContent !== meta.title) title.textContent = meta.title;
+      if (subtitle && subtitle.textContent !== meta.subtitle) subtitle.textContent = meta.subtitle;
+      const body = assistDrawerBody();
+      const node = body?.querySelector(`[data-assist-section="${nextTab}"]`);
+      if (body && node) {
+        const bodyRect = body.getBoundingClientRect?.();
+        const nodeRect = node.getBoundingClientRect?.();
+        const relativeTop = bodyRect && nodeRect
+          ? nodeRect.top - bodyRect.top + Number(body.scrollTop || 0)
+          : Number(node.offsetTop || 0);
+        const targetTop = relativeTop - 8;
+        body.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+      }
+      $$('.ws-assist-tab').forEach(button => {
+        const active = button.dataset.assistDrawerTab === nextTab;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+    });
+  }
+
+  function openAssistDrawer(tab = state.assistDrawerTab, returnFocus = null) {
+    const nextTab = ASSIST_DRAWER_TABS.has(String(tab)) ? String(tab) : 'ai';
+    if (returnFocus) assistDrawerReturnFocus = returnFocus;
+    state.assistDrawerTab = nextTab;
+    state.assistDrawerOpen = true;
+    if (Number(window.innerWidth || 0) > 0 && Number(window.innerWidth) <= 900) state.mobilePanel = 'right';
+    writeAssistDrawerState('tab', nextTab);
+    writeAssistDrawerState('open', true);
+    render({ skipNativeResize: true });
+    requestAnimationFrame(() => {
+      $('#wsAssistDrawerClose')?.focus?.();
+      focusAssistDrawerTab(nextTab, false);
+    });
+  }
+
+  function closeAssistDrawer() {
+    state.assistDrawerOpen = false;
+    writeAssistDrawerState('open', false);
+    render({ skipNativeResize: true });
+    requestAnimationFrame(() => {
+      const target = assistDrawerReturnFocus?.isConnected ? assistDrawerReturnFocus : $('.ws-assist-launcher');
+      target?.focus?.();
+      assistDrawerReturnFocus = null;
+    });
+  }
+
+  function handleAssistDrawerResizeStart(event) {
+    const handle = event.target?.closest?.('[data-ws-action="assist-drawer-handle"]');
+    const drawer = $('#wsAssistDrawer');
+    const layout = $('.ws-layout');
+    if (!handle || !drawer || !layout || !state.assistDrawerOpen) return;
+    assistDrawerResize = {
+      pointerId: event.pointerId,
+      startX: Number(event.clientX || 0),
+      startWidth: clampAssistDrawerWidth(state.assistDrawerWidth),
+      drawer,
+      layout,
+      handle,
+    };
+    handle.setPointerCapture?.(event.pointerId);
+    bindAssistPointerListeners();
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  function handleAssistDrawerResizeMove(event) {
+    const resize = assistDrawerResize;
+    if (!resize || (resize.pointerId != null && event.pointerId !== resize.pointerId)) return;
+    const delta = resize.startX - Number(event.clientX || 0);
+    const width = Math.min(assistDrawerColumnWidth(resize.layout), clampAssistDrawerWidth(resize.startWidth + delta));
+    state.assistDrawerWidth = width;
+    resize.drawer.style.setProperty('--ws-assist-drawer-width', `${width}px`);
+    resize.layout.style.setProperty('--ws-assist-column-width', `${width}px`);
+    resize.layout.style.setProperty('--ws-assist-drawer-width', `${width}px`);
+    event.preventDefault();
+  }
+
+  function handleAssistDrawerResizeEnd(event) {
+    const resize = assistDrawerResize;
+    if (!resize || (resize.pointerId != null && event.pointerId != null && event.pointerId !== resize.pointerId)) return;
+    writeAssistDrawerState('width', state.assistDrawerWidth);
+    resize.handle?.releasePointerCapture?.(resize.pointerId);
+    assistDrawerResize = null;
+    unbindAssistPointerListeners();
+  }
+
+  function assistDrawerMoveLimit() {
+    return Math.min(64, Math.max(0, Number(window.innerHeight || 900) - 180));
+  }
+
+  function handleAssistDrawerMoveStart(event) {
+    const header = event.target?.closest?.('[data-assist-drawer-drag]');
+    const drawer = $('#wsAssistDrawer');
+    if (!header || !drawer || !state.assistDrawerOpen || Number(window.innerWidth || 0) <= 900) return;
+    // Buttons retain their click behavior; only the empty header surface moves
+    // the drawer. Horizontal movement stays locked to the page column.
+    if (event.target?.closest?.('button, input, select, textarea, a')) return;
+    const offset = normalizeAssistDrawerOffset(state.assistDrawerOffset);
+    assistDrawerMove = {
+      pointerId: event.pointerId,
+      startY: Number(event.clientY || 0),
+      startOffsetY: offset.y,
+      drawer,
+      header,
+    };
+    header.setPointerCapture?.(event.pointerId);
+    bindAssistPointerListeners();
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  function handleAssistDrawerMove(event) {
+    const move = assistDrawerMove;
+    if (!move || (move.pointerId != null && event.pointerId !== move.pointerId)) return;
+    const delta = Number(event.clientY || 0) - move.startY;
+    const limit = assistDrawerMoveLimit();
+    const y = Math.max(-limit, Math.min(limit, Math.round(move.startOffsetY + delta)));
+    state.assistDrawerOffset = { x: 0, y };
+    move.drawer.style.setProperty('--ws-assist-drawer-offset-x', '0px');
+    move.drawer.style.setProperty('--ws-assist-drawer-offset-y', `${y}px`);
+    event.preventDefault();
+  }
+
+  function handleAssistDrawerMoveEnd(event) {
+    const move = assistDrawerMove;
+    if (!move || (move.pointerId != null && event.pointerId != null && event.pointerId !== move.pointerId)) return;
+    writeAssistDrawerState('offset', state.assistDrawerOffset);
+    move.header?.releasePointerCapture?.(move.pointerId);
+    assistDrawerMove = null;
+    unbindAssistPointerListeners();
+  }
+
   async function retryFailedTranslations() {
     const failed = state.messages.filter(item => item.translationStatus === 'failed' || item.translationError);
     for (const message of failed) await translateMessage(message.id);
   }
   async function handleAction(action, element) {
+    if (action === 'return-zhike') { (document.querySelector('[data-workspace-target="main"]') || document.querySelector('.nav-item[data-view="home"]'))?.click(); return; }
+    if (action.startsWith('business-')) {
+      const view = String(element?.dataset?.businessView || state.wsWorkspaceView);
+      if (view !== state.wsWorkspaceView || !['contacts', 'logs', 'members', 'crm', 'tasks'].includes(view)) return;
+      const page = wsWorkspacePageState(view);
+      if (action === 'business-detail') {
+        const id = String(element?.dataset?.recordId || ''); page.detailId = page.detailId === id ? '' : id;
+        render({ skipNativeResize: true });
+        if (page.detailId && (Number(window.innerWidth || 0) < 1440 || !['contacts', 'logs'].includes(view))) document.querySelector(`[data-ws-workspace-page="${view}"] [data-ws-business-selected-detail]`)?.scrollIntoView?.({ block: 'nearest', behavior: 'auto' });
+        return;
+      }
+      if (action === 'business-detail-close') { page.detailId = ''; render({ skipNativeResize: true }); return; }
+      if (action === 'business-reset') { page.filter = ''; page.businessFilters = {}; page.page = 1; page.detailId = ''; return refreshWorkspacePage(); }
+      if (action === 'business-search') { page.page = 1; page.detailId = ''; return refreshWorkspacePage(); }
+      if (action === 'business-page') {
+        page.page = Math.max(1, page.page + (Number(element?.dataset?.pageDelta) > 0 ? 1 : -1)); page.detailId = '';
+        if (view === 'contacts' || view === 'logs') return refreshWorkspacePage();
+        render({ skipNativeResize: true }); return;
+      }
+      return;
+    }
+    if (action === 'collection-history') {
+      wsWorkspacePageState().scrollTop = Number(document.querySelector('[data-ws-workspace-page]')?.scrollTop || 0);
+      state.wsWorkspaceView = 'logs';
+      const page = wsWorkspacePageState('logs'); page.businessFilters = { category: 'snapshot', sourceType: 'ws_collection_runs' }; page.page = 1; page.detailId = '';
+      writeWsWorkspaceState('logs', state.wsWorkspaceNavCollapsed); render();
+      return refreshWorkspacePage();
+    }
     if (['open', 'login', 'reload', 'reconnect', 'close', 'clear-session', 'probe'].includes(action)) return connectionAction(action);
     if (action === 'create-account') return openAccountForm();
     if (action === 'submit-account') return createAccount();
@@ -3175,8 +5223,72 @@
     if (action === 'switch-account') return switchAccount(element?.dataset?.accountId);
     if (action === 'capture-selection') return captureSelection();
     if (action === 'toggle-capture') { state.captureCollapsed = !state.captureCollapsed; writePanelCollapsed('capture', state.captureCollapsed); render(); return; }
+    if (action === 'toggle-messages') { state.messageCollapsed = !state.messageCollapsed; writePanelCollapsed('messages', state.messageCollapsed); render(); return; }
+    if (action === 'toggle-local-panels') { state.localPanelsCollapsed = !state.localPanelsCollapsed; state.manualToolsVisible = !state.localPanelsCollapsed; writePanelCollapsed('local-panels', state.localPanelsCollapsed); render(); return; }
+    if (action === 'toggle-workspace-nav') { state.wsWorkspaceNavCollapsed = !state.wsWorkspaceNavCollapsed; writeWsWorkspaceState(state.wsWorkspaceView, state.wsWorkspaceNavCollapsed); render(); return; }
+    if (action.startsWith('group-reading-')) return groupReading?.run(action.slice('group-reading-'.length));
+    if (action.startsWith('group-directory-')) {
+      if (state.wsWorkspaceView !== 'groups') return;
+      const page = groupDirectoryState();
+      if (action === 'group-directory-detail') page.detailGroupId = page.detailGroupId === element?.dataset?.groupId ? '' : String(element?.dataset?.groupId || '');
+      else if (action === 'group-directory-clear') { page.selectedGroupIds = []; page.showSelectedOnly = false; }
+      else if (action === 'group-directory-selected') { page.showSelectedOnly = !page.showSelectedOnly; page.page = 1; }
+      else if (action === 'group-directory-copy') {
+        const selected = new Set(page.selectedGroupIds);
+        const ids = groupDirectoryRows().filter(row => selected.has(row.directoryId)).map(row => row.directoryId);
+        if (!ids.length) return;
+        if (!window.zhikeDesktop?.tools) throw new Error('当前环境没有本机剪贴板能力。');
+        const context = captureContext(''), output = ids.join('\n');
+        const copied = await window.zhikeDesktop.tools({ action: 'copy', text: output });
+        assertContext(context);
+        if (copied?.copied !== true || copied.truncated === true || (copied.length != null && Number(copied.length) !== output.length)) throw new Error('群组标识复制失败，请重试。');
+        toast(`已复制 ${ids.length} 个群组标识`);
+        return;
+      } else return;
+      render({ skipNativeResize: true });
+      if (action === 'group-directory-detail') return groupReading?.open();
+      return;
+    }
+    if (action === 'open-local-tools') {
+      wsWorkspacePageState().scrollTop = Number(document.querySelector('[data-ws-workspace-page]')?.scrollTop || 0);
+      state.wsWorkspaceView = 'chat';
+      state.manualToolsVisible = true;
+      state.localPanelsCollapsed = false;
+      state.captureCollapsed = false;
+      writeWsWorkspaceState('chat', state.wsWorkspaceNavCollapsed);
+      render();
+      return;
+    }
+    if (action === 'refresh-workspace-page') return refreshWorkspacePage();
+    if (action === 'workspace-list-page') {
+      const view = String(element?.dataset?.listView || '');
+      if (view !== state.wsWorkspaceView) return;
+      const page = wsWorkspacePageState(view);
+      page.page = Math.max(1, page.page + (Number(element.dataset.pageDelta) > 0 ? 1 : -1));
+      render({ skipNativeResize: true });
+      return;
+    }
+    if (action === 'toggle-login-layout') { state.loginLayoutExpanded = !state.loginLayoutExpanded; render(); return; }
     if (action === 'toggle-left') { state.leftCollapsed = !state.leftCollapsed; writePanelCollapsed('left', state.leftCollapsed); render(); return; }
-    if (action === 'toggle-right') { state.rightCollapsed = !state.rightCollapsed; writePanelCollapsed('right', state.rightCollapsed); render(); return; }
+    if (action === 'toggle-right') {
+      assistDrawerReturnFocus = element || $('.ws-heading-collapse[data-ws-action="toggle-right"]');
+      if (state.assistDrawerOpen) closeAssistDrawer();
+      else openAssistDrawer(state.assistDrawerTab, assistDrawerReturnFocus);
+      return;
+    }
+    if (action === 'open-assist-drawer') { openAssistDrawer(state.assistDrawerTab, element); return; }
+    if (action === 'close-assist-drawer' || action === 'assist-backdrop') { closeAssistDrawer(); return; }
+    if (action === 'focus-assist') {
+      if (state.wsWorkspaceView !== 'chat') {
+        wsWorkspacePageState().scrollTop = Number(document.querySelector('[data-ws-workspace-page]')?.scrollTop || 0);
+        state.wsWorkspaceView = 'chat';
+        writeWsWorkspaceState('chat', state.wsWorkspaceNavCollapsed);
+      }
+      state.assistDrawerOpen = true;
+      openAssistDrawer(element?.dataset?.assistTarget || 'ai', element);
+      queueResizeWsView();
+      return;
+    }
     if (action === 'mobile-left' || action === 'mobile-center' || action === 'mobile-right') { state.mobilePanel = action.slice(7); render(); return; }
     if (action === 'new-conversation') { state.mobilePanel = 'left'; render(); requestAnimationFrame(() => $('#wsConversationExternalId')?.focus()); return; }
     if (action === 'next-conversations' || action === 'previous-conversations') {
@@ -3192,6 +5304,24 @@
     if (action === 'resume-collection') return updateCollectionRun('running');
     if (action === 'stop-collection') return updateCollectionRun('stopped');
     if (action === 'resume-collection-checkpoint') return resumeCollectionFromCheckpoint();
+    if (action === 'group-monitor-create') return createGroupMonitor();
+    if (action === 'group-monitor-refresh') return loadGroupMonitor();
+    if (action === 'group-monitor-scan') return scanGroupMonitorTargets();
+    if (action === 'group-monitor-add-target') return addGroupMonitorTarget();
+    if (action === 'group-monitor-add-selected') return addSelectedGroupMonitorTarget();
+    if (action === 'group-monitor-toggle') return toggleGroupMonitor(element?.dataset?.enabled !== 'true');
+    if (action === 'group-monitor-target-toggle') return toggleGroupMonitorTarget(element);
+    if (action === 'group-monitor-resolve') return resolveGroupMonitorEvent(element, 'resolve');
+    if (action === 'group-monitor-ignore') return resolveGroupMonitorEvent(element, 'ignore');
+    if (action === 'broadcast-select-all') { state.broadcast.selectedIds = new Set(broadcastCandidates().map(item => String(item.id))); render(); return; }
+    if (action === 'broadcast-clear-selection') { state.broadcast.selectedIds.clear(); render(); return; }
+    if (action === 'pick-broadcast-files') { $('#wsBroadcastFiles')?.click?.(); return; }
+    if (action === 'remove-broadcast-attachment') { removeBroadcastAttachment(element?.dataset?.attachmentId); return; }
+    if (action === 'translate-broadcast') return translateBroadcast();
+    if (action === 'create-broadcast-plan') return createBroadcastPlan();
+    if (action === 'send-broadcast-item') return sendBroadcastItem(element);
+    if (action === 'clear-broadcast-plan') return clearBroadcastPlan();
+    if (action === 'export-all') return exportAllWsData();
     if (action === 'discover-conversations') return discoverConversations();
     if (action === 'collect-all-read') return collectAllReadConversations();
     if (action === 'capture-visible-messages') return captureVisibleMessages();
@@ -3232,7 +5362,37 @@
     }
   }
   function applyControlChange(target) {
+    if (target.matches('[data-ws-group-reading-message]')) { groupReading?.select(target.value); return; }
+    if (target.matches('[data-ws-business-account]')) {
+      const view = state.wsWorkspaceView;
+      void switchAccount(target.value).then(switched => { if (switched && state.wsWorkspaceView === view) return refreshWorkspacePage(); });
+      return;
+    }
+    if (target.matches('[data-ws-business-filter]')) {
+      if (!['contacts', 'logs'].includes(state.wsWorkspaceView)) return;
+      const key = String(target.dataset.wsBusinessFilter || '');
+      if (!['duplicate', 'category', 'type', 'sourceType', 'outcome', 'from', 'to', 'jobId', 'objectId'].includes(key)) return;
+      const page = wsWorkspacePageState(); page.businessFilters ||= {};
+      if (key === 'category' && page.businessFilters.category !== target.value) { page.businessFilters.type = ''; page.businessFilters.outcome = ''; page.businessFilters.sourceType = ''; }
+      page.businessFilters[key] = String(target.value || '').slice(0, 200);
+      return;
+    }
+    if (target.matches('[data-ws-member-group]')) { const page = wsWorkspacePageState('members'); page.groupFilter = String(target.value || 'all'); page.page = 1; page.detailId = ''; render({ skipNativeResize: true }); return; }
+    if (applyGroupDirectoryControl(target)) return;
+    if (target.matches('[data-ws-workspace-status]')) { applyWorkspaceListFilter(target); return; }
     if (target.matches('#wsTopAccount')) { void switchAccount(target.value); return; }
+    if (target.matches('#wsBroadcastFiles')) { void addBroadcastFiles(target.files); return; }
+    if (target.matches('[data-ws-broadcast-select]')) {
+      const id = String(target.dataset.wsBroadcastSelect || '');
+      if (id) {
+        if (target.checked) state.broadcast.selectedIds.add(id);
+        else state.broadcast.selectedIds.delete(id);
+        render();
+      }
+      return;
+    }
+    if (target.matches('#wsBroadcastLanguage')) { state.broadcast.targetLanguage = text(target.value); render(); return; }
+    if (target.matches('#wsExportIncludeMedia')) { state.export.includeMedia = target.checked; return; }
     if (target.matches('#wsCaptureDirection')) { state.captureDirection = target.value === 'send' ? 'send' : 'receive'; render(); return; }
     if (target.matches('#wsTopTranslationMode')) applyTranslationMode(target.value);
     if (target.matches('#wsTopTranslateEnabled, #wsTranslateEnabled')) state.settings.enabled = target.checked;
@@ -3251,6 +5411,11 @@
         void cancelAllAiWork();
       }
     }
+    if (target.matches('#wsGroupMonitorStatusFilter')) {
+      state.groupMonitor.statusFilter = text(target.value) || 'all';
+      void loadGroupMonitor({ silent: true });
+      return;
+    }
     if (target.matches('[data-hot-profile-color]')) { state.hotProfileColorDraft = target.value; return; }
     if (target.matches('#wsTopTranslationMode, #wsTopTranslateEnabled, #wsTranslateEnabled, #wsReceiveEnabled, #wsSendEnabled, #wsShowOriginal, #wsTargetLanguage, #wsSendLanguage, #wsAiEnabled')) {
       state.settings = core.normalizeTranslationSettings(state.settings);
@@ -3260,6 +5425,9 @@
     }
   }
   function applyInput(target) {
+    if (target.matches('[data-ws-business-query]')) { wsWorkspacePageState().filter = String(target.value || '').slice(0, 160); return; }
+    if (target.matches('[data-ws-business-filter]')) { applyControlChange(target); return; }
+    if (target.matches('[data-ws-workspace-search]')) { applyWorkspaceListFilter(target); return; }
     if (target.matches('#wsConversationSearch')) {
       state.conversationQuery = target.value;
       state.conversationWindowStart = 0;
@@ -3270,6 +5438,9 @@
     if (target.matches('#wsConversationExternalId')) { state.createExternalId = target.value; return; }
     if (target.matches('#wsConversationTitle')) { state.createTitle = target.value; return; }
     if (target.matches('#wsAccountDisplayName')) { state.accountFormName = target.value; state.accountFormError = ''; return; }
+    if (target.matches('#wsBroadcastText')) { state.broadcast.originalText = target.value; state.broadcast.caption = target.value; state.broadcast.translatedText = ''; state.broadcast.error = ''; return; }
+    if (target.matches('#wsGroupMonitorJid')) { state.groupMonitor.draftJid = target.value; state.groupMonitor.error = ''; return; }
+    if (target.matches('#wsGroupMonitorName')) { state.groupMonitor.draftName = target.value; return; }
     if (target.matches('[data-hot-profile-field]')) { state.hotProfileEdits[target.dataset.hotProfileField] = target.value; return; }
     const draft = currentDraft();
     const fields = {
@@ -3322,29 +5493,47 @@
       // another Zhike page was visible. Re-entering WS only remounts the UI;
       // it must not start another poller, queue pump or account load.
       queueResizeWsView();
-      void refreshCollectionSummary();
+      void refreshCollectionSummary({ background: true });
+      void loadGroupMonitor({ background: true, silent: true });
       return;
     }
     const startGeneration = backgroundGeneration;
     if (backgroundStartPromise && backgroundStartGeneration === startGeneration) return;
     backgroundStartGeneration = startGeneration;
+    let startAccount = null;
+    const ownsStart = () => state.backgroundActive && startGeneration === backgroundGeneration
+      && (!startAccount || (startAccount.id === state.activeAccountId && startAccount.generation === state.accountPresentationGeneration && startAccount.attempt === state.connectionAttemptGeneration));
     backgroundStartPromise = (async () => {
       await loadAccounts();
-      if (!state.backgroundActive || startGeneration !== backgroundGeneration) return;
+      if (!ownsStart()) return;
+      startAccount = { id: state.activeAccountId, generation: state.accountPresentationGeneration, attempt: state.connectionAttemptGeneration };
       render();
-      await wsBridge('open').catch(error => { if (state.backgroundActive && startGeneration === backgroundGeneration) state.error = error.message || 'WS 账号页面打开失败。'; });
-      if (!state.backgroundActive || startGeneration !== backgroundGeneration) return;
+      let openError = null;
+      await wsBridge('open').catch(error => {
+        if (!ownsStart()) return;
+        openError = error;
+        state.error = error.message || 'WS 账号页面打开失败。';
+      });
+      if (!ownsStart()) return;
       await syncVipGroupAllowlist(captureContext(''), true).catch(() => null);
+      if (!ownsStart()) return;
       await loadConversations();
-      if (!state.backgroundActive || startGeneration !== backgroundGeneration) return;
+      if (!ownsStart()) return;
+      await loadGroupMonitor({ silent: true });
+      if (!ownsStart()) return;
       const result = await wsBridge('status');
-      if (!state.backgroundActive || startGeneration !== backgroundGeneration) return;
+      if (!ownsStart()) return;
       updateAccountStatus(result);
-      setStatus(result.status, result.detail || '');
+      if (openError) {
+        state.error = openError.message || 'WS 账号页面打开失败。';
+        setStatus('连接失败', wsErrorDetail(openError));
+      } else {
+        setStatus(result.status, result.detail || '');
+      }
       render();
-      await refreshCollectionSummary();
+      await refreshCollectionSummary({ background: true });
     })().catch(error => {
-      if (state.backgroundActive && startGeneration === backgroundGeneration) setStatus('连接失败', error.message);
+      if (ownsStart()) { state.error = error.message || 'WS 初始化失败。'; setStatus('连接失败', state.error); render(); }
     }).finally(() => {
       if (backgroundStartGeneration === startGeneration) {
         backgroundStartPromise = null;
@@ -3355,18 +5544,37 @@
   function deactivate() {
     if (!state.active) return;
     state.active = false;
+    groupReading?.reset();
+    assistDrawerResize = null;
+    assistDrawerMove = null;
+    unbindAssistPointerListeners();
     browserResizeObserver?.disconnect?.();
     browserResizeObserver = undefined;
+    browserResizeObservedHost = undefined;
+    lastResizeBounds = '';
+    lastResizeGeometry = null;
     document.body.classList.remove('ws-mode');
     wsBridge('hide').catch(() => {});
     if (backgroundAccountRefreshQueue.size) void requestAccountPipelineRefresh(backgroundAccountRefreshQueue.values().next().value);
   }
   async function exportWsData(accountId = '') { return api('/api/ws/export'+(accountId?'?accountId='+encodeURIComponent(accountId):''), { timeout: 30000 }); }
+  async function listWsBackupAccounts() { return api('/api/ws/accounts', { timeout: 30000 }); }
+  async function ensureWsBackupAccount(accountId, displayName) {
+    const id=String(accountId||'').trim();if(!id)throw new Error('备份中的 WS 账号编号为空。');
+    const listed=await listWsBackupAccounts();if(!Array.isArray(listed.accounts))throw new Error('无法读取 WS 账号清单，恢复已取消。');
+    if(listed.accounts.some(item=>String(item?.id||'').toLowerCase()===id.toLowerCase()))return {created:false};
+    try { await api('/api/ws/accounts',{method:'POST',timeout:30000,body:JSON.stringify({id,displayName:String(displayName||id)})},{accountId:id});return {created:true}; }
+    catch(error){const refreshed=await listWsBackupAccounts();if(Array.isArray(refreshed.accounts)&&refreshed.accounts.some(item=>String(item?.id||'').toLowerCase()===id.toLowerCase()))return {created:false};throw error;}
+  }
+  async function deleteWsBackupAccount(accountId) {
+    const id=String(accountId||'').trim();if(!id||id==='default')throw new Error('不能删除默认 WS 账号。');
+    return api('/api/ws/accounts/'+encodeURIComponent(id),{method:'DELETE',timeout:30000},{accountId:id});
+  }
   async function importWsData(value, accountId = '') {
     if (!value || typeof value !== 'object') return { skipped: true };
     return api('/api/ws/import', { method: 'POST', timeout: 60000, body: JSON.stringify({...value,accountId:accountId||value.accountId||''}) });
   }
-  window.__zhikeWsBackup = Object.freeze({ exportData: exportWsData, importData: importWsData });
+  window.__zhikeWsBackup = Object.freeze({ exportData: exportWsData, importData: importWsData, listAccounts: listWsBackupAccounts, ensureAccount: ensureWsBackupAccount, deleteAccount: deleteWsBackupAccount });
   window.__zhikeWsFollowups = Object.freeze({
     // Native WebView2 ingestion publishes ws.message/sync.updated as soon as
     // a batch is committed to the local SQLite sidecar.  Keep the renderer
@@ -3382,8 +5590,19 @@
     openWorkspace: () => activate(),
   });
   function boot() {
+    if (bootInitialized) return;
     const host = getHost();
-    if (!host) { setTimeout(boot, 50); return; }
+    if (!host) {
+      // The registry host is mounted asynchronously by the shell. Keep one
+      // bounded retry timer instead of creating an unbounded timer chain on
+      // every failed probe, and release it once the page is unloaded.
+      if (bootRetryTimer == null) bootRetryTimer = setTimeout(() => {
+        bootRetryTimer = null;
+        boot();
+      }, 50);
+      return;
+    }
+    bootInitialized = true;
     const nav = $('#mainNav');
     nav?.addEventListener('click', event => {
       const item = event.target.closest('[data-view]');
@@ -3396,7 +5615,30 @@
     }, true);
     const view = $('#viewContainer');
     view?.addEventListener('click', event => {
-      const element = event.target.closest('[data-ws-action]');
+      const target = event.target;
+      const workspaceItem = target?.closest?.('[data-ws-workspace-view]');
+      if (workspaceItem) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const nextView = WS_WORKSPACE_VIEW_IDS.has(String(workspaceItem.dataset.wsWorkspaceView || '')) ? String(workspaceItem.dataset.wsWorkspaceView) : 'overview';
+        wsWorkspacePageState(state.wsWorkspaceView).scrollTop = Number(document.querySelector('[data-ws-workspace-page]')?.scrollTop || 0);
+        state.wsWorkspaceView = nextView;
+        wsWorkspacePageState(nextView);
+        writeWsWorkspaceState(nextView, state.wsWorkspaceNavCollapsed);
+        render();
+        if (nextView !== 'chat' && wsWorkspacePageState(nextView).status === '尚未刷新') void refreshWorkspacePage();
+        return;
+      }
+      // Page-layer drawer clicks close the drawer when they land outside it.
+      // The native WS host is explicitly excluded so normal chatting remains
+      // uninterrupted while the auxiliary panel is open.
+      if (state.wsWorkspaceView === 'chat' && state.assistDrawerOpen && !target?.closest?.('#wsAssistDrawer, #wsBrowserHost, .ws-assist-launcher, button, input, select, label, [data-ws-action="toggle-right"], [data-ws-action="open-assist-drawer"]')) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        closeAssistDrawer();
+        return;
+      }
+      const element = target?.closest?.('[data-ws-action]');
       if (!element) return;
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -3405,6 +5647,21 @@
         toast(state.error, 'x');
         render();
       });
+    }, true);
+    view?.addEventListener('toggle', event => {
+      if (state.wsWorkspaceView !== 'groups' || !event.target?.matches?.('[data-ws-group-monitor-details]')) return;
+      const page = groupDirectoryState(), open = Boolean(event.target.open);
+      if (Boolean(page.monitorDetailsOpen) === open) return;
+      page.monitorDetailsOpen = open;
+      render({ skipNativeResize: true });
+    }, true);
+    view?.addEventListener('pointerdown', event => {
+      const target = event.target;
+      if (target?.closest?.('[data-ws-action="assist-drawer-handle"]')) {
+        handleAssistDrawerResizeStart(event);
+        return;
+      }
+      if (target?.closest?.('[data-assist-drawer-drag]')) handleAssistDrawerMoveStart(event);
     }, true);
     view?.addEventListener('change', event => {
       if (!event.target.closest('.ws-workbench-page')) return;
@@ -3415,12 +5672,25 @@
       if (!event.target.closest('.ws-workbench-page')) return;
       applyInput(event.target);
     }, true);
+    view?.addEventListener('submit', event => {
+      const form = event.target?.closest?.('[data-ws-business-form]');
+      if (!form) return;
+      event.preventDefault(); event.stopImmediatePropagation();
+      void handleAction('business-search', { dataset: { businessView: form.dataset.wsBusinessForm } });
+    }, true);
+    // keydown Escape closes the assistant drawer without touching the native chat surface.
     view?.addEventListener('keydown', event => {
-      if (event.target.id === 'wsAccountDisplayName') {
+      const target = event.target;
+      if (event.key === 'Escape' && state.assistDrawerOpen && target?.closest?.('#wsAssistDrawer')) {
+        event.preventDefault();
+        closeAssistDrawer();
+        return;
+      }
+      if (target?.id === 'wsAccountDisplayName') {
         if (event.key === 'Escape') { event.preventDefault(); cancelAccountForm(); return; }
         if (event.key === 'Enter') { event.preventDefault(); void createAccount(); return; }
       }
-      if (event.target.id === 'wsVisibleChat' && event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+      if (target?.id === 'wsVisibleChat' && event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
         event.preventDefault();
         importVisible();
       }
@@ -3453,15 +5723,9 @@
         void cancelAllAiWork();
         ++state.accountLoadSequence;
         state.pendingRestoreAccountId = String(payload.restoreAccountId);
-        state.activeAccountId = String(payload.restoreAccountId);
+        resetAccountPresentation(payload.restoreAccountId);
         writeStoredAccountId(state.activeAccountId);
         state.accountBusy = false;
-        state.busy.import = false; state.busy.customer = false; state.busy.followup = false; state.busy.connection = false; state.busy.reply = false; state.busy.capture = false; state.busy.readHistory = false; state.aiBusy = false; state.translationBusy.clear();
-        state.currentConversationId = '';
-        state.conversationSelectionManual = false;
-        state.conversationWindowStart = 0;
-        state.conversations = [];
-        state.analysisRefreshPending.clear();
         updateAccountStatus({ ...payload, accountId: state.activeAccountId, status: payload.status || '连接失败' });
         // The restore event can arrive before the first account-list response.
         // Always reload the list so the pending account is resolved instead of
@@ -3470,27 +5734,61 @@
         render();
         return;
       }
-      updateAccountStatus(payload);
+      const wasConnected = state.wsStatus === '已连接';
       const payloadAccountId = text(payload.accountId);
+      updateAccountStatus(payload);
+      if (payloadAccountId && payload.status) {
+        // Keep the non-active account rail current without rebuilding the
+        // live WS shell. updateAccountStatus also handles direct bridge
+        // responses; this explicit branch documents the background event
+        // boundary and protects the multi-account path from future refactors.
+        updateAccountStatusDom(payloadAccountId, payload.status);
+      }
       if (payloadAccountId && payloadAccountId !== String(state.activeAccountId || 'default')) {
         if (state.backgroundActive && (payload.status === '已连接' || payload.eventName || payload.accepted != null || payload.queuedForRetry)) void requestAccountPipelineRefresh(payloadAccountId);
         return;
       }
       if (payload.eventName === 'collection-complete' || payload.coverage === 'read-history-complete') state.readHistoryAutoStarted = false;
-      setStatus(payload.status || '未连接', payload.detail || '');
+      // Native background heartbeats arrive every few seconds without a new
+      // detail string. Replacing the status text with the default sentence on
+      // each tick makes the compact toolbar re-measure and can move the
+      // embedded WebView/scrollbar even though no business state changed.
+      const isTelemetryTick = payload.eventName === 'background-tick' && !text(payload.detail);
+      if (isTelemetryTick && payload.status === state.wsStatus) updateStatusDom();
+      else if (!payloadAccountId && payload.status) setStatus(payload.status, payload.detail || '');
       if (state.backgroundActive && payload.status === '已连接') {
         if (payload.accepted != null || payload.queuedForRetry) state.wsDetail = payload.detail || state.wsDetail;
-        void refreshCollectionSummary();
+        // QR login completes asynchronously after the Open/Reload action.
+        // The first connected status event is therefore the other discovery
+        // boundary: refresh the account once here so the group picker is
+        // populated without requiring a second manual click.  Subsequent
+        // heartbeat ticks keep the cheap summary refresh only.
+        if (!wasConnected && payloadAccountId === String(state.activeAccountId || 'default')) void loadConversations();
+        void refreshCollectionSummary({ background: payload.background === true || payload.eventName === 'background-tick' || payload.accepted != null || payload.queuedForRetry });
       }
     });
-    window.addEventListener('resize', () => { if (state.active) queueResizeWsView(); });
-    window.addEventListener('beforeunload', () => { stopBackgroundRuntime(); });
+    window.addEventListener('resize', () => {
+      if (state.active) {
+        const normalizedOffset = normalizeAssistDrawerOffset(state.assistDrawerOffset);
+        if (normalizedOffset.y !== state.assistDrawerOffset.y) {
+          state.assistDrawerOffset = normalizedOffset;
+          writeAssistDrawerState('offset', normalizedOffset);
+          const drawer = $('#wsAssistDrawer');
+          drawer?.style?.setProperty('--ws-assist-drawer-offset-y', `${normalizedOffset.y}px`);
+        }
+        queueResizeWsView();
+      }
+    });
+    window.addEventListener('beforeunload', () => {
+      if (bootRetryTimer != null) { clearTimeout(bootRetryTimer); bootRetryTimer = null; }
+      stopBackgroundRuntime();
+    });
     window.addEventListener('offline', () => setStatus('连接失败', '网络已断开；知客本地客户功能仍可使用。'));
     window.addEventListener('online', () => {
       if (!state.backgroundActive) return;
       wsBridge('probe').then(result => {
         setStatus(result.status, result.detail || '');
-        if (result.status === '已连接') void refreshCollectionSummary();
+        if (result.status === '已连接') void refreshCollectionSummary({ background: true });
       }).catch(() => {});
     });
     observer = new MutationObserver(() => {
@@ -3500,3 +5798,4 @@
   }
   boot();
 })();
+

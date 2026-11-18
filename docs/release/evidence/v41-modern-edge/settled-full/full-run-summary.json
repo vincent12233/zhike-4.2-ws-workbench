@@ -1,0 +1,33 @@
+{
+  "codeCommit": "63404b4",
+  "checkCount": 298,
+  "passed": 297,
+  "failedLabels": [
+    "Delivery S1 actual main renderers and shared design system"
+  ],
+  "exitCode": 1,
+  "exitRecord": {
+    "sourcePath": ".tools/v41-completion/settled-full-regression.exit",
+    "bytes": 3,
+    "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
+  },
+  "invocation": "1794987122799-5e2d0993-a962-4536-ae31-d80c9a94145c",
+  "case": "operations-atelier-dawn screenshot",
+  "primaryFailure": "process-exit",
+  "caseResultReady": true,
+  "cleanupSafe": false,
+  "eventTimesMs": {
+    "result-verified": 2129,
+    "screenshot-written": 3068,
+    "result-ready": 3238,
+    "browser-close-acknowledged": 3244,
+    "cdp-transport-closed": 3245,
+    "failure-owned-handle-termination": 30006
+  },
+  "checkedAfterward": {
+    "atUtc": "2026-11-18T07:36:50.6286137+00:00",
+    "matchedObservedBrowserIdentities": 14,
+    "browserPidsAbsent": 14,
+    "probePidAbsent": true
+  }
+}

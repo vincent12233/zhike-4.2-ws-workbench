@@ -10,7 +10,9 @@ const installer = fs.readFileSync(path.join(repo, 'scripts/build-winui-installer
 const setup = fs.readFileSync(path.join(repo, 'zhike-desktop-setup.iss'), 'utf8');
 const attributes = fs.readFileSync(path.join(repo, '.gitattributes'), 'utf8');
 
-assert.match(bundle, /Version\s*=\s*'6\.0\.1'/);
+const version = require('../resources/app/package.json').version;
+const icon = `zhike-horizon-${version.replaceAll('.', '-')}.ico`;
+assert.equal(bundle.match(/Version\s*=\s*'([^']+)'/)?.[1], version);
 assert.match(bundle, /resourcesRoot/);
 assert.match(bundle, /'index\.html'/);
 assert.match(bundle, /'app\.js'/);
@@ -27,6 +29,8 @@ assert.match(bundle, /node\.exe/);
 assert.match(bundle, /sourceCommit/);
 assert.match(bundle, /sourceArchive/);
 assert.match(bundle, /WindowsAppSDKSelfContained=true/);
+assert.match(bundle, /-p:PlatformTarget=x64/, 'WinUI publish must target x64 for Windows App SDK self-contained bundles');
+assert.match(bundle, /-p:Platform=x64/, 'WinUI publish must pass the x64 platform to MSBuild');
 assert.match(bundle, /sourceArchiveBytes/);
 assert.match(bundle, /iconSource/);
 assert.match(bundle, /zhike\.ico/);
@@ -49,16 +53,32 @@ assert.match(installer, /DIconFile/);
 assert.match(installer, /ComSpec \/d \/s \/c/);
 assert.match(setup, /DestDir:\s*\"\{app\}\"/);
 assert.match(setup, /LOCALAPPDATA.*Zhike/);
-assert.match(setup, /HasWebView2Runtime/);
+const versionCheck = setup.split('function IsInstalledWebView2Version')[1].split('function WebView2RuntimeRegistered')[0];
+const registrationCheck = setup.split('function WebView2RuntimeRegistered')[1].split('function InitializeSetup')[0];
+const initialize = setup.split('function InitializeSetup')[1];
+assert.match(setup, /WebView2ClientKey = 'Software\\Microsoft\\EdgeUpdate\\Clients\\\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5\}'/);
+assert.match(versionCheck, /Result := False;[\s\S]*if not HasDigit then Exit;/, 'empty version components are rejected');
+assert.match(versionCheck, /VersionText\[I\] < '0'\) or \(VersionText\[I\] > '9'\) then Exit;/, 'non-numeric versions are rejected');
+assert.match(versionCheck, /if \(DotCount <> 3\) or not HasDigit then Exit;\s*if not StrToVersion\(VersionText, Version\) then Exit;\s*Result := Version > 0;/,
+  'only a valid nonzero four-part version counts as installed');
+assert.match(registrationCheck, /Result := False;\s*if RegQueryStringValue\(RootKey, WebView2ClientKey, 'pv', VersionText\) then\s*Result := IsInstalledWebView2Version\(VersionText\);/);
+assert.match(registrationCheck, /Result := WebView2RuntimeRegistered\(HKCU\) or WebView2RuntimeRegistered\(HKLM32\);/,
+  'either complete Evergreen registry branch can satisfy the prerequisite');
+assert.match(initialize, /Result := HasWebView2Runtime\(\);\s*if Result then\s*Exit;/,
+  'installation proceeds only after the prerequisite succeeds');
+assert.match(initialize, /Log\('[^']*Setup cancelled before changing files\.'\);\s*if WizardSilent\(\) then\s*Exit;\s*Choice := MsgBox/,
+  'silent installation fails before prompting or opening the browser');
+assert.doesNotMatch(initialize, /Result := True|RetirePreviousElectronClient|PrepareToInstall/,
+  'a missing runtime cannot start setup or retire a prior installation');
 assert.match(setup, /developer\.microsoft\.com\/microsoft-edge\/webview2/);
 assert.match(setup, /ShellExec\('open'/);
 assert.match(installer, /Invoke-CodeSign/);
 assert.match(installer, /signtool\.exe/);
 assert.match(installer, /verify \/pa \/all/);
 assert.match(setup, /SetupIconFile=\{#IconFile\}/);
-assert.match(setup, /DestName: "zhike-horizon-6-0-1\.ico"/, 'installer must use a new icon path so Windows cannot reuse the old shortcut cache');
-assert.match(setup, /IconFilename: "\{app\}\\zhike-horizon-6-0-1\.ico"/);
-assert.match(setup, /UninstallDisplayIcon=\{app\}\\zhike-horizon-6-0-1\.ico/);
+assert.ok(setup.includes(`DestName: "${icon}"`), 'installer must use a versioned icon path so Windows cannot reuse the old shortcut cache');
+assert.ok(setup.includes(`IconFilename: "{app}\\${icon}"`));
+assert.ok(setup.includes(`UninstallDisplayIcon={app}\\${icon}`));
 assert.match(setup, /AppName=知客工作台/);
 assert.match(setup, /Name: "\{autodesktop\}\\知客工作台"/);
 assert.doesNotMatch(setup, /^\[Tasks\]$/m, 'the always-created desktop shortcut must not expose a no-op optional task');
@@ -70,13 +90,14 @@ assert.match(setup, /\{userprograms\}\\知客兼容回滚（旧版）\.lnk/, 'fo
 assert.match(setup, /\{userprograms\}\\知客原生桌面版\\知客工作台\.lnk/, 'formal upgrade must remove the retired native shortcut');
 assert.match(setup, /dirifempty; Name: "\{userprograms\}\\知客原生桌面版"/, 'formal upgrade must remove the retired empty program group');
 assert.match(setup, /\[InstallDelete\][\s\S]*release-notes-5\.3\.18\.md/);
+assert.match(setup, /\[InstallDelete\][\s\S]*release-notes-5\.4\.0\.md[\s\S]*release-notes-6\.0\.0\.md[\s\S]*release-notes-6\.0\.1\.md/, 'in-place upgrade must remove stale 5.4/6.0.0/6.0.1 release notes');
 assert.match(setup, /\[InstallDelete\][\s\S]*phone-registry-seed\.json/);
 assert.match(setup, /\[InstallDelete\][\s\S]*operations-core\.test\.cjs/);
 assert.doesNotMatch(setup, /\[InstallDelete\][\s\S]*\{localappdata\}\\Zhike/);
 
 const project = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Zhike.Desktop.csproj'), 'utf8');
 assert.match(project, /ApplicationIcon>Assets\\zhike\.ico</);
-assert.match(project, /<Version>6\.0\.1<\/Version>/);
+assert.ok(project.includes(`<Version>${version}</Version>`));
 assert.match(bundle, /-p:Version=\$Version/);
 assert.match(bundle, /-p:FileVersion=\$Version\.0/);
 assert.equal(fs.existsSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Assets', 'zhike.ico')), true, 'brand ico must be tracked');

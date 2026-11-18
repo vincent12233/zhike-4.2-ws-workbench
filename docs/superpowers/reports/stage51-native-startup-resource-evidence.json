@@ -1,0 +1,23 @@
+{
+  "stage": "5.1",
+  "status": "Observed",
+  "test": "native isolated startup process counters",
+  "rootPid": 20132,
+  "samples": 21,
+  "sampleIntervalSeconds": 10,
+  "durationMs": 205553.4,
+  "first": { "atUtc": "2026-11-16T12:22:29.1703875Z", "elapsedMs": 365.8, "rootAlive": true, "processCount": 3, "webViewProcessCount": 0, "workingSetBytes": 233984000, "privateBytes": 120971264, "threads": 32, "handles": 1489 },
+  "last": { "atUtc": "2026-11-16T12:25:54.3629784Z", "elapsedMs": 205553.4, "rootAlive": true, "processCount": 3, "webViewProcessCount": 0, "workingSetBytes": 234520576, "privateBytes": 121495552, "threads": 35, "handles": 1485 },
+  "deltas": { "workingSetBytes": 536576, "privateBytes": 524288, "threads": 3, "handles": -4 },
+  "peaks": { "workingSetBytes": 234520576, "privateBytes": 121495552, "threads": 35, "handles": 1489, "processCount": 3, "webViewProcessCount": 0 },
+  "observedCpuDeltaSeconds": 0,
+  "mainWindowHandleObservedSeparately": 5899836,
+  "nativeInteraction": "Blocked: desktop control could not bind the test application identity",
+  "webViewInstanceCount": "NotTested; process count is not an instance count",
+  "performanceThreshold": "NotDefined",
+  "gateInference": "No desktop performance pass inferred",
+  "observerStopped": true,
+  "rootApplicationStoppedByObserver": false,
+  "productionWorkerStarted": false,
+  "productionDatabaseOpened": false
+}

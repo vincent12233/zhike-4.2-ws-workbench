@@ -1,0 +1,146 @@
+{
+  "status": "Observed",
+  "source": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-native-92eccfc80f164b15b7fcd1618058cb21\\native-events.jsonl",
+  "sourceSha256": "A347DEE167BA185A20A52576BCA2A655B50A479297D9FB3C274D0433B8341622",
+  "retainedEvents": 39,
+  "navigationTrace": "first and last per session/role only; complete counts below",
+  "counts": [
+    {
+      "count": 1,
+      "group": "18128, application-start"
+    },
+    {
+      "count": 1,
+      "group": "18128, application-stopping"
+    },
+    {
+      "count": 1,
+      "group": "18128, sidecar-created"
+    },
+    {
+      "count": 1,
+      "group": "18128, sidecar-ready"
+    },
+    {
+      "count": 1,
+      "group": "18128, sidecar-stopped"
+    },
+    {
+      "count": 1,
+      "group": "18128, webview-created, shell"
+    },
+    {
+      "count": 2,
+      "group": "18128, webview-created, ws-visible"
+    },
+    {
+      "count": 1,
+      "group": "18128, webview-navigation, shell"
+    },
+    {
+      "count": 6810,
+      "group": "18128, webview-navigation, ws-visible"
+    },
+    {
+      "count": 1,
+      "group": "18128, window-created"
+    },
+    {
+      "count": 1,
+      "group": "30308, application-start"
+    },
+    {
+      "count": 1,
+      "group": "30308, sidecar-created"
+    },
+    {
+      "count": 1,
+      "group": "30308, sidecar-ready"
+    },
+    {
+      "count": 1,
+      "group": "30308, webview-created, shell"
+    },
+    {
+      "count": 1,
+      "group": "30308, webview-navigation, shell"
+    },
+    {
+      "count": 1,
+      "group": "30308, window-created"
+    },
+    {
+      "count": 1,
+      "group": "31928, application-start"
+    },
+    {
+      "count": 1,
+      "group": "31928, application-stopping"
+    },
+    {
+      "count": 1,
+      "group": "31928, sidecar-created"
+    },
+    {
+      "count": 1,
+      "group": "31928, sidecar-ready"
+    },
+    {
+      "count": 1,
+      "group": "31928, sidecar-stopped"
+    },
+    {
+      "count": 1,
+      "group": "31928, webview-created, shell"
+    },
+    {
+      "count": 2,
+      "group": "31928, webview-created, ws-visible"
+    },
+    {
+      "count": 1,
+      "group": "31928, webview-navigation, shell"
+    },
+    {
+      "count": 2428,
+      "group": "31928, webview-navigation, ws-visible"
+    },
+    {
+      "count": 1,
+      "group": "31928, window-created"
+    },
+    {
+      "count": 1,
+      "group": "32904, application-start"
+    },
+    {
+      "count": 1,
+      "group": "32904, sidecar-created"
+    },
+    {
+      "count": 1,
+      "group": "32904, sidecar-ready"
+    },
+    {
+      "count": 1,
+      "group": "32904, webview-created, shell"
+    },
+    {
+      "count": 1,
+      "group": "32904, webview-created, ws-visible"
+    },
+    {
+      "count": 1,
+      "group": "32904, webview-navigation, shell"
+    },
+    {
+      "count": 11208,
+      "group": "32904, webview-navigation, ws-visible"
+    },
+    {
+      "count": 1,
+      "group": "32904, window-created"
+    }
+  ],
+  "performanceConclusion": "Blocked: repeated navigation interferes with representative WS stability measurement"
+}

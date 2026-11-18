@@ -1,0 +1,675 @@
+{
+  "checkedAtUtc": "2026-11-17T17:57:40.5261403Z",
+  "mode": "Actual credential patterns plus complete Windows user SID scan; words token/key alone are not matches",
+  "rules": [
+    "openai_style_api_key",
+    "google_api_key",
+    "aws_access_key",
+    "jwt_credential",
+    "bearer_credential",
+    "private_key",
+    "google_oauth_token",
+    "assigned_long_credential"
+  ],
+  "candidateFiles": 99,
+  "copiedFiles": 99,
+  "details": [
+    {
+      "path": "actual-browser/capture-manifest.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "actual-browser/pages/1794933430249-7e155d11-689b-4a07-a258-e23ce56a0a6e.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "actual-browser/pages/1794933430249-7e155d11-689b-4a07-a258-e23ce56a0a6e.result.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "actual-browser/pages/1794933435010-9e1e4e64-a6ad-4c82-85d6-cab259123bdf.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "actual-browser/pages/1794933435010-9e1e4e64-a6ad-4c82-85d6-cab259123bdf.result.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "actual-browser/pages/1794933464472-d7e0af4e-af1e-48cb-ba31-43e476f1f5c0.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "actual-browser/pages/1794933464472-d7e0af4e-af1e-48cb-ba31-43e476f1f5c0.result.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "actual-browser/pages/1794933464472-d7e0af4e-af1e-48cb-ba31-43e476f1f5c0.stderr.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "actual-browser/pages/1794933464472-d7e0af4e-af1e-48cb-ba31-43e476f1f5c0.stdout.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "actual-browser/pages/capture-manifest.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "actual-browser/pages/main-home-atelier-dawn.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "actual-browser/pages/main-intake-atelier-dawn.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "actual-browser/pages/main-operations-atelier-dawn.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "actual-browser/pages/post-failure-identities.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "capture-status.md",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "coverage-draft.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "coverage-draft.md",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "customer-table/v4-horizontal-after-800.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "customer-table/v4-horizontal-after-final.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "customer-table/v4-horizontal-after.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "customer-table/v4-horizontal-after.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "customer-table/v4-horizontal-after.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "customer-table/v4-horizontal-before.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "customer-table/v4-horizontal-before.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "customer-table/v4-horizontal-before.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "customer-table/v4-horizontal-capture-after-800.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "customer-table/v4-horizontal-capture-after-final.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "customer-table/v4-horizontal-capture-after.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "customer-table/v4-horizontal-capture-before.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "full-regression.sid-redacted.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "native-build.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "native-core-seed.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "native-diagnostics/native-event-counts-1396.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "native-diagnostics/native-event-counts-8304.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "native-diagnostics/native-events.jsonl",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "native-diagnostics/v4-resources.context.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "native-diagnostics/v4-resources.jsonl",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "native-process-cleanup-final.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "native-process-cleanup.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "native-process-reopen.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "native-process.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "native-resources.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "native-seed.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "native-session.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "native/01-customer-light-overlap.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "native/02-home-light.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "native/03-crm-rail-expanded-light.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "native/04-appearance-light.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "native/05-appearance-dark.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "native/06-home-dark.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "native/07-tasks-dark.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "native/08-stage-board-dark.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "native/09-stage-columns-dark.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "native/10-ws-rail-tasks-dark.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "native/11-ws-chat-dark.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "native/12-ws-crm-panel-dark.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "native/13-ws-groups-dark.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "native/14-ws-accounts-dark.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "native/15-return-crm-dark.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "release-build.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "smoke-browser-v2/1794933242588-3c20e172-f16b-4416-b1d8-f0dd2cf0c624.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "smoke-browser-v2/1794933242588-3c20e172-f16b-4416-b1d8-f0dd2cf0c624.result.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "smoke-browser-v2/1794933247597-ef32fda0-5bc2-4568-b9b5-90e9fb434a37.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "smoke-browser-v2/1794933247597-ef32fda0-5bc2-4568-b9b5-90e9fb434a37.result.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "smoke-browser-v2/1794933252844-cae620ab-cf09-4073-8680-92162a47a41b.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "smoke-browser-v2/1794933252844-cae620ab-cf09-4073-8680-92162a47a41b.result.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "smoke-browser-v2/capture-manifest.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "smoke-browser-v2/main-gpt-atelier-dawn.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "smoke-browser-v2/main-home-atelier-dawn.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "smoke-browser-v2/ws-chat-atelier-dawn.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "smoke-browser/1794933128394-10e3f250-d5f6-42f6-bcdd-aea2e3157c3f.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "smoke-browser/1794933128394-10e3f250-d5f6-42f6-bcdd-aea2e3157c3f.result.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "smoke-browser/1794933133736-d8059533-b09d-4c78-a445-5dc0a05df0e8.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "smoke-browser/1794933133736-d8059533-b09d-4c78-a445-5dc0a05df0e8.stderr.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "smoke-browser/1794933133736-d8059533-b09d-4c78-a445-5dc0a05df0e8.stdout.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "smoke-browser/capture-manifest.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "smoke-browser/main-home-atelier-dawn.png",
+      "type": "PNG-not-text-scanned",
+      "hits": []
+    },
+    {
+      "path": "ws-broadcast-isolated-rerun-1.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "ws-broadcast-isolated-rerun-2.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "ws-broadcast-isolated-rerun-3.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "ws-broadcast-isolated-rerun-4.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "ws-broadcast-isolated-rerun-5.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "ws-broadcast-isolated-rerun-6.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "ws-broadcast-residual-inspection.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "ws-regression-serial.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "ws-regression.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "full-regression-final.sid-redacted.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "final-regression/stage51/1794936944713-5e93f3ef-8e30-4a57-94d1-7958951ecfb3.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "final-regression/stage51/1794936944713-5e93f3ef-8e30-4a57-94d1-7958951ecfb3.result.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "final-regression/stage51/1794936944713-5e93f3ef-8e30-4a57-94d1-7958951ecfb3.stderr.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "final-regression/stage51/1794936944713-5e93f3ef-8e30-4a57-94d1-7958951ecfb3.stdout.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "final-regression/main/1794937090207-b9cbe0f2-2291-40c2-8c13-d4fedbc08485.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "final-regression/main/1794937090207-b9cbe0f2-2291-40c2-8c13-d4fedbc08485.result.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "final-regression/main/1794937090207-b9cbe0f2-2291-40c2-8c13-d4fedbc08485.stderr.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "final-regression/main/1794937090207-b9cbe0f2-2291-40c2-8c13-d4fedbc08485.stdout.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "release-build-final.log",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "final-scope-audit.md",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "final-test-subsets.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    },
+    {
+      "path": "final-edge-identities.json",
+      "type": "text",
+      "encoding": "UTF-8",
+      "hits": [],
+      "completeWindowsUserSidOccurrences": 0
+    }
+  ],
+  "hashVerification": {
+    "sourceAndArchiveVerified": 99,
+    "hashIssues": [],
+    "byteExact": 97,
+    "sidTransformed": 2
+  },
+  "imageLimit": "PNG screenshots are listed and were produced in an isolated synthetic-data session; text regex scanning does not OCR image pixels.",
+  "excludedByPolicy": [
+    "Original full regression logs with complete Windows user SIDs remain in .tools; only explicitly SID-redacted copies are archived.",
+    "connection.private.json",
+    "SQLite and journals",
+    "WebView profiles / Cookies / credential stores",
+    "diagnostic helper source: not evidence"
+  ],
+  "actualCredentialOrSidHits": [],
+  "unregisteredArchiveFiles": []
+}

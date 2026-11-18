@@ -1,0 +1,28 @@
+{
+  "stage": "5.1",
+  "status": "Passed",
+  "scope": "resource absence after parent-controlled end of exact isolated V3 processes",
+  "rootPid": 32904,
+  "normalCloseAccepted": false,
+  "normalCloseStatus": "NotTested",
+  "closedByParent": "Controlled stop after exact test executable, UTC creation time and owned isolated sidecar path were verified; not native Alt+F4",
+  "parentReportedCreationUtc": "2026-11-16T12:58:50.3703105Z",
+  "checks": [
+    { "checkedAtUtc": "2026-11-16T13:20:00.3322655Z", "evidenceFile": "native-final-resource.jsonl", "observedProcessIdentities": 15, "remainingCount": 0, "unverifiedCount": 0 },
+    { "checkedAtUtc": "2026-11-16T13:20:00.3699520Z", "evidenceFile": "native-final-before-close.jsonl", "observedProcessIdentities": 15, "remainingCount": 0, "unverifiedCount": 0 }
+  ],
+  "lastSnapshotBeforeControlledStop": { "samples": 1, "workingSetBytes": 1380143104, "privateBytes": 784896000, "threads": 353, "handles": 9270, "processIdentities": 15, "webViewSubprocesses": 12 },
+  "listenerCheckedAtUtc": "2026-11-16T13:20:03.2165731Z",
+  "isolatedSidecarPort": 58574,
+  "listenerCount": 0,
+  "workbenchLock": { "exists": true, "ownerPid": 7408, "ownerAlive": false, "classification": "stale test lock after controlled forced end" },
+  "isolatedWorkerProcessesRemaining": 0,
+  "checkerTerminatedAnyProcess": false,
+  "nativeRootRetainedForEvidence": true,
+  "temporaryRootCleanupStatus": "Blocked",
+  "temporaryRootDisposition": "NotCleaned: automatic approval policy rejected cleanup; no alternate deletion attempted",
+  "parentReportedRetainedNativeRoots": 3,
+  "staleLockRetained": true,
+  "apiTokenInReport": false,
+  "limitations": "Process and endpoint absence is verified; this does not claim normal application shutdown or automatic lock cleanup passed"
+}

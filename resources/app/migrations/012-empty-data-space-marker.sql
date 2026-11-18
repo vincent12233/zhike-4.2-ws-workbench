@@ -1,0 +1,2 @@
+-- Schema marker for the isolated Zhike 6.0 data root.
+-- No legacy data is imported or mutated by this marker.

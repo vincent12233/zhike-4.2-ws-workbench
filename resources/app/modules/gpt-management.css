@@ -1,1 +1,7 @@
-.gpt-manage-toggle{margin:0 12px 12px;padding:10px 8px!important;border:1px solid #e4b55f;border-radius:8px;background:#fff8e8;color:#805f20!important}.gpt-plan{display:grid;gap:7px;margin-top:12px;padding:11px;border:1px solid #e4b55f;border-radius:8px;background:#fff9ec}.gpt-plan>b{color:#78581f}.gpt-plan>span{display:block;padding:6px 8px;border-radius:5px;background:#fff;font-size:9px}.gpt-plan .btn{justify-self:start;margin-top:3px}.gpt-plan small{color:#8a7348}[data-theme="dark"] .gpt-manage-toggle,[data-theme="dark"] .gpt-plan{background:#3b321e;border-color:#806a34;color:#e7d4a7!important}[data-theme="dark"] .gpt-plan>span{background:#28291f}
+/* Management remains a preview-and-confirm flow; presentation follows the shared palette. */
+.gpt-manage-toggle{margin:0 12px 12px;padding:10px 8px!important;border:1px solid var(--ds-border-strong);border-radius:8px;background:var(--ds-warning-bg);color:var(--ds-warning)!important;font-size:16px}
+.gpt-plan{display:grid;gap:10px;margin-top:12px;padding:16px;border:1px solid var(--ds-border-strong);border-radius:16px;background:var(--ds-warning-bg);color:var(--ds-text);font-size:16px;line-height:1.6}
+.gpt-plan>b{color:var(--ds-warning)}
+.gpt-plan>span{display:block;padding:10px 12px;border:1px solid var(--ds-border);border-radius:10px;background:var(--ds-surface);color:var(--ds-text);font-size:16px;overflow-wrap:anywhere}
+.gpt-plan .btn{justify-self:start;margin-top:3px}
+.gpt-plan small{color:var(--ds-warning);font-size:16px}

@@ -1,0 +1,62 @@
+{
+  "scope": "Real shipped renderer and full CSS cascade, synthetic fixture only; not native WinUI or production acceptance",
+  "design": "Horizon Atelier Pro glacier",
+  "matrix": {
+    "viewports": 8,
+    "routes": 20,
+    "geometryAssertions": "Passed before final shared card paint correction",
+    "wholeCommands": "Failed on actual legacy card contrast; preserved, not labelled fully Passed",
+    "evidence": "checks/pro/pre-shared-paint-fix-daylight-8-viewport-matrix.json"
+  },
+  "finalPageContrast": {
+    "status": "Passed",
+    "routeRenders": 40,
+    "variants": [
+      "horizon-night",
+      "atelier-dawn with legacy dark"
+    ],
+    "contrastElements": 1798,
+    "contrastCombinations": 2508,
+    "minimumContrast": 4.969599986211087,
+    "governanceStatusText": "Included with its genuine semantic foreground; not exempted"
+  },
+  "finalTopbar": {
+    "status": "Passed",
+    "paletteChange": "Dawn topbar adjusted to light blue-violet after page contrast run; sidebars stay navy",
+    "screenshots": 4,
+    "actualChromeTextContrast": "Passed on all four final screenshot routes",
+    "strictLifecycle": "All final calls exit0, streams closed, cleanupSafe true",
+    "contrastElements": 16,
+    "minimumContrast": 5.146206812386612
+  },
+  "motion": {
+    "enabled": "Actual six KPI / brand / nav / button finite-or-none and <=220ms; no transformed layout ancestors",
+    "off": "Actual KPI transform none and transition 0s",
+    "systemReduced": "Separate probe owned by root/business; not claimed here"
+  },
+  "density": {
+    "comfortable": 55,
+    "compact": 47,
+    "fonts": [
+      "16px",
+      "16px"
+    ]
+  },
+  "priorExitDiagnostics": [
+    {
+      "root": "C:/Users/酷酷/AppData/Local/Temp/zhike-s1-main-style-JQDcU6",
+      "identities": 18,
+      "ownedStillRunning": 0
+    },
+    {
+      "root": "C:/Users/酷酷/AppData/Local/Temp/zhike-s1-main-style-fbcpt0",
+      "identities": 15,
+      "ownedStillRunning": 0
+    }
+  ],
+  "initialProFailures": [
+    "Shared summary tiles inherited legacy dark backgrounds",
+    "Governance signal-grid business KPIs inherited legacy dark backgrounds"
+  ],
+  "productionEntry": "FROZEN"
+}

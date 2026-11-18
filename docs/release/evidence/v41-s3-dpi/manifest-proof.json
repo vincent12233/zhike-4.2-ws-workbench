@@ -1,0 +1,107 @@
+{
+  "sourceFixCommit": "774ab14",
+  "sourceManifest": "desktop/src/Zhike.Desktop/app.manifest",
+  "windowsSdkManifestToolVersion": "10.0.26100.4654",
+  "baseline": {
+    "isolatedPid": 41092,
+    "executable": "Zhike.Stage51.Acceptance.exe",
+    "executableSha256": "DED5189193F25D98C0486A12E26D7D633E2A9E511783EF0BA3E1B85AC0514760",
+    "evidenceMethod": "Read the running process executable path, then extract its embedded RT_MANIFEST #1 with Windows SDK mt.exe and validate the extracted XML.",
+    "extractedManifestSha256": "A08D7CCD7C83FACDFB1628FEBF8BDDEC90815129AE77DBAF5425D00E28E8257E",
+    "manifestValidationExitCode": 0,
+    "assemblyIdentity": "Zhike.Desktop",
+    "requestedExecutionLevel": "asInvoker",
+    "modernDpiEntries": 0,
+    "legacyDpiEntries": 0,
+    "sdkFileEntries": 29,
+    "externalManifestPresent": false,
+    "exactExecutablePathAppCompatOverride": {
+      "currentUser": false,
+      "localMachine": false
+    },
+    "nativeSample": {
+      "kind": "stage51-dom-layout",
+      "at": "2026-11-18T16:36:02.0433685+05:30",
+      "tick": 246670312,
+      "hwndDpi": 96,
+      "hwndDpiAwareness": "unaware",
+      "presentation": "Maximized",
+      "clientSizeReportedPx": [
+        1536,
+        889
+      ],
+      "xamlRootScale": 1,
+      "winUiWebViewScale": 1,
+      "domDpr": 1.25
+    }
+  },
+  "fixedSourceManifestMerge": {
+    "evidenceMethod": "Merge the fixed source manifest with the Windows App SDK manifest using mt.exe in a temporary file and validate the merged XML.",
+    "mergedManifestSha256": "9041F8537EED455EBEFAE8E0793CEF5008F508EA2A0D9F45E0D726A1745FAFC9",
+    "manifestValidationExitCode": 0,
+    "assemblyIdentity": "Zhike.Desktop",
+    "requestedExecutionLevel": "asInvoker",
+    "dpiAwareness": "PerMonitorV2",
+    "sdkFileEntries": 29
+  },
+  "fixedIsolatedExecutable": {
+    "integrationSourceCommit": "80c7f07908d5cbc640bc2d9c889a3c325606d061",
+    "executable": "Zhike.Stage51.Acceptance.exe",
+    "executableLastWriteUtc": "2026-11-18T11:24:11.1550076Z",
+    "executableBytes": 336384,
+    "executableSha256": "A43F707EEC20FCF646644B3EE469DDFEBE8CE8AEFEEC19D6A02E623C44BA6AA5",
+    "evidenceMethod": "Extract the isolated Release executable's embedded RT_MANIFEST #1 with Windows SDK mt.exe, validate the extracted XML, and compare executable hashes before and after extraction.",
+    "extractedManifestSha256": "17E7CD28669BC327F07B37BE2E0C2BFA2B8C98601D21346B02DFBA3D5B855D0E",
+    "manifestValidationExitCode": 0,
+    "assemblyIdentity": "Zhike.Desktop",
+    "requestedExecutionLevel": "asInvoker",
+    "dpiAwareness": "PerMonitorV2",
+    "modernDpiEntries": 1,
+    "legacyDpiEntries": 0,
+    "sdkFileEntries": 29
+  },
+  "fixedStandardReleaseExecutable": {
+    "integrationSourceCommit": "eacc42517600b7356f239c310e686cc271359f88",
+    "executable": "desktop/src/Zhike.Desktop/bin/x64/Release/net10.0-windows10.0.22621.0/win-x64/Zhike.Desktop.exe",
+    "productVersion": "6.0.3+eacc42517600b7356f239c310e686cc271359f88",
+    "buildFinishedUtc": "2026-11-18T12:47:45.7253123Z",
+    "buildWarnings": 0,
+    "buildErrors": 0,
+    "executableLastWriteUtc": "2026-11-18T12:47:44.6933658Z",
+    "executableBytes": 336384,
+    "executableSha256": "4F9A87C5E2331975D36842609595673B66992F570624BFCA6B77F29EE2DA59BA",
+    "evidenceMethod": "Extract the standard Release executable's embedded RT_MANIFEST #1 with Windows SDK mt.exe, validate its XML, and compare executable hashes before and after extraction. The standard executable was not started.",
+    "extractedManifestSha256": "17E7CD28669BC327F07B37BE2E0C2BFA2B8C98601D21346B02DFBA3D5B855D0E",
+    "manifestValidationExitCode": 0,
+    "assemblyIdentity": "Zhike.Desktop",
+    "requestedExecutionLevel": "asInvoker",
+    "dpiAwareness": "PerMonitorV2",
+    "modernDpiEntries": 1,
+    "legacyDpiEntries": 0,
+    "sdkFileEntries": 29
+  },
+  "contractTests": {
+    "command": "node --test tests/native-window-minimum-contract.test.cjs",
+    "beforeFix": {
+      "exitCode": 1,
+      "passed": 3,
+      "failed": 1,
+      "failure": "Windows process DPI awareness belongs under the asm.v3 application element"
+    },
+    "afterFix": {
+      "exitCode": 0,
+      "passed": 4,
+      "failed": 0
+    },
+    "afterFixAdditionalProbe": {
+      "path": "scripts/stage51/native-input-probe.test.cjs",
+      "passed": 1,
+      "failed": 0
+    }
+  },
+  "references": [
+    "https://learn.microsoft.com/en-us/windows/win32/hidpi/setting-the-default-dpi-awareness-for-a-process",
+    "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getdpiforwindow",
+    "https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/support"
+  ]
+}

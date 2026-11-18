@@ -1,0 +1,7 @@
+{
+  "Head": "420b9d4b0aee01e27d9573d78ab48eac8c41bd92",
+  "StartUtc": "2026-11-18T10:05:46.9451276Z",
+  "Command": "resources/app/node.exe scripts/run-tests.cjs all",
+  "ParallelHeavyTests": false,
+  "Reason": "Re-run after 420b9d4 fixes real HTTP asset and render fixture regressions"
+}

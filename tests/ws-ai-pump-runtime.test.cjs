@@ -11,7 +11,7 @@ const core = require(path.join(repo, 'resources', 'app', 'modules', 'ws-workbenc
 const originalSource = fs.readFileSync(workbenchPath, 'utf8');
 const source = originalSource.replace(
   /\r?\n  boot\(\);\r?\n\}\)\(\);\s*$/,
-  `\n  Object.assign(window.__test, {\n    state, refreshCollectionSummary, scheduleAiQueuePump, cancelAllAiWork, switchAccount, activate, deactivate, connectionAction, startBackgroundRuntime, stopBackgroundRuntime, analyzeConversation, importVisible, currentDraft, collectionRenderSignature, aiJobIdempotencyKey, fullHistorySourceFingerprint, transcriptDirectionVersion, explicitConversationType, isAutomaticDirectConversation, renderMessageRows, render,\n    getAiPumpState: () => ({ running: Boolean(aiPumpPromise), queued: aiPumpQueued, scheduled: aiPumpScheduled, aborted: Boolean(aiPumpController?.signal?.aborted) })\n  });\n})();`,
+  `\n  Object.assign(window.__test, {\n    state, loadConversations, refreshCollectionSummary, scheduleAiQueuePump, cancelAllAiWork, switchAccount, activate, deactivate, connectionAction, startBackgroundRuntime, stopBackgroundRuntime, analyzeConversation, importVisible, currentDraft, collectionRenderSignature, aiJobIdempotencyKey, fullHistorySourceFingerprint, transcriptDirectionVersion, explicitConversationType, isAutomaticDirectConversation, renderMessageRows, render,\n    getAiPumpState: () => ({ running: Boolean(aiPumpPromise), queued: aiPumpQueued, scheduled: aiPumpScheduled, aborted: Boolean(aiPumpController?.signal?.aborted) })\n  });\n})();`,
 );
 assert.notEqual(source, originalSource, 'runtime harness must replace boot without changing production source');
 
@@ -249,6 +249,7 @@ runtime.state.activeAccountId = 'default';
 runtime.state.accountLoadSequence = 1;
 runtime.state.accounts = [{ id: 'default', displayName: 'Default', status: '未连接' }, { id: 'secondary', displayName: 'Secondary', status: '未连接' }];
 runtime.state.currentConversationId = 'conv-read';
+runtime.state.conversationSelectionManual = true;
 runtime.state.conversations = [readConversation(), unreadConversation(), groupConversation()];
 runtime.state.messages = messages();
 runtime.state.historyCoverage = { loaded: 1, total: 1, complete: true };
@@ -312,10 +313,17 @@ const waitFor = async (predicate, ms = 500) => {
 };
 
 (async () => {
-  await Promise.race([runtime.refreshCollectionSummary(), timeout(250)]);
+  const blockedRefresh = await Promise.race([runtime.refreshCollectionSummary(), timeout(250)]);
+  assert.equal(blockedRefresh.code, 'COLLECTION_CAPABILITY_BLOCKED', 'RD02 does not start an automatic collector to wake the AI pump');
+  assert.equal(aiRequestCount, 0, 'blocked collector refresh cannot automatically consume an AI job');
+  assert.equal(claimCount, 0, 'blocked collector refresh does not claim queued work');
+  await runtime.loadConversations();
+  assert.equal(aiRequestCount, 0, 'an explicit local-history read does not implicitly request AI');
+  assert.equal(claimCount, 0, 'only the following explicit AI action can claim a stored job');
+  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence });
   await waitFor(() => aiRequestCount === 1);
   assert.equal(runtime.state.collectionRefreshing, false, 'collection refresh lock must clear while AI request remains pending');
-  assert.equal(runtime.getAiPumpState().running, true, 'AI work continues on the independent background pump');
+  assert.equal(runtime.getAiPumpState().running, true, 'explicitly requested AI work continues on the independent pump');
   assert.equal(claimCount, 1, 'only the read conversation is claimed');
   assert.deepEqual(claimedJobIds, ['job-read'], 'explicit group and unread jobs never reach the model claim path');
   assert.equal(runtime.state.conversations.some(item => item.id === 'conv-group'), false, 'explicit groups are omitted from the personal workbench list');
@@ -325,38 +333,40 @@ const waitFor = async (predicate, ms = 500) => {
   host.state.view = 'customers';
   view.innerHTML = 'CUSTOMER_PAGE';
   assert.equal(runtime.state.active, false, 'leaving WS only hides the route');
-  assert.equal(runtime.state.backgroundActive, true, 'leaving WS keeps the background runtime alive');
+  assert.equal(runtime.state.backgroundActive, true, 'leaving WS preserves the existing manual-session lifetime');
   assert.equal(runtime.getAiPumpState().running, true, 'route leave does not abort a pending AI request');
   assert.equal(aiSignalAborted, false, 'route leave is not treated as an app/account shutdown');
   phase = 2;
-  await Promise.race([runtime.refreshCollectionSummary(), timeout(250)]);
-  assert.equal(runtime.state.collectionRun.completed, 11, 'new collection progress becomes visible while AI is pending');
-  assert.equal(runtime.state.messages.length, 2, 'selected conversation messages refresh independently from AI');
-  assert.equal(runtime.state.historyCoverage.loaded, 2, 'selected history metadata refreshes with the messages');
+  assert.equal((await Promise.race([runtime.refreshCollectionSummary(), timeout(250)])).code, 'COLLECTION_CAPABILITY_BLOCKED');
+  assert.equal(runtime.state.collectionRun.completed, 2, 'blocked refresh does not mutate stored collection progress');
+  assert.equal(runtime.state.messages.length, 1, 'blocked refresh does not invent a new collected message');
+  await runtime.loadConversations();
+  assert.equal(runtime.state.collectionRun.completed, 11, 'explicit local-history read loads the saved progress while manual AI is pending');
+  assert.equal(runtime.state.messages.length, 2, 'selected stored messages refresh independently from AI');
+  assert.equal(runtime.state.historyCoverage.loaded, 2, 'selected stored-history metadata refreshes with the messages');
   assert.notEqual(runtime.collectionRenderSignature(), previousSignature, 'history and run changes participate in the render signature');
-  assert.equal(view.innerHTML, 'CUSTOMER_PAGE', 'background refresh never overwrites the currently visible non-WS page');
+  assert.equal(view.innerHTML, 'CUSTOMER_PAGE', 'reading saved WS state never overwrites the currently visible non-WS page');
 
   runtime.activate();
   await new Promise(resolve => setTimeout(resolve, 20));
   assert.equal(runtime.state.active, true, 'returning to WS remounts the visible route');
   assert.equal(runtime.state.backgroundActive, true);
-  assert.equal(activeIntervals.size, 2, 're-entering WS keeps exactly one collection timer and one visible-chat fallback timer');
+  assert.equal(activeIntervals.size, 0, 're-entering WS cannot register a blocked hidden-collector timer');
   runtime.activate();
-  assert.equal(activeIntervals.size, 2, 'repeated WS activation replaces timers instead of duplicating them');
+  assert.equal(activeIntervals.size, 0, 'repeated WS activation cannot revive the blocked collector');
   assert.equal(bridgeCalls.filter(call => call.action === 'open').length, 0, 'remounting a live background session does not reopen the account');
   assert.match(view.innerHTML, /11\/12/, 'rendered collection card shows the refreshed progress');
 
   const collectionTimer = [...activeIntervals.values()].find(item => item.delay === 12000);
-  const visibleCaptureTimer = [...activeIntervals.values()].find(item => item.delay === 15000);
-  assert.ok(collectionTimer && visibleCaptureTimer, 'background and visible-chat timers are both registered once');
+  assert.equal(collectionTimer, undefined, 'RD02 registers no automatic 12-second collection refresh');
   runtime.deactivate();
   host.state.view = 'tasks';
   documentStub.hidden = true;
   const captureCallsBeforeHiddenTick = bridgeCalls.filter(call => call.action === 'capture-visible-messages').length;
-  collectionTimer.callback();
-  visibleCaptureTimer.callback();
+  const hiddenRefresh = await runtime.refreshCollectionSummary({ background: true });
   await new Promise(resolve => setTimeout(resolve, 25));
-  assert.equal(runtime.state.backgroundActive, true, 'minimising/leaving keeps background collection active');
+  assert.equal(hiddenRefresh.code, 'COLLECTION_CAPABILITY_BLOCKED');
+  assert.equal(runtime.state.backgroundActive, true, 'minimising/leaving preserves the manual session without starting collection');
   assert.equal(bridgeCalls.filter(call => call.action === 'capture-visible-messages').length, captureCallsBeforeHiddenTick, 'hidden route never runs current-chat DOM capture');
   documentStub.hidden = false;
   runtime.activate();
@@ -373,9 +383,9 @@ const waitFor = async (predicate, ms = 500) => {
   runtime.state.aiEnabled = false;
   await runtime.cancelAllAiWork();
   assert.equal(aiSignalAborted, true, 'turning AI off aborts the pending model request');
-  assert.equal(runtime.state.backgroundActive, true, 'turning AI off does not stop collection');
+  assert.equal(runtime.state.backgroundActive, true, 'turning AI off does not close the manual foreground session');
   await Promise.race([runtime.refreshCollectionSummary(), timeout(250)]);
-  assert.equal(runtime.state.collectionRefreshing, false, 'collection remains usable while AI is off');
+  assert.equal(runtime.state.collectionRefreshing, false, 'blocked collection cannot leave a stale refresh lock while AI is off');
 
   aiSignalAborted = false;
   runtime.state.aiEnabled = true;
@@ -467,7 +477,10 @@ const waitFor = async (predicate, ms = 500) => {
   runtime.state.aiEnabled = false;
   await runtime.connectionAction('open');
   await waitFor(() => !runtime.state.collectionRefreshing);
-  assert.equal(runtime.state.backgroundActive, true, 'Open WS restarts background collection immediately after an interrupted startup');
+  assert.equal(runtime.state.backgroundActive, true, 'manual Open WS restores the session lifetime after an interrupted startup');
+  assert.equal(activeIntervals.size, 0, 'manual Open WS does not start a collector or automatic AI timer');
+  assert.equal(bridgeCalls.some(call => ['discover-conversations', 'collect-all-read', 'start-group-monitor', 'configure-group-monitor', 'configure-ws-groups', 'configure-vip-groups'].includes(call.action)), false,
+    'manual-session and AI regression coverage cannot invoke any blocked native collector action');
   runtime.stopBackgroundRuntime();
 
   process.stdout.write('WS non-blocking AI pump runtime checks passed.\n');

@@ -1,0 +1,239 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "SHA-256",
+  "sourcePathBase": "integration worktree",
+  "sourceHeadAtTrial": "e44518d7df0fb66f1e51fc8e4135c7f1a41c83d7",
+  "fullRegression": {
+    "total": 319,
+    "passed": 318,
+    "failed": 1,
+    "failingCheck": "Delivery S1 actual main renderers and shared design system"
+  },
+  "observedRecheck": {
+    "originalCommand": "resources/app/node.exe scripts/delivery/s1-main-visual.test.cjs",
+    "observerRuntime": ".tools/dotnet10/dotnet.exe",
+    "observerRuntimeVariable": "ZHIKE_EDGE_OBSERVER_DOTNET",
+    "successfulInvocationAssertions": 5,
+    "exitCode": 1
+  },
+  "cases": [
+    {
+      "invocation": "1795028241746-e8df1168-1414-4cb6-bffc-891f3febd6db",
+      "fixture": "Full route fixture, horizon-night",
+      "syntheticRootName": "zhike-s1-main-style-UZJ3c3",
+      "timeoutMs": 30000,
+      "failure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit",
+        "message": "Isolated lifecycle deadline reached during process-exit"
+      },
+      "resultCases": 1,
+      "result": {
+        "compactJsonBytes": 264370,
+        "compactJsonSha256": "1fc2a8f88b2fd0aaa6417b846f95f5a23d4fe3770f49c3d7c6f79b69ad9169f7"
+      },
+      "screenshot": null,
+      "cleanupSafe": false,
+      "kernelObserverRecorded": false
+    },
+    {
+      "invocation": "1795028511745-f9edc775-832a-4ddd-8f6b-ad7a405831b1",
+      "fixture": "Operations screenshot, atelier-dawn",
+      "syntheticRootName": "zhike-s1-main-style-stiPxF",
+      "timeoutMs": 30000,
+      "failure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit",
+        "message": "Isolated lifecycle deadline reached during process-exit"
+      },
+      "resultCases": 1,
+      "result": {
+        "compactJsonBytes": 7781,
+        "compactJsonSha256": "532b69d600dee5531704232493709dcec78e25b6b847955f0a8ba8e505b2d767"
+      },
+      "screenshot": {
+        "path": "operations-atelier-dawn.png",
+        "bytes": 497403,
+        "width": 1920,
+        "height": 1080,
+        "sha256": "8afdbfad72c211e77ce6531605237c640439992447e9adcfde0a295b985fc609"
+      },
+      "cleanupSafe": false,
+      "kernelObserverRecorded": true
+    }
+  ],
+  "previousPassingComparison": {
+    "invocation": "1795025504869-33e3d860-f991-4008-baba-424e98b39b51",
+    "directory": ".tools/visual-usability/main-visual"
+  },
+  "files": [
+    {
+      "sourcePath": ".tools/visual-usability/main-visual/1795028241746-e8df1168-1414-4cb6-bffc-891f3febd6db.json",
+      "rawBytes": 12651,
+      "rawSha256": "1f78a3f168e3adca099ad3e3ec0e051734c840a8601518f0d6a116d9598cf823",
+      "archivedPath": "full/metadata.json",
+      "archivedBytes": 11556,
+      "archivedSha256": "013ed75a26f64a69153e792ebca1445924e700a2832ea5388b1a37a6deb2823b",
+      "redactions": [
+        "Omit the absolute profile path and retain the synthetic root name.",
+        "Keep only filenames for the result, screenshot and kernel observer log.",
+        "Omit transient DevTools frame and loader identifiers."
+      ]
+    },
+    {
+      "sourcePath": ".tools/visual-usability/main-visual/1795028241746-e8df1168-1414-4cb6-bffc-891f3febd6db.stderr.log",
+      "rawBytes": 437,
+      "rawSha256": "21fc6b497c5d337ac3decb88cc2758214cc861edfc4f3adc9be46ed0b9a07c3c",
+      "archivedPath": "full/stderr.txt",
+      "archivedBytes": 383,
+      "archivedSha256": "076f165a92182009f7a40f9551854aa6261bd40b1725cf13d24661c9a155b479",
+      "redactions": [
+        "Omit the transient local DevTools endpoint.",
+        "Normalize CRLF to LF for the archived Git content."
+      ]
+    },
+    {
+      "sourcePath": ".tools/visual-usability/main-visual/1795028241746-e8df1168-1414-4cb6-bffc-891f3febd6db.stdout.log",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archivedPath": null
+    },
+    {
+      "sourcePath": ".tools/visual-usability/main-visual/1795028241746-e8df1168-1414-4cb6-bffc-891f3febd6db.result.json",
+      "rawBytes": 264371,
+      "rawSha256": "4ec528676740d376111fb416fcb857b875a2958051ccebf0260913e8b22867a0",
+      "archivedPath": null
+    },
+    {
+      "sourcePath": ".tools/usable-stabilization/s1-main-kernel-recheck/1795028511745-f9edc775-832a-4ddd-8f6b-ad7a405831b1.json",
+      "rawBytes": 13690,
+      "rawSha256": "fdf38038e7bc5d574eabad8af4404e7794ca9873fb482b1aa3c2298b4fa7b46d",
+      "archivedPath": "recheck/metadata.json",
+      "archivedBytes": 12234,
+      "archivedSha256": "db50ff9797cbcbb2fd4bf4028e6fda568eafff223cd605e7c6d6dd77a7fd13e1",
+      "redactions": [
+        "Omit the absolute profile path and retain the synthetic root name.",
+        "Keep only filenames for the result, screenshot and kernel observer log.",
+        "Omit transient DevTools frame and loader identifiers."
+      ]
+    },
+    {
+      "sourcePath": ".tools/usable-stabilization/s1-main-kernel-recheck/1795028511745-f9edc775-832a-4ddd-8f6b-ad7a405831b1.stderr.log",
+      "rawBytes": 281,
+      "rawSha256": "bb6bb52edd7b92e4626a57a3db94363793934f08f91f050f444270a8ff113b81",
+      "archivedPath": "recheck/stderr.txt",
+      "archivedBytes": 227,
+      "archivedSha256": "4829c6961560b840aed256c1216af298e46e96d7c03b81863d5ae9dfb180a19b",
+      "redactions": [
+        "Omit the transient local DevTools endpoint.",
+        "Normalize CRLF to LF for the archived Git content."
+      ]
+    },
+    {
+      "sourcePath": ".tools/usable-stabilization/s1-main-kernel-recheck/1795028511745-f9edc775-832a-4ddd-8f6b-ad7a405831b1.stdout.log",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archivedPath": null
+    },
+    {
+      "sourcePath": ".tools/usable-stabilization/s1-main-kernel-recheck/1795028511745-f9edc775-832a-4ddd-8f6b-ad7a405831b1.result.json",
+      "rawBytes": 7782,
+      "rawSha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75",
+      "archivedPath": null
+    },
+    {
+      "sourcePath": ".tools/usable-stabilization/s1-main-kernel-recheck/1795028511745-f9edc775-832a-4ddd-8f6b-ad7a405831b1.kernel.jsonl",
+      "rawBytes": 3259,
+      "rawSha256": "7a8c728ebd284c257bcd7af7ded658cd10a0690d0272baf5abad9fdd0c75e6b6",
+      "archivedPath": "recheck/kernel.jsonl",
+      "archivedBytes": 3259,
+      "archivedSha256": "7a8c728ebd284c257bcd7af7ded658cd10a0690d0272baf5abad9fdd0c75e6b6"
+    },
+    {
+      "sourcePath": ".tools/usable-stabilization/final-regression.log",
+      "rawBytes": 511618,
+      "rawSha256": "e8565789f0baee14f1b10976af3203975d0b3aeeb9d6b11bed2c164911ec4bf5",
+      "archivedPath": null
+    },
+    {
+      "sourcePath": ".tools/visual-usability/main-visual/1795025504869-33e3d860-f991-4008-baba-424e98b39b51.json",
+      "rawBytes": 11966,
+      "rawSha256": "7c5d456d0a6182b11710beb1c69c17965de83efd291698cf508531df901ecaf8",
+      "archivedPath": null
+    },
+    {
+      "sourcePath": ".tools/visual-usability/main-visual/1795025504869-33e3d860-f991-4008-baba-424e98b39b51.result.json",
+      "rawBytes": 264371,
+      "rawSha256": "ec9f721ff7f32956b26a832cdddf4f08f1686b89f701cb229c6f0b358929ed59",
+      "archivedPath": null
+    },
+    {
+      "sourcePath": ".tools/usable-stabilization/s1-main-kernel-recheck/command.result.json",
+      "rawBytes": 251,
+      "rawSha256": "b8fa94def316cb942acea7679dfacb234d7e50c68b79dd3e1329fb30e252671e",
+      "archivedPath": "recheck/command.result.json",
+      "archivedBytes": 251,
+      "archivedSha256": "b8fa94def316cb942acea7679dfacb234d7e50c68b79dd3e1329fb30e252671e"
+    },
+    {
+      "sourcePath": ".tools/usable-stabilization/s1-main-kernel-recheck/command.stdout.log",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archivedPath": null
+    },
+    {
+      "sourcePath": ".tools/usable-stabilization/s1-main-kernel-recheck/command.stderr.log",
+      "rawBytes": 4502,
+      "rawSha256": "ab49a5b90817710b8ac7d96ee4a0762e200bafa5c1da929aa15dea6208687523",
+      "archivedPath": null
+    },
+    {
+      "sourcePath": ".tools/usable-stabilization/s1-main-kernel-recheck/1795028481428-d0a86ac0-ccd5-4030-8578-0a8f8532381e.assertions.json",
+      "rawBytes": 133,
+      "rawSha256": "6caeac8b151ceca593e98c85d59eaba1ebb81880c34f443ca76e6a7eab2c3cda",
+      "archivedPath": "recheck/assertions/1795028481428-d0a86ac0-ccd5-4030-8578-0a8f8532381e.assertions.json",
+      "archivedBytes": 133,
+      "archivedSha256": "6caeac8b151ceca593e98c85d59eaba1ebb81880c34f443ca76e6a7eab2c3cda"
+    },
+    {
+      "sourcePath": ".tools/usable-stabilization/s1-main-kernel-recheck/1795028491417-746391b8-1ab6-47ef-9a2b-50989b909ee3.assertions.json",
+      "rawBytes": 134,
+      "rawSha256": "a2d34b699676a7679f7f61c5c9033ed69773e66cc5f8cad21ea1b5fde14857eb",
+      "archivedPath": "recheck/assertions/1795028491417-746391b8-1ab6-47ef-9a2b-50989b909ee3.assertions.json",
+      "archivedBytes": 134,
+      "archivedSha256": "a2d34b699676a7679f7f61c5c9033ed69773e66cc5f8cad21ea1b5fde14857eb"
+    },
+    {
+      "sourcePath": ".tools/usable-stabilization/s1-main-kernel-recheck/1795028496363-1224abe3-80e7-41f3-a2f5-552434308cd8.assertions.json",
+      "rawBytes": 133,
+      "rawSha256": "434d8c526d4db3e8aca9e49a626c08588f654758471e47248b079b0f5bf866a8",
+      "archivedPath": "recheck/assertions/1795028496363-1224abe3-80e7-41f3-a2f5-552434308cd8.assertions.json",
+      "archivedBytes": 133,
+      "archivedSha256": "434d8c526d4db3e8aca9e49a626c08588f654758471e47248b079b0f5bf866a8"
+    },
+    {
+      "sourcePath": ".tools/usable-stabilization/s1-main-kernel-recheck/1795028502368-513d0dcc-8f34-4371-92a1-66893637c976.assertions.json",
+      "rawBytes": 125,
+      "rawSha256": "be7e4c0bb04ca89fa17d8c7b7cbcbd62e5e4e2e8cedb3fd81c045d471803f018",
+      "archivedPath": "recheck/assertions/1795028502368-513d0dcc-8f34-4371-92a1-66893637c976.assertions.json",
+      "archivedBytes": 125,
+      "archivedSha256": "be7e4c0bb04ca89fa17d8c7b7cbcbd62e5e4e2e8cedb3fd81c045d471803f018"
+    },
+    {
+      "sourcePath": ".tools/usable-stabilization/s1-main-kernel-recheck/1795028507395-f48e2f8c-896a-4bdb-864e-36dcd88ac2e2.assertions.json",
+      "rawBytes": 133,
+      "rawSha256": "6c5f3790c6452bae12bcc9de175efb03da1af1fee1f41cb3b1a4f3df1a1ebd99",
+      "archivedPath": "recheck/assertions/1795028507395-f48e2f8c-896a-4bdb-864e-36dcd88ac2e2.assertions.json",
+      "archivedBytes": 133,
+      "archivedSha256": "6c5f3790c6452bae12bcc9de175efb03da1af1fee1f41cb3b1a4f3df1a1ebd99"
+    }
+  ],
+  "derivedEvidence": [
+    {
+      "path": "process-identity-check.json",
+      "bytes": 6468,
+      "sha256": "26f4b442e1676d676390ae2ed43a28cb5f873e3389c1ea430d0b39bc33c654c8",
+      "source": "Live Windows process identity lookup driven by the raw invocation metadata."
+    }
+  ]
+}

@@ -1,6 +1,8 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const { test } = require('node:test');
+const { runInNewContext } = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -10,6 +12,9 @@ const main = read('desktop/src/Zhike.Desktop/MainWindow.xaml.cs');
 const host = read('desktop/src/Zhike.Desktop/Views/LegacyUiHostPage.xaml.cs');
 const hostXaml = read('desktop/src/Zhike.Desktop/Views/LegacyUiHostPage.xaml');
 const api = read('desktop/src/Zhike.Desktop/Services/ApiClient.cs');
+const workbench = read('resources/app/modules/ws-workbench.js');
+const runtime = read('desktop/src/Zhike.Desktop/Services/WsRuntimeService.cs');
+const capability = read('desktop/src/Zhike.Desktop/Services/WsCollectionCapability.cs');
 
 const between = (source, start, end) => source.slice(source.indexOf(start), source.indexOf(end, source.indexOf(start)));
 const route = between(host, 'public async Task NavigateRouteAsync', 'public async Task<bool> TryReloadAsync');
@@ -29,14 +34,60 @@ assert.match(hostXaml, /x:Name="WsOverlayLayer"[^>]*Visibility="Collapsed"[^>]*I
 assert.match(host, /private void HideWsOverlay\(\)[\s\S]*_wsView\?\.CoreWebView2 is null[\s\S]*Canvas\.SetZIndex\(WsOverlayLayer, -1\)[\s\S]*Visibility\.Visible/, 'an active hidden WS view must retain nonzero layout behind the parent instead of being collapsed');
 assert.match(host, /Canvas\.SetZIndex\(WsOverlayLayer, 20\)[\s\S]*IsHitTestVisible = true/, 'returning to WS restores foreground z-order and input only after trusted bounds');
 
-assert.match(host, /window\.__zhikeWsBackgroundTick\?\.\(\)/, 'a native heartbeat must wake throttled background collector timers');
-assert.match(host, /window\.__zhikeWsBackgroundTick\s*=\s*\(\)\s*=>[\s\S]*scheduleIncrementalReadHistory\(80\)/, 'the background heartbeat must schedule full-history incremental work');
-assert.match(host, /drainDueCollectorTasks\(\)/, 'the native heartbeat must advance collector tasks whose hidden-page rAF/timer never fired');
-assert.match(host, /scheduleCollectorPaint\(processNext\)/, 'full-history pagination must use the heartbeat-aware paint scheduler');
-assert.match(host, /Publish\("ws\.background-tick"[\s\S]*accountId[\s\S]*observedAt/, 'the parent AI pump receives a metadata-only background wake event');
-assert.match(host, /WriteBackgroundHeartbeatAsync\([\s\S]*"allRounds"[\s\S]*"allNoProgressMs"/, 'bounded diagnostics expose list readiness and fixed numeric scan progress without customer identifiers or message content');
-assert.match(host, /scheduleIncrementalReadHistory\(3500, true\)[\s\S]*highPriorityHistoryRetryPending/, 'an explicit retry remains higher priority than an optional full-list preview scan');
-assert.match(host, /LIST_SCAN_STALL_MS\s*=\s*30 \* 1000[\s\S]*page-list-interrupted/, 'a non-progressing full-list scan yields with recoverable partial checkpoints');
+const heartbeat = between(host, 'private async Task HeartbeatPooledWsSessionAsync', 'private void SyncPooledWsPresentation');
+assert.match(heartbeat, /if \(driveCollection\) return;/, 'RD02 must reject a collection-driving heartbeat');
+assert.match(heartbeat, /App\.WsSessions\.IsCurrent\(session\.AccountId, session\.Generation, view\)/, 'foreground probes remain fenced by account, generation and view');
+assert.match(heartbeat, /ProbeWsLoginStateAsync\(session\.AccountId, view, session\.Generation, cancellationToken\)/, 'only the existing read-only foreground login probe remains');
+assert.doesNotMatch(heartbeat, /CollectorView|__zhikeWsBackgroundTick|__zhikeWsDiscoverAll|__zhikeWsCollectAllRead|EnsureWsCollector/,
+  'the native heartbeat cannot create/wake/fall back to a collector');
+assert.doesNotMatch(workbench, /autoCaptureTimer|setInterval\(\(\) => \{ if \(state\.active && !document\.hidden\) void autoCaptureCurrentConversation\(\)/,
+  'automatic message capture must stay in the hidden collector; the visible WS surface must not poll or read its chat DOM');
+assert.match(heartbeat, /_lastForegroundWsHeartbeatAtByAccount[\s\S]*now - lastHeartbeat < TimeSpan\.FromSeconds\(15\)/, 'visible WS heartbeat probes retain their actual per-account throttle while the operator chats');
+assert.doesNotMatch(host, /var foregroundScript = "\(\(\) => window\.__zhikeWsBackgroundTick/, 'foreground heartbeat must not execute the collector DOM tick');
+assert.doesNotMatch(runtime, /LeaseNextBackgroundAccount|GetOrCreateAsync\(backgroundId|RunHeartbeatAsync\(acquired\.Session, true/, 'RD02 scheduler must not keep attempting background account creation');
+assert.match(host, /var isCurrent = App\.WsSessions\.IsCurrent\(accountId, generation, view\);[\s\S]{0,100}if \(publishStatus && isCurrent\)/, 'status persistence retains its actual generation/current-view gate');
+assert.match(capability, /State => "blocked"[\s\S]*BackgroundCollection => false[\s\S]*ForegroundFallback => false/, 'collection capability is explicitly blocked independent of login');
+assert.match(host, /fields\["collectionCapability"\] = JsonSerializer\.SerializeToElement\(WsCollectionCapability\.Current\)/, 'all status events carry the typed capability instead of implying background collection');
+assert.doesNotMatch(host, /Publish\("ws\.background-tick"/, 'an unavailable collector cannot produce a live background wake event');
+// Legacy parsing/scheduling algorithms remain regression-tested as dormant
+// code, never as evidence of an active or authorized collector.
+const legacyScript = host.match(/internal static string BuildWsCollectorScript\(string accountId\)\s*\{[\s\S]*?return \$\$"""([\s\S]*?)""";/)?.[1] || '';
+assert.match(legacyScript, /window\.__zhikeWsBackgroundTick\s*=\s*\(\)\s*=>[\s\S]*scheduleIncrementalReadHistory\(80\)/, 'retained legacy incremental scheduling semantics must not silently change');
+assert.match(legacyScript, /drainDueCollectorTasks\(\)/, 'retained legacy scheduler must preserve its bounded drain semantics');
+assert.match(legacyScript, /scheduleCollectorPaint\(processNext\)/, 'retained legacy pagination must retain its scheduling boundary');
+assert.match(host, /PublishWsStatus\([\s\S]*background = fromBackgroundCollector/, 'durable/manual packet status retains its origin metadata through the capability decorator');
+assert.match(host, /Publish\("ws\.message"[\s\S]*background = fromBackgroundCollector/, 'isolated collector ingest events are marked so the foreground shell can avoid shared refreshes');
+assert.match(host, /ingestScope = fromBackgroundCollector \? "background-collector" : "visible-authorized-content"/, 'queued ingest packets preserve foreground/background origin for sync isolation');
+assert.match(host, /Publish\("sync\.updated"[\s\S]*request\.Scope, "background-collector"/, 'background queue flushes do not request a shared CRM redraw');
+assert.match(host, /supported = false, retryable = false, collectionCapability = WsCollectionCapability\.Current/, 'blocked responses carry bounded capability metadata without scheduling a collector retry');
+assert.match(legacyScript, /scheduleIncrementalReadHistory\(3500, true\)[\s\S]*highPriorityHistoryRetryPending/, 'retained explicit retry ordering stays covered without enabling runtime collection');
+assert.match(legacyScript, /LIST_SCAN_STALL_MS\s*=\s*30 \* 1000[\s\S]*page-list-interrupted/, 'retained non-progress handling still preserves partial checkpoints');
+
+
+const statusResponse = between(host, 'private async Task<BridgeResponse> WsStatusResponseAsync(', 'private async Task<(string status, string detail)> ProbeWsLoginStateAsync(');
+const isolatedStatus = between(statusResponse, '#if STAGE51_ISOLATED_UI', '#else');
+assert.ok(isolatedStatus, 'isolated status responses must not use the WhatsApp login probe');
+assert.match(isolatedStatus, /App\.WsSessions\.IsCurrent\(accountId, session\.Generation, session\.View\)/, 'only the current account and generation can confirm an isolated preview');
+assert.match(isolatedStatus, /status\s*=\s*"未连接"[\s\S]*隔离验收[\s\S]*未连接 WhatsApp[\s\S]*isolatedPreview/, 'a ready preview still reports no authenticated connection');
+assert.doesNotMatch(isolatedStatus, /"已连接"|ProbeWsLoginStateAsync|SetWsStatusAsync|PublishWsStatus/, 'a blank preview cannot probe, persist or publish a WhatsApp connection');
+assert.match(statusResponse, /#else[\s\S]*ProbeWsLoginStateAsync\(accountId, session\?\.View, session\?\.Generation \?\? 0, cancellationToken\)/, 'normal builds still use the existing login probe');
+
+
+for (const [action, next] of [['resize', 'hide'], ['hide', 'close']]) {
+  const ack = between(host, 'case "' + action + '":', 'case "' + next + '":');
+  assert.match(ack, /#if STAGE51_ISOLATED_UI\s+status\s*=\s*"未连接",\s+#else/, action + ' must not report an authenticated connection in the isolated build');
+}
+
+const openOverlay = between(host, 'private async Task OpenWsOverlayAsync(', 'private async Task<bool> CloseWsOverlayAsync(');
+assert.match(openOverlay, /#if !STAGE51_ISOLATED_UI[\s\S]*if \(acquired\.Created\) await SetWsStatusAsync\(accountId, "连接中", cancellationToken\);[\s\S]*#endif/, 'opening an isolated preview must not persist a connection attempt');
+const bridgeEvent = between(host, 'private void OnBridgeEventPublished(', 'private async Task<BridgeResponse?> HandleNativeBridgeAsync(');
+const dispatcher = bridgeEvent.indexOf('DispatcherQueue.TryEnqueue');
+assert.ok(dispatcher >= 0);
+assert.doesNotMatch(bridgeEvent.slice(0, dispatcher), /_webView|CoreWebView2/, 'bridge events may be published from a worker thread');
+assert.match(bridgeEvent.slice(dispatcher), /_webView\?\.CoreWebView2\?\.PostWebMessageAsJson/, 'access the shell WebView only in the dispatcher callback');
+const probe = between(host, 'private async Task<(string status, string detail)> ProbeWsLoginStateAsync(', 'private async Task SetWsStatusAsync(');
+assert.match(probe, /catch \(OperationCanceledException\) when \(cancellationToken\.IsCancellationRequested\)\s*\{\s*throw;\s*\}/, 'cancelled probes keep their bridge timeout semantics');
+
 
 const boundsObserver = host.match(/BuildWsBoundsObserverScript\(\) => """([\s\S]*?)""";/)?.[1] || '';
 assert.match(boundsObserver, /ResizeObserver\(schedule\)[\s\S]*resizeObserver\.observe\(observed\)/, 'the actual WS host size must refresh native overlay bounds');
@@ -53,4 +104,83 @@ assert.match(api, /string\s+ConversationType\s*=\s*""[\s\S]*bool\?\s+IsGroup\s*=
 assert.match(host, /allowedConversationKeys[\s\S]*item\.ConversationType, "direct"[\s\S]*item\.VipGroup[\s\S]*"vip_group"[\s\S]*messages\.RemoveAll/, 'native ingress accepts direct and explicit VIP-group bodies while discarding ordinary groups');
 assert.doesNotMatch(main, /WsWorkbenchPage/, 'the retired native fallback must not be production-routable');
 
-console.log('WS background lifecycle contract: retained pooled WebViews, metadata heartbeat, stable DPI bounds and direct/VIP ingress are wired');
+console.log('WS lifecycle contract: retained foreground Core/route/DPI/queue boundaries; RD02 automatic collection blocked without fallback');
+
+
+const connectionActionSource = between(workbench, '  async function connectionAction(action)', '  async function loadConversations()');
+const activateSource = between(workbench, '  function activate()', '  function deactivate()');
+const isolatedResult = { status: '未连接', isolatedPreview: true, detail: '隔离验收会话容器已打开，未连接 WhatsApp。' };
+
+async function invokeOpen(result) {
+  const state = { busy: {}, accounts: [{}], backgroundActive: true };
+  const toasts = [];
+  const action = runInNewContext('(' + connectionActionSource + ')', {
+    state,
+    startBackgroundRuntime: () => false,
+    captureContext: () => ({}),
+    contextCurrent: () => true,
+    assertContext() {},
+    wsBridge: async () => {
+      if (result instanceof Error) throw result;
+      return result;
+    },
+    syncVipGroupAllowlist: async () => {},
+    setStatus: (status, detail) => Object.assign(state, { status, detail }),
+    toast: (message, tone) => toasts.push([message, tone]),
+    wsErrorDetail: (error) => error.message,
+    classifyWsError: () => 'service',
+    refreshCollectionSummary: async () => {},
+    render() {},
+  });
+  await action('open');
+  return { status: state.status, toasts };
+}
+
+test('opening an isolated Core reports the unauthenticated preview without a login prompt', async () => {
+  const result = await invokeOpen(isolatedResult);
+  assert.equal(result.status, '未连接');
+  assert.deepEqual(result.toasts, [[isolatedResult.detail, undefined]]);
+});
+
+test('normal Open still prompts to log in and actual bridge failures still report an error', async () => {
+  const normal = await invokeOpen({ status: '等待登录' });
+  assert.equal(normal.status, '等待登录');
+  assert.deepEqual(normal.toasts, [['WS 页面已打开，请自行扫码或登录', undefined]]);
+  const failed = await invokeOpen(new Error('desktop bridge request timed out'));
+  assert.equal(failed.status, '连接失败');
+  assert.deepEqual(failed.toasts, [['desktop bridge request timed out', 'x']]);
+});
+
+test('an isolated factory failure survives the initial account and conversation refresh', async () => {
+  const host = { state: {} };
+  const state = { backgroundActive: true };
+  const factoryFailure = new Error('isolated WS factory failed');
+  const callbacks = [];
+  await runInNewContext(activateSource + '\nactivate(); backgroundStartPromise;', {
+    state,
+    getHost: () => host,
+    startBackgroundRuntime: () => true,
+    backgroundGeneration: 1,
+    backgroundStartGeneration: 0,
+    backgroundStartPromise: null,
+    document: { documentElement: { dataset: {} }, body: { classList: { add() {} } } },
+    $: () => ({}),
+    $$: () => [],
+    render() {},
+    loadAccounts: async () => {},
+    wsBridge: async (action) => {
+      if (action === 'open') throw factoryFailure;
+      return { status: '未连接', isolatedPreview: false };
+    },
+    syncVipGroupAllowlist: async () => {},
+    captureContext: () => ({}),
+    loadConversations: async () => { state.error = ''; },
+    loadGroupMonitor: async () => {},
+    updateAccountStatus() {},
+    setStatus: (status, detail) => callbacks.push([status, detail]),
+    wsErrorDetail: (error) => error.message,
+    refreshCollectionSummary: async () => {},
+  });
+  assert.equal(state.error, factoryFailure.message);
+  assert.deepEqual(callbacks, [['连接失败', factoryFailure.message]]);
+});

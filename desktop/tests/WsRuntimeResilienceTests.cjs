@@ -2,12 +2,10 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const legacy = fs.readFileSync(path.join(__dirname, '..', 'src', 'Zhike.Desktop', 'Views', 'LegacyUiHostPage.xaml.cs'), 'utf8');
-const native = fs.readFileSync(path.join(__dirname, '..', 'src', 'Zhike.Desktop', 'Views', 'WsWorkbenchPage.xaml.cs'), 'utf8');
+const legacy = fs.readFileSync(path.join(__dirname, '..', 'src', 'Zhike.Desktop', 'Views', 'LegacyUiHostPage.xaml.cs'), 'utf8').replaceAll('\r\n', '\n');
+const capability = fs.readFileSync(path.join(__dirname, '..', 'src', 'Zhike.Desktop', 'Services', 'WsCollectionCapability.cs'), 'utf8');
 
-for (const [name, source] of [['兼容主界面', legacy], ['原生工作台', native]]) {
-  assert.match(source, /querySelector\(['"]#pane-side['"]\)/, `${name} 必须用当前 WhatsApp 会话栏识别已登录状态`);
-}
+assert.match(legacy, /querySelector\(['"]#pane-side['"]\)/, '工作台必须用当前 WhatsApp 会话栏识别已登录状态');
 assert.doesNotMatch(legacy, /documentElement\.style\.zoom\s*=/, '生产工作台不得缩放 WhatsApp 根节点，否则 WebView 底部留下空白并裁切二维码');
 
 assert.match(legacy, /SetWsStatusAsync\(accountId,\s*"已连接"\)[\s\S]{0,500}_wsQueue\.EnqueueAsync/, '收到授权页面采集后应先更新连接状态并持久化队列');
@@ -21,9 +19,21 @@ assert.match(wsMessageHandler, /claimedAccountId[\s\S]*?string\.Equals\(claimedA
 assert.match(legacy, /_wsFlushGate/, 'WS 入库必须串行化，避免大批量扫描压死 SQLite sidecar');
 assert.match(legacy, /CancelAfter\(TimeSpan\.FromSeconds\((?:10|15|20)\)\)/, 'WS 入库必须有短超时并可回退本机队列');
 assert.match(legacy, /current\.length\s*>=\s*250/, '单个 WS 入库包必须限制记录数，避免同步 SQLite 长时间阻塞健康接口');
-assert.match(native, /LegacyUiHostPage\.BuildWsCollectorScript\(accountId\)/, '原生 WS 页面必须复用完整列表采集器，不得退回仅当前可见列表');
-assert.match(native, /await App\.RecoverLocalServiceAsync\(\)/, '原生 WS 页面必须周期恢复假死的本机服务');
-assert.match(native, /_localQueue\.EnqueueAsync\("api\/ws\/ingest\/batch"/, '原生 WS 页面必须先进入持久队列再写入数据库');
-assert.match(native, /_flushGate/, '原生 WS 页面批量写入必须串行化');
+assert.doesNotMatch(legacy, /BuildWsCollectorScript\(accountId\)/,
+  'RD02 不得向前台或复制认证状态的后台注入自动完整列表采集器');
+assert.match(legacy, /if \(WsCollectionCapability\.BlocksAction\(action\)\) return WsCollectionBlocked\(requestId, id\);[\s\S]{0,260}_activeWsAccountId = id/,
+  '自动采集请求必须在账号或会话状态变更前被明确拒绝');
+assert.match(capability, /BackgroundCollection => false/);
+assert.match(capability, /AutomaticHistory => false/);
+assert.match(capability, /ForegroundFallback => false/);
+assert.match(capability, /ManualVisibleImport => true/);
+assert.match(legacy, /if \(kind is "discover" or "collect-all-read"\) return WsCollectionBlocked\(requestId, accountId\)/,
+  '直接调用采集入口也不得绕过阻断或退回前台采集');
+assert.match(legacy, /if \(kind is not \("messages" or "selection"\)\)/,
+  '保留一次性人工可见原文或选中文本导入，不将其冒充完整历史');
+assert.match(legacy, /_ => BuildWsVisibleCaptureScript\(accountId\)/,
+  '已有人工可见聊天导入路径保持可用');
+assert.match(legacy, /RecoverLocalServiceAsync|EnsureLocalServiceAsync/, '工作台必须具备本机服务恢复路径');
+assert.match(legacy, /_wsQueue\.EnqueueAsync\(/, '工作台必须先进入持久队列再写入数据库');
 
 console.log('WS 运行时恢复与节流回归测试通过');

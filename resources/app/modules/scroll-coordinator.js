@@ -42,9 +42,12 @@
     { selector: '.gpt-messages', mode: 'contain', id: 'gpt-messages' },
     { selector: '.ws-account-list', mode: 'contain', id: 'ws-accounts' },
     { selector: '.ws-session-list', mode: 'contain', id: 'ws-sessions' },
+    { selector: '.ws-workspace-nav-list', mode: 'contain', id: 'ws-workspace-navigation', scope: 'shell' },
+    { selector: '.ws-workspace-page-content', mode: 'contain', id: 'ws-workspace-content' },
     { selector: '.ws-capture-panel:not(.is-collapsed)', mode: 'contain', id: 'ws-capture' },
     { selector: '.ws-message-list', mode: 'contain', id: 'ws-messages' },
-    { selector: '.ws-assist-panel', mode: 'contain', id: 'ws-assist' },
+    { selector: '.ws-broadcast-attachments', mode: 'contain', id: 'ws-broadcast-attachments' },
+    { selector: '.ws-assist-drawer-body', mode: 'contain', id: 'ws-assist-drawer' },
     { selector: '.ws-hot-profile-fields', mode: 'contain', id: 'ws-profile-fields' },
     { selector: '.table-scroll', mode: 'horizontal', id: 'table' },
     { selector: '.table-wrap', mode: 'horizontal', id: 'table-wrap' },
@@ -56,6 +59,7 @@
     { selector: '.subnav', mode: 'horizontal', id: 'subnav' },
     { selector: '.ops-board', mode: 'horizontal', id: 'stage-board' },
   ];
+  const regionSelector = `[data-scroll-mode],${definitions.map(item => item.selector).join(',')}`;
 
   function routeName() {
     return String(window.__zhikeRegistryHost?.state?.view || document.body?.classList.contains('ws-mode') && 'ws-workbench' || 'home');
@@ -146,6 +150,9 @@
   function regionScope(node) {
     if (node.dataset.scrollScope) return node.dataset.scrollScope;
     if (node.id === 'mainNav') return 'shell';
+    if (node.matches('.ws-workspace-page-content')) {
+      return `ws-workspace:${encodeURIComponent(node.dataset.wsAccountId || 'default')}:${encodeURIComponent(node.dataset.wsWorkspacePage || 'overview')}`;
+    }
     if (node.closest?.('#modal')) {
       if (!modalPositionScope) syncModalIdentity();
       return modalPositionPrefix || `modal:${routeName()}:closed`;
@@ -170,7 +177,16 @@
     // the actual #mainNav scroller. A wheel anywhere inside that visible rail
     // belongs to navigation; it must never fall through to the business page.
     if (target.closest('#sidebar')) return document.querySelector('#mainNav');
-    return target.closest('[data-scroll-mode]');
+    // Search results, drawers and other bounded panes can be inserted inside
+    // an existing page without replacing #viewContainer. Register the nearest
+    // pane at input time so its wheel cannot accidentally select the page.
+    const region = target.closest(regionSelector);
+    if (!region || region.dataset.scrollMode) return region;
+    const definition = definitions.find(item => region.matches(item.selector));
+    if (!definition) return null;
+    const index = Array.prototype.indexOf.call(document.querySelectorAll(definition.selector), region);
+    registerRegion(region, definition, Math.max(0, index));
+    return region;
   }
 
   // A bounded component can contain another bounded component (for example
@@ -192,17 +208,19 @@
     return null;
   }
 
+  function registerRegion(node, definition, index = 0) {
+    if (!node.dataset.scrollMode) node.dataset.scrollMode = definition.mode;
+    if (!node.dataset.scrollId) node.dataset.scrollId = node.id || `${definition.id}-${index}`;
+    if (definition.scope && !node.dataset.scrollScope) node.dataset.scrollScope = definition.scope;
+    if (definition.mode === 'contain' && !node.hasAttribute('tabindex')) node.tabIndex = 0;
+  }
+
   function registerRegions(root = document) {
     for (const definition of definitions) {
       const nodes = [];
       if (root instanceof Element && root.matches(definition.selector)) nodes.push(root);
       nodes.push(...root.querySelectorAll(definition.selector));
-      nodes.forEach((node, index) => {
-        if (!node.dataset.scrollMode) node.dataset.scrollMode = definition.mode;
-        if (!node.dataset.scrollId) node.dataset.scrollId = node.id || `${definition.id}-${index}`;
-        if (definition.scope && !node.dataset.scrollScope) node.dataset.scrollScope = definition.scope;
-        if (definition.mode === 'contain' && !node.hasAttribute('tabindex')) node.tabIndex = 0;
-      });
+      nodes.forEach((node, index) => registerRegion(node, definition, index));
     }
   }
 
@@ -217,6 +235,14 @@
       const pageChanged = nodes.some(node => node.id === 'viewContainer') && activePageRoute && activePageRoute !== pageRoute;
       if (nodes.some(node => node.id === 'viewContainer')) activePageRoute = pageRoute;
       for (const node of nodes) {
+        if (node.matches('.ws-center-panel') && node.closest('.ws-workbench-page')?.classList.contains('is-login-focus')) {
+          // The compact WS layout can scroll its center rail. Returning to
+          // the expanded login surface must show the login header from top.
+          positions.delete(positionKey(node));
+          node.scrollTop = 0;
+          node.scrollLeft = 0;
+          continue;
+        }
         if (pageChanged && node.id === 'viewContainer') {
           // A new business page must start at its heading. Reusing the previous
           // page's scroll offset made routes appear to open halfway down.
@@ -291,6 +317,10 @@
   }
 
   function onWheel(event) {
+    // Ctrl-wheel also represents trackpad pinch zoom. Leave browser/OS zoom,
+    // already-owned gestures and noncancelable native events untouched; a
+    // manual delta here would steal zoom or apply a second scroll movement.
+    if (event.ctrlKey || event.metaKey || event.defaultPrevented || event.cancelable === false) return;
     markScrollActivity();
     const modalOpen = !document.querySelector('#modalBackdrop')?.classList.contains('hidden');
     const modal = document.querySelector('#modal');
@@ -299,6 +329,10 @@
       event.stopPropagation();
       return;
     }
+    // Editing controls own caret/selection, native inner scrolling and their
+    // boundary chain. Routing their wheel straight to the surrounding pane
+    // skips the actual textarea/contenteditable owner.
+    if (event.target instanceof Element && event.target.closest('input,textarea,select,[contenteditable="true"]')) return;
     let region = findRegion(event.target);
     if (modalOpen && modal && (!region || !modal.contains(region))) region = modal.querySelector('.modal-body');
     if (!region) return;
@@ -320,10 +354,16 @@
     if (horizontalIntent || mode === 'page') return;
     const delta = normalizedDelta(event, 'y', region.clientHeight);
     if (mode === 'contain') {
+      const owner = containedScrollOwner(region, 'y', delta, modalOpen ? modal : null);
+      // A contained pane owns the gesture only when it can actually consume
+      // it.  At the top/bottom boundary, leave the event untouched so the
+      // browser can hand the wheel to the next scrollable ancestor/page.  The
+      // old implementation prevented every contained event first, which made
+      // nested WS panes appear frozen when their thumb reached an edge.
+      if (!owner || !applyDelta(owner, 'y', delta)) return;
       event.preventDefault();
       event.stopPropagation();
-      const owner = containedScrollOwner(region, 'y', delta, modalOpen ? modal : null);
-      if (owner && applyDelta(owner, 'y', delta)) savePosition(owner);
+      savePosition(owner);
       return;
     }
     // Handoff regions keep native behaviour until reaching their boundary.
@@ -331,10 +371,13 @@
   }
 
   function keyboardTarget() {
+    const modalOpen = !document.querySelector('#modalBackdrop')?.classList.contains('hidden');
+    const modal = modalOpen ? document.querySelector('#modal') : null;
+    const eligible = node => node?.isConnected && (!modal || modal.contains(node));
     const active = findRegion(document.activeElement);
-    if (active?.isConnected) return active;
-    if (pointerRegion?.isConnected) return pointerRegion;
-    return document.querySelector('#viewContainer');
+    if (eligible(active)) return active;
+    if (eligible(pointerRegion)) return pointerRegion;
+    return modal ? modal.querySelector('.modal-body') : document.querySelector('#viewContainer');
   }
 
   function onKeyDown(event) {

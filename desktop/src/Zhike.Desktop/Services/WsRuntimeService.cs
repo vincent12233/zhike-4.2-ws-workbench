@@ -43,7 +43,19 @@ public sealed class WsRuntimeService
         if (_timer is not null) return;
         _timer = dispatcher.CreateTimer();
         _timer.Interval = TimeSpan.FromSeconds(10);
-        _timer.Tick += async (_, _) => await TickAsync();
+        // DispatcherQueueTimer has an async-void event surface. Never allow a
+        // transient WebView/service exception to escape the event handler and
+        // tear down the dispatcher pump (which used to look like periodic WS
+        // flicker or a frozen workbench).
+        _timer.Tick += async (_, _) =>
+        {
+            try { await TickAsync(); }
+            catch (OperationCanceledException) { }
+            catch (Exception error)
+            {
+                System.Diagnostics.Debug.WriteLine($"WS runtime tick failed: {error.GetType().Name}: {error.Message}");
+            }
+        };
         _timer.Start();
     }
 
@@ -59,7 +71,16 @@ public sealed class WsRuntimeService
         try
         {
             var result = await _pool.GetOrCreateAsync(accountId, factory, cancellationToken);
-            if (result.Created) result.Session.View.Source = new Uri("https://web.whatsapp.com/");
+            if (result.Created)
+            {
+#if STAGE51_ISOLATED_UI
+                // This build has no WS authorization. A local blank entry is
+                // not a failed network login and must not enter recovery.
+                result.Session.View.Source = new Uri("about:blank");
+#else
+                result.Session.View.Source = new Uri("https://web.whatsapp.com/");
+#endif
+            }
             _activeAccountId = accountId;
             SessionsChanged?.Invoke(this, EventArgs.Empty);
             return result;
@@ -95,6 +116,11 @@ public sealed class WsRuntimeService
 
     public async Task TickAsync(CancellationToken cancellationToken = default)
     {
+#if STAGE51_ISOLATED_UI
+        // The native UI acceptance process never drives a WhatsApp collector.
+        await Task.CompletedTask;
+        return;
+#else
         if (!await _tickGate.WaitAsync(0, cancellationToken)) return;
         try
         {
@@ -105,27 +131,15 @@ public sealed class WsRuntimeService
             if (!string.IsNullOrWhiteSpace(snapshot.ForegroundAccountId)
                 && _pool.TryGet(snapshot.ForegroundAccountId, out var foreground)
                 && foreground is not null)
-                await RunHeartbeatAsync(foreground, false, heartbeat, cancellationToken);
+                await RunHeartbeatAsync(foreground, false, heartbeat, cancellationToken).ConfigureAwait(false);
 
-            var backgroundId = _coordinator.LeaseNextBackgroundAccount();
-            if (!string.IsNullOrWhiteSpace(backgroundId)
-                && !string.Equals(backgroundId, snapshot.ForegroundAccountId, StringComparison.OrdinalIgnoreCase))
-            {
-                try
-                {
-                    var acquired = await _pool.GetOrCreateAsync(backgroundId, factory, cancellationToken);
-                    if (acquired.Created) acquired.Session.View.Source = new Uri("https://web.whatsapp.com/");
-                    if (acquired.Created) SessionsChanged?.Invoke(this, EventArgs.Empty);
-                    await RunHeartbeatAsync(acquired.Session, true, heartbeat, cancellationToken);
-                }
-                catch (InvalidOperationException error) when (error.Message.Contains("session pool is busy", StringComparison.OrdinalIgnoreCase))
-                {
-                    _coordinator.ReleaseBackgroundLease(backgroundId, succeeded: true);
-                }
-            }
-            if (_flush is not null) await _flush(cancellationToken);
+            // RD02: no automatic background lease, WebView creation, profile
+            // preparation or collection heartbeat. Manual foreground selection
+            // is the only account creation boundary.
+            if (_flush is not null) await _flush(cancellationToken).ConfigureAwait(false);
         }
         finally { _tickGate.Release(); }
+#endif
     }
 
     public async Task ShutdownAsync(CancellationToken cancellationToken = default)

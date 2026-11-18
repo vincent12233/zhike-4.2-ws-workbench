@@ -1,0 +1,84 @@
+[
+  {
+    "file": "special-initial.txt",
+    "source": ".tools/stage55c1a/special.log",
+    "sourceSha256": "8c4e05215135ce6e1a7578425dca4451bd027e602137ef909cec276691fef229",
+    "sha256": "b71269f12882888be4373e71b034aab52c0cba1e2aea4bfceb6d9a7453ed6a11",
+    "sidRedactions": 0
+  },
+  {
+    "file": "account-ui.txt",
+    "source": ".tools/stage55c1a/account-ui.log",
+    "sourceSha256": "de4110cab3ffba6d04c4ed1999a12cec7dea563f738d7f614b8f981fc71cc1e5",
+    "sha256": "55c8f0b9949284127901d0bbb6385e18c5b6f1b25f0bd498249d66cbc5ce4ea2",
+    "sidRedactions": 0
+  },
+  {
+    "file": "ws-final.txt",
+    "source": ".tools/stage55c1a/ws-final.log",
+    "sourceSha256": "aef7815e89330d0fddf53f0c6e2caea9f460c17e22fc0c5fbac3710cbbe1652a",
+    "sha256": "28587d4309361e53fea74439bedd2c4d726ed47015b71a5d042b176b1e319a39",
+    "sidRedactions": 0
+  },
+  {
+    "file": "full-final.txt",
+    "source": ".tools/stage55c1a/full.log",
+    "sourceSha256": "89adefeafae05b740c6279a980585fc4efdbd6913b13e74c020455ce3743ad23",
+    "sha256": "4aad7422e9aefb8a21a8a47f24da7cf720fc878cdf625eab7ed4514e3eaeceaf",
+    "sidRedactions": 2
+  },
+  {
+    "file": "winui-release.txt",
+    "source": ".tools/stage55c1a/release.log",
+    "sourceSha256": "913ee4ada2a6969afd04556c642863206e068659fee8385c26e8e0031a2916b1",
+    "sha256": "faa713516e427e774139db9f2305d2b0956bfe9b79c12afca6ec84a2119e057b",
+    "sidRedactions": 0
+  },
+  {
+    "file": "api-before.txt",
+    "source": ".tools/stage55c-api-repro-confirmed.log",
+    "sourceSha256": "ab91827dc8f8f112572928a1d195a30e342009ed042431793bf2c728a19b6256",
+    "sha256": "0a0bc7a0747ea806e06c22750676da89a19725ea6670268b7f59ca0c653d7b21",
+    "sidRedactions": 0
+  },
+  {
+    "file": "api-proof-before.txt",
+    "source": ".tools/stage55c-evidence-repro.log",
+    "sourceSha256": "527b48d40845704c75892e1fbd948974161a9b41567fd4ecc2b1d5461c8d452e",
+    "sha256": "20899c8b35f1809a7f3eee5237a8dd9805a7d69004dc639fd2480327eca90481",
+    "sidRedactions": 0
+  },
+  {
+    "file": "native-before.txt",
+    "source": ".tools/stage55c-native-send/baseline.log",
+    "sourceSha256": "5c1fbb952a7ff559f9b909b4c227c3d06ed1e0e135edda939c92f0bd64b3b443",
+    "sha256": "19051dbe5c557fe83a7590f682b8d52dda945a99e1a1f86c368278777dd21920",
+    "sidRedactions": 0
+  },
+  {
+    "file": "dom-before.txt",
+    "source": ".tools/stage55c-native-send/dom-baseline.log",
+    "sourceSha256": "daf6e0285acdf74ab714290442ea4c143968b49246b2b5fede3581fbb0e9b74e",
+    "sha256": "daf6e0285acdf74ab714290442ea4c143968b49246b2b5fede3581fbb0e9b74e",
+    "sidRedactions": 0
+  },
+  {
+    "file": "ui-before.txt",
+    "source": ".tools/stage55c1a/ws-ui-before.log",
+    "sourceSha256": "c998afa271604d9dd303949b20413246651ee83843b9d5a5933837c5dae6cb37",
+    "sha256": "126e206ff8626a8f3ec8fb96ec0b06d1c6f7b3fb0ed98ae34a7a2b54b974d487",
+    "sidRedactions": 0
+  },
+  {
+    "file": ".gitattributes",
+    "sha256": "a79691a93b46e49ce460c26ef22afcc03d6eca1e63bf2edbc20e96159510f6c9"
+  },
+  {
+    "file": "results.json",
+    "sha256": "cfd8c25da0ce090903ee0b9e26a83234ec2a3a30dfcec4ac2555d56d2a589dcb"
+  },
+  {
+    "file": "source-hashes.json",
+    "sha256": "59b26695ae8adb6271dbdb5ef60e294a251681b7a1d4e2fe22196202c5bb1739"
+  }
+]

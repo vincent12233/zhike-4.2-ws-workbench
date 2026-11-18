@@ -7,9 +7,8 @@ const path = require('node:path');
 const repo = path.resolve(__dirname, '..', '..');
 const desktop = path.join(repo, 'desktop', 'src', 'Zhike.Desktop');
 const host = fs.readFileSync(path.join(desktop, 'Views', 'LegacyUiHostPage.xaml.cs'), 'utf8');
-const standalone = fs.readFileSync(path.join(desktop, 'Views', 'WsWorkbenchPage.xaml.cs'), 'utf8');
 const log = fs.readFileSync(path.join(desktop, 'Services', 'WsCollectorDiagnosticLog.cs'), 'utf8');
-const scriptMatch = host.match(/return \$\$"""([\s\S]*?)""";/);
+const scriptMatch = host.match(/internal static string BuildWsCollectorScript\(string accountId\)\s*\{[\s\S]*?return \$\$"""([\s\S]*?)""";/);
 assert.ok(scriptMatch);
 const script = scriptMatch[1];
 
@@ -19,9 +18,7 @@ for (const field of ['rowCount', 'readCount', 'skipCount', 'pendingCount', 'domN
   assert.match(script, new RegExp(`${field}`), `collector window diagnostics must include ${field}`);
 
 assert.match(host, /WsCollectorDiagnosticLog\.WriteAsync/, 'legacy host must persist sanitized lifecycle diagnostics');
-assert.match(standalone, /WsCollectorDiagnosticLog\.WriteAsync/, 'standalone WS page must persist sanitized lifecycle diagnostics');
 assert.match(host, /WriteDirectionStructureAsync/, 'legacy host must persist privacy-safe unresolved-direction structure diagnostics');
-assert.match(standalone, /WriteDirectionStructureAsync/, 'standalone page must persist privacy-safe unresolved-direction structure diagnostics');
 assert.match(log, /MaxBytes\s*=\s*256\s*\*\s*1024/, 'diagnostic file must remain bounded to 256 KB');
 assert.match(log, /RetainedBytes\s*=\s*128\s*\*\s*1024/, 'bounded log must retain only a tail when cycling');
 assert.match(log, /ws-collector\.jsonl/, 'collector diagnostics use one local bounded JSONL file');

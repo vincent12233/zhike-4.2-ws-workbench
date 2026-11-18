@@ -1,0 +1,360 @@
+{
+  "scope": "One opt-in diagnostic acquisition separate from the original four-entry result",
+  "head": "6fd74a570f4b47dbca89022dedbea02f6502d41e",
+  "exitCode": 0,
+  "elapsedMs": 15884.2861,
+  "call": {
+    "invocation": "1795008503415-f9c8481f-4b5f-4566-b1d0-783c7296aba2",
+    "pid": 18420,
+    "startedTicks": "639306053034201740",
+    "launchedAt": "2026-11-18T13:28:23.414Z",
+    "status": "Passed",
+    "timeoutMs": 30000,
+    "resultCases": 10,
+    "resultVerifiedInWorkBudget": true,
+    "cleanupSafe": true,
+    "forceTerminated": false,
+    "profileRetained": false,
+    "failure": null,
+    "releaseFailure": null,
+    "resultEvidenceFailure": null,
+    "navigation": {
+      "startedMs": 1832.2873,
+      "requestMs": 1832.6256,
+      "responseMs": 1862.4469000000001,
+      "commandId": 8,
+      "loaderId": "D883BE25505281628833BA666DC71803",
+      "frameId": "4E18CFD7976849D2241A339458D55D0F",
+      "matchingDomContentLoadedMs": 1930.3643,
+      "loadMs": 4229.643499999999,
+      "matchingLoaderAndFrame": true,
+      "lifecycleEventsReceived": {
+        "DOMContentLoaded": 12,
+        "load": 12,
+        "init": 21
+      },
+      "loadEvents": [
+        {
+          "elapsedMs": 1829.9208,
+          "loaderId": "A3A1FD89C023DA33BEE33C5A8CC5E74F",
+          "frameId": "4E18CFD7976849D2241A339458D55D0F"
+        },
+        {
+          "elapsedMs": 3623.4862000000003,
+          "loaderId": "C4AD51E59F89A2AEE83100C9BFB6C24D",
+          "frameId": "7EE5CFF027A3DF1B228C191B6AD977C1"
+        },
+        {
+          "elapsedMs": 3685.6025,
+          "loaderId": "3DE29929D9F5D7049B223A830F975E96",
+          "frameId": "63E3D4BBBEEFB5586C2066022BF6F467"
+        },
+        {
+          "elapsedMs": 3696.4804,
+          "loaderId": "5609E2E7B13FB72E9D7AA17708D0521C",
+          "frameId": "E3DA71583E5B37105D5085F596F53FF8"
+        },
+        {
+          "elapsedMs": 3982.6514,
+          "loaderId": "8D25E8B0A458DD948A5DC0951A7B1F5B",
+          "frameId": "DB06712CC9EEB63B2D6449BE6DBE527F"
+        },
+        {
+          "elapsedMs": 3993.255,
+          "loaderId": "2F91462F82A201E94962CECA734A163A",
+          "frameId": "CA37FA3F45D11D36E02544CDD5EE0F8D"
+        },
+        {
+          "elapsedMs": 4004.9448,
+          "loaderId": "DB5703349DD4994AF2E0BA65542989DB",
+          "frameId": "09C17593A287E85E23812E2682AAA477"
+        },
+        {
+          "elapsedMs": 4028.4743000000003,
+          "loaderId": "24A114EDA5E0C07B2756B6188089E516",
+          "frameId": "9B0ACD5D3062F6B19FC32FAADC3919D0"
+        },
+        {
+          "elapsedMs": 4224.699799999999,
+          "loaderId": "0C0B46C1784BAB20D0DF45D4A16C3D24",
+          "frameId": "01903BA9CDC0B0B913974958E0A2FAE6"
+        },
+        {
+          "elapsedMs": 4227.908899999999,
+          "loaderId": "4A103B91B4CC6DCF9027EE973532167E",
+          "frameId": "54B8A99942878FC53E182DC00FBFC694"
+        },
+        {
+          "elapsedMs": 4229.1592,
+          "loaderId": "93E954E89AFB2A91E17E1CC49FD34C73",
+          "frameId": "4929028518C9A084EBC148A66C2F278A"
+        },
+        {
+          "elapsedMs": 4229.564899999999,
+          "loaderId": "D883BE25505281628833BA666DC71803",
+          "frameId": "4E18CFD7976849D2241A339458D55D0F"
+        }
+      ],
+      "pendingWorkAtClose": null
+    },
+    "timings": {
+      "resultValidationStartedMs": 8845.0038,
+      "resultVerifiedMs": 8856.7245,
+      "resultValidationElapsedMs": 11.720699999999852,
+      "resultReadyMs": 9072.6454,
+      "visualAssertionsCompleteMs": 10870.8995,
+      "browserCloseRequestMs": 9075.1738,
+      "browserCloseResponseMs": 9075.7704,
+      "browserCloseAcknowledgementMs": 9075.806,
+      "cdpTransportCloseMs": 9079.9148,
+      "nodeExitMs": 10760.244499999999,
+      "childCloseMs": 10768.1772,
+      "stdoutCloseMs": 10768.1972,
+      "stderrCloseMs": 10768.1198,
+      "streamsCloseMs": 10768.2335,
+      "identityProbeCloseMs": 10839.600199999999,
+      "lifecycleCompleteMs": 10840.2664,
+      "runnerFinalMs": 10846.1127,
+      "forcedTerminationRequestMs": null,
+      "localStdioDisposalMs": null
+    },
+    "browserClose": {
+      "commandId": 13,
+      "matchingProtocolResponse": true,
+      "acknowledgement": "protocol-response"
+    },
+    "kernel": {
+      "sameIdentity": true,
+      "ending": "root-exited",
+      "waitStatus": 0,
+      "exitCode": 0,
+      "lastRunningIntervalMs": [
+        10708.509499978352,
+        10709.02719997835
+      ],
+      "waitReturnedIntervalMs": [
+        10759.445799987841,
+        10759.96349998784
+      ],
+      "clockBracketMs": 0.5177000000001044,
+      "observerExitCode": 0,
+      "observerExitSignal": null
+    },
+    "nodeReleaseState": {
+      "exitObserved": true,
+      "closeObserved": true,
+      "stdoutCloseObserved": true,
+      "stderrCloseObserved": true
+    },
+    "completeSameInvocationEvidence": true
+  },
+  "resources": {
+    "captureEndedMs": 9072.9756,
+    "omitted": 0,
+    "pendingCount": 0,
+    "capturedCount": 241,
+    "uniqueFrameCount": 11,
+    "byResource": {
+      "<fixture>/matrix.html": {
+        "requested": 1,
+        "responded": 1,
+        "finished": 1,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<fixture>/fixture.html": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/styles.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/modules/v4.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/modules/gpt-assistant.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/modules/gpt-workbench.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/modules/gpt-modern.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/modules/gpt-management.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/modules/phone-registry.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/modules/business-enhancements.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/modules/v41-ui.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/modules/operations-upgrade.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/modules/ui-refresh.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/modules/ws-workbench.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/modules/design-system.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/modules/horizon-atelier.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/modules/business-6.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/modules/operations-6.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/modules/global-6.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/modules/home-6.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/modules/scroll-system.css": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/assets/zhike-horizon-logo.png": {
+        "requested": 10,
+        "responded": 10,
+        "finished": 10,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<non-file>": {
+        "requested": 20,
+        "responded": 20,
+        "finished": 20,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/assets/atelier-dawn.svg": {
+        "requested": 6,
+        "responded": 6,
+        "finished": 6,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      },
+      "<app>/assets/horizon-flow-6.png": {
+        "requested": 4,
+        "responded": 4,
+        "finished": 4,
+        "failed": 0,
+        "redirected": 0,
+        "pending": 0
+      }
+    }
+  }
+}

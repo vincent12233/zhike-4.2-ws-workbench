@@ -1,0 +1,8 @@
+{
+  "file": "tests/full-final.log",
+  "reason": "Windows user SID minimized before Git archive; results and timing unchanged",
+  "replacementCount": 2,
+  "originalSha256": "3188ae54b3fca6261d9b19d9806b9ca3d5a1bd0d9ea11baa1881ec2ad311c120",
+  "archivedSha256": "0b892755ab31a0b032abe69273c9cac48b71a6ce5c7a658682920bfccf63ed5d",
+  "originalLocalPath": ".tools/visual-upgrade/full-final.log"
+}

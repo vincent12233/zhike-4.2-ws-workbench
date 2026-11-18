@@ -1,0 +1,52 @@
+{
+  "stage": "5.5C-1A",
+  "baseline": "fa4ced4",
+  "codeCommit": "39ac33c9113449c0492685b8de728c130733cf8e",
+  "executedAtUtc": "2026-11-16T20:09:35.077039+00:00",
+  "initialWs": {
+    "checks": 156,
+    "passed": 154,
+    "failed": [
+      "WS durable queue Web JSON and API roundtrip",
+      "WS frontend high-priority fixes"
+    ],
+    "rawLocalLog": ".tools/stage55c1a/ws.log",
+    "rawSha256": "2b241c043844cb3d43029e893ab60d5702d40427a466442d13b6f25a581ec160"
+  },
+  "final": {
+    "ws": {
+      "checks": 156,
+      "passed": 156
+    },
+    "full": {
+      "checks": 272,
+      "passed": 272
+    },
+    "accountUi": {
+      "checks": 7,
+      "passed": 7
+    },
+    "apiCases": 16,
+    "sendUiCases": 14,
+    "nativeCases": 18,
+    "domBridgeCases": 16,
+    "credentialCases": 11,
+    "providerRaceCases": 11,
+    "releaseWarnings": 0,
+    "releaseErrors": 0
+  },
+  "specialEvidence": {
+    "initialMode": "6/6 before the WinRT Task adaptation correction",
+    "finalSourceCoverage": "Five new registered entries and existing AI credential DPAPI persistence all reran Passed in full-final.txt"
+  },
+  "baselineTerminalOnly": {
+    "R08": "1/7; original terminal execution, no saved raw log",
+    "R09": "0/5; original terminal execution, no saved raw log"
+  },
+  "productionEntry": "FROZEN",
+  "realWhatsAppConnected": false,
+  "paidAiCalled": false,
+  "productionSqliteOpened": false,
+  "productionWorkerEnabled": false,
+  "newConsumerEnabled": false
+}

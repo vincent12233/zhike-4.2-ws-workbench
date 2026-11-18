@@ -44,7 +44,7 @@ const analysis = (summary, followupTime, extra = {}) => ({
   nextStep: '确认预算并发送报价',
   followupTime,
   confidence: 0.92,
-  contact: { name: '测试客户', phone: '+91 98765 43210' },
+  contact: { name: '链路测试客户', phone: '+91 98765 43210' },
   profile: { origin: 'WS 测试' },
   ...extra,
 });
@@ -56,17 +56,43 @@ const analysis = (summary, followupTime, extra = {}) => ({
     const initial = await request('/api/state', { method: 'POST', headers: { ...headers, 'x-state-version': '' }, body: JSON.stringify({ schemaVersion: 4, customers: [{ id: 'C-chain', name: '链路测试客户', rawPhone: '+91 98765 43210', phone: '9876543210', origin: '', deleted: false }], savedViews: [], activities: [], tickets: [], deposits: [], followups: [], registrations: [], phoneRegistry: [], batchOperations: [], settings: { operatingTasks: [] }, channelAliases: {}, importIssues: [], qualityDecisions: {} }) });
     assert.equal(initial.status, 200);
 
-    const first = await json(await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, result: analysis('第一次分析', '2099-01-01') }) }));
+    // Exercise the real local ingestion endpoint before AI sync. Both sides
+    // of the conversation must survive a repeated native collector packet.
+    const transcript = {
+      protocol: 'zhike.ws.ingest.batch.v1', connectorId: 'desktop-webview2', accountId: 'default',
+      capturedAt: '2026-11-14T10:00:00.000Z', scope: 'read-history',
+      checkpoints: [{ conversationType: 'direct', conversationKey: '+91 98765 43210', historyLoaded: true, historyMessageCount: 2, directionVersion: 4, unreadCount: 0 }],
+      messages: [
+        { conversationType: 'direct', conversationKey: '+91 98765 43210', externalMessageId: 'chain-customer-1', body: '我经营一家贸易公司，想了解报价', direction: 'incoming', directionSource: 'icon-tail-in', sentAt: '2026-11-14T09:58:00.000Z', order: 1 },
+        { conversationType: 'direct', conversationKey: '+91 98765 43210', externalMessageId: 'chain-operator-1', body: '我会先整理产品信息给您', direction: 'outgoing', directionSource: 'icon-tail-out', sentAt: '2026-11-14T09:59:00.000Z', order: 2 },
+      ],
+    };
+    const ingest = await json(await request('/api/ws/ingest/batch', { method: 'POST', body: JSON.stringify(transcript) }));
+    assert.equal(ingest.accepted, 2);
+    const replay = await json(await request('/api/ws/ingest/batch', { method: 'POST', body: JSON.stringify(transcript) }));
+    assert.equal(replay.accepted, 0);
+    assert.equal(replay.deduplicated, 2);
+    const savedMessages = await json(await request(`/api/ws/messages?conversationId=${encodeURIComponent(conversation.id)}&limit=20`));
+    assert.deepEqual(new Set(savedMessages.messages.map(item => item.direction)), new Set(['receive', 'send']));
+    assert.deepEqual(new Set(savedMessages.messages.map(item => item.originalText)), new Set(transcript.messages.map(item => item.body)));
+    const collected = await json(await request('/api/ws/conversations?limit=20'));
+    const currentHistory = collected.conversations.find(item => item.id === conversation.id);
+    assert.equal(currentHistory.data.directionVersion, 4);
+    const transcriptInfo = { sourceFingerprint: currentHistory.data.historyFingerprint, directionVersion: 4 };
+
+    const first = await json(await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, result: analysis('第一次分析', '2099-01-01', { transcriptInfo }) }) }));
     const firstSync = await json(await request('/api/ws/crm-sync', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, analysisId: first.id }) }));
-    assert.equal(firstSync.ok, true);
+    assert.equal(firstSync.ok, true, JSON.stringify(firstSync));
     assert.equal(firstSync.followup.aiGenerated, true);
 
     // A newer analysis is a new decision, but must update the one active task
     // rather than create a second open reminder for the same conversation.
-    const second = await json(await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, result: analysis('第二次分析', '2099-01-02') }) }));
+    const second = await json(await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, result: analysis('第二次分析', '2099-01-02', { transcriptInfo }) }) }));
     const secondSync = await json(await request('/api/ws/crm-sync', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, analysisId: second.id }) }));
     assert.equal(secondSync.ok, true);
     const state = await json(await request('/api/state'));
+    assert.equal(state.customers.length, 1, 'WS analysis enriches the existing customer and must not create a new customer');
+    assert.equal(state.customers[0].id, 'C-chain');
     const activeFollowups = (state.followups || []).filter(item => String(item.wsConversationId || '') === String(conversation.id) && !item.done && item.status !== 'dismissed');
     const activeTasks = (state.settings?.operatingTasks || []).filter(item => String(item.wsConversationId || '') === String(conversation.id) && !item.done);
     assert.equal(activeFollowups.length, 0, 'AI plans must not be counted as actual completed follow-up records');
@@ -75,7 +101,7 @@ const analysis = (summary, followupTime, extra = {}) => ({
 
     // A no-reply result is cooled down to the model-suggested date and also
     // reuses the same active task instead of firing on every poll.
-    const quiet = await json(await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, result: analysis('暂未回复', '2099-01-03', { noReply: { noReply: true, reason: '客户正在忙', suggestedAt: '2099-01-03', cooldownDays: 3 }, nextStep: '' }) }) }));
+    const quiet = await json(await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, result: analysis('暂未回复', '2099-01-03', { transcriptInfo, noReply: { noReply: true, reason: '客户正在忙', suggestedAt: '2099-01-03', cooldownDays: 3 }, nextStep: '' }) }) }));
     await json(await request('/api/ws/crm-sync', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, analysisId: quiet.id }) }));
     const afterQuiet = await json(await request('/api/state'));
     const quietTasks = (afterQuiet.settings?.operatingTasks || []).filter(item => String(item.wsConversationId || '') === String(conversation.id) && !item.done);

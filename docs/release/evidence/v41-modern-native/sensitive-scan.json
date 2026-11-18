@@ -1,0 +1,341 @@
+{
+  "scope": "Only listed source files. The seven JPEG originals were visually inspected as native isolated UI. Two CRM fixture numbers in the seed script are intentionally retained.",
+  "checkedFiles": [
+    {
+      "file": "captures/01-home-light.jpg",
+      "media": "JPEG",
+      "onlySyntheticContentVisible": true,
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ]
+    },
+    {
+      "file": "captures/01-home-light.txt",
+      "media": "UTF-8",
+      "sourceFilesystemPathStarts": 0,
+      "sourceUrlCount": 0,
+      "archiveFilesystemPathStarts": 0,
+      "archiveUrlCount": 0,
+      "archivedSensitiveMatches": {
+        "credentials": 0,
+        "assignedCredential": 0,
+        "privateKey": 0,
+        "sid": 0,
+        "cdp": 0,
+        "email": 0,
+        "whatsappJid": 0
+      }
+    },
+    {
+      "file": "captures/02-home-dark.jpg",
+      "media": "JPEG",
+      "onlySyntheticContentVisible": true,
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ]
+    },
+    {
+      "file": "captures/02-home-dark.txt",
+      "media": "UTF-8",
+      "sourceFilesystemPathStarts": 0,
+      "sourceUrlCount": 1,
+      "archiveFilesystemPathStarts": 0,
+      "archiveUrlCount": 0,
+      "archivedSensitiveMatches": {
+        "credentials": 0,
+        "assignedCredential": 0,
+        "privateKey": 0,
+        "sid": 0,
+        "cdp": 0,
+        "email": 0,
+        "whatsappJid": 0
+      }
+    },
+    {
+      "file": "captures/03-customers-dark.jpg",
+      "media": "JPEG",
+      "onlySyntheticContentVisible": true,
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ]
+    },
+    {
+      "file": "captures/03-customers-dark.txt",
+      "media": "UTF-8",
+      "sourceFilesystemPathStarts": 0,
+      "sourceUrlCount": 1,
+      "archiveFilesystemPathStarts": 0,
+      "archiveUrlCount": 0,
+      "archivedSensitiveMatches": {
+        "credentials": 0,
+        "assignedCredential": 0,
+        "privateKey": 0,
+        "sid": 0,
+        "cdp": 0,
+        "email": 0,
+        "whatsappJid": 0
+      }
+    },
+    {
+      "file": "captures/04-ws-overview-dark.jpg",
+      "media": "JPEG",
+      "onlySyntheticContentVisible": true,
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ]
+    },
+    {
+      "file": "captures/04-ws-overview-dark.txt",
+      "media": "UTF-8",
+      "sourceFilesystemPathStarts": 0,
+      "sourceUrlCount": 1,
+      "archiveFilesystemPathStarts": 0,
+      "archiveUrlCount": 0,
+      "archivedSensitiveMatches": {
+        "credentials": 0,
+        "assignedCredential": 0,
+        "privateKey": 0,
+        "sid": 0,
+        "cdp": 0,
+        "email": 0,
+        "whatsappJid": 0
+      }
+    },
+    {
+      "file": "captures/05-ws-chat-unconnected.jpg",
+      "media": "JPEG",
+      "onlySyntheticContentVisible": true,
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ]
+    },
+    {
+      "file": "captures/05-ws-chat-unconnected.txt",
+      "media": "UTF-8",
+      "sourceFilesystemPathStarts": 0,
+      "sourceUrlCount": 0,
+      "archiveFilesystemPathStarts": 0,
+      "archiveUrlCount": 0,
+      "archivedSensitiveMatches": {
+        "credentials": 0,
+        "assignedCredential": 0,
+        "privateKey": 0,
+        "sid": 0,
+        "cdp": 0,
+        "email": 0,
+        "whatsappJid": 0
+      }
+    },
+    {
+      "file": "captures/06-ws-crm-expanded.jpg",
+      "media": "JPEG",
+      "onlySyntheticContentVisible": true,
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ]
+    },
+    {
+      "file": "captures/06-ws-crm-expanded.txt",
+      "media": "UTF-8",
+      "sourceFilesystemPathStarts": 0,
+      "sourceUrlCount": 0,
+      "archiveFilesystemPathStarts": 0,
+      "archiveUrlCount": 0,
+      "archivedSensitiveMatches": {
+        "credentials": 0,
+        "assignedCredential": 0,
+        "privateKey": 0,
+        "sid": 0,
+        "cdp": 0,
+        "email": 0,
+        "whatsappJid": 0
+      }
+    },
+    {
+      "file": "captures/07-ws-chat-returned.jpg",
+      "media": "JPEG",
+      "onlySyntheticContentVisible": true,
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ]
+    },
+    {
+      "file": "captures/07-ws-chat-returned.txt",
+      "media": "UTF-8",
+      "sourceFilesystemPathStarts": 0,
+      "sourceUrlCount": 0,
+      "archiveFilesystemPathStarts": 0,
+      "archiveUrlCount": 0,
+      "archivedSensitiveMatches": {
+        "credentials": 0,
+        "assignedCredential": 0,
+        "privateKey": 0,
+        "sid": 0,
+        "cdp": 0,
+        "email": 0,
+        "whatsappJid": 0
+      }
+    },
+    {
+      "file": "run/native-prepare.json",
+      "media": "UTF-8",
+      "sourceFilesystemPathStarts": 2,
+      "sourceUrlCount": 0,
+      "archiveFilesystemPathStarts": 0,
+      "archiveUrlCount": 0,
+      "archivedSensitiveMatches": {
+        "credentials": 0,
+        "assignedCredential": 0,
+        "privateKey": 0,
+        "sid": 0,
+        "cdp": 0,
+        "email": 0,
+        "whatsappJid": 0
+      }
+    },
+    {
+      "file": "run/native-launch.json",
+      "media": "UTF-8",
+      "sourceFilesystemPathStarts": 1,
+      "sourceUrlCount": 0,
+      "archiveFilesystemPathStarts": 0,
+      "archiveUrlCount": 0,
+      "archivedSensitiveMatches": {
+        "credentials": 0,
+        "assignedCredential": 0,
+        "privateKey": 0,
+        "sid": 0,
+        "cdp": 0,
+        "email": 0,
+        "whatsappJid": 0
+      }
+    },
+    {
+      "file": "run/native-closed.json",
+      "media": "UTF-8",
+      "sourceFilesystemPathStarts": 0,
+      "sourceUrlCount": 0,
+      "archiveFilesystemPathStarts": 0,
+      "archiveUrlCount": 0,
+      "archivedSensitiveMatches": {
+        "credentials": 0,
+        "assignedCredential": 0,
+        "privateKey": 0,
+        "sid": 0,
+        "cdp": 0,
+        "email": 0,
+        "whatsappJid": 0
+      }
+    },
+    {
+      "file": "run/native-build.log",
+      "media": "UTF-8",
+      "sourceFilesystemPathStarts": 1,
+      "sourceUrlCount": 0,
+      "archiveFilesystemPathStarts": 0,
+      "archiveUrlCount": 0,
+      "archivedSensitiveMatches": {
+        "credentials": 0,
+        "assignedCredential": 0,
+        "privateKey": 0,
+        "sid": 0,
+        "cdp": 0,
+        "email": 0,
+        "whatsappJid": 0
+      }
+    },
+    {
+      "file": "run/native-build.exit",
+      "media": "UTF-8",
+      "sourceFilesystemPathStarts": 0,
+      "sourceUrlCount": 0,
+      "archiveFilesystemPathStarts": 0,
+      "archiveUrlCount": 0,
+      "archivedSensitiveMatches": {
+        "credentials": 0,
+        "assignedCredential": 0,
+        "privateKey": 0,
+        "sid": 0,
+        "cdp": 0,
+        "email": 0,
+        "whatsappJid": 0
+      }
+    },
+    {
+      "file": "run/native-seed.log",
+      "media": "UTF-8",
+      "sourceFilesystemPathStarts": 0,
+      "sourceUrlCount": 0,
+      "archiveFilesystemPathStarts": 0,
+      "archiveUrlCount": 0,
+      "archivedSensitiveMatches": {
+        "credentials": 0,
+        "assignedCredential": 0,
+        "privateKey": 0,
+        "sid": 0,
+        "cdp": 0,
+        "email": 0,
+        "whatsappJid": 0
+      }
+    },
+    {
+      "file": "lifecycle/native-events.jsonl",
+      "media": "UTF-8",
+      "sourceFilesystemPathStarts": 2,
+      "sourceUrlCount": 0,
+      "archiveFilesystemPathStarts": 0,
+      "archiveUrlCount": 0,
+      "archivedSensitiveMatches": {
+        "credentials": 0,
+        "assignedCredential": 0,
+        "privateKey": 0,
+        "sid": 0,
+        "cdp": 0,
+        "email": 0,
+        "whatsappJid": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "path": "resources/app/modules/ws-workbench.js",
+    "sha256": "e8a185f37acdd58c3e7e90e3967460b59770ef5b47313bcb601f0ece20856c3a"
+  },
+  {
+    "path": "resources/app/modules/ws-workbench.css",
+    "sha256": "082fa014e917f2db41a924f3b0b3438dafbcb405c30b211087788b655a7b436a"
+  },
+  {
+    "path": "resources/app/app.js",
+    "sha256": "5075dae0ea378d88c77503b27b45f7b7b704a1329eb7fabf6a669168a4f62e92"
+  },
+  {
+    "path": "desktop/src/Zhike.Desktop/Views/LegacyUiHostPage.xaml.cs",
+    "sha256": "ec32df9def6c3834d3aa48b6ef379c2b8905639cdcb4ad5bfc85473776a7d870"
+  },
+  {
+    "path": "desktop/src/Zhike.Desktop/MainWindow.xaml.cs",
+    "sha256": "88c58167271f7a7f3bfb3a8c330864efcc4bec1dd1d489ead561d5b5b9093cbb"
+  }
+]

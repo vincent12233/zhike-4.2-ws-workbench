@@ -8,8 +8,8 @@ const read = relative => fs.readFileSync(path.join(repo, relative), 'utf8');
 
 const client = read('desktop/src/Zhike.Desktop/Services/ApiClient.cs');
 const manager = read('desktop/src/Zhike.Desktop/Services/LocalServiceManager.cs');
-const page = read('desktop/src/Zhike.Desktop/Views/HomePage.xaml.cs');
-const xaml = read('desktop/src/Zhike.Desktop/Views/HomePage.xaml');
+const page = read('desktop/src/Zhike.Desktop/Views/LegacyUiHostPage.xaml.cs');
+const xaml = read('desktop/src/Zhike.Desktop/Views/LegacyUiHostPage.xaml');
 const bridge = read('desktop/src/Zhike.Desktop/Services/LegacyBridgeScript.cs');
 const app = read('resources/app/app.js');
 
@@ -20,8 +20,7 @@ assert.match(manager, /X-Zhike-Shutdown-Token/);
 assert.match(client, /ConfigureLocalSidecar/);
 assert.match(client, /api\/health/);
 assert.match(page, /EnsureLocalServiceAsync/);
-assert.match(xaml, /SQLite 本机数据库/);
-assert.doesNotMatch(xaml, /Docker PostgreSQL|配对码/);
+assert.match(xaml, /WebViewHost/);
 assert.match(bridge, /Replace\("__ZHikeLocalDbFlag__", "true"/);
 assert.match(bridge, /Replace\("__ZhikeStorageMode__", "'local'"/);
 assert.match(app, /本机存储正常/);

@@ -1,0 +1,11 @@
+S3 drawer: first lazy creation, same-ID redraw, same-name A→B, close/invalid ID and lifecycle payload passed
+S3 customers: real filters/export, page selection, hidden columns and UI-only preview close/restore passed
+AssertionError [ERR_ASSERTION]: all seven original metrics are in one native expandable overview
+    at verifyCustomerListFirstLayout (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\delivery-s3-core-pages.test.cjs:69:154) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}

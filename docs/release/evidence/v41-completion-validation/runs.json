@@ -1,0 +1,25 @@
+{
+  "codeCommit": "b174bea",
+  "sourceRunnerSha256": "8cfcad97052a8e7d60d3dc6a56d5172bd45bb2696967d5a1dfb007d478af5c86",
+  "total": 298,
+  "passed": 295,
+  "failed": [
+    "Delivery S1 actual main renderers and shared design system",
+    "Delivery S1 WS computed layout and retained host",
+    "Delivery S3 full-CSS customer table, drawer and modal ownership"
+  ],
+  "wsIncludedSubset": {
+    "note": "Results from this actual all run, classified by the WS driver; not a separate run.",
+    "total": 164,
+    "passed": 164,
+    "failed": []
+  },
+  "release": {
+    "exit": 0,
+    "warnings": 0,
+    "errors": 0,
+    "elapsedSeconds": 23.41
+  },
+  "production": "FROZEN",
+  "s3": "Blocked"
+}

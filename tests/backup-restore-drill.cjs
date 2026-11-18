@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
-const { cpSync, mkdtempSync, rmSync, writeFileSync } = require('node:fs');
+const { mkdtempSync, rmSync, writeFileSync } = require('node:fs');
+const { copyIsolatedAppFixture } = require('./helpers/isolated-app-fixture.cjs');
 const os = require('node:os');
 const path = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
@@ -11,8 +12,8 @@ if (!app) throw new Error('app path required');
 const root = mkdtempSync(path.join(os.tmpdir(), 'zhike-restore-drill-'));
 const first = path.join(root, 'first');
 const second = path.join(root, 'second');
-cpSync(app, first, { recursive: true });
-cpSync(app, second, { recursive: true });
+copyIsolatedAppFixture(app, first);
+copyIsolatedAppFixture(app, second);
 const token = 'restore-drill-token';
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -26,7 +27,9 @@ function start(dir, port) {
   return child;
 }
 async function healthy(port) {
-  for (let i = 0; i < 300; i++) {
+  // Each copied workspace runs the complete migration chain before health;
+  // allow a bounded cold-start window instead of failing on slower disks.
+  for (let i = 0; i < 2400; i++) {
     try { if ((await fetch(`http://127.0.0.1:${port}/api/health`)).ok) return true; } catch {}
     await wait(50);
   }

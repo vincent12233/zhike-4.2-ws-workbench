@@ -1,0 +1,18 @@
+[
+  {
+    "timedOut": false,
+    "invocation": "1795003984639-7554ea0f-2c39-4108-bc34-1cefcec24929",
+    "kernel": "root-exited",
+    "bracketWidthMs": 2.245999999999867,
+    "lifecycle": "<local-user>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\s3-worktrees\\edge\\.tools\\edge-exit-observer\\1795003984639-7554ea0f-2c39-4108-bc34-1cefcec24929.json",
+    "observation": "<local-user>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\s3-worktrees\\edge\\.tools\\edge-exit-observer\\1795003984639-7554ea0f-2c39-4108-bc34-1cefcec24929.kernel.jsonl"
+  },
+  {
+    "timedOut": true,
+    "invocation": "1795003986924-8fbbfda2-0ab4-4294-8740-11b3179e332d",
+    "kernel": "original-deadline",
+    "bracketWidthMs": 0.690900000000056,
+    "lifecycle": "<local-user>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\s3-worktrees\\edge\\.tools\\edge-exit-observer\\1795003986924-8fbbfda2-0ab4-4294-8740-11b3179e332d.json",
+    "observation": "<local-user>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\s3-worktrees\\edge\\.tools\\edge-exit-observer\\1795003986924-8fbbfda2-0ab4-4294-8740-11b3179e332d.kernel.jsonl"
+  }
+]

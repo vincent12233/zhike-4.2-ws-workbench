@@ -1,0 +1,27 @@
+[
+  {
+    "repeat": 1,
+    "exitCode": 0,
+    "testProcessElapsedMs": 1194
+  },
+  {
+    "repeat": 2,
+    "exitCode": 0,
+    "testProcessElapsedMs": 1105
+  },
+  {
+    "repeat": 3,
+    "exitCode": 0,
+    "testProcessElapsedMs": 1126
+  },
+  {
+    "repeat": 4,
+    "exitCode": 0,
+    "testProcessElapsedMs": 1217
+  },
+  {
+    "repeat": 5,
+    "exitCode": 0,
+    "testProcessElapsedMs": 1164
+  }
+]

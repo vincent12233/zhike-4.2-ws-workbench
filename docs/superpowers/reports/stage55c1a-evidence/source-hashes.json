@@ -1,0 +1,86 @@
+[
+  {
+    "file": "desktop/src/Zhike.Desktop/Services/AiBridgeService.cs",
+    "sha256": "f6505331a8884006bfcbb3e54f9374546f68130ebf58559136738cf0aacdff0c"
+  },
+  {
+    "file": "desktop/src/Zhike.Desktop/Services/LegacyBridgeScript.cs",
+    "sha256": "a40fd7a02218b87c72432bebd190ff3de69391e29720dd114ef85ef8c29eb3d6"
+  },
+  {
+    "file": "desktop/src/Zhike.Desktop/Services/WsSendOperationGuard.cs",
+    "sha256": "796974e7dbd62d7029d7f9541bf662f12c1b0e8b91042424e912af9cbf42af54"
+  },
+  {
+    "file": "desktop/src/Zhike.Desktop/Views/LegacyUiHostPage.xaml.cs",
+    "sha256": "f1d6539b3b649c90e5b874c80f4a676e428f079f19696992cc51e95a7c9f4bc9"
+  },
+  {
+    "file": "desktop/tests/AiBridgeCredentialRuntime/Program.cs",
+    "sha256": "cd4e51943808f878792c9965cbc04b0054deffc9bcdc783bca03d2ad77278d3e"
+  },
+  {
+    "file": "resources/app/modules/gpt-assistant.js",
+    "sha256": "cde475bc743fb301b67a1b6d6d8e554a739bcaebe45860f18f97b21b0736c61e"
+  },
+  {
+    "file": "resources/app/modules/ws-media-core.js",
+    "sha256": "31624d0fd46e6676b475a71a5a5690e05ad4fb31fc15c24ffc4df7f4c7503635"
+  },
+  {
+    "file": "resources/app/modules/ws-workbench.js",
+    "sha256": "93b664167c3289033e677e120da4292addc26fa8c8a7a5fe86beb808e9173fbd"
+  },
+  {
+    "file": "resources/app/server.mjs",
+    "sha256": "c09f9c1de7a07f3c2a2dfbacd07ed32c5817905f7f112bdcb6516c93ab14f4aa"
+  },
+  {
+    "file": "scripts/run-tests.cjs",
+    "sha256": "ff29f8f717b4f01fdf1453c8d3fd5c0d66b995f3db00bf3cc11c7c7b3e3f8600"
+  },
+  {
+    "file": "scripts/stage55c/NativeSendSafetyRuntime/NativeSendSafetyRuntime.csproj",
+    "sha256": "b0527cc8d37d7e4790dcc6a67fb4ac5b3a1816c075091da5d3c903a79ff81829"
+  },
+  {
+    "file": "scripts/stage55c/NativeSendSafetyRuntime/Program.cs",
+    "sha256": "7a1d45d4a1cf1db3af5a18851a2cd7962ce6845843306819d52e532b01c53682"
+  },
+  {
+    "file": "scripts/stage55c/gpt-provider-race-runtime.test.cjs",
+    "sha256": "12a6180ef5e6f543db42d94dc7c62d875d4d839b1d5448c3d6c74fcac70bc38f"
+  },
+  {
+    "file": "scripts/stage55c/native-send-dom.test.cjs",
+    "sha256": "4499b9e02e4e0daaac803b9b031df7e63cfb25d112af1169e1be40b59ef00da1"
+  },
+  {
+    "file": "scripts/stage55c/native-send-safety.test.cjs",
+    "sha256": "a3283b9f8c9a02aed4498cfe8a4457ba7a19ac87e1a2d19f9ae67d63a56ac6fd"
+  },
+  {
+    "file": "scripts/stage55c1a/ws-send-runtime.test.cjs",
+    "sha256": "81be63bd03387a9bb830825b43e0fc920a8eebd97ea1d2dde875e8fc24a27135"
+  },
+  {
+    "file": "tests/ai-queue-contract.test.cjs",
+    "sha256": "c31a760bb5205db14356c39d684c11bf7ce9e9a68b7e31df2f816d0eb1fd4a7f"
+  },
+  {
+    "file": "tests/frontend-high-priority-fixes.test.cjs",
+    "sha256": "7e717efe6c2b1aa78a3ac8cba92a3b2a9171c32df3c8377fb9da1f8640f83367"
+  },
+  {
+    "file": "tests/stage55c-send-media-api.test.cjs",
+    "sha256": "2138440869b4684c24aeeb281c1e0f2e6351337ed8f1c53fa9d114e60d6dd844"
+  },
+  {
+    "file": "tests/ws-broadcast-translation.test.cjs",
+    "sha256": "4c20dd395e1c079ea6b44c76c8525abe1921ea8962b8dc625e2994512a522884"
+  },
+  {
+    "file": "tests/ws-media-api.test.cjs",
+    "sha256": "af0d51dc72e6be7a6473dcbc08bbc6f27ad1223ca7918909dd22d8c7d8dc160d"
+  }
+]

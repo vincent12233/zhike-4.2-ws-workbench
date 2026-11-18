@@ -1,0 +1,48 @@
+{
+  "stage": "5.5B",
+  "isolatedRootName": "zhike-stage51-native-3d0e5c7fe2c449dcb863c10d65d11994",
+  "generatedAt": "2026-11-16T19:10:29.918Z",
+  "missing": [],
+  "sourceProjections": [
+    {
+      "source": "isolated-root/native-events.jsonl",
+      "rawBytes": 34341,
+      "rawSha256": "5e9c1de18258609febfce2f84b94449bc89fedb95c48db84fd16da75cc5a4347",
+      "archive": "native-events.jsonl",
+      "projection": true
+    },
+    {
+      "source": "isolated-root/stage55b-seed-evidence.json",
+      "rawBytes": 178,
+      "rawSha256": "35a22bd64d2818ab0985de9725c4d71bd4c4f56a2d432e9eee95f401bbc2142e",
+      "archive": "stage55b-seed-evidence.json",
+      "projection": true
+    },
+    {
+      "source": "isolated-root/stage55b-business-evidence.json",
+      "rawBytes": 828,
+      "rawSha256": "8853ea294180c7f296a987164b4afdf2eacb6740f21b2f6619738bf7a1baa8dd",
+      "archive": "stage55b-business-evidence.json",
+      "projection": true
+    },
+    {
+      "source": "isolated-root/stage55b-resource-samples.jsonl",
+      "rawBytes": 94993,
+      "rawSha256": "aa74d38541c94930d12950505e2d0ad282c451432a1dd0bca762e23b0c552963",
+      "archive": "stage55b-resource-samples.jsonl",
+      "projection": true
+    },
+    {
+      "source": "isolated-root/stage55b-resource-samples.context.json",
+      "rawBytes": 1909,
+      "rawSha256": "5f8372848bd635e11b0e2926493ba91538f4cea9db689d213321bc9f0a1b37b3",
+      "archive": "stage55b-resource-samples.context.json",
+      "projection": true
+    }
+  ],
+  "productionOpened": false,
+  "originalRootModified": false,
+  "sensitiveOriginalsCopied": false,
+  "gate": "NotEvaluated",
+  "screenshotsRequireOperatorSensitiveContentReview": true
+}

@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794937090207-b9cbe0f2-2291-40c2-8c13-d4fedbc08485",
+  "mode": "real-edge-synthetic-layout",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 30000,
+  "launchedAt": "2026-11-17T17:38:10.207Z",
+  "events": [
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 974
+    },
+    {
+      "event": "cdp-readiness-wait",
+      "elapsedMs": 1823,
+      "code": "ENOENT"
+    },
+    {
+      "event": "cdp-ready",
+      "elapsedMs": 2284
+    },
+    {
+      "event": "owned-target-created",
+      "elapsedMs": 3145
+    },
+    {
+      "event": "owned-session-attached",
+      "elapsedMs": 3156
+    },
+    {
+      "event": "viewport-configured",
+      "elapsedMs": 3173,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "event": "navigation-started",
+      "elapsedMs": 3177
+    },
+    {
+      "event": "viewport-verified",
+      "elapsedMs": 27704,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "event": "result-verified",
+      "elapsedMs": 27888,
+      "cases": 8
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 28511
+    },
+    {
+      "event": "owned-session-detached",
+      "elapsedMs": 28515
+    },
+    {
+      "event": "owned-target-close-confirmed",
+      "elapsedMs": 28516
+    },
+    {
+      "event": "owned-browser-close-requested",
+      "elapsedMs": 28516
+    },
+    {
+      "event": "browser-close-acknowledged",
+      "elapsedMs": 28553,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "cdp-transport-close-requested",
+      "elapsedMs": 28553
+    },
+    {
+      "event": "cdp-transport-closed",
+      "elapsedMs": 28555,
+      "code": 1000
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 28556,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 29290,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 29297
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 29297
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 29297
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 29297
+    }
+  ],
+  "identities": [
+    {
+      "pid": 35752,
+      "startedTicks": "639305338902170914",
+      "startedUtc": "2026-11-17T17:38:10.2170914Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 19852,
+      "startedTicks": "639305338924843313",
+      "startedUtc": "2026-11-17T17:38:12.4843313Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 25944,
+      "startedTicks": "639305338924694543",
+      "startedUtc": "2026-11-17T17:38:12.4694543Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 22764,
+      "startedTicks": "639305338908855331",
+      "startedUtc": "2026-11-17T17:38:10.8855331Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 26992,
+      "startedTicks": "639305338908921545",
+      "startedUtc": "2026-11-17T17:38:10.8921545Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 29284,
+      "startedTicks": "639305338909447524",
+      "startedUtc": "2026-11-17T17:38:10.9447524Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "pid": 35752,
+  "profile": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s1-main-style-tZqAdl\\edge-profile-cf05b4b1-9ee7-41d1-8862-69610f782ccb",
+  "resourceReleaseOrder": "owned-session-target-browser",
+  "devToolsReadiness": {
+    "polls": 7,
+    "enoent": 6,
+    "ebusy": 0,
+    "partial": 0
+  },
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "resultCases": 8,
+  "resultBytes": 1698583,
+  "resultSha256": "9f77af399e7560c316c061f74b5054e5d3b8559c80e5ffb2a379bca1f4d6ef4b",
+  "resultFile": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-usability\\main-visual\\1794937090207-b9cbe0f2-2291-40c2-8c13-d4fedbc08485.result.json",
+  "rootExitProof": "verified-spawn-handle-exit-and-streams",
+  "remainingIdentities": [],
+  "elapsedMs": 29812,
+  "stdoutBytes": 0,
+  "stderrBytes": 1111,
+  "failure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "identity",
+    "message": "Isolated lifecycle deadline reached during identity"
+  }
+}

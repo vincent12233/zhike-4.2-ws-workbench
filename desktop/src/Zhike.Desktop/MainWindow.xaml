@@ -3,7 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid x:Name="RootShell" MinWidth="820" MinHeight="540"
-          Background="{StaticResource ZhikePageBackgroundBrush}"
+          Background="{ThemeResource ZhikePageBackgroundBrush}"
           SizeChanged="OnShellSizeChanged">
         <!-- The embedded workbench owns the only header, sidebar and route
              state in 6.0. A second hidden NavigationView would keep the old

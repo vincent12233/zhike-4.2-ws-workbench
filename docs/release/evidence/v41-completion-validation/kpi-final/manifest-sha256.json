@@ -1,0 +1,153 @@
+{
+  "entries": [
+    {
+      "path": "runs.json",
+      "archiveSha256": "14c097a4a11aabe2d5e432cb935909204020cd3a3d34faa0e493ad98d0d20999",
+      "archiveBytes": 1539,
+      "sources": [
+        {
+          "path": ".tools/v41-completion/kpi-final-render.log",
+          "sha256": "17544d1cffc4336fceadb727f6080df8f8faccbdc6644dbc8fb1a2342d3d0806",
+          "bytes": 238
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render.exit",
+          "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+          "bytes": 3
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-contract.log",
+          "sha256": "0db41eeaa984b71bcdbb9c0007048bf6fe52581b767d732cd498cc5957f5c633",
+          "bytes": 111
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-contract.exit",
+          "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+          "bytes": 3
+        }
+      ],
+      "treatment": "Exact exit codes and output summaries. Screenshot destination path removed."
+    },
+    {
+      "path": "computed-summary.json",
+      "archiveSha256": "7e92a8f79eed2a3919855c2b0fe77bdffa8d879017800ebecf63a21ef1c763e4",
+      "archiveBytes": 7771,
+      "sources": [
+        {
+          "path": ".tools/v41-completion/kpi-final-render/computed-styles.json",
+          "sha256": "5c2cfabcefef5599db8a68ef093ae1193e202d5799300626eac58771da7e1ae1",
+          "bytes": 4301386
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/night-computed.json",
+          "sha256": "13d075f8e0553a1e85717b17e34f896ac0bed3ae1f22af19cf23c7d4bcbc3357",
+          "bytes": 472666
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/dawn-dark-legacy-computed.json",
+          "sha256": "14b90d169b597b797b30f8136c08e655f26262e60694ecd5d63e40247346c1a7",
+          "bytes": 472466
+        }
+      ],
+      "treatment": "Selected computed viewport, route count and home KPI measurements. Full raw JSON remains local."
+    },
+    {
+      "path": "browser-lifecycle.json",
+      "archiveSha256": "657b437b5778c5c217b13d1a12d5fce3c30aeea70fe460c6bab6c3d48aa12f72",
+      "archiveBytes": 7543,
+      "sources": [
+        {
+          "path": ".tools/v41-completion/kpi-final-render/1794986398700-70c7d4e8-cf94-47d6-bb4f-5742e48942b6.json",
+          "sha256": "83246f64f7423f8a00e15422ab7bd3e43c86fb4c03d6e51b1b95e694721ed4cb",
+          "bytes": 8305
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/1794986398700-70c7d4e8-cf94-47d6-bb4f-5742e48942b6.result.json",
+          "sha256": "3d1959e0325f6b752418026dd32b4539bc1e6bcdd2ad497a5dfb2bdd3efc8d7d",
+          "bytes": 2099875
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/1794986416965-cc0918c5-9877-48af-bbf1-f6c037d4b4a7.json",
+          "sha256": "630b4b84a05d6fcd9abe72d77d97e2694822e491f8530c433772cb625a2f2aec",
+          "bytes": 7874
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/1794986416965-cc0918c5-9877-48af-bbf1-f6c037d4b4a7.result.json",
+          "sha256": "39214967ecf768dcac26897bf1729536b1a99f2d246a4257f3cd64ce53390cc2",
+          "bytes": 265680
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/1794986421793-32c9c3bc-13be-42ec-8f99-8cee8e1cc1cf.json",
+          "sha256": "641f98104a1ba121a47467a9848107fb648eef7ec0b75a886981cca9bfbe7cb6",
+          "bytes": 7872
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/1794986421793-32c9c3bc-13be-42ec-8f99-8cee8e1cc1cf.result.json",
+          "sha256": "18036324d0b9094ec087c77060191bb139987f02801efb7ba3eeece776c6da32",
+          "bytes": 266391
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/1794986425717-1933931d-5c5a-4bae-b018-f186e28bd0f6.json",
+          "sha256": "9ccbc5611c96b9baa799b35d58f8ac48998f48223371af915ddd03513e40b0c7",
+          "bytes": 8747
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/1794986425717-1933931d-5c5a-4bae-b018-f186e28bd0f6.result.json",
+          "sha256": "71f2eeb60625ba413f7a06044253f21934d2a02f69440b062fd2660f3d84f4e6",
+          "bytes": 23629
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/home-atelier-dawn.png",
+          "sha256": "7e6dac2613e45673ce7df42e931b1ebcff31d00def3977df0bc39151045cec50",
+          "bytes": 896555
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/1794986431310-1a08e72f-d1c6-4a3f-8a86-efa694ebeb90.json",
+          "sha256": "24e2bafaf4856a7be15065f8c0c2b906a1029e99a3d0d586cd92651386b52f19",
+          "bytes": 9022
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/1794986431310-1a08e72f-d1c6-4a3f-8a86-efa694ebeb90.result.json",
+          "sha256": "986c95818babe0e574780f360e1d54792f49bcb1ffd8a72541d74b53ef2a3bcc",
+          "bytes": 26847
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/customers-atelier-dawn.png",
+          "sha256": "ae0f94ae34762207770a28bada78d962d1503debb8dab4fbbc28189b6d658cea",
+          "bytes": 359856
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/1794986435766-0518e22e-e983-4452-98bc-286579fb454d.json",
+          "sha256": "75e051e5891e6092221bf124b1624032d513acf72207b8e89780a907b8ec7d8f",
+          "bytes": 8585
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/1794986435766-0518e22e-e983-4452-98bc-286579fb454d.result.json",
+          "sha256": "5c86f75166013c455c5a79cd1d8045b84258bdee9ab2e8d5c6e89743adf446e5",
+          "bytes": 7891
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/operations-atelier-dawn.png",
+          "sha256": "ad67ffcf7f8b0aeb314ec72523c41049334988d528d7f8bbaf835e7dcaebfe27",
+          "bytes": 494446
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/1794986440139-8831b3cf-2955-43f1-9b70-1811f7f84cd8.json",
+          "sha256": "c24c7305361bf8386ba17726bd18adc42b2c5cf633cbfa47f699e38e253c3dc6",
+          "bytes": 9082
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/1794986440139-8831b3cf-2955-43f1-9b70-1811f7f84cd8.result.json",
+          "sha256": "1114f4fdfc3d10fe9b8084562e20e833c96003b5413badb23f284a6806cf428e",
+          "bytes": 23199
+        },
+        {
+          "path": ".tools/v41-completion/kpi-final-render/home-horizon-night.png",
+          "sha256": "ddaa9640dd21ee267c7070e3e196c0a9a301a59ab161dad25eca0c8d2312bbba",
+          "bytes": 976995
+        }
+      ],
+      "treatment": "Lifecycle, result hashes and screenshot digests only. Browser directories, DOM and screenshot bytes excluded."
+    }
+  ]
+}

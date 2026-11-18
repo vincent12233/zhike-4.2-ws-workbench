@@ -1,0 +1,246 @@
+{
+  "schemaVersion": 1,
+  "generatedAtUtc": "2026-11-17T14:27:06.595Z",
+  "status": "Observed",
+  "scope": "Read-only allowed native event/resource files; isolated synthetic data only",
+  "sourceHashes": {
+    "acceptance-resource.jsonl": {
+      "bytes": 538416,
+      "sha256OfUtf8Text": "fb7c80feb1984b83a866d91a7fa28c5c85d54bb34590b7d09ee6c92bbca94ab9"
+    },
+    "acceptance-resource.context.json": {
+      "bytes": 1904,
+      "sha256OfUtf8Text": "854a21ab1992abb045b3db6b67c553ccf6a61ca53666edd283151b25e102c4b6"
+    },
+    "native-events.jsonl": {
+      "bytes": 27856,
+      "sha256OfUtf8Text": "912051097225e63d8e22914a42c04e4195c37340095ab1686d8d6410582c3377"
+    },
+    "native-event-counts-2100.json": {
+      "bytes": 1561,
+      "sha256OfUtf8Text": "b187ea0d39997f94e0ab2728649b9b4650f098e60684620c8d8f3b8e93037484"
+    }
+  },
+  "environment": {
+    "windows": "Microsoft Windows 11 专业版",
+    "windowsVersion": "10.0.26300",
+    "architecture": "64 位",
+    "appProductVersion": "6.0.3+9aacf56bda2edd4316fcd026d565801cad45a918",
+    "configuration": "Release",
+    "webView2RuntimeVersion": "157.0.4341.46",
+    "logicalProcessorCount": 20
+  },
+  "coverage": {
+    "rootPid": 2100,
+    "rootStartedUtc": "2026-11-17T13:38:19.6529300Z",
+    "firstSampleUtc": "2026-11-17T13:39:30.6735610Z",
+    "lastSampleUtc": "2026-11-17T13:55:51.3514759Z",
+    "requestedSamples": 181,
+    "actualSamples": 181,
+    "sequenceContiguous": true,
+    "requestedIntervalSeconds": 5,
+    "actualIntervalSeconds": {
+      "first": 5.459,
+      "last": 5.483,
+      "delta": 0.024,
+      "minimum": 5.364,
+      "maximum": 6.28
+    },
+    "sampleSpanSeconds": 980.678,
+    "sampleSpanMinutes": 16.345,
+    "samplerElapsedMs": 981100,
+    "firstSampleAfterRootStartSeconds": 71.021,
+    "requestedObservationCompleted": true,
+    "rootAliveInAllSamples": true,
+    "eventLogLastUtc": "2026-11-17T14:10:05.6510533+00:00",
+    "eventLogExtendsPastSampling": true,
+    "coversWholeApplicationLifetime": false
+  },
+  "resources": {
+    "treeWorkingSetMiB": {
+      "first": 938.602,
+      "last": 1244.457,
+      "delta": 305.855,
+      "minimum": 852.422,
+      "maximum": 1328.973
+    },
+    "treePrivateMiB": {
+      "first": 556.594,
+      "last": 680.715,
+      "delta": 124.121,
+      "minimum": 477.5,
+      "maximum": 744.238
+    },
+    "threads": {
+      "first": 230,
+      "last": 355,
+      "delta": 125,
+      "minimum": 223,
+      "maximum": 388
+    },
+    "handles": {
+      "first": 6101,
+      "last": 9396,
+      "delta": 3295,
+      "minimum": 6085,
+      "maximum": 9465
+    },
+    "processCount": {
+      "first": 9,
+      "last": 15,
+      "delta": 6,
+      "minimum": 9,
+      "maximum": 15
+    },
+    "webView2ProcessCount": {
+      "first": 6,
+      "last": 12,
+      "delta": 6,
+      "minimum": 6,
+      "maximum": 12
+    },
+    "uniqueObservedPidStartTimePairs": 15,
+    "observedCpuDeltaSeconds": 287.984,
+    "meanObservedCoreEquivalentPercent": 29.366,
+    "meanObservedWholeMachinePercent": 1.468,
+    "peakIntervalObservedCoreEquivalentPercent": 67.721,
+    "cpuLimitations": "Derived only from CPU counters of observed identical PID/starttime pairs. No unobserved process lifetime or total machine utilization inferred.",
+    "lastFiveMinutes": {
+      "sampleCount": 56,
+      "treeWorkingSetMiB": {
+        "first": 1264.723,
+        "last": 1244.457,
+        "delta": -20.266,
+        "minimum": 1228.977,
+        "maximum": 1272.555
+      },
+      "treePrivateMiB": {
+        "first": 675.934,
+        "last": 680.715,
+        "delta": 4.781,
+        "minimum": 663.168,
+        "maximum": 698.359
+      },
+      "processCount": {
+        "first": 15,
+        "last": 15,
+        "delta": 0,
+        "minimum": 15,
+        "maximum": 15
+      },
+      "webView2ProcessCount": {
+        "first": 12,
+        "last": 12,
+        "delta": 0,
+        "minimum": 12,
+        "maximum": 12
+      }
+    },
+    "contextReportedCpuDeltaSeconds": 290.0625,
+    "cpuComparisonNote": "The source context aggregates tree CPU change including new processes. The summary sums last-minus-first counters for each observed PID/starttime pair (287.984s), excluding initial CPU already accumulated before a newly seen process first appears; neither is total machine CPU utilization."
+  },
+  "lifecycle": {
+    "eventKinds": {
+      "application-start": 1,
+      "sidecar-created": 1,
+      "window-initialize-start": 1,
+      "window-initialize-completed": 1,
+      "window-created": 1,
+      "host-route-request": 2,
+      "shell-initialize-requested": 3,
+      "host-loaded": 1,
+      "sidecar-ready": 1,
+      "shell-profile-created": 1,
+      "stage53-drag-attached": 1,
+      "stage53-drag-summary": 1,
+      "webview-created": 2,
+      "webview-source-changed": 1,
+      "webview-navigation": 2,
+      "ws-bounds-decision": 23,
+      "window-presentation-state": 11,
+      "workspace-page": 33,
+      "workspace-presentation-enter": 4,
+      "ws-initialize": 1,
+      "ws-account-selected": 2,
+      "navigation-starting": 1,
+      "navigation-completed": 1,
+      "workspace-presentation-exit": 3
+    },
+    "webViewCreationByRole": {
+      "shell": 1,
+      "ws-visible": 1
+    },
+    "webViewNavigationByRole": {
+      "shell": 1,
+      "ws-visible": 1
+    },
+    "webViewNavigationSuccessCount": 2,
+    "navigationStartingCount": 1,
+    "navigationCompleted": [
+      {
+        "at": "2026-11-17T13:40:49.6983515+00:00",
+        "success": true,
+        "outcome": "isolated-document",
+        "retries": 0,
+        "generation": 1
+      }
+    ],
+    "accountSelectedCount": 2,
+    "distinctSelectedAccounts": 1,
+    "accountSelections": [
+      {
+        "at": "2026-11-17T13:40:49.5566433+00:00",
+        "accountAlias": "observed-account-1",
+        "created": true,
+        "reload": false,
+        "generation": 1
+      },
+      {
+        "at": "2026-11-17T14:01:16.9582647+00:00",
+        "accountAlias": "observed-account-1",
+        "created": false,
+        "reload": false,
+        "generation": 1
+      }
+    ],
+    "pageEventsByPage": {
+      "overview": 10,
+      "accounts": 2,
+      "chat": 5,
+      "groups": 4,
+      "members": 2,
+      "collection": 2,
+      "contacts": 2,
+      "crm": 2,
+      "ai": 2,
+      "settings": 2
+    },
+    "countsSnapshotAt": "2026-11-17T14:10:05.6455113+00:00",
+    "countsSnapshotSuppressed": 0,
+    "shutdownEventCount": 0,
+    "exitVerification": "NotTested; no current OS process exit or application shutdown claim"
+  },
+  "limits": [
+    "No defined performance threshold; observation does not grant a performance Gate.",
+    "Working-set growth alone is not proof of a leak. Second WebView core creation changes the process-tree baseline; no forced GC or steady-state reuse proof is claimed.",
+    "Sampling covers the requested interval, not initial startup, subsequent UI operations or shutdown.",
+    "Only one distinct selected account appears; this does not verify ten account switches.",
+    "Event and count files are snapshots taken while the window remains active, so later counter changes are possible."
+  ],
+  "rawLogArchiveRisk": {
+    "absoluteLocalPathValues": 1,
+    "targetFieldValues": 3,
+    "targetValuesWithQuery": 0,
+    "credentialLikeFieldNames": [],
+    "rawFilesMayExpose": [
+      "Windows username/temp paths",
+      "native process IDs, handles and window geometry",
+      "local service ports and internal target strings",
+      "account identifiers"
+    ],
+    "recommendation": "Archive this whitelist summary or a separately sanitized event subset. Do not copy connection.private.json, profile directories, SQLite files, or private configuration. Source hash is for the allowed text snapshot only."
+  },
+  "production": "FROZEN",
+  "performanceGate": "NotTested",
+  "s3Gate": "No change inferred"
+}

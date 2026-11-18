@@ -1,0 +1,39 @@
+{
+  "scope": "Independent isolated Edge main-render and lightweight stylesheet/navigation contract after the full run at 5316b6c.",
+  "productCommit": "1dbab88",
+  "equivalentCodeAt": "63404b4",
+  "render": {
+    "command": "resources/app/node.exe scripts/delivery/s1-main-visual.test.cjs",
+    "exitCode": 0,
+    "summary": "S1 main visual actual-render/full-CSS computed styles: 8 viewports × 20 routes PASS",
+    "viewports": 8,
+    "routesPerViewport": 20,
+    "logLastWriteUtc": "2026-11-18T07:20:45.316Z"
+  },
+  "contract": {
+    "command": "resources/app/node.exe tests/horizon-atelier-contract.test.cjs",
+    "exitCode": 0,
+    "summary": "Horizon Atelier contract: dynamic data, exact navigation, collapsible/responsive shell and no preview samples",
+    "logLastWriteUtc": "2026-11-18T07:22:08.990Z"
+  },
+  "sourceBindings": [
+    {
+      "path": "resources/app/modules/home-6.css",
+      "sha256": "24070d196804b6dab151e807459997f261db7352df5be4e6a464d8d3c2d8d555",
+      "bytes": 18764,
+      "encoding": "Git blob bytes at 1dbab88 and 63404b4"
+    },
+    {
+      "path": "scripts/delivery/s1-main-visual.test.cjs",
+      "sha256": "defeb070ac69ca75b2897693d73a7a60fd0a7d68e6b457f91b229c6383d171cf",
+      "bytes": 38807,
+      "encoding": "Git blob bytes at 1dbab88 and 63404b4"
+    },
+    {
+      "path": "tests/horizon-atelier-contract.test.cjs",
+      "sha256": "a5d4f29dfe74d48f2e7f05219892d7607a52ee534e78818f84a173d4b9b92e55",
+      "bytes": 11594,
+      "encoding": "Git blob bytes at 1dbab88 and 63404b4"
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "synthetic": true,
+  "readOnlyVerification": true,
+  "productionOpened": false,
+  "realWs": false,
+  "realAi": false,
+  "followMarker": "ISOLATED_S3_NATIVE_FOLLOW_1117",
+  "sourceCustomerId": "C-native",
+  "sourceRows": 1,
+  "nextDue": "2026-11-24",
+  "lastFollow": "2026-11-17",
+  "customers": 52,
+  "registrations": 3,
+  "followups": 3,
+  "tickets": 1,
+  "deposits": 1,
+  "manualFieldPreserved": true,
+  "noUnintendedCustomerDelete": true,
+  "stage": {
+    "mode": "stage-moved",
+    "customerId": "ISOLATED_S3_001",
+    "phase": "潜在客户",
+    "phaseHistory": [
+      {
+        "from": "新客户",
+        "to": "潜在客户",
+        "at": "2026-11-17T06:55:08.265Z"
+      }
+    ],
+    "counts": {
+      "新客户": 8,
+      "潜在客户": 11,
+      "意向客户": 8,
+      "高意向": 8,
+      "成交客户": 8,
+      "暂停跟进": 8,
+      "未设置": 1
+    },
+    "otherCustomerIdsAndPhasesPreserved": true
+  }
+}

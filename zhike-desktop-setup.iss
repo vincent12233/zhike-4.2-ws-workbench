@@ -1,8 +1,8 @@
 #ifndef AppVersion
-#define AppVersion "6.0.1"
+#define AppVersion "6.1.0"
 #endif
 #ifndef StageDir
-#define StageDir "work\\winui-bundle\\zhike-winui-6.0.1-win-x64"
+#define StageDir "work\\winui-bundle\\zhike-winui-6.1.0-win-x64"
 #endif
 #ifndef BuildOutputDir
 #define BuildOutputDir "work\\winui-installer-output"
@@ -24,6 +24,7 @@ OutputBaseFilename=知客-{#AppVersion}-WinUI桌面版
 Compression=lzma2/fast
 SolidCompression=yes
 WizardStyle=modern
+MinVersion=10.0.22621
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 SetupIconFile={#IconFile}
@@ -31,7 +32,7 @@ CloseApplications=yes
 RestartApplications=no
 DisableProgramGroupPage=yes
 SetupLogging=yes
-UninstallDisplayIcon={app}\zhike-horizon-6-0-1.ico
+UninstallDisplayIcon={app}\zhike-horizon-6-1-0.ico
 
 [Languages]
 Name: "chinesesimp"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
@@ -40,7 +41,7 @@ Name: "chinesesimp"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 Source: "{#StageDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; A versioned shortcut icon path prevents Windows Explorer from reusing the
 ; cached blue pre-6.0 tile after an in-place upgrade.
-Source: "{#StageDir}\zhike.ico"; DestDir: "{app}"; DestName: "zhike-horizon-6-0-1.ico"; Flags: ignoreversion
+Source: "{#StageDir}\zhike.ico"; DestDir: "{app}"; DestName: "zhike-horizon-6-1-0.ico"; Flags: ignoreversion
 
 [InstallDelete]
 ; All business data and credentials live outside {app}, under the isolated
@@ -58,7 +59,7 @@ Type: files; Name: "{app}\*.pdb"
 Type: files; Name: "{app}\*.pri"
 Type: files; Name: "{app}\*.winmd"
 Type: files; Name: "{app}\zhike*.ico"
-; 6.0.1 keeps a single desktop entry. These names were created by earlier
+; Keep a single desktop entry. These names were created by earlier
 ; WinUI packages and point to the same executable, so retaining them makes one
 ; installed product look like multiple clients.
 Type: files; Name: "{autodesktop}\知客原生桌面版.lnk"
@@ -95,6 +96,12 @@ Type: files; Name: "{app}\release-notes-5.3.15.md"
 Type: files; Name: "{app}\release-notes-5.3.16.md"
 Type: files; Name: "{app}\release-notes-5.3.17.md"
 Type: files; Name: "{app}\release-notes-5.3.18.md"
+; Remove obsolete release notes from prior 5.4/6.0.0/6.0.1 packages so an
+; in-place upgrade leaves one coherent application payload. User data
+; remains outside {app} under %LOCALAPPDATA%\Zhike6 and is not touched.
+Type: files; Name: "{app}\release-notes-5.4.0.md"
+Type: files; Name: "{app}\release-notes-6.0.0.md"
+Type: files; Name: "{app}\release-notes-6.0.1.md"
 Type: files; Name: "{app}\test-report-5.3.9.md"
 Type: files; Name: "{app}\server-version-deployment.md"
 Type: files; Name: "{app}\server-version-troubleshooting.md"
@@ -104,11 +111,11 @@ Type: files; Name: "{app}\resources\app\modules\operations-core.test.cjs"
 Type: files; Name: "{app}\resources\app\modules\phone-registry-seed.json"
 
 [Icons]
-Name: "{group}\知客工作台"; Filename: "{app}\Zhike.Desktop.exe"; IconFilename: "{app}\zhike-horizon-6-0-1.ico"; IconIndex: 0; WorkingDir: "{app}"
+Name: "{group}\知客工作台"; Filename: "{app}\Zhike.Desktop.exe"; IconFilename: "{app}\zhike-horizon-6-1-0.ico"; IconIndex: 0; WorkingDir: "{app}"
 ; The formal desktop build always creates a desktop shortcut.  The previous
 ; optional task defaulted to unchecked, which made users think installation
 ; had failed even though the app was installed under LocalAppData.
-Name: "{autodesktop}\知客工作台"; Filename: "{app}\Zhike.Desktop.exe"; IconFilename: "{app}\zhike-horizon-6-0-1.ico"; IconIndex: 0; WorkingDir: "{app}"
+Name: "{autodesktop}\知客工作台"; Filename: "{app}\Zhike.Desktop.exe"; IconFilename: "{app}\zhike-horizon-6-1-0.ico"; IconIndex: 0; WorkingDir: "{app}"
 
 [Run]
 Filename: "{app}\Zhike.Desktop.exe"; Description: "启动知客工作台"; Flags: nowait postinstall skipifsilent
@@ -118,6 +125,7 @@ Filename: "{app}\Zhike.Desktop.exe"; Description: "启动知客工作台"; Flags
 
 [Code]
 const
+  WebView2ClientKey = 'Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}';
   PreviousElectronUninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{C3EDBD10-E7B9-4C06-A297-6184F7DDE410}_is1';
 
 function QueryPreviousElectronUninstaller(var CommandLine: String): Boolean;
@@ -171,7 +179,7 @@ begin
     Exit;
   SplitUninstallCommand(CommandLine, Filename, Parameters);
   if (Filename = '') or (not FileExists(Filename)) then begin
-    Log('Previous Electron uninstall entry is orphaned; no executable remains to retire, so 6.0 installation will continue.');
+    Log('Previous Electron uninstall entry is orphaned; no executable remains to retire, so installation will continue.');
     Result := True;
     Exit;
   end;
@@ -191,44 +199,47 @@ function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
   Result := '';
   if not RetirePreviousElectronClient() then
-    Result := '检测到旧版知客客户端，但未能安全卸载。请先在 Windows“已安装的应用”中卸载“知客运营工作台”，再重新运行 6.0 安装程序。旧版数据目录不会被读取、迁移或删除。';
+    Result := '检测到旧版知客客户端，但未能安全卸载。请先在 Windows“已安装的应用”中卸载“知客运营工作台”，再重新运行知客安装程序。旧版数据目录不会被读取、迁移或删除。';
+end;
+
+function IsInstalledWebView2Version(const VersionText: String): Boolean;
+var
+  I: Integer;
+  DotCount: Integer;
+  HasDigit: Boolean;
+  Version: Int64;
+begin
+  Result := False;
+  DotCount := 0;
+  HasDigit := False;
+  for I := 1 to Length(VersionText) do begin
+    if VersionText[I] = '.' then begin
+      if not HasDigit then Exit;
+      DotCount := DotCount + 1;
+      HasDigit := False;
+    end else begin
+      if (VersionText[I] < '0') or (VersionText[I] > '9') then Exit;
+      HasDigit := True;
+    end;
+  end;
+  if (DotCount <> 3) or not HasDigit then Exit;
+  if not StrToVersion(VersionText, Version) then Exit;
+  Result := Version > 0;
+end;
+
+function WebView2RuntimeRegistered(RootKey: Integer): Boolean;
+var
+  VersionText: String;
+begin
+  Result := False;
+  if RegQueryStringValue(RootKey, WebView2ClientKey, 'pv', VersionText) then
+    Result := IsInstalledWebView2Version(VersionText);
 end;
 
 function HasWebView2Runtime(): Boolean;
-var
-  SubKeys: TArrayOfString;
-  I: Integer;
-  ClientKey: String;
-  ProductName: String;
 begin
-  Result := False;
-  if RegGetSubkeyNames(HKCU, 'Software\Microsoft\EdgeUpdate\Clients', SubKeys) then
-    for I := 0 to GetArrayLength(SubKeys) - 1 do begin
-      ClientKey := 'Software\Microsoft\EdgeUpdate\Clients\' + SubKeys[I];
-      if RegQueryStringValue(HKCU, ClientKey, 'name', ProductName) and
-         (Pos('WebView2', ProductName) > 0) and RegValueExists(HKCU, ClientKey, 'pv') then begin
-        Result := True;
-        Exit;
-      end;
-    end;
-  if RegGetSubkeyNames(HKLM, 'Software\Microsoft\EdgeUpdate\Clients', SubKeys) then
-    for I := 0 to GetArrayLength(SubKeys) - 1 do begin
-      ClientKey := 'Software\Microsoft\EdgeUpdate\Clients\' + SubKeys[I];
-      if RegQueryStringValue(HKLM, ClientKey, 'name', ProductName) and
-         (Pos('WebView2', ProductName) > 0) and RegValueExists(HKLM, ClientKey, 'pv') then begin
-        Result := True;
-        Exit;
-      end;
-    end;
-  if RegGetSubkeyNames(HKLM, 'Software\WOW6432Node\Microsoft\EdgeUpdate\Clients', SubKeys) then
-    for I := 0 to GetArrayLength(SubKeys) - 1 do begin
-      ClientKey := 'Software\WOW6432Node\Microsoft\EdgeUpdate\Clients\' + SubKeys[I];
-      if RegQueryStringValue(HKLM, ClientKey, 'name', ProductName) and
-         (Pos('WebView2', ProductName) > 0) and RegValueExists(HKLM, ClientKey, 'pv') then begin
-        Result := True;
-        Exit;
-      end;
-    end;
+  { Microsoft's Evergreen per-user key and x64 machine key in the 32-bit view. }
+  Result := WebView2RuntimeRegistered(HKCU) or WebView2RuntimeRegistered(HKLM32);
 end;
 
 function InitializeSetup(): Boolean;
@@ -236,10 +247,15 @@ var
   Choice: Integer;
   ErrorCode: Integer;
 begin
-  Result := True;
-  if not HasWebView2Runtime() then begin
-    Choice := MsgBox('未检测到 Microsoft Edge WebView2 Evergreen Runtime。知客可以继续安装，但 WS 与业务页面需要此运行时。是否现在打开微软官方下载页？', mbConfirmation, MB_YESNO);
-    if Choice = IDYES then
-      ShellExec('open', 'https://developer.microsoft.com/microsoft-edge/webview2/', '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
-  end;
+  Result := HasWebView2Runtime();
+  if Result then
+    Exit;
+
+  Log('Microsoft Edge WebView2 Evergreen Runtime is required. Install it before rerunning Setup. Setup cancelled before changing files.');
+  if WizardSilent() then
+    Exit;
+
+  Choice := MsgBox('未检测到 Microsoft Edge WebView2 Evergreen Runtime，知客安装已中止。请安装此运行时后重新运行安装程序。是否现在打开微软官方下载页？', mbConfirmation, MB_YESNO);
+  if Choice = IDYES then
+    ShellExec('open', 'https://developer.microsoft.com/microsoft-edge/webview2/', '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
 end;

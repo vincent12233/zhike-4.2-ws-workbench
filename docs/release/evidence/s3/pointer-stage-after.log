@@ -1,0 +1,39 @@
+[PASS] actual pointer drag stores the canonical stage data, independent of decorated visible label
+[PASS] same canonical stage is a no-op with no snapshot, persistence or activity
+[PASS] unset stage follows the existing core stageColumns identity and is a no-op
+[PASS] a target lacking its canonical stage cannot derive a writable stage from text
+[PASS] snapshot refusal makes no customer, history or activity changes
+[PASS] failed existing flush restores the entire customer and activity history
+[PASS] external drops and deleted customer cards cannot trigger a write
+[PASS] repeated real refresh does not multiply pointer subscriptions or retain a native stage drag engine
+[PASS] overlapping drops for one customer have one in-flight snapshot and commit
+[PASS] failed stage persistence releases its guard for a later valid retry
+{"observation":"actual-stage-overlap","concurrentCommit":false,"otherPhase":"新客户","otherAuditPresent":false}
+[PASS] different-customer drops cannot overlap an activity snapshot rollback
+[PASS] subthreshold pointer movement preserves the original button click and never captures or writes
+[PASS] six effective pixels starts capture and source-only drag feedback without moving DOM nodes
+[PASS] only the immediate source post-drag click is suppressed; the next normal tap still opens
+[PASS] a drag without browser click cannot consume a later genuine tap or keyboard activation
+[PASS] right-button and nonprimary pointers retain ordinary input and never start a stage move
+[PASS] hit testing accepts a target child but never an outside board or detached column
+[PASS] release rechecks its actual location and cannot reuse a previously highlighted column
+[PASS] pointercancel, lost capture, blur, Escape and hidden document cancel with full feedback cleanup
+[PASS] pointer identity and captured source ownership reject unrelated move, up and lost-capture events
+[PASS] a replaced view cancels its old captured card and late pointerup while fresh cards remain usable
+[PASS] changed phase, removed identity and deleted records invalidate an in-progress pointer gesture
+[PASS] snapshot await cannot commit after board replacement, route exit, identity replacement or independent phase change
+[PASS] failed pointer capture cancels safely without consuming a normal button activation
+[PASS] duplicate pointerup cannot commit twice and snapshot rejection releases the shared guard
+[PASS] the existing phase-history cap and complete original activity/persistence chain are preserved
+[PASS] manual task registered action uses the existing status fields and persists once
+[PASS] manual task failure restores its original completion state
+[PASS] AI action uses the original follow-up boundary without local task writes
+[PASS] AI action failure restores all original task fields
+[PASS] actual empty stage board has no fabricated positive distribution lengths
+[PASS] actual populated board distribution preserves true counts and zero-member stages
+[PASS] manual task insight identifies human provenance and labels its due value as a deadline
+[PASS] manual task missing details do not become invented AI advice
+[PASS] AI task keeps provided advice but a task deadline is not an inferred contact window
+[PASS] AI task absent evidence stays explicitly unprovided instead of default generated advice
+[PASS] no selected task does not imply an AI recommendation exists
+{"suite":"delivery-s3-actual-operations-handlers","passed":37,"actualShippedModules":true,"syntheticHostOnly":true,"realBrowser":false,"realService":false,"realDatabase":false,"realWhatsApp":false}

@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794933133736-d8059533-b09d-4c78-a445-5dc0a05df0e8",
+  "mode": "real-edge-synthetic-layout",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 30000,
+  "launchedAt": "2026-11-17T16:32:13.736Z",
+  "events": [
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 550
+    },
+    {
+      "event": "cdp-ready",
+      "elapsedMs": 743
+    },
+    {
+      "event": "owned-target-created",
+      "elapsedMs": 1446
+    },
+    {
+      "event": "owned-session-attached",
+      "elapsedMs": 1458
+    },
+    {
+      "event": "viewport-configured",
+      "elapsedMs": 1480,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "event": "navigation-started",
+      "elapsedMs": 1483
+    },
+    {
+      "event": "viewport-verified",
+      "elapsedMs": 1819,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 2066
+    },
+    {
+      "event": "owned-session-detached",
+      "elapsedMs": 2071
+    },
+    {
+      "event": "owned-target-close-confirmed",
+      "elapsedMs": 2072
+    },
+    {
+      "event": "owned-browser-close-requested",
+      "elapsedMs": 2072
+    },
+    {
+      "event": "browser-close-acknowledged",
+      "elapsedMs": 2073,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "cdp-transport-close-requested",
+      "elapsedMs": 2073
+    },
+    {
+      "event": "cdp-transport-closed",
+      "elapsedMs": 2074,
+      "code": 1000
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 2074,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 3233,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 3240
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 3240
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 3240
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 3240
+    }
+  ],
+  "identities": [
+    {
+      "pid": 33168,
+      "startedTicks": "639305299337424818",
+      "startedUtc": "2026-11-17T16:32:13.7424818Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 28720,
+      "startedTicks": "639305299344751724",
+      "startedUtc": "2026-11-17T16:32:14.4751724Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 35404,
+      "startedTicks": "639305299343740607",
+      "startedUtc": "2026-11-17T16:32:14.3740607Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 500,
+      "startedTicks": "639305299341352409",
+      "startedUtc": "2026-11-17T16:32:14.1352409Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 14540,
+      "startedTicks": "639305299341434883",
+      "startedUtc": "2026-11-17T16:32:14.1434883Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 18580,
+      "startedTicks": "639305299342058682",
+      "startedUtc": "2026-11-17T16:32:14.2058682Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "pid": 33168,
+  "profile": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s1-main-style-2TnUKA\\edge-profile-9ea99583-b3c6-4a1f-b16a-502a429089b0",
+  "resourceReleaseOrder": "owned-session-target-browser",
+  "devToolsReadiness": {
+    "polls": 1,
+    "enoent": 0,
+    "ebusy": 0,
+    "partial": 0
+  },
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "rootExitProof": "verified-spawn-handle-exit-and-streams",
+  "remainingIdentities": [],
+  "elapsedMs": 3725,
+  "stdoutBytes": 0,
+  "stderrBytes": 281,
+  "failure": {
+    "code": "ERR_ASSERTION",
+    "phase": "assertion",
+    "message": "Every real browser case must finish before close\n\nundefined !== 1\n"
+  }
+}

@@ -81,7 +81,13 @@ async function benchmark(size, ordinal) {
         const active = i >= size-activeCount;
         customers.push({ id:customerId, name:`Synthetic ${suffix}` });
         tasks.push({ id:`t${suffix}`, aiGenerated:true, wsAccountId:'default', wsConversationId:conversationId, wsAnalysisId:analysisId, customerId, due:active ? '2020-01-01' : '2099-01-01', done:false, status:'open' });
-        conversationInsert.run(conversationId,'default',`9190${suffix}`,`Synthetic ${suffix}`,'','','',JSON.stringify({ conversationType:'direct' }),now,now,'',0,'');
+        // Keep the synthetic conversation inside the production AI eligibility
+        // contract.  The endpoint deliberately rejects incomplete/stale
+        // history, so a benchmark fixture that only sets conversationType
+        // measures the policy guard (always zero alerts) instead of the
+        // follow-up query path.
+        const historyFingerprint = `bench-history-${suffix}`;
+        conversationInsert.run(conversationId,'default',`9190${suffix}`,`Synthetic ${suffix}`,'','','',JSON.stringify({ conversationType:'direct', historyLoaded:true, historyFingerprint, lastMessageFingerprint:historyFingerprint, directionVersion:4 }),now,now,now,0,'');
         analysisInsert.run(analysisId,'default',conversationId,active ? activeResult : quietResult,.9,'synthetic','synthetic','',now,now);
       }
       db.prepare('INSERT INTO app_state(id,json,updated_at,revision) VALUES(1,?,?,1)').run(JSON.stringify({ customers, settings:{ operatingTasks:tasks }, tickets:[], deposits:[], followups:[], registrations:[], phoneRegistry:[], activities:[] }),now);

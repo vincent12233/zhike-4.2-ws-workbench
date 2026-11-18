@@ -1,0 +1,1429 @@
+{
+  "scope": "Isolated synthetic Edge invocations. Lifecycle and page assertion evidence are separate.",
+  "totals": {
+    "invocations": 20,
+    "passed": 19,
+    "failed": 1,
+    "missingAssertionsEvidence": 0,
+    "failedByPhase": {
+      "result": 1
+    }
+  },
+  "calls": [
+    {
+      "trial": "A-01",
+      "invocation": "1795029523112-0a7ef8e5-e2e3-4467-bebb-8e6f9e3fff04",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 4434.070199999999,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 4451.8072999999995,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 2985.8075,
+        "result-ready": 3505.8404,
+        "owned-session-detached": 3510.1188,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 3511.2632,
+        "browser-close-request-sent": 3511.5831,
+        "browser-close-acknowledged": 3512.4161,
+        "cdp-transport-closed": 3515.7632,
+        "close-request-complete": 3515.9093000000003,
+        "close-request-failed": null,
+        "process-exit": 4353.8515,
+        "streams-close": 4361.1901,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/A-01/1795029523112-0a7ef8e5-e2e3-4467-bebb-8e6f9e3fff04.json",
+          "bytes": 13005,
+          "sha256": "c7b46b1a719b200fc755f797b926ac079bdeabcce01b8b1dc5dffc00293424ac"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/A-01/1795029523112-0a7ef8e5-e2e3-4467-bebb-8e6f9e3fff04.kernel.jsonl",
+          "bytes": 2909,
+          "sha256": "a2d032dcd7f0052d8d50c6f1d8e5cefeca77afe585b26e934a6c6025d5a4a992"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/A-01/1795029523112-0a7ef8e5-e2e3-4467-bebb-8e6f9e3fff04.assertions.json",
+          "bytes": 134,
+          "sha256": "eca5103fb47edf5f4a92c9648388a55a0e08f3b07a601662fa7336b23a7255fc"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/A-01/1795029523112-0a7ef8e5-e2e3-4467-bebb-8e6f9e3fff04.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    },
+    {
+      "trial": "A-02",
+      "invocation": "1795029576509-ce74b79e-c418-43dc-84bf-fe4dfb6dc4a2",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 5044.1479,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 5048.6716,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 1978.6518999999998,
+        "result-ready": 3624.8605000000002,
+        "owned-session-detached": 3629.9224,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 3630.7148,
+        "browser-close-request-sent": 3631.029,
+        "browser-close-acknowledged": 3632.2516,
+        "cdp-transport-closed": 3635.7633,
+        "close-request-complete": 3635.8833,
+        "close-request-failed": null,
+        "process-exit": 4965.2675,
+        "streams-close": 4972.5746,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/A-02/1795029576509-ce74b79e-c418-43dc-84bf-fe4dfb6dc4a2.json",
+          "bytes": 13299,
+          "sha256": "a56206916515ff4e2e666087bafc8775e74c0985d9b5391a125195eb0cd39965"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/A-02/1795029576509-ce74b79e-c418-43dc-84bf-fe4dfb6dc4a2.kernel.jsonl",
+          "bytes": 2959,
+          "sha256": "3be3633e0e8415d8931b4c9ddf48073e09d8971e50ceace86c381f5753020b48"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/A-02/1795029576509-ce74b79e-c418-43dc-84bf-fe4dfb6dc4a2.assertions.json",
+          "bytes": 125,
+          "sha256": "7cbc6214cd629b596651e51d8b9ae0aeda2d2c1b02fe5a99abe1f850af85aa96"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/A-02/1795029576509-ce74b79e-c418-43dc-84bf-fe4dfb6dc4a2.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    },
+    {
+      "trial": "A-03",
+      "invocation": "1795029613449-1493702e-f8ad-406b-a333-21f37b30a062",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 3936.1007000000004,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 4916.726900000001,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 1846.1991,
+        "result-ready": 2346.3087,
+        "owned-session-detached": 2352.5129,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 2353.4276000000004,
+        "browser-close-request-sent": 2353.7291,
+        "browser-close-acknowledged": 2354.4688,
+        "cdp-transport-closed": 2358.253,
+        "close-request-complete": 2358.3877,
+        "close-request-failed": null,
+        "process-exit": 3858.3830000000003,
+        "streams-close": 3865.6863000000003,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/A-03/1795029613449-1493702e-f8ad-406b-a333-21f37b30a062.json",
+          "bytes": 13098,
+          "sha256": "da5ba96e90b3fb410aa2bf01d0b7edd3afedba3502bf888923994644f9878462"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/A-03/1795029613449-1493702e-f8ad-406b-a333-21f37b30a062.kernel.jsonl",
+          "bytes": 2928,
+          "sha256": "b3c586642598b83094fefd4a04ece8094c5e8cd4aa7681e1f0c1b0fdb0a43e37"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/A-03/1795029613449-1493702e-f8ad-406b-a333-21f37b30a062.assertions.json",
+          "bytes": 133,
+          "sha256": "02cef0daaf4f7ace790ded99e5f281744a49f5276a35b698db0587bdfd73f58d"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/A-03/1795029613449-1493702e-f8ad-406b-a333-21f37b30a062.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    },
+    {
+      "trial": "A-04",
+      "invocation": "1795029623614-57ed77cd-24c3-4942-b02f-60c33e8c3888",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 3100.3626,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 3104.5804,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 1751.3064,
+        "result-ready": 2228.9834,
+        "owned-session-detached": 2233.8204,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 2234.9763000000003,
+        "browser-close-request-sent": 2235.2821,
+        "browser-close-acknowledged": 2235.9722,
+        "cdp-transport-closed": 2239.6087,
+        "close-request-complete": 2239.7677,
+        "close-request-failed": null,
+        "process-exit": 3018.9954000000002,
+        "streams-close": 3027.5129,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/A-04/1795029623614-57ed77cd-24c3-4942-b02f-60c33e8c3888.json",
+          "bytes": 12773,
+          "sha256": "f1073e8c1265fe932f7075ce30b2b2836698a06f7e4b1f8fbc215a6c6e27e649"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/A-04/1795029623614-57ed77cd-24c3-4942-b02f-60c33e8c3888.kernel.jsonl",
+          "bytes": 2931,
+          "sha256": "71491a1b01acb679f6973494e8069792d7e87fa9782f0958958be402368f3f3f"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/A-04/1795029623614-57ed77cd-24c3-4942-b02f-60c33e8c3888.assertions.json",
+          "bytes": 125,
+          "sha256": "4be872f35eb661fccf2df1ead0b9337364dd79d99150599582b5d0d7c18fa14c"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/A-04/1795029623614-57ed77cd-24c3-4942-b02f-60c33e8c3888.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    },
+    {
+      "trial": "A-05",
+      "invocation": "1795029631054-712f75b5-cd9c-4899-af92-61d18f3354e7",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 4883.8274,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 4888.086899999999,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 1635.5436,
+        "result-ready": 3218.5029,
+        "owned-session-detached": 3224.9085,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 3225.8962,
+        "browser-close-request-sent": 3226.2491,
+        "browser-close-acknowledged": 3227.0381,
+        "cdp-transport-closed": 3230.7977,
+        "close-request-complete": 3230.9771,
+        "close-request-failed": null,
+        "process-exit": 4803.673,
+        "streams-close": 4810.5333,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/A-05/1795029631054-712f75b5-cd9c-4899-af92-61d18f3354e7.json",
+          "bytes": 12848,
+          "sha256": "d26d5456c77ac95d712480fe290ebc09176f52f450a85275c9b9cd40294d5587"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/A-05/1795029631054-712f75b5-cd9c-4899-af92-61d18f3354e7.kernel.jsonl",
+          "bytes": 2908,
+          "sha256": "3a2fe22e4f1f56a61b3737c7f2d893ec8b23fe858e05a23fe125dfc0a93b4c0d"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/A-05/1795029631054-712f75b5-cd9c-4899-af92-61d18f3354e7.assertions.json",
+          "bytes": 133,
+          "sha256": "57bd9a1a51ae7faf176f4b0ad5248b2512ade31aa09b5ea42d762e42824864e0"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/A-05/1795029631054-712f75b5-cd9c-4899-af92-61d18f3354e7.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    },
+    {
+      "trial": "A-06",
+      "invocation": "1795029640774-ef884863-f67a-4add-aa24-3147cb02a541",
+      "status": "Failed",
+      "lifecycleStatus": "Failed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 30017.618400000003,
+      "resultReady": false,
+      "resultCases": null,
+      "visualAssertionsRecorded": false,
+      "visualAssertionsElapsedMs": null,
+      "exit": null,
+      "streamsClosed": false,
+      "cleanupSafe": false,
+      "forceTerminated": true,
+      "primaryFailure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "result"
+      },
+      "releaseFailure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit"
+      },
+      "timingMs": {
+        "result-verified": null,
+        "result-ready": null,
+        "owned-session-detached": null,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": null,
+        "browser-close-request-sent": null,
+        "browser-close-acknowledged": null,
+        "cdp-transport-closed": null,
+        "close-request-complete": null,
+        "close-request-failed": 30013.369100000004,
+        "process-exit": null,
+        "streams-close": null,
+        "deadline-timeout": 28515.298300000002,
+        "failure-owned-handle-termination-started": 30013.5289
+      },
+      "independentKernel": {
+        "ending": "original-deadline",
+        "waitStatus": 258,
+        "waitStatusBeforeQuery": 258,
+        "waitStatusAfterQuery": 258,
+        "rawExitCode": 259,
+        "exitCode": null,
+        "exitStatusBeforeSignalObserved": false,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/A-06/1795029640774-ef884863-f67a-4add-aa24-3147cb02a541.json",
+          "bytes": 8173,
+          "sha256": "ff7f99768f4c75a54d89acb0a49ad5eb046b1a063571da872ba0f2d1faa6db95"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/A-06/1795029640774-ef884863-f67a-4add-aa24-3147cb02a541.kernel.jsonl",
+          "bytes": 4893,
+          "sha256": "6321d79e7f1d01224a8e5222801246ecce40298c724e3c1415744ae78a36b4a9"
+        },
+        "assertions": null,
+        "result": null
+      }
+    },
+    {
+      "trial": "A-07",
+      "invocation": "1795029758132-af02e584-cce4-473e-b837-ee3cf534af53",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 3842.7259,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 3846.9537,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 1620.116,
+        "result-ready": 2147.9323,
+        "owned-session-detached": 2152.2106,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 2153.0353999999998,
+        "browser-close-request-sent": 2153.3692,
+        "browser-close-acknowledged": 2154.1136,
+        "cdp-transport-closed": 2157.694,
+        "close-request-complete": 2157.9462,
+        "close-request-failed": null,
+        "process-exit": 3765.6904999999997,
+        "streams-close": 3772.4712999999997,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/A-07/1795029758132-af02e584-cce4-473e-b837-ee3cf534af53.json",
+          "bytes": 12860,
+          "sha256": "1af2fe6b8255d322bbfec21ba20b47baf2bd24928eaa15aa4dff27b588d92b6f"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/A-07/1795029758132-af02e584-cce4-473e-b837-ee3cf534af53.kernel.jsonl",
+          "bytes": 2912,
+          "sha256": "311afd2c08a01b5f707b422f7967ba77b29b1b73560779c6880f9a19191a88dd"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/A-07/1795029758132-af02e584-cce4-473e-b837-ee3cf534af53.assertions.json",
+          "bytes": 125,
+          "sha256": "f3b261672bf56591bde78dfc7de1cd7e67aaf0bf9152bf7e0c8c8c40239ea9c9"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/A-07/1795029758132-af02e584-cce4-473e-b837-ee3cf534af53.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    },
+    {
+      "trial": "A-08",
+      "invocation": "1795029766993-ffe70b31-9d51-409e-a2e5-0a171450fa07",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 3769.8768,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 3774.2343,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 2355.9773,
+        "result-ready": 2851.9798,
+        "owned-session-detached": 2858.2801,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 2859.3916,
+        "browser-close-request-sent": 2859.7221,
+        "browser-close-acknowledged": 2860.4335,
+        "cdp-transport-closed": 2864.0841,
+        "close-request-complete": 2864.2401,
+        "close-request-failed": null,
+        "process-exit": 3706.5676,
+        "streams-close": 3714.5927,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/A-08/1795029766993-ffe70b31-9d51-409e-a2e5-0a171450fa07.json",
+          "bytes": 12879,
+          "sha256": "4d210ad53417adad34d6b109291931da4b5644efaf38e56e932fc99889d4d4c9"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/A-08/1795029766993-ffe70b31-9d51-409e-a2e5-0a171450fa07.kernel.jsonl",
+          "bytes": 2933,
+          "sha256": "5851d96259f69bbbb27f4be4dfadde3c3b73c83a80942128e9ca97df8a073b95"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/A-08/1795029766993-ffe70b31-9d51-409e-a2e5-0a171450fa07.assertions.json",
+          "bytes": 125,
+          "sha256": "74749429d75a288f0c4bedef3cefca2e3e924087253fbce9d23469927e7c07c2"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/A-08/1795029766993-ffe70b31-9d51-409e-a2e5-0a171450fa07.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    },
+    {
+      "trial": "A-09",
+      "invocation": "1795029776200-ec1a6239-f912-46e1-bc27-86e35108c4eb",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 4378.298000000001,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 4382.7034,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 1857.815,
+        "result-ready": 2667.7059999999997,
+        "owned-session-detached": 2674.6729,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 2675.5316,
+        "browser-close-request-sent": 2675.8453,
+        "browser-close-acknowledged": 2676.7299,
+        "cdp-transport-closed": 2681.0532,
+        "close-request-complete": 2681.2587999999996,
+        "close-request-failed": null,
+        "process-exit": 4299.2652,
+        "streams-close": 4306.514700000001,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/A-09/1795029776200-ec1a6239-f912-46e1-bc27-86e35108c4eb.json",
+          "bytes": 12822,
+          "sha256": "be7f7670384c5540a802ab8e376a7559b626c712838afc9f206a3e61d97194e0"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/A-09/1795029776200-ec1a6239-f912-46e1-bc27-86e35108c4eb.kernel.jsonl",
+          "bytes": 2898,
+          "sha256": "5f9f61cb88b6cedecaeca9fdd511816a73dfa8ad50743c79b05e8b2d602c9444"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/A-09/1795029776200-ec1a6239-f912-46e1-bc27-86e35108c4eb.assertions.json",
+          "bytes": 125,
+          "sha256": "f920584d2e32db64a7da1993c6d810fe4f5709dab3db4b9dbe1086309f469c31"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/A-09/1795029776200-ec1a6239-f912-46e1-bc27-86e35108c4eb.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    },
+    {
+      "trial": "A-10",
+      "invocation": "1795029786129-5ff00df8-95aa-48c9-be95-0a06d80c169f",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 4949.708799999999,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 4953.9038,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 1842.3991,
+        "result-ready": 2350.9510999999998,
+        "owned-session-detached": 2378.6467,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 2384.5652,
+        "browser-close-request-sent": 2384.9878,
+        "browser-close-acknowledged": 2386.6043,
+        "cdp-transport-closed": 2390.3905999999997,
+        "close-request-complete": 2390.5272,
+        "close-request-failed": null,
+        "process-exit": 4871.423,
+        "streams-close": 4877.594,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/A-10/1795029786129-5ff00df8-95aa-48c9-be95-0a06d80c169f.json",
+          "bytes": 13364,
+          "sha256": "32080cad20318ad18539a250eb7d996a742ac865601747e2b194e93b5fa647ac"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/A-10/1795029786129-5ff00df8-95aa-48c9-be95-0a06d80c169f.kernel.jsonl",
+          "bytes": 2903,
+          "sha256": "a5d06a0dfc74a4c254d1d37c8f20902d95bf31c4fbf7801f8c7134b90a8447e5"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/A-10/1795029786129-5ff00df8-95aa-48c9-be95-0a06d80c169f.assertions.json",
+          "bytes": 125,
+          "sha256": "3938e5e97f1e2e4e60a9f475e93fcaf7ab1f0014988f31d13ef63388fb5103de"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/A-10/1795029786129-5ff00df8-95aa-48c9-be95-0a06d80c169f.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    },
+    {
+      "trial": "B-01",
+      "invocation": "1795029549325-46f54892-ef96-400d-a787-82e25fbab91f",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 3537.0329,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 3541.2023,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 1462.3148,
+        "result-ready": 1962.8036000000002,
+        "owned-session-detached": 1968.7887,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 1969.9545000000003,
+        "browser-close-request-sent": 2035.0495,
+        "browser-close-acknowledged": 2048.3909,
+        "cdp-transport-closed": 2053.6597,
+        "close-request-complete": 2053.8099,
+        "close-request-failed": null,
+        "process-exit": 3459.6406,
+        "streams-close": 3467.4415,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/B-01/1795029549325-46f54892-ef96-400d-a787-82e25fbab91f.json",
+          "bytes": 13681,
+          "sha256": "5a3b940e4f91861da9ecf14c5f02ce18230bfa3f37caef6df8f40a4506d24c70"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/B-01/1795029549325-46f54892-ef96-400d-a787-82e25fbab91f.kernel.jsonl",
+          "bytes": 2923,
+          "sha256": "ef17e82b7d1df883f6fdaff95e50bf9317898a41d271f12979615bbb69368466"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/B-01/1795029549325-46f54892-ef96-400d-a787-82e25fbab91f.assertions.json",
+          "bytes": 125,
+          "sha256": "ff5ae319dce0e94c9b943451e2547c534aa800782bd9a5e64dba1f08db3e7088"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/B-01/1795029549325-46f54892-ef96-400d-a787-82e25fbab91f.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    },
+    {
+      "trial": "B-02",
+      "invocation": "1795029610156-18875891-5542-42b7-9e30-0b4ffb623957",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 3019.2909,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 3025.4911,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 1634.1364,
+        "result-ready": 2130.5447,
+        "owned-session-detached": 2138.9241,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 2140.0185,
+        "browser-close-request-sent": 2184.4647,
+        "browser-close-acknowledged": 2194.8264,
+        "cdp-transport-closed": 2198.9006,
+        "close-request-complete": 2199.0687,
+        "close-request-failed": null,
+        "process-exit": 2943.7572999999998,
+        "streams-close": 2950.3864,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/B-02/1795029610156-18875891-5542-42b7-9e30-0b4ffb623957.json",
+          "bytes": 13173,
+          "sha256": "d2d6c3286adcc981ef74b2408a495cfe088740d2dda6ad24bd6985835330bceb"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/B-02/1795029610156-18875891-5542-42b7-9e30-0b4ffb623957.kernel.jsonl",
+          "bytes": 2902,
+          "sha256": "5ad2f5e18d11d399f95107f63a216a7bd36e785be0b503ab47d8dff6a96467ea"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/B-02/1795029610156-18875891-5542-42b7-9e30-0b4ffb623957.assertions.json",
+          "bytes": 125,
+          "sha256": "8aec111dd7a3b6c101350938eecf4fcd5053f1daa0fa7e4bef43aaa7804d5498"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/B-02/1795029610156-18875891-5542-42b7-9e30-0b4ffb623957.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    },
+    {
+      "trial": "B-03",
+      "invocation": "1795029618602-9275745f-4b43-4979-a11d-9163351e9a33",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 4797.0267,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 4801.475,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 1772.1883,
+        "result-ready": 2276.2874,
+        "owned-session-detached": 2281.2802,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 2282.2975,
+        "browser-close-request-sent": 2317.7402,
+        "browser-close-acknowledged": 2327.9652,
+        "cdp-transport-closed": 2331.9472,
+        "close-request-complete": 2332.0954,
+        "close-request-failed": null,
+        "process-exit": 4723.7969,
+        "streams-close": 4731.0116,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/B-03/1795029618602-9275745f-4b43-4979-a11d-9163351e9a33.json",
+          "bytes": 13441,
+          "sha256": "f4cd73ce35980bb563130e1ade7be5f1468f492cc885963cebd0f79bbd105ea4"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/B-03/1795029618602-9275745f-4b43-4979-a11d-9163351e9a33.kernel.jsonl",
+          "bytes": 2911,
+          "sha256": "aea9de5d60e15835c2b3094a27532f2e13dafc50107146f45b99798d808a868d"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/B-03/1795029618602-9275745f-4b43-4979-a11d-9163351e9a33.assertions.json",
+          "bytes": 124,
+          "sha256": "ffbce6935e897c7bfaa7c4ddcab7353260495758b86034743db5561fcce999ed"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/B-03/1795029618602-9275745f-4b43-4979-a11d-9163351e9a33.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    },
+    {
+      "trial": "B-04",
+      "invocation": "1795029626944-add9503d-4b24-4610-bf62-986547b35d1f",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 3893.072,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 3897.368,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 2578.5412,
+        "result-ready": 3044.5502,
+        "owned-session-detached": 3049.2377,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 3050.1589,
+        "browser-close-request-sent": 3084.0907,
+        "browser-close-acknowledged": 3093.8604,
+        "cdp-transport-closed": 3097.8708,
+        "close-request-complete": 3098.0095,
+        "close-request-failed": null,
+        "process-exit": 3816.4397,
+        "streams-close": 3823.8162,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/B-04/1795029626944-add9503d-4b24-4610-bf62-986547b35d1f.json",
+          "bytes": 13289,
+          "sha256": "b2787eea6be196c10fe3490756b7b5b7d01bd79fe675405b2b7a51e3ef4533bc"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/B-04/1795029626944-add9503d-4b24-4610-bf62-986547b35d1f.kernel.jsonl",
+          "bytes": 2885,
+          "sha256": "efba8d6355cffff9622b3082d7bc678acfbea6eff61a74a21121dbed9f96bad9"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/B-04/1795029626944-add9503d-4b24-4610-bf62-986547b35d1f.assertions.json",
+          "bytes": 124,
+          "sha256": "bfdf4a00e0eb0aeaadfe231d1cfba159037adbd883e3a452fa13b4c71f3f747f"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/B-04/1795029626944-add9503d-4b24-4610-bf62-986547b35d1f.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    },
+    {
+      "trial": "B-05",
+      "invocation": "1795029636169-49142cf4-f790-4247-a03b-22be25216d03",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 4389.2238,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 4393.5971,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 1705.3537,
+        "result-ready": 2731.1528000000003,
+        "owned-session-detached": 2738.3001000000004,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 2739.5222000000003,
+        "browser-close-request-sent": 2778.2766,
+        "browser-close-acknowledged": 2787.0913,
+        "cdp-transport-closed": 2791.7484000000004,
+        "close-request-complete": 2791.9285,
+        "close-request-failed": null,
+        "process-exit": 4312.2532,
+        "streams-close": 4319.1422,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/B-05/1795029636169-49142cf4-f790-4247-a03b-22be25216d03.json",
+          "bytes": 13256,
+          "sha256": "5df345672e02619514dd1137f7984eed774bff730c55c0a6d154fde23a25ff0a"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/B-05/1795029636169-49142cf4-f790-4247-a03b-22be25216d03.kernel.jsonl",
+          "bytes": 2919,
+          "sha256": "a29841a917be850c38c115477c0f157fd7ddfc1ffe576543bfda5c308a27880f"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/B-05/1795029636169-49142cf4-f790-4247-a03b-22be25216d03.assertions.json",
+          "bytes": 125,
+          "sha256": "2d69a74ed7b8f6af30e48f8ad21bbc25820ef86c10698093755989848cd41909"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/B-05/1795029636169-49142cf4-f790-4247-a03b-22be25216d03.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    },
+    {
+      "trial": "B-06",
+      "invocation": "1795029671842-33cb005c-a667-4559-9567-b75a8b4b20d2",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 9342.1892,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 9346.4937,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 7651.6058,
+        "result-ready": 8195.9067,
+        "owned-session-detached": 8200.9308,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 8201.8523,
+        "browser-close-request-sent": 8238.1098,
+        "browser-close-acknowledged": 8250.7294,
+        "cdp-transport-closed": 8254.5699,
+        "close-request-complete": 8254.7161,
+        "close-request-failed": null,
+        "process-exit": 9296.6461,
+        "streams-close": 9303.4044,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/B-06/1795029671842-33cb005c-a667-4559-9567-b75a8b4b20d2.json",
+          "bytes": 13759,
+          "sha256": "68782cc377099379c08ef1a8745dfc89cff80d8b2f5d110af69f41836581e687"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/B-06/1795029671842-33cb005c-a667-4559-9567-b75a8b4b20d2.kernel.jsonl",
+          "bytes": 2940,
+          "sha256": "faf62ba0bf963838c13de0ead50b4c20d0525cc1e195685423947f5ae13f57ff"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/B-06/1795029671842-33cb005c-a667-4559-9567-b75a8b4b20d2.assertions.json",
+          "bytes": 125,
+          "sha256": "0078813199e03923be7becb577334628e27aae9fbb138b1092771988764a5178"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/B-06/1795029671842-33cb005c-a667-4559-9567-b75a8b4b20d2.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    },
+    {
+      "trial": "B-07",
+      "invocation": "1795029762702-338ea70f-9049-420d-aade-9dde05eedba3",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 3972.9991000000005,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 3977.2431,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 1711.3161,
+        "result-ready": 2244.4534000000003,
+        "owned-session-detached": 2259.5184,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 2265.8223000000003,
+        "browser-close-request-sent": 2305.9037000000003,
+        "browser-close-acknowledged": 2323.7977,
+        "cdp-transport-closed": 2327.7560000000003,
+        "close-request-complete": 2327.9013,
+        "close-request-failed": null,
+        "process-exit": 3892.5319000000004,
+        "streams-close": 3900.4204999999997,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/B-07/1795029762702-338ea70f-9049-420d-aade-9dde05eedba3.json",
+          "bytes": 13773,
+          "sha256": "417448e377bef32d453e49f640ef627391a552a2feab59338a7a460707337868"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/B-07/1795029762702-338ea70f-9049-420d-aade-9dde05eedba3.kernel.jsonl",
+          "bytes": 2943,
+          "sha256": "a13263ddd15f8954c8517f49043ed0637186cd11b7241b25c0b20adb3ce6b0a6"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/B-07/1795029762702-338ea70f-9049-420d-aade-9dde05eedba3.assertions.json",
+          "bytes": 125,
+          "sha256": "095de30df921eaa641b1fc97afad39efdda687820d14a621245a3ec0fc071815"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/B-07/1795029762702-338ea70f-9049-420d-aade-9dde05eedba3.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    },
+    {
+      "trial": "B-08",
+      "invocation": "1795029771050-125ba377-9cc4-477b-b96c-303ff4e25f23",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 4905.3612,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 4909.6446000000005,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 3360.5942,
+        "result-ready": 3860.1339000000003,
+        "owned-session-detached": 3867.9086,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 3868.9280000000003,
+        "browser-close-request-sent": 3906.1196,
+        "browser-close-acknowledged": 3916.3959,
+        "cdp-transport-closed": 3920.6875,
+        "close-request-complete": 3920.8802,
+        "close-request-failed": null,
+        "process-exit": 4826.2853000000005,
+        "streams-close": 4833.3067,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/B-08/1795029771050-125ba377-9cc4-477b-b96c-303ff4e25f23.json",
+          "bytes": 13294,
+          "sha256": "197d9b15a068bf6a4308a345054fe9b2097d6910830fb7658270e9ab39160490"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/B-08/1795029771050-125ba377-9cc4-477b-b96c-303ff4e25f23.kernel.jsonl",
+          "bytes": 2932,
+          "sha256": "256552a928139ac0aa7ed20d97a24a81b39be526fed8d3a3feea1b7e9a08617e"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/B-08/1795029771050-125ba377-9cc4-477b-b96c-303ff4e25f23.assertions.json",
+          "bytes": 134,
+          "sha256": "ce437124218e3015dc299671163b85d18352bcef51d7a8eaf4f693d42b414434"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/B-08/1795029771050-125ba377-9cc4-477b-b96c-303ff4e25f23.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    },
+    {
+      "trial": "B-09",
+      "invocation": "1795029780891-e4559150-276b-4ff0-ac6e-98583511ae37",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 4846.1241,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 4850.3098,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 1677.1896,
+        "result-ready": 2262.6733,
+        "owned-session-detached": 2290.7364,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 2297.8471,
+        "browser-close-request-sent": 2331.7427,
+        "browser-close-acknowledged": 2336.3716,
+        "cdp-transport-closed": 2341.1539,
+        "close-request-complete": 2341.3475,
+        "close-request-failed": null,
+        "process-exit": 4769.354,
+        "streams-close": 4777.5842999999995,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/B-09/1795029780891-e4559150-276b-4ff0-ac6e-98583511ae37.json",
+          "bytes": 13267,
+          "sha256": "dd77821620a24fbe75c346eca92d8e169ef749c0896d4efab7254637e3bcfcd9"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/B-09/1795029780891-e4559150-276b-4ff0-ac6e-98583511ae37.kernel.jsonl",
+          "bytes": 2924,
+          "sha256": "6f25010170ba643d07ba149d0b69a016cb38783aeff5887684ba112f5e8b1d73"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/B-09/1795029780891-e4559150-276b-4ff0-ac6e-98583511ae37.assertions.json",
+          "bytes": 125,
+          "sha256": "301d1de0a0a38a98b8dfbf9075ce040a38d426e326b8d51a4f9d7d2682eed980"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/B-09/1795029780891-e4559150-276b-4ff0-ac6e-98583511ae37.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    },
+    {
+      "trial": "B-10",
+      "invocation": "1795029791352-62b1f828-0824-4ec2-a644-2ac7c5512101",
+      "status": "Passed",
+      "lifecycleStatus": "Passed",
+      "mode": "real-edge-synthetic-layout",
+      "timeoutMs": 30000,
+      "elapsedMs": 3948.7929,
+      "resultReady": true,
+      "resultCases": 1,
+      "visualAssertionsRecorded": true,
+      "visualAssertionsElapsedMs": 3953.0946,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "primaryFailure": null,
+      "releaseFailure": null,
+      "timingMs": {
+        "result-verified": 1673.4757,
+        "result-ready": 2166.0135,
+        "owned-session-detached": 2170.7665,
+        "target-close-acknowledged": null,
+        "target-destroyed-observed": null,
+        "owned-target-close-confirmed": 2171.9523,
+        "browser-close-request-sent": 2207.8422,
+        "browser-close-acknowledged": 2216.0906,
+        "cdp-transport-closed": 2220.0347,
+        "close-request-complete": 2220.1751,
+        "close-request-failed": null,
+        "process-exit": 3872.6938999999998,
+        "streams-close": 3878.9289,
+        "deadline-timeout": null,
+        "failure-owned-handle-termination-started": null
+      },
+      "independentKernel": {
+        "ending": "root-exited",
+        "waitStatus": 0,
+        "waitStatusBeforeQuery": 0,
+        "waitStatusAfterQuery": 0,
+        "rawExitCode": 0,
+        "exitCode": 0,
+        "exitStatusBeforeSignalObserved": true,
+        "observerExited": true
+      },
+      "source": {
+        "lifecycle": {
+          "path": ".tools/edge-exit-fix/B-10/1795029791352-62b1f828-0824-4ec2-a644-2ac7c5512101.json",
+          "bytes": 13235,
+          "sha256": "89e15c2eca6d0097dc4f40103a2b89dac219a4ca889308af71bdaf8c3cf2b285"
+        },
+        "kernel": {
+          "path": ".tools/edge-exit-fix/B-10/1795029791352-62b1f828-0824-4ec2-a644-2ac7c5512101.kernel.jsonl",
+          "bytes": 2924,
+          "sha256": "80cd21160b30b70db252a6b3c352775c112e57719839b163db2c1c9ea58a7865"
+        },
+        "assertions": {
+          "path": ".tools/edge-exit-fix/B-10/1795029791352-62b1f828-0824-4ec2-a644-2ac7c5512101.assertions.json",
+          "bytes": 125,
+          "sha256": "e979e1a994221c1ce7e24a9f3f256b5172154efac73507ffbbaa3424bb1bcdba"
+        },
+        "result": {
+          "path": ".tools/edge-exit-fix/B-10/1795029791352-62b1f828-0824-4ec2-a644-2ac7c5512101.result.json",
+          "bytes": 7782,
+          "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75"
+        }
+      }
+    }
+  ]
+}

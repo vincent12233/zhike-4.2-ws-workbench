@@ -71,7 +71,7 @@ try
         }));
         throw new Exception("超过单次上游预算的请求没有被取消");
     }
-    catch (OperationCanceledException) { }
+    catch (InvalidOperationException error) when (error.Message.Contains("单次请求超过", StringComparison.Ordinal)) { }
     attemptWatch.Stop();
     if (attemptTimeoutHandler.CallCount != 1) throw new Exception("上游超时后重复提交了同一个慢请求");
     if (!attemptTimeoutHandler.CancellationObserved) throw new Exception("单次上游预算没有传递取消");

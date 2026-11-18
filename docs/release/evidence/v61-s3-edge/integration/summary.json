@@ -1,0 +1,624 @@
+{
+  "executionHead": "4e2af3c",
+  "command": "resources/app/node.exe scripts/run-tests.cjs all",
+  "observerEnabled": true,
+  "logCreatedUtc": "2026-11-18T12:30:54.769Z",
+  "logLastWriteUtc": "2026-11-18T12:43:48.026Z",
+  "finishedUtc": "2026-11-18T12:43:48.0433209Z",
+  "completionHead": "eacc42517600b7356f239c310e686cc271359f88",
+  "exitCode": 0,
+  "fullSummary": "Completed 312 checks: 312 passed, 0 failed.",
+  "formalEdgeExitMarkers": [
+    {
+      "line": "[RUN] Stage 5.1 real workspace collapsed layout",
+      "lineNumber": 1283
+    },
+    {
+      "line": "[PASS] Stage 5.1 real workspace collapsed layout",
+      "lineNumber": 1292
+    },
+    {
+      "line": "[RUN] Delivery S1 actual main renderers and shared design system",
+      "lineNumber": 1449
+    },
+    {
+      "line": "[PASS] Delivery S1 actual main renderers and shared design system",
+      "lineNumber": 1451
+    },
+    {
+      "line": "[RUN] Delivery S1 WS computed layout and retained host",
+      "lineNumber": 1453
+    },
+    {
+      "line": "[PASS] Delivery S1 WS computed layout and retained host",
+      "lineNumber": 1470
+    },
+    {
+      "line": "[RUN] Delivery S2 actual shipped CSS and accessible chart rendering",
+      "lineNumber": 1502
+    },
+    {
+      "line": "[PASS] Delivery S2 actual shipped CSS and accessible chart rendering",
+      "lineNumber": 1508
+    },
+    {
+      "line": "[RUN] Delivery S3 full-CSS customer table, drawer and modal ownership",
+      "lineNumber": 1600
+    },
+    {
+      "line": "[PASS] Delivery S3 full-CSS customer table, drawer and modal ownership",
+      "lineNumber": 1612
+    }
+  ],
+  "tests": [
+    {
+      "label": "Stage 5.1 real workspace collapsed layout",
+      "status": "Passed",
+      "calls": [
+        {
+          "invocation": "1795005591086-67738171-30b8-40d4-be8b-84e6bcaafc57",
+          "launchedAt": "2026-11-18T12:39:51.085Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "pid": 39332,
+          "startedTicks": "639306023910921754",
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 6,
+          "profileRetained": false,
+          "times": {
+            "navigationSentMs": 1299.5120000000002,
+            "navigationResponseMs": 1331.0858,
+            "matchingLoadMs": 3144.2227000000003,
+            "resultVerifiedMs": 3154.9582,
+            "closeRequestedMs": 3284.0005,
+            "closeAcknowledgedMs": 3314.8437,
+            "cdpCloseMs": 3318.4534,
+            "nodeExitMs": 5875.978099999999,
+            "childCloseMs": 5884.1750999999995,
+            "stdoutCloseMs": 5884.1991,
+            "stderrCloseMs": 5884.1187,
+            "streamsCloseMs": 5884.2336,
+            "probeCloseMs": 5963.798599999999,
+            "lifecycleCompleteMs": 5964.1298,
+            "runnerFinalMs": 5965.7734,
+            "pageAssertionsMs": null
+          },
+          "kernel": {
+            "verified": true,
+            "end": "root-exited",
+            "waitStatus": 0,
+            "lastRunningIntervalMs": [
+              5828.516000018644,
+              5829.286200018644
+            ],
+            "sampleIntervalMs": [
+              5874.8961000006675,
+              5875.666300000667
+            ],
+            "browserExitCode": 0,
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "clockBracketWidthMs": 0.7702000000000453
+          }
+        }
+      ]
+    },
+    {
+      "label": "Delivery S1 actual main renderers and shared design system",
+      "status": "Passed",
+      "calls": [
+        {
+          "invocation": "1795005731940-b3cafb02-548c-4fda-9da4-136e157abe1c",
+          "launchedAt": "2026-11-18T12:42:11.939Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "pid": 25740,
+          "startedTicks": "639306025319454453",
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 8,
+          "profileRetained": false,
+          "times": {
+            "navigationSentMs": 1424.0827,
+            "navigationResponseMs": 1451.9049,
+            "matchingLoadMs": 8494.8236,
+            "resultVerifiedMs": 8703.0824,
+            "closeRequestedMs": 8900.4965,
+            "closeAcknowledgedMs": 8937.7282,
+            "cdpCloseMs": 8941.3624,
+            "nodeExitMs": 9784.116399999999,
+            "childCloseMs": 9792.220299999999,
+            "stdoutCloseMs": 9792.2421,
+            "stderrCloseMs": 9792.157299999999,
+            "streamsCloseMs": 9792.2762,
+            "probeCloseMs": 9878.9753,
+            "lifecycleCompleteMs": 9879.3992,
+            "runnerFinalMs": 9893.711299999999,
+            "pageAssertionsMs": 10027.615899999999
+          },
+          "kernel": {
+            "verified": true,
+            "end": "root-exited",
+            "waitStatus": 0,
+            "lastRunningIntervalMs": [
+              9720.829200001479,
+              9721.32550000148
+            ],
+            "sampleIntervalMs": [
+              9783.411799999,
+              9783.908099999
+            ],
+            "browserExitCode": 0,
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "clockBracketWidthMs": 0.4963000000000193
+          }
+        },
+        {
+          "invocation": "1795005741970-919f25d8-ff8b-42e5-aa50-920ba096bb64",
+          "launchedAt": "2026-11-18T12:42:21.970Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "pid": 10068,
+          "startedTicks": "639306025419730480",
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 1,
+          "profileRetained": false,
+          "times": {
+            "navigationSentMs": 1474.8025000000016,
+            "navigationResponseMs": 1505.2093000000004,
+            "matchingLoadMs": 2895.569800000001,
+            "resultVerifiedMs": 2924.188,
+            "closeRequestedMs": 3037.7016000000003,
+            "closeAcknowledgedMs": 3038.2746000000006,
+            "cdpCloseMs": 3039.2462000000014,
+            "nodeExitMs": 3839.774300000001,
+            "childCloseMs": 3847.3983000000007,
+            "stdoutCloseMs": 3847.3586000000014,
+            "stderrCloseMs": 3847.4028000000017,
+            "streamsCloseMs": 3847.4331,
+            "probeCloseMs": 3919.8830000000016,
+            "lifecycleCompleteMs": 3920.0143000000007,
+            "runnerFinalMs": 3922.6661000000004,
+            "pageAssertionsMs": 3938.6239000000005
+          },
+          "kernel": {
+            "verified": true,
+            "end": "root-exited",
+            "waitStatus": 0,
+            "lastRunningIntervalMs": [
+              3791.0820000103486,
+              3791.613600010349
+            ],
+            "sampleIntervalMs": [
+              3839.049300008155,
+              3839.5809000081554
+            ],
+            "browserExitCode": 0,
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "clockBracketWidthMs": 0.5316000000002532
+          }
+        },
+        {
+          "invocation": "1795005745911-2d6e907a-ef03-4e47-9f89-0daf117ad341",
+          "launchedAt": "2026-11-18T12:42:25.911Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "pid": 11688,
+          "startedTicks": "639306025459135437",
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 1,
+          "profileRetained": false,
+          "times": {
+            "navigationSentMs": 1096.7141999999985,
+            "navigationResponseMs": 1460.2079999999987,
+            "matchingLoadMs": 2934.271899999998,
+            "resultVerifiedMs": 2964.2623000000003,
+            "closeRequestedMs": 3107.031499999999,
+            "closeAcknowledgedMs": 3107.6278999999977,
+            "cdpCloseMs": 3108.779099999998,
+            "nodeExitMs": 4855.972199999998,
+            "childCloseMs": 4864.120000000001,
+            "stdoutCloseMs": 4864.123600000001,
+            "stderrCloseMs": 4864.090599999998,
+            "streamsCloseMs": 4864.150499999998,
+            "probeCloseMs": 4936.2829,
+            "lifecycleCompleteMs": 4936.4299999999985,
+            "runnerFinalMs": 4939.552099999999,
+            "pageAssertionsMs": 4961.6265
+          },
+          "kernel": {
+            "verified": true,
+            "end": "root-exited",
+            "waitStatus": 0,
+            "lastRunningIntervalMs": [
+              4822.281500017309,
+              4822.839400017308
+            ],
+            "sampleIntervalMs": [
+              4855.39140001502,
+              4855.94930001502
+            ],
+            "browserExitCode": 0,
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "clockBracketWidthMs": 0.5578999999997905
+          }
+        },
+        {
+          "invocation": "1795005750876-9e0dffbe-dc29-463e-af66-3aed14e1b4cb",
+          "launchedAt": "2026-11-18T12:42:30.876Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "pid": 9768,
+          "startedTicks": "639306025508790632",
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 1,
+          "profileRetained": false,
+          "times": {
+            "navigationSentMs": 1150.3604999999989,
+            "navigationResponseMs": 1179.7844000000005,
+            "matchingLoadMs": 2304.8516999999993,
+            "resultVerifiedMs": 2319.1944000000003,
+            "closeRequestedMs": 3229.795299999998,
+            "closeAcknowledgedMs": 3230.4618999999984,
+            "cdpCloseMs": 3232.006799999999,
+            "nodeExitMs": 4187.949099999998,
+            "childCloseMs": 4196.017199999998,
+            "stdoutCloseMs": 4195.9856,
+            "stderrCloseMs": 4196.021399999998,
+            "streamsCloseMs": 4196.051599999999,
+            "probeCloseMs": 4286.993699999999,
+            "lifecycleCompleteMs": 4287.109399999998,
+            "runnerFinalMs": 4288.478199999998,
+            "pageAssertionsMs": 4290.087100000001
+          },
+          "kernel": {
+            "verified": true,
+            "end": "root-exited",
+            "waitStatus": 0,
+            "lastRunningIntervalMs": [
+              4151.753200011204,
+              4152.185000011206
+            ],
+            "sampleIntervalMs": [
+              4187.433100001763,
+              4187.864900001765
+            ],
+            "browserExitCode": 0,
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "clockBracketWidthMs": 0.43180000000211294
+          }
+        },
+        {
+          "invocation": "1795005755169-ba26b557-7ec4-4abc-bf7e-227b6464405e",
+          "launchedAt": "2026-11-18T12:42:35.169Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "pid": 22836,
+          "startedTicks": "639306025551721837",
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 1,
+          "profileRetained": false,
+          "times": {
+            "navigationSentMs": 1053.7502999999997,
+            "navigationResponseMs": 1083.3953000000001,
+            "matchingLoadMs": 1686.900999999998,
+            "resultVerifiedMs": 1716.1349999999984,
+            "closeRequestedMs": 2477.908099999997,
+            "closeAcknowledgedMs": 2478.503099999998,
+            "cdpCloseMs": 2479.2127,
+            "nodeExitMs": 3339.7466999999997,
+            "childCloseMs": 3347.332299999998,
+            "stdoutCloseMs": 3347.2959999999985,
+            "stderrCloseMs": 3347.3367,
+            "streamsCloseMs": 3347.372599999999,
+            "probeCloseMs": 3409.5676999999996,
+            "lifecycleCompleteMs": 3409.6445999999996,
+            "runnerFinalMs": 3410.9794999999976,
+            "pageAssertionsMs": 3412.809699999998
+          },
+          "kernel": {
+            "verified": true,
+            "end": "root-exited",
+            "waitStatus": 0,
+            "lastRunningIntervalMs": [
+              3287.1046999965656,
+              3289.273899996566
+            ],
+            "sampleIntervalMs": [
+              3337.6118000124443,
+              3339.7810000124446
+            ],
+            "browserExitCode": 0,
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "clockBracketWidthMs": 2.1692000000002736
+          }
+        },
+        {
+          "invocation": "1795005758585-c152c015-55dc-40d3-a098-a04db2746ebe",
+          "launchedAt": "2026-11-18T12:42:38.585Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "pid": 11548,
+          "startedTicks": "639306025585875668",
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 1,
+          "profileRetained": false,
+          "times": {
+            "navigationSentMs": 1085.8788000000022,
+            "navigationResponseMs": 1181.4979999999996,
+            "matchingLoadMs": 2543.5617999999995,
+            "resultVerifiedMs": 2569.9490000000005,
+            "closeRequestedMs": 3109.1594000000005,
+            "closeAcknowledgedMs": 3109.7728000000025,
+            "cdpCloseMs": 3110.452300000001,
+            "nodeExitMs": 4241.8946,
+            "childCloseMs": 4250.6001,
+            "stdoutCloseMs": 4250.536600000003,
+            "stderrCloseMs": 4250.607900000003,
+            "streamsCloseMs": 4250.6378,
+            "probeCloseMs": 4332.660400000001,
+            "lifecycleCompleteMs": 4332.736700000001,
+            "runnerFinalMs": 4334.1296,
+            "pageAssertionsMs": 4335.497800000001
+          },
+          "kernel": {
+            "verified": true,
+            "end": "root-exited",
+            "waitStatus": 0,
+            "lastRunningIntervalMs": [
+              4189.667099984839,
+              4190.079699984839
+            ],
+            "sampleIntervalMs": [
+              4241.4117999994305,
+              4241.82439999943
+            ],
+            "browserExitCode": 0,
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "clockBracketWidthMs": 0.4125999999996566
+          }
+        },
+        {
+          "invocation": "1795005762923-11805c79-fb49-4390-86df-316a1632baaf",
+          "launchedAt": "2026-11-18T12:42:42.922Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "pid": 30404,
+          "startedTicks": "639306025629267603",
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 1,
+          "profileRetained": false,
+          "times": {
+            "navigationSentMs": 1076.9968000000008,
+            "navigationResponseMs": 1119.9259999999995,
+            "matchingLoadMs": 2299.998099999997,
+            "resultVerifiedMs": 2308.4202000000005,
+            "closeRequestedMs": 3384.539499999999,
+            "closeAcknowledgedMs": 3385.078800000003,
+            "cdpCloseMs": 3385.8724,
+            "nodeExitMs": 4889.012799999997,
+            "childCloseMs": 4896.842700000001,
+            "stdoutCloseMs": 4896.809699999998,
+            "stderrCloseMs": 4896.847000000002,
+            "streamsCloseMs": 4896.879399999998,
+            "probeCloseMs": 4971.739399999999,
+            "lifecycleCompleteMs": 4971.848700000002,
+            "runnerFinalMs": 4973.194100000001,
+            "pageAssertionsMs": 4974.630299999997
+          },
+          "kernel": {
+            "verified": true,
+            "end": "root-exited",
+            "waitStatus": 0,
+            "lastRunningIntervalMs": [
+              4849.546200008248,
+              4850.01890000825
+            ],
+            "sampleIntervalMs": [
+              4888.431400002097,
+              4888.904100002099
+            ],
+            "browserExitCode": 0,
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "clockBracketWidthMs": 0.472700000002078
+          }
+        }
+      ]
+    },
+    {
+      "label": "Delivery S1 WS computed layout and retained host",
+      "status": "Passed",
+      "calls": [
+        {
+          "invocation": "1795005771284-41deb87f-21c1-439b-a712-130707ace052",
+          "launchedAt": "2026-11-18T12:42:51.283Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "pid": 36384,
+          "startedTicks": "639306025712894325",
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 7,
+          "profileRetained": false,
+          "times": {
+            "navigationSentMs": 1179.253,
+            "navigationResponseMs": 1209.076,
+            "matchingLoadMs": 2291.2335000000003,
+            "resultVerifiedMs": 10751.4757,
+            "closeRequestedMs": 10950.946,
+            "closeAcknowledgedMs": 10951.6771,
+            "cdpCloseMs": 10955.600900000001,
+            "nodeExitMs": 12010.1587,
+            "childCloseMs": 12018.3344,
+            "stdoutCloseMs": 12018.3623,
+            "stderrCloseMs": 12018.248000000001,
+            "streamsCloseMs": 12018.413400000001,
+            "probeCloseMs": 12094.6134,
+            "lifecycleCompleteMs": 12094.9637,
+            "runnerFinalMs": 12098.365800000001,
+            "pageAssertionsMs": 12107.7492
+          },
+          "kernel": {
+            "verified": true,
+            "end": "root-exited",
+            "waitStatus": 0,
+            "lastRunningIntervalMs": [
+              11952.284299991941,
+              11954.494199991941
+            ],
+            "sampleIntervalMs": [
+              12007.724399976349,
+              12009.934299976348
+            ],
+            "browserExitCode": 0,
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "clockBracketWidthMs": 2.2099000000000615
+          }
+        }
+      ]
+    },
+    {
+      "label": "Delivery S2 actual shipped CSS and accessible chart rendering",
+      "status": "Passed",
+      "calls": [
+        {
+          "invocation": "1795005784987-d274e842-cf8e-4977-b130-c516785913c3",
+          "launchedAt": "2026-11-18T12:43:04.986Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "pid": 41012,
+          "startedTicks": "639306025849922891",
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 4,
+          "profileRetained": false,
+          "times": {
+            "navigationSentMs": 1336.7532,
+            "navigationResponseMs": 1369.5339000000001,
+            "matchingLoadMs": 1788.3952000000002,
+            "resultVerifiedMs": 1796.4814,
+            "closeRequestedMs": 1905.655,
+            "closeAcknowledgedMs": 1937.3925000000002,
+            "cdpCloseMs": 1941.2049,
+            "nodeExitMs": 2853.5613000000003,
+            "childCloseMs": 2861.0065000000004,
+            "stdoutCloseMs": 2861.0314,
+            "stderrCloseMs": 2860.9359000000004,
+            "streamsCloseMs": 2861.0811000000003,
+            "probeCloseMs": 2936.691,
+            "lifecycleCompleteMs": 2937.0110999999997,
+            "runnerFinalMs": 2938.7857999999997,
+            "pageAssertionsMs": 2941.0265
+          },
+          "kernel": {
+            "verified": true,
+            "end": "root-exited",
+            "waitStatus": 0,
+            "lastRunningIntervalMs": [
+              2814.7754000052455,
+              2815.5054000052455
+            ],
+            "sampleIntervalMs": [
+              2852.633600018883,
+              2853.363600018883
+            ],
+            "browserExitCode": 0,
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "clockBracketWidthMs": 0.7300000000000182
+          }
+        }
+      ]
+    },
+    {
+      "label": "Delivery S3 full-CSS customer table, drawer and modal ownership",
+      "status": "Passed",
+      "calls": [
+        {
+          "invocation": "1795005789304-22549a63-0e57-4334-a0a8-864146547aa9",
+          "launchedAt": "2026-11-18T12:43:09.303Z",
+          "status": "Passed",
+          "timeoutMs": 30000,
+          "pid": 33888,
+          "startedTicks": "639306025893091474",
+          "cleanupSafe": true,
+          "forceTerminated": false,
+          "failure": null,
+          "releaseFailure": null,
+          "resultCases": 10,
+          "profileRetained": false,
+          "times": {
+            "navigationSentMs": 1149.6199000000001,
+            "navigationResponseMs": 1208.5928000000001,
+            "matchingLoadMs": 3591.4930999999997,
+            "resultVerifiedMs": 8718.752,
+            "closeRequestedMs": 8923.066200000001,
+            "closeAcknowledgedMs": 8970.9597,
+            "cdpCloseMs": 8975.936,
+            "nodeExitMs": 9884.5067,
+            "childCloseMs": 9891.8822,
+            "stdoutCloseMs": 9891.9037,
+            "stderrCloseMs": 9891.8226,
+            "streamsCloseMs": 9891.9382,
+            "probeCloseMs": 10012.6489,
+            "lifecycleCompleteMs": 10013.0035,
+            "runnerFinalMs": 10017.1315,
+            "pageAssertionsMs": 10039.7098
+          },
+          "kernel": {
+            "verified": true,
+            "end": "root-exited",
+            "waitStatus": 0,
+            "lastRunningIntervalMs": [
+              9824.341499982118,
+              9824.805699982118
+            ],
+            "sampleIntervalMs": [
+              9883.73509999895,
+              9884.19929999895
+            ],
+            "browserExitCode": 0,
+            "observerExitCode": 0,
+            "observerExitSignal": null,
+            "clockBracketWidthMs": 0.4642000000000053
+          }
+        }
+      ]
+    }
+  ]
+}

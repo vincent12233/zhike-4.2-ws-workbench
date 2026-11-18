@@ -1,0 +1,551 @@
+{
+  "synthetic": true,
+  "scope": "current isolated native app only",
+  "counts": {
+    "application-start": 1,
+    "sidecar-created": 1,
+    "window-initialize-start": 1,
+    "window-initialize-completed": 1,
+    "window-created": 1,
+    "host-route-request": 2,
+    "shell-initialize-requested": 3,
+    "stage51-native-dpi": 1,
+    "host-loaded": 1,
+    "sidecar-ready": 1,
+    "shell-profile-created": 1,
+    "stage53-drag-attached": 1,
+    "stage53-drag-summary": 2,
+    "webview-created": 2,
+    "webview-source-changed": 1,
+    "stage51-dom-layout": 22,
+    "webview-navigation": 3,
+    "ws-bounds-decision": 9,
+    "window-presentation-state": 5,
+    "stage51-native-wheel": 23,
+    "stage51-dom-wheel-arrival": 22,
+    "stage51-dom-wheel": 15,
+    "stage51-dom-wheel-settled": 6,
+    "stage51-dom-frame": 2,
+    "stage51-preview-start": 2,
+    "stage51-preview-complete": 2,
+    "workspace-page": 10,
+    "workspace-presentation-enter": 1,
+    "ws-isolated-status": 4,
+    "ws-initialize": 1,
+    "ws-account-selected": 2,
+    "navigation-starting": 1,
+    "navigation-completed": 1,
+    "workspace-presentation-exit": 1,
+    "application-stopping": 1,
+    "sidecar-stopped": 1,
+    "host-unloaded": 1
+  },
+  "events": [
+    {
+      "at": "2026-11-18T15:43:55.4858402+00:00",
+      "pid": 36324,
+      "kind": "webview-created",
+      "fields": {
+        "role": "shell",
+        "accountId": "workbench-ui",
+        "browserProcessId": 37952
+      }
+    },
+    {
+      "at": "2026-11-18T15:43:59.5148191+00:00",
+      "pid": 36324,
+      "kind": "webview-navigation",
+      "fields": {
+        "role": "shell",
+        "accountId": "workbench-ui",
+        "success": true,
+        "target": "isolated-local"
+      }
+    },
+    {
+      "at": "2026-11-18T15:56:35.2619173+00:00",
+      "pid": 36324,
+      "kind": "webview-navigation",
+      "fields": {
+        "role": "shell",
+        "accountId": "workbench-ui",
+        "success": true,
+        "target": "isolated-local"
+      }
+    },
+    {
+      "at": "2026-11-18T16:04:42.5618327+00:00",
+      "pid": 36324,
+      "kind": "workspace-page",
+      "fields": {
+        "page": "overview",
+        "phase": "enter"
+      }
+    },
+    {
+      "at": "2026-11-18T16:04:47.659716+00:00",
+      "pid": 36324,
+      "kind": "webview-created",
+      "fields": {
+        "role": "ws-visible",
+        "accountId": "default",
+        "browserProcessId": 19212
+      }
+    },
+    {
+      "at": "2026-11-18T16:04:50.0969335+00:00",
+      "pid": 36324,
+      "kind": "navigation-starting",
+      "fields": {
+        "accountId": "default",
+        "generation": 1,
+        "surface": "visible",
+        "navigationId": 2,
+        "cancelled": false,
+        "source": "user-navigation",
+        "cycle": 1,
+        "request": 2
+      }
+    },
+    {
+      "at": "2026-11-18T16:04:50.2746255+00:00",
+      "pid": 36324,
+      "kind": "webview-navigation",
+      "fields": {
+        "role": "ws-visible",
+        "accountId": "default",
+        "success": true,
+        "target": "about:blank"
+      }
+    },
+    {
+      "at": "2026-11-18T16:04:50.2811926+00:00",
+      "pid": 36324,
+      "kind": "navigation-completed",
+      "fields": {
+        "accountId": "default",
+        "generation": 1,
+        "surface": "visible",
+        "navigationId": 2,
+        "success": true,
+        "outcome": "isolated-document",
+        "retries": 0,
+        "cycle": 1,
+        "request": 2
+      }
+    },
+    {
+      "at": "2026-11-18T16:05:27.4922956+00:00",
+      "pid": 36324,
+      "kind": "workspace-page",
+      "fields": {
+        "page": "overview",
+        "phase": "exit"
+      }
+    },
+    {
+      "at": "2026-11-18T16:05:27.4932266+00:00",
+      "pid": 36324,
+      "kind": "workspace-page",
+      "fields": {
+        "page": "contacts",
+        "phase": "enter"
+      }
+    },
+    {
+      "at": "2026-11-18T16:09:08.9296418+00:00",
+      "pid": 36324,
+      "kind": "workspace-page",
+      "fields": {
+        "page": "contacts",
+        "phase": "exit"
+      }
+    },
+    {
+      "at": "2026-11-18T16:09:08.9303819+00:00",
+      "pid": 36324,
+      "kind": "workspace-page",
+      "fields": {
+        "page": "chat",
+        "phase": "enter"
+      }
+    },
+    {
+      "at": "2026-11-18T16:11:01.8116513+00:00",
+      "pid": 36324,
+      "kind": "workspace-page",
+      "fields": {
+        "page": "chat",
+        "phase": "exit"
+      }
+    },
+    {
+      "at": "2026-11-18T16:11:01.8123142+00:00",
+      "pid": 36324,
+      "kind": "workspace-page",
+      "fields": {
+        "page": "members",
+        "phase": "enter"
+      }
+    },
+    {
+      "at": "2026-11-18T16:11:56.6915642+00:00",
+      "pid": 36324,
+      "kind": "workspace-page",
+      "fields": {
+        "page": "members",
+        "phase": "exit"
+      }
+    },
+    {
+      "at": "2026-11-18T16:11:56.6923645+00:00",
+      "pid": 36324,
+      "kind": "workspace-page",
+      "fields": {
+        "page": "chat",
+        "phase": "enter"
+      }
+    },
+    {
+      "at": "2026-11-18T16:13:24.5688148+00:00",
+      "pid": 36324,
+      "kind": "workspace-page",
+      "fields": {
+        "page": "chat",
+        "phase": "exit"
+      }
+    },
+    {
+      "at": "2026-11-18T16:15:06.4074343+00:00",
+      "pid": 36324,
+      "kind": "application-stopping",
+      "fields": null
+    },
+    {
+      "at": "2026-11-18T16:15:06.7377862+00:00",
+      "pid": 36324,
+      "kind": "sidecar-stopped",
+      "fields": {
+        "running": false
+      }
+    },
+    {
+      "at": "2026-11-18T16:15:06.7484216+00:00",
+      "pid": 36324,
+      "kind": "host-unloaded",
+      "fields": {
+        "route": "legacy-background"
+      }
+    }
+  ],
+  "geometry": [
+    {
+      "at": "2026-11-18T15:43:59.5034167+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 0,
+        "collector": 0,
+        "total": 1
+      },
+      "view": null,
+      "theme": "dark",
+      "palette": "atelier-dawn",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T15:44:36.4694152+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 0,
+        "collector": 0,
+        "total": 1
+      },
+      "view": "home",
+      "theme": "dark",
+      "palette": "atelier-dawn",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T15:44:45.5240712+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 0,
+        "collector": 0,
+        "total": 1
+      },
+      "view": "customers",
+      "theme": "dark",
+      "palette": "atelier-dawn",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T15:45:12.2337027+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 0,
+        "collector": 0,
+        "total": 1
+      },
+      "view": "customers",
+      "theme": "dark",
+      "palette": "atelier-dawn",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T15:49:57.7142099+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 0,
+        "collector": 0,
+        "total": 1
+      },
+      "view": "customers",
+      "theme": "dark",
+      "palette": "atelier-dawn",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T15:54:16.9464965+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 0,
+        "collector": 0,
+        "total": 1
+      },
+      "view": "customers",
+      "theme": "dark",
+      "palette": "atelier-dawn",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T15:56:35.5283961+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 0,
+        "collector": 0,
+        "total": 1
+      },
+      "view": "home",
+      "theme": "dark",
+      "palette": "atelier-dawn",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T15:57:16.4788404+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 0,
+        "collector": 0,
+        "total": 1
+      },
+      "view": "customers",
+      "theme": "dark",
+      "palette": "atelier-dawn",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T15:58:06.6048918+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 0,
+        "collector": 0,
+        "total": 1
+      },
+      "view": "customers",
+      "theme": "dark",
+      "palette": "atelier-dawn",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T15:58:53.1391964+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 0,
+        "collector": 0,
+        "total": 1
+      },
+      "view": "customers",
+      "theme": "dark",
+      "palette": "horizon-night",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T15:59:38.0696624+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 0,
+        "collector": 0,
+        "total": 1
+      },
+      "view": "customers",
+      "theme": "dark",
+      "palette": "horizon-night",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T16:01:15.9475713+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 0,
+        "collector": 0,
+        "total": 1
+      },
+      "view": "customers",
+      "theme": "dark",
+      "palette": "horizon-night",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T16:03:56.8273474+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 0,
+        "collector": 0,
+        "total": 1
+      },
+      "view": "customers",
+      "theme": "dark",
+      "palette": "horizon-night",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T16:04:42.7462247+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 0,
+        "collector": 0,
+        "total": 1
+      },
+      "view": "ws-workbench",
+      "theme": "dark",
+      "palette": "horizon-night",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T16:05:27.6813266+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 1,
+        "collector": 0,
+        "total": 2
+      },
+      "view": "ws-workbench",
+      "theme": "dark",
+      "palette": "horizon-night",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T16:06:22.679849+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 1,
+        "collector": 0,
+        "total": 2
+      },
+      "view": "ws-workbench",
+      "theme": "dark",
+      "palette": "horizon-night",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T16:09:09.0862262+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 1,
+        "collector": 0,
+        "total": 2
+      },
+      "view": "ws-workbench",
+      "theme": "dark",
+      "palette": "horizon-night",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T16:09:59.5431627+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 1,
+        "collector": 0,
+        "total": 2
+      },
+      "view": "ws-workbench",
+      "theme": "dark",
+      "palette": "horizon-night",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T16:11:01.9993559+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 1,
+        "collector": 0,
+        "total": 2
+      },
+      "view": "ws-workbench",
+      "theme": "dark",
+      "palette": "horizon-night",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T16:11:56.9089091+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 1,
+        "collector": 0,
+        "total": 2
+      },
+      "view": "ws-workbench",
+      "theme": "dark",
+      "palette": "horizon-night",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T16:12:41.835161+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 1,
+        "collector": 0,
+        "total": 2
+      },
+      "view": "ws-workbench",
+      "theme": "dark",
+      "palette": "horizon-night",
+      "wheel": null
+    },
+    {
+      "at": "2026-11-18T16:13:24.7858572+00:00",
+      "dpi": 120,
+      "coreCounts": {
+        "shell": 1,
+        "visibleWs": 1,
+        "collector": 0,
+        "total": 2
+      },
+      "view": "customers",
+      "theme": "dark",
+      "palette": "horizon-night",
+      "wheel": null
+    }
+  ]
+}

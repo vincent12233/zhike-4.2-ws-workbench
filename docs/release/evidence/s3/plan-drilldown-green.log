@@ -1,0 +1,6 @@
+S3 drawer: first lazy creation, same-ID redraw, same-name A→B, close/invalid ID and lifecycle payload passed
+S3 customers: real filters/export, page selection, hidden columns and UI-only preview close/restore passed
+S3 selection identity: real SelectionSet add/has/delete and numeric-ID export retained
+S3 followups: original route/data/record export retained; nextDate header and customer-vs-task scope are explicit
+S3 home: source-first hierarchy, wide-trend/compact-empty hooks, original actions and one reminder load retained
+S3 home plan drilldown: every actual home button → existing open route, exact 13 IDs, stale filters ignored, title/route, open/completed exports retained

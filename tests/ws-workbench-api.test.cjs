@@ -36,12 +36,20 @@ async function json(response) { return response.json(); }
     const orphanSettings = await request('/api/ws/settings?conversationId=missing', { method: 'PUT', body: JSON.stringify({ enabled: true }) });
     assert.equal(orphanSettings.status, 400);
 
-    const conversation = await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-001', title: '张三', customerId: '', language: 'English', unreadCount: 2 }) });
+    const conversation = await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-001', title: '张三', customerId: '', language: 'English', conversationType: 'direct', unreadCount: 2 }) });
     assert.equal(conversation.status, 200);
     const conversationBody = await json(conversation);
     assert.ok(conversationBody.id);
     assert.equal(conversationBody.language, 'English');
     assert.equal(conversationBody.unreadCount, 2);
+
+    const unreadRejected = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, result: { summary: '不应分析未读会话', confidence: 0.9 } }) });
+    assert.equal(unreadRejected.status, 422, '未读会话必须被服务端 AI 门槛拒绝');
+    const incompleteConversation = await json(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-incomplete', title: '未完成历史', conversationType: 'direct', data: { historyLoaded: false, historyFingerprint: '', lastMessageFingerprint: '' }, unreadCount: 0 }) }));
+    const incompleteRejected = await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ conversationId: incompleteConversation.id, idempotencyKey: 'incomplete-history' }) });
+    assert.equal(incompleteRejected.status, 422, '未完成历史不得进入 AI 队列');
+    const prepared = await json(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-001', conversationType: 'direct', unreadCount: 0, data: { conversationType: 'direct', historyLoaded: true, historyFingerprint: 'seed-history', lastMessageFingerprint: 'seed-history', directionVersion: 4 } }) }));
+    assert.equal(prepared.id, conversationBody.id);
 
     const collectionRun = await json(await request('/api/ws/collection-runs', { method: 'POST', body: JSON.stringify({}) }));
     assert.equal(collectionRun.run.status, 'created');
@@ -99,6 +107,8 @@ async function json(response) { return response.json(); }
     assert.equal(repeatedBody.existed, 2);
     assert.equal(repeatedBody.repeated, true);
 
+    await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-001', conversationType: 'direct', unreadCount: 0, data: { conversationType: 'direct', historyLoaded: true, historyFingerprint: 'seed-history', lastMessageFingerprint: 'seed-history', directionVersion: 4 } }) });
+
     const messages = await request(`/api/ws/messages?conversationId=${encodeURIComponent(conversationBody.id)}`);
     const messageRows = (await json(messages)).messages;
     assert.equal(messageRows.length, 3);
@@ -122,10 +132,10 @@ async function json(response) { return response.json(); }
     assert.equal(retryableItem.item.analysisStatus, 'retryable');
     assert.match(retryableItem.item.lastError, /AI 服务未配置/);
 
-    const analysis = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, result: { summary: '咨询产品', intent: '高意向', intentScore: 90, urgency: '高', nextStep: '今天联系客户确认预算', followupTime: '2026-11-05', language: 'English', confidence: 0.8, contact: { name: '张三', phone: '+91 98765 43210' }, profile: { origin: '展会', age: 36, occupation: '采购经理' }, evidence: [{ field: 'age', value: 36, text: '我今年36岁' }] }, providerName: 'test', model: 'test-model' }) });
+    const analysis = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, result: { summary: '咨询产品', intent: '高意向', intentScore: 90, urgency: '高', nextStep: '今天联系客户确认预算', followupTime: '2026-11-05', language: 'English', confidence: 0.8, contact: { name: '张三', phone: '+91 98765 43210' }, profile: { origin: '历史导入', age: 36, occupation: '采购经理' }, evidence: [{ field: 'age', value: 36, text: '我今年36岁' }] }, providerName: 'test', model: 'test-model' }) });
     assert.equal(analysis.status, 200);
     const analysisBody = await json(analysis);
-    const initializeCrm = await request('/api/state', { method: 'POST', headers: { 'x-state-version': '' }, body: JSON.stringify({ schemaVersion: 4, customers: [{ id: 'C-existing', name: '张三旧档案', rawPhone: '+91 98765 43210', phone: '9876543210', origin: '历史导入', age: '', occupation: '', tags: [], deleted: false }], savedViews: [], activities: [], tickets: [], deposits: [], followups: [], registrations: [], phoneRegistry: [], batchOperations: [], settings: { operatingTasks: [] }, channelAliases: {}, importIssues: [], qualityDecisions: {} }) });
+    const initializeCrm = await request('/api/state', { method: 'POST', headers: { 'x-state-version': '' }, body: JSON.stringify({ schemaVersion: 4, customers: [{ id: 'C-existing', name: '张三', rawPhone: '+91 98765 43210', phone: '9876543210', origin: '历史导入', age: '', occupation: '', tags: [], deleted: false }], savedViews: [], activities: [], tickets: [], deposits: [], followups: [], registrations: [], phoneRegistry: [], batchOperations: [], settings: { operatingTasks: [] }, channelAliases: {}, importIssues: [], qualityDecisions: {} }) });
     assert.equal(initializeCrm.status, 200);
     const bindExisting = await json(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-001', customerId: 'C-existing', bindingSource: 'manual' }) }));
     assert.equal(bindExisting.customerId, 'C-existing', 'fixture must model an explicit operator-confirmed customer association');
@@ -158,7 +168,6 @@ async function json(response) { return response.json(); }
     assert.equal(crmState.followups.length, 0, 'AI 建议只创建任务，不伪造已完成跟进记录');
     assert.equal(crmState.settings.operatingTasks.length, 1, 'AI 同步创建一个待跟进任务');
 
-
     const analysisList = await json(await request(`/api/ws/analyses?conversationId=${encodeURIComponent(conversationBody.id)}&limit=1&offset=0`));
     assert.equal(analysisList.total, 1);
     assert.equal(analysisList.analysis.result.summary, '咨询产品');
@@ -188,7 +197,7 @@ async function json(response) { return response.json(); }
     assert.equal(refreshedConversation.intentLevel, '高意向');
     assert.equal(refreshedConversation.language, 'English');
     assert.ok(refreshedConversation.lastMessageAt);
-    assert.equal(refreshedConversation.unreadCount, 4);
+    assert.equal(refreshedConversation.unreadCount, 0, '完整历史检查点必须清除未读门槛');
 
     const firstAlerts = await json(await request('/api/ws/followup-alerts?limit=8'));
     assert.equal(firstAlerts.alerts.length, 1);
@@ -211,6 +220,20 @@ async function json(response) { return response.json(); }
     assert.equal(newerAnalysis.status, 200);
     const alertsAfterNewerAnalysis = await json(await request('/api/ws/followup-alerts?limit=8'));
     assert.equal(alertsAfterNewerAnalysis.alerts.length, 0, '同一会话只应采用最新分析，不能保留旧的紧急提醒');
+
+    const lowConfidence = await json(await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, result: { summary: '证据不足', confidence: 0.4, nextStep: '不应自动跟进' }, confidence: 0.4, providerName: 'test', model: 'test-model' }) }));
+    const beforeLowConfidence = await json(await request('/api/state'));
+    const lowConfidenceSync = await json(await request('/api/ws/crm-sync', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, analysisId: lowConfidence.id }) }));
+    assert.equal(lowConfidenceSync.status, 'awaiting-human', '低置信度同步必须进入人工确认');
+    const afterLowConfidence = await json(await request('/api/state'));
+    assert.equal(afterLowConfidence.settings.operatingTasks.length, beforeLowConfidence.settings.operatingTasks.length, '低置信度不得创建跟进任务');
+
+    const deleteVersion = await json(await request('/api/state/version'));
+    const softDelete = await request('/api/data-governance/customers/C-existing/soft-delete', { method: 'POST', headers: { 'x-state-version': deleteVersion.version }, body: JSON.stringify({ reason: '测试软删除' }) });
+    assert.equal(softDelete.status, 200);
+    const deletedAnalysis = await json(await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, result: { summary: '已归档客户新证据', confidence: 0.9, nextStep: '不应直接修改已归档客户' }, confidence: 0.9, providerName: 'test', model: 'test-model' }) }));
+    const deletedSync = await json(await request('/api/ws/crm-sync', { method: 'POST', body: JSON.stringify({ conversationId: conversationBody.id, analysisId: deletedAnalysis.id }) }));
+    assert.equal(deletedSync.status, 'awaiting-restore', '软删除客户必须等待恢复后再同步');
 
     const replyPayload = { conversationId: conversationBody.id, originalText: 'Thank you', translatedText: '谢谢', status: 'copied', idempotencyKey: 'reply-copy-001' };
     const reply = await json(await request('/api/ws/replies', { method: 'POST', body: JSON.stringify(replyPayload) }));
@@ -236,7 +259,7 @@ async function json(response) { return response.json(); }
     assert.equal(imported.status, 200);
     const importResult = await json(imported);
     assert.equal(importResult.schemaVersion, 6);
-    assert.deepEqual(importResult.counts, { settings: 1, conversations: 1, messages: 3, analyses: 2, replies: 1, batches: 1, collectionRuns: 1, collectionItems: 1, followupAlerts: 1 });
+    assert.deepEqual(importResult.counts, { settings: 1, conversations: 2, messages: 3, analyses: 4, replies: 1, batches: 1, collectionRuns: 1, collectionItems: 1, followupAlerts: 1 });
 
     const v5 = JSON.parse(JSON.stringify(exportedBody));
     v5.schemaVersion = 5;
@@ -252,7 +275,7 @@ async function json(response) { return response.json(); }
     assert.equal(afterV5.counts.batches, 0);
 
     // 同一 WS 登录账号下的另一联系人没有现有客户匹配时不得自动建档。
-    const secondConversation = await json(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-002', title: '李四', customerId: '', language: 'English' }) }));
+    const secondConversation = await json(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-002', title: '李四', customerId: '', language: 'English', conversationType: 'direct', unreadCount: 0, data: { conversationType: 'direct', historyLoaded: true, historyFingerprint: 'second-history', lastMessageFingerprint: 'second-history', directionVersion: 4 } }) }));
     const secondAnalysisResponse = await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: secondConversation.id, result: { summary: '另一位客户咨询', intent: '高意向', intentScore: 85, urgency: '中', nextStep: '明天联系确认', followupTime: '2026-11-06', language: 'English', confidence: 0.9 }, providerName: 'test', model: 'test-model' }) });
     assert.equal(secondAnalysisResponse.status, 200);
     const secondAnalysis = await json(secondAnalysisResponse);
@@ -280,3 +303,5 @@ async function json(response) { return response.json(); }
     try { rmSync(dataDir, { recursive: true, force: true }); } catch {}
   }
 })().catch(error => { console.error(error); process.exitCode = 1; });
+
+

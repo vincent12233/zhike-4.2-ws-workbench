@@ -1,0 +1,228 @@
+{
+  "entries": [
+    {
+      "path": "captures/01-home-light.jpg",
+      "source": "main:.tools/v41-modern/native/01-home-light.jpg",
+      "sourceBytes": 239124,
+      "sourceSha256": "edbff4ec541d3176c107accf449ecc79f40481d6e8e7c17b429c5259b6853e7c",
+      "archiveBytes": 239124,
+      "archiveSha256": "edbff4ec541d3176c107accf449ecc79f40481d6e8e7c17b429c5259b6853e7c",
+      "originalBytesRetained": true,
+      "treatment": "original bytes"
+    },
+    {
+      "path": "captures/01-home-light.txt",
+      "source": "main:.tools/v41-modern/native/01-home-light.txt",
+      "sourceBytes": 27,
+      "sourceSha256": "fdfb278a6d2981701c66ba8f505165f07d5ffd5f6cf743e4d6a737d70779cfbc",
+      "archiveBytes": 27,
+      "archiveSha256": "fdfb278a6d2981701c66ba8f505165f07d5ffd5f6cf743e4d6a737d70779cfbc",
+      "originalBytesRetained": true,
+      "treatment": "original bytes"
+    },
+    {
+      "path": "captures/02-home-dark.jpg",
+      "source": "main:.tools/v41-modern/native/02-home-dark.jpg",
+      "sourceBytes": 240846,
+      "sourceSha256": "ef472807d3cbd2772f694034ea475118eade1b0a0c4287ca0edf42b5ee048169",
+      "archiveBytes": 240846,
+      "archiveSha256": "ef472807d3cbd2772f694034ea475118eade1b0a0c4287ca0edf42b5ee048169",
+      "originalBytesRetained": true,
+      "treatment": "original bytes"
+    },
+    {
+      "path": "captures/02-home-dark.txt",
+      "source": "main:.tools/v41-modern/native/02-home-dark.txt",
+      "sourceBytes": 14982,
+      "sourceSha256": "898fcde9c8c08a2d0ec860f04c45f4380c39b2421fd3c0a33d08264578a3eab8",
+      "archiveBytes": 14956,
+      "archiveSha256": "370f05ad52e713eb345be7162ff7a316e8e1581f224d581b8ca1fbffd4cb0bc3",
+      "originalBytesRetained": false,
+      "treatment": "replace the local isolation browser address with <isolated-url>"
+    },
+    {
+      "path": "captures/03-customers-dark.jpg",
+      "source": "main:.tools/v41-modern/native/03-customers-dark.jpg",
+      "sourceBytes": 238931,
+      "sourceSha256": "4945651c7e1f4bd5c586efe337f56cac18dbad3cb88f1e2fc68af60f6f319e08",
+      "archiveBytes": 238931,
+      "archiveSha256": "4945651c7e1f4bd5c586efe337f56cac18dbad3cb88f1e2fc68af60f6f319e08",
+      "originalBytesRetained": true,
+      "treatment": "original bytes"
+    },
+    {
+      "path": "captures/03-customers-dark.txt",
+      "source": "main:.tools/v41-modern/native/03-customers-dark.txt",
+      "sourceBytes": 16376,
+      "sourceSha256": "6aa3e13b036b1dd2e9a63308250d0e1553f25201968c7d5b33d900753904754e",
+      "archiveBytes": 16350,
+      "archiveSha256": "b24daa9746d65887a7a7b4ae7a5f061be377bef6aec8e51448d9c1f5eddad070",
+      "originalBytesRetained": false,
+      "treatment": "replace the local isolation browser address with <isolated-url>"
+    },
+    {
+      "path": "captures/04-ws-overview-dark.jpg",
+      "source": "main:.tools/v41-modern/native/04-ws-overview-dark.jpg",
+      "sourceBytes": 177308,
+      "sourceSha256": "b827873afcc3919c6a4942589da1f40d505ce73d5b77f22bc07d177f5ff0c732",
+      "archiveBytes": 177308,
+      "archiveSha256": "b827873afcc3919c6a4942589da1f40d505ce73d5b77f22bc07d177f5ff0c732",
+      "originalBytesRetained": true,
+      "treatment": "original bytes"
+    },
+    {
+      "path": "captures/04-ws-overview-dark.txt",
+      "source": "main:.tools/v41-modern/native/04-ws-overview-dark.txt",
+      "sourceBytes": 9235,
+      "sourceSha256": "15623611ffea2e2459f6d8073196e7b521fd9f48dfd2e0ed39eaa81fce9390fd",
+      "archiveBytes": 9209,
+      "archiveSha256": "6cd2bc1fe9a25b6b90affb4cfed9b251fc2356cf817724bf0d9ec53a2363c8ff",
+      "originalBytesRetained": false,
+      "treatment": "replace the local isolation browser address with <isolated-url>"
+    },
+    {
+      "path": "captures/05-ws-chat-unconnected.jpg",
+      "source": "main:.tools/v41-modern/native/05-ws-chat-unconnected.jpg",
+      "sourceBytes": 113678,
+      "sourceSha256": "7beb8bbd6fc9615be844bc773814a35ea316255ffae6f54cc9d68d6972370c48",
+      "archiveBytes": 113678,
+      "archiveSha256": "7beb8bbd6fc9615be844bc773814a35ea316255ffae6f54cc9d68d6972370c48",
+      "originalBytesRetained": true,
+      "treatment": "original bytes"
+    },
+    {
+      "path": "captures/05-ws-chat-unconnected.txt",
+      "source": "main:.tools/v41-modern/native/05-ws-chat-unconnected.txt",
+      "sourceBytes": 27,
+      "sourceSha256": "fdfb278a6d2981701c66ba8f505165f07d5ffd5f6cf743e4d6a737d70779cfbc",
+      "archiveBytes": 27,
+      "archiveSha256": "fdfb278a6d2981701c66ba8f505165f07d5ffd5f6cf743e4d6a737d70779cfbc",
+      "originalBytesRetained": true,
+      "treatment": "original bytes"
+    },
+    {
+      "path": "captures/06-ws-crm-expanded.jpg",
+      "source": "main:.tools/v41-modern/native/06-ws-crm-expanded.jpg",
+      "sourceBytes": 154792,
+      "sourceSha256": "d4f555963a9a7bf7351de6396e35e8cf6047751f4429ea15beeb8fe4214d98f4",
+      "archiveBytes": 154792,
+      "archiveSha256": "d4f555963a9a7bf7351de6396e35e8cf6047751f4429ea15beeb8fe4214d98f4",
+      "originalBytesRetained": true,
+      "treatment": "original bytes"
+    },
+    {
+      "path": "captures/06-ws-crm-expanded.txt",
+      "source": "main:.tools/v41-modern/native/06-ws-crm-expanded.txt",
+      "sourceBytes": 27,
+      "sourceSha256": "fdfb278a6d2981701c66ba8f505165f07d5ffd5f6cf743e4d6a737d70779cfbc",
+      "archiveBytes": 27,
+      "archiveSha256": "fdfb278a6d2981701c66ba8f505165f07d5ffd5f6cf743e4d6a737d70779cfbc",
+      "originalBytesRetained": true,
+      "treatment": "original bytes"
+    },
+    {
+      "path": "captures/07-ws-chat-returned.jpg",
+      "source": "main:.tools/v41-modern/native/07-ws-chat-returned.jpg",
+      "sourceBytes": 154205,
+      "sourceSha256": "b84f508f9083d5986f724ef3cee2d1f418a7514e061c36aa867ca1586551465c",
+      "archiveBytes": 154205,
+      "archiveSha256": "b84f508f9083d5986f724ef3cee2d1f418a7514e061c36aa867ca1586551465c",
+      "originalBytesRetained": true,
+      "treatment": "original bytes"
+    },
+    {
+      "path": "captures/07-ws-chat-returned.txt",
+      "source": "main:.tools/v41-modern/native/07-ws-chat-returned.txt",
+      "sourceBytes": 27,
+      "sourceSha256": "fdfb278a6d2981701c66ba8f505165f07d5ffd5f6cf743e4d6a737d70779cfbc",
+      "archiveBytes": 27,
+      "archiveSha256": "fdfb278a6d2981701c66ba8f505165f07d5ffd5f6cf743e4d6a737d70779cfbc",
+      "originalBytesRetained": true,
+      "treatment": "original bytes"
+    },
+    {
+      "path": "run/native-prepare.json",
+      "source": "main:.tools/v41-modern/native-prepare.json",
+      "sourceBytes": 411,
+      "sourceSha256": "de9ebb7cde31f750a33257ea06a0b1bfa13ad800822ff761e612915e853edb24",
+      "archiveBytes": 253,
+      "archiveSha256": "84eb9070da0b6b86681630350f390460f972822f91a2e42953fc32a520472d68",
+      "originalBytesRetained": false,
+      "treatment": "replace the isolated temporary path and repository root"
+    },
+    {
+      "path": "run/native-launch.json",
+      "source": "main:.tools/v41-modern/native-launch.json",
+      "sourceBytes": 182,
+      "sourceSha256": "ef7053b62cf814691bcf6a18b262c3ee31de15407bec96ec0082c694e657baf8",
+      "archiveBytes": 94,
+      "archiveSha256": "72ef165c35644d6d9b2efb49d2d0ca33982bb297dc343499a7626bbbb54c25cb",
+      "originalBytesRetained": false,
+      "treatment": "replace isolated temporary path"
+    },
+    {
+      "path": "run/native-closed.json",
+      "source": "main:.tools/v41-modern/native-closed.json",
+      "sourceBytes": 106,
+      "sourceSha256": "6ef4a864395563d539206d13ac67ae53241627a7c1dfc66b8163761e57aacc84",
+      "archiveBytes": 106,
+      "archiveSha256": "6ef4a864395563d539206d13ac67ae53241627a7c1dfc66b8163761e57aacc84",
+      "originalBytesRetained": true,
+      "treatment": "original bytes"
+    },
+    {
+      "path": "run/native-build.log",
+      "source": "main:.tools/v41-modern/native-build.log",
+      "sourceBytes": 257,
+      "sourceSha256": "75dea00d81ac37233bfa4c41141ea156f6248dbaf4ceac2ec2307fb9c84630fa",
+      "archiveBytes": 165,
+      "archiveSha256": "7432a3025a955494cbd5c0d48f0f01a6466682a4b072a118f6f38978eed0bbe4",
+      "originalBytesRetained": false,
+      "treatment": "replace the repository root"
+    },
+    {
+      "path": "run/native-build.exit",
+      "source": "main:.tools/v41-modern/native-build.exit",
+      "sourceBytes": 3,
+      "sourceSha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+      "archiveBytes": 3,
+      "archiveSha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+      "originalBytesRetained": true,
+      "treatment": "original bytes"
+    },
+    {
+      "path": "run/native-seed.log",
+      "source": "main:.tools/v41-modern/native-seed.log",
+      "sourceBytes": 259,
+      "sourceSha256": "c57c58f66a513beb575cb32781884689aee051d9a00b97baad9b213405b6a8c9",
+      "archiveBytes": 259,
+      "archiveSha256": "c57c58f66a513beb575cb32781884689aee051d9a00b97baad9b213405b6a8c9",
+      "originalBytesRetained": true,
+      "treatment": "original bytes"
+    },
+    {
+      "path": "lifecycle/native-events.jsonl",
+      "source": "isolated-root:native-events.jsonl",
+      "sourceBytes": 10677,
+      "sourceSha256": "52319d126616617a8a5f97958057101016c220d4d041395cc94477ac0a9f713a",
+      "archiveBytes": 9231,
+      "archiveSha256": "f2ade8dd59f17a38bef4cd7fe21cb15220e3d580b7dfa46ad9261cd35d2aa009",
+      "originalBytesRetained": false,
+      "treatment": "replace the temporary root, omit local-port fields and profile/drag records outside the acceptance"
+    },
+    {
+      "path": "observation.json",
+      "source": null,
+      "archiveBytes": 1204,
+      "archiveSha256": "2ba8249fe2ad595325100b2755e6753ffa5c91e4b5a82a37d8c565bc5b4cdf13",
+      "treatment": "generated from checked evidence"
+    },
+    {
+      "path": "sensitive-scan.json",
+      "source": null,
+      "archiveBytes": 8012,
+      "archiveSha256": "da5cd44081f6216f3da08e3abccabc1a598edad97f3a1bf043a107d66f320d7d",
+      "treatment": "generated from checked evidence"
+    }
+  ]
+}

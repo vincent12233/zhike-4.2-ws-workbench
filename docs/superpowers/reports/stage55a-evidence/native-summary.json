@@ -1,0 +1,586 @@
+[
+  {
+    "pid": 2080,
+    "pagesEntered": [],
+    "visibleCoreCreations": [],
+    "visibleNavigations": 0,
+    "accountSelections": [],
+    "presentation": [],
+    "lastChatDecision": null
+  },
+  {
+    "pid": 24944,
+    "pagesEntered": [
+      "overview",
+      "chat"
+    ],
+    "visibleCoreCreations": [
+      "default"
+    ],
+    "visibleNavigations": 1,
+    "accountSelections": [
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": true,
+        "reload": false
+      }
+    ],
+    "presentation": [
+      {
+        "at": "2026-11-16T17:13:56.1885301+00:00",
+        "pid": 24944,
+        "kind": "workspace-presentation-enter",
+        "fields": {
+          "hwnd": 2820176,
+          "Changed": true,
+          "Succeeded": true,
+          "Phase": "enter",
+          "rasterizationScale": 1,
+          "before": {
+            "ShowCommand": 1,
+            "Flags": 0,
+            "X": 208,
+            "Y": 208,
+            "Width": 1152,
+            "Height": 659,
+            "IsMaximized": false,
+            "IsMinimized": false
+          },
+          "after": {
+            "ShowCommand": 3,
+            "Flags": 2,
+            "X": 208,
+            "Y": 208,
+            "Width": 1152,
+            "Height": 659,
+            "IsMaximized": true,
+            "IsMinimized": false
+          },
+          "title": "WS 工作台 · 知客 Stage 5.1 · ISOLATED 验收"
+        }
+      }
+    ],
+    "lastChatDecision": null
+  },
+  {
+    "pid": 21900,
+    "pagesEntered": [
+      "chat"
+    ],
+    "visibleCoreCreations": [
+      "default"
+    ],
+    "visibleNavigations": 1,
+    "accountSelections": [
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": true,
+        "reload": false
+      }
+    ],
+    "presentation": [
+      {
+        "at": "2026-11-16T17:26:36.8789438+00:00",
+        "pid": 21900,
+        "kind": "workspace-presentation-enter",
+        "fields": {
+          "hwnd": 8063260,
+          "Changed": true,
+          "Succeeded": true,
+          "Phase": "enter",
+          "rasterizationScale": 1,
+          "before": {
+            "ShowCommand": 1,
+            "Flags": 0,
+            "X": 208,
+            "Y": 208,
+            "Width": 1152,
+            "Height": 659,
+            "IsMaximized": false,
+            "IsMinimized": false
+          },
+          "after": {
+            "ShowCommand": 3,
+            "Flags": 2,
+            "X": 208,
+            "Y": 208,
+            "Width": 1152,
+            "Height": 659,
+            "IsMaximized": true,
+            "IsMinimized": false
+          },
+          "title": "WS 工作台 · 知客 Stage 5.1 · ISOLATED 验收"
+        }
+      }
+    ],
+    "lastChatDecision": null
+  },
+  {
+    "pid": 32180,
+    "pagesEntered": [
+      "chat",
+      "overview",
+      "accounts",
+      "groups",
+      "members",
+      "collection",
+      "contacts",
+      "ai",
+      "crm",
+      "tasks",
+      "logs",
+      "settings"
+    ],
+    "visibleCoreCreations": [
+      "default"
+    ],
+    "visibleNavigations": 1,
+    "accountSelections": [
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": true,
+        "reload": false
+      }
+    ],
+    "presentation": [
+      {
+        "at": "2026-11-16T17:28:15.9562458+00:00",
+        "pid": 32180,
+        "kind": "workspace-presentation-enter",
+        "fields": {
+          "hwnd": 77138856,
+          "Changed": true,
+          "Succeeded": true,
+          "Phase": "enter",
+          "rasterizationScale": 1,
+          "before": {
+            "ShowCommand": 1,
+            "Flags": 0,
+            "X": 208,
+            "Y": 208,
+            "Width": 1152,
+            "Height": 659,
+            "IsMaximized": false,
+            "IsMinimized": false
+          },
+          "after": {
+            "ShowCommand": 3,
+            "Flags": 2,
+            "X": 208,
+            "Y": 208,
+            "Width": 1152,
+            "Height": 659,
+            "IsMaximized": true,
+            "IsMinimized": false
+          },
+          "title": "WS 工作台 · 知客 Stage 5.1 · ISOLATED 验收"
+        }
+      },
+      {
+        "at": "2026-11-16T17:31:19.2836019+00:00",
+        "pid": 32180,
+        "kind": "workspace-presentation-exit",
+        "fields": {
+          "hwnd": 77138856,
+          "Changed": true,
+          "Succeeded": true,
+          "Phase": "exit",
+          "rasterizationScale": 1,
+          "before": {
+            "ShowCommand": 3,
+            "Flags": 2,
+            "X": 208,
+            "Y": 208,
+            "Width": 1152,
+            "Height": 659,
+            "IsMaximized": true,
+            "IsMinimized": false
+          },
+          "after": {
+            "ShowCommand": 1,
+            "Flags": 0,
+            "X": 208,
+            "Y": 208,
+            "Width": 1152,
+            "Height": 659,
+            "IsMaximized": false,
+            "IsMinimized": false
+          },
+          "title": "知客 Stage 5.1 · ISOLATED 验收"
+        }
+      },
+      {
+        "at": "2026-11-16T17:31:41.6574465+00:00",
+        "pid": 32180,
+        "kind": "workspace-presentation-enter",
+        "fields": {
+          "hwnd": 77138856,
+          "Changed": true,
+          "Succeeded": true,
+          "Phase": "enter",
+          "rasterizationScale": 1,
+          "before": {
+            "ShowCommand": 1,
+            "Flags": 0,
+            "X": 208,
+            "Y": 208,
+            "Width": 1152,
+            "Height": 659,
+            "IsMaximized": false,
+            "IsMinimized": false
+          },
+          "after": {
+            "ShowCommand": 3,
+            "Flags": 2,
+            "X": 208,
+            "Y": 208,
+            "Width": 1152,
+            "Height": 659,
+            "IsMaximized": true,
+            "IsMinimized": false
+          },
+          "title": "WS 工作台 · 知客 Stage 5.1 · ISOLATED 验收"
+        }
+      }
+    ],
+    "lastChatDecision": null
+  },
+  {
+    "pid": 24104,
+    "pagesEntered": [
+      "accounts",
+      "groups",
+      "tasks",
+      "chat"
+    ],
+    "visibleCoreCreations": [
+      "default",
+      "native-b"
+    ],
+    "visibleNavigations": 2,
+    "accountSelections": [
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": true,
+        "reload": false
+      },
+      {
+        "accountId": "native-b",
+        "generation": 2,
+        "created": true,
+        "reload": false
+      },
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "native-b",
+        "generation": 2,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "native-b",
+        "generation": 2,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "native-b",
+        "generation": 2,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "native-b",
+        "generation": 2,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "native-b",
+        "generation": 2,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "native-b",
+        "generation": 2,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": false,
+        "reload": false
+      }
+    ],
+    "presentation": [
+      {
+        "at": "2026-11-16T17:35:06.9366401+00:00",
+        "pid": 24104,
+        "kind": "workspace-presentation-enter",
+        "fields": {
+          "hwnd": 23399142,
+          "Changed": true,
+          "Succeeded": true,
+          "Phase": "enter",
+          "rasterizationScale": 1,
+          "before": {
+            "ShowCommand": 1,
+            "Flags": 0,
+            "X": 208,
+            "Y": 208,
+            "Width": 1152,
+            "Height": 659,
+            "IsMaximized": false,
+            "IsMinimized": false
+          },
+          "after": {
+            "ShowCommand": 3,
+            "Flags": 2,
+            "X": 208,
+            "Y": 208,
+            "Width": 1152,
+            "Height": 659,
+            "IsMaximized": true,
+            "IsMinimized": false
+          },
+          "title": "WS 工作台 · 知客 Stage 5.1 · ISOLATED 验收"
+        }
+      }
+    ],
+    "lastChatDecision": null
+  },
+  {
+    "pid": 4860,
+    "pagesEntered": [
+      "chat",
+      "accounts",
+      "groups",
+      "members",
+      "collection"
+    ],
+    "visibleCoreCreations": [
+      "default",
+      "native-b"
+    ],
+    "visibleNavigations": 2,
+    "accountSelections": [
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": true,
+        "reload": false
+      },
+      {
+        "accountId": "native-b",
+        "generation": 2,
+        "created": true,
+        "reload": false
+      },
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "native-b",
+        "generation": 2,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "native-b",
+        "generation": 2,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "native-b",
+        "generation": 2,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "native-b",
+        "generation": 2,
+        "created": false,
+        "reload": false
+      },
+      {
+        "accountId": "default",
+        "generation": 1,
+        "created": false,
+        "reload": false
+      }
+    ],
+    "presentation": [
+      {
+        "at": "2026-11-16T17:45:14.7353196+00:00",
+        "pid": 4860,
+        "kind": "workspace-presentation-enter",
+        "fields": {
+          "hwnd": 6687510,
+          "Changed": true,
+          "Succeeded": true,
+          "Phase": "enter",
+          "rasterizationScale": 1,
+          "before": {
+            "ShowCommand": 1,
+            "Flags": 0,
+            "X": 208,
+            "Y": 208,
+            "Width": 1152,
+            "Height": 659,
+            "IsMaximized": false,
+            "IsMinimized": false
+          },
+          "after": {
+            "ShowCommand": 3,
+            "Flags": 2,
+            "X": 208,
+            "Y": 208,
+            "Width": 1152,
+            "Height": 659,
+            "IsMaximized": true,
+            "IsMinimized": false
+          },
+          "title": "WS 工作台 · 知客 Stage 5.1 · ISOLATED 验收"
+        }
+      },
+      {
+        "at": "2026-11-16T17:49:38.654183+00:00",
+        "pid": 4860,
+        "kind": "workspace-presentation-exit",
+        "fields": {
+          "hwnd": 6687510,
+          "Changed": true,
+          "Succeeded": true,
+          "Phase": "exit",
+          "rasterizationScale": 1,
+          "before": {
+            "ShowCommand": 3,
+            "Flags": 2,
+            "X": 208,
+            "Y": 208,
+            "Width": 1152,
+            "Height": 659,
+            "IsMaximized": true,
+            "IsMinimized": false
+          },
+          "after": {
+            "ShowCommand": 1,
+            "Flags": 0,
+            "X": 208,
+            "Y": 208,
+            "Width": 1152,
+            "Height": 659,
+            "IsMaximized": false,
+            "IsMinimized": false
+          },
+          "title": "知客 Stage 5.1 · ISOLATED 验收"
+        }
+      }
+    ],
+    "lastChatDecision": {
+      "at": "2026-11-16T17:48:27.9264531+00:00",
+      "pid": 4860,
+      "kind": "ws-bounds-decision",
+      "fields": {
+        "page": "chat",
+        "accountId": "default",
+        "routeActive": true,
+        "routeVisible": true,
+        "sequence": 22,
+        "lastAcceptedSequence": 22,
+        "currentRoute": "ws-workbench",
+        "nativeViewAccountId": "default",
+        "activeAccountId": "default",
+        "presentationAccountId": "default",
+        "accepted": true,
+        "chatActive": true,
+        "hostRenderable": true,
+        "hasNativeCore": true,
+        "hasBounds": true,
+        "hidden": false,
+        "x": 274,
+        "y": 188,
+        "width": 1164.4000244140625,
+        "height": 663.2000122070312,
+        "overlayGeometryApplied": true,
+        "overlayHitTestVisible": true,
+        "overlayZIndex": 20
+      }
+    }
+  }
+]

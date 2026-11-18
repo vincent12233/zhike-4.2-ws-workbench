@@ -1,0 +1,153 @@
+{
+  "checkedAtUtc": "2026-11-17T14:58:09.0572479Z",
+  "sourceSha256": "4321f79bc59b18a4d99f0a9df698ad3599aa9a1a28bc7f718955b49e204245ed",
+  "counterSnapshotAt": "2026-11-17T20:16:20.4731825+05:30",
+  "pid": 2100,
+  "counts": {
+    "application-start": {
+      "total": 1,
+      "emitted": 1,
+      "suppressed": 0
+    },
+    "sidecar-created": {
+      "total": 1,
+      "emitted": 1,
+      "suppressed": 0
+    },
+    "window-initialize-start": {
+      "total": 1,
+      "emitted": 1,
+      "suppressed": 0
+    },
+    "window-initialize-completed": {
+      "total": 1,
+      "emitted": 1,
+      "suppressed": 0
+    },
+    "window-created": {
+      "total": 1,
+      "emitted": 1,
+      "suppressed": 0
+    },
+    "host-route-request": {
+      "total": 2,
+      "emitted": 2,
+      "suppressed": 0
+    },
+    "shell-initialize-requested": {
+      "total": 3,
+      "emitted": 3,
+      "suppressed": 0
+    },
+    "host-loaded": {
+      "total": 1,
+      "emitted": 1,
+      "suppressed": 0
+    },
+    "sidecar-ready": {
+      "total": 1,
+      "emitted": 1,
+      "suppressed": 0
+    },
+    "shell-profile-created": {
+      "total": 1,
+      "emitted": 1,
+      "suppressed": 0
+    },
+    "stage53-drag-attached": {
+      "total": 1,
+      "emitted": 1,
+      "suppressed": 0
+    },
+    "stage53-drag-summary": {
+      "total": 1,
+      "emitted": 1,
+      "suppressed": 0
+    },
+    "webview-created": {
+      "total": 2,
+      "emitted": 2,
+      "suppressed": 0
+    },
+    "webview-source-changed": {
+      "total": 1,
+      "emitted": 1,
+      "suppressed": 0
+    },
+    "webview-navigation": {
+      "total": 2,
+      "emitted": 2,
+      "suppressed": 0
+    },
+    "ws-bounds-decision": {
+      "total": 24,
+      "emitted": 24,
+      "suppressed": 0
+    },
+    "window-presentation-state": {
+      "total": 12,
+      "emitted": 12,
+      "suppressed": 0
+    },
+    "workspace-page": {
+      "total": 34,
+      "emitted": 34,
+      "suppressed": 0
+    },
+    "workspace-presentation-enter": {
+      "total": 4,
+      "emitted": 4,
+      "suppressed": 0
+    },
+    "ws-initialize": {
+      "total": 1,
+      "emitted": 1,
+      "suppressed": 0
+    },
+    "ws-account-selected": {
+      "total": 2,
+      "emitted": 2,
+      "suppressed": 0
+    },
+    "navigation-starting": {
+      "total": 1,
+      "emitted": 1,
+      "suppressed": 0
+    },
+    "navigation-completed": {
+      "total": 1,
+      "emitted": 1,
+      "suppressed": 0
+    },
+    "workspace-presentation-exit": {
+      "total": 4,
+      "emitted": 4,
+      "suppressed": 0
+    },
+    "application-stopping": {
+      "total": 1,
+      "emitted": 1,
+      "suppressed": 0
+    },
+    "sidecar-stopped": {
+      "total": 1,
+      "emitted": 1,
+      "suppressed": 0
+    },
+    "host-unloaded": {
+      "total": 1,
+      "emitted": 1,
+      "suppressed": 0
+    }
+  },
+  "closeMethod": "User confirmed normal window close",
+  "releaseEvidence": [
+    "native-process-release.json",
+    "native-final-process-release.json"
+  ],
+  "limits": [
+    "Only observed process identities are verified.",
+    "No real WhatsApp login or chat acceptance.",
+    "No new account selection after the capture boundary."
+  ]
+}

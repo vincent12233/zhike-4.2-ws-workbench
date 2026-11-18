@@ -8,6 +8,7 @@ const repo = path.resolve(__dirname, '..');
 const read = relative => fs.readFileSync(path.join(repo, relative), 'utf8');
 const index = read('resources/app/index.html');
 const css = read('resources/app/modules/scroll-system.css');
+const customerCss = read('resources/app/modules/business-6.css');
 const coordinator = read('resources/app/modules/scroll-coordinator.js');
 const nativeHost = read('desktop/src/Zhike.Desktop/Views/LegacyUiHostPage.xaml.cs');
 
@@ -17,7 +18,13 @@ assert.equal(stylesheetOrder.at(-1), 'scroll-system.css', 'scroll ownership must
 assert.match(index, /modules\/desktop-host\.js[\s\S]*modules\/scroll-coordinator\.js/, 'scroll coordinator must start after the existing business and desktop modules');
 
 assert.match(css, /\.view-container\s*\{[\s\S]*?overflow-y:auto!important/, 'normal pages have one vertical page owner');
-assert.match(css, /\.table-scroll,[\s\S]*?overflow-x:auto!important;[\s\S]*?overflow-y:hidden!important/, 'business tables own horizontal overflow only');
+assert.match(css, /\.table-scroll,[\s\S]*?overflow-x:auto!important;[\s\S]*?overflow-y:auto!important/, 'business tables own bounded two-axis overflow');
+assert.match(css, /\[data-scroll-mode="contain"\]\s*\{\s*overscroll-behavior:contain\s*\}/,
+  'vertical inner regions contain their scroll at the boundaries');
+assert.match(customerCss, /html\[data-view="customers"\] \.customer6-primary \.table-scroll\{[^}]*overscroll-behavior:contain\}/,
+  'the customer table keeps containment outside its horizontal registration');
+assert.match(customerCss, /html\[data-view="customers"\] \.customer6-primary \.table-scroll\[data-scroll-mode="horizontal"\]\s*\{\s*overscroll-behavior-y:auto\s*;?\s*\}/,
+  'the customer table releases the vertical chain with no table range while retaining horizontal containment');
 assert.match(css, /--zk-scrollbar-size:11px/, 'desktop scrollbars have a usable drag target');
 assert.match(css, /html\.zk-scroll-modal-open \.view-container\{overflow:hidden!important\}/, 'dialogs freeze the background page');
 assert.match(css, /body\.ws-mode \.view-container\{overflow:hidden!important/, 'WS keeps a fixed outer canvas');
@@ -26,6 +33,7 @@ assert.match(css, /html\[data-desktop-host\][\s\S]*\.main-area\{overflow:hidden\
 assert.match(css, /:where\(\[data-scroll-mode\],#mainNav,#viewContainer\)::\-webkit-scrollbar/, 'scrollbars are styled only on registered scroll owners');
 assert.doesNotMatch(css, /(?:^|\n)\*::\-webkit-scrollbar/m, 'large customer tables must not pay a universal scrollbar selector cost');
 assert.match(css, /\.business-batch-list,[\s\S]*?\.v4-dimension-table,[\s\S]*?overflow-y:auto/, 'bounded legacy business lists use the unified vertical owner');
+assert.match(css, /\.ws-center-panel\{overflow:hidden!important/, 'WS center panel remains a non-scrolling layout shell');
 assert.match(css, /\.modal-backdrop\{background:[^}]*backdrop-filter:none!important\}/, 'full-window modal blur is disabled for smooth WebView2 scrolling');
 
 assert.match(coordinator, /mode: 'page'[\s\S]*mode: 'contain'[\s\S]*mode: 'horizontal'/, 'page, contained and horizontal ownership modes exist');

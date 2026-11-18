@@ -1,51 +1,31 @@
-# 知客 6.0 Horizon Atelier 本机桌面版
+# 知客 6.1 A+B 本机桌面版
 
-知客是现有 4.1 业务体系的升级版。正式产品只有一套桌面运行链：WinUI 3 + WebView2 + 随包 Node SQLite 本机服务。客户中心、快速录入、跟票、入金、报名、统计、数据中心、设置、GPT 助手和 WS 工作台都使用同一份本机数据，不需要 Docker、PostgreSQL、远程 API 或 Electron。
+知客使用 WinUI 3、WebView2 和随包 Node SQLite 本机服务。客户、跟票、入金、报名、统计、导入和备份可以离线使用。WhatsApp 前台聊天和用户主动调用的外部 AI 服务需要联网。
 
-## 当前入口
+## 下载与首次使用
 
-- 当前源码版本：6.0.1（候选版，安装包与实机验收待完成）
-- 预期安装包：`outputs/知客-6.0.1-WinUI桌面版/知客-6.0.1-WinUI桌面版.exe`（尚未生成）
-- 发布说明与测试状态：`docs/release-notes-6.0.1.md`、`docs/test-report-6.0.1.md`
-- 当前索引：`docs/current-release-index.md`
+- 当前候选为 **6.1.0**，预发行标签为 **`v6.1.0-rc.1`**。从仓库的 [GitHub Releases](https://github.com/vincent12233/zhike-4.2-ws-workbench/releases) 选择该标签下的 `zhike-6.1.0-win-x64-setup.exe` 和 `release-output-manifest.json`。下载需要登录已有该私有仓库访问权限的 GitHub 账号。候选状态和历史版本见[当前版本索引](docs/current-release-index.md)。
+- 安装器要求 Windows x64、系统内部版本 22621 或以上，并要求先安装 WebView2 Evergreen Runtime。缺少此依赖时安装器会中止。随包提供 .NET、Windows App SDK 和 Node，无须另装这些运行时。干净目标机上的安装、覆盖升级和卸载仍待验收。
+- 对照候选清单校验安装器 SHA-256。安装后从桌面或开始菜单打开“知客工作台”。首次使用会在 `%LOCALAPPDATA%\Zhike6` 创建空 SQLite 库。安装和备份步骤见[本机部署说明](docs/local-desktop-deployment.md)。
+- 有已有资料时，升级前在“数据中心”导出备份。新旧版本的外置数据目录保持分离。程序不自动迁移旧 `%LOCALAPPDATA%\Zhike`。
 
-安装器会创建桌面快捷方式。6.0 业务数据独立保存在 `%LOCALAPPDATA%\Zhike6`，首次启动创建空 SQLite 库且不预置演示数据。6.0 不读取、不迁移旧 `%LOCALAPPDATA%\Zhike` 数据；安装和卸载也不会主动删除旧目录。
+## 使用范围
 
-## 业务与 WS/AI
+| 能力 | 当前可用范围 |
+|---|---|
+| 客户与业务 | 同一客户的跟票、入金、报名和跟进保持独立。渠道、VIP、群组和任务可使用系统设置中的筛选选项。 |
+| WS 前台聊天 | 在 WS 工作台选择账号，首次由用户在官方页面扫码或登录。每个账号使用独立的 WebView2 会话。真实账号体验以目标环境为准。 |
+| WS 手动导入 | 用户可导入获准处理的当前可见或选中内容。群组、联系人和审计页面展示已保存的本机资料。 |
+| WS 后台能力 | 自动会话发现、后台采集、自动完整历史和后台群监测保持关闭。认证 profile 复制和隐藏采集保持禁用。 |
+| AI 与跟进 | 可查看本机摘要、待确认建议和跟进提醒。显式联网请求需要用户配置服务并确认提交。生产 Worker 和自动 AI 消费者保持关闭。 |
 
-本版保留原有统计口径和独立业务记录：同一客户不同股票、买入/卖出和不同入金记录不会合并；号码只用于关联客户主档案。VIP、渠道、群组、热聊和任务筛选共享设置中的选项。
+VIP 群按可信发言人身份拆分手动导入的消息，只有唯一匹配到现有客户的记录才进入个人档案和跟进评分。AI 审核保护人工已填字段。支付、验证码及身份冲突需人工处理。[热聊与 AI 使用说明](docs/hot-chat-profile-usage.md)
 
-WS 工作台支持多账号标签、登录状态、全量聊天列表扫描、已读会话自动逐个采集、未读跳过、可见消息采集、手动导入、原文/译文、AI 摘要、客户意向/情绪/职业/年龄/来源等字段提取、客户主档案补齐和跟进提醒。一对一会话与系统设置中明确绑定的 VIP 群可进入完整历史采集；普通群排除。VIP 群消息按可信发言人身份拆分，只有唯一匹配到现有客户的成员才进入该客户档案和个人跟进评分，不自动新增客户，也不把其他群成员的话归给该客户。AI 只补充空字段或生成待确认建议，不覆盖已有人工内容；低置信度、身份冲突、付款/退款/验证码/金融/法律/医疗/价格或交付承诺只提示人工确认，不自动发送。
+## 开发与构建
 
-WhatsApp Web 没有适合个人账号的后台接口。知客可以扫描当前已登录页面的聊天列表（无需逐个打开会话），并采集当前页面实际渲染且用户授权可见的消息；不会读取密码、Cookie、二维码或秘密 Token，也不承诺电脑关闭后继续接收端到端加密内容。
+`desktop/` 为 WinUI 壳和本机桥接，`resources/app/` 为 WebView2 页面、SQLite sidecar 和业务模块，`scripts/` 与 `tests/` 提供构建和回归入口。
 
-## 数据、备份与恢复
+构建需要 .NET 10 SDK、Windows App SDK 依赖和 Inno Setup。把官方 Node.js 24 Windows x64 发行包中的 `node.exe` 放在 `resources/app/` 下。开发命令可使用 PATH 上的 Node，安装器只能使用该随包路径。构建、校验和候选发布命令见[候选发布计划](docs/release/runtime-release-plan.md)。
 
-在“数据中心”进行本机备份、导出和恢复。导入、批量删除、渠道设置和 AI 同步在写入前创建快照；写入失败会保留原始数据并允许重试。恢复或换机前先导出备份，勿直接删除 `workspace.sqlite`。
-
-## 目录
-
-- `desktop/`：WinUI 3 桌面壳、WebView2、WS 隔离和本机桥接。
-- `resources/app/`：原版知客页面、本机 SQLite sidecar、迁移和业务模块。
-- `tests/`、`desktop/tests/`：本机服务、WS 采集、AI/CRM、导入、性能和安装回归。
-- `docs/`：仅保留 6.0 当前部署、故障排查、业务说明、发布说明与测试报告。
-- `zhike-desktop-setup.iss`、`scripts/build-winui-*.ps1`：唯一正式构建入口。
-
-旧 Docker/PostgreSQL/Electron 运行时已从正式项目移出，不属于当前产品，也不存在可启动的旧回退入口。6.0 不从历史运行时或旧业务库导入数据。
-
-## 开发、测试与打包
-
-需要 Node.js 24+、.NET 10 SDK、Windows App SDK 和 WebView2 Runtime。
-
-```powershell
-node scripts/run-tests.cjs all
-dotnet build desktop/src/Zhike.Desktop/Zhike.Desktop.csproj -c Release -r win-x64 --no-restore
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-bundle.ps1 -Version 6.0.1 -Configuration Release -RuntimeIdentifier win-x64 -SelfContained
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installer.ps1 -AppVersion 6.0.1 -AllowUnsigned -SkipWebView2Check
-```
-
-构建产物只写入 `work/`，验收通过后的交付文件放到 `outputs/知客-6.0.1-WinUI桌面版/`。当前尚无 6.0.1 合格安装包。不以“编译成功”代替验收；真实 WS 登录、手机新消息和外部 AI 服务需要在目标机由用户本人完成环境验证。
-
-## 安全边界
-
-WS 登录、扫码、验证码和发送操作由用户本人完成。所有 AI 建议默认需要人工复制或确认；关闭翻译或 AI 后不调用对应服务，采集和原文保存仍可继续。日志会脱敏，不记录密码、Cookie、二维码和密钥。
+- [故障排查](docs/local-desktop-troubleshooting.md)
+- [6.1.0 候选发布说明](docs/release/release-notes-6.1.0.md)

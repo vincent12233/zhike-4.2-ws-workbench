@@ -1,0 +1,11 @@
+✔ one delegated registration export click downloads all confirmed rows without an unavailable toast (29.5001ms)
+✔ main analysis shows no filled bars for zero and preserves the active-customer denominator (3.3977ms)
+✔ filtered analysis keeps independent counts and their ratios without painting zero bars (3.4993ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 44.2091

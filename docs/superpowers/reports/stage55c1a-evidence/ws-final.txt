@@ -1,0 +1,650 @@
+
+[RUN] syntax resources\app\app.js
+[PASS] syntax resources\app\app.js
+
+[RUN] syntax resources\app\migration-runner.cjs
+[PASS] syntax resources\app\migration-runner.cjs
+
+[RUN] syntax resources\app\modules\accessibility-enhancements.js
+[PASS] syntax resources\app\modules\accessibility-enhancements.js
+
+[RUN] syntax resources\app\modules\ai-crm-suggestion-core.js
+[PASS] syntax resources\app\modules\ai-crm-suggestion-core.js
+
+[RUN] syntax resources\app\modules\ai-job-pipeline-core.js
+[PASS] syntax resources\app\modules\ai-job-pipeline-core.js
+
+[RUN] syntax resources\app\modules\ai-mock-provider.js
+[PASS] syntax resources\app\modules\ai-mock-provider.js
+
+[RUN] syntax resources\app\modules\ai-review-center-ui.js
+[PASS] syntax resources\app\modules\ai-review-center-ui.js
+
+[RUN] syntax resources\app\modules\business-enhancements.js
+[PASS] syntax resources\app\modules\business-enhancements.js
+
+[RUN] syntax resources\app\modules\business-rule-core.js
+[PASS] syntax resources\app\modules\business-rule-core.js
+
+[RUN] syntax resources\app\modules\customer-governance-core.js
+[PASS] syntax resources\app\modules\customer-governance-core.js
+
+[RUN] syntax resources\app\modules\customer-governance-ui.js
+[PASS] syntax resources\app\modules\customer-governance-ui.js
+
+[RUN] syntax resources\app\modules\desktop-host.js
+[PASS] syntax resources\app\modules\desktop-host.js
+
+[RUN] syntax resources\app\modules\desktop-performance.js
+[PASS] syntax resources\app\modules\desktop-performance.js
+
+[RUN] syntax resources\app\modules\gpt-assistant.js
+[PASS] syntax resources\app\modules\gpt-assistant.js
+
+[RUN] syntax resources\app\modules\hot-chat-profile-core.js
+[PASS] syntax resources\app\modules\hot-chat-profile-core.js
+
+[RUN] syntax resources\app\modules\operations-core.cjs
+[PASS] syntax resources\app\modules\operations-core.cjs
+
+[RUN] syntax resources\app\modules\operations-ui.js
+[PASS] syntax resources\app\modules\operations-ui.js
+
+[RUN] syntax resources\app\modules\operations-upgrade.js
+[PASS] syntax resources\app\modules\operations-upgrade.js
+
+[RUN] syntax resources\app\modules\performance-enhancements.js
+[PASS] syntax resources\app\modules\performance-enhancements.js
+
+[RUN] syntax resources\app\modules\phone-registry.js
+[PASS] syntax resources\app\modules\phone-registry.js
+
+[RUN] syntax resources\app\modules\productivity.js
+[PASS] syntax resources\app\modules\productivity.js
+
+[RUN] syntax resources\app\modules\runtime-customizer.js
+[PASS] syntax resources\app\modules\runtime-customizer.js
+
+[RUN] syntax resources\app\modules\scroll-coordinator.js
+[PASS] syntax resources\app\modules\scroll-coordinator.js
+
+[RUN] syntax resources\app\modules\smart-import.js
+[PASS] syntax resources\app\modules\smart-import.js
+
+[RUN] syntax resources\app\modules\ticket-record-core.js
+[PASS] syntax resources\app\modules\ticket-record-core.js
+
+[RUN] syntax resources\app\modules\v4-data-center.js
+[PASS] syntax resources\app\modules\v4-data-center.js
+
+[RUN] syntax resources\app\modules\ws-business-pages.js
+[PASS] syntax resources\app\modules\ws-business-pages.js
+
+[RUN] syntax resources\app\modules\ws-crm-sync-core.js
+[PASS] syntax resources\app\modules\ws-crm-sync-core.js
+
+[RUN] syntax resources\app\modules\ws-group-manager-core.js
+[PASS] syntax resources\app\modules\ws-group-manager-core.js
+
+[RUN] syntax resources\app\modules\ws-group-mock-transport.js
+[PASS] syntax resources\app\modules\ws-group-mock-transport.js
+
+[RUN] syntax resources\app\modules\ws-group-monitor-core.js
+[PASS] syntax resources\app\modules\ws-group-monitor-core.js
+
+[RUN] syntax resources\app\modules\ws-media-core.js
+[PASS] syntax resources\app\modules\ws-media-core.js
+
+[RUN] syntax resources\app\modules\ws-scope.js
+[PASS] syntax resources\app\modules\ws-scope.js
+
+[RUN] syntax resources\app\modules\ws-workbench-core.js
+[PASS] syntax resources\app\modules\ws-workbench-core.js
+
+[RUN] syntax resources\app\modules\ws-workbench.js
+[PASS] syntax resources\app\modules\ws-workbench.js
+
+[RUN] syntax resources\app\modules\ws-workspace-query.cjs
+[PASS] syntax resources\app\modules\ws-workspace-query.cjs
+
+[RUN] syntax resources\app\server.mjs
+[PASS] syntax resources\app\server.mjs
+
+[RUN] syntax resources\app\sidecar-write-coordinator.cjs
+[PASS] syntax resources\app\sidecar-write-coordinator.cjs
+
+[RUN] syntax resources\app\state-delta.cjs
+[PASS] syntax resources\app\state-delta.cjs
+
+[RUN] syntax resources\app\worker-fencing-gate.cjs
+[PASS] syntax resources\app\worker-fencing-gate.cjs
+
+[RUN] syntax resources\app\worker-queue-adapter.cjs
+[PASS] syntax resources\app\worker-queue-adapter.cjs
+
+[RUN] Stage 3 group feature flags
+stage3 worker group feature flags contract: pass
+[PASS] Stage 3 group feature flags
+
+[RUN] Stage 3 Worker and group-manager isolation gate
+stage3 Worker and group-manager isolation gate: pass
+[PASS] Stage 3 Worker and group-manager isolation gate
+
+[RUN] Stage 3 group manager migration
+stage3 group manager migration contract: pass
+[PASS] Stage 3 group manager migration
+
+[RUN] Stage 3 group manager core
+stage3 group manager core contract: pass
+[PASS] Stage 3 group manager core
+
+[RUN] Stage 3 group manager isolated API and Mock Transport
+stage3 group manager API, account isolation, CRM gate, idempotency and mock transport: pass
+[PASS] Stage 3 group manager isolated API and Mock Transport
+
+[RUN] Stage 3 WS workspace navigation
+stage3 WS workspace navigation contract: pass
+[PASS] Stage 3 WS workspace navigation
+
+[RUN] Stage 4 AI job pipeline core
+ai job pipeline core: PASS
+[PASS] Stage 4 AI job pipeline core
+
+[RUN] Stage 4 CRM suggestion core
+ai crm suggestion core: PASS
+[PASS] Stage 4 CRM suggestion core
+
+[RUN] Stage 4 migration and schema
+stage4 migration: PASS
+[PASS] Stage 4 migration and schema
+
+[RUN] Stage 4 Worker AI flags
+stage4 worker AI feature flags contract: pass
+[PASS] Stage 4 Worker AI flags
+
+[RUN] Stage 4 Mock AI provider
+ai mock provider: PASS
+[PASS] Stage 4 Mock AI provider
+
+[RUN] Stage 4 AI review center UI
+ai review center ui: PASS
+[PASS] Stage 4 AI review center UI
+
+[RUN] Stage 4 desktop ApiClient queue and CRM contract
+desktop ApiClient Stage 4 queue and CRM contract passed
+[PASS] Stage 4 desktop ApiClient queue and CRM contract
+
+[RUN] Stage 4 isolated AI pipeline API
+stage4 isolated AI queue, fencing, evidence, CRM review and rollback boundaries: PASS
+[PASS] Stage 4 isolated AI pipeline API
+
+[RUN] WS core rules
+ws-workbench-core: pass; shared-login isolation and live discovery payloads verified
+[PASS] WS core rules
+
+[RUN] WS direct-only collection and AI policy
+WS direct-only policy: core identity, mixed ingest, unknown rejection, legacy group retirement, late-write guards pass
+[PASS] WS direct-only collection and AI policy
+
+[RUN] WS VIP member task and alert isolation
+VIP member reminders: two customers, distinct tasks and alerts, idempotent polling and reanalysis pass
+[PASS] WS VIP member task and alert isolation
+
+[RUN] WS and GPT Horizon visual reachability
+WS and GPT Horizon visual scope, dark states, narrow control reachability and scroll contract pass
+[PASS] WS and GPT Horizon visual reachability
+
+[RUN] WS AI CRM sync rules
+ws-crm-sync-core: pass
+[PASS] WS AI CRM sync rules
+
+[RUN] WS unified customer archive UI contract
+ws-hot-chat-profile-ui: source wiring contract passed; live UI behavior requires separate native acceptance
+[PASS] WS unified customer archive UI contract
+
+[RUN] WS CRM customer-link trust boundary
+WS CRM link trust: pending wrong links and shared accounts are blocked; manual and independent WS identity links pass
+[PASS] WS CRM customer-link trust boundary
+
+[RUN] WS workbench initialization
+ws-workbench-init: pass
+[PASS] WS workbench initialization
+
+[RUN] WS API and SQLite
+ws-workbench-api: pass
+[PASS] WS API and SQLite
+
+[RUN] WS export streaming contract
+WS export streaming contract: bounded SQLite iteration, disconnect handling and backpressure are present
+[PASS] WS export streaming contract
+
+[RUN] WS export and media schema
+[PASS] WS export and media schema
+
+[RUN] WS complete export and export jobs
+ws-export-complete: pass
+[PASS] WS complete export and export jobs
+
+[RUN] WS media staging and attachment broadcast
+ws-media-api: staging, account isolation, raw download, attachment broadcast, idempotency and deletion guard contracts pass
+[PASS] WS media staging and attachment broadcast
+
+[RUN] WS media send runtime contract
+ws-media-send-runtime: attachment upload, media-id plans and send-media dispatch required
+[PASS] WS media send runtime contract
+
+[RUN] WS broadcast, translation and send audit
+ws-broadcast-translation: translation preservation, explicit broadcast confirmation, account isolation, rate limiting, native bridge and audit contracts pass
+[PASS] WS broadcast, translation and send audit
+
+[RUN] WS VIP customer and group-monitor scope separation
+VIP scope separation: customer VIP and WS group monitoring remain independent
+[PASS] WS VIP customer and group-monitor scope separation
+
+[RUN] WS conversation cursor pagination
+WS conversation pagination: 5205 conversations loaded without gaps or duplicates
+[PASS] WS conversation cursor pagination
+
+[RUN] WS conversation incremental watermark runtime
+WS conversation delta runtime: unchanged=1 page, 1105 updates=5 pages, late update recovered
+[PASS] WS conversation incremental watermark runtime
+
+[RUN] WS list preview update
+ws-list-preview-update: pass
+[PASS] WS list preview update
+
+[RUN] WS follow-up chain dedupe and refresh
+ws-followup-chain: isolated repeated-analysis dedupe, no-reply cooldown and current-alert refresh pass
+[PASS] WS follow-up chain dedupe and refresh
+
+[RUN] WS task lifecycle and multi-account history ingest
+WS lifecycle: multi-account radar, plan/statistics separation, snooze, completion idempotency, reopen and dismiss pass
+[PASS] WS task lifecycle and multi-account history ingest
+
+[RUN] WS complete original text and backup roundtrip
+WS original roundtrip: long text, whitespace, backup/restore and explicit oversized rejection passed
+[PASS] WS complete original text and backup roundtrip
+
+[RUN] WS intelligent follow-up strategy and CRM persistence
+WS follow-up intelligence: structured strategy, priority and CRM persistence pass
+[PASS] WS intelligent follow-up strategy and CRM persistence
+
+[RUN] WS live refresh event contract
+WS live refresh contract: heartbeat is WS-only; real ingestion and changed business versions refresh safely
+[PASS] WS live refresh event contract
+
+[RUN] WS non-blocking AI pump runtime
+WS non-blocking AI pump runtime checks passed.
+[PASS] WS non-blocking AI pump runtime
+
+[RUN] Home WS follow-up runtime
+home WS follow-up runtime: fallback, placeholder, stale guard, five-card identity/score layout, bridge priority, visible retry and filter-safe task deep-link passed
+[PASS] Home WS follow-up runtime
+
+[RUN] WS SQLite v6 migration
+ws-workbench-migration-v6/v9: pass
+[PASS] WS SQLite v6 migration
+
+[RUN] WS external-id uniqueness migration
+ws external-id migration: duplicate repair and unique account/conversation index pass
+[PASS] WS external-id uniqueness migration
+
+[RUN] WS local security contract
+ws-workbench-security: local bridge, authorized capture and secret-boundary contracts pass
+[PASS] WS local security contract
+
+[RUN] WS multi-account database isolation
+ws-multi-account: pass
+[PASS] WS multi-account database isolation
+
+[RUN] WS account runtime recovery
+ws-account-runtime-recovery: pass
+[PASS] WS account runtime recovery
+
+[RUN] WS native collector async full-list scan contract
+WS native collector contract: virtualized full-list scan yields across frames, restores scroll and schedules background scans
+[PASS] WS native collector async full-list scan contract
+
+[RUN] WS native collector P0 durability contract
+WS collector P0 contract: top-first scan, identity guard, durable checkpoints, final-packet semantics and incremental recapture are wired
+[PASS] WS native collector P0 durability contract
+
+[RUN] WS native collector diagnostics contract
+WS collector diagnostics contract: fixed-field lifecycle telemetry is local, sanitized and bounded to 256 KB
+[PASS] WS native collector diagnostics contract
+
+[RUN] WS native group monitor bridge contract
+WS native group monitor contract: DTO, queue bridge, collector-only lifecycle and group event forwarding are wired
+[PASS] WS native group monitor bridge contract
+
+[RUN] WS group monitor core
+ok - normalizes WhatsApp phone JIDs and phone text deterministically
+ok - creates a stable idempotency key for replayed events
+ok - resolves participant id before external ids, phone and manual mapping
+ok - returns pending for ambiguous and unmatched identities without creating a customer
+ok - counts only confirmed joins and excludes approval requests
+ok - projects a joined event per account, group and customer and protects manual locks
+ok - maps left and removed events to distinct customer relationship states
+ok - does not treat two distinct id-less events as duplicates
+ws-group-monitor-core: pass
+[PASS] WS group monitor core
+
+[RUN] WS group monitor migration
+ws-group-monitor-migration: pass
+[PASS] WS group monitor migration
+
+[RUN] WS group monitor sidecar API
+ws-group-monitor-api: pass
+[PASS] WS group monitor sidecar API
+
+[RUN] WS group monitor ingest
+ws-group-monitor-ingest: pass
+[PASS] WS group monitor ingest
+
+[RUN] WS customer group status projection
+customer-group-membership: status projection contract present
+[PASS] WS customer group status projection
+
+[RUN] WS customer group status projection runtime
+ws-group-status-projection-runtime: pass
+[PASS] WS customer group status projection runtime
+
+[RUN] WS native background lifecycle and bounds contract
+WS background lifecycle contract: retained pooled WebViews, metadata heartbeat, stable DPI bounds and direct/VIP ingress are wired
+[PASS] WS native background lifecycle and bounds contract
+
+[RUN] WS process runtime coordinator contract
+WS runtime coordinator contract: process-owned multi-account policy, foreground isolation, fair leases and retry backoff pass
+[PASS] WS process runtime coordinator contract
+
+[RUN] WS process WebView session pool contract
+WS process session pool contract: finite multi-account LRU, leases, generation fencing, background lifecycle, shutdown and popup isolation pass
+[PASS] WS process WebView session pool contract
+
+[RUN] WS process runtime coordinator scheduling
+WS runtime coordinator scheduling: foreground isolation, fair rotation, per-account backoff and collection policy pass
+[PASS] WS process runtime coordinator scheduling
+
+[RUN] WS parent-route visibility runtime
+WS route visibility runtime: 12 pages, chat-only native anchor, account fencing and ordered WS enter/exit pass
+[PASS] WS parent-route visibility runtime
+
+[RUN] WS hidden native scheduler runtime
+WS hidden scheduler runtime: dormant rAF/page timers are advanced safely by the native heartbeat
+[PASS] WS hidden native scheduler runtime
+
+[RUN] WS native group exclusion runtime
+WS VIP-group runtime: explicit whitelist allows one VIP group, ordinary groups stay excluded, and unread policy remains fail-closed
+[PASS] WS native group exclusion runtime
+
+[RUN] WS native conversation identity runtime
+WS conversation identity runtime: data-jid/data-chat-id/data-group-id are extracted and groups are surfaced separately
+[PASS] WS native conversation identity runtime
+
+[RUN] WS durable queue Web JSON and API roundtrip
+WS queue Web JSON/API roundtrip passed: account, bidirectional evidence, checkpoint coverage and original body preserved
+[PASS] WS durable queue Web JSON and API roundtrip
+
+[RUN] WS native collector chunk runtime
+WS native collector chunk runtime: 5,000 rows remain complete and each WebView2 payload stays below 700k
+[PASS] WS native collector chunk runtime
+
+[RUN] WS native collector physical-bottom runtime
+WS full-list runtime: the physical bottom window is rendered and collected before completion
+[PASS] WS native collector physical-bottom runtime
+
+[RUN] WS native collector in-flight discovery runtime
+WS discover-all progress runtime: in-flight reads expose partial rows and completion publishes all rows
+[PASS] WS native collector in-flight discovery runtime
+
+[RUN] WS native collector full-list stall runtime
+WS full-list stall runtime: a frozen virtual list yields after 30 seconds with partial checkpoints
+[PASS] WS native collector full-list stall runtime
+
+[RUN] WS native collector navigation/retry runtime
+WS navigation/retry runtime: archive rows are excluded and identity failures do not block later customers
+[PASS] WS native collector navigation/retry runtime
+
+[RUN] WS native collector history packet runtime
+WS history packet runtime: bidirectional roles, multiline fidelity, 600 KB chunking, durable resume, phone increment and retry safety pass
+[PASS] WS native collector history packet runtime
+
+[RUN] WS native collector foreground isolation runtime
+WS foreground isolation runtime: no persistent collector is injected; manual capture is read-only and on-demand
+[PASS] WS native collector foreground isolation runtime
+
+[RUN] WS native media bridge contract
+ws-media-bridge-contract: explicit media action, safety refusal and conversation guard required
+[PASS] WS native media bridge contract
+
+[RUN] WS unread skip contract
+WS unread skip contract: unread conversations are never eligible for automatic opening
+[PASS] WS unread skip contract
+
+[RUN] WS strict unread detection runtime
+WS unread detection runtime: strict badges pass, action/preview false positives are rejected, unknown DOM is conservative
+[PASS] WS strict unread detection runtime
+
+[RUN] WS read-history collector runtime
+WS read-history collector runtime: read-only collection, unknown fail-safe, busy guard and delayed-history quiet window passed
+[PASS] WS read-history collector runtime
+
+[RUN] WS ChatKnow UI contract
+ws-workbench-ui: accounts, collapsible panels, list capture and AI sync contracts pass
+[PASS] WS ChatKnow UI contract
+
+[RUN] WS group monitor UI contract
+ws-group-monitor-ui: pass
+[PASS] WS group monitor UI contract
+
+[RUN] WS group discovery contract
+ws-group-discovery-contract: pass
+[PASS] WS group discovery contract
+
+[RUN] WS broadcast and translation UI contract
+ws-broadcast-ui: read-direct recipient filtering, translation preview, audited queue and foreground safety pass
+[PASS] WS broadcast and translation UI contract
+
+[RUN] WS collection and CRM sync contract
+ws-workbench-sync: idempotent messages, account linkage, AI CRM sync and follow-up contracts pass
+[PASS] WS collection and CRM sync contract
+
+[RUN] WS complete per-customer history contract
+ws full-history contract: complete per-customer message loading and AI transcript coverage are wired
+[PASS] WS complete per-customer history contract
+
+[RUN] WS chunked full-history AI and checkpoint contract
+WS chunked AI analysis: 4 chunks, 5 calls, middle evidence retention, full coverage and durable checkpoint contracts pass
+[PASS] WS chunked full-history AI and checkpoint contract
+
+[RUN] WS durable AI queue contract
+AI durable queue contract: idempotent enqueue, restart recovery, claim, backoff and stats passed
+[PASS] WS durable AI queue contract
+
+[RUN] WS AI queue UI metrics contract
+ai queue UI metrics contract: retry and dead-letter indicators are visible and refresh-safe
+[PASS] WS AI queue UI metrics contract
+
+[RUN] WS resize performance contract
+ws resize performance contract: native resize is probe-free and web resize calls are coalesced
+[PASS] WS resize performance contract
+
+[RUN] WS frontend high-priority fixes
+frontend high-priority fixes: WS mount, scroll boundaries, responsive layout, customer links and GPT errors contract pass
+[PASS] WS frontend high-priority fixes
+
+[RUN] project stability and lifecycle contract
+project-stability-contract: routing, request lifecycles, WS layout and accessibility contracts are present
+[PASS] project stability and lifecycle contract
+
+[RUN] WS 50k conversation list render budget
+WS conversation list performance: 50k filter/window 34.2 ms, DOM capped at 120 rows
+[PASS] WS 50k conversation list render budget
+
+[RUN] WS bridge recovery contract
+ws bridge recovery contract: stale sidecar clients rebind and actionable errors survive
+[PASS] WS bridge recovery contract
+
+[RUN] WS scroll routing contract
+ws scroll routing contract: nested panes contain wheel/touch scrolling
+[PASS] WS scroll routing contract
+
+[RUN] WS A+ dual-layer layout contract
+ws-workbench-a-plus-layout: compact rail, max WebView, collapsible local workspace and stable process rail required
+[PASS] WS A+ dual-layer layout contract
+
+[RUN] WS data archive customer bridge
+ws-data-archive-api: unified CRM/WS archive read, business records, account isolation and non-mutating contract passed
+[PASS] WS data archive customer bridge
+
+[RUN] WS data archive summary bridge
+data archive summary: SQLite archive, CRM links, WS counts and account isolation pass
+[PASS] WS data archive summary bridge
+
+[RUN] WS data archive UI bridge
+data-archive-ui: data center renders the SQLite archive bridge and refresh contract
+[PASS] WS data archive UI bridge
+
+[RUN] WS data archive drilldown UI
+data-archive-drilldown-ui: lightweight customer archive drilldown contract
+[PASS] WS data archive drilldown UI
+
+[RUN] WS group catalog runtime
+ws-group-catalog-runtime: pass
+[PASS] WS group catalog runtime
+
+[RUN] WS background isolation runtime
+ws-background-isolation: per-account heartbeat and non-UI parsing contract
+[PASS] WS background isolation runtime
+
+[RUN] WS multi-account detection contract
+ws-multi-account-detection: persisted waiting accounts are probed and status events are surfaced
+[PASS] WS multi-account detection contract
+
+[RUN] WS scroll stability contract
+ws-scroll-stability: closed rail, single owner, bounded tables, refresh backpressure and cancellable reads are required
+[PASS] WS scroll stability contract
+
+[RUN] WS assistant drawer runtime
+ws-assist-drawer-runtime: persistence, focus, drag, layer and scroll contracts are present
+[PASS] WS assistant drawer runtime
+
+[RUN] hot-chat profile API
+hot-chat-profile-api: migration, non-mutating reads, isolation, merge, confirm/reject/lock, colors, events and retry passed
+[PASS] hot-chat profile API
+
+[RUN] hot-chat profile core
+hot-chat-profile-core: pass
+[PASS] hot-chat profile core
+
+[RUN] hot-chat profile migration
+hot-chat-profile-migration: idempotent pass
+[PASS] hot-chat profile migration
+
+[RUN] request coalescer cancellation
+request coalescer cancellation: caller abort does not cancel or await shared read
+[PASS] request coalescer cancellation
+
+[RUN] task6 stability contract
+task6 stability contract: bounded local writes, adaptive sync, WS/AI retry and WinUI installer gates pass
+[PASS] task6 stability contract
+
+[RUN] desktop performance contract
+desktop performance contract: budgets, hidden-poll pause and request coalescing are present
+[PASS] desktop performance contract
+
+[RUN] CRM phone index and archive diagnostics
+customer-phone-index: canonical WS/CRM phone index and diagnostics pass
+[PASS] CRM phone index and archive diagnostics
+
+[RUN] unified scroll system contract
+scroll system contract: single-axis ownership, accessible bars, modal freeze and bounded WS telemetry pass
+[PASS] unified scroll system contract
+
+[RUN] unified scroll coordinator runtime
+scroll coordinator runtime: scroll ownership, wheel units, boundaries and state retention pass
+[PASS] unified scroll coordinator runtime
+
+[RUN] WS route sidebar policy runtime
+sidebar WS route policy: independent navigation, hidden/inert main sidebar, preference and viewport restoration pass
+[PASS] WS route sidebar policy runtime
+
+[RUN] Stage 5.5C-1A real isolated send/media/AI risk API
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"queued","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"sending","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"sent","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"failed","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"cancelled","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[PASS] R04 all attachment states retain bytes and references
+[PASS] R04 database failure leaves original bytes intact
+[PASS] R04 cleanup failure has a durable tombstone and explicit retry
+[PASS] R04 legacy audit references and post-cleanup database failure remain recoverable
+[PASS] R01 same-key changed full content is rejected without changing the old plan
+[PASS] R01 legacy rows and maximum-length idempotency keys remain compatible
+[PASS] R02 planning 30 targets does not reserve actual send quota
+[PASS] R03 begin token, per-attachment outcome, unknown blocking and untrusted receipt rejection
+[PASS] R03 concurrent begin grants one token and a proven preflight failure can retry safely
+[PASS] R03 partial attachment attempt plus later failure is unknown and cannot resend
+[OBSERVED] {"scenario":"local-evidence-consistency","httpStatus":422,"storedDeliveryState":"unknown"}
+[OBSERVED] {"scenario":"local-evidence-consistency","httpStatus":422,"storedDeliveryState":"unknown"}
+[OBSERVED] {"scenario":"local-evidence-consistency","httpStatus":422,"storedDeliveryState":"unknown"}
+[PASS] R03 contradictory or missing local-attempt evidence cannot upgrade unknown intent
+[OBSERVED] {"scenario":"failed-evidence-consistency","httpStatus":409,"retryAllowed":false}
+[OBSERVED] {"scenario":"failed-evidence-consistency","httpStatus":409,"retryAllowed":false}
+[OBSERVED] {"scenario":"failed-evidence-consistency","httpStatus":409,"retryAllowed":false}
+[OBSERVED] {"scenario":"failed-evidence-consistency","httpStatus":409,"retryAllowed":false}
+[PASS] R03 contradictory or missing preflight evidence cannot authorize retry
+[PASS] R02 actual attempt reservations are per account and bounded
+[PASS] R03 prepared unknown intent survives a real isolated sidecar restart
+[PASS] R05 24 MiB upper bound and executable signature or extension rejection
+[PASS] R07 AI GET is read-only and explicit legacy recovery does not touch Worker jobs
+{"stage":"5.5C-1A","checks":16,"passed":16,"failed":0,"results":[{"name":"R04 all attachment states retain bytes and references","result":"PASS"},{"name":"R04 database failure leaves original bytes intact","result":"PASS"},{"name":"R04 cleanup failure has a durable tombstone and explicit retry","result":"PASS"},{"name":"R04 legacy audit references and post-cleanup database failure remain recoverable","result":"PASS"},{"name":"R01 same-key changed full content is rejected without changing the old plan","result":"PASS"},{"name":"R01 legacy rows and maximum-length idempotency keys remain compatible","result":"PASS"},{"name":"R02 planning 30 targets does not reserve actual send quota","result":"PASS"},{"name":"R03 begin token, per-attachment outcome, unknown blocking and untrusted receipt rejection","result":"PASS"},{"name":"R03 concurrent begin grants one token and a proven preflight failure can retry safely","result":"PASS"},{"name":"R03 partial attachment attempt plus later failure is unknown and cannot resend","result":"PASS"},{"name":"R03 contradictory or missing local-attempt evidence cannot upgrade unknown intent","result":"PASS"},{"name":"R03 contradictory or missing preflight evidence cannot authorize retry","result":"PASS"},{"name":"R02 actual attempt reservations are per account and bounded","result":"PASS"},{"name":"R03 prepared unknown intent survives a real isolated sidecar restart","result":"PASS"},{"name":"R05 24 MiB upper bound and executable signature or extension rejection","result":"PASS"},{"name":"R07 AI GET is read-only and explicit legacy recovery does not touch Worker jobs","result":"PASS"}],"productionOpened":false,"realWs":false,"paidAi":false,"workerStarted":false}
+[PASS] Stage 5.5C-1A real isolated send/media/AI risk API
+
+[RUN] Stage 5.5C-1A send UI evidence and async ownership
+PASS R01 fingerprint includes every effective payload field
+PASS R03 local click is not platform acceptance or delivery and cannot blindly retry
+PASS R03 partial attachment execution is unknown and does not replay first attachment
+PASS R06 switch while native response is pending never writes new account state
+PASS R03 transport loss after authorization is unknown and blocked from replay
+PASS R03 duplicate manual clicks cannot start concurrent native attempts
+PASS R06 switch during authorization aborts before touching native UI
+PASS R03 acknowledgement loss preserves unknown and stops remaining attachments
+PASS R03 lost authorization response is not presented as a fresh replayable item
+PASS R03 definite preflight refusal is distinct from an uncertain attempt
+PASS R03 incomplete native proof stays unknown instead of inventing a local attempt
+PASS R03 actual attachment captions are exactly those frozen in the plan
+PASS R03 rejected native promise records the individual preflight refusal
+PASS R03 UI labels preserve all five evidence levels and distrust legacy sent
+Stage 5.5C-1A WS UI: 14/14
+[PASS] Stage 5.5C-1A send UI evidence and async ownership
+
+[RUN] Stage 5.5C-1A production native send qualification
+已成功生成。
+    0 个警告
+    0 个错误
+
+已用时间 00:00:01.87
+{"stage":"5.5C-1A","nativeHandlersFromProductionSource":true,"cases":[{"name":"media-await-cancel","passed":true},{"name":"media-await-account-switch","passed":true},{"name":"media-await-A-B-A","passed":true},{"name":"media-await-session-replaced","passed":true},{"name":"media-await-same-generation-session-replaced","passed":true},{"name":"media-await-core-replaced","passed":true},{"name":"media-await-close","passed":true},{"name":"media-await-window-hidden","passed":true},{"name":"text-local-attempt-only","passed":true},{"name":"media-local-attempt-only","passed":true},{"name":"dispatch-exception-is-unknown","passed":true},{"name":"invalid-dispatch-result-is-unknown","passed":true},{"name":"post-dispatch-cancel-is-unknown","passed":true},{"name":"page-pre-click-refusal-is-failed","passed":true},{"name":"missing-target-never-dispatches","passed":true},{"name":"in-flight-cancel-releases-wait-as-unknown","passed":true},{"name":"post-dispatch-A-B-A-remains-unknown","passed":true},{"name":"webview-string-wrapped-result-is-parsed","passed":true}],"productionOpened":false,"realWs":false,"network":false}
+[PASS] Stage 5.5C-1A production native send qualification
+
+[RUN] Stage 5.5C-1A actual send DOM and bridge outcomes
+{"stage":"5.5C-1A","actualProductionScripts":true,"cases":[{"name":"text-click-only-local-attempt","passed":true},{"name":"text-click-exception-unknown","passed":true},{"name":"text-noSend-before-click-failed","passed":true},{"name":"text-noComposer-before-click-failed","passed":true},{"name":"text-wrongConversation-before-click-failed","passed":true},{"name":"media-click-only-local-attempt","passed":true},{"name":"media-click-exception-unknown","passed":true},{"name":"media-noSend-before-click-failed","passed":true},{"name":"media-noComposer-before-click-failed","passed":true},{"name":"media-wrongConversation-before-click-failed","passed":true},{"name":"media-no-file-input-before-click-failed","passed":true},{"name":"ws-bridge-whitelist-preserves-non-attempt","passed":true},{"name":"ws-prefixed-bridge-preserves-unknown","passed":true},{"name":"non-ws-bridge-does-not-forward-send-metadata","passed":true},{"name":"bridge-invalid-state-types-not-trusted","passed":true},{"name":"unknown-never-exposes-a-retryable-preflight","passed":true}],"realWs":false,"network":false,"productionOpened":false}
+[PASS] Stage 5.5C-1A actual send DOM and bridge outcomes
+
+[RUN] Stage 5.5C-1A provider modal generation and stale responses
+PASS provider change immediately clears temporary secret
+PASS late provider status cannot replace current provider model
+PASS late status error cannot notify or overwrite reopened settings
+PASS save is single flight and closing does not allow stale completion to close a new modal
+PASS late initial open cannot replace a newer settings session
+PASS provider loading blocks save and rejects a mismatched response
+PASS late model results cannot populate another provider catalog
+PASS delete is single flight and its late error cannot affect a closed session
+PASS storage read failure remains explicit and cannot authorize overwrite
+PASS initial settings response cannot replace another module modal
+PASS current save failure keeps modal open and clears temporary input
+GPT provider isolated race runtime: 11/11; network calls=0
+[PASS] Stage 5.5C-1A provider modal generation and stale responses
+
+Completed 156 checks: 156 passed, 0 failed.

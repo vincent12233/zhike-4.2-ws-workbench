@@ -1,0 +1,26 @@
+{
+  "suite": "isolated-edge-runner-lifecycle",
+  "parameterChecks": 13,
+  "actualControlledChildCases": 2,
+  "passed": 2,
+  "realEdgeStarted": false,
+  "realBrowserAccepted": false,
+  "cases": [
+    {
+      "mode": "probe-close-timeout",
+      "status": "Passed",
+      "testedStatus": "Failed",
+      "errorCode": "EDGE_RUNNER_TIMEOUT",
+      "elapsedMs": 2843,
+      "preparationMs": 2416
+    },
+    {
+      "mode": "probe-unverified-timeout",
+      "status": "Passed",
+      "testedStatus": "Failed",
+      "errorCode": "EDGE_RUNNER_TIMEOUT",
+      "elapsedMs": 3004,
+      "preparationMs": 2415
+    }
+  ]
+}

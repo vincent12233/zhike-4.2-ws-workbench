@@ -1,0 +1,110 @@
+{
+  "checkedAt": "2026-11-17T16:42:49.9858997Z",
+  "scope": "Only recorded PID/start-time identities",
+  "checks": [
+    {
+      "pid": 9988,
+      "expectedStartedTicks": "639305302644764951",
+      "currentStartedTicks": "",
+      "status": "Exited"
+    },
+    {
+      "pid": 10340,
+      "expectedStartedTicks": "639305302751622712",
+      "currentStartedTicks": "",
+      "status": "Exited"
+    },
+    {
+      "pid": 8964,
+      "expectedStartedTicks": "639305302751618578",
+      "currentStartedTicks": "",
+      "status": "Exited"
+    },
+    {
+      "pid": 27704,
+      "expectedStartedTicks": "639305302751616309",
+      "currentStartedTicks": "",
+      "status": "Exited"
+    },
+    {
+      "pid": 33640,
+      "expectedStartedTicks": "639305302751530755",
+      "currentStartedTicks": "",
+      "status": "Exited"
+    },
+    {
+      "pid": 22384,
+      "expectedStartedTicks": "639305302751535617",
+      "currentStartedTicks": "",
+      "status": "Exited"
+    },
+    {
+      "pid": 11200,
+      "expectedStartedTicks": "639305302751509363",
+      "currentStartedTicks": "",
+      "status": "Exited"
+    },
+    {
+      "pid": 27576,
+      "expectedStartedTicks": "639305302696314089",
+      "currentStartedTicks": "",
+      "status": "Exited"
+    },
+    {
+      "pid": 15812,
+      "expectedStartedTicks": "639305302696390931",
+      "currentStartedTicks": "",
+      "status": "Exited"
+    },
+    {
+      "pid": 23360,
+      "expectedStartedTicks": "639305302696957991",
+      "currentStartedTicks": "",
+      "status": "Exited"
+    },
+    {
+      "pid": 8292,
+      "expectedStartedTicks": "639305302878676933",
+      "currentStartedTicks": "",
+      "status": "Exited"
+    },
+    {
+      "pid": 35348,
+      "expectedStartedTicks": "639305302876963871",
+      "currentStartedTicks": "",
+      "status": "Exited"
+    },
+    {
+      "pid": 368,
+      "expectedStartedTicks": "639305302875145741",
+      "currentStartedTicks": "",
+      "status": "Exited"
+    },
+    {
+      "pid": 22980,
+      "expectedStartedTicks": "639305302775675961",
+      "currentStartedTicks": "",
+      "status": "Exited"
+    },
+    {
+      "pid": 7020,
+      "expectedStartedTicks": "639305302877283285",
+      "currentStartedTicks": "",
+      "status": "Exited"
+    },
+    {
+      "pid": 6896,
+      "expectedStartedTicks": "639305302799712517",
+      "currentStartedTicks": "",
+      "status": "IdentityUnavailable"
+    },
+    {
+      "pid": 364,
+      "expectedStartedTicks": "639305302878887097",
+      "currentStartedTicks": "",
+      "status": "Exited"
+    }
+  ],
+  "remaining": 0,
+  "unknown": 1
+}

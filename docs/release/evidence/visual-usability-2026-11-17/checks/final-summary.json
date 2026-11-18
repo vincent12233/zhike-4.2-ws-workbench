@@ -1,0 +1,69 @@
+{
+  "baseline": "0c14a9b",
+  "productCommit": "20d01e41ab336944e4fa5df66b358c9032bb8f04",
+  "testCorrectionCommit": "45330dde37f35432c26a861b3d892c64bbf527a5",
+  "productionEntry": "FROZEN",
+  "s3Gate": "Blocked",
+  "fullRegression": {
+    "passed": 289,
+    "total": 291,
+    "failed": 2,
+    "exitCode": 1,
+    "combinedRerunsAreNotFullPass": true
+  },
+  "followupTests": [
+    {
+      "name": "global motion guarded scope",
+      "status": "Passed",
+      "productCodeChanged": false
+    },
+    {
+      "name": "same Stage5.1 collapsed layout isolated rerun",
+      "status": "Passed",
+      "rootCauseOfIntermittentExit": "Unverified"
+    }
+  ],
+  "build": {
+    "configuration": "Release x64/win-x64",
+    "warnings": 0,
+    "errors": 0,
+    "seconds": 36.76
+  },
+  "native": {
+    "previewAndCancel": "Passed in limited isolated scope before final Pro palette",
+    "finalProAllPages": "NotTested",
+    "captureRecovery": "Blocked: window crop is outside captured monitor",
+    "realWs": "NotTested",
+    "windowsReducedMotion": "NotTested"
+  },
+  "protectedSourceDiffCheck": {
+    "status": "Passed",
+    "forbiddenModifiedPaths": [],
+    "changedFiles": [
+      "resources/app/modules/business-6.css",
+      "resources/app/modules/design-system.css",
+      "resources/app/modules/global-6.css",
+      "resources/app/modules/gpt-management.css",
+      "resources/app/modules/gpt-modern.css",
+      "resources/app/modules/home-6.css",
+      "resources/app/modules/horizon-atelier.css",
+      "resources/app/modules/metrics-charts.js",
+      "resources/app/modules/operations-6.css",
+      "resources/app/modules/workspace-shell.js",
+      "resources/app/modules/ws-workbench.css",
+      "resources/app/styles.css",
+      "scripts/delivery/s1-main-visual.test.cjs",
+      "scripts/delivery/s1-ws-visual.test.cjs",
+      "scripts/delivery/s3-customer-table-visual.test.cjs",
+      "scripts/stage51/workspace-layout.test.cjs",
+      "tests/delivery-s1-workspace-shell-runtime.test.cjs",
+      "tests/design-system-contract.test.cjs",
+      "tests/global-6-visual-contract.test.cjs",
+      "tests/horizon-atelier-contract.test.cjs",
+      "tests/operations-6-workspace-contract.test.cjs",
+      "tests/static-assets-contract.test.cjs",
+      "tests/ws-gpt-horizon-visual.test.cjs"
+    ]
+  },
+  "installationPublished": false
+}

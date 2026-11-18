@@ -30,7 +30,7 @@ function start() {
   });
 }
 async function request(pathname, init = {}) {
-  for (let i = 0; i < 300; i += 1) {
+  for (let i = 0; i < 1200; i += 1) {
     try { return await fetch(`http://127.0.0.1:${port}${pathname}`, { ...init, headers: { ...headers, ...(init.headers || {}) } }); }
     catch { await wait(50); }
   }

@@ -1,0 +1,101 @@
+{
+  "suite": "isolated-edge-runner-lifecycle",
+  "parameterChecks": 13,
+  "actualControlledChildCases": 13,
+  "passed": 13,
+  "realEdgeStarted": false,
+  "realBrowserAccepted": false,
+  "cases": [
+    {
+      "mode": "real-windows-exclusive-readiness",
+      "status": "Passed",
+      "testedStatus": "Passed",
+      "busyPolls": 1
+    },
+    {
+      "mode": "real-windows-bounded-readiness",
+      "status": "Passed",
+      "testedStatus": "Failed",
+      "busyPolls": 40
+    },
+    {
+      "mode": "normal",
+      "status": "Passed",
+      "testedStatus": "Passed",
+      "errorCode": null,
+      "elapsedMs": 622
+    },
+    {
+      "mode": "invalid-result",
+      "status": "Passed",
+      "testedStatus": "Failed",
+      "errorCode": "INVALID_RESULT",
+      "elapsedMs": 535
+    },
+    {
+      "mode": "result-timeout",
+      "status": "Passed",
+      "testedStatus": "Failed",
+      "errorCode": "EDGE_RUNNER_TIMEOUT",
+      "elapsedMs": 2300
+    },
+    {
+      "mode": "close-timeout",
+      "status": "Passed",
+      "testedStatus": "Failed",
+      "errorCode": "EDGE_RUNNER_TIMEOUT",
+      "elapsedMs": 3017
+    },
+    {
+      "mode": "probe-close-timeout",
+      "status": "Passed",
+      "testedStatus": "Failed",
+      "errorCode": "EDGE_RUNNER_TIMEOUT",
+      "elapsedMs": 2838,
+      "preparationMs": 1460
+    },
+    {
+      "mode": "probe-unverified-timeout",
+      "status": "Passed",
+      "testedStatus": "Failed",
+      "errorCode": "EDGE_RUNNER_TIMEOUT",
+      "elapsedMs": 3002,
+      "preparationMs": 486
+    },
+    {
+      "mode": "nonzero-close",
+      "status": "Passed",
+      "testedStatus": "Failed",
+      "errorCode": "PROCESS_EXIT_NONZERO",
+      "elapsedMs": 547
+    },
+    {
+      "mode": "early-exit",
+      "status": "Passed",
+      "testedStatus": "Failed",
+      "errorCode": "PROCESS_EARLY_EXIT",
+      "elapsedMs": 474
+    },
+    {
+      "mode": "stream-exit-order",
+      "status": "Passed",
+      "testedStatus": "Passed",
+      "errorCode": null,
+      "elapsedMs": 1078
+    },
+    {
+      "mode": "tracked-child",
+      "status": "Passed",
+      "testedStatus": "Failed",
+      "errorCode": "OWNED_PROCESSES_REMAIN",
+      "elapsedMs": 1784
+    },
+    {
+      "mode": "late-release",
+      "status": "Passed",
+      "testedStatus": "Passed",
+      "errorCode": null,
+      "elapsedMs": 5674
+    }
+  ]
+}

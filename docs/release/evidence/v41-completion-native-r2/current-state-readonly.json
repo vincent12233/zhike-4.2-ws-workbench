@@ -1,0 +1,60 @@
+{
+  "scope": "Explicit isolated workspace SQLite, one read-only transaction, narrow numeric/comparison projections",
+  "readOnly": true,
+  "atUtc": "2026-11-18T06:07:58.290Z",
+  "model": {
+    "customers": 52,
+    "activeCustomers": 52,
+    "registrations": 3,
+    "tasks": 2,
+    "seededTasksDone": 1,
+    "manualNamedDone": 1,
+    "seededS3": 50
+  },
+  "card": {
+    "phase": "潜在客户",
+    "phaseRecords": 1
+  },
+  "cardFlow": [
+    {
+      "fromPhase": "新客户",
+      "toPhase": "潜在客户",
+      "at": "2026-11-18T05:43:39.075Z"
+    }
+  ],
+  "recordedStageTransitions": 1,
+  "stageMoveAudit": {
+    "stageMoveActivityRows": 1,
+    "fixtureCardActivityRows": 1
+  },
+  "crmComparisonCounts": {
+    "originalCustomersRetained": 2,
+    "approvedEmptyOccupationApplied": 1,
+    "rejectedLanguageRemainsEmpty": 1,
+    "protectedManualOccupationUnchanged": 1
+  },
+  "crmDecisionCounts": {
+    "appliedOccupation": 1,
+    "rejectedLanguage": 1,
+    "manualConflict": 1,
+    "isolatedOtherAccountSuggestions": 3,
+    "isolatedOtherAccountPending": 3
+  },
+  "auditByAction": [
+    {
+      "action": "suggestion.approve",
+      "status": "applied",
+      "count": 1
+    },
+    {
+      "action": "suggestion.conflict",
+      "status": "conflict",
+      "count": 1
+    },
+    {
+      "action": "suggestion.reject",
+      "status": "rejected",
+      "count": 1
+    }
+  ]
+}

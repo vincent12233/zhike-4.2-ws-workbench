@@ -1,0 +1,5 @@
+{"palette":"atelier-dawn","viewport":{"width":1280,"height":720},"axisLabels":12,"stroke":"none","keyboardPoint":true,"detailsRows":7,"docOverflow":false}
+{"palette":"atelier-dawn","viewport":{"width":1920,"height":1080},"axisLabels":12,"stroke":"none","keyboardPoint":true,"detailsRows":7,"docOverflow":false}
+{"palette":"horizon-night","viewport":{"width":1280,"height":720},"axisLabels":12,"stroke":"none","keyboardPoint":true,"detailsRows":7,"docOverflow":false}
+{"palette":"horizon-night","viewport":{"width":1920,"height":1080},"axisLabels":12,"stroke":"none","keyboardPoint":true,"detailsRows":7,"docOverflow":false}
+{"suite":"delivery-s2-metrics-real-css-inheritance","cases":4,"passed":4,"browserLifecycle":"Passed","pid":2672,"exit":{"code":0,"signal":null},"streamsClosed":true,"cleanupSafe":true,"realBusinessData":false,"realWhatsApp":false,"realAi":false}

@@ -1,0 +1,37 @@
+[
+  {
+    "path": "resources/app/modules/ws-workbench.js",
+    "bytes": 397950,
+    "sha256": "82a6ef4d514f92dc684652213fe699e44e171d7950cde6a4b057c15e274c662b"
+  },
+  {
+    "path": "resources/app/modules/ws-workbench.css",
+    "bytes": 124943,
+    "sha256": "ba01e8434f859a47edfb69ae5edd36dbed202176d5b9cc2044b6d9a045761778"
+  },
+  {
+    "path": "resources/app/modules/ws-business-pages.js",
+    "bytes": 26536,
+    "sha256": "d78c02e1c7624f63a8340a3373b23a07c2e4ae94ced83fda8758dc1de9aaf0cc"
+  },
+  {
+    "path": "resources/app/modules/ws-workspace-query.cjs",
+    "bytes": 15201,
+    "sha256": "83c0178ab970c6bb076415bae3d0a9fe5ab8563a6c7e67fe3deb23e3e29fb856"
+  },
+  {
+    "path": "resources/app/modules/gpt-assistant.js",
+    "bytes": 51720,
+    "sha256": "2d9e2b5d2e476902d299ee527e290ba5ab2c525ba45cdf5ba252ae1f677213b5"
+  },
+  {
+    "path": "resources/app/server.mjs",
+    "bytes": 440189,
+    "sha256": "5e96f2d41348b0a9ba48f5f460d42b4bbd41e4399cebea7dda55798a12dfb455"
+  },
+  {
+    "path": "resources/app/index.html",
+    "bytes": 14915,
+    "sha256": "60304cdc7b130212daa1c1172daee8646ee030fb7da715a6018b37ca50cb85d2"
+  }
+]

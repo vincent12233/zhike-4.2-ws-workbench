@@ -1,0 +1,1661 @@
+{
+  "schemaVersion": 1,
+  "scope": "BrowserOnly actual production renderers with explicitly synthetic records; no native acceptance",
+  "fixtureRoot": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s1-main-style-hLVIrw",
+  "createdAt": "2026-11-17T16:34:02.581Z",
+  "cases": [
+    {
+      "name": "main-home-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "home"
+      }
+    },
+    {
+      "name": "main-gpt-atelier-dawn",
+      "file": "gpt.html",
+      "query": {
+        "palette": "atelier-dawn"
+      }
+    },
+    {
+      "name": "ws-chat-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "chat"
+      }
+    }
+  ],
+  "loadedMainModules": [
+    "ticket-record-core.js",
+    "business-rule-core.js",
+    "metrics-charts.js",
+    "app.js",
+    "operations-core.cjs",
+    "operations-ui.js",
+    "phone-registry.js",
+    "workspace-shell.js"
+  ],
+  "limits": [
+    "Native Core lifecycle, real WS and AI are not tested.",
+    "Optional late enhancement scripts not loaded by existing S1 fixture are source-audited, not asserted as native/browser functional acceptance.",
+    "Previous historical screenshots may be used only with their original commit/date."
+  ],
+  "results": [
+    {
+      "name": "main-home-atelier-dawn",
+      "status": "Passed-browser-capture",
+      "bytes": 692905,
+      "sha256": "790719fabf3cdfc54fe8b3f0fc7302b330e72f39b46c09c9f46217971869f5b1",
+      "result": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "results": [
+          {
+            "view": "home",
+            "palette": "atelier-dawn",
+            "body": {
+              "font": "16px",
+              "color": "rgb(30, 47, 80)",
+              "background": "rgb(245, 247, 250)",
+              "backgroundImage": "none",
+              "radius": "0px",
+              "display": "block",
+              "visibility": "visible"
+            },
+            "nav": {
+              "font": "16px",
+              "color": "rgb(255, 255, 255)",
+              "background": "rgba(0, 0, 0, 0)",
+              "backgroundImage": "linear-gradient(115deg, rgb(49, 86, 201), rgb(101, 80, 181))",
+              "radius": "18px",
+              "display": "flex",
+              "visibility": "visible"
+            },
+            "sidebar": {
+              "x": 8,
+              "y": 8,
+              "width": 248,
+              "height": 1064,
+              "right": 256,
+              "bottom": 1072
+            },
+            "title": {
+              "font": "28px",
+              "color": "rgb(30, 47, 80)",
+              "background": "rgba(0, 0, 0, 0)",
+              "backgroundImage": "linear-gradient(90deg, rgb(19, 40, 64), rgb(44, 88, 128))",
+              "radius": "0px",
+              "display": "block",
+              "visibility": "visible"
+            },
+            "titleVisible": true,
+            "button": {
+              "x": 1502.90625,
+              "y": 878.671875,
+              "width": 347.078125,
+              "height": 44,
+              "right": 1849.984375,
+              "bottom": 922.671875
+            },
+            "buttonType": {
+              "font": "16px",
+              "color": "rgb(255, 255, 255)",
+              "background": "rgba(0, 0, 0, 0)",
+              "backgroundImage": "linear-gradient(115deg, rgb(49, 86, 201), rgb(101, 80, 181))",
+              "radius": "14px",
+              "display": "flex",
+              "visibility": "visible"
+            },
+            "search": null,
+            "table": null,
+            "row": null,
+            "panel": {
+              "font": "16px",
+              "color": "rgb(30, 47, 80)",
+              "background": "rgb(255, 255, 255)",
+              "backgroundImage": "none",
+              "radius": "14px",
+              "display": "block",
+              "visibility": "visible"
+            },
+            "navLastReachable": true,
+            "docOverflow": false,
+            "container": {
+              "x": 256,
+              "y": 72,
+              "width": 1664,
+              "height": 978,
+              "right": 1920,
+              "bottom": 1050
+            },
+            "childrenOutside": [],
+            "controls": [
+              {
+                "tag": "BUTTON",
+                "font": "16px",
+                "height": 44
+              },
+              {
+                "tag": "BUTTON",
+                "font": "16px",
+                "height": 44
+              },
+              {
+                "tag": "BUTTON",
+                "font": "16px",
+                "height": 44
+              }
+            ],
+            "markupLength": 13643,
+            "smallText": [
+              {
+                "selector": "span.digital-horizon-brand",
+                "parent": "digital-horizon-copy",
+                "font": "12px",
+                "text": "HORIZON ATELIER PRO · 数字地平线"
+              },
+              {
+                "selector": "span.horizon-eyebrow",
+                "parent": "",
+                "font": "13px",
+                "text": "智能客户运营"
+              },
+              {
+                "selector": "small.",
+                "parent": "horizon-weight-legend",
+                "font": "13px",
+                "text": "投资经验仅补充档案，不计入提醒权重"
+              },
+              {
+                "selector": "small.",
+                "parent": "horizon-kpi",
+                "font": "13px",
+                "text": "加载中 · 数据未确认 · 按客户进群事件"
+              },
+              {
+                "selector": "small.",
+                "parent": "horizon-kpi",
+                "font": "13px",
+                "text": "加载中 · 数据未确认 · 周一至今日"
+              },
+              {
+                "selector": "small.",
+                "parent": "horizon-kpi",
+                "font": "13px",
+                "text": "加载中 · 数据未确认 · 周一至今日 · 含待确认"
+              },
+              {
+                "selector": "small.",
+                "parent": "horizon-kpi",
+                "font": "13px",
+                "text": "加载中 · 数据未确认 · 包含逾期客户"
+              },
+              {
+                "selector": "small.",
+                "parent": "horizon-kpi",
+                "font": "13px",
+                "text": "加载中 · 数据未确认 · 本地CRM规则"
+              },
+              {
+                "selector": "small.",
+                "parent": "horizon-kpi",
+                "font": "13px",
+                "text": "加载中 · 数据未确认 · 姓名、地区或职业有缺口"
+              }
+            ],
+            "special": {
+              ".customer6-focus": null,
+              ".customer6-focus-field strong": null,
+              ".saved-view": null,
+              ".ops6-task-insight": null,
+              ".ops6-task-insight-rows strong": null,
+              ".ops6-task-stage-list strong": null,
+              ".ops6-task-tabs button": null,
+              ".subnav button": null,
+              ".preview-table td": null,
+              ".source-defaults>label": null,
+              ".activity-text": null,
+              ".horizon-spotlight-capabilities small": {
+                "font": "14px",
+                "color": "rgb(76, 96, 128)",
+                "background": "rgba(0, 0, 0, 0)",
+                "backgroundImage": "none",
+                "radius": "0px",
+                "display": "block",
+                "visibility": "visible"
+              },
+              ".ops6-task-board": null
+            },
+            "workspaces": {
+              "rect": {
+                "x": 284,
+                "y": 8.5,
+                "width": 294.25,
+                "height": 54,
+                "right": 578.25,
+                "bottom": 62.5
+              },
+              "tabs": [
+                {
+                  "rect": {
+                    "x": 289,
+                    "y": 13.5,
+                    "width": 140,
+                    "height": 44,
+                    "right": 429,
+                    "bottom": 57.5
+                  },
+                  "font": "16px",
+                  "visible": true
+                },
+                {
+                  "rect": {
+                    "x": 435,
+                    "y": 13.5,
+                    "width": 138.25,
+                    "height": 44,
+                    "right": 573.25,
+                    "bottom": 57.5
+                  },
+                  "font": "16px",
+                  "visible": true
+                }
+              ],
+              "topbar": {
+                "x": 256,
+                "y": 0,
+                "width": 1664,
+                "height": 72,
+                "right": 1920,
+                "bottom": 72
+              },
+              "actions": [
+                {
+                  "id": "",
+                  "rect": {
+                    "x": 289,
+                    "y": 13.5,
+                    "width": 140,
+                    "height": 44,
+                    "right": 429,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "",
+                  "rect": {
+                    "x": 435,
+                    "y": 13.5,
+                    "width": 138.25,
+                    "height": 44,
+                    "right": 573.25,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "globalSearch",
+                  "rect": {
+                    "x": 1048.9375,
+                    "y": 13.5,
+                    "width": 340,
+                    "height": 44,
+                    "right": 1388.9375,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "shortcutButton",
+                  "rect": {
+                    "x": 1526,
+                    "y": 13.5,
+                    "width": 44,
+                    "height": 44,
+                    "right": 1570,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "appearanceButton",
+                  "rect": {
+                    "x": 1580,
+                    "y": 13.5,
+                    "width": 44,
+                    "height": 44,
+                    "right": 1624,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "backupButton",
+                  "rect": {
+                    "x": 1634,
+                    "y": 13.5,
+                    "width": 44,
+                    "height": 44,
+                    "right": 1678,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "notificationButton",
+                  "rect": {
+                    "x": 1794,
+                    "y": 13.5,
+                    "width": 44,
+                    "height": 44,
+                    "right": 1838,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "",
+                  "rect": {
+                    "x": 1848,
+                    "y": 13.5,
+                    "width": 44,
+                    "height": 44,
+                    "right": 1892,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                }
+              ]
+            },
+            "activeNav": {
+              "font": "16px",
+              "color": "rgb(255, 255, 255)",
+              "background": "rgba(0, 0, 0, 0)",
+              "backgroundImage": "linear-gradient(115deg, rgb(49, 86, 201), rgb(101, 80, 181))",
+              "radius": "18px",
+              "display": "flex",
+              "visibility": "visible"
+            },
+            "activeNavIcon": {
+              "font": "16px",
+              "color": "rgb(255, 255, 255)",
+              "background": "rgba(0, 0, 0, 0)",
+              "backgroundImage": "none",
+              "radius": "0px",
+              "display": "block",
+              "visibility": "visible"
+            },
+            "chromeContrast": [
+              {
+                "selector": "strong.",
+                "text": "home",
+                "foreground": "rgb(24, 59, 123)",
+                "backgrounds": [
+                  "rgb(248, 251, 255)",
+                  "rgb(242, 238, 251)"
+                ]
+              },
+              {
+                "selector": "span.",
+                "text": "搜索客户、号码、群编号",
+                "foreground": "rgb(24, 59, 123)",
+                "backgrounds": [
+                  "rgb(237, 243, 255)"
+                ]
+              },
+              {
+                "selector": "button.top-icon",
+                "text": "?",
+                "foreground": "rgb(24, 59, 123)",
+                "backgrounds": [
+                  "rgb(237, 243, 255)"
+                ]
+              },
+              {
+                "selector": "span.sync-status online",
+                "text": "已保存到本机",
+                "foreground": "rgb(64, 91, 134)",
+                "backgrounds": [
+                  "rgb(248, 251, 255)",
+                  "rgb(242, 238, 251)"
+                ]
+              }
+            ],
+            "activeNavContrast": {
+              "foreground": "rgb(255, 255, 255)",
+              "backgrounds": [
+                "rgb(49, 86, 201)",
+                "rgb(101, 80, 181)"
+              ]
+            },
+            "contrastSamples": [
+              {
+                "selector": "p.page-subtitle",
+                "text": "查看业务状态、客户计划与最新聊天分析",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)",
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "p.muted-cell home-reading-context",
+                "text": "范围：全局客户主档与既有业务记录 · 加载中 · 数据未确认 · 本机业务读取时",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(241, 245, 251)",
+                  "rgb(245, 242, 251)"
+                ]
+              },
+              {
+                "selector": "span.horizon-flow-description",
+                "text": "基于客户动态与业务进展，智能生成跟进优先级与下一步动作",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(242, 245, 251)",
+                  "rgb(245, 243, 251)"
+                ]
+              },
+              {
+                "selector": "span.horizon-flow-source",
+                "text": "正在读取 AI 跟进提醒",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(242, 245, 251)",
+                  "rgb(245, 243, 251)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "按真实聊天与客户动态排序",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)",
+                  "rgb(245, 242, 251)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "结合意向与进度安排时间",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)",
+                  "rgb(245, 242, 251)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "避免重复话题和机械问候",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)",
+                  "rgb(245, 242, 251)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "识别需进一步核实的信息",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)",
+                  "rgb(245, 242, 251)"
+                ]
+              },
+              {
+                "selector": "button.btn primary",
+                "text": "查看任务中心",
+                "foreground": "rgb(255, 255, 255)",
+                "backgrounds": [
+                  "rgb(49, 86, 201)",
+                  "rgb(101, 80, 181)"
+                ]
+              },
+              {
+                "selector": "strong.",
+                "text": "—",
+                "foreground": "rgb(21, 66, 143)",
+                "backgrounds": [
+                  "rgb(211, 231, 255)",
+                  "rgb(231, 239, 255)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "加载中 · 数据未确认 · 按客户进群事件",
+                "foreground": "rgb(21, 66, 143)",
+                "backgrounds": [
+                  "rgb(211, 231, 255)",
+                  "rgb(231, 239, 255)"
+                ]
+              },
+              {
+                "selector": "strong.",
+                "text": "—",
+                "foreground": "rgb(94, 42, 159)",
+                "backgrounds": [
+                  "rgb(227, 214, 255)",
+                  "rgb(239, 231, 255)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "加载中 · 数据未确认 · 周一至今日",
+                "foreground": "rgb(94, 42, 159)",
+                "backgrounds": [
+                  "rgb(227, 214, 255)",
+                  "rgb(239, 231, 255)"
+                ]
+              },
+              {
+                "selector": "strong.",
+                "text": "—",
+                "foreground": "rgb(135, 67, 4)",
+                "backgrounds": [
+                  "rgb(255, 223, 184)",
+                  "rgb(255, 237, 207)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "加载中 · 数据未确认 · 周一至今日 · 含待确认",
+                "foreground": "rgb(135, 67, 4)",
+                "backgrounds": [
+                  "rgb(255, 223, 184)",
+                  "rgb(255, 237, 207)"
+                ]
+              },
+              {
+                "selector": "strong.",
+                "text": "—",
+                "foreground": "rgb(7, 94, 92)",
+                "backgrounds": [
+                  "rgb(205, 235, 231)",
+                  "rgb(224, 244, 239)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "加载中 · 数据未确认 · 包含逾期客户",
+                "foreground": "rgb(7, 94, 92)",
+                "backgrounds": [
+                  "rgb(205, 235, 231)",
+                  "rgb(224, 244, 239)"
+                ]
+              },
+              {
+                "selector": "strong.",
+                "text": "—",
+                "foreground": "rgb(94, 42, 159)",
+                "backgrounds": [
+                  "rgb(227, 214, 255)",
+                  "rgb(239, 231, 255)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "加载中 · 数据未确认 · 本地CRM规则",
+                "foreground": "rgb(94, 42, 159)",
+                "backgrounds": [
+                  "rgb(227, 214, 255)",
+                  "rgb(239, 231, 255)"
+                ]
+              },
+              {
+                "selector": "strong.",
+                "text": "—",
+                "foreground": "rgb(7, 94, 92)",
+                "backgrounds": [
+                  "rgb(205, 235, 231)",
+                  "rgb(224, 244, 239)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "加载中 · 数据未确认 · 姓名、地区或职业有缺口",
+                "foreground": "rgb(7, 94, 92)",
+                "backgrounds": [
+                  "rgb(205, 235, 231)",
+                  "rgb(224, 244, 239)"
+                ]
+              },
+              {
+                "selector": "div.empty-state",
+                "text": "正在读取动态；读取失败时可通过顶部同步状态重试。",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)",
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "div.empty-state",
+                "text": "正在读取最新 AI 跟进提醒…",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)",
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "button.btn primary",
+                "text": "新增客户",
+                "foreground": "rgb(255, 255, 255)",
+                "backgrounds": [
+                  "rgb(49, 86, 201)",
+                  "rgb(101, 80, 181)"
+                ]
+              },
+              {
+                "selector": "span.metric-label",
+                "text": "客户总数",
+                "foreground": "rgb(21, 66, 143)",
+                "backgrounds": [
+                  "rgb(211, 231, 255)",
+                  "rgb(231, 239, 255)"
+                ]
+              },
+              {
+                "selector": "strong.metric-value",
+                "text": "—",
+                "foreground": "rgb(21, 66, 143)",
+                "backgrounds": [
+                  "rgb(211, 231, 255)",
+                  "rgb(231, 239, 255)"
+                ]
+              },
+              {
+                "selector": "span.metric-foot up",
+                "text": "全局有效客户",
+                "foreground": "rgb(21, 66, 143)",
+                "backgrounds": [
+                  "rgb(211, 231, 255)",
+                  "rgb(231, 239, 255)"
+                ]
+              },
+              {
+                "selector": "span.metric-label",
+                "text": "今日待跟进",
+                "foreground": "rgb(94, 42, 159)",
+                "backgrounds": [
+                  "rgb(227, 214, 255)",
+                  "rgb(239, 231, 255)"
+                ]
+              },
+              {
+                "selector": "strong.metric-value",
+                "text": "—",
+                "foreground": "rgb(94, 42, 159)",
+                "backgrounds": [
+                  "rgb(227, 214, 255)",
+                  "rgb(239, 231, 255)"
+                ]
+              },
+              {
+                "selector": "span.metric-foot ",
+                "text": "包含逾期客户",
+                "foreground": "rgb(94, 42, 159)",
+                "backgrounds": [
+                  "rgb(227, 214, 255)",
+                  "rgb(239, 231, 255)"
+                ]
+              },
+              {
+                "selector": "span.metric-label",
+                "text": "热聊客户",
+                "foreground": "rgb(7, 94, 92)",
+                "backgrounds": [
+                  "rgb(205, 235, 231)",
+                  "rgb(224, 244, 239)"
+                ]
+              },
+              {
+                "selector": "strong.metric-value",
+                "text": "—",
+                "foreground": "rgb(7, 94, 92)",
+                "backgrounds": [
+                  "rgb(205, 235, 231)",
+                  "rgb(224, 244, 239)"
+                ]
+              },
+              {
+                "selector": "span.metric-foot up",
+                "text": "全局热聊标记",
+                "foreground": "rgb(7, 94, 92)",
+                "backgrounds": [
+                  "rgb(205, 235, 231)",
+                  "rgb(224, 244, 239)"
+                ]
+              },
+              {
+                "selector": "span.metric-label",
+                "text": "已报名客户",
+                "foreground": "rgb(135, 67, 4)",
+                "backgrounds": [
+                  "rgb(255, 223, 184)",
+                  "rgb(255, 237, 207)"
+                ]
+              },
+              {
+                "selector": "strong.metric-value",
+                "text": "—",
+                "foreground": "rgb(135, 67, 4)",
+                "backgrounds": [
+                  "rgb(255, 223, 184)",
+                  "rgb(255, 237, 207)"
+                ]
+              },
+              {
+                "selector": "span.metric-foot up",
+                "text": "按报名记录去重",
+                "foreground": "rgb(135, 67, 4)",
+                "backgrounds": [
+                  "rgb(255, 223, 184)",
+                  "rgb(255, 237, 207)"
+                ]
+              },
+              {
+                "selector": "th.",
+                "text": "客户",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "th.",
+                "text": "联系方式",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "th.",
+                "text": "评级",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "th.",
+                "text": "渠道",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "th.",
+                "text": "负责人",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "th.",
+                "text": "下次跟进",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "th.",
+                "text": "操作",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "span.status-tag tag-blue",
+                "text": "B级｜中等",
+                "foreground": "rgb(40, 70, 168)",
+                "backgrounds": [
+                  "rgb(214, 226, 255)"
+                ]
+              },
+              {
+                "selector": "button.table-action",
+                "text": "跟进 →",
+                "foreground": "rgb(30, 47, 80)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              },
+              {
+                "selector": "span.status-tag tag-blue",
+                "text": "B级｜中等",
+                "foreground": "rgb(40, 70, 168)",
+                "backgrounds": [
+                  "rgb(214, 226, 255)"
+                ]
+              },
+              {
+                "selector": "button.table-action",
+                "text": "跟进 →",
+                "foreground": "rgb(30, 47, 80)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              },
+              {
+                "selector": "span.status-tag tag-blue",
+                "text": "B级｜中等",
+                "foreground": "rgb(40, 70, 168)",
+                "backgrounds": [
+                  "rgb(214, 226, 255)"
+                ]
+              },
+              {
+                "selector": "button.table-action",
+                "text": "跟进 →",
+                "foreground": "rgb(30, 47, 80)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              },
+              {
+                "selector": "span.status-tag tag-blue",
+                "text": "B级｜中等",
+                "foreground": "rgb(40, 70, 168)",
+                "backgrounds": [
+                  "rgb(214, 226, 255)"
+                ]
+              },
+              {
+                "selector": "button.table-action",
+                "text": "跟进 →",
+                "foreground": "rgb(30, 47, 80)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              },
+              {
+                "selector": "span.status-tag tag-blue",
+                "text": "B级｜中等",
+                "foreground": "rgb(40, 70, 168)",
+                "backgrounds": [
+                  "rgb(214, 226, 255)"
+                ]
+              },
+              {
+                "selector": "button.table-action",
+                "text": "跟进 →",
+                "foreground": "rgb(30, 47, 80)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              },
+              {
+                "selector": "p.muted-cell",
+                "text": "各状态可重叠；百分比以有效客户主档总数为分母，不代表逐级转化率。",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              },
+              {
+                "selector": "p.muted-cell",
+                "text": "数据尚未确认；不显示进退群零值。",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              }
+            ],
+            "progressTracks": [],
+            "motion": {
+              "preference": "off",
+              "kpis": [
+                {
+                  "transform": "none",
+                  "transitionDuration": "0s"
+                },
+                {
+                  "transform": "none",
+                  "transitionDuration": "0s"
+                },
+                {
+                  "transform": "none",
+                  "transitionDuration": "0s"
+                },
+                {
+                  "transform": "none",
+                  "transitionDuration": "0s"
+                },
+                {
+                  "transform": "none",
+                  "transitionDuration": "0s"
+                },
+                {
+                  "transform": "none",
+                  "transitionDuration": "0s"
+                }
+              ]
+            }
+          }
+        ],
+        "appearance": null,
+        "collapsed": null,
+        "errors": [],
+        "v4": {
+          "route": "home",
+          "dialog": null,
+          "density": "comfortable",
+          "state": "synthetic",
+          "mode": "BrowserOnly",
+          "actualRenderer": true,
+          "contentPresent": true,
+          "heading": "今日工作台",
+          "visibleText": "HORIZON ATELIER PRO · 数字地平线今日工作台查看业务状态、客户计划与最新聊天分析2026-11-17今日待跟进 — 位范围：全局客户主档与既有业务记录 · 加载中 · 数据未确认 · 本机业务读取时间：尚无成功读取。尚未",
+          "contentBounds": {
+            "x": 256,
+            "y": 72,
+            "width": 1664,
+            "height": 978,
+            "right": 1920,
+            "bottom": 1050
+          },
+          "registry": [],
+          "stagePanels": [],
+          "motionOff": true
+        }
+      },
+      "processInvocation": "1794933242588-3c20e172-f16b-4416-b1d8-f0dd2cf0c624"
+    },
+    {
+      "name": "main-gpt-atelier-dawn",
+      "status": "Passed-browser-capture",
+      "bytes": 344126,
+      "sha256": "f25076b13e0d7edac3d0d8fde0e78bc445b565371d47a69a8f8dfa08ffe408ad",
+      "result": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "palette": "atelier-dawn",
+        "configured": true,
+        "errors": [],
+        "calls": [
+          "/api/state"
+        ],
+        "text": [
+          {
+            "selector": "P.page-subtitle",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(245, 247, 250)"
+            ],
+            "contrast": 12.402788742996439
+          },
+          {
+            "selector": "SPAN.gpt-heading-status",
+            "font": "16px",
+            "foreground": "rgb(18, 104, 66)",
+            "backgrounds": [
+              "rgb(217, 241, 233)"
+            ],
+            "contrast": 5.741291602447848
+          },
+          {
+            "selector": "BUTTON.btn",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "STRONG.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "SPAN.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "BUTTON.gpt-new-chat",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(255, 255, 255)"
+            ],
+            "contrast": 13.310959569971622
+          },
+          {
+            "selector": "B.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(255, 255, 255)"
+            ],
+            "contrast": 13.310959569971622
+          },
+          {
+            "selector": "SPAN.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "BUTTON.gpt-local-import",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "BUTTON.gpt-workspace-btn",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "SMALL.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "SPAN.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "LABEL.gpt-check",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "LABEL.gpt-check gpt-manage-toggle",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "STRONG.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "SPAN.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "SMALL.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "SPAN.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(255, 255, 255)"
+            ],
+            "contrast": 13.310959569971622
+          },
+          {
+            "selector": "SPAN.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(255, 255, 255)"
+            ],
+            "contrast": 13.310959569971622
+          },
+          {
+            "selector": "SPAN.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(255, 255, 255)"
+            ],
+            "contrast": 13.310959569971622
+          },
+          {
+            "selector": "SPAN.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(255, 255, 255)"
+            ],
+            "contrast": 13.310959569971622
+          },
+          {
+            "selector": "SMALL.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "SPAN.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "B.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "SPAN.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "STRONG.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(255, 255, 255)"
+            ],
+            "contrast": 13.310959569971622
+          },
+          {
+            "selector": "SPAN.",
+            "font": "16px",
+            "foreground": "rgb(76, 96, 128)",
+            "backgrounds": [
+              "rgb(255, 255, 255)"
+            ],
+            "contrast": 6.378808450611178
+          },
+          {
+            "selector": "BUTTON.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(255, 255, 255)"
+            ],
+            "contrast": 13.310959569971622
+          },
+          {
+            "selector": "STRONG.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(240, 251, 249)",
+              "rgb(243, 247, 253)",
+              "rgb(248, 245, 254)"
+            ],
+            "contrast": 12.34965871542939
+          },
+          {
+            "selector": "EM.",
+            "font": "16px",
+            "foreground": "rgb(18, 104, 66)",
+            "backgrounds": [
+              "rgb(217, 241, 233)"
+            ],
+            "contrast": 5.741291602447848
+          },
+          {
+            "selector": "SPAN.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(240, 251, 249)",
+              "rgb(243, 247, 253)",
+              "rgb(248, 245, 254)"
+            ],
+            "contrast": 12.34965871542939
+          },
+          {
+            "selector": "SPAN.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(240, 251, 249)",
+              "rgb(243, 247, 253)",
+              "rgb(248, 245, 254)"
+            ],
+            "contrast": 12.34965871542939
+          },
+          {
+            "selector": "BUTTON.gpt-icon-btn",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(240, 251, 249)",
+              "rgb(243, 247, 253)",
+              "rgb(248, 245, 254)"
+            ],
+            "contrast": 12.34965871542939
+          },
+          {
+            "selector": "SMALL.",
+            "font": "16px",
+            "foreground": "rgb(21, 66, 143)",
+            "backgrounds": [
+              "rgb(211, 231, 255)",
+              "rgb(231, 239, 255)"
+            ],
+            "contrast": 7.538771008193808
+          },
+          {
+            "selector": "B.",
+            "font": "16px",
+            "foreground": "rgb(21, 66, 143)",
+            "backgrounds": [
+              "rgb(211, 231, 255)",
+              "rgb(231, 239, 255)"
+            ],
+            "contrast": 7.538771008193808
+          },
+          {
+            "selector": "SMALL.",
+            "font": "16px",
+            "foreground": "rgb(94, 42, 159)",
+            "backgrounds": [
+              "rgb(227, 214, 255)",
+              "rgb(239, 231, 255)"
+            ],
+            "contrast": 6.642278689398982
+          },
+          {
+            "selector": "B.",
+            "font": "16px",
+            "foreground": "rgb(94, 42, 159)",
+            "backgrounds": [
+              "rgb(227, 214, 255)",
+              "rgb(239, 231, 255)"
+            ],
+            "contrast": 6.642278689398982
+          },
+          {
+            "selector": "SMALL.",
+            "font": "16px",
+            "foreground": "rgb(7, 94, 92)",
+            "backgrounds": [
+              "rgb(205, 235, 231)",
+              "rgb(224, 244, 239)"
+            ],
+            "contrast": 6.016320984729336
+          },
+          {
+            "selector": "B.",
+            "font": "16px",
+            "foreground": "rgb(7, 94, 92)",
+            "backgrounds": [
+              "rgb(205, 235, 231)",
+              "rgb(224, 244, 239)"
+            ],
+            "contrast": 6.016320984729336
+          },
+          {
+            "selector": "SMALL.",
+            "font": "16px",
+            "foreground": "rgb(135, 67, 4)",
+            "backgrounds": [
+              "rgb(255, 223, 184)",
+              "rgb(255, 237, 207)"
+            ],
+            "contrast": 5.820248790776934
+          },
+          {
+            "selector": "B.",
+            "font": "16px",
+            "foreground": "rgb(135, 67, 4)",
+            "backgrounds": [
+              "rgb(255, 223, 184)",
+              "rgb(255, 237, 207)"
+            ],
+            "contrast": 5.820248790776934
+          },
+          {
+            "selector": "SMALL.",
+            "font": "16px",
+            "foreground": "rgb(135, 67, 4)",
+            "backgrounds": [
+              "rgb(255, 223, 184)",
+              "rgb(255, 237, 207)"
+            ],
+            "contrast": 5.820248790776934
+          },
+          {
+            "selector": "B.",
+            "font": "16px",
+            "foreground": "rgb(135, 67, 4)",
+            "backgrounds": [
+              "rgb(255, 223, 184)",
+              "rgb(255, 237, 207)"
+            ],
+            "contrast": 5.820248790776934
+          },
+          {
+            "selector": "STRONG.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(245, 242, 251)"
+            ],
+            "contrast": 12.028261430079558
+          },
+          {
+            "selector": "DIV.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(245, 242, 251)"
+            ],
+            "contrast": 12.028261430079558
+          },
+          {
+            "selector": "STRONG.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)",
+              "rgb(255, 255, 255)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "DIV.",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)",
+              "rgb(255, 255, 255)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "LABEL.gpt-attach-btn",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(241, 245, 251)"
+            ],
+            "contrast": 12.166295954816635
+          },
+          {
+            "selector": "SPAN.",
+            "font": "16px",
+            "foreground": "rgb(76, 96, 128)",
+            "backgrounds": [
+              "rgb(255, 255, 255)"
+            ],
+            "contrast": 6.378808450611178
+          },
+          {
+            "selector": "BUTTON.gpt-send-round",
+            "font": "16px",
+            "foreground": "rgb(255, 255, 255)",
+            "backgrounds": [
+              "rgb(104, 64, 174)",
+              "rgb(162, 62, 123)"
+            ],
+            "contrast": 5.980625679680137
+          },
+          {
+            "selector": "P.gpt-disclaimer",
+            "font": "16px",
+            "foreground": "rgb(30, 47, 80)",
+            "backgrounds": [
+              "rgb(255, 255, 255)"
+            ],
+            "contrast": 13.310959569971622
+          }
+        ],
+        "motionOff": true,
+        "page": {
+          "x": 286,
+          "y": 100,
+          "width": 1589,
+          "height": 918,
+          "right": 1875,
+          "bottom": 1018
+        },
+        "overflow": false,
+        "surface": "rgb(255, 255, 255)",
+        "expectedSurface": "rgb(255, 255, 255)",
+        "scheme": "light",
+        "context": {
+          "x": 287,
+          "y": 195,
+          "width": 258,
+          "height": 822,
+          "right": 545,
+          "bottom": 1017
+        },
+        "contextOverflow": "auto",
+        "contextScrolls": true,
+        "messages": {
+          "x": 559,
+          "y": 308,
+          "width": 1315,
+          "height": 526,
+          "right": 1874,
+          "bottom": 834
+        },
+        "composer": {
+          "x": 836.5,
+          "y": 849,
+          "width": 760,
+          "height": 123,
+          "right": 1596.5,
+          "bottom": 972
+        },
+        "composerShell": {
+          "x": 559,
+          "y": 834,
+          "width": 1315,
+          "height": 183,
+          "right": 1874,
+          "bottom": 1017
+        },
+        "send": {
+          "x": 1452.171875,
+          "y": 919,
+          "width": 133.328125,
+          "height": 44,
+          "right": 1585.5,
+          "bottom": 963
+        },
+        "controls": [
+          {
+            "selector": "btn",
+            "font": "16px",
+            "height": 44
+          },
+          {
+            "selector": "gpt-new-chat",
+            "font": "16px",
+            "height": 44
+          },
+          {
+            "selector": "",
+            "font": "16px",
+            "height": 44
+          },
+          {
+            "selector": "gpt-local-import",
+            "font": "16px",
+            "height": 44
+          },
+          {
+            "selector": "gpt-workspace-btn",
+            "font": "16px",
+            "height": 44
+          },
+          {
+            "selector": "",
+            "font": "16px",
+            "height": 44
+          },
+          {
+            "selector": "",
+            "font": "16px",
+            "height": 44
+          },
+          {
+            "selector": "",
+            "font": "16px",
+            "height": 44
+          },
+          {
+            "selector": "gpt-icon-btn",
+            "font": "16px",
+            "height": 44
+          },
+          {
+            "selector": "gpt-attach-btn",
+            "font": "16px",
+            "height": 44
+          },
+          {
+            "selector": "gpt-send-round",
+            "font": "16px",
+            "height": 44
+          }
+        ],
+        "tools": [
+          {
+            "selector": ".gpt-new-chat",
+            "display": "block"
+          },
+          {
+            "selector": ".gpt-history",
+            "display": "grid"
+          },
+          {
+            "selector": ".gpt-provider-card",
+            "display": "flex"
+          },
+          {
+            "selector": ".gpt-local-import",
+            "display": "block"
+          },
+          {
+            "selector": ".gpt-workspace-btn",
+            "display": "block"
+          }
+        ],
+        "v4": {
+          "route": "gpt",
+          "mode": "BrowserOnly",
+          "actualRenderer": true,
+          "contentPresent": true
+        }
+      },
+      "processInvocation": "1794933247597-ef32fda0-5bc2-4568-b9b5-90e9fb434a37"
+    },
+    {
+      "name": "ws-chat-atelier-dawn",
+      "status": "Passed-browser-capture",
+      "bytes": 255256,
+      "sha256": "bc55f8ec2843e0372cbbc6770af064208d1ee559bb0e5e11eca13fd0c9b1e39d",
+      "result": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "errors": [],
+        "v4": {
+          "route": "chat",
+          "mode": "BrowserOnly",
+          "actualRenderer": true,
+          "contentPresent": true,
+          "heading": "前台聊天",
+          "contentBounds": {
+            "x": 0,
+            "y": 56,
+            "width": 1920,
+            "height": 1024,
+            "right": 1920,
+            "bottom": 1080
+          },
+          "nativeAnchor": {
+            "x": 266,
+            "y": 188,
+            "width": 1246,
+            "height": 876,
+            "right": 1512,
+            "bottom": 1064
+          },
+          "overflow": false,
+          "palette": "atelier-dawn",
+          "capabilityBlocked": true,
+          "motionOff": true
+        }
+      },
+      "processInvocation": "1794933252844-cae620ab-cf09-4073-8680-92162a47a41b"
+    }
+  ],
+  "status": "Passed-browser-capture",
+  "cleanupSafe": true,
+  "fixtureCleaned": true
+}

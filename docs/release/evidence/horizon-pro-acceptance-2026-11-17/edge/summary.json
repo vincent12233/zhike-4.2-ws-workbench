@@ -1,0 +1,1011 @@
+{
+  "schemaVersion": 1,
+  "scope": "real isolated Edge test infrastructure diagnosis; product unchanged",
+  "originalDeadlineMs": 30000,
+  "records": [
+    {
+      "invocation": "1794922244297-5f950962-5e15-4e4f-9bd4-f6202b926276",
+      "log": "baseline-1.log",
+      "status": "Failed",
+      "failure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit",
+        "message": "Isolated lifecycle deadline reached during process-exit"
+      },
+      "timeoutMs": 30000,
+      "elapsedMs": 30016,
+      "resultCases": 6,
+      "resultVerifiedMs": 11820,
+      "browserAckMs": 12551,
+      "transportClosedMs": 12556,
+      "ackToExitMs": null,
+      "exit": null,
+      "streamsClosed": false,
+      "forceTerminated": true,
+      "cleanupSafe": false,
+      "observedIdentities": 12
+    },
+    {
+      "invocation": "1794922275137-58d50dde-cd7b-4b51-99d0-be4239c23230",
+      "log": "baseline-2.log",
+      "status": "Failed",
+      "failure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "resource-release",
+        "message": "Isolated lifecycle deadline reached during resource-release"
+      },
+      "timeoutMs": 30000,
+      "elapsedMs": 30007,
+      "resultCases": 6,
+      "resultVerifiedMs": 7319,
+      "browserAckMs": 7994,
+      "transportClosedMs": 7996,
+      "exitMs": 29836,
+      "ackToExitMs": 21842,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "forceTerminated": false,
+      "cleanupSafe": false,
+      "observedIdentities": 16
+    },
+    {
+      "invocation": "1794922305406-7924fb90-1707-45b4-b1be-06353e110f5d",
+      "log": "baseline-3.log",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 8943,
+      "resultCases": 6,
+      "resultVerifiedMs": 3273,
+      "browserAckMs": 3913,
+      "transportClosedMs": 3917,
+      "exitMs": 8451,
+      "ackToExitMs": 4538,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "forceTerminated": false,
+      "cleanupSafe": true,
+      "observedIdentities": 16
+    },
+    {
+      "invocation": "1794922377345-1f5f43b6-f677-4b8d-b173-408082d166a7",
+      "log": "diagnostic-1.log",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 5678,
+      "resultCases": 6,
+      "resultVerifiedMs": 3145,
+      "browserAckMs": 4297,
+      "transportClosedMs": 4301,
+      "exitMs": 5172,
+      "ackToExitMs": 875,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "forceTerminated": false,
+      "cleanupSafe": true,
+      "observedIdentities": 17,
+      "observations": [
+        {
+          "phase": "targets-before-browser-close",
+          "targetCount": 9,
+          "types": {
+            "service_worker": 3,
+            "background_page": 4,
+            "page": 2
+          },
+          "schemes": {
+            "chrome-extension:": 7,
+            "about:": 1,
+            "edge:": 1
+          }
+        },
+        {
+          "phase": "close-request",
+          "elapsedMs": 5040,
+          "processCount": 1,
+          "processes": [
+            {
+              "pid": 23532,
+              "cpuMs": 3937.5,
+              "privateBytes": 91590656,
+              "threadCount": 1,
+              "waitReasons": {
+                "Executive": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "invocation": "1794922390988-e00b7879-ad63-4dc8-9adc-eb70e676defa",
+      "log": "diagnostic-2.log",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 6733,
+      "resultCases": 6,
+      "resultVerifiedMs": 3405,
+      "browserAckMs": 4551,
+      "transportClosedMs": 4554,
+      "exitMs": 6202,
+      "ackToExitMs": 1651,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "forceTerminated": false,
+      "cleanupSafe": true,
+      "observedIdentities": 16,
+      "observations": [
+        {
+          "phase": "targets-before-browser-close",
+          "targetCount": 9,
+          "types": {
+            "service_worker": 3,
+            "background_page": 4,
+            "page": 2
+          },
+          "schemes": {
+            "chrome-extension:": 7,
+            "edge:": 1,
+            "about:": 1
+          }
+        },
+        {
+          "phase": "close-request",
+          "elapsedMs": 5264,
+          "processCount": 1,
+          "processes": [
+            {
+              "pid": 19892,
+              "cpuMs": 3968.75,
+              "privateBytes": 93368320,
+              "threadCount": 80,
+              "waitReasons": {
+                "UserRequest": 55,
+                "EventPairLow": 17,
+                "Executive": 2,
+                "ExecutionDelay": 2,
+                "Unknown": 4
+              }
+            }
+          ]
+        },
+        {
+          "phase": "after-close-2s",
+          "elapsedMs": 7084,
+          "processCount": 0,
+          "processes": []
+        }
+      ]
+    },
+    {
+      "invocation": "1794922409870-415eea81-236f-4e76-8613-52ad9a71d64d",
+      "log": "diagnostic-3.log",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 6039,
+      "resultCases": 6,
+      "resultVerifiedMs": 3419,
+      "browserAckMs": 4560,
+      "transportClosedMs": 4564,
+      "exitMs": 5544,
+      "ackToExitMs": 984,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "forceTerminated": false,
+      "cleanupSafe": true,
+      "observedIdentities": 16,
+      "observations": [
+        {
+          "phase": "targets-before-browser-close",
+          "targetCount": 9,
+          "types": {
+            "service_worker": 3,
+            "background_page": 4,
+            "page": 2
+          },
+          "schemes": {
+            "chrome-extension:": 7,
+            "about:": 1,
+            "edge:": 1
+          }
+        },
+        {
+          "phase": "close-request",
+          "elapsedMs": 5234,
+          "processCount": 1,
+          "processes": [
+            {
+              "pid": 34268,
+              "cpuMs": 3656.25,
+              "privateBytes": 92364800,
+              "threadCount": 75,
+              "waitReasons": {
+                "UserRequest": 52,
+                "EventPairLow": 15,
+                "Running": 1,
+                "Executive": 1,
+                "ExecutionDelay": 2,
+                "Unknown": 4
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "invocation": "1794922468829-c1e3057a-fd40-476b-a6af-4875ee0715ed",
+      "log": "paired-1-default.log",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 8775,
+      "resultCases": 6,
+      "resultVerifiedMs": 5728,
+      "browserAckMs": 7494,
+      "transportClosedMs": 7497,
+      "exitMs": 8302,
+      "ackToExitMs": 808,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "forceTerminated": false,
+      "cleanupSafe": true,
+      "observedIdentities": 15,
+      "observations": [
+        {
+          "phase": "targets-before-browser-close",
+          "targetCount": 8,
+          "types": {
+            "service_worker": 3,
+            "background_page": 4,
+            "page": 1
+          },
+          "schemes": {
+            "chrome-extension:": 7,
+            "about:": 1
+          }
+        },
+        {
+          "phase": "close-request",
+          "elapsedMs": 8095,
+          "processCount": 1,
+          "processes": [
+            {
+              "pid": 8060,
+              "cpuMs": 4062.5,
+              "privateBytes": 92860416,
+              "threadCount": 1,
+              "waitReasons": {
+                "Running": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "invocation": "1794922477996-1aad051f-ea20-4cef-a2b2-cd0e04037f95",
+      "log": "paired-1-guest.log",
+      "status": "Failed",
+      "failure": {
+        "code": "CDP_COMMAND_FAILED",
+        "phase": "cdp",
+        "message": "Target.createTarget: Failed to open a new tab"
+      },
+      "timeoutMs": 30000,
+      "elapsedMs": 19788,
+      "browserAckMs": 2080,
+      "transportClosedMs": 2083,
+      "exitMs": 18911,
+      "ackToExitMs": 16831,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "forceTerminated": false,
+      "cleanupSafe": true,
+      "observedIdentities": 6,
+      "observations": [
+        {
+          "phase": "targets-before-browser-close",
+          "targetCount": 11,
+          "types": {
+            "service_worker": 3,
+            "background_page": 7,
+            "page": 1
+          },
+          "schemes": {
+            "chrome-extension:": 10,
+            "about:": 1
+          }
+        },
+        {
+          "phase": "close-request",
+          "elapsedMs": 2792,
+          "processCount": 4,
+          "processes": [
+            {
+              "pid": 22764,
+              "cpuMs": 3250,
+              "privateBytes": 92569600,
+              "threadCount": 77,
+              "waitReasons": {
+                "UserRequest": 54,
+                "EventPairLow": 16,
+                "Executive": 1,
+                "ExecutionDelay": 2,
+                "Unknown": 4
+              }
+            },
+            {
+              "pid": 30384,
+              "cpuMs": 203.125,
+              "privateBytes": 13750272,
+              "threadCount": 11,
+              "waitReasons": {
+                "UserRequest": 8,
+                "EventPairLow": 3
+              }
+            },
+            {
+              "pid": 18244,
+              "cpuMs": 531.25,
+              "privateBytes": 15380480,
+              "threadCount": 36,
+              "waitReasons": {
+                "UserRequest": 24,
+                "EventPairLow": 11,
+                "Executive": 1
+              }
+            },
+            {
+              "pid": 2412,
+              "cpuMs": 93.75,
+              "privateBytes": 8978432,
+              "threadCount": 16,
+              "waitReasons": {
+                "UserRequest": 13,
+                "EventPairLow": 3
+              }
+            }
+          ]
+        },
+        {
+          "phase": "after-close-2s",
+          "elapsedMs": 4725,
+          "processCount": 1,
+          "processes": [
+            {
+              "pid": 22764,
+              "cpuMs": 3296.875,
+              "privateBytes": 88580096,
+              "threadCount": 71,
+              "waitReasons": {
+                "UserRequest": 50,
+                "EventPairLow": 12,
+                "Executive": 4,
+                "ExecutionDelay": 2,
+                "Unknown": 3
+              }
+            }
+          ]
+        },
+        {
+          "phase": "after-close-8s",
+          "elapsedMs": 10653,
+          "processCount": 1,
+          "processes": [
+            {
+              "pid": 22764,
+              "cpuMs": 3312.5,
+              "privateBytes": 88526848,
+              "threadCount": 71,
+              "waitReasons": {
+                "UserRequest": 50,
+                "EventPairLow": 14,
+                "Executive": 2,
+                "ExecutionDelay": 2,
+                "Unknown": 3
+              }
+            }
+          ]
+        },
+        {
+          "phase": "after-close-14s",
+          "elapsedMs": 16633,
+          "processCount": 1,
+          "processes": [
+            {
+              "pid": 22764,
+              "cpuMs": 3328.125,
+              "privateBytes": 88481792,
+              "threadCount": 70,
+              "waitReasons": {
+                "UserRequest": 50,
+                "EventPairLow": 14,
+                "Executive": 2,
+                "ExecutionDelay": 1,
+                "Unknown": 3
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "invocation": "1794922503826-b0e11756-c06b-4880-b14f-f9d93e244799",
+      "log": "paired-2-default.log",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 11763,
+      "resultCases": 6,
+      "resultVerifiedMs": 9521,
+      "browserAckMs": 10407,
+      "transportClosedMs": 10410,
+      "exitMs": 11277,
+      "ackToExitMs": 870,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "forceTerminated": false,
+      "cleanupSafe": true,
+      "observedIdentities": 16,
+      "observations": [
+        {
+          "phase": "targets-before-browser-close",
+          "targetCount": 9,
+          "types": {
+            "service_worker": 3,
+            "background_page": 4,
+            "page": 2
+          },
+          "schemes": {
+            "chrome-extension:": 7,
+            "about:": 1,
+            "edge:": 1
+          }
+        },
+        {
+          "phase": "close-request",
+          "elapsedMs": 11054,
+          "processCount": 1,
+          "processes": [
+            {
+              "pid": 22188,
+              "cpuMs": 4484.375,
+              "privateBytes": 109064192,
+              "threadCount": 1,
+              "waitReasons": {
+                "Running": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "invocation": "1794922515905-445ce141-b883-47fc-8cde-fe68d63a9d71",
+      "log": "paired-2-guest.log",
+      "status": "Failed",
+      "failure": {
+        "code": "CDP_COMMAND_FAILED",
+        "phase": "cdp",
+        "message": "Target.createTarget: Failed to open a new tab"
+      },
+      "timeoutMs": 30000,
+      "elapsedMs": 18621,
+      "browserAckMs": 2076,
+      "transportClosedMs": 2080,
+      "exitMs": 18153,
+      "ackToExitMs": 16077,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "forceTerminated": false,
+      "cleanupSafe": true,
+      "observedIdentities": 9,
+      "observations": [
+        {
+          "phase": "targets-before-browser-close",
+          "targetCount": 8,
+          "types": {
+            "background_page": 7,
+            "page": 1
+          },
+          "schemes": {
+            "chrome-extension:": 7,
+            "about:": 1
+          }
+        },
+        {
+          "phase": "close-request",
+          "elapsedMs": 2916,
+          "processCount": 4,
+          "processes": [
+            {
+              "pid": 28040,
+              "cpuMs": 3015.625,
+              "privateBytes": 90357760,
+              "threadCount": 79,
+              "waitReasons": {
+                "UserRequest": 53,
+                "EventPairLow": 16,
+                "Executive": 4,
+                "ExecutionDelay": 2,
+                "Unknown": 4
+              }
+            },
+            {
+              "pid": 20312,
+              "cpuMs": 203.125,
+              "privateBytes": 12550144,
+              "threadCount": 11,
+              "waitReasons": {
+                "UserRequest": 8,
+                "EventPairLow": 3
+              }
+            },
+            {
+              "pid": 15180,
+              "cpuMs": 765.625,
+              "privateBytes": 14610432,
+              "threadCount": 35,
+              "waitReasons": {
+                "UserRequest": 22,
+                "EventPairLow": 10,
+                "Executive": 3
+              }
+            },
+            {
+              "pid": 31756,
+              "cpuMs": 109.375,
+              "privateBytes": 10059776,
+              "threadCount": 17,
+              "waitReasons": {
+                "UserRequest": 14,
+                "EventPairLow": 2,
+                "Standby": 1
+              }
+            }
+          ]
+        },
+        {
+          "phase": "after-close-2s",
+          "elapsedMs": 5091,
+          "processCount": 1,
+          "processes": [
+            {
+              "pid": 28040,
+              "cpuMs": 3156.25,
+              "privateBytes": 92729344,
+              "threadCount": 1,
+              "waitReasons": {
+                "Executive": 1
+              }
+            }
+          ]
+        },
+        {
+          "phase": "after-close-8s",
+          "elapsedMs": 10640,
+          "processCount": 1,
+          "processes": [
+            {
+              "pid": 28040,
+              "cpuMs": 3203.125,
+              "privateBytes": 86515712,
+              "threadCount": 1,
+              "waitReasons": {
+                "Executive": 1
+              }
+            }
+          ]
+        },
+        {
+          "phase": "after-close-14s",
+          "elapsedMs": 17786,
+          "processCount": 1,
+          "processes": [
+            {
+              "pid": 28040,
+              "cpuMs": 3203.125,
+              "privateBytes": 86507520,
+              "threadCount": 1,
+              "waitReasons": {
+                "Unknown": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "invocation": "1794922534910-12bbaddd-d3c9-4447-ae0d-035bedffda40",
+      "log": "paired-3-default.log",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 20261,
+      "resultCases": 6,
+      "resultVerifiedMs": 3211,
+      "browserAckMs": 4204,
+      "transportClosedMs": 4208,
+      "exitMs": 19776,
+      "ackToExitMs": 15572,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "forceTerminated": false,
+      "cleanupSafe": true,
+      "observedIdentities": 16,
+      "observations": [
+        {
+          "phase": "targets-before-browser-close",
+          "targetCount": 9,
+          "types": {
+            "service_worker": 3,
+            "background_page": 4,
+            "page": 2
+          },
+          "schemes": {
+            "chrome-extension:": 7,
+            "about:": 1,
+            "edge:": 1
+          }
+        },
+        {
+          "phase": "close-request",
+          "elapsedMs": 7968,
+          "error": null
+        },
+        {
+          "phase": "after-close-2s",
+          "elapsedMs": 8851,
+          "error": null
+        },
+        {
+          "phase": "after-close-8s",
+          "elapsedMs": 14943,
+          "error": null
+        },
+        {
+          "phase": "after-close-14s",
+          "elapsedMs": 19070,
+          "processCount": 5,
+          "processes": [
+            {
+              "pid": 9840,
+              "cpuMs": 3890.625,
+              "privateBytes": 94052352,
+              "threadCount": 87,
+              "waitReasons": {
+                "UserRequest": 57,
+                "EventPairLow": 17,
+                "Executive": 7,
+                "ExecutionDelay": 1,
+                "Unknown": 5
+              }
+            },
+            {
+              "pid": 18632,
+              "cpuMs": 218.75,
+              "privateBytes": 13074432,
+              "threadCount": 14,
+              "waitReasons": {
+                "UserRequest": 10,
+                "EventPairLow": 4
+              }
+            },
+            {
+              "pid": 956,
+              "cpuMs": 468.75,
+              "privateBytes": 14528512,
+              "threadCount": 31,
+              "waitReasons": {
+                "UserRequest": 17,
+                "EventPairLow": 11,
+                "Executive": 1,
+                "Unknown": 2
+              }
+            },
+            {
+              "pid": 8944,
+              "cpuMs": 109.375,
+              "privateBytes": 8445952,
+              "threadCount": 15,
+              "waitReasons": {
+                "UserRequest": 10,
+                "EventPairLow": 4,
+                "Executive": 1
+              }
+            },
+            {
+              "pid": 21608,
+              "cpuMs": 31.25,
+              "privateBytes": 7696384,
+              "threadCount": 10,
+              "waitReasons": {
+                "UserRequest": 7,
+                "EventPairLow": 3
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "invocation": "1794922555499-405e857f-db94-445f-ac28-78d56aef20eb",
+      "log": "paired-3-guest.log",
+      "status": "Failed",
+      "failure": {
+        "code": "CDP_COMMAND_FAILED",
+        "phase": "cdp",
+        "message": "Target.createTarget: Failed to open a new tab"
+      },
+      "timeoutMs": 30000,
+      "elapsedMs": 17781,
+      "browserAckMs": 1974,
+      "transportClosedMs": 1977,
+      "exitMs": 17336,
+      "ackToExitMs": 15362,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "forceTerminated": false,
+      "cleanupSafe": true,
+      "observedIdentities": 4,
+      "observations": [
+        {
+          "phase": "targets-before-browser-close",
+          "targetCount": 8,
+          "types": {
+            "background_page": 7,
+            "page": 1
+          },
+          "schemes": {
+            "chrome-extension:": 7,
+            "about:": 1
+          }
+        },
+        {
+          "phase": "close-request",
+          "elapsedMs": 2646,
+          "processCount": 4,
+          "processes": [
+            {
+              "pid": 5872,
+              "cpuMs": 2734.375,
+              "privateBytes": 91353088,
+              "threadCount": 85,
+              "waitReasons": {
+                "Running": 1,
+                "EventPairLow": 14,
+                "UserRequest": 48,
+                "Executive": 14,
+                "Unknown": 6,
+                "ExecutionDelay": 2
+              }
+            },
+            {
+              "pid": 16024,
+              "cpuMs": 203.125,
+              "privateBytes": 12623872,
+              "threadCount": 11,
+              "waitReasons": {
+                "UserRequest": 8,
+                "EventPairLow": 3
+              }
+            },
+            {
+              "pid": 20216,
+              "cpuMs": 453.125,
+              "privateBytes": 15450112,
+              "threadCount": 36,
+              "waitReasons": {
+                "UserRequest": 18,
+                "EventPairLow": 11,
+                "Executive": 6,
+                "Unknown": 1
+              }
+            },
+            {
+              "pid": 16304,
+              "cpuMs": 109.375,
+              "privateBytes": 8908800,
+              "threadCount": 17,
+              "waitReasons": {
+                "UserRequest": 14,
+                "EventPairLow": 3
+              }
+            }
+          ]
+        },
+        {
+          "phase": "after-close-2s",
+          "elapsedMs": 5410,
+          "processCount": 1,
+          "processes": [
+            {
+              "pid": 5872,
+              "cpuMs": 3265.625,
+              "privateBytes": 85700608,
+              "threadCount": 1,
+              "waitReasons": {
+                "Executive": 1
+              }
+            }
+          ]
+        },
+        {
+          "phase": "after-close-8s",
+          "elapsedMs": 10907,
+          "processCount": 1,
+          "processes": [
+            {
+              "pid": 5872,
+              "cpuMs": 3312.5,
+              "privateBytes": 85700608,
+              "threadCount": 1,
+              "waitReasons": {
+                "Executive": 1
+              }
+            }
+          ]
+        },
+        {
+          "phase": "after-close-14s",
+          "elapsedMs": 17536,
+          "processCount": 0,
+          "processes": []
+        }
+      ]
+    },
+    {
+      "invocation": "1794922587693-16719265-41b9-4584-be32-db15a396d715",
+      "log": "isolated-services-1.log",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 10180,
+      "resultCases": 6,
+      "resultVerifiedMs": 7686,
+      "browserAckMs": 8822,
+      "transportClosedMs": 8826,
+      "exitMs": 9690,
+      "ackToExitMs": 868,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "forceTerminated": false,
+      "cleanupSafe": true,
+      "observedIdentities": 16,
+      "observations": [
+        {
+          "phase": "targets-before-browser-close",
+          "targetCount": 8,
+          "types": {
+            "service_worker": 3,
+            "background_page": 4,
+            "page": 1
+          },
+          "schemes": {
+            "chrome-extension:": 7,
+            "about:": 1
+          }
+        },
+        {
+          "phase": "close-request",
+          "elapsedMs": 9467,
+          "processCount": 1,
+          "processes": [
+            {
+              "pid": 34520,
+              "cpuMs": 4343.75,
+              "privateBytes": 108040192,
+              "threadCount": 1,
+              "waitReasons": {
+                "Running": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "invocation": "1794922912830-d841f4d1-69dd-423d-914f-16c989dd2ad1",
+      "log": "default-wct-1.log",
+      "status": "Passed",
+      "timeoutMs": 30000,
+      "elapsedMs": 8092,
+      "resultCases": 6,
+      "resultVerifiedMs": 3321,
+      "browserAckMs": 5702,
+      "transportClosedMs": 5708,
+      "exitMs": 7590,
+      "ackToExitMs": 1888,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "streamsClosed": true,
+      "forceTerminated": false,
+      "cleanupSafe": true,
+      "observedIdentities": 14,
+      "observations": [
+        {
+          "phase": "targets-before-browser-close",
+          "targetCount": 8,
+          "types": {
+            "service_worker": 3,
+            "background_page": 4,
+            "page": 1
+          },
+          "schemes": {
+            "chrome-extension:": 7,
+            "about:": 1
+          }
+        },
+        {
+          "phase": "close-request",
+          "elapsedMs": 6394,
+          "processCount": 1,
+          "processes": [
+            {
+              "pid": 27060,
+              "cpuMs": 4453.125,
+              "privateBytes": 92917760,
+              "threadCount": 78,
+              "waitReasons": {
+                "UserRequest": 54,
+                "EventPairLow": 15,
+                "Executive": 1,
+                "ExecutionDelay": 2,
+                "Unknown": 4,
+                "LpcReply": 1,
+                "Running": 1
+              }
+            }
+          ]
+        },
+        {
+          "phase": "after-close-2s",
+          "elapsedMs": 8240,
+          "processCount": 0,
+          "processes": []
+        }
+      ]
+    }
+  ],
+  "findings": [
+    "Two of three unchanged exact Stage5.1 tests timed out only after results and real CDP close.",
+    "Guest experiment is unsupported by Target.createTarget here; it was not adopted.",
+    "Background targets with chrome-extension: and edge: schemes occur in fresh unique test profiles. No identity or credential content was inspected.",
+    "One disable-extensions/disable-sync experiment passed, but component targets remained; this is not sufficient evidence of cause or repair.",
+    "OS snapshots show the browser parent remains after observed children have exited, with mostly waiting threads. No product lifecycle defect is established."
+  ],
+  "production": "FROZEN"
+}

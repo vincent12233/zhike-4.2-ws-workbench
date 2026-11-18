@@ -1,0 +1,33 @@
+{
+  "codeCommit": "4804e08",
+  "sourceRunnerSha256": "0648821643e86e36f83a5d6eb92b5d9ffd21d81813d18fb8298811ca4438eeb8",
+  "first": {
+    "total": 293,
+    "passed": 286,
+    "failed": [
+      "local write flush race contract",
+      "WS runtime login detection and ingest resilience",
+      "WS ChatKnow UI contract",
+      "Stage 5.1 real workspace collapsed layout",
+      "Delivery S1 WS computed layout and retained host",
+      "Delivery S2 authoritative read-only metrics projection",
+      "Delivery S3 full-CSS customer table, drawer and modal ownership"
+    ]
+  },
+  "final": {
+    "total": 293,
+    "passed": 292,
+    "failed": [
+      "Delivery S1 actual main renderers and shared design system"
+    ],
+    "wsIncludedSubset": {
+      "note": "Actual results from this all run, classified by the unchanged ws driver; not a separate WS run.",
+      "total": 162,
+      "passed": 162,
+      "failed": []
+    }
+  },
+  "production": "FROZEN",
+  "s3": "Blocked",
+  "note": "Fresh automation does not replace incomplete native acceptance or establish that the historical intermittent Edge exit cause was fixed."
+}

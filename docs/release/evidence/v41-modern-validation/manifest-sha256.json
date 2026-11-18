@@ -1,0 +1,94 @@
+{
+  "entries": [
+    {
+      "path": "full-regression.json",
+      "sourcePath": ".tools/v41-modern/full-regression.log",
+      "sourceBytes": 485002,
+      "sourceSha256": "5d88d0bf291a5c565c532a3fcfffd618fe5bc25fd7ae6df34d33c4a16bd037f3",
+      "archiveBytes": 28972,
+      "archiveSha256": "08686d43a5a939f4cc59a236c8e36f808f1a0e6daa132272b623564a89fb7e64",
+      "treatment": "Whitelist of runner labels/results, no test data or credentials"
+    },
+    {
+      "path": "full-regression-r2.json",
+      "sourcePath": ".tools/v41-modern/full-regression-r2.log",
+      "sourceBytes": 447253,
+      "sourceSha256": "57c8a4bd1469497f0f5905a61b67d1a457118bb4ba886bb405b94e66d96ebf5a",
+      "archiveBytes": 28640,
+      "archiveSha256": "998ce131ec0782f74b0b4cdb3b8ed5dda414ecf24e8637483cccdae43e5e799d",
+      "treatment": "Whitelist of runner labels/results, no test data or credentials"
+    },
+    {
+      "path": "main-visual.log",
+      "sourcePath": ".tools/v41-modern/main-visual.log",
+      "sourceBytes": 222,
+      "sourceSha256": "17ad83211956885116bdfb72dc39680cc8b9f56fbc922602c0aef1c9dd97a20c",
+      "archiveBytes": 129,
+      "archiveSha256": "65039cd6ce6832d590c7a08af6632955f016124732e7f7c50b504819a42700e9",
+      "treatment": "Path redaction; S3 only final result metadata; WS excludes per-page layout records"
+    },
+    {
+      "path": "ws-visual-r3.log",
+      "sourcePath": ".tools/v41-modern/ws-visual-r3.log",
+      "sourceBytes": 4937,
+      "sourceSha256": "ffb4cb9b6585ab0c0aa40b3237818da2670cbfd6bc5356dc13166d54092513c8",
+      "archiveBytes": 461,
+      "archiveSha256": "71281447ac35024929485f1358631aad5626335a2e6552d07fc6c73fe81e1a04",
+      "treatment": "Path redaction; S3 only final result metadata; WS excludes per-page layout records"
+    },
+    {
+      "path": "workspace-layout-r2.log",
+      "sourcePath": ".tools/v41-modern/workspace-layout-r2.log",
+      "sourceBytes": 2622,
+      "sourceSha256": "41d9e23a2bf68f05bed9cec26332181112c6e87eabf3009b7a38c78cc9ded8c3",
+      "archiveBytes": 2603,
+      "archiveSha256": "b95ae99b90a51d9cdcd36578beb5b86732801803cacc432124ae23f27fb3b24d",
+      "treatment": "Path redaction; S3 only final result metadata; WS excludes per-page layout records"
+    },
+    {
+      "path": "s3-visual-r2.log",
+      "sourcePath": ".tools/v41-modern/s3-visual-r2.log",
+      "sourceBytes": 342816,
+      "sourceSha256": "5c9e8be1ceab5afe983dea94e0380a4e5b4abf842958627566aac712229c5936",
+      "archiveBytes": 229,
+      "archiveSha256": "20401940237e9639e6c0f047909824a9e929265aa433b21e242ccdf7929abe7f",
+      "treatment": "Path redaction; S3 only final result metadata; WS excludes per-page layout records"
+    },
+    {
+      "path": "ui-node.log",
+      "sourcePath": ".tools/v41-modern/ui-node.log",
+      "sourceBytes": 2533,
+      "sourceSha256": "84220a78a978022c45bdc46f9975e38e827c685f7a90c35cc79eb2fc48639f35",
+      "archiveBytes": 2500,
+      "archiveSha256": "9ad242e9f4b2f925dcf9edc551e8515c96a0d0b4df332cf1d96b3920aa59eed7",
+      "treatment": "Path redaction; S3 only final result metadata; WS excludes per-page layout records"
+    },
+    {
+      "path": "ui-contract-r2.log",
+      "sourcePath": ".tools/v41-modern/ui-contract-r2.log",
+      "sourceBytes": 1591,
+      "sourceSha256": "0c105ca428b2d004050b8fa5f44508e80f9c89ced3fcc88eb60b8c96b2afd774",
+      "archiveBytes": 1569,
+      "archiveSha256": "2caa157932cfbee0ab867023aaba669d91ee94e160023020fcc152272952f87c",
+      "treatment": "Path redaction; S3 only final result metadata; WS excludes per-page layout records"
+    },
+    {
+      "path": "release-build.log",
+      "sourcePath": ".tools/v41-modern/release-build.log",
+      "sourceBytes": 299,
+      "sourceSha256": "fa377212f2306ee23a4778be8a753ee0392cb5e6c8ff5a10ee82f17a32702a45",
+      "archiveBytes": 200,
+      "archiveSha256": "9c0c649256402eb95affc3b107e66cde2302668f06c5128fd7873e7493e2a4f2",
+      "treatment": "Path redaction; S3 only final result metadata; WS excludes per-page layout records"
+    },
+    {
+      "path": "runs.json",
+      "sourcePath": "scripts/run-tests.cjs",
+      "sourceBytes": 36833,
+      "sourceSha256": "0648821643e86e36f83a5d6eb92b5d9ffd21d81813d18fb8298811ca4438eeb8",
+      "archiveBytes": 1120,
+      "archiveSha256": "5640c59451056d1d93141c1c0afb9bbe75caa42333e70283756fae6d40a8eea7",
+      "treatment": "Test result index; source hash identifies driver used for WS label enumeration"
+    }
+  ]
+}

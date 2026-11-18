@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794997084424-e5110893-1113-4dc3-a16c-460b6b9dab44",
+  "mode": "real-edge-synthetic-layout",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 30000,
+  "launchedAt": "2026-11-18T10:18:04.424Z",
+  "events": [
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 9,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 506,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 506
+    },
+    {
+      "event": "cdp-readiness-wait",
+      "elapsedMs": 506,
+      "code": "ENOENT"
+    },
+    {
+      "event": "cdp-readiness-wait",
+      "elapsedMs": 584,
+      "code": "EBUSY"
+    },
+    {
+      "event": "cdp-ready",
+      "elapsedMs": 786
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 809,
+      "phase": "observation",
+      "count": 5
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 849,
+      "phase": "observation",
+      "count": 5
+    },
+    {
+      "event": "owned-target-created",
+      "elapsedMs": 895
+    },
+    {
+      "event": "owned-session-attached",
+      "elapsedMs": 901
+    },
+    {
+      "event": "viewport-configured",
+      "elapsedMs": 1245,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "event": "navigation-started",
+      "elapsedMs": 1248
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 1248,
+      "phase": "navigation-response"
+    },
+    {
+      "event": "cdp-work-completed",
+      "elapsedMs": 1597,
+      "phase": "navigation-response"
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 1597,
+      "phase": "navigation-load"
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 28512
+    },
+    {
+      "event": "cdp-work-pending-at-close",
+      "elapsedMs": 28512,
+      "phase": "navigation-load"
+    },
+    {
+      "event": "close-request-failed",
+      "elapsedMs": 30006,
+      "code": "EDGE_RUNNER_TIMEOUT"
+    },
+    {
+      "event": "failure-owned-handle-termination",
+      "elapsedMs": 30008,
+      "requested": true
+    },
+    {
+      "event": "identity-probe-termination-requested",
+      "elapsedMs": 30008,
+      "attempted": true,
+      "requested": true
+    },
+    {
+      "event": "identity-probe-termination-unverified",
+      "elapsedMs": 30009
+    }
+  ],
+  "identities": [
+    {
+      "pid": 1000,
+      "startedTicks": "639305938844304915",
+      "startedUtc": "2026-11-18T10:18:04.4304915Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 27020,
+      "startedTicks": "639305938851123217",
+      "startedUtc": "2026-11-18T10:18:05.1123217Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 36068,
+      "startedTicks": "639305938848599288",
+      "startedUtc": "2026-11-18T10:18:04.8599288Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 38256,
+      "startedTicks": "639305938848648374",
+      "startedUtc": "2026-11-18T10:18:04.8648374Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 14584,
+      "startedTicks": "639305938849164061",
+      "startedUtc": "2026-11-18T10:18:04.9164061Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": null,
+  "streamsClosed": false,
+  "forceTerminated": true,
+  "cleanupSafe": false,
+  "pid": 1000,
+  "identityProbePid": 34664,
+  "profile": "<TEMP>\\zhike-s1-main-style-c9VAky\\edge-profile-90118163-ceb4-4f3a-b040-c9467a7c0ae0",
+  "resourceReleaseOrder": "owned-session-target-browser",
+  "devToolsReadiness": {
+    "polls": 4,
+    "enoent": 2,
+    "ebusy": 1,
+    "partial": 0
+  },
+  "releaseFailure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "process-exit"
+  },
+  "identityProbeTermination": {
+    "attempted": true,
+    "requested": true,
+    "observedClose": null,
+    "status": "unknown"
+  },
+  "elapsedMs": 30009,
+  "stdoutBytes": 0,
+  "stderrBytes": 100,
+  "failure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "result",
+    "message": "Isolated lifecycle deadline reached during result"
+  }
+}

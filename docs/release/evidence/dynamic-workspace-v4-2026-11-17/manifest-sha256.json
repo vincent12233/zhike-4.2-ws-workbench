@@ -1,0 +1,1005 @@
+{
+  "schemaVersion": 1,
+  "createdAtUtc": "2026-11-17T17:37:02.1923151Z",
+  "updatedAtUtc": "2026-11-17T17:57:36.1086926Z",
+  "scope": "V4 isolated diagnostics only; production data and authentication profiles excluded",
+  "uniqueEvidenceFiles": 99,
+  "sha256Algorithm": "SHA-256",
+  "transformationPolicy": "Only complete Windows user SIDs are replaced in explicitly named sid-redacted files. Original source logs stay in .tools; sourceSha256 and archiveSha256 intentionally differ for transformed entries.",
+  "entries": [
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\actual-browser\\capture-manifest.json",
+      "archive": "actual-browser/capture-manifest.json",
+      "sourceBytes": 24714,
+      "bytes": 24714,
+      "sourceSha256": "60b9e020b888132b623a052045bfb837f4657845d62ca9ac6a9564d108d4496d",
+      "archiveSha256": "60b9e020b888132b623a052045bfb837f4657845d62ca9ac6a9564d108d4496d",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\actual-browser\\pages\\1794933430249-7e155d11-689b-4a07-a258-e23ce56a0a6e.json",
+      "archive": "actual-browser/pages/1794933430249-7e155d11-689b-4a07-a258-e23ce56a0a6e.json",
+      "sourceBytes": 6049,
+      "bytes": 6049,
+      "sourceSha256": "f533154a776560a030dc91c9956c467d9afce9931726ebdd04a1d10b3ad9ea15",
+      "archiveSha256": "f533154a776560a030dc91c9956c467d9afce9931726ebdd04a1d10b3ad9ea15",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\actual-browser\\pages\\1794933430249-7e155d11-689b-4a07-a258-e23ce56a0a6e.result.json",
+      "archive": "actual-browser/pages/1794933430249-7e155d11-689b-4a07-a258-e23ce56a0a6e.result.json",
+      "sourceBytes": 14723,
+      "bytes": 14723,
+      "sourceSha256": "c7ee715ac1337f6ee9b06df30264cbe9acd06c44d1be7ebb7101697bfd58ab30",
+      "archiveSha256": "c7ee715ac1337f6ee9b06df30264cbe9acd06c44d1be7ebb7101697bfd58ab30",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\actual-browser\\pages\\1794933435010-9e1e4e64-a6ad-4c82-85d6-cab259123bdf.json",
+      "archive": "actual-browser/pages/1794933435010-9e1e4e64-a6ad-4c82-85d6-cab259123bdf.json",
+      "sourceBytes": 6219,
+      "bytes": 6219,
+      "sourceSha256": "04136b936011dcdafbd022a43bbb1e3ffd0853df65ac6c0f6664bb44dc6b5c02",
+      "archiveSha256": "04136b936011dcdafbd022a43bbb1e3ffd0853df65ac6c0f6664bb44dc6b5c02",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\actual-browser\\pages\\1794933435010-9e1e4e64-a6ad-4c82-85d6-cab259123bdf.result.json",
+      "archive": "actual-browser/pages/1794933435010-9e1e4e64-a6ad-4c82-85d6-cab259123bdf.result.json",
+      "sourceBytes": 6843,
+      "bytes": 6843,
+      "sourceSha256": "ca76c45c9b4ef2c74fcf09cc57067bf69314664e886583ca98f2ef1b2dbd67e2",
+      "archiveSha256": "ca76c45c9b4ef2c74fcf09cc57067bf69314664e886583ca98f2ef1b2dbd67e2",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\actual-browser\\pages\\1794933464472-d7e0af4e-af1e-48cb-ba31-43e476f1f5c0.json",
+      "archive": "actual-browser/pages/1794933464472-d7e0af4e-af1e-48cb-ba31-43e476f1f5c0.json",
+      "sourceBytes": 6420,
+      "bytes": 6420,
+      "sourceSha256": "453a8eae80d9b969704aa9789b37a0cc95451704a012a3c378dc88aa7df01d51",
+      "archiveSha256": "453a8eae80d9b969704aa9789b37a0cc95451704a012a3c378dc88aa7df01d51",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\actual-browser\\pages\\1794933464472-d7e0af4e-af1e-48cb-ba31-43e476f1f5c0.result.json",
+      "archive": "actual-browser/pages/1794933464472-d7e0af4e-af1e-48cb-ba31-43e476f1f5c0.result.json",
+      "sourceBytes": 9645,
+      "bytes": 9645,
+      "sourceSha256": "65e833c6915393e33237654c4c22d4a603ba061035533324c1a43328b0673a17",
+      "archiveSha256": "65e833c6915393e33237654c4c22d4a603ba061035533324c1a43328b0673a17",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\actual-browser\\pages\\1794933464472-d7e0af4e-af1e-48cb-ba31-43e476f1f5c0.stderr.log",
+      "archive": "actual-browser/pages/1794933464472-d7e0af4e-af1e-48cb-ba31-43e476f1f5c0.stderr.log",
+      "sourceBytes": 1780,
+      "bytes": 1780,
+      "sourceSha256": "fd29fe46ece564a4adf897081f74f68e7b71e61a8de498c26ce4abb2635f4737",
+      "archiveSha256": "fd29fe46ece564a4adf897081f74f68e7b71e61a8de498c26ce4abb2635f4737",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\actual-browser\\pages\\1794933464472-d7e0af4e-af1e-48cb-ba31-43e476f1f5c0.stdout.log",
+      "archive": "actual-browser/pages/1794933464472-d7e0af4e-af1e-48cb-ba31-43e476f1f5c0.stdout.log",
+      "sourceBytes": 0,
+      "bytes": 0,
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\actual-browser\\pages\\capture-manifest.json",
+      "archive": "actual-browser/pages/capture-manifest.json",
+      "sourceBytes": 60092,
+      "bytes": 60092,
+      "sourceSha256": "29b37a5815971bc9c2f846de8ead1a5cc9c9b9f517c595cb874d3d1eec5f0fac",
+      "archiveSha256": "29b37a5815971bc9c2f846de8ead1a5cc9c9b9f517c595cb874d3d1eec5f0fac",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\actual-browser\\pages\\main-home-atelier-dawn.png",
+      "archive": "actual-browser/pages/main-home-atelier-dawn.png",
+      "sourceBytes": 690637,
+      "bytes": 690637,
+      "sourceSha256": "0fcae74ed2d95ab2daa1ea9df29e1013364fd737718c44e53337b261b24078e5",
+      "archiveSha256": "0fcae74ed2d95ab2daa1ea9df29e1013364fd737718c44e53337b261b24078e5",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\actual-browser\\pages\\main-intake-atelier-dawn.png",
+      "archive": "actual-browser/pages/main-intake-atelier-dawn.png",
+      "sourceBytes": 276455,
+      "bytes": 276455,
+      "sourceSha256": "1dfc441325a356068e146e2cad97596c0886a720ee4b43614ec3a22fd91398c8",
+      "archiveSha256": "1dfc441325a356068e146e2cad97596c0886a720ee4b43614ec3a22fd91398c8",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\actual-browser\\pages\\main-operations-atelier-dawn.png",
+      "archive": "actual-browser/pages/main-operations-atelier-dawn.png",
+      "sourceBytes": 364254,
+      "bytes": 364254,
+      "sourceSha256": "b44a63b476fee9ac073a513b6032ca330b50082cf14982154e842ec406538af3",
+      "archiveSha256": "b44a63b476fee9ac073a513b6032ca330b50082cf14982154e842ec406538af3",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\actual-browser\\pages\\post-failure-identities.json",
+      "archive": "actual-browser/pages/post-failure-identities.json",
+      "sourceBytes": 2701,
+      "bytes": 2701,
+      "sourceSha256": "864040726656776741d705023fd9cb45347acf09d6c9cf245848b9762a6c57d9",
+      "archiveSha256": "864040726656776741d705023fd9cb45347acf09d6c9cf245848b9762a6c57d9",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\capture-status.md",
+      "archive": "capture-status.md",
+      "sourceBytes": 4115,
+      "bytes": 4115,
+      "sourceSha256": "3018bfed2b5fef991948591923497c8a553ce99bd49c3d56346d01b7a6ed815b",
+      "archiveSha256": "3018bfed2b5fef991948591923497c8a553ce99bd49c3d56346d01b7a6ed815b",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\coverage-draft.json",
+      "archive": "coverage-draft.json",
+      "sourceBytes": 56658,
+      "bytes": 56658,
+      "sourceSha256": "e99eba020bf0c8a1273ef510c0f17d35c4dc4a0eedff06d1055f7b3475d6075b",
+      "archiveSha256": "e99eba020bf0c8a1273ef510c0f17d35c4dc4a0eedff06d1055f7b3475d6075b",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\coverage-draft.md",
+      "archive": "coverage-draft.md",
+      "sourceBytes": 16567,
+      "bytes": 16567,
+      "sourceSha256": "49deba1148da92dfbe9083bc6f4da902222e671b56a3165e8a43ecab4596d2b6",
+      "archiveSha256": "49deba1148da92dfbe9083bc6f4da902222e671b56a3165e8a43ecab4596d2b6",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s3-customer-table\\v4-horizontal-after-800.png",
+      "archive": "customer-table/v4-horizontal-after-800.png",
+      "sourceBytes": 227633,
+      "bytes": 227633,
+      "sourceSha256": "93e3ae4a60678ea460a7482efec6b9224a987e67bfdde3dc4d991ea2405322f9",
+      "archiveSha256": "93e3ae4a60678ea460a7482efec6b9224a987e67bfdde3dc4d991ea2405322f9",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s3-customer-table\\v4-horizontal-after-final.png",
+      "archive": "customer-table/v4-horizontal-after-final.png",
+      "sourceBytes": 227642,
+      "bytes": 227642,
+      "sourceSha256": "a7d47f7b2c17fd971702a31d64c0011abbd66081fee4f23216176230a58cab2a",
+      "archiveSha256": "a7d47f7b2c17fd971702a31d64c0011abbd66081fee4f23216176230a58cab2a",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s3-customer-table\\v4-horizontal-after.json",
+      "archive": "customer-table/v4-horizontal-after.json",
+      "sourceBytes": 595507,
+      "bytes": 595507,
+      "sourceSha256": "d7f66f6f82a7fa757669e8a98da95e3a4470060b63bdb7cf970a89155b852493",
+      "archiveSha256": "d7f66f6f82a7fa757669e8a98da95e3a4470060b63bdb7cf970a89155b852493",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s3-customer-table\\v4-horizontal-after.log",
+      "archive": "customer-table/v4-horizontal-after.log",
+      "sourceBytes": 318248,
+      "bytes": 318248,
+      "sourceSha256": "f5e5e3541434501f4282fb2cdeccb4dc3cd7ee1511e8ad0ab66225a621e9d326",
+      "archiveSha256": "f5e5e3541434501f4282fb2cdeccb4dc3cd7ee1511e8ad0ab66225a621e9d326",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s3-customer-table\\v4-horizontal-after.png",
+      "archive": "customer-table/v4-horizontal-after.png",
+      "sourceBytes": 246050,
+      "bytes": 246050,
+      "sourceSha256": "5683008ad632b1011a0c33209b2b8fd4e5b9eee7846fa77cd786639e69727ce3",
+      "archiveSha256": "5683008ad632b1011a0c33209b2b8fd4e5b9eee7846fa77cd786639e69727ce3",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s3-customer-table\\v4-horizontal-before.json",
+      "archive": "customer-table/v4-horizontal-before.json",
+      "sourceBytes": 595475,
+      "bytes": 595475,
+      "sourceSha256": "a82ff45aa8f9d3ad0df9835b9234c7647646d3f55d5e3cd78d799e422afd772c",
+      "archiveSha256": "a82ff45aa8f9d3ad0df9835b9234c7647646d3f55d5e3cd78d799e422afd772c",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s3-customer-table\\v4-horizontal-before.log",
+      "archive": "customer-table/v4-horizontal-before.log",
+      "sourceBytes": 321320,
+      "bytes": 321320,
+      "sourceSha256": "c3773bd6496a00b26a7ad9cfb5840940084472cc24a28fc9cfd8092153734ace",
+      "archiveSha256": "c3773bd6496a00b26a7ad9cfb5840940084472cc24a28fc9cfd8092153734ace",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s3-customer-table\\v4-horizontal-before.png",
+      "archive": "customer-table/v4-horizontal-before.png",
+      "sourceBytes": 253770,
+      "bytes": 253770,
+      "sourceSha256": "1839429e330daf298f3bc7455874549dd2fae1ff33ab07dfe2ab959b340bce89",
+      "archiveSha256": "1839429e330daf298f3bc7455874549dd2fae1ff33ab07dfe2ab959b340bce89",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s3-customer-table\\v4-horizontal-capture-after-800.log",
+      "archive": "customer-table/v4-horizontal-capture-after-800.log",
+      "sourceBytes": 32392,
+      "bytes": 32392,
+      "sourceSha256": "40b64ace4b19d4d5d9e3c056b9d688504e8d8cdf70631fef9a600960be6ced21",
+      "archiveSha256": "40b64ace4b19d4d5d9e3c056b9d688504e8d8cdf70631fef9a600960be6ced21",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s3-customer-table\\v4-horizontal-capture-after-final.log",
+      "archive": "customer-table/v4-horizontal-capture-after-final.log",
+      "sourceBytes": 32392,
+      "bytes": 32392,
+      "sourceSha256": "40b64ace4b19d4d5d9e3c056b9d688504e8d8cdf70631fef9a600960be6ced21",
+      "archiveSha256": "40b64ace4b19d4d5d9e3c056b9d688504e8d8cdf70631fef9a600960be6ced21",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s3-customer-table\\v4-horizontal-capture-after.log",
+      "archive": "customer-table/v4-horizontal-capture-after.log",
+      "sourceBytes": 32386,
+      "bytes": 32386,
+      "sourceSha256": "bc2f4bc23869a6501851bf0b623d56de3470170e8672a0e258390a89701aebee",
+      "archiveSha256": "bc2f4bc23869a6501851bf0b623d56de3470170e8672a0e258390a89701aebee",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s3-customer-table\\v4-horizontal-capture-before.log",
+      "archive": "customer-table/v4-horizontal-capture-before.log",
+      "sourceBytes": 32667,
+      "bytes": 32667,
+      "sourceSha256": "1013c206c8810151fda89b17ad6f5b21a7fdfc05ee5dc15ce122d2a098e0f1e6",
+      "archiveSha256": "1013c206c8810151fda89b17ad6f5b21a7fdfc05ee5dc15ce122d2a098e0f1e6",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\full-regression.log",
+      "archive": "full-regression.sid-redacted.log",
+      "sourceBytes": 440198,
+      "bytes": 440162,
+      "sourceSha256": "d19711197a33ea65edaba237947488fa5806c367b4bdcdbbae1a181bbb77bd14",
+      "archiveSha256": "e6f57ab8dd86b37f453d14ae85907f797c80f70e3fd6131c882f73cb11f2864a",
+      "sourceStableDuringCopy": true,
+      "equal": false,
+      "transformation": "SID redaction",
+      "redactedSidOccurrences": 2
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native-build.log",
+      "archive": "native-build.log",
+      "sourceBytes": 257,
+      "bytes": 257,
+      "sourceSha256": "eb3ea0d28f4f7872df4323ac3dc34edea1da4c1fd5e959ab8b270f43609f7eaa",
+      "archiveSha256": "eb3ea0d28f4f7872df4323ac3dc34edea1da4c1fd5e959ab8b270f43609f7eaa",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native-core-seed.log",
+      "archive": "native-core-seed.log",
+      "sourceBytes": 347,
+      "bytes": 347,
+      "sourceSha256": "0a450d9d7cd39fad5fb3174227bfb42a4ea8bf6fe069f635c974fed5a075307b",
+      "archiveSha256": "0a450d9d7cd39fad5fb3174227bfb42a4ea8bf6fe069f635c974fed5a075307b",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-native-30ffcf8c8cdb4ee5b4abcf515ddf7f7e\\native-event-counts-1396.json",
+      "archive": "native-diagnostics/native-event-counts-1396.json",
+      "sourceBytes": 1672,
+      "bytes": 1672,
+      "sourceSha256": "5dcb843f36d505109e191252d9dff2e9ac37ee8c5065fe44bc05c4a0750d11b7",
+      "archiveSha256": "5dcb843f36d505109e191252d9dff2e9ac37ee8c5065fe44bc05c4a0750d11b7",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-native-30ffcf8c8cdb4ee5b4abcf515ddf7f7e\\native-event-counts-8304.json",
+      "archive": "native-diagnostics/native-event-counts-8304.json",
+      "sourceBytes": 1733,
+      "bytes": 1733,
+      "sourceSha256": "9165acc2fc20a75b2a9f6cf262d47ab4555bd1b1924026ffc31702f3bbe7b646",
+      "archiveSha256": "9165acc2fc20a75b2a9f6cf262d47ab4555bd1b1924026ffc31702f3bbe7b646",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-native-30ffcf8c8cdb4ee5b4abcf515ddf7f7e\\native-events.jsonl",
+      "archive": "native-diagnostics/native-events.jsonl",
+      "sourceBytes": 29967,
+      "bytes": 29967,
+      "sourceSha256": "dbd167f40c711ae461729f03c1f9a22311937fdfc9eb11c01f75624c24b4c11a",
+      "archiveSha256": "dbd167f40c711ae461729f03c1f9a22311937fdfc9eb11c01f75624c24b4c11a",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-native-30ffcf8c8cdb4ee5b4abcf515ddf7f7e\\v4-resources.context.json",
+      "archive": "native-diagnostics/v4-resources.context.json",
+      "sourceBytes": 1881,
+      "bytes": 1881,
+      "sourceSha256": "64b5d4a42063e693812622b70b743c8c19f1a9869a45833f152dae33fce71b0c",
+      "archiveSha256": "64b5d4a42063e693812622b70b743c8c19f1a9869a45833f152dae33fce71b0c",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-native-30ffcf8c8cdb4ee5b4abcf515ddf7f7e\\v4-resources.jsonl",
+      "archive": "native-diagnostics/v4-resources.jsonl",
+      "sourceBytes": 9173,
+      "bytes": 9173,
+      "sourceSha256": "668d540c3fefc031a22c04caacc16f935d52a0677d31db66c9ff63cdcabc4153",
+      "archiveSha256": "668d540c3fefc031a22c04caacc16f935d52a0677d31db66c9ff63cdcabc4153",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native-process-cleanup-final.log",
+      "archive": "native-process-cleanup-final.log",
+      "sourceBytes": 323,
+      "bytes": 323,
+      "sourceSha256": "3948814f50604198bd2abfbf9c8e651b3efbeac19dc3062073a36d15bdf8e364",
+      "archiveSha256": "3948814f50604198bd2abfbf9c8e651b3efbeac19dc3062073a36d15bdf8e364",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native-process-cleanup.log",
+      "archive": "native-process-cleanup.log",
+      "sourceBytes": 710,
+      "bytes": 710,
+      "sourceSha256": "766aaf19d7ef0506ba3a95811b395b1e67c012d6caad34bda0257bb2e959ab7a",
+      "archiveSha256": "766aaf19d7ef0506ba3a95811b395b1e67c012d6caad34bda0257bb2e959ab7a",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native-process-reopen.json",
+      "archive": "native-process-reopen.json",
+      "sourceBytes": 174,
+      "bytes": 174,
+      "sourceSha256": "9ad90c992a4b65d7fc19ff75ebc34638d67b4d7819db47c03436fcd5323f9c17",
+      "archiveSha256": "9ad90c992a4b65d7fc19ff75ebc34638d67b4d7819db47c03436fcd5323f9c17",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native-process.json",
+      "archive": "native-process.json",
+      "sourceBytes": 174,
+      "bytes": 174,
+      "sourceSha256": "7fc87542ef9c5cd1e3f889240ca1de599289741107ae68e10499388fc80b323c",
+      "archiveSha256": "7fc87542ef9c5cd1e3f889240ca1de599289741107ae68e10499388fc80b323c",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native-resources.log",
+      "archive": "native-resources.log",
+      "sourceBytes": 1587,
+      "bytes": 1587,
+      "sourceSha256": "50ad1c597653082e94f444f40257d0d5777e4e334d19d4ed7d882a3b0674ef06",
+      "archiveSha256": "50ad1c597653082e94f444f40257d0d5777e4e334d19d4ed7d882a3b0674ef06",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native-seed.log",
+      "archive": "native-seed.log",
+      "sourceBytes": 113,
+      "bytes": 113,
+      "sourceSha256": "d66c7b50529a751a8c2f48d63a6f9604685c356bbfc6b1273f1cc350a767e63f",
+      "archiveSha256": "d66c7b50529a751a8c2f48d63a6f9604685c356bbfc6b1273f1cc350a767e63f",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native-session.json",
+      "archive": "native-session.json",
+      "sourceBytes": 411,
+      "bytes": 411,
+      "sourceSha256": "7c877e916646bf17336c4e79db807d92ff92365e518c306528271e8727f10c88",
+      "archiveSha256": "7c877e916646bf17336c4e79db807d92ff92365e518c306528271e8727f10c88",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native\\01-customer-light-overlap.png",
+      "archive": "native/01-customer-light-overlap.png",
+      "sourceBytes": 242293,
+      "bytes": 242293,
+      "sourceSha256": "5c2473f2519e35a0fce8f2466146acaa2d923621d392f08d07bd0776efbd42f0",
+      "archiveSha256": "5c2473f2519e35a0fce8f2466146acaa2d923621d392f08d07bd0776efbd42f0",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native\\02-home-light.png",
+      "archive": "native/02-home-light.png",
+      "sourceBytes": 212532,
+      "bytes": 212532,
+      "sourceSha256": "8aed230407cbe4278e8452fbea1cc14ce84499fa047428045d1c40b7dcbf2ea1",
+      "archiveSha256": "8aed230407cbe4278e8452fbea1cc14ce84499fa047428045d1c40b7dcbf2ea1",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native\\03-crm-rail-expanded-light.png",
+      "archive": "native/03-crm-rail-expanded-light.png",
+      "sourceBytes": 122835,
+      "bytes": 122835,
+      "sourceSha256": "81353f8783ba4374a810270dbb608bf31a95d2ffe48ba6fb4a65c0147266ae9d",
+      "archiveSha256": "81353f8783ba4374a810270dbb608bf31a95d2ffe48ba6fb4a65c0147266ae9d",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native\\04-appearance-light.png",
+      "archive": "native/04-appearance-light.png",
+      "sourceBytes": 110383,
+      "bytes": 110383,
+      "sourceSha256": "01094e7c90102a510fcdd48583d6447340f494fdf3d2173705d030a7afba29b0",
+      "archiveSha256": "01094e7c90102a510fcdd48583d6447340f494fdf3d2173705d030a7afba29b0",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native\\05-appearance-dark.png",
+      "archive": "native/05-appearance-dark.png",
+      "sourceBytes": 93054,
+      "bytes": 93054,
+      "sourceSha256": "e1ddc41fb8a1e84d3120aaa0843fd75a3b2fedb9083664f003212fb3da4f2cef",
+      "archiveSha256": "e1ddc41fb8a1e84d3120aaa0843fd75a3b2fedb9083664f003212fb3da4f2cef",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native\\06-home-dark.png",
+      "archive": "native/06-home-dark.png",
+      "sourceBytes": 123153,
+      "bytes": 123153,
+      "sourceSha256": "fb41574d04efcd616008dc023141a3fd1526fb8bfb5716f9833d9e6a7233c962",
+      "archiveSha256": "fb41574d04efcd616008dc023141a3fd1526fb8bfb5716f9833d9e6a7233c962",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native\\07-tasks-dark.png",
+      "archive": "native/07-tasks-dark.png",
+      "sourceBytes": 121236,
+      "bytes": 121236,
+      "sourceSha256": "8ed7a4a766ec506dddb2667650d425643e94c7014f18a8c4751b02c4f4ab4591",
+      "archiveSha256": "8ed7a4a766ec506dddb2667650d425643e94c7014f18a8c4751b02c4f4ab4591",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native\\08-stage-board-dark.png",
+      "archive": "native/08-stage-board-dark.png",
+      "sourceBytes": 123140,
+      "bytes": 123140,
+      "sourceSha256": "70b3314f0c77e68c5b4bf08da6bf02f1b3921f2b37573b8a34f131624262e0f2",
+      "archiveSha256": "70b3314f0c77e68c5b4bf08da6bf02f1b3921f2b37573b8a34f131624262e0f2",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native\\09-stage-columns-dark.png",
+      "archive": "native/09-stage-columns-dark.png",
+      "sourceBytes": 131023,
+      "bytes": 131023,
+      "sourceSha256": "c1ac217c3b372b4d4e106a0317ecde37f1365ef0a2488fea8ff1a77cca4ea2e8",
+      "archiveSha256": "c1ac217c3b372b4d4e106a0317ecde37f1365ef0a2488fea8ff1a77cca4ea2e8",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native\\10-ws-rail-tasks-dark.png",
+      "archive": "native/10-ws-rail-tasks-dark.png",
+      "sourceBytes": 176626,
+      "bytes": 176626,
+      "sourceSha256": "f27da53658951e70069d2d48ef36b6f4438fa45284c1d4619903798dd139ba72",
+      "archiveSha256": "f27da53658951e70069d2d48ef36b6f4438fa45284c1d4619903798dd139ba72",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native\\11-ws-chat-dark.png",
+      "archive": "native/11-ws-chat-dark.png",
+      "sourceBytes": 92447,
+      "bytes": 92447,
+      "sourceSha256": "ef14258056e8bf30de3bc07f19c7def4193a1eb53bff890dd5a830737663004f",
+      "archiveSha256": "ef14258056e8bf30de3bc07f19c7def4193a1eb53bff890dd5a830737663004f",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native\\12-ws-crm-panel-dark.png",
+      "archive": "native/12-ws-crm-panel-dark.png",
+      "sourceBytes": 116676,
+      "bytes": 116676,
+      "sourceSha256": "68c6142615a3eb1d6b1d59a985f4a19315f2dd9f9714deab325701ba0246ce4a",
+      "archiveSha256": "68c6142615a3eb1d6b1d59a985f4a19315f2dd9f9714deab325701ba0246ce4a",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native\\13-ws-groups-dark.png",
+      "archive": "native/13-ws-groups-dark.png",
+      "sourceBytes": 114746,
+      "bytes": 114746,
+      "sourceSha256": "0ad0e63e10f40a01d60be2b5bf5c1e0f12091aedf4735333cc95c9ca6665fb6a",
+      "archiveSha256": "0ad0e63e10f40a01d60be2b5bf5c1e0f12091aedf4735333cc95c9ca6665fb6a",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native\\14-ws-accounts-dark.png",
+      "archive": "native/14-ws-accounts-dark.png",
+      "sourceBytes": 107033,
+      "bytes": 107033,
+      "sourceSha256": "9f9652d7d4071ab9d0f99f0f1a79a250e7c1927dacf11519a858b9531022201a",
+      "archiveSha256": "9f9652d7d4071ab9d0f99f0f1a79a250e7c1927dacf11519a858b9531022201a",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\native\\15-return-crm-dark.png",
+      "archive": "native/15-return-crm-dark.png",
+      "sourceBytes": 123393,
+      "bytes": 123393,
+      "sourceSha256": "bf234dace231054df48366618883f19b4bbc22f3a8859fba642eef3126e7eb8a",
+      "archiveSha256": "bf234dace231054df48366618883f19b4bbc22f3a8859fba642eef3126e7eb8a",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\release-build.log",
+      "archive": "release-build.log",
+      "sourceBytes": 299,
+      "bytes": 299,
+      "sourceSha256": "491f79716f3e80389cb888ed9ebc6fd1c74637eb97f47548e8cc467e20d27bbf",
+      "archiveSha256": "491f79716f3e80389cb888ed9ebc6fd1c74637eb97f47548e8cc467e20d27bbf",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\smoke-browser-v2\\1794933242588-3c20e172-f16b-4416-b1d8-f0dd2cf0c624.json",
+      "archive": "smoke-browser-v2/1794933242588-3c20e172-f16b-4416-b1d8-f0dd2cf0c624.json",
+      "sourceBytes": 6137,
+      "bytes": 6137,
+      "sourceSha256": "99c44841791f1754881ac751fe2a5c8490dcd763d74dbfa1b83f6ad243354c63",
+      "archiveSha256": "99c44841791f1754881ac751fe2a5c8490dcd763d74dbfa1b83f6ad243354c63",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\smoke-browser-v2\\1794933242588-3c20e172-f16b-4416-b1d8-f0dd2cf0c624.result.json",
+      "archive": "smoke-browser-v2/1794933242588-3c20e172-f16b-4416-b1d8-f0dd2cf0c624.result.json",
+      "sourceBytes": 14723,
+      "bytes": 14723,
+      "sourceSha256": "794b218da4b8397e7445a40cf41fecc6579eb8c7668929881a86b62a652cca00",
+      "archiveSha256": "794b218da4b8397e7445a40cf41fecc6579eb8c7668929881a86b62a652cca00",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\smoke-browser-v2\\1794933247597-ef32fda0-5bc2-4568-b9b5-90e9fb434a37.json",
+      "archive": "smoke-browser-v2/1794933247597-ef32fda0-5bc2-4568-b9b5-90e9fb434a37.json",
+      "sourceBytes": 6293,
+      "bytes": 6293,
+      "sourceSha256": "6c522c47714ecd3b9a2e5222b1bf76f933011782a148480d7e04011baf1d5552",
+      "archiveSha256": "6c522c47714ecd3b9a2e5222b1bf76f933011782a148480d7e04011baf1d5552",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\smoke-browser-v2\\1794933247597-ef32fda0-5bc2-4568-b9b5-90e9fb434a37.result.json",
+      "archive": "smoke-browser-v2/1794933247597-ef32fda0-5bc2-4568-b9b5-90e9fb434a37.result.json",
+      "sourceBytes": 9092,
+      "bytes": 9092,
+      "sourceSha256": "3dd63e8d14965f74fd8c9013720389cce8e0d528169c69cd0ee53f39cdf03031",
+      "archiveSha256": "3dd63e8d14965f74fd8c9013720389cce8e0d528169c69cd0ee53f39cdf03031",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\smoke-browser-v2\\1794933252844-cae620ab-cf09-4073-8680-92162a47a41b.json",
+      "archive": "smoke-browser-v2/1794933252844-cae620ab-cf09-4073-8680-92162a47a41b.json",
+      "sourceBytes": 6034,
+      "bytes": 6034,
+      "sourceSha256": "d42cc9b808ca03c7d63d3788c183ad2b06a9620eea1ad98ad813ee24d2e873a9",
+      "archiveSha256": "d42cc9b808ca03c7d63d3788c183ad2b06a9620eea1ad98ad813ee24d2e873a9",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\smoke-browser-v2\\1794933252844-cae620ab-cf09-4073-8680-92162a47a41b.result.json",
+      "archive": "smoke-browser-v2/1794933252844-cae620ab-cf09-4073-8680-92162a47a41b.result.json",
+      "sourceBytes": 423,
+      "bytes": 423,
+      "sourceSha256": "b86c8c719f68b7de0f54320dfde22a5530446ee98950e7b9ce10db094da2d4f7",
+      "archiveSha256": "b86c8c719f68b7de0f54320dfde22a5530446ee98950e7b9ce10db094da2d4f7",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\smoke-browser-v2\\capture-manifest.json",
+      "archive": "smoke-browser-v2/capture-manifest.json",
+      "sourceBytes": 51012,
+      "bytes": 51012,
+      "sourceSha256": "04b84cf9a4cf4bf30acebd28c48179156d9d0f5934a261b67150d5f097322373",
+      "archiveSha256": "04b84cf9a4cf4bf30acebd28c48179156d9d0f5934a261b67150d5f097322373",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\smoke-browser-v2\\main-gpt-atelier-dawn.png",
+      "archive": "smoke-browser-v2/main-gpt-atelier-dawn.png",
+      "sourceBytes": 344126,
+      "bytes": 344126,
+      "sourceSha256": "f25076b13e0d7edac3d0d8fde0e78bc445b565371d47a69a8f8dfa08ffe408ad",
+      "archiveSha256": "f25076b13e0d7edac3d0d8fde0e78bc445b565371d47a69a8f8dfa08ffe408ad",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\smoke-browser-v2\\main-home-atelier-dawn.png",
+      "archive": "smoke-browser-v2/main-home-atelier-dawn.png",
+      "sourceBytes": 692905,
+      "bytes": 692905,
+      "sourceSha256": "790719fabf3cdfc54fe8b3f0fc7302b330e72f39b46c09c9f46217971869f5b1",
+      "archiveSha256": "790719fabf3cdfc54fe8b3f0fc7302b330e72f39b46c09c9f46217971869f5b1",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\smoke-browser-v2\\ws-chat-atelier-dawn.png",
+      "archive": "smoke-browser-v2/ws-chat-atelier-dawn.png",
+      "sourceBytes": 255256,
+      "bytes": 255256,
+      "sourceSha256": "bc55f8ec2843e0372cbbc6770af064208d1ee559bb0e5e11eca13fd0c9b1e39d",
+      "archiveSha256": "bc55f8ec2843e0372cbbc6770af064208d1ee559bb0e5e11eca13fd0c9b1e39d",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\smoke-browser\\1794933128394-10e3f250-d5f6-42f6-bcdd-aea2e3157c3f.json",
+      "archive": "smoke-browser/1794933128394-10e3f250-d5f6-42f6-bcdd-aea2e3157c3f.json",
+      "sourceBytes": 6130,
+      "bytes": 6130,
+      "sourceSha256": "1ff29f6c1c13e0254e8b6984dbd7e67dd5e1033843e6b6fc94424cffdb35bcd7",
+      "archiveSha256": "1ff29f6c1c13e0254e8b6984dbd7e67dd5e1033843e6b6fc94424cffdb35bcd7",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\smoke-browser\\1794933128394-10e3f250-d5f6-42f6-bcdd-aea2e3157c3f.result.json",
+      "archive": "smoke-browser/1794933128394-10e3f250-d5f6-42f6-bcdd-aea2e3157c3f.result.json",
+      "sourceBytes": 14723,
+      "bytes": 14723,
+      "sourceSha256": "794b218da4b8397e7445a40cf41fecc6579eb8c7668929881a86b62a652cca00",
+      "archiveSha256": "794b218da4b8397e7445a40cf41fecc6579eb8c7668929881a86b62a652cca00",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\smoke-browser\\1794933133736-d8059533-b09d-4c78-a445-5dc0a05df0e8.json",
+      "archive": "smoke-browser/1794933133736-d8059533-b09d-4c78-a445-5dc0a05df0e8.json",
+      "sourceBytes": 3849,
+      "bytes": 3849,
+      "sourceSha256": "214bb5929d286d22319813375b3ebeed2983045820ac4e0879f7f539950b23f6",
+      "archiveSha256": "214bb5929d286d22319813375b3ebeed2983045820ac4e0879f7f539950b23f6",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\smoke-browser\\1794933133736-d8059533-b09d-4c78-a445-5dc0a05df0e8.stderr.log",
+      "archive": "smoke-browser/1794933133736-d8059533-b09d-4c78-a445-5dc0a05df0e8.stderr.log",
+      "sourceBytes": 281,
+      "bytes": 281,
+      "sourceSha256": "9b8ca7e498828cc2296d3436f6d70bf9cec7ac7f9588705d56f4f9d4aa968829",
+      "archiveSha256": "9b8ca7e498828cc2296d3436f6d70bf9cec7ac7f9588705d56f4f9d4aa968829",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\smoke-browser\\1794933133736-d8059533-b09d-4c78-a445-5dc0a05df0e8.stdout.log",
+      "archive": "smoke-browser/1794933133736-d8059533-b09d-4c78-a445-5dc0a05df0e8.stdout.log",
+      "sourceBytes": 0,
+      "bytes": 0,
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\smoke-browser\\capture-manifest.json",
+      "archive": "smoke-browser/capture-manifest.json",
+      "sourceBytes": 33362,
+      "bytes": 33362,
+      "sourceSha256": "4b3674311f0f0f99e5b5564130b3d926e6e3436fd6fd5cb04cd4848c2d30fdce",
+      "archiveSha256": "4b3674311f0f0f99e5b5564130b3d926e6e3436fd6fd5cb04cd4848c2d30fdce",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\smoke-browser\\main-home-atelier-dawn.png",
+      "archive": "smoke-browser/main-home-atelier-dawn.png",
+      "sourceBytes": 692905,
+      "bytes": 692905,
+      "sourceSha256": "790719fabf3cdfc54fe8b3f0fc7302b330e72f39b46c09c9f46217971869f5b1",
+      "archiveSha256": "790719fabf3cdfc54fe8b3f0fc7302b330e72f39b46c09c9f46217971869f5b1",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\ws-broadcast-isolated-rerun-1.log",
+      "archive": "ws-broadcast-isolated-rerun-1.log",
+      "sourceBytes": 378,
+      "bytes": 378,
+      "sourceSha256": "44a893500aebae502f8b57a5bf06847911c64edd9bdd39d75f71b305232e6540",
+      "archiveSha256": "44a893500aebae502f8b57a5bf06847911c64edd9bdd39d75f71b305232e6540",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\ws-broadcast-isolated-rerun-2.log",
+      "archive": "ws-broadcast-isolated-rerun-2.log",
+      "sourceBytes": 267,
+      "bytes": 267,
+      "sourceSha256": "9f04d9429b7698bcd513d1b7a3e97a769d6ad71308e94795299e91786907ff81",
+      "archiveSha256": "9f04d9429b7698bcd513d1b7a3e97a769d6ad71308e94795299e91786907ff81",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\ws-broadcast-isolated-rerun-3.log",
+      "archive": "ws-broadcast-isolated-rerun-3.log",
+      "sourceBytes": 267,
+      "bytes": 267,
+      "sourceSha256": "d3b0204730ce14fa9e6cbfda9ff17a1efbe4cc3fe5291b18dc95b07bb32e5b21",
+      "archiveSha256": "d3b0204730ce14fa9e6cbfda9ff17a1efbe4cc3fe5291b18dc95b07bb32e5b21",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\ws-broadcast-isolated-rerun-4.log",
+      "archive": "ws-broadcast-isolated-rerun-4.log",
+      "sourceBytes": 267,
+      "bytes": 267,
+      "sourceSha256": "bafdf39a82ebf5b01b419c19f531b0af62636644cbdf1353d62d35b4a638c94a",
+      "archiveSha256": "bafdf39a82ebf5b01b419c19f531b0af62636644cbdf1353d62d35b4a638c94a",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\ws-broadcast-isolated-rerun-5.log",
+      "archive": "ws-broadcast-isolated-rerun-5.log",
+      "sourceBytes": 267,
+      "bytes": 267,
+      "sourceSha256": "fb46f7ac58d02a57d313b03f17fa177ffceed96754c5f5d8592bbab93eb96020",
+      "archiveSha256": "fb46f7ac58d02a57d313b03f17fa177ffceed96754c5f5d8592bbab93eb96020",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\ws-broadcast-isolated-rerun-6.log",
+      "archive": "ws-broadcast-isolated-rerun-6.log",
+      "sourceBytes": 267,
+      "bytes": 267,
+      "sourceSha256": "579ae43062df7317d48f657c909b73b933185b7c4a33fbf35edfbf23efd6c274",
+      "archiveSha256": "579ae43062df7317d48f657c909b73b933185b7c4a33fbf35edfbf23efd6c274",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\ws-broadcast-residual-inspection.json",
+      "archive": "ws-broadcast-residual-inspection.json",
+      "sourceBytes": 1326,
+      "bytes": 1326,
+      "sourceSha256": "0aa382ce7ada771d06a53e7c7d85c42f3691dada995edac64559cd355b640bfa",
+      "archiveSha256": "0aa382ce7ada771d06a53e7c7d85c42f3691dada995edac64559cd355b640bfa",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\ws-regression-serial.log",
+      "archive": "ws-regression-serial.log",
+      "sourceBytes": 36989,
+      "bytes": 36989,
+      "sourceSha256": "8b2d82da64c80e07829a155e8adfb143d792609a0597314f78bb9aa6acffa92c",
+      "archiveSha256": "8b2d82da64c80e07829a155e8adfb143d792609a0597314f78bb9aa6acffa92c",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\ws-regression.log",
+      "archive": "ws-regression.log",
+      "sourceBytes": 37505,
+      "bytes": 37505,
+      "sourceSha256": "3873acfef1c07ccca4e7043af3735d99f2406f7fc46c81901c39c01395b6673c",
+      "archiveSha256": "3873acfef1c07ccca4e7043af3735d99f2406f7fc46c81901c39c01395b6673c",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\full-regression-final.log",
+      "archive": "full-regression-final.sid-redacted.log",
+      "sourceBytes": 418063,
+      "bytes": 418027,
+      "sourceSha256": "eaa15a15f8ecf89bede07112b5e83fd9af565f8c734ddfdae36bbb8052ab8b17",
+      "archiveSha256": "862bac1ab044a4c64a58b3b5f234203a76cf7b75c50f8b6cfc261fa72a1af967",
+      "sourceStableDuringCopy": true,
+      "equal": false,
+      "transformation": "SID redaction",
+      "redactedSidOccurrences": 2
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s1-edge-layout\\1794936944713-5e93f3ef-8e30-4a57-94d1-7958951ecfb3.json",
+      "archive": "final-regression/stage51/1794936944713-5e93f3ef-8e30-4a57-94d1-7958951ecfb3.json",
+      "sourceBytes": 4890,
+      "bytes": 4890,
+      "sourceSha256": "da4be2946c1914bc3b09b529aefc73bbec6b2f3529e9f265e2e08ed24b096846",
+      "archiveSha256": "da4be2946c1914bc3b09b529aefc73bbec6b2f3529e9f265e2e08ed24b096846",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s1-edge-layout\\1794936944713-5e93f3ef-8e30-4a57-94d1-7958951ecfb3.result.json",
+      "archive": "final-regression/stage51/1794936944713-5e93f3ef-8e30-4a57-94d1-7958951ecfb3.result.json",
+      "sourceBytes": 19947,
+      "bytes": 19947,
+      "sourceSha256": "3c024a188f160a5ffa7549844b7eef030bd691fbfef437c46691ab9533ac5706",
+      "archiveSha256": "3c024a188f160a5ffa7549844b7eef030bd691fbfef437c46691ab9533ac5706",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s1-edge-layout\\1794936944713-5e93f3ef-8e30-4a57-94d1-7958951ecfb3.stderr.log",
+      "archive": "final-regression/stage51/1794936944713-5e93f3ef-8e30-4a57-94d1-7958951ecfb3.stderr.log",
+      "sourceBytes": 100,
+      "bytes": 100,
+      "sourceSha256": "ba62d095c61c4bb35b26a7d1c43a25734c3f57cb0a84b3582e82600b0cd39af8",
+      "archiveSha256": "ba62d095c61c4bb35b26a7d1c43a25734c3f57cb0a84b3582e82600b0cd39af8",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s1-edge-layout\\1794936944713-5e93f3ef-8e30-4a57-94d1-7958951ecfb3.stdout.log",
+      "archive": "final-regression/stage51/1794936944713-5e93f3ef-8e30-4a57-94d1-7958951ecfb3.stdout.log",
+      "sourceBytes": 0,
+      "bytes": 0,
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-usability\\main-visual\\1794937090207-b9cbe0f2-2291-40c2-8c13-d4fedbc08485.json",
+      "archive": "final-regression/main/1794937090207-b9cbe0f2-2291-40c2-8c13-d4fedbc08485.json",
+      "sourceBytes": 4402,
+      "bytes": 4402,
+      "sourceSha256": "52bdea85bb9655cbbe08d49dcf02b96e4d96c26d4f02d232f24c3e35e164faa0",
+      "archiveSha256": "52bdea85bb9655cbbe08d49dcf02b96e4d96c26d4f02d232f24c3e35e164faa0",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-usability\\main-visual\\1794937090207-b9cbe0f2-2291-40c2-8c13-d4fedbc08485.result.json",
+      "archive": "final-regression/main/1794937090207-b9cbe0f2-2291-40c2-8c13-d4fedbc08485.result.json",
+      "sourceBytes": 1698584,
+      "bytes": 1698584,
+      "sourceSha256": "8404187c1a34e889c67b1e97cbd4f6fd0d4d33eefca64b1c703425556e5fb8e4",
+      "archiveSha256": "8404187c1a34e889c67b1e97cbd4f6fd0d4d33eefca64b1c703425556e5fb8e4",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-usability\\main-visual\\1794937090207-b9cbe0f2-2291-40c2-8c13-d4fedbc08485.stderr.log",
+      "archive": "final-regression/main/1794937090207-b9cbe0f2-2291-40c2-8c13-d4fedbc08485.stderr.log",
+      "sourceBytes": 1111,
+      "bytes": 1111,
+      "sourceSha256": "f407f0dba1b7ad670d886f40bdde85949998ddeba88bb833350c81aba57b652f",
+      "archiveSha256": "f407f0dba1b7ad670d886f40bdde85949998ddeba88bb833350c81aba57b652f",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-usability\\main-visual\\1794937090207-b9cbe0f2-2291-40c2-8c13-d4fedbc08485.stdout.log",
+      "archive": "final-regression/main/1794937090207-b9cbe0f2-2291-40c2-8c13-d4fedbc08485.stdout.log",
+      "sourceBytes": 0,
+      "bytes": 0,
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\release-build-final.log",
+      "archive": "release-build-final.log",
+      "sourceBytes": 299,
+      "bytes": 299,
+      "sourceSha256": "6441546ca3fa5ef6d48f50cfa09aaf553253050858d985031a219744b8a7a68c",
+      "archiveSha256": "6441546ca3fa5ef6d48f50cfa09aaf553253050858d985031a219744b8a7a68c",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\final-scope-audit.md",
+      "archive": "final-scope-audit.md",
+      "sourceBytes": 4988,
+      "bytes": 4988,
+      "sourceSha256": "11d36fee96d1ce0f9820119f03ee20f2c2c5032e5010f96ffb61f22c50f17e60",
+      "archiveSha256": "11d36fee96d1ce0f9820119f03ee20f2c2c5032e5010f96ffb61f22c50f17e60",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\final-test-subsets.json",
+      "archive": "final-test-subsets.json",
+      "sourceBytes": 34065,
+      "bytes": 34065,
+      "sourceSha256": "40268e9d85317c43228b4fdb1db741b6db7faf2451164e3090bba4e2df6cbdb6",
+      "archiveSha256": "40268e9d85317c43228b4fdb1db741b6db7faf2451164e3090bba4e2df6cbdb6",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    },
+    {
+      "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\final-edge-identities.json",
+      "archive": "final-edge-identities.json",
+      "sourceBytes": 3495,
+      "bytes": 3495,
+      "sourceSha256": "b7bb8fe9df9426562762a70af47330db979ec60812da25d386b0ee39d84f17a7",
+      "archiveSha256": "b7bb8fe9df9426562762a70af47330db979ec60812da25d386b0ee39d84f17a7",
+      "sourceStableDuringCopy": true,
+      "equal": true
+    }
+  ]
+}

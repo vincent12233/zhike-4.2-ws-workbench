@@ -1,0 +1,2 @@
+{"test":"WS broadcast, translation and send audit","command":"resources/app/node.exe tests/ws-broadcast-translation.test.cjs","startedAt":"2026-11-17T16:50:45.387Z","elapsedMs":896,"status":0,"signal":null,"error":null}
+ws-broadcast-translation: translation preservation, explicit broadcast confirmation, account isolation, rate limiting, native bridge and audit contracts pass

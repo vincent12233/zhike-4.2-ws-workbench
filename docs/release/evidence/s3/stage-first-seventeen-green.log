@@ -1,0 +1,19 @@
+[PASS] actual drag/drop stores the canonical stage data, independent of decorated visible label
+[PASS] same canonical stage is a no-op with no snapshot, persistence or activity
+[PASS] unset stage follows the existing core stageColumns identity and is a no-op
+[PASS] a target lacking its canonical stage cannot derive a writable stage from text
+[PASS] snapshot refusal makes no customer, history or activity changes
+[PASS] failed existing flush restores the entire customer and activity history
+[PASS] external drops and deleted customer cards cannot trigger a write
+[PASS] repeated real refresh does not multiply drag/drop subscriptions
+[PASS] overlapping drops for one customer have one in-flight snapshot and commit
+[PASS] failed stage persistence releases its guard for a later valid retry
+{"observation":"actual-stage-overlap","concurrentCommit":false,"otherPhase":"新客户","otherAuditPresent":false}
+[PASS] different-customer drops cannot overlap an activity snapshot rollback
+[PASS] manual task registered action uses the existing status fields and persists once
+[PASS] manual task failure restores its original completion state
+[PASS] AI action uses the original follow-up boundary without local task writes
+[PASS] AI action failure restores all original task fields
+[PASS] actual empty stage board has no fabricated positive distribution lengths
+[PASS] actual populated board distribution preserves true counts and zero-member stages
+{"suite":"delivery-s3-actual-operations-handlers","passed":17,"actualShippedModules":true,"syntheticHostOnly":true,"realBrowser":false,"realService":false,"realDatabase":false,"realWhatsApp":false}

@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "sha256",
+  "scope": "Run-3 wide-window and normal exit observations only",
+  "entries": [
+    {
+      "file": "captures/r3-04-kpi-no-vertical-scroll.jpg",
+      "bytes": 239138,
+      "sha256": "c1dcb02dfdd8686898001f39ba5620359c9380d5ff48f0ea3574ec7515ab4e5f",
+      "sources": [
+        {
+          "file": "source/native/r3-04-kpi-no-vertical-scroll-0.png",
+          "bytes": 239138,
+          "sha256": "c1dcb02dfdd8686898001f39ba5620359c9380d5ff48f0ea3574ec7515ab4e5f"
+        }
+      ],
+      "change": "Original JPEG bytes; corrected extension",
+      "width": 1902,
+      "height": 1134
+    },
+    {
+      "file": "captures/r3-06-motion-off-selected.jpg",
+      "bytes": 235347,
+      "sha256": "8bdf0ada871398a4e3ba3849e671bbda37fb42e207ea755155e882ae64f7936b",
+      "sources": [
+        {
+          "file": "source/native/r3-06-motion-off-selected-0.png",
+          "bytes": 235347,
+          "sha256": "8bdf0ada871398a4e3ba3849e671bbda37fb42e207ea755155e882ae64f7936b"
+        }
+      ],
+      "change": "Original JPEG bytes; corrected extension",
+      "width": 1902,
+      "height": 1136
+    },
+    {
+      "file": "captures/r3-07-motion-off-statistics.jpg",
+      "bytes": 239021,
+      "sha256": "845cbc310bfcae3ccf7faa55b073a48c1edaeff364f746155630df0c685d88c8",
+      "sources": [
+        {
+          "file": "source/native/r3-07-motion-off-statistics-0.png",
+          "bytes": 239021,
+          "sha256": "845cbc310bfcae3ccf7faa55b073a48c1edaeff364f746155630df0c685d88c8"
+        }
+      ],
+      "change": "Original JPEG bytes; corrected extension",
+      "width": 1902,
+      "height": 1136
+    },
+    {
+      "file": "run-context.json",
+      "bytes": 645,
+      "sha256": "a2c2c43365ebb992255ff8b5e24c33c865f489550e72eee6bbec7242d2fc083b",
+      "sources": [
+        {
+          "file": "source/native-r3-launch.json",
+          "bytes": 268,
+          "sha256": "1a1748ed83c7db2ff499841a101c6540e366fa0a3e8ef8d61885bc6888e689a3"
+        },
+        {
+          "file": "source/native-r3-prepare.json",
+          "bytes": 411,
+          "sha256": "5cbb9e0fc38f5af8bdaefe61e79addf5bf5a4718210ef0b832153a4f6e2bb629"
+        },
+        {
+          "file": "<isolated-build>/resources/app/modules/home-6.css",
+          "bytes": 18954,
+          "sha256": "ed7278c318f49b3b794d4b5ca6c76e4656efaae5e94454f9bf975c7f6b69a662"
+        }
+      ],
+      "change": "Allowlisted launch fields and verified stylesheet SHA, no absolute paths copied"
+    },
+    {
+      "file": "completion-r3-close-identities.jsonl",
+      "bytes": 1978,
+      "sha256": "1665dcf92c87fd3feeb47993e838ce26b60f7f67d8390b58a778f97f9542e4a5",
+      "sources": [
+        {
+          "file": "<isolated-root>/completion-r3-close-identities.jsonl",
+          "bytes": 1978,
+          "sha256": "1665dcf92c87fd3feeb47993e838ce26b60f7f67d8390b58a778f97f9542e4a5"
+        }
+      ],
+      "change": "Original bytes; identities sampled once before close"
+    },
+    {
+      "file": "native-r3-closed-check.json",
+      "bytes": 340,
+      "sha256": "3fc6b1244425e3d9d3ceac6a8549dd8394f093bfa482377e0d384882ec29aaa9",
+      "sources": [
+        {
+          "file": "source/native-r3-closed-check.json",
+          "bytes": 340,
+          "sha256": "3fc6b1244425e3d9d3ceac6a8549dd8394f093bfa482377e0d384882ec29aaa9"
+        }
+      ],
+      "change": "Original bytes; checked only sampled run-3 identities"
+    },
+    {
+      "file": "native-exit-events.jsonl",
+      "bytes": 323,
+      "sha256": "d02e0ff548de09fbcf2903abfe698dd6c3fc337b80da172067fca64601ca248b",
+      "sources": [
+        {
+          "file": "<isolated-root>/native-events.jsonl",
+          "bytes": 54745,
+          "sha256": "48f6d2e130bfe7d46a7518ee91c55f57058fdcb2576b5e377e4dac016cdd4a05"
+        }
+      ],
+      "change": "Filtered to three allowlisted shutdown rows for PID 15168"
+    },
+    {
+      "file": "sensitive-scan.json",
+      "bytes": 571,
+      "sha256": "5e1d8365eb69e8cacb49efb4f24e1e48866bab7b78990563e3c9f012f8b0d7e9",
+      "sources": [],
+      "change": "Generated after visual inspection and field-by-field checks"
+    },
+    {
+      "file": ".gitattributes",
+      "bytes": 56,
+      "sha256": "bf01c87c8fca86a5ff849895cd63628f0a219be5d8c9abfc3745c9e915433de8",
+      "sources": [],
+      "change": "Preserve archive bytes on checkout"
+    }
+  ]
+}

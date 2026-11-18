@@ -1,0 +1,1217 @@
+{
+  "codeCommit": "63404b4",
+  "baseline": "34951cc",
+  "branch": "upgrade/v41-completion-batch",
+  "command": "resources/app/node.exe scripts/run-tests.cjs all",
+  "sourceLog": ".tools/v41-completion/settled-full-regression.log",
+  "exit": 1,
+  "complete": "Completed 298 checks: 297 passed, 1 failed.",
+  "total": 298,
+  "passed": 297,
+  "failed": [
+    "Delivery S1 actual main renderers and shared design system"
+  ],
+  "wsIncludedSubset": {
+    "note": "Results from this actual all run, classified by the WS driver; not a separate run.",
+    "total": 164,
+    "passed": 164,
+    "failed": []
+  },
+  "environment": "Product baseline 63404b4 includes final 1dbab88 CSS; only documentation commits through 38dc125 landed during the all run. All observed native test processes exited before the run (run2 21/21, run3 9/9). No concurrent native app, input, resource sampling or separately scheduled heavy tests/builds. No production activity. Previous failed full runs are preserved separately.",
+  "production": "FROZEN",
+  "s3": "Blocked",
+  "records": [
+    {
+      "label": "isolated app fixture safety",
+      "status": "Passed"
+    },
+    {
+      "label": "6.0 no legacy data migration contract",
+      "status": "Passed"
+    },
+    {
+      "label": "backup integrity contract",
+      "status": "Passed"
+    },
+    {
+      "label": "manual multi-account backup contract",
+      "status": "Passed"
+    },
+    {
+      "label": "encrypted device package integrity and isolated extraction",
+      "status": "Passed"
+    },
+    {
+      "label": "local-first sidecar contract",
+      "status": "Passed"
+    },
+    {
+      "label": "isolated sidecar startup observation and redaction",
+      "status": "Passed"
+    },
+    {
+      "label": "WS local ingest runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS direction effects repair runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS identity effects repair runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS unverified association-only scoped repair",
+      "status": "Passed"
+    },
+    {
+      "label": "local service manager contract",
+      "status": "Passed"
+    },
+    {
+      "label": "resource lifecycle contract",
+      "status": "Passed"
+    },
+    {
+      "label": "local service hang recovery",
+      "status": "Passed"
+    },
+    {
+      "label": "local service port race regression",
+      "status": "Passed"
+    },
+    {
+      "label": "local bridge contract",
+      "status": "Passed"
+    },
+    {
+      "label": "design system contract",
+      "status": "Passed"
+    },
+    {
+      "label": "Horizon Atelier 6.0 dynamic UI contract",
+      "status": "Passed"
+    },
+    {
+      "label": "Horizon Atelier AI alert ordering",
+      "status": "Passed"
+    },
+    {
+      "label": "GPT Horizon 6.0 workspace contract",
+      "status": "Passed"
+    },
+    {
+      "label": "Horizon Atelier governance/settings UI contract",
+      "status": "Passed"
+    },
+    {
+      "label": "6.0 linked business workspace shell",
+      "status": "Passed"
+    },
+    {
+      "label": "6.0 global Horizon visual finish",
+      "status": "Passed"
+    },
+    {
+      "label": "save error regression",
+      "status": "Passed"
+    },
+    {
+      "label": "snapshot before write regression",
+      "status": "Passed"
+    },
+    {
+      "label": "local health contract",
+      "status": "Passed"
+    },
+    {
+      "label": "database diagnostic validity and asynchronous log route ownership",
+      "status": "Passed"
+    },
+    {
+      "label": "registration export scope and truthful analytics presentation",
+      "status": "Passed"
+    },
+    {
+      "label": "desktop/runtime version anti-rollback contract",
+      "status": "Passed"
+    },
+    {
+      "label": "6.0 isolated data-root contract",
+      "status": "Passed"
+    },
+    {
+      "label": "6.0 single runtime and route contract",
+      "status": "Passed"
+    },
+    {
+      "label": "local write flush race contract",
+      "status": "Passed"
+    },
+    {
+      "label": "desktop startup XAML contract",
+      "status": "Passed"
+    },
+    {
+      "label": "desktop visual single-shell contract",
+      "status": "Passed"
+    },
+    {
+      "label": "desktop native smoke contract",
+      "status": "Passed"
+    },
+    {
+      "label": "desktop local service flow",
+      "status": "Passed"
+    },
+    {
+      "label": "desktop local SQLite storage mode",
+      "status": "Passed"
+    },
+    {
+      "label": "desktop bridge response matching and import timeout",
+      "status": "Passed"
+    },
+    {
+      "label": "desktop ApiClient local-only routes",
+      "status": "Passed"
+    },
+    {
+      "label": "AI followup startup recovery",
+      "status": "Passed"
+    },
+    {
+      "label": "AI credential DPAPI persistence",
+      "status": "Passed"
+    },
+    {
+      "label": "AI provider 503 recovery and model fallback",
+      "status": "Passed"
+    },
+    {
+      "label": "AI provider health and retry contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS runtime login detection and ingest resilience",
+      "status": "Passed"
+    },
+    {
+      "label": "desktop responsive contract",
+      "status": "Passed"
+    },
+    {
+      "label": "desktop icon contract",
+      "status": "Passed"
+    },
+    {
+      "label": "customer governance core",
+      "status": "Passed"
+    },
+    {
+      "label": "business rule baseline and compatibility migration",
+      "status": "Passed"
+    },
+    {
+      "label": "business P1 batching, source subtype, ledger rollback and import rollback",
+      "status": "Passed"
+    },
+    {
+      "label": "customer governance API",
+      "status": "Passed"
+    },
+    {
+      "label": "customer purge completeness",
+      "status": "Passed"
+    },
+    {
+      "label": "customer governance UI",
+      "status": "Passed"
+    },
+    {
+      "label": "settings option synchronization",
+      "status": "Passed"
+    },
+    {
+      "label": "cross-workspace business chain",
+      "status": "Passed"
+    },
+    {
+      "label": "stage 1.5 queue compatibility review",
+      "status": "Passed"
+    },
+    {
+      "label": "stage 1.5 IPC real WinUI supervisor integration",
+      "status": "Passed"
+    },
+    {
+      "label": "stage 1.5 sidecar fencing real writer integration",
+      "status": "Passed"
+    },
+    {
+      "label": "stage 1.5 fencing failure and BUSY recovery",
+      "status": "Passed"
+    },
+    {
+      "label": "stage 2 controlled worker fencing gate",
+      "status": "Passed"
+    },
+    {
+      "label": "stage 2 read-only legacy queue adapter",
+      "status": "Passed"
+    },
+    {
+      "label": "stage 2 controlled Worker lifecycle integration",
+      "status": "Passed"
+    },
+    {
+      "label": "stage 2 Worker feature flags",
+      "status": "Passed"
+    },
+    {
+      "label": "stage 2 Worker disabled-path integration",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\app.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\device-migration-package.cjs",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\migration-runner.cjs",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\accessibility-enhancements.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ai-crm-suggestion-core.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ai-job-pipeline-core.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ai-mock-provider.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ai-review-center-ui.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\business-enhancements.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\business-rule-core.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\customer-governance-core.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\customer-governance-ui.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\desktop-host.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\desktop-performance.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\gpt-assistant.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\hot-chat-profile-core.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\metrics-charts.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\operations-core.cjs",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\operations-ui.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\operations-upgrade.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\performance-enhancements.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\phone-registry.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\productivity.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\runtime-customizer.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\scroll-coordinator.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\smart-import.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ticket-record-core.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\v4-data-center.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\workspace-shell.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-business-pages.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-crm-sync-core.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-group-manager-core.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-group-mock-transport.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-group-monitor-core.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-media-core.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-scope.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-workbench-core.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-workbench.js",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\modules\\ws-workspace-query.cjs",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\server.mjs",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\sidecar-write-coordinator.cjs",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\state-delta.cjs",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\worker-fencing-gate.cjs",
+      "status": "Passed"
+    },
+    {
+      "label": "syntax resources\\app\\worker-queue-adapter.cjs",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 3 group feature flags",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 3 Worker and group-manager isolation gate",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 3 group manager migration",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 3 group manager core",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 3 group manager isolated API and Mock Transport",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 3 WS workspace navigation",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 4 AI job pipeline core",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 4 CRM suggestion core",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 4 migration and schema",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 4 Worker AI flags",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 4 Mock AI provider",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 4 AI review center UI",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 4 desktop ApiClient queue and CRM contract",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 4 isolated AI pipeline API",
+      "status": "Passed"
+    },
+    {
+      "label": "WS core rules",
+      "status": "Passed"
+    },
+    {
+      "label": "WS direct-only collection and AI policy",
+      "status": "Passed"
+    },
+    {
+      "label": "WS VIP member task and alert isolation",
+      "status": "Passed"
+    },
+    {
+      "label": "WS and GPT Horizon visual reachability",
+      "status": "Passed"
+    },
+    {
+      "label": "V4.1 layered visual contrast regression",
+      "status": "Passed"
+    },
+    {
+      "label": "WS AI CRM sync rules",
+      "status": "Passed"
+    },
+    {
+      "label": "WS unified customer archive UI contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS CRM customer-link trust boundary",
+      "status": "Passed"
+    },
+    {
+      "label": "WS workbench initialization",
+      "status": "Passed"
+    },
+    {
+      "label": "WS API and SQLite",
+      "status": "Passed"
+    },
+    {
+      "label": "WS export streaming contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS export and media schema",
+      "status": "Passed"
+    },
+    {
+      "label": "WS complete export and export jobs",
+      "status": "Passed"
+    },
+    {
+      "label": "WS media staging and attachment broadcast",
+      "status": "Passed"
+    },
+    {
+      "label": "WS media send runtime contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS broadcast, translation and send audit",
+      "status": "Passed"
+    },
+    {
+      "label": "WS VIP customer and group-monitor scope separation",
+      "status": "Passed"
+    },
+    {
+      "label": "WS conversation cursor pagination",
+      "status": "Passed"
+    },
+    {
+      "label": "WS conversation incremental watermark runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS list preview update",
+      "status": "Passed"
+    },
+    {
+      "label": "WS follow-up chain dedupe and refresh",
+      "status": "Passed"
+    },
+    {
+      "label": "WS task lifecycle and multi-account history ingest",
+      "status": "Passed"
+    },
+    {
+      "label": "WS complete original text and backup roundtrip",
+      "status": "Passed"
+    },
+    {
+      "label": "WS intelligent follow-up strategy and CRM persistence",
+      "status": "Passed"
+    },
+    {
+      "label": "WS live refresh event contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS non-blocking AI pump runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "Home WS follow-up runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS SQLite v6 migration",
+      "status": "Passed"
+    },
+    {
+      "label": "WS external-id uniqueness migration",
+      "status": "Passed"
+    },
+    {
+      "label": "WS local security contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS multi-account database isolation",
+      "status": "Passed"
+    },
+    {
+      "label": "WS account runtime recovery",
+      "status": "Passed"
+    },
+    {
+      "label": "WS native collector async full-list scan contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS native collector P0 durability contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS native collector diagnostics contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS native group monitor bridge contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS group monitor core",
+      "status": "Passed"
+    },
+    {
+      "label": "V4.1 opaque identities and atomic membership ledger",
+      "status": "Passed"
+    },
+    {
+      "label": "WS group monitor migration",
+      "status": "Passed"
+    },
+    {
+      "label": "WS group monitor sidecar API",
+      "status": "Passed"
+    },
+    {
+      "label": "WS group monitor ingest",
+      "status": "Passed"
+    },
+    {
+      "label": "WS customer group status projection",
+      "status": "Passed"
+    },
+    {
+      "label": "WS customer group status projection runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS native background lifecycle and bounds contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS process runtime coordinator contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS process WebView session pool contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS process runtime coordinator scheduling",
+      "status": "Passed"
+    },
+    {
+      "label": "WS parent-route visibility runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS hidden native scheduler runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS native group exclusion runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS native conversation identity runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS durable queue Web JSON and API roundtrip",
+      "status": "Passed"
+    },
+    {
+      "label": "WS native collector chunk runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS native collector physical-bottom runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS native collector in-flight discovery runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS native collector full-list stall runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS native collector navigation/retry runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS native collector history packet runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS native collector foreground isolation runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS native media bridge contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS unread skip contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS strict unread detection runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS read-history collector runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS ChatKnow UI contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS group monitor UI contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS group discovery contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS broadcast and translation UI contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS collection and CRM sync contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS complete per-customer history contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS chunked full-history AI and checkpoint contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS durable AI queue contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS AI queue UI metrics contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS resize performance contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS frontend high-priority fixes",
+      "status": "Passed"
+    },
+    {
+      "label": "project stability and lifecycle contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS 50k conversation list render budget",
+      "status": "Passed"
+    },
+    {
+      "label": "WS bridge recovery contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS scroll routing contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS A+ dual-layer layout contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS data archive customer bridge",
+      "status": "Passed"
+    },
+    {
+      "label": "WS data archive summary bridge",
+      "status": "Passed"
+    },
+    {
+      "label": "WS data archive UI bridge",
+      "status": "Passed"
+    },
+    {
+      "label": "WS data archive drilldown UI",
+      "status": "Passed"
+    },
+    {
+      "label": "WS group catalog runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS background isolation runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS multi-account detection contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS migrated account timestamp wire compatibility",
+      "status": "Passed"
+    },
+    {
+      "label": "WS scroll stability contract",
+      "status": "Passed"
+    },
+    {
+      "label": "WS assistant drawer runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "hot-chat profile API",
+      "status": "Passed"
+    },
+    {
+      "label": "hot-chat profile core",
+      "status": "Passed"
+    },
+    {
+      "label": "hot-chat profile migration",
+      "status": "Passed"
+    },
+    {
+      "label": "request coalescer cancellation",
+      "status": "Passed"
+    },
+    {
+      "label": "task6 stability contract",
+      "status": "Passed"
+    },
+    {
+      "label": "desktop performance contract",
+      "status": "Passed"
+    },
+    {
+      "label": "CRM phone index and archive diagnostics",
+      "status": "Passed"
+    },
+    {
+      "label": "unified scroll system contract",
+      "status": "Passed"
+    },
+    {
+      "label": "unified scroll coordinator runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "WS route sidebar policy runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.5C-1A real isolated send/media/AI risk API",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.5C-1A send UI evidence and async ownership",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.5C-1A production native send qualification",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.5C-1A actual send DOM and bridge outcomes",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.5C-1A provider modal generation and stale responses",
+      "status": "Passed"
+    },
+    {
+      "label": "RD02 actual Native authenticated-profile and hidden-collector boundary",
+      "status": "Passed"
+    },
+    {
+      "label": "RD02 WS blocked collection capability and preserved foreground actions",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5 baseline",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5 WS workspace pages",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5 business integration",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5 migration drill",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5 backup and restore drill",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5 Worker security and performance",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5 UI automation contract",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5 review center runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5 indexed business data performance",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.1 real workspace collapsed layout",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.1 historical 024 compatibility and real startup",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.1 isolated native entry safety",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.1 Worker lifecycle resource observation",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.1 real member API and account-scoped UI binding",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.1 review actions through real isolated service",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.1 workspace wheel ownership and navigation restoration",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.1 resource observer process identity safety",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.1 sidecar readiness without UI pump and bounded shutdown",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.2 Worker real pipe IO deadlines and recovery",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.2 navigation cancellation and bounded session recovery",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.5A same-window presentation and exact restoration",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.5A account switch monitor request ownership",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.5A reply copy uses real native acknowledgement",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.5B read-only contacts and authoritative audit queries",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.5B business pages and scoped async ownership",
+      "status": "Passed"
+    },
+    {
+      "label": "Stage 5.5B existing GPT settings from WS",
+      "status": "Passed"
+    },
+    {
+      "label": "Delivery S1 isolated browser process ownership and safe release",
+      "status": "Passed"
+    },
+    {
+      "label": "Delivery isolated browser transport acknowledgement and release",
+      "status": "Passed"
+    },
+    {
+      "label": "Delivery S1 actual workspace shell and preference rollback",
+      "status": "Passed"
+    },
+    {
+      "label": "Delivery S1 native wheel gestures and modal ownership",
+      "status": "Passed"
+    },
+    {
+      "label": "Delivery S1 actual main renderers and shared design system",
+      "status": "Failed"
+    },
+    {
+      "label": "Delivery S1 WS computed layout and retained host",
+      "status": "Passed"
+    },
+    {
+      "label": "Delivery S2 authoritative read-only metrics projection",
+      "status": "Passed"
+    },
+    {
+      "label": "Delivery S2 safe and bounded accessible charts",
+      "status": "Passed"
+    },
+    {
+      "label": "Delivery S2 actual shipped CSS and accessible chart rendering",
+      "status": "Passed"
+    },
+    {
+      "label": "Delivery isolated Native XBF preflight rejects malformed build resources",
+      "status": "Passed"
+    },
+    {
+      "label": "Delivery S3 customer history identity and stale-response ownership",
+      "status": "Passed"
+    },
+    {
+      "label": "Delivery S3 actual core page renderers and preserved operations",
+      "status": "Passed"
+    },
+    {
+      "label": "Delivery S3 stage movement persistence and isolated task boundaries",
+      "status": "Passed"
+    },
+    {
+      "label": "Delivery S3 full-CSS customer table, drawer and modal ownership",
+      "status": "Passed"
+    },
+    {
+      "label": "operations core",
+      "status": "Passed"
+    },
+    {
+      "label": "operations task center UI contract",
+      "status": "Passed"
+    },
+    {
+      "label": "operations and stage-board 6.0 workspace",
+      "status": "Passed"
+    },
+    {
+      "label": "group management malformed-data regression",
+      "status": "Passed"
+    },
+    {
+      "label": "group configured-channel runtime separation",
+      "status": "Passed"
+    },
+    {
+      "label": "group summary server event link",
+      "status": "Passed"
+    },
+    {
+      "label": "smart import classification",
+      "status": "Passed"
+    },
+    {
+      "label": "customer center registration date column",
+      "status": "Passed"
+    },
+    {
+      "label": "customer import routing (163 rows)",
+      "status": "Passed"
+    },
+    {
+      "label": "phone registry file import",
+      "status": "Passed"
+    },
+    {
+      "label": "ticket record separation",
+      "status": "Passed"
+    },
+    {
+      "label": "10k/50k performance scale",
+      "status": "Passed"
+    },
+    {
+      "label": "50k customer list cached ordering budget",
+      "status": "Passed"
+    },
+    {
+      "label": "50k analytics aggregation budget",
+      "status": "Passed"
+    },
+    {
+      "label": "desktop packaging contract",
+      "status": "Passed"
+    },
+    {
+      "label": "6.0 publish anti-rollback gate",
+      "status": "Passed"
+    },
+    {
+      "label": "legacy Electron installation retirement",
+      "status": "Passed"
+    },
+    {
+      "label": "release output single-version contract",
+      "status": "Passed"
+    },
+    {
+      "label": "desktop reminders and automatic backup contract",
+      "status": "Passed"
+    },
+    {
+      "label": "native backup retention runtime",
+      "status": "Passed"
+    },
+    {
+      "label": "native backup to browser restore roundtrip",
+      "status": "Passed"
+    },
+    {
+      "label": "retired runtime removal contract",
+      "status": "Passed"
+    },
+    {
+      "label": "HTTP asset smoke",
+      "status": "Passed"
+    },
+    {
+      "label": "static assets contract",
+      "status": "Passed"
+    },
+    {
+      "label": "CSS cleanup contract",
+      "status": "Passed"
+    },
+    {
+      "label": "sidebar scroll contract",
+      "status": "Passed"
+    },
+    {
+      "label": "release 6.0 consistency",
+      "status": "Passed"
+    },
+    {
+      "label": "current docs consistency",
+      "status": "Passed"
+    },
+    {
+      "label": "session persistence contract",
+      "status": "Passed"
+    },
+    {
+      "label": "backup and restore drill",
+      "status": "Passed"
+    },
+    {
+      "label": "project audit regression",
+      "status": "Passed"
+    }
+  ]
+}

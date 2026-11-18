@@ -1,0 +1,100 @@
+{
+  "invocation": "1794988848447-29a2d7b5-9841-4d6f-9a8f-61d020328a2d",
+  "rootPid": 36892,
+  "observerPid": 9484,
+  "observerExitProof": [
+    0,
+    null
+  ],
+  "verifiedHandleCount": 18,
+  "unavailableAtArmCount": 0,
+  "samples": [
+    {
+      "afterArmRequestMs": 48,
+      "scheduledOffsetMs": 0,
+      "rootState": "running",
+      "rootKernel100ns": 16562500,
+      "rootUser100ns": 23906250,
+      "countByRoleAndState": {
+        "browser/running": 1,
+        "renderer/running": 4,
+        "renderer/exited": 7,
+        "gpu/running": 1,
+        "network-service/running": 1,
+        "storage-service/running": 1,
+        "tracing-service/running": 1,
+        "other/running": 2
+      },
+      "rootThreadStates": {
+        "status": "observed",
+        "states": {
+          "unnamed/Running": 1,
+          "unnamed/Wait:EventPairLow": 16,
+          "unnamed/Wait:ExecutionDelay": 2,
+          "unnamed/Wait:Executive": 2,
+          "unnamed/Wait:Unknown": 7,
+          "unnamed/Wait:UserRequest": 52
+        }
+      }
+    },
+    {
+      "afterArmRequestMs": 296,
+      "scheduledOffsetMs": 250,
+      "rootState": "running",
+      "rootKernel100ns": 16875000,
+      "rootUser100ns": 24531250,
+      "countByRoleAndState": {
+        "browser/running": 1,
+        "renderer/running": 3,
+        "renderer/exited": 8,
+        "gpu/running": 1,
+        "network-service/running": 1,
+        "storage-service/running": 1,
+        "tracing-service/running": 1,
+        "other/running": 2
+      },
+      "rootThreadStates": {
+        "status": "observed",
+        "states": {
+          "unnamed/Wait:EventPairLow": 16,
+          "unnamed/Wait:ExecutionDelay": 2,
+          "unnamed/Wait:Executive": 2,
+          "unnamed/Wait:LpcReply": 1,
+          "unnamed/Wait:Unknown": 7,
+          "unnamed/Wait:UserRequest": 52
+        }
+      }
+    },
+    {
+      "afterArmRequestMs": 2052,
+      "scheduledOffsetMs": 2000,
+      "rootState": "running",
+      "rootKernel100ns": 18281250,
+      "rootUser100ns": 25000000,
+      "countByRoleAndState": {
+        "browser/running": 1,
+        "renderer/running": 3,
+        "renderer/exited": 8,
+        "gpu/running": 1,
+        "network-service/running": 1,
+        "storage-service/running": 1,
+        "tracing-service/running": 1,
+        "other/running": 2
+      },
+      "rootThreadStates": {
+        "status": "observed",
+        "states": {
+          "unnamed/Wait:EventPairLow": 18,
+          "unnamed/Wait:ExecutionDelay": 2,
+          "unnamed/Wait:LpcReply": 1,
+          "unnamed/Wait:Unknown": 7,
+          "unnamed/Wait:UserRequest": 56
+        }
+      }
+    }
+  ],
+  "rootKernelExitUnixMs": 1794988858188,
+  "rootKernelExitAfterArmRequestMs": 5866,
+  "observerReceivedExitAfterArmRequestMs": 5982,
+  "lastObservedChildExitBeforeRootMs": 363
+}

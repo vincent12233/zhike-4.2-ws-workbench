@@ -1,0 +1,31 @@
+{
+  "entries": [
+    {
+      "path": "full-regression.json",
+      "sourcePath": ".tools/v41-completion/settled-full-regression.log",
+      "sourceSha256": "86d7a369484b65e45a2d6bee1154039555019f0dcf6afef6bc13d0a0c74e416a",
+      "sourceBytes": 451749,
+      "archiveSha256": "d51dc31b53f4b98fdcb6de945ec2ed0ce48c7609d10784c46b8c3c561fbff38d",
+      "archiveBytes": 29663,
+      "treatment": "Only runner labels and result metadata; no test data or credentials."
+    },
+    {
+      "path": "current-release-build.log",
+      "sourcePath": ".tools/v41-completion/current-release-build.log",
+      "sourceSha256": "2b0237c58d4f7369dc3c676fbf3e95c74d6a0565e5fadec96b94de874753b423",
+      "sourceBytes": 299,
+      "archiveSha256": "4b2e936c3b2d8d5a9169a4092dddd346945ce0fde9dfc21279b22fe5b624bd55",
+      "archiveBytes": 200,
+      "treatment": "Repository paths redacted."
+    },
+    {
+      "path": "runs.json",
+      "sourcePath": "scripts/run-tests.cjs",
+      "sourceSha256": "8cfcad97052a8e7d60d3dc6a56d5172bd45bb2696967d5a1dfb007d478af5c86",
+      "sourceBytes": 37387,
+      "archiveSha256": "78e8ba5490c67dd30ed64eede8ceee230b14e7796b1cecec82b858be38270d9d",
+      "archiveBytes": 563,
+      "treatment": "Summary of actual full run and Release build; native gaps retained."
+    }
+  ]
+}

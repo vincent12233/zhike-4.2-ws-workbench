@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "references": "Exactly three manually reviewed window captures from the synthetic isolation fixture.",
+  "imageMetadata": {
+    "reviewed": 3,
+    "exifOrOtherAppSegments": 0,
+    "comments": 0,
+    "trailingBytes": 0,
+    "format": "JPEG/JFIF"
+  },
+  "structuredEvidence": {
+    "unredactedPathOrCredentialHits": 0,
+    "closureRecords": 3,
+    "identitySamples": 1
+  },
+  "omitted": [
+    "connection file",
+    "SQLite database",
+    "WebView profiles",
+    "credentials",
+    "accessibility transcripts",
+    "business record details"
+  ]
+}

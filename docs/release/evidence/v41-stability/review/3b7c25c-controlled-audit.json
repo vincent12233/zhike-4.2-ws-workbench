@@ -1,0 +1,66 @@
+[
+  {
+    "mode": "controlled-node-close-timeout",
+    "elapsedMs": 3001,
+    "deadlineMs": 3000,
+    "probePidAbsent": true,
+    "termination": null,
+    "events": [
+      {
+        "event": "identity-probe-closed",
+        "elapsedMs": 2675
+      }
+    ]
+  },
+  {
+    "mode": "controlled-node-probe-close-timeout",
+    "elapsedMs": 2848,
+    "deadlineMs": 3000,
+    "probePidAbsent": true,
+    "termination": {
+      "attempted": true,
+      "requested": true,
+      "observedClose": {
+        "code": null,
+        "signal": "SIGTERM"
+      },
+      "status": "confirmed"
+    },
+    "events": [
+      {
+        "event": "identity-probe-termination-requested",
+        "elapsedMs": 2827,
+        "attempted": true,
+        "requested": true
+      },
+      {
+        "event": "identity-probe-termination-confirmed",
+        "elapsedMs": 2848
+      }
+    ]
+  },
+  {
+    "mode": "controlled-node-probe-unverified-timeout",
+    "elapsedMs": 3012,
+    "deadlineMs": 3000,
+    "probePidAbsent": true,
+    "termination": {
+      "attempted": true,
+      "requested": true,
+      "observedClose": null,
+      "status": "unknown"
+    },
+    "events": [
+      {
+        "event": "identity-probe-termination-requested",
+        "elapsedMs": 2829,
+        "attempted": true,
+        "requested": true
+      },
+      {
+        "event": "identity-probe-termination-unverified",
+        "elapsedMs": 3012
+      }
+    ]
+  }
+]

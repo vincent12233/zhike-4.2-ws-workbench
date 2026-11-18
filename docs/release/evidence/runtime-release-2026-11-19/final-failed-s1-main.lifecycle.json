@@ -1,0 +1,248 @@
+{
+  "schemaVersion": 2,
+  "invocation": "1795038243458-0680c8f2-1493-4d45-a1b7-16d9f95c39a7",
+  "mode": "real-webview2-synthetic-layout",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 30000,
+  "launchedAt": "2026-11-18T21:44:03.456Z",
+  "timebase": "node-monotonic-ms",
+  "startedMonotonicMs": 88.4539,
+  "events": [
+    {
+      "event": "process-spawned",
+      "elapsedMs": 15.414000000000001,
+      "pid": 41464
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 15.581800000000001,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 721.3245000000001,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 721.4806
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 3593.8492,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 3608.5934,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "webview-core-ready",
+      "elapsedMs": 3608.7584
+    },
+    {
+      "event": "result-verified",
+      "elapsedMs": 27242.0746,
+      "cases": 8
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 27242.1105,
+      "phase": "observation",
+      "count": 5
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 27279.9623,
+      "phase": "observation",
+      "count": 5
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 27280.0668
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 27280.0704
+    },
+    {
+      "event": "webview-close-requested",
+      "elapsedMs": 27283.5963
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 27575.1086
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 27575.1381
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 27606.4952,
+      "code": 3221225477,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 27606.564599999998,
+      "code": 3221225477,
+      "signal": null
+    },
+    {
+      "event": "deadline-timeout",
+      "elapsedMs": 30008.810699999998,
+      "phase": "request-close",
+      "deadlineMs": 30000
+    },
+    {
+      "event": "close-request-failed",
+      "elapsedMs": 30009.2785,
+      "code": "EDGE_RUNNER_TIMEOUT"
+    },
+    {
+      "event": "deadline-timeout",
+      "elapsedMs": 30009.305,
+      "phase": "process-exit",
+      "deadlineMs": 30000
+    },
+    {
+      "event": "node-release-state",
+      "elapsedMs": 30009.4647,
+      "exitObserved": true,
+      "closeObserved": true,
+      "stdoutCloseObserved": true,
+      "stderrCloseObserved": true,
+      "exitCode": 3221225477,
+      "signalCode": null
+    },
+    {
+      "event": "deadline-timeout",
+      "elapsedMs": 30009.9435,
+      "phase": "identity-probe-close",
+      "deadlineMs": 30000
+    },
+    {
+      "event": "identity-probe-termination-requested",
+      "elapsedMs": 30010.8881,
+      "attempted": true,
+      "requested": true
+    },
+    {
+      "event": "deadline-timeout",
+      "elapsedMs": 30010.9736,
+      "phase": "identity-probe-termination",
+      "deadlineMs": 30000
+    },
+    {
+      "event": "identity-probe-termination-unverified",
+      "elapsedMs": 30011.9502
+    },
+    {
+      "event": "runner-lifecycle-complete",
+      "elapsedMs": 30021.6826,
+      "cleanupSafe": false,
+      "forceTerminated": false
+    },
+    {
+      "event": "deadline-timeout",
+      "elapsedMs": 30040.9938,
+      "phase": "webview-browser-exited",
+      "deadlineMs": 30000
+    },
+    {
+      "event": "runner-final",
+      "elapsedMs": 30052.3305,
+      "status": "Failed",
+      "cleanupSafe": false,
+      "forceTerminated": false
+    }
+  ],
+  "identities": [
+    {
+      "pid": 41464,
+      "startedTicks": "639306350434692513",
+      "startedUtc": "2026-11-18T21:44:03.4692513Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 4932,
+      "startedTicks": "639306350443526998",
+      "startedUtc": "2026-11-18T21:44:04.3526998Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 20980,
+      "startedTicks": "639306350448125527",
+      "startedUtc": "2026-11-18T21:44:04.8125527Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 36552,
+      "startedTicks": "639306350447713069",
+      "startedUtc": "2026-11-18T21:44:04.7713069Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 37236,
+      "startedTicks": "639306350447667829",
+      "startedUtc": "2026-11-18T21:44:04.7667829Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 40244,
+      "startedTicks": "639306350471738897",
+      "startedUtc": "2026-11-18T21:44:07.1738897Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 3221225477,
+    "signal": null
+  },
+  "streamsClosed": false,
+  "forceTerminated": false,
+  "cleanupSafe": false,
+  "profile": "<temp>\\zhike-s1-main-style-Vag3u9\\webview-profile-d591f46a-7869-4758-9f6f-7c1e8bfdd0a5",
+  "pid": 41464,
+  "identityProbePid": 16816,
+  "browserPid": 4932,
+  "runtimeVersion": "157.0.4341.60",
+  "navigation": {
+    "id": 2,
+    "succeeded": true
+  },
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "resultCases": 8,
+  "resultBytes": 2089812,
+  "resultSha256": "94c0c91bb11d1374a8088bf83923d550f59266fd283f58c5bb227787b5f1850a",
+  "resultFile": "<repo>\\.tools\\visual-usability\\main-visual\\1795038243458-0680c8f2-1493-4d45-a1b7-16d9f95c39a7.result.json",
+  "resultReady": true,
+  "releaseFailure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "process-exit"
+  },
+  "identityProbeTermination": {
+    "attempted": true,
+    "requested": true,
+    "observedClose": null,
+    "status": "unknown"
+  },
+  "elapsedMs": 30017.2703,
+  "stdoutBytes": 3703671,
+  "stderrBytes": 893,
+  "failure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "request-close",
+    "message": "Isolated lifecycle deadline reached during request-close"
+  }
+}

@@ -1,0 +1,52 @@
+✖ active pointer replacement preserves a substituted destination (12247.9798ms)
+✖ active pointer replacement preserves a substituted temporary (6589.0008ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 19006.3216
+
+✖ failing tests:
+
+test at tests\device-migration-restore.test.cjs:276:3
+✖ active pointer replacement preserves a substituted destination (12247.9798ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (<TEST_WORKTREE>\tests\device-migration-restore.test.cjs:282:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests\device-migration-restore.test.cjs:276:3
+✖ active pointer replacement preserves a substituted temporary (6589.0008ms)
+  AssertionError [ERR_ASSERTION]: The validation function is expected to return "true". Received false
+
+  Caught error:
+
+  Error: An isolated restore record is damaged.
+      at async TestContext.<anonymous> (<TEST_WORKTREE>\tests\device-migration-restore.test.cjs:282:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: An isolated restore record is damaged.
+        at requireThat (<TEST_WORKTREE>\resources\app\device-migration-restore.cjs:38:39)
+        at readRecord (<TEST_WORKTREE>\resources\app\device-migration-restore.cjs:133:5)
+        at replaceRecord (<TEST_WORKTREE>\resources\app\device-migration-restore.cjs:176:15)
+        at selectGeneration (<TEST_WORKTREE>\resources\app\device-migration-restore.cjs:482:10)
+        at activate (<TEST_WORKTREE>\resources\app\device-migration-restore.cjs:519:18)
+        at <TEST_WORKTREE>\resources\app\device-migration-restore.cjs:607:12
+        at async withTarget (<TEST_WORKTREE>\resources\app\device-migration-restore.cjs:213:12)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (<TEST_WORKTREE>\tests\device-migration-restore.test.cjs:282:5),
+    operator: 'rejects',
+    diff: 'simple'
+  }

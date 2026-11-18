@@ -1,0 +1,138 @@
+{
+  "entries": [
+    {
+      "path": "native-events.jsonl",
+      "source": "isolated-root:native-events.jsonl",
+      "sourceSha256": "07fb553dc6e0f7c3322b88bb767e3aa974ecf9f1090c164729a9e640b7bc2cb1",
+      "sourceBytes": 44349,
+      "archiveSha256": "f857ecf37669bd3ded0f6a6bfb8bcc6e18d0c88154f74d2303dd42e88f777e48",
+      "archiveBytes": 30860,
+      "preservesSourceBytes": false,
+      "transform": "Keep only PID 35236 lifecycle rows; omit profile/drag markers; replace isolated data root and remove local dynamic ports.",
+      "sourceIsBoundedCompleteLinePrefix": true,
+      "capturedAtUtc": "2026-11-18T06:06:44.153Z"
+    },
+    {
+      "path": "completion-r2-resources.jsonl",
+      "source": "isolated-root:completion-r2-resources.jsonl",
+      "sourceSha256": "cf9a20d7cc541bbf84b138f07d20a15c223ee901f4dae3fa468a20a7fb0887a0",
+      "sourceBytes": 347006,
+      "archiveSha256": "cf9a20d7cc541bbf84b138f07d20a15c223ee901f4dae3fa468a20a7fb0887a0",
+      "archiveBytes": 347006,
+      "preservesSourceBytes": true,
+      "transform": "Original source bytes."
+    },
+    {
+      "path": "completion-r2-resources.context.json",
+      "source": "isolated-root:completion-r2-resources.context.json",
+      "sourceSha256": "7527f2167ee79b05440dd6c2e43aaa39f27e53a138099575fb1249922bae265c",
+      "sourceBytes": 1906,
+      "archiveSha256": "7527f2167ee79b05440dd6c2e43aaa39f27e53a138099575fb1249922bae265c",
+      "archiveBytes": 1906,
+      "preservesSourceBytes": true,
+      "transform": "Original source bytes."
+    },
+    {
+      "path": "current-state-readonly.json",
+      "source": "derived:restricted read-only aggregate and fixture comparisons",
+      "sourceSha256": null,
+      "sourceBytes": null,
+      "archiveSha256": "5137cd1e2bbb6b32368ca8b04f1eb9d2ea3d7524c0dcc083fd7fbe8ec1ef812c",
+      "archiveBytes": 1377,
+      "preservesSourceBytes": false,
+      "transform": "No SQLite file, credentials, record bodies or live API connection are archived."
+    },
+    {
+      "path": "observation.json",
+      "source": null,
+      "sourceSha256": null,
+      "sourceBytes": null,
+      "archiveSha256": "de0695fff4d080c4c70c0cd92e90897a5f7290c7df826eec99e4b749626dca0d",
+      "archiveBytes": 4298,
+      "preservesSourceBytes": false,
+      "transform": "Derived from lifecycle and resource observations."
+    },
+    {
+      "path": "sensitive-scan.json",
+      "source": null,
+      "sourceSha256": null,
+      "sourceBytes": null,
+      "archiveSha256": "31d4f6344ba183450482f3234752f6f8a3747d15d5ece583e0f7ff4cabe22cb1",
+      "archiveBytes": 1339,
+      "preservesSourceBytes": false,
+      "transform": "Generated manifest of archive-only pattern checks."
+    },
+    {
+      "path": "closure/before-close-early-check.json",
+      "source": "repo:.tools/v41-completion/native-r2-close-check.json",
+      "sourceSha256": "bd0de2699185f055fd8e9b4ca47b6c478e4b6edf0e26f8d7c0fc1d2074c879fc",
+      "sourceBytes": 2278,
+      "archiveSha256": "bd0de2699185f055fd8e9b4ca47b6c478e4b6edf0e26f8d7c0fc1d2074c879fc",
+      "archiveBytes": 2278,
+      "preservesSourceBytes": true,
+      "transform": "Original bytes passed archive sensitivity checks; evidence reference is a basename."
+    },
+    {
+      "path": "closure/before-close-final-check.json",
+      "source": "repo:.tools/v41-completion/native-r2-final-close-check.json",
+      "sourceSha256": "769c73770b9c1b21daea424d5393531f3e4302993be4d743a656087d2f529107",
+      "sourceBytes": 2281,
+      "archiveSha256": "769c73770b9c1b21daea424d5393531f3e4302993be4d743a656087d2f529107",
+      "archiveBytes": 2281,
+      "preservesSourceBytes": true,
+      "transform": "Original bytes passed archive sensitivity checks; evidence reference is a basename."
+    },
+    {
+      "path": "closure/closed-after-user.json",
+      "source": "repo:.tools/v41-completion/native-r2-closed-after-user.json",
+      "sourceSha256": "7c7505ce8f99bf6ea3e6991faa624aff8db124579412f37f55e63856e5e653ab",
+      "sourceBytes": 334,
+      "archiveSha256": "7c7505ce8f99bf6ea3e6991faa624aff8db124579412f37f55e63856e5e653ab",
+      "archiveBytes": 334,
+      "preservesSourceBytes": true,
+      "transform": "Original bytes passed archive sensitivity checks; evidence reference is a basename."
+    },
+    {
+      "path": "closure/native-close-events.jsonl",
+      "source": "isolated-root:native-events.jsonl",
+      "sourceSha256": "60059d17b1ccc7de14558f5ff3a971025df2e89886279fd89d2e014f07744375",
+      "sourceBytes": 53592,
+      "archiveSha256": "850be13da587270ca7ebc61ec2972fedb4720096bb845a3ef265c91bf9e72150",
+      "archiveBytes": 326,
+      "preservesSourceBytes": false,
+      "transform": "Extracted three complete original lines for PID 35236 and its close sequence; all other lines omitted.",
+      "sourceIsBoundedCompleteLinePrefix": true,
+      "capturedAtUtc": "2026-11-18T07:12:43.723Z"
+    },
+    {
+      "path": "closure/completion-r2-final-sample.jsonl",
+      "source": "isolated-root:completion-r2-final-sample.jsonl",
+      "sourceSha256": "76d104f2c3d1f3bee48c7d66da9ddf22800a3e62156cfa0fb615f23ab14d8e24",
+      "sourceBytes": 4149,
+      "archiveSha256": "76d104f2c3d1f3bee48c7d66da9ddf22800a3e62156cfa0fb615f23ab14d8e24",
+      "archiveBytes": 4149,
+      "preservesSourceBytes": true,
+      "transform": "Original source bytes."
+    },
+    {
+      "path": "closure/completion-r2-final-sample.context.json",
+      "source": "isolated-root:completion-r2-final-sample.context.json",
+      "sourceSha256": "70bef405949e9d14c52480285662c27f5685b1839e43b6f13c0025890af452d6",
+      "sourceBytes": 1893,
+      "archiveSha256": "70bef405949e9d14c52480285662c27f5685b1839e43b6f13c0025890af452d6",
+      "archiveBytes": 1893,
+      "preservesSourceBytes": true,
+      "transform": "Original source bytes."
+    },
+    {
+      "path": "closure/closure-sensitive-scan.json",
+      "source": null,
+      "sourceSha256": null,
+      "sourceBytes": null,
+      "archiveSha256": "d231628512aaae416d3e0e69b08eef171fe1cb44777505fe01db481e7ec783cf",
+      "archiveBytes": 1794,
+      "preservesSourceBytes": false,
+      "transform": "Derived archive-only pattern checks."
+    }
+  ]
+}

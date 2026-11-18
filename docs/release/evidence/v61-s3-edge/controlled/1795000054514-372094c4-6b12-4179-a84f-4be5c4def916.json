@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 2,
+  "invocation": "1795000054514-372094c4-6b12-4179-a84f-4be5c4def916",
+  "mode": "controlled-result-evidence-delayed-write",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Passed",
+  "timeoutMs": 6000,
+  "launchedAt": "2026-11-18T11:07:34.514Z",
+  "timebase": "node-monotonic-ms",
+  "startedMonotonicMs": 6660.3808,
+  "events": [
+    {
+      "event": "process-spawned",
+      "elapsedMs": 6.062600000000202,
+      "pid": 6208
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 6.075800000000527,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 1463.2124000000003,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 1463.2537000000002
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 1463.4123
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 1463.4141
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 1463.5131000000001,
+      "acknowledgement": "requested"
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 1469.4403000000002
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 1469.4557000000004
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 1473.2898000000005,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 1473.3730000000005,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 1473.5150000000003
+    },
+    {
+      "event": "node-release-state",
+      "elapsedMs": 1473.8008,
+      "exitObserved": true,
+      "closeObserved": true,
+      "stdoutCloseObserved": true,
+      "stderrCloseObserved": true,
+      "exitCode": 0,
+      "signalCode": null
+    },
+    {
+      "event": "identity-probe-closed",
+      "elapsedMs": 1499.5551999999998
+    },
+    {
+      "event": "runner-lifecycle-complete",
+      "elapsedMs": 1499.5866999999998,
+      "cleanupSafe": true,
+      "forceTerminated": false
+    },
+    {
+      "event": "runner-final",
+      "elapsedMs": 6113.2051,
+      "status": "Passed",
+      "cleanupSafe": true,
+      "forceTerminated": false
+    }
+  ],
+  "identities": [
+    {
+      "pid": 6208,
+      "startedTicks": "639305968545255698",
+      "startedUtc": "2026-11-18T11:07:34.5255698Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "pid": 6208,
+  "identityProbePid": 33832,
+  "resultFile": "<edge-worktree>\\.tools\\isolated-edge-runner-lifecycle\\1795000054514-372094c4-6b12-4179-a84f-4be5c4def916.result.json",
+  "resultReady": true,
+  "rootExitProof": "verified-spawn-handle-exit-and-streams",
+  "remainingIdentities": [],
+  "identityProbeClosed": true,
+  "elapsedMs": 1499.5662000000002,
+  "stdoutBytes": 6,
+  "stderrBytes": 0
+}

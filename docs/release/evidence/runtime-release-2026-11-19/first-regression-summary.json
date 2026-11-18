@@ -1,0 +1,43 @@
+{
+  "checks": 322,
+  "passed": 316,
+  "failed": 6,
+  "failures": [
+    {
+      "label": "local health contract",
+      "phase": "assertion",
+      "summary": "Stale release version expectation",
+      "followupCommit": "34f5d42"
+    },
+    {
+      "label": "desktop/runtime version anti-rollback contract",
+      "phase": "assertion",
+      "summary": "Stale release version expectation",
+      "followupCommit": "34f5d42"
+    },
+    {
+      "label": "desktop native smoke contract",
+      "phase": "assertion",
+      "summary": "Stale window title version expectation",
+      "followupCommit": "34f5d42"
+    },
+    {
+      "label": "desktop bridge response matching and import timeout",
+      "phase": "assertion",
+      "summary": "Stale current-release index expectation",
+      "followupCommit": "34f5d42"
+    },
+    {
+      "label": "Stage 5.1 real workspace collapsed layout",
+      "phase": "result",
+      "summary": "Isolated host deadline while awaiting result",
+      "followupCommit": null
+    },
+    {
+      "label": "Delivery S1 actual main renderers and shared design system",
+      "phase": "process-exit",
+      "summary": "Isolated host deadline while awaiting process exit",
+      "followupCommit": null
+    }
+  ]
+}

@@ -30,6 +30,9 @@ public sealed class LocalQueue
     public LocalQueue(string? root = null)
     {
         var basePath = root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Zhike6", "queue");
+#if STAGE51_ISOLATED_UI
+        basePath = Stage51Isolation.MapDataPath(basePath);
+#endif
         Directory.CreateDirectory(basePath);
         _path = Path.Combine(basePath, "pending.json");
         _deadLetterPath = Path.Combine(basePath, "dead-letter.json");

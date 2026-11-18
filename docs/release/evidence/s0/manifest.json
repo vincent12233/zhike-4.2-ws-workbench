@@ -1,0 +1,39 @@
+{
+  "baseline": "e042693",
+  "syntheticOnly": true,
+  "productionDataCopied": false,
+  "files": [
+    {
+      "file": "baseline-full.txt",
+      "sha256": "5554d465f9664208253bfc51e24cf5ffbe4ccf23533827b7aa0eab855c739535"
+    },
+    {
+      "file": "baseline-release.txt",
+      "sha256": "fa5443a9e37e0744ef120f2416e5f83d7fef612a0a8227e8a0a0c17b2f026dc0"
+    },
+    {
+      "file": "isolated-build.txt",
+      "sha256": "8ed1a6cc238cab8042f4049c37b6a48e6ddf1607a7bb09fd2e316d2048fbad99"
+    },
+    {
+      "file": "resource-summary.json",
+      "sha256": "c3624a8b565a4cbe57189dffc2b2fb82b550c544ba0259bbd16131e412d83251"
+    },
+    {
+      "file": "cleanup-first.json",
+      "sha256": "c3320dccc49ce135b786db2aabd613e799452d7fab2deccbcca0157300a49b17"
+    },
+    {
+      "file": "cleanup-final.json",
+      "sha256": "f0c924fecb448dd0e6c20138290d7b0525f1ae5c014182944b35f5aa41a3dc73"
+    },
+    {
+      "file": "baseline-home.png",
+      "sha256": "16fecdf1c7dd4903e43aeeb05cbfb56c6da7f6ce08cef6a98d9dc5b036f6a9c9"
+    },
+    {
+      "file": "baseline-home-expanded.png",
+      "sha256": "6e9dd3b870bb42badea0ed8975b8fe7853a97c2cfdf4fe222f846b9bb5abb0e8"
+    }
+  ]
+}

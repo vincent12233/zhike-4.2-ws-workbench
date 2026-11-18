@@ -1,0 +1,8 @@
+{
+  "status": "Failed",
+  "observerReady": false,
+  "exitCode": 1,
+  "controlledNodeInvocations": 0,
+  "realEdgeInvocations": 0,
+  "startError": "UnauthorizedAccess"
+}

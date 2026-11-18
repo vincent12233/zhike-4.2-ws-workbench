@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794923476736-d44a5df8-8933-4dea-8529-a928cd232031",
+  "mode": "controlled-node-invalid-result",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 10000,
+  "launchedAt": "2026-11-17T13:51:16.736Z",
+  "events": [
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 744
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 744
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 744,
+      "acknowledgement": "stdin-request"
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 750
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 750
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 755,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 755
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 755
+    }
+  ],
+  "identities": [
+    {
+      "pid": 25060,
+      "startedTicks": "639305202767462842",
+      "startedUtc": "2026-11-17T13:51:16.7462842Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "pid": 25060,
+  "remainingIdentities": [],
+  "elapsedMs": 1209,
+  "stdoutBytes": 19,
+  "stderrBytes": 0,
+  "failure": {
+    "code": "INVALID_RESULT",
+    "phase": "result",
+    "message": "Invalid controlled result"
+  }
+}

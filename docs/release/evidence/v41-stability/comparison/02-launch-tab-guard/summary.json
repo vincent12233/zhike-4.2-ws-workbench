@@ -1,0 +1,43 @@
+{
+  "mode": "close-launch-tab-first",
+  "evidence": "[STABILITY_WORKTREE]\\.tools\\v41-edge-investigation\\targets\\close-launch-tab-first-ti5jfn",
+  "code": 1,
+  "status": "Failed",
+  "elapsedMs": 30011,
+  "timeoutMs": 30000,
+  "failure": {
+    "code": "ERR_ASSERTION",
+    "phase": "assertion",
+    "message": "Only the fresh invocation launch tab may be closed\n+ actual - expected\n\n  {\n+   count: 3,\n-   count: 2,\n    fixture: true,\n    launchBlank: true,\n+   other: 1\n-   other: 0\n  }\n"
+  },
+  "resultSha256": "9aa006d55d26f227de0b550e656066e44f30f3da72d1ed00641d87efd711675a",
+  "events": [
+    {
+      "event": "experiment-launch-pages",
+      "elapsedMs": 969,
+      "count": 1,
+      "fixture": false,
+      "launchBlank": true,
+      "other": 0
+    },
+    {
+      "event": "result-verified",
+      "elapsedMs": 2847,
+      "cases": 6
+    },
+    {
+      "event": "experiment-before-fixture-close",
+      "elapsedMs": 2954,
+      "count": 3,
+      "fixture": true,
+      "launchBlank": true,
+      "other": 1
+    },
+    {
+      "event": "failure-owned-handle-termination",
+      "elapsedMs": 30006,
+      "requested": true
+    }
+  ],
+  "outstanding": 0
+}

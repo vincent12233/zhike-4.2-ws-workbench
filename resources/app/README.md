@@ -1,11 +1,11 @@
-# 知客 6.0 Horizon Atelier
+# 知客 6.1 A+B
 
 当前资源目录只服务一套正式产品：WinUI 3 桌面壳、WebView2 工作台、本机 Node sidecar 与 SQLite 数据库。项目不包含 Electron、Docker、PostgreSQL、旧客户端入口或旧数据库迁移链。
 
 ## 数据空间
 
-- 6.0 只使用 `%LOCALAPPDATA%\Zhike6`。
-- 首次启动创建空白 `workspace.sqlite`，不预置客户、业务记录、账号、聊天或演示数据。
+- 6.1 沿用 `%LOCALAPPDATA%\Zhike6`。
+- 首次启动创建空白 `workspace.sqlite`，并建立未连接的默认 WS 账号配置。客户、业务记录、聊天和演示数据为空。
 - 不读取、不迁移、也不删除旧 `%LOCALAPPDATA%\Zhike`。
 - 数据中心只支持 CSV/Excel 智能导入、6.0 JSON 备份、快照与恢复；旧版备份会被拒绝，6.0 备份恢复前校验 SHA-256 完整性。
 - AI Key 使用 Windows 本机加密存储，不写入 SQLite、备份、快照或日志。
@@ -27,13 +27,14 @@
 
 ## WS 工作台
 
-- WhatsApp Web 内嵌在知客中，用户可正常扫码、阅读和发送消息。
-- 每个账号使用隔离 WebView2 profile；前台聊天与后台采集互不抢占。
-- 后台会在知客切换页面或最小化后继续运行，显式退出或关闭 WS 才停止。
-- 一对一会话与系统设置中明确绑定的 VIP 群可进入完整历史采集；普通群排除。
-- 未读会话不会被后台自动打开。
-- 客户与我方消息都保存原文、方向、时间、发言人和断点；列表预览不冒充完整历史。
-- VIP 群按可信 JID/手机号拆分成员，只有唯一匹配到现有客户的成员才可进入其档案和个人跟进评分；不会自动新建客户，也不会把其他成员的话归给该客户。
+|能力|当前可用范围|
+|---|---|
+|前台聊天|首次由用户在官方页面自行扫码或登录。实际账号消息操作以目标环境为准。每个账号使用隔离的 WebView2 profile，可手动切换。|
+|手动导入|处理用户获准查看的当前可见或选中内容，保存适用的原文、方向、时间和发言人字段。列表预览只表示已保存的本机内容。|
+|本机目录|展示已保存的联系人、群组和审计记录。独立群成员管理仅在隔离 Mock 环境启用，普通运行可查看已有进退群历史。|
+|后台能力|自动会话发现、后台采集、自动完整历史与后台群监测当前不可用。生产 Worker 和自动 AI 消费者保持关闭。|
+
+VIP 群的手动导入按可信 JID 或手机号拆分发言人。只有唯一匹配到现有客户的记录才可用于个人档案和跟进评分。详见 [WS 能力验收](../../docs/release/rd02-authenticated-profile-acceptance.md)。
 
 ## AI 与提醒
 
@@ -41,13 +42,15 @@ AI 只补现有客户的空字段，人工值优先且不会被覆盖。低置�
 
 ## 开发与验收
 
+打包前，从 Node.js 24 官方 Windows x64 发布包解出 `node.exe`，放在仓库的 `resources/app/` 下，与 `server.mjs` 同目录。开发命令可使用 PATH 中的 Node.js，随包运行时由前述明确路径提供。
+
 ```powershell
 node scripts/run-tests.cjs all
 dotnet build desktop/src/Zhike.Desktop/Zhike.Desktop.csproj -c Release -r win-x64 --no-restore
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-bundle.ps1 -Version 6.0.1 -Configuration Release -RuntimeIdentifier win-x64 -SelfContained
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installer.ps1 -AppVersion 6.0.1 -AllowUnsigned -SkipWebView2Check
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-bundle.ps1 -Version 6.1.0 -Configuration Release -RuntimeIdentifier win-x64 -SelfContained
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-winui-installer.ps1 -AppVersion 6.1.0
 ```
 
-正式验收还必须覆盖真实 WS 登录、手机端消息同步、后台完整历史采集、VIP 群成员归属、AI 补档、任务提醒、备份恢复、覆盖安装和 1 万/5 万客户性能；不能以编译成功代替验收。
+正式验收需逐项记录目标机的真实 WS 登录、前台消息同步、手动导入与 VIP 群成员归属、手动 AI 补档、任务提醒、备份恢复、覆盖安装和大客户库性能。后台完整历史按当前不可用记录。
 
 当前发布入口与交付清单以 [`docs/current-release-index.md`](../../docs/current-release-index.md) 为准。

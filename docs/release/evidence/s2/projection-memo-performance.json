@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 1,
+  "kind": "same-realm-approved-priority-memo-readonly-baseline",
+  "command": "node --expose-gc .tools/delivery-s2-priority-memo-performance.cjs",
+  "startedAt": "2026-11-17T02:40:13.901Z",
+  "sourceSha256": "e42571bb70125732f2f0ce1cebe48c582788dc5e1ec3227d606e1214536151c0",
+  "ownerHashes": [
+    {
+      "boundary": "  const normalizeObjectRows =",
+      "sha256": "c8fd03ce648622930a1e640b320001554f85e2eaf9f6d85540956670ef5bc63c",
+      "identicalTo": "591d372"
+    },
+    {
+      "boundary": "  function isGroupFanSource(",
+      "sha256": "957a01606f4f0b4b07c8e7c1ca7a4de62e3c8817fd44fde0cb6f260ba29a782e",
+      "identicalTo": "591d372"
+    },
+    {
+      "boundary": "  let activeCustomerCache=",
+      "sha256": "b27e34da00a001a13c5bface569457a94dddf4766e2de1e3099b512e22662189",
+      "identicalTo": "591d372"
+    },
+    {
+      "boundary": "  const money =",
+      "sha256": "779e94498d5cc53a614b8742ba8eda60932342ccde809e88caf151e6207f1ae2",
+      "identicalTo": "591d372"
+    },
+    {
+      "boundary": "  const buildCounts =",
+      "sha256": "5bdc5d0b3c0bb0e8525b0e7e141a197c66ad8f0a1aaa79bdcfff96c298d6d7b6",
+      "identicalTo": "591d372"
+    },
+    {
+      "boundary": "  function isStatusBaseline(",
+      "sha256": "00d35274063ce6f05f86d2d118dbf8f07919040709b2d222232d703bf917e2b6",
+      "identicalTo": "591d372"
+    },
+    {
+      "boundary": "  function todayStatusCounts(",
+      "sha256": "52fea4a89d862288767abad4a1c9595bab120591bda4bf2a8e6155f4062e54a6",
+      "identicalTo": "591d372"
+    }
+  ],
+  "environment": {
+    "platform": "win32",
+    "release": "10.0.26300",
+    "arch": "x64",
+    "node": "v24.22.1",
+    "v8": "13.6.233.17-node.58",
+    "cpu": "13th Gen Intel(R) Core(TM) i7-13650HX"
+  },
+  "method": {
+    "realm": "Functions and synthetic data in the same JavaScript realm, fixed asOfDay and Date.now snapshot; Node, not WinUI/browser.",
+    "cold": "Fresh actual app helpers and synthetic arrays; source compilation/generation/GC excluded; time only getMetricsProjection.",
+    "counts": "5 cold calls each at 1k and 10k; one cold call at 50k. Five 1000-call warm batches per scale.",
+    "boundary": "Original smartPriority/CRM/date/amount owners unchanged. Local priority map lasts only this preparation; private prepared cache retains existing revision/day semantics. No assertion about dynamically moving Date.now during one sort.",
+    "noProduction": "No boot/service/database/config/credentials/WS/AI/Edge/native opened."
+  },
+  "runs": [
+    {
+      "customers": 1000,
+      "cold": [
+        {
+          "iteration": 1,
+          "durationMs": 60.48740000000001,
+          "cpuMs": 63
+        },
+        {
+          "iteration": 2,
+          "durationMs": 30.02729999999997,
+          "cpuMs": 47
+        },
+        {
+          "iteration": 3,
+          "durationMs": 23.757300000000043,
+          "cpuMs": 31
+        },
+        {
+          "iteration": 4,
+          "durationMs": 22.55170000000004,
+          "cpuMs": 31
+        },
+        {
+          "iteration": 5,
+          "durationMs": 21.96719999999999,
+          "cpuMs": 48
+        }
+      ],
+      "warm": [
+        {
+          "batch": 1,
+          "calls": 1000,
+          "totalMs": 1.4740999999999644,
+          "perCallMs": 0.0014740999999999645
+        },
+        {
+          "batch": 2,
+          "calls": 1000,
+          "totalMs": 1.6013000000000375,
+          "perCallMs": 0.0016013000000000375
+        },
+        {
+          "batch": 3,
+          "calls": 1000,
+          "totalMs": 2.9745000000000346,
+          "perCallMs": 0.0029745000000000344
+        },
+        {
+          "batch": 4,
+          "calls": 1000,
+          "totalMs": 0.7975000000000136,
+          "perCallMs": 0.0007975000000000137
+        },
+        {
+          "batch": 5,
+          "calls": 1000,
+          "totalMs": 0.5044000000000324,
+          "perCallMs": 0.0005044000000000324
+        }
+      ],
+      "data": {
+        "activeCustomers": 979,
+        "followups": 2000,
+        "registrations": 250,
+        "tickets": 200,
+        "deposits": 125
+      },
+      "coldSummary": {
+        "minMs": 21.96719999999999,
+        "medianMs": 23.757300000000043,
+        "maxMs": 60.48740000000001
+      },
+      "warmPerCallSummary": {
+        "minMs": 0.0005044000000000324,
+        "medianMs": 0.0014740999999999645,
+        "maxMs": 0.0029745000000000344
+      }
+    },
+    {
+      "customers": 10000,
+      "cold": [
+        {
+          "iteration": 1,
+          "durationMs": 201.70789999999994,
+          "cpuMs": 391
+        },
+        {
+          "iteration": 2,
+          "durationMs": 191.68290000000002,
+          "cpuMs": 312
+        },
+        {
+          "iteration": 3,
+          "durationMs": 216.2527,
+          "cpuMs": 406
+        },
+        {
+          "iteration": 4,
+          "durationMs": 198.14539999999988,
+          "cpuMs": 407
+        },
+        {
+          "iteration": 5,
+          "durationMs": 189.62580000000003,
+          "cpuMs": 360
+        }
+      ],
+      "warm": [
+        {
+          "batch": 1,
+          "calls": 1000,
+          "totalMs": 1.2234000000000833,
+          "perCallMs": 0.0012234000000000834
+        },
+        {
+          "batch": 2,
+          "calls": 1000,
+          "totalMs": 0.7853999999999814,
+          "perCallMs": 0.0007853999999999815
+        },
+        {
+          "batch": 3,
+          "calls": 1000,
+          "totalMs": 0.5868000000000393,
+          "perCallMs": 0.0005868000000000393
+        },
+        {
+          "batch": 4,
+          "calls": 1000,
+          "totalMs": 0.5369999999998072,
+          "perCallMs": 0.0005369999999998072
+        },
+        {
+          "batch": 5,
+          "calls": 1000,
+          "totalMs": 0.5879999999999654,
+          "perCallMs": 0.0005879999999999654
+        }
+      ],
+      "data": {
+        "activeCustomers": 9795,
+        "followups": 20000,
+        "registrations": 2500,
+        "tickets": 2000,
+        "deposits": 1250
+      },
+      "coldSummary": {
+        "minMs": 189.62580000000003,
+        "medianMs": 198.14539999999988,
+        "maxMs": 216.2527
+      },
+      "warmPerCallSummary": {
+        "minMs": 0.0005369999999998072,
+        "medianMs": 0.0005879999999999654,
+        "maxMs": 0.0012234000000000834
+      }
+    },
+    {
+      "customers": 50000,
+      "cold": [
+        {
+          "iteration": 1,
+          "durationMs": 849.1202000000003,
+          "cpuMs": 1077
+        }
+      ],
+      "warm": [
+        {
+          "batch": 1,
+          "calls": 1000,
+          "totalMs": 1.1493999999997868,
+          "perCallMs": 0.001149399999999787
+        },
+        {
+          "batch": 2,
+          "calls": 1000,
+          "totalMs": 0.7635000000000218,
+          "perCallMs": 0.0007635000000000219
+        },
+        {
+          "batch": 3,
+          "calls": 1000,
+          "totalMs": 0.49949999999989814,
+          "perCallMs": 0.0004994999999998981
+        },
+        {
+          "batch": 4,
+          "calls": 1000,
+          "totalMs": 0.5041000000001077,
+          "perCallMs": 0.0005041000000001077
+        },
+        {
+          "batch": 5,
+          "calls": 1000,
+          "totalMs": 0.5039000000001579,
+          "perCallMs": 0.0005039000000001579
+        }
+      ],
+      "data": {
+        "activeCustomers": 48979,
+        "followups": 100000,
+        "registrations": 12500,
+        "tickets": 10000,
+        "deposits": 6250
+      },
+      "coldSummary": {
+        "minMs": 849.1202000000003,
+        "medianMs": 849.1202000000003,
+        "maxMs": 849.1202000000003
+      },
+      "warmPerCallSummary": {
+        "minMs": 0.0004994999999998981,
+        "medianMs": 0.0005041000000001077,
+        "maxMs": 0.001149399999999787
+      }
+    }
+  ],
+  "finishedAt": "2026-11-17T02:40:16.374Z"
+}

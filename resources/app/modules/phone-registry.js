@@ -13,7 +13,35 @@ document.querySelector('#viewContainer').innerHTML=pageHero('<button class="btn"
 async function mutate(reason,log,fn){const before=clone(h.state.phoneRegistry),beforeActivities=clone(h.state.activities||[]);if(!await h.snapshotBeforeWrite(reason))return false;try{fn();h.activity(log);await h.flushStateWrites();selected.clear();render();return true}catch{h.state.phoneRegistry=before;h.state.activities=beforeActivities;h.persist();render();h.toast('保存失败，已恢复修改前内容','x');return false}}
 function newModal(){h.openModal('新增手机号登记','独立保存，不会同步到客户中心。','<div class="filter-grid"><label class="filter-field"><span>手机位置</span><select id="rnDevice">'+opts(D,D[0])+'</select></label><label class="filter-field"><span>编号</span><input id="rnCode"></label><label class="filter-field"><span>号码</span><input id="rnPhone"></label><label class="filter-field"><span>所属角色</span><input id="rnRole"></label><label class="filter-field"><span>接码渠道</span><input id="rnChannel"></label></div>','<button class="btn" data-action="close-modal">取消</button><button class="btn primary" data-registry-action="save-new">保存</button>')}
 async function saveNew(){const phone=clean(document.querySelector('#rnPhone')?.value),k=pkey(phone);if(k&&h.state.phoneRegistry.some(x=>pkey(x.phone)===k)){h.toast('该号码已存在','x');return}const x={id:uid(),device:document.querySelector('#rnDevice').value,code:document.querySelector('#rnCode').value.trim(),phone,role:document.querySelector('#rnRole').value.trim(),channel:document.querySelector('#rnChannel').value.trim(),createdAt:now(),updatedAt:now()};if(await mutate('新增手机号登记前自动快照','新增手机号登记 '+(phone||x.code||x.device),()=>h.state.phoneRegistry.unshift(x))){h.closeModal();h.toast('登记已保存')}}
-function parse(tables){const out=[],title=/^(多开手机\d+|手机\d+号)$/;for(const t of tables||[]){const a=t.rows||t||[],tr=[...new Set(a.flatMap((r,i)=>(r||[]).some(v=>title.test(String(v||'').trim()))?[i]:[]))];if(tr.length)tr.forEach((r0,ti)=>(a[r0]||[]).forEach((v,c)=>{const device=String(v||'').trim();if(!title.test(device))return;for(let r=r0+2;r<(tr[ti+1]??a.length);r++){const z=(a[r]||[]).slice(c,c+4).map(v=>String(v??'').trim());if(z.some(Boolean))out.push({device,code:z[0],phone:clean(z[1]),role:z[2],channel:z[3],row:r+1})}}));else if(a.length>1){const hd=a[0].map(v=>String(v||'').trim()),fi=(...n)=>hd.findIndex(v=>n.includes(v)),mp={device:fi('手机位置','设备','手机'),code:fi('编号'),phone:fi('号码','手机号','手机号码'),role:fi('所属角色','角色'),channel:fi('接码渠道','渠道')};a.slice(1).forEach((r,i)=>{const x=Object.fromEntries(Object.entries(mp).map(([k,c])=>[k,c<0?'':String(r[c]??'').trim()]));x.phone=clean(x.phone);x.row=i+2;if(Object.values(x).some(Boolean))out.push(x)})}}return out}
+function parse(tables){
+  const out=[],title=/^(多开手机\d+|手机\d+号)$/;
+  for(const table of tables||[]){
+    const rows=table.rows||table||[];
+    if(!rows.length)continue;
+    const headers=(rows[0]||[]).map(value=>String(value||'').trim());
+    const findHeader=(...names)=>headers.findIndex(value=>names.includes(value));
+    const mapping={device:findHeader('手机位置','设备','手机'),code:findHeader('编号'),phone:findHeader('号码','手机号','手机号码'),role:findHeader('所属角色','角色'),channel:findHeader('接码渠道','渠道')};
+    // A flat table can contain "多开手机1" in every data row. Detect its
+    // header first so those values are not mistaken for section headings.
+    if(mapping.phone>=0){
+      rows.slice(1).forEach((row,index)=>{
+        const item=Object.fromEntries(Object.entries(mapping).map(([key,column])=>[key,column<0?'':String(row?.[column]??'').trim()]));
+        item.phone=clean(item.phone);item.row=index+2;
+        if(['device','code','phone','role','channel'].some(key=>item[key]))out.push(item);
+      });
+      continue;
+    }
+    const sectionRows=rows.flatMap((row,index)=>(row||[]).some(value=>title.test(String(value||'').trim()))?[index]:[]);
+    sectionRows.forEach((start,sectionIndex)=>(rows[start]||[]).forEach((value,column)=>{
+      const device=String(value||'').trim();if(!title.test(device))return;
+      for(let rowIndex=start+2;rowIndex<(sectionRows[sectionIndex+1]??rows.length);rowIndex++){
+        const cells=(rows[rowIndex]||[]).slice(column,column+4).map(cell=>String(cell??'').trim());
+        if(cells.some(Boolean))out.push({device,code:cells[0],phone:clean(cells[1]),role:cells[2],channel:cells[3],row:rowIndex+1});
+      }
+    }));
+  }
+  return out;
+}
 function prep(items){const keys=new Map(h.state.phoneRegistry.map(x=>[x.device+'|'+(pkey(x.phone)||x.code),x])),phones=new Set(h.state.phoneRegistry.map(x=>pkey(x.phone)).filter(Boolean)),batch=new Set,valid=[],issues=[];let adds=0,updates=0;for(const x of items){const pk=pkey(x.phone),sig=x.device+'|'+(pk||x.code),old=keys.get(sig);if(x.phone&&(x.phone.length<6||x.phone.length>15)){issues.push({...x,reason:'号码长度异常'});continue}if(pk&&batch.has(pk)){issues.push({...x,reason:'文件内重复'});continue}if(pk&&phones.has(pk)&&!old){issues.push({...x,reason:'与现有登记重复'});continue}if(pk)batch.add(pk);valid.push({...x,existingId:old?.id||''});old?updates++:adds++}return{total:items.length,valid,issues,adds,updates}}
 function preview(b){pending=b;h.openModal('手机号登记导入预览','确认新增、更新、重复和异常数量。','<div class="batch-preview-summary"><div><span>总行</span><strong>'+b.total+'</strong></div><div><span>新增</span><strong>'+b.adds+'</strong></div><div><span>更新</span><strong>'+b.updates+'</strong></div><div><span>跳过</span><strong>'+b.issues.length+'</strong></div></div><div class="notice-line">不会创建或修改客户、跟票、入金和报名数据。</div>','<button class="btn" data-action="close-modal">取消</button><button class="btn" data-registry-action="export-issues" '+(b.issues.length?'':'disabled')+'>导出异常</button><button class="btn primary" data-registry-action="commit-import" '+(b.valid.length?'':'disabled')+'>确认导入 '+b.valid.length+' 条</button>')}
 async function importFile(file){if(!file)return;try{if(file.size>10*1024*1024)throw Error('Excel 超过 10 MB');const p=await window.zhikeAI.parseExcel({bytes:await file.arrayBuffer()}),items=parse(p.tables||[]);if(!items.length)throw Error('未识别到登记数据');preview(prep(items))}catch(e){h.toast(e.message||'读取失败','x')}}

@@ -1,0 +1,20 @@
+Commit: 8362d83
+Node: v24.22.1
+Command: node --test tests/scroll-system-contract.test.cjs tests/scroll-coordinator-runtime.test.cjs tests/ws-scroll-routing-contract.test.cjs tests/ws-scroll-stability.test.cjs
+scroll coordinator runtime: scroll ownership, wheel units, boundaries and state retention pass
+✔ tests\scroll-coordinator-runtime.test.cjs (2584.9459ms)
+scroll system contract: single-axis ownership, accessible bars, modal freeze and bounded WS telemetry pass
+✔ tests\scroll-system-contract.test.cjs (91.0333ms)
+ws scroll routing contract: nested panes contain wheel/touch scrolling
+✔ tests\ws-scroll-routing-contract.test.cjs (83.669ms)
+ws-scroll-stability: closed rail, single owner, bounded tables, refresh backpressure and cancellable reads are required
+✔ tests\ws-scroll-stability.test.cjs (83.5005ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2600.0753
+Exit code: 0

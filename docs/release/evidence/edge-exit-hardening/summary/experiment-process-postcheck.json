@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "startedAtUtc": "2026-11-18T19:56:03.5026211+00:00",
+  "completedAtUtc": "2026-11-18T19:56:04.7447133+00:00",
+  "scope": "Point-in-time checks of explicitly recorded experimental process IDs only. Unobserved descendants and exact exit times are outside this evidence.",
+  "method": "Get-Process -Id; compare StartTime UTC ticks for metadata.identities; helper PIDs have no verified creation time.",
+  "completedInvocations": 81,
+  "trialDirectories": 57,
+  "browserIdentitySamples": 1212,
+  "uniqueBrowserIdentities": 1212,
+  "helperPidSamples": 162,
+  "distinctPidsQueried": 1162,
+  "browserCounts": {
+    "Absent": 1207,
+    "PidReused": 3,
+    "Matched": 0,
+    "Unknown": 2
+  },
+  "helperCounts": {
+    "Absent": 162,
+    "Unknown": 0
+  },
+  "matched": [],
+  "unknown": [
+    {
+      "source": "metadata.identities",
+      "status": "Unknown",
+      "invocation": "1795029613449-1493702e-f8ad-406b-a333-21f37b30a062",
+      "trial": "A-03",
+      "pid": 41936,
+      "startedTicks": "639306264142181160",
+      "checkedAtUtc": "2026-11-18T19:56:04.6935232+00:00",
+      "queryError": "RuntimeException"
+    },
+    {
+      "source": "metadata.identities",
+      "status": "Unknown",
+      "invocation": "1795030322334-49a9396d-3e43-4dcb-83fd-dbda4d74c276",
+      "trial": "fixed-s1-3",
+      "pid": 7556,
+      "startedTicks": "639306271240564358",
+      "checkedAtUtc": "2026-11-18T19:56:04.3621349+00:00",
+      "queryError": "RuntimeException"
+    }
+  ],
+  "initialUnknownRecheck": {
+    "startedAtUtc": "2026-11-18T19:56:40.3415589+00:00",
+    "completedAtUtc": "2026-11-18T19:56:40.4286969+00:00",
+    "counts": {
+      "Absent": 0,
+      "PidReused": 0,
+      "Matched": 0,
+      "Unknown": 2
+    },
+    "rows": [
+      {
+        "source": "metadata.identities",
+        "invocation": "1795029613449-1493702e-f8ad-406b-a333-21f37b30a062",
+        "trial": "A-03",
+        "pid": 41936,
+        "startedTicks": "639306264142181160",
+        "checkedAtUtc": "2026-11-18T19:56:40.3549895+00:00",
+        "status": "Unknown",
+        "queryError": "RuntimeException",
+        "queryErrorId": "InvokeMethodOnNull"
+      },
+      {
+        "source": "metadata.identities",
+        "invocation": "1795030322334-49a9396d-3e43-4dcb-83fd-dbda4d74c276",
+        "trial": "fixed-s1-3",
+        "pid": 7556,
+        "startedTicks": "639306271240564358",
+        "checkedAtUtc": "2026-11-18T19:56:40.4129036+00:00",
+        "status": "Unknown",
+        "queryError": "RuntimeException",
+        "queryErrorId": "InvokeMethodOnNull"
+      }
+    ]
+  },
+  "browserCountsIncludingRecheck": {
+    "Absent": 1207,
+    "PidReused": 3,
+    "Matched": 0,
+    "Unknown": 2
+  },
+  "win32Recheck": {
+    "startedAtUtc": "2026-11-18T19:58:51.3139299+00:00",
+    "completedAtUtc": "2026-11-18T19:58:51.3814567+00:00",
+    "access": "SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION (0x00101000)",
+    "method": "Explicit PID only; GetProcessId, WaitForSingleObject(0), GetExitCodeProcess, GetProcessTimes, WaitForSingleObject(0); no privilege changes.",
+    "counts": {
+      "PidReused": 0,
+      "ExitedWithSignaledHandle": 0,
+      "MatchedRunning": 0,
+      "Unknown": 2
+    },
+    "rows": [
+      {
+        "source": "metadata.identities",
+        "invocation": "1795029613449-1493702e-f8ad-406b-a333-21f37b30a062",
+        "trial": "A-03",
+        "pid": 41936,
+        "checkedAtUtc": "2026-11-18T19:58:51.3182758+00:00",
+        "status": "Unknown",
+        "startedTicks": "639306264142181160",
+        "handleStartedUtcTicks": null,
+        "opened": false,
+        "openError": 5,
+        "handlePid": null,
+        "handlePidError": null,
+        "waitStatusBeforeQuery": null,
+        "waitErrorBeforeQuery": null,
+        "waitStatusAfterQuery": null,
+        "waitErrorAfterQuery": null,
+        "rawExitCode": null,
+        "exitCodeQueryError": null,
+        "processTimesError": null,
+        "rawCreationFileTime": null,
+        "rawExitFileTime": null
+      },
+      {
+        "source": "metadata.identities",
+        "invocation": "1795030322334-49a9396d-3e43-4dcb-83fd-dbda4d74c276",
+        "trial": "fixed-s1-3",
+        "pid": 7556,
+        "checkedAtUtc": "2026-11-18T19:58:51.3548725+00:00",
+        "status": "Unknown",
+        "startedTicks": "639306271240564358",
+        "handleStartedUtcTicks": null,
+        "opened": false,
+        "openError": 5,
+        "handlePid": null,
+        "handlePidError": null,
+        "waitStatusBeforeQuery": null,
+        "waitErrorBeforeQuery": null,
+        "waitStatusAfterQuery": null,
+        "waitErrorAfterQuery": null,
+        "rawExitCode": null,
+        "exitCodeQueryError": null,
+        "processTimesError": null,
+        "rawCreationFileTime": null,
+        "rawExitFileTime": null
+      }
+    ]
+  },
+  "browserCountsIncludingWin32Recheck": {
+    "Absent": 1207,
+    "PidReused": 3,
+    "ExitedWithSignaledHandle": 0,
+    "Matched": 0,
+    "Unknown": 2
+  }
+}

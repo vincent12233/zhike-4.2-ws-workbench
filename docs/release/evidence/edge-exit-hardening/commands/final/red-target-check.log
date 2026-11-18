@@ -1,0 +1,20 @@
+{"run":"reexecuted negative control","recordedAtUtc":"2026-11-18T20:09:37.622Z","baseline":"3c35db1cb28715088916920acfc0fc2bde270522","runnerBlob":"93cfa80916314b0645d88cb78d7d85ff356778d1","testBlob":"0f76fa10549d7a7621f7969c1ec64153ea0b07af","overlaySha256":"5c22682af36fda0f87207b397713cf3b6dddb733100e9b93d02049688dc03be9","loopbackOnly":true}
+{"mode":"ack-only","status":"Passed","actualLoopbackWebSocket":true,"realEdgeStarted":false,"realBrowserAccepted":false,"events":["browser-close-request-sent","browser-close-response-received","browser-close-acknowledged","cdp-transport-close-requested","cdp-transport-closed"]}
+{"mode":"peer-close","status":"Passed","actualLoopbackWebSocket":true,"realEdgeStarted":false,"realBrowserAccepted":false,"events":["browser-close-request-sent","cdp-transport-closed","browser-close-acknowledged"]}
+{"mode":"stall-close","status":"Passed","actualLoopbackWebSocket":true,"realEdgeStarted":false,"realBrowserAccepted":false,"events":["browser-close-request-sent","browser-close-response-received","browser-close-acknowledged","cdp-transport-close-requested"]}
+{"mode":"premature-disconnect","status":"Passed","actualLoopbackWebSocket":true,"realEdgeStarted":false,"realBrowserAccepted":false,"events":["cdp-transport-closed"]}
+{"mode":"work-phase-observation","status":"Passed","actualLoopbackWebSocket":true,"realEdgeStarted":false,"realBrowserAccepted":false,"events":["cdp-work-started","navigation-request-sent","navigation-response-received","navigation-lifecycle-received","cdp-work-completed","cdp-work-started"]}
+AssertionError [ERR_ASSERTION]: The ACK and unrelated destruction events cannot release this target
+
+true !== false
+
+    at testTargetClose (<USERPROFILE>\Documents\Codex\2026-11-04\new-chat\work\project-review\visual-system-worktrees\integration\tests\isolated-edge-transport.test.cjs:159:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async <USERPROFILE>\Documents\Codex\2026-11-04\new-chat\work\project-review\visual-system-worktrees\integration\tests\isolated-edge-transport.test.cjs:223:34 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: true,
+  expected: false,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

@@ -1,0 +1,307 @@
+Window: "知客 Stage 5.1 · ISOLATED 验收", App: Zhike.Stage51.Acceptance.exe.
+	0 window (窗口) 知客 Stage 5.1 · ISOLATED 验收 Secondary Actions: Raise
+		1 pane (窗格) Non Client Input Sink Window
+		2 pane (窗格) AppWindow Custom Title Bar
+			3 button (按钮) Minimize ID: Minimize
+			403 button (按钮) Restore ID: Restore
+			5 button (按钮) Close ID: Close
+		6 pane (窗格)
+			7 pane (窗格)
+				14 pane (窗格)
+			15 pane (窗格) 知客 6.0 · Horizon Atelier
+				16 pane (窗格) (disabled)
+				17 pane (区域) 知客 6.0 · Horizon Atelier - Web 内容
+					18 pane (区域)
+						19 pane (区域)
+						20 pane (区域)
+							21 pane (区域)
+								22 pane (区域)
+								23 pane (区域)
+									24 pane (区域)
+										25 pane (区域)
+											26 pane (区域)
+												27 pane (区域)
+												31 document (文档) 知客 6.0 · Horizon Atelier Value: <isolated-url> ID: RootWebArea
+													32 group (补充) ID: sidebar
+														387 text (文本) 知客 6.0
+														388 text (文本) Horizon Atelier
+														35 button (按钮) 收起导航 Description: 收起导航 ID: collapseNav
+															36 image (图形)
+														389 button (按钮) 设置工作区资料 Description: 设置工作区资料 ID: workspaceSwitch
+															390 image (图形)
+														39 group (导航) ID: mainNav
+															391 text (文本) 工作
+															41 button (按钮) 今日工作台 Description: 今日工作台
+																42 image (图形)
+															43 button (按钮) 快速录入 Description: 快速录入
+																44 image (图形)
+															45 button (按钮) 任务中心 Description: 任务中心
+																46 image (图形)
+															47 button (按钮) 阶段看板 Description: 阶段看板
+																48 image (图形)
+															392 text (文本) 客户
+															50 button (按钮) 客户中心 Description: 客户中心
+																51 image (图形)
+															52 button (按钮) 分类视图 Description: 分类视图
+																53 image (图形)
+															54 button (按钮) 热聊管理 Description: 热聊管理
+																55 image (图形)
+															56 button (按钮) 群组管理 Description: 群组管理
+																57 image (图形)
+															58 button (按钮) VIP 管理 Description: VIP 管理
+																59 image (图形)
+															393 text (文本) 业务数据
+															61 button (按钮) 跟票管理 Description: 跟票管理
+																62 image (图形)
+															63 button (按钮) 报名统计 Description: 报名统计
+																64 image (图形)
+															65 button (按钮) 入金管理 Description: 入金管理
+																66 image (图形)
+															67 button (按钮) 统计分析 Description: 统计分析
+																68 image (图形)
+															394 text (文本) 系统管理
+															70 button (按钮) WS 工作台 Description: WS 工作台 ID: wsWorkbenchNav
+																71 image (图形)
+															72 button (按钮) GPT 运营助手 Description: GPT 运营助手 ID: gptAssistantNav
+																73 image (图形)
+															74 button (按钮) 本地自动化 Description: 本地自动化
+																75 image (图形)
+															76 button (按钮) 数据治理 Description: 数据治理
+																77 image (图形)
+															78 button (按钮) 数据中心 Description: 数据中心
+																79 image (图形)
+															80 button (按钮) 操作记录 Description: 操作记录
+																81 image (图形)
+															82 button (按钮) 回收站 Description: 回收站
+																83 image (图形)
+															84 button (按钮) 系统设置 Description: 系统设置
+																85 image (图形)
+															86 button (按钮) 手机号登记 Description: 手机号登记
+																87 image (图形)
+														429 text (文本) DB
+														89 image (图形)
+														396 text (文本) 本机存储正常
+														397 text (文本) SQLite · 本机服务已启动
+														92 button (按钮) 管理本地管理员头像 Description: 管理本地管理员头像
+															398 image (图形)
+													94 group (主要)
+														95 group (章节标题)
+															96 group (导航) 工作台切换
+																97 button (切换按钮) 知客工作台
+																	98 image (图形)
+																	99 text (文本) 知客工作台
+																100 button (切换按钮) WS 工作台
+																	101 image (图形)
+																	102 text (文本) WS 工作台
+															108 button (按钮) 搜索客户、号码、群编号Ctrl K ID: globalSearch
+																109 image (图形)
+															112 button (按钮) 快捷键与使用帮助 Description: 快捷键与使用帮助 ID: shortcutButton
+															113 button (按钮) 外观偏好 Description: 外观偏好 ID: appearanceButton
+																114 image (图形)
+															115 button (按钮) 立即备份 Description: 立即备份 ID: backupButton
+																116 image (图形)
+															119 button (按钮) 本地提醒 Description: 本地提醒 ID: notificationButton
+																120 image (图形)
+															121 button (按钮) 管理本地管理员头像 Description: 管理本地管理员头像
+														128 group (组) ID: viewContainer
+															430 text (标题) 客户中心
+															431 text (文本) 客户资料是唯一主档 · 2 位客户；跟票、报名和入金保持独立记录
+															432 button (按钮) 删除重复值
+															433 button (按钮) 导入客户
+																434 image (图形)
+															435 button (按钮) 新增客户
+																436 image (图形)
+															437 group (详细信息)
+																438 button (开合三角标记) › 客户业务概览 全局 2 位 · 今日计划 0 位 · 逾期 0 位 展开7项指标
+																	593 text (文本) ›
+																	440 text (文本) 客户业务概览
+																	441 text (文本) 全局 2 位 · 今日计划 0 位 · 逾期 0 位
+																	442 text (文本) 展开7项指标
+																594 group (组) 客户业务摘要
+																	595 text (文本) 客户总数
+																	596 text (文本) 2
+																	597 text (文本) 全局有效客户
+																	598 text (文本) 有跟票
+																	599 text (文本) 0
+																	600 text (文本) 全局有效客户
+																	601 text (文本) 今日待跟进
+																	602 text (文本) 0
+																	603 text (文本) 全局有效客户
+																	604 text (文本) 已进群
+																	605 text (文本) 0
+																	606 text (文本) 全局有效客户
+																	607 text (文本) VIP 客户
+																	608 text (文本) 0
+																	609 text (文本) 全局有效客户
+																	610 text (文本) 热聊客户
+																	611 text (文本) 0
+																	612 text (文本) 全局有效客户
+																	613 text (文本) 逾期待跟进
+																	614 text (文本) 0
+																	615 text (文本) 全局有效客户
+															443 text (文本) 搜索与筛选作用于客户列表；右侧预览可收起，完整档案仍可从客户行打开。
+															444 button (按钮) 收起档案预览
+															445 button (按钮) 全部客户
+															446 button (按钮) 今日新增
+															447 button (按钮) 已进群
+															448 button (按钮) 热聊客户
+															449 button (按钮) VIP 客户
+															450 button (按钮) ＋ 保存视图
+															451 text (文本) 客户列表
+															452 text (文本) 2 位客户
+															453 image (图形)
+															454 text field (编辑) (settable, string) 搜索姓名、号码、群编号 Description: 搜索姓名、号码、群编号
+															455 button (按钮) 展开高级筛选，当前 0 项
+																456 image (图形)
+															457 button (按钮) 导出当前筛选全部 2 位客户，不限当前页 Description: 导出当前筛选全部 2 位客户，不限当前页
+																458 image (图形)
+															459 button (按钮) 列设置
+															460 status bar (状态) ID: customer-list-scope-customer
+																461 text (文本) 生效条件 0 项 · 当前筛选 2 位客户 · 导出筛选结果包含全部匹配页。
+																462 text (文本) 表头复选框仅选择本页；筛选与导出不受隐藏列影响。
+															463 table (表格)
+																464 data item (行)
+																	465 data item (列标题) 选择本页客户 ID: a11y-th-mwl7dxts-0-0
+																		466 checkbox (复选框) (settable, string) 选择本页客户
+																		467 group (组) Description: 拖动调整列宽
+																	468 data item (列标题) 客户 ID: a11y-th-mwl7dxts-0-1
+																		469 group (组) Description: 拖动调整列宽
+																	470 data item (列标题) 原始号码 ID: a11y-th-mwl7dxts-0-2
+																		471 group (组) Description: 拖动调整列宽
+																	472 data item (列标题) 标准号码 ID: a11y-th-mwl7dxts-0-3
+																		473 group (组) Description: 拖动调整列宽
+																	474 data item (列标题) 渠道 ID: a11y-th-mwl7dxts-0-4
+																		475 group (组) Description: 拖动调整列宽
+																	476 data item (列标题) 页面 ID: a11y-th-mwl7dxts-0-5
+																		477 group (组) Description: 拖动调整列宽
+																	478 data item (列标题) 助理 ID: a11y-th-mwl7dxts-0-6
+																		479 group (组) Description: 拖动调整列宽
+																	480 data item (列标题) 进群状态 ID: a11y-th-mwl7dxts-0-7
+																		481 group (组) Description: 拖动调整列宽
+																	482 data item (列标题) 客户阶段 ID: a11y-th-mwl7dxts-0-8
+																		483 group (组) Description: 拖动调整列宽
+																	484 data item (列标题) 热聊 ID: a11y-th-mwl7dxts-0-9
+																		485 group (组) Description: 拖动调整列宽
+																	486 data item (列标题) VIP ID: a11y-th-mwl7dxts-0-10
+																		487 group (组) Description: 拖动调整列宽
+																	488 data item (列标题) 群编号 ID: a11y-th-mwl7dxts-0-11
+																		489 group (组) Description: 拖动调整列宽
+																	490 data item (列标题) 跟票 ID: a11y-th-mwl7dxts-0-12
+																		491 group (组) Description: 拖动调整列宽
+																	492 data item (列标题) 入金 ID: a11y-th-mwl7dxts-0-13
+																		493 group (组) Description: 拖动调整列宽
+																	494 data item (列标题) 登记日期 ID: a11y-th-mwl7dxts-0-14
+																		495 group (组) Description: 拖动调整列宽
+																	496 data item (列标题) 操作 ID: a11y-th-mwl7dxts-0-15
+																		497 group (组) Description: 拖动调整列宽
+																498 data item (行)
+																	499 data item (项)
+																		500 checkbox (复选框) (settable, string)
+																	501 data item (项) 标记为重点关注 隔 隔离测试客户
+																		502 button (按钮) 标记为重点关注 Description: 标记为重点关注
+																	503 data item (项) 919000000051
+																	504 data item (项) 919000000051
+																	505 data item (项) 单导
+																	506 data item (项) —
+																	507 data item (项)
+																	508 data item (项)
+																	509 data item (项)
+																	510 data item (项) —
+																	511 data item (项) —
+																	512 data item (项)
+																	513 data item (项) —
+																	514 data item (项) —
+																	515 data item (项) —
+																	516 data item (项) 移入回收站
+																		517 button (按钮) 移入回收站
+																518 data item (行)
+																	519 data item (项)
+																		520 checkbox (复选框) (settable, string)
+																	521 data item (项) 标记为重点关注 人 人工资料保护测试
+																		522 button (按钮) 标记为重点关注 Description: 标记为重点关注
+																	523 data item (项) 919000000052
+																	524 data item (项) 919000000052
+																	525 data item (项) 单导
+																	526 data item (项) —
+																	527 data item (项)
+																	528 data item (项)
+																	529 data item (项)
+																	530 data item (项) —
+																	531 data item (项) —
+																	532 data item (项)
+																	533 data item (项) —
+																	534 data item (项) —
+																	535 data item (项) —
+																	536 data item (项) 移入回收站
+																		537 button (按钮) 移入回收站
+															538 text (文本) 显示 1–2 条，共 2 条
+															539 button (按钮) ‹
+															540 button (按钮) 1
+															541 button (按钮) ›
+															542 text (文本) 跳至
+															543 spinner (调节按钮) (settable, float) 跳至 Value: 1
+															544 combo box (组合框) (settable, string) Value: 10
+															545 group (导航) 客户关联业务
+																546 button (按钮) 群组查看关联记录 →
+																547 button (按钮) VIP查看关联记录 →
+																548 button (按钮) 跟票查看关联记录 →
+																549 button (按钮) 报名查看关联记录 →
+																550 button (按钮) 入金查看关联记录 →
+															551 group (补充) 客户档案预览 ID: customerCenterPreview
+																552 text (文本) 客户 360°
+																553 text (文本) 当前列表首位
+																554 text (文本) 隔
+																555 text (文本) 隔离测试客户
+																556 text (文本) 919000000051
+																557 text (标题) 基础资料
+																558 text (文本) 手机号码
+																559 text (文本) 919000000051
+																560 text (文本) 身份标识
+																561 text (文本) —
+																562 text (文本) 渠道
+																563 text (文本) 单导
+																564 text (文本) 页面分类
+																565 text (文本) —
+																566 text (文本) 资质评级
+																567 text (文本) 待评估
+																568 text (标题) 热聊资料
+																569 text (文本) 热聊状态
+																570 text (文本) 否
+																571 text (文本) 客户阶段
+																572 text (文本) 未分类
+																573 text (标题) 业务概览
+																574 text (文本) 群组
+																575 text (文本) —
+																576 text (文本) 跟票
+																577 text (文本) 暂无记录
+																578 text (文本) 入金
+																579 text (文本) 暂无记录
+																580 text (标题) 群组关系
+																581 text (文本) 暂无 WS 群组关系记录
+																582 text (标题) AI 摘要
+																583 text (文本) 尚无聊天分析摘要
+																584 text (标题) 跟进时间线
+																585 text (文本) 上次跟进
+																586 text (文本) —
+																587 text (文本) 下次跟进
+																588 text (文本) 未安排
+																589 text (文本) CRM 阶段
+																590 text (文本) 新线索
+																591 button (按钮) 打开完整档案
+														122 group (章节页脚)
+															233 text (文本) 本机运行 · 数据仅保存在本机
+															592 text (文本) 本地客户库 · 2 位客户
+															125 text (文本) 本地自动快照 · 保留数量可配置
+													126 group (组) ID: toastRegion
+								28 pane (区域)
+						29 pane (区域)
+		8 title bar (标题栏) (settable, string) Value: 知客 Stage 5.1 · ISOLATED 验收
+			9 menu bar (菜单栏) 系统 ID: MenuBar
+				10 menu item (菜单项) 系统
+			11 button (按钮) 最小化
+			12 button (按钮) 还原
+			13 button (按钮) 关闭
+
+Document text: ```
+搜索姓名、号码、群编号
+```

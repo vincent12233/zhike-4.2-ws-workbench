@@ -1,0 +1,21 @@
+Isolated visual failure root retained: <USERPROFILE>\AppData\Local\Temp\<ISOLATED-FIXTURE-37>
+AssertionError [ERR_ASSERTION]: The owned fresh profile must start with exactly one page
+
+2 !== 1
+
+    at Object.readResult (<USERPROFILE>\Documents\Codex\2026-11-04\new-chat\work\project-review\visual-system-worktrees\integration\tests\helpers\isolated-edge-runner.cjs:624:14)
+    at async runProcessLifecycle (<USERPROFILE>\Documents\Codex\2026-11-04\new-chat\work\project-review\visual-system-worktrees\integration\tests\helpers\isolated-edge-runner.cjs:258:14)
+    at async runIsolatedEdge (<USERPROFILE>\Documents\Codex\2026-11-04\new-chat\work\project-review\visual-system-worktrees\integration\tests\helpers\isolated-edge-runner.cjs:606:18)
+    at async run (<USERPROFILE>\Documents\Codex\2026-11-04\new-chat\work\project-review\visual-system-worktrees\integration\scripts\delivery\s1-main-visual.test.cjs:126:20)
+    at async captureMainScreenshots (<USERPROFILE>\Documents\Codex\2026-11-04\new-chat\work\project-review\visual-system-worktrees\integration\scripts\delivery\s1-main-visual.test.cjs:220:39)
+    at async main (<USERPROFILE>\Documents\Codex\2026-11-04\new-chat\work\project-review\visual-system-worktrees\integration\scripts\delivery\s1-main-visual.test.cjs:235:5)
+    at async main (<USERPROFILE>\Documents\Codex\2026-11-04\new-chat\work\project-review\visual-system-worktrees\integration\.tools\edge-exit-fix\bootstrap-close-harness.cjs:131:3) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 2,
+  expected: 1,
+  operator: 'strictEqual',
+  diff: 'simple',
+  metadata: [Object],
+  cleanupSafe: true
+}

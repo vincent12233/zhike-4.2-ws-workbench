@@ -1,0 +1,315 @@
+{
+  "schemaVersion": 1,
+  "kind": "synthetic-readonly-synchronous-metrics-baseline",
+  "command": "node --expose-gc .tools/delivery-s2-projection-performance.cjs",
+  "startedAt": "2026-11-17T02:27:12.291Z",
+  "sourceSha256": "81e3b87098afb30ab85392de462989367a1c1f77cc1cb95bf4eeedc3865d84b1",
+  "environment": {
+    "platform": "win32",
+    "release": "10.0.26300",
+    "arch": "x64",
+    "node": "v24.22.1",
+    "v8": "13.6.233.17-node.58",
+    "cpuModel": "13th Gen Intel(R) Core(TM) i7-13650HX",
+    "logicalCpus": 20,
+    "execArgv": [
+      "--expose-gc"
+    ]
+  },
+  "method": {
+    "sizes": [
+      1000,
+      10000,
+      50000
+    ],
+    "coldRuns": 5,
+    "warmBatches": 5,
+    "warmCallsPerBatch": 1000,
+    "cold": "New synthetic state and VM; source compilation/dataset generation/explicit pre-run GC excluded; first getMetricsProjection({scope:global-crm}) timed synchronously.",
+    "warm": "Same state/read metadata/revision/asOfDay; same frozen DTO identity verified; 1000 calls per batch, total and per-call average recorded.",
+    "data": "Synthetic customers, two followups/customer, registrations 25%, tickets 20%, deposits 12.5%, approx 2% soft-deleted; mixed due dates/status/CRM flags.",
+    "scope": "Actual shipped app.js production aggregation, active-customer/business/CRM caches and DTO freezing in Node VM; no DOM, native WebView2, disk IO or network. Not a browser performance acceptance or invented pass threshold."
+  },
+  "runs": [
+    {
+      "customers": 1000,
+      "cold": [
+        {
+          "iteration": 1,
+          "durationMs": 165.3005,
+          "activeCustomers": 979,
+          "seriesBuckets": 7,
+          "metrics": 15
+        },
+        {
+          "iteration": 2,
+          "durationMs": 128.49730000000005,
+          "activeCustomers": 979,
+          "seriesBuckets": 7,
+          "metrics": 15
+        },
+        {
+          "iteration": 3,
+          "durationMs": 129.4633,
+          "activeCustomers": 979,
+          "seriesBuckets": 7,
+          "metrics": 15
+        },
+        {
+          "iteration": 4,
+          "durationMs": 127.54909999999995,
+          "activeCustomers": 979,
+          "seriesBuckets": 7,
+          "metrics": 15
+        },
+        {
+          "iteration": 5,
+          "durationMs": 129.8691,
+          "activeCustomers": 979,
+          "seriesBuckets": 7,
+          "metrics": 15
+        }
+      ],
+      "warm": [
+        {
+          "batch": 1,
+          "calls": 1000,
+          "totalMs": 4.13900000000001,
+          "perCallMs": 0.00413900000000001
+        },
+        {
+          "batch": 2,
+          "calls": 1000,
+          "totalMs": 3.6955999999998994,
+          "perCallMs": 0.0036955999999998992
+        },
+        {
+          "batch": 3,
+          "calls": 1000,
+          "totalMs": 3.835800000000063,
+          "perCallMs": 0.0038358000000000628
+        },
+        {
+          "batch": 4,
+          "calls": 1000,
+          "totalMs": 3.1054000000000315,
+          "perCallMs": 0.0031054000000000316
+        },
+        {
+          "batch": 5,
+          "calls": 1000,
+          "totalMs": 3.1321000000000367,
+          "perCallMs": 0.003132100000000037
+        }
+      ],
+      "data": {
+        "activeCustomers": 979,
+        "followups": 2000,
+        "registrations": 250,
+        "tickets": 200,
+        "deposits": 125
+      },
+      "coldSummary": {
+        "samples": 5,
+        "minMs": 127.54909999999995,
+        "medianMs": 129.4633,
+        "maxMs": 165.3005,
+        "meanMs": 136.13586
+      },
+      "warmPerCallSummary": {
+        "samples": 5,
+        "minMs": 0.0031054000000000316,
+        "medianMs": 0.0036955999999998992,
+        "maxMs": 0.00413900000000001,
+        "meanMs": 0.003581580000000008
+      }
+    },
+    {
+      "customers": 10000,
+      "cold": [
+        {
+          "iteration": 1,
+          "durationMs": 1340.3662,
+          "activeCustomers": 9795,
+          "seriesBuckets": 7,
+          "metrics": 15
+        },
+        {
+          "iteration": 2,
+          "durationMs": 1388.5423999999998,
+          "activeCustomers": 9795,
+          "seriesBuckets": 7,
+          "metrics": 15
+        },
+        {
+          "iteration": 3,
+          "durationMs": 1471.4960999999994,
+          "activeCustomers": 9795,
+          "seriesBuckets": 7,
+          "metrics": 15
+        },
+        {
+          "iteration": 4,
+          "durationMs": 1429.915,
+          "activeCustomers": 9795,
+          "seriesBuckets": 7,
+          "metrics": 15
+        },
+        {
+          "iteration": 5,
+          "durationMs": 1474.7239,
+          "activeCustomers": 9795,
+          "seriesBuckets": 7,
+          "metrics": 15
+        }
+      ],
+      "warm": [
+        {
+          "batch": 1,
+          "calls": 1000,
+          "totalMs": 3.4068999999999505,
+          "perCallMs": 0.0034068999999999506
+        },
+        {
+          "batch": 2,
+          "calls": 1000,
+          "totalMs": 2.847000000000662,
+          "perCallMs": 0.002847000000000662
+        },
+        {
+          "batch": 3,
+          "calls": 1000,
+          "totalMs": 2.9792999999999665,
+          "perCallMs": 0.0029792999999999664
+        },
+        {
+          "batch": 4,
+          "calls": 1000,
+          "totalMs": 3.036399999999958,
+          "perCallMs": 0.003036399999999958
+        },
+        {
+          "batch": 5,
+          "calls": 1000,
+          "totalMs": 3.094899999999143,
+          "perCallMs": 0.003094899999999143
+        }
+      ],
+      "data": {
+        "activeCustomers": 9795,
+        "followups": 20000,
+        "registrations": 2500,
+        "tickets": 2000,
+        "deposits": 1250
+      },
+      "coldSummary": {
+        "samples": 5,
+        "minMs": 1340.3662,
+        "medianMs": 1429.915,
+        "maxMs": 1474.7239,
+        "meanMs": 1421.0087199999998
+      },
+      "warmPerCallSummary": {
+        "samples": 5,
+        "minMs": 0.002847000000000662,
+        "medianMs": 0.003036399999999958,
+        "maxMs": 0.0034068999999999506,
+        "meanMs": 0.0030728999999999358
+      }
+    },
+    {
+      "customers": 50000,
+      "cold": [
+        {
+          "iteration": 1,
+          "durationMs": 7635.2808,
+          "activeCustomers": 48979,
+          "seriesBuckets": 7,
+          "metrics": 15
+        },
+        {
+          "iteration": 2,
+          "durationMs": 7522.456700000001,
+          "activeCustomers": 48979,
+          "seriesBuckets": 7,
+          "metrics": 15
+        },
+        {
+          "iteration": 3,
+          "durationMs": 7588.8184,
+          "activeCustomers": 48979,
+          "seriesBuckets": 7,
+          "metrics": 15
+        },
+        {
+          "iteration": 4,
+          "durationMs": 7594.245699999996,
+          "activeCustomers": 48979,
+          "seriesBuckets": 7,
+          "metrics": 15
+        },
+        {
+          "iteration": 5,
+          "durationMs": 7556.619599999998,
+          "activeCustomers": 48979,
+          "seriesBuckets": 7,
+          "metrics": 15
+        }
+      ],
+      "warm": [
+        {
+          "batch": 1,
+          "calls": 1000,
+          "totalMs": 3.6099000000031083,
+          "perCallMs": 0.0036099000000031083
+        },
+        {
+          "batch": 2,
+          "calls": 1000,
+          "totalMs": 2.9738999999972293,
+          "perCallMs": 0.0029738999999972295
+        },
+        {
+          "batch": 3,
+          "calls": 1000,
+          "totalMs": 2.959900000001653,
+          "perCallMs": 0.0029599000000016533
+        },
+        {
+          "batch": 4,
+          "calls": 1000,
+          "totalMs": 2.8862999999983003,
+          "perCallMs": 0.0028862999999983005
+        },
+        {
+          "batch": 5,
+          "calls": 1000,
+          "totalMs": 2.86699999999837,
+          "perCallMs": 0.00286699999999837
+        }
+      ],
+      "data": {
+        "activeCustomers": 48979,
+        "followups": 100000,
+        "registrations": 12500,
+        "tickets": 10000,
+        "deposits": 6250
+      },
+      "coldSummary": {
+        "samples": 5,
+        "minMs": 7522.456700000001,
+        "medianMs": 7588.8184,
+        "maxMs": 7635.2808,
+        "meanMs": 7579.48424
+      },
+      "warmPerCallSummary": {
+        "samples": 5,
+        "minMs": 0.00286699999999837,
+        "medianMs": 0.0029599000000016533,
+        "maxMs": 0.0036099000000031083,
+        "meanMs": 0.0030593999999997323
+      }
+    }
+  ],
+  "finishedAt": "2026-11-17T02:27:59.238Z"
+}

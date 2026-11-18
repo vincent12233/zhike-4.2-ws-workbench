@@ -1,0 +1,1094 @@
+{
+  "sources": {
+    "finalAll": ".tools/dynamic-v4/full-regression-final.log",
+    "serialWs": ".tools/dynamic-v4/ws-regression-serial.log",
+    "mainResult": ".tools/visual-usability/main-visual/1794937090207-b9cbe0f2-2291-40c2-8c13-d4fedbc08485.result.json"
+  },
+  "mode": "ReadOnly-existing-evidence-no-rerun",
+  "finalAll": {
+    "runs": 291,
+    "uniqueRuns": 291,
+    "passed": 289,
+    "failed": 2,
+    "failedLabels": [
+      "Stage 5.1 real workspace collapsed layout",
+      "Delivery S1 actual main renderers and shared design system"
+    ],
+    "nestedPassLinesIgnored": 123
+  },
+  "wsSubset": {
+    "serialWsRunCount": 160,
+    "uniqueSerialWsLabels": 160,
+    "executedInFinalAll": 160,
+    "passedInFinalAll": 160,
+    "failedInFinalAll": 0,
+    "notRecordedInFinalAll": 0,
+    "rows": [
+      {
+        "label": "syntax resources\\app\\app.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\migration-runner.cjs",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\accessibility-enhancements.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\ai-crm-suggestion-core.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\ai-job-pipeline-core.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\ai-mock-provider.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\ai-review-center-ui.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\business-enhancements.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\business-rule-core.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\customer-governance-core.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\customer-governance-ui.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\desktop-host.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\desktop-performance.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\gpt-assistant.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\hot-chat-profile-core.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\metrics-charts.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\operations-core.cjs",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\operations-ui.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\operations-upgrade.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\performance-enhancements.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\phone-registry.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\productivity.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\runtime-customizer.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\scroll-coordinator.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\smart-import.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\ticket-record-core.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\v4-data-center.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\workspace-shell.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\ws-business-pages.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\ws-crm-sync-core.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\ws-group-manager-core.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\ws-group-mock-transport.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\ws-group-monitor-core.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\ws-media-core.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\ws-scope.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\ws-workbench-core.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\ws-workbench.js",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\modules\\ws-workspace-query.cjs",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\server.mjs",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\sidecar-write-coordinator.cjs",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\state-delta.cjs",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\worker-fencing-gate.cjs",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "syntax resources\\app\\worker-queue-adapter.cjs",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 3 group feature flags",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 3 Worker and group-manager isolation gate",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 3 group manager migration",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 3 group manager core",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 3 group manager isolated API and Mock Transport",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 3 WS workspace navigation",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 4 AI job pipeline core",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 4 CRM suggestion core",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 4 migration and schema",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 4 Worker AI flags",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 4 Mock AI provider",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 4 AI review center UI",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 4 desktop ApiClient queue and CRM contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 4 isolated AI pipeline API",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS core rules",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS direct-only collection and AI policy",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS VIP member task and alert isolation",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS and GPT Horizon visual reachability",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS AI CRM sync rules",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS unified customer archive UI contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS CRM customer-link trust boundary",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS workbench initialization",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS API and SQLite",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS export streaming contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS export and media schema",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS complete export and export jobs",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS media staging and attachment broadcast",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS media send runtime contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS broadcast, translation and send audit",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Failed"
+      },
+      {
+        "label": "WS VIP customer and group-monitor scope separation",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS conversation cursor pagination",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS conversation incremental watermark runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS list preview update",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS follow-up chain dedupe and refresh",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS task lifecycle and multi-account history ingest",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS complete original text and backup roundtrip",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS intelligent follow-up strategy and CRM persistence",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS live refresh event contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS non-blocking AI pump runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Home WS follow-up runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS SQLite v6 migration",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS external-id uniqueness migration",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS local security contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS multi-account database isolation",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS account runtime recovery",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS native collector async full-list scan contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS native collector P0 durability contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS native collector diagnostics contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS native group monitor bridge contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS group monitor core",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS group monitor migration",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS group monitor sidecar API",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS group monitor ingest",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS customer group status projection",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS customer group status projection runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS native background lifecycle and bounds contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS process runtime coordinator contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS process WebView session pool contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS process runtime coordinator scheduling",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS parent-route visibility runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS hidden native scheduler runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS native group exclusion runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS native conversation identity runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS durable queue Web JSON and API roundtrip",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS native collector chunk runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS native collector physical-bottom runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS native collector in-flight discovery runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS native collector full-list stall runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS native collector navigation/retry runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS native collector history packet runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS native collector foreground isolation runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS native media bridge contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS unread skip contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS strict unread detection runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS read-history collector runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS ChatKnow UI contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS group monitor UI contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS group discovery contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS broadcast and translation UI contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS collection and CRM sync contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS complete per-customer history contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS chunked full-history AI and checkpoint contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS durable AI queue contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS AI queue UI metrics contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS resize performance contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS frontend high-priority fixes",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "project stability and lifecycle contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS 50k conversation list render budget",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS bridge recovery contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS scroll routing contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS A+ dual-layer layout contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS data archive customer bridge",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS data archive summary bridge",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS data archive UI bridge",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS data archive drilldown UI",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS group catalog runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS background isolation runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS multi-account detection contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS scroll stability contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS assistant drawer runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "hot-chat profile API",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "hot-chat profile core",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "hot-chat profile migration",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "request coalescer cancellation",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "task6 stability contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "desktop performance contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "CRM phone index and archive diagnostics",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "unified scroll system contract",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "unified scroll coordinator runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "WS route sidebar policy runtime",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 5.5C-1A real isolated send/media/AI risk API",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 5.5C-1A send UI evidence and async ownership",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 5.5C-1A production native send qualification",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 5.5C-1A actual send DOM and bridge outcomes",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "Stage 5.5C-1A provider modal generation and stale responses",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "RD02 actual Native authenticated-profile and hidden-collector boundary",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      },
+      {
+        "label": "RD02 WS blocked collection capability and preserved foreground actions",
+        "executedInFinalAll": true,
+        "finalAllStatus": "Passed",
+        "serialWsStatus": "Passed"
+      }
+    ]
+  },
+  "mainFontReview": {
+    "assertionSource": "scripts/delivery/s1-main-visual.test.cjs:251-256",
+    "cases": [
+      {
+        "index": 0,
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "pageCount": 20,
+        "errors": [],
+        "unreadable": [],
+        "specialFontFailures": [],
+        "controlFontFailures": []
+      },
+      {
+        "index": 1,
+        "viewport": {
+          "width": 2560,
+          "height": 1440
+        },
+        "pageCount": 20,
+        "errors": [],
+        "unreadable": [],
+        "specialFontFailures": [],
+        "controlFontFailures": []
+      },
+      {
+        "index": 2,
+        "viewport": {
+          "width": 1536,
+          "height": 864
+        },
+        "pageCount": 20,
+        "errors": [],
+        "unreadable": [],
+        "specialFontFailures": [],
+        "controlFontFailures": []
+      },
+      {
+        "index": 3,
+        "viewport": {
+          "width": 2048,
+          "height": 1152
+        },
+        "pageCount": 20,
+        "errors": [],
+        "unreadable": [],
+        "specialFontFailures": [],
+        "controlFontFailures": []
+      },
+      {
+        "index": 4,
+        "viewport": {
+          "width": 1280,
+          "height": 720
+        },
+        "pageCount": 20,
+        "errors": [],
+        "unreadable": [],
+        "specialFontFailures": [],
+        "controlFontFailures": []
+      },
+      {
+        "index": 5,
+        "viewport": {
+          "width": 1707,
+          "height": 960
+        },
+        "pageCount": 20,
+        "errors": [],
+        "unreadable": [],
+        "specialFontFailures": [],
+        "controlFontFailures": []
+      },
+      {
+        "index": 6,
+        "viewport": {
+          "width": 820,
+          "height": 540
+        },
+        "pageCount": 20,
+        "errors": [],
+        "unreadable": [],
+        "specialFontFailures": [],
+        "controlFontFailures": []
+      },
+      {
+        "index": 7,
+        "viewport": {
+          "width": 1024,
+          "height": 576
+        },
+        "pageCount": 20,
+        "errors": [],
+        "unreadable": [],
+        "specialFontFailures": [],
+        "controlFontFailures": []
+      }
+    ],
+    "conclusion": "Saved browser observations satisfy the unchanged 14px body/special and 15px control font assertions; this does NOT mark the timed-out main test Passed.",
+    "fullTestStatus": "Failed (Edge lifecycle timeout retained)",
+    "recordedPageObservations": 160,
+    "assertionScope": "Exact existing smallText filter (eyebrow/metric/kpi/legend/activity-time/SVG/ops6-card-tags exceptions retained), special font >= 14px, control font >= 15px. Saved observations only; no Edge rerun."
+  }
+}

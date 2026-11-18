@@ -1,0 +1,10 @@
+{
+  "head": "e0b534c28d12e5d91e13c9380ca2bb6acca08896",
+  "startedUtc": "2026-11-18T14:32:48.7545491Z",
+  "finishedUtc": "2026-11-18T14:46:05.4980561Z",
+  "exitCode": 1,
+  "command": "resources/app/node.exe scripts/run-tests.cjs all",
+  "edgeObserver": true,
+  "edgeResourceDiagnostics": true,
+  "productionOpened": false
+}

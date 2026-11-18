@@ -1,0 +1,22 @@
+{
+  "stage": "5.1",
+  "status": "Passed",
+  "test": "existing isolated WorkerRuntimeController lifecycle",
+  "durationMs": 4651.2,
+  "parentCpuUserMs": 31,
+  "parentCpuSystemMs": 16,
+  "lifecycle": {
+    "heartbeat": true,
+    "cancellation": true,
+    "crashRecovery": true,
+    "tokenRotation": true,
+    "restartStorm": true,
+    "concurrentLifecycle": true,
+    "stopped": true,
+    "temporaryRootClean": true
+  },
+  "matchingTestProcessesRemaining": 0,
+  "workerCpuAndMemory": "NotMeasuredByThisWrapper",
+  "productionWorkerStarted": false,
+  "productionDatabaseOpened": false
+}

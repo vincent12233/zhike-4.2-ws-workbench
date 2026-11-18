@@ -1,0 +1,51 @@
+{
+  "status": "Failed",
+  "passedParameterChecks": 13,
+  "completedCases": [
+    {
+      "mode": "real-windows-exclusive-readiness",
+      "status": "Passed",
+      "testedStatus": "Passed",
+      "busyPolls": 1
+    },
+    {
+      "mode": "real-windows-bounded-readiness",
+      "status": "Passed",
+      "testedStatus": "Failed",
+      "busyPolls": 15
+    },
+    {
+      "mode": "normal",
+      "status": "Passed",
+      "testedStatus": "Passed",
+      "errorCode": null,
+      "elapsedMs": 548
+    },
+    {
+      "mode": "invalid-result",
+      "status": "Passed",
+      "testedStatus": "Failed",
+      "errorCode": "INVALID_RESULT",
+      "elapsedMs": 534
+    },
+    {
+      "mode": "result-timeout",
+      "status": "Passed",
+      "testedStatus": "Failed",
+      "errorCode": "EDGE_RUNNER_TIMEOUT",
+      "elapsedMs": 2300
+    },
+    {
+      "mode": "close-timeout",
+      "status": "Passed",
+      "testedStatus": "Failed",
+      "errorCode": "EDGE_RUNNER_TIMEOUT",
+      "elapsedMs": 3009
+    }
+  ],
+  "failure": {
+    "mode": "controlled-node-probe-close-timeout",
+    "actualPhase": "identity",
+    "expectedPhase": "identity-probe-close"
+  }
+}

@@ -1,0 +1,1681 @@
+{
+  "schemaVersion": 1,
+  "title": "Dynamic Workspace V4 全项目覆盖草稿",
+  "baseline": "db4abfb",
+  "branch": "upgrade/zhike-61-ab-delivery",
+  "production": "FROZEN",
+  "s3": "Blocked",
+  "generatedAt": "2026-11-17T16:45:06.349Z",
+  "method": "读取已有review、release矩阵与当前源码；不代表本轮原生或浏览器已验收",
+  "priorEvidence": [
+    "docs/review/2026-11-17/知客项目现状审核_2026-11-17.md",
+    "docs/release/acceptance-matrix.md",
+    "docs/release/visual-usability-upgrade-2026-11-17.md",
+    "docs/release/horizon-pro-acceptance-followup-2026-11-17.md"
+  ],
+  "pages": [
+    {
+      "id": "M01",
+      "route": "home",
+      "title": "今日工作台",
+      "renderer": {
+        "file": "resources/app/app.js",
+        "symbol": "renderHome",
+        "line": 565
+      },
+      "selectors": [
+        "home-dashboard-grid",
+        "horizon-workbench-hero",
+        "horizon-kpi"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/home-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "已有真实 KPI / 趋势 / 提醒；需升级白底数字地平线与有限动效，不换统计口径",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M02",
+      "route": "intake",
+      "title": "快速录入",
+      "renderer": {
+        "file": "resources/app/app.js",
+        "symbol": "renderIntake",
+        "line": 855
+      },
+      "selectors": [
+        "intake-preview",
+        "intake-textarea"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/business-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "原解析/预览/保存流程复用；需分区层次和警告状态一致",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M03",
+      "route": "operations",
+      "title": "任务中心",
+      "renderer": {
+        "file": "resources/app/modules/operations-ui.js",
+        "symbol": "taskPage",
+        "line": 174
+      },
+      "selectors": [
+        "ops6-page",
+        "ops-task-list",
+        "ops-task",
+        "ops6-task-insight"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/operations-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "已有完成率图与真实任务状态；紫色强调，不改完成/恢复规则",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M04",
+      "route": "stage-board",
+      "title": "阶段看板",
+      "renderer": {
+        "file": "resources/app/modules/operations-ui.js",
+        "symbol": "boardPage",
+        "line": 287
+      },
+      "selectors": [
+        "ops-board",
+        "ops-column",
+        "ops-card",
+        "ops-stage-open"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/operations-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "已有真实阶段图；青色分列，不动画化拖动节点",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M05",
+      "route": "customers",
+      "title": "客户中心",
+      "renderer": {
+        "file": "resources/app/app.js",
+        "symbol": "renderCustomers",
+        "line": 723
+      },
+      "selectors": [
+        "customer6-workspace",
+        "customer6-focus",
+        "data-table",
+        "quick-filters"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/business-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "已有可收预览/主档抽屉和分页；保留16px正文与紧凑密度",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M06",
+      "route": "segments",
+      "title": "分类视图",
+      "renderer": {
+        "file": "resources/app/app.js",
+        "symbol": "renderSegments",
+        "line": 716
+      },
+      "selectors": [
+        "segment-top",
+        "segment-summary",
+        "saved-view-strip"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/business-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "已有保存筛选；强调分类层次，不改变相对日期语义",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M07",
+      "route": "hot",
+      "title": "热聊管理",
+      "renderer": {
+        "file": "resources/app/app.js",
+        "symbol": "renderHot",
+        "line": 888
+      },
+      "selectors": [
+        "business-summary",
+        "business-kpi",
+        "subnav",
+        "data-table"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/business-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "使用暖橙；来源仍为真实热聊标记及业务记录",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M08",
+      "route": "groups",
+      "title": "本地群组管理",
+      "renderer": {
+        "file": "resources/app/app.js",
+        "symbol": "renderGroups",
+        "line": 978
+      },
+      "selectors": [],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/business-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "本地关系聚合与 WS 目录不同；绿色/青色状态不能假设实时同步",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M09",
+      "route": "vip",
+      "title": "VIP管理",
+      "renderer": {
+        "file": "resources/app/app.js",
+        "symbol": "renderVip",
+        "line": 887
+      },
+      "selectors": [
+        "business-summary",
+        "business-kpi",
+        "subnav",
+        "data-table"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/business-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "金色业务标识；VIP客户不等于VIP平台群",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M10",
+      "route": "tickets",
+      "title": "跟票管理",
+      "renderer": {
+        "file": "resources/app/app.js",
+        "symbol": "renderBusiness",
+        "line": 905
+      },
+      "selectors": [
+        "table-panel",
+        "data-table"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/business-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "靛蓝强调；同客户不同股票/买卖日记录不合并",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M11",
+      "route": "registrations",
+      "title": "报名统计",
+      "renderer": {
+        "file": "resources/app/app.js",
+        "symbol": "renderRegistrations",
+        "line": 1165
+      },
+      "selectors": [
+        "business-summary",
+        "data-table"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/business-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "绿色强调；客户人数与报名记录数区分",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M12",
+      "route": "deposits",
+      "title": "入金管理",
+      "renderer": {
+        "file": "resources/app/app.js",
+        "symbol": "renderBusiness",
+        "line": 905
+      },
+      "selectors": [
+        "business-summary",
+        "data-table"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/business-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "青绿强调；不修改币种合计和已确认语义",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M13",
+      "route": "analytics",
+      "title": "统计分析",
+      "renderer": {
+        "file": "resources/app/app.js",
+        "symbol": "renderAnalytics",
+        "line": 990
+      },
+      "selectors": [
+        "crm-pipeline-panel"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/business-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "现有真实图表优先；不造图、不改变分母/来源",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M14",
+      "route": "ws-workbench",
+      "title": "WS入口",
+      "renderer": {
+        "file": "resources/app/modules/ws-workbench.js",
+        "symbol": "render",
+        "line": 3837
+      },
+      "selectors": [
+        "ws-workbench-shell",
+        "ws-workspace-nav",
+        "ws-browser-host"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/ws-workbench.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "入口与WS03共用原生容器；截图不证明原生Core生命周期",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M15",
+      "route": "gpt",
+      "title": "GPT运营助手",
+      "renderer": {
+        "file": "resources/app/modules/gpt-assistant.js",
+        "symbol": "render",
+        "line": 128
+      },
+      "selectors": [
+        "gpt-setup"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/gpt-modern.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "真实异步renderer；配置仅隔离状态，不调用付费AI",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M16",
+      "route": "automation",
+      "title": "本地自动化",
+      "renderer": {
+        "file": "resources/app/app.js",
+        "symbol": "renderAutomation",
+        "line": 994
+      },
+      "selectors": [
+        "governance-page-hero"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/global-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "只展示已有本地规则与建议，不把本地排序叫AI推理",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M17",
+      "route": "quality",
+      "title": "数据治理",
+      "renderer": {
+        "file": "resources/app/app.js",
+        "symbol": "renderQuality",
+        "line": 1043
+      },
+      "selectors": [
+        "governance-page-hero"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/global-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "需覆盖复核/冲突/警告色；保留人工审核与去重规则",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M18",
+      "route": "data",
+      "title": "数据中心",
+      "renderer": {
+        "file": "resources/app/app.js",
+        "symbol": "renderData",
+        "line": 1044
+      },
+      "selectors": [
+        "governance-page-hero"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/global-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "已有备份/恢复入口与原v4扩展；恢复确认属于低频弹窗",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M19",
+      "route": "activity",
+      "title": "操作记录",
+      "renderer": {
+        "file": "resources/app/app.js",
+        "symbol": "renderActivity",
+        "line": 1045
+      },
+      "selectors": [
+        "governance-page-hero",
+        "activity-list",
+        "activity-item"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/global-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "真实本机操作记录；不可把运行快照冒充审计",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M20",
+      "route": "recycle",
+      "title": "回收站",
+      "renderer": {
+        "file": "resources/app/app.js",
+        "symbol": "renderRecycle",
+        "line": 1046
+      },
+      "selectors": [
+        "governance-page-hero",
+        "data-table"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/global-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "危险操作明确、不自动执行；空态需要单独截图",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M21",
+      "route": "settings",
+      "title": "系统设置",
+      "renderer": {
+        "file": "resources/app/app.js",
+        "symbol": "renderSettings",
+        "line": 1099
+      },
+      "selectors": [
+        "governance-page-hero",
+        "settings-grid",
+        "settings-complete-panel"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/global-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "主题/密度/动效/安全等现有设置应统一，不重写存储",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M22",
+      "route": "phone-registry",
+      "title": "手机号登记",
+      "renderer": {
+        "file": "resources/app/modules/phone-registry.js",
+        "symbol": "render",
+        "line": 9
+      },
+      "selectors": [
+        "registry-toolbar",
+        "registry-pagination"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/phone-registry.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "独立号码登记库；不自动建 CRM；需导入预览、重复、空态",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "M23",
+      "route": "followups",
+      "title": "兼容客户跟进",
+      "renderer": {
+        "file": "resources/app/app.js",
+        "symbol": "renderFollowups",
+        "line": 869
+      },
+      "selectors": [],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/business-6.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "实际可达的隐藏route；原客户计划非第二套任务库",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "WS01",
+      "route": "overview",
+      "title": "WS工作台首页",
+      "renderer": {
+        "file": "resources/app/modules/ws-workbench.js",
+        "symbol": "renderWorkspaceOperationalOverview",
+        "line": 3291
+      },
+      "selectors": [
+        "ws-workspace-metrics",
+        "ws-workspace-card"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/ws-workbench.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "已加载范围与未知值明示，不伪造在线状态",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "WS02",
+      "route": "accounts",
+      "title": "WS账号管理",
+      "renderer": {
+        "file": "resources/app/modules/ws-workbench.js",
+        "symbol": "renderAccountList",
+        "line": 3573
+      },
+      "selectors": [
+        "ws-account-row",
+        "ws-account-form",
+        "ws-workspace-metrics"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/ws-workbench.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "真实账号列表/切换入口；隔离fixture不授权平台账号",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "WS03",
+      "route": "chat",
+      "title": "WS前台聊天",
+      "renderer": {
+        "file": "resources/app/modules/ws-workbench.js",
+        "symbol": "render",
+        "line": 3837
+      },
+      "selectors": [
+        "ws-login-toolbar",
+        "ws-center-panel",
+        "ws-assist-panel",
+        "wsBrowserHost"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/ws-workbench.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "仅外壳美化；原生WebView内部不着色、不创建仿制会话",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "WS04",
+      "route": "groups",
+      "title": "WS群组管理",
+      "renderer": {
+        "file": "resources/app/modules/ws-workbench.js",
+        "symbol": "renderGroupDirectory",
+        "line": 3122
+      },
+      "selectors": [
+        "ws-group-directory",
+        "ws-group-table",
+        "ws-group-details"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/ws-workbench.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "原账号目录/筛选/详情；RD02禁止后台路径不恢复",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "WS05",
+      "route": "members",
+      "title": "WS群成员",
+      "renderer": {
+        "file": "resources/app/modules/ws-business-pages.js",
+        "symbol": "renderMembers",
+        "line": 118
+      },
+      "selectors": [
+        "ws-workspace-card"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/ws-workbench.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "账号/群组双scope，不把未知角色说成管理员",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "WS06",
+      "route": "collection",
+      "title": "WS数据采集",
+      "renderer": {
+        "file": "resources/app/modules/ws-workbench.js",
+        "symbol": "renderCollectionCard",
+        "line": 3346
+      },
+      "selectors": [
+        "ws-collection-stats",
+        "ws-collection-card",
+        "ws-flow-strip"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/ws-workbench.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "明确FROZEN/后台采集不可用；只读历史，不改能力",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "WS07",
+      "route": "contacts",
+      "title": "WS通讯录",
+      "renderer": {
+        "file": "resources/app/modules/ws-business-pages.js",
+        "symbol": "renderDirectory",
+        "line": 97
+      },
+      "selectors": [],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/ws-workbench.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "仅已保存账号通讯录投影，不是全平台联系人",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "WS08",
+      "route": "ai",
+      "title": "WS AI助手",
+      "renderer": {
+        "file": "resources/app/modules/ws-workbench.js",
+        "symbol": "renderAnalysis",
+        "line": 3626
+      },
+      "selectors": [],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/ws-workbench.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "正式消费者关闭；已有任务/证据/审核，不生成虚假结论",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "WS09",
+      "route": "crm",
+      "title": "WS CRM客户",
+      "renderer": {
+        "file": "resources/app/modules/ws-business-pages.js",
+        "symbol": "renderCustomers",
+        "line": 132
+      },
+      "selectors": [
+        "ws-workspace-card",
+        "ws-hot-profile"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/ws-workbench.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "唯一主档+人工字段保护；候选审核仍走原服务",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "WS10",
+      "route": "tasks",
+      "title": "WS任务中心",
+      "renderer": {
+        "file": "resources/app/modules/ws-business-pages.js",
+        "symbol": "renderTasks",
+        "line": 140
+      },
+      "selectors": [
+        "ws-workspace-metrics",
+        "ws-workspace-card"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/ws-workbench.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "真实任务来源、失败和未知，不增加伪操作",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "WS11",
+      "route": "logs",
+      "title": "WS操作日志",
+      "renderer": {
+        "file": "resources/app/modules/ws-business-pages.js",
+        "symbol": "renderDirectory",
+        "line": 97
+      },
+      "selectors": [],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/ws-workbench.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "审计/快照/诊断分别标识且脱敏",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    },
+    {
+      "id": "WS12",
+      "route": "settings",
+      "title": "WS工具与设置",
+      "renderer": {
+        "file": "resources/app/modules/ws-workbench.js",
+        "symbol": "renderWsWorkspacePage",
+        "line": 3323
+      },
+      "selectors": [
+        "ws-workspace-settings-grid",
+        "ws-workspace-card"
+      ],
+      "styles": [
+        "resources/app/modules/design-system.css",
+        "resources/app/modules/global-6.css",
+        "resources/app/modules/horizon-atelier.css",
+        "resources/app/modules/ws-workbench.css"
+      ],
+      "classification": [
+        "已有业务结构符合，保留",
+        "需复用共享V4视觉升级",
+        "双主题/小窗口布局待实测"
+      ],
+      "scope": "复用现有翻译/导出/群发/设置；任何禁用能力继续禁用",
+      "sourceStatus": "Located",
+      "browserStatus": "NotTested-current-V4",
+      "nativeStatus": "NotTested-current-V4",
+      "assumptionNote": "选择器名称已在产品JS源码核实；当前route实际可见性和计算布局以新harness报告复核；不是截图验收结论。"
+    }
+  ],
+  "components": [
+    {
+      "id": "C01",
+      "name": "CRM主导航/工作区切换/顶部/底部信息",
+      "sources": [
+        "resources/app/index.html",
+        "resources/app/modules/workspace-shell.js"
+      ],
+      "selectors": [
+        "#sidebar",
+        "#mainNav",
+        ".workspace-switch",
+        ".sidebar-bottom",
+        ".topbar"
+      ],
+      "classification": "需美化，交互尺寸与折叠/滚动保留"
+    },
+    {
+      "id": "C02",
+      "name": "WS独立导航/顶部/状态",
+      "sources": [
+        "resources/app/modules/ws-workbench.js"
+      ],
+      "selectors": [
+        ".ws-workspace-nav",
+        ".ws-workspace-nav-item",
+        ".ws-workspace-nav-status",
+        ".ws-login-toolbar"
+      ],
+      "classification": "需美化，原生宿主边界保护"
+    },
+    {
+      "id": "C03",
+      "name": "按钮/输入/搜索/分页/批选/标签",
+      "sources": [
+        "resources/app/app.js",
+        "resources/app/modules/design-system.css"
+      ],
+      "selectors": [
+        ".btn",
+        ".filter-field",
+        ".input-search",
+        ".pagination",
+        ".status-tag",
+        ".tag",
+        ".active-chips"
+      ],
+      "classification": "已有共享体系符合；需V4级别/语义色复用，不做第二套控件"
+    },
+    {
+      "id": "C04",
+      "name": "所有共享Modal、抽屉和原生弹出",
+      "sources": [
+        "resources/app/app.js",
+        "resources/app/modules/workspace-shell.js"
+      ],
+      "selectors": [
+        "#modalBackdrop",
+        "#modal",
+        ".modal-head",
+        ".modal-body",
+        ".modal-foot",
+        "#customerDrawer",
+        ".details-drawer"
+      ],
+      "classification": "主题/焦点/小窗口滚动需复验；不动确认写入逻辑"
+    },
+    {
+      "id": "C05",
+      "name": "外观/布局/快捷键/全局搜索/通知/头像",
+      "sources": [
+        "resources/app/app.js",
+        "resources/app/modules/workspace-shell.js"
+      ],
+      "selectors": [
+        "[data-shell-appearance]",
+        ".shortcut-list",
+        ".global-search-modal-input",
+        ".notice-row",
+        ".profile-avatar-editor"
+      ],
+      "classification": "低频真实入口统一；保留当前偏好和取消恢复"
+    },
+    {
+      "id": "C06",
+      "name": "客户编辑/跟进/票据/入金/报名/VIP/批量预览",
+      "sources": [
+        "resources/app/app.js",
+        "resources/app/modules/business-enhancements.js"
+      ],
+      "selectors": [
+        ".filter-grid",
+        ".batch-preview",
+        ".modal",
+        ".customer-360-section"
+      ],
+      "classification": "原有业务表单复用；对比度与危险操作样式覆盖"
+    },
+    {
+      "id": "C07",
+      "name": "号码导入/数据导入/治理/备份恢复",
+      "sources": [
+        "resources/app/modules/phone-registry.js",
+        "resources/app/modules/smart-import.js",
+        "resources/app/modules/customer-governance-ui.js",
+        "resources/app/modules/v4-data-center.js"
+      ],
+      "selectors": [
+        ".registry-import-preview",
+        ".modal",
+        ".notice-line",
+        ".quality-tag"
+      ],
+      "classification": "低频页/弹窗不可遗漏；本轮不执行导入恢复或删除"
+    },
+    {
+      "id": "C08",
+      "name": "GPT配置/Provider/Key掩码/计划预览/历史",
+      "sources": [
+        "resources/app/modules/gpt-assistant.js"
+      ],
+      "selectors": [
+        ".gpt-settings",
+        ".gpt-provider-card",
+        ".gpt-management-panel",
+        ".gpt-history"
+      ],
+      "classification": "现有配置通道与脱敏保留；需主页面和弹窗双主题"
+    },
+    {
+      "id": "C09",
+      "name": "WS辅助翻译/诊断/群发/导出/本地消息",
+      "sources": [
+        "resources/app/modules/ws-workbench.js"
+      ],
+      "selectors": [
+        ".ws-assist-panel",
+        ".ws-assist-tab",
+        ".ws-broadcast-preview",
+        ".ws-export-option",
+        ".ws-local-workspace"
+      ],
+      "classification": "可访问辅助组件要覆盖；不启用发送/采集/真实WS"
+    },
+    {
+      "id": "C10",
+      "name": "AI候选/证据/审核冲突/任务详情",
+      "sources": [
+        "resources/app/modules/ai-review-center-ui.js",
+        "resources/app/modules/ws-business-pages.js"
+      ],
+      "selectors": [
+        ".stage4-ai-panel",
+        ".stage4-ai-summary",
+        ".stage4-crm-review",
+        ".ws-directory-detail"
+      ],
+      "classification": "只读数据/已存在审核交互复用；AI消费者冻结"
+    },
+    {
+      "id": "C11",
+      "name": "空/加载/错误/未知/禁用/成功/Toast",
+      "sources": [
+        "resources/app/app.js",
+        "resources/app/modules/ws-workbench.js",
+        "resources/app/modules/gpt-assistant.js"
+      ],
+      "selectors": [
+        ".empty-state",
+        ".ws-empty",
+        ".ws-error-line",
+        ".toast",
+        ".notice-line",
+        ".ws-status-badge"
+      ],
+      "classification": "需不同真实状态截图；未授权不假造成功，未知不等于失败"
+    },
+    {
+      "id": "C12",
+      "name": "图表/明细/已知来源时间与口径",
+      "sources": [
+        "resources/app/modules/metrics-charts.js",
+        "resources/app/modules/operations-ui.js",
+        "resources/app/app.js"
+      ],
+      "selectors": [
+        ".metrics-chart",
+        ".ops6-task-insight",
+        ".horizon-trend"
+      ],
+      "classification": "已有图表不重写；只改标记/色彩，不新增假图"
+    },
+    {
+      "id": "N01",
+      "name": "原生启动/加载/连接异常/诊断按钮",
+      "sources": [
+        "desktop/src/Zhike.Desktop/App.xaml",
+        "desktop/src/Zhike.Desktop/MainWindow.xaml",
+        "desktop/src/Zhike.Desktop/Views/LegacyUiHostPage.xaml"
+      ],
+      "selectors": [
+        "RootShell",
+        "HostStatus",
+        "HostActions",
+        "HostBorder"
+      ],
+      "classification": "原生专有，Browser不适用；固定浅色StaticResource可能主题边缘不一致，需要原生观察，不能声明已修复"
+    },
+    {
+      "id": "N02",
+      "name": "Windows标题栏/最小化/最大化/返回状态",
+      "sources": [
+        "desktop/src/Zhike.Desktop/MainWindow.xaml.cs"
+      ],
+      "selectors": [
+        "AppWindow",
+        "OverlappedPresenter"
+      ],
+      "classification": "已有生命周期逻辑不动；由原生操作验收"
+    },
+    {
+      "id": "X01",
+      "name": "WhatsApp官方WebView内部/已停用采集层",
+      "sources": [
+        "desktop/src/Zhike.Desktop/Views/LegacyUiHostPage.xaml",
+        "resources/app/modules/ws-workbench.js"
+      ],
+      "selectors": [
+        "WsOverlayHost",
+        "WsCollectorHost",
+        "#wsBrowserHost"
+      ],
+      "classification": "内部视觉不适用/禁止修改；只验证外层不动宿主/不恢复旧采集"
+    }
+  ],
+  "dialogSymbols": [
+    {
+      "file": "resources/app/app.js",
+      "symbol": "workspaceProfileModal",
+      "line": 328,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "profileAvatarModal",
+      "line": 330,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "newCustomerModal",
+      "line": 867,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "vipCustomerModal",
+      "line": 891,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "hotCustomerModal",
+      "line": 893,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "importIssueModal",
+      "line": 1028,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "clearAllDataModal",
+      "line": 1067,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "notificationModal",
+      "line": 1098,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "optionListModal",
+      "line": 1100,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "securitySettingsModal",
+      "line": 1105,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "registrationModal",
+      "line": 1178,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "openModal",
+      "line": 1180,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "requestText",
+      "line": 1181,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "globalSearchModal",
+      "line": 1184,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "customerColumnsModal",
+      "line": 1185,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "shortcutHelpModal",
+      "line": 1186,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "closeModal",
+      "line": 1187,
+      "kind": "lifecycle/handler",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "closeCustomerDrawer",
+      "line": 1202,
+      "kind": "lifecycle/handler",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "editCustomerModal",
+      "line": 1204,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "followModal",
+      "line": 1205,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "businessModal",
+      "line": 1206,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "batchModal",
+      "line": 1214,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "symbol": "extendedBatchModal",
+      "line": 1599,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/modules/workspace-shell.js",
+      "symbol": "appearanceDialog",
+      "line": 57,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    },
+    {
+      "file": "resources/app/modules/phone-registry.js",
+      "symbol": "newModal",
+      "line": 14,
+      "kind": "render/entry",
+      "status": "SourceLocated-browserNativePending"
+    }
+  ],
+  "fixture": {
+    "main": "scripts/delivery/s1-main-visual.test.cjs：生产app.js只替换backend bootstrap；目前20页，补followups",
+    "ws": "tests/helpers/ws-workbench-render-fixture.cjs：真实完整renderer；屏蔽boot/native/network；12页",
+    "gpt": "scripts/delivery/s1-ws-visual.test.cjs：actual gpt-assistant async renderer + 隔离configured/setup状态",
+    "helper": "tests/helpers/isolated-edge-runner.cjs：复用原timeout、结果协议、Browser.close与清理检查，不修改",
+    "plan": "新增scripts/delivery/dynamic-v4-capture.cjs独立命令，不进入自动*.test.cjs全量；35路由双主题，真实popup/drawer/empty/error/compact/small抽检；screenshots BrowserOnly"
+  },
+  "limits": [
+    "本轮未改变数据库/业务规则/Worker/IPC/WebView生命周期",
+    "截图数据为明确隔离合成夹具；不是平台实时状态或真实业务数据",
+    "所有源文件来自当前产品renderer；不画fake卡片替代页面",
+    "SourceLocated不等于Passed；实际覆盖由证据和native结果补齐",
+    "旧全量290/291是历史基线，未拿作本轮结果"
+  ],
+  "modalCalls": [
+    {
+      "file": "resources/app/app.js",
+      "line": 328,
+      "title": "工作区资料",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 330,
+      "title": "本地管理员头像",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 867,
+      "title": "新增客户",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 891,
+      "title": "设置 VIP 编号",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 893,
+      "title": "标记热聊客户",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 1011,
+      "title": "删除重复值",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 1028,
+      "title": "复核导入行",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 1072,
+      "title": "清空本机全库数据",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 1098,
+      "title": "本地提醒",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 1100,
+      "title": "管理${item.label}",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 1105,
+      "title": "安全与备份",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 1178,
+      "title": "新增报名记录",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 1184,
+      "title": "全局客户搜索",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 1185,
+      "title": "客户表格列设置",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 1186,
+      "title": "快捷键与使用帮助",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 1204,
+      "title": "编辑客户资料",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 1205,
+      "title": "登记跟进",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 1217,
+      "title": "确认${label}",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 1338,
+      "title": "智能批量导入",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 1599,
+      "title": "批量${config[0]}",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 1600,
+      "title": "批量变更预览",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/app.js",
+      "line": 1737,
+      "title": "历史日期字段迁移",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/modules/workspace-shell.js",
+      "line": 62,
+      "title": "外观偏好",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/modules/phone-registry.js",
+      "line": 14,
+      "title": "新增手机号登记",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/modules/phone-registry.js",
+      "line": 46,
+      "title": "手机号登记导入预览",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/modules/business-enhancements.js",
+      "line": 38,
+      "title": "批量编辑${label}",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/modules/business-enhancements.js",
+      "line": 65,
+      "title": "确认批量编辑${label}",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/modules/business-enhancements.js",
+      "line": 103,
+      "title": "合并重复客户",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/modules/operations-upgrade.js",
+      "line": 11,
+      "title": "本地运营分析",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/modules/productivity.js",
+      "line": 27,
+      "title": "批次客户",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    },
+    {
+      "file": "resources/app/modules/productivity.js",
+      "line": 52,
+      "title": "自定义首页",
+      "status": "SourceLocated-renderAndReachabilityPending"
+    }
+  ]
+}

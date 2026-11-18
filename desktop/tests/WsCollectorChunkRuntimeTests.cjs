@@ -7,7 +7,7 @@ const vm = require('node:vm');
 
 const repo = path.resolve(__dirname, '..', '..');
 const host = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Views', 'LegacyUiHostPage.xaml.cs'), 'utf8');
-const match = host.match(/return \$\$"""([\s\S]*?)""";/);
+const match = host.match(/internal static string BuildWsCollectorScript\(string accountId\)\s*\{[\s\S]*?return \$\$"""([\s\S]*?)""";/);
 assert.ok(match, 'WS collector raw script must remain embedded in the native host');
 const script = match[1].replace(/\{\{encodedAccount\}\}/g, JSON.stringify('default'));
 

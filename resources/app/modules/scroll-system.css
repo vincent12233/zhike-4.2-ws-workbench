@@ -63,6 +63,7 @@ body{min-width:0!important}
   flex-basis:var(--zhike-sidebar-collapsed,68px)!important;
 }
 #sidebar.collapsed+.main-area{margin-left:0!important}
+html[data-view="ws-workbench"]{--zhike-sidebar-collapsed:74px}
 
 /* The WinUI/WebView2 host uses the same shell contract. Keeping these
    host-specific bounds here removes a second competing stylesheet. */
@@ -81,12 +82,12 @@ html[data-desktop-host] .modal-backdrop{overscroll-behavior:contain}
 .task-table-wrap,
 .registry-table-wrap,
 .home-task-scroll{
-  max-height:none!important;
+  max-height:min(62vh,720px)!important;
   min-height:0;
   overflow-x:auto!important;
-  overflow-y:hidden!important;
+  overflow-y:auto!important;
   overscroll-behavior-x:contain;
-  overscroll-behavior-y:auto;
+  overscroll-behavior-y:contain;
   scrollbar-gutter:stable;
   touch-action:pan-x pan-y;
 }
@@ -151,7 +152,11 @@ html.zk-scroll-modal-open .modal-body{touch-action:pan-y}
 body.ws-mode .view-container{overflow:hidden!important;touch-action:pan-y}
 .ws-workbench-page,.ws-layout,.ws-center-panel{min-height:0!important;overflow:hidden!important}
 .ws-sessions-panel,.ws-assist-panel{min-height:0}
+.ws-center-panel{overflow:hidden!important;overscroll-behavior:contain}
 .ws-browser-host{overscroll-behavior:none;touch-action:none}
+.ws-command-rail{overflow:hidden!important;overscroll-behavior:contain;touch-action:none}
+.ws-local-workspace{min-height:0;overflow:hidden!important;overscroll-behavior:contain;touch-action:pan-y}
+.ws-process-rail{overflow:hidden!important;overscroll-behavior:contain;touch-action:none}
 .ws-capture-panel.is-collapsed{overflow:hidden!important;touch-action:none}
 
 /* Visible, easy-to-grab scrollbars. Scope the WebKit pseudo-elements to real
@@ -207,3 +212,4 @@ html.zk-scroll-active :is(.panel,.metric-card,.business-kpi,.summary-tile,.data-
   [data-scroll-mode],#mainNav,.view-container{scrollbar-color:auto}
   [data-scroll-mode]:focus-visible{outline:2px solid Highlight}
 }
+

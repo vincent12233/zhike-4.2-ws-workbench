@@ -1,0 +1,86 @@
+[
+  {
+    "source": ".tools/v41-integrated-final-20261118-151333/full.log",
+    "file": "first-full.log",
+    "sourceSha256": "f1e1944099a4316fc7a46aa7f5112cc9776bbfa1e4b0e2759958790c1521d09d",
+    "archivedSha256": "15e787e64350ede07814b6055c08435bd7e709eae029de913d6e6f27af281fe2",
+    "redaction": "local-path-prefixes; LF and line-end whitespace normalization"
+  },
+  {
+    "source": ".tools/v41-integrated-final-20261118-151333/context.json",
+    "file": "first-context.json",
+    "sourceSha256": "b66fc505b87ae26b2df25a7381c8f62119949ae77cd0ec0400cccd22a114c2d8",
+    "archivedSha256": "fa347d0af420171d2d08d08b56a064adcd31ae5090f8e34ba57aeac4b1ab9ff3",
+    "redaction": "local-path-prefixes; LF and line-end whitespace normalization"
+  },
+  {
+    "source": ".tools/v41-integrated-final-20261118-151333/result.json",
+    "file": "first-result.json",
+    "sourceSha256": "488ab3d0f3146584585398038dc7b9d62eabf1dd1d743c1372983c0dc6506095",
+    "archivedSha256": "8c24f3d12e9d561480938b5e027f57166d4fded2d1dcb2895ea21b5c919685a7",
+    "redaction": "local-path-prefixes; LF and line-end whitespace normalization"
+  },
+  {
+    "source": ".tools/v41-integrated-final-20261118-151333/release-build.log",
+    "file": "release-build.log",
+    "sourceSha256": "b6d2df1c1e7f3997b7f73007ca0dab10bb52dfe3b6e8a6eb09c3fdf3b87db155",
+    "archivedSha256": "c9481798b802cdee35dfc27cf2e95a2c38d1604deb00b2d7272e6fd2ff2ba237",
+    "redaction": "local-path-prefixes; LF and line-end whitespace normalization"
+  },
+  {
+    "source": ".tools/visual-usability/main-visual/1794995710741-50ec43d1-34c8-4d5b-9627-8a06c5fede6a.json",
+    "file": "first-edge-exit-failure.json",
+    "sourceSha256": "fd5dc2127a9a2f37a43c2583c6b7ef59d8a6019c6ccb749d27ccabd1196d06b5",
+    "archivedSha256": "ddd2e4c6675a71d2d15eef3594b2419a9887a2cc2efee77c2ccef65a7ef7224b",
+    "redaction": "local-path-prefixes; LF and line-end whitespace normalization"
+  },
+  {
+    "source": ".tools/v41-integrated-final-20261118-153508/full.log",
+    "file": "final-full.log",
+    "sourceSha256": "38eb461d1d5a9e9e1d367a985b1a653937a73426ed451cd7ee191c05eb795f16",
+    "archivedSha256": "ddef1982abb0fb32d375bb638da66d85c814db68aeceeb7d6edc0955644d638c",
+    "redaction": "local-path-prefixes; LF and line-end whitespace normalization"
+  },
+  {
+    "source": ".tools/v41-integrated-final-20261118-153508/context.json",
+    "file": "final-context.json",
+    "sourceSha256": "8af4439ae0029f8d204563730922b65c89a17ed824a6c37683e54c204176483e",
+    "archivedSha256": "ba15681e08fddb3cdd9f391b50348e9867618aba41ad25eb760da841978c6ebb",
+    "redaction": "local-path-prefixes; LF and line-end whitespace normalization"
+  },
+  {
+    "source": ".tools/v41-integrated-final-20261118-153508/result.json",
+    "file": "final-result.json",
+    "sourceSha256": "1035253dc0becbdc4acc4f3ac0f64323498a32ab3f409b0d52fc5ac37ffdda59",
+    "archivedSha256": "739aab08b9d9098fa98ce3c58eaa7c2fca79cd73793ea3c03e0673f94ee9c379",
+    "redaction": "local-path-prefixes; LF and line-end whitespace normalization"
+  },
+  {
+    "source": ".tools/visual-usability/main-visual/1794997084424-e5110893-1113-4dc3-a16c-460b6b9dab44.json",
+    "file": "final-edge-main-failure.json",
+    "sourceSha256": "984b939213e08d828a8edae52368141ce59a08f39bf57a41fc21ae4b69e10b42",
+    "archivedSha256": "9b1eafd54e80935b24aa1315a358eae3487b7713291f496ee15f64a95762d352",
+    "redaction": "local-path-prefixes; LF and line-end whitespace normalization"
+  },
+  {
+    "source": ".tools/delivery-s1-ws-visual/1794997117075-4749a769-46b9-4062-88a2-83bcc3ad4dac.json",
+    "file": "final-edge-ws-failure.json",
+    "sourceSha256": "cba225103965b8e11501bcfea80873cc7b5d412b6a26148e7df6f1627592d0a1",
+    "archivedSha256": "d7617710f0261939399acdbf2c1d928919ce071ea278d8be39511655bb674065",
+    "redaction": "local-path-prefixes; LF and line-end whitespace normalization"
+  },
+  {
+    "source": ".tools/delivery-s2-metrics-visual/1794997148698-a3459918-25ad-4332-b95c-90089844eb93.json",
+    "file": "final-edge-charts-failure.json",
+    "sourceSha256": "217f446bf5003a1bb35b15b66b1efebb9df6eb47d72fa353ae7ff08cb0eb65cc",
+    "archivedSha256": "7d29e28b82310f435fa242954ab4725412188ddf25aa82ef8a53dab1e29410b4",
+    "redaction": "local-path-prefixes; LF and line-end whitespace normalization"
+  },
+  {
+    "source": ".tools/delivery-s3-customer-table/1794997192949-e040ee3e-99f3-4744-98a2-5fee611da2ff.json",
+    "file": "final-edge-customer-failure.json",
+    "sourceSha256": "c60de5bb56fce18d4a0b76c6c0906240b032f14a7b08fa2c73f888800608eef2",
+    "archivedSha256": "b27e0eedb03d246b2ffe8853a86be6d556493b15123c7bdc98911582a623faf5",
+    "redaction": "local-path-prefixes; LF and line-end whitespace normalization"
+  }
+]

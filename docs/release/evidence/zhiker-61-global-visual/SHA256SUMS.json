@@ -1,0 +1,247 @@
+{
+  "algorithm": "SHA-256",
+  "codeCommit": "8da6fb2f8ce09c4c1560328a48b5f04bfd477244",
+  "excludes": "this manifest itself",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 396,
+      "sha256": "e572953ef2787a19d42d32d64d19bbb7bfa624c0c93d7c970126a53ddf72aba2"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 77,
+      "sha256": "862c36727e686a823b05a2029014ccb1cc4dd9150627214446aca5f8e04d0785"
+    },
+    {
+      "path": "archive-safety.json",
+      "bytes": 282,
+      "sha256": "89f60fa0d7e708540acf7fa12463ce85d5b700211c30f122cbf80b4f7adc39e9"
+    },
+    {
+      "path": "build-isolated.log",
+      "bytes": 492,
+      "sha256": "5b772986459de7b7a63b18a6fe25abdd2108d1848db5324611e50aab0a18828b"
+    },
+    {
+      "path": "edge-exit/1795019228820-9e8feaf4-da7d-4e47-aba3-1387fd598626.json",
+      "bytes": 15228,
+      "sha256": "eb9cab8b3dafdf7d87e9802d654406709e91926f97cbcb1a215353109e040a2d"
+    },
+    {
+      "path": "edge-exit/1795019228820-9e8feaf4-da7d-4e47-aba3-1387fd598626.result.json",
+      "bytes": 20263,
+      "sha256": "750d4217b1af83e303959799bedd3bc3390cd711763b0a73989a511c50eb2de0"
+    },
+    {
+      "path": "edge-exit/1795020493025-13a4a511-5469-4e8f-b99f-c5c8d50cf3c7.json",
+      "bytes": 15802,
+      "sha256": "5b404ca560e8c6952c22eece383405bb7340fe5fd3e486c027d17c557b412a9c"
+    },
+    {
+      "path": "edge-exit/1795020493025-13a4a511-5469-4e8f-b99f-c5c8d50cf3c7.result.json",
+      "bytes": 20263,
+      "sha256": "750d4217b1af83e303959799bedd3bc3390cd711763b0a73989a511c50eb2de0"
+    },
+    {
+      "path": "edge-exit/1795020493025-13a4a511-5469-4e8f-b99f-c5c8d50cf3c7.stderr.log",
+      "bytes": 437,
+      "sha256": "c684b08cc26d7894e9442ca0d33187ae0cc94f4f4a2627351549fb8c84068e2f"
+    },
+    {
+      "path": "exit-additional-check.json",
+      "bytes": 132,
+      "sha256": "3d05defd296a56f2c74a68a86997e99cef67974ac41e31bcff9250c74477061f"
+    },
+    {
+      "path": "exit-final-check.json",
+      "bytes": 216,
+      "sha256": "c00fa3e690594987a22ea61255b32eec33bc5a2964dd352c2e9768ee3f0da391"
+    },
+    {
+      "path": "native-final-assets.json",
+      "bytes": 2318,
+      "sha256": "82a4f32a44ec1aa803da1fce59a24bc5a1870a12edff8bfc83df8dd60fc07e96"
+    },
+    {
+      "path": "native-final-geometry.json",
+      "bytes": 2819,
+      "sha256": "c6831e29326bf65fc6cab09b3c5eef2f4dddd7c1a7a6c2915e9f032bbd840f73"
+    },
+    {
+      "path": "native-final-summary.json",
+      "bytes": 2918,
+      "sha256": "fd081991c222e8ea58930120a24e916dad5550f29e75ab1b9dfbdec5f7ed3200"
+    },
+    {
+      "path": "native-process-cleanup.json",
+      "bytes": 325,
+      "sha256": "0f8e789cd8536779f26306f9c07ca5ef33d8688de32552de57085b872c8f336c"
+    },
+    {
+      "path": "native-summary.json",
+      "bytes": 12304,
+      "sha256": "2b278153866916ef75a2eee2971b9cb13ea4d6c65f4fbc5ccaadfeacce801a8b"
+    },
+    {
+      "path": "native/01-customer-drawer-light.jpg",
+      "bytes": 172711,
+      "sha256": "b059afaf0b5f48e277f1064cb51d3c78202ced1d57f4c10272fb421780903205"
+    },
+    {
+      "path": "native/02-customer-list-dark.jpg",
+      "bytes": 194311,
+      "sha256": "7382ae100ed5c8877cd705d547124efebd731fc9331e0c22ba40fc8f44580c08"
+    },
+    {
+      "path": "native/03-customer-wheel-dark.jpg",
+      "bytes": 205076,
+      "sha256": "515fd897aeb84e03f5884e15c1b642986ef1e316fb0134549c6419423e515b3c"
+    },
+    {
+      "path": "native/04-selection-synchronization.jpg",
+      "bytes": 200157,
+      "sha256": "a98540d1ec54d2492d4785afbcdd31c500d68c0c0c96fe47dbc2444984884363"
+    },
+    {
+      "path": "native/05-drawer-core-preview.png",
+      "bytes": 499158,
+      "sha256": "5016133c091780a2665ab9503bc5c0103c5888b389b28bd7327ec6498496eb7c"
+    },
+    {
+      "path": "native/06-ws-contact-details.jpg",
+      "bytes": 197691,
+      "sha256": "ef9846896ae51c0de3eb7a115ccce85079fb55e183dab147cc2ebebb2374cbe0"
+    },
+    {
+      "path": "native/07-ws-avatar-unavailable.jpg",
+      "bytes": 176846,
+      "sha256": "6eb69c678737a03edc2a4ff8d04d6218e864b69193a31a4b5dd01e6ab9533d68"
+    },
+    {
+      "path": "native/08-ws-members.jpg",
+      "bytes": 133592,
+      "sha256": "6b6478b6e3e05e5e5af34a0f2da6cd033312a18abbf6059f87bcb634b5d80ceb"
+    },
+    {
+      "path": "native/09-isolated-chat-core-return.jpg",
+      "bytes": 108378,
+      "sha256": "53a8aafaf8d8809a8fd4a0e1f7f5fdb288fb787e415a9a9f8ac903159bfcc354"
+    },
+    {
+      "path": "native/10-chat-crm-collapsed.jpg",
+      "bytes": 78178,
+      "sha256": "6ab0e945d9b6414a5f6b43c643d4bd6b52f017e6e8af3f5b984110968887d0ea"
+    },
+    {
+      "path": "native/11-final-customer-dark.jpg",
+      "bytes": 180459,
+      "sha256": "1a98b5cf67ef133b027c0f37b4c3ad6359d6df9a3206ac7f8561e309360a972c"
+    },
+    {
+      "path": "native/12-final-customer-core-preview.png",
+      "bytes": 552246,
+      "sha256": "fa498d885ddab08efcb439c740f61cce10039bbf14b80dfa1e0113fbee0e2990"
+    },
+    {
+      "path": "native/13-final-assets-customer-dark.png",
+      "bytes": 552173,
+      "sha256": "f9d72ebb8d2e0dd390d569603d4be494b045287af77663d7f150d6ffe2cc587e"
+    },
+    {
+      "path": "native/14-final-assets-customer-light.png",
+      "bytes": 454501,
+      "sha256": "000fe23929283bd0eeff9a80221d69f1289379e2fb9377cd0b482e47d8bc9de6"
+    },
+    {
+      "path": "native/15-final-drawer-scroll.jpg",
+      "bytes": 170936,
+      "sha256": "36d7453e8323f32ec29b76376b68cc81df3c0a1568be1ba7e70c066ffa3064b1"
+    },
+    {
+      "path": "native/16-final-restored-window.jpg",
+      "bytes": 178227,
+      "sha256": "c6d90e8cd6019bae1a10f491db3862fcd69f1b9f842643629933d3c6710e2d9a"
+    },
+    {
+      "path": "redaction.json",
+      "bytes": 392,
+      "sha256": "6d4f5cd9e96ff94405908655e4223b732640e521ed2544835eb39a2f9af52311"
+    },
+    {
+      "path": "stage55b-seed-evidence.json",
+      "bytes": 178,
+      "sha256": "35a22bd64d2818ab0985de9725c4d71bd4c4f56a2d432e9eee95f401bbc2142e"
+    },
+    {
+      "path": "tests/build-release.log",
+      "bytes": 394,
+      "sha256": "0bcc46a1566f8dee27fda112dd195d73462b307b704cec39ecb75f51f79812e4"
+    },
+    {
+      "path": "tests/customer-visual-2.log",
+      "bytes": 390525,
+      "sha256": "f24b5db897df1911a28d2ad08870e943d7f831c7823cb4bacad8f24cb04e8459"
+    },
+    {
+      "path": "tests/full-final-result.json",
+      "bytes": 74,
+      "sha256": "03c84268e7bfc9260412d34b86a640d5113ee771dfef32e5107b5c7aa8d9519c"
+    },
+    {
+      "path": "tests/full-final.log",
+      "bytes": 508801,
+      "sha256": "0b892755ab31a0b032abe69273c9cac48b71a6ce5c7a658682920bfccf63ed5d"
+    },
+    {
+      "path": "tests/full-result.json",
+      "bytes": 74,
+      "sha256": "54cdf7f548c2bd7ad3d092e47481a5c947d5009c20c8a629528c189500465755"
+    },
+    {
+      "path": "tests/full.log",
+      "bytes": 514483,
+      "sha256": "65dace9068970b69202ca021ea1ccd9bcb37bc46bdb0cab62e05f0e6bd41f09e"
+    },
+    {
+      "path": "tests/restore-credential.log",
+      "bytes": 254,
+      "sha256": "d140c8f5c226b43f3562c1a7146d048e4a9fbed03afac011ab8fef1c72d593ee"
+    },
+    {
+      "path": "tests/restore-provider.log",
+      "bytes": 250,
+      "sha256": "02e9d72746c11905e0f4610451d88f04c69e130a46465eb1adcdbadac3a3256c"
+    },
+    {
+      "path": "tests/restore-supervisor.log",
+      "bytes": 251,
+      "sha256": "23a956709f9eaa207c14dae8af29abbe11daf385cebdb07004a7f50b91d02c67"
+    },
+    {
+      "path": "tests/result-index.json",
+      "bytes": 26434,
+      "sha256": "d39ca1ffb769ccd3a3efab60443aaa9a63ab941d5f25927dc4e8bb3f3dcbcd77"
+    },
+    {
+      "path": "tests/s1-final.log",
+      "bytes": 16906,
+      "sha256": "fc742096c06fdf1c27088d4affa6db753ae0401a91c836ae707d8b4309590b86"
+    },
+    {
+      "path": "visual-resource.context.json",
+      "bytes": 2003,
+      "sha256": "ab781e97a0c4ec9df08adce692a24cd07f153646ea4f51befdaa7adff2718d1a"
+    },
+    {
+      "path": "visual-resource.jsonl",
+      "bytes": 96392,
+      "sha256": "ded4d6467072b87727f8795edf591385183584d72441987e7dda737292a3c3fe"
+    },
+    {
+      "path": "visual-seed-evidence.json",
+      "bytes": 73,
+      "sha256": "f45383f262282b2fe1e59476cbef9cdd0adbce6b464a1e15eccc8ff538f7386b"
+    }
+  ]
+}

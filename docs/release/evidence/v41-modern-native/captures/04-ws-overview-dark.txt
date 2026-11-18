@@ -1,0 +1,204 @@
+Window: "WS 工作台 · 知客 Stage 5.1 · ISOLATED 验收", App: Zhike.Stage51.Acceptance.exe.
+	0 window (窗口) WS 工作台 · 知客 Stage 5.1 · ISOLATED 验收 Secondary Actions: Raise
+		1 pane (窗格) Non Client Input Sink Window
+		2 pane (窗格) AppWindow Custom Title Bar
+			3 button (按钮) Minimize ID: Minimize
+			403 button (按钮) Restore ID: Restore
+			5 button (按钮) Close ID: Close
+		6 pane (窗格)
+			7 pane (窗格)
+				14 pane (窗格)
+			15 pane (窗格) 知客 6.0 · Horizon Atelier
+				16 pane (窗格) (disabled)
+				17 pane (区域) 知客 6.0 · Horizon Atelier - Web 内容
+					18 pane (区域)
+						19 pane (区域)
+						20 pane (区域)
+							21 pane (区域)
+								22 pane (区域)
+								23 pane (区域)
+									24 pane (区域)
+										25 pane (区域)
+											26 pane (区域)
+												27 pane (区域)
+												31 document (文档) 知客 6.0 · Horizon Atelier Value: <isolated-url> ID: RootWebArea
+													94 group (主要)
+														95 group (章节标题)
+															96 group (导航) 工作台切换
+																97 button (切换按钮) 知客工作台
+																	98 image (图形)
+																	99 text (文本) 知客工作台
+																100 button (切换按钮) WS 工作台
+																	101 image (图形)
+																	102 text (文本) WS 工作台
+															108 button (按钮) 搜索客户、号码、群编号Ctrl K ID: globalSearch
+																109 image (图形)
+														128 group (组) ID: viewContainer
+															692 group (补充) WS 工作台功能导航
+																693 text (文本) WS
+																694 text (文本) WS 工作台
+																695 text (文本) 知客 · 运营工作区
+																696 button (按钮) ‹ Description: 收起 WS 工作区导航
+																697 group (导航)
+																	698 button (按钮) 工作台首页 Description: 工作台首页 · 账号、采集与工作入口
+																	699 button (按钮) 账号管理 Description: 账号管理 · 多账号与连接状态
+																	700 button (按钮) 前台聊天 Description: 前台聊天 · 原生 WS 聊天与客户档案
+																	701 button (按钮) 群组管理 Description: 群组管理 · 群组目录与监测端口
+																	702 button (按钮) 群成员管理 Description: 群成员管理 · 成员事件与 CRM 关系
+																	703 button (按钮) 数据采集 Description: 数据采集 · 采集任务、断点与跳过规则
+																	704 button (按钮) 通讯录管理 Description: 通讯录管理 · 已同步联系人与号码核验
+																	705 button (按钮) AI助手 Description: AI助手 · 队列、证据与分析结果
+																	706 button (按钮) CRM客户 Description: CRM客户 · 客户主档匹配与冲突
+																	707 button (按钮) 任务中心 Description: 任务中心 · 跟进任务与提醒
+																	708 button (按钮) 操作日志 Description: 操作日志 · 审计记录、运行快照与关联查询
+																	709 button (按钮) 工具与设置 Description: 工具与设置 · 翻译、导入、导出与安全开关
+																710 group (组) Description: COLLECTION_CAPABILITY_BLOCKED：后台采集依赖复制认证状态，已按安全边界停用；前台聊天和手动导入可用。
+																	711 text (文本) 后台采集不可用
+																712 button (按钮) 返回知客 Description: 返回知客
+															713 group (区域) 工作台首页
+																714 text (标题) 工作台首页 ID: wsWorkspacePageTitle
+																715 text (文本) 账号、采集与工作入口
+																716 text (文本) 当前账号：默认账号
+																717 group (组)
+																	718 text (文本) 尚未刷新
+																719 button (按钮) 刷新
+																720 status bar (状态)
+																	721 text (文本) COLLECTION_CAPABILITY_BLOCKED：后台采集依赖复制认证状态，已按安全边界停用；前台聊天和手动导入可用。
+																722 text (标题) 开始今天的客户运营
+																723 text (文本) 在独立工作区管理账号、查看真实采集记录，并随时回到前台聊天。
+																724 button (按钮) 进入前台聊天
+																725 group (区域) 已加载工作区概况
+																	726 text (文本) 已加载账号
+																	727 text (文本) 1
+																	728 text (文本) 本机隔离会话
+																	729 text (文本) 已加载会话
+																	730 text (文本) —
+																	731 text (文本) 等待读取本地记录
+																	732 text (文本) 已加载群组
+																	733 text (文本) —
+																	734 text (文本) 等待同步群组目录
+																735 group (区域) 真实业务状态
+																	736 text (文本) 采集任务
+																	737 text (文本) 未提供
+																	738 text (文本) 尚无任务或未读取
+																	739 text (文本) 已加载跟进提醒
+																	740 text (文本) —
+																	741 text (文本) 当前账号服务返回范围
+																	742 text (文本) AI 排队任务
+																	743 text (文本) —
+																	744 text (文本) 本机队列状态；不启动消费者
+																745 text (文本) 资料审核
+																746 text (文本) 候选、冲突与审计从原 CRM 审核服务读取；本页未读取时不显示虚假计数。
+																747 button (按钮) 进入 CRM 审核
+																748 text (文本) 工作区入口
+																749 text (文本) 每项功能拥有独立页面，页面切换保留账号会话。
+																750 text (文本) 未连接
+																751 button (按钮) 账号管理 多账号与连接状态
+																752 button (按钮) 群组管理 群组目录与监测端口
+																753 button (按钮) 群成员管理 成员事件与 CRM 关系
+																754 button (按钮) 数据采集 采集任务、断点与跳过规则
+																755 button (按钮) 通讯录管理 已同步联系人与号码核验
+																756 button (按钮) AI助手 队列、证据与分析结果
+																757 button (按钮) CRM客户 客户主档匹配与冲突
+																758 button (按钮) 任务中心 跟进任务与提醒
+																759 button (按钮) 操作日志 审计记录、运行快照与关联查询
+																760 button (按钮) 工具与设置 翻译、导入、导出与安全开关
+																761 text (文本) 运行边界
+																762 text (文本) 仅展示现有业务服务与账号状态。
+																763 text (文本) FROZEN
+																764 text (文本) 生产 Worker、AI 自动处理和群组自动建档保持当前关闭配置。工作区导航不会启动新的消费者或付费 AI 请求。
+													126 group (组) ID: toastRegion
+								28 pane (区域)
+						29 pane (区域)
+		8 title bar (标题栏) (settable, string) Value: WS 工作台 · 知客 Stage 5.1 · ISOLATED 验收
+			9 menu bar (菜单栏) 系统 ID: MenuBar
+				10 menu item (菜单项) 系统
+			11 button (按钮) 最小化
+			12 button (按钮) 还原
+			13 button (按钮) 关闭
+
+Document text: ```
+￼
+知客工作台
+￼
+WS 工作台
+￼
+搜索客户、号码、群编号
+Ctrl K
+WS
+WS 工作台
+知客 · 运营工作区
+‹
+工作台首页
+账号管理
+前台聊天
+群组管理
+群成员管理
+数据采集
+通讯录管理
+AI助手
+CRM客户
+任务中心
+操作日志
+工具与设置
+后台采集不可用
+返回知客
+工作台首页
+账号、采集与工作入口
+当前账号：默认账号
+尚未刷新
+刷新
+COLLECTION_CAPABILITY_BLOCKED：后台采集依赖复制认证状态，已按安全边界停用；前台聊天和手动导入可用。
+开始今天的客户运营
+在独立工作区管理账号、查看真实采集记录，并随时回到前台聊天。
+进入前台聊天
+已加载账号
+1
+本机隔离会话
+已加载会话
+—
+等待读取本地记录
+已加载群组
+—
+等待同步群组目录
+采集任务
+未提供
+尚无任务或未读取
+已加载跟进提醒
+—
+当前账号服务返回范围
+AI 排队任务
+—
+本机队列状态；不启动消费者
+资料审核
+候选、冲突与审计从原 CRM 审核服务读取；本页未读取时不显示虚假计数。
+进入 CRM 审核
+工作区入口
+每项功能拥有独立页面，页面切换保留账号会话。
+未连接
+账号管理
+多账号与连接状态
+群组管理
+群组目录与监测端口
+群成员管理
+成员事件与 CRM 关系
+数据采集
+采集任务、断点与跳过规则
+通讯录管理
+已同步联系人与号码核验
+AI助手
+队列、证据与分析结果
+CRM客户
+客户主档匹配与冲突
+任务中心
+跟进任务与提醒
+操作日志
+审计记录、运行快照与关联查询
+工具与设置
+翻译、导入、导出与安全开关
+运行边界
+仅展示现有业务服务与账号状态。
+FROZEN
+生产 Worker、AI 自动处理和群组自动建档保持当前关闭配置。工作区导航不会启动新的消费者或付费 AI 请求。
+￼
+```

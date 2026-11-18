@@ -1,0 +1,748 @@
+{
+  "schemaVersion": 1,
+  "scope": "Isolated native application during the usable-stabilization run. Resource observations and the later event snapshot have separate cutoffs.",
+  "provenance": {
+    "integrationHeadAtAnalysis": "e44518d",
+    "sampledAppProductVersion": "6.0.3+4d7ff7a827e4468a9a5b39888809017f3748dbdb",
+    "sampledConfiguration": "Release",
+    "sampledWebView2Runtime": "157.0.4341.60",
+    "logicalProcessors": 20,
+    "sourceRoot": "isolated native root from native-prepared.json",
+    "sources": [
+      {
+        "relativeFilename": "usable-resource.jsonl",
+        "bytes": 504697,
+        "sha256": "f3e260022433e6eb8e67d34fd2649c71e12f5c30b46b058909800b91a3b8561b"
+      },
+      {
+        "relativeFilename": "usable-resource.context.json",
+        "bytes": 2012,
+        "sha256": "dc8c62ba8f83ca8fe29997c05a5c78bcf2f5ccfee418aca4cc6e0a0fb9932165"
+      },
+      {
+        "relativeFilename": "native-events.jsonl",
+        "bytes": 154988,
+        "sha256": "314e92acc79da592a46dbf68b1971d6d60e77bd68ff1ac76fdbbd2498ba772db"
+      },
+      {
+        "relativeFilename": "native-event-counts-33964.json",
+        "bytes": 1932,
+        "sha256": "deb6cbba61e6dc54f15f9060022af4edfdb81a4dfb735528c180137667714eb4"
+      }
+    ],
+    "analysisAtUtc": "2026-11-18T18:44:37.314539+00:00"
+  },
+  "resources": {
+    "configuredIntervalSeconds": 10,
+    "requestedSamples": 91,
+    "observerElapsedSeconds": 947.2171,
+    "sampleCoverage": {
+      "label": "Complete sampled workload, including three foreground account Core creations",
+      "firstSampleIndex": 0,
+      "lastSampleIndex": 90,
+      "samples": 91,
+      "firstSampleAtUtc": "2026-11-18T18:18:49.1877690Z",
+      "lastSampleAtUtc": "2026-11-18T18:34:35.9263691Z",
+      "sampleSpanSeconds": 946.7386,
+      "identitySets": 5,
+      "metrics": {
+        "workingSetBytes": {
+          "first": 874205184.0,
+          "last": 2116440064.0,
+          "change": 1242234880.0,
+          "min": 874205184.0,
+          "max": 2181017600.0,
+          "median": 1675866112.0
+        },
+        "workingSetMiB": {
+          "first": 833.707031,
+          "last": 2018.394531,
+          "change": 1184.6875,
+          "min": 833.707031,
+          "max": 2079.980469,
+          "median": 1598.230469
+        },
+        "privateBytes": {
+          "first": 492486656.0,
+          "last": 1108992000.0,
+          "change": 616505344.0,
+          "min": 492486656.0,
+          "max": 1170440192.0,
+          "median": 878657536.0
+        },
+        "privateMiB": {
+          "first": 469.671875,
+          "last": 1057.617188,
+          "change": 587.945312,
+          "min": 469.671875,
+          "max": 1116.21875,
+          "median": 837.953125
+        },
+        "threads": {
+          "first": 218.0,
+          "last": 623.0,
+          "change": 405.0,
+          "min": 210.0,
+          "max": 651.0,
+          "median": 494.0
+        },
+        "handles": {
+          "first": 5780.0,
+          "last": 15322.0,
+          "change": 9542.0,
+          "min": 5760.0,
+          "max": 15366.0,
+          "median": 12116.0
+        },
+        "processCount": {
+          "first": 9,
+          "last": 27,
+          "change": 18,
+          "min": 9,
+          "max": 27,
+          "median": 21
+        },
+        "webViewProcessCount": {
+          "first": 6,
+          "last": 24,
+          "change": 18,
+          "min": 6,
+          "max": 24,
+          "median": 18
+        }
+      }
+    },
+    "stableIdentityWindows": [
+      {
+        "label": "Both preseeded WS account Cores present, prior to the new synthetic account",
+        "firstSampleIndex": 17,
+        "lastSampleIndex": 52,
+        "samples": 36,
+        "firstSampleAtUtc": "2026-11-18T18:21:46.7272849Z",
+        "lastSampleAtUtc": "2026-11-18T18:27:54.2906719Z",
+        "sampleSpanSeconds": 367.563387,
+        "identitySets": 1,
+        "metrics": {
+          "workingSetBytes": {
+            "first": 1621794816.0,
+            "last": 1660162048.0,
+            "change": 38367232.0,
+            "min": 1616052224.0,
+            "max": 1709285376.0,
+            "median": 1652490240.0
+          },
+          "workingSetMiB": {
+            "first": 1546.664062,
+            "last": 1583.253906,
+            "change": 36.589844,
+            "min": 1541.1875,
+            "max": 1630.101562,
+            "median": 1575.9375
+          },
+          "privateBytes": {
+            "first": 836861952.0,
+            "last": 845484032.0,
+            "change": 8622080.0,
+            "min": 825110528.0,
+            "max": 902672384.0,
+            "median": 847413248.0
+          },
+          "privateMiB": {
+            "first": 798.09375,
+            "last": 806.316406,
+            "change": 8.222656,
+            "min": 786.886719,
+            "max": 860.855469,
+            "median": 808.15625
+          },
+          "threads": {
+            "first": 488.0,
+            "last": 487.0,
+            "change": -1.0,
+            "min": 465.0,
+            "max": 501.0,
+            "median": 487.0
+          },
+          "handles": {
+            "first": 12027.0,
+            "last": 12132.0,
+            "change": 105.0,
+            "min": 12026.0,
+            "max": 12155.0,
+            "median": 12071.5
+          },
+          "processCount": {
+            "first": 21,
+            "last": 21,
+            "change": 0,
+            "min": 21,
+            "max": 21,
+            "median": 21.0
+          },
+          "webViewProcessCount": {
+            "first": 18,
+            "last": 18,
+            "change": 0,
+            "min": 18,
+            "max": 18,
+            "median": 18.0
+          }
+        }
+      },
+      {
+        "label": "First sample after new synthetic account Core creation through the end of resource capture",
+        "firstSampleIndex": 53,
+        "lastSampleIndex": 90,
+        "samples": 38,
+        "firstSampleAtUtc": "2026-11-18T18:28:04.8748751Z",
+        "lastSampleAtUtc": "2026-11-18T18:34:35.9263691Z",
+        "sampleSpanSeconds": 391.051494,
+        "identitySets": 1,
+        "metrics": {
+          "workingSetBytes": {
+            "first": 2106515456.0,
+            "last": 2116440064.0,
+            "change": 9924608.0,
+            "min": 2039361536.0,
+            "max": 2181017600.0,
+            "median": 2081509376.0
+          },
+          "workingSetMiB": {
+            "first": 2008.929688,
+            "last": 2018.394531,
+            "change": 9.464844,
+            "min": 1944.886719,
+            "max": 2079.980469,
+            "median": 1985.082031
+          },
+          "privateBytes": {
+            "first": 1106022400.0,
+            "last": 1108992000.0,
+            "change": 2969600.0,
+            "min": 1033138176.0,
+            "max": 1170440192.0,
+            "median": 1074376704.0
+          },
+          "privateMiB": {
+            "first": 1054.785156,
+            "last": 1057.617188,
+            "change": 2.832031,
+            "min": 985.277344,
+            "max": 1116.21875,
+            "median": 1024.605469
+          },
+          "threads": {
+            "first": 637.0,
+            "last": 623.0,
+            "change": -14.0,
+            "min": 609.0,
+            "max": 651.0,
+            "median": 627.5
+          },
+          "handles": {
+            "first": 15231.0,
+            "last": 15322.0,
+            "change": 91.0,
+            "min": 15227.0,
+            "max": 15366.0,
+            "median": 15315.5
+          },
+          "processCount": {
+            "first": 27,
+            "last": 27,
+            "change": 0,
+            "min": 27,
+            "max": 27,
+            "median": 27.0
+          },
+          "webViewProcessCount": {
+            "first": 24,
+            "last": 24,
+            "change": 0,
+            "min": 24,
+            "max": 24,
+            "median": 24.0
+          }
+        }
+      },
+      {
+        "label": "Trailing interval after the last in-sample workspace page entry",
+        "firstSampleIndex": 73,
+        "lastSampleIndex": 90,
+        "samples": 18,
+        "firstSampleAtUtc": "2026-11-18T18:31:36.3099709Z",
+        "lastSampleAtUtc": "2026-11-18T18:34:35.9263691Z",
+        "sampleSpanSeconds": 179.616399,
+        "identitySets": 1,
+        "metrics": {
+          "workingSetBytes": {
+            "first": 2124005376.0,
+            "last": 2116440064.0,
+            "change": -7565312.0,
+            "min": 2060353536.0,
+            "max": 2181017600.0,
+            "median": 2117945344.0
+          },
+          "workingSetMiB": {
+            "first": 2025.609375,
+            "last": 2018.394531,
+            "change": -7.214844,
+            "min": 1964.90625,
+            "max": 2079.980469,
+            "median": 2019.830078
+          },
+          "privateBytes": {
+            "first": 1114533888.0,
+            "last": 1108992000.0,
+            "change": -5541888.0,
+            "min": 1048739840.0,
+            "max": 1170440192.0,
+            "median": 1109147648.0
+          },
+          "privateMiB": {
+            "first": 1062.902344,
+            "last": 1057.617188,
+            "change": -5.285156,
+            "min": 1000.15625,
+            "max": 1116.21875,
+            "median": 1057.765625
+          },
+          "threads": {
+            "first": 611.0,
+            "last": 623.0,
+            "change": 12.0,
+            "min": 611.0,
+            "max": 631.0,
+            "median": 626.5
+          },
+          "handles": {
+            "first": 15313.0,
+            "last": 15322.0,
+            "change": 9.0,
+            "min": 15261.0,
+            "max": 15331.0,
+            "median": 15313.0
+          },
+          "processCount": {
+            "first": 27,
+            "last": 27,
+            "change": 0,
+            "min": 27,
+            "max": 27,
+            "median": 27.0
+          },
+          "webViewProcessCount": {
+            "first": 24,
+            "last": 24,
+            "change": 0,
+            "min": 24,
+            "max": 24,
+            "median": 24.0
+          }
+        }
+      }
+    ],
+    "processCountTransitions": [
+      {
+        "sampleIndex": 0,
+        "atUtc": "2026-11-18T18:18:49.1877690Z",
+        "processCount": 9,
+        "webViewProcessCount": 6
+      },
+      {
+        "sampleIndex": 4,
+        "atUtc": "2026-11-18T18:19:30.8013604Z",
+        "processCount": 15,
+        "webViewProcessCount": 12
+      },
+      {
+        "sampleIndex": 12,
+        "atUtc": "2026-11-18T18:20:54.3620772Z",
+        "processCount": 16,
+        "webViewProcessCount": 13
+      },
+      {
+        "sampleIndex": 13,
+        "atUtc": "2026-11-18T18:21:04.8025450Z",
+        "processCount": 15,
+        "webViewProcessCount": 12
+      },
+      {
+        "sampleIndex": 17,
+        "atUtc": "2026-11-18T18:21:46.7272849Z",
+        "processCount": 21,
+        "webViewProcessCount": 18
+      },
+      {
+        "sampleIndex": 53,
+        "atUtc": "2026-11-18T18:28:04.8748751Z",
+        "processCount": 27,
+        "webViewProcessCount": 24
+      }
+    ],
+    "observedProcessIdentities": 28,
+    "aggregateObservedCpuDeltaSeconds": 86.7656,
+    "samplesWithUnverifiedIdentities": 0,
+    "samplesWithUnavailableCounters": 0,
+    "rootAliveAtLastResourceSample": true,
+    "exitTailSamplesRecorded": 0
+  },
+  "nativeEvents": {
+    "eventSnapshotStartsUtc": "2026-11-18T18:17:40.4107088+00:00",
+    "eventSnapshotEndsUtc": "2026-11-18T18:43:57.8295097+00:00",
+    "eventRows": 183,
+    "eventCounts": {
+      "application-start": 1,
+      "host-loaded": 1,
+      "host-route-request": 2,
+      "navigation-completed": 3,
+      "navigation-starting": 3,
+      "shell-initialize-requested": 3,
+      "shell-profile-created": 1,
+      "sidecar-created": 2,
+      "sidecar-ready": 1,
+      "stage51-dom-layout": 40,
+      "stage51-dom-wheel": 3,
+      "stage51-dom-wheel-arrival": 3,
+      "stage51-dom-wheel-settled": 3,
+      "stage51-native-dpi": 1,
+      "stage51-native-wheel": 3,
+      "stage53-drag-attached": 1,
+      "stage53-drag-summary": 1,
+      "webview-created": 4,
+      "webview-navigation": 4,
+      "webview-source-changed": 1,
+      "window-created": 1,
+      "window-initialize-completed": 1,
+      "window-initialize-start": 1,
+      "window-presentation-state": 3,
+      "workspace-page": 30,
+      "workspace-presentation-enter": 1,
+      "workspace-presentation-exit": 1,
+      "ws-account-selected": 13,
+      "ws-bounds-decision": 31,
+      "ws-initialize": 3,
+      "ws-isolated-status": 17
+    },
+    "countsFileSnapshotAtUtc": "2026-11-18T18:36:34.2170731+00:00",
+    "countsFileSuppressionReported": 0,
+    "eventCountDeltaVersusCountsFile": {
+      "stage51-dom-layout": 8,
+      "window-presentation-state": 1,
+      "workspace-page": 3,
+      "workspace-presentation-exit": 1,
+      "ws-bounds-decision": 4
+    },
+    "observedDpi": {
+      "systemDpi": 120,
+      "hwndDpi": 120,
+      "nativeTheme": "Light"
+    },
+    "coreCount": 4,
+    "coresByAccount": [
+      {
+        "account": "shell",
+        "coresCreated": 1,
+        "createdAtUtc": [
+          "2026-11-18T18:18:05.4632804+00:00"
+        ],
+        "selectionEvents": 0,
+        "generationsSelected": [],
+        "selectionCreated": 0,
+        "selectionReused": 0,
+        "selectionReloads": 0,
+        "webviewNavigationEvents": 1,
+        "webviewNavigationSuccesses": 1,
+        "visibleNavigationStarted": 0,
+        "visibleNavigationCancelled": 0,
+        "visibleNavigationCompleted": 0,
+        "visibleNavigationSuccesses": 0,
+        "outcomes": {},
+        "visibleNavigationRetries": 0
+      },
+      {
+        "account": "default",
+        "coresCreated": 1,
+        "createdAtUtc": [
+          "2026-11-18T18:19:27.8663471+00:00"
+        ],
+        "selectionEvents": 7,
+        "generationsSelected": [
+          1
+        ],
+        "selectionCreated": 1,
+        "selectionReused": 6,
+        "selectionReloads": 0,
+        "webviewNavigationEvents": 1,
+        "webviewNavigationSuccesses": 1,
+        "visibleNavigationStarted": 1,
+        "visibleNavigationCancelled": 0,
+        "visibleNavigationCompleted": 1,
+        "visibleNavigationSuccesses": 1,
+        "outcomes": {
+          "isolated-document": 1
+        },
+        "visibleNavigationRetries": 0
+      },
+      {
+        "account": "native-b",
+        "coresCreated": 1,
+        "createdAtUtc": [
+          "2026-11-18T18:21:36.7959139+00:00"
+        ],
+        "selectionEvents": 5,
+        "generationsSelected": [
+          2
+        ],
+        "selectionCreated": 1,
+        "selectionReused": 4,
+        "selectionReloads": 0,
+        "webviewNavigationEvents": 1,
+        "webviewNavigationSuccesses": 1,
+        "visibleNavigationStarted": 1,
+        "visibleNavigationCancelled": 0,
+        "visibleNavigationCompleted": 1,
+        "visibleNavigationSuccesses": 1,
+        "outcomes": {
+          "isolated-document": 1
+        },
+        "visibleNavigationRetries": 0
+      },
+      {
+        "account": "new-synthetic-account",
+        "coresCreated": 1,
+        "createdAtUtc": [
+          "2026-11-18T18:28:00.0046436+00:00"
+        ],
+        "selectionEvents": 1,
+        "generationsSelected": [
+          3
+        ],
+        "selectionCreated": 1,
+        "selectionReused": 0,
+        "selectionReloads": 0,
+        "webviewNavigationEvents": 1,
+        "webviewNavigationSuccesses": 1,
+        "visibleNavigationStarted": 1,
+        "visibleNavigationCancelled": 0,
+        "visibleNavigationCompleted": 1,
+        "visibleNavigationSuccesses": 1,
+        "outcomes": {
+          "isolated-document": 1
+        },
+        "visibleNavigationRetries": 0
+      }
+    ],
+    "workspacePages": {
+      "enterCount": 15,
+      "exitCount": 15,
+      "uniquePages": 12,
+      "enters": [
+        {
+          "page": "overview",
+          "atUtc": "2026-11-18T18:19:26.7257836+00:00",
+          "inResourceSampleSpan": true
+        },
+        {
+          "page": "chat",
+          "atUtc": "2026-11-18T18:20:24.1726197+00:00",
+          "inResourceSampleSpan": true
+        },
+        {
+          "page": "accounts",
+          "atUtc": "2026-11-18T18:22:28.0776346+00:00",
+          "inResourceSampleSpan": true
+        },
+        {
+          "page": "chat",
+          "atUtc": "2026-11-18T18:28:00.2020979+00:00",
+          "inResourceSampleSpan": true
+        },
+        {
+          "page": "contacts",
+          "atUtc": "2026-11-18T18:28:27.5373833+00:00",
+          "inResourceSampleSpan": true
+        },
+        {
+          "page": "accounts",
+          "atUtc": "2026-11-18T18:28:53.7175248+00:00",
+          "inResourceSampleSpan": true
+        },
+        {
+          "page": "groups",
+          "atUtc": "2026-11-18T18:29:41.1623728+00:00",
+          "inResourceSampleSpan": true
+        },
+        {
+          "page": "members",
+          "atUtc": "2026-11-18T18:30:07.1753178+00:00",
+          "inResourceSampleSpan": true
+        },
+        {
+          "page": "collection",
+          "atUtc": "2026-11-18T18:30:32.2806146+00:00",
+          "inResourceSampleSpan": true
+        },
+        {
+          "page": "ai",
+          "atUtc": "2026-11-18T18:30:57.2493555+00:00",
+          "inResourceSampleSpan": true
+        },
+        {
+          "page": "crm",
+          "atUtc": "2026-11-18T18:31:22.1722085+00:00",
+          "inResourceSampleSpan": true
+        },
+        {
+          "page": "tasks",
+          "atUtc": "2026-11-18T18:35:35.4845553+00:00",
+          "inResourceSampleSpan": false
+        },
+        {
+          "page": "logs",
+          "atUtc": "2026-11-18T18:36:07.2879633+00:00",
+          "inResourceSampleSpan": false
+        },
+        {
+          "page": "settings",
+          "atUtc": "2026-11-18T18:36:34.0036748+00:00",
+          "inResourceSampleSpan": false
+        },
+        {
+          "page": "chat",
+          "atUtc": "2026-11-18T18:37:02.0362314+00:00",
+          "inResourceSampleSpan": false
+        }
+      ],
+      "exits": [
+        {
+          "page": "overview",
+          "atUtc": "2026-11-18T18:20:24.1716706+00:00"
+        },
+        {
+          "page": "chat",
+          "atUtc": "2026-11-18T18:22:28.0769883+00:00"
+        },
+        {
+          "page": "accounts",
+          "atUtc": "2026-11-18T18:28:00.1887736+00:00"
+        },
+        {
+          "page": "chat",
+          "atUtc": "2026-11-18T18:28:27.536361+00:00"
+        },
+        {
+          "page": "contacts",
+          "atUtc": "2026-11-18T18:28:53.7169022+00:00"
+        },
+        {
+          "page": "accounts",
+          "atUtc": "2026-11-18T18:29:41.1615385+00:00"
+        },
+        {
+          "page": "groups",
+          "atUtc": "2026-11-18T18:30:07.1744916+00:00"
+        },
+        {
+          "page": "members",
+          "atUtc": "2026-11-18T18:30:32.2797999+00:00"
+        },
+        {
+          "page": "collection",
+          "atUtc": "2026-11-18T18:30:57.2485422+00:00"
+        },
+        {
+          "page": "ai",
+          "atUtc": "2026-11-18T18:31:22.1712528+00:00"
+        },
+        {
+          "page": "crm",
+          "atUtc": "2026-11-18T18:35:35.4836764+00:00"
+        },
+        {
+          "page": "tasks",
+          "atUtc": "2026-11-18T18:36:07.2866499+00:00"
+        },
+        {
+          "page": "logs",
+          "atUtc": "2026-11-18T18:36:34.0022676+00:00"
+        },
+        {
+          "page": "settings",
+          "atUtc": "2026-11-18T18:37:02.0354922+00:00"
+        },
+        {
+          "page": "chat",
+          "atUtc": "2026-11-18T18:42:10.3770439+00:00"
+        }
+      ]
+    },
+    "workspaceEnterSucceeded": [
+      true
+    ],
+    "workspaceExitSucceeded": [
+      true
+    ],
+    "workspaceBounds": {
+      "decisions": 31,
+      "accepted": 5,
+      "notAccepted": 26,
+      "notAcceptedWithHiddenRequested": 25,
+      "notAcceptedWithVisibleRequested": [
+        {
+          "page": "chat",
+          "routeActive": true,
+          "routeVisible": true,
+          "chatActive": false,
+          "hostRenderable": true,
+          "hasNativeCore": true,
+          "hasBounds": true,
+          "overlayGeometryApplied": false,
+          "overlayHitTestVisible": false
+        }
+      ]
+    },
+    "wheelSeriesEvents": {
+      "stage51-native-wheel": 3,
+      "stage51-dom-wheel-arrival": 3,
+      "stage51-dom-wheel": 3,
+      "stage51-dom-wheel-settled": 3
+    },
+    "sidecar": {
+      "created": [
+        "2026-11-18T18:17:41.2206583+00:00",
+        "2026-11-18T18:18:02.263093+00:00"
+      ],
+      "ready": [
+        "2026-11-18T18:18:04.4753144+00:00"
+      ],
+      "advertisedModes": [
+        {
+          "workerEnabled": false,
+          "realWsEnabled": false,
+          "paidAiEnabled": false
+        },
+        {
+          "workerEnabled": false,
+          "realWsEnabled": false,
+          "paidAiEnabled": false
+        }
+      ]
+    },
+    "namedFailureEventCounts": {},
+    "shutdownEventTimesPresent": {
+      "application-stopping": [],
+      "sidecar-stopped": [],
+      "host-unloaded": []
+    }
+  },
+  "limitations": [
+    "The resource sequence spans normal shell and foreground Core creation plus page and account actions. It is one observational run with no matched before/after workload or defined threshold.",
+    "Working set is the observer sum across the process tree. Shared pages can be counted for multiple processes, and its changes alone do not diagnose a leak.",
+    "Fixed identity windows describe the sampled process sets. Their counter ranges still fluctuate. Native event types do not constitute a complete user-input ledger.",
+    "The observer finished while the root was running. Exit tail and release require the separate closure observation.",
+    "The native WebView navigation outcomes refer to isolated documents. Real WhatsApp, production Worker, and paid AI were disabled in the recorded sidecar modes.",
+    "The event counts file precedes the event-stream cutoff. Event list deltas capture that difference; later events cannot be inferred from this snapshot.",
+    "No connection file, live profile, SQLite database, or process memory contents were read."
+  ]
+}

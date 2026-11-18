@@ -1,0 +1,520 @@
+{
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "results": [
+    {
+      "view": "operations",
+      "palette": "horizon-night",
+      "body": {
+        "font": "16px",
+        "color": "rgb(238, 242, 255)",
+        "background": "rgb(16, 24, 43)",
+        "backgroundImage": "radial-gradient(1000px 600px at 100% 0px, rgba(117, 89, 189, 0.1), rgba(0, 0, 0, 0) 72%), none",
+        "radius": "0px",
+        "display": "block",
+        "visibility": "visible"
+      },
+      "nav": {
+        "font": "16px",
+        "color": "rgb(255, 255, 255)",
+        "background": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "none",
+        "radius": "14px",
+        "display": "flex",
+        "visibility": "visible"
+      },
+      "sidebar": {
+        "x": 8,
+        "y": 8,
+        "width": 248,
+        "height": 1064,
+        "right": 256,
+        "bottom": 1072
+      },
+      "title": {
+        "font": "28px",
+        "color": "rgb(238, 242, 255)",
+        "background": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "linear-gradient(90deg, rgb(227, 244, 250), rgb(120, 216, 206))",
+        "radius": "0px",
+        "display": "block",
+        "visibility": "visible"
+      },
+      "titleVisible": true,
+      "button": {
+        "x": 1777,
+        "y": 131.671875,
+        "width": 98,
+        "height": 44,
+        "right": 1875,
+        "bottom": 175.671875
+      },
+      "buttonType": {
+        "font": "16px",
+        "color": "rgb(255, 255, 255)",
+        "background": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "linear-gradient(115deg, rgb(49, 86, 201), rgb(101, 80, 181))",
+        "radius": "14px",
+        "display": "flex",
+        "visibility": "visible"
+      },
+      "search": {
+        "x": 314,
+        "y": 629.796875,
+        "width": 342,
+        "height": 44,
+        "right": 656,
+        "bottom": 673.796875
+      },
+      "table": null,
+      "row": null,
+      "panel": {
+        "font": "16px",
+        "color": "rgb(238, 242, 255)",
+        "background": "rgb(23, 35, 59)",
+        "backgroundImage": "none",
+        "radius": "14px",
+        "display": "block",
+        "visibility": "visible"
+      },
+      "navLastReachable": true,
+      "docOverflow": false,
+      "container": {
+        "x": 256,
+        "y": 72,
+        "width": 1664,
+        "height": 978,
+        "right": 1920,
+        "bottom": 1050
+      },
+      "childrenOutside": [],
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "font": "16px",
+          "height": 44
+        },
+        {
+          "tag": "INPUT",
+          "font": "16px",
+          "height": 44
+        },
+        {
+          "tag": "BUTTON",
+          "font": "16px",
+          "height": 44
+        },
+        {
+          "tag": "BUTTON",
+          "font": "16px",
+          "height": 44
+        },
+        {
+          "tag": "BUTTON",
+          "font": "16px",
+          "height": 44
+        },
+        {
+          "tag": "BUTTON",
+          "font": "16px",
+          "height": 44
+        },
+        {
+          "tag": "BUTTON",
+          "font": "16px",
+          "height": 44
+        },
+        {
+          "tag": "BUTTON",
+          "font": "16px",
+          "height": 44
+        },
+        {
+          "tag": "BUTTON",
+          "font": "16px",
+          "height": 44
+        },
+        {
+          "tag": "SELECT",
+          "font": "16px",
+          "height": 44
+        },
+        {
+          "tag": "BUTTON",
+          "font": "16px",
+          "height": 44
+        },
+        {
+          "tag": "BUTTON",
+          "font": "16px",
+          "height": 44
+        },
+        {
+          "tag": "BUTTON",
+          "font": "16px",
+          "height": 44
+        }
+      ],
+      "markupLength": 5750,
+      "smallText": [
+        {
+          "selector": "span.ops6-eyebrow",
+          "parent": "",
+          "font": "13px",
+          "text": "ACTION ORCHESTRATION"
+        }
+      ],
+      "special": {
+        ".customer6-focus": null,
+        ".customer6-focus-field strong": null,
+        ".saved-view": null,
+        ".ops6-task-insight": {
+          "font": "16px",
+          "color": "rgb(238, 242, 255)",
+          "background": "rgb(23, 35, 59)",
+          "backgroundImage": "none",
+          "radius": "18px",
+          "display": "block",
+          "visibility": "visible"
+        },
+        ".ops6-task-insight-rows strong": {
+          "font": "15px",
+          "color": "rgb(238, 242, 255)",
+          "background": "rgba(0, 0, 0, 0)",
+          "backgroundImage": "none",
+          "radius": "0px",
+          "display": "block",
+          "visibility": "visible"
+        },
+        ".ops6-task-stage-list strong": {
+          "font": "16px",
+          "color": "rgb(238, 242, 255)",
+          "background": "rgba(0, 0, 0, 0)",
+          "backgroundImage": "none",
+          "radius": "0px",
+          "display": "block",
+          "visibility": "visible"
+        },
+        ".ops6-task-tabs button": {
+          "font": "16px",
+          "color": "rgb(176, 189, 216)",
+          "background": "rgb(23, 35, 59)",
+          "backgroundImage": "none",
+          "radius": "12px",
+          "display": "flex",
+          "visibility": "visible"
+        },
+        ".subnav button": null,
+        ".preview-table td": null,
+        ".source-defaults>label": null,
+        ".activity-text": null,
+        ".horizon-spotlight-capabilities small": null,
+        ".ops6-task-board": {
+          "font": "16px",
+          "color": "rgb(238, 242, 255)",
+          "background": "rgb(23, 35, 59)",
+          "backgroundImage": "none",
+          "radius": "18px",
+          "display": "block",
+          "visibility": "visible"
+        }
+      },
+      "workspaces": {
+        "rect": {
+          "x": 284,
+          "y": 8.5,
+          "width": 294.25,
+          "height": 54,
+          "right": 578.25,
+          "bottom": 62.5
+        },
+        "tabs": [
+          {
+            "rect": {
+              "x": 289,
+              "y": 13.5,
+              "width": 140,
+              "height": 44,
+              "right": 429,
+              "bottom": 57.5
+            },
+            "font": "16px",
+            "visible": true
+          },
+          {
+            "rect": {
+              "x": 435,
+              "y": 13.5,
+              "width": 138.25,
+              "height": 44,
+              "right": 573.25,
+              "bottom": 57.5
+            },
+            "font": "16px",
+            "visible": true
+          }
+        ],
+        "topbar": {
+          "x": 256,
+          "y": 0,
+          "width": 1664,
+          "height": 72,
+          "right": 1920,
+          "bottom": 72
+        },
+        "actions": [
+          {
+            "id": "",
+            "rect": {
+              "x": 289,
+              "y": 13.5,
+              "width": 140,
+              "height": 44,
+              "right": 429,
+              "bottom": 57.5
+            },
+            "visible": true
+          },
+          {
+            "id": "",
+            "rect": {
+              "x": 435,
+              "y": 13.5,
+              "width": 138.25,
+              "height": 44,
+              "right": 573.25,
+              "bottom": 57.5
+            },
+            "visible": true
+          },
+          {
+            "id": "globalSearch",
+            "rect": {
+              "x": 1048.9375,
+              "y": 13.5,
+              "width": 340,
+              "height": 44,
+              "right": 1388.9375,
+              "bottom": 57.5
+            },
+            "visible": true
+          },
+          {
+            "id": "shortcutButton",
+            "rect": {
+              "x": 1526,
+              "y": 13.5,
+              "width": 44,
+              "height": 44,
+              "right": 1570,
+              "bottom": 57.5
+            },
+            "visible": true
+          },
+          {
+            "id": "appearanceButton",
+            "rect": {
+              "x": 1580,
+              "y": 13.5,
+              "width": 44,
+              "height": 44,
+              "right": 1624,
+              "bottom": 57.5
+            },
+            "visible": true
+          },
+          {
+            "id": "backupButton",
+            "rect": {
+              "x": 1634,
+              "y": 13.5,
+              "width": 44,
+              "height": 44,
+              "right": 1678,
+              "bottom": 57.5
+            },
+            "visible": true
+          },
+          {
+            "id": "notificationButton",
+            "rect": {
+              "x": 1794,
+              "y": 13.5,
+              "width": 44,
+              "height": 44,
+              "right": 1838,
+              "bottom": 57.5
+            },
+            "visible": true
+          },
+          {
+            "id": "",
+            "rect": {
+              "x": 1848,
+              "y": 13.5,
+              "width": 44,
+              "height": 44,
+              "right": 1892,
+              "bottom": 57.5
+            },
+            "visible": true
+          }
+        ]
+      },
+      "activeNav": {
+        "font": "16px",
+        "color": "rgb(174, 185, 201)",
+        "background": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "none",
+        "radius": "14px",
+        "display": "flex",
+        "visibility": "visible"
+      },
+      "activeNavIcon": {
+        "font": "16px",
+        "color": "rgb(174, 185, 201)",
+        "background": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "none",
+        "radius": "0px",
+        "display": "block",
+        "visibility": "visible"
+      },
+      "contrastSamples": [
+        {
+          "selector": "p.page-subtitle",
+          "text": "统一处理人工任务和 AI 跟进提醒；完成结果实时回写客户档案、首页和统计。",
+          "foreground": "rgb(176, 189, 216)",
+          "backgrounds": [
+            "rgb(23, 32, 54)",
+            "rgb(16, 24, 43)"
+          ]
+        },
+        {
+          "selector": "button.btn primary",
+          "text": "新建任务",
+          "foreground": "rgb(255, 255, 255)",
+          "backgrounds": [
+            "rgb(49, 86, 201)",
+            "rgb(101, 80, 181)"
+          ]
+        },
+        {
+          "selector": "button.btn small primary active",
+          "text": "全部",
+          "foreground": "rgb(255, 255, 255)",
+          "backgrounds": [
+            "rgb(49, 86, 201)",
+            "rgb(101, 80, 181)"
+          ]
+        },
+        {
+          "selector": "strong.",
+          "text": "隔离布局任务 · 今日",
+          "foreground": "rgb(238, 242, 255)",
+          "backgrounds": [
+            "rgb(23, 35, 59)"
+          ]
+        },
+        {
+          "selector": "span.ops-task-meta",
+          "text": "2026-11-17 · 未分配",
+          "foreground": "rgb(176, 189, 216)",
+          "backgrounds": [
+            "rgb(23, 35, 59)"
+          ]
+        },
+        {
+          "selector": "span.ops-priority ",
+          "text": "普通",
+          "foreground": "rgb(238, 242, 255)",
+          "backgrounds": [
+            "rgb(23, 35, 59)"
+          ]
+        },
+        {
+          "selector": "span.",
+          "text": "任务备注",
+          "foreground": "rgb(176, 189, 216)",
+          "backgrounds": [
+            "rgb(23, 35, 59)"
+          ]
+        },
+        {
+          "selector": "strong.",
+          "text": "未填写",
+          "foreground": "rgb(238, 242, 255)",
+          "backgrounds": [
+            "rgb(23, 35, 59)"
+          ]
+        },
+        {
+          "selector": "span.",
+          "text": "任务目标",
+          "foreground": "rgb(176, 189, 216)",
+          "backgrounds": [
+            "rgb(23, 35, 59)"
+          ]
+        },
+        {
+          "selector": "strong.",
+          "text": "未填写",
+          "foreground": "rgb(238, 242, 255)",
+          "backgrounds": [
+            "rgb(23, 35, 59)"
+          ]
+        },
+        {
+          "selector": "span.",
+          "text": "截止日期",
+          "foreground": "rgb(176, 189, 216)",
+          "backgrounds": [
+            "rgb(23, 35, 59)"
+          ]
+        },
+        {
+          "selector": "strong.",
+          "text": "2026-11-17",
+          "foreground": "rgb(238, 242, 255)",
+          "backgrounds": [
+            "rgb(23, 35, 59)"
+          ]
+        },
+        {
+          "selector": "button.btn primary",
+          "text": "定位任务",
+          "foreground": "rgb(255, 255, 255)",
+          "backgrounds": [
+            "rgb(49, 86, 201)",
+            "rgb(101, 80, 181)"
+          ]
+        }
+      ],
+      "progressTracks": [
+        {
+          "viewport": {
+            "x": 287,
+            "y": 403.828125,
+            "width": 1587,
+            "height": 12,
+            "right": 1874,
+            "bottom": 415.828125
+          },
+          "background": {
+            "x": 287,
+            "y": 403.828125,
+            "width": 1587,
+            "height": 12,
+            "right": 1874,
+            "bottom": 415.828125
+          },
+          "stroke": "none"
+        }
+      ]
+    }
+  ],
+  "appearance": null,
+  "collapsed": null,
+  "errors": []
+}

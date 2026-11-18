@@ -1,0 +1,12 @@
+{
+  "scope": "offline delivery gallery only, not product acceptance",
+  "status": "Passed",
+  "localRefs": 34,
+  "images": 12,
+  "viewports": [
+    1440,
+    820
+  ],
+  "externalNetwork": false,
+  "pageErrors": []
+}

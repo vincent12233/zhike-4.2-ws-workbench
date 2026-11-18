@@ -1,0 +1,244 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794933464472-d7e0af4e-af1e-48cb-ba31-43e476f1f5c0",
+  "mode": "real-edge-synthetic-layout",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 30000,
+  "launchedAt": "2026-11-17T16:37:44.472Z",
+  "events": [
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 9492
+    },
+    {
+      "event": "cdp-ready",
+      "elapsedMs": 11775
+    },
+    {
+      "event": "owned-target-created",
+      "elapsedMs": 12415
+    },
+    {
+      "event": "owned-session-attached",
+      "elapsedMs": 12428
+    },
+    {
+      "event": "viewport-configured",
+      "elapsedMs": 12440,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "event": "navigation-started",
+      "elapsedMs": 12443
+    },
+    {
+      "event": "viewport-verified",
+      "elapsedMs": 23569,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "event": "result-verified",
+      "elapsedMs": 23573,
+      "cases": 1
+    },
+    {
+      "event": "screenshot-written",
+      "elapsedMs": 23918,
+      "bytes": 364254,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 24576
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 24576
+    },
+    {
+      "event": "owned-session-detached",
+      "elapsedMs": 24580
+    },
+    {
+      "event": "owned-target-close-confirmed",
+      "elapsedMs": 24582
+    },
+    {
+      "event": "owned-browser-close-requested",
+      "elapsedMs": 24582
+    },
+    {
+      "event": "browser-close-acknowledged",
+      "elapsedMs": 24583,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "cdp-transport-close-requested",
+      "elapsedMs": 24583
+    },
+    {
+      "event": "cdp-transport-closed",
+      "elapsedMs": 24584,
+      "code": 1000
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 24584,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "failure-owned-handle-termination",
+      "elapsedMs": 30013,
+      "requested": true
+    }
+  ],
+  "identities": [
+    {
+      "pid": 9988,
+      "startedTicks": "639305302644764951",
+      "startedUtc": "2026-11-17T16:37:44.4764951Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 10340,
+      "startedTicks": "639305302751622712",
+      "startedUtc": "2026-11-17T16:37:55.1622712Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 8964,
+      "startedTicks": "639305302751618578",
+      "startedUtc": "2026-11-17T16:37:55.1618578Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 27704,
+      "startedTicks": "639305302751616309",
+      "startedUtc": "2026-11-17T16:37:55.1616309Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 33640,
+      "startedTicks": "639305302751530755",
+      "startedUtc": "2026-11-17T16:37:55.1530755Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 22384,
+      "startedTicks": "639305302751535617",
+      "startedUtc": "2026-11-17T16:37:55.1535617Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 11200,
+      "startedTicks": "639305302751509363",
+      "startedUtc": "2026-11-17T16:37:55.1509363Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 27576,
+      "startedTicks": "639305302696314089",
+      "startedUtc": "2026-11-17T16:37:49.6314089Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 15812,
+      "startedTicks": "639305302696390931",
+      "startedUtc": "2026-11-17T16:37:49.6390931Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 23360,
+      "startedTicks": "639305302696957991",
+      "startedUtc": "2026-11-17T16:37:49.6957991Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 8292,
+      "startedTicks": "639305302878676933",
+      "startedUtc": "2026-11-17T16:38:07.8676933Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 35348,
+      "startedTicks": "639305302876963871",
+      "startedUtc": "2026-11-17T16:38:07.6963871Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 368,
+      "startedTicks": "639305302875145741",
+      "startedUtc": "2026-11-17T16:38:07.5145741Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 22980,
+      "startedTicks": "639305302775675961",
+      "startedUtc": "2026-11-17T16:37:57.5675961Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 7020,
+      "startedTicks": "639305302877283285",
+      "startedUtc": "2026-11-17T16:38:07.7283285Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 6896,
+      "startedTicks": "639305302799712517",
+      "startedUtc": "2026-11-17T16:37:59.9712517Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 364,
+      "startedTicks": "639305302878887097",
+      "startedUtc": "2026-11-17T16:38:07.8887097Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": null,
+  "streamsClosed": false,
+  "forceTerminated": true,
+  "cleanupSafe": false,
+  "pid": 9988,
+  "profile": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s1-main-style-JCgVB2\\edge-profile-0de72c89-2542-44bb-93b1-7f93579df4df",
+  "resourceReleaseOrder": "owned-session-target-browser",
+  "devToolsReadiness": {
+    "polls": 1,
+    "enoent": 0,
+    "ebusy": 0,
+    "partial": 0
+  },
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "resultCases": 1,
+  "resultBytes": 9644,
+  "resultSha256": "9656b45fe3ab1da4f2fa15fec409029ebd1d380f40ba206ecba71e3896710cc7",
+  "resultFile": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\actual-browser\\pages\\1794933464472-d7e0af4e-af1e-48cb-ba31-43e476f1f5c0.result.json",
+  "screenshot": {
+    "path": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dynamic-v4\\actual-browser\\pages\\main-operations-atelier-dawn.png",
+    "bytes": 364254,
+    "width": 1920,
+    "height": 1080,
+    "sha256": "b44a63b476fee9ac073a513b6032ca330b50082cf14982154e842ec406538af3"
+  },
+  "resultReady": true,
+  "releaseFailure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "process-exit"
+  },
+  "elapsedMs": 30015,
+  "stdoutBytes": 0,
+  "stderrBytes": 1780,
+  "failure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "process-exit",
+    "message": "Isolated lifecycle deadline reached during process-exit"
+  }
+}

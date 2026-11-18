@@ -1,0 +1,18 @@
+[
+  {
+    "timedOut": false,
+    "invocation": "1795008100736-ca58b9ce-8fb4-4fa0-b952-de3f56428731",
+    "kernel": "root-exited",
+    "bracketWidthMs": 2.2485999999998967,
+    "lifecycle": "<worktree>/.tools/edge-exit-observer/1795008100736-ca58b9ce-8fb4-4fa0-b952-de3f56428731.json",
+    "observation": "<worktree>/.tools/edge-exit-observer/1795008100736-ca58b9ce-8fb4-4fa0-b952-de3f56428731.kernel.jsonl"
+  },
+  {
+    "timedOut": true,
+    "invocation": "1795008102805-b7503375-2496-4d8c-bbde-e8eaf25328a8",
+    "kernel": "original-deadline",
+    "bracketWidthMs": 0.5351999999998043,
+    "lifecycle": "<worktree>/.tools/edge-exit-observer/1795008102805-b7503375-2496-4d8c-bbde-e8eaf25328a8.json",
+    "observation": "<worktree>/.tools/edge-exit-observer/1795008102805-b7503375-2496-4d8c-bbde-e8eaf25328a8.kernel.jsonl"
+  }
+]

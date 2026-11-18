@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const repo = path.resolve(__dirname, '..');
-const source = fs.readFileSync(path.join(repo, 'resources', 'app', 'app.js'), 'utf8');
+const source = fs.readFileSync(path.join(repo, 'resources', 'app', 'app.js'), 'utf8').replaceAll('\r\n', '\n');
 const match = source.match(/async function flushStateWrites\(\)\{([^}]+(?:\}[^}]*)*?)\n?\s*\}\n\s*const persist/);
 assert(match, 'flushStateWrites implementation is present');
 const body = match[1];

@@ -1,0 +1,10 @@
+{"at": "2026-11-17T01:22:03.7761687+00:00", "pid": 33660, "kind": "application-start", "fields": {}}
+{"at": "2026-11-17T01:22:06.3781614+00:00", "pid": 33660, "kind": "webview-created", "fields": {"role": "shell", "accountId": "workbench-ui", "browserProcessId": 7448}}
+{"at": "2026-11-17T01:22:09.3002477+00:00", "pid": 33660, "kind": "webview-navigation", "fields": {"role": "shell", "accountId": "workbench-ui", "success": true, "target": "isolated-local"}}
+{"at": "2026-11-17T01:38:33.9931387+00:00", "pid": 33660, "kind": "webview-navigation", "fields": {"role": "shell", "accountId": "workbench-ui", "success": true, "target": "isolated-local"}}
+{"at": "2026-11-17T02:04:38.6502333+00:00", "pid": 33660, "kind": "webview-navigation", "fields": {"role": "shell", "accountId": "workbench-ui", "success": true, "target": "isolated-local"}}
+{"at": "2026-11-17T02:31:08.8163995+00:00", "pid": 33660, "kind": "webview-navigation", "fields": {"role": "shell", "accountId": "workbench-ui", "success": true, "target": "isolated-local"}}
+{"at": "2026-11-17T02:43:11.9549577+00:00", "pid": 33660, "kind": "webview-navigation", "fields": {"role": "shell", "accountId": "workbench-ui", "success": true, "target": "isolated-local"}}
+{"at": "2026-11-17T02:44:31.8835603+00:00", "pid": 33660, "kind": "application-stopping", "fields": {}}
+{"at": "2026-11-17T02:44:32.0394072+00:00", "pid": 33660, "kind": "sidecar-stopped", "fields": {}}
+{"at": "2026-11-17T02:44:32.0576234+00:00", "pid": 33660, "kind": "host-unloaded", "fields": {}}

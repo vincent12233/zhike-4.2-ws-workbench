@@ -1,0 +1,22 @@
+{
+  "worktreeCommit": "8a9e4c8",
+  "integratedSourceMatch": "c29db87",
+  "command": "bundled Node v24.22.1 tests/data-archive-summary.test.cjs",
+  "runCount": 1,
+  "standalone": true,
+  "exitCode": 0,
+  "retryAttempts": 300,
+  "retryDelayMs": 40,
+  "port4599ListenersBefore": 0,
+  "laterPortCheckUtc": "2026-11-18T06:39:17.1140818Z",
+  "port4599ListenersOnLaterCheck": 0,
+  "newTestDirectoriesOnLaterCheck": 0,
+  "originalFullResult": "292/298",
+  "originalLogName": "data-archive-summary.log",
+  "originalLogBytes": 87,
+  "originalLogSha256": "7fd25b5875ba57b32d2491d0cd7df8e4ee99143f662c3b1be38261154849fa04",
+  "originalLogCreatedAtUtc": "2026-11-18T06:37:44.9975213Z",
+  "originalLogLastWriteUtc": "2026-11-18T06:37:45.9033654Z",
+  "exactProcessDurationMs": null,
+  "timestampLimit": "Original log filesystem timestamps only. Post-run metadata script did not persist exact process elapsed time."
+}

@@ -34,8 +34,11 @@ public sealed record DesktopNotificationResult(bool Supported, string Reason = "
 /// </summary>
 public sealed class DesktopToolsService
 {
-    private const string BackupPrefix = "知客自动备份_";
+#if STAGE51_ISOLATED_UI
+    private readonly string _dataRoot = Stage51Isolation.MapDataPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Zhike6"));
+#else
     private readonly string _dataRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Zhike6");
+#endif
     private readonly SemaphoreSlim _configGate = new(1, 1);
     private readonly SemaphoreSlim _backupGate = new(1, 1);
     private readonly SemaphoreSlim _reminderGate = new(1, 1);
@@ -128,12 +131,15 @@ public sealed class DesktopToolsService
                 ?? throw new InvalidDataException("本机业务数据格式异常，未生成备份。");
             state.Remove("initialized");
             state.Remove("version");
+            NativeBackupEnvelope.ValidateWorkspace(state);
 
             var activeAccount = string.IsNullOrWhiteSpace(accountId) ? "default" : accountId.Trim();
             var wsAccounts = new JsonObject();
             var wsAccountMetadata = new JsonArray();
             JsonNode? activeWs = null;
-            var accounts = await api.GetWsAccountsAsync(cancellationToken) ?? [];
+            var accounts = await api.GetWsAccountsAsync(cancellationToken)
+                ?? throw new InvalidDataException("WS 账号清单读取失败，未生成不完整备份。请稍后重试。");
+            NativeBackupEnvelope.ValidateAccountIds(accounts.Select(account => account?.Id));
             foreach (var account in accounts)
             {
                 wsAccountMetadata.Add(new JsonObject
@@ -144,33 +150,38 @@ public sealed class DesktopToolsService
                 });
                 cancellationToken.ThrowIfCancellationRequested();
                 var response = await api.SendJsonAsync($"api/ws/export?accountId={Uri.EscapeDataString(account.Id)}", HttpMethod.Get, cancellationToken: cancellationToken);
-                if (!response.Ok || response.Data is null) continue;
-                var node = JsonNode.Parse(response.Data.Value.GetRawText());
-                if (node is null) continue;
+                if (!response.Ok || response.Data is null)
+                    throw new InvalidOperationException("WS 会话导出失败，未生成不完整备份。请稍后重试。");
+                var node = JsonNode.Parse(response.Data.Value.GetRawText())
+                    ?? throw new InvalidDataException("WS 会话导出格式异常，未生成不完整备份。请稍后重试。");
+                NativeBackupEnvelope.ValidateWsAccount(node);
                 wsAccounts[account.Id] = node.DeepClone();
                 if (account.Id.Equals(activeAccount, StringComparison.OrdinalIgnoreCase)) activeWs = node.DeepClone();
             }
             if (activeWs is null)
             {
                 var response = await api.SendJsonAsync($"api/ws/export?accountId={Uri.EscapeDataString(activeAccount)}", HttpMethod.Get, cancellationToken: cancellationToken);
-                if (response.Ok && response.Data is not null)
-                    activeWs = JsonNode.Parse(response.Data.Value.GetRawText());
+                if (!response.Ok || response.Data is null)
+                    throw new InvalidOperationException("当前 WS 会话导出失败，未生成不完整备份。请稍后重试。");
+                activeWs = JsonNode.Parse(response.Data.Value.GetRawText())
+                    ?? throw new InvalidDataException("当前 WS 会话导出格式异常，未生成不完整备份。请稍后重试。");
+                NativeBackupEnvelope.ValidateWsAccount(activeWs);
             }
 
             var createdAt = DateTimeOffset.UtcNow;
-            state["appVersion"] = "6.0.1";
-            state["version"] = 5;
+            state["appVersion"] = "6.1.0";
+            state["backupFormat"] = "zhike-6-workspace";
+            state["productVersion"] = "6.1.0";
+            state["version"] = 6;
             state["schemaVersion"] = 5;
             state["createdAt"] = createdAt.ToString("O");
             state["summary"] = BuildSummary(state);
-            state["ws"] = activeWs ?? EmptyWsBackup(createdAt);
+            state["ws"] = activeWs;
             state["wsAccounts"] = wsAccounts;
             state["wsAccountMetadata"] = wsAccountMetadata;
 
-            var bytes = JsonSerializer.SerializeToUtf8Bytes(state, _json);
-            if (bytes.LongLength > 250L * 1024 * 1024)
-                throw new InvalidDataException("完整备份超过 250 MB 安全上限，未写入文件。");
-            var filename = $"{BackupPrefix}{createdAt.ToLocalTime():yyyyMMdd_HHmmssfff}.json";
+            var bytes = NativeBackupEnvelope.Create(state, _json);
+            var filename = BackupRetention.FileName(createdAt);
             var finalPath = Path.Combine(directory, filename);
             EnsureDirectChild(directory, finalPath);
             var temporaryPath = finalPath + $".{Guid.NewGuid():N}.tmp";
@@ -184,7 +195,7 @@ public sealed class DesktopToolsService
                 try { if (File.Exists(temporaryPath)) File.Delete(temporaryPath); } catch { }
             }
 
-            RetainManagedBackups(directory, config.Keep);
+            BackupRetention.Retain(directory, config.Keep);
             var updated = config with { LastAt = createdAt.ToString("O"), LastError = string.Empty };
             await SaveConfigAsync(updated, cancellationToken);
             return new(false, finalPath, updated.LastAt, bytes.LongLength);
@@ -352,37 +363,6 @@ public sealed class DesktopToolsService
         => element.TryGetProperty(name, out var value) && value.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined
             ? value.ToString().Trim()
             : string.Empty;
-
-    private static JsonObject EmptyWsBackup(DateTimeOffset createdAt)
-        => new()
-        {
-            ["schemaVersion"] = 6,
-            ["createdAt"] = createdAt.ToString("O"),
-            ["settings"] = new JsonArray(),
-            ["conversations"] = new JsonArray(),
-            ["messages"] = new JsonArray(),
-            ["analyses"] = new JsonArray(),
-            ["replies"] = new JsonArray(),
-            ["batches"] = new JsonArray(),
-            ["collectionRuns"] = new JsonArray(),
-            ["collectionItems"] = new JsonArray(),
-            ["followupAlerts"] = new JsonArray(),
-        };
-
-    private static void RetainManagedBackups(string directory, int keep)
-    {
-        var root = Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
-        var managed = Directory.EnumerateFiles(directory, $"{BackupPrefix}*.json", SearchOption.TopDirectoryOnly)
-            .Select(Path.GetFullPath)
-            .Where(path => path.StartsWith(root, StringComparison.OrdinalIgnoreCase)
-                && Path.GetFileName(path).StartsWith(BackupPrefix, StringComparison.Ordinal)
-                && Path.GetExtension(path).Equals(".json", StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(File.GetLastWriteTimeUtc)
-            .ThenByDescending(Path.GetFileName, StringComparer.Ordinal)
-            .ToArray();
-        foreach (var path in managed.Skip(Math.Clamp(keep, 3, 100)))
-            try { File.Delete(path); } catch { }
-    }
 
     private static void EnsureDirectChild(string directory, string path)
     {

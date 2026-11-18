@@ -1,0 +1,22 @@
+[PASS] parameter/path valid optional viewport and confined PNG are normalized without starting a process
+[PASS] parameter/path legacy matrix accepts omitted Emulation and retains all expected cases
+[PASS] parameter/path viewport rejects strings booleans missing nonfinite negative and excessive dimensions
+[PASS] parameter/path expected viewport handshake never accepts an empty or invalid array
+[PASS] parameter/path screenshots require one matching explicit viewport
+[PASS] parameter/path outside and traversal targets are refused
+[PASS] parameter/path ADS non-PNG and directory destinations are refused
+[PASS] parameter/path a real filesystem junction cannot redirect a screenshot outside evidence
+[PASS] parameter/path PNG writer preserves original bytes and safely replaces only a regular evidence artifact
+[PASS] parameter/path invalid PNG bytes and viewport mismatch never replace the existing evidence
+[PASS] parameter/path hard-linked destination is refused without changing the other file
+[PASS] parameter/path readiness classification admits only ENOENT or EBUSY on the exact owned endpoint path
+{"mode":"real-windows-exclusive-readiness","status":"Passed","testedStatus":"Passed","busyPolls":1,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794880478619-abdf010d-334d-4617-89bd-7b7a35c69a63.json"}
+{"mode":"real-windows-bounded-readiness","status":"Passed","testedStatus":"Failed","busyPolls":77,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794880482191-b6c5f976-ac0b-4cbd-99cd-e4d9cf3e8910.json"}
+{"mode":"normal","status":"Passed","testedStatus":"Passed","errorCode":null,"elapsedMs":1043,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794880486123-440ff5d2-0789-47c9-8637-255c25599688.json"}
+{"mode":"invalid-result","status":"Passed","testedStatus":"Failed","errorCode":"INVALID_RESULT","elapsedMs":1042,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794880487628-2ceba459-7809-4b84-8c97-fb63c7b3f4ab.json"}
+{"mode":"result-timeout","status":"Passed","testedStatus":"Failed","errorCode":"EDGE_RUNNER_TIMEOUT","elapsedMs":2739,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794880489142-c7452599-eb39-4b33-bff6-6f250b4a1e9c.json"}
+{"mode":"close-timeout","status":"Passed","testedStatus":"Failed","errorCode":"EDGE_RUNNER_TIMEOUT","elapsedMs":3018,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794880492340-94bc03e4-8936-4728-a184-99feb56cacb8.json"}
+{"mode":"nonzero-close","status":"Passed","testedStatus":"Failed","errorCode":"PROCESS_EXIT_NONZERO","elapsedMs":1008,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794880495863-7113ab68-55b4-4a5f-8694-a651df0f65fa.json"}
+{"mode":"early-exit","status":"Passed","testedStatus":"Failed","errorCode":"PROCESS_EARLY_EXIT","elapsedMs":131,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794880497329-d18e0678-9168-4ad6-9789-8de1505fd15f.json"}
+{"mode":"stream-exit-order","status":"Passed","testedStatus":"Passed","errorCode":null,"elapsedMs":1446,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794880497951-72247192-da31-43fd-b0b8-bfbd6bfc6a33.json"}
+{"suite":"isolated-edge-runner-lifecycle","parameterChecks":12,"actualControlledChildCases":9,"passed":9,"realEdgeStarted":false,"realBrowserAccepted":false}

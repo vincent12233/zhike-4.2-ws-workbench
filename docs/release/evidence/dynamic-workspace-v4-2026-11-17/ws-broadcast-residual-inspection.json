@@ -1,0 +1,40 @@
+{
+  "inspectedAt": "2026-11-17T22:25:41.0704438+05:30",
+  "isolatedPath": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-ws-broadcast-2GH5Zz",
+  "exists": true,
+  "pathProvenance": "Exact test mkdtemp prefix; creation timestamp matches failed suite; migration backup identifies server PID 35000",
+  "commandLineReferenceCount": 1,
+  "commandLineReferences": [
+    {
+      "ProcessId": 19448,
+      "ParentProcessId": 15012,
+      "Name": "pwsh.exe"
+    }
+  ],
+  "migrationPid35000Alive": false,
+  "listener4497": [],
+  "fileInventory": [
+    {
+      "relativePath": "\\.workbench.lock",
+      "Length": 107
+    },
+    {
+      "relativePath": "\\workspace.sqlite",
+      "Length": 4096
+    },
+    {
+      "relativePath": "\\workspace.sqlite-shm",
+      "Length": 32768
+    },
+    {
+      "relativePath": "\\workspace.sqlite-wal",
+      "Length": 1367872
+    },
+    {
+      "relativePath": "\\.backups\\migration-2026-11-17T16-40-25-481Z-35000-052d87c9.sqlite",
+      "Length": 0
+    }
+  ],
+  "action": "Preserved; no deletion, no production database access",
+  "referenceInterpretation": "The sole match was the inspection PowerShell command itself (PID 19448), not an application or test worker. This is a command-line/PID/listening-port inspection, not a kernel open-handle proof."
+}

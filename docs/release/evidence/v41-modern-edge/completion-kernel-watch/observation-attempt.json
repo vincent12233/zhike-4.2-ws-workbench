@@ -1,0 +1,9 @@
+{
+  "status": "Failed",
+  "nativeEnvironment": "isolated WinUI closed normally before the control",
+  "controlledNodeInvocations": 1,
+  "realEdgeInvocations": 0,
+  "kernelExitObserved": false,
+  "observerFinalExitStatus": "unconfirmed",
+  "plannedBrowserExperiment": "not-started"
+}

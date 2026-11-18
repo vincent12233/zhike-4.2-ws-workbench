@@ -7,7 +7,7 @@ const vm = require('node:vm');
 
 const repo = path.resolve(__dirname, '..', '..');
 const host = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Views', 'LegacyUiHostPage.xaml.cs'), 'utf8');
-const match = host.match(/return \$\$"""([\s\S]*?)""";/);
+const match = host.match(/internal static string BuildWsCollectorScript\(string accountId\)\s*\{[\s\S]*?return \$\$"""([\s\S]*?)""";/);
 assert.ok(match);
 const script = match[1].replace(/\{\{encodedAccount\}\}/g, JSON.stringify('default'));
 
@@ -50,6 +50,7 @@ const messageNodes = Array.from({ length: 620 }, (_, index) => {
   const dataIdOnly = index === 4 || index === 5;
   const tailOnly = index === 6 || index === 7;
   const paletteOnly = index === 8 || index === 9;
+  const geometryOnly = index === 10 || index === 11;
   const body = () => index === 0 ? firstBody : (index === 2 || index === 3 ? '双方完全相同的一句话' : `历史消息-${index + 1}`);
   let inner, middle, paletteBubble;
   const paletteAnchor = {
@@ -60,7 +61,7 @@ const messageNodes = Array.from({ length: 620 }, (_, index) => {
   };
   const outer = {
     tagName:'DIV', parentElement:null, _background:paletteOnly ? (outgoing ? 'rgb(255, 255, 255)' : 'rgb(217, 253, 211)') : 'rgba(0,0,0,0)',
-    classList: { contains(value) { return !dataIdOnly && !tailOnly && !paletteOnly && !(forceUnknownDirection && index === 0) && value === directionClass; } },
+    classList: { contains(value) { return !dataIdOnly && !tailOnly && !paletteOnly && !geometryOnly && !(forceUnknownDirection && index === 0) && value === directionClass; } },
     getAttribute(name) { return name === 'data-id' ? (dataIdOnly ? `${outgoing ? 'true' : 'false'}_native-${index + 1}` : `msg-${index + 1}`) : ''; },
     querySelector(selector) {
       if (selector === '[data-pre-plain-text]') return inner;
@@ -70,6 +71,10 @@ const messageNodes = Array.from({ length: 620 }, (_, index) => {
     querySelectorAll(selector) { return index === 1 && selector === 'span.selectable-text' ? [quoteBlock, nestedQuoteBlock, replyBlockOne, replyBlockTwo] : []; },
     closest(selector) { return selector.includes('.message-out') || selector.includes('.message-in') ? outer : null; },
     get innerText() { return body(); }, get textContent() { return body(); },
+    getBoundingClientRect() {
+      if (!geometryOnly) return { left:0, width:1200 };
+      return outgoing ? { left:1040, width:140 } : { left:20, width:140 };
+    },
     outerHTML: `<div class="${directionClass}"><div data-testid="msg-container"></div></div>`,
   };
   middle = {
@@ -77,6 +82,10 @@ const messageNodes = Array.from({ length: 620 }, (_, index) => {
     classList:{contains(){return false;}},
     getAttribute(name){ if(name === 'data-id') return `decoration-${index + 1}`; if(name === 'role' && tailOnly) return 'row'; return ''; },
     querySelector(){ return null; }, matches(){ return false; },
+    getBoundingClientRect() {
+      if (!geometryOnly) return { left:0, width:1200 };
+      return outgoing ? { left:1050, width:120 } : { left:30, width:120 };
+    },
   };
   paletteBubble = {
     tagName:'DIV', parentElement:null, _background:outgoing ? 'rgb(217, 253, 211)' : 'rgb(255, 255, 255)',
@@ -106,6 +115,10 @@ const messageNodes = Array.from({ length: 620 }, (_, index) => {
       return null;
     },
     get innerText() { return body(); }, get textContent() { return body(); },
+    getBoundingClientRect() {
+      if (!geometryOnly) return { left:0, width:1200 };
+      return outgoing ? { left:1060, width:100 } : { left:40, width:100 };
+    },
     outerHTML: '<div data-testid="msg-container"></div>',
   };
   paletteBubble.parentElement = inner;
@@ -116,6 +129,7 @@ const pane = {
   querySelectorAll(selector) { return /msg-container|message-in|message-out|pre-plain-text|data-id/.test(selector) ? messageNodes : []; },
   querySelector() { return messageNodes[0]; },
   dispatchEvent() {},
+  getBoundingClientRect() { return { left:0, width:1200, top:0, height:600 }; },
 };
 const header = {
   getAttribute(name) { return name === 'data-id' ? activeChat : ''; },
@@ -205,6 +219,10 @@ assert.equal(visibleCapture.messages[8].direction, 'incoming', 'nearest in-messa
 assert.equal(visibleCapture.messages[8].directionSource, 'palette-incoming');
 assert.equal(visibleCapture.messages[9].direction, 'outgoing', 'nearest in-message green palette identifies a tailless operator bubble');
 assert.equal(visibleCapture.messages[9].directionSource, 'palette-outgoing');
+assert.equal(visibleCapture.messages[10].direction, 'incoming', 'left-aligned bubble uses geometry when explicit direction signals are absent');
+assert.equal(visibleCapture.messages[10].directionSource, 'geometry-left');
+assert.equal(visibleCapture.messages[11].direction, 'outgoing', 'right-aligned bubble uses geometry when explicit direction signals are absent');
+assert.equal(visibleCapture.messages[11].directionSource, 'geometry-right');
 forceUnknownDirection = true; forceTailConflict = true;
 assert.ok(!sandbox.window.__zhikeWsCapture().messages.some(message => message.externalMessageId === 'msg-1'), 'conflicting tail evidence remains unknown');
 forceTailConflict = false; forceInvalidPalette = true;

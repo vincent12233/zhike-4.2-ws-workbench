@@ -1,0 +1,680 @@
+{"id":"dawn-full-125","viewport":{"width":1536,"height":864},"palette":"atelier-dawn","legacyTheme":"light","initial":{"scroller":{"x":287,"y":561.140625,"width":839,"height":535.671875,"bottom":1096.8125,"right":1126},"scrollTop":0,"scrollHeight":2601,"clientHeight":525,"header":{"x":288,"y":561.140625,"width":860,"height":50,"bottom":611.140625,"right":1148},"firstRow":{"x":288,"y":611.140625,"width":860,"height":51,"bottom":662.140625,"right":1148},"firstName":{"x":420,"y":622.640625,"width":98.375,"height":25.59375,"bottom":648.234375,"right":518.375},"text":{"top":624.640625,"bottom":644.640625,"center":634.640625},"hitRow":true,"headerSticky":["sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky"],"rowPaint":{"visibility":"auto","intrinsic":"auto 44px"},"rowColor":"rgb(238, 243, 253)","cellColor":"rgb(238, 243, 253)","selected":false,"checked":false,"firstFont":"16px"},"focus":{"input":{"outline":"none","width":3,"shadow":"none"},"wrapper":{"outline":"solid","width":3,"shadow":"none"},"active":true,"before":{"input":{"outline":"none","width":3,"shadow":"none"},"wrapper":{"outline":"none","width":3,"shadow":"none"}}},"overlap":{"scrollTop":35,"header":{"x":342,"y":561.140625,"width":220.328125,"height":50,"bottom":611.140625,"right":562.328125},"textCenter":599.640625,"withinHeader":true,"headerWins":true,"hitTag":"TH","headerZ":"4","bodyZ":"3"},"semanticRowColor":"rgb(238, 243, 253)","sticky":{"scrollTop":80,"headerTop":561.140625,"scrollerTop":561.140625},"drawer":{"outsidePage":true,"open":true,"rect":{"x":1016,"y":72,"width":520,"height":792,"bottom":864,"right":1536},"head":{"font":16,"color":"rgb(23, 42, 77)","background":"rgba(255, 255, 255, 0.92)","image":"none","position":"sticky"},"shell":{"font":16,"color":"rgb(23, 42, 77)","background":"rgb(255, 255, 255)","image":"none","position":"fixed"},"footer":{"font":16,"color":"rgb(23, 42, 77)","background":"rgba(255, 255, 255, 0.92)","image":"none","position":"fixed"},"footerBefore":{"x":1000,"y":737,"width":520,"height":126,"bottom":863,"right":1520},"footerAfter":{"x":1000,"y":-188,"width":520,"height":126,"bottom":-62,"right":1520},"scrollTop":925,"scrollHeight":1715,"clientHeight":790,"lastSection":{"x":1041,"y":667.078125,"width":455,"height":120.078125,"bottom":787.15625,"right":1496},"textNodes":[{"selector":"SPAN.panel-note","text":"客户 360° 档案 · 本机实时汇总","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"隔离客户 001","font":16,"color":"rgb(51, 65, 86)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"P.","text":"+91 9006000000 · 单导","font":9,"color":"rgb(116, 134, 146)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.status-tag tag-gray","text":"新客户","font":14,"color":"rgb(118, 131, 149)","background":"rgb(240, 242, 245)","image":"none","position":"static"},{"selector":"STRONG.","text":"CRM 指挥信息","font":12,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"D 级 · 今日到期","font":9,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"CRM 评分","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"23","font":16,"color":"rgb(29, 81, 96)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SMALL.","text":"D 级客户","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"生命周期","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"新线索","font":16,"color":"rgb(29, 81, 96)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SMALL.","text":"累计跟进 0 次","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"下一步建议","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"完成首次联系","font":12,"color":"rgb(29, 81, 96)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SMALL.","text":"按客户状态与业务记录计算","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"业务概览","font":12,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"实时关联本机记录","font":9,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"跟票状态","font":8,"color":"rgb(139, 154, 163)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"暂无跟票","font":11,"color":"rgb(56, 81, 95)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"累计入金","font":8,"color":"rgb(139, 154, 163)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"¥0","font":11,"color":"rgb(56, 81, 95)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"下次跟进日期","font":8,"color":"rgb(139, 154, 163)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.status-tag tag-blue","text":"2026-11-17","font":14,"color":"rgb(56, 81, 95)","background":"rgb(237, 243, 255)","image":"none","position":"static"},{"selector":"STRONG.","text":"基础资料","font":12,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"标准号码","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"9006000000","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"客户类型","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"单导","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"来源渠道","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"单导","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"页面分类","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"跟进助理","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"未分配","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"进群状态","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"客户阶段","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"新客户","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"群编号","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"VIP 编号","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"客户登记日期","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"2026-11-17","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"最后跟进","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"下次跟进日期","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"2026-11-17","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"是否股民","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"否","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"资质评级","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"群组关系","font":12,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"WS 监控事件投影","font":9,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"P.customer-group-membership-empty","text":"暂无 WS 群组关系记录","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"完整时间线","font":12,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"最近 12 条","font":9,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"DIV.timeline-row","text":"暂无跟进或业务记录客户登记于 2026-11-1","font":9,"color":"rgb(114, 128, 147)","background":"rgba(0, 0, 0, 0)","image":"none","position":"relative"},{"selector":"SPAN.panel-note","text":"客户登记于 2026-11-17","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"}],"actions":[{"text":"GPT 分析","action":"gpt-customer","rect":{"x":1024,"y":-172,"width":112.75,"height":44,"bottom":-128,"right":1136.75},"font":16},{"text":"登记跟进","action":"follow","rect":{"x":1143.75,"y":-172,"width":112.75,"height":44,"bottom":-128,"right":1256.5},"font":16},{"text":"新增跟票","action":"new-customer-ticket","rect":{"x":1263.5,"y":-172,"width":112.75,"height":44,"bottom":-128,"right":1376.25},"font":16},{"text":"新增入金","action":"new-customer-deposit","rect":{"x":1383.25,"y":-172,"width":112.75,"height":44,"bottom":-128,"right":1496},"font":16},{"text":"编辑资料","action":"edit-customer","rect":{"x":1024,"y":-121,"width":112.75,"height":44,"bottom":-77,"right":1136.75},"font":16}],"closed":true},"modal":{"rect":{"x":408,"y":293.109375,"width":720,"height":277.78125,"bottom":570.890625,"right":1128},"bodyFont":16,"inputFont":16,"footerButtons":[{"x":1037,"y":507.890625,"width":66,"height":44,"bottom":551.890625,"right":1103}]},"styles":[{"path":"styles.css","loaded":true},{"path":"modules/v4.css","loaded":true},{"path":"modules/gpt-assistant.css","loaded":true},{"path":"modules/gpt-workbench.css","loaded":true},{"path":"modules/gpt-modern.css","loaded":true},{"path":"modules/gpt-management.css","loaded":true},{"path":"modules/phone-registry.css","loaded":true},{"path":"modules/business-enhancements.css","loaded":true},{"path":"modules/v41-ui.css","loaded":true},{"path":"modules/operations-upgrade.css","loaded":true},{"path":"modules/ui-refresh.css","loaded":true},{"path":"modules/ws-workbench.css","loaded":true},{"path":"modules/design-system.css","loaded":true},{"path":"modules/horizon-atelier.css","loaded":true},{"path":"modules/business-6.css","loaded":true},{"path":"modules/operations-6.css","loaded":true},{"path":"modules/global-6.css","loaded":true},{"path":"modules/home-6.css","loaded":true},{"path":"modules/scroll-system.css","loaded":true}],"enhancerStyle":true,"rowCount":50,"docOverflow":false,"errors":[]}
+{"id":"dawn-legacy-dark-125","viewport":{"width":1536,"height":864},"palette":"atelier-dawn","legacyTheme":"dark","initial":{"scroller":{"x":287,"y":561.140625,"width":839,"height":535.671875,"bottom":1096.8125,"right":1126},"scrollTop":0,"scrollHeight":2601,"clientHeight":525,"header":{"x":288,"y":561.140625,"width":860,"height":50,"bottom":611.140625,"right":1148},"firstRow":{"x":288,"y":611.140625,"width":860,"height":51,"bottom":662.140625,"right":1148},"firstName":{"x":420,"y":622.640625,"width":98.375,"height":25.59375,"bottom":648.234375,"right":518.375},"text":{"top":624.640625,"bottom":644.640625,"center":634.640625},"hitRow":true,"headerSticky":["sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky"],"rowPaint":{"visibility":"auto","intrinsic":"auto 44px"},"rowColor":"rgb(238, 243, 253)","cellColor":"rgb(238, 243, 253)","selected":false,"checked":false,"firstFont":"16px"},"focus":{"input":{"outline":"none","width":3,"shadow":"none"},"wrapper":{"outline":"solid","width":3,"shadow":"none"},"active":true,"before":{"input":{"outline":"none","width":3,"shadow":"none"},"wrapper":{"outline":"none","width":3,"shadow":"none"}}},"overlap":{"scrollTop":35,"header":{"x":342,"y":561.140625,"width":220.328125,"height":50,"bottom":611.140625,"right":562.328125},"textCenter":599.640625,"withinHeader":true,"headerWins":true,"hitTag":"TH","headerZ":"4","bodyZ":"3"},"semanticRowColor":"rgb(238, 243, 253)","sticky":{"scrollTop":80,"headerTop":561.140625,"scrollerTop":561.140625},"drawer":{"outsidePage":true,"open":true,"rect":{"x":1016,"y":72,"width":520,"height":792,"bottom":864,"right":1536},"head":{"font":16,"color":"rgb(23, 42, 77)","background":"rgba(17, 34, 46, 0.98)","image":"none","position":"sticky"},"shell":{"font":16,"color":"rgb(23, 42, 77)","background":"rgb(255, 255, 255)","image":"none","position":"fixed"},"footer":{"font":16,"color":"rgb(23, 42, 77)","background":"rgba(17, 34, 46, 0.98)","image":"none","position":"fixed"},"footerBefore":{"x":1000,"y":737,"width":520,"height":126,"bottom":863,"right":1520},"footerAfter":{"x":1000,"y":-188,"width":520,"height":126,"bottom":-62,"right":1520},"scrollTop":925,"scrollHeight":1715,"clientHeight":790,"lastSection":{"x":1041,"y":667.078125,"width":455,"height":120.078125,"bottom":787.15625,"right":1496},"textNodes":[{"selector":"SPAN.panel-note","text":"客户 360° 档案 · 本机实时汇总","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"隔离客户 001","font":16,"color":"rgb(51, 65, 86)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"P.","text":"+91 9006000000 · 单导","font":9,"color":"rgb(116, 134, 146)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.status-tag tag-gray","text":"新客户","font":14,"color":"rgb(118, 131, 149)","background":"rgb(240, 242, 245)","image":"none","position":"static"},{"selector":"STRONG.","text":"CRM 指挥信息","font":12,"color":"rgb(209, 227, 233)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"D 级 · 今日到期","font":9,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"CRM 评分","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"23","font":16,"color":"rgb(167, 231, 223)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SMALL.","text":"D 级客户","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"生命周期","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"新线索","font":16,"color":"rgb(167, 231, 223)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SMALL.","text":"累计跟进 0 次","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"下一步建议","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"完成首次联系","font":12,"color":"rgb(167, 231, 223)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SMALL.","text":"按客户状态与业务记录计算","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"业务概览","font":12,"color":"rgb(209, 227, 233)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"实时关联本机记录","font":9,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"跟票状态","font":8,"color":"rgb(139, 154, 163)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"暂无跟票","font":11,"color":"rgb(192, 212, 220)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"累计入金","font":8,"color":"rgb(139, 154, 163)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"¥0","font":11,"color":"rgb(192, 212, 220)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"下次跟进日期","font":8,"color":"rgb(139, 154, 163)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.status-tag tag-blue","text":"2026-11-17","font":14,"color":"rgb(192, 212, 220)","background":"rgb(237, 243, 255)","image":"none","position":"static"},{"selector":"STRONG.","text":"基础资料","font":12,"color":"rgb(209, 227, 233)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"标准号码","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"9006000000","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"客户类型","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"单导","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"来源渠道","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"单导","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"页面分类","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"跟进助理","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"未分配","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"进群状态","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"客户阶段","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"新客户","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"群编号","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"VIP 编号","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"客户登记日期","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"2026-11-17","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"最后跟进","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"下次跟进日期","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"2026-11-17","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"是否股民","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"否","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"资质评级","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"群组关系","font":12,"color":"rgb(209, 227, 233)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"WS 监控事件投影","font":9,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"P.customer-group-membership-empty","text":"暂无 WS 群组关系记录","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"完整时间线","font":12,"color":"rgb(209, 227, 233)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"最近 12 条","font":9,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"DIV.timeline-row","text":"暂无跟进或业务记录客户登记于 2026-11-1","font":9,"color":"rgb(114, 128, 147)","background":"rgba(0, 0, 0, 0)","image":"none","position":"relative"},{"selector":"SPAN.panel-note","text":"客户登记于 2026-11-17","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"}],"actions":[{"text":"GPT 分析","action":"gpt-customer","rect":{"x":1024,"y":-172,"width":112.75,"height":44,"bottom":-128,"right":1136.75},"font":16},{"text":"登记跟进","action":"follow","rect":{"x":1143.75,"y":-172,"width":112.75,"height":44,"bottom":-128,"right":1256.5},"font":16},{"text":"新增跟票","action":"new-customer-ticket","rect":{"x":1263.5,"y":-172,"width":112.75,"height":44,"bottom":-128,"right":1376.25},"font":16},{"text":"新增入金","action":"new-customer-deposit","rect":{"x":1383.25,"y":-172,"width":112.75,"height":44,"bottom":-128,"right":1496},"font":16},{"text":"编辑资料","action":"edit-customer","rect":{"x":1024,"y":-121,"width":112.75,"height":44,"bottom":-77,"right":1136.75},"font":16}],"closed":true},"modal":{"rect":{"x":408,"y":293.109375,"width":720,"height":277.78125,"bottom":570.890625,"right":1128},"bodyFont":16,"inputFont":16,"footerButtons":[{"x":1037,"y":507.890625,"width":66,"height":44,"bottom":551.890625,"right":1103}]},"styles":[{"path":"styles.css","loaded":true},{"path":"modules/v4.css","loaded":true},{"path":"modules/gpt-assistant.css","loaded":true},{"path":"modules/gpt-workbench.css","loaded":true},{"path":"modules/gpt-modern.css","loaded":true},{"path":"modules/gpt-management.css","loaded":true},{"path":"modules/phone-registry.css","loaded":true},{"path":"modules/business-enhancements.css","loaded":true},{"path":"modules/v41-ui.css","loaded":true},{"path":"modules/operations-upgrade.css","loaded":true},{"path":"modules/ui-refresh.css","loaded":true},{"path":"modules/ws-workbench.css","loaded":true},{"path":"modules/design-system.css","loaded":true},{"path":"modules/horizon-atelier.css","loaded":true},{"path":"modules/business-6.css","loaded":true},{"path":"modules/operations-6.css","loaded":true},{"path":"modules/global-6.css","loaded":true},{"path":"modules/home-6.css","loaded":true},{"path":"modules/scroll-system.css","loaded":true}],"enhancerStyle":true,"rowCount":50,"docOverflow":false,"errors":[]}
+{"id":"dawn-full-100","viewport":{"width":1920,"height":1080},"palette":"atelier-dawn","legacyTheme":"light","initial":{"scroller":{"x":287,"y":536.34375,"width":1223,"height":669.59375,"bottom":1205.9375,"right":1510},"scrollTop":0,"scrollHeight":2601,"clientHeight":669,"header":{"x":288,"y":536.34375,"width":1211,"height":50,"bottom":586.34375,"right":1499},"firstRow":{"x":288,"y":586.34375,"width":1211,"height":51,"bottom":637.34375,"right":1499},"firstName":{"x":420,"y":597.84375,"width":98.375,"height":25.59375,"bottom":623.4375,"right":518.375},"text":{"top":599.84375,"bottom":619.84375,"center":609.84375},"hitRow":true,"headerSticky":["sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky"],"rowPaint":{"visibility":"auto","intrinsic":"auto 44px"},"rowColor":"rgb(238, 243, 253)","cellColor":"rgb(238, 243, 253)","selected":false,"checked":false,"firstFont":"16px"},"focus":{"input":{"outline":"none","width":3,"shadow":"none"},"wrapper":{"outline":"solid","width":3,"shadow":"none"},"active":true,"before":{"input":{"outline":"none","width":3,"shadow":"none"},"wrapper":{"outline":"none","width":3,"shadow":"none"}}},"overlap":{"scrollTop":35,"header":{"x":342,"y":536.34375,"width":316.28125,"height":50,"bottom":586.34375,"right":658.28125},"textCenter":574.84375,"withinHeader":true,"headerWins":true,"hitTag":"TH","headerZ":"4","bodyZ":"3"},"semanticRowColor":"rgb(238, 243, 253)","sticky":{"scrollTop":80,"headerTop":536.34375,"scrollerTop":536.34375},"drawer":{"outsidePage":true,"open":true,"rect":{"x":1400,"y":72,"width":520,"height":1008,"bottom":1080,"right":1920},"head":{"font":16,"color":"rgb(23, 42, 77)","background":"rgba(255, 255, 255, 0.92)","image":"none","position":"sticky"},"shell":{"font":16,"color":"rgb(23, 42, 77)","background":"rgb(255, 255, 255)","image":"none","position":"fixed"},"footer":{"font":16,"color":"rgb(23, 42, 77)","background":"rgba(255, 255, 255, 0.92)","image":"none","position":"fixed"},"footerBefore":{"x":1384,"y":953,"width":520,"height":126,"bottom":1079,"right":1904},"footerAfter":{"x":1384,"y":244,"width":520,"height":126,"bottom":370,"right":1904},"scrollTop":709,"scrollHeight":1715,"clientHeight":1006,"lastSection":{"x":1425,"y":883.078125,"width":455,"height":120.078125,"bottom":1003.15625,"right":1880},"textNodes":[{"selector":"SPAN.panel-note","text":"客户 360° 档案 · 本机实时汇总","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"隔离客户 001","font":16,"color":"rgb(51, 65, 86)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"P.","text":"+91 9006000000 · 单导","font":9,"color":"rgb(116, 134, 146)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.status-tag tag-gray","text":"新客户","font":14,"color":"rgb(118, 131, 149)","background":"rgb(240, 242, 245)","image":"none","position":"static"},{"selector":"STRONG.","text":"CRM 指挥信息","font":12,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"D 级 · 今日到期","font":9,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"CRM 评分","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"23","font":16,"color":"rgb(29, 81, 96)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SMALL.","text":"D 级客户","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"生命周期","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"新线索","font":16,"color":"rgb(29, 81, 96)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SMALL.","text":"累计跟进 0 次","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"下一步建议","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"完成首次联系","font":12,"color":"rgb(29, 81, 96)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SMALL.","text":"按客户状态与业务记录计算","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"业务概览","font":12,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"实时关联本机记录","font":9,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"跟票状态","font":8,"color":"rgb(139, 154, 163)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"暂无跟票","font":11,"color":"rgb(56, 81, 95)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"累计入金","font":8,"color":"rgb(139, 154, 163)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"¥0","font":11,"color":"rgb(56, 81, 95)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"下次跟进日期","font":8,"color":"rgb(139, 154, 163)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.status-tag tag-blue","text":"2026-11-17","font":14,"color":"rgb(56, 81, 95)","background":"rgb(237, 243, 255)","image":"none","position":"static"},{"selector":"STRONG.","text":"基础资料","font":12,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"标准号码","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"9006000000","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"客户类型","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"单导","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"来源渠道","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"单导","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"页面分类","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"跟进助理","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"未分配","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"进群状态","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"客户阶段","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"新客户","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"群编号","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"VIP 编号","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"客户登记日期","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"2026-11-17","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"最后跟进","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"下次跟进日期","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"2026-11-17","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"是否股民","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"否","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"资质评级","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"群组关系","font":12,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"WS 监控事件投影","font":9,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"P.customer-group-membership-empty","text":"暂无 WS 群组关系记录","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"完整时间线","font":12,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"最近 12 条","font":9,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"DIV.timeline-row","text":"暂无跟进或业务记录客户登记于 2026-11-1","font":9,"color":"rgb(114, 128, 147)","background":"rgba(0, 0, 0, 0)","image":"none","position":"relative"},{"selector":"SPAN.panel-note","text":"客户登记于 2026-11-17","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"}],"actions":[{"text":"GPT 分析","action":"gpt-customer","rect":{"x":1408,"y":260,"width":112.75,"height":44,"bottom":304,"right":1520.75},"font":16},{"text":"登记跟进","action":"follow","rect":{"x":1527.75,"y":260,"width":112.75,"height":44,"bottom":304,"right":1640.5},"font":16},{"text":"新增跟票","action":"new-customer-ticket","rect":{"x":1647.5,"y":260,"width":112.75,"height":44,"bottom":304,"right":1760.25},"font":16},{"text":"新增入金","action":"new-customer-deposit","rect":{"x":1767.25,"y":260,"width":112.75,"height":44,"bottom":304,"right":1880},"font":16},{"text":"编辑资料","action":"edit-customer","rect":{"x":1408,"y":311,"width":112.75,"height":44,"bottom":355,"right":1520.75},"font":16}],"closed":true},"modal":{"rect":{"x":600,"y":401.109375,"width":720,"height":277.78125,"bottom":678.890625,"right":1320},"bodyFont":16,"inputFont":16,"footerButtons":[{"x":1229,"y":615.890625,"width":66,"height":44,"bottom":659.890625,"right":1295}]},"styles":[{"path":"styles.css","loaded":true},{"path":"modules/v4.css","loaded":true},{"path":"modules/gpt-assistant.css","loaded":true},{"path":"modules/gpt-workbench.css","loaded":true},{"path":"modules/gpt-modern.css","loaded":true},{"path":"modules/gpt-management.css","loaded":true},{"path":"modules/phone-registry.css","loaded":true},{"path":"modules/business-enhancements.css","loaded":true},{"path":"modules/v41-ui.css","loaded":true},{"path":"modules/operations-upgrade.css","loaded":true},{"path":"modules/ui-refresh.css","loaded":true},{"path":"modules/ws-workbench.css","loaded":true},{"path":"modules/design-system.css","loaded":true},{"path":"modules/horizon-atelier.css","loaded":true},{"path":"modules/business-6.css","loaded":true},{"path":"modules/operations-6.css","loaded":true},{"path":"modules/global-6.css","loaded":true},{"path":"modules/home-6.css","loaded":true},{"path":"modules/scroll-system.css","loaded":true}],"enhancerStyle":true,"rowCount":50,"docOverflow":false,"errors":[]}
+{"id":"diagnostic-without-row-paint","viewport":{"width":1536,"height":864},"palette":"atelier-dawn","legacyTheme":"light","initial":{"scroller":{"x":287,"y":561.140625,"width":839,"height":535.671875,"bottom":1096.8125,"right":1126},"scrollTop":0,"scrollHeight":2601,"clientHeight":525,"header":{"x":288,"y":561.140625,"width":860,"height":50,"bottom":611.140625,"right":1148},"firstRow":{"x":288,"y":611.140625,"width":860,"height":51,"bottom":662.140625,"right":1148},"firstName":{"x":420,"y":622.640625,"width":98.375,"height":25.59375,"bottom":648.234375,"right":518.375},"text":{"top":624.640625,"bottom":644.640625,"center":634.640625},"hitRow":true,"headerSticky":["sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky","sticky"],"rowPaint":{"visibility":"visible","intrinsic":"none"},"rowColor":"rgb(238, 243, 253)","cellColor":"rgb(238, 243, 253)","selected":false,"checked":false,"firstFont":"16px"},"focus":{"input":{"outline":"none","width":3,"shadow":"none"},"wrapper":{"outline":"solid","width":3,"shadow":"none"},"active":true,"before":{"input":{"outline":"none","width":3,"shadow":"none"},"wrapper":{"outline":"none","width":3,"shadow":"none"}}},"overlap":{"scrollTop":35,"header":{"x":342,"y":561.140625,"width":220.328125,"height":50,"bottom":611.140625,"right":562.328125},"textCenter":599.640625,"withinHeader":true,"headerWins":true,"hitTag":"TH","headerZ":"4","bodyZ":"3"},"semanticRowColor":"rgb(238, 243, 253)","sticky":{"scrollTop":80,"headerTop":561.140625,"scrollerTop":561.140625},"drawer":{"outsidePage":true,"open":true,"rect":{"x":1016,"y":72,"width":520,"height":792,"bottom":864,"right":1536},"head":{"font":16,"color":"rgb(23, 42, 77)","background":"rgba(255, 255, 255, 0.92)","image":"none","position":"sticky"},"shell":{"font":16,"color":"rgb(23, 42, 77)","background":"rgb(255, 255, 255)","image":"none","position":"fixed"},"footer":{"font":16,"color":"rgb(23, 42, 77)","background":"rgba(255, 255, 255, 0.92)","image":"none","position":"fixed"},"footerBefore":{"x":1000,"y":737,"width":520,"height":126,"bottom":863,"right":1520},"footerAfter":{"x":1000,"y":-188,"width":520,"height":126,"bottom":-62,"right":1520},"scrollTop":925,"scrollHeight":1715,"clientHeight":790,"lastSection":{"x":1041,"y":667.078125,"width":455,"height":120.078125,"bottom":787.15625,"right":1496},"textNodes":[{"selector":"SPAN.panel-note","text":"客户 360° 档案 · 本机实时汇总","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"隔离客户 001","font":16,"color":"rgb(51, 65, 86)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"P.","text":"+91 9006000000 · 单导","font":9,"color":"rgb(116, 134, 146)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.status-tag tag-gray","text":"新客户","font":14,"color":"rgb(118, 131, 149)","background":"rgb(240, 242, 245)","image":"none","position":"static"},{"selector":"STRONG.","text":"CRM 指挥信息","font":12,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"D 级 · 今日到期","font":9,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"CRM 评分","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"23","font":16,"color":"rgb(29, 81, 96)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SMALL.","text":"D 级客户","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"生命周期","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"新线索","font":16,"color":"rgb(29, 81, 96)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SMALL.","text":"累计跟进 0 次","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"下一步建议","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"完成首次联系","font":12,"color":"rgb(29, 81, 96)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SMALL.","text":"按客户状态与业务记录计算","font":9,"color":"rgb(124, 142, 157)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"业务概览","font":12,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"实时关联本机记录","font":9,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"跟票状态","font":8,"color":"rgb(139, 154, 163)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"暂无跟票","font":11,"color":"rgb(56, 81, 95)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"累计入金","font":8,"color":"rgb(139, 154, 163)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"¥0","font":11,"color":"rgb(56, 81, 95)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"下次跟进日期","font":8,"color":"rgb(139, 154, 163)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.status-tag tag-blue","text":"2026-11-17","font":14,"color":"rgb(56, 81, 95)","background":"rgb(237, 243, 255)","image":"none","position":"static"},{"selector":"STRONG.","text":"基础资料","font":12,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"标准号码","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"9006000000","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"客户类型","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"单导","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"来源渠道","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"单导","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"页面分类","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"跟进助理","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"未分配","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"进群状态","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"客户阶段","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"新客户","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"群编号","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"VIP 编号","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"客户登记日期","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"2026-11-17","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"最后跟进","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"—","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"下次跟进日期","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"2026-11-17","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"是否股民","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"否","font":16,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"资质评级","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"群组关系","font":12,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"WS 监控事件投影","font":9,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"P.customer-group-membership-empty","text":"暂无 WS 群组关系记录","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"STRONG.","text":"完整时间线","font":12,"color":"rgb(23, 42, 77)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"SPAN.","text":"最近 12 条","font":9,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"},{"selector":"DIV.timeline-row","text":"暂无跟进或业务记录客户登记于 2026-11-1","font":9,"color":"rgb(114, 128, 147)","background":"rgba(0, 0, 0, 0)","image":"none","position":"relative"},{"selector":"SPAN.panel-note","text":"客户登记于 2026-11-17","font":14,"color":"rgb(90, 109, 136)","background":"rgba(0, 0, 0, 0)","image":"none","position":"static"}],"actions":[{"text":"GPT 分析","action":"gpt-customer","rect":{"x":1024,"y":-172,"width":112.75,"height":44,"bottom":-128,"right":1136.75},"font":16},{"text":"登记跟进","action":"follow","rect":{"x":1143.75,"y":-172,"width":112.75,"height":44,"bottom":-128,"right":1256.5},"font":16},{"text":"新增跟票","action":"new-customer-ticket","rect":{"x":1263.5,"y":-172,"width":112.75,"height":44,"bottom":-128,"right":1376.25},"font":16},{"text":"新增入金","action":"new-customer-deposit","rect":{"x":1383.25,"y":-172,"width":112.75,"height":44,"bottom":-128,"right":1496},"font":16},{"text":"编辑资料","action":"edit-customer","rect":{"x":1024,"y":-121,"width":112.75,"height":44,"bottom":-77,"right":1136.75},"font":16}],"closed":true},"modal":{"rect":{"x":408,"y":293.109375,"width":720,"height":277.78125,"bottom":570.890625,"right":1128},"bodyFont":16,"inputFont":16,"footerButtons":[{"x":1037,"y":507.890625,"width":66,"height":44,"bottom":551.890625,"right":1103}]},"styles":[{"path":"styles.css","loaded":true},{"path":"modules/v4.css","loaded":true},{"path":"modules/gpt-assistant.css","loaded":true},{"path":"modules/gpt-workbench.css","loaded":true},{"path":"modules/gpt-modern.css","loaded":true},{"path":"modules/gpt-management.css","loaded":true},{"path":"modules/phone-registry.css","loaded":true},{"path":"modules/business-enhancements.css","loaded":true},{"path":"modules/v41-ui.css","loaded":true},{"path":"modules/operations-upgrade.css","loaded":true},{"path":"modules/ui-refresh.css","loaded":true},{"path":"modules/ws-workbench.css","loaded":true},{"path":"modules/design-system.css","loaded":true},{"path":"modules/horizon-atelier.css","loaded":true},{"path":"modules/business-6.css","loaded":true},{"path":"modules/operations-6.css","loaded":true},{"path":"modules/global-6.css","loaded":true},{"path":"modules/home-6.css","loaded":true},{"path":"modules/scroll-system.css","loaded":true}],"enhancerStyle":false,"rowCount":50,"docOverflow":false,"errors":[]}
+AssertionError [ERR_ASSERTION]: Real customer table geometry, sticky stacking, focus and palette contract
++ actual - expected
+
++ [
++   'dawn-full-125 body drawer typography: Every actual drawer label/value/history text remains readable\n' +
++     '+ actual - expected\n' +
++     '\n' +
++     '+ [\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(116, 134, 146)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'P.',\n" +
++     "+     text: '+91 9006000000 · 单导'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(23, 42, 77)',\n" +
++     '+     font: 12,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: 'CRM 指挥信息'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(90, 109, 136)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: 'D 级 · 今日到期'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(124, 142, 157)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: 'CRM 评分'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(124, 142, 157)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SMALL.',\n" +
++     "+     text: 'D 级客户'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(124, 142, 157)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '生命周期'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(124, 142, 157)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SMALL.',\n" +
++     "+     text: '累计跟进 0 次'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(124, 142, 157)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '下一步建议'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(29, 81, 96)',\n" +
++     '+     font: 12,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '完成首次联系'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(124, 142, 157)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SMALL.',\n" +
++     "+     text: '按客户状态与业务记录计算'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(23, 42, 77)',\n" +
++     '+     font: 12,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '业务概览'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(90, 109, 136)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '实时关联本机记录'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(139, 154, 163)',\n" +
++     '+     font: 8,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '跟票状态'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(56, 81, 95)',\n" +
++     '+     font: 11,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '暂无跟票'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(139, 154, 163)',\n" +
++     '+     font: 8,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '累计入金'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(56, 81, 95)',\n" +
++     '+     font: 11,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '¥0'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(139, 154, 163)',\n" +
++     '+     font: 8,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '下次跟进日期'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(23, 42, 77)',\n" +
++     '+     font: 12,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '基础资料'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(23, 42, 77)',\n" +
++     '+     font: 12,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '群组关系'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(90, 109, 136)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: 'WS 监控事件投影'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(23, 42, 77)',\n" +
++     '+     font: 12,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '完整时间线'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(90, 109, 136)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '最近 12 条'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(114, 128, 147)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'relative',\n" +
++     "+     selector: 'DIV.timeline-row',\n" +
++     "+     text: '暂无跟进或业务记录客户登记于 2026-11-1'\n" +
++     '+   }\n' +
++     '+ ]\n' +
++     '- []\n',
++   'dawn-full-125 drawer surfaces: Expected values to be strictly equal:\n' +
++     '+ actual - expected\n' +
++     '\n' +
++     "+ 'rgba(255, 255, 255, 0.92)'\n" +
++     "- 'rgb(255, 255, 255)'\n" +
++     '      ^\n',
++   'dawn-full-125 drawer scroll and footer: Footer remains anchored while content scrolls',
++   'dawn-legacy-dark-125 body drawer typography: Every actual drawer label/value/history text remains readable\n' +
++     '+ actual - expected\n' +
++     '\n' +
++     '+ [\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(116, 134, 146)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'P.',\n" +
++     "+     text: '+91 9006000000 · 单导'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(209, 227, 233)',\n" +
++     '+     font: 12,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: 'CRM 指挥信息'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(90, 109, 136)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: 'D 级 · 今日到期'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(124, 142, 157)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: 'CRM 评分'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(124, 142, 157)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SMALL.',\n" +
++     "+     text: 'D 级客户'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(124, 142, 157)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '生命周期'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(124, 142, 157)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SMALL.',\n" +
++     "+     text: '累计跟进 0 次'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(124, 142, 157)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '下一步建议'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(167, 231, 223)',\n" +
++     '+     font: 12,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '完成首次联系'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(124, 142, 157)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SMALL.',\n" +
++     "+     text: '按客户状态与业务记录计算'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(209, 227, 233)',\n" +
++     '+     font: 12,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '业务概览'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(90, 109, 136)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '实时关联本机记录'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(139, 154, 163)',\n" +
++     '+     font: 8,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '跟票状态'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(192, 212, 220)',\n" +
++     '+     font: 11,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '暂无跟票'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(139, 154, 163)',\n" +
++     '+     font: 8,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '累计入金'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(192, 212, 220)',\n" +
++     '+     font: 11,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '¥0'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(139, 154, 163)',\n" +
++     '+     font: 8,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '下次跟进日期'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(209, 227, 233)',\n" +
++     '+     font: 12,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '基础资料'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(209, 227, 233)',\n" +
++     '+     font: 12,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '群组关系'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(90, 109, 136)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: 'WS 监控事件投影'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(209, 227, 233)',\n" +
++     '+     font: 12,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '完整时间线'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(90, 109, 136)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '最近 12 条'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(114, 128, 147)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'relative',\n" +
++     "+     selector: 'DIV.timeline-row',\n" +
++     "+     text: '暂无跟进或业务记录客户登记于 2026-11-1'\n" +
++     '+   }\n' +
++     '+ ]\n' +
++     '- []\n',
++   'dawn-legacy-dark-125 drawer surfaces: Expected values to be strictly equal:\n' +
++     '+ actual - expected\n' +
++     '\n' +
++     "+ 'rgba(17, 34, 46, 0.98)'\n" +
++     "- 'rgb(255, 255, 255)'\n" +
++     '      ^\n',
++   'dawn-legacy-dark-125 drawer scroll and footer: Footer remains anchored while content scrolls',
++   'dawn-full-100 body drawer typography: Every actual drawer label/value/history text remains readable\n' +
++     '+ actual - expected\n' +
++     '\n' +
++     '+ [\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(116, 134, 146)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'P.',\n" +
++     "+     text: '+91 9006000000 · 单导'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(23, 42, 77)',\n" +
++     '+     font: 12,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: 'CRM 指挥信息'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(90, 109, 136)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: 'D 级 · 今日到期'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(124, 142, 157)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: 'CRM 评分'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(124, 142, 157)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SMALL.',\n" +
++     "+     text: 'D 级客户'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(124, 142, 157)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '生命周期'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(124, 142, 157)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SMALL.',\n" +
++     "+     text: '累计跟进 0 次'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(124, 142, 157)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '下一步建议'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(29, 81, 96)',\n" +
++     '+     font: 12,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '完成首次联系'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(124, 142, 157)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SMALL.',\n" +
++     "+     text: '按客户状态与业务记录计算'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(23, 42, 77)',\n" +
++     '+     font: 12,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '业务概览'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(90, 109, 136)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '实时关联本机记录'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(139, 154, 163)',\n" +
++     '+     font: 8,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '跟票状态'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(56, 81, 95)',\n" +
++     '+     font: 11,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '暂无跟票'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(139, 154, 163)',\n" +
++     '+     font: 8,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '累计入金'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(56, 81, 95)',\n" +
++     '+     font: 11,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '¥0'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(139, 154, 163)',\n" +
++     '+     font: 8,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '下次跟进日期'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(23, 42, 77)',\n" +
++     '+     font: 12,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '基础资料'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(23, 42, 77)',\n" +
++     '+     font: 12,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '群组关系'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(90, 109, 136)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: 'WS 监控事件投影'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(23, 42, 77)',\n" +
++     '+     font: 12,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'STRONG.',\n" +
++     "+     text: '完整时间线'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(90, 109, 136)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'static',\n" +
++     "+     selector: 'SPAN.',\n" +
++     "+     text: '最近 12 条'\n" +
++     '+   },\n' +
++     '+   {\n' +
++     "+     background: 'rgba(0, 0, 0, 0)',\n" +
++     "+     color: 'rgb(114, 128, 147)',\n" +
++     '+     font: 9,\n' +
++     "+     image: 'none',\n" +
++     "+     position: 'relative',\n" +
++     "+     selector: 'DIV.timeline-row',\n" +
++     "+     text: '暂无跟进或业务记录客户登记于 2026-11-1'\n" +
++     '+   }\n' +
++     '+ ]\n' +
++     '- []\n',
++   'dawn-full-100 drawer surfaces: Expected values to be strictly equal:\n' +
++     '+ actual - expected\n' +
++     '\n' +
++     "+ 'rgba(255, 255, 255, 0.92)'\n" +
++     "- 'rgb(255, 255, 255)'\n" +
++     '      ^\n',
++   'dawn-full-100 drawer scroll and footer: Footer remains anchored while content scrolls'
++ ]
+- []
+
+    at C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\scripts\delivery\s3-customer-table-visual.test.cjs:81:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [Array],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}

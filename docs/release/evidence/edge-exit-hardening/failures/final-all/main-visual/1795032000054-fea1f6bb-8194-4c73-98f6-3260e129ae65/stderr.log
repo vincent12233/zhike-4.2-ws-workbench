@@ -1,0 +1,4 @@
+
+DevTools listening on ws://127.0.0.1:53713/devtools/browser/59f2f2c8-3973-452b-a8fd-ee0e5c6c964b
+[15628:10780:1119/013002.894:ERROR:chrome\browser\task_manager\providers\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a "Renderer" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.
+[15628:35752:1119/013009.618:ERROR:components\sync\engine\get_updates_processor.cc:426] PostClientToServerMessage() failed during GetUpdates with error Network error (ERR_ABORTED)

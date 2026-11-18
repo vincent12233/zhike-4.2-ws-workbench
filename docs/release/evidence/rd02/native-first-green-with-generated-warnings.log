@@ -1,0 +1,13 @@
+C:\Users\酷酷\AppData\Local\Temp\zhike-rd02-host-harness-u7HjY0\NativeHost.generated.cs(22,105): warning CS8669: 对可为 null 的引用类型的批注只应在 "#nullable" 批注上下文中的代码中使用。自动生成的代码要求在源中使用显式 "#nullable" 指令。 [C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\desktop\tests\Rd02CollectionBoundaryRuntime\Rd02CollectionBoundaryRuntime.csproj]
+C:\Users\酷酷\AppData\Local\Temp\zhike-rd02-host-harness-u7HjY0\NativeHost.generated.cs(8,118): warning CS8669: 对可为 null 的引用类型的批注只应在 "#nullable" 批注上下文中的代码中使用。自动生成的代码要求在源中使用显式 "#nullable" 指令。 [C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\desktop\tests\Rd02CollectionBoundaryRuntime\Rd02CollectionBoundaryRuntime.csproj]
+[PASS] prepare rejects before copying or replacing existing synthetic profiles
+[PASS] collector environment is denied without creating a profile or environment
+[PASS] missing roots and cancelled collector calls remain blocked with no directory creation
+[PASS] foreground environment and its cache remain usable without changing existing data
+[PASS] ordinary scheduler ticks do not lease, create, navigate or drive hidden accounts
+[PASS] manual A-B-A switches retain pooled foreground views and safe shutdown
+[PASS] typed capability is immutable, explicit and separate from connection state
+[PASS] actual Native handler denies automatic actions before account/session operations
+[PASS] actual pause/stop handlers only acknowledge local inactive monitor state
+{"suite":"RD02 linked production C# boundaries","passed":9,"failed":0,"syntheticDirectoriesOnly":true,"platformAdapters":"synthetic; not native WinUI acceptance","realProfile":false,"realWhatsApp":false,"realSqlite":false}
+{"suite":"RD02 authenticated profile boundary","nativeRouting":"actual extracted production C#","services":"actual linked production C#","staticCreationGuards":"Passed","realWinUI":"NotTested","realProfile":false,"realWhatsApp":false,"realSqlite":false}

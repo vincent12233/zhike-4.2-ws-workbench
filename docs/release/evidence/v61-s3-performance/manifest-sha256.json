@@ -1,0 +1,42 @@
+{
+  "rootPid": 25568,
+  "rootStartedUtc": "2026-11-18T13:34:22.7019526Z",
+  "schemaVersion": 1,
+  "source": "Attested isolated Windows run. All copies preserve source bytes. The native event stream contains only original byte lines for the identified app run.",
+  "fullSharedNativeEventsSource": {
+    "bytes": 604592,
+    "sha256": "d3cd28e5e81f14c5f1a69bb17398ff0ffadbc717160c9a5f91b8037e221a1e57"
+  },
+  "files": [
+    {
+      "file": "s3-performance-final-25568.jsonl",
+      "bytes": 3720350,
+      "sha256": "472f8c9a3ad5fa74f304ef1a169fca54d45810cbf0e6c7259b5a5ae7cf961717"
+    },
+    {
+      "file": "s3-performance-final-25568.context.json",
+      "bytes": 2008,
+      "sha256": "122541f21c3bdf27f96e156873aec448a088c631a64cced25f07834895bf86f1"
+    },
+    {
+      "file": "native-event-counts-25568.json",
+      "bytes": 1865,
+      "sha256": "b9642c1d4d423c389ea747fbf5f8bfca4ce0669760a093218f6a85ac8970bbed"
+    },
+    {
+      "file": "s3-performance-final-25568.operations.jsonl",
+      "bytes": 965,
+      "sha256": "4dbcd513625ae898ce54ff589bed773a20c96dc603c17ce0ce8cee161c5cc663"
+    },
+    {
+      "file": "s3-performance-final-25568.cleanup.json",
+      "bytes": 336,
+      "sha256": "1ca0573dddf22ed96b6906bb4f01e617c0d482f48fb921e529058471701755a1"
+    },
+    {
+      "file": "native-events-25568.jsonl",
+      "bytes": 133695,
+      "sha256": "cca86b5ffa1973df62e7fbb64f680622d32e167e10691e7c60fee13cf845f5a8"
+    }
+  ]
+}

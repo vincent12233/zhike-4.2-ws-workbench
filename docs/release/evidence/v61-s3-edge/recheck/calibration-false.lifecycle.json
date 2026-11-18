@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 2,
+  "invocation": "1795003984639-7554ea0f-2c39-4108-bc34-1cefcec24929",
+  "mode": "kernel-calibration",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Passed",
+  "timeoutMs": 4000,
+  "launchedAt": "2026-11-18T12:13:04.637Z",
+  "timebase": "node-monotonic-ms",
+  "startedMonotonicMs": 73.2395,
+  "events": [
+    {
+      "event": "process-spawned",
+      "elapsedMs": 15.140599999999992,
+      "pid": 40584
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 26.51129999999999,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 1708.1505000000002,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 1708.4618
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 1708.6762
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 1708.6791
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 1709.0321000000001,
+      "acknowledgement": "requested"
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 2227.7879
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 2227.833
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 2231.9855,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 2232.0411,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 2232.2565999999997
+    },
+    {
+      "event": "node-release-state",
+      "elapsedMs": 2232.5708,
+      "exitObserved": true,
+      "closeObserved": true,
+      "stdoutCloseObserved": true,
+      "stderrCloseObserved": true,
+      "exitCode": 0,
+      "signalCode": null
+    },
+    {
+      "event": "identity-probe-closed",
+      "elapsedMs": 2262.8997999999997
+    },
+    {
+      "event": "runner-lifecycle-complete",
+      "elapsedMs": 2262.9492,
+      "cleanupSafe": true,
+      "forceTerminated": false
+    },
+    {
+      "event": "runner-final",
+      "elapsedMs": 2263.0406,
+      "status": "Passed",
+      "cleanupSafe": true,
+      "forceTerminated": false
+    }
+  ],
+  "identities": [
+    {
+      "pid": 40584,
+      "startedTicks": "639306007846451808",
+      "startedUtc": "2026-11-18T12:13:04.6451808Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "pid": 40584,
+  "kernelObserver": {
+    "file": "<local-user>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\s3-worktrees\\edge\\.tools\\edge-exit-observer\\1795003984639-7554ea0f-2c39-4108-bc34-1cefcec24929.kernel.jsonl",
+    "pid": 29328
+  },
+  "identityProbePid": 6400,
+  "resultReady": true,
+  "rootExitProof": "verified-spawn-handle-exit-and-streams",
+  "remainingIdentities": [],
+  "identityProbeClosed": true,
+  "elapsedMs": 2262.9211999999998,
+  "stdoutBytes": 5,
+  "stderrBytes": 0
+}

@@ -1,0 +1,878 @@
+{
+  "scope": "Only six exact roots linked to the two current full-run logs",
+  "plan": [
+    {
+      "root": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-layout-Z2orqH",
+      "sourceLog": "full-regression.log",
+      "metadata": [
+        {
+          "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s1-edge-layout\\1794923352824-012991e9-d248-4939-b305-75e3b1fad40a.json",
+          "archive": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-acceptance\\full-failures\\1794923352824-012991e9-d248-4939-b305-75e3b1fad40a.json",
+          "sha256": "be1c2b00763d5886cd6934fcd80c327bd14094808d049f5b2bb3692adf9c9360",
+          "originalStatus": "Failed",
+          "invocation": "1794923352824-012991e9-d248-4939-b305-75e3b1fad40a",
+          "identities": [
+            {
+              "pid": 22380,
+              "startedTicks": "639305201528306145",
+              "startedUtc": "2026-11-17T13:49:12.8306145Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 15216,
+              "startedTicks": "639305201551930038",
+              "startedUtc": "2026-11-17T13:49:15.1930038Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 13868,
+              "startedTicks": "639305201551989236",
+              "startedUtc": "2026-11-17T13:49:15.1989236Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 17676,
+              "startedTicks": "639305201553315483",
+              "startedUtc": "2026-11-17T13:49:15.3315483Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 28180,
+              "startedTicks": "639305201578079866",
+              "startedUtc": "2026-11-17T13:49:17.8079866Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 16548,
+              "startedTicks": "639305201577856821",
+              "startedUtc": "2026-11-17T13:49:17.7856821Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 20044,
+              "startedTicks": "639305201577710934",
+              "startedUtc": "2026-11-17T13:49:17.7710934Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 9828,
+              "startedTicks": "639305201577708181",
+              "startedUtc": "2026-11-17T13:49:17.7708181Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 1128,
+              "startedTicks": "639305201577704477",
+              "startedUtc": "2026-11-17T13:49:17.7704477Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 9572,
+              "startedTicks": "639305201577704436",
+              "startedUtc": "2026-11-17T13:49:17.7704436Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 33896,
+              "startedTicks": "639305201566227775",
+              "startedUtc": "2026-11-17T13:49:16.6227775Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 15872,
+              "startedTicks": "639305201613986671",
+              "startedUtc": "2026-11-17T13:49:21.3986671Z",
+              "source": "Windows-StartTime"
+            }
+          ],
+          "pid": 22380,
+          "profile": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-layout-Z2orqH\\edge-profile-37af9d15-9827-4064-a5db-0b5b7dd86f61"
+        }
+      ],
+      "sourceLogSha256": "6c8074f0d9e240d508ff66129871b195781b9374bdee0c49cb3aab43b85de809"
+    },
+    {
+      "root": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-edge-runner-test-ZLlDUX",
+      "sourceLog": "full-regression.log",
+      "metadata": [
+        {
+          "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794923468262-ec86ba0d-98bf-44f1-8def-0b84576f27cf.json",
+          "archive": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-acceptance\\full-failures\\1794923468262-ec86ba0d-98bf-44f1-8def-0b84576f27cf.json",
+          "sha256": "34c711814d00901272f21052d876b8add28768bf46880aca609b3571643f7cfa",
+          "originalStatus": "Passed",
+          "invocation": "1794923468262-ec86ba0d-98bf-44f1-8def-0b84576f27cf",
+          "identities": [
+            {
+              "pid": 22572,
+              "startedTicks": "639305202682732550",
+              "startedUtc": "2026-11-17T13:51:08.2732550Z",
+              "source": "Windows-StartTime"
+            }
+          ],
+          "pid": 22572,
+          "profile": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-edge-runner-test-ZLlDUX\\edge-profile-519f5bd6-a6f1-4693-b4a6-f373362b9156"
+        },
+        {
+          "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794923470436-0e53f94a-3aa3-41d4-a28d-cfd1f5d6462a.json",
+          "archive": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-acceptance\\full-failures\\1794923470436-0e53f94a-3aa3-41d4-a28d-cfd1f5d6462a.json",
+          "sha256": "b592c1ebf7ae7b9e2395c343dbb96d1b7cbe0e524d02d5277a0dc71e288dd879",
+          "originalStatus": "Failed",
+          "invocation": "1794923470436-0e53f94a-3aa3-41d4-a28d-cfd1f5d6462a",
+          "identities": [
+            {
+              "pid": 20108,
+              "startedTicks": "639305202704458065",
+              "startedUtc": "2026-11-17T13:51:10.4458065Z",
+              "source": "Windows-StartTime"
+            }
+          ],
+          "pid": 20108,
+          "profile": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-edge-runner-test-ZLlDUX\\edge-profile-75795a3a-7a4f-4713-9eb9-5a5c1af2c68f"
+        },
+        {
+          "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794923474402-8b9eff30-b52f-4aa5-b13a-b825a7ee2a42.json",
+          "archive": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-acceptance\\full-failures\\1794923474402-8b9eff30-b52f-4aa5-b13a-b825a7ee2a42.json",
+          "sha256": "7e285c1524274c8e0ff5899aaab111a6400f613df0f32c34183161abb279c334",
+          "originalStatus": "Passed",
+          "invocation": "1794923474402-8b9eff30-b52f-4aa5-b13a-b825a7ee2a42",
+          "identities": [
+            {
+              "pid": 23780,
+              "startedTicks": "639305202744125234",
+              "startedUtc": "2026-11-17T13:51:14.4125234Z",
+              "source": "Windows-StartTime"
+            }
+          ],
+          "pid": 23780
+        },
+        {
+          "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794923476736-d44a5df8-8933-4dea-8529-a928cd232031.json",
+          "archive": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-acceptance\\full-failures\\1794923476736-d44a5df8-8933-4dea-8529-a928cd232031.json",
+          "sha256": "92f8bbeebcfde69d2bb61aa1f142a12cd192db2ab99944356655995ab05cd07b",
+          "originalStatus": "Failed",
+          "invocation": "1794923476736-d44a5df8-8933-4dea-8529-a928cd232031",
+          "identities": [
+            {
+              "pid": 25060,
+              "startedTicks": "639305202767462842",
+              "startedUtc": "2026-11-17T13:51:16.7462842Z",
+              "source": "Windows-StartTime"
+            }
+          ],
+          "pid": 25060
+        },
+        {
+          "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794923478784-1665f981-1a2e-4b73-b95e-71a6cc5e034c.json",
+          "archive": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-acceptance\\full-failures\\1794923478784-1665f981-1a2e-4b73-b95e-71a6cc5e034c.json",
+          "sha256": "09c945b96a1edf2071a50caa470a7db34734514d99c03e5c5a7f0cd96bb23eee",
+          "originalStatus": "Failed",
+          "invocation": "1794923478784-1665f981-1a2e-4b73-b95e-71a6cc5e034c",
+          "identities": [
+            {
+              "pid": 12704,
+              "startedTicks": "639305202787946029",
+              "startedUtc": "2026-11-17T13:51:18.7946029Z",
+              "source": "Windows-StartTime"
+            }
+          ],
+          "pid": 12704
+        }
+      ],
+      "sourceLogSha256": "6c8074f0d9e240d508ff66129871b195781b9374bdee0c49cb3aab43b85de809"
+    },
+    {
+      "root": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s1-main-style-ZWiOXB",
+      "sourceLog": "full-regression.log",
+      "metadata": [
+        {
+          "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-usability\\main-visual\\1794923489958-bf423a6e-2861-4d7e-b47d-9ea0a83d7343.json",
+          "archive": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-acceptance\\full-failures\\1794923489958-bf423a6e-2861-4d7e-b47d-9ea0a83d7343.json",
+          "sha256": "88be2a28179d1fc49f8c834f42d7a4e7c93e5d1157bc81cb84a85bde283a27a4",
+          "originalStatus": "Failed",
+          "invocation": "1794923489958-bf423a6e-2861-4d7e-b47d-9ea0a83d7343",
+          "identities": [
+            {
+              "pid": 15792,
+              "startedTicks": "639305202899746686",
+              "startedUtc": "2026-11-17T13:51:29.9746686Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 5200,
+              "startedTicks": "639305202912617061",
+              "startedUtc": "2026-11-17T13:51:31.2617061Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 20156,
+              "startedTicks": "639305202912672290",
+              "startedUtc": "2026-11-17T13:51:31.2672290Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 20660,
+              "startedTicks": "639305202913247070",
+              "startedUtc": "2026-11-17T13:51:31.3247070Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 18864,
+              "startedTicks": "639305202961269314",
+              "startedUtc": "2026-11-17T13:51:36.1269314Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 25928,
+              "startedTicks": "639305202961178457",
+              "startedUtc": "2026-11-17T13:51:36.1178457Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 8432,
+              "startedTicks": "639305202956550358",
+              "startedUtc": "2026-11-17T13:51:35.6550358Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 13272,
+              "startedTicks": "639305202951380740",
+              "startedUtc": "2026-11-17T13:51:35.1380740Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 33304,
+              "startedTicks": "639305202951366127",
+              "startedUtc": "2026-11-17T13:51:35.1366127Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 14796,
+              "startedTicks": "639305202951357152",
+              "startedUtc": "2026-11-17T13:51:35.1357152Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 20328,
+              "startedTicks": "639305202970033049",
+              "startedUtc": "2026-11-17T13:51:37.0033049Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 20516,
+              "startedTicks": "639305202951240641",
+              "startedUtc": "2026-11-17T13:51:35.1240641Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 6380,
+              "startedTicks": "639305202951282749",
+              "startedUtc": "2026-11-17T13:51:35.1282749Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 31764,
+              "startedTicks": "639305202959597587",
+              "startedUtc": "2026-11-17T13:51:35.9597587Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 8180,
+              "startedTicks": "639305202937343574",
+              "startedUtc": "2026-11-17T13:51:33.7343574Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 34780,
+              "startedTicks": "639305202970207965",
+              "startedUtc": "2026-11-17T13:51:37.0207965Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 13868,
+              "startedTicks": "639305202972135724",
+              "startedUtc": "2026-11-17T13:51:37.2135724Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 34468,
+              "startedTicks": "639305202986331535",
+              "startedUtc": "2026-11-17T13:51:38.6331535Z",
+              "source": "Windows-StartTime"
+            }
+          ],
+          "pid": 15792,
+          "profile": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s1-main-style-ZWiOXB\\edge-profile-e8e660f8-fa47-4263-999c-2e009dfc0019"
+        }
+      ],
+      "sourceLogSha256": "6c8074f0d9e240d508ff66129871b195781b9374bdee0c49cb3aab43b85de809"
+    },
+    {
+      "root": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s2-metrics-style-1xwAOy",
+      "sourceLog": "full-regression.log",
+      "metadata": [
+        {
+          "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s2-metrics-visual\\1794923553405-82a6cd3a-d3a9-4bca-ae19-fc3c81e6b08f.json",
+          "archive": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-acceptance\\full-failures\\1794923553405-82a6cd3a-d3a9-4bca-ae19-fc3c81e6b08f.json",
+          "sha256": "435cba710d3999be84f48371946a78beae3889389556e951b402327e1597c40c",
+          "originalStatus": "Failed",
+          "invocation": "1794923553405-82a6cd3a-d3a9-4bca-ae19-fc3c81e6b08f",
+          "identities": [
+            {
+              "pid": 34788,
+              "startedTicks": "639305203534213045",
+              "startedUtc": "2026-11-17T13:52:33.4213045Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 25720,
+              "startedTicks": "639305203541960811",
+              "startedUtc": "2026-11-17T13:52:34.1960811Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 25372,
+              "startedTicks": "639305203541281629",
+              "startedUtc": "2026-11-17T13:52:34.1281629Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 19516,
+              "startedTicks": "639305203538328168",
+              "startedUtc": "2026-11-17T13:52:33.8328168Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 22184,
+              "startedTicks": "639305203538391266",
+              "startedUtc": "2026-11-17T13:52:33.8391266Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 16556,
+              "startedTicks": "639305203538896267",
+              "startedUtc": "2026-11-17T13:52:33.8896267Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 23616,
+              "startedTicks": "639305203549949668",
+              "startedUtc": "2026-11-17T13:52:34.9949668Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 23940,
+              "startedTicks": "639305203549461027",
+              "startedUtc": "2026-11-17T13:52:34.9461027Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 10256,
+              "startedTicks": "639305203547674041",
+              "startedUtc": "2026-11-17T13:52:34.7674041Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 16888,
+              "startedTicks": "639305203542144240",
+              "startedUtc": "2026-11-17T13:52:34.2144240Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 3364,
+              "startedTicks": "639305203542140177",
+              "startedUtc": "2026-11-17T13:52:34.2140177Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 27088,
+              "startedTicks": "639305203542101680",
+              "startedUtc": "2026-11-17T13:52:34.2101680Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 15504,
+              "startedTicks": "639305203542076715",
+              "startedUtc": "2026-11-17T13:52:34.2076715Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 24040,
+              "startedTicks": "639305203548759332",
+              "startedUtc": "2026-11-17T13:52:34.8759332Z",
+              "source": "Windows-StartTime"
+            }
+          ],
+          "pid": 34788,
+          "profile": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s2-metrics-style-1xwAOy\\edge-profile-3c7216bf-35e0-4393-b7b5-5f92f02f93be"
+        }
+      ],
+      "sourceLogSha256": "6c8074f0d9e240d508ff66129871b195781b9374bdee0c49cb3aab43b85de809"
+    },
+    {
+      "root": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s3-customer-table-rHHe1Q",
+      "sourceLog": "full-regression.log",
+      "metadata": [
+        {
+          "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\delivery-s3-customer-table\\1794923590076-deeda4c8-d8b1-4a90-bbdf-31946b3fe084.json",
+          "archive": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-acceptance\\full-failures\\1794923590076-deeda4c8-d8b1-4a90-bbdf-31946b3fe084.json",
+          "sha256": "4546ad901f270b5a3b9525d16622b400947d603e110650487c1a49ac261be82e",
+          "originalStatus": "Failed",
+          "invocation": "1794923590076-deeda4c8-d8b1-4a90-bbdf-31946b3fe084",
+          "identities": [
+            {
+              "pid": 35700,
+              "startedTicks": "639305203900879987",
+              "startedUtc": "2026-11-17T13:53:10.0879987Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 16068,
+              "startedTicks": "639305204005026568",
+              "startedUtc": "2026-11-17T13:53:20.5026568Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 24076,
+              "startedTicks": "639305204005161948",
+              "startedUtc": "2026-11-17T13:53:20.5161948Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 35540,
+              "startedTicks": "639305204004228555",
+              "startedUtc": "2026-11-17T13:53:20.4228555Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 27608,
+              "startedTicks": "639305203966918419",
+              "startedUtc": "2026-11-17T13:53:16.6918419Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 11600,
+              "startedTicks": "639305203966995014",
+              "startedUtc": "2026-11-17T13:53:16.6995014Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 17400,
+              "startedTicks": "639305203967526328",
+              "startedUtc": "2026-11-17T13:53:16.7526328Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 31032,
+              "startedTicks": "639305204015792862",
+              "startedUtc": "2026-11-17T13:53:21.5792862Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 18816,
+              "startedTicks": "639305204015453920",
+              "startedUtc": "2026-11-17T13:53:21.5453920Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 18448,
+              "startedTicks": "639305204012049288",
+              "startedUtc": "2026-11-17T13:53:21.2049288Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 34348,
+              "startedTicks": "639305204006104085",
+              "startedUtc": "2026-11-17T13:53:20.6104085Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 16712,
+              "startedTicks": "639305204006103460",
+              "startedUtc": "2026-11-17T13:53:20.6103460Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 17976,
+              "startedTicks": "639305204006031616",
+              "startedUtc": "2026-11-17T13:53:20.6031616Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 33932,
+              "startedTicks": "639305204021112264",
+              "startedUtc": "2026-11-17T13:53:22.1112264Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 18572,
+              "startedTicks": "639305204012892923",
+              "startedUtc": "2026-11-17T13:53:21.2892923Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 8064,
+              "startedTicks": "639305204021195720",
+              "startedUtc": "2026-11-17T13:53:22.1195720Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 20504,
+              "startedTicks": "639305204031251661",
+              "startedUtc": "2026-11-17T13:53:23.1251661Z",
+              "source": "Windows-StartTime"
+            }
+          ],
+          "pid": 35700,
+          "profile": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s3-customer-table-rHHe1Q\\edge-profile-e88788d3-2c79-4fda-a298-8c7197d41e3d"
+        }
+      ],
+      "sourceLogSha256": "6c8074f0d9e240d508ff66129871b195781b9374bdee0c49cb3aab43b85de809"
+    },
+    {
+      "root": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s1-main-style-XkSnvy",
+      "sourceLog": "full-regression-after-helper.log",
+      "metadata": [
+        {
+          "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-usability\\main-visual\\1794925559649-a5ead72a-d32c-4323-9b4d-d3a4414db24b.json",
+          "archive": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-acceptance\\full-failures\\1794925559649-a5ead72a-d32c-4323-9b4d-d3a4414db24b.json",
+          "sha256": "11a5b9652ba3eda8ac95e1cea4aa2d8d2dfbc612b01864da94bacc98621f4d2b",
+          "originalStatus": "Passed",
+          "invocation": "1794925559649-a5ead72a-d32c-4323-9b4d-d3a4414db24b",
+          "identities": [
+            {
+              "pid": 19328,
+              "startedTicks": "639305223596641505",
+              "startedUtc": "2026-11-17T14:25:59.6641505Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 21060,
+              "startedTicks": "639305223604517219",
+              "startedUtc": "2026-11-17T14:26:00.4517219Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 34500,
+              "startedTicks": "639305223604510839",
+              "startedUtc": "2026-11-17T14:26:00.4510839Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 10256,
+              "startedTicks": "639305223604476175",
+              "startedUtc": "2026-11-17T14:26:00.4476175Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 21312,
+              "startedTicks": "639305223604324081",
+              "startedUtc": "2026-11-17T14:26:00.4324081Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 35172,
+              "startedTicks": "639305223604452960",
+              "startedUtc": "2026-11-17T14:26:00.4452960Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 552,
+              "startedTicks": "639305223603444372",
+              "startedUtc": "2026-11-17T14:26:00.3444372Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 16856,
+              "startedTicks": "639305223600457528",
+              "startedUtc": "2026-11-17T14:26:00.0457528Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 26204,
+              "startedTicks": "639305223600519780",
+              "startedUtc": "2026-11-17T14:26:00.0519780Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 26716,
+              "startedTicks": "639305223601054978",
+              "startedUtc": "2026-11-17T14:26:00.1054978Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 11020,
+              "startedTicks": "639305223613416214",
+              "startedUtc": "2026-11-17T14:26:01.3416214Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 22044,
+              "startedTicks": "639305223612766237",
+              "startedUtc": "2026-11-17T14:26:01.2766237Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 17228,
+              "startedTicks": "639305223610919281",
+              "startedUtc": "2026-11-17T14:26:01.0919281Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 31228,
+              "startedTicks": "639305223626554662",
+              "startedUtc": "2026-11-17T14:26:02.6554662Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 30272,
+              "startedTicks": "639305223611589614",
+              "startedUtc": "2026-11-17T14:26:01.1589614Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 35812,
+              "startedTicks": "639305223626719647",
+              "startedUtc": "2026-11-17T14:26:02.6719647Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 34832,
+              "startedTicks": "639305223626885969",
+              "startedUtc": "2026-11-17T14:26:02.6885969Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 35088,
+              "startedTicks": "639305223636602250",
+              "startedUtc": "2026-11-17T14:26:03.6602250Z",
+              "source": "Windows-StartTime"
+            }
+          ],
+          "pid": 19328,
+          "profile": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s1-main-style-XkSnvy\\edge-profile-738ffb94-f781-48ba-8257-05e645c476b8"
+        },
+        {
+          "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-usability\\main-visual\\1794925570958-a27632ab-8868-4c03-acd8-c59919eb3e04.json",
+          "archive": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-acceptance\\full-failures\\1794925570958-a27632ab-8868-4c03-acd8-c59919eb3e04.json",
+          "sha256": "95dfdcbae712ad564688c31fad92122665921c32c276d8951dd276f5d0a67add",
+          "originalStatus": "Passed",
+          "invocation": "1794925570958-a27632ab-8868-4c03-acd8-c59919eb3e04",
+          "identities": [
+            {
+              "pid": 20972,
+              "startedTicks": "639305223709711157",
+              "startedUtc": "2026-11-17T14:26:10.9711157Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 34424,
+              "startedTicks": "639305223716081891",
+              "startedUtc": "2026-11-17T14:26:11.6081891Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 14768,
+              "startedTicks": "639305223713668549",
+              "startedUtc": "2026-11-17T14:26:11.3668549Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 16264,
+              "startedTicks": "639305223713726385",
+              "startedUtc": "2026-11-17T14:26:11.3726385Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 32796,
+              "startedTicks": "639305223714310806",
+              "startedUtc": "2026-11-17T14:26:11.4310806Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 35024,
+              "startedTicks": "639305223726056389",
+              "startedUtc": "2026-11-17T14:26:12.6056389Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 28720,
+              "startedTicks": "639305223725410251",
+              "startedUtc": "2026-11-17T14:26:12.5410251Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 18272,
+              "startedTicks": "639305223723659258",
+              "startedUtc": "2026-11-17T14:26:12.3659258Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 7708,
+              "startedTicks": "639305223717618484",
+              "startedUtc": "2026-11-17T14:26:11.7618484Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 6416,
+              "startedTicks": "639305223717617625",
+              "startedUtc": "2026-11-17T14:26:11.7617625Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 18224,
+              "startedTicks": "639305223717588889",
+              "startedUtc": "2026-11-17T14:26:11.7588889Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 21936,
+              "startedTicks": "639305223737104762",
+              "startedUtc": "2026-11-17T14:26:13.7104762Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 17388,
+              "startedTicks": "639305223717471897",
+              "startedUtc": "2026-11-17T14:26:11.7471897Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 5140,
+              "startedTicks": "639305223717538576",
+              "startedUtc": "2026-11-17T14:26:11.7538576Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 5220,
+              "startedTicks": "639305223725175464",
+              "startedUtc": "2026-11-17T14:26:12.5175464Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 29808,
+              "startedTicks": "639305223737284772",
+              "startedUtc": "2026-11-17T14:26:13.7284772Z",
+              "source": "Windows-StartTime"
+            }
+          ],
+          "pid": 20972,
+          "profile": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s1-main-style-XkSnvy\\edge-profile-73f83b6c-85a3-47d5-aae6-914068884f25"
+        },
+        {
+          "source": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-usability\\main-visual\\1794925576024-f768686a-1ef2-4f0f-9f57-f853ad481c31.json",
+          "archive": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\visual-acceptance\\full-failures\\1794925576024-f768686a-1ef2-4f0f-9f57-f853ad481c31.json",
+          "sha256": "ccf6949f753031e63ae8f4d9c2acf56c51984c0c6e333499bb8f4951a5b2bfc0",
+          "originalStatus": "Failed",
+          "invocation": "1794925576024-f768686a-1ef2-4f0f-9f57-f853ad481c31",
+          "identities": [
+            {
+              "pid": 7156,
+              "startedTicks": "639305223760367331",
+              "startedUtc": "2026-11-17T14:26:16.0367331Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 30392,
+              "startedTicks": "639305223767622331",
+              "startedUtc": "2026-11-17T14:26:16.7622331Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 8088,
+              "startedTicks": "639305223767763640",
+              "startedUtc": "2026-11-17T14:26:16.7763640Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 20360,
+              "startedTicks": "639305223766757226",
+              "startedUtc": "2026-11-17T14:26:16.6757226Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 34912,
+              "startedTicks": "639305223764283856",
+              "startedUtc": "2026-11-17T14:26:16.4283856Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 26224,
+              "startedTicks": "639305223764359539",
+              "startedUtc": "2026-11-17T14:26:16.4359539Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 16600,
+              "startedTicks": "639305223764917404",
+              "startedUtc": "2026-11-17T14:26:16.4917404Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 496,
+              "startedTicks": "639305223785396735",
+              "startedUtc": "2026-11-17T14:26:18.5396735Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 23528,
+              "startedTicks": "639305223782999054",
+              "startedUtc": "2026-11-17T14:26:18.2999054Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 5240,
+              "startedTicks": "639305223775114587",
+              "startedUtc": "2026-11-17T14:26:17.5114587Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 16112,
+              "startedTicks": "639305223768767785",
+              "startedUtc": "2026-11-17T14:26:16.8767785Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 23988,
+              "startedTicks": "639305223768766310",
+              "startedUtc": "2026-11-17T14:26:16.8766310Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 11108,
+              "startedTicks": "639305223768705337",
+              "startedUtc": "2026-11-17T14:26:16.8705337Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 35384,
+              "startedTicks": "639305223785153420",
+              "startedUtc": "2026-11-17T14:26:18.5153420Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 31500,
+              "startedTicks": "639305223777866686",
+              "startedUtc": "2026-11-17T14:26:17.7866686Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 35692,
+              "startedTicks": "639305223783212399",
+              "startedUtc": "2026-11-17T14:26:18.3212399Z",
+              "source": "Windows-StartTime"
+            },
+            {
+              "pid": 6416,
+              "startedTicks": "639305223793287179",
+              "startedUtc": "2026-11-17T14:26:19.3287179Z",
+              "source": "Windows-StartTime"
+            }
+          ],
+          "pid": 7156,
+          "profile": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s1-main-style-XkSnvy\\edge-profile-0e52b365-8f02-40c0-8f1a-4e941f841b6f"
+        }
+      ],
+      "sourceLogSha256": "5f68f99bec3729a438b46c539a67a2b39ef96387dde4b42113cacf2c69df5eb1"
+    }
+  ]
+}

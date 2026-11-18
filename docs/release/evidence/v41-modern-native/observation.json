@@ -1,0 +1,64 @@
+{
+  "nativeExecutableProductVersion": "6.0.3+545fbc1cb406e0c444e007ef4abecf0934375a9c",
+  "pid": 16544,
+  "sourceLifecycleRows": 48,
+  "archivedLifecycleRows": 44,
+  "wsVisibleCoreCreations": 1,
+  "wsAboutBlankNavigations": 1,
+  "retainedDefaultGeneration": 1,
+  "statusSamples": [
+    {
+      "generation": 0,
+      "isolatedPreview": false
+    },
+    {
+      "generation": 1,
+      "isolatedPreview": true
+    },
+    {
+      "generation": 1,
+      "isolatedPreview": true
+    },
+    {
+      "generation": 1,
+      "isolatedPreview": true
+    }
+  ],
+  "lastChatOverviewTransitions": [
+    [
+      "chat",
+      "exit"
+    ],
+    [
+      "overview",
+      "enter"
+    ],
+    [
+      "overview",
+      "exit"
+    ],
+    [
+      "chat",
+      "enter"
+    ]
+  ],
+  "closeEvents": [
+    {
+      "kind": "application-stopping",
+      "at": "2026-11-17T21:32:34.011954+00:00"
+    },
+    {
+      "kind": "sidecar-stopped",
+      "at": "2026-11-17T21:32:34.2810586+00:00"
+    },
+    {
+      "kind": "host-unloaded",
+      "at": "2026-11-17T21:32:34.2985881+00:00"
+    }
+  ],
+  "readOnlyClosureProbe": {
+    "At": "2026-11-18T03:03:09.6376653+05:30",
+    "HostPresent": false,
+    "ExactRootReferences": []
+  }
+}

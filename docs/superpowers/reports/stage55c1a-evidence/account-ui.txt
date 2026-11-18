@@ -1,0 +1,36 @@
+
+[RUN] Stage 5.5A twelve-page UI and scoped group table
+stage5 twelve-page rendering: navigation, independent home/chat, honest contacts, real scoped group table, unknown metadata, safe selection/native clipboard, filters, 40-row pagination and scroll restoration PASS; native rendering NotTested
+[PASS] Stage 5.5A twelve-page UI and scoped group table
+
+[RUN] Stage 5.5A UI actions and real bridge response contract
+stage5 UI controller: read-only refresh, account/page races, errors, busy recovery and review routing PASS; native visual acceptance NotTested
+[PASS] Stage 5.5A UI actions and real bridge response contract
+
+[RUN] Stage 5.5A main sidebar preservation
+sidebar WS route policy: independent navigation, hidden/inert main sidebar, preference and viewport restoration pass
+[PASS] Stage 5.5A main sidebar preservation
+
+[RUN] Stage 5.5A six effective-viewport computed layout
+{"browser":"real isolated Edge; complete production render; CSS viewport model, not native Windows DPI","physical":[1920,1080],"scale":1,"viewport":{"width":1920,"height":1080},"navigation":250,"chat":{"x":274,"y":188,"width":1222,"height":868,"bottom":1056},"crm":380,"groupDetail":"right 340px","tasksFlow":"hidden","collectionFlowHeight":195.1875}
+{"browser":"real isolated Edge; complete production render; CSS viewport model, not native Windows DPI","physical":[1920,1080],"scale":1.25,"viewport":{"width":1536,"height":864},"navigation":250,"chat":{"x":274,"y":188,"width":838,"height":652,"bottom":840},"crm":380,"groupDetail":"right 340px","tasksFlow":"hidden","collectionFlowHeight":195.1875}
+{"browser":"real isolated Edge; complete production render; CSS viewport model, not native Windows DPI","physical":[1920,1080],"scale":1.5,"viewport":{"width":1280,"height":720},"navigation":250,"chat":{"x":274,"y":188,"width":626,"height":508,"bottom":696},"crm":340,"groupDetail":"stacked","tasksFlow":"hidden","collectionFlowHeight":195.1875}
+{"browser":"real isolated Edge; complete production render; CSS viewport model, not native Windows DPI","physical":[2560,1440],"scale":1,"viewport":{"width":2560,"height":1440},"navigation":250,"chat":{"x":274,"y":188,"width":1862,"height":1228,"bottom":1416},"crm":380,"groupDetail":"right 340px","tasksFlow":"hidden","collectionFlowHeight":195.1875}
+{"browser":"real isolated Edge; complete production render; CSS viewport model, not native Windows DPI","physical":[2560,1440],"scale":1.25,"viewport":{"width":2048,"height":1152},"navigation":250,"chat":{"x":274,"y":188,"width":1350,"height":940,"bottom":1128},"crm":380,"groupDetail":"right 340px","tasksFlow":"hidden","collectionFlowHeight":195.1875}
+{"browser":"real isolated Edge; complete production render; CSS viewport model, not native Windows DPI","physical":[2560,1440],"scale":1.5,"viewport":{"width":1707,"height":960},"navigation":250,"chat":{"x":274,"y":188,"width":1009,"height":748,"bottom":936},"crm":380,"groupDetail":"right 340px","tasksFlow":"hidden","collectionFlowHeight":195.1875}
+stage5.5A full-render layout: chrome wrappers hidden, one native command row, blue/purple controls, readable tables and preserved native host PASS
+[PASS] Stage 5.5A six effective-viewport computed layout
+
+[RUN] Stage 5.5A same-window presentation and exact restoration
+{"kind":"real-win32-placement-runtime","passed":true,"cases":[{"initial":"normal","before":{"ShowCommand":1,"Flags":0,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":false,"IsMinimized":false},"enter":{"Changed":true,"Succeeded":true,"Observed":{"ShowCommand":3,"Flags":2,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":true,"IsMinimized":false},"Phase":"enter"},"after":{"ShowCommand":1,"Flags":0,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":false,"IsMinimized":false},"sameHwnd":29099326},{"initial":"maximized","before":{"ShowCommand":3,"Flags":2,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":true,"IsMinimized":false},"enter":{"Changed":true,"Succeeded":true,"Observed":{"ShowCommand":3,"Flags":2,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":true,"IsMinimized":false},"Phase":"enter"},"after":{"ShowCommand":3,"Flags":2,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":true,"IsMinimized":false},"sameHwnd":29099326},{"initial":"minimized","before":{"ShowCommand":2,"Flags":0,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":false,"IsMinimized":true},"enter":{"Changed":true,"Succeeded":true,"Observed":{"ShowCommand":3,"Flags":2,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":true,"IsMinimized":false},"Phase":"enter"},"after":{"ShowCommand":2,"Flags":0,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":false,"IsMinimized":true},"sameHwnd":29099326},{"initial":"minimized-from-maximized","before":{"ShowCommand":2,"Flags":2,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":false,"IsMinimized":true},"enter":{"Changed":true,"Succeeded":true,"Observed":{"ShowCommand":3,"Flags":2,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":true,"IsMinimized":false},"Phase":"enter"},"after":{"ShowCommand":2,"Flags":2,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":false,"IsMinimized":true},"sameHwnd":29099326}]}
+[PASS] Stage 5.5A same-window presentation and exact restoration
+
+[RUN] Stage 5.5A account switch monitor request ownership
+WS account runtime: scoped monitor/profile state, every switch await boundary, stale native/API errors, rollback completion races and three-account sequence ownership PASS
+[PASS] Stage 5.5A account switch monitor request ownership
+
+[RUN] Stage 5.5A reply copy uses real native acknowledgement
+WS reply copy runtime: native copied DTO, legacy exact-length confirmation, safe failure/audit behavior and sensitive-copy cancellation PASS
+[PASS] Stage 5.5A reply copy uses real native acknowledgement
+
+Completed 7 checks: 7 passed, 0 failed.

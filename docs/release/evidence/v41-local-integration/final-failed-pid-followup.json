@@ -1,0 +1,42 @@
+[
+  {
+    "File": "final-edge-main-failure.json",
+    "Phase": "result",
+    "Code": "EDGE_RUNNER_TIMEOUT",
+    "CheckedUtc": "2026-11-18T10:27:07.8945129Z",
+    "ObservedIdentityCount": 5,
+    "ProbePid": 34664,
+    "ProbePresent": false,
+    "RemainingPids": []
+  },
+  {
+    "File": "final-edge-ws-failure.json",
+    "Phase": "process-exit",
+    "Code": "EDGE_RUNNER_TIMEOUT",
+    "CheckedUtc": "2026-11-18T10:27:07.9327179Z",
+    "ObservedIdentityCount": 14,
+    "ProbePid": 37220,
+    "ProbePresent": false,
+    "RemainingPids": []
+  },
+  {
+    "File": "final-edge-charts-failure.json",
+    "Phase": "process-exit",
+    "Code": "EDGE_RUNNER_TIMEOUT",
+    "CheckedUtc": "2026-11-18T10:27:07.9372919Z",
+    "ObservedIdentityCount": 12,
+    "ProbePid": 36920,
+    "ProbePresent": false,
+    "RemainingPids": []
+  },
+  {
+    "File": "final-edge-customer-failure.json",
+    "Phase": "navigation-load",
+    "Code": "EDGE_RUNNER_TIMEOUT",
+    "CheckedUtc": "2026-11-18T10:27:07.9407850Z",
+    "ObservedIdentityCount": 4,
+    "ProbePid": 30396,
+    "ProbePresent": false,
+    "RemainingPids": []
+  }
+]

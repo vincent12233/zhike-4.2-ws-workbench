@@ -1,0 +1,114 @@
+'use strict';
+
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const Module = require('node:module');
+const vm = require('node:vm');
+
+const repo = path.resolve(__dirname, '../..');
+const runnerPath = path.join(repo, 'tests/helpers/isolated-edge-runner.cjs');
+const fixturePath = path.join(repo, 'scripts/delivery/s1-main-visual.test.cjs');
+
+function replaceOnce(source, anchor, replacement) {
+  const first = source.indexOf(anchor);
+  assert.ok(first !== -1 && source.lastIndexOf(anchor) === first, 'Expected one source anchor: ' + anchor);
+  return source.slice(0, first) + replacement + source.slice(first + anchor.length);
+}
+
+function runnerForExperiment(mode) {
+  const declarations = '  let connection, ownedTargetId, ownedSessionId, stopResourceObservation;';
+  let source = replaceOnce(fs.readFileSync(runnerPath, 'utf8'), declarations, declarations + `
+  const experimentMode = ${JSON.stringify(mode)};
+  const bootstrapTargets = new Set(), ownedTargetDestroyed = deferred();
+  let observedOwnedTargetId;`);
+
+  const create = "      const target = await connection.send('Target.createTarget', { url: 'about:blank' });";
+  source = replaceOnce(source, create, `      context.metadata.targetDestructionExperiment = { mode: experimentMode, waitsForOwnedDestruction: experimentMode === 'B' };
+      connection.listeners.add(message => {
+        if (message.method !== 'Target.targetDestroyed') return;
+        const targetId = message.params?.targetId;
+        if (targetId === observedOwnedTargetId && typeof targetId === 'string') {
+          context.mark('experiment-owned-target-destroyed', { targetId });
+          ownedTargetDestroyed.resolve(targetId);
+        } else if (bootstrapTargets.has(targetId)) {
+          context.mark('experiment-bootstrap-target-destroyed', { targetId });
+        }
+      });
+      await connection.send('Target.setDiscoverTargets', { discover: true });
+      context.mark('experiment-target-discovery-ready');
+      const bootstrap = await connection.send('Target.getTargets');
+      const pages = bootstrap.targetInfos.filter(info => info.type === 'page').map(info => {
+        bootstrapTargets.add(info.targetId);
+        return { targetId: info.targetId, aboutBlank: info.url === 'about:blank' };
+      });
+      context.mark('experiment-bootstrap-pages', { pages });
+` + create);
+
+  const setOwned = '      ownedTargetId = target.targetId;';
+  source = replaceOnce(source, setOwned, setOwned + `
+      observedOwnedTargetId = ownedTargetId;
+      context.mark('experiment-fixture-target-identity', { targetId: observedOwnedTargetId });`);
+
+  const closeAck = "        ownedTargetId = undefined; context.mark('owned-target-close-confirmed');";
+  return replaceOnce(source, closeAck, closeAck + `
+        if (experimentMode === 'B') {
+          context.mark('experiment-owned-destroy-wait-started', { targetId: observedOwnedTargetId });
+          const destroyedId = await context.wait(ownedTargetDestroyed.promise, 'owned-target-destroy', true);
+          assert.equal(destroyedId, observedOwnedTargetId, 'Wait for the exact invocation-owned page to be destroyed');
+          context.mark('experiment-owned-destroy-wait-complete', { targetId: destroyedId });
+        }`);
+}
+
+function operationsFixture() {
+  let source = replaceOnce(fs.readFileSync(fixturePath, 'utf8'),
+    "[['home','atelier-dawn'],['customers','atelier-dawn'],['operations','atelier-dawn'],['home','horizon-night']]",
+    "[['operations','atelier-dawn']]");
+  source = replaceOnce(source, 'Final Pro screenshots: 4 real routes and actual topbar text contrast PASS',
+    'Operations / Atelier Dawn: original screenshot and topbar assertions passed');
+  return replaceOnce(source, 'main().catch(error=>{console.error(error);process.exitCode=1;});', 'module.exports = main();');
+}
+
+function compile(filename, source, dependencies = {}) {
+  const compiled = new Module(filename, module);
+  compiled.filename = filename;
+  compiled.paths = Module._nodeModulePaths(path.dirname(filename));
+  const originalRequire = compiled.require.bind(compiled);
+  compiled.require = name => Object.hasOwn(dependencies, name) ? dependencies[name] : originalRequire(name);
+  compiled._compile(source, filename);
+  return compiled.exports;
+}
+
+async function main() {
+  const [mode, output, dotnet = path.join(repo, '.tools/dotnet10/dotnet.exe')] = process.argv.slice(2);
+  assert.ok(mode === 'A' || mode === 'B' || mode === '--check-sources',
+    'Usage: target-destroy-harness.cjs <A|B> <new output directory under .tools/edge-exit-fix> [dotnet.exe]');
+  const fixtureSource = operationsFixture();
+  if (mode === '--check-sources') {
+    for (const arm of ['A', 'B']) new vm.Script(Module.wrap(runnerForExperiment(arm)), { filename: runnerPath });
+    new vm.Script(Module.wrap(fixtureSource), { filename: fixturePath });
+    console.log('Both diagnostic overlays and the unchanged Operations assertions compile. Edge was not started.');
+    return;
+  }
+
+  assert.equal(process.platform, 'win32');
+  assert.ok(output, 'A separate new output directory is required for each invocation');
+  const evidence = path.resolve(repo, output);
+  const relative = path.relative(__dirname, evidence);
+  assert.ok(relative && !relative.startsWith('..') && !path.isAbsolute(relative),
+    'Output must be under .tools/edge-exit-fix');
+  const observerDotnet = path.resolve(repo, dotnet);
+  const observer = path.join(repo, 'scripts/diagnostics/edge-exit-observer/observer/bin/Release/net10.0/Observer.dll');
+  assert.ok(fs.statSync(observerDotnet).isFile() && fs.statSync(observer).isFile(),
+    'The independent Windows exit observer must already be built');
+  fs.mkdirSync(evidence);
+  process.env.ZHIKE_EDGE_OBSERVER_DOTNET = observerDotnet;
+  process.env.ZHIKE_VISUAL_EVIDENCE = evidence;
+  process.env.ZHIKE_VISUAL_ONLY = 'snapshots';
+  delete process.env.ZHIKE_VISUAL_SNAPSHOTS;
+
+  const runner = compile(runnerPath, runnerForExperiment(mode));
+  await compile(fixturePath, fixtureSource, { '../../tests/helpers/isolated-edge-runner.cjs': runner });
+}
+
+main().catch(error => { console.error(error); process.exitCode = 1; });

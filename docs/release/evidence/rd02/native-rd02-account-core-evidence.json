@@ -1,0 +1,96 @@
+{
+  "pid": 3532,
+  "selected": [
+    {
+      "accountId": "default",
+      "generation": 1,
+      "created": true,
+      "reload": false
+    },
+    {
+      "accountId": "default",
+      "generation": 1,
+      "created": false,
+      "reload": false
+    },
+    {
+      "accountId": "native-b",
+      "generation": 2,
+      "created": true,
+      "reload": false
+    },
+    {
+      "accountId": "default",
+      "generation": 1,
+      "created": false,
+      "reload": false
+    },
+    {
+      "accountId": "native-b",
+      "generation": 2,
+      "created": false,
+      "reload": false
+    },
+    {
+      "accountId": "default",
+      "generation": 1,
+      "created": false,
+      "reload": false
+    },
+    {
+      "accountId": "native-b",
+      "generation": 2,
+      "created": false,
+      "reload": false
+    },
+    {
+      "accountId": "default",
+      "generation": 1,
+      "created": false,
+      "reload": false
+    },
+    {
+      "accountId": "native-b",
+      "generation": 2,
+      "created": false,
+      "reload": false
+    },
+    {
+      "accountId": "default",
+      "generation": 1,
+      "created": false,
+      "reload": false
+    },
+    {
+      "accountId": "native-b",
+      "generation": 2,
+      "created": false,
+      "reload": false
+    },
+    {
+      "accountId": "default",
+      "generation": 1,
+      "created": false,
+      "reload": false
+    }
+  ],
+  "created": [
+    {
+      "role": "shell",
+      "accountId": "workbench-ui",
+      "browserProcessId": 30316
+    },
+    {
+      "role": "ws-visible",
+      "accountId": "default",
+      "browserProcessId": 13064
+    },
+    {
+      "role": "ws-visible",
+      "accountId": "native-b",
+      "browserProcessId": 33628
+    }
+  ],
+  "externalRequests": 0,
+  "collectorDirs": []
+}

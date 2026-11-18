@@ -1,0 +1,621 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "SHA-256",
+  "scope": "V4.1 isolated synthetic browser matrix lifecycle",
+  "fileCount": 52,
+  "transformationPolicy": "Selected metadata only; profile, user and evidence paths, raw markup and protocol endpoints are excluded.",
+  "files": [
+    {
+      "path": "cdp-phases/controlled-identity-timeout.json",
+      "sourcePath": ".tools/isolated-edge-runner-lifecycle/1794973185113-bbb40f7b-0e21-4b6c-8ce5-036b3e558b43.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 2082,
+      "sourceSha256": "4da209725ecc7a62031150e2027ce8b1c99815cb01bd244f764319abab02cfec",
+      "archiveBytes": 2082,
+      "archiveSha256": "4da209725ecc7a62031150e2027ce8b1c99815cb01bd244f764319abab02cfec",
+      "transformations": [
+        "utf8-json-normalization"
+      ]
+    },
+    {
+      "path": "cdp-phases/controlled-lifecycle-summary.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/cdp-phases/controlled-lifecycle.log",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 3997,
+      "sourceSha256": "910485d40ffcf4f41b5c00d0f8c0fb5d3deb5333206b7e11bb0fd9335ab620ef",
+      "archiveBytes": 1154,
+      "archiveSha256": "fc47339181aa69e4455cb76e5d56817309955a19a7c41b091268155d93803b2e",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "cdp-phases/main-run-1-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/cdp-phases/main-run-1-audit.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 2125,
+      "sourceSha256": "82dfed3497d5dfdb3d0e99dd351ec98250f5af216e426bc5aa4cde9666e92a63",
+      "archiveBytes": 2026,
+      "archiveSha256": "ebe3a3b977c4426229f340fd057bb4caa0e630e42a56c6e9bf6dc3bd69b696bd",
+      "transformations": [
+        "utf8-json-normalization"
+      ]
+    },
+    {
+      "path": "cdp-phases/main-run-1.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/cdp-phases/main-run-1/1794972887981-ab91c9b9-2aa4-4ca2-9215-553253160f81.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 8501,
+      "sourceSha256": "0aeb2885d490e51de408d35fba633d3de37172f95a68ee8dd6eb6cd17e9890e2",
+      "archiveBytes": 8103,
+      "archiveSha256": "64c3c10cbdfce670eb7371426751036b615101f5f4598e1663e15fc4f36c72a7",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "cdp-phases/main-run-2-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/cdp-phases/main-run-2-audit.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 2126,
+      "sourceSha256": "4237fc646a8d9ab9fd2211ee8bb933b275512105197b2f67d68fb9868714a70d",
+      "archiveBytes": 2027,
+      "archiveSha256": "2b6a27c53d72d572aaeb011a86c7d59f1057dd7aea56f7b03a094682bd38509c",
+      "transformations": [
+        "utf8-json-normalization"
+      ]
+    },
+    {
+      "path": "cdp-phases/main-run-2.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/cdp-phases/main-run-2/1794973029579-c66efd8f-02c6-4ed1-9768-c8f2a1e67a3f.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 9083,
+      "sourceSha256": "0f1b85d5ae1ab231d258cf79c4f758b475117f02bd239e9c5ae1aedf3b352cb1",
+      "archiveBytes": 8685,
+      "archiveSha256": "c5cbbd458bf97fb52132b2a69607ea15875cb97bb599e039a47f3f20ecbc9eb7",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "cdp-phases/transport-suite.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/cdp-phases/controlled-transport.log",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 1051,
+      "sourceSha256": "a266f9fc8e43abd420c4d7462eb02f3121d54b32681d86cf9d82003fa01b2138",
+      "archiveBytes": 1499,
+      "archiveSha256": "fc18cc3535bb60066c61d0eb3b4c70c02010cc72cc6be7c04e354602f48c9454",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "comparison-summary.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/ws-comparison-summary.json",
+      "sourceBytes": 1408,
+      "sourceSha256": "42ca8e9b74aeecb45efecf3b617c6d9579225748da5e60e3e5158088e014778a",
+      "archiveBytes": 1362,
+      "archiveSha256": "9139acfec239b19b0ffbd63a2f62eafc37d3ba35b73e7a026e4bb33fb405d8cf",
+      "transformations": [
+        "utf8-json-normalization"
+      ]
+    },
+    {
+      "path": "completion-kernel-watch/controlled-node-handle.json",
+      "sourcePath": ".tools/v41-edge-investigation/completion-kernel-watch/controlled-node-handle.log",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 263,
+      "sourceSha256": "f04a9b22e074ac6afc76694ea2556b03ea6110e5b9502504c52ee0b098fe8b9b",
+      "archiveBytes": 311,
+      "archiveSha256": "2fe5f1f86aaf07ada80a5059ac2a1610a50d93d66b87334de1bb6a51a3f7d937",
+      "transformations": [
+        "utf8-json-normalization"
+      ]
+    },
+    {
+      "path": "completion-kernel-watch/customer-table-process-exit.json",
+      "sourcePath": ".tools/delivery-s3-customer-table/1794976959360-02bc1c1b-f308-42fa-9e7c-c316a7900cee.json",
+      "sourceLocation": "main-repository",
+      "sourceBytes": 7455,
+      "sourceSha256": "f5c4c5f3c8754c2340889e43bd586a838554d781a488e6da2e6e4a788b18c491",
+      "archiveBytes": 7127,
+      "archiveSha256": "d133cd115ed8615583e1e0179556f93a94f0b3282b89d8d87a096196d256c64e",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "completion-kernel-watch/main-process-exit.json",
+      "sourcePath": ".tools/visual-usability/main-visual/1794976873517-44371d31-04a9-436c-990e-b771166422f5.json",
+      "sourceLocation": "main-repository",
+      "sourceBytes": 8265,
+      "sourceSha256": "ce6efabfbedd04d971660211bef042d149061e962e6c7ead93adc8d416e490f3",
+      "archiveBytes": 7938,
+      "archiveSha256": "d124bdf48c67b5f7fa4f4c36088919e1ca4c7a40778ceb07e5d50565cf7fb4f1",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "completion-kernel-watch/observation-attempt.json",
+      "sourcePath": ".tools/v41-edge-investigation/completion-kernel-watch/run-owned.log",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 60,
+      "sourceSha256": "dfbd103a6e885b0b9494d0ff1cd686b2f403f08bc1f7a5ebd211abe956a3b149",
+      "archiveBytes": 283,
+      "archiveSha256": "24a6a16baec9854f1832f4c0aec6c60ca4e819cf955fc474091c0e3e959124fa",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "completion-kernel-watch/observer-control-runner-phases.json",
+      "sourcePath": ".tools/v41-edge-investigation/completion-kernel-watch/invocation-owned/runner-phases.jsonl",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 424,
+      "sourceSha256": "c3653ba0dbe982529c14174752f13f651d5cf4406595bb80c70a830d348354d0",
+      "archiveBytes": 565,
+      "archiveSha256": "66eb7e79355bbc47853fa23e80252559df7b9534c6598075f6e893bdb25eda40",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "completion-kernel-watch/observer-file-start-failure.json",
+      "sourcePath": ".tools/v41-edge-investigation/completion-kernel-watch/run.log",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 690,
+      "sourceSha256": "30b0b773189b731bdc330ae8be04843bf54ff581da833e02e4ecdc701cf41cdc",
+      "archiveBytes": 168,
+      "archiveSha256": "f37a1f93c6e10e52a3826eeb797294ed0801ab749bcbe4b0f19a048712d93414",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "completion-kernel-watch/observer-readiness-only.json",
+      "sourcePath": ".tools/v41-edge-investigation/completion-kernel-watch/invocation-owned/kernel.jsonl",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 53,
+      "sourceSha256": "266223bd7ec801aae92bd3b44c275dc15de774f1d0a1c989cdae43be1d48e07c",
+      "archiveBytes": 189,
+      "archiveSha256": "2b30ac3ca2a9a90542d6d4f655c237ec4d1f416957958917ccc05bedcbd606f9",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "completion-kernel-watch/ws-matrix-result-and-exit.json",
+      "sourcePath": ".tools/delivery-s1-ws-visual/1794976904319-61ab28a9-9467-4a71-beab-c7ad5f432c7d.json",
+      "sourceLocation": "main-repository",
+      "sourceBytes": 4879,
+      "sourceSha256": "f3d695b1cb04650adfdbb44e87868335cc2beaea6931dd124fa92b37c69c3426",
+      "archiveBytes": 4782,
+      "archiveSha256": "7868f74d50a79176b4a52ce102ae99b5f5d10b02b7b3a7822398573143814c44",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "final-full/main-result-timeout-normal-release.json",
+      "sourcePath": ".tools/visual-usability/main-visual/1794983319887-9216d200-91f5-4930-8b2f-f44150a9b80d.json",
+      "sourceLocation": "main-repository",
+      "sourceBytes": 5393,
+      "sourceSha256": "eb0e8106af65c51ea07ddde89cf90b246aa893ae8ea19c87c40bfe4a70785d54",
+      "archiveBytes": 5297,
+      "archiveSha256": "954027bee999d3dfe30f7338b730e85b81730829e216452fb4bcdccefb505274",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "final-full/stage51-layout-process-exit.json",
+      "sourcePath": ".tools/delivery-s1-edge-layout/1794983143623-a0ca68c4-1969-49f4-aff3-1520acab5fc3.json",
+      "sourceLocation": "main-repository",
+      "sourceBytes": 7438,
+      "sourceSha256": "676bcc31e647c7589a6678de87cfd5f92978c6eaf9e7a39a37c51204bc69aa58",
+      "archiveBytes": 7116,
+      "archiveSha256": "0ea3c5042bbe466b067b7719af1d910401dbbee82d85887f98b7de245399a1d8",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "final-full/ws-result-and-release-timeout.json",
+      "sourcePath": ".tools/delivery-s1-ws-visual/1794983349957-0bf4aa9b-5cbe-42bf-b6e8-1e6a7194179d.json",
+      "sourceLocation": "main-repository",
+      "sourceBytes": 4447,
+      "sourceSha256": "e4f5495441b43bb77c41c1d44b568069da90c82365990afc6bcab82f885c3020",
+      "archiveBytes": 4350,
+      "archiveSha256": "2e11306a6a571b4bd28f8a425b3f587357e73ed0b585ae9216c8206787619c29",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "final-main/read-only-process-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/late-release/r2-main-result-timeout-audit.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 1389,
+      "sourceSha256": "bfc0de07dc699a87ec2fc619dbda8c73787501da72af34afba2439575e3f09ba",
+      "archiveBytes": 1339,
+      "archiveSha256": "2e5fa99d6ab8f37a439e3346b28b15b655dcd3553e094d92e7f654254a50370b",
+      "transformations": [
+        "utf8-json-normalization"
+      ]
+    },
+    {
+      "path": "final-main/result-timeout.json",
+      "sourcePath": ".tools/visual-usability/main-visual/1794953355894-093e7265-ef77-4b86-8f0c-e4c59f135d2c.json",
+      "sourceLocation": "main-repository",
+      "sourceBytes": 4038,
+      "sourceSha256": "5484ec0a2560ac34a976ad9daa88ea2d3f539bd4ad6a38035bd16f9815e3403f",
+      "archiveBytes": 3903,
+      "archiveSha256": "610dc26643470f32cedbff9d3aeb6f1fe26ab2dba0c3997cfeed7ca2ef7c2abc",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "formal-fixture-hashes.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/ws-formal-fixtures.json",
+      "sourceBytes": 171,
+      "sourceSha256": "7a2efd1b1d66aecc0b2668738127a40e38a08de94928021cd8bc07ff03e956fe",
+      "archiveBytes": 171,
+      "archiveSha256": "7a2efd1b1d66aecc0b2668738127a40e38a08de94928021cd8bc07ff03e956fe",
+      "transformations": []
+    },
+    {
+      "path": "formal-pass-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/ws-owned-liveness-audit.json",
+      "sourceBytes": 2129,
+      "sourceSha256": "6b290ae8320ea00205d92d9635fd94a230444380fb2464bd1ca7f3be82c48f9c",
+      "archiveBytes": 2030,
+      "archiveSha256": "95498fa08339a5e90852f7112080213fc5bdeff649f42b12ff2318a8eb168152",
+      "transformations": [
+        "utf8-json-normalization"
+      ]
+    },
+    {
+      "path": "formal-pass.json",
+      "sourcePath": ".tools/delivery-s1-ws-visual/1794949155223-8b5d45de-3b0c-490f-b277-e604ba3f924b.json",
+      "sourceBytes": 7179,
+      "sourceSha256": "6ef7efbcfb539b85f56555532b86caa14522d5a5423e9a7178f6aa8e0b27b540",
+      "archiveBytes": 6823,
+      "archiveSha256": "0b54692a07dfc7f0d64c6bc7d15aa8e0683e943b81b4da144b1de5117ac84260",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "formal-timeout-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/ws-formal-audit.json",
+      "sourceBytes": 2128,
+      "sourceSha256": "807ca1317a05bd4dd7ec3821ca9f3c290550f91038383270f99203cc574f0061",
+      "archiveBytes": 2029,
+      "archiveSha256": "e6a9b17a8942bb1d7d1a0349ab33a7d93e4cb44fe397d0c9ee632fbad5526786",
+      "transformations": [
+        "utf8-json-normalization"
+      ]
+    },
+    {
+      "path": "formal-timeout.json",
+      "sourcePath": ".tools/delivery-s1-ws-visual/1794949051326-f7fa3227-e45c-4369-b0f3-19c95145d805.json",
+      "sourceBytes": 6926,
+      "sourceSha256": "053d5b19a06a5fb0e289757564908c7ec67ec0a827784fac2b2f53bd0e9e8362",
+      "archiveBytes": 6570,
+      "archiveSha256": "d3e9d62a1ebf585ba808855a50bba05e4f8ff445d23c7ca7e69b78834b26aa77",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "late-release/controlled-green-focused.json",
+      "sourcePath": ".tools/isolated-edge-runner-lifecycle/1794952524063-8e689bdd-b071-4e35-8c7f-e42265b86dcc.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 2566,
+      "sourceSha256": "3fa7c026e2dda620419efa1fc9fac8efe44ba6d2f4440f8eedf894ce64783a60",
+      "archiveBytes": 2566,
+      "archiveSha256": "3f2e01318920b50e8fd3959283c3c64f50d5a7ea7548e2148273b45aaeed4bd8",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "late-release/controlled-green-suite.json",
+      "sourcePath": ".tools/isolated-edge-runner-lifecycle/1794952573266-2154bc58-29b5-432b-bb1b-3c38be8988c1.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 2566,
+      "sourceSha256": "f9811e07db9824893b134d31595e4eef3307637cadd21ad8e43f4ae4a19bb2e3",
+      "archiveBytes": 2566,
+      "archiveSha256": "f07f053dd8d6b06b9ba2410e6e331820c799d92baee51e0dd0a20ffc753a24cf",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "late-release/controlled-red.json",
+      "sourcePath": ".tools/isolated-edge-runner-lifecycle/1794952488451-0dedfbf0-4d62-42b0-8d73-9dbade5237a7.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 2648,
+      "sourceSha256": "d2ff31b331b508bada569cd2dca26f9eaeb8a8570173e124b545179b022b1243",
+      "archiveBytes": 2648,
+      "archiveSha256": "6d88a7050123a77c475915f61a4d1227ea0c498aa1e8af03d148733c886f1540",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "late-release/initial-full-ws-race.json",
+      "sourcePath": ".tools/delivery-s1-ws-visual/1794951726058-6f405d2f-1aa3-4c12-b0ef-c03545b815e0.json",
+      "sourceLocation": "main-repository",
+      "sourceBytes": 6984,
+      "sourceSha256": "ae7ad522c4e01f3b83a0f0adee4d23338143239ff70c49aad4a51fcf4aa5fb24",
+      "archiveBytes": 6626,
+      "archiveSha256": "652909cf05b5c8a84b8e0c6762e4e7c9cb5bcce2a4d48967bc845bc2d238fb15",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "late-release/lifecycle-suite-summary.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/late-release/lifecycle.log",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 5639,
+      "sourceSha256": "8b2c2d64d545ab1ab0b2b44587a9300641bc6ff74a210d581c5f02c8dd63d851",
+      "archiveBytes": 185,
+      "archiveSha256": "619546300dbd1cd4362e7c783ea1286f35dd0079df2dfb6f0e7f50d742c8c4ab",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "late-release/transport-suite-summary.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/late-release/transport.log",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 845,
+      "sourceSha256": "618429f536317a014f10b71aef7bcb7785aff5bde7c1ec8290e7fe65307fafed",
+      "archiveBytes": 88,
+      "archiveSha256": "590ba53c2e6185203682b49f55769311a9363b7e46be3384b0565c1e3f42e604",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "legacy-sync-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/ws-baseline-audit.json",
+      "sourceBytes": 44,
+      "sourceSha256": "05d9231dd8f6299e2ed6ea7124149916137b840fbb1773a9dfe7cdb80626a80c",
+      "archiveBytes": 40,
+      "archiveSha256": "a0e2325a16ba595ac219a6d2debf7cbd0139ef042f6fcf7362c5027b379137ff",
+      "transformations": [
+        "utf8-json-normalization"
+      ]
+    },
+    {
+      "path": "legacy-sync.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/ws-baseline.json",
+      "sourceBytes": 798,
+      "sourceSha256": "ce960e2598003f9e8de7716a9d765f882ccecf507b89539d8353208b44b67618",
+      "archiveBytes": 712,
+      "archiveSha256": "eb885a4edd3c6412fea0e203d18f778c3e9117977aaeb9ddcd8630e7e40018ed",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "owned-shutdown-observer/control-standard-kernel.json",
+      "sourcePath": ".tools/v41-edge-investigation/integrated-rootcause/control-standard/observer.jsonl",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 1411,
+      "sourceSha256": "55a915245e417a0532c0a94c5cbdf0420d97a1f0cf9b9f334a5210d0b6a1e6d6",
+      "archiveBytes": 1319,
+      "archiveSha256": "9bfdce2c12eb7024d372761d1232aa3ab0e0467906f551f8154148dc9480146e",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "owned-shutdown-observer/control-standard-lifecycle.json",
+      "sourcePath": ".tools/v41-edge-investigation/integrated-rootcause/control-standard/1794988640016-f9b69d2c-93cc-4254-b219-73df804bc060.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 1911,
+      "sourceSha256": "e688784680366bdfdd534961dee7727d1ad23f14cb64510f54bdd477f004eca0",
+      "archiveBytes": 605,
+      "archiveSha256": "3b7b5a02576bf62ec3d6af9591e47b29fe6bc1e0d3824288ef357776f321af2a",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "owned-shutdown-observer/edge-standard-kernel.json",
+      "sourcePath": ".tools/v41-edge-investigation/integrated-rootcause/edge-standard/observer.jsonl",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 11296,
+      "sourceSha256": "29be75fa66bdaad342a2b726e8ccd3b8944fee3c621c4f2cb723d7dfce1b668a",
+      "archiveBytes": 3088,
+      "archiveSha256": "7b8fb176e79182fc69070cb718098b472917170f70b9cf4e70f8399d5fcfd1c2",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "owned-shutdown-observer/edge-standard-lifecycle.json",
+      "sourcePath": ".tools/v41-edge-investigation/integrated-rootcause/edge-standard/1794988700812-10a61be4-a4ea-4a09-94ef-7066fc799d08.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 8727,
+      "sourceSha256": "84771ac88bd473da8a2a3797b1127f574b3c983e1eca046ecd54eed96d6a0733",
+      "archiveBytes": 998,
+      "archiveSha256": "e724a8f2618c53876c4ce5d6e32bf5f34c6ebc0bce32eff12da2db08053cfb80",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "owned-shutdown-observer/edge-trace-category-summary.json",
+      "sourcePath": ".tools/v41-edge-investigation/integrated-rootcause/edge-trace/shutdown-trace.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 99037,
+      "sourceSha256": "f470ead31beb9c2c1e498491cffa4685716cf224fe0f5c757d800683793fd6a3",
+      "archiveBytes": 557,
+      "archiveSha256": "de7a5653f44447ace9211a98d6c1cff50b6dbe8d158488ab96c9bcf6ae19a872",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "owned-shutdown-observer/edge-trace-kernel.json",
+      "sourcePath": ".tools/v41-edge-investigation/integrated-rootcause/edge-trace/observer.jsonl",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 10710,
+      "sourceSha256": "830360193f95dc63675efce57cf64b62b49559580c4350ecf6cd2899df2f0dc1",
+      "archiveBytes": 2804,
+      "archiveSha256": "ead6302e9bfa1ff1265556d4613e849a8cb102b8191f97386763173d725da34c",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "owned-shutdown-observer/edge-trace-lifecycle.json",
+      "sourcePath": ".tools/v41-edge-investigation/integrated-rootcause/edge-trace/1794988848447-29a2d7b5-9841-4d6f-9a8f-61d020328a2d.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 9205,
+      "sourceSha256": "cba1ed48c3590ebaaa0456fd5dd14df7c4bdd0269363fc158acea606095c4638",
+      "archiveBytes": 994,
+      "archiveSha256": "7bc7668be167cff25bc98b189eba62a9804d556fe5db63992d5743e069a7dbd7",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "probe-preparation/additive-cold-start-fixture-timeout.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/cdp-phases/probe-preparation/controlled-preparation-timeout.log",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 1671,
+      "sourceSha256": "37324ee10d56b81e0884fdf1313037c4fb8ec51479dd563199c80ebcaadb17bf",
+      "archiveBytes": 182,
+      "archiveSha256": "9162b40a2b9deea387aaa41932f7b8628bdd384b99375868dac3ce8a6c63fe00",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "probe-preparation/controlled-delayed-suite.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/cdp-phases/probe-preparation/controlled-green.log",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 2095,
+      "sourceSha256": "15db5e656f1e03fe979fad2a6b825bd5e95539f7544b5ec0a93aeda4459830dd",
+      "archiveBytes": 611,
+      "archiveSha256": "ec22f5b16194e26cdd7a13e0e1755f1fdf4444fd849c48aa236f13decd56a3ff",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "probe-preparation/controlled-lifecycle-suite.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/cdp-phases/probe-preparation/controlled-lifecycle-suite.log",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 5682,
+      "sourceSha256": "5310563a39376639389343684d8f1907f4526fb1a29202c0fb37ca4a68dd34e1",
+      "archiveBytes": 2345,
+      "archiveSha256": "72851749a5d2a233c1d6f2a550ba54719c5e428d3df43ffc5eebc2991450112c",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "probe-preparation/controlled-prepared-confirmed.json",
+      "sourcePath": ".tools/isolated-edge-runner-lifecycle/1794976168782-bbf1e769-c2fc-4457-a408-75b0d1b60c8c.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 2483,
+      "sourceSha256": "44c094fa41d807b66602834455ce2adac6f4319b6dafbca9dd0dd834981c2920",
+      "archiveBytes": 2483,
+      "archiveSha256": "44c094fa41d807b66602834455ce2adac6f4319b6dafbca9dd0dd834981c2920",
+      "transformations": [
+        "utf8-json-normalization"
+      ]
+    },
+    {
+      "path": "probe-preparation/controlled-prepared-unknown.json",
+      "sourcePath": ".tools/isolated-edge-runner-lifecycle/1794976174534-2904e1b0-ee37-4593-9a15-38032e1718ec.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 2443,
+      "sourceSha256": "13e777631571f00f075de76a990d70827c8e1b92d0f4a4956ca4cbe6cddc45e4",
+      "archiveBytes": 2443,
+      "archiveSha256": "13e777631571f00f075de76a990d70827c8e1b92d0f4a4956ca4cbe6cddc45e4",
+      "transformations": [
+        "utf8-json-normalization"
+      ]
+    },
+    {
+      "path": "probe-preparation/controlled-unprepared.json",
+      "sourcePath": ".tools/isolated-edge-runner-lifecycle/1794976162400-e4aee12c-8057-4281-b8b8-16e056b1c16a.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 2082,
+      "sourceSha256": "cf935018f86cd013381cc0842eb37908ad2ce9d2017eb07ee9b34de0b3155a8f",
+      "archiveBytes": 2082,
+      "archiveSha256": "cf935018f86cd013381cc0842eb37908ad2ce9d2017eb07ee9b34de0b3155a8f",
+      "transformations": [
+        "utf8-json-normalization"
+      ]
+    },
+    {
+      "path": "settled-full/full-run-summary.json",
+      "sourcePath": ".tools/v41-completion/settled-full-regression.log",
+      "sourceLocation": "main-repository",
+      "sourceBytes": 451749,
+      "sourceSha256": "86d7a369484b65e45a2d6bee1154039555019f0dcf6afef6bc13d0a0c74e416a",
+      "archiveBytes": 983,
+      "archiveSha256": "2a88ff71ac8d15e092fadf2ce6ccd6f41780226c88d764b1db5229b4a475c13c",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "settled-full/operations-screenshot-process-exit.json",
+      "sourcePath": ".tools/visual-usability/main-visual/1794987122799-5e2d0993-a962-4536-ae31-d80c9a94145c.json",
+      "sourceLocation": "main-repository",
+      "sourceBytes": 8464,
+      "sourceSha256": "17cc378285483b8640c3bdf34df8ca91eaf3abf0149a42e113345525d1d5adb3",
+      "archiveBytes": 8128,
+      "archiveSha256": "0f55b7f03a077184301fd49a09c77ee2c8027ec571044c4058b3512c0530df87",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "settled-full/read-only-process-audit.json",
+      "sourcePath": ".tools/v41-edge-investigation/completion-kernel-watch/settled-full/process-audit.json",
+      "sourceLocation": "stability-worktree",
+      "sourceBytes": 1429,
+      "sourceSha256": "3ad4236149d42f9e9b390ae9ce528bc61f0f758bd8aacb95c6465101a1f837dd",
+      "archiveBytes": 1963,
+      "archiveSha256": "f61110096a09093d11fe168e482c9f06967c0b14de00cd0a82e1df168665edd2",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "temporary-cdp-fixture-hashes.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/ws-cdp-candidate.log",
+      "sourceBytes": 3469,
+      "sourceSha256": "5cbbff6a100d3d453dd13fcdfc949cdbb0b0ba3430b962d1cb30c50651e871cb",
+      "archiveBytes": 187,
+      "archiveSha256": "c855bdaa8abd0a7d6dc322dea02f75c2aceaa40166d3307178c8d2951f6fc76b",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    },
+    {
+      "path": "temporary-cdp.json",
+      "sourcePath": ".tools/v41-edge-investigation/modern-stability/candidate-evidence/1794948946680-e93cc97e-4851-45d8-b2e3-fdd4f8cbb971.json",
+      "sourceBytes": 7111,
+      "sourceSha256": "a650fe181a93cd33c068b25d55dbb96274a58ce461d982a53c37d623f92eb145",
+      "archiveBytes": 6716,
+      "archiveSha256": "c5b7a99f6229045e083074f5e6a2e0dcc3092cc221d639464821825c359ceccd",
+      "transformations": [
+        "metadata-only-projection"
+      ]
+    }
+  ]
+}

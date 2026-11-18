@@ -1,4 +1,8 @@
 releases/*.exe filter=lfs diff=lfs merge=lfs -text
+# Migration source and registry hashes are calculated from canonical LF text;
+# keep checkouts byte-stable across Windows and Linux.
+resources/app/migrations/*.sql text eol=lf
+resources/app/migrations/manifest.json text eol=lf
 # The formal source archive is the local-first WinUI project.  Docker/PostgreSQL
 # and Electron rollback material is preserved in the external migration archive
 # and must not silently re-enter current source packages.
@@ -19,3 +23,5 @@ tests/ws-multi-account-main.test.cjs export-ignore
 tests/ws-installer-qa.cjs export-ignore
 tests/ws-upgrade-qa.cjs export-ignore
 releases/*.exe export-ignore
+# Keep historical acceptance artifacts in Git without shipping them in source ZIPs.
+/docs/release/evidence export-ignore

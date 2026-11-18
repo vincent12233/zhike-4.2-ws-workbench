@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "entries": [
+    {
+      "source": ".tools/edge-s3-result-evidence-20261118-110727/controlled-result-evidence.log",
+      "bytes": 1082,
+      "sha256": "9dfb442996e01c382a4e947e3cb7b891895ccf4ace9ab073911b6946fd13df8d",
+      "archive": {
+        "file": "controlled-result-evidence.log",
+        "bytes": 827,
+        "sha256": "a05d966a6d1f45e19290fdfa4efa90ce6c7ee88ec5bcf8d8cf808b72ba1f4515"
+      }
+    },
+    {
+      "source": ".tools/isolated-edge-runner-lifecycle/1795000047923-86dbae07-0d38-4253-9d8e-cc527f9c33d8.json",
+      "bytes": 3611,
+      "sha256": "2b1896af9066ed2679947a1c3f386373e14932bf5696e0f39b45311ecf025ceb",
+      "archive": {
+        "file": "1795000047923-86dbae07-0d38-4253-9d8e-cc527f9c33d8.json",
+        "bytes": 3611,
+        "sha256": "2b1896af9066ed2679947a1c3f386373e14932bf5696e0f39b45311ecf025ceb"
+      }
+    },
+    {
+      "source": ".tools/isolated-edge-runner-lifecycle/1795000054514-372094c4-6b12-4179-a84f-4be5c4def916.json",
+      "bytes": 3080,
+      "sha256": "f8d3f9e727ec05f19b8c09c4f160e83f5cb158606705c920738b3389f672eb60",
+      "archive": {
+        "file": "1795000054514-372094c4-6b12-4179-a84f-4be5c4def916.json",
+        "bytes": 2996,
+        "sha256": "5e8420ff093d54efcf2287fd76ef98c27616c322b1f4a141762c53ef4b405096"
+      }
+    },
+    {
+      "source": ".tools/isolated-edge-runner-lifecycle/1795000061112-7f12757f-e36a-4811-9dd3-5567a7d04c20.json",
+      "bytes": 3295,
+      "sha256": "e11082cb7fb4217e8255b19c1c9e098bb20c288711c5ec561f5bf6fba74c81c4",
+      "archive": {
+        "file": "1795000061112-7f12757f-e36a-4811-9dd3-5567a7d04c20.json",
+        "bytes": 3211,
+        "sha256": "22fa1b863405955d578e892104008c499f83e1ca20d4229dcfeb0c32cb3906d7"
+      }
+    },
+    {
+      "source": ".tools/edge-s3-result-evidence-20261118-110727/controlled-transport.log",
+      "bytes": 1295,
+      "sha256": "8404413f8171522d067da9b6b3d046628a2aeaaf5ad3e74537c46452223c9721",
+      "archive": {
+        "file": "controlled-transport.log",
+        "bytes": 1289,
+        "sha256": "a7cd1df22a47b47310066defad9eee8a1af12761ab6abb65b3fd6d369b819a0b"
+      }
+    }
+  ]
+}

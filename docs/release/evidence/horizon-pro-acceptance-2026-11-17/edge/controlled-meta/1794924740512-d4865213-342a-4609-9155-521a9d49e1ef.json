@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794924740512-d4865213-342a-4609-9155-521a9d49e1ef",
+  "mode": "controlled-node-normal",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Passed",
+  "timeoutMs": 10000,
+  "launchedAt": "2026-11-17T14:12:20.512Z",
+  "events": [
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 556
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 556
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 556
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 556,
+      "acknowledgement": "stdin-request"
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 563
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 563
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 567,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 567
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 567
+    }
+  ],
+  "identities": [
+    {
+      "pid": 35532,
+      "startedTicks": "639305215405243702",
+      "startedUtc": "2026-11-17T14:12:20.5243702Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "pid": 35532,
+  "resultReady": true,
+  "rootExitProof": "verified-spawn-handle-exit-and-streams",
+  "remainingIdentities": [],
+  "elapsedMs": 567,
+  "stdoutBytes": 37,
+  "stderrBytes": 0
+}

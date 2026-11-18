@@ -1,0 +1,12 @@
+{
+  "status": "Passed",
+  "checkedAtUtc": "2026-11-16T17:50:50.8295277Z",
+  "evidenceFile": "stage52-before-close-snapshot-d449ed385e33445cb34e3b82cdc91fce.jsonl",
+  "observedProcessIdentities": 21,
+  "remainingCount": 0,
+  "remainingProcesses": [],
+  "unverifiedCount": 0,
+  "unverifiedProcesses": [],
+  "processTerminatedByCheck": false,
+  "scope": "read-only process identity checks after application close"
+}

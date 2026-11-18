@@ -1,0 +1,17 @@
+PASS native capability telemetry is account-scoped and never replaces connection state
+PASS collector-dependent native bridge actions fail closed before any native call
+PASS manual foreground bridge operations and safe monitor stop are preserved
+PASS opening a connected foreground account does not turn blocked collection into a connection failure
+PASS manual account switches remain available without restarting any collector
+PASS blocked collection never registers automatic polling or marks the background running
+PASS automatic refresh and delayed account refresh do not consume or mutate queues
+PASS create, collect, discover and resume are blocked before run API writes
+PASS automatic history scheduling and running transitions cannot bypass the capability
+PASS blocked group-monitor enable and scan actions never persist enabled configurations
+PASS allowlist synchronization is a harmless blocked result, not a login failure
+PASS reading saved enabled monitor configuration cannot restart the native collector
+PASS connected cockpit and collection views show the actual blocked capability
+PASS group-monitor UI cannot present historical enabled configuration as live monitoring
+PASS business run details retain checkpoint and identify historical status versus blocked execution
+RD02 WS capability runtime: 15/16; real modules, synthetic boundaries, no profile/database/network/browser
+FAIL complete WS page renderers do not claim background collection while preserving manual tools: overview must not misrepresent the inactive collector

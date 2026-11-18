@@ -1,0 +1,1 @@
+{"suite":"s3-customer-table-real-enhancers","cases":10,"productionCases":9,"passed":true,"lifecycle":"Passed","exit":{"code":0,"signal":null},"streamsClosed":true,"cleanupSafe":true,"realBusinessData":false,"realWhatsApp":false}

@@ -1,0 +1,38 @@
+{
+  "invocation": "1795008167315-6c18f709-e9e2-47f1-b031-eb97532cfa19",
+  "observedUtc": "2026-11-18T13:25:01.0104019Z",
+  "kind": "Later explicit PID and creation-time check",
+  "failProfileStillPresent": true,
+  "processes": [
+    {
+      "pid": 31260,
+      "startedTicks": "639306049673204605",
+      "present": false,
+      "sameCreation": null
+    },
+    {
+      "pid": 9060,
+      "startedTicks": "639306049692176183",
+      "present": false,
+      "sameCreation": null
+    },
+    {
+      "pid": 21312,
+      "startedTicks": "639306049680709958",
+      "present": false,
+      "sameCreation": null
+    },
+    {
+      "pid": 9456,
+      "startedTicks": "639306049680768539",
+      "present": false,
+      "sameCreation": null
+    },
+    {
+      "pid": 7836,
+      "startedTicks": "639306049690746716",
+      "present": false,
+      "sameCreation": null
+    }
+  ]
+}

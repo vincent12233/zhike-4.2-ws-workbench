@@ -1,0 +1,29 @@
+[PASS] parameter/path valid optional viewport and confined PNG are normalized without starting a process
+[PASS] parameter/path legacy matrix accepts omitted Emulation and retains all expected cases
+[PASS] parameter/path viewport rejects strings booleans missing nonfinite negative and excessive dimensions
+[PASS] parameter/path expected viewport handshake never accepts an empty or invalid array
+[PASS] parameter/path screenshots require one matching explicit viewport
+[PASS] parameter/path outside and traversal targets are refused
+[PASS] parameter/path ADS non-PNG and directory destinations are refused
+[PASS] parameter/path a real filesystem junction cannot redirect a screenshot outside evidence
+[PASS] parameter/path PNG writer preserves original bytes and safely replaces only a regular evidence artifact
+[PASS] parameter/path invalid PNG bytes and viewport mismatch never replace the existing evidence
+[PASS] parameter/path hard-linked destination is refused without changing the other file
+Controlled lifecycle failure evidence root retained: C:\Users\酷酷\AppData\Local\Temp\zhike-edge-runner-test-b7RUl5
+AssertionError [ERR_ASSERTION]: ifError got unwanted exception: EBUSY: resource busy or locked, open 'C:\Users\酷酷\AppData\Local\Temp\zhike-edge-runner-test-b7RUl5\edge-profile-f1593c69-0a86-41aa-a55e-706288a6f0b7\DevToolsActivePort'
+    at runExclusiveReadinessCase (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\isolated-edge-runner-lifecycle.test.cjs:110:97)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async open (node:internal/fs/promises:1345:25)
+    at async Object.readFile (node:internal/fs/promises:2003:14)
+    at async waitForOwnedDevToolsEndpoint (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\helpers\isolated-edge-runner.cjs:253:17)
+    at async Object.readResult (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\isolated-edge-runner-lifecycle.test.cjs:106:19)
+    at async runProcessLifecycle (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\helpers\isolated-edge-runner.cjs:98:14)
+    at async runExclusiveReadinessCase (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\isolated-edge-runner-lifecycle.test.cjs:102:13)
+    at async C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\isolated-edge-runner-lifecycle.test.cjs:119:3 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [Error],
+  expected: null,
+  operator: 'ifError',
+  diff: 'simple'
+}

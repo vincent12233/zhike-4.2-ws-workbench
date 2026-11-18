@@ -1,0 +1,321 @@
+{
+  "testedCommit": "420b9d4",
+  "passedChecks": 306,
+  "failedChecks": 4,
+  "fullLog": {
+    "source": "full.log",
+    "bytes": 117695,
+    "sourceSha256": "38eb461d1d5a9e9e1d367a985b1a653937a73426ed451cd7ee191c05eb795f16"
+  },
+  "failures": [
+    {
+      "suite": "Delivery S1 main",
+      "source": "1794997084424-e5110893-1113-4dc3-a16c-460b6b9dab44.json",
+      "bytes": 4164,
+      "sourceSha256": "984b939213e08d828a8edae52368141ce59a08f39bf57a41fc21ae4b69e10b42",
+      "invocation": "1794997084424-e5110893-1113-4dc3-a16c-460b6b9dab44",
+      "timeoutMs": 30000,
+      "failure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "result",
+        "message": "Isolated lifecycle deadline reached during result"
+      },
+      "releaseFailure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit"
+      },
+      "heldIdentityCount": 5,
+      "resultReady": false,
+      "resultCases": null,
+      "exit": null,
+      "streamsClosed": false,
+      "terminationRequested": true,
+      "identityProbeTerminationStatus": "unknown",
+      "cleanupSafe": false,
+      "events": [
+        {
+          "event": "cdp-work-started",
+          "elapsedMs": 1248,
+          "phase": "navigation-response"
+        },
+        {
+          "event": "cdp-work-completed",
+          "elapsedMs": 1597,
+          "phase": "navigation-response"
+        },
+        {
+          "event": "cdp-work-started",
+          "elapsedMs": 1597,
+          "phase": "navigation-load"
+        },
+        {
+          "event": "close-requested",
+          "elapsedMs": 28512
+        },
+        {
+          "event": "cdp-work-pending-at-close",
+          "elapsedMs": 28512,
+          "phase": "navigation-load"
+        },
+        {
+          "event": "close-request-failed",
+          "elapsedMs": 30006,
+          "code": "EDGE_RUNNER_TIMEOUT"
+        },
+        {
+          "event": "failure-owned-handle-termination",
+          "elapsedMs": 30008,
+          "requested": true
+        }
+      ]
+    },
+    {
+      "suite": "Delivery S1 WS",
+      "source": "1794997117075-4749a769-46b9-4062-88a2-83bcc3ad4dac.json",
+      "bytes": 7361,
+      "sourceSha256": "cba225103965b8e11501bcfea80873cc7b5d412b6a26148e7df6f1627592d0a1",
+      "invocation": "1794997117075-4749a769-46b9-4062-88a2-83bcc3ad4dac",
+      "timeoutMs": 30000,
+      "failure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit",
+        "message": "Isolated lifecycle deadline reached during process-exit"
+      },
+      "releaseFailure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit"
+      },
+      "heldIdentityCount": 14,
+      "resultReady": true,
+      "resultCases": 7,
+      "exit": null,
+      "streamsClosed": false,
+      "terminationRequested": true,
+      "identityProbeTerminationStatus": "unknown",
+      "cleanupSafe": false,
+      "events": [
+        {
+          "event": "cdp-work-started",
+          "elapsedMs": 7764,
+          "phase": "navigation-response"
+        },
+        {
+          "event": "cdp-work-completed",
+          "elapsedMs": 8104,
+          "phase": "navigation-response"
+        },
+        {
+          "event": "cdp-work-started",
+          "elapsedMs": 8104,
+          "phase": "navigation-load"
+        },
+        {
+          "event": "cdp-work-completed",
+          "elapsedMs": 13224,
+          "phase": "navigation-load"
+        },
+        {
+          "event": "cdp-work-started",
+          "elapsedMs": 13224,
+          "phase": "matrix-result"
+        },
+        {
+          "event": "cdp-work-completed",
+          "elapsedMs": 21059,
+          "phase": "matrix-result"
+        },
+        {
+          "event": "result-verified",
+          "elapsedMs": 21068,
+          "cases": 7
+        },
+        {
+          "event": "cdp-work-started",
+          "elapsedMs": 21068,
+          "phase": "result-process-identities"
+        },
+        {
+          "event": "cdp-work-completed",
+          "elapsedMs": 21174,
+          "phase": "result-process-identities"
+        },
+        {
+          "event": "close-requested",
+          "elapsedMs": 21174
+        },
+        {
+          "event": "browser-close-acknowledged",
+          "elapsedMs": 21204,
+          "acknowledgement": "protocol-response"
+        },
+        {
+          "event": "cdp-transport-closed",
+          "elapsedMs": 21208,
+          "code": 1000
+        },
+        {
+          "event": "failure-owned-handle-termination",
+          "elapsedMs": 30015,
+          "requested": true
+        }
+      ]
+    },
+    {
+      "suite": "Delivery S2 metrics",
+      "source": "1794997148698-a3459918-25ad-4332-b95c-90089844eb93.json",
+      "bytes": 6840,
+      "sourceSha256": "217f446bf5003a1bb35b15b66b1efebb9df6eb47d72fa353ae7ff08cb0eb65cc",
+      "invocation": "1794997148698-a3459918-25ad-4332-b95c-90089844eb93",
+      "timeoutMs": 30000,
+      "failure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit",
+        "message": "Isolated lifecycle deadline reached during process-exit"
+      },
+      "releaseFailure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit"
+      },
+      "heldIdentityCount": 12,
+      "resultReady": true,
+      "resultCases": 4,
+      "exit": null,
+      "streamsClosed": false,
+      "terminationRequested": true,
+      "identityProbeTerminationStatus": "unknown",
+      "cleanupSafe": false,
+      "events": [
+        {
+          "event": "cdp-work-started",
+          "elapsedMs": 3387,
+          "phase": "navigation-response"
+        },
+        {
+          "event": "cdp-work-completed",
+          "elapsedMs": 3484,
+          "phase": "navigation-response"
+        },
+        {
+          "event": "cdp-work-started",
+          "elapsedMs": 3484,
+          "phase": "navigation-load"
+        },
+        {
+          "event": "cdp-work-completed",
+          "elapsedMs": 13082,
+          "phase": "navigation-load"
+        },
+        {
+          "event": "cdp-work-started",
+          "elapsedMs": 13082,
+          "phase": "matrix-result"
+        },
+        {
+          "event": "cdp-work-completed",
+          "elapsedMs": 13087,
+          "phase": "matrix-result"
+        },
+        {
+          "event": "result-verified",
+          "elapsedMs": 13090,
+          "cases": 4
+        },
+        {
+          "event": "cdp-work-started",
+          "elapsedMs": 13090,
+          "phase": "result-process-identities"
+        },
+        {
+          "event": "cdp-work-completed",
+          "elapsedMs": 13182,
+          "phase": "result-process-identities"
+        },
+        {
+          "event": "close-requested",
+          "elapsedMs": 13182
+        },
+        {
+          "event": "browser-close-acknowledged",
+          "elapsedMs": 13210,
+          "acknowledgement": "protocol-response"
+        },
+        {
+          "event": "cdp-transport-closed",
+          "elapsedMs": 13214,
+          "code": 1000
+        },
+        {
+          "event": "failure-owned-handle-termination",
+          "elapsedMs": 30011,
+          "requested": true
+        }
+      ]
+    },
+    {
+      "suite": "Delivery S3 customer table",
+      "source": "1794997192949-e040ee3e-99f3-4744-98a2-5fee611da2ff.json",
+      "bytes": 4496,
+      "sourceSha256": "c60de5bb56fce18d4a0b76c6c0906240b032f14a7b08fa2c73f888800608eef2",
+      "invocation": "1794997192949-e040ee3e-99f3-4744-98a2-5fee611da2ff",
+      "timeoutMs": 30000,
+      "failure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "navigation-load",
+        "message": "Isolated lifecycle deadline reached during navigation-load"
+      },
+      "releaseFailure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit"
+      },
+      "heldIdentityCount": 4,
+      "resultReady": false,
+      "resultCases": null,
+      "exit": null,
+      "streamsClosed": false,
+      "terminationRequested": true,
+      "identityProbeTerminationStatus": "unknown",
+      "cleanupSafe": false,
+      "events": [
+        {
+          "event": "cdp-work-started",
+          "elapsedMs": 10682,
+          "phase": "navigation-response"
+        },
+        {
+          "event": "cdp-work-completed",
+          "elapsedMs": 11201,
+          "phase": "navigation-response"
+        },
+        {
+          "event": "cdp-work-started",
+          "elapsedMs": 11201,
+          "phase": "navigation-load"
+        },
+        {
+          "event": "close-requested",
+          "elapsedMs": 28513
+        },
+        {
+          "event": "cdp-work-pending-at-close",
+          "elapsedMs": 28513,
+          "phase": "navigation-load"
+        },
+        {
+          "event": "browser-close-acknowledged",
+          "elapsedMs": 28518,
+          "acknowledgement": "protocol-response"
+        },
+        {
+          "event": "cdp-transport-closed",
+          "elapsedMs": 28521,
+          "code": 1000
+        },
+        {
+          "event": "failure-owned-handle-termination",
+          "elapsedMs": 30007,
+          "requested": true
+        }
+      ]
+    }
+  ]
+}

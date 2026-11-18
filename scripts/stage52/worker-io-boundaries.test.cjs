@@ -1,0 +1,14 @@
+'use strict';
+const assert = require('node:assert/strict');
+const path = require('node:path');
+const { runRuntime } = require('../stage2/worker-runtime-test-helper.cjs');
+const repo = path.resolve(__dirname, '../..');
+const result = runRuntime(repo, ['io-boundaries']);
+assert.ifError(result.error);
+assert.equal(result.status, 0, result.stdout + result.stderr);
+const output = JSON.parse(result.stdout.trim().split(/\r?\n/).at(-1));
+assert.equal(output.ok, true);
+assert.equal(output.cases.length, 5);
+assert.equal(output.productionWorkerStarted, false);
+assert.equal(output.productionDatabaseOpened, false);
+console.log(JSON.stringify(output));

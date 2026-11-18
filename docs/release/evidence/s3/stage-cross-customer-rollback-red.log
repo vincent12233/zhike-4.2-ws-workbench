@@ -1,0 +1,25 @@
+[PASS] actual drag/drop stores the canonical stage data, independent of decorated visible label
+[PASS] same canonical stage is a no-op with no snapshot, persistence or activity
+[PASS] unset stage follows the existing core stageColumns identity and is a no-op
+[PASS] a target lacking its canonical stage cannot derive a writable stage from text
+[PASS] snapshot refusal makes no customer, history or activity changes
+[PASS] failed existing flush restores the entire customer and activity history
+[PASS] external drops and deleted customer cards cannot trigger a write
+[PASS] repeated real refresh does not multiply drag/drop subscriptions
+[PASS] overlapping drops for one customer have one in-flight snapshot and commit
+[PASS] failed stage persistence releases its guard for a later valid retry
+{"observation":"actual-stage-overlap","concurrentCommit":true,"otherPhase":"意向客户","otherAuditPresent":false}
+AssertionError [ERR_ASSERTION]: Stage writes must have one global in-flight boundary because rollback restores the shared activity snapshot
+
+2 !== 1
+
+    at C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\delivery-s3-operations-runtime.test.cjs:85:10
+    at async test (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\delivery-s3-operations-runtime.test.cjs:43:31)
+    at async C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\delivery-s3-operations-runtime.test.cjs:80:2 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 2,
+  expected: 1,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

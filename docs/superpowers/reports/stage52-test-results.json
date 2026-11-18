@@ -1,0 +1,61 @@
+{
+  "stage": "5.2",
+  "recordedAtUtc": "2026-11-16T15:51:48.506Z",
+  "results": {
+    "stage5": {
+      "total": 9,
+      "passed": 9,
+      "failed": 0,
+      "source": ".tools/stage52-stage5.log",
+      "sha256": "d97449ef4d5637268caf6aa5ceb55f6e92b2b85002141156e15b45c9e9f2b6fc"
+    },
+    "stage51": {
+      "total": 9,
+      "passed": 9,
+      "failed": 0,
+      "source": ".tools/stage52-stage51.log",
+      "sha256": "4a1fc5f546173231cc9184c368c7b2209673d256a6ff40b7e47e4d39cf93f4b5"
+    },
+    "stage52": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "source": ".tools/stage52-stage52.log",
+      "sha256": "1468f48df8efa4db7e8f3d9a348aa4406bb102305b36b39145719bca44b31669"
+    },
+    "ws": {
+      "total": 149,
+      "passed": 148,
+      "failed": 1,
+      "source": ".tools/stage52-ws.log",
+      "sha256": "df99c9cfd80b6c28ce553e2a564649cb5c10715a01445bfdfb54068169e0fba0"
+    },
+    "full": {
+      "total": 259,
+      "passed": 259,
+      "failed": 0,
+      "source": ".tools/stage52-full.log",
+      "sha256": "e3f9729e19ab4a1d2a922a4272f3146b518cae14e196b404308edaec2dd1c945"
+    }
+  },
+  "finalWsCoverageInFull": {
+    "passed": 149,
+    "total": 149,
+    "status": "Passed",
+    "source": ".tools/stage52-full.log",
+    "initialSeparateRun": {
+      "total": 149,
+      "passed": 148,
+      "failed": 1,
+      "source": ".tools/stage52-ws.log",
+      "sha256": "df99c9cfd80b6c28ce553e2a564649cb5c10715a01445bfdfb54068169e0fba0"
+    }
+  },
+  "releaseBuild": {
+    "status": "Passed",
+    "warnings": 0,
+    "errors": 0,
+    "source": ".tools/stage52-release-build.log",
+    "sha256": "56e1d89b63e3c018d62a8d2914a46f0242fdfe8cce210e17e9bd53088fee5956"
+  }
+}

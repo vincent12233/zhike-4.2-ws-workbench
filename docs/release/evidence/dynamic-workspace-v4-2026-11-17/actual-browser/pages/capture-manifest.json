@@ -1,0 +1,2023 @@
+{
+  "schemaVersion": 1,
+  "scope": "BrowserOnly actual production renderers with explicitly synthetic records; no native acceptance",
+  "fixtureRoot": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s1-main-style-JCgVB2",
+  "createdAt": "2026-11-17T16:37:10.242Z",
+  "cases": [
+    {
+      "name": "main-home-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "home"
+      }
+    },
+    {
+      "name": "main-intake-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "intake"
+      }
+    },
+    {
+      "name": "main-operations-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "operations"
+      }
+    },
+    {
+      "name": "main-stage-board-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "stage-board"
+      }
+    },
+    {
+      "name": "main-customers-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "customers"
+      }
+    },
+    {
+      "name": "main-segments-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "segments"
+      }
+    },
+    {
+      "name": "main-hot-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "hot"
+      }
+    },
+    {
+      "name": "main-groups-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "groups"
+      }
+    },
+    {
+      "name": "main-vip-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "vip"
+      }
+    },
+    {
+      "name": "main-tickets-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "tickets"
+      }
+    },
+    {
+      "name": "main-registrations-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "registrations"
+      }
+    },
+    {
+      "name": "main-deposits-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "deposits"
+      }
+    },
+    {
+      "name": "main-analytics-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "analytics"
+      }
+    },
+    {
+      "name": "main-automation-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "automation"
+      }
+    },
+    {
+      "name": "main-quality-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "quality"
+      }
+    },
+    {
+      "name": "main-data-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "data"
+      }
+    },
+    {
+      "name": "main-activity-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "activity"
+      }
+    },
+    {
+      "name": "main-recycle-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "recycle"
+      }
+    },
+    {
+      "name": "main-settings-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "settings"
+      }
+    },
+    {
+      "name": "main-phone-registry-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "phone-registry"
+      }
+    },
+    {
+      "name": "main-followups-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "followups"
+      }
+    },
+    {
+      "name": "main-gpt-atelier-dawn",
+      "file": "gpt.html",
+      "query": {
+        "palette": "atelier-dawn"
+      }
+    },
+    {
+      "name": "main-ws-entry-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "chat"
+      }
+    },
+    {
+      "name": "ws-overview-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "overview"
+      }
+    },
+    {
+      "name": "ws-accounts-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "accounts"
+      }
+    },
+    {
+      "name": "ws-chat-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "chat"
+      }
+    },
+    {
+      "name": "ws-groups-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "groups"
+      }
+    },
+    {
+      "name": "ws-members-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "members"
+      }
+    },
+    {
+      "name": "ws-collection-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "collection"
+      }
+    },
+    {
+      "name": "ws-contacts-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "contacts"
+      }
+    },
+    {
+      "name": "ws-ai-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "ai"
+      }
+    },
+    {
+      "name": "ws-crm-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "crm"
+      }
+    },
+    {
+      "name": "ws-tasks-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "tasks"
+      }
+    },
+    {
+      "name": "ws-logs-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "logs"
+      }
+    },
+    {
+      "name": "ws-settings-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "settings"
+      }
+    },
+    {
+      "name": "main-home-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "home"
+      }
+    },
+    {
+      "name": "main-intake-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "intake"
+      }
+    },
+    {
+      "name": "main-operations-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "operations"
+      }
+    },
+    {
+      "name": "main-stage-board-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "stage-board"
+      }
+    },
+    {
+      "name": "main-customers-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "customers"
+      }
+    },
+    {
+      "name": "main-segments-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "segments"
+      }
+    },
+    {
+      "name": "main-hot-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "hot"
+      }
+    },
+    {
+      "name": "main-groups-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "groups"
+      }
+    },
+    {
+      "name": "main-vip-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "vip"
+      }
+    },
+    {
+      "name": "main-tickets-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "tickets"
+      }
+    },
+    {
+      "name": "main-registrations-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "registrations"
+      }
+    },
+    {
+      "name": "main-deposits-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "deposits"
+      }
+    },
+    {
+      "name": "main-analytics-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "analytics"
+      }
+    },
+    {
+      "name": "main-automation-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "automation"
+      }
+    },
+    {
+      "name": "main-quality-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "quality"
+      }
+    },
+    {
+      "name": "main-data-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "data"
+      }
+    },
+    {
+      "name": "main-activity-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "activity"
+      }
+    },
+    {
+      "name": "main-recycle-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "recycle"
+      }
+    },
+    {
+      "name": "main-settings-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "settings"
+      }
+    },
+    {
+      "name": "main-phone-registry-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "phone-registry"
+      }
+    },
+    {
+      "name": "main-followups-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "followups"
+      }
+    },
+    {
+      "name": "main-gpt-horizon-night",
+      "file": "gpt.html",
+      "query": {
+        "palette": "horizon-night"
+      }
+    },
+    {
+      "name": "main-ws-entry-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "chat"
+      }
+    },
+    {
+      "name": "ws-overview-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "overview"
+      }
+    },
+    {
+      "name": "ws-accounts-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "accounts"
+      }
+    },
+    {
+      "name": "ws-chat-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "chat"
+      }
+    },
+    {
+      "name": "ws-groups-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "groups"
+      }
+    },
+    {
+      "name": "ws-members-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "members"
+      }
+    },
+    {
+      "name": "ws-collection-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "collection"
+      }
+    },
+    {
+      "name": "ws-contacts-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "contacts"
+      }
+    },
+    {
+      "name": "ws-ai-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "ai"
+      }
+    },
+    {
+      "name": "ws-crm-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "crm"
+      }
+    },
+    {
+      "name": "ws-tasks-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "tasks"
+      }
+    },
+    {
+      "name": "ws-logs-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "logs"
+      }
+    },
+    {
+      "name": "ws-settings-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "settings"
+      }
+    }
+  ],
+  "loadedMainModules": [
+    "ticket-record-core.js",
+    "business-rule-core.js",
+    "metrics-charts.js",
+    "app.js",
+    "operations-core.cjs",
+    "operations-ui.js",
+    "phone-registry.js",
+    "workspace-shell.js"
+  ],
+  "limits": [
+    "Native Core lifecycle, real WS and AI are not tested.",
+    "Optional late enhancement scripts not loaded by existing S1 fixture are source-audited, not asserted as native/browser functional acceptance.",
+    "Previous historical screenshots may be used only with their original commit/date."
+  ],
+  "results": [
+    {
+      "name": "main-home-atelier-dawn",
+      "status": "Passed-browser-capture",
+      "bytes": 690637,
+      "sha256": "0fcae74ed2d95ab2daa1ea9df29e1013364fd737718c44e53337b261b24078e5",
+      "result": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "results": [
+          {
+            "view": "home",
+            "palette": "atelier-dawn",
+            "body": {
+              "font": "16px",
+              "color": "rgb(30, 47, 80)",
+              "background": "rgb(245, 247, 250)",
+              "backgroundImage": "none",
+              "radius": "0px",
+              "display": "block",
+              "visibility": "visible"
+            },
+            "nav": {
+              "font": "16px",
+              "color": "rgb(255, 255, 255)",
+              "background": "rgba(0, 0, 0, 0)",
+              "backgroundImage": "linear-gradient(115deg, rgb(49, 86, 201), rgb(101, 80, 181))",
+              "radius": "18px",
+              "display": "flex",
+              "visibility": "visible"
+            },
+            "sidebar": {
+              "x": 8,
+              "y": 8,
+              "width": 248,
+              "height": 1064,
+              "right": 256,
+              "bottom": 1072
+            },
+            "title": {
+              "font": "28px",
+              "color": "rgb(30, 47, 80)",
+              "background": "rgba(0, 0, 0, 0)",
+              "backgroundImage": "linear-gradient(90deg, rgb(19, 40, 64), rgb(44, 88, 128))",
+              "radius": "0px",
+              "display": "block",
+              "visibility": "visible"
+            },
+            "titleVisible": true,
+            "button": {
+              "x": 1502.90625,
+              "y": 875.671875,
+              "width": 347.078125,
+              "height": 44,
+              "right": 1849.984375,
+              "bottom": 919.671875
+            },
+            "buttonType": {
+              "font": "16px",
+              "color": "rgb(255, 255, 255)",
+              "background": "rgba(0, 0, 0, 0)",
+              "backgroundImage": "linear-gradient(115deg, rgb(49, 86, 201), rgb(101, 80, 181))",
+              "radius": "14px",
+              "display": "flex",
+              "visibility": "visible"
+            },
+            "search": null,
+            "table": null,
+            "row": null,
+            "panel": {
+              "font": "16px",
+              "color": "rgb(30, 47, 80)",
+              "background": "rgb(255, 255, 255)",
+              "backgroundImage": "none",
+              "radius": "14px",
+              "display": "block",
+              "visibility": "visible"
+            },
+            "navLastReachable": true,
+            "docOverflow": false,
+            "container": {
+              "x": 256,
+              "y": 72,
+              "width": 1664,
+              "height": 978,
+              "right": 1920,
+              "bottom": 1050
+            },
+            "childrenOutside": [],
+            "controls": [
+              {
+                "tag": "BUTTON",
+                "font": "16px",
+                "height": 44
+              },
+              {
+                "tag": "BUTTON",
+                "font": "16px",
+                "height": 44
+              },
+              {
+                "tag": "BUTTON",
+                "font": "16px",
+                "height": 44
+              }
+            ],
+            "markupLength": 13643,
+            "smallText": [
+              {
+                "selector": "span.digital-horizon-brand",
+                "parent": "digital-horizon-copy",
+                "font": "12px",
+                "text": "HORIZON ATELIER PRO · 数字地平线"
+              },
+              {
+                "selector": "span.horizon-eyebrow",
+                "parent": "",
+                "font": "13px",
+                "text": "智能客户运营"
+              },
+              {
+                "selector": "small.",
+                "parent": "horizon-weight-legend",
+                "font": "13px",
+                "text": "投资经验仅补充档案，不计入提醒权重"
+              },
+              {
+                "selector": "small.",
+                "parent": "horizon-kpi",
+                "font": "13px",
+                "text": "加载中 · 数据未确认 · 按客户进群事件"
+              },
+              {
+                "selector": "small.",
+                "parent": "horizon-kpi",
+                "font": "13px",
+                "text": "加载中 · 数据未确认 · 周一至今日"
+              },
+              {
+                "selector": "small.",
+                "parent": "horizon-kpi",
+                "font": "13px",
+                "text": "加载中 · 数据未确认 · 周一至今日 · 含待确认"
+              },
+              {
+                "selector": "small.",
+                "parent": "horizon-kpi",
+                "font": "13px",
+                "text": "加载中 · 数据未确认 · 包含逾期客户"
+              },
+              {
+                "selector": "small.",
+                "parent": "horizon-kpi",
+                "font": "13px",
+                "text": "加载中 · 数据未确认 · 本地CRM规则"
+              },
+              {
+                "selector": "small.",
+                "parent": "horizon-kpi",
+                "font": "13px",
+                "text": "加载中 · 数据未确认 · 姓名、地区或职业有缺口"
+              }
+            ],
+            "special": {
+              ".customer6-focus": null,
+              ".customer6-focus-field strong": null,
+              ".saved-view": null,
+              ".ops6-task-insight": null,
+              ".ops6-task-insight-rows strong": null,
+              ".ops6-task-stage-list strong": null,
+              ".ops6-task-tabs button": null,
+              ".subnav button": null,
+              ".preview-table td": null,
+              ".source-defaults>label": null,
+              ".activity-text": null,
+              ".horizon-spotlight-capabilities small": {
+                "font": "14px",
+                "color": "rgb(76, 96, 128)",
+                "background": "rgba(0, 0, 0, 0)",
+                "backgroundImage": "none",
+                "radius": "0px",
+                "display": "block",
+                "visibility": "visible"
+              },
+              ".ops6-task-board": null
+            },
+            "workspaces": {
+              "rect": {
+                "x": 284,
+                "y": 8.5,
+                "width": 294.25,
+                "height": 54,
+                "right": 578.25,
+                "bottom": 62.5
+              },
+              "tabs": [
+                {
+                  "rect": {
+                    "x": 289,
+                    "y": 13.5,
+                    "width": 140,
+                    "height": 44,
+                    "right": 429,
+                    "bottom": 57.5
+                  },
+                  "font": "16px",
+                  "visible": true
+                },
+                {
+                  "rect": {
+                    "x": 435,
+                    "y": 13.5,
+                    "width": 138.25,
+                    "height": 44,
+                    "right": 573.25,
+                    "bottom": 57.5
+                  },
+                  "font": "16px",
+                  "visible": true
+                }
+              ],
+              "topbar": {
+                "x": 256,
+                "y": 0,
+                "width": 1664,
+                "height": 72,
+                "right": 1920,
+                "bottom": 72
+              },
+              "actions": [
+                {
+                  "id": "",
+                  "rect": {
+                    "x": 289,
+                    "y": 13.5,
+                    "width": 140,
+                    "height": 44,
+                    "right": 429,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "",
+                  "rect": {
+                    "x": 435,
+                    "y": 13.5,
+                    "width": 138.25,
+                    "height": 44,
+                    "right": 573.25,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "globalSearch",
+                  "rect": {
+                    "x": 1048.9375,
+                    "y": 13.5,
+                    "width": 340,
+                    "height": 44,
+                    "right": 1388.9375,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "shortcutButton",
+                  "rect": {
+                    "x": 1526,
+                    "y": 13.5,
+                    "width": 44,
+                    "height": 44,
+                    "right": 1570,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "appearanceButton",
+                  "rect": {
+                    "x": 1580,
+                    "y": 13.5,
+                    "width": 44,
+                    "height": 44,
+                    "right": 1624,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "backupButton",
+                  "rect": {
+                    "x": 1634,
+                    "y": 13.5,
+                    "width": 44,
+                    "height": 44,
+                    "right": 1678,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "notificationButton",
+                  "rect": {
+                    "x": 1794,
+                    "y": 13.5,
+                    "width": 44,
+                    "height": 44,
+                    "right": 1838,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "",
+                  "rect": {
+                    "x": 1848,
+                    "y": 13.5,
+                    "width": 44,
+                    "height": 44,
+                    "right": 1892,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                }
+              ]
+            },
+            "activeNav": {
+              "font": "16px",
+              "color": "rgb(255, 255, 255)",
+              "background": "rgba(0, 0, 0, 0)",
+              "backgroundImage": "linear-gradient(115deg, rgb(49, 86, 201), rgb(101, 80, 181))",
+              "radius": "18px",
+              "display": "flex",
+              "visibility": "visible"
+            },
+            "activeNavIcon": {
+              "font": "16px",
+              "color": "rgb(255, 255, 255)",
+              "background": "rgba(0, 0, 0, 0)",
+              "backgroundImage": "none",
+              "radius": "0px",
+              "display": "block",
+              "visibility": "visible"
+            },
+            "chromeContrast": [
+              {
+                "selector": "strong.",
+                "text": "home",
+                "foreground": "rgb(24, 59, 123)",
+                "backgrounds": [
+                  "rgb(248, 251, 255)",
+                  "rgb(242, 238, 251)"
+                ]
+              },
+              {
+                "selector": "span.",
+                "text": "搜索客户、号码、群编号",
+                "foreground": "rgb(24, 59, 123)",
+                "backgrounds": [
+                  "rgb(237, 243, 255)"
+                ]
+              },
+              {
+                "selector": "button.top-icon",
+                "text": "?",
+                "foreground": "rgb(24, 59, 123)",
+                "backgrounds": [
+                  "rgb(237, 243, 255)"
+                ]
+              },
+              {
+                "selector": "span.sync-status online",
+                "text": "已保存到本机",
+                "foreground": "rgb(64, 91, 134)",
+                "backgrounds": [
+                  "rgb(248, 251, 255)",
+                  "rgb(242, 238, 251)"
+                ]
+              }
+            ],
+            "activeNavContrast": {
+              "foreground": "rgb(255, 255, 255)",
+              "backgrounds": [
+                "rgb(49, 86, 201)",
+                "rgb(101, 80, 181)"
+              ]
+            },
+            "contrastSamples": [
+              {
+                "selector": "p.page-subtitle",
+                "text": "查看业务状态、客户计划与最新聊天分析",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)",
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "p.muted-cell home-reading-context",
+                "text": "范围：全局客户主档与既有业务记录 · 加载中 · 数据未确认 · 本机业务读取时",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(241, 245, 251)",
+                  "rgb(245, 242, 251)"
+                ]
+              },
+              {
+                "selector": "span.horizon-flow-description",
+                "text": "基于客户动态与业务进展，智能生成跟进优先级与下一步动作",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(242, 245, 251)",
+                  "rgb(245, 243, 251)"
+                ]
+              },
+              {
+                "selector": "span.horizon-flow-source",
+                "text": "正在读取 AI 跟进提醒",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(242, 245, 251)",
+                  "rgb(245, 243, 251)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "按真实聊天与客户动态排序",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)",
+                  "rgb(245, 242, 251)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "结合意向与进度安排时间",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)",
+                  "rgb(245, 242, 251)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "避免重复话题和机械问候",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)",
+                  "rgb(245, 242, 251)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "识别需进一步核实的信息",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)",
+                  "rgb(245, 242, 251)"
+                ]
+              },
+              {
+                "selector": "button.btn primary",
+                "text": "查看任务中心",
+                "foreground": "rgb(255, 255, 255)",
+                "backgrounds": [
+                  "rgb(49, 86, 201)",
+                  "rgb(101, 80, 181)"
+                ]
+              },
+              {
+                "selector": "strong.",
+                "text": "—",
+                "foreground": "rgb(21, 66, 143)",
+                "backgrounds": [
+                  "rgb(211, 231, 255)",
+                  "rgb(231, 239, 255)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "加载中 · 数据未确认 · 按客户进群事件",
+                "foreground": "rgb(21, 66, 143)",
+                "backgrounds": [
+                  "rgb(211, 231, 255)",
+                  "rgb(231, 239, 255)"
+                ]
+              },
+              {
+                "selector": "strong.",
+                "text": "—",
+                "foreground": "rgb(94, 42, 159)",
+                "backgrounds": [
+                  "rgb(227, 214, 255)",
+                  "rgb(239, 231, 255)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "加载中 · 数据未确认 · 周一至今日",
+                "foreground": "rgb(94, 42, 159)",
+                "backgrounds": [
+                  "rgb(227, 214, 255)",
+                  "rgb(239, 231, 255)"
+                ]
+              },
+              {
+                "selector": "strong.",
+                "text": "—",
+                "foreground": "rgb(135, 67, 4)",
+                "backgrounds": [
+                  "rgb(255, 223, 184)",
+                  "rgb(255, 237, 207)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "加载中 · 数据未确认 · 周一至今日 · 含待确认",
+                "foreground": "rgb(135, 67, 4)",
+                "backgrounds": [
+                  "rgb(255, 223, 184)",
+                  "rgb(255, 237, 207)"
+                ]
+              },
+              {
+                "selector": "strong.",
+                "text": "—",
+                "foreground": "rgb(7, 94, 92)",
+                "backgrounds": [
+                  "rgb(205, 235, 231)",
+                  "rgb(224, 244, 239)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "加载中 · 数据未确认 · 包含逾期客户",
+                "foreground": "rgb(7, 94, 92)",
+                "backgrounds": [
+                  "rgb(205, 235, 231)",
+                  "rgb(224, 244, 239)"
+                ]
+              },
+              {
+                "selector": "strong.",
+                "text": "—",
+                "foreground": "rgb(94, 42, 159)",
+                "backgrounds": [
+                  "rgb(227, 214, 255)",
+                  "rgb(239, 231, 255)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "加载中 · 数据未确认 · 本地CRM规则",
+                "foreground": "rgb(94, 42, 159)",
+                "backgrounds": [
+                  "rgb(227, 214, 255)",
+                  "rgb(239, 231, 255)"
+                ]
+              },
+              {
+                "selector": "strong.",
+                "text": "—",
+                "foreground": "rgb(7, 94, 92)",
+                "backgrounds": [
+                  "rgb(205, 235, 231)",
+                  "rgb(224, 244, 239)"
+                ]
+              },
+              {
+                "selector": "small.",
+                "text": "加载中 · 数据未确认 · 姓名、地区或职业有缺口",
+                "foreground": "rgb(7, 94, 92)",
+                "backgrounds": [
+                  "rgb(205, 235, 231)",
+                  "rgb(224, 244, 239)"
+                ]
+              },
+              {
+                "selector": "div.empty-state",
+                "text": "正在读取动态；读取失败时可通过顶部同步状态重试。",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)",
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "div.empty-state",
+                "text": "正在读取最新 AI 跟进提醒…",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)",
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "button.btn primary",
+                "text": "新增客户",
+                "foreground": "rgb(255, 255, 255)",
+                "backgrounds": [
+                  "rgb(49, 86, 201)",
+                  "rgb(101, 80, 181)"
+                ]
+              },
+              {
+                "selector": "span.metric-label",
+                "text": "客户总数",
+                "foreground": "rgb(21, 66, 143)",
+                "backgrounds": [
+                  "rgb(211, 231, 255)",
+                  "rgb(231, 239, 255)"
+                ]
+              },
+              {
+                "selector": "strong.metric-value",
+                "text": "—",
+                "foreground": "rgb(21, 66, 143)",
+                "backgrounds": [
+                  "rgb(211, 231, 255)",
+                  "rgb(231, 239, 255)"
+                ]
+              },
+              {
+                "selector": "span.metric-foot up",
+                "text": "全局有效客户",
+                "foreground": "rgb(21, 66, 143)",
+                "backgrounds": [
+                  "rgb(211, 231, 255)",
+                  "rgb(231, 239, 255)"
+                ]
+              },
+              {
+                "selector": "span.metric-label",
+                "text": "今日待跟进",
+                "foreground": "rgb(94, 42, 159)",
+                "backgrounds": [
+                  "rgb(227, 214, 255)",
+                  "rgb(239, 231, 255)"
+                ]
+              },
+              {
+                "selector": "strong.metric-value",
+                "text": "—",
+                "foreground": "rgb(94, 42, 159)",
+                "backgrounds": [
+                  "rgb(227, 214, 255)",
+                  "rgb(239, 231, 255)"
+                ]
+              },
+              {
+                "selector": "span.metric-foot ",
+                "text": "包含逾期客户",
+                "foreground": "rgb(94, 42, 159)",
+                "backgrounds": [
+                  "rgb(227, 214, 255)",
+                  "rgb(239, 231, 255)"
+                ]
+              },
+              {
+                "selector": "span.metric-label",
+                "text": "热聊客户",
+                "foreground": "rgb(7, 94, 92)",
+                "backgrounds": [
+                  "rgb(205, 235, 231)",
+                  "rgb(224, 244, 239)"
+                ]
+              },
+              {
+                "selector": "strong.metric-value",
+                "text": "—",
+                "foreground": "rgb(7, 94, 92)",
+                "backgrounds": [
+                  "rgb(205, 235, 231)",
+                  "rgb(224, 244, 239)"
+                ]
+              },
+              {
+                "selector": "span.metric-foot up",
+                "text": "全局热聊标记",
+                "foreground": "rgb(7, 94, 92)",
+                "backgrounds": [
+                  "rgb(205, 235, 231)",
+                  "rgb(224, 244, 239)"
+                ]
+              },
+              {
+                "selector": "span.metric-label",
+                "text": "已报名客户",
+                "foreground": "rgb(135, 67, 4)",
+                "backgrounds": [
+                  "rgb(255, 223, 184)",
+                  "rgb(255, 237, 207)"
+                ]
+              },
+              {
+                "selector": "strong.metric-value",
+                "text": "—",
+                "foreground": "rgb(135, 67, 4)",
+                "backgrounds": [
+                  "rgb(255, 223, 184)",
+                  "rgb(255, 237, 207)"
+                ]
+              },
+              {
+                "selector": "span.metric-foot up",
+                "text": "按报名记录去重",
+                "foreground": "rgb(135, 67, 4)",
+                "backgrounds": [
+                  "rgb(255, 223, 184)",
+                  "rgb(255, 237, 207)"
+                ]
+              },
+              {
+                "selector": "th.",
+                "text": "客户",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "th.",
+                "text": "联系方式",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "th.",
+                "text": "评级",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "th.",
+                "text": "渠道",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "th.",
+                "text": "负责人",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "th.",
+                "text": "下次跟进",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "th.",
+                "text": "操作",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(241, 245, 251)"
+                ]
+              },
+              {
+                "selector": "span.status-tag tag-blue",
+                "text": "B级｜中等",
+                "foreground": "rgb(40, 70, 168)",
+                "backgrounds": [
+                  "rgb(214, 226, 255)"
+                ]
+              },
+              {
+                "selector": "button.table-action",
+                "text": "跟进 →",
+                "foreground": "rgb(30, 47, 80)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              },
+              {
+                "selector": "span.status-tag tag-blue",
+                "text": "B级｜中等",
+                "foreground": "rgb(40, 70, 168)",
+                "backgrounds": [
+                  "rgb(214, 226, 255)"
+                ]
+              },
+              {
+                "selector": "button.table-action",
+                "text": "跟进 →",
+                "foreground": "rgb(30, 47, 80)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              },
+              {
+                "selector": "span.status-tag tag-blue",
+                "text": "B级｜中等",
+                "foreground": "rgb(40, 70, 168)",
+                "backgrounds": [
+                  "rgb(214, 226, 255)"
+                ]
+              },
+              {
+                "selector": "button.table-action",
+                "text": "跟进 →",
+                "foreground": "rgb(30, 47, 80)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              },
+              {
+                "selector": "span.status-tag tag-blue",
+                "text": "B级｜中等",
+                "foreground": "rgb(40, 70, 168)",
+                "backgrounds": [
+                  "rgb(214, 226, 255)"
+                ]
+              },
+              {
+                "selector": "button.table-action",
+                "text": "跟进 →",
+                "foreground": "rgb(30, 47, 80)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              },
+              {
+                "selector": "span.status-tag tag-blue",
+                "text": "B级｜中等",
+                "foreground": "rgb(40, 70, 168)",
+                "backgrounds": [
+                  "rgb(214, 226, 255)"
+                ]
+              },
+              {
+                "selector": "button.table-action",
+                "text": "跟进 →",
+                "foreground": "rgb(30, 47, 80)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              },
+              {
+                "selector": "p.muted-cell",
+                "text": "各状态可重叠；百分比以有效客户主档总数为分母，不代表逐级转化率。",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              },
+              {
+                "selector": "p.muted-cell",
+                "text": "数据尚未确认；不显示进退群零值。",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              }
+            ],
+            "progressTracks": [],
+            "motion": {
+              "preference": "off",
+              "kpis": [
+                {
+                  "transform": "none",
+                  "transitionDuration": "0s"
+                },
+                {
+                  "transform": "none",
+                  "transitionDuration": "0s"
+                },
+                {
+                  "transform": "none",
+                  "transitionDuration": "0s"
+                },
+                {
+                  "transform": "none",
+                  "transitionDuration": "0s"
+                },
+                {
+                  "transform": "none",
+                  "transitionDuration": "0s"
+                },
+                {
+                  "transform": "none",
+                  "transitionDuration": "0s"
+                }
+              ]
+            }
+          }
+        ],
+        "appearance": null,
+        "collapsed": null,
+        "errors": [],
+        "v4": {
+          "route": "home",
+          "dialog": null,
+          "density": "comfortable",
+          "state": "synthetic",
+          "mode": "BrowserOnly",
+          "actualRenderer": true,
+          "contentPresent": true,
+          "heading": "今日工作台",
+          "visibleText": "HORIZON ATELIER PRO · 数字地平线今日工作台查看业务状态、客户计划与最新聊天分析2026-11-17今日待跟进 — 位范围：全局客户主档与既有业务记录 · 加载中 · 数据未确认 · 本机业务读取时间：尚无成功读取。尚未",
+          "contentBounds": {
+            "x": 256,
+            "y": 72,
+            "width": 1664,
+            "height": 978,
+            "right": 1920,
+            "bottom": 1050
+          },
+          "registry": [],
+          "stagePanels": [],
+          "motionOff": true
+        }
+      },
+      "processInvocation": "1794933430249-7e155d11-689b-4a07-a258-e23ce56a0a6e"
+    },
+    {
+      "name": "main-intake-atelier-dawn",
+      "status": "Passed-browser-capture",
+      "bytes": 276455,
+      "sha256": "1dfc441325a356068e146e2cad97596c0886a720ee4b43614ec3a22fd91398c8",
+      "result": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "results": [
+          {
+            "view": "intake",
+            "palette": "atelier-dawn",
+            "body": {
+              "font": "16px",
+              "color": "rgb(30, 47, 80)",
+              "background": "rgb(245, 247, 250)",
+              "backgroundImage": "none",
+              "radius": "0px",
+              "display": "block",
+              "visibility": "visible"
+            },
+            "nav": {
+              "font": "16px",
+              "color": "rgb(225, 235, 255)",
+              "background": "rgba(0, 0, 0, 0)",
+              "backgroundImage": "none",
+              "radius": "18px",
+              "display": "flex",
+              "visibility": "visible"
+            },
+            "sidebar": {
+              "x": 8,
+              "y": 8,
+              "width": 248,
+              "height": 1064,
+              "right": 256,
+              "bottom": 1072
+            },
+            "title": {
+              "font": "28px",
+              "color": "rgb(30, 47, 80)",
+              "background": "rgba(0, 0, 0, 0)",
+              "backgroundImage": "linear-gradient(90deg, rgb(19, 40, 64), rgb(44, 88, 128))",
+              "radius": "0px",
+              "display": "block",
+              "visibility": "visible"
+            },
+            "titleVisible": true,
+            "button": {
+              "x": 1493,
+              "y": 117.765625,
+              "width": 142,
+              "height": 44,
+              "right": 1635,
+              "bottom": 161.765625
+            },
+            "buttonType": {
+              "font": "16px",
+              "color": "rgb(30, 47, 80)",
+              "background": "rgb(255, 255, 255)",
+              "backgroundImage": "none",
+              "radius": "14px",
+              "display": "flex",
+              "visibility": "visible"
+            },
+            "search": {
+              "x": 0,
+              "y": 0,
+              "width": 0,
+              "height": 0,
+              "right": 0,
+              "bottom": 0
+            },
+            "table": null,
+            "row": null,
+            "panel": {
+              "font": "16px",
+              "color": "rgb(30, 47, 80)",
+              "background": "rgb(255, 255, 255)",
+              "backgroundImage": "none",
+              "radius": "14px",
+              "display": "block",
+              "visibility": "visible"
+            },
+            "navLastReachable": true,
+            "docOverflow": false,
+            "container": {
+              "x": 256,
+              "y": 72,
+              "width": 1664,
+              "height": 978,
+              "right": 1920,
+              "bottom": 1050
+            },
+            "childrenOutside": [],
+            "controls": [
+              {
+                "tag": "BUTTON",
+                "font": "16px",
+                "height": 44
+              },
+              {
+                "tag": "BUTTON",
+                "font": "16px",
+                "height": 44
+              },
+              {
+                "tag": "BUTTON",
+                "font": "16px",
+                "height": 44
+              },
+              {
+                "tag": "SELECT",
+                "font": "16px",
+                "height": 44
+              },
+              {
+                "tag": "SELECT",
+                "font": "16px",
+                "height": 44
+              },
+              {
+                "tag": "INPUT",
+                "font": "16px",
+                "height": 44
+              },
+              {
+                "tag": "INPUT",
+                "font": "16px",
+                "height": 44
+              },
+              {
+                "tag": "INPUT",
+                "font": "16px",
+                "height": 44
+              },
+              {
+                "tag": "SELECT",
+                "font": "16px",
+                "height": 44
+              },
+              {
+                "tag": "INPUT",
+                "font": "16px",
+                "height": 44
+              },
+              {
+                "tag": "SELECT",
+                "font": "16px",
+                "height": 44
+              },
+              {
+                "tag": "INPUT",
+                "font": "16px",
+                "height": 44
+              },
+              {
+                "tag": "BUTTON",
+                "font": "16px",
+                "height": 44
+              },
+              {
+                "tag": "BUTTON",
+                "font": "16px",
+                "height": 44
+              }
+            ],
+            "markupLength": 3692,
+            "smallText": [],
+            "special": {
+              ".customer6-focus": null,
+              ".customer6-focus-field strong": null,
+              ".saved-view": null,
+              ".ops6-task-insight": null,
+              ".ops6-task-insight-rows strong": null,
+              ".ops6-task-stage-list strong": null,
+              ".ops6-task-tabs button": null,
+              ".subnav button": null,
+              ".preview-table td": {
+                "font": "16px",
+                "color": "rgb(30, 47, 80)",
+                "background": "rgb(255, 255, 255)",
+                "backgroundImage": "none",
+                "radius": "0px",
+                "display": "table-cell",
+                "visibility": "visible"
+              },
+              ".source-defaults>label": {
+                "font": "15px",
+                "color": "rgb(76, 96, 128)",
+                "background": "rgba(0, 0, 0, 0)",
+                "backgroundImage": "none",
+                "radius": "0px",
+                "display": "grid",
+                "visibility": "visible"
+              },
+              ".activity-text": null,
+              ".horizon-spotlight-capabilities small": null,
+              ".ops6-task-board": null
+            },
+            "workspaces": {
+              "rect": {
+                "x": 284,
+                "y": 8.5,
+                "width": 294.25,
+                "height": 54,
+                "right": 578.25,
+                "bottom": 62.5
+              },
+              "tabs": [
+                {
+                  "rect": {
+                    "x": 289,
+                    "y": 13.5,
+                    "width": 140,
+                    "height": 44,
+                    "right": 429,
+                    "bottom": 57.5
+                  },
+                  "font": "16px",
+                  "visible": true
+                },
+                {
+                  "rect": {
+                    "x": 435,
+                    "y": 13.5,
+                    "width": 138.25,
+                    "height": 44,
+                    "right": 573.25,
+                    "bottom": 57.5
+                  },
+                  "font": "16px",
+                  "visible": true
+                }
+              ],
+              "topbar": {
+                "x": 256,
+                "y": 0,
+                "width": 1664,
+                "height": 72,
+                "right": 1920,
+                "bottom": 72
+              },
+              "actions": [
+                {
+                  "id": "",
+                  "rect": {
+                    "x": 289,
+                    "y": 13.5,
+                    "width": 140,
+                    "height": 44,
+                    "right": 429,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "",
+                  "rect": {
+                    "x": 435,
+                    "y": 13.5,
+                    "width": 138.25,
+                    "height": 44,
+                    "right": 573.25,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "globalSearch",
+                  "rect": {
+                    "x": 1048.9375,
+                    "y": 13.5,
+                    "width": 340,
+                    "height": 44,
+                    "right": 1388.9375,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "shortcutButton",
+                  "rect": {
+                    "x": 1526,
+                    "y": 13.5,
+                    "width": 44,
+                    "height": 44,
+                    "right": 1570,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "appearanceButton",
+                  "rect": {
+                    "x": 1580,
+                    "y": 13.5,
+                    "width": 44,
+                    "height": 44,
+                    "right": 1624,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "backupButton",
+                  "rect": {
+                    "x": 1634,
+                    "y": 13.5,
+                    "width": 44,
+                    "height": 44,
+                    "right": 1678,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "notificationButton",
+                  "rect": {
+                    "x": 1794,
+                    "y": 13.5,
+                    "width": 44,
+                    "height": 44,
+                    "right": 1838,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                },
+                {
+                  "id": "",
+                  "rect": {
+                    "x": 1848,
+                    "y": 13.5,
+                    "width": 44,
+                    "height": 44,
+                    "right": 1892,
+                    "bottom": 57.5
+                  },
+                  "visible": true
+                }
+              ]
+            },
+            "activeNav": {
+              "font": "16px",
+              "color": "rgb(255, 255, 255)",
+              "background": "rgba(0, 0, 0, 0)",
+              "backgroundImage": "linear-gradient(115deg, rgb(49, 86, 201), rgb(101, 80, 181))",
+              "radius": "18px",
+              "display": "flex",
+              "visibility": "visible"
+            },
+            "activeNavIcon": {
+              "font": "16px",
+              "color": "rgb(255, 255, 255)",
+              "background": "rgba(0, 0, 0, 0)",
+              "backgroundImage": "none",
+              "radius": "0px",
+              "display": "block",
+              "visibility": "visible"
+            },
+            "chromeContrast": [
+              {
+                "selector": "strong.",
+                "text": "intake",
+                "foreground": "rgb(24, 59, 123)",
+                "backgrounds": [
+                  "rgb(248, 251, 255)",
+                  "rgb(242, 238, 251)"
+                ]
+              },
+              {
+                "selector": "span.",
+                "text": "搜索客户、号码、群编号",
+                "foreground": "rgb(24, 59, 123)",
+                "backgrounds": [
+                  "rgb(237, 243, 255)"
+                ]
+              },
+              {
+                "selector": "button.top-icon",
+                "text": "?",
+                "foreground": "rgb(24, 59, 123)",
+                "backgrounds": [
+                  "rgb(237, 243, 255)"
+                ]
+              },
+              {
+                "selector": "span.sync-status online",
+                "text": "已保存到本机",
+                "foreground": "rgb(64, 91, 134)",
+                "backgrounds": [
+                  "rgb(248, 251, 255)",
+                  "rgb(242, 238, 251)"
+                ]
+              }
+            ],
+            "activeNavContrast": {
+              "foreground": "rgb(255, 255, 255)",
+              "backgrounds": [
+                "rgb(49, 86, 201)",
+                "rgb(101, 80, 181)"
+              ]
+            },
+            "contrastSamples": [
+              {
+                "selector": "p.page-subtitle",
+                "text": "直接粘贴表格或聊天文本；先智能整理，再一键写入。逐行识别结果优先于批次默认值",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(245, 247, 250)"
+                ]
+              },
+              {
+                "selector": "label.",
+                "text": "渠道单导群粉",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              },
+              {
+                "selector": "label.",
+                "text": "页面不分页面",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              },
+              {
+                "selector": "label.",
+                "text": "跟进助理",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              },
+              {
+                "selector": "label.",
+                "text": "群编号",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              },
+              {
+                "selector": "label.",
+                "text": "VIP编号",
+                "foreground": "rgb(76, 96, 128)",
+                "backgrounds": [
+                  "rgb(255, 255, 255)"
+                ]
+              },
+              {
+                "selector": "button.btn primary intake-submit",
+                "text": "安全写入客户",
+                "foreground": "rgb(255, 255, 255)",
+                "backgrounds": [
+                  "rgb(49, 86, 201)",
+                  "rgb(101, 80, 181)"
+                ]
+              }
+            ],
+            "progressTracks": [],
+            "motion": {
+              "preference": "off",
+              "kpis": []
+            }
+          }
+        ],
+        "appearance": null,
+        "collapsed": null,
+        "errors": [],
+        "v4": {
+          "route": "intake",
+          "dialog": null,
+          "density": "comfortable",
+          "state": "synthetic",
+          "mode": "BrowserOnly",
+          "actualRenderer": true,
+          "contentPresent": true,
+          "heading": "快速录入",
+          "visibleText": "快速录入直接粘贴表格或聊天文本；先智能整理，再一键写入。逐行识别结果优先于批次默认值从文件读取 智能整理清空粘贴客户资料支持多行 / Excel · Ctrl+Enter 写入本批次默认值仅填未填写项渠道单导群粉页面不分页面跟进助理群编号V",
+          "contentBounds": {
+            "x": 256,
+            "y": 72,
+            "width": 1664,
+            "height": 978,
+            "right": 1920,
+            "bottom": 1050
+          },
+          "registry": [],
+          "stagePanels": [],
+          "motionOff": true
+        }
+      },
+      "processInvocation": "1794933435010-9e1e4e64-a6ad-4c82-85d6-cab259123bdf"
+    },
+    {
+      "name": "main-operations-atelier-dawn",
+      "status": "Failed",
+      "error": {
+        "message": "Isolated lifecycle deadline reached during process-exit",
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit",
+        "cleanupSafe": false
+      }
+    }
+  ],
+  "status": "Failed",
+  "failure": "Error: Isolated lifecycle deadline reached during process-exit\n    at failure (C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\tests\\helpers\\isolated-edge-runner.cjs:13:57)\n    at Timeout.<anonymous> (C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\tests\\helpers\\isolated-edge-runner.cjs:59:82)\n    at listOnTimeout (node:internal/timers:685:17)\n    at process.processTimers (node:internal/timers:618:7)",
+  "cleanupSafe": false
+}

@@ -1,0 +1,8 @@
+{
+  "suite": "isolated-edge-runner-lifecycle",
+  "parameterChecks": 13,
+  "actualControlledChildCases": 13,
+  "passed": 13,
+  "realEdgeStarted": false,
+  "realBrowserAccepted": false
+}

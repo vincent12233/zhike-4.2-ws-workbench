@@ -1,0 +1,66 @@
+{
+  "mode": "baseline",
+  "evidence": "[STABILITY_WORKTREE]\\.tools\\v41-edge-investigation\\targets\\baseline-GCEG23",
+  "code": 1,
+  "status": "Failed",
+  "elapsedMs": 30009,
+  "timeoutMs": 30000,
+  "failure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "process-exit",
+    "message": "Isolated lifecycle deadline reached during process-exit"
+  },
+  "resultSha256": "9aa006d55d26f227de0b550e656066e44f30f3da72d1ed00641d87efd711675a",
+  "events": [
+    {
+      "event": "experiment-launch-pages",
+      "elapsedMs": 5476,
+      "count": 1,
+      "fixture": false,
+      "launchBlank": true,
+      "other": []
+    },
+    {
+      "event": "result-verified",
+      "elapsedMs": 13997,
+      "cases": 6
+    },
+    {
+      "event": "experiment-before-fixture-close",
+      "elapsedMs": 14089,
+      "count": 2,
+      "fixture": true,
+      "launchBlank": true,
+      "other": []
+    },
+    {
+      "event": "experiment-before-browser-close",
+      "elapsedMs": 14117,
+      "count": 1,
+      "fixture": false,
+      "launchBlank": true,
+      "other": []
+    },
+    {
+      "event": "browser-close-acknowledged",
+      "elapsedMs": 14118,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "cdp-transport-closed",
+      "elapsedMs": 14123,
+      "code": 1000
+    },
+    {
+      "event": "experiment-owned-os-identity-sample-failed",
+      "elapsedMs": 22286,
+      "code": "PROCESS_IDENTITY_UNVERIFIED"
+    },
+    {
+      "event": "failure-owned-handle-termination",
+      "elapsedMs": 30005,
+      "requested": true
+    }
+  ],
+  "outstanding": 0
+}

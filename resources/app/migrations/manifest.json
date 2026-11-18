@@ -1,0 +1,138 @@
+{
+  "format": 1,
+  "supportedSchemaVersion": 25,
+  "migrations": [
+    {
+      "version": 4,
+      "file": "004-core-schema-marker.sql",
+      "description": "4.0 客户运营、报名、批量审计与诊断结构",
+      "checksum": "1a6bebe3efd672c5e556eb5e1778e1cf014adbb64d543f83c158c1b5b58f7623"
+    },
+    {
+      "version": 5,
+      "file": "005-ws-workbench.sql",
+      "description": "4.2 WS 工作台独立会话、消息、翻译与 AI 数据",
+      "checksum": "f58085ca8db998bc98fa5ccaee1799f12e73e172459fb7b1741ae7214b7d18c8"
+    },
+    {
+      "version": 6,
+      "file": "006-ws-workbench-hardening.sql",
+      "description": "4.2 WS 工作台消息批次、翻译恢复与幂等强化",
+      "checksum": "83fff6fe673cf7388a4294eb4eb338f968eee9d03e8487f797b79b5865376d51"
+    },
+    {
+      "version": 7,
+      "file": "007-ws-collection-followup.sql",
+      "description": "4.2 WS 全会话采集、AI 分析与跟进队列",
+      "checksum": "e38671d16f330a3a714bbc9f8c0f469d529e592bf64720f306fe05e50c0e0815"
+    },
+    {
+      "version": 8,
+      "file": "008-ws-accounts.sql",
+      "description": "4.3 WS 多账号隔离与账号设置",
+      "checksum": "cf654bdb94100a188aea81e5066ebb536357fd98fb2962b4db5018c9cce7bf85"
+    },
+    {
+      "version": 9,
+      "file": "009-ws-resume-alerts.sql",
+      "description": "4.3 WS 断点采集与 AI 提醒状态",
+      "checksum": "146d802e1daadfc3a5ca3f999b600067b7a6da7a615fa3ecf207d7cf98cc2028"
+    },
+    {
+      "version": 10,
+      "file": "010-ai-customer-governance.sql",
+      "description": "4.4 AI 客户档案自动治理、字段证据与删除审计",
+      "checksum": "f9d273bade2b8cdfdbfedc6bc7e082625ae2f8226510f9d9ef9592fd4ac58afb"
+    },
+    {
+      "version": 11,
+      "file": "011-hot-chat-profile.sql",
+      "description": "4.5 热聊客户档案、事件与本地同步 outbox",
+      "checksum": "77f992622d67d3e9073ad392bdac61288133046c3efa59a74e706ad2f2b62417"
+    },
+    {
+      "version": 12,
+      "file": "012-empty-data-space-marker.sql",
+      "description": "6.0 独立空白数据空间",
+      "checksum": "ec84f9da9c98b978653c39391776eb55183188189c108956d8643d79f9d00213"
+    },
+    {
+      "version": 13,
+      "file": "013-ws-account-runtime.sql",
+      "description": "5.3 WS 账号运行状态与上次连接记录分离",
+      "checksum": "8554cf539426d3581457158d48f6a362c39196f117e96b19fc0d99799f2ea58b"
+    },
+    {
+      "version": 14,
+      "file": "014-ws-message-external-unique.sql",
+      "description": "6.0.2 WS 消息 external_id 唯一性与重复证据保留",
+      "checksum": "1c9b9277ef5b5f2ff941c1b68e9017eca39deab379d9a3a8abeff70ef928d1a0"
+    },
+    {
+      "version": 15,
+      "file": "015-ws-group-monitor.sql",
+      "description": "6.0.2 固定 WS 群组监控席位与进退群事件账本",
+      "checksum": "c0e43f1c6080c0b297070f665de17431a57af0274328e0108e6742046dda6222"
+    },
+    {
+      "version": 16,
+      "file": "016-ws-send-audit.sql",
+      "description": "6.1 WS 翻译持久化、显式群发计划与发送审计",
+      "checksum": "6537a88e97f7154f365c9c4a139c4b9332c0598b9d30667eef862d01f7bf6fde"
+    },
+    {
+      "version": 17,
+      "file": "017-ws-group-catalog.sql",
+      "description": "6.0.3 WS 账号级完整群组目录与渠道关联",
+      "checksum": "539c40e08bf34e9a7cf2f64f63eb27db211f2fdbd0454011acfc63af5d2906a0"
+    },
+    {
+      "version": 18,
+      "file": "018-ws-export-media.sql",
+      "description": "6.0.3 WS 全量导出、媒体索引与附件审计",
+      "checksum": "d778445093e84083c0bb9fe3aa706ec92cd722c1c805533d0ed520667c491136"
+    },
+    {
+      "version": 19,
+      "file": "019-crm-base-schema.sql",
+      "description": "6.1 P0 CRM base schema authority",
+      "checksum": "1876edfeafb0e8fbbc130ba9be1f5197a6a1ae7d3aba4f88b258aa1130b0ef1e"
+    },
+    {
+      "version": 20,
+      "file": "020-ai-schema-authority.sql",
+      "description": "6.1 P0 AI queue schema authority",
+      "checksum": "bd37069d9ca61629ca11d5969a3e959460f52d59bbc94e46f40098a4b440b7cc"
+    },
+    {
+      "version": 21,
+      "file": "021-crm-authority.sql",
+      "description": "6.1 P0 CRM identity uniqueness and conflict ledger",
+      "checksum": "e6c7427247ba492963cd251cba3386981afe05ffadb52c6fc0e78bd495c08edd"
+    },
+    {
+      "version": 22,
+      "file": "022-ws-group-identity.sql",
+      "description": "6.1 P0 WS group identity relationship ledger",
+      "checksum": "15b26b5d55ce3a6b8f0a6e80a8b4f850821e2a59bd65300edb7af18b5f9b4889"
+    },
+    {
+      "version": 23,
+      "file": "023-ws-group-manager.sql",
+      "description": "6.1 Stage 3 WS group manager members, messages, evidence and audit",
+      "checksum": "78db5f4c79b164d342df4565d1926e7ad17110d968f039a383adb6f115ea71a9"
+    },
+    {
+      "version": 24,
+      "file": "024-ai-pipeline-crm-review.sql",
+      "description": "6.1 Stage 4 isolated AI queue and CRM review boundary",
+      "checksum": "9dc642557b9007b9de83c73aab035e017caa7d41a2ed58b1cb275e9fb9dd640f"
+    },
+    {
+      "version": 25,
+      "file": "025-stage5-correlation-id.sql",
+      "description": "6.1 Stage 5 cross-workspace business correlation id",
+      "checksum": "26e56523887b9f2e983f472b137e52da496ca54c30847d78f3fa852c8298d203"
+    }
+  ]
+}

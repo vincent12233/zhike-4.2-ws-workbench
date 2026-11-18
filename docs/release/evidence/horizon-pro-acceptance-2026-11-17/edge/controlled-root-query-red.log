@@ -1,0 +1,38 @@
+[PASS] parameter/path valid optional viewport and confined PNG are normalized without starting a process
+[PASS] parameter/path legacy matrix accepts omitted Emulation and retains all expected cases
+[PASS] parameter/path owned resource release is fixed and cannot be changed by callers
+[PASS] parameter/path viewport rejects strings booleans missing nonfinite negative and excessive dimensions
+[PASS] parameter/path expected viewport handshake never accepts an empty or invalid array
+[PASS] parameter/path screenshots require one matching explicit viewport
+[PASS] parameter/path outside and traversal targets are refused
+[PASS] parameter/path ADS non-PNG and directory destinations are refused
+[PASS] parameter/path a real filesystem junction cannot redirect a screenshot outside evidence
+[PASS] parameter/path PNG writer preserves original bytes and safely replaces only a regular evidence artifact
+[PASS] parameter/path invalid PNG bytes and viewport mismatch never replace the existing evidence
+[PASS] parameter/path hard-linked destination is refused without changing the other file
+[PASS] parameter/path readiness classification admits only ENOENT or EBUSY on the exact owned endpoint path
+{"mode":"real-windows-exclusive-readiness","status":"Passed","testedStatus":"Passed","busyPolls":1,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794924637175-cf86f14e-915e-4867-9b62-a8fc15dfd482.json"}
+{"mode":"real-windows-bounded-readiness","status":"Passed","testedStatus":"Failed","busyPolls":65,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794924639617-7349db41-83fa-4a46-a195-14cbdc88b036.json"}
+Controlled lifecycle failure evidence root retained: C:\Users\酷酷\AppData\Local\Temp\zhike-edge-runner-test-IgxQdh
+AssertionError [ERR_ASSERTION]: A verified directly owned child exit must not spend its cleanup deadline launching a redundant PID query
++ actual - expected
+
+  [
+    [
+      30684
+    ],
++   [
++     30684
++   ]
+  ]
+
+    at runCase (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\isolated-edge-runner-lifecycle.test.cjs:105:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\isolated-edge-runner-lifecycle.test.cjs:154:3 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [Array],
+  expected: [Array],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}

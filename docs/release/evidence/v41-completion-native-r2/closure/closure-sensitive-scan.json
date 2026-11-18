@@ -1,0 +1,71 @@
+{
+  "scope": "Archive-only pattern checks on six new files. The source lifecycle prefix is hashed without archiving its nonselected rows.",
+  "checked": [
+    {
+      "file": "before-close-early-check.json",
+      "archivedSensitiveMatches": {
+        "filesystemPath": 0,
+        "privateUrl": 0,
+        "userSid": 0,
+        "credential": 0,
+        "credentialAttribute": 0,
+        "isolatedDirectoryId": 0
+      }
+    },
+    {
+      "file": "before-close-final-check.json",
+      "archivedSensitiveMatches": {
+        "filesystemPath": 0,
+        "privateUrl": 0,
+        "userSid": 0,
+        "credential": 0,
+        "credentialAttribute": 0,
+        "isolatedDirectoryId": 0
+      }
+    },
+    {
+      "file": "closed-after-user.json",
+      "archivedSensitiveMatches": {
+        "filesystemPath": 0,
+        "privateUrl": 0,
+        "userSid": 0,
+        "credential": 0,
+        "credentialAttribute": 0,
+        "isolatedDirectoryId": 0
+      }
+    },
+    {
+      "file": "native-close-events.jsonl",
+      "archivedSensitiveMatches": {
+        "filesystemPath": 0,
+        "privateUrl": 0,
+        "userSid": 0,
+        "credential": 0,
+        "credentialAttribute": 0,
+        "isolatedDirectoryId": 0
+      }
+    },
+    {
+      "file": "completion-r2-final-sample.jsonl",
+      "archivedSensitiveMatches": {
+        "filesystemPath": 0,
+        "privateUrl": 0,
+        "userSid": 0,
+        "credential": 0,
+        "credentialAttribute": 0,
+        "isolatedDirectoryId": 0
+      }
+    },
+    {
+      "file": "completion-r2-final-sample.context.json",
+      "archivedSensitiveMatches": {
+        "filesystemPath": 0,
+        "privateUrl": 0,
+        "userSid": 0,
+        "credential": 0,
+        "credentialAttribute": 0,
+        "isolatedDirectoryId": 0
+      }
+    }
+  ]
+}

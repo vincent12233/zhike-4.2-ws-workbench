@@ -1,0 +1,35 @@
+{
+  "stage": "5.2",
+  "checkedAtUtc": "2026-11-16T14:36:06.6326409Z",
+  "status": "Passed",
+  "cleanupActor": "user",
+  "automaticDeletionExecuted": false,
+  "automaticAttempt": "unused95 marker/empty-dir command rejected before execution: blocked by policy",
+  "roots": [
+    {
+      "path": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-native-248a3820ba4f4b6abbfa8c09fd957da5",
+      "exists": false
+    },
+    {
+      "path": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-native-92eccfc80f164b15b7fcd1618058cb21",
+      "exists": false
+    },
+    {
+      "path": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-native-95d5941432654bf9906247471c41ddce",
+      "exists": false
+    }
+  ],
+  "archivedEvents": [
+    {
+      "copy": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\stage52-baseline-native-events-20261116\\zhike-stage51-native-248a3820ba4f4b6abbfa8c09fd957da5.jsonl",
+      "sha256": "4EFD30EAD7BDB652F16BA059E6C81BCCED0875776E71845A6C32797A445A243F",
+      "matchesOriginalManifest": true
+    },
+    {
+      "copy": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\stage52-baseline-native-events-20261116\\zhike-stage51-native-92eccfc80f164b15b7fcd1618058cb21.jsonl",
+      "sha256": "A347DEE167BA185A20A52576BCA2A655B50A479297D9FB3C274D0433B8341622",
+      "matchesOriginalManifest": true
+    }
+  ],
+  "privateConnectionCopied": false
+}

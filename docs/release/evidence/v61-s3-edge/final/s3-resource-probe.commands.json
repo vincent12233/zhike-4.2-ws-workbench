@@ -1,0 +1,23 @@
+{
+  "label": "s3-resource-probe",
+  "head": "6fd74a570f4b47dbca89022dedbea02f6502d41e",
+  "args": [
+    "scripts/delivery/s3-customer-table-visual.test.cjs"
+  ],
+  "evidenceDirectory": ".tools/delivery-s3-customer-table",
+  "startUtc": "2026-11-18T13:28:23.277Z",
+  "endUtc": "2026-11-18T13:28:39.163Z",
+  "elapsedMs": 15884.2861,
+  "timeoutMs": 180000,
+  "exitCode": 0,
+  "signal": null,
+  "errorCode": null,
+  "files": [
+    "1795008503415-f9c8481f-4b5f-4566-b1d0-783c7296aba2.assertions.json",
+    "1795008503415-f9c8481f-4b5f-4566-b1d0-783c7296aba2.json",
+    "1795008503415-f9c8481f-4b5f-4566-b1d0-783c7296aba2.kernel.jsonl",
+    "1795008503415-f9c8481f-4b5f-4566-b1d0-783c7296aba2.result.json",
+    "latest-observations.json"
+  ],
+  "optIn": "ZHIKE_EDGE_NETWORK_DIAGNOSTICS=1"
+}

@@ -1,0 +1,5 @@
+File C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\.tools\acceptance-followup-edge\w
+ait-chain.ps1 cannot be loaded because running scripts is disabled on this system. For more information, see about_Exec
+ution_Policies at https:/go.microsoft.com/fwlink/?LinkID=135170.
+    + CategoryInfo          : SecurityError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : UnauthorizedAccess

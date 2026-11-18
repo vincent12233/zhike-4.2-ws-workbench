@@ -1,0 +1,15 @@
+{
+  "check": "Delivery S1 WS computed layout and retained host",
+  "renderer": "Edge --dump-dom",
+  "timeoutMs": 45000,
+  "error": "ETIMEDOUT",
+  "runnerOutcome": "FAIL",
+  "partialFixtureStdoutPresent": true,
+  "omittedFixtureOutputBytesInLog": 6006,
+  "omittedFixtureOutputSha256": "d98edfe9033e4c3ef48c74c1d5a3b86daaeea4832a264c9f500f58da06fcdce3",
+  "fixtureAssertionsReached": false,
+  "exactReasonForProcessTimeout": "Unknown",
+  "source": "full-regression-r3.log",
+  "archiveRunLine": 1230,
+  "archiveOutcomeLine": 1262
+}

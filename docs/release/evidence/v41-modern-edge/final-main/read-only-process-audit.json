@@ -1,0 +1,50 @@
+{
+  "invocation": "1794953355894-093e7265-ef77-4b86-8f0c-e4c59f135d2c",
+  "checkedAtUtc": "2026-11-17T22:13:15.8367040Z",
+  "method": "Read-only GetProcessById and exact Windows StartTime where previously recorded",
+  "originalStatus": "Failed",
+  "originalTimeoutMs": 30000,
+  "primaryFailurePhase": "result",
+  "releaseFailurePhase": "process-exit",
+  "setupViewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "fixtureMatrixResultFilePresent": false,
+  "isolatedRootStillPresent": true,
+  "browserIdentitiesChecked": 4,
+  "identityProbePidsChecked": 1,
+  "remainingOrUnverified": 0,
+  "processes": [
+    {
+      "pid": 34264,
+      "role": "browser-root",
+      "expectedStartedTicks": "639305501559024977",
+      "status": "absent"
+    },
+    {
+      "pid": 34780,
+      "role": "observed-browser-process",
+      "expectedStartedTicks": "639305501564064157",
+      "status": "absent"
+    },
+    {
+      "pid": 28740,
+      "role": "observed-browser-process",
+      "expectedStartedTicks": "639305501564389054",
+      "status": "absent"
+    },
+    {
+      "pid": 30324,
+      "role": "observed-browser-process",
+      "expectedStartedTicks": "639305501564952260",
+      "status": "absent"
+    },
+    {
+      "pid": 9184,
+      "role": "owned-identity-probe",
+      "expectedStartedTicks": null,
+      "status": "absent"
+    }
+  ]
+}

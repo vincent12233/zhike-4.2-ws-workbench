@@ -1,0 +1,24 @@
+{
+  "command": [
+    "resources/app/node.exe",
+    "scripts/run-tests.cjs",
+    "all"
+  ],
+  "sourceHead": "e0b534c28d12e5d91e13c9380ca2bb6acca08896",
+  "checks": 313,
+  "passed": 312,
+  "failed": 1,
+  "exitCode": 1,
+  "startedUtc": "2026-11-18T14:32:48.7545491Z",
+  "finishedUtc": "2026-11-18T14:46:05.4980561Z",
+  "observedLogCreatedUtc": "2026-11-18T14:32:48.836Z",
+  "observedLogLastWriteUtc": "2026-11-18T14:46:05.445Z",
+  "terminalLineNumber": 1744,
+  "terminalLine": "Completed 313 checks: 312 passed, 1 failed.",
+  "observation": {
+    "kernelObserverEnabled": true,
+    "networkResourceDiagnostics": "1",
+    "nodeVersion": "v24.22.1",
+    "edgeVersion": "157.0.4341.60"
+  }
+}

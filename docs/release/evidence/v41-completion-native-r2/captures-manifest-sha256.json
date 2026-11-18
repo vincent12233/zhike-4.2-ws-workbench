@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "sha256",
+  "scope": "Selected visual observations from the second isolated Windows run. All displayed record examples are synthetic.",
+  "files": [
+    {
+      "file": "captures/r2-02-accounts-fixed.jpg",
+      "sourceFile": ".tools/v41-completion/native/r2-02-accounts-fixed-0.png",
+      "bytes": 179350,
+      "width": 1920,
+      "height": 1140,
+      "sourceModifiedAtUtc": "2026-11-18T05:04:11.100Z",
+      "sourceSha256": "a76152a625a1f074f037fb9c3d5a3e1b0e4b44bc916d940fd551c5e32754e97f",
+      "sha256": "a76152a625a1f074f037fb9c3d5a3e1b0e4b44bc916d940fd551c5e32754e97f"
+    },
+    {
+      "file": "captures/r2-switch-10-a.jpg",
+      "sourceFile": ".tools/v41-completion/native/r2-switch-10-a-0.png",
+      "bytes": 199709,
+      "width": 1920,
+      "height": 1140,
+      "sourceModifiedAtUtc": "2026-11-18T05:18:00.187Z",
+      "sourceSha256": "5b6d18e073c2621e059e0c6d89fcbe186e4570781e8e67fb6f5e5e54bdd78cf8",
+      "sha256": "5b6d18e073c2621e059e0c6d89fcbe186e4570781e8e67fb6f5e5e54bdd78cf8"
+    },
+    {
+      "file": "captures/r2-03-contacts-b.jpg",
+      "sourceFile": ".tools/v41-completion/native/r2-03-contacts-b-0.png",
+      "bytes": 253749,
+      "width": 1920,
+      "height": 1140,
+      "sourceModifiedAtUtc": "2026-11-18T05:04:49.886Z",
+      "sourceSha256": "d5afb91cab784bec38dcc919e08df037e2fe9820be1701128b8d7f5104aa1a99",
+      "sha256": "d5afb91cab784bec38dcc919e08df037e2fe9820be1701128b8d7f5104aa1a99"
+    },
+    {
+      "file": "captures/r2-06-contacts-a.jpg",
+      "sourceFile": ".tools/v41-completion/native/r2-06-contacts-a-0.png",
+      "bytes": 267855,
+      "width": 1920,
+      "height": 1140,
+      "sourceModifiedAtUtc": "2026-11-18T05:18:45.961Z",
+      "sourceSha256": "91f3492218a77643afb8342d497334b484be852812ffedf82b5845599930bbcf",
+      "sha256": "91f3492218a77643afb8342d497334b484be852812ffedf82b5845599930bbcf"
+    },
+    {
+      "file": "captures/r2-07-groups-a.jpg",
+      "sourceFile": ".tools/v41-completion/native/r2-07-groups-a-0.png",
+      "bytes": 215486,
+      "width": 1920,
+      "height": 1140,
+      "sourceModifiedAtUtc": "2026-11-18T05:19:25.725Z",
+      "sourceSha256": "9a89745d27acddcf60580de9e6699070d2f20d49bae21f54de651dfe4ecaf192",
+      "sha256": "9a89745d27acddcf60580de9e6699070d2f20d49bae21f54de651dfe4ecaf192"
+    },
+    {
+      "file": "captures/r2-08-members-a.jpg",
+      "sourceFile": ".tools/v41-completion/native/r2-08-members-a-0.png",
+      "bytes": 216308,
+      "width": 1920,
+      "height": 1140,
+      "sourceModifiedAtUtc": "2026-11-18T05:20:08.397Z",
+      "sourceSha256": "9364029f453b3012ab622c1f8c2dad4ad4288a184c28d5f541117876f1ebc2b1",
+      "sha256": "9364029f453b3012ab622c1f8c2dad4ad4288a184c28d5f541117876f1ebc2b1"
+    },
+    {
+      "file": "captures/r2-14-crm-conflict.jpg",
+      "sourceFile": ".tools/v41-completion/native/r2-14-crm-conflict-0.png",
+      "bytes": 208840,
+      "width": 1920,
+      "height": 1140,
+      "sourceModifiedAtUtc": "2026-11-18T05:27:35.983Z",
+      "sourceSha256": "969f62eca102c748041ec49f90e47f9eb6829dbe242fc105e58727852086799e",
+      "sha256": "969f62eca102c748041ec49f90e47f9eb6829dbe242fc105e58727852086799e"
+    },
+    {
+      "file": "captures/r2-15-crm-reject.jpg",
+      "sourceFile": ".tools/v41-completion/native/r2-15-crm-reject-0.png",
+      "bytes": 208303,
+      "width": 1920,
+      "height": 1140,
+      "sourceModifiedAtUtc": "2026-11-18T05:28:17.457Z",
+      "sourceSha256": "315c75c72d8977d2da7079fb37cec8c8ee9404ed61df70fba7719a0a463f7371",
+      "sha256": "315c75c72d8977d2da7079fb37cec8c8ee9404ed61df70fba7719a0a463f7371"
+    },
+    {
+      "file": "captures/r2-16-crm-approve.jpg",
+      "sourceFile": ".tools/v41-completion/native/r2-16-crm-approve-0.png",
+      "bytes": 208211,
+      "width": 1920,
+      "height": 1140,
+      "sourceModifiedAtUtc": "2026-11-18T05:29:01.461Z",
+      "sourceSha256": "2d07dae739842fb754fc8daedb35405754f141ca3c0c3099599d217026d0e6e5",
+      "sha256": "2d07dae739842fb754fc8daedb35405754f141ca3c0c3099599d217026d0e6e5"
+    },
+    {
+      "file": "captures/r2-22-chat-crm-expanded.jpg",
+      "sourceFile": ".tools/v41-completion/native/r2-22-chat-crm-expanded-0.png",
+      "bytes": 184569,
+      "width": 1920,
+      "height": 1140,
+      "sourceModifiedAtUtc": "2026-11-18T05:34:11.171Z",
+      "sourceSha256": "1c168a561b208a79fcb9121f6390972235cfbcd13b2e291ebdbeb37777af1ca6",
+      "sha256": "1c168a561b208a79fcb9121f6390972235cfbcd13b2e291ebdbeb37777af1ca6"
+    },
+    {
+      "file": "captures/r2-28-task-chart-details.jpg",
+      "sourceFile": ".tools/v41-completion/native/r2-28-task-chart-details-0.png",
+      "bytes": 233926,
+      "width": 1920,
+      "height": 1140,
+      "sourceModifiedAtUtc": "2026-11-18T05:41:45.510Z",
+      "sourceSha256": "a090d27dabe048c4af0c23b7726ad27138a1d6f1208eb9badc0e26832c180b79",
+      "sha256": "a090d27dabe048c4af0c23b7726ad27138a1d6f1208eb9badc0e26832c180b79"
+    },
+    {
+      "file": "captures/r2-32-stage-flow-nonempty.jpg",
+      "sourceFile": ".tools/v41-completion/native/r2-32-stage-flow-nonempty-0.png",
+      "bytes": 194977,
+      "width": 1920,
+      "height": 1140,
+      "sourceModifiedAtUtc": "2026-11-18T05:48:31.092Z",
+      "sourceSha256": "dce87e7a671583190aeca93c4f93ac84e6a0bbe8b1c5b5c856f7b62dc2536b8e",
+      "sha256": "dce87e7a671583190aeca93c4f93ac84e6a0bbe8b1c5b5c856f7b62dc2536b8e"
+    },
+    {
+      "file": "captures/r2-34-stage-chart-dark.jpg",
+      "sourceFile": ".tools/v41-completion/native/r2-34-stage-chart-dark-0.png",
+      "bytes": 195786,
+      "width": 1920,
+      "height": 1140,
+      "sourceModifiedAtUtc": "2026-11-18T05:51:10.404Z",
+      "sourceSha256": "1aa9bdd48a773aa74124f0b7bd374e3cd404670dd363553b91c40ed7bf2a8655",
+      "sha256": "1aa9bdd48a773aa74124f0b7bd374e3cd404670dd363553b91c40ed7bf2a8655"
+    },
+    {
+      "file": "captures/r2-36-customer-wheel-down.jpg",
+      "sourceFile": ".tools/v41-completion/native/r2-36-customer-wheel-down-0.png",
+      "bytes": 282230,
+      "width": 1920,
+      "height": 1140,
+      "sourceModifiedAtUtc": "2026-11-18T05:52:38.010Z",
+      "sourceSha256": "00d1eda199bfb856dc5bcf24c3859b59915cafdc1dffa5de67bc8180eaebaae6",
+      "sha256": "00d1eda199bfb856dc5bcf24c3859b59915cafdc1dffa5de67bc8180eaebaae6"
+    },
+    {
+      "file": "captures/r2-37-customer-wheel-up.jpg",
+      "sourceFile": ".tools/v41-completion/native/r2-37-customer-wheel-up-0.png",
+      "bytes": 282226,
+      "width": 1920,
+      "height": 1140,
+      "sourceModifiedAtUtc": "2026-11-18T05:58:16.131Z",
+      "sourceSha256": "e0841a2a96d0a2eaa9e5e7295747805ffc4cc197c0bf262511ff8c9ee86c0e65",
+      "sha256": "e0841a2a96d0a2eaa9e5e7295747805ffc4cc197c0bf262511ff8c9ee86c0e65"
+    },
+    {
+      "file": "captures/r2-24-return-zhike.jpg",
+      "sourceFile": ".tools/v41-completion/native/r2-24-return-zhike-0.png",
+      "bytes": 163470,
+      "width": 1422,
+      "height": 815,
+      "sourceModifiedAtUtc": "2026-11-18T05:37:03.620Z",
+      "sourceSha256": "99488c40499ec98bff93f6802bc0ee1e5486fe4ddb09f490c8c08d039cdf8065",
+      "sha256": "99488c40499ec98bff93f6802bc0ee1e5486fe4ddb09f490c8c08d039cdf8065"
+    }
+  ],
+  "supportingFiles": [
+    {
+      "file": "captures-sensitive-scan.json",
+      "bytes": 841,
+      "sha256": "6283de29699cb61051da1ed8105ec6bcdfa10514eb96fbfa486fe7344c423433"
+    }
+  ]
+}

@@ -1,0 +1,420 @@
+{
+  "algorithm": "SHA-256",
+  "snapshot": {
+    "uiActionCutoff": "2026-11-17T19:27:44.0555939+00:00",
+    "laterApplicationClosingMarkers": [
+      {
+        "at": "2026-11-17T19:35:24.5949866+00:00",
+        "kind": "application-stopping"
+      },
+      {
+        "at": "2026-11-17T19:35:24.8553603+00:00",
+        "kind": "sidecar-stopped"
+      },
+      {
+        "at": "2026-11-17T19:35:24.8967927+00:00",
+        "kind": "host-unloaded"
+      }
+    ],
+    "resourceFirstAtUtc": "2026-11-17T18:57:10.1277108Z",
+    "resourceLastAtUtc": "2026-11-17T19:12:43.5437138Z",
+    "lifecycleFirstAt": "2026-11-17T18:54:19.7843208+00:00",
+    "lifecycleLastAt": "2026-11-17T19:35:24.9026652+00:00",
+    "counterSnapshotAt": "2026-11-17T19:35:24.8975003+00:00",
+    "buildProductVersion": "6.0.3+c586250c9b48063c7ce172e2b6c51e3185ec2fd5",
+    "closureStatus": "Pending at UI action cutoff; later application markers retained; process and profile release unverified in this archive",
+    "scope": "Native isolated WinUI with synthetic data"
+  },
+  "entries": [
+    {
+      "path": "captures/01-home-light-windowed.jpg",
+      "source": "main:.tools/v41/native/01-home-light-windowed.png",
+      "sourceBytes": 117125,
+      "bytes": 117125,
+      "sourceSha256": "f4aa66d8aa4135a1cd01930d75433e898ab0aeca349c9610c4a4c50691b52cd0",
+      "archiveSha256": "f4aa66d8aa4135a1cd01930d75433e898ab0aeca349c9610c4a4c50691b52cd0",
+      "originalBytesRetained": true,
+      "transformation": "archive name uses .jpg for the original JPEG bytes"
+    },
+    {
+      "path": "captures/01-home-light-windowed.txt",
+      "source": "main:.tools/v41/native/01-home-light-windowed.txt",
+      "sourceBytes": 15945,
+      "bytes": 15945,
+      "sourceSha256": "be5075c41c4da9cf0971d8077ba48988e19c77931e39d2f56ceb2b9602f0612f",
+      "archiveSha256": "be5075c41c4da9cf0971d8077ba48988e19c77931e39d2f56ceb2b9602f0612f",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "captures/02-home-light-maximized.jpg",
+      "source": "main:.tools/v41/native/02-home-light-maximized.png",
+      "sourceBytes": 226061,
+      "bytes": 226061,
+      "sourceSha256": "e6e10735a63fd2fa8c7df5a42fb83fd683052403c121f6e7eeedac65f2e3a44b",
+      "archiveSha256": "e6e10735a63fd2fa8c7df5a42fb83fd683052403c121f6e7eeedac65f2e3a44b",
+      "originalBytesRetained": true,
+      "transformation": "archive name uses .jpg for the original JPEG bytes"
+    },
+    {
+      "path": "captures/02-home-light-maximized.txt",
+      "source": "main:.tools/v41/native/02-home-light-maximized.txt",
+      "sourceBytes": 17002,
+      "bytes": 17002,
+      "sourceSha256": "2b6783b0448778fafeb8919bc6ec9986b2f67a7657820a659f990d32c5d46708",
+      "archiveSha256": "2b6783b0448778fafeb8919bc6ec9986b2f67a7657820a659f990d32c5d46708",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "captures/03-appearance-light.jpg",
+      "source": "main:.tools/v41/native/03-appearance-light.png",
+      "sourceBytes": 199533,
+      "bytes": 199533,
+      "sourceSha256": "8aeed0f80a7be5063c2536d8f809b52f3e81524f7cd264082a1bbbcd6cd94423",
+      "archiveSha256": "8aeed0f80a7be5063c2536d8f809b52f3e81524f7cd264082a1bbbcd6cd94423",
+      "originalBytesRetained": true,
+      "transformation": "archive name uses .jpg for the original JPEG bytes"
+    },
+    {
+      "path": "captures/03-appearance-light.txt",
+      "source": "main:.tools/v41/native/03-appearance-light.txt",
+      "sourceBytes": 18768,
+      "bytes": 18768,
+      "sourceSha256": "e1bf4bdb06ce9b89716a94f04b7e88fd070eaa7bd52fe611c2869047d1ca8a3a",
+      "archiveSha256": "e1bf4bdb06ce9b89716a94f04b7e88fd070eaa7bd52fe611c2869047d1ca8a3a",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "captures/04-appearance-dark.jpg",
+      "source": "main:.tools/v41/native/04-appearance-dark.png",
+      "sourceBytes": 153782,
+      "bytes": 153782,
+      "sourceSha256": "2563151249d39f82ca87a5b286d0524857d9ec5fc51b04e0091a1f340f379f28",
+      "archiveSha256": "2563151249d39f82ca87a5b286d0524857d9ec5fc51b04e0091a1f340f379f28",
+      "originalBytesRetained": true,
+      "transformation": "archive name uses .jpg for the original JPEG bytes"
+    },
+    {
+      "path": "captures/04-appearance-dark.txt",
+      "source": "main:.tools/v41/native/04-appearance-dark.txt",
+      "sourceBytes": 18768,
+      "bytes": 18768,
+      "sourceSha256": "e1bf4bdb06ce9b89716a94f04b7e88fd070eaa7bd52fe611c2869047d1ca8a3a",
+      "archiveSha256": "e1bf4bdb06ce9b89716a94f04b7e88fd070eaa7bd52fe611c2869047d1ca8a3a",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "captures/05-home-dark.jpg",
+      "source": "main:.tools/v41/native/05-home-dark.png",
+      "sourceBytes": 228914,
+      "bytes": 228914,
+      "sourceSha256": "70ada1392d4303d37231790fc00dd799a22c21940efdea5729a3234c016c1574",
+      "archiveSha256": "70ada1392d4303d37231790fc00dd799a22c21940efdea5729a3234c016c1574",
+      "originalBytesRetained": true,
+      "transformation": "archive name uses .jpg for the original JPEG bytes"
+    },
+    {
+      "path": "captures/05-home-dark.txt",
+      "source": "main:.tools/v41/native/05-home-dark.txt",
+      "sourceBytes": 17002,
+      "bytes": 17002,
+      "sourceSha256": "28d03f92bbbfbefc92195187865184a09e4a69b1942a6192d856b19a042c5fab",
+      "archiveSha256": "28d03f92bbbfbefc92195187865184a09e4a69b1942a6192d856b19a042c5fab",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "captures/06-customer-dark.jpg",
+      "source": "main:.tools/v41/native/06-customer-dark.png",
+      "sourceBytes": 250997,
+      "bytes": 250997,
+      "sourceSha256": "ecc6f9cd176fe33aa87e47547464f2e2d9eae2a55d9ab7de4f0460184b885493",
+      "archiveSha256": "ecc6f9cd176fe33aa87e47547464f2e2d9eae2a55d9ab7de4f0460184b885493",
+      "originalBytesRetained": true,
+      "transformation": "archive name uses .jpg for the original JPEG bytes"
+    },
+    {
+      "path": "captures/06-customer-dark.txt",
+      "source": "main:.tools/v41/native/06-customer-dark.txt",
+      "sourceBytes": 18181,
+      "bytes": 18181,
+      "sourceSha256": "8a51f69a7b85ccff4d2082d61f520533c672c0598e75c720ba155d6aed13e305",
+      "archiveSha256": "8a51f69a7b85ccff4d2082d61f520533c672c0598e75c720ba155d6aed13e305",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "captures/07-wheel-no-movement.jpg",
+      "source": "main:.tools/v41/native/07-wheel-no-movement.png",
+      "sourceBytes": 251715,
+      "bytes": 251715,
+      "sourceSha256": "c28b72b98ed8a0bff237261c6185e378bfba75cfaf8710c023d6bbc93612ff3c",
+      "archiveSha256": "c28b72b98ed8a0bff237261c6185e378bfba75cfaf8710c023d6bbc93612ff3c",
+      "originalBytesRetained": true,
+      "transformation": "archive name uses .jpg for the original JPEG bytes"
+    },
+    {
+      "path": "captures/07-wheel-no-movement.txt",
+      "source": "main:.tools/v41/native/07-wheel-no-movement.txt",
+      "sourceBytes": 27794,
+      "bytes": 27794,
+      "sourceSha256": "889e619222995e32f1169a923187144676681cad06ee59ccc4d9c43cf2b3eeee",
+      "archiveSha256": "889e619222995e32f1169a923187144676681cad06ee59ccc4d9c43cf2b3eeee",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "captures/08-home-chart-scroll.jpg",
+      "source": "main:.tools/v41/native/08-home-chart-scroll.png",
+      "sourceBytes": 244305,
+      "bytes": 244305,
+      "sourceSha256": "99f9092eb732a2272679e063b329840a9f45d8e22c90a8a0ff91b8196ab7b9c6",
+      "archiveSha256": "99f9092eb732a2272679e063b329840a9f45d8e22c90a8a0ff91b8196ab7b9c6",
+      "originalBytesRetained": true,
+      "transformation": "archive name uses .jpg for the original JPEG bytes"
+    },
+    {
+      "path": "captures/08-home-chart-scroll.txt",
+      "source": "main:.tools/v41/native/08-home-chart-scroll.txt",
+      "sourceBytes": 0,
+      "bytes": 0,
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "captures/09-wheel-footer-hit-diagnostic.jpg",
+      "source": "main:.tools/v41/native/09-wheel-footer-hit-diagnostic.png",
+      "sourceBytes": 268264,
+      "bytes": 268264,
+      "sourceSha256": "4a107b6753d1573ef6ee664c31861c2f53b598124cf0ac6c798b2fb354fe3a27",
+      "archiveSha256": "4a107b6753d1573ef6ee664c31861c2f53b598124cf0ac6c798b2fb354fe3a27",
+      "originalBytesRetained": true,
+      "transformation": "archive name uses .jpg for the original JPEG bytes"
+    },
+    {
+      "path": "captures/09-wheel-footer-hit-diagnostic.txt",
+      "source": "main:.tools/v41/native/09-wheel-footer-hit-diagnostic.txt",
+      "sourceBytes": 29282,
+      "bytes": 29282,
+      "sourceSha256": "456b516eb17de55b69d4e2db9aab69dc2a0f3009019bf5c607fad3351c9e2d26",
+      "archiveSha256": "456b516eb17de55b69d4e2db9aab69dc2a0f3009019bf5c607fad3351c9e2d26",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "captures/10-wheel-table67.jpg",
+      "source": "main:.tools/v41/native/10-wheel-table67.png",
+      "sourceBytes": 276529,
+      "bytes": 276529,
+      "sourceSha256": "40a45d57103c4154b50209ed1c5e39b186f7492acda7cb4ad4189d02ae93570d",
+      "archiveSha256": "40a45d57103c4154b50209ed1c5e39b186f7492acda7cb4ad4189d02ae93570d",
+      "originalBytesRetained": true,
+      "transformation": "archive name uses .jpg for the original JPEG bytes"
+    },
+    {
+      "path": "captures/10-wheel-table67.txt",
+      "source": "main:.tools/v41/native/10-wheel-table67.txt",
+      "sourceBytes": 29618,
+      "bytes": 29618,
+      "sourceSha256": "abc4863a7785493a546f2671298b9a0010262c615d8bf084aa5017cd708de862",
+      "archiveSha256": "abc4863a7785493a546f2671298b9a0010262c615d8bf084aa5017cd708de862",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "captures/11-ws-home-dark.jpg",
+      "source": "main:.tools/v41/native/11-ws-home-dark.png",
+      "sourceBytes": 198267,
+      "bytes": 198267,
+      "sourceSha256": "c20dc2e8d67ad54bdbc1961dd4fb56ac4c08480aab535a181264477259dc53e8",
+      "archiveSha256": "c20dc2e8d67ad54bdbc1961dd4fb56ac4c08480aab535a181264477259dc53e8",
+      "originalBytesRetained": true,
+      "transformation": "archive name uses .jpg for the original JPEG bytes"
+    },
+    {
+      "path": "captures/11-ws-home-dark.txt",
+      "source": "main:.tools/v41/native/11-ws-home-dark.txt",
+      "sourceBytes": 11261,
+      "bytes": 11261,
+      "sourceSha256": "89c230f558367bfc938bd700325e86dbbb90e2653f6c09a5da39639e0635e4e2",
+      "archiveSha256": "89c230f558367bfc938bd700325e86dbbb90e2653f6c09a5da39639e0635e4e2",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "captures/12-ws-open-attempt.jpg",
+      "source": "main:.tools/v41/native/12-ws-open-attempt.png",
+      "sourceBytes": 183896,
+      "bytes": 183896,
+      "sourceSha256": "4c1895a0702ccfca4c59a4728fc78d0d3d23a046117d583c2dfc96a355630ad5",
+      "archiveSha256": "4c1895a0702ccfca4c59a4728fc78d0d3d23a046117d583c2dfc96a355630ad5",
+      "originalBytesRetained": true,
+      "transformation": "archive name uses .jpg for the original JPEG bytes"
+    },
+    {
+      "path": "captures/12-ws-open-attempt.txt",
+      "source": "main:.tools/v41/native/12-ws-open-attempt.txt",
+      "sourceBytes": 0,
+      "bytes": 0,
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "captures/13-wheel-coordinate-mismatch.jpg",
+      "source": "main:.tools/v41/native/13-wheel-coordinate-mismatch.png",
+      "sourceBytes": 275657,
+      "bytes": 275657,
+      "sourceSha256": "4fc8316df21af291d2c15e53efef1add20668ab1f385011a31c84452668b0304",
+      "archiveSha256": "4fc8316df21af291d2c15e53efef1add20668ab1f385011a31c84452668b0304",
+      "originalBytesRetained": true,
+      "transformation": "archive name uses .jpg for the original JPEG bytes"
+    },
+    {
+      "path": "captures/13-wheel-coordinate-mismatch.txt",
+      "source": "main:.tools/v41/native/13-wheel-coordinate-mismatch.txt",
+      "sourceBytes": 0,
+      "bytes": 0,
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "captures/14-motion-off.jpg",
+      "source": "main:.tools/v41/native/14-motion-off.png",
+      "sourceBytes": 238816,
+      "bytes": 238816,
+      "sourceSha256": "ef497e5a39c04e22c6affad32514193cec254b71d32baf07cb362fdc97179298",
+      "archiveSha256": "ef497e5a39c04e22c6affad32514193cec254b71d32baf07cb362fdc97179298",
+      "originalBytesRetained": true,
+      "transformation": "archive name uses .jpg for the original JPEG bytes"
+    },
+    {
+      "path": "captures/14-motion-off.txt",
+      "source": "main:.tools/v41/native/14-motion-off.txt",
+      "sourceBytes": 0,
+      "bytes": 0,
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "lifecycle/native-cleanup.json",
+      "source": "main:.tools/v41/native-cleanup.json",
+      "sourceBytes": 323,
+      "bytes": 323,
+      "sourceSha256": "da493b3206b4bd01a63e00c74efe22438c30cfa8843653282af40d6897064a20",
+      "archiveSha256": "da493b3206b4bd01a63e00c74efe22438c30cfa8843653282af40d6897064a20",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "lifecycle/native-event-counts-24196.json",
+      "source": "isolated-root:native-event-counts-24196.json",
+      "sourceBytes": 1730,
+      "bytes": 1730,
+      "sourceSha256": "94bfa84074c825c214acfcb6b128ee6393be239a91d81f28349047044a90e930",
+      "archiveSha256": "94bfa84074c825c214acfcb6b128ee6393be239a91d81f28349047044a90e930",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "lifecycle/native-events.jsonl",
+      "source": "isolated-root:native-events.jsonl",
+      "sourceBytes": 12023,
+      "bytes": 11937,
+      "sourceSha256": "ebebd6ed599f24c0fad01216a08e8fb24fd2a553765e09dd8f063b7b78c0bcdb",
+      "archiveSha256": "1a5027f6ba4a8542e68e7d61c8ee96892b9e27f4b8c11b1570d3608fd6d531a6",
+      "originalBytesRetained": false,
+      "transformation": "replace absolute dataRoot in application-start with <isolated-root>/data"
+    },
+    {
+      "path": "lifecycle/native-owned-processes.json",
+      "source": "main:.tools/v41/native-owned-processes.json",
+      "sourceBytes": 225,
+      "bytes": 225,
+      "sourceSha256": "91d80463931dcee93e85db30cff3910d896f7439783acf87aaf3d1c27d87ab5a",
+      "archiveSha256": "91d80463931dcee93e85db30cff3910d896f7439783acf87aaf3d1c27d87ab5a",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "resources/resource-observe.log",
+      "source": "main:.tools/v41/resource-observe.log",
+      "sourceBytes": 1599,
+      "bytes": 1599,
+      "sourceSha256": "2bc67dc6e41390f559e1871346c5139d1e25e8c5d2037c4160831c4c5cbbfa8f",
+      "archiveSha256": "2bc67dc6e41390f559e1871346c5139d1e25e8c5d2037c4160831c4c5cbbfa8f",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "resources/v41-resources.jsonl",
+      "source": "isolated-root:v41-resources.jsonl",
+      "sourceBytes": 180090,
+      "bytes": 180090,
+      "sourceSha256": "502c06a31cf2b3fcfe57eaac766ebafc5ef66621775c8e6c7b1a8f80d948b606",
+      "archiveSha256": "502c06a31cf2b3fcfe57eaac766ebafc5ef66621775c8e6c7b1a8f80d948b606",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "sensitive-scan.json",
+      "source": null,
+      "sourceSha256": null,
+      "sourceBytes": null,
+      "bytes": 19932,
+      "archiveSha256": "18bd6ac1e4920b42da6e6d303d0bf92752eaeda8d245ec67d10670306cf4d020",
+      "originalBytesRetained": false,
+      "transformation": "generated sensitive-content scan"
+    }
+  ],
+  "closureVerification": {
+    "status": "User confirmed closure; two bounded post-close process checks recorded",
+    "applicationEvents": "Preserved in the original snapshot above",
+    "observedPidAndStartTime": {
+      "evidence": "lifecycle/native-cleanup.json",
+      "checkedAtUtc": "2026-11-17T19:36:52.0876152Z",
+      "observedIdentities": 9,
+      "remaining": 0,
+      "unverified": 0,
+      "scopeLimit": "These identities were recorded during the resource sampling window and exclude WS processes created after it."
+    },
+    "directoryReferenceScan": {
+      "evidence": "lifecycle/native-owned-processes.json",
+      "checkedAtUtc": "2026-11-17T19:42:34.2584880Z",
+      "remaining": 0,
+      "scopeLimit": "Matches command-line references to the unique isolated root at the time of the separate scan."
+    },
+    "isolatedDirectoryRetainedForDiagnostics": true,
+    "processTerminatedByChecks": false,
+    "sensitiveScan": {
+      "files": [
+        "lifecycle/native-cleanup.json",
+        "lifecycle/native-owned-processes.json"
+      ],
+      "rules": [
+        "absoluteWindowsPath",
+        "userSid",
+        "websocketOrCdpToken",
+        "openAiStyleKey",
+        "googleApiKey",
+        "googleOAuthToken",
+        "awsAccessKey",
+        "jwtCredential",
+        "bearerCredential",
+        "assignedCredential",
+        "privateKey"
+      ],
+      "sourceAndArchiveMatches": 0
+    }
+  }
+}

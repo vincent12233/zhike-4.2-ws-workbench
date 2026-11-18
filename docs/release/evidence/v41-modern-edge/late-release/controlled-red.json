@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794952488451-0dedfbf0-4d62-42b0-8d73-9dbade5237a7",
+  "mode": "controlled-node-late-release",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 6000,
+  "launchedAt": "2026-11-17T21:54:48.451Z",
+  "elapsedMs": 5644,
+  "pid": 37904,
+  "events": [
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 16,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 774,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 774
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 774,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 784,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 784
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 784
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 785,
+      "acknowledgement": "stdin-request"
+    },
+    {
+      "event": "identity-probe-closed",
+      "elapsedMs": 5538
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 5639
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 5639
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 5643,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 5643
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 5644
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 5644,
+      "phase": "release",
+      "count": 1
+    }
+  ],
+  "identities": [
+    {
+      "pid": 37904,
+      "startedTicks": "639305492884582871",
+      "startedUtc": "2026-11-17T21:54:48.4582871Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 40632,
+      "startedTicks": "639305492885560704",
+      "startedUtc": "2026-11-17T21:54:48.5560704Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "stdoutBytes": 49,
+  "stderrBytes": 0,
+  "forceTerminated": false,
+  "cleanupSafe": false,
+  "identityProbePid": 34016,
+  "identityProbeClosed": true,
+  "resultReady": true,
+  "rootExitProof": "verified-spawn-handle-exit-and-streams",
+  "releaseFailure": {
+    "code": "PROCESS_IDENTITY_UNVERIFIED",
+    "phase": "identity"
+  },
+  "failure": {
+    "code": "PROCESS_IDENTITY_UNVERIFIED",
+    "phase": "identity",
+    "message": "Process identity probe is closing"
+  }
+}

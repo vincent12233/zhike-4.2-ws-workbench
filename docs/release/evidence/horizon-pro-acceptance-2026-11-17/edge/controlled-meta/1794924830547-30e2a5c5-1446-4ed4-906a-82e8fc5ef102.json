@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794924830547-30e2a5c5-1446-4ed4-906a-82e8fc5ef102",
+  "mode": "controlled-node-result-timeout",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 3000,
+  "launchedAt": "2026-11-17T14:13:50.547Z",
+  "events": [
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 522
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 2252
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 2252,
+      "acknowledgement": "stdin-request"
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 2259
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 2259
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 2266,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 2266
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 2266
+    }
+  ],
+  "identities": [
+    {
+      "pid": 16544,
+      "startedTicks": "639305216305516810",
+      "startedUtc": "2026-11-17T14:13:50.5516810Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "pid": 16544,
+  "rootExitProof": "verified-spawn-handle-exit-and-streams",
+  "remainingIdentities": [],
+  "elapsedMs": 2266,
+  "stdoutBytes": 6,
+  "stderrBytes": 0,
+  "failure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "result",
+    "message": "Isolated lifecycle deadline reached during result"
+  }
+}

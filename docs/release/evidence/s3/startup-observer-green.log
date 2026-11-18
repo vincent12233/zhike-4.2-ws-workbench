@@ -1,0 +1,7 @@
+[PASS] actual early child exit reports code and elapsed time instead of exhausting readiness retries
+[PASS] actual spawn error is observed and reported without an unhandled process error
+[PASS] actual stderr split over chunks redacts known and labelled credentials before diagnosis
+[PASS] oversized actual stderr stays bounded and omits the truncated text entirely
+[PASS] readiness attempt budget remains 300 by 50ms and a real live child cannot extend a smaller test budget
+[PASS] an actual child exiting during retry stops requests at the observed failure instead of a timeout
+{"suite":"sidecar-startup-observer","passed":6,"actualChildProcesses":true,"productionDatabase":false,"realWs":false,"paidAi":false,"childProcessesRemaining":0}

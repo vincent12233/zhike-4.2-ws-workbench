@@ -1,0 +1,52 @@
+{
+  "head": "118b263d6c7873efa2420eced29f4b886e05f58b",
+  "node": "<local-user>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\resources\\app\\node.exe",
+  "nodeVersion": "v24.22.1",
+  "edge": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+  "edgeVersion": "157.0.4341.60",
+  "dotnet": "<local-user>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dotnet10\\dotnet.exe",
+  "startUtc": "2026-11-18T10:55:14.1375205Z",
+  "endUtc": "2026-11-18T10:57:47.1083239Z",
+  "results": [
+    {
+      "label": "s1-main-visual",
+      "path": "<local-user>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\s3-worktrees\\edge\\scripts\\delivery\\s1-main-visual.test.cjs",
+      "timeoutMs": 180000,
+      "startUtc": "2026-11-18T10:55:14.1400583Z",
+      "endUtc": "2026-11-18T10:55:55.5453597Z",
+      "elapsedMs": 41405.3014,
+      "outerTimeout": false,
+      "exitCode": 1
+    },
+    {
+      "label": "s1-ws-visual",
+      "path": "<local-user>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\s3-worktrees\\edge\\scripts\\delivery\\s1-ws-visual.test.cjs",
+      "timeoutMs": 180000,
+      "startUtc": "2026-11-18T10:55:55.5963491Z",
+      "endUtc": "2026-11-18T10:56:36.8678248Z",
+      "elapsedMs": 41271.4757,
+      "outerTimeout": false,
+      "exitCode": 1
+    },
+    {
+      "label": "s2-metrics-visual",
+      "path": "<local-user>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\s3-worktrees\\edge\\scripts\\delivery\\s2-metrics-visual.test.cjs",
+      "timeoutMs": 180000,
+      "startUtc": "2026-11-18T10:56:36.8725518Z",
+      "endUtc": "2026-11-18T10:57:13.3653071Z",
+      "elapsedMs": 36492.7553,
+      "outerTimeout": false,
+      "exitCode": 1
+    },
+    {
+      "label": "s3-customer-table-visual",
+      "path": "<local-user>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\s3-worktrees\\edge\\scripts\\delivery\\s3-customer-table-visual.test.cjs",
+      "timeoutMs": 180000,
+      "startUtc": "2026-11-18T10:57:13.3677763Z",
+      "endUtc": "2026-11-18T10:57:46.9549684Z",
+      "elapsedMs": 33587.1921,
+      "outerTimeout": false,
+      "exitCode": 1
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+'use strict';
+
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+
+const repo = path.resolve(__dirname, '..', '..');
+const api = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Services', 'ApiClient.cs'), 'utf8');
+const host = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Views', 'LegacyUiHostPage.xaml.cs'), 'utf8');
+const capability = fs.readFileSync(path.join(repo, 'desktop/src/Zhike.Desktop/Services/WsCollectionCapability.cs'), 'utf8');
+const script = host.match(/internal static string BuildWsCollectorScript\(string accountId\)\s*\{[\s\S]*?return \$\$"""([\s\S]*?)""";/)?.[1] || '';
+
+assert.match(api, /record WsGroupMembershipEventDto\(/, 'native API must model WS group membership events');
+assert.match(api, /GroupEvents\s*=\s*null/, 'ingest batches must carry optional group events without breaking old message packets');
+assert.match(api, /request\.GroupEvents[\s\S]*Count\s*==\s*0/, 'validation must allow a group-events-only ingest batch');
+assert.match(host, /groupEvents/, 'native WS bridge must parse groupEvents from collector packets');
+assert.match(host, /new WsGroupMembershipEventDto\(/, 'native bridge must normalize group event DTOs before queueing');
+assert.match(host, /new WsIngestBatchRequestDto\([\s\S]*groupEvents/, 'group events must be sent with the normal durable WS ingest batch');
+assert.match(host, /sharedState\s*=\s*request\.GroupEvents is \{ Count: > 0 \}/, 'group event sync must refresh the shared CRM state');
+assert.match(host, /fromBackgroundCollector = collectorRole == "background";[\s\S]{0,150}if \(fromBackgroundCollector\) return;/,
+  'RD02 denies newly submitted background packets before the retained group-event parser');
+assert.match(host, /if \(fromBackgroundCollector && root\.TryGetProperty\("groupEvents"/,
+  'historical group parsing remains origin-scoped; disabling runtime must not rewrite the group DTO rules');
+assert.match(host, /ws-native-group-monitor/, 'native bridge must reject untrusted group-event sources');
+assert.match(host, /configure-group-monitor/, 'desktop bridge must expose group monitor configuration');
+assert.match(host, /start-group-monitor/, 'desktop bridge must expose group monitor start');
+assert.match(host, /pause-group-monitor/, 'desktop bridge must expose group monitor pause');
+assert.match(host, /stop-group-monitor/, 'desktop bridge must expose group monitor stop');
+assert.match(host, /__zhikeWsConfigureGroupMonitor/, 'group monitor configuration must target the collector page API');
+assert.match(host, /__zhikeWsGroupMonitor(Start|Tick)/, 'group monitor must have a collector-only heartbeat/start API');
+assert.match(host, /__zhikeWsGroupMonitorPause/, 'group monitor must expose a collector-only pause API');
+assert.match(host, /__zhikeWsGroupMonitorStop/, 'group monitor must expose a collector-only stop API');
+assert.match(script, /groupEvents/, 'collector packets must include the group event envelope');
+assert.match(script, /collectGroupMonitorPreviewEvents/, 'group monitor must inspect rendered VIP-group list previews without opening chats');
+assert.doesNotMatch(script, /row\.conversationType !== 'vip_group'/, 'fixed group monitor must accept an explicitly monitored ordinary group');
+assert.doesNotMatch(script, /typeEvidence\.conversationType !== 'vip_group'/, 'fixed group monitor must accept an explicitly monitored ordinary group header');
+assert.match(script, /conversationIdentityFromRow/, 'group discovery must derive a stable row identity before falling back to display text');
+assert.match(script, /data-group-id.*data-jid.*data-chat-id/, 'group discovery must inspect WhatsApp group/JID attributes');
+assert.match(script, /const identity = conversationIdentityFromRow\(row\)/, 'row discovery must use the robust group identity extractor');
+assert.match(script, /lastMessagePreview|previewText/, 'group monitor preview observer must use existing list metadata');
+assert.match(script, /申请加入|等待审核|join request|approval pending/, 'join-request system rows must be excluded before emitting joined events');
+assert.match(script, /mergeRows\(run\.seen, readRows\(\)[\s\S]*collectGroupMonitorPreviewEvents/, 'full hidden list sweep must feed each rendered window to group monitoring');
+assert.match(script, /const groupMonitor = backgroundCollectorRole \? groupMonitorTick\(\)/, 'background heartbeat must drive the passive group monitor');
+assert.match(script, /advanced, queuedTasks:collectorTasks\.size, groupMonitor/, 'background heartbeat must expose monitor health counters');
+const begin = host.indexOf('private Task<BridgeResponse> ConfigureVipGroupsAsync(');
+const end = host.indexOf('private async Task<List<StoredWsAccount>> LoadWsAccountsAsync(', begin);
+assert.ok(begin > 0 && end > begin, 'RD02 group entry boundaries must exist');
+const groupMonitorMethod = host.slice(begin, end);
+assert.match(groupMonitorMethod, /ConfigureGroupMonitorAsync[\s\S]*Task\.FromResult\(WsCollectionBlocked\(requestId, accountId\)\)/,
+  'configuration must be explicitly blocked rather than persisted as enabled');
+assert.match(groupMonitorMethod, /action is not \("pause" or "stop"\)[\s\S]*WsCollectionBlocked/,
+  'only safe local pause/stop acknowledgements remain');
+assert.match(groupMonitorMethod, /localOnly = true[\s\S]*collectionCapability = WsCollectionCapability\.Current/);
+assert.doesNotMatch(groupMonitorMethod, /ExecuteScriptAsync|CollectorView|_wsGroupMonitorConfigs\[/,
+  'blocked monitor configuration must not execute on either hidden or foreground WebViews');
+assert.doesNotMatch(host, /ExecuteGroupMonitorScriptAsync|ApplyGroupMonitorConfigurationAsync|_wsCollectorBootstraps/,
+  'there is no alternate production bootstrap or script-execution entry');
+assert.match(capability, /"configure-group-monitor"[\s\S]*"start-group-monitor"/);
+assert.match(host, /if \(WsCollectionCapability\.BlocksAction\(action\)\) return WsCollectionBlocked\(requestId, id\)/);
+
+console.log('WS native group contract: historical DTO/queue/parser retained; RD02 runtime/config/start blocked with local-only safe stop');

@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794940878190-6fc6658e-09b4-4b07-96dc-bb10ff503ce0",
+  "mode": "controlled-node-probe-close-timeout",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 3000,
+  "launchedAt": "2026-11-17T18:41:18.190Z",
+  "events": [
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 11,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 902,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 902
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 902
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 902
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 902,
+      "acknowledgement": "stdin-request"
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 907
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 907
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 912,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 912
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 912
+    },
+    {
+      "event": "identity-probe-termination-requested",
+      "elapsedMs": 2827,
+      "attempted": true,
+      "requested": true
+    },
+    {
+      "event": "identity-probe-termination-confirmed",
+      "elapsedMs": 2848
+    }
+  ],
+  "identities": [
+    {
+      "pid": 39188,
+      "startedTicks": "639305376781943837",
+      "startedUtc": "2026-11-17T18:41:18.1943837Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": false,
+  "pid": 39188,
+  "identityProbePid": 37772,
+  "resultReady": true,
+  "rootExitProof": "verified-spawn-handle-exit-and-streams",
+  "remainingIdentities": [],
+  "identityProbeTermination": {
+    "attempted": true,
+    "requested": true,
+    "observedClose": {
+      "code": null,
+      "signal": "SIGTERM"
+    },
+    "status": "confirmed"
+  },
+  "releaseFailure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "identity-probe-close"
+  },
+  "elapsedMs": 2848,
+  "stdoutBytes": 37,
+  "stderrBytes": 0,
+  "failure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "identity-probe-close",
+    "message": "Isolated lifecycle deadline reached during identity-probe-close"
+  }
+}

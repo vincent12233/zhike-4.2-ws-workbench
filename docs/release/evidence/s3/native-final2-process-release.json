@@ -1,0 +1,23 @@
+{
+  "rootPid": 19588,
+  "normalCloseByUser": true,
+  "recordedPids": [
+    {
+      "pid": 13732,
+      "livePidFound": false
+    },
+    {
+      "pid": 19588,
+      "livePidFound": false
+    },
+    {
+      "pid": 28472,
+      "livePidFound": false
+    }
+  ],
+  "stoppingEventCount": 1,
+  "fullPreCloseProcessTreeObserved": false,
+  "limitation": "Window capture failed before a final full process-tree sample; recorded root/sidecar/Core PIDs only",
+  "usedForce": false,
+  "productionOpened": false
+}

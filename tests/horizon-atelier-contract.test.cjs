@@ -10,6 +10,7 @@ const index = read('resources/app/index.html');
 const app = read('resources/app/app.js');
 const css = read('resources/app/modules/horizon-atelier.css');
 const homeCss = read('resources/app/modules/home-6.css');
+const designCss = read('resources/app/modules/design-system.css');
 
 const requiredNav = [
   '今日工作台','快速录入','任务中心','阶段看板','客户中心','分类视图','热聊管理','群组管理','VIP 管理',
@@ -36,31 +37,62 @@ assert.match(app, /home-detail-sections/, 'full business controls remain accessi
 assert.match(app, /资金实力 <b>55%<\/b>/);
 assert.match(app, /聊天粘度 <b>45%<\/b>/);
 assert.match(app, /投资经验仅补充档案，不计入提醒权重/);
-assert.match(css, /--hz-sidebar-expanded:246px/);
-assert.match(homeCss, /--hz-sidebar-expanded:clamp\(176px,15\.2vw,214px\)/, 'expanded navigation must retain the reference panel width while leaving the work surface usable');
-assert.match(homeCss, /#sidebar #mainNav\{order:1;[^}]*padding:15px 14px 4px 12px/, 'sections must begin at the top while leaving room for full labels at Windows display scaling');
-assert.match(homeCss, /#sidebar:not\(\.collapsed\)\{[\s\S]*?mask-image:url\("\.\.\/assets\/horizon-sidebar-shell-6\.svg"\)/, 'expanded sidebar must use the actual S-curve silhouette, not a rounded rectangle');
-assert.match(homeCss, /#sidebar \.workspace-switch\{[\s\S]*?order:2;/, 'workspace control must stay reachable below the navigation rather than displacing the reference section header');
-assert.match(homeCss, /#sidebar \.nav-item\{[\s\S]*?height:24px!important/, 'reference navigation spacing must remain readable and scrollable');
-assert.match(homeCss, /\.home-dashboard-grid\{[\s\S]*?grid-template-columns:\s*(?:minmax\(0,[^)]+\)\s*){3}/, 'activity, trend and status must share the first screen');
-assert.match(homeCss, /html\[data-view="home"\] #viewContainer>\.page-heading\{display:none!important\}/, 'home must not spend a second row on the page title');
-assert.match(homeCss, /html\[data-view="home"\] \.home-top-title\{/, 'the title must occupy the topbar with search and status');
-assert.match(homeCss, /@media \(max-width:939px\)/, 'small-window layout must reflow instead of clipping the AI card');
-assert.match(css, /\.sidebar\.collapsed/);
+assert.match(css, /--hz-sidebar-expanded:248px/);
+assert.match(css, /--zhike-sidebar-expanded:var\(--hz-sidebar-expanded\)|--zhike-sidebar-expanded:248px/, 'expanded navigation has one stable width and does not compress its labels');
+assert.match(css, /#mainNav\s*\{padding:0 12px 16px/, 'navigation keeps a bounded inset and its own scroll owner');
+assert.match(css, /html\[data-palette\]:not\(\[data-view="ws-workbench"\]\)\s*\{/, 'main and GPT routes share one palette-aware outer shell while the independent WS workspace keeps its own geometry');
+assert.doesNotMatch(css, /:not\(\[data-view="gpt"\]\)/, 'GPT retains the complete shared outer shell at every responsive breakpoint');
+assert.match(designCss, /html\[data-palette\]:not\(\[data-view="ws-workbench"\]\):not\(\[data-view="gpt"\]\)\s*\{/, 'GPT content controls retain their separate design-system boundary');
+assert.match(css, /#sidebar\s*\{[^}]*background:var\(--ds-rail-decoration\) center bottom\/100% auto no-repeat,var\(--ds-rail-paint\)!important[^}]*-webkit-mask-image:none;mask-image:none/, 'both palettes use the shared static curve and navy rail paint without an artwork mask clipping navigation');
+assert.doesNotMatch(css, /html\[data-palette="horizon-night"\][^{]*#sidebar/, 'night mode cannot introduce a second rail geometry or paint owner');
+assert.match(css, /#sidebar \.workspace-switch\s*\{[^}]*min-height:54px/, 'local workspace settings remain a reachable full-size control');
+assert.match(css, /#mainNav \.nav-item\s*\{[^}]*min-height:44px[^}]*font-size:var\(--ds-font-nav\)/, 'navigation preserves readable labels and accessible targets');
+assert.match(homeCss, /\.home-dashboard-grid\s*\{[^}]*grid-template-columns:minmax\(0,1\.7fr\) minmax\(300px,1fr\);grid-template-areas:"trend health" "activity activity"/,
+  'the trend and health share a readable first row while activity has its own full row');
+for (const area of ['trend', 'activity', 'health']) assert.match(homeCss, new RegExp(`\\.home-${area}-panel\\s*\\{grid-area:${area}\\}`),
+  `the ${area} panel must bind to its real dashboard grid area`);
+assert.match(homeCss, /@media\(max-width:1440px\)[\s\S]*?\.home-dashboard-grid\s*\{grid-template-columns:minmax\(0,1\.4fr\) minmax\(280px,1fr\);grid-template-areas:"trend health" "activity activity"/,
+  'smaller desktop widths retain two readable columns and the complete activity row');
+assert.match(homeCss, /@media\(max-width:820px\)[\s\S]*?\.home-dashboard-grid\s*\{grid-template-columns:1fr;grid-template-areas:"trend" "activity" "health"/,
+  'narrow/high-DPI windows preserve all three panels in one readable column');
+assert.match(css, /\.home-top-title\s*\{display:none\}/, 'the shared topbar must not duplicate the content page title');
+assert.doesNotMatch(homeCss, /#viewContainer>\.page-heading[^}]*display:none/, 'the actual page heading remains visible in the content region');
+assert.match(homeCss, /@media\(max-width:1150px\)[\s\S]*?\.horizon-workbench-hero\s*\{grid-template-columns:1fr/, 'AI flow and details reflow instead of clipping in smaller windows');
+assert.match(css, /#sidebar\.collapsed/);
 assert.match(index, /<img src="\.\/assets\/zhike-horizon-logo\.png" alt="" draggable="false" \/>/, '6.0 shell must use the Horizon logo instead of the legacy text tile');
-assert.match(css, /\.brand-mark img\{[^}]*object-fit:contain/, 'Horizon brand asset must stay proportionally contained');
-assert.match(css, /border-radius:46px 78px 94px 36px \/ 52px 82px 126px 42px/, 'expanded sidebar must keep the approved sculptural silhouette');
-assert.match(css, /border:1px solid rgba\(231,199,136,\.27\)!important/, 'sidebar needs the restrained gold material edge from the approved preview');
-assert.match(css, /\.nav-item\.active\{[\s\S]*?border-color:rgba\(240,210,151,\.5\)!important/, 'active navigation must use the approved gold-and-teal focus treatment');
-assert.match(css, /\.horizon-workbench-hero/);
-assert.match(css, /@media \(max-width:820px\)/);
-assert.match(css, /@media \(max-width:560px\)/, '200% scaling needs a compact effective-width layout');
-assert.match(css, /@media \(max-height:620px\)/, '820x540 needs an explicit compact-height layout');
-assert.match(css, /\.horizon-flow-node,\.horizon-flow-node:nth-child\(n\)\{position:relative;inset:auto;width:100%/, 'priority cards must reflow instead of overlap at high zoom');
-assert.match(css, /\.sidebar\.collapsed \.brand-mark[^}]*display:none!important/, 'collapsed rail keeps its control inside the clipped shell');
-assert.match(css, /\.sidebar\.collapsed \.collapse-button\{position:static/, 'collapse button must remain reachable inside the rail');
-assert.match(css, /--zk-surface:var\(--hz-surface\)/, 'legacy components must consume the 6.0 surface token');
-assert.match(css, /--surface-ink:var\(--hz-text\)/, 'all component layers must share the 6.0 text token');
+assert.match(css, /\.brand-mark img\s*\{[^}]*object-fit:contain/, 'Horizon brand asset must stay proportionally contained');
+assert.match(css, /#sidebar\s*\{[^}]*border:1px solid var\(--ds-rail-border\)!important;[^}]*border-radius:var\(--ds-radius-large\)!important/, 'the shared rail retains a visible navy-rail edge and restrained rounded shape');
+assert.match(designCss, /--ds-radius-large:22px/, 'the rail uses the shared 22px panel silhouette in both palettes');
+assert.match(css, /\.nav-item\.active\s*\{[^}]*color:var\(--ds-rail-active-text\)!important[^}]*box-shadow:inset 3px 0 var\(--ds-rail-accent\)/, 'active navigation uses the dedicated high-contrast rail foreground and cue without changing content-tab colors');
+assert.match(css, /\.topbar\s*\{[^}]*background:var\(--ds-topbar-bg\)!important[^}]*color:var\(--ds-topbar-text\)/, 'the blue-purple topbar owns its readable foreground separately from the canvas');
+assert.match(homeCss, /\.horizon-workbench-hero/);
+const homeHeroMarkup = app.slice(app.indexOf('function renderHorizonHero('), app.indexOf('function ensureHomeWsFollowupPanel('));
+assert.match(homeHeroMarkup, /class="horizon-kpis"[\s\S]*class="horizon-kpi-icon" aria-hidden="true"[\s\S]*class="horizon-flow-stage"/, 'KPI indicators precede the AI panels in source and visual reading order');
+assert.match(homeCss, /\.horizon-kpis\s*\{grid-column:1\/-1;display:grid;grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/, 'six KPI cards span the full workspace before the two-column AI section');
+assert.match(homeCss, /\.horizon-kpi strong\s*\{[^}]*white-space:nowrap;[^}]*overflow-x:auto;overflow-y:hidden;[^}]*font-size:var\(--ds-font-kpi\);line-height:1\.2;/,
+  'keep one-line KPI values at 26px, with enough line height and horizontal-only overflow');
+for (const [limit, columns] of [[1240, 3], [600, 2], [370, 1]]) {
+  const limitQuery = RegExp.escape('(max-width:' + limit + 'px)');
+  const tracks = RegExp.escape('grid-template-columns:repeat(' + columns + ',minmax(0,1fr))');
+  const selector = new RegExp('@container main-workspace ' + limitQuery + '\\s*\\{[^}]*\\.horizon-kpis\\s*\\{' + tracks);
+  assert.match(homeCss, selector, 'KPI columns reflow according to the available workspace');
+}
+assert.match(app, /class="digital-horizon" aria-label="数字地平线 · 今日工作台"/, 'the original Digital Horizon banner is part of the real home renderer');
+assert.match(app, /class="digital-horizon-context"[\s\S]*?esc\(today\)[\s\S]*?display\(allDue\.length\)/, 'banner date and reminder reuse actual existing values and data-read safeguards');
+assert.match(app, /class="digital-horizon-art"[^>]*aria-hidden="true"[^>]*focusable="false"/, 'abstract illustration is decorative rather than a fabricated business chart');
+assert.match(homeCss, /\.digital-horizon\s*\{[^}]*min-height:110px/, 'brand banner has a bounded first-screen height');
+assert.match(homeCss, /\.digital-horizon-art\s*\{[^}]*pointer-events:none/, 'art cannot obstruct working controls');
+assert.match(homeCss, /\.horizon-flow-stage\s*\{[^}]*padding-bottom:calc\(var\(--ds-section-inset\) \+ 12px\);[^}]*background:var\(--ds-material-3\),var\(--ds-material-0\)/, 'flow text keeps the existing surface blend with artwork confined to its footer');
+assert.match(homeCss, /\.horizon-flow-stage::after\s*\{[^}]*content:"";position:absolute;inset:auto 0 0;height:22px;[^}]*background:var\(--ds-flow-art\)[^}]*pointer-events:none/, 'flow artwork stays inside the reserved bottom inset');
+assert.match(css, /@media\s*\(max-width:820px\)/);
+assert.match(css, /@media\s*\(max-width:560px\)/, '200% scaling needs a compact effective-width layout');
+assert.match(css, /@media\s*\(max-height:620px\)/, '820x540 needs an explicit compact-height layout');
+assert.match(homeCss, /\.horizon-flow-node\s*\{position:relative;inset:auto!important;transform:none!important;[^}]*flex:1 1 150px;min-width:0/, 'priority cards use normal flex flow instead of overlapping absolute coordinates');
+assert.match(css, /#sidebar\.collapsed \.brand\s*\{min-height:96px/, 'collapsed rail reserves separate space for the restore control');
+assert.match(css, /#collapseNav\s*\{position:absolute;right:5px;top:15px;width:var\(--ds-control-height\);height:var\(--ds-control-height\);min-width:var\(--ds-control-height\)/, 'the expanded rail toggle is 44px with the original center');
+assert.match(css, /#sidebar\.collapsed #collapseNav\s*\{display:grid!important;top:51px;right:13px/, 'the 44px collapsed rail toggle keeps its original center inside the 72px rail');
+assert.match(designCss, /--zk-surface:var\(--ds-surface\)/, 'legacy surfaces consume the single shared palette authority');
+assert.match(designCss, /--surface-ink:var\(--ds-text\)/, 'all component layers share the palette text token');
 assert.doesNotMatch(css, /\.panel[^\n{]*,[^\n{]*\.data-table tbody tr[^\n{]*\{contain:layout paint\}/, 'large panels and table rows must not clip sticky content');
 
 const headEnd = index.indexOf('</head>');

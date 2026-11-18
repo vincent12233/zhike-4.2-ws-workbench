@@ -15,6 +15,8 @@ public sealed record ImportPreviewResponse(string Id, string SourceHash, IReadOn
 public sealed record WsAccountDto(string Id, string DisplayName, string Status, DateTimeOffset? LastSeen, string? RuntimeStatus = null, DateTimeOffset? UpdatedAt = null, string? LastKnownStatus = null);
 public sealed record FollowupDto(string Id, string CustomerId, string ReasonKey, string Title, string Detail, DateTimeOffset? DueAt, string Priority, string State);
 public sealed record AiJobDto(string Id, string JobType, string State, int Attempts, DateTimeOffset AvailableAt, string LastError, DateTimeOffset UpdatedAt);
+public sealed record AiPipelineLeaseDto(string ScopeKey, string LeaseId, string OwnerId, long FencingToken);
+public sealed record AiPipelineRequestResult(bool Ok, int StatusCode, JsonElement? Data, string Message);
 public sealed record WsAccountRequest(string Id, string DisplayName, string Status = "未连接");
 public sealed record WsMessageEnvelopeDto(
     string ConnectorId,
@@ -61,10 +63,31 @@ public sealed record WsCheckpointDto(
     string ConversationType = "",
     bool? IsGroup = null,
     bool VipGroup = false);
-public sealed record WsIngestBatchRequestDto(string Protocol, string ConnectorId, string AccountId, DateTimeOffset CapturedAt, string Scope, IReadOnlyList<WsMessageEnvelopeDto> Messages, IReadOnlyList<WsCheckpointDto> Checkpoints);
+public sealed record WsGroupMembershipEventDto(
+    string AccountId,
+    string ProfileId,
+    string TargetId,
+    string GroupJid,
+    string MemberId,
+    string MemberPhone,
+    string Type,
+    DateTimeOffset? EventAt = null,
+    DateTimeOffset? ObservedAt = null,
+    string SourceEventId = "",
+    double Confidence = 0,
+    string Source = "ws-native");
+public sealed record WsIngestBatchRequestDto(
+    string Protocol,
+    string ConnectorId,
+    string AccountId,
+    DateTimeOffset CapturedAt,
+    string Scope,
+    IReadOnlyList<WsMessageEnvelopeDto> Messages,
+    IReadOnlyList<WsCheckpointDto> Checkpoints,
+    IReadOnlyList<WsGroupMembershipEventDto>? GroupEvents = null);
 public sealed record WsIngestBatchResponseDto(int Accepted, int Deduplicated, IReadOnlyList<string> MessageIds, DateTimeOffset ProcessedAt);
 
-public sealed class ApiClient(HttpClient http)
+public sealed class ApiClient(HttpClient http) : IDisposable
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private string? _sessionToken;
@@ -76,6 +99,12 @@ public sealed class ApiClient(HttpClient http)
     /// set; the desktop build has no remote-server fallback.
     /// </summary>
     public bool IsLocalSidecar { get; private set; }
+
+    public void Dispose()
+    {
+        http.Dispose();
+        GC.SuppressFinalize(this);
+    }
 
     public void ConfigureLocalSidecar() => IsLocalSidecar = true;
 
@@ -145,6 +174,48 @@ public sealed class ApiClient(HttpClient http)
         catch
         {
             return new RawApiResponse(false, 0, "upstream request unavailable", null);
+        }
+    }
+
+    public async Task<BinaryApiResponse> GetBytesAsync(
+        string path,
+        CancellationToken cancellationToken = default,
+        int maxBytes = 64 * 1024 * 1024)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !path.StartsWith("api/ws/media/", StringComparison.OrdinalIgnoreCase))
+            return new(false, 400, "invalid binary path", [], string.Empty, string.Empty);
+        if (maxBytes < 1) return new(false, 400, "invalid binary size limit", [], string.Empty, string.Empty);
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, path);
+            using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            await using var output = new MemoryStream();
+            var buffer = new byte[64 * 1024];
+            var total = 0;
+            while (true)
+            {
+                var read = await stream.ReadAsync(buffer.AsMemory(), cancellationToken);
+                if (read <= 0) break;
+                total += read;
+                if (total > maxBytes)
+                    return new(false, 413, "binary response exceeds the configured limit", [], string.Empty, string.Empty);
+                await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+            }
+            var bytes = output.ToArray();
+            var contentType = response.Content.Headers.ContentType?.MediaType ?? string.Empty;
+            var disposition = response.Content.Headers.ContentDisposition?.ToString() ?? string.Empty;
+            return response.IsSuccessStatusCode
+                ? new(true, (int)response.StatusCode, "ok", bytes, contentType, disposition)
+                : new(false, (int)response.StatusCode, "binary request failed", [], contentType, disposition);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return new(false, 0, "binary request timed out", [], string.Empty, string.Empty);
+        }
+        catch
+        {
+            return new(false, 0, "binary request unavailable", [], string.Empty, string.Empty);
         }
     }
 
@@ -261,16 +332,163 @@ public sealed class ApiClient(HttpClient http)
 
     public async Task<AiJobDto[]?> GetAiJobsAsync(string? state = null, CancellationToken cancellationToken = default)
     {
-        await Task.CompletedTask;
-        // The local desktop executes AI analysis inline and persists the
-        // result with the WS analysis row; there is no remote worker queue.
-        return [];
+        // Keep this method on the legacy queue route for existing native
+        // callers.  The route remains the production authority while the
+        // Stage 4 pipeline is behind its isolated feature gate.
+        var query = "api/ws/ai-jobs?accountId=default";
+        if (!string.IsNullOrWhiteSpace(state)) query += "&status=" + Uri.EscapeDataString(state.Trim());
+        using var response = await http.GetAsync(query, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        using var document = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
+        if (!document.RootElement.TryGetProperty("jobs", out var rows) || rows.ValueKind != JsonValueKind.Array) return [];
+        return rows.EnumerateArray().Select(ParseLegacyAiJob).ToArray();
     }
 
     public async Task<int> RetryAiJobsAsync(IReadOnlyList<string> ids, CancellationToken cancellationToken = default)
     {
-        await Task.CompletedTask;
-        return 0;
+        if (ids is null || ids.Count == 0) return 0;
+        throw new InvalidOperationException("AI 重试需要隔离队列的 fencing lease；请调用 RetryAiPipelineJobsAsync。 ");
+    }
+
+    /// <summary>
+    /// Reads the Stage 4 queue without enabling it. A 404 response is returned
+    /// as data instead of being hidden so the UI can truthfully show that the
+    /// production gate is still frozen.
+    /// </summary>
+    public Task<AiPipelineRequestResult> GetAiPipelineJobsAsync(
+        string accountId = "default",
+        string? state = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = $"api/ws/ai-pipeline/jobs?accountId={Uri.EscapeDataString(accountId)}";
+        if (!string.IsNullOrWhiteSpace(state)) query += "&state=" + Uri.EscapeDataString(state.Trim());
+        return SendAiPipelineRequestAsync(HttpMethod.Get, query, null, cancellationToken);
+    }
+
+    public Task<AiPipelineRequestResult> GetAiPipelineJobAsync(
+        string jobId,
+        string accountId = "default",
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(jobId)) throw new ArgumentException("任务编号不能为空。", nameof(jobId));
+        var path = $"api/ws/ai-pipeline/jobs/{Uri.EscapeDataString(jobId)}?accountId={Uri.EscapeDataString(accountId)}";
+        return SendAiPipelineRequestAsync(HttpMethod.Get, path, null, cancellationToken);
+    }
+
+    public Task<AiPipelineRequestResult> GetAiCrmSuggestionsAsync(
+        string accountId = "default",
+        string? status = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = $"api/ws/ai-pipeline/suggestions?accountId={Uri.EscapeDataString(accountId)}";
+        if (!string.IsNullOrWhiteSpace(status)) query += "&status=" + Uri.EscapeDataString(status.Trim());
+        return SendAiPipelineRequestAsync(HttpMethod.Get, query, null, cancellationToken);
+    }
+
+    public Task<AiPipelineRequestResult> AcquireAiPipelineLeaseAsync(
+        string scopeKey,
+        string ownerId,
+        int leaseMs = 120_000,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(scopeKey)) throw new ArgumentException("租约作用域不能为空。", nameof(scopeKey));
+        if (string.IsNullOrWhiteSpace(ownerId)) throw new ArgumentException("租约所有者不能为空。", nameof(ownerId));
+        return SendAiPipelineRequestAsync(HttpMethod.Post, "api/ws/fencing", new
+        {
+            action = "acquire",
+            scopeKey,
+            ownerId,
+            leaseMs = Math.Clamp(leaseMs, 10_000, 600_000),
+        }, cancellationToken);
+    }
+
+    public Task<AiPipelineRequestResult> SendAiPipelineJobActionAsync(
+        string jobId,
+        string action,
+        AiPipelineLeaseDto lease,
+        string accountId = "default",
+        object? fields = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(jobId)) throw new ArgumentException("任务编号不能为空。", nameof(jobId));
+        if (string.IsNullOrWhiteSpace(action)) throw new ArgumentException("任务操作不能为空。", nameof(action));
+        var body = BuildStage4Body(accountId, fields);
+        body["jobId"] = jobId;
+        body["action"] = action.Trim().ToLowerInvariant();
+        body["lease"] = JsonSerializer.SerializeToNode(lease, JsonOptions);
+        var path = $"api/ws/ai-pipeline/jobs/{Uri.EscapeDataString(jobId)}?accountId={Uri.EscapeDataString(accountId)}";
+        return SendAiPipelineRequestAsync(HttpMethod.Post, path, body, cancellationToken);
+    }
+
+    public async Task<int> RetryAiPipelineJobsAsync(
+        IReadOnlyList<string> ids,
+        AiPipelineLeaseDto lease,
+        string accountId = "default",
+        CancellationToken cancellationToken = default)
+    {
+        if (ids is null || ids.Count == 0) return 0;
+        var retried = 0;
+        foreach (var id in ids.Where(value => !string.IsNullOrWhiteSpace(value)).Distinct(StringComparer.Ordinal))
+        {
+            var result = await SendAiPipelineJobActionAsync(id, "retry", lease, accountId, cancellationToken: cancellationToken);
+            if (result.Ok && result.Data is { } data && data.ValueKind == JsonValueKind.Object && data.TryGetProperty("retried", out var value) && value.ValueKind == JsonValueKind.True)
+                retried++;
+        }
+        return retried;
+    }
+
+    public Task<AiPipelineRequestResult> ApproveAiCrmSuggestionAsync(
+        string suggestionId,
+        AiPipelineLeaseDto lease,
+        string stateVersion,
+        string accountId = "default",
+        string actor = "operator",
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(suggestionId)) throw new ArgumentException("候选编号不能为空。", nameof(suggestionId));
+        if (string.IsNullOrWhiteSpace(stateVersion)) throw new ArgumentException("审核必须带客户资料版本。", nameof(stateVersion));
+        var body = BuildStage4Body(accountId, new { actor });
+        body["action"] = "approve";
+        body["suggestionId"] = suggestionId;
+        body["lease"] = JsonSerializer.SerializeToNode(lease, JsonOptions);
+        var path = $"api/ws/ai-pipeline/suggestions/{Uri.EscapeDataString(suggestionId)}/approve?accountId={Uri.EscapeDataString(accountId)}";
+        return SendAiPipelineRequestAsync(HttpMethod.Post, path, body, cancellationToken, new Dictionary<string, string> { ["X-State-Version"] = stateVersion });
+    }
+
+    private async Task<AiPipelineRequestResult> SendAiPipelineRequestAsync(
+        HttpMethod method,
+        string path,
+        object? payload,
+        CancellationToken cancellationToken,
+        IReadOnlyDictionary<string, string>? headers = null)
+    {
+        JsonElement? element = payload is null ? null : JsonSerializer.SerializeToElement(payload, JsonOptions);
+        var response = await SendJsonAsync(path, method, element, cancellationToken, headers);
+        return new AiPipelineRequestResult(response.Ok, response.StatusCode, response.Data, response.Message);
+    }
+
+    private static JsonObject BuildStage4Body(string accountId, object? fields)
+    {
+        var body = fields is null
+            ? new JsonObject()
+            : JsonSerializer.SerializeToNode(fields, JsonOptions)?.AsObject() ?? new JsonObject();
+        body["accountId"] = accountId;
+        return body;
+    }
+
+    private static AiJobDto ParseLegacyAiJob(JsonElement row)
+    {
+        var availableAt = DateTimeOffset.TryParse(Text(row, "nextAttemptAt", "createdAt", "updatedAt"), out var parsed)
+            ? parsed
+            : DateTimeOffset.UtcNow;
+        return new AiJobDto(
+            Text(row, "id"),
+            Text(row, "jobType") is { Length: > 0 } type ? type : "ws.ai.analysis",
+            Text(row, "status", "state"),
+            int.TryParse(Text(row, "attempts"), out var attempts) ? attempts : 0,
+            availableAt,
+            Text(row, "lastError", "error"),
+            DateTimeOffset.TryParse(Text(row, "updatedAt", "createdAt"), out var updated) ? updated : availableAt);
     }
 
     private async Task<JsonDocument> GetStateDocumentAsync(CancellationToken cancellationToken)
@@ -611,6 +829,32 @@ public sealed class ApiClient(HttpClient http)
         return payload.Deserialize<WsAccountDto>(JsonOptions);
     }
 
+    public async Task<WsAccountDto> EnsureWsAccountAsync(WsAccountRequest request, CancellationToken cancellationToken = default)
+    {
+        async Task<WsAccountDto?> FindExistingAsync()
+        {
+            var accounts = await GetWsAccountsAsync(cancellationToken) ?? throw new InvalidDataException("本机账号列表未返回。");
+            var existing = accounts.FirstOrDefault(account => string.Equals(account.Id, request.Id, StringComparison.Ordinal));
+            if (existing is not null) return existing;
+            if (accounts.Any(account => string.Equals(account.Id, request.Id, StringComparison.OrdinalIgnoreCase)))
+                throw new InvalidDataException("本机账号编号大小写不一致，无法确认原账号。");
+            return null;
+        }
+
+        var existing = await FindExistingAsync();
+        if (existing is not null) return existing;
+
+        WsAccountDto? confirmed;
+        try { confirmed = await UpsertWsAccountAsync(request, cancellationToken); }
+        catch (HttpRequestException error) when (error.StatusCode == System.Net.HttpStatusCode.Conflict)
+        {
+            confirmed = await FindExistingAsync();
+        }
+        if (confirmed is null || !string.Equals(confirmed.Id, request.Id, StringComparison.Ordinal))
+            throw new InvalidDataException("本机数据服务未确认原账号编号。");
+        return confirmed;
+    }
+
     public async Task<bool> UpdateWsAccountStatusAsync(string accountId, string status, CancellationToken cancellationToken = default)
     {
         using var response = await http.PatchAsJsonAsync($"api/ws/accounts/{Uri.EscapeDataString(accountId)}", new { Status = status }, JsonOptions, cancellationToken);
@@ -631,7 +875,9 @@ public sealed class ApiClient(HttpClient http)
         if (string.IsNullOrWhiteSpace(request.AccountId)) throw new InvalidDataException("WS 待同步数据缺少账号标识。");
         if (request.Messages is null) throw new InvalidDataException("WS 待同步数据缺少消息集合。");
         if (request.Checkpoints is null) throw new InvalidDataException("WS 待同步数据缺少会话检查点集合。");
-        if (request.Messages.Count == 0 && request.Checkpoints.Count == 0)
+        if (request.GroupEvents is not null && request.GroupEvents.Count > 1000)
+            throw new InvalidDataException("WS 群组事件批次超过 1000 条，已保留等待重试。");
+        if (request.Messages.Count == 0 && request.Checkpoints.Count == 0 && (request.GroupEvents is null || request.GroupEvents.Count == 0))
             throw new InvalidDataException("WS 待同步数据为空，已保留等待修复，未误报同步成功。");
     }
 

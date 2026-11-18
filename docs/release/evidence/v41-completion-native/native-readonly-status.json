@@ -1,0 +1,172 @@
+{
+  "frontendSourceRevision": "f0daaf1",
+  "nativeHostProductVersion": "6.0.3+545fbc1cb406e0c444e007ef4abecf0934375a9c",
+  "pid": 2928,
+  "startedAtUtc": "2026-11-18T03:55:07.1237866Z",
+  "isolation": {
+    "workerEnabled": false,
+    "realWsEnabled": false,
+    "paidAiEnabled": false
+  },
+  "seedCounts": [
+    {
+      "seeded": true,
+      "synthetic": true,
+      "accounts": 2,
+      "groups": 4,
+      "members": 4,
+      "customerCount": 2,
+      "jobs": 8,
+      "suggestions": 6
+    },
+    {
+      "stage": "5.5B",
+      "synthetic": true,
+      "contactsDefault": 49,
+      "auditDefault": 54,
+      "crmCustomers": 2,
+      "realWs": false,
+      "paidAi": false,
+      "productionOpened": false
+    }
+  ],
+  "visitedWsPages": [
+    "overview",
+    "accounts",
+    "chat"
+  ],
+  "wsVisibleCoreCreations": [
+    {
+      "at": "2026-11-18T03:58:46.1680043+00:00",
+      "role": "ws-visible",
+      "accountId": "default",
+      "browserProcessId": 34760
+    }
+  ],
+  "wsVisibleNavigation": [
+    {
+      "at": "2026-11-18T03:58:46.3618742+00:00",
+      "role": "ws-visible",
+      "accountId": "default",
+      "success": true,
+      "target": "about:blank"
+    }
+  ],
+  "wsAccountSelections": [
+    {
+      "at": "2026-11-18T03:58:46.1735542+00:00",
+      "accountId": "default",
+      "generation": 1,
+      "created": true,
+      "reload": false
+    },
+    {
+      "at": "2026-11-18T04:13:40.0527912+00:00",
+      "accountId": "default",
+      "generation": 1,
+      "created": false,
+      "reload": false
+    }
+  ],
+  "isolatedStatusReads": [
+    {
+      "at": "2026-11-18T03:58:45.397114+00:00",
+      "generation": 0,
+      "isolatedPreview": false
+    },
+    {
+      "at": "2026-11-18T03:58:46.1807311+00:00",
+      "generation": 1,
+      "isolatedPreview": true
+    },
+    {
+      "at": "2026-11-18T03:58:46.3236229+00:00",
+      "generation": 1,
+      "isolatedPreview": true
+    },
+    {
+      "at": "2026-11-18T04:06:28.2337313+00:00",
+      "generation": 1,
+      "isolatedPreview": true
+    },
+    {
+      "at": "2026-11-18T04:10:58.7322839+00:00",
+      "generation": 1,
+      "isolatedPreview": true
+    },
+    {
+      "at": "2026-11-18T04:13:40.0538698+00:00",
+      "generation": 1,
+      "isolatedPreview": true
+    }
+  ],
+  "chatWidths": [
+    {
+      "at": "2026-11-18T04:12:21.9692104+00:00",
+      "width": 1188.4000244140625
+    },
+    {
+      "at": "2026-11-18T04:16:20.3290223+00:00",
+      "width": 860.4000244140625
+    },
+    {
+      "at": "2026-11-18T04:17:02.210845+00:00",
+      "width": 1188.4000244140625
+    }
+  ],
+  "windowRestore": {
+    "sameHwnd": true,
+    "initialPlacementRestored": true,
+    "placement": {
+      "ShowCommand": 1,
+      "Flags": 0,
+      "X": 182,
+      "Y": 182,
+      "Width": 1152,
+      "Height": 659,
+      "IsMaximized": false,
+      "IsMinimized": false
+    }
+  },
+  "lastSampleUtc": "2026-11-18T04:11:37.1496341Z",
+  "availableCloseCheck": {
+    "at": "2026-11-18T04:20:18.6453619Z",
+    "status": "ObservedProcessesRemain",
+    "observed": 15,
+    "remaining": 15,
+    "unverified": 0,
+    "terminatedByCheck": false
+  },
+  "lastReadOnlyHostCheck": {
+    "checkedAtUtc": "2026-11-18T04:36:50.1555058Z",
+    "pid": 2928,
+    "present": true,
+    "name": "Zhike.Stage51.Acceptance",
+    "startedAtUtc": "2026-11-18T03:55:07.1237866Z",
+    "terminatedByCheck": false
+  },
+  "closeEvents": [
+    {
+      "at": "2026-11-18T04:51:54.9353838+00:00",
+      "kind": "application-stopping"
+    },
+    {
+      "at": "2026-11-18T04:51:55.2553955+00:00",
+      "kind": "sidecar-stopped"
+    },
+    {
+      "at": "2026-11-18T04:51:55.2894244+00:00",
+      "kind": "host-unloaded"
+    }
+  ],
+  "releaseAcceptance": "pending",
+  "afterUserClose": {
+    "at": "2026-11-18T04:52:34.1832326Z",
+    "status": "Passed",
+    "observed": 15,
+    "remaining": 0,
+    "unverified": 0,
+    "terminatedByCheck": false,
+    "scope": "Observed process identities from completion-resources.jsonl"
+  }
+}

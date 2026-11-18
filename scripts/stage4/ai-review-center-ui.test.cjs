@@ -1,0 +1,13 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const root = path.resolve(__dirname, '..', '..');
+const ui = fs.readFileSync(path.join(root, 'resources', 'app', 'modules', 'ai-review-center-ui.js'), 'utf8');
+const index = fs.readFileSync(path.join(root, 'resources', 'app', 'index.html'), 'utf8');
+const css = fs.readFileSync(path.join(root, 'resources', 'app', 'modules', 'ws-workbench.css'), 'utf8');
+for (const endpoint of ['/api/ws/ai-pipeline/jobs', '/api/ws/ai-pipeline/suggestions']) assert.match(ui, new RegExp(endpoint.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+for (const token of ['data-stage4-action="approve"', 'data-stage4-action="reject"', '生产 AI 队列仍处于 FROZEN', 'sourceEvidence']) assert.match(ui, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+assert.match(index, /modules\/ai-review-center-ui\.js/);
+assert.match(css, /stage4-ai-review-center/);
+console.log('ai review center ui: PASS');

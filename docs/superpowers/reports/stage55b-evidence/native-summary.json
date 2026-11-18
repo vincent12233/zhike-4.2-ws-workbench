@@ -1,0 +1,251 @@
+{
+  "status": "Observed",
+  "gateInference": "NotEvaluated",
+  "eventRows": 128,
+  "processes": [
+    {
+      "pid": 11628,
+      "firstAt": "2026-11-16T18:22:52.191Z",
+      "lastAt": "2026-11-16T18:23:59.952Z",
+      "pagesEntered": [],
+      "visibleCoreCreations": [],
+      "visibleNavigations": 0,
+      "accountSelections": [],
+      "presentation": [],
+      "lastChatDecision": null,
+      "observedKindCounts": {
+        "application-start": 1,
+        "sidecar-created": 1,
+        "window-created": 1,
+        "sidecar-ready": 1,
+        "host-route-request": 2,
+        "shell-initialize-requested": 3,
+        "shell-profile-created": 1,
+        "host-loaded": 1,
+        "webview-created": 1,
+        "webview-source-changed": 1,
+        "webview-navigation": 1,
+        "ws-bounds-decision": 1,
+        "application-stopping": 1,
+        "sidecar-stopped": 1,
+        "host-unloaded": 1
+      }
+    },
+    {
+      "pid": 5380,
+      "firstAt": "2026-11-16T18:25:09.613Z",
+      "lastAt": "2026-11-16T19:08:41.465Z",
+      "pagesEntered": [
+        "overview",
+        "contacts",
+        "logs",
+        "groups",
+        "members",
+        "collection",
+        "ai",
+        "crm",
+        "tasks",
+        "settings",
+        "accounts",
+        "chat"
+      ],
+      "visibleCoreCreations": [
+        "default",
+        "native-b"
+      ],
+      "visibleNavigations": 2,
+      "accountSelections": [
+        {
+          "accountId": "default",
+          "generation": 1,
+          "created": true,
+          "reload": false
+        },
+        {
+          "accountId": "default",
+          "generation": 1,
+          "created": false,
+          "reload": false
+        },
+        {
+          "accountId": "native-b",
+          "generation": 2,
+          "created": true,
+          "reload": false
+        },
+        {
+          "accountId": "default",
+          "generation": 1,
+          "created": false,
+          "reload": false
+        },
+        {
+          "accountId": "native-b",
+          "generation": 2,
+          "created": false,
+          "reload": false
+        },
+        {
+          "accountId": "default",
+          "generation": 1,
+          "created": false,
+          "reload": false
+        },
+        {
+          "accountId": "native-b",
+          "generation": 2,
+          "created": false,
+          "reload": false
+        },
+        {
+          "accountId": "default",
+          "generation": 1,
+          "created": false,
+          "reload": false
+        },
+        {
+          "accountId": "native-b",
+          "generation": 2,
+          "created": false,
+          "reload": false
+        },
+        {
+          "accountId": "default",
+          "generation": 1,
+          "created": false,
+          "reload": false
+        },
+        {
+          "accountId": "native-b",
+          "generation": 2,
+          "created": false,
+          "reload": false
+        },
+        {
+          "accountId": "default",
+          "generation": 1,
+          "created": false,
+          "reload": false
+        }
+      ],
+      "presentation": [
+        {
+          "at": "2026-11-16T18:26:02.020Z",
+          "pid": 5380,
+          "kind": "workspace-presentation-enter",
+          "fields": {
+            "hwnd": 35849590,
+            "Changed": true,
+            "Succeeded": true,
+            "Phase": "enter",
+            "rasterizationScale": 1,
+            "before": {
+              "ShowCommand": 1,
+              "Flags": 0,
+              "X": 156,
+              "Y": 156,
+              "Width": 1152,
+              "Height": 659,
+              "IsMaximized": false,
+              "IsMinimized": false
+            },
+            "after": {
+              "ShowCommand": 3,
+              "Flags": 2,
+              "X": 156,
+              "Y": 156,
+              "Width": 1152,
+              "Height": 659,
+              "IsMaximized": true,
+              "IsMinimized": false
+            }
+          }
+        },
+        {
+          "at": "2026-11-16T19:07:37.189Z",
+          "pid": 5380,
+          "kind": "workspace-presentation-exit",
+          "fields": {
+            "hwnd": 35849590,
+            "Changed": true,
+            "Succeeded": true,
+            "Phase": "exit",
+            "rasterizationScale": 1,
+            "before": {
+              "ShowCommand": 1,
+              "Flags": 0,
+              "X": 156,
+              "Y": 156,
+              "Width": 1152,
+              "Height": 659,
+              "IsMaximized": false,
+              "IsMinimized": false
+            },
+            "after": {
+              "ShowCommand": 1,
+              "Flags": 0,
+              "X": 156,
+              "Y": 156,
+              "Width": 1152,
+              "Height": 659,
+              "IsMaximized": false,
+              "IsMinimized": false
+            }
+          }
+        }
+      ],
+      "lastChatDecision": {
+        "at": "2026-11-16T19:06:35.931Z",
+        "pid": 5380,
+        "kind": "ws-bounds-decision",
+        "fields": {
+          "page": "chat",
+          "accountId": "default",
+          "routeActive": true,
+          "routeVisible": true,
+          "sequence": 30,
+          "lastAcceptedSequence": 30,
+          "currentRoute": "ws-workbench",
+          "nativeViewAccountId": "default",
+          "activeAccountId": "default",
+          "presentationAccountId": "default",
+          "accepted": true,
+          "chatActive": true,
+          "hostRenderable": true,
+          "hasNativeCore": true,
+          "hasBounds": true,
+          "hidden": false,
+          "x": 274,
+          "y": 188,
+          "width": 768.4000244140625,
+          "height": 394.3999938964844
+        }
+      },
+      "observedKindCounts": {
+        "application-start": 1,
+        "sidecar-created": 1,
+        "window-created": 1,
+        "sidecar-ready": 1,
+        "host-route-request": 2,
+        "shell-initialize-requested": 3,
+        "window-presentation-state": 7,
+        "shell-profile-created": 1,
+        "host-loaded": 1,
+        "webview-created": 3,
+        "webview-source-changed": 1,
+        "webview-navigation": 3,
+        "ws-bounds-decision": 32,
+        "workspace-page": 30,
+        "workspace-presentation-enter": 1,
+        "ws-initialize": 2,
+        "ws-account-selected": 12,
+        "navigation-starting": 2,
+        "navigation-completed": 2,
+        "workspace-presentation-exit": 1,
+        "application-stopping": 1,
+        "sidecar-stopped": 1,
+        "host-unloaded": 1
+      }
+    }
+  ]
+}

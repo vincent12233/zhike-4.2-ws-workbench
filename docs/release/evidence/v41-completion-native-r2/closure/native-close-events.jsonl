@@ -1,0 +1,3 @@
+{"at":"2026-11-18T06:45:45.9685171+00:00","pid":35236,"kind":"application-stopping","fields":null}
+{"at":"2026-11-18T06:45:46.4278766+00:00","pid":35236,"kind":"sidecar-stopped","fields":{"running":false}}
+{"at":"2026-11-18T06:45:46.4939277+00:00","pid":35236,"kind":"host-unloaded","fields":{"route":"legacy-background"}}

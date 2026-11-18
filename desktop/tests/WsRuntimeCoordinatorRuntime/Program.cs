@@ -50,4 +50,9 @@ restored.RegisterAccount("restored", "重启恢复账号", WsAccountRuntimeState
 Check(restored.LeaseNextBackgroundAccount(start) == "restored",
     "a restored registered account must receive one background probe so a persisted login can resume after restart");
 
+var staleWaitingLogin = new WsRuntimeCoordinator(WsCollectionPolicy.PersonalWhatsAppDefault);
+staleWaitingLogin.RegisterAccount("stale", "状态可能过期的账号", WsAccountRuntimeState.WaitingLogin);
+Check(staleWaitingLogin.LeaseNextBackgroundAccount(start) == "stale",
+    "an account still marked WaitingLogin must be re-probed so a completed QR login is detected without opening it");
+
 Console.WriteLine("WS runtime coordinator scheduling: foreground isolation, fair rotation, per-account backoff and collection policy pass");

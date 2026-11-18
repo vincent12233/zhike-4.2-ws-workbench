@@ -1,0 +1,37 @@
+[
+  {
+    "test": "ws-workbench-api.test.cjs",
+    "exitCode": 1,
+    "errorCode": null,
+    "signal": null,
+    "elapsedMs": 19273
+  },
+  {
+    "test": "ws-export-media-schema.test.cjs",
+    "exitCode": 0,
+    "errorCode": null,
+    "signal": null,
+    "elapsedMs": 7725
+  },
+  {
+    "test": "ws-broadcast-translation.test.cjs",
+    "exitCode": 0,
+    "errorCode": null,
+    "signal": null,
+    "elapsedMs": 13311
+  },
+  {
+    "test": "ws-list-preview-update.test.cjs",
+    "exitCode": 0,
+    "errorCode": null,
+    "signal": null,
+    "elapsedMs": 10806
+  },
+  {
+    "test": "ws-followup-chain.test.cjs",
+    "exitCode": 0,
+    "errorCode": null,
+    "signal": null,
+    "elapsedMs": 1577
+  }
+]

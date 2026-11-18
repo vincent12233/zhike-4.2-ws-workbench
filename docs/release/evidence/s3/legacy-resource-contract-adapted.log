@@ -1,0 +1,1 @@
+resource lifecycle contract: ApiClient disposal, WS callback ownership, serialized initialization and stream error handling are required

@@ -56,7 +56,7 @@ public static class LegacyBridgeScript
             if (signal?.aborted)
               return Promise.reject(Object.assign(new Error(`desktop bridge cancelled (${method})`), { code: 'CANCELLED' }));
             return new Promise((resolve, reject) => {
-              const item = { resolve, reject, timer: null, signal: null, abortHandler: null };
+              const item = { resolve, reject, method, timer: null, signal: null, abortHandler: null };
               const fail = (error, cancelNative) => {
                 if (pending.get(requestId) !== item) return;
                 clearTimeout(item.timer); pending.delete(requestId);
@@ -143,7 +143,21 @@ public static class LegacyBridgeScript
             const item = pending.get(message.requestId); if (!item) return;
             clearTimeout(item.timer); pending.delete(message.requestId);
             if (item.signal && item.abortHandler) item.signal.removeEventListener('abort', item.abortHandler);
-            message.ok ? item.resolve(message) : item.reject(Object.assign(new Error(message.message || 'bridge error'), { code: message.errorCode }));
+            if (message.ok) item.resolve(message);
+            else {
+              const error = Object.assign(new Error(message.message || 'bridge error'), { code: message.errorCode });
+              // Only send outcome metadata crosses this error boundary. Never
+              // attach arbitrary native payloads, bytes, credentials or data.
+              if (/^ws(?:\.|$)/i.test(item.method) && message.data && typeof message.data === 'object') {
+                if (['failed', 'unknown', 'local_attempted'].includes(message.data.deliveryState)) error.deliveryState = message.data.deliveryState;
+                if (typeof message.data.dispatchAttempted === 'boolean') error.dispatchAttempted = message.data.dispatchAttempted;
+                if (message.data.deliveryState === 'failed' && message.data.dispatchAttempted === false) {
+                  if (message.data.notAttempted === true) error.notAttempted = true;
+                  if (message.data.phase === 'preflight') error.phase = 'preflight';
+                }
+              }
+              item.reject(error);
+            }
           }
           if (message.type === 'zhike.bridge.event') window.__zhikeDesktopDispatch?.(message);
         });

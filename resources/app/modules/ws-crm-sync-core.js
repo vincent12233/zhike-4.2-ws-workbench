@@ -15,6 +15,7 @@
     'is_investor', 'investment_years', 'holdings', 'investment_habits',
     'investment_preferences', 'family_context', 'life_interests', 'future_plans',
   ]);
+  const AUTO_SYNC_CONFIDENCE_THRESHOLD = 0.6;
   const redactSensitive = value => text(value)
     .replace(/(?:password|passcode|token|cookie|secret|api[\s_-]?key)\s*[:：=]?\s*[^\s，。；;]+/ig, '[已脱敏]')
     .replace(/(?:验证码|校验码|密码|银行卡(?:号)?|收款码|二维码|身份证(?:号)?|护照(?:号)?)\s*[:：=]?\s*[^\s，。；;]+/ig, '[已脱敏]');
@@ -74,7 +75,11 @@
     const titleDigits = conversationTitle.replace(/\D/g, '');
     const titleIsIdentity = (titleDigits.length >= 7 && titleDigits.length >= conversationTitle.replace(/\s/g, '').length * 0.6)
       || (conversationTitle && conversationTitle === text(conversation.externalId));
-    const name = text(contact.name || result.customerName || fact('preferred_name') || (!titleIsIdentity ? conversationTitle : '') || '未命名客户');
+    // A WhatsApp list title is display metadata, not evidence of the person's
+    // name. Only an explicit AI contact/name fact may populate the profile;
+    // otherwise keep the neutral placeholder and let governance preserve the
+    // existing customer name without creating a false conflict.
+    const name = text(contact.name || result.customerName || fact('preferred_name')) || '未命名客户';
     return {
       customerId: text(result.customerId || result.customer_id || contact.customerId),
       wsExternalId: text(conversation.externalId),
@@ -158,11 +163,16 @@
 
   function matchCustomerForAutoSync(customers, profile = {}) {
     const rows = (Array.isArray(customers) ? customers : []).filter(item => item && typeof item === 'object');
+    const resolve = (kind, candidates) => {
+      if (candidates.length === 1 && candidates[0]?.deleted) return { kind: 'awaiting-restore', customer: candidates[0], candidates };
+      if (candidates.length === 1) return { kind, customer: candidates[0], candidates };
+      if (candidates.length > 1) return { kind: 'ambiguous', customer: null, candidates };
+      return null;
+    };
     const explicitCustomerId = text(profile.customerId || profile.customer_id);
     if (explicitCustomerId) {
       const candidates = rows.filter(item => text(item.id) === explicitCustomerId);
-      if (candidates.length === 1) return { kind: 'explicit-id', customer: candidates[0], candidates };
-      if (candidates.length > 1) return { kind: 'ambiguous', customer: null, candidates };
+      const resolved = resolve('explicit-id', candidates); if (resolved) return resolved;
     }
     const externalId = text(profile.wsExternalId);
     const accountId = text(profile.wsAccountId);
@@ -175,8 +185,7 @@
     };
     if (externalId) {
       const candidates = rows.filter(item => belongsToAccount(item) && (text(item.wsExternalId) === externalId || (Array.isArray(item.wsExternalIds) && item.wsExternalIds.map(text).includes(externalId))));
-      if (candidates.length === 1) return { kind: 'ws-id', customer: candidates[0], candidates };
-      if (candidates.length > 1) return { kind: 'ambiguous', customer: null, candidates };
+      const resolved = resolve('ws-id', candidates); if (resolved) return resolved;
     }
     const identityConfidence = Number(profile.phoneConfidence ?? profile.identityConfidence ?? profile.confidence);
     const phoneTrusted = profile.phoneVerified === true
@@ -185,20 +194,17 @@
     const phone = phoneTrusted ? normalizePhone(profile.phone) : '';
     if (phone) {
       const candidates = rows.filter(item => normalizePhone(item.phone || item.rawPhone) === phone);
-      if (candidates.length === 1) return { kind: 'phone', customer: candidates[0], candidates };
-      if (candidates.length > 1) return { kind: 'ambiguous', customer: null, candidates };
+      const resolved = resolve('phone', candidates); if (resolved) return resolved;
     }
     const contactAccount = text(profile.contactAccount || profile.account);
     if (contactAccount) {
       const candidates = rows.filter(item => text(item.wsContactAccount) === contactAccount || (Array.isArray(item.wsContactAccounts) && item.wsContactAccounts.map(text).includes(contactAccount)));
-      if (candidates.length === 1) return { kind: 'contact-account', customer: candidates[0], candidates };
-      if (candidates.length > 1) return { kind: 'ambiguous', customer: null, candidates };
+      const resolved = resolve('contact-account', candidates); if (resolved) return resolved;
     }
     const conversationId = text(profile.conversationId);
     if (conversationId) {
       const candidates = rows.filter(item => text(item.wsConversationId) === conversationId || (Array.isArray(item.wsConversationIds) && item.wsConversationIds.map(text).includes(conversationId)));
-      if (candidates.length === 1) return { kind: 'conversation', customer: candidates[0], candidates };
-      if (candidates.length > 1) return { kind: 'ambiguous', customer: null, candidates };
+      const resolved = resolve('conversation', candidates); if (resolved) return resolved;
     }
     return { kind: 'new', customer: null, candidates: [] };
   }
@@ -371,5 +377,5 @@
     return { customer, changedFields };
   }
 
-  return { shouldAutoSync, deriveCustomerProfile, deriveFollowupPlan, matchCustomerForAutoSync, mergeCustomerProfileSafely, normalizeDate, normalizePhone };
+  return { shouldAutoSync, deriveCustomerProfile, deriveFollowupPlan, matchCustomerForAutoSync, mergeCustomerProfileSafely, normalizeDate, normalizePhone, AUTO_SYNC_CONFIDENCE_THRESHOLD };
 });

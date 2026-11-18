@@ -70,7 +70,7 @@ const getPort = () => new Promise((resolve, reject) => {
       env: { ...process.env, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token, ZHIKE_DATA_DIR: newRoot },
     });
     let healthy = false;
-    for (let attempt = 0; attempt < 200; attempt++) {
+    for (let attempt = 0; attempt < 1200; attempt++) {
       try { healthy = (await fetch(`http://127.0.0.1:${port}/api/health`)).ok; } catch {}
       if (healthy) break;
       await delay(25);

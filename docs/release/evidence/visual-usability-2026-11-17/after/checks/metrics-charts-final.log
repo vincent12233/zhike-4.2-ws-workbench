@@ -1,0 +1,16 @@
+[PASS] UMD browser export is frozen and never touches service/timer/observer/business state
+[PASS] trend consumes both actual series and exposes title, scope, legend, keyboard points and table
+[PASS] missing series values break their lines and are never converted to zero
+[PASS] zero and entirely unknown trend data do not fabricate a positive chart
+[PASS] all external strings and ids are escaped; colors cannot inject SVG/HTML
+[PASS] large trends bound chart and table to 120 samples, retain endpoints and disclose sampling
+[PASS] loading, error and explicit empty hide stale geometry with honest accessible status
+[PASS] bar values remain raw; zero/unknown rows never draw positive length and input is immutable
+[PASS] empty bar denominator and unsafe/nonfinite values draw no graph
+[PASS] complete distribution shows genuine shares and a zero denominator has no fake percent
+[PASS] partial/missing distribution never treats unknown as zero or claims a full-population share
+[PASS] progress only calculates against a valid positive denominator and retains actual fraction
+[PASS] invalid status fails closed and no renderer changes caller data or business formulas
+[PASS] invalid caller objects and empty inputs are explicit, without zero totals being invented
+[PASS] large and tiny valid numbers remain finite and presentation does not claim 0 or completion prematurely
+{"suite":"delivery-s2-metrics-charts","checks":15,"passed":15,"network":false,"timers":false,"realAi":false,"realWhatsApp":false}

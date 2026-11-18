@@ -1,0 +1,149 @@
+{
+  "files": [
+    {
+      "file": ".gitattributes",
+      "sizeBytes": 8,
+      "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da"
+    },
+    {
+      "file": "01-restart-home.jpg",
+      "sizeBytes": 246735,
+      "sha256": "33dfd296351826fbb82ef1c41aa4627c0d25f7e9d456fc488ff0189a36b1c351"
+    },
+    {
+      "file": "02-narrow-native-clipping.jpg",
+      "sizeBytes": 130491,
+      "sha256": "4b0a6d087eb19f1c3816c6d9284a7a2e0492e0c3b5fc2fe9e0283d33991d73af"
+    },
+    {
+      "file": "03-motion-off-accessibility.txt",
+      "sizeBytes": 124,
+      "sha256": "2af487c725c298c43ef210a9c66a6f85e826d768886eefcae2bece096dd36a96"
+    },
+    {
+      "file": "03-motion-off-after-restart.jpg",
+      "sizeBytes": 187372,
+      "sha256": "cbcf1059c33cb642666410979f26e4c665e7cb95ea54f871984d7de875590936"
+    },
+    {
+      "file": "04-minimum-bounds-fixed.jpg",
+      "sizeBytes": 130006,
+      "sha256": "522f94359712f56a653985ce5d9269e47ec7bc0c415695998bc9618853df183f"
+    },
+    {
+      "file": "05-reading-unknown-native.jpg",
+      "sizeBytes": 207444,
+      "sha256": "66fbbf3a627071c665a6c332794ce46146f9584e278339bb840b2cef8284726d"
+    },
+    {
+      "file": "06-reading-pagination-native.jpg",
+      "sizeBytes": 159205,
+      "sha256": "5f0aecb93c070bf6408b67ffbbbadefd5874a805241195ee8561bcd4ae54f608"
+    },
+    {
+      "file": "final-context.json",
+      "sizeBytes": 288,
+      "sha256": "ba15681e08fddb3cdd9f391b50348e9867618aba41ad25eb760da841978c6ebb"
+    },
+    {
+      "file": "final-edge-charts-failure.json",
+      "sizeBytes": 6706,
+      "sha256": "7d29e28b82310f435fa242954ab4725412188ddf25aa82ef8a53dab1e29410b4"
+    },
+    {
+      "file": "final-edge-customer-failure.json",
+      "sizeBytes": 4463,
+      "sha256": "b27e0eedb03d246b2ffe8853a86be6d556493b15123c7bdc98911582a623faf5"
+    },
+    {
+      "file": "final-edge-main-failure.json",
+      "sizeBytes": 4131,
+      "sha256": "9b1eafd54e80935b24aa1315a358eae3487b7713291f496ee15f64a95762d352"
+    },
+    {
+      "file": "final-edge-ws-failure.json",
+      "sizeBytes": 7227,
+      "sha256": "d7617710f0261939399acdbf2c1d928919ce071ea278d8be39511655bb674065"
+    },
+    {
+      "file": "final-failed-pid-followup.json",
+      "sizeBytes": 1098,
+      "sha256": "adbf028ba237dbcf5f519c9b3433e3f002ebdfca900325b997aa54609093f66b"
+    },
+    {
+      "file": "final-full.log",
+      "sizeBytes": 112252,
+      "sha256": "ddef1982abb0fb32d375bb638da66d85c814db68aeceeb7d6edc0955644d638c"
+    },
+    {
+      "file": "final-result.json",
+      "sizeBytes": 64,
+      "sha256": "739aab08b9d9098fa98ce3c58eaa7c2fca79cd73793ea3c03e0673f94ee9c379"
+    },
+    {
+      "file": "first-context.json",
+      "sizeBytes": 199,
+      "sha256": "fa347d0af420171d2d08d08b56a064adcd31ae5090f8e34ba57aeac4b1ab9ff3"
+    },
+    {
+      "file": "first-edge-exit-failure.json",
+      "sizeBytes": 8297,
+      "sha256": "ddd2e4c6675a71d2d15eef3594b2419a9887a2cc2efee77c2ccef65a7ef7224b"
+    },
+    {
+      "file": "first-full.log",
+      "sizeBytes": 455218,
+      "sha256": "15e787e64350ede07814b6055c08435bd7e709eae029de913d6e6f27af281fe2"
+    },
+    {
+      "file": "first-result.json",
+      "sizeBytes": 64,
+      "sha256": "8c24f3d12e9d561480938b5e027f57166d4fded2d1dcb2895ea21b5c919685a7"
+    },
+    {
+      "file": "r1-exited-identities.json",
+      "sizeBytes": 901,
+      "sha256": "d85df8a0ecda28425e34ac60d314bfd158cc1bfb664efe0b0cc170776c06c4c0"
+    },
+    {
+      "file": "r2-core-lifecycle.jsonl",
+      "sizeBytes": 667,
+      "sha256": "d2c51af0a72dd032905d79927fc2b5b6457444e9c7f736ffca93ec8aa4e54946"
+    },
+    {
+      "file": "r2-exited-identities.json",
+      "sizeBytes": 1607,
+      "sha256": "6aa1d14b73ed922d8adcb06cbe323a3ea7a8d2768e6fad38b8affe304be1c0f8"
+    },
+    {
+      "file": "r2-native-events.jsonl",
+      "sizeBytes": 14290,
+      "sha256": "dfce205f38e84b392dc335357d441518a11be0f4f2e9df8527e95a1fd1e8e45b"
+    },
+    {
+      "file": "r2-resource-single-sample.jsonl",
+      "sizeBytes": 3060,
+      "sha256": "ef91dbe777d9337039d8d84d0057333a57d17cccbb8fb127c22e189f6178e0e9"
+    },
+    {
+      "file": "release-build.log",
+      "sizeBytes": 200,
+      "sha256": "c9481798b802cdee35dfc27cf2e95a2c38d1604deb00b2d7272e6fd2ff2ba237"
+    },
+    {
+      "file": "test-log-provenance.json",
+      "sizeBytes": 4717,
+      "sha256": "9f8334ee0eac88f09f99e7851dd2be03d4820c87bda78615b08f407dcf19f5d9"
+    },
+    {
+      "file": "windows-final-restore-tests.log",
+      "sizeBytes": 1315,
+      "sha256": "e61d118bc8d37f8d5bf63d4211e90411fa74575b4658131460a44a274a1eea52"
+    },
+    {
+      "file": "windows-rename-control-red.log",
+      "sizeBytes": 2429,
+      "sha256": "27edc6c5f2c6591c98753783d6ba11c8010c1ed145bee887f79d05b5d8c805ff"
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "invocation": "1794949155223-8b5d45de-3b0c-490f-b277-e604ba3f924b",
+  "identities": [
+    {
+      "pid": 32140,
+      "startedTicks": "639305459552390441",
+      "state": "absent"
+    },
+    {
+      "pid": 36188,
+      "startedTicks": "639305459576537630",
+      "state": "absent"
+    },
+    {
+      "pid": 38716,
+      "startedTicks": "639305459576616148",
+      "state": "absent"
+    },
+    {
+      "pid": 25100,
+      "startedTicks": "639305459624384544",
+      "state": "absent"
+    },
+    {
+      "pid": 13796,
+      "startedTicks": "639305459704814371",
+      "state": "absent"
+    },
+    {
+      "pid": 38228,
+      "startedTicks": "639305459704539567",
+      "state": "absent"
+    },
+    {
+      "pid": 39196,
+      "startedTicks": "639305459695076064",
+      "state": "absent"
+    },
+    {
+      "pid": 31664,
+      "startedTicks": "639305459694943291",
+      "state": "absent"
+    },
+    {
+      "pid": 20744,
+      "startedTicks": "639305459694925746",
+      "state": "absent"
+    },
+    {
+      "pid": 19552,
+      "startedTicks": "639305459694886660",
+      "state": "absent"
+    },
+    {
+      "pid": 25968,
+      "startedTicks": "639305459717925290",
+      "state": "absent"
+    },
+    {
+      "pid": 32660,
+      "startedTicks": "639305459694736751",
+      "state": "absent"
+    },
+    {
+      "pid": 32468,
+      "startedTicks": "639305459694875983",
+      "state": "absent"
+    },
+    {
+      "pid": 24420,
+      "startedTicks": "639305459702971033",
+      "state": "absent"
+    },
+    {
+      "pid": 34212,
+      "startedTicks": "639305459694627884",
+      "state": "absent"
+    },
+    {
+      "pid": 25896,
+      "startedTicks": "639305459718032303",
+      "state": "absent"
+    },
+    {
+      "pid": 20108,
+      "startedTicks": "639305459720411728",
+      "state": "absent"
+    },
+    {
+      "pid": 40912,
+      "startedTicks": "639305459732278957",
+      "state": "absent"
+    }
+  ],
+  "probePid": 38884,
+  "probeState": "absent",
+  "notReleased": 0,
+  "checkedAtUtc": "2026-11-17T20:59:57.4696005Z"
+}

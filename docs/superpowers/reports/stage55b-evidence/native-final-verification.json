@@ -1,0 +1,365 @@
+{
+  "stage": "5.5B",
+  "status": "Passed",
+  "scope": "real isolated desktop completion only; production remains FROZEN",
+  "rootPid": 5380,
+  "accountSwitches": [
+    {
+      "at": "2026-11-16T19:03:36.3256241+00:00",
+      "accountId": "native-b",
+      "generation": 2,
+      "created": true,
+      "reload": false
+    },
+    {
+      "at": "2026-11-16T19:04:59.6162527+00:00",
+      "accountId": "default",
+      "generation": 1,
+      "created": false,
+      "reload": false
+    },
+    {
+      "at": "2026-11-16T19:05:12.2175527+00:00",
+      "accountId": "native-b",
+      "generation": 2,
+      "created": false,
+      "reload": false
+    },
+    {
+      "at": "2026-11-16T19:05:23.8655724+00:00",
+      "accountId": "default",
+      "generation": 1,
+      "created": false,
+      "reload": false
+    },
+    {
+      "at": "2026-11-16T19:05:35.5256468+00:00",
+      "accountId": "native-b",
+      "generation": 2,
+      "created": false,
+      "reload": false
+    },
+    {
+      "at": "2026-11-16T19:05:47.479677+00:00",
+      "accountId": "default",
+      "generation": 1,
+      "created": false,
+      "reload": false
+    },
+    {
+      "at": "2026-11-16T19:05:59.326632+00:00",
+      "accountId": "native-b",
+      "generation": 2,
+      "created": false,
+      "reload": false
+    },
+    {
+      "at": "2026-11-16T19:06:10.9596788+00:00",
+      "accountId": "default",
+      "generation": 1,
+      "created": false,
+      "reload": false
+    },
+    {
+      "at": "2026-11-16T19:06:24.3036136+00:00",
+      "accountId": "native-b",
+      "generation": 2,
+      "created": false,
+      "reload": false
+    },
+    {
+      "at": "2026-11-16T19:06:35.9282843+00:00",
+      "accountId": "default",
+      "generation": 1,
+      "created": false,
+      "reload": false
+    }
+  ],
+  "visibleCoreCreations": [
+    "default",
+    "native-b"
+  ],
+  "visibleNavigations": 2,
+  "sameHwnd": true,
+  "entryPlacement": {
+    "ShowCommand": 1,
+    "Flags": 0,
+    "X": 156,
+    "Y": 156,
+    "Width": 1152,
+    "Height": 659,
+    "IsMaximized": false,
+    "IsMinimized": false
+  },
+  "exitPlacement": {
+    "ShowCommand": 1,
+    "Flags": 0,
+    "X": 156,
+    "Y": 156,
+    "Width": 1152,
+    "Height": 659,
+    "IsMaximized": false,
+    "IsMinimized": false
+  },
+  "windowRestoredExactly": true,
+  "normalCloseObserved": true,
+  "beforeCloseProcesses": [
+    {
+      "pid": 5380,
+      "name": "Zhike.Stage51.Acceptance",
+      "startedUtc": "2026-11-16T18:25:09.1382254Z",
+      "workingSetBytes": 255320064,
+      "privateBytes": 143560704,
+      "threads": 41,
+      "handles": 1538,
+      "cpuSeconds": 55.109375
+    },
+    {
+      "pid": 31756,
+      "name": "node",
+      "startedUtc": "2026-11-16T18:25:09.7023077Z",
+      "workingSetBytes": 74420224,
+      "privateBytes": 46206976,
+      "threads": 8,
+      "handles": 242,
+      "cpuSeconds": 4.765625
+    },
+    {
+      "pid": 24560,
+      "name": "conhost",
+      "startedUtc": "2026-11-16T18:25:09.7163703Z",
+      "workingSetBytes": 7897088,
+      "privateBytes": 1265664,
+      "threads": 2,
+      "handles": 96,
+      "cpuSeconds": 0.046875
+    },
+    {
+      "pid": 22976,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-16T18:25:11.3511903Z",
+      "workingSetBytes": 193417216,
+      "privateBytes": 80101376,
+      "threads": 65,
+      "handles": 1773,
+      "cpuSeconds": 84.328125
+    },
+    {
+      "pid": 33660,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-16T18:25:11.4474782Z",
+      "workingSetBytes": 13520896,
+      "privateBytes": 3129344,
+      "threads": 8,
+      "handles": 176,
+      "cpuSeconds": 0.15625
+    },
+    {
+      "pid": 10732,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-16T18:25:11.8570582Z",
+      "workingSetBytes": 204152832,
+      "privateBytes": 181514240,
+      "threads": 24,
+      "handles": 1405,
+      "cpuSeconds": 18.609375
+    },
+    {
+      "pid": 33196,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-16T18:25:11.8604056Z",
+      "workingSetBytes": 41377792,
+      "privateBytes": 12140544,
+      "threads": 22,
+      "handles": 363,
+      "cpuSeconds": 0.71875
+    },
+    {
+      "pid": 17132,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-16T18:25:11.9921241Z",
+      "workingSetBytes": 22175744,
+      "privateBytes": 8073216,
+      "threads": 11,
+      "handles": 200,
+      "cpuSeconds": 0.078125
+    },
+    {
+      "pid": 6360,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-16T18:25:12.0757553Z",
+      "workingSetBytes": 156200960,
+      "privateBytes": 82702336,
+      "threads": 32,
+      "handles": 393,
+      "cpuSeconds": 17.84375
+    },
+    {
+      "pid": 33788,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-16T18:26:02.0944318Z",
+      "workingSetBytes": 175374336,
+      "privateBytes": 71073792,
+      "threads": 60,
+      "handles": 1764,
+      "cpuSeconds": 27.421875
+    },
+    {
+      "pid": 15352,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-16T18:26:02.1276785Z",
+      "workingSetBytes": 13537280,
+      "privateBytes": 3129344,
+      "threads": 8,
+      "handles": 176,
+      "cpuSeconds": 0.25
+    },
+    {
+      "pid": 13504,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-16T18:26:02.4930431Z",
+      "workingSetBytes": 83009536,
+      "privateBytes": 61448192,
+      "threads": 23,
+      "handles": 563,
+      "cpuSeconds": 5.90625
+    },
+    {
+      "pid": 26748,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-16T18:26:02.4982173Z",
+      "workingSetBytes": 40980480,
+      "privateBytes": 12353536,
+      "threads": 24,
+      "handles": 363,
+      "cpuSeconds": 0.6875
+    },
+    {
+      "pid": 25264,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-16T18:26:02.5423262Z",
+      "workingSetBytes": 21184512,
+      "privateBytes": 7839744,
+      "threads": 10,
+      "handles": 189,
+      "cpuSeconds": 0.109375
+    },
+    {
+      "pid": 27776,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-16T18:26:02.7309084Z",
+      "workingSetBytes": 57880576,
+      "privateBytes": 25784320,
+      "threads": 27,
+      "handles": 315,
+      "cpuSeconds": 1.125
+    },
+    {
+      "pid": 18012,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-16T19:03:35.7394646Z",
+      "workingSetBytes": 162582528,
+      "privateBytes": 68464640,
+      "threads": 53,
+      "handles": 1584,
+      "cpuSeconds": 6.9375
+    },
+    {
+      "pid": 32288,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-16T19:03:35.7763001Z",
+      "workingSetBytes": 13455360,
+      "privateBytes": 3170304,
+      "threads": 9,
+      "handles": 182,
+      "cpuSeconds": 0.046875
+    },
+    {
+      "pid": 20804,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-16T19:03:36.1384122Z",
+      "workingSetBytes": 81616896,
+      "privateBytes": 60928000,
+      "threads": 22,
+      "handles": 563,
+      "cpuSeconds": 1.53125
+    },
+    {
+      "pid": 28972,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-16T19:03:36.1456304Z",
+      "workingSetBytes": 40562688,
+      "privateBytes": 12402688,
+      "threads": 24,
+      "handles": 354,
+      "cpuSeconds": 0.46875
+    },
+    {
+      "pid": 33320,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-16T19:03:36.1888099Z",
+      "workingSetBytes": 20529152,
+      "privateBytes": 7700480,
+      "threads": 9,
+      "handles": 183,
+      "cpuSeconds": 0.109375
+    },
+    {
+      "pid": 5980,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-16T19:03:36.3089517Z",
+      "workingSetBytes": 53813248,
+      "privateBytes": 21999616,
+      "threads": 25,
+      "handles": 304,
+      "cpuSeconds": 0.484375
+    }
+  ],
+  "cleanupChecks": [
+    {
+      "status": "Passed",
+      "checkedAtUtc": "2026-11-16T19:09:10.9290231Z",
+      "evidenceFile": "stage52-before-close-snapshot-91e1075f6bb44eb4896495ef889883da.jsonl",
+      "observedProcessIdentities": 21,
+      "remainingCount": 0,
+      "remainingProcesses": [],
+      "unverifiedCount": 0,
+      "unverifiedProcesses": [],
+      "processTerminatedByCheck": false,
+      "scope": "read-only process identity checks after application close"
+    },
+    {
+      "status": "Passed",
+      "checkedAtUtc": "2026-11-16T19:09:11.0039280Z",
+      "evidenceFile": "stage55b-resource-samples.jsonl",
+      "observedProcessIdentities": 15,
+      "remainingCount": 0,
+      "remainingProcesses": [],
+      "unverifiedCount": 0,
+      "unverifiedProcesses": [],
+      "processTerminatedByCheck": false,
+      "scope": "read-only process identity checks after application close"
+    }
+  ],
+  "sourceHashes": [
+    {
+      "file": "native-events.jsonl",
+      "sha256": "5e9c1de18258609febfce2f84b94449bc89fedb95c48db84fd16da75cc5a4347"
+    },
+    {
+      "file": "stage52-before-close-snapshot-91e1075f6bb44eb4896495ef889883da.jsonl",
+      "sha256": "d54c5f6be0dda734a507759136b4d0050adbe1a6456f1d34d343fb848171fb37"
+    },
+    {
+      "file": "stage55b-close-current.json",
+      "sha256": "12752cf5449f4ab9d864d6ba42f4513bccdc75c501c2491a069c6ee8a963fe1b"
+    },
+    {
+      "file": "stage55b-close-original.json",
+      "sha256": "36438ee94fac4ecdee28994f409a59d9fcdee2ea0997aab030feb9e796fd1b79"
+    }
+  ],
+  "temporaryDirectoryDeleted": false,
+  "realWhatsAppConnected": false,
+  "productionOpened": false
+}

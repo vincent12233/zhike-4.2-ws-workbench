@@ -1,0 +1,20 @@
+FAIL R01 fingerprint includes every effective payload field: changed payload must not reuse plan identity
+FAIL R03 local click is not platform acceptance or delivery and cannot blindly retry: durable intent must precede external action
++ actual - expected
+
++ undefined
+- 'begin-attempt'
+
+FAIL R03 partial attachment execution is unknown and does not replay first attachment: record completed attachment before proceeding
+PASS R06 switch while native response is pending never writes new account state
+FAIL R03 transport loss after authorization is unknown and blocked from replay: Expected values to be strictly equal:
++ actual - expected
+
++ 'failed'
+- 'unknown'
+
+FAIL R03 duplicate manual clicks cannot start concurrent native attempts: Expected values to be strictly equal:
+
+2 !== 1
+
+Stage 5.5C-1A WS UI: 1/6

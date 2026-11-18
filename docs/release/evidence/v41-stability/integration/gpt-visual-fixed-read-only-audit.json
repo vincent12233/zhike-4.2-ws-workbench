@@ -1,0 +1,16 @@
+{
+  "sourceLog": ".tools/v41/gpt-visual-fixed.log",
+  "sourceLogModifiedUtc": "2026-11-17T20:01:48.4113167Z",
+  "checkedAtUtc": "2026-11-17T20:07:17.9242537Z",
+  "method": "Read-only GetProcessById for stderr-observed PID only",
+  "spawnedRootIdentity": "unknown; the assertion did not persist spawnSync pid or creation time",
+  "exactTemporaryRootIdentified": false,
+  "descendants": "unknown; no descendant identities were observed or logged",
+  "observed": [
+    {
+      "pid": 38792,
+      "source": "captured isolated msedge stderr",
+      "status": "absent"
+    }
+  ]
+}

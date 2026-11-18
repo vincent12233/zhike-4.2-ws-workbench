@@ -34,6 +34,12 @@ assert.match(resizeCase[1], /BridgeResponse\.Success/, 'resize must acknowledge 
 // The web side must coalesce them and avoid concurrent bridge calls.
 assert.match(web, /resizeInFlight/, 'WS resize path must track an in-flight bridge call');
 assert.match(web, /resizePending/, 'WS resize path must coalesce pending bounds');
+assert.match(native, /_wsOverlayGeometryApplied/, 'native WS overlay must retain a stable geometry sample');
+assert.match(native, /Math\.Abs\(width - _lastWsOverlayWidth\) < 2d/, 'native WS overlay must ignore sub-2px layout jitter');
+const hiddenBoundsGuard = native.match(/if \(GetBool\(bounds, "hidden"\)\)([\s\S]*?)var viewportWidth/);
+assert.ok(hiddenBoundsGuard, 'native WS bounds must explicitly handle transient hidden geometry');
+assert.match(hiddenBoundsGuard[1], /_wsOverlayGeometryApplied[\s\S]*?IsWsChatPresentationActive[\s\S]*?return;/, 'a stable live chat rectangle survives transient hidden geometry');
+assert.match(native, /pendingTimer = setTimeout/, 'parent bounds observer must wait for a stable geometry sample');
 
 // Accessibility repair must not rescan the entire document for every WS
 // overlay mutation. The view root is the only page surface that needs a full

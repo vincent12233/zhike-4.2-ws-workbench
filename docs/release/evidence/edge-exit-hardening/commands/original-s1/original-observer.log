@@ -1,0 +1,66 @@
+Isolated visual failure root retained: <USERPROFILE>\AppData\Local\Temp\<ISOLATED-FIXTURE-56>
+Error: Isolated lifecycle deadline reached during result
+    at failure (<USERPROFILE>\Documents\Codex\2026-11-04\new-chat\work\project-review\visual-system-worktrees\integration\tests\helpers\isolated-edge-runner.cjs:16:57)
+    at noteTimeout (<USERPROFILE>\Documents\Codex\2026-11-04\new-chat\work\project-review\visual-system-worktrees\integration\tests\helpers\isolated-edge-runner.cjs:146:12)
+    at Timeout.<anonymous> (<USERPROFILE>\Documents\Codex\2026-11-04\new-chat\work\project-review\visual-system-worktrees\integration\tests\helpers\isolated-edge-runner.cjs:156:82)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7) {
+  code: 'EDGE_RUNNER_TIMEOUT',
+  phase: 'result',
+  metadata: {
+    schemaVersion: 2,
+    invocation: '1795029848021-d9d8c734-c8ca-417a-a9ea-cf80cd294902',
+    mode: 'real-edge-synthetic-layout',
+    scope: 'process lifecycle; caller owns layout assertions',
+    status: 'Failed',
+    timeoutMs: 30000,
+    launchedAt: '2026-11-18T19:24:08.021Z',
+    timebase: 'node-monotonic-ms',
+    startedMonotonicMs: 23115.1183,
+    events: [
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object]
+    ],
+    identities: [ [Object], [Object], [Object], [Object], [Object] ],
+    exit: null,
+    streamsClosed: false,
+    forceTerminated: true,
+    cleanupSafe: false,
+    profile: '<USERPROFILE>\\AppData\\Local\\Temp\\<ISOLATED-FIXTURE-56>\\<ISOLATED-EDGE-PROFILE>',
+    pid: 39384,
+    kernelObserver: {
+      file: '<USERPROFILE>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\edge-exit-fix\\original-observer\\1795029848021-d9d8c734-c8ca-417a-a9ea-cf80cd294902.kernel.jsonl',
+      pid: 35924
+    },
+    identityProbePid: 16520,
+    resourceReleaseOrder: 'owned-session-target-browser',
+    devToolsReadiness: { polls: 6, enoent: 5, ebusy: 0, partial: 0 },
+    releaseFailure: { code: 'EDGE_RUNNER_TIMEOUT', phase: 'process-exit' },
+    identityProbeTermination: {
+      attempted: true,
+      requested: true,
+      observedClose: null,
+      status: 'unknown'
+    },
+    elapsedMs: 30003.5998,
+    stdoutBytes: 0,
+    stderrBytes: 100,
+    failure: {
+      code: 'EDGE_RUNNER_TIMEOUT',
+      phase: 'result',
+      message: 'Isolated lifecycle deadline reached during result'
+    },
+    evidenceFile: '<USERPROFILE>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\edge-exit-fix\\original-observer\\1795029848021-d9d8c734-c8ca-417a-a9ea-cf80cd294902.json'
+  },
+  cleanupSafe: false
+}

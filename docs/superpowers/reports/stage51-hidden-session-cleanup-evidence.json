@@ -1,0 +1,15 @@
+{
+  "stage": "5.1",
+  "status": "Observed",
+  "scope": "read-only attribution check of earlier controlled-ended hidden test session",
+  "checkedAtUtc": "2026-11-16T13:15:11.0196041Z",
+  "hiddenSessionPid": 30308,
+  "browserProcessIdRecordedByThatSession": 24936,
+  "knownRootPresent": false,
+  "knownBrowserPresent": false,
+  "processesWithParent30308Or24936": 0,
+  "nodeProcessesWithParent30308": 0,
+  "processTerminatedByThisCheck": false,
+  "normalCloseAccepted": false,
+  "limitation": "This check does not invent identities for any unrecorded orphan process; it checks the exact known root/browser and direct owned parent links"
+}

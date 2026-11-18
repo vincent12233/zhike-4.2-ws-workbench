@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "SHA-256",
+  "sourcePathBase": "ws worktree",
+  "sourceHeadAtTrial": "17aaecf9c78e9a27defd94165c87a3f64224bbd3",
+  "scope": "Two separate isolated Edge invocations using synthetic inputs. The exit-failure root cause remains undetermined.",
+  "experiments": [
+    {
+      "id": "stage51",
+      "trialResult": "Six synthetic Stage 5.1 layout cases completed in this invocation.",
+      "runnerStatus": "Passed",
+      "browserExitCode": 0,
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "timeoutMs": 30000,
+      "elapsedMs": 13488.030299999999,
+      "resultCases": 6,
+      "resultCompactJsonSha256": "4edb49cdabb617303da7ad7cd668d05cbe5285c683b5759203e56d697015a89c"
+    },
+    {
+      "id": "zero-page-control",
+      "trialResult": "The zero-page control stopped at its pre-close assertion after observing one page target where zero was required.",
+      "runnerStatus": "Failed",
+      "browserExitCode": 0,
+      "streamsClosed": true,
+      "cleanupSafe": true,
+      "forceTerminated": false,
+      "timeoutMs": 30000,
+      "elapsedMs": 4120.5248,
+      "failureCode": "ERR_ASSERTION",
+      "failurePhase": "assertion"
+    }
+  ],
+  "files": [
+    {
+      "sourcePath": ".tools/delivery-s1-edge-layout/1795023316286-4f137092-82b2-41a3-83b4-75b2549f62f5.json",
+      "rawBytes": 15872,
+      "rawSha256": "35a7e1c56ccfec3b8b33277e660b71cb3ee792c919e09ab7f3436b87aa102369",
+      "archivedPath": "stage51/lifecycle.json",
+      "archivedBytes": 15574,
+      "archivedSha256": "e175fa95f204ec6f04c8cdb20393d84c7b5c49c885cffb5c8226fb89da742c2c",
+      "redactions": [
+        "profile: omit synthetic profile path",
+        "kernelObserver.file: make local path relative to ws worktree",
+        "resultFile: make local path relative to ws worktree"
+      ]
+    },
+    {
+      "sourcePath": ".tools/delivery-s1-edge-layout/1795023316286-4f137092-82b2-41a3-83b4-75b2549f62f5.kernel.jsonl",
+      "rawBytes": 2441,
+      "rawSha256": "d2304580a47b70bad90da8597eb4a2a8218869bac0edc36cd0cc57abbc440bde",
+      "archivedPath": "stage51/kernel.jsonl",
+      "archivedBytes": 2441,
+      "archivedSha256": "d2304580a47b70bad90da8597eb4a2a8218869bac0edc36cd0cc57abbc440bde",
+      "redactions": []
+    },
+    {
+      "sourcePath": ".tools/delivery-s1-edge-layout/1795023316286-4f137092-82b2-41a3-83b4-75b2549f62f5.result.json",
+      "rawBytes": 20263,
+      "rawSha256": "750d4217b1af83e303959799bedd3bc3390cd711763b0a73989a511c50eb2de0",
+      "archivedPath": "stage51/result.json",
+      "archivedBytes": 20263,
+      "archivedSha256": "750d4217b1af83e303959799bedd3bc3390cd711763b0a73989a511c50eb2de0",
+      "redactions": []
+    },
+    {
+      "sourcePath": ".tools/usable-edge-experiment/stage51-default.log",
+      "rawBytes": 2623,
+      "rawSha256": "a40a2522959567a3e3cc4d8d68a755a58ee2555493318a5d880c4accdc4c46e4",
+      "archivedPath": "stage51/command.log",
+      "archivedBytes": 2525,
+      "archivedSha256": "9d5f528b20b95177567096252a073d45f0a9ca534530a02d4befe5077f9f5e4f",
+      "redactions": [
+        "evidence: make local path relative to ws worktree"
+      ]
+    },
+    {
+      "sourcePath": ".tools/edge-exit-observer/zero-page-c53961f5-e486-46c7-8bbf-8b1b02212595/1795023406701-ffbd6620-c244-472f-b993-7f657c51cd57.json",
+      "rawBytes": 5312,
+      "rawSha256": "2a326681ed7bbcf90f21a4ebfced1eed57ecad888c4352cf2fe145322b5c97fe",
+      "archivedPath": "zero-page-control/lifecycle.json",
+      "archivedBytes": 5111,
+      "archivedSha256": "de874a881b575ac523739d1c2cf304295be248c306cc3eb86114b566dbb0edf7",
+      "redactions": [
+        "profile: omit synthetic profile path",
+        "kernelObserver.file: make local path relative to ws worktree"
+      ]
+    },
+    {
+      "sourcePath": ".tools/edge-exit-observer/zero-page-c53961f5-e486-46c7-8bbf-8b1b02212595/1795023406701-ffbd6620-c244-472f-b993-7f657c51cd57.kernel.jsonl",
+      "rawBytes": 1828,
+      "rawSha256": "d2406c7ee25658ab8ae11a7abb1b08ec471fa51d2ebd8941a56e07dbdf5686db",
+      "archivedPath": "zero-page-control/kernel.jsonl",
+      "archivedBytes": 1828,
+      "archivedSha256": "d2406c7ee25658ab8ae11a7abb1b08ec471fa51d2ebd8941a56e07dbdf5686db",
+      "redactions": []
+    },
+    {
+      "sourcePath": ".tools/edge-exit-observer/zero-page-c53961f5-e486-46c7-8bbf-8b1b02212595/1795023406701-ffbd6620-c244-472f-b993-7f657c51cd57.stderr.log",
+      "rawBytes": 100,
+      "rawSha256": "b60cde0fb90caca73dc58f3c00122ede01758c09c62d81dafa18850173c5f594",
+      "archivedPath": null,
+      "archivedBytes": null,
+      "archivedSha256": null,
+      "redactions": [],
+      "omission": "DevTools loopback endpoint"
+    },
+    {
+      "sourcePath": ".tools/edge-exit-observer/zero-page-c53961f5-e486-46c7-8bbf-8b1b02212595/1795023406701-ffbd6620-c244-472f-b993-7f657c51cd57.stdout.log",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archivedPath": null,
+      "archivedBytes": null,
+      "archivedSha256": null,
+      "redactions": [],
+      "omission": "empty stdout"
+    },
+    {
+      "sourcePath": ".tools/usable-edge-experiment/zero-page-control.log",
+      "rawBytes": 393,
+      "rawSha256": "bc1f2c284b3b27f90b15829a62076c698d97b51f93ebb40f88b724797b791d3a",
+      "archivedPath": "zero-page-control/command.log",
+      "archivedBytes": 294,
+      "archivedSha256": "9e1b172b3bdbed389e1c63c3e98b31eb8ff1f5553d9e4dcdf4b04eb1e33af3d2",
+      "redactions": [
+        "evidence: make local path relative to ws worktree"
+      ]
+    },
+    {
+      "sourcePath": ".tools/usable-edge-experiment/zero-page-control.source.cjs",
+      "rawBytes": 4628,
+      "rawSha256": "8f16d37e6c5bee98136a1e1782a9eb63dc75993322aecc5ea715f9a05f34c138",
+      "archivedPath": "zero-page-control/control.source.cjs",
+      "archivedBytes": 4628,
+      "archivedSha256": "8f16d37e6c5bee98136a1e1782a9eb63dc75993322aecc5ea715f9a05f34c138",
+      "redactions": []
+    }
+  ],
+  "excludedUninspected": [
+    "Browser profiles and profile contents",
+    "Private connection files and credentials"
+  ],
+  "localPathPlaceholders": {
+    "<WS_WORKTREE>": "source worktree root",
+    "<PROFILE_OMITTED>": "synthetic profile path omitted"
+  }
+}

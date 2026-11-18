@@ -31,3 +31,11 @@ public sealed record RawApiResponse(
     int StatusCode,
     string Message,
     JsonElement? Data);
+
+public sealed record BinaryApiResponse(
+    bool Ok,
+    int StatusCode,
+    string Message,
+    byte[] Data,
+    string ContentType,
+    string ContentDisposition);

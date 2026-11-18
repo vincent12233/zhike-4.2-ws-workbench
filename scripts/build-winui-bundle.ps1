@@ -2,7 +2,7 @@
 param(
   [string]$OutputDir = '',
   [ValidatePattern('^\d+\.\d+\.\d+$')]
-  [string]$Version = '6.0.1',
+  [string]$Version = '6.1.0',
   [ValidateSet('Debug','Release')]
   [string]$Configuration = 'Release',
   [string]$RuntimeIdentifier = 'win-x64',
@@ -29,12 +29,20 @@ $sourceArchive = Join-Path $out "zhike-source-$Version.zip"
 $project = Join-Path $repo 'desktop\src\Zhike.Desktop\Zhike.Desktop.csproj'
 $iconSource = Join-Path $repo 'desktop\src\Zhike.Desktop\Assets\zhike.ico'
 $resourcesRoot = Join-Path $repo 'resources\app'
+$bundledNode = Join-Path $resourcesRoot 'node.exe'
+if (-not (Test-Path -LiteralPath $bundledNode -PathType Leaf)) {
+  throw "Bundled Node executable is missing at $bundledNode. Extract node.exe from the official Node.js 24 Windows x64 distribution and place it there before building."
+}
 $resourceAllowList = @(
   'index.html',
   'app.js',
   'styles.css',
   'node.exe',
   'server.mjs',
+  # The isolated fencing route is opt-in, but the coordinator is a runtime
+  # dependency of server.mjs and must be present in every self-contained
+  # bundle so the sidecar can start deterministically.
+  'sidecar-write-coordinator.cjs',
   'state-delta.cjs',
   'assets',
   'migrations',
@@ -64,16 +72,23 @@ function Assert-SourceReleaseContract {
   $indexSourcePath = Join-Path $resourcesRoot 'index.html'
   $horizonPath = Join-Path $resourcesRoot 'modules\horizon-atelier.css'
   $homePath = Join-Path $resourcesRoot 'modules\home-6.css'
-  $homeArtwork = @('horizon-ridge-6.png', 'horizon-flow-6.png', 'horizon-topline-6.png', 'horizon-rock-6.png')
+  $designSystemPath = Join-Path $resourcesRoot 'modules\design-system.css'
+  $paletteArtwork = @('atelier-dawn.svg', 'horizon-flow-6.png')
+  $homeArtwork = $paletteArtwork + @('horizon-ridge-6.png', 'horizon-topline-6.png', 'horizon-rock-6.png')
   $setupPath = Join-Path $repo 'zhike-desktop-setup.iss'
-  foreach ($requiredPath in @($packagePath, $project, $serverPath, $indexSourcePath, $horizonPath, $homePath, $setupPath)) {
+  foreach ($requiredPath in @($packagePath, $project, $serverPath, $indexSourcePath, $horizonPath, $homePath, $designSystemPath, $setupPath)) {
     if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) { throw "release source is incomplete: $requiredPath" }
   }
   $homeCss = [IO.File]::ReadAllText($homePath)
+  if (-not $homeCss.Contains('var(--ds-flow-art)')) { throw 'release home stylesheet does not use the shared palette artwork.' }
+  $paletteCss = [IO.File]::ReadAllText($designSystemPath)
   foreach ($artwork in $homeArtwork) {
     $artworkPath = Join-Path $resourcesRoot "assets\$artwork"
     if (-not (Test-Path -LiteralPath $artworkPath -PathType Leaf)) { throw "release home artwork is missing: $artworkPath" }
-    if (-not $homeCss.Contains("../assets/$artwork")) { throw "release home artwork is not referenced by home-6.css: $artwork" }
+  }
+  foreach ($artwork in $paletteArtwork) {
+    $reference = '--ds-flow-art\s*:\s*url\(\s*["'']?\.\./assets/' + [regex]::Escape($artwork) + '["'']?\s*\)'
+    if ($paletteCss -notmatch $reference) { throw "release palette stylesheet is missing artwork reference: $artwork" }
   }
 
   $packageVersion = [string]((Get-Content -LiteralPath $packagePath -Raw -Encoding UTF8 | ConvertFrom-Json).version)
@@ -87,6 +102,7 @@ function Assert-SourceReleaseContract {
   $serverText = [IO.File]::ReadAllText($serverPath)
   if ($serverText -notmatch "const APP_VERSION = '$([regex]::Escape($Version))'") { throw "source version mismatch: server.mjs expected $Version" }
   if (-not $serverText.Contains("'/modules/horizon-atelier.css'")) { throw 'Horizon Atelier is not present in the local static-resource allowlist.' }
+  if (-not $serverText.Contains("'/modules/design-system.css'")) { throw 'The shared palette stylesheet is not served by the local service.' }
   if (-not $serverText.Contains("'/modules/home-6.css'")) { throw 'The compact Horizon home stylesheet is not present in the local static-resource allowlist.' }
   foreach ($artwork in $homeArtwork) {
     if (-not $serverText.Contains("'/assets/$artwork'")) { throw "Horizon home artwork is not present in the local static-resource allowlist: $artwork" }
@@ -99,6 +115,8 @@ function Assert-SourceReleaseContract {
   $scrollIndex = $indexSource.IndexOf('scroll-system.css', [StringComparison]::Ordinal)
   $horizonIndex = $indexSource.IndexOf('horizon-atelier.css', [StringComparison]::Ordinal)
   if ($horizonIndex -lt 0 -or $scrollIndex -le $horizonIndex) { throw 'scroll-system.css must remain the final interaction layer after Horizon Atelier.' }
+  $designIndex = $indexSource.IndexOf('design-system.css', [StringComparison]::Ordinal)
+  if ($designIndex -lt 0 -or $designIndex -ge $horizonIndex) { throw 'design-system.css must load before Horizon Atelier.' }
   $homeIndex = $indexSource.IndexOf('home-6.css', [StringComparison]::Ordinal)
   if ($homeIndex -le $horizonIndex -or $homeIndex -ge $scrollIndex) { throw 'home-6.css must load after Horizon Atelier and before the final scroll layer.' }
 
@@ -124,7 +142,7 @@ try {
 }
 if ($ReleaseGate) {
   if ($sourceCommit -eq 'unavailable') { throw 'release gate requires a valid Git commit.' }
-  if ($sourceWorktreeDirty) { throw 'release gate rejected a dirty worktree; commit the complete 6.0 source before publishing.' }
+  if ($sourceWorktreeDirty) { throw 'release gate rejected a dirty worktree; commit the complete source before publishing.' }
 }
 if (-not (Test-Path -LiteralPath $project)) { throw "missing WinUI project: $project" }
 if (-not (Test-Path -LiteralPath $iconSource -PathType Leaf)) { throw "missing WinUI application icon: $iconSource" }
@@ -140,6 +158,12 @@ $publishArgs += "-p:Version=$Version"
 $publishArgs += "-p:AssemblyVersion=$Version.0"
 $publishArgs += "-p:FileVersion=$Version.0"
 $publishArgs += "-p:InformationalVersion=$Version"
+# Windows App SDK's self-contained targets do not reliably infer the native
+# platform from RuntimeIdentifier on every SDK/host combination.  Pin the
+# supported desktop bundle to x64 explicitly; without this, publish can fail
+# before compilation with a misleading "unsupported Windows architecture".
+$publishArgs += '-p:PlatformTarget=x64'
+$publishArgs += '-p:Platform=x64'
 if ($useSelfContained) {
   $publishArgs += '-p:WindowsAppSDKSelfContained=true'
   $publishArgs += '-p:WindowsPackageType=None'
@@ -182,7 +206,7 @@ foreach ($item in Get-ChildItem -LiteralPath $resourcesRoot -Recurse -Force) {
 foreach ($required in @('index.html', 'app.js', 'styles.css', 'vendor\xlsx\xlsx.js')) {
   if (-not (Test-Path -LiteralPath (Join-Path $stage "resources\app\$required") -PathType Leaf)) { throw "bundle is missing resources/app/$required" }
 }
-foreach ($required in @('server.mjs', 'modules\horizon-atelier.css', 'modules\home-6.css', 'assets\horizon-ridge-6.png', 'assets\horizon-flow-6.png', 'assets\horizon-topline-6.png', 'assets\horizon-rock-6.png')) {
+foreach ($required in @('node.exe', 'server.mjs', 'sidecar-write-coordinator.cjs', 'modules\horizon-atelier.css', 'modules\home-6.css', 'modules\design-system.css', 'assets\atelier-dawn.svg', 'assets\horizon-ridge-6.png', 'assets\horizon-flow-6.png', 'assets\horizon-topline-6.png', 'assets\horizon-rock-6.png')) {
   if (-not (Test-Path -LiteralPath (Join-Path $stage "resources\app\$required") -PathType Leaf)) { throw "bundle is missing resources/app/$required" }
 }
 if (Get-ChildItem -LiteralPath $resourceDestination -Recurse -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -in $blockedResourceNames -or $_.Name -match '(?i)^(.*credentials.*|.*\.sqlite|.*\.db|.*\.log)$' }) { throw 'resource bundle contains blocked user data or credential files' }
@@ -195,7 +219,7 @@ Copy-Item -LiteralPath (Join-Path $repo 'desktop\src\Zhike.Desktop\README.md') -
 Copy-Item -LiteralPath (Join-Path $repo 'docs\local-desktop-deployment.md') -Destination (Join-Path $stage 'local-desktop-deployment.md') -Force
 Copy-Item -LiteralPath (Join-Path $repo 'docs\local-desktop-troubleshooting.md') -Destination (Join-Path $stage 'local-desktop-troubleshooting.md') -Force
 Copy-Item -LiteralPath (Join-Path $repo 'docs\hot-chat-profile-usage.md') -Destination (Join-Path $stage 'hot-chat-profile-usage.md') -Force
-Copy-Item -LiteralPath (Join-Path $repo "docs\release-notes-$Version.md") -Destination (Join-Path $stage "release-notes-$Version.md") -Force
+Copy-Item -LiteralPath (Join-Path $repo "docs\release\release-notes-$Version.md") -Destination (Join-Path $stage "release-notes-$Version.md") -Force
 $optionalMigration = Join-Path $repo "docs\migrations\$Version-ws-timestamp-provenance.sql"
 if (Test-Path -LiteralPath $optionalMigration -PathType Leaf) {
   $migrationDestination = Join-Path $stage 'migrations'
@@ -232,14 +256,8 @@ if ($sourceCommit -ne 'unavailable') {
     '.superpowers', '.codex-backups', 'desktop/.backups', 'docs/superpowers',
     'infra', 'server', 'connectors/ws-worker', 'tools/sqlite-to-postgres',
     'resources/app/main.cjs', 'resources/app/preload.cjs', 'resources/app/ws-preload.cjs',
-    'desktop/src/Zhike.Desktop/Views/HomePage.xaml', 'desktop/src/Zhike.Desktop/Views/HomePage.xaml.cs',
-    'desktop/src/Zhike.Desktop/Views/CustomersPage.xaml', 'desktop/src/Zhike.Desktop/Views/CustomersPage.xaml.cs',
-    'desktop/src/Zhike.Desktop/Views/ImportPage.xaml', 'desktop/src/Zhike.Desktop/Views/ImportPage.xaml.cs',
-    'desktop/src/Zhike.Desktop/Views/OperationsPage.xaml', 'desktop/src/Zhike.Desktop/Views/OperationsPage.xaml.cs',
-    'desktop/src/Zhike.Desktop/Views/AiFollowupPage.xaml', 'desktop/src/Zhike.Desktop/Views/AiFollowupPage.xaml.cs',
-    'desktop/src/Zhike.Desktop/Views/WsWorkbenchPage.xaml', 'desktop/src/Zhike.Desktop/Views/WsWorkbenchPage.xaml.cs',
     'scripts/build-server-bundle.ps1', 'scripts/build-installer.ps1', 'zhike-setup.iss',
-    'docs/archive', 'tests/server-v2', 'tests/automatic-backup-test.cjs',
+    'docs/archive', 'docs/release/evidence', 'tests/server-v2', 'tests/automatic-backup-test.cjs',
     'tests/ws-multi-account-main.test.cjs', 'tests/ws-installer-qa.cjs', 'tests/ws-upgrade-qa.cjs'
   )
   foreach ($prefix in $sourceArchiveExcludedPrefixes) {

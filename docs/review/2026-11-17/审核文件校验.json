@@ -1,0 +1,89 @@
+{
+  "createdDate": "2026-11-17",
+  "timezone": "Asia/Calcutta",
+  "productSnapshot": "6befac01f1254f63047ec5977825004a991a48d3",
+  "scope": "documentation only; existing isolated screenshots; no product changes or new acceptance run",
+  "files": [
+    {
+      "file": "知客项目现状审核_2026-11-17.md",
+      "sha256": "30f3ebeab5169e4e3d4b0018ff30d576135b5cf9a0c3cab4d5dfe7ec7ea0342c"
+    },
+    {
+      "file": "知客项目现状审核_2026-11-17.html",
+      "sha256": "6f76d209e4fcbfd258732fbe8cbbfe9fe41cb4c508920121817fbf1ec3486e5d"
+    },
+    {
+      "file": "assets/native-home.jpg",
+      "sha256": "8ef83a3e3ab14a5d754473ced4cc412a4a62f5cd4fc9c470060ba41ead1ff592"
+    },
+    {
+      "file": "assets/native-drawer-refined.jpg",
+      "sha256": "eaf2e4a6d65650961ee0c4edc4c65d51013ba75739a406f27e766093e4035b3f"
+    },
+    {
+      "file": "assets/native-followups-palette-final.jpg",
+      "sha256": "094c9b301b83502cdd3fb88d16da94faf1a57a0b2749ad3e3c5e1d4f746fb05a"
+    },
+    {
+      "file": "assets/native-tasks-restored-source.jpg",
+      "sha256": "ab114a7fd19c2a6d325efe7438dc10a7444853278f5adf9adefb57b421876d2c"
+    },
+    {
+      "file": "assets/native-shared47-stage-restored.jpg",
+      "sha256": "50d037e48fc737ec0e8c8d3157b43c5687c5be64919f30db3a68beb310d11b7b"
+    },
+    {
+      "file": "assets/native-final-compact-ws.jpg",
+      "sha256": "3260947e91615758ac9fa055b325161b5a6d303ffe2218d21e4e077ce7338596"
+    },
+    {
+      "file": "document-validation.json",
+      "sha256": "8b3911efe10dbf7a94f831ee432b75f601ca99b4c4946ee4d891afe16c76bf51"
+    }
+  ],
+  "imageNotes": [
+    {
+      "id": "UI01",
+      "title": "今日工作台首屏",
+      "file": "native-home.jpg",
+      "sha256": "8ef83a3e3ab14a5d754473ced4cc412a4a62f5cd4fc9c470060ba41ead1ff592",
+      "caption": "S3期间的真实隔离窗口记录。用于审核主导航、首屏和信息密度；不能由这一张截图推定所有后续细节均已验收。"
+    },
+    {
+      "id": "UI02",
+      "title": "客户档案抽屉",
+      "file": "native-drawer-refined.jpg",
+      "sha256": "eaf2e4a6d65650961ee0c4edc4c65d51013ba75739a406f27e766093e4035b3f",
+      "caption": "真实客户档案与关联资料的修复后观察。截图中的资料是合成测试资料；稳定ID及同名客户的保护另有运行时证据。"
+    },
+    {
+      "id": "UI03",
+      "title": "客户跟进页面",
+      "file": "native-followups-palette-final.jpg",
+      "sha256": "094c9b301b83502cdd3fb88d16da94faf1a57a0b2749ad3e3c5e1d4f746fb05a",
+      "caption": "最终原生复验显示待处理26、已逾期13、今日计划13、未安排13；这是该隔离样本的结果，不是你的生产统计。"
+    },
+    {
+      "id": "UI04",
+      "title": "任务中心已有操作",
+      "file": "native-tasks-restored-source.jpg",
+      "sha256": "ab114a7fd19c2a6d325efe7438dc10a7444853278f5adf9adefb57b421876d2c",
+      "caption": "实际人工任务完成后恢复的界面记录。该图早于新增完成率图，不应将它解释为新增图表已通过原生验收。"
+    },
+    {
+      "id": "UI05",
+      "title": "客户阶段看板",
+      "file": "native-shared47-stage-restored.jpg",
+      "sha256": "50d037e48fc737ec0e8c8d3157b43c5687c5be64919f30db3a68beb310d11b7b",
+      "caption": "共享指针控制器的真实拖动及反向恢复后画面。新客户与潜在客户数量恢复；新增流转图在此截图中未展示，原生验收仍缺失。"
+    },
+    {
+      "id": "UI06",
+      "title": "WS前台聊天区域",
+      "file": "native-final-compact-ws.jpg",
+      "sha256": "3260947e91615758ac9fa055b325161b5a6d303ffe2218d21e4e077ce7338596",
+      "caption": "真实WinUI内的隔离WebView2容器。黑色区域为about:blank，不是已登录WhatsApp；本图只证明布局和“后台采集不可用”状态的有限观察。"
+    }
+  ],
+  "documentValidation": "Passed; offline HTML only; not a new product regression or native WinUI acceptance"
+}

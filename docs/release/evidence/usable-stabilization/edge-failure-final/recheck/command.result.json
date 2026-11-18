@@ -1,0 +1,9 @@
+{
+  "command": "resources/app/node.exe scripts/delivery/s1-main-visual.test.cjs",
+  "startUtc": "2026-11-18T19:01:21.320Z",
+  "endUtc": "2026-11-18T19:02:32.959Z",
+  "isolatedKernelObserver": true,
+  "exitCode": 1,
+  "signal": null,
+  "error": null
+}

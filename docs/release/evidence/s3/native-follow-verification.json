@@ -1,0 +1,19 @@
+{
+  "synthetic": true,
+  "readOnlyVerification": true,
+  "productionOpened": false,
+  "realWs": false,
+  "realAi": false,
+  "followMarker": "ISOLATED_S3_NATIVE_FOLLOW_1117",
+  "sourceCustomerId": "C-native",
+  "sourceRows": 1,
+  "nextDue": "2026-11-24",
+  "lastFollow": "2026-11-17",
+  "customers": 52,
+  "registrations": 3,
+  "followups": 3,
+  "tickets": 1,
+  "deposits": 1,
+  "manualFieldPreserved": true,
+  "noUnintendedCustomerDelete": true
+}

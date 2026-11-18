@@ -2,18 +2,18 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const pagePath = path.join(__dirname, '..', 'src', 'Zhike.Desktop', 'Views', 'AiFollowupPage.xaml.cs');
+const pagePath = path.join(__dirname, '..', 'src', 'Zhike.Desktop', 'Views', 'LegacyUiHostPage.xaml.cs');
 const source = fs.readFileSync(pagePath, 'utf8');
 
 assert.doesNotMatch(
   source,
   /readonly\s+ApiClient\?\s+_api\s*=\s*ApiClient\.TryCreateFromEnvironment\(\)/,
-  'AI 跟进页不得在页面构造阶段永久缓存未就绪的 API 客户端'
+  '统一工作台不得在页面构造阶段永久缓存未就绪的 API 客户端'
 );
 assert.match(
   source,
-  /await\s+App\.EnsureLocalServiceAsync\(\)/,
-  'AI 跟进页加载时必须等待本机服务启动'
+  /await\s+App\.EnsureLocalServiceAsync\([^)]*\)/,
+  '统一工作台加载时必须等待本机服务启动'
 );
 assert.match(
   source,

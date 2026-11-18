@@ -1,0 +1,265 @@
+{
+  "stage": "5.2",
+  "status": "Observed",
+  "sourceFile": "stage52-observation-final.jsonl",
+  "sourceSha256": "b2747f01792633c103d7b0996e7bd0c5071b4699ba37e93fe03974474790cc58",
+  "rootPid": 19572,
+  "samples": 91,
+  "firstUtc": "2026-11-16T14:58:00.1804157Z",
+  "lastUtc": "2026-11-16T15:13:35.2087567Z",
+  "durationMs": 935519.7,
+  "recommended15MinuteObservationReached": true,
+  "first": {
+    "workingSetBytes": 1238093824,
+    "privateBytes": 644952064,
+    "processCount": 15,
+    "webViewProcessCount": 12,
+    "threads": 359,
+    "handles": 9034
+  },
+  "last": {
+    "workingSetBytes": 1273778176,
+    "privateBytes": 677093376,
+    "processCount": 15,
+    "webViewProcessCount": 12,
+    "threads": 338,
+    "handles": 9270,
+    "rootAlive": true
+  },
+  "workingSetDeltaBytes": 35684352,
+  "privateDeltaBytes": 32141312,
+  "peaks": {
+    "workingSetBytes": 1387790336,
+    "privateBytes": 770334720,
+    "threads": 372,
+    "handles": 9340
+  },
+  "observedProcessIdentities": 16,
+  "rawProcessSumsVerified": true,
+  "context": {
+    "stage": "5.2",
+    "status": "Observed",
+    "checkedAtUtc": "2026-11-16T15:13:35.6193201Z",
+    "rootPid": 19572,
+    "rootStartedUtc": "2026-11-16T14:52:14.9604095Z",
+    "windowsCaption": "Microsoft Windows 11 专业版",
+    "windowsVersion": "10.0.26300",
+    "architecture": "64 位",
+    "appProductVersion": "6.0.3+37449b2a8bb0e147a744d360c5ff8e1cf04ff646",
+    "appFileVersion": "6.0.3.0",
+    "configurationDeclaredByRunner": "Release",
+    "webView2RuntimeFileVersion": "157.0.4341.46",
+    "logicalProcessorCount": 20,
+    "requestedIntervalSeconds": 10,
+    "requestedSamples": 91,
+    "actualSamples": 91,
+    "elapsedMs": 935519.7,
+    "completedRequestedObservation": true,
+    "resourceObservation": {
+      "status": "Observed",
+      "evidenceFile": "stage52-observation-final.jsonl",
+      "samples": 91,
+      "durationMs": 935519.7,
+      "rootAliveAtEnd": true,
+      "workingSetFirstBytes": 1238093824,
+      "workingSetLastBytes": 1273778176,
+      "workingSetDeltaBytes": 35684352,
+      "workingSetPeakBytes": 1387790336,
+      "privatePeakBytes": 770334720,
+      "privateFirstBytes": 644952064,
+      "privateLastBytes": 677093376,
+      "threadsFirst": 359,
+      "threadsLast": 338,
+      "handlesFirst": 9034,
+      "handlesLast": 9270,
+      "threadsPeak": 372,
+      "handlesPeak": 9340,
+      "observedCpuDeltaSeconds": 57.9844,
+      "webViewProcessCountFirst": 12,
+      "webViewProcessCountLast": 12,
+      "observedProcessCount": 16,
+      "scope": "process counters; no window input or application memory/credential inspection",
+      "threshold": "NotDefined",
+      "gateInference": "No automatic performance pass is inferred"
+    },
+    "contextLimitations": "Page/account/data-size counts must come from the real operation ledger; no performance threshold is invented.",
+    "privateConnectionRead": false,
+    "processMemoryContentsRead": false,
+    "productionDataRead": false
+  },
+  "visibleEventCounts": {
+    "application-start": 1,
+    "sidecar-created": 1,
+    "window-initialize-start": 1,
+    "window-initialize-completed": 1,
+    "window-created": 1,
+    "host-route-request": 2,
+    "shell-initialize-requested": 3,
+    "host-loaded": 1,
+    "sidecar-ready": 1,
+    "shell-profile-created": 1,
+    "webview-created": 3,
+    "webview-source-changed": 1,
+    "webview-navigation": 3,
+    "workspace-page": 27,
+    "ws-initialization-injected-failure": 1,
+    "ws-initialize": 2,
+    "ws-account-selected": 14,
+    "navigation-starting": 2,
+    "navigation-completed": 2
+  },
+  "diagnosticEventTotals": {
+    "application-start": 1,
+    "sidecar-created": 1,
+    "window-initialize-start": 1,
+    "window-initialize-completed": 1,
+    "window-created": 1,
+    "host-route-request": 2,
+    "shell-initialize-requested": 3,
+    "host-loaded": 1,
+    "sidecar-ready": 1,
+    "shell-profile-created": 1,
+    "webview-created": 3,
+    "webview-source-changed": 1,
+    "webview-navigation": 2,
+    "workspace-page": 19,
+    "ws-initialization-injected-failure": 1,
+    "ws-initialize": 2,
+    "ws-account-selected": 1,
+    "navigation-starting": 1,
+    "navigation-completed": 1
+  },
+  "diagnosticCountersIncludeSuppressed": true,
+  "diagnosticCountersFlushedAt": "2026-11-16T15:17:47.8904613+00:00",
+  "completeSessionCounters": false,
+  "coreCreationEvents": [
+    {
+      "at": "2026-11-16T14:52:18.0449205+00:00",
+      "role": "shell",
+      "accountId": "workbench-ui",
+      "browserProcessId": 3320
+    },
+    {
+      "at": "2026-11-16T14:56:28.8455001+00:00",
+      "role": "ws-visible",
+      "accountId": "default",
+      "browserProcessId": 30716
+    },
+    {
+      "at": "2026-11-16T15:17:47.8780854+00:00",
+      "role": "ws-visible",
+      "accountId": "native-b",
+      "browserProcessId": 23812
+    }
+  ],
+  "exceptionLikeEventTotals": {
+    "ws-initialization-injected-failure": 1
+  },
+  "expectedInjectedFailureCount": 1,
+  "operationTimeline": [
+    {
+      "atUtc": "2026-11-16T14:53:34.5570031Z",
+      "phase": "startup-idle",
+      "boundary": "end",
+      "snapshotFile": "stage52-startup-idle-end-f7744b77ef6c4a029ba0cbe3f59a45aa.jsonl",
+      "withinContinuousObservation": false,
+      "counterSnapshotNestedCountsSerialized": true
+    },
+    {
+      "atUtc": "2026-11-16T14:53:34.9419013Z",
+      "phase": "ten-page-switch",
+      "boundary": "begin",
+      "snapshotFile": "stage52-ten-page-switch-begin-a9a053da7b3040f9aeb0ad5fed2554f7.jsonl",
+      "withinContinuousObservation": false,
+      "counterSnapshotNestedCountsSerialized": true
+    },
+    {
+      "atUtc": "2026-11-16T14:56:57.2632629Z",
+      "phase": "startup-idle",
+      "boundary": "snapshot",
+      "snapshotFile": "stage52-startup-idle-snapshot-58468902fa8f426eadc742c3ac0b51c9.jsonl",
+      "withinContinuousObservation": false,
+      "counterSnapshotNestedCountsSerialized": true
+    },
+    {
+      "atUtc": "2026-11-16T15:01:43.9367303Z",
+      "phase": "member-load",
+      "boundary": "begin",
+      "snapshotFile": "stage52-member-load-begin-d0f15df4ec4247ac992a17a763807ed7.jsonl",
+      "withinContinuousObservation": true,
+      "counterSnapshotNestedCountsSerialized": true
+    },
+    {
+      "atUtc": "2026-11-16T15:02:05.4377386Z",
+      "phase": "member-load",
+      "boundary": "end",
+      "snapshotFile": "stage52-member-load-end-77b69c01ba9d4dcf973a88a57ffa1e92.jsonl",
+      "withinContinuousObservation": true,
+      "counterSnapshotNestedCountsSerialized": true
+    },
+    {
+      "atUtc": "2026-11-16T15:02:28.4197999Z",
+      "phase": "ai-refresh",
+      "boundary": "begin",
+      "snapshotFile": "stage52-ai-refresh-begin-821615b61165470e91c4a39c7269e009.jsonl",
+      "withinContinuousObservation": true,
+      "counterSnapshotNestedCountsSerialized": true
+    },
+    {
+      "atUtc": "2026-11-16T15:05:01.1087331Z",
+      "phase": "ai-refresh",
+      "boundary": "end",
+      "snapshotFile": "stage52-ai-refresh-end-a43879b6d72849f4a2f0efb020f47168.jsonl",
+      "withinContinuousObservation": true,
+      "counterSnapshotNestedCountsSerialized": true
+    },
+    {
+      "atUtc": "2026-11-16T15:05:01.5378709Z",
+      "phase": "crm-refresh",
+      "boundary": "begin",
+      "snapshotFile": "stage52-crm-refresh-begin-c1e7b39472b547efad21951c5f407f57.jsonl",
+      "withinContinuousObservation": true,
+      "counterSnapshotNestedCountsSerialized": true
+    },
+    {
+      "atUtc": "2026-11-16T15:05:40.3260378Z",
+      "phase": "crm-refresh",
+      "boundary": "end",
+      "snapshotFile": "stage52-crm-refresh-end-2d7e458ef19b4f3daef2e451a11740d6.jsonl",
+      "withinContinuousObservation": true,
+      "counterSnapshotNestedCountsSerialized": true
+    },
+    {
+      "atUtc": "2026-11-16T15:17:30.3178517Z",
+      "phase": "ten-page-switch",
+      "boundary": "end",
+      "snapshotFile": "stage52-ten-page-switch-end-8488bb14eb164bbbbce59da0c02de282.jsonl",
+      "withinContinuousObservation": false,
+      "counterSnapshotNestedCountsSerialized": true
+    },
+    {
+      "atUtc": "2026-11-16T15:17:31.0284617Z",
+      "phase": "account-switch",
+      "boundary": "begin",
+      "snapshotFile": "stage52-account-switch-begin-4507b3b0fe5e4bb1993ac5d0663c351c.jsonl",
+      "withinContinuousObservation": false,
+      "counterSnapshotNestedCountsSerialized": true
+    },
+    {
+      "atUtc": "2026-11-16T15:19:23.2287857Z",
+      "phase": "account-switch",
+      "boundary": "end",
+      "snapshotFile": "stage52-account-switch-end-f5a3526152ce454eba60186ebedf0a00.jsonl",
+      "withinContinuousObservation": false,
+      "counterSnapshotNestedCountsSerialized": true
+    }
+  ],
+  "limits": [
+    "Process counters do not read memory contents or prove absence of leaks.",
+    "Operation labels require confirmation by actual native operator actions.",
+    "Visible event counts must not replace total counters when records were suppressed.",
+    "A completed sample window is not an automatic performance pass; no new threshold is invented."
+  ],
+  "privateConnectionRead": false,
+  "productionDataRead": false
+}

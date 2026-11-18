@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794973185113-bbb40f7b-0e21-4b6c-8ce5-036b3e558b43",
+  "mode": "controlled-node-probe-close-timeout",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 3000,
+  "launchedAt": "2026-11-18T03:39:45.113Z",
+  "events": [
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 16,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 2263
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 2263,
+      "acknowledgement": "stdin-request"
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 2268
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 2268
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 2273,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 2273
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 2273
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 2382,
+      "phase": "observation",
+      "count": 0
+    },
+    {
+      "event": "identity-probe-termination-requested",
+      "elapsedMs": 2816,
+      "attempted": true,
+      "requested": true
+    },
+    {
+      "event": "identity-probe-termination-confirmed",
+      "elapsedMs": 2835
+    }
+  ],
+  "identities": [],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": false,
+  "pid": 15208,
+  "identityProbePid": 39480,
+  "remainingIdentities": [],
+  "releaseFailure": {
+    "code": "OWNED_PROCESSES_REMAIN",
+    "phase": "resource-release"
+  },
+  "identityProbeTermination": {
+    "attempted": true,
+    "requested": true,
+    "observedClose": {
+      "code": null,
+      "signal": "SIGTERM"
+    },
+    "status": "confirmed"
+  },
+  "elapsedMs": 2835,
+  "stdoutBytes": 37,
+  "stderrBytes": 0,
+  "failure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "identity",
+    "message": "Isolated lifecycle deadline reached during identity"
+  }
+}

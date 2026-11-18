@@ -1,0 +1,80 @@
+{
+  "entry": "Delivery S1 isolated browser process ownership and safe release",
+  "status": "Failed",
+  "logMarkerLine": 1419,
+  "missingReadinessCounterExceptionLine": 1415,
+  "recordedControls": [
+    {
+      "mode": "controlled-powershell-exclusive-readiness",
+      "invocation": "1795013045805-6e3ec754-d5c9-425a-be78-7c8cc03f0628",
+      "status": "Passed",
+      "timeoutMs": 10000,
+      "failure": null,
+      "releaseFailure": null,
+      "resultReady": true,
+      "cleanupSafe": true,
+      "forceTerminationRequested": false,
+      "stdoutBytes": 18,
+      "stderrBytes": 0,
+      "devToolsReadiness": {
+        "polls": 2,
+        "enoent": 0,
+        "ebusy": 1,
+        "partial": 0
+      },
+      "timeoutEvents": [],
+      "identityConfirmedMs": 1781.4545,
+      "profileRetained": true,
+      "fixtureEndpointFilePresent": true
+    },
+    {
+      "mode": "controlled-powershell-bounded-readiness",
+      "invocation": "1795013048193-61a6e96f-9b79-43f2-ac2c-1ec9faa9ceae",
+      "status": "Failed",
+      "timeoutMs": 4000,
+      "failure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "lock-ready"
+      },
+      "releaseFailure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit"
+      },
+      "resultReady": false,
+      "cleanupSafe": false,
+      "forceTerminationRequested": true,
+      "stdoutBytes": 0,
+      "stderrBytes": 0,
+      "devToolsReadiness": null,
+      "timeoutEvents": [
+        {
+          "event": "deadline-timeout",
+          "elapsedMs": 3003.9584,
+          "phase": "lock-ready",
+          "deadlineMs": 2999.9999999999995
+        },
+        {
+          "event": "deadline-timeout",
+          "elapsedMs": 4002.9276000000004,
+          "phase": "process-exit",
+          "deadlineMs": 3999.9999999999995
+        },
+        {
+          "event": "deadline-timeout",
+          "elapsedMs": 4004.6357000000003,
+          "phase": "identity-probe-close",
+          "deadlineMs": 3999.9999999999995
+        },
+        {
+          "event": "deadline-timeout",
+          "elapsedMs": 4005.6409,
+          "phase": "identity-probe-termination",
+          "deadlineMs": 3999.9999999999995
+        }
+      ],
+      "identityConfirmedMs": 1018.5889000000002,
+      "profileRetained": true,
+      "fixtureEndpointFilePresent": false
+    }
+  ]
+}

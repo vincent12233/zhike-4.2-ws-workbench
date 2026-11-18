@@ -1,0 +1,239 @@
+Window: "WS 工作台 · 知客 Stage 5.1 · ISOLATED 验收", App: Zhike.Stage51.Acceptance.exe.
+	0 window (窗口) WS 工作台 · 知客 Stage 5.1 · ISOLATED 验收 Secondary Actions: Raise
+		1 pane (窗格) Non Client Input Sink Window
+		2 pane (窗格) AppWindow Custom Title Bar
+			3 button (按钮) Minimize ID: Minimize
+			549 button (按钮) Restore ID: Restore
+			5 button (按钮) Close ID: Close
+		6 pane (窗格)
+			7 pane (窗格)
+				14 pane (窗格)
+			15 pane (窗格) 知客 6.0 · Horizon Atelier
+				29 pane (窗格) (disabled)
+				16 pane (区域) 知客 6.0 · Horizon Atelier - Web 内容
+					17 pane (区域)
+						18 pane (区域)
+						19 pane (区域)
+							20 pane (区域)
+								21 pane (区域)
+								22 pane (区域)
+									23 pane (区域)
+										24 pane (区域)
+											25 pane (区域)
+												26 pane (区域)
+												903 document (文档) 知客 6.0 · Horizon Atelier Value: https://zhike.local/index.html?desktop=1 ID: RootWebArea
+													966 group (主要)
+														967 group (章节标题)
+															968 group (导航) 工作台切换
+																969 button (切换按钮) 知客工作台
+																	970 image (图形)
+																	971 text (文本) 知客工作台
+																972 button (切换按钮) WS 工作台
+																	973 image (图形)
+																	974 text (文本) WS 工作台
+															980 button (按钮) 搜索客户、号码、群编号Ctrl K ID: globalSearch
+																981 image (图形)
+														1002 group (组) ID: viewContainer
+															1523 group (补充) WS 工作台功能导航
+																1524 text (文本) WS
+																1525 text (文本) WS 工作台
+																1526 text (文本) 知客 · 运营工作区
+																1527 button (按钮) ‹ Description: 收起 WS 工作区导航
+																1528 group (导航)
+																	1529 button (按钮) 工作台首页 Description: 工作台首页 · 账号、采集与工作入口
+																	1530 button (按钮) 账号管理 Description: 账号管理 · 多账号与连接状态
+																	1531 button (按钮) 前台聊天 Description: 前台聊天 · 原生 WS 聊天与客户档案
+																	1532 button (按钮) 群组管理 Description: 群组管理 · 群组目录与监测端口
+																	1533 button (按钮) 群成员管理 Description: 群成员管理 · 成员事件与 CRM 关系
+																	1534 button (按钮) 数据采集 Description: 数据采集 · 采集任务、断点与跳过规则
+																	1535 button (按钮) 通讯录管理 Description: 通讯录管理 · 已同步联系人与号码核验
+																	1536 button (按钮) AI助手 Description: AI助手 · 队列、证据与分析结果
+																	1537 button (按钮) CRM客户 Description: CRM客户 · 客户主档匹配与冲突
+																	1538 button (按钮) 任务中心 Description: 任务中心 · 跟进任务与提醒
+																	1539 button (按钮) 操作日志 Description: 操作日志 · 审计记录、运行快照与关联查询
+																	1540 button (按钮) 工具与设置 Description: 工具与设置 · 翻译、导入、导出与安全开关
+																1541 group (组) Description: COLLECTION_CAPABILITY_BLOCKED：后台采集依赖复制认证状态，已按安全边界停用；前台聊天和手动导入可用。
+																	1542 text (文本) 后台采集不可用
+																1543 button (按钮) 返回知客 Description: 返回知客
+															1544 group (区域) 工作台首页
+																1545 text (标题) 工作台首页 ID: wsWorkspacePageTitle
+																1546 text (文本) 账号、采集与工作入口
+																1547 text (文本) 当前账号：默认账号
+																1548 group (组)
+																	1549 text (文本) 尚未刷新
+																1550 button (按钮) 刷新
+																1551 status bar (状态)
+																	1552 text (文本) COLLECTION_CAPABILITY_BLOCKED：后台采集依赖复制认证状态，已按安全边界停用；前台聊天和手动导入可用。
+																1553 text (标题) 开始今天的客户运营
+																1554 text (文本) 在独立工作区管理账号、查看真实采集记录，并随时回到前台聊天。
+																1555 button (按钮) 进入前台聊天
+																1556 group (区域) 已加载工作区概况
+																	1557 text (文本) 已加载账号
+																	1558 text (文本) 2
+																	1559 text (文本) 本机隔离会话
+																	1560 text (文本) 已加载会话
+																	1561 text (文本) —
+																	1562 text (文本) 等待读取本地记录
+																	1563 text (文本) 已加载群组
+																	1564 text (文本) —
+																	1565 text (文本) 等待同步群组目录
+																1566 group (区域) 真实业务状态
+																	1567 text (文本) 采集任务
+																	1568 text (文本) 未提供
+																	1569 text (文本) 尚无任务或未读取
+																	1570 text (文本) 已加载跟进提醒
+																	1571 text (文本) —
+																	1572 text (文本) 当前账号服务返回范围
+																	1573 text (文本) AI 排队任务
+																	1574 text (文本) —
+																	1575 text (文本) 本机队列状态；不启动消费者
+																1576 text (文本) 资料审核
+																1577 text (文本) 候选、冲突与审计从原 CRM 审核服务读取；本页未读取时不显示虚假计数。
+																1578 button (按钮) 进入 CRM 审核
+																1579 text (文本) 工作区入口
+																1580 text (文本) 每项功能拥有独立页面，页面切换保留账号会话。
+																1581 text (文本) 未连接
+																1582 button (按钮) 账号管理 多账号与连接状态
+																1583 button (按钮) 群组管理 群组目录与监测端口
+																1584 button (按钮) 群成员管理 成员事件与 CRM 关系
+																1585 button (按钮) 数据采集 采集任务、断点与跳过规则
+																1586 button (按钮) 通讯录管理 已同步联系人与号码核验
+																1587 button (按钮) AI助手 队列、证据与分析结果
+																1588 button (按钮) CRM客户 客户主档匹配与冲突
+																1589 button (按钮) 任务中心 跟进任务与提醒
+																1590 button (按钮) 操作日志 审计记录、运行快照与关联查询
+																1591 button (按钮) 工具与设置 翻译、导入、导出与安全开关
+																1592 text (文本) 运行边界
+																1593 text (文本) 仅展示现有业务服务与账号状态。
+																1594 text (文本) FROZEN
+																1595 text (文本) 生产 Worker、AI 自动处理和群组自动建档保持当前关闭配置。工作区导航不会启动新的消费者或付费 AI 请求。
+													998 group (组) ID: toastRegion
+													1137 group (组) Isolated input diagnostic ID: stage51NativeInputHud
+														1596 text (文本) STAGE51 DIAGNOSTIC: trusted inputs only wheel=3 click=2 keydown=0 pointerdown=2 pointerup=2 dragstart=0 dragover=0 dragend=0 drop=0 last=click target=span last drag=- target=- ops-card=0 draggable=true=0 table scrollTop=67 thead.bottom=512 first text.top=527 first text point inViewport=true target=div.customer-list-scope wheel target=td.phone-cell deltaY=200 deltaX=0 mode=0 coordinator=true modal=false prevented=false/false owner=div.table-scroll.perf-table-viewport mode=horizontal before top=0 height=531/598 connected=true after top=0 height=531/598 connected=true frame top=67 height=531/598 connected=true current top=67 height=531/598 connected=true
+								27 pane (区域)
+						28 pane (区域)
+			1597 pane (窗格) about:blank
+				1598 pane (窗格) (disabled)
+				1599 pane (区域) about:blank - Web 内容
+					1600 pane (区域)
+						1601 pane (区域)
+						1602 pane (区域)
+							1603 pane (区域)
+								1604 pane (区域)
+								1605 pane (区域)
+									1606 pane (区域)
+										1607 pane (区域)
+											1608 pane (区域)
+												1609 pane (区域)
+												1610 document (文档) Value: about:blank ID: RootWebArea
+								1611 pane (区域)
+						1612 pane (区域)
+		8 title bar (标题栏) (settable, string) Value: WS 工作台 · 知客 Stage 5.1 · ISOLATED 验收
+			9 menu bar (菜单栏) 系统 ID: MenuBar
+				10 menu item (菜单项) 系统
+			11 button (按钮) 最小化
+			12 button (按钮) 还原
+			13 button (按钮) 关闭
+
+Document text: ```
+￼
+知客工作台
+￼
+WS 工作台
+￼
+搜索客户、号码、群编号
+Ctrl K
+WS
+WS 工作台
+知客 · 运营工作区
+‹
+工作台首页
+账号管理
+前台聊天
+群组管理
+群成员管理
+数据采集
+通讯录管理
+AI助手
+CRM客户
+任务中心
+操作日志
+工具与设置
+后台采集不可用
+返回知客
+工作台首页
+账号、采集与工作入口
+当前账号：默认账号
+尚未刷新
+刷新
+COLLECTION_CAPABILITY_BLOCKED：后台采集依赖复制认证状态，已按安全边界停用；前台聊天和手动导入可用。
+开始今天的客户运营
+在独立工作区管理账号、查看真实采集记录，并随时回到前台聊天。
+进入前台聊天
+已加载账号
+2
+本机隔离会话
+已加载会话
+—
+等待读取本地记录
+已加载群组
+—
+等待同步群组目录
+采集任务
+未提供
+尚无任务或未读取
+已加载跟进提醒
+—
+当前账号服务返回范围
+AI 排队任务
+—
+本机队列状态；不启动消费者
+资料审核
+候选、冲突与审计从原 CRM 审核服务读取；本页未读取时不显示虚假计数。
+进入 CRM 审核
+工作区入口
+每项功能拥有独立页面，页面切换保留账号会话。
+未连接
+账号管理
+多账号与连接状态
+群组管理
+群组目录与监测端口
+群成员管理
+成员事件与 CRM 关系
+数据采集
+采集任务、断点与跳过规则
+通讯录管理
+已同步联系人与号码核验
+AI助手
+队列、证据与分析结果
+CRM客户
+客户主档匹配与冲突
+任务中心
+跟进任务与提醒
+操作日志
+审计记录、运行快照与关联查询
+工具与设置
+翻译、导入、导出与安全开关
+运行边界
+仅展示现有业务服务与账号状态。
+FROZEN
+生产 Worker、AI 自动处理和群组自动建档保持当前关闭配置。工作区导航不会启动新的消费者或付费 AI 请求。
+￼
+STAGE51 DIAGNOSTIC: trusted inputs only
+wheel=3 click=2 keydown=0
+pointerdown=2 pointerup=2
+dragstart=0 dragover=0 dragend=0 drop=0
+last=click target=span
+last drag=- target=-
+ops-card=0 draggable=true=0
+table scrollTop=67 thead.bottom=512 first text.top=527
+first text point inViewport=true target=div.customer-list-scope
+wheel target=td.phone-cell
+deltaY=200 deltaX=0 mode=0
+coordinator=true modal=false prevented=false/false
+owner=div.table-scroll.perf-table-viewport mode=horizontal
+before top=0 height=531/598 connected=true
+after top=0 height=531/598 connected=true
+frame top=67 height=531/598 connected=true
+current top=67 height=531/598 connected=true
+```

@@ -1,0 +1,75 @@
+{
+  "scope": "Independent post-full run evidence. The recorded full run remains 292/298 at 5316b6c.",
+  "devicePackage": {
+    "codeCommit": "55bfdd6",
+    "command": "resources/app/node.exe --test tests/device-migration-package.test.cjs",
+    "exitCode": 0,
+    "tests": 12,
+    "passed": 12,
+    "failed": 0,
+    "elapsedMs": 29154.9008,
+    "log": "package-final.log",
+    "logLastWriteUtc": "2026-11-18T06:34:02.584Z"
+  },
+  "registrationExport": {
+    "codeCommit": "229e2c1",
+    "command": "resources/app/node.exe tests/registration-analytics-presentation.test.cjs",
+    "exitCode": 0,
+    "tests": 3,
+    "passed": 3,
+    "failed": 0,
+    "elapsedMs": 44.2091,
+    "log": "export-final.log",
+    "logLastWriteUtc": "2026-11-18T06:35:40.912Z"
+  },
+  "observer": {
+    "documentedDiagnosticCommit": "c29db87",
+    "standaloneCountReported": 6,
+    "standaloneRawLogArchived": false,
+    "documentedEvidence": "../../../v41-completion-sidecar-startup.md",
+    "inFull": [
+      {
+        "codeCommit": "b174bea",
+        "suite": "sidecar-startup-observer",
+        "passed": 6,
+        "actualChildProcesses": true,
+        "productionDatabase": false,
+        "realWs": false,
+        "paidAi": false,
+        "childProcessesRemaining": 0
+      },
+      {
+        "codeCommit": "5316b6c",
+        "suite": "sidecar-startup-observer",
+        "passed": 6,
+        "actualChildProcesses": true,
+        "productionDatabase": false,
+        "realWs": false,
+        "paidAi": false,
+        "childProcessesRemaining": 0
+      }
+    ],
+    "scope": "In-full markers document only the observer tests executed within those two all runs."
+  },
+  "archiveSummary": {
+    "worktreeCommit": "8a9e4c8",
+    "integratedSourceMatch": "c29db87",
+    "evidenceCommit": "9764619",
+    "command": "bundled Node v24.22.1 tests/data-archive-summary.test.cjs",
+    "exitCode": 0,
+    "runCount": 1,
+    "exactProcessDurationMs": null,
+    "evidenceDirectory": "../../v41-archive-summary-replay"
+  },
+  "compiler": {
+    "kind": "ordinary WinUI Release x64",
+    "exitCode": 0,
+    "warnings": 0,
+    "errors": 0,
+    "elapsedSeconds": 29.24,
+    "log": "settled-release-build.log",
+    "logLastWriteUtc": "2026-11-18T06:42:56.479Z",
+    "exactCodeCommit": null,
+    "baselineLimit": "Log does not record the build commit. Build output predates commit 1dbab88."
+  }
+}

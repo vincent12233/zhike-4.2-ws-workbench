@@ -1,0 +1,14 @@
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+'新客户' !== '成交客户'
+
+    at C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\delivery-s3-operations-runtime.test.cjs:71:77
+    at async test (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\delivery-s3-operations-runtime.test.cjs:68:31)
+    at async C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\delivery-s3-operations-runtime.test.cjs:70:2 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '新客户',
+  expected: '成交客户',
+  operator: 'strictEqual',
+  diff: 'simple'
+}

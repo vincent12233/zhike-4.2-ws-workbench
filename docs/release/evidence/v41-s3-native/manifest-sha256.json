@@ -1,0 +1,86 @@
+{
+  "files": [
+    {
+      "bytes": 130431,
+      "sha256": "316B0C5339A4CFBD7EE82CDF596E62D0BC8D2BA7BE3E242122133421AA69558F",
+      "file": "01-125-light-max.png"
+    },
+    {
+      "bytes": 151972,
+      "sha256": "F07A21592725114E7E346AB661C50B2AB69934DFB7EDE6D5D61025A1182FB369",
+      "file": "02-125-home-wheel.png"
+    },
+    {
+      "bytes": 146329,
+      "sha256": "A5E681923ACD52D2C41C4F43DDCF3EF298E77D29903C6E9A1962361530BE0FDC",
+      "file": "03-125-light-maximized.png"
+    },
+    {
+      "bytes": 124969,
+      "sha256": "837DB402FC7B09C376E466F5234A65EC48605235441BE12BFF86968C9A763D86",
+      "file": "04-125-dark-preview.png"
+    },
+    {
+      "bytes": 148294,
+      "sha256": "0DFFE999B4290DB212B99A0D7D0F3C6C6BA7FFCAE02F19A0FA72F1A7FEACB05E",
+      "file": "05-125-dark-maximized.png"
+    },
+    {
+      "bytes": 127351,
+      "sha256": "5304BD3E8C747CA563843FD7765C3E2A775868C8F9ED876D5D9467B82D9429E2",
+      "file": "06-100-dark-restored.png"
+    },
+    {
+      "bytes": 198241,
+      "sha256": "FE360AA79A40F5E1C055C966CC5F5A4EE5EE9B0FF8FAF1AEEA19C58234065A36",
+      "file": "07-100-dark-maximized.png"
+    },
+    {
+      "bytes": 306356,
+      "sha256": "4700D1028D6FD677F38800DDC2AA54CD12EA3D7EB855ED5933C58D7384B84B3D",
+      "file": "08-100-dark-customers.png"
+    },
+    {
+      "bytes": 306500,
+      "sha256": "917DE597000550622BC6DA0CB73501E284246B009FA33B25F2527AB1AEB5AC5B",
+      "file": "09-100-customers-wheel.png"
+    },
+    {
+      "bytes": 102633,
+      "sha256": "86CD592D25EEEAA7C895DC7446328457DC01DACCA7617BF4CC73A343D5DB377F",
+      "file": "10-100-ws-open-pending.png"
+    },
+    {
+      "bytes": 299104,
+      "sha256": "1D4ACDB5E4850818E9ED2424795B15224644F1212133E750B36D2180A32FF5C1",
+      "file": "11-100-customers-outside-wheel.png"
+    },
+    {
+      "bytes": 150560,
+      "sha256": "BE253DF08EB700E3FFE96DFEA710E311B65E63E7DADBCFE309958557AA23482B",
+      "file": "12-150-dark-restored.png"
+    },
+    {
+      "bytes": 164413,
+      "sha256": "96D138A081BCFDEC0E0E7694179AD1321BE194CC3EE92B29F048B933C8399018",
+      "file": "13-150-dark-maximized.png"
+    },
+    {
+      "bytes": 193249,
+      "sha256": "E1858C01BFEC5C94A40403E55374EE2A8DC29CC12E0082CB823B41759F1A8D76",
+      "file": "14-fixed-css-customer-before.png"
+    },
+    {
+      "bytes": 205617,
+      "sha256": "20A02FD1FD85DCCBEC64A317848760935362F619752FBB9F341F34A7686EEBE7",
+      "file": "15-fixed-css-inner-consumed.png"
+    },
+    {
+      "bytes": 213989,
+      "sha256": "D7A13AA06C464A09A9DA94807A57891F0B4F096A982E695969B9B748FD1A8766",
+      "file": "16-fixed-css-page-handoff.png"
+    }
+  ],
+  "note": "01-125-light-max.png was actually Restored. Files 12-16 retain observed capture text corruption; not visual acceptance Passed.",
+  "scope": "Windows native isolated synthetic workspace; screenshots unedited; no Settings or production screenshots"
+}

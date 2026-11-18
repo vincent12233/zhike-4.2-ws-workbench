@@ -1,0 +1,440 @@
+{
+  "algorithm": "SHA-256",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 225,
+      "sha256": "50e1d59bf90f6a0ef6a285b25ae73743f1d98ca1c3228f3147de6d9422438791"
+    },
+    {
+      "path": "after/chat-atelier-dawn.png",
+      "bytes": 172551,
+      "sha256": "bfc0b5dbaf200d8c742c2f20fe884ea5f293848b6ea4bba4977c08ac965edc7b"
+    },
+    {
+      "path": "after/chat-horizon-night.png",
+      "bytes": 172133,
+      "sha256": "abb2776702b9e9d1f7ffb4c100a205c92d94a62ec83b1ef876b2f0fd2df51411"
+    },
+    {
+      "path": "after/checks/dawn-with-legacy-dark-computed.json",
+      "bytes": 295911,
+      "sha256": "df80439edb414157830d81aed5ca04b35eff763adeb138a5e21abdbcffe7e8db"
+    },
+    {
+      "path": "after/checks/main-visual-run5-passed.log",
+      "bytes": 235,
+      "sha256": "7f1d244b4bd2b93288ac42a7d7553bef32109312f260532e9501cd40d36f0f42"
+    },
+    {
+      "path": "after/checks/matrix-computed.json",
+      "bytes": 2735309,
+      "sha256": "7fe8a1e8016f6df1e7fbb6d28811df0573b4335691fe0572df7a07fb6e853057"
+    },
+    {
+      "path": "after/checks/metrics-charts-final.log",
+      "bytes": 1519,
+      "sha256": "626953ce63ae56d23fb565bdfb1571bd3382864e01cc1f6e526e6f035483042b"
+    },
+    {
+      "path": "after/checks/night-computed.json",
+      "bytes": 295165,
+      "sha256": "c7f307ed57636169de361b9826258a6ebc7e5ebf2d46d3f843a9ec3594ebe80f"
+    },
+    {
+      "path": "after/checks/operations-progress-atelier-dawn-computed.json",
+      "bytes": 12990,
+      "sha256": "1fdf31a1b40312fc2de3a50e1ef12934b8fff2c8d769c9ad3974308aa8360e95"
+    },
+    {
+      "path": "after/checks/operations-progress-browser-0.json",
+      "bytes": 6096,
+      "sha256": "2dae3c5cc49e2f015629478d288a6c8c433073c67a28476f7d0191651caeea5f"
+    },
+    {
+      "path": "after/checks/operations-progress-browser-1.json",
+      "bytes": 6315,
+      "sha256": "7c7a52a2a5416cd56ba343140f544e2063ba945b72b92a9e9c61d771aa4adef4"
+    },
+    {
+      "path": "after/checks/operations-progress-final.log",
+      "bytes": 121,
+      "sha256": "e427c136440f4285d1df6c4c9f1cb462d2054a1aa104b35f228be93acc1d3b49"
+    },
+    {
+      "path": "after/checks/operations-progress-horizon-night-computed.json",
+      "bytes": 12988,
+      "sha256": "1763a4dcada41bab3d02cd90fe3fce6783bf49c44388673980d4cca80f42eefe"
+    },
+    {
+      "path": "after/checks/pro/1794918990493-3e423387-243c-43cb-970d-441a1a3e7a13.json",
+      "bytes": 5500,
+      "sha256": "77b41931c33a33cc01e257e7b9dc50f025367f35d20b3ff95d2e5cc63c94d205"
+    },
+    {
+      "path": "after/checks/pro/1794918996229-ed969826-cc6a-4efa-9f92-e872e0c8f5c4.json",
+      "bytes": 6110,
+      "sha256": "8c4cf81b20bd1477630a37e64a223dda07cdbb24344acb149bb419e924506365"
+    },
+    {
+      "path": "after/checks/pro/1794919022667-eaf727ad-7f64-4c51-af60-c3e2e8966598.json",
+      "bytes": 6427,
+      "sha256": "d19c14a65775cc74863703a799ef509dd7a4a4f02c8f8c5bd171beccdc7a668d"
+    },
+    {
+      "path": "after/checks/pro/1794919027303-6b89d14e-9021-4a4d-86d3-130bbccf488c.json",
+      "bytes": 6535,
+      "sha256": "7631420a593dc37db05183826180c6c99f7aeb9980f8821f7f86653c79c2804b"
+    },
+    {
+      "path": "after/checks/pro/1794919055810-e58515a5-0f70-498b-88de-813497f01a9d.json",
+      "bytes": 6004,
+      "sha256": "ffa598d8a22611a7899b83717c0eb92ccbfa53fb5f115cb6450161baac19b9d9"
+    },
+    {
+      "path": "after/checks/pro/1794919060941-7e7d0040-eb71-4e3b-8859-99e3cc7c7b29.json",
+      "bytes": 6286,
+      "sha256": "46962e51320513ee67ec57301d025d621890f5d14470c651e4fa574e5dc3ad6b"
+    },
+    {
+      "path": "after/checks/pro/1794919230898-1380ef79-2281-45b6-adfb-49e5e8c6b739.json",
+      "bytes": 6002,
+      "sha256": "49169ad1649af460ca20a90601c10d337e79619f2f20167b528e1696c16e0299"
+    },
+    {
+      "path": "after/checks/pro/1794919230898-1380ef79-2281-45b6-adfb-49e5e8c6b739.result.json",
+      "bytes": 14034,
+      "sha256": "0ea9caf412a8d617b7a1d3a7a020798c813f6e5dc72a1c2cdcb953ad9504cf7c"
+    },
+    {
+      "path": "after/checks/pro/1794919236151-d4dcf7d9-e7e7-4adc-a699-76df503e24f2.json",
+      "bytes": 6431,
+      "sha256": "af23ff47731fea2974be5cb64f585d83b85c303785e7eecf99ca4f0fae8ac757"
+    },
+    {
+      "path": "after/checks/pro/1794919236151-d4dcf7d9-e7e7-4adc-a699-76df503e24f2.result.json",
+      "bytes": 23729,
+      "sha256": "5eb15a678ce576a2913c84bb2a3c878e38407e4c1b3a5481ac8397c9f91b2957"
+    },
+    {
+      "path": "after/checks/pro/1794919240595-9d14340f-1efb-4c49-a16d-12a68d9273d7.json",
+      "bytes": 6431,
+      "sha256": "8eefa12b66a9ad8e92241c30ec02ef39d92c25282b16734479db237700d94672"
+    },
+    {
+      "path": "after/checks/pro/1794919240595-9d14340f-1efb-4c49-a16d-12a68d9273d7.result.json",
+      "bytes": 7861,
+      "sha256": "f0864101011ed96abfde29a60b678409b6295525ce47f65a75a83c99558d3682"
+    },
+    {
+      "path": "after/checks/pro/1794919245678-60ad57c6-8ed5-4ab7-a54a-60751079c877.json",
+      "bytes": 6425,
+      "sha256": "772deac44d12effe3eb86948c0021d84b800bfcb40a413ecdc156d5c79f811ad"
+    },
+    {
+      "path": "after/checks/pro/1794919245678-60ad57c6-8ed5-4ab7-a54a-60751079c877.result.json",
+      "bytes": 13921,
+      "sha256": "57cc78dcf1ea1b04e177b7c151da439e6d6de7df1d85b2baab9aa46030b2a8c4"
+    },
+    {
+      "path": "after/checks/pro/final-light-topbar-snapshots-passed.log",
+      "bytes": 75,
+      "sha256": "57c6fb3bf66adc03f0e1b9bf5708c70b872a9b62eef64605b9b9007fde3eb4e9"
+    },
+    {
+      "path": "after/checks/pro/final-page-contrast-passed.log",
+      "bytes": 156,
+      "sha256": "4c2dd710cd8d86f6b479bf6dfea17048c884281ec4659d1d30fbe5297c8b0c41"
+    },
+    {
+      "path": "after/checks/pro/legacy-dark-final-page-contrast.json",
+      "bytes": 373785,
+      "sha256": "e9d443722db0593977e2b0ba5d11478d20f19d05891af9cd1856cf726cad3361"
+    },
+    {
+      "path": "after/checks/pro/night-final-page-contrast.json",
+      "bytes": 372567,
+      "sha256": "0b95c956395871aea4d6f2c8aea84394c10eb3f8f28d69655254943ff8aeb29f"
+    },
+    {
+      "path": "after/checks/pro/pre-shared-paint-fix-daylight-8-viewport-matrix.json",
+      "bytes": 3454597,
+      "sha256": "4adebcb429b3d36c402dc2a9f1be77dcee37e4ffc2a10660e96b2a4765099b9c"
+    },
+    {
+      "path": "after/customers-atelier-dawn.png",
+      "bytes": 419278,
+      "sha256": "7337a2f02dc1a4b5c8627c5e14c8b04d88dfca78f390bb9aaa0720c04a65d643"
+    },
+    {
+      "path": "after/diagnostics/pro/followup-governance-kpi-paint-failure.json",
+      "bytes": 373680,
+      "sha256": "ff086e7362866aee7e4804ee66265dac609755cbc62c09716c893a6273652d8f"
+    },
+    {
+      "path": "after/diagnostics/pro/followup-governance-kpi-paint-failure.log",
+      "bytes": 6407,
+      "sha256": "ef395473bc604e1d5879a85ce7da43b685b877185f965c0c4cc2ec8e4f901183"
+    },
+    {
+      "path": "after/diagnostics/pro/initial-shared-summary-paint-failure.json",
+      "bytes": 371683,
+      "sha256": "cefadeffdd8efeb5359099614b020f907f78be82afac413f2b8dd035aa7171a6"
+    },
+    {
+      "path": "after/diagnostics/pro/initial-shared-summary-paint-failure.log",
+      "bytes": 6265,
+      "sha256": "4d99afc302059f42894ea09f9e2790bbf5d2c30f734f88c95353f70080150eda"
+    },
+    {
+      "path": "after/diagnostics/run3-identities-released.json",
+      "bytes": 81,
+      "sha256": "29c72bf48c953aed22dcf69ab4a96c63d77bb10b95535744535bd11d629d580a"
+    },
+    {
+      "path": "after/diagnostics/run3-process-exit-failed.json",
+      "bytes": 6072,
+      "sha256": "7ec8764adb1a87bc28673a1b4dbcd226e1a20edb6bf100bc8bf00e018e81c824"
+    },
+    {
+      "path": "after/diagnostics/run6-identities-released.json",
+      "bytes": 81,
+      "sha256": "c68cd09788badf9ef09fab896cab8fee7d63245c56eff00690fdbde01b1b6785"
+    },
+    {
+      "path": "after/diagnostics/run6-process-exit-failed.json",
+      "bytes": 5592,
+      "sha256": "fb688711133acdd0c3c6336e17e5a82ba8fa1951ad2df7d30d5f0d3f63b9b51a"
+    },
+    {
+      "path": "after/diagnostics/run6-process-exit-failed.log",
+      "bytes": 2814,
+      "sha256": "1259ae62e90c0edb5553b97a9dd3b9e0e7570b4849edb1534046551de4872a4b"
+    },
+    {
+      "path": "after/gpt-atelier-dawn-1920.png",
+      "bytes": 357278,
+      "sha256": "e3de9c7b2999f496999754b206d5a2301b48af7e6e7da7ae85736f7af9b315eb"
+    },
+    {
+      "path": "after/gpt-atelier-dawn-820.png",
+      "bytes": 162697,
+      "sha256": "7a868286b058f7d9db906ce845a27311b52f202dd3b4725ce2309c7d7ece7f98"
+    },
+    {
+      "path": "after/gpt-horizon-night-1920.png",
+      "bytes": 362096,
+      "sha256": "ccef686483fe0e0068736c60a0c7069cedde796c5d13c183aeef2d9746df09e3"
+    },
+    {
+      "path": "after/gpt-horizon-night-820.png",
+      "bytes": 164641,
+      "sha256": "26e8f9e1fd703b1873445b449f4618b4708e0118edc8f93774d5596081c56916"
+    },
+    {
+      "path": "after/home-atelier-dawn.png",
+      "bytes": 665148,
+      "sha256": "4259022169b26df0a09b48fccfee7998dc1db4f77691ef6013ae0abed53ee9e9"
+    },
+    {
+      "path": "after/home-horizon-night.png",
+      "bytes": 719082,
+      "sha256": "1cbe066d15cc1f25adb3c434586b767d4238aa28bb43c93a13e93e28b9c204d5"
+    },
+    {
+      "path": "after/main-visual-summary.json",
+      "bytes": 2160,
+      "sha256": "abe97085c51242829c696cb9b72bde17e40b161ae5bd186c295719d8ddec5e68"
+    },
+    {
+      "path": "after/operations-atelier-dawn.png",
+      "bytes": 420390,
+      "sha256": "d816965e202fd5ca1376c52391dbfae7a3f1ed110fe516dc08be1120fc5b19cf"
+    },
+    {
+      "path": "after/sha256.json",
+      "bytes": 8969,
+      "sha256": "576b30358ddbcd32415cebfce193f621de3a83f96a3eb57226553da8b05a47ff"
+    },
+    {
+      "path": "before/before-main.log",
+      "bytes": 230,
+      "sha256": "a7e3b02b866af84ca8cb7f58b61d1a9ad1b3531b78572067cf1fd4ed696c1444"
+    },
+    {
+      "path": "before/customers-atelier-dawn.png",
+      "bytes": 261953,
+      "sha256": "d8d6953a4cf06f9deaa7a54c971494a63eb34157f3326ca294b2ab840e6923ed"
+    },
+    {
+      "path": "before/home-atelier-dawn.png",
+      "bytes": 396410,
+      "sha256": "c3b94bc7b426de2a9da62c6e5ca2f0f5e9db00014714f0b30fd800c835bdc793"
+    },
+    {
+      "path": "before/home-horizon-night.png",
+      "bytes": 923013,
+      "sha256": "ad60bc876d2be82c8bb56e8ce6981f9d871b1ef0af80fc6647077721fda6bf3a"
+    },
+    {
+      "path": "before/operations-atelier-dawn.png",
+      "bytes": 204467,
+      "sha256": "57e4d398a2cbb80e8577a7f3881892d8d300f012d6eb3eddd05c8f20fcbfd17d"
+    },
+    {
+      "path": "checks/1794915123537-fc098c50-008d-4b3c-980a-2ccb0c3a2903.json",
+      "bytes": 5632,
+      "sha256": "df6a1a9465030565d1d1ee3bb208f9e8acbca62e46bc6c48b21133afccab6778"
+    },
+    {
+      "path": "checks/1794917270644-c1f76631-eb4f-4921-8330-ebbfc2da6d45.json",
+      "bytes": 4799,
+      "sha256": "93c1f63d431ebbaee8a3c03de2f2c1828aa27aa76311205e3b6130cf99c05ecc"
+    },
+    {
+      "path": "checks/1794920196082-1f35b051-671e-46a7-8618-941cb54357cd.json",
+      "bytes": 4799,
+      "sha256": "26cad56ed2c7a083fe60b1cdae9e24460c6ae96b13714a5fe4aad501c12db8ed"
+    },
+    {
+      "path": "checks/1794920678483-68430277-be0b-4a55-99fb-544858a26b7a.json",
+      "bytes": 5519,
+      "sha256": "718f391e7d0411877b9b668f47c61c7716ec21cfa315021ddc8630a0d171467c"
+    },
+    {
+      "path": "checks/customer-table-final.txt",
+      "bytes": 298730,
+      "sha256": "ad7fd3624eeafcb98b38f076b4c792c020858425e2de125608c3200ac8fb3d98"
+    },
+    {
+      "path": "checks/customer-table-followups-failure.txt",
+      "bytes": 302621,
+      "sha256": "9cafeaa627931d4bd0c2cefb28c901fcf7c007ee37f9be77989ccc7f4fb14fb0"
+    },
+    {
+      "path": "checks/final-failed-test-cleanup.json",
+      "bytes": 283,
+      "sha256": "92777e9ef59fcbd08916cc1284efe014ee3c82d58c5e32250aa68d9d06309231"
+    },
+    {
+      "path": "checks/final-summary.json",
+      "bytes": 2329,
+      "sha256": "f2ece95d94baf10b39dbdf6d55213b47111efae8f263d8070953c299b19f2b3d"
+    },
+    {
+      "path": "checks/full-regression-initial.txt",
+      "bytes": 111697,
+      "sha256": "33450848a323056074cf66b879b9a1ca4b5d5135f8f06889fdc02a0436c5c596"
+    },
+    {
+      "path": "checks/full-regression-pro-final.txt",
+      "bytes": 397561,
+      "sha256": "451a2b9185166355652ce5f6fc0e05826326051e2d29e409bfb07e66a2beff30"
+    },
+    {
+      "path": "checks/full-regression-soft-snapshot.txt",
+      "bytes": 395666,
+      "sha256": "45b8ad72d410d6bcab39cf8007ce1e585352c97f103149964262ca88cdcee110"
+    },
+    {
+      "path": "checks/global-motion-scope-contract.txt",
+      "bytes": 137,
+      "sha256": "f53289e16111d5e26a73f4f3ace00ef55f860f4f187505126ed00e2a421c1474"
+    },
+    {
+      "path": "checks/gpt-computed-final-pro.txt",
+      "bytes": 3643,
+      "sha256": "7b53a908faf30378fc25e0bbe84af91d727d7ee5ed9523bdf0bf430e9951be0b"
+    },
+    {
+      "path": "checks/owned-process-recheck.json",
+      "bytes": 659,
+      "sha256": "c4ae183ff47f5f18693deca25a75abecd00826396966f0f273f7abfcc984631f"
+    },
+    {
+      "path": "checks/pro-final-collapsed-layout-isolated.txt",
+      "bytes": 2622,
+      "sha256": "56b469050e8da3bd0c207d65e1738bc92941d500b9bc2dd038a7cbdd1da8c214"
+    },
+    {
+      "path": "checks/pro-final-customer-table-observations.json",
+      "bytes": 552093,
+      "sha256": "d450833e6b1fc00a5653b77b6ad168cc1172d173d04401525506406438110dc0"
+    },
+    {
+      "path": "checks/pro-final-customer-table.txt",
+      "bytes": 299534,
+      "sha256": "ec3a00b7e58ae0fae372ca33de9605df0ccaba1b04acd1924beb43e047786b07"
+    },
+    {
+      "path": "checks/pro-final-nav-contrast.txt",
+      "bytes": 902,
+      "sha256": "40b9630299c61ba734d0a20a1f568de031a804b538a305dd1d6c7360f77b3b61"
+    },
+    {
+      "path": "checks/pro-final-nav-observations.json",
+      "bytes": 35921,
+      "sha256": "0503625681cdf0e96b17321618bd6f4f4b85b30f8bc253aa409dc05a7db4fdef"
+    },
+    {
+      "path": "checks/pro-final-owned-checks.source.sha256",
+      "bytes": 815,
+      "sha256": "a6ab085d63d468ad1544e655a6660bd030772ec589bd96cc8caacb8dbb7c7815"
+    },
+    {
+      "path": "checks/review-gallery-validation.json",
+      "bytes": 215,
+      "sha256": "501ee53984b0269d3a9b6f53eac45bc164bedee4d89d9de8f14a5ae8268c54cd"
+    },
+    {
+      "path": "checks/temporary-cleanup.json",
+      "bytes": 617,
+      "sha256": "16ed0badaf192dfffa2d2cafbc98f9ff36e76158f8ebefd9e2638c350fea7e2b"
+    },
+    {
+      "path": "checks/visual-contract-updates.txt",
+      "bytes": 2971,
+      "sha256": "fe3cc184c2b8843ea14f764e17422756fcf4fa9e6a721ee1947b1b9accd5ff32"
+    },
+    {
+      "path": "checks/winui-isolated-build.txt",
+      "bytes": 257,
+      "sha256": "27a791729412dd9ab6fa0b1154dc3c28cae3c2456e006f568773e3c99b60483d"
+    },
+    {
+      "path": "checks/winui-pro-release-build.txt",
+      "bytes": 299,
+      "sha256": "22d5494a4f9c74745fab5af7e5272024648dd4f3c11544fe0b1a53c408811640"
+    },
+    {
+      "path": "checks/ws-computed-final-pro.txt",
+      "bytes": 3514,
+      "sha256": "cf167daf8a24afe3537fc66756975b309a84e78e3f58ba5283ccf8a4b7ab95c6"
+    },
+    {
+      "path": "checks/ws-computed-initial.txt",
+      "bytes": 3514,
+      "sha256": "cf167daf8a24afe3537fc66756975b309a84e78e3f58ba5283ccf8a4b7ab95c6"
+    },
+    {
+      "path": "native/safe-lifecycle-events.json",
+      "bytes": 1076,
+      "sha256": "2fd9c5b857c910989b77e7c53247fef5dd00ca47c57c31b6b2e3701469a1470c"
+    },
+    {
+      "path": "native/stage-board-dawn.png",
+      "bytes": 186470,
+      "sha256": "cea60b99823ed13f5349d190a6a04ef7322cd953ee2fa34f7354a5d6e0482528"
+    },
+    {
+      "path": "native/theme-preview-cancel-restored.png",
+      "bytes": 182681,
+      "sha256": "f3be31a0c4a85a36ad68fdf346f7fed3f97472a49f3e36d3863e11b499ae608c"
+    },
+    {
+      "path": "native/theme-preview-night.png",
+      "bytes": 138564,
+      "sha256": "55f468403183e18508f4c9b7da3f9189ab242d21073e8eda847eb8ec6b0aa206"
+    }
+  ]
+}

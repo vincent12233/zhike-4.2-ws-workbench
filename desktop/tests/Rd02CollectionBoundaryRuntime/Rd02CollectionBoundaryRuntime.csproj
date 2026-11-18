@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../src/Zhike.Desktop/Services/WsCollectionCapability.cs" Link="WsCollectionCapability.cs" />
+    <Compile Include="../../src/Zhike.Desktop/Services/BridgeContracts.cs" Link="BridgeContracts.cs" />
+    <Compile Include="$(Rd02GeneratedHost)" Link="NativeHost.generated.cs" Condition="'$(Rd02GeneratedHost)' != ''" />
+    <Compile Include="../../src/Zhike.Desktop/Services/WebViewProfileService.cs" Link="WebViewProfileService.cs" />
+    <Compile Include="../../src/Zhike.Desktop/Services/WsRuntimeService.cs" Link="WsRuntimeService.cs" />
+    <Compile Include="../../src/Zhike.Desktop/Services/WsRuntimeCoordinator.cs" Link="WsRuntimeCoordinator.cs" />
+    <Compile Include="../../src/Zhike.Desktop/Services/WsWebViewSessionPool.cs" Link="WsWebViewSessionPool.cs" />
+    <Compile Include="../../src/Zhike.Desktop/Services/WsAccountStore.cs" Link="WsAccountStore.cs" />
+  </ItemGroup>
+</Project>

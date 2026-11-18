@@ -1,0 +1,54 @@
+{
+  "head": "260d29e0c42f40f77b7a96946088af6375d1f9a1",
+  "node": "<local-user>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\resources\\app\\node.exe",
+  "nodeVersion": "v24.22.1",
+  "edge": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+  "edgeVersion": "157.0.4341.60",
+  "dotnet": "<local-user>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\dotnet10\\dotnet.exe",
+  "startUtc": "2026-11-18T12:13:32.6078229Z",
+  "endUtc": "2026-11-18T12:14:44.5123262Z",
+  "results": [
+    {
+      "label": "s1-main-visual",
+      "path": "<local-user>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\s3-worktrees\\edge\\scripts\\delivery\\s1-main-visual.test.cjs",
+      "timeoutMs": 180000,
+      "startUtc": "2026-11-18T12:13:32.6121470Z",
+      "endUtc": "2026-11-18T12:14:14.9786518Z",
+      "elapsedMs": 42366.5048,
+      "outerTimeout": false,
+      "exitCode": 0
+    },
+    {
+      "label": "s1-ws-visual",
+      "path": "<local-user>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\s3-worktrees\\edge\\scripts\\delivery\\s1-ws-visual.test.cjs",
+      "timeoutMs": 180000,
+      "startUtc": "2026-11-18T12:14:15.0319240Z",
+      "endUtc": "2026-11-18T12:14:28.5936296Z",
+      "elapsedMs": 13561.7056,
+      "outerTimeout": false,
+      "exitCode": 0
+    },
+    {
+      "label": "s2-metrics-visual",
+      "path": "<local-user>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\s3-worktrees\\edge\\scripts\\delivery\\s2-metrics-visual.test.cjs",
+      "timeoutMs": 180000,
+      "startUtc": "2026-11-18T12:14:28.5996665Z",
+      "endUtc": "2026-11-18T12:14:32.0223295Z",
+      "elapsedMs": 3422.663,
+      "outerTimeout": false,
+      "exitCode": 0
+    },
+    {
+      "label": "s3-customer-table-visual",
+      "path": "<local-user>\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\s3-worktrees\\edge\\scripts\\delivery\\s3-customer-table-visual.test.cjs",
+      "timeoutMs": 180000,
+      "startUtc": "2026-11-18T12:14:32.0240161Z",
+      "endUtc": "2026-11-18T12:14:44.3906340Z",
+      "elapsedMs": 12366.6179,
+      "outerTimeout": false,
+      "exitCode": 0
+    }
+  ],
+  "observerBuildCommand": "dotnet build scripts/diagnostics/edge-exit-observer/observer/Observer.csproj -c Release --no-restore -p:UseSharedCompilation=false --nologo",
+  "observerCalibrationCommand": "node scripts/diagnostics/edge-exit-observer/calibrate-invocation.cjs <dotnet.exe>"
+}

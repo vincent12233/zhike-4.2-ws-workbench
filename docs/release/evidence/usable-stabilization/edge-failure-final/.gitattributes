@@ -1,0 +1,2 @@
+# Preserve the archived bytes referenced by SHA-256 manifests.
+* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

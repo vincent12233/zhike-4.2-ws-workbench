@@ -1,0 +1,6 @@
+# Preserve exact evidence bytes so SHA-256 remains valid across checkouts.
+# Native PowerShell evidence uses CRLF; preserve it without treating CR as spaces.
+* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Test runner output contains trailing spaces; retain the diagnostic bytes.
+# This exception is scoped to archived logs, not product code or tests.
+*.log -whitespace

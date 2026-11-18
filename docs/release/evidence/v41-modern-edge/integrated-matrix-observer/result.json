@@ -1,0 +1,17 @@
+{
+  "result": "Passed",
+  "invocation": "1794997382764-ceb6b6fc-1d18-43fa-be94-df6cd0483ab0",
+  "pid": 11668,
+  "closeAtUnixMs": 1794997390916,
+  "deadlineUnixMs": 1794997412764,
+  "kernelObservation": "root-exited",
+  "kernelRoot": {
+    "pid": 11668,
+    "role": "browser",
+    "state": "exited",
+    "exitUnixMs": 1794997392720,
+    "exitCode": 0,
+    "kernelTicks": 21093750,
+    "userTicks": 30000000
+  }
+}

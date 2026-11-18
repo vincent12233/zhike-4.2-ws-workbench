@@ -1,0 +1,115 @@
+
+[RUN] Visual customer column minimum and preference compatibility
+Customer column CSS floor governs legacy restore and drag without changing column indexes, wider widths, or other minimums.
+[PASS] Visual customer column minimum and preference compatibility
+
+[RUN] Visual shared Unicode avatar and safe image fallback
+Shared avatar runtime: graphemes, local still rasters, scoped fallback, and sprite wiring
+[PASS] Visual shared Unicode avatar and safe image fallback
+
+[RUN] Visual customer 360 real-data and retained action contract
+Customer 360 uses CRM identity and saved summaries, separates amount evidence from zero, and keeps unobserved reading unknown.
+[PASS] Visual customer 360 real-data and retained action contract
+
+[RUN] Visual WS avatar presentation and account scope
+✔ contact details keep only scoped names and reject mixed-account directory responses (44.2099ms)
+✔ a late contact response cannot populate the newly active account (5.1171ms)
+✔ member portraits use current account roster names and neutral historical fallbacks (5.9507ms)
+✔ direct sessions get person fallbacks, groups get a group glyph, and ambiguous sessions stay neutral (4.7462ms)
+✔ WS CRM uses persisted account links and ignores guessed image fields in the archive (6.9798ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 78.0062
+[PASS] Visual WS avatar presentation and account scope
+
+[RUN] Delivery S1 isolated browser process ownership and safe release
+[PASS] parameter/path valid optional viewport and confined PNG are normalized without starting a process
+[PASS] parameter/path legacy matrix accepts omitted Emulation and retains all expected cases
+[PASS] parameter/path owned resource release is fixed and cannot be changed by callers
+[PASS] parameter/path viewport rejects strings booleans missing nonfinite negative and excessive dimensions
+[PASS] parameter/path expected viewport handshake never accepts an empty or invalid array
+[PASS] parameter/path screenshots require one matching explicit viewport
+[PASS] parameter/path outside and traversal targets are refused
+[PASS] parameter/path ADS non-PNG and directory destinations are refused
+[PASS] parameter/path a real filesystem junction cannot redirect a screenshot outside evidence
+[PASS] parameter/path PNG writer preserves original bytes and safely replaces only a regular evidence artifact
+[PASS] parameter/path invalid PNG bytes and viewport mismatch never replace the existing evidence
+[PASS] parameter/path hard-linked destination is refused without changing the other file
+[PASS] parameter/path readiness classification admits only ENOENT or EBUSY on the exact owned endpoint path
+{"mode":"real-windows-exclusive-readiness","status":"Passed","testedStatus":"Passed","busyPolls":1,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\isolated-edge-runner-lifecycle\\1795019737374-b5e01d01-dcc7-4df1-8a0b-1996af8c49b2.json"}
+{"mode":"real-windows-bounded-readiness","status":"Passed","testedStatus":"Failed","busyPolls":77,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\isolated-edge-runner-lifecycle\\1795019739061-62339337-d3b8-468a-90d1-0872ac15f3f5.json"}
+{"mode":"normal","status":"Passed","testedStatus":"Passed","errorCode":null,"elapsedMs":556.7089999999998,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\isolated-edge-runner-lifecycle\\1795019742624-f1dce773-1fe8-4903-8d4f-1a6594575500.json"}
+{"mode":"invalid-result","status":"Passed","testedStatus":"Failed","errorCode":"INVALID_RESULT","elapsedMs":558.0931999999993,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\isolated-edge-runner-lifecycle\\1795019743684-6731b2e3-4f09-457b-bd6e-dbe06ef8c863.json"}
+{"mode":"result-timeout","status":"Passed","testedStatus":"Failed","errorCode":"EDGE_RUNNER_TIMEOUT","elapsedMs":2300.6996,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\isolated-edge-runner-lifecycle\\1795019744861-5fac191c-ad05-4d31-956c-e22eadab2b94.json"}
+{"mode":"close-timeout","status":"Passed","testedStatus":"Failed","errorCode":"EDGE_RUNNER_TIMEOUT","elapsedMs":3011.0805999999993,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\isolated-edge-runner-lifecycle\\1795019747682-125a1876-407b-4b99-b360-ff611d457431.json"}
+{"mode":"probe-close-timeout","status":"Passed","testedStatus":"Failed","errorCode":"EDGE_RUNNER_TIMEOUT","elapsedMs":2836.7083999999995,"preparationMs":1003,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\isolated-edge-runner-lifecycle\\1795019752215-89757475-7ed8-409a-864b-4940e0a47423.json"}
+{"mode":"probe-unverified-timeout","status":"Passed","testedStatus":"Failed","errorCode":"EDGE_RUNNER_TIMEOUT","elapsedMs":3000.8037000000004,"preparationMs":509,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\isolated-edge-runner-lifecycle\\1795019756084-058f1f86-61eb-46a2-99d5-f1d313453e01.json"}
+{"mode":"nonzero-close","status":"Passed","testedStatus":"Failed","errorCode":"PROCESS_EXIT_NONZERO","elapsedMs":554.2839999999997,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\isolated-edge-runner-lifecycle\\1795019759607-4541253c-6081-49d1-904c-8ba38a349362.json"}
+{"mode":"early-exit","status":"Passed","testedStatus":"Failed","errorCode":"PROCESS_EARLY_EXIT","elapsedMs":500.35199999999895,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\isolated-edge-runner-lifecycle\\1795019760680-facf9ba5-9238-44f0-ade5-c7c9c2ba69a8.json"}
+{"mode":"stream-exit-order","status":"Passed","testedStatus":"Passed","errorCode":null,"elapsedMs":968.9229999999989,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\isolated-edge-runner-lifecycle\\1795019761691-e79f8452-23e8-4606-9c74-0e6b4d941651.json"}
+{"mode":"tracked-child","status":"Passed","testedStatus":"Failed","errorCode":"OWNED_PROCESSES_REMAIN","elapsedMs":780.2580999999991,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\isolated-edge-runner-lifecycle\\1795019763167-95982b37-4b79-4b67-a8f4-2b6604fab146.json"}
+{"mode":"late-release","status":"Passed","testedStatus":"Passed","errorCode":null,"elapsedMs":5706.905900000002,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\isolated-edge-runner-lifecycle\\1795019764464-ceb234d8-cb84-46b3-abb8-0a150e22a728.json"}
+{"mode":"controlled-result-evidence-delayed-write","status":"Passed","testedStatus":"Passed","elapsedMs":550.7641999999978,"finalElapsedMs":6116.633799999996,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\isolated-edge-runner-lifecycle\\1795019770707-06257e27-fff6-4984-beb0-c262830a677e.json"}
+{"mode":"controlled-result-evidence-write-error","status":"Passed","testedStatus":"Failed","elapsedMs":556.2407000000021,"finalElapsedMs":556.4790999999968,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\isolated-edge-runner-lifecycle\\1795019777347-8c0721a7-a109-40bb-b472-05862526a1c4.json"}
+{"suite":"isolated-edge-runner-lifecycle","parameterChecks":13,"actualControlledChildCases":15,"passed":15,"realEdgeStarted":false,"realBrowserAccepted":false}
+[PASS] Delivery S1 isolated browser process ownership and safe release
+
+[RUN] Delivery isolated browser transport acknowledgement and release
+{"mode":"ack-only","status":"Passed","actualLoopbackWebSocket":true,"realEdgeStarted":false,"realBrowserAccepted":false,"events":["browser-close-request-sent","browser-close-response-received","browser-close-acknowledged","cdp-transport-close-requested","cdp-transport-closed"]}
+{"mode":"peer-close","status":"Passed","actualLoopbackWebSocket":true,"realEdgeStarted":false,"realBrowserAccepted":false,"events":["browser-close-request-sent","cdp-transport-closed","browser-close-acknowledged"]}
+{"mode":"stall-close","status":"Passed","actualLoopbackWebSocket":true,"realEdgeStarted":false,"realBrowserAccepted":false,"events":["browser-close-request-sent","browser-close-response-received","browser-close-acknowledged","cdp-transport-close-requested"]}
+{"mode":"premature-disconnect","status":"Passed","actualLoopbackWebSocket":true,"realEdgeStarted":false,"realBrowserAccepted":false,"events":["cdp-transport-closed"]}
+{"mode":"work-phase-observation","status":"Passed","actualLoopbackWebSocket":true,"realEdgeStarted":false,"realBrowserAccepted":false,"events":["cdp-work-started","navigation-request-sent","navigation-response-received","navigation-lifecycle-received","cdp-work-completed","cdp-work-started"]}
+{"suite":"isolated-edge-transport","passed":5,"diagnosticResourceChecks":1,"realBrowserAccepted":false}
+[PASS] Delivery isolated browser transport acknowledgement and release
+
+[RUN] Delivery S1 actual workspace shell and preference rollback
+S1 workspace shell: scoped navigation, no duplicate route, local appearance, owned modal and real legacy preference rollback PASS
+[PASS] Delivery S1 actual workspace shell and preference rollback
+
+[RUN] Delivery S1 native wheel gestures and modal ownership
+[PASS] ctrlKey wheel remains an unclaimed native zoom gesture
+[PASS] metaKey wheel remains an unclaimed native zoom gesture
+[PASS] a native zoom gesture is preserved even over the modal backdrop
+[PASS] an already claimed or noncancelable wheel is not routed again
+[PASS] sidebar chrome and inner contained owner keep the existing vertical policy
+[PASS] nested contained panes hand off within their rail but not manually to the page
+[PASS] table trackpad, shift-wheel and vertical axes remain independent
+[PASS] registered WS regions, drawers and modal body consume only their own axis
+[PASS] editable focus and modified keys retain native caret and shortcut behavior
+[PASS] scrollable textarea and its boundary retain native ownership without manually scrolling the outer pane
+[PASS] native editing gestures preserve text input, selection and shift-wheel axis behavior
+[PASS] modal keyboard scrolling cannot choose a stale background focus or pointer owner
+[PASS] scroll activity defers and deduplicates idle callbacks until the real timer settles
+{"suite":"delivery-S1-scroll-gestures","checks":13,"passed":13,"failed":0,"nativeZoomValidated":false,"realWebViewTested":false}
+[PASS] Delivery S1 native wheel gestures and modal ownership
+
+[RUN] Delivery S1 actual main renderers and shared design system
+S1 main visual actual-render/full-CSS computed styles: 8 viewports × 20 routes PASS; screenshots: C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\visual-system-worktrees\integration\.tools\visual-usability\main-visual
+[PASS] Delivery S1 actual main renderers and shared design system
+
+[RUN] Delivery S1 WS computed layout and retained host
+{"browserLifecycle":"Passed","pid":37244,"exit":{"code":0,"signal":null},"streamsClosed":true,"cleanupSafe":true,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\delivery-s1-ws-visual\\1795019845333-df140087-ca9d-4268-ba07-7d94ec3a5bf1.json"}
+{"kind":"ws-chrome-geometry","palette":"atelier-dawn","viewport":{"width":1920,"height":1080},"before":{"x":266,"y":223,"width":1246,"height":833,"bottom":1056},"after":{"x":266,"y":187,"width":1246,"height":877,"bottom":1064}}
+{"kind":"real-computed-css","palette":"atelier-dawn","physical":[1920,1080],"scale":1,"viewport":{"width":1920,"height":1080},"pages":12,"topbar":56,"navigation":[250,76],"beforeCompression":{"x":266,"y":223,"width":1246,"height":833,"bottom":1056},"chat":{"x":266,"y":187,"width":1246,"height":877,"bottom":1064},"gradientContrast":[6.3537818352605475,6.235073315822632],"mountUpdates":20,"hostStable":true}
+{"kind":"ws-chrome-geometry","palette":"atelier-dawn","viewport":{"width":1536,"height":864},"before":{"x":266,"y":223,"width":862,"height":617,"bottom":840},"after":{"x":266,"y":187,"width":862,"height":661,"bottom":848}}
+{"kind":"real-computed-css","palette":"atelier-dawn","physical":[1920,1080],"scale":1.25,"viewport":{"width":1536,"height":864},"pages":12,"topbar":56,"navigation":[250,76],"beforeCompression":{"x":266,"y":223,"width":862,"height":617,"bottom":840},"chat":{"x":266,"y":187,"width":862,"height":661,"bottom":848},"gradientContrast":[6.3537818352605475,6.235073315822632],"mountUpdates":20,"hostStable":true}
+{"kind":"ws-chrome-geometry","palette":"atelier-dawn","viewport":{"width":1280,"height":720},"before":{"x":266,"y":223,"width":646,"height":473,"bottom":696},"after":{"x":266,"y":187,"width":646,"height":517,"bottom":704}}
+{"kind":"real-computed-css","palette":"atelier-dawn","physical":[1920,1080],"scale":1.5,"viewport":{"width":1280,"height":720},"pages":12,"topbar":56,"navigation":[250,76],"beforeCompression":{"x":266,"y":223,"width":646,"height":473,"bottom":696},"chat":{"x":266,"y":187,"width":646,"height":517,"bottom":704},"gradientContrast":[6.3537818352605475,6.235073315822632],"mountUpdates":20,"hostStable":true}
+{"kind":"ws-chrome-geometry","palette":"atelier-dawn","viewport":{"width":2560,"height":1440},"before":{"x":266,"y":223,"width":1886,"height":1193,"bottom":1416},"after":{"x":266,"y":187,"width":1886,"height":1237,"bottom":1424}}
+{"kind":"real-computed-css","palette":"atelier-dawn","physical":[2560,1440],"scale":1,"viewport":{"width":2560,"height":1440},"pages":12,"topbar":56,"navigation":[250,76],"beforeCompression":{"x":266,"y":223,"width":1886,"height":1193,"bottom":1416},"chat":{"x":266,"y":187,"width":1886,"height":1237,"bottom":1424},"gradientContrast":[6.3537818352605475,6.235073315822632],"mountUpdates":20,"hostStable":true}
+{"kind":"ws-chrome-geometry","palette":"atelier-dawn","viewport":{"width":2048,"height":1152},"before":{"x":266,"y":223,"width":1374,"height":905,"bottom":1128},"after":{"x":266,"y":187,"width":1374,"height":949,"bottom":1136}}
+{"kind":"real-computed-css","palette":"atelier-dawn","physical":[2560,1440],"scale":1.25,"viewport":{"width":2048,"height":1152},"pages":12,"topbar":56,"navigation":[250,76],"beforeCompression":{"x":266,"y":223,"width":1374,"height":905,"bottom":1128},"chat":{"x":266,"y":187,"width":1374,"height":949,"bottom":1136},"gradientContrast":[6.3537818352605475,6.235073315822632],"mountUpdates":20,"hostStable":true}
+{"kind":"ws-chrome-geometry","palette":"atelier-dawn","viewport":{"width":1707,"height":960},"before":{"x":266,"y":223,"width":1033,"height":713,"bottom":936},"after":{"x":266,"y":187,"width":1033,"height":757,"bottom":944}}
+{"kind":"real-computed-css","palette":"atelier-dawn","physical":[2560,1440],"scale":1.5,"viewport":{"width":1707,"height":960},"pages":12,"topbar":56,"navigation":[250,76],"beforeCompression":{"x":266,"y":223,"width":1033,"height":713,"bottom":936},"chat":{"x":266,"y":187,"width":1033,"height":757,"bottom":944},"gradientContrast":[6.3537818352605475,6.235073315822632],"mountUpdates":20,"hostStable":true}
+{"kind":"ws-chrome-geometry","palette":"horizon-night","viewport":{"width":1920,"height":1080},"before":{"x":266,"y":223,"width":1246,"height":833,"bottom":1056},"after":{"x":266,"y":187,"width":1246,"height":877,"bottom":1064}}
+{"kind":"real-computed-css","palette":"horizon-night","physical":[1920,1080],"scale":1,"viewport":{"width":1920,"height":1080},"pages":12,"topbar":56,"navigation":[250,76],"beforeCompression":{"x":266,"y":223,"width":1246,"height":833,"bottom":1056},"chat":{"x":266,"y":187,"width":1246,"height":877,"bottom":1064},"gradientContrast":[6.3537818352605475,6.235073315822632],"mountUpdates":20,"hostStable":true}
+S1 WS computed design system: 12 routes x 6 daylight viewports + night, 44px controls, readable palettes, 20-update native DOM anchor stability PASS
+[PASS] Delivery S1 WS computed layout and retained host
+
+Completed 10 checks: 10 passed, 0 failed.

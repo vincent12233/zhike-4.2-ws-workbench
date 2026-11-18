@@ -1,0 +1,30 @@
+{
+  "stage": "5.1",
+  "status": "Observed",
+  "test": "native isolated application during desktop interaction",
+  "rootPid": 18128,
+  "samples": 31,
+  "sampleIntervalSeconds": 10,
+  "durationMs": 312658.5,
+  "first": { "atUtc": "2026-11-16T12:34:54.5336765Z", "elapsedMs": 478.1, "sample": 0, "processCount": 9, "webViewProcessCount": 6, "workingSetBytes": 954773504, "privateBytes": 549580800, "threads": 225, "handles": 5780 },
+  "last": { "atUtc": "2026-11-16T12:40:06.7185127Z", "elapsedMs": 312658.5, "sample": 30, "processCount": 15, "webViewProcessCount": 12, "workingSetBytes": 1357787136, "privateBytes": 755875840, "threads": 356, "handles": 9172 },
+  "workingSetDeltaBytes": 403013632,
+  "privateDeltaBytes": 206295040,
+  "observedPeaks": { "workingSetBytes": 1357787136, "privateBytes": 755875840, "threads": 387, "handles": 9536 },
+  "observedCpuDeltaSeconds": 183.9531,
+  "observedProcessIdentities": 17,
+  "createdWebViewCores": [
+    { "atUtc": "2026-11-16T12:32:58.9023063+00:00", "role": "shell", "accountId": "workbench-ui", "browserProcessId": 3208 },
+    { "atUtc": "2026-11-16T12:36:00.6304759+00:00", "role": "ws-visible", "accountId": "default", "browserProcessId": 3220 }
+  ],
+  "postSecondCoreBaseline": { "atUtc": "2026-11-16T12:36:17.6137154Z", "elapsedMs": 83553.7, "sample": 8, "processCount": 15, "webViewProcessCount": 12, "workingSetBytes": 1289097216, "privateBytes": 701177856, "threads": 368, "handles": 9122 },
+  "postSecondCoreDelta": { "workingSetBytes": 68689920, "privateBytes": 54697984, "threads": -12, "handles": 50 },
+  "allPerProcessAggregatesVerified": true,
+  "rootAliveAtEnd": true,
+  "windowInteractionEvidence": "Parent task native CUA observations; this observer performs no UI input",
+  "webViewProcessCountIsNotCoreInstanceCount": true,
+  "performanceThreshold": "NotDefined",
+  "gateInference": "No automatic desktop performance pass or leak-free claim inferred",
+  "productionWorkerStarted": false,
+  "productionDatabaseOpened": false
+}

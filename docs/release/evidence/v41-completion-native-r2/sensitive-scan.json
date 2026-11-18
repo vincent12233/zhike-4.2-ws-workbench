@@ -1,0 +1,56 @@
+{
+  "scope": "Selected native metadata, aggregate counters and synthetic read-only fixture assertions.",
+  "sourceHasUntrackedPrivatePaths": true,
+  "checked": [
+    {
+      "file": "native-events.jsonl",
+      "archivedSensitiveMatches": {
+        "filesystemPath": 0,
+        "privateUrl": 0,
+        "userSid": 0,
+        "credential": 0,
+        "credentialAttribute": 0
+      }
+    },
+    {
+      "file": "completion-r2-resources.jsonl",
+      "archivedSensitiveMatches": {
+        "filesystemPath": 0,
+        "privateUrl": 0,
+        "userSid": 0,
+        "credential": 0,
+        "credentialAttribute": 0
+      }
+    },
+    {
+      "file": "completion-r2-resources.context.json",
+      "archivedSensitiveMatches": {
+        "filesystemPath": 0,
+        "privateUrl": 0,
+        "userSid": 0,
+        "credential": 0,
+        "credentialAttribute": 0
+      }
+    },
+    {
+      "file": "current-state-readonly.json",
+      "archivedSensitiveMatches": {
+        "filesystemPath": 0,
+        "privateUrl": 0,
+        "userSid": 0,
+        "credential": 0,
+        "credentialAttribute": 0
+      }
+    },
+    {
+      "file": "observation.json",
+      "archivedSensitiveMatches": {
+        "filesystemPath": 0,
+        "privateUrl": 0,
+        "userSid": 0,
+        "credential": 0,
+        "credentialAttribute": 0
+      }
+    }
+  ]
+}

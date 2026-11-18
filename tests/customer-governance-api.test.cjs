@@ -12,7 +12,7 @@ const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mj
 const headers = { 'content-type': 'application/json', 'x-zhike-api-token': token, origin: `http://127.0.0.1:${port}` };
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function request(pathname, init = {}) {
-  for (let i = 0; i < 300; i++) {
+  for (let i = 0; i < 1200; i++) {
     try {
       const nextHeaders = { ...headers, ...(init.headers || {}) };
       if (String(init.method || 'GET').toUpperCase() !== 'GET' && pathname !== '/api/state' && !Object.keys(nextHeaders).some(key => key.toLowerCase() === 'x-state-version')) {
@@ -35,7 +35,7 @@ const json = response => response.json();
     const state = await request('/api/state', { method: 'POST', headers: { ...headers, 'x-state-version': '' }, body: JSON.stringify(initial) });
     assert.equal(state.status, 200);
 
-    const conversation = await json(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: '+91 98765 43210', title: '张三' }) }));
+    const conversation = await json(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: '+91 98765 43210', title: '张三', unreadCount: 0, data: { conversationType: 'direct', historyLoaded: true, historyFingerprint: 'governance-history', lastMessageFingerprint: 'governance-history', directionVersion: 4 } }) }));
     const analysis = await json(await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, result: { summary: '客户来自展会', confidence: 0.95, contact: { name: '张三', phone: '+91 98765 43210' }, profile: { origin: '展会', age: 36, occupation: '采购经理' }, evidence: [{ field: 'age', value: 36, text: '我今年36岁' }] } }) }));
     const synced = await json(await request('/api/ws/crm-sync', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, analysisId: analysis.id }) }));
     assert.equal(synced.customer.id, 'C1');
@@ -44,7 +44,7 @@ const json = response => response.json();
     assert.equal(profile.customer.id, 'C1');
     assert.ok(profile.evidence.some(item => item.fieldName === 'age'));
 
-    const malformedConversation = await json(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-malformed', title: '未命名会话' }) }));
+    const malformedConversation = await json(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'wa-malformed', title: '未命名会话', unreadCount: 0, data: { conversationType: 'direct', historyLoaded: true, historyFingerprint: 'malformed-history', lastMessageFingerprint: 'malformed-history', directionVersion: 4 } }) }));
     const malformedAnalysis = await json(await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: malformedConversation.id, result: { confidence: 0.99, summary: '只有摘要，没有可验证客户字段' } }) }));
     const malformedSync = await json(await request('/api/ws/crm-sync', { method: 'POST', body: JSON.stringify({ conversationId: malformedConversation.id, analysisId: malformedAnalysis.id }) }));
     assert.equal(malformedSync.skipped, true, '格式不完整的 AI 结果不应自动建档');

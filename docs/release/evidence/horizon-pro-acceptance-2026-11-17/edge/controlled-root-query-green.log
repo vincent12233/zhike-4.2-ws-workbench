@@ -1,0 +1,34 @@
+[PASS] parameter/path valid optional viewport and confined PNG are normalized without starting a process
+[PASS] parameter/path legacy matrix accepts omitted Emulation and retains all expected cases
+[PASS] parameter/path owned resource release is fixed and cannot be changed by callers
+[PASS] parameter/path viewport rejects strings booleans missing nonfinite negative and excessive dimensions
+[PASS] parameter/path expected viewport handshake never accepts an empty or invalid array
+[PASS] parameter/path screenshots require one matching explicit viewport
+[PASS] parameter/path outside and traversal targets are refused
+[PASS] parameter/path ADS non-PNG and directory destinations are refused
+[PASS] parameter/path a real filesystem junction cannot redirect a screenshot outside evidence
+[PASS] parameter/path PNG writer preserves original bytes and safely replaces only a regular evidence artifact
+[PASS] parameter/path invalid PNG bytes and viewport mismatch never replace the existing evidence
+[PASS] parameter/path hard-linked destination is refused without changing the other file
+[PASS] parameter/path readiness classification admits only ENOENT or EBUSY on the exact owned endpoint path
+{"mode":"real-windows-exclusive-readiness","status":"Passed","testedStatus":"Passed","busyPolls":1,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794924678106-cd70380d-357a-4289-b876-bc7db1cc93e0.json"}
+{"mode":"real-windows-bounded-readiness","status":"Passed","testedStatus":"Failed","busyPolls":66,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794924679230-79957939-bd23-47c3-aef7-8d578e43b9b6.json"}
+{"mode":"normal","status":"Passed","testedStatus":"Passed","errorCode":null,"elapsedMs":574,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794924682739-fc1bd70b-8980-4e1c-9b11-bf0f7e103c34.json"}
+{"mode":"invalid-result","status":"Passed","testedStatus":"Failed","errorCode":"INVALID_RESULT","elapsedMs":577,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794924683772-e597aac1-755a-477f-886a-22b9ba067d29.json"}
+{"mode":"result-timeout","status":"Passed","testedStatus":"Failed","errorCode":"EDGE_RUNNER_TIMEOUT","elapsedMs":2273,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794924684817-aba3bd83-a902-490b-8599-e648fa5bfd87.json"}
+{"mode":"close-timeout","status":"Passed","testedStatus":"Failed","errorCode":"EDGE_RUNNER_TIMEOUT","elapsedMs":3004,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794924687593-11f28ae1-6151-4a95-ae61-af54fabf5a46.json"}
+{"mode":"nonzero-close","status":"Passed","testedStatus":"Failed","errorCode":"PROCESS_EXIT_NONZERO","elapsedMs":560,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794924691057-231188c5-759f-481d-b8ec-a8e775ac15d2.json"}
+{"mode":"early-exit","status":"Passed","testedStatus":"Failed","errorCode":"PROCESS_EARLY_EXIT","elapsedMs":139,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794924692067-a0e45964-c20a-470d-845b-6e84a32b6cc0.json"}
+{"mode":"stream-exit-order","status":"Passed","testedStatus":"Passed","errorCode":null,"elapsedMs":956,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794924692664-fda813ea-3e56-4f1e-aad0-06448ea9d396.json"}
+Controlled lifecycle failure evidence root retained: C:\Users\酷酷\AppData\Local\Temp\zhike-edge-runner-test-kKizwp
+AssertionError [ERR_ASSERTION]: The failure must never be converted into a pass
+    at runCase (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\isolated-edge-runner-lifecycle.test.cjs:101:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\isolated-edge-runner-lifecycle.test.cjs:161:3 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}

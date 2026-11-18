@@ -18,6 +18,9 @@ public sealed class WsAccountStore
     public WsAccountStore(string? root = null)
     {
         var basePath = root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Zhike6", "ws-accounts");
+#if STAGE51_ISOLATED_UI
+        basePath = Stage51Isolation.MapDataPath(basePath);
+#endif
         Directory.CreateDirectory(basePath);
         _path = Path.Combine(basePath, "accounts.json");
     }
@@ -27,9 +30,7 @@ public sealed class WsAccountStore
         await _gate.WaitAsync(cancellationToken);
         try
         {
-            if (!File.Exists(_path)) return [];
-            await using var stream = File.OpenRead(_path);
-            return await JsonSerializer.DeserializeAsync<List<StoredWsAccount>>(stream, _options, cancellationToken) ?? [];
+            return await ReadAsync(cancellationToken);
         }
         catch (JsonException)
         {
@@ -43,18 +44,45 @@ public sealed class WsAccountStore
     public async Task SaveAsync(IEnumerable<StoredWsAccount> accounts, CancellationToken cancellationToken = default)
     {
         await _gate.WaitAsync(cancellationToken);
+        try { await WriteAsync(Normalize(accounts), cancellationToken); }
+        finally { _gate.Release(); }
+    }
+
+    public async Task<IReadOnlyList<StoredWsAccount>> UpdateAsync(
+        Func<IReadOnlyList<StoredWsAccount>, IEnumerable<StoredWsAccount>> change,
+        CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
         try
         {
-            var unique = accounts
-                .Where(item => !string.IsNullOrWhiteSpace(item.Id))
-                .GroupBy(item => item.Id.Trim(), StringComparer.OrdinalIgnoreCase)
-                .Select(group => group.Last() with { Id = group.Key })
-                .OrderBy(item => item.DisplayName, StringComparer.OrdinalIgnoreCase)
-                .ToArray();
-            var temporary = $"{_path}.{Guid.NewGuid():N}.tmp";
-            await File.WriteAllTextAsync(temporary, JsonSerializer.Serialize(unique, _options), cancellationToken);
-            File.Move(temporary, _path, true);
+            // Keep read, mutation, and atomic replacement within the same gate.
+            // Invalid JSON propagates instead of replacing the unreadable index.
+            var current = await ReadAsync(cancellationToken);
+            var updated = Normalize(change(current));
+            if (!current.SequenceEqual(updated)) await WriteAsync(updated, cancellationToken);
+            return updated;
         }
         finally { _gate.Release(); }
+    }
+
+    private async Task<IReadOnlyList<StoredWsAccount>> ReadAsync(CancellationToken cancellationToken)
+    {
+        if (!File.Exists(_path)) return [];
+        await using var stream = File.OpenRead(_path);
+        return await JsonSerializer.DeserializeAsync<List<StoredWsAccount>>(stream, _options, cancellationToken) ?? [];
+    }
+
+    private static StoredWsAccount[] Normalize(IEnumerable<StoredWsAccount> accounts) => accounts
+        .Where(item => !string.IsNullOrWhiteSpace(item.Id))
+        .GroupBy(item => item.Id.Trim(), StringComparer.OrdinalIgnoreCase)
+        .Select(group => group.Last() with { Id = group.Key })
+        .OrderBy(item => item.DisplayName, StringComparer.OrdinalIgnoreCase)
+        .ToArray();
+
+    private async Task WriteAsync(StoredWsAccount[] accounts, CancellationToken cancellationToken)
+    {
+        var temporary = $"{_path}.{Guid.NewGuid():N}.tmp";
+        await File.WriteAllTextAsync(temporary, JsonSerializer.Serialize(accounts, _options), cancellationToken);
+        File.Move(temporary, _path, true);
     }
 }

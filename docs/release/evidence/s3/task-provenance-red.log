@@ -1,0 +1,32 @@
+[PASS] actual drag/drop stores the canonical stage data, independent of decorated visible label
+[PASS] same canonical stage is a no-op with no snapshot, persistence or activity
+[PASS] unset stage follows the existing core stageColumns identity and is a no-op
+[PASS] a target lacking its canonical stage cannot derive a writable stage from text
+[PASS] snapshot refusal makes no customer, history or activity changes
+[PASS] failed existing flush restores the entire customer and activity history
+[PASS] external drops and deleted customer cards cannot trigger a write
+[PASS] repeated real refresh does not multiply drag/drop subscriptions
+[PASS] overlapping drops for one customer have one in-flight snapshot and commit
+[PASS] failed stage persistence releases its guard for a later valid retry
+{"observation":"actual-stage-overlap","concurrentCommit":false,"otherPhase":"新客户","otherAuditPresent":false}
+[PASS] different-customer drops cannot overlap an activity snapshot rollback
+[PASS] manual task registered action uses the existing status fields and persists once
+[PASS] manual task failure restores its original completion state
+[PASS] AI action uses the original follow-up boundary without local task writes
+[PASS] AI action failure restores all original task fields
+[PASS] actual empty stage board has no fabricated positive distribution lengths
+[PASS] actual populated board distribution preserves true counts and zero-member stages
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /<strong>任务详情<\/strong>/. Input:
+
+'<div class="ops6-task-insight-head"><span>✦</span><strong>AI 跟进建议</strong><small>0 项待处理</small></div><div class="ops6-task-insight-title"><span>当前任务</span><strong>人工核对资料</strong></div><div class="ops6-task-insight-rows"><div><span>跟进原因</span><strong>本人安排 &lt;资料核对&gt;</strong></div><div><span>建议话题</span><strong>确认登记</strong></div><div><span>避免重复</span><strong>查看档案中的已知信息</strong></div><div><span>最佳联系窗口</span><strong>2020-01-02</strong></div></div><div class="ops6-task-insight-actions"><button type="button" class="btn primary" data-ops-focus="manual-insight">定位任务</button></div>'
+
+    at C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\delivery-s3-operations-runtime.test.cjs:110:10
+    at test (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\delivery-s3-operations-runtime.test.cjs:44:37)
+    at C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\delivery-s3-operations-runtime.test.cjs:108:8 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'ass="btn primary" data-ops-focus="manual-insight">定位任务</button></div>...',
+  expected: /<strong>任务详情<\/strong>/,
+  operator: 'match',
+  diff: 'simple'
+}

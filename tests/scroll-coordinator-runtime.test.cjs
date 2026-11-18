@@ -35,6 +35,7 @@ class FakeElement {
     this.semanticChildren = [];
   }
   matches(selector) {
+    if (selector.includes(',')) return selector.split(',').some(part => this.matches(part.trim()));
     if (selector === '[data-scroll-mode]') return Boolean(this.dataset.scrollMode);
     if (selector.startsWith('#')) return this.id === selector.slice(1);
     if (selector.startsWith('.')) return this.classList.contains(selector.slice(1));
@@ -47,7 +48,7 @@ class FakeElement {
   contains(node) { for (let current = node; current; current = current.parentElement) if (current === this) return true; return false; }
   querySelectorAll(selector) {
     if (selector === '.modal-body') return this.modalBody ? [this.modalBody] : [];
-    if (selector === '[data-scroll-mode]') return this.modalBody?.dataset?.scrollMode ? [this.modalBody] : [];
+    if (selector === '[data-scroll-mode]') return [this.modalBody, this.wsCenter].filter(node => node?.dataset?.scrollMode);
     if (selector.includes('[data-action]')) return this.semanticChildren;
     return [];
   }
@@ -133,7 +134,7 @@ assert.equal(typeof wheel, 'function');
 let prevented = false;
 nav.scrollTop = 500;
 wheel({ target: nav, deltaX: 0, deltaY: 30, deltaMode: 0, shiftKey: false, preventDefault() { prevented = true; }, stopPropagation() {} });
-assert.equal(prevented, true, 'contained inner panes do not leak a boundary wheel to the page');
+assert.equal(prevented, false, 'a contained pane hands a boundary wheel to the parent/page');
 
 prevented = false;
 view.scrollTop = 0;
@@ -144,7 +145,7 @@ assert.equal(nav.scrollTop, 500, 'a large sidebar wheel is clamped to the real #
 assert.equal(view.scrollTop, 0, 'sidebar wheel input never moves the business page');
 prevented = false;
 wheel({ target: sidebarChrome, deltaX: 0, deltaY: 1600, deltaMode: 0, shiftKey: false, preventDefault() { prevented = true; }, stopPropagation() {} });
-assert.equal(prevented, true, 'a sidebar wheel remains contained after navigation reaches its boundary');
+assert.equal(prevented, false, 'a sidebar boundary wheel is not swallowed after navigation reaches its boundary');
 assert.equal(view.scrollTop, 0, 'navigation boundary does not hand the gesture to the page');
 
 view.scrollTop = 230;
@@ -164,6 +165,90 @@ prevented = false;
 wheel({ target: nestedPane, deltaX: 0, deltaY: 60, deltaMode: 0, shiftKey: false, preventDefault() { prevented = true; }, stopPropagation() {} });
 assert.equal(prevented, true, 'a nested contained pane keeps the gesture inside its rail');
 assert.equal(nav.scrollTop, 60, 'a non-scrollable contained child hands the gesture to its contained parent');
+
+const dynamicSearch = new FakeElement({ classes: ['global-search-results'], parent: view, clientHeight: 100, scrollHeight: 500 });
+const dynamicSearchRow = new FakeElement({ parent: dynamicSearch });
+view.scrollTop = 0;
+prevented = false;
+wheel({ target: dynamicSearchRow, deltaX: 0, deltaY: 60, deltaMode: 0, shiftKey: false, preventDefault() { prevented = true; }, stopPropagation() {} });
+assert.equal(dynamicSearch.dataset.scrollMode, 'contain', 'a result pane inserted after page mount is registered on first input');
+assert.equal(prevented, true, 'the late result pane owns its wheel instead of the business page');
+assert.equal(dynamicSearch.scrollTop, 60);
+assert.equal(view.scrollTop, 0);
+
+const wsPage = new FakeElement({ classes: ['ws-workbench-page'], parent: view });
+const wsCenter = new FakeElement({ classes: ['ws-center-panel'], parent: wsPage, clientHeight: 141, scrollHeight: 578 });
+const wsToolbar = new FakeElement({ parent: wsCenter });
+view.wsCenter = wsCenter;
+prevented = false;
+wheel({ target: wsToolbar, deltaX: 0, deltaY: 120, deltaMode: 0, shiftKey: false, preventDefault() { prevented = true; }, stopPropagation() {} });
+assert.equal(prevented, false, 'WS center shell does not compete with the embedded WebView for vertical wheel ownership');
+assert.equal(wsCenter.scrollTop, 0, 'WS center shell remains fixed while the embedded WebView owns chat scrolling');
+assert.equal(view.scrollTop, 0);
+wsPage.classList.add('is-login-focus');
+context.window.__zhikeRegistryHost.state.view = 'ws-workbench';
+mutationCallback([{ target: view }]);
+assert.equal(wsCenter.scrollTop, 0, 'returning to the expanded login view shows the login header instead of restoring an old center scroll offset');
+wsPage.classList.remove('is-login-focus');
+
+// The secondary WS rail and standalone workspace pages are inserted inside a
+// fixed canvas. Their wheel input must never resolve to the outer page owner.
+const workspaceNav = new FakeElement({ classes: ['ws-workspace-nav-list'], parent: wsPage, clientHeight: 300, scrollHeight: 650 });
+const workspaceNavButton = new FakeElement({ parent: workspaceNav });
+prevented = false;
+wheel({ target: workspaceNavButton, deltaX: 0, deltaY: 140, deltaMode: 0, shiftKey: false, preventDefault() { prevented = true; }, stopPropagation() {} });
+assert.equal(workspaceNav.dataset.scrollMode, 'contain', 'secondary navigation is registered at first wheel input');
+assert.equal(prevented, true, 'secondary navigation consumes the wheel inside its own bounds');
+assert.equal(workspaceNav.scrollTop, 140, 'the last three navigation items become reachable by mouse');
+assert.equal(view.scrollTop, 0, 'secondary navigation does not scroll the main business page');
+const workspaceContent = new FakeElement({ classes: ['ws-workspace-page-content'], parent: wsPage, clientHeight: 300, scrollHeight: 900 });
+workspaceContent.dataset.wsWorkspacePage = 'members';
+workspaceContent.dataset.wsAccountId = 'account-a';
+const workspaceCard = new FakeElement({ parent: workspaceContent });
+prevented = false;
+wheel({ target: workspaceCard, deltaX: 0, deltaY: 180, deltaMode: 0, shiftKey: false, preventDefault() { prevented = true; }, stopPropagation() {} });
+assert.equal(workspaceContent.dataset.scrollMode, 'contain');
+assert.equal(prevented, true, 'workspace content owns vertical wheel scrolling');
+assert.equal(workspaceContent.scrollTop, 180);
+assert.equal(workspaceNav.scrollTop, 140, 'content scrolling does not move secondary navigation');
+assert.equal(view.scrollTop, 0, 'content scrolling does not move the outer page');
+coordinator.savePosition(workspaceContent);
+workspaceContent.dataset.wsWorkspacePage = 'groups';
+workspaceContent.scrollTop = 0;
+coordinator.restorePositions(workspaceContent);
+assert.equal(workspaceContent.scrollTop, 0, 'a different workspace page does not inherit member-page scroll position');
+workspaceContent.dataset.wsWorkspacePage = 'members';
+workspaceContent.dataset.wsAccountId = 'account-b';
+coordinator.restorePositions(workspaceContent);
+assert.equal(workspaceContent.scrollTop, 0, 'a different account does not inherit the first account scroll position');
+workspaceContent.dataset.wsAccountId = 'account-a';
+coordinator.restorePositions(workspaceContent);
+assert.equal(workspaceContent.scrollTop, 180, 'returning to the same account and page restores its own position');
+
+// Execute the real shell capture/restore helpers against a replaced nav node.
+// A render used to replace the list at zero and hide the selected lower item.
+const workbenchSource = fs.readFileSync(path.join(repo, 'resources/app/modules/ws-workbench.js'), 'utf8');
+const captureStart = workbenchSource.indexOf('  function captureWorkspaceNavScroll(');
+const captureEnd = workbenchSource.indexOf('  function renderWsWorkspaceNav(', captureStart);
+assert.ok(captureStart > 0 && captureEnd > captureStart);
+let currentWorkspaceNav = workspaceNav;
+const navSandbox = { state: {}, $: selector => selector === '.ws-workspace-nav-list' ? currentWorkspaceNav : null };
+vm.runInNewContext(workbenchSource.slice(captureStart, captureEnd) + '\nglobalThis.capture=captureWorkspaceNavScroll;globalThis.restore=restoreWorkspaceNavScroll;', navSandbox);
+navSandbox.capture();
+currentWorkspaceNav = new FakeElement({ classes: ['ws-workspace-nav-list'], parent: wsPage, clientHeight: 300, scrollHeight: 650 });
+navSandbox.restore();
+assert.equal(currentWorkspaceNav.scrollTop, 140, 'shell redraw preserves lower-navigation reachability');
+currentWorkspaceNav.scrollTop = 350;
+navSandbox.capture();
+currentWorkspaceNav = new FakeElement({ classes: ['ws-workspace-nav-list'], parent: wsPage, clientHeight: 600, scrollHeight: 650 });
+navSandbox.restore();
+assert.equal(currentWorkspaceNav.scrollTop, 50, 'navigation restoration is clamped after a window resize');
+currentWorkspaceNav = null;
+navSandbox.capture();
+currentWorkspaceNav = new FakeElement({ classes: ['ws-workspace-nav-list'], parent: wsPage, clientHeight: 300, scrollHeight: 650 });
+navSandbox.restore();
+assert.equal(currentWorkspaceNav.scrollTop, 350, 'leaving and returning to the WS surface keeps its independent navigation state');
+assert.match(workbenchSource, /captureWorkspaceNavScroll\(\);[\s\S]*?mountWsWorkbenchShell\(target, markup\);\s*restoreWorkspaceNavScroll\(\);/, 'every shell render must use capture/restore, including direct navigation');
 
 prevented = false;
 table.scrollLeft = 0;

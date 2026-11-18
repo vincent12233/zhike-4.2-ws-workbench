@@ -1,0 +1,89 @@
+{
+  "pid": 25568,
+  "git": "c19af339caaa7e931d90f5ef325dcc459a09975f",
+  "startUtc": "2026-11-18T13:34:22.7019526Z",
+  "productionOpened": false,
+  "files": [
+    {
+      "filename": "01-125-dark-home-max.jpg",
+      "sha256": "E1674DDA463CF3C70EE8C78CE0104D31B70361C119183FD19397FB800FCE7027",
+      "bytes": 198496,
+      "sourceLastWriteUtc": "2026-11-18T13:38:49.4306618Z",
+      "format": "JPEG",
+      "width": 1523,
+      "height": 906
+    },
+    {
+      "filename": "02-100-dark-customer-before.jpg",
+      "sha256": "2B4A2FFBF19EC6E66878BF7188D6AD33E6470EAE12871100D7EC5C1DCCFA9D0A",
+      "bytes": 294502,
+      "sourceLastWriteUtc": "2026-11-18T13:47:54.9859888Z",
+      "format": "JPEG",
+      "width": 1920,
+      "height": 1152
+    },
+    {
+      "filename": "03-100-dark-table-wheel-immediate.jpg",
+      "sha256": "3967876165828C8009F3D1EC77DD77DE5C2FEDA9E3D3817EDD70167F18457D33",
+      "bytes": 301492,
+      "sourceLastWriteUtc": "2026-11-18T13:48:42.1640047Z",
+      "format": "JPEG",
+      "width": 1920,
+      "height": 1152
+    },
+    {
+      "filename": "stage51-preview-25568-001-7a29d246918943bab3d2b2fbec6d61ae.png",
+      "sha256": "ABF8A5B5C7E2854FCEF45CA9D1D79D509130A4AF5AA5462A1A6BB34438B0DB63",
+      "bytes": 442922,
+      "sourceLastWriteUtc": "2026-11-18T13:47:54.6109395Z",
+      "format": "PNG",
+      "width": 1918,
+      "height": 1115
+    },
+    {
+      "filename": "04-150-dark-customer-restored.jpg",
+      "sha256": "A8F5E26DF68C07AF175B8C33545AF39C16A187AE912F181B90D951F78F199FB2",
+      "bytes": 157877,
+      "sourceLastWriteUtc": "2026-11-18T13:55:43.5512840Z",
+      "format": "JPEG",
+      "width": 1267,
+      "height": 745
+    },
+    {
+      "filename": "05-150-dark-customer-paired.jpg",
+      "sha256": "A9B13549C4FC07D27DAEB74213EB8E2DF7CF78FF3CB3B8ED86458A5221296211",
+      "bytes": 158335,
+      "sourceLastWriteUtc": "2026-11-18T13:56:58.8283915Z",
+      "format": "JPEG",
+      "width": 1267,
+      "height": 745
+    },
+    {
+      "filename": "06-150-dark-customer-focused-pair.jpg",
+      "sha256": "78C538842A6893801DF662A5F059E098FACFE9C420BF7D652CD581F77397BCED",
+      "bytes": 158608,
+      "sourceLastWriteUtc": "2026-11-18T13:58:49.1524932Z",
+      "format": "JPEG",
+      "width": 1267,
+      "height": 745
+    },
+    {
+      "filename": "stage51-preview-25568-002-e4fb8a32a0c94c4eacd7614f2633e0d7.png",
+      "sha256": "4C2357AE8C8270DB5FA73CD44CFFC1ACF61265E27BA0BCDEF077C82CF7BFBB4D",
+      "bytes": 470733,
+      "sourceLastWriteUtc": "2026-11-18T13:58:47.5267849Z",
+      "format": "PNG",
+      "width": 1893,
+      "height": 1049
+    },
+    {
+      "filename": "07-150-light-theme-modal.jpg",
+      "sha256": "0A5A430D648B45D50529210BA288F2B362D7E4A767D94306AE56C466B729BE4F",
+      "bytes": 110299,
+      "sourceLastWriteUtc": "2026-11-18T14:03:14.2488736Z",
+      "format": "JPEG",
+      "width": 1267,
+      "height": 745
+    }
+  ]
+}

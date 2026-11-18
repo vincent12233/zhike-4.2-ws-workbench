@@ -1,0 +1,135 @@
+[
+  {
+    "at": "2026-11-18T16:58:41.8237255+00:00",
+    "kind": "stage51-native-dpi",
+    "systemDpi": 120,
+    "hwndDpi": 120,
+    "presentation": "Restored",
+    "coreCounts": {
+      "shell": 0,
+      "visibleWs": 0,
+      "collector": 0,
+      "total": 0
+    }
+  },
+  {
+    "at": "2026-11-18T16:58:42.3284733+00:00",
+    "kind": "stage51-native-dpi",
+    "systemDpi": 120,
+    "hwndDpi": 120,
+    "presentation": "Maximized",
+    "coreCounts": {
+      "shell": 0,
+      "visibleWs": 0,
+      "collector": 0,
+      "total": 0
+    }
+  },
+  {
+    "at": "2026-11-18T16:58:45.7092232+00:00",
+    "kind": "stage51-dom-layout",
+    "systemDpi": 120,
+    "hwndDpi": 120,
+    "presentation": "Maximized",
+    "coreCounts": {
+      "shell": 1,
+      "visibleWs": 0,
+      "collector": 0,
+      "total": 1
+    }
+  },
+  {
+    "at": "2026-11-18T17:00:24.4116205+00:00",
+    "kind": "stage51-dom-layout",
+    "systemDpi": 120,
+    "hwndDpi": 120,
+    "presentation": "Maximized",
+    "coreCounts": {
+      "shell": 1,
+      "visibleWs": 0,
+      "collector": 0,
+      "total": 1
+    }
+  },
+  {
+    "at": "2026-11-18T17:05:08.6103957+00:00",
+    "kind": "stage51-dom-layout",
+    "systemDpi": 120,
+    "hwndDpi": 120,
+    "presentation": "Maximized",
+    "coreCounts": {
+      "shell": 1,
+      "visibleWs": 0,
+      "collector": 0,
+      "total": 1
+    }
+  },
+  {
+    "at": "2026-11-18T17:05:42.3718653+00:00",
+    "kind": "stage51-dom-layout",
+    "systemDpi": 120,
+    "hwndDpi": 120,
+    "presentation": "Maximized",
+    "coreCounts": {
+      "shell": 1,
+      "visibleWs": 0,
+      "collector": 0,
+      "total": 1
+    }
+  },
+  {
+    "at": "2026-11-18T17:06:18.007742+00:00",
+    "kind": "stage51-dom-layout",
+    "systemDpi": 120,
+    "hwndDpi": 120,
+    "presentation": "Maximized",
+    "coreCounts": {
+      "shell": 1,
+      "visibleWs": 0,
+      "collector": 0,
+      "total": 1
+    }
+  },
+  {
+    "at": "2026-11-18T17:06:49.9092059+00:00",
+    "kind": "stage51-dom-layout",
+    "systemDpi": 120,
+    "hwndDpi": 120,
+    "presentation": "Maximized",
+    "coreCounts": {
+      "shell": 1,
+      "visibleWs": 0,
+      "collector": 0,
+      "total": 1
+    }
+  },
+  {
+    "at": "2026-11-18T17:08:11.5036792+00:00",
+    "kind": "stage51-dom-wheel-settled",
+    "systemDpi": 120,
+    "hwndDpi": 120,
+    "presentation": "Maximized",
+    "coreCounts": null
+  },
+  {
+    "at": "2026-11-18T17:08:43.8141384+00:00",
+    "kind": "stage51-dom-layout",
+    "systemDpi": 120,
+    "hwndDpi": 120,
+    "presentation": "Restored",
+    "coreCounts": {
+      "shell": 1,
+      "visibleWs": 0,
+      "collector": 0,
+      "total": 1
+    }
+  },
+  {
+    "at": "2026-11-18T17:08:44.0497201+00:00",
+    "kind": "stage51-dom-wheel-settled",
+    "systemDpi": 120,
+    "hwndDpi": 120,
+    "presentation": "Restored",
+    "coreCounts": null
+  }
+]

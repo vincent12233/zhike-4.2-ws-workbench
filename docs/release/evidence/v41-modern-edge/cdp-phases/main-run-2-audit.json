@@ -1,0 +1,99 @@
+{
+  "invocation": "1794973029579-c66efd8f-02c6-4ed1-9768-c8f2a1e67a3f",
+  "identities": [
+    {
+      "pid": 37336,
+      "startedTicks": "639305698295938941",
+      "state": "absent"
+    },
+    {
+      "pid": 38988,
+      "startedTicks": "639305698312247148",
+      "state": "absent"
+    },
+    {
+      "pid": 19336,
+      "startedTicks": "639305698309817229",
+      "state": "absent"
+    },
+    {
+      "pid": 17760,
+      "startedTicks": "639305698304185425",
+      "state": "absent"
+    },
+    {
+      "pid": 21816,
+      "startedTicks": "639305698304119931",
+      "state": "absent"
+    },
+    {
+      "pid": 34992,
+      "startedTicks": "639305698304116205",
+      "state": "absent"
+    },
+    {
+      "pid": 36136,
+      "startedTicks": "639305698303755602",
+      "state": "absent"
+    },
+    {
+      "pid": 36992,
+      "startedTicks": "639305698304053198",
+      "state": "absent"
+    },
+    {
+      "pid": 27992,
+      "startedTicks": "639305698311645809",
+      "state": "absent"
+    },
+    {
+      "pid": 21408,
+      "startedTicks": "639305698302975050",
+      "state": "absent"
+    },
+    {
+      "pid": 25400,
+      "startedTicks": "639305698300058391",
+      "state": "absent"
+    },
+    {
+      "pid": 38944,
+      "startedTicks": "639305698300110817",
+      "state": "absent"
+    },
+    {
+      "pid": 15208,
+      "startedTicks": "639305698300689455",
+      "state": "absent"
+    },
+    {
+      "pid": 34388,
+      "startedTicks": "639305698322826412",
+      "state": "absent"
+    },
+    {
+      "pid": 41500,
+      "startedTicks": "639305698328337322",
+      "state": "absent"
+    },
+    {
+      "pid": 5340,
+      "startedTicks": "639305698328549235",
+      "state": "absent"
+    },
+    {
+      "pid": 31884,
+      "startedTicks": "639305698333772999",
+      "state": "absent"
+    },
+    {
+      "pid": 6300,
+      "startedTicks": "639305698343073583",
+      "state": "absent"
+    }
+  ],
+  "probePid": 8516,
+  "probeState": "absent",
+  "notReleased": 0,
+  "checkedAtUtc": "2026-11-18T03:38:32.7556965Z"
+}

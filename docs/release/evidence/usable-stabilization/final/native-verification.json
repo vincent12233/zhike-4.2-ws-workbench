@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "checkedAtUtc": "2026-11-18T18:50:37.959Z",
+  "scope": "Native WinUI isolated application, synthetic local workspace; no real WS login or paid AI.",
+  "sourceCommit": "4d7ff7a",
+  "finalTestCommit": "e44518d",
+  "commitDifference": "e44518d changes tests only; product code contains b6f655c.",
+  "environment": {
+    "windows": "Windows 11 Pro 10.0.26300 x64",
+    "configuration": "Release / Stage51IsolatedUi=true",
+    "dpi": 120,
+    "scalePercent": 125,
+    "webView2": "157.0.4341.60",
+    "resourceSamples": 91,
+    "observationSeconds": 947.2171
+  },
+  "testData": {
+    "seedScript": "scripts/stage55b/seed-native.cjs",
+    "initialAccounts": 2,
+    "createdInUi": 1,
+    "initialCustomers": 2,
+    "initialGroups": 4,
+    "initialMembers": 4,
+    "contactsPerSeededAccount": 49,
+    "aiJobsPerSeededAccount": 46,
+    "syntheticSuggestions": 6
+  },
+  "cases": [
+    {
+      "id": "N01",
+      "action": "Enter WS from restored main window",
+      "result": "Maximized; original main sidebar replaced by independent WS navigation",
+      "status": "Passed"
+    },
+    {
+      "id": "N02",
+      "action": "Ten observed alternations between default and native-b accounts",
+      "result": "Each displayed account changed; one Core per account retained; an ineffective End-key attempt is not counted",
+      "status": "Passed",
+      "evidence": "native-ten-account-switches.jpg"
+    },
+    {
+      "id": "N03",
+      "action": "Add ISOLATED_USABLE_C using actual native account form",
+      "result": "Account appeared and opened its own chat container; current-account contacts empty; seeded account data remained",
+      "status": "Passed",
+      "evidence": [
+        "native-created-account-c.jpg",
+        "native-new-account-empty-contacts.jpg"
+      ]
+    },
+    {
+      "id": "N04",
+      "action": "Visit all twelve WS pages",
+      "result": "All twelve entered with real isolated Service data or explicit disabled/empty state. Does not certify every action in every page.",
+      "status": "Passed"
+    },
+    {
+      "id": "N05",
+      "action": "View same member in two different groups",
+      "result": "Two separate scoped member records shown; this is synthetic membership, not real platform synchronization",
+      "status": "Passed",
+      "evidence": "native-members-default.jpg"
+    },
+    {
+      "id": "N06",
+      "action": "Retry one failed synthetic AI Job",
+      "result": "Explicit user action changed Failed to Queued; consumer remains disabled",
+      "status": "Passed",
+      "evidence": "native-ai-explicit-retry.jpg"
+    },
+    {
+      "id": "N07",
+      "action": "Approve verified empty occupation candidate; reject language candidate; approve conflicting manual occupation",
+      "result": "UI respectively showed filled, rejected, conflict-protected. Human occupation retained. Audit page showed corresponding real isolated audit rows.",
+      "status": "Passed",
+      "evidence": [
+        "native-crm-review-three-outcomes.jpg",
+        "native-crm-conflict-protected.jpg",
+        "native-audit-after-review.jpg"
+      ]
+    },
+    {
+      "id": "N08",
+      "action": "Scroll CRM review inner panel",
+      "result": "Candidate content moved while outer navigation remained fixed. This was tool-injected native scrolling, not physical wheel/touchpad acceptance.",
+      "status": "Passed"
+    },
+    {
+      "id": "N09",
+      "action": "Return to chat after twelve pages and toggle CRM panel",
+      "result": "Panel expanded and collapsed; chat filled available area; same account Core retained",
+      "status": "Passed",
+      "evidence": "native-chat-restored-after-pages.jpg"
+    },
+    {
+      "id": "N10",
+      "action": "Return to main workspace and preview/save Horizon dark theme",
+      "result": "Original restored window size and main navigation returned; dark theme preview/save worked",
+      "status": "Passed",
+      "evidence": "native-main-dark-restored.jpg"
+    },
+    {
+      "id": "N11",
+      "action": "Normal title-bar close",
+      "result": "Post-close identity-aware check found 28/28 observed processes gone; root absent; exact binary and test-root references zero",
+      "status": "Passed",
+      "evidence": "native-exit-analysis.json"
+    },
+    {
+      "id": "N12",
+      "action": "Real WhatsApp login, actual chat send/receive, avatar fetch and paid AI quality",
+      "result": "Not authorized/run; visible WS Core uses isolated document, not WhatsApp.",
+      "status": "NotTested"
+    },
+    {
+      "id": "N13",
+      "action": "New CRM save/followup bug cases through native form",
+      "result": "Covered by actual-handler automated regression this turn; native exercise above is AI review, not these form edge cases",
+      "status": "NotTested"
+    },
+    {
+      "id": "N14",
+      "action": "Clean Windows install, 100/150% DPI, physical wheel/touchpad, high contrast and multi-monitor matrix",
+      "result": "Not performed in this native run",
+      "status": "NotTested"
+    }
+  ],
+  "toolLimitations": [
+    "One screenshot ID was rejected; refreshed observation then retried successfully.",
+    "One screenshot artifact save used a nonexistent dataUrl property; refreshed capture and saved using actual url property. No product error inferred.",
+    "F7 diagnostic toggle opened browser caret-browsing confirmation; cancelled with Escape and not treated as product bug."
+  ],
+  "safety": {
+    "productionEntry": "FROZEN",
+    "productionDatabaseOpened": false,
+    "productionWorkerStarted": false,
+    "realWsConnected": false,
+    "paidAiCalled": false,
+    "authProfileCopied": false,
+    "newDualConsumerEnabled": false
+  },
+  "resources": {
+    "status": "Observed",
+    "evidence": "resource-analysis.json",
+    "threshold": "NotDefined",
+    "limitations": "Initial memory growth includes account Core additions. No leak-free or performance-target claim. See separate post-close identity check."
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "startedAtUtc": "2026-11-18T20:09:16.0015383+00:00",
+  "completedAtUtc": "2026-11-18T20:09:17.3162923+00:00",
+  "scope": "Point-in-time checks of explicitly recorded identities from two official final-all failures and six separate shutdown diagnostic invocations. Unobserved descendants and exact exit times are outside this evidence.",
+  "method": "Get-Process -Id for explicit PID union, matching exact UTC creation ticks. Unavailable times use OpenProcess QUERY_LIMITED_INFORMATION|SYNCHRONIZE then GetProcessId, WaitForSingleObject(0), GetExitCodeProcess, GetProcessTimes, WaitForSingleObject(0); no privilege changes.",
+  "completedInvocations": 8,
+  "browserIdentitySamples": 135,
+  "uniqueBrowserIdentities": 135,
+  "helperPidSamples": 16,
+  "distinctPidsQueried": 150,
+  "win32ExplicitPidsQueried": 1,
+  "scopes": {
+    "final-all-main-visual": {
+      "invocations": 1,
+      "browserIdentitySamples": 18,
+      "helperPidSamples": 2,
+      "browserCounts": {
+        "Absent": 18,
+        "PidReused": 0,
+        "ExitedWithSignaledHandle": 0,
+        "Matched": 0,
+        "Unknown": 0
+      },
+      "helperCounts": {
+        "Absent": 2,
+        "Unknown": 0
+      }
+    },
+    "final-all-ws-visual": {
+      "invocations": 1,
+      "browserIdentitySamples": 17,
+      "helperPidSamples": 2,
+      "browserCounts": {
+        "Absent": 17,
+        "PidReused": 0,
+        "ExitedWithSignaledHandle": 0,
+        "Matched": 0,
+        "Unknown": 0
+      },
+      "helperCounts": {
+        "Absent": 2,
+        "Unknown": 0
+      }
+    },
+    "shutdown-log-1": {
+      "invocations": 6,
+      "browserIdentitySamples": 100,
+      "helperPidSamples": 12,
+      "browserCounts": {
+        "Absent": 99,
+        "PidReused": 0,
+        "ExitedWithSignaledHandle": 0,
+        "Matched": 0,
+        "Unknown": 1
+      },
+      "helperCounts": {
+        "Absent": 12,
+        "Unknown": 0
+      }
+    }
+  },
+  "browserCounts": {
+    "Absent": 134,
+    "PidReused": 0,
+    "ExitedWithSignaledHandle": 0,
+    "Matched": 0,
+    "Unknown": 1
+  },
+  "helperCounts": {
+    "Absent": 16,
+    "Unknown": 0
+  },
+  "matched": [],
+  "unknown": [
+    {
+      "source": "metadata.identities",
+      "status": "Unknown",
+      "scope": "shutdown-log-1",
+      "invocation": "1795032263171-0e7cf0ec-1cf2-4bc7-a0af-8f5673049271",
+      "pid": 22732,
+      "startedTicks": "639306290639413332",
+      "firstObservation": {
+        "status": "Present",
+        "ticks": null,
+        "checkedAtUtc": "2026-11-18T20:09:16.3195869+00:00",
+        "queryError": "StartTimeNotAvailable"
+      },
+      "win32Recheck": {
+        "pid": 22732,
+        "checkedAtUtc": "2026-11-18T20:09:17.2853528+00:00",
+        "observation": {
+          "Opened": false,
+          "OpenError": 5,
+          "HandlePid": null,
+          "HandlePidError": null,
+          "WaitBefore": null,
+          "WaitBeforeError": null,
+          "WaitAfter": null,
+          "WaitAfterError": null,
+          "RawExitCode": null,
+          "ExitCodeQueryError": null,
+          "CreatedUtcTicks": null,
+          "RawCreationFileTime": null,
+          "RawExitFileTime": null,
+          "ProcessTimesError": null
+        }
+      }
+    }
+  ],
+  "win32Rechecks": [
+    {
+      "pid": 22732,
+      "checkedAtUtc": "2026-11-18T20:09:17.2853528+00:00",
+      "observation": {
+        "Opened": false,
+        "OpenError": 5,
+        "HandlePid": null,
+        "HandlePidError": null,
+        "WaitBefore": null,
+        "WaitBeforeError": null,
+        "WaitAfter": null,
+        "WaitAfterError": null,
+        "RawExitCode": null,
+        "ExitCodeQueryError": null,
+        "CreatedUtcTicks": null,
+        "RawCreationFileTime": null,
+        "RawExitFileTime": null,
+        "ProcessTimesError": null
+      }
+    }
+  ]
+}

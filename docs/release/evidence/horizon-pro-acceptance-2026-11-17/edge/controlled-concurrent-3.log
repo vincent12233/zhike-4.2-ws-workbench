@@ -1,0 +1,5 @@
+{"mode":"result-timeout","status":"Passed","testedStatus":"Failed","errorCode":"EDGE_RUNNER_TIMEOUT","elapsedMs":2279,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794924881472-9931eea6-d90e-44c8-9b9a-7e8c1095a671.json"}
+{"focusedIteration":1,"plannedIterations":1,"status":"Passed"}
+{"mode":"normal","status":"Passed","testedStatus":"Passed","errorCode":null,"elapsedMs":576,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794924884254-2a024338-5b5d-444b-b94a-ad6613fbed50.json"}
+{"mode":"tracked-child","status":"Passed","testedStatus":"Failed","errorCode":"OWNED_PROCESSES_REMAIN","elapsedMs":1640,"evidence":"C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\isolated-edge-runner-lifecycle\\1794924885311-f96ee8af-6b44-41f5-a903-c1c045657a65.json"}
+{"suite":"isolated-edge-runner-lifecycle","parameterChecks":0,"actualControlledChildCases":3,"passed":3,"realEdgeStarted":false,"realBrowserAccepted":false}

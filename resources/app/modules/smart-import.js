@@ -194,9 +194,9 @@
       product=mappedValue(row,mapping,'product'),direction=mappedValue(row,mapping,'direction'),amount=mappedValue(row,mapping,'amount'),
       followDate=mappedValue(row,mapping,'followDate'),buyDate=mappedValue(row,mapping,'buyDate'),sellDate=mappedValue(row,mapping,'sellDate');
     let ticket=explicit==='ticket'&&ticketHeader('recordType'),deposit=explicit==='deposit'&&ticketHeader('recordType'),registration=explicit==='registration'&&ticketHeader('recordType'),followup=explicit==='followup'&&ticketHeader('recordType');
-    // An explicit row type is authoritative. A shared "business date/note"
-    // column must not turn a registration or follow-up row into a stock row.
-    if(registration||followup)return {ticket:false,deposit:false,registration,followup};
+    // An explicit row type is authoritative. A shared business date, amount
+    // or reference column must not count the same row as another ledger type.
+    if(ticket||deposit||registration||followup)return {ticket,deposit,registration,followup};
     if(ticketHeader('product')&&looksLikeProductCode(product))ticket=true;
     if(ticketHeader('direction')&&direction)ticket=true;
     if(ticketHeader('buyDate')&&buyDate)ticket=true;

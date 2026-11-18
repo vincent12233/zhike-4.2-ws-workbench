@@ -1,0 +1,312 @@
+{
+  "algorithm": "SHA-256",
+  "baseline": "8b7dfd0",
+  "fix": "0181804241bbae5e53965ec644462cce05f79f7f",
+  "scope": "Five original Edge PNGs, eight original browser result files, eight lifecycle records, eight assertion logs and two generated controls.",
+  "entries": [
+    {
+      "path": "after-800-capture-atelier-dawn/assertions.log",
+      "source": ".tools/ui01-customer-scroll/after-capture-atelier-dawn.log",
+      "sourceBytes": 32729,
+      "bytes": 32727,
+      "sourceSha256": "abb159b82ebf4360919249e7e30708fea216579062caf55ab15ff5ba46fc7638",
+      "sha256": "4d93c08caf5e3b7f4ef08658bd02e4c6ecba380ed37211c1c363ff4b2bfb4afa",
+      "originalBytesRetained": false,
+      "transformation": "CRLF to LF"
+    },
+    {
+      "path": "after-800-capture-atelier-dawn/horizontal.png",
+      "source": ".tools/ui01-customer-scroll/after-capture-atelier-dawn/horizontal-atelier-dawn.png",
+      "sourceBytes": 229034,
+      "bytes": 229034,
+      "sourceSha256": "e740cd3dc6ed04dd7c5e5c6fa60a5b3e3e9ff008440f12ab363dfe0c9c5f7105",
+      "sha256": "e740cd3dc6ed04dd7c5e5c6fa60a5b3e3e9ff008440f12ab363dfe0c9c5f7105",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "after-800-capture-atelier-dawn/lifecycle.json",
+      "source": ".tools/ui01-customer-scroll/after-capture-atelier-dawn/<invocation>.json",
+      "sourceBytes": 8001,
+      "bytes": 7486,
+      "sourceSha256": "10d81508d53ccf43dcc23846ed976d9a100385b7fa7f5f14a3eca75a0136027a",
+      "sha256": "068a634d71abdb71d72a150d57bbfdd27f0afa09d6a371c180014abb5657656a",
+      "originalBytesRetained": false,
+      "transformation": "redact temporary Edge profile path; replace original invocation ID with archive run label; make artifact paths archive-relative; serialize UTF-8 LF JSON"
+    },
+    {
+      "path": "after-800-capture-atelier-dawn/result.json",
+      "source": ".tools/ui01-customer-scroll/after-capture-atelier-dawn/<invocation>.result.json",
+      "sourceBytes": 32501,
+      "bytes": 32501,
+      "sourceSha256": "8dba7f14fc8f5554b677f236e14b80c8a3246d67e8296875bb62d90a10c5d7e7",
+      "sha256": "8dba7f14fc8f5554b677f236e14b80c8a3246d67e8296875bb62d90a10c5d7e7",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "after-800-capture-horizon-night/assertions.log",
+      "source": ".tools/ui01-customer-scroll/after-capture-horizon-night.log",
+      "sourceBytes": 32946,
+      "bytes": 32944,
+      "sourceSha256": "f3e96e103870cd53cff84325bde3c7946501ade18d652bd263a62609d3ca296d",
+      "sha256": "a0917d11abc8874b97e2d604e17d7dc161f46a0455d14cfcceb2950d78272118",
+      "originalBytesRetained": false,
+      "transformation": "CRLF to LF"
+    },
+    {
+      "path": "after-800-capture-horizon-night/horizontal.png",
+      "source": ".tools/ui01-customer-scroll/after-capture-horizon-night/horizontal-horizon-night.png",
+      "sourceBytes": 242136,
+      "bytes": 242136,
+      "sourceSha256": "09a4d0c141ecee900c5c88f07e5526d1f8e4e76ade30aab2bfd43a79cbc34ee4",
+      "sha256": "09a4d0c141ecee900c5c88f07e5526d1f8e4e76ade30aab2bfd43a79cbc34ee4",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "after-800-capture-horizon-night/lifecycle.json",
+      "source": ".tools/ui01-customer-scroll/after-capture-horizon-night/<invocation>.json",
+      "sourceBytes": 7226,
+      "bytes": 6709,
+      "sourceSha256": "f24d78f3c852ed58dedbb526b58fef616098e1e2de2a8207de8daaec36916ea5",
+      "sha256": "f4f96e826f1505e96c7c2f1f45f5e86ca47e77f82b5ca935a56cc34b3e70b3fb",
+      "originalBytesRetained": false,
+      "transformation": "redact temporary Edge profile path; replace original invocation ID with archive run label; make artifact paths archive-relative; serialize UTF-8 LF JSON"
+    },
+    {
+      "path": "after-800-capture-horizon-night/result.json",
+      "source": ".tools/ui01-customer-scroll/after-capture-horizon-night/<invocation>.result.json",
+      "sourceBytes": 32718,
+      "bytes": 32718,
+      "sourceSha256": "20dd21d75ac7fe9a0d1763041cfd0db4045c29eb15bbbf913fb6927f368e24c8",
+      "sha256": "20dd21d75ac7fe9a0d1763041cfd0db4045c29eb15bbbf913fb6927f368e24c8",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "after-900-capture-atelier-dawn/assertions.log",
+      "source": ".tools/ui01-customer-scroll/after-900-capture-atelier-dawn.log",
+      "sourceBytes": 32729,
+      "bytes": 32727,
+      "sourceSha256": "7fa58d31a5ef3f7aaa2d3ad47bc7f89582cbc759850184ea36b5de5664b86b6d",
+      "sha256": "5c91299af6949c91fe085c46b269766dfb294da0fe588f55caf0d16673a9005d",
+      "originalBytesRetained": false,
+      "transformation": "CRLF to LF"
+    },
+    {
+      "path": "after-900-capture-atelier-dawn/horizontal.png",
+      "source": ".tools/ui01-customer-scroll/after-900-capture-atelier-dawn/horizontal-atelier-dawn.png",
+      "sourceBytes": 248291,
+      "bytes": 248291,
+      "sourceSha256": "6bdb5966ed6f87d1e445cbc88dd576a9b3b7091fd815a1f792ec814c23cac313",
+      "sha256": "6bdb5966ed6f87d1e445cbc88dd576a9b3b7091fd815a1f792ec814c23cac313",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "after-900-capture-atelier-dawn/lifecycle.json",
+      "source": ".tools/ui01-customer-scroll/after-900-capture-atelier-dawn/<invocation>.json",
+      "sourceBytes": 8011,
+      "bytes": 7488,
+      "sourceSha256": "4a14679dd71372206b7d3188e309963342536bf5245cd8a38cfab5b89c9d40ea",
+      "sha256": "44b5788a3c2fb5ad02ac091796668c4998d6d6c2b545355f655a5d94a8d60b76",
+      "originalBytesRetained": false,
+      "transformation": "redact temporary Edge profile path; replace original invocation ID with archive run label; make artifact paths archive-relative; serialize UTF-8 LF JSON"
+    },
+    {
+      "path": "after-900-capture-atelier-dawn/result.json",
+      "source": ".tools/ui01-customer-scroll/after-900-capture-atelier-dawn/<invocation>.result.json",
+      "sourceBytes": 32501,
+      "bytes": 32501,
+      "sourceSha256": "2a1a68ff724ee5f907c6608e2cc89ac595f3ac1206232a42f36d09490d820998",
+      "sha256": "2a1a68ff724ee5f907c6608e2cc89ac595f3ac1206232a42f36d09490d820998",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "after-900-default-atelier-dawn/assertions.log",
+      "source": ".tools/ui01-customer-scroll/after-900-default-atelier-dawn.log",
+      "sourceBytes": 32721,
+      "bytes": 32719,
+      "sourceSha256": "c173233b4f26ac26e6e320ee859393b19b1c502ba911d56091bfa57d022f51f0",
+      "sha256": "d161cc03d76f2e7067650e743a0b8a13ff338355380b82cc2ebd243a0bf2f02c",
+      "originalBytesRetained": false,
+      "transformation": "CRLF to LF"
+    },
+    {
+      "path": "after-900-default-atelier-dawn/lifecycle.json",
+      "source": ".tools/ui01-customer-scroll/after-900-default-atelier-dawn/<invocation>.json",
+      "sourceBytes": 6427,
+      "bytes": 6087,
+      "sourceSha256": "5f12b5a84bd56b569a2efa71c68d68996e3d7a3ad645a3f799b2626366d9ab89",
+      "sha256": "fac295f0094d049a7f494c0cf9e870b50e39e1a3558325153f828ebe50b3ab5d",
+      "originalBytesRetained": false,
+      "transformation": "redact temporary Edge profile path; replace original invocation ID with archive run label; make artifact paths archive-relative; serialize UTF-8 LF JSON"
+    },
+    {
+      "path": "after-900-default-atelier-dawn/result.json",
+      "source": ".tools/ui01-customer-scroll/after-900-default-atelier-dawn/<invocation>.result.json",
+      "sourceBytes": 32493,
+      "bytes": 32493,
+      "sourceSha256": "1281a6f0d9d494ce4a4cd72e0cfea450da4d6902429f57c2060c9c9086498855",
+      "sha256": "1281a6f0d9d494ce4a4cd72e0cfea450da4d6902429f57c2060c9c9086498855",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "before-800-capture-atelier-dawn/assertions.log",
+      "source": ".tools/ui01-customer-scroll/before-capture-atelier-dawn.log",
+      "sourceBytes": 32669,
+      "bytes": 32556,
+      "sourceSha256": "ff6ce16b990138ba24aecfefed81ba211ec9954ad1bfa86fe1380d303b51b412",
+      "sha256": "73239d9b582563a4b3c1c52b59673a3b6155a84670d4e555ae5969faf879d42a",
+      "originalBytesRetained": false,
+      "transformation": "CRLF to LF; replace absolute workspace path in stack trace"
+    },
+    {
+      "path": "before-800-capture-atelier-dawn/horizontal.png",
+      "source": ".tools/ui01-customer-scroll/before-capture-atelier-dawn/horizontal-atelier-dawn.png",
+      "sourceBytes": 229034,
+      "bytes": 229034,
+      "sourceSha256": "e740cd3dc6ed04dd7c5e5c6fa60a5b3e3e9ff008440f12ab363dfe0c9c5f7105",
+      "sha256": "e740cd3dc6ed04dd7c5e5c6fa60a5b3e3e9ff008440f12ab363dfe0c9c5f7105",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "before-800-capture-atelier-dawn/lifecycle.json",
+      "source": ".tools/ui01-customer-scroll/before-capture-atelier-dawn/<invocation>.json",
+      "sourceBytes": 7557,
+      "bytes": 7041,
+      "sourceSha256": "e4a61e2204814eb2dcbe77a72d9b852d0e06ccc5a3202dc3b4dc99da5dc8038f",
+      "sha256": "783f9781037e91fff6411ba6aff5781a551c543accceeba32e4698ca8bd453c1",
+      "originalBytesRetained": false,
+      "transformation": "redact temporary Edge profile path; replace original invocation ID with archive run label; make artifact paths archive-relative; serialize UTF-8 LF JSON"
+    },
+    {
+      "path": "before-800-capture-atelier-dawn/result.json",
+      "source": ".tools/ui01-customer-scroll/before-capture-atelier-dawn/<invocation>.result.json",
+      "sourceBytes": 31657,
+      "bytes": 31657,
+      "sourceSha256": "540b18243c2df5c5e5d9e398544dff3701556a61ba4f0e2d07a83aaf43ef8e46",
+      "sha256": "540b18243c2df5c5e5d9e398544dff3701556a61ba4f0e2d07a83aaf43ef8e46",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "before-800-default-atelier-dawn/assertions.log",
+      "source": ".tools/ui01-customer-scroll/before-default-atelier-dawn.log",
+      "sourceBytes": 32645,
+      "bytes": 32532,
+      "sourceSha256": "092a599ac331cb435abc046de9d26674f93e90657f26e0daa3b241219e0329bf",
+      "sha256": "2427c29cf69a42051fbf653c3682f7689fda457f43d8315a0535ccb734f58ad5",
+      "originalBytesRetained": false,
+      "transformation": "CRLF to LF; replace absolute workspace path in stack trace"
+    },
+    {
+      "path": "before-800-default-atelier-dawn/lifecycle.json",
+      "source": ".tools/ui01-customer-scroll/before-default-atelier-dawn/<invocation>.json",
+      "sourceBytes": 6947,
+      "bytes": 6611,
+      "sourceSha256": "9f876cf0006dad78dd56fe5c62322584f9a6ed1ba3877001d4cf2ef55b40e0c1",
+      "sha256": "b1803af66f350e7069e120fadc939b1a30a27f0dd364033a02dadbbb71160a0b",
+      "originalBytesRetained": false,
+      "transformation": "redact temporary Edge profile path; replace original invocation ID with archive run label; make artifact paths archive-relative; serialize UTF-8 LF JSON"
+    },
+    {
+      "path": "before-800-default-atelier-dawn/result.json",
+      "source": ".tools/ui01-customer-scroll/before-default-atelier-dawn/<invocation>.result.json",
+      "sourceBytes": 31649,
+      "bytes": 31649,
+      "sourceSha256": "89bb76fe26a2ba60e140507890dbe159fde9e03efc81bfc785692d65bc68470a",
+      "sha256": "89bb76fe26a2ba60e140507890dbe159fde9e03efc81bfc785692d65bc68470a",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "before-900-capture-atelier-dawn/assertions.log",
+      "source": ".tools/ui01-customer-scroll/diagnostic-capture-atelier-dawn.log",
+      "sourceBytes": 32761,
+      "bytes": 32648,
+      "sourceSha256": "39c6e9ca73db0a88af55814a3d6057927b7ddd29f42ae1c31b614d32ac828ed3",
+      "sha256": "b92ab92555eb4ae2376465e1ae511fca1b739ed563da01d5ce9f08a0ea757fe2",
+      "originalBytesRetained": false,
+      "transformation": "CRLF to LF; replace absolute workspace path in stack trace"
+    },
+    {
+      "path": "before-900-capture-atelier-dawn/horizontal.png",
+      "source": ".tools/ui01-customer-scroll/diagnostic-capture-atelier-dawn/horizontal-atelier-dawn.png",
+      "sourceBytes": 248301,
+      "bytes": 248301,
+      "sourceSha256": "0c5ac0f2f1ae609d4adceb051cc1358b2279b9b6343a9520400724581a5a8a5f",
+      "sha256": "0c5ac0f2f1ae609d4adceb051cc1358b2279b9b6343a9520400724581a5a8a5f",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "before-900-capture-atelier-dawn/lifecycle.json",
+      "source": ".tools/ui01-customer-scroll/diagnostic-capture-atelier-dawn/<invocation>.json",
+      "sourceBytes": 7395,
+      "bytes": 6871,
+      "sourceSha256": "f207f72c3b0c5df8e9a649c260012ed4028e1eb309683452a14791bb36047c54",
+      "sha256": "6e46819f32e0f53414946c76a6efb83552095748d25806af1c9db201d5ab4aac",
+      "originalBytesRetained": false,
+      "transformation": "redact temporary Edge profile path; replace original invocation ID with archive run label; make artifact paths archive-relative; serialize UTF-8 LF JSON"
+    },
+    {
+      "path": "before-900-capture-atelier-dawn/result.json",
+      "source": ".tools/ui01-customer-scroll/diagnostic-capture-atelier-dawn/<invocation>.result.json",
+      "sourceBytes": 31749,
+      "bytes": 31749,
+      "sourceSha256": "a894db484ba335d76d41d249810a31a5d407d3d053e6065172d67ddcbfce5c0e",
+      "sha256": "a894db484ba335d76d41d249810a31a5d407d3d053e6065172d67ddcbfce5c0e",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "before-900-default-atelier-dawn/assertions.log",
+      "source": ".tools/ui01-customer-scroll/diagnostic-default-atelier-dawn.log",
+      "sourceBytes": 32737,
+      "bytes": 32624,
+      "sourceSha256": "b1b0cc8f41603796b70e1cd662699bc3481f00d262318a22f3846e52319250fe",
+      "sha256": "04aedd73f2cd2a52e5ba25b685535ca4c19a85570079ed6249f2874a04735a4a",
+      "originalBytesRetained": false,
+      "transformation": "CRLF to LF; replace absolute workspace path in stack trace"
+    },
+    {
+      "path": "before-900-default-atelier-dawn/lifecycle.json",
+      "source": ".tools/ui01-customer-scroll/diagnostic-default-atelier-dawn/<invocation>.json",
+      "sourceBytes": 6929,
+      "bytes": 6589,
+      "sourceSha256": "54caddb2003977ca6bd3cbd227bd26ece9049d3151ccfb59cc6a3ad68876e491",
+      "sha256": "12e3af64fcf5357016a8b0ef0f8b036661a6bf4adbc72ca92f1a1640e0d1564e",
+      "originalBytesRetained": false,
+      "transformation": "redact temporary Edge profile path; replace original invocation ID with archive run label; make artifact paths archive-relative; serialize UTF-8 LF JSON"
+    },
+    {
+      "path": "before-900-default-atelier-dawn/result.json",
+      "source": ".tools/ui01-customer-scroll/diagnostic-default-atelier-dawn/<invocation>.result.json",
+      "sourceBytes": 31741,
+      "bytes": 31741,
+      "sourceSha256": "c24c0d419b91aaed58a3915b97fdac3a1c834370ddf90140178e2cc68e689bbb",
+      "sha256": "c24c0d419b91aaed58a3915b97fdac3a1c834370ddf90140178e2cc68e689bbb",
+      "originalBytesRetained": true,
+      "transformation": "none"
+    },
+    {
+      "path": "runs.json",
+      "bytes": 7319,
+      "sha256": "c7939aca21501d8e2ef6654b3dff411575593513ccdc86b954c5b7a6f7a98f87",
+      "originalBytesRetained": false,
+      "transformation": "generated index from archived runs"
+    },
+    {
+      "path": "sensitive-scan.json",
+      "bytes": 21983,
+      "sha256": "770ddd85b7a837df1741818bfcd3f863fccbdbdab387de33ca47efbfce1ebe3b",
+      "originalBytesRetained": false,
+      "transformation": "generated sensitive-content scan"
+    }
+  ]
+}

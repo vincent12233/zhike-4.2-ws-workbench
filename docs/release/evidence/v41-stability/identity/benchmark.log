@@ -1,0 +1,13 @@
+{"iteration":1,"warmMs":4167,"coldMs":1304,"identityExact":true}
+{"iteration":2,"warmMs":12,"coldMs":865,"identityExact":true}
+{"iteration":3,"warmMs":7,"coldMs":2920,"identityExact":true}
+Error: Process identity query failed: Error
+    at failure ([STABILITY_WORKTREE]\tests\helpers\isolated-edge-runner.cjs:13:57)
+    at [STABILITY_WORKTREE]\tests\helpers\isolated-edge-runner.cjs:35:25
+    at ChildProcess.exithandler (node:child_process:424:5)
+    at ChildProcess.emit (node:events:514:28)
+    at maybeClose (node:internal/child_process:1172:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+  code: 'PROCESS_IDENTITY_UNVERIFIED',
+  phase: 'identity'
+}

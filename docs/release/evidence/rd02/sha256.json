@@ -1,0 +1,217 @@
+{
+  "scope": "synthetic isolation evidence only; not real WhatsApp/platform acceptance",
+  "productionCredentialsIncluded": false,
+  "nativeEvents": 113,
+  "finalRegressionChecks": 291,
+  "finalRegressionPassed": 286,
+  "finalRegressionFailed": 5,
+  "stageGate": "Blocked",
+  "textNormalization": "UTF-8 without BOM; LF; trailing whitespace removed; credential/debugger values omitted; raw sources retained locally",
+  "exclusions": [
+    "connection.private.json",
+    "profiles",
+    "databases",
+    "Cookie/Token/API key files",
+    "real customer/chat data",
+    "recursive isolated-root copy"
+  ],
+  "files": [
+    {
+      "file": "compact-capability-green.log",
+      "source": ".tools/delivery-rd02-compact-status-final.log",
+      "bytes": 1751,
+      "sourceSha256BeforeNormalization": "1e15f441c55d334bf7e7d0e516cc4196652440c0a76fadab23524637809f8564",
+      "sha256": "1e15f441c55d334bf7e7d0e516cc4196652440c0a76fadab23524637809f8564"
+    },
+    {
+      "file": "compact-layout-seven-cases.log",
+      "source": ".tools/delivery-rd02-compact-layout-final.log",
+      "bytes": 3004,
+      "sourceSha256BeforeNormalization": "882f60072b588993fc68afd1c1ffe3f869b1ad7c8c08bf5150267d64b0bacd30",
+      "sha256": "fad2acbeaf3b38c55b586008b4c8ab1d10963644c21948dadbf67c285e59a33c"
+    },
+    {
+      "file": "first-release.log",
+      "source": ".tools/delivery-rd02-release.log",
+      "bytes": 292,
+      "sourceSha256BeforeNormalization": "ef90afbec7baed3548f33ef0f80399e0c6bb0b187d62c4409c58f612b9a61221",
+      "sha256": "ecdff432d5cf51b08231547b30e5bb9ec6660b7d0eddd841c714cc015b8214ae"
+    },
+    {
+      "file": "first-ws-regression-failed.log",
+      "source": ".tools/delivery-rd02-ws-initial.log",
+      "bytes": 149710,
+      "sourceSha256BeforeNormalization": "782515ef3aa67e58dd25a40b90345aab5459a1d1750547d1407e9372c5d271ae",
+      "sha256": "03c2351414152740bd0f3ea5e3c93fcd4c7066971d1bf6e3ee74c6d177f45bae"
+    },
+    {
+      "file": "five-native-contract-adaptations.md",
+      "source": ".tools/rd02-five-contract-adaptations.md",
+      "bytes": 5027,
+      "sourceSha256BeforeNormalization": "aadc4a1200770731be36cdab3b85ddd4e0426fc6d504bbf5640bf3ee645c8606",
+      "sha256": "aadc4a1200770731be36cdab3b85ddd4e0426fc6d504bbf5640bf3ee645c8606"
+    },
+    {
+      "file": "native-boundary-green.log",
+      "source": ".tools/rd02-native-boundary-final.log",
+      "bytes": 1235,
+      "sourceSha256BeforeNormalization": "852b20875b2b50ee7836420a1e9ec2d2875dfbe5c1fb1d0df715762094ad1cf1",
+      "sha256": "a8def4bc7020a7b8f58cfd5d920ed516b2d3faacede4eab1a38cd5c2193e511c"
+    },
+    {
+      "file": "native-boundary-red.log",
+      "source": ".tools/rd02-native-boundary-red.log",
+      "bytes": 963,
+      "sourceSha256BeforeNormalization": "9507de4f4931e7fcdce0d55d5c037cc9f446b5fb614db682b767603c555c9a47",
+      "sha256": "5b30b30ed3f39c21302fb330059eca170072a0eeb166ca74573f9c4b3cdbf7a9"
+    },
+    {
+      "file": "native-events-sanitized.jsonl",
+      "source": "[owned-isolated-native-root]/native-events.jsonl",
+      "sourceSha256BeforeNormalization": "229b6da915a3b5998d49d5351911333ab1e22289fe8ba87ba98a795c09464cae",
+      "sha256": "58ea9faafa38304449015040d01e557f30cdb31e02f283ae6ee4ba860e05787e",
+      "bytes": 27367,
+      "transformation": "bounded pid/kind/typed-field allowlist; all other fields excluded"
+    },
+    {
+      "file": "native-final-process-release.json",
+      "source": ".tools/delivery-s3/native-final-process-release.json",
+      "bytes": 2369,
+      "sourceSha256BeforeNormalization": "c1afb144cf75f8143aa5750c0514925663d58d2d49263dfb7516161115968b27",
+      "sha256": "2a364bcfa99c70147b68b515f205e1a41b43c24a93b908ed9b016473cf689e8a"
+    },
+    {
+      "file": "native-final-resource-before-close.json",
+      "source": ".tools/delivery-s3/native-final-resource-before-close.json",
+      "bytes": 760,
+      "sourceSha256BeforeNormalization": "3936a801a058e36f44b304e744402b55f1ef5eb857e93c5caa72a34a83cc8e8e",
+      "sha256": "56fd41e6f7879e604afdb2375a45fce4790f78fbaa744125625d837dd3b4cfb3"
+    },
+    {
+      "file": "native-final2-process-release.json",
+      "source": ".tools/delivery-s3/native-final2-process-release.json",
+      "bytes": 500,
+      "sourceSha256BeforeNormalization": "0492207c66688feeda915a6621792c26c7584e69338b55640d77a2f2dd0a5a81",
+      "sha256": "a037d641593788927987e121a5634b082813ec7779e2652208d2581b747a5389"
+    },
+    {
+      "file": "native-first-green-with-generated-warnings.log",
+      "source": ".tools/delivery-rd02-native-boundary.log",
+      "bytes": 2170,
+      "sourceSha256BeforeNormalization": "e28dcd740362b61d40475141fe56cdb97deed41c97a146dcffc85ea2988c9c4b",
+      "sha256": "500ea1aa80a50e98abd05584ba11a9b5a5d07a43ae6ff799a9d99a718a9dd55a"
+    },
+    {
+      "file": "native-rd02-account-core-evidence.json",
+      "source": ".tools/delivery-s3/native-rd02-account-core-evidence.json",
+      "bytes": 1762,
+      "sourceSha256BeforeNormalization": "9a8bbd3116cf3ca155495b912b612aa06e8b8b57fd67a2cc88aa926649662e53",
+      "sha256": "60a70cc242e7a02cc046d62a04644efb6067f4ac28c9fa89cb19b3c393ccf830"
+    },
+    {
+      "file": "native-rd02-chat-expanded.jpg",
+      "source": ".tools/delivery-s3/native-rd02-chat-expanded.jpg",
+      "bytes": 127069,
+      "sourceSha256BeforeNormalization": "e1734bf18c78d83d5fc170dce8d0b885eeef85dfd9e42cf7bf467751179940ea",
+      "sha256": "e1734bf18c78d83d5fc170dce8d0b885eeef85dfd9e42cf7bf467751179940ea"
+    },
+    {
+      "file": "native-rd02-process-release.json",
+      "source": ".tools/delivery-s3/native-rd02-process-release.json",
+      "bytes": 3269,
+      "sourceSha256BeforeNormalization": "679f197ffc93d5acec6bb861205c266d428844e823fa0f3e3188fffe4fde6269",
+      "sha256": "c8df9746f41d8e498c1f01322136c25571de80da3924bb16cd363860125d3210"
+    },
+    {
+      "file": "native-rd02-resource-before-close.json",
+      "source": ".tools/delivery-s3/native-rd02-resource-before-close.json",
+      "bytes": 759,
+      "sourceSha256BeforeNormalization": "4efdb0a7873eba96bbea73a0b4c902acd4e86e01fe0ef785a5aa0b2efb311601",
+      "sha256": "a89ca39c5a1eafcf7e67fed85412891d787fecad06aa0b7420d66db282e82518"
+    },
+    {
+      "file": "native-rd02-ten-account-switches.jpg",
+      "source": ".tools/delivery-s3/native-rd02-ten-account-switches.jpg",
+      "bytes": 175056,
+      "sourceSha256BeforeNormalization": "90d0b030f9ebe35d1c20e12a0c507519f5443b78d2af3c8ff101ca6921436abe",
+      "sha256": "90d0b030f9ebe35d1c20e12a0c507519f5443b78d2af3c8ff101ca6921436abe"
+    },
+    {
+      "file": "native-recheck-process-release.json",
+      "source": ".tools/delivery-s3/native-recheck-process-release.json",
+      "bytes": 2371,
+      "sourceSha256BeforeNormalization": "1dccedd29588f829d7cb6abe318971c424734bb85f56eb13b140d824eb7a1b3a",
+      "sha256": "f11a4b20bf0ff87180e87b2090e3594484d42f44d16b4a25644a3144487452b9"
+    },
+    {
+      "file": "native-send-safety.log",
+      "source": ".tools/rd02-native-send-safety.log",
+      "bytes": 1192,
+      "sourceSha256BeforeNormalization": "0a407b4578515654dc831be67ae0199cfdc0c64af916f858564d5c61d0ceca9d",
+      "sha256": "e4fc8bf5e57e56c49fb6df9ae6ff4baf0d7c352ef213a694ef9325f97f80cc97"
+    },
+    {
+      "file": "native-services-green.log",
+      "source": ".tools/rd02-native-services-green.log",
+      "bytes": 731,
+      "sourceSha256BeforeNormalization": "8dc98f05a36e88135cad0ecd17fefa98cbb110f824501017a7fbba17d9433dbc",
+      "sha256": "bdd0efa672fd30f706fe29aae41525570c89fd85ed20edcf7872bfdb86e04c4a"
+    },
+    {
+      "file": "native-ws-capability.jpg",
+      "source": ".tools/delivery-s3/native-ws-capability.jpg",
+      "bytes": 97242,
+      "sourceSha256BeforeNormalization": "4423e766e0ecde59035c98aab1b83988ef08280f7bbd18279146b8e27214a35e",
+      "sha256": "4423e766e0ecde59035c98aab1b83988ef08280f7bbd18279146b8e27214a35e"
+    },
+    {
+      "file": "previous-release.log",
+      "source": ".tools/delivery-s3-rd02-release-final.log",
+      "bytes": 292,
+      "sourceSha256BeforeNormalization": "71bf60878837cc0c331423625d530e7d20e0c73d5004fc48f87311bd97cfccaa",
+      "sha256": "3b8ed4a529251de2a3072f2b7c76b912cba9783ac72a0d141894dd979158ff9d"
+    },
+    {
+      "file": "release.log",
+      "source": ".tools/delivery-s3-rd02-release-post-native-fixes.log",
+      "bytes": 292,
+      "sourceSha256BeforeNormalization": "317953e97cc5f25228350d19faeb3e937f38894ed4a13a54312299c0a91eb82b",
+      "sha256": "dd9d0272f9c0075078679d6321c9a8d9e443ba7149f97598554764418c0cf644"
+    },
+    {
+      "file": "six-ws-contract-adaptations.md",
+      "source": ".tools/delivery-rd02-legacy-tests.md",
+      "bytes": 6833,
+      "sourceSha256BeforeNormalization": "9c9bbdee37a7e32ca0254ae100f1d70eef30022a0f89555179a9ec335f45d080",
+      "sha256": "9c9bbdee37a7e32ca0254ae100f1d70eef30022a0f89555179a9ec335f45d080"
+    },
+    {
+      "file": "ws-capability-green.log",
+      "source": ".tools/delivery-rd02-capability-final.log",
+      "bytes": 1751,
+      "sourceSha256BeforeNormalization": "ba56389bbd84ecf1e34954ce01af59fa190bd8dbf942e041b406f7258e1bff9d",
+      "sha256": "1e15f441c55d334bf7e7d0e516cc4196652440c0a76fadab23524637809f8564"
+    },
+    {
+      "file": "ws-capability-red.log",
+      "source": ".tools/delivery-rd02-ws-capability-red.log",
+      "bytes": 6345,
+      "sourceSha256BeforeNormalization": "bc65e05078c8af260524eea6836c09d34c7740deae85d1805aaf7d36594f2270",
+      "sha256": "7a0da154e2bcf08f0e010f09c8eeb64ceca2ebee58d0598ff28f573a2840f310"
+    },
+    {
+      "file": "ws-capability-shell-red.log",
+      "source": ".tools/delivery-rd02-ws-capability-shell-red.log",
+      "bytes": 1545,
+      "sourceSha256BeforeNormalization": "8a91e55392531c2eaf078270fe81044b88cb8c865d130b293072f643922e508e",
+      "sha256": "7d8b98ee6b1076c9726f93212bf9b8f0ae342503e1106799fb97efd76c5fa697"
+    },
+    {
+      "file": "ws-regression.log",
+      "source": ".tools/delivery-rd02-s3-ws-final.log",
+      "bytes": 36251,
+      "sourceSha256BeforeNormalization": "9fe250db912216fd4598b78def7e2a60c48a5ba8602dbe24626751b972526fa3",
+      "sha256": "9364713b5d509ca57c755b3279093de9cdd39066921f73fe4302ba84095c8bc0"
+    }
+  ]
+}

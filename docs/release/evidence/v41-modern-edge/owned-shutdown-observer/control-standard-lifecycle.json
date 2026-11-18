@@ -1,0 +1,26 @@
+{
+  "invocation": "1794988640016-f9b69d2c-93cc-4254-b219-73df804bc060",
+  "mode": "controlled-node-kernel-observer",
+  "rootPid": 19784,
+  "probePid": 40892,
+  "status": "Passed",
+  "elapsedMs": 3882,
+  "timeoutMs": 10000,
+  "cleanupSafe": true,
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "identityProbeClosed": true,
+  "forceTerminated": false,
+  "observedIdentities": 1,
+  "remainingIdentities": [],
+  "eventTimesMs": {
+    "result-ready": 2534,
+    "close-requested": 2534,
+    "process-exit": 3849,
+    "streams-close": 3849,
+    "identity-probe-closed": 3882
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "baseline": "bca8813",
+  "fixtureHashesMatchBaseline": true,
+  "resultSha256": "4d581359cbe55b6f82d1a5f9bd59b029b66cd691b4b3274c0ae3a607e3b178e8",
+  "resultCases": 7,
+  "recordedRuns": [
+    {
+      "mode": "legacy sync",
+      "status": 0,
+      "elapsedMs": 11372,
+      "timeoutMs": 45000
+    },
+    {
+      "mode": "temporary CDP candidate",
+      "status": "Passed",
+      "elapsedMs": 11005,
+      "timeoutMs": 30000
+    },
+    {
+      "mode": "formal CDP",
+      "status": "Failed",
+      "elapsedMs": 30007,
+      "timeoutMs": 30000,
+      "failure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit",
+        "message": "Isolated lifecycle deadline reached during process-exit"
+      },
+      "invocation": "1794949051326-f7fa3227-e45c-4369-b0f3-19c95145d805",
+      "rootRetained": true
+    },
+    {
+      "mode": "formal CDP with read-only liveness observer",
+      "status": "Passed",
+      "elapsedMs": 25005,
+      "timeoutMs": 30000,
+      "invocation": "1794949155223-8b5d45de-3b0c-490f-b277-e604ba3f924b",
+      "livenessSamples": 0
+    }
+  ],
+  "controlledLifecycleCases": 12,
+  "controlledLifecycleParameters": 13,
+  "controlledTransportCases": 4,
+  "controlledWorkspaceCleanupCases": 3,
+  "runtimeExitIssue": "Occasional browser process exit still unverified after explicit Browser.close and actual CDP shutdown"
+}

@@ -1,0 +1,46 @@
+{
+  "summary": "Completed 312 checks: 312 passed, 0 failed.",
+  "edgeMarkers": [
+    {
+      "line": "[RUN] Stage 5.1 real workspace collapsed layout",
+      "lineNumber": 1283
+    },
+    {
+      "line": "[PASS] Stage 5.1 real workspace collapsed layout",
+      "lineNumber": 1292
+    },
+    {
+      "line": "[RUN] Delivery S1 actual main renderers and shared design system",
+      "lineNumber": 1449
+    },
+    {
+      "line": "[PASS] Delivery S1 actual main renderers and shared design system",
+      "lineNumber": 1451
+    },
+    {
+      "line": "[RUN] Delivery S1 WS computed layout and retained host",
+      "lineNumber": 1453
+    },
+    {
+      "line": "[PASS] Delivery S1 WS computed layout and retained host",
+      "lineNumber": 1470
+    },
+    {
+      "line": "[RUN] Delivery S2 actual shipped CSS and accessible chart rendering",
+      "lineNumber": 1502
+    },
+    {
+      "line": "[PASS] Delivery S2 actual shipped CSS and accessible chart rendering",
+      "lineNumber": 1508
+    },
+    {
+      "line": "[RUN] Delivery S3 full-CSS customer table, drawer and modal ownership",
+      "lineNumber": 1600
+    },
+    {
+      "line": "[PASS] Delivery S3 full-CSS customer table, drawer and modal ownership",
+      "lineNumber": 1612
+    }
+  ],
+  "fullFailureMarkers": []
+}

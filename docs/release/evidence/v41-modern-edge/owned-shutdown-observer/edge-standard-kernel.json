@@ -1,0 +1,114 @@
+{
+  "invocation": "1794988700812-10a61be4-a4ea-4a09-94ef-7066fc799d08",
+  "rootPid": 29804,
+  "observerPid": 28620,
+  "observerExitProof": [
+    0,
+    null
+  ],
+  "verifiedHandleCount": 15,
+  "unavailableAtArmCount": 0,
+  "samples": [
+    {
+      "afterArmRequestMs": 46,
+      "scheduledOffsetMs": 0,
+      "rootState": "running",
+      "rootKernel100ns": 16250000,
+      "rootUser100ns": 17968750,
+      "countByRoleAndState": {
+        "browser/running": 1,
+        "renderer/running": 4,
+        "renderer/exited": 6,
+        "gpu/running": 1,
+        "other/running": 3
+      },
+      "rootThreadStates": {
+        "status": "observed",
+        "states": {
+          "unnamed/Running": 2,
+          "unnamed/Wait:EventPairLow": 13,
+          "unnamed/Wait:ExecutionDelay": 2,
+          "unnamed/Wait:Executive": 7,
+          "unnamed/Wait:Unknown": 12,
+          "unnamed/Wait:UserRequest": 43
+        }
+      }
+    },
+    {
+      "afterArmRequestMs": 288,
+      "scheduledOffsetMs": 250,
+      "rootState": "running",
+      "rootKernel100ns": 16250000,
+      "rootUser100ns": 18125000,
+      "countByRoleAndState": {
+        "browser/running": 1,
+        "renderer/running": 3,
+        "renderer/exited": 7,
+        "gpu/running": 1,
+        "other/running": 3
+      },
+      "rootThreadStates": {
+        "status": "observed",
+        "states": {
+          "unnamed/Wait:EventPairLow": 13,
+          "unnamed/Wait:ExecutionDelay": 2,
+          "unnamed/Wait:Executive": 7,
+          "unnamed/Wait:Unknown": 13,
+          "unnamed/Wait:UserRequest": 44
+        }
+      }
+    },
+    {
+      "afterArmRequestMs": 2044,
+      "scheduledOffsetMs": 2000,
+      "rootState": "running",
+      "rootKernel100ns": 17656250,
+      "rootUser100ns": 19687500,
+      "countByRoleAndState": {
+        "browser/running": 1,
+        "renderer/exited": 10,
+        "gpu/running": 1,
+        "other/running": 2,
+        "other/exited": 1
+      },
+      "rootThreadStates": {
+        "status": "observed",
+        "states": {
+          "unnamed/Wait:EventPairLow": 16,
+          "unnamed/Wait:ExecutionDelay": 2,
+          "unnamed/Wait:Executive": 15,
+          "unnamed/Wait:Unknown": 11,
+          "unnamed/Wait:UserRequest": 30
+        }
+      }
+    },
+    {
+      "afterArmRequestMs": 7078,
+      "scheduledOffsetMs": 7000,
+      "rootState": "running",
+      "rootKernel100ns": 19531250,
+      "rootUser100ns": 20937500,
+      "countByRoleAndState": {
+        "browser/running": 1,
+        "renderer/exited": 10,
+        "gpu/running": 1,
+        "other/running": 2,
+        "other/exited": 1
+      },
+      "rootThreadStates": {
+        "status": "observed",
+        "states": {
+          "unnamed/Wait:EventPairLow": 18,
+          "unnamed/Wait:ExecutionDelay": 1,
+          "unnamed/Wait:Executive": 3,
+          "unnamed/Wait:Unknown": 5,
+          "unnamed/Wait:UserRequest": 49
+        }
+      }
+    }
+  ],
+  "rootKernelExitUnixMs": 1794988717138,
+  "rootKernelExitAfterArmRequestMs": 11603,
+  "observerReceivedExitAfterArmRequestMs": 11661,
+  "lastObservedChildExitBeforeRootMs": 3533
+}

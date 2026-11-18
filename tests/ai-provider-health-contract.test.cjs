@@ -1,0 +1,11 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const source = fs.readFileSync(path.join(__dirname, '..', 'desktop/src/Zhike.Desktop/Services/AiBridgeService.cs'), 'utf8');
+assert.match(source, /ConcurrentDictionary<string, ProviderHealth>/, 'AI bridge must keep provider health per provider');
+assert.match(source, /lastFailureAt/, 'provider status must expose the last failure time');
+assert.match(source, /lastLatencyMs/, 'provider status must expose latency');
+assert.match(source, /retryable/, 'provider failure response must classify retryability');
+assert.match(source, /providerHealth/, 'status response must include provider health');
+console.log('ai-provider-health-contract: provider health and retry classification required');

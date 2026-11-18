@@ -1,15 +1,15 @@
 <Page x:Class="Zhike.Desktop.Views.LegacyUiHostPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      Background="{StaticResource ZhikePageBackgroundBrush}">
+      Background="{ThemeResource ZhikePageBackgroundBrush}">
     <Grid x:Name="Root" RowSpacing="8" Padding="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Border x:Name="HostBorder" Grid.Row="0"
-                Background="{StaticResource ZhikeSurfaceBrush}"
-                BorderBrush="{StaticResource ZhikeLineBrush}"
+                Background="{ThemeResource ZhikeSurfaceBrush}"
+                BorderBrush="{ThemeResource ZhikeLineBrush}"
                 BorderThickness="1" CornerRadius="8">
             <Grid x:Name="WebViewHost" SizeChanged="OnWebViewHostSizeChanged">
                 <Canvas x:Name="WsOverlayLayer" Visibility="Collapsed" IsHitTestVisible="False"
@@ -17,6 +17,15 @@
                     <Border x:Name="WsOverlayBorder" Background="Transparent" BorderThickness="0" CornerRadius="0">
                         <Grid x:Name="WsOverlayHost" />
                     </Border>
+                </Canvas>
+                <!-- Keep a real, non-interactive viewport for the hidden
+                     collector. Collapsing this surface makes WhatsApp report
+                     no virtualized scroll geometry, so the collector layer is
+                     laid out offscreen with zero opacity instead. -->
+                <Canvas x:Name="WsCollectorLayer" Visibility="Visible" IsHitTestVisible="False"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch" UseLayoutRounding="True">
+                    <Grid x:Name="WsCollectorHost" Width="1280" Height="900"
+                          Background="Transparent" IsHitTestVisible="False" Opacity="0" />
                 </Canvas>
             </Grid>
         </Border>

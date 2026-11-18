@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794924885337-7fa29e2a-dbac-4893-aa8f-1c93bcf6db26",
+  "mode": "controlled-node-tracked-child",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 10000,
+  "launchedAt": "2026-11-17T14:14:45.337Z",
+  "events": [
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 577
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 1128
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 1128
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 1128,
+      "acknowledgement": "stdin-request"
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 1133
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 1133
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 1138,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 1138
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 1138
+    }
+  ],
+  "identities": [
+    {
+      "pid": 34852,
+      "startedTicks": "639305216853428085",
+      "startedUtc": "2026-11-17T14:14:45.3428085Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 30036,
+      "startedTicks": "639305216854518369",
+      "startedUtc": "2026-11-17T14:14:45.4518369Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": false,
+  "pid": 34852,
+  "resultReady": true,
+  "rootExitProof": "verified-spawn-handle-exit-and-streams",
+  "remainingIdentities": [
+    {
+      "pid": 30036,
+      "startedTicks": "639305216854518369",
+      "startedUtc": "2026-11-17T14:14:45.4518369Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "releaseFailure": {
+    "code": "OWNED_PROCESSES_REMAIN",
+    "phase": "resource-release"
+  },
+  "elapsedMs": 1657,
+  "stdoutBytes": 49,
+  "stderrBytes": 0,
+  "failure": {
+    "code": "OWNED_PROCESSES_REMAIN",
+    "phase": "resource-release",
+    "message": "Observed isolated processes remain after close"
+  }
+}

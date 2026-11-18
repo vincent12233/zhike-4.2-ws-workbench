@@ -1,0 +1,99 @@
+{
+  "rootPid": 18712,
+  "observed": 15,
+  "released": 15,
+  "processes": [
+    {
+      "pid": 18712,
+      "name": "Zhike.Stage51.Acceptance",
+      "startedUtc": "2026-11-17T07:02:26.4401877Z",
+      "sameIdentityAlive": false
+    },
+    {
+      "pid": 32856,
+      "name": "node",
+      "startedUtc": "2026-11-17T07:02:27.7607449Z",
+      "sameIdentityAlive": false
+    },
+    {
+      "pid": 30192,
+      "name": "conhost",
+      "startedUtc": "2026-11-17T07:02:27.9547163Z",
+      "sameIdentityAlive": false
+    },
+    {
+      "pid": 34236,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-17T07:02:28.7029087Z",
+      "sameIdentityAlive": false
+    },
+    {
+      "pid": 14744,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-17T07:02:28.7345673Z",
+      "sameIdentityAlive": false
+    },
+    {
+      "pid": 32872,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-17T07:02:29.1109739Z",
+      "sameIdentityAlive": false
+    },
+    {
+      "pid": 8012,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-17T07:02:29.1158689Z",
+      "sameIdentityAlive": false
+    },
+    {
+      "pid": 15504,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-17T07:02:29.1569853Z",
+      "sameIdentityAlive": false
+    },
+    {
+      "pid": 19328,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-17T07:02:29.2352264Z",
+      "sameIdentityAlive": false
+    },
+    {
+      "pid": 20404,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-17T07:31:39.8474005Z",
+      "sameIdentityAlive": false
+    },
+    {
+      "pid": 28820,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-17T07:31:39.8791711Z",
+      "sameIdentityAlive": false
+    },
+    {
+      "pid": 19344,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-17T07:31:40.2442321Z",
+      "sameIdentityAlive": false
+    },
+    {
+      "pid": 26836,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-17T07:31:40.247698Z",
+      "sameIdentityAlive": false
+    },
+    {
+      "pid": 22064,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-17T07:31:40.2893346Z",
+      "sameIdentityAlive": false
+    },
+    {
+      "pid": 8184,
+      "name": "msedgewebview2",
+      "startedUtc": "2026-11-17T07:31:40.38836Z",
+      "sameIdentityAlive": false
+    }
+  ],
+  "usedForce": false,
+  "productionOpened": false
+}

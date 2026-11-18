@@ -1,0 +1,5 @@
+# Immutable execution evidence: preserve the archived bytes and their SHA-256.
+* -text whitespace=cr-at-eol
+# Raw tool output can contain trailing spaces. Never rewrite execution evidence.
+*.log -whitespace
+*.txt -whitespace

@@ -1,0 +1,23 @@
+S2 main metrics: loaded/unknown/error, original-owner equivalence, calendar/date/legacy/zero/nonfinite, cache/read-only/scope passed
+S2 correction Failed: first-read recovery and pending/revision guards: full initialized response after first-read failure must apply existing read path
+
+0 !== 1
+
+S2 correction Failed: single asOfDay across midnight before existing tick: trend must stay with existing today until minute tick
++ actual - expected
+
++ '2026-11-16'
+- '2026-11-15'
+            ^
+
+S2 correction Failed: unknown/error coverage basis cannot leak numeric zero: loading numerator is not a confirmed zero
+
+0 !== null
+
+S2 correction Failed: out-of-order request cannot bless provenance or rewrite timestamp: older completion cannot create last-good read after newer failure
+
+true !== false
+
+Error: 4/4 S2 correction vectors failed
+    at verifyRequiredCorrections (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\delivery-s2-metrics-projection.test.cjs:129:21)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)

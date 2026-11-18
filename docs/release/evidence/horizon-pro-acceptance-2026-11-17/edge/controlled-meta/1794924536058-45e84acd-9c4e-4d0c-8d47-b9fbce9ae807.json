@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794924536058-45e84acd-9c4e-4d0c-8d47-b9fbce9ae807",
+  "mode": "controlled-powershell-bounded-readiness",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 4000,
+  "launchedAt": "2026-11-17T14:08:56.058Z",
+  "events": [
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 1082
+    },
+    {
+      "event": "cdp-readiness-wait",
+      "elapsedMs": 1083,
+      "code": "EBUSY"
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 3004
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 3004,
+      "acknowledgement": "stdin-request"
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 3027
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 3027
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 3037,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 3037
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 3037
+    }
+  ],
+  "identities": [
+    {
+      "pid": 20580,
+      "startedTicks": "639305213360652187",
+      "startedUtc": "2026-11-17T14:08:56.0652187Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "pid": 20580,
+  "profile": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-edge-runner-test-Hafej5\\edge-profile-f1c93666-c321-4987-bd44-a18e705999a3",
+  "devToolsReadiness": {
+    "polls": 61,
+    "enoent": 0,
+    "ebusy": 61,
+    "partial": 0
+  },
+  "remainingIdentities": [],
+  "elapsedMs": 3485,
+  "stdoutBytes": 18,
+  "stderrBytes": 0,
+  "failure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "result",
+    "message": "Isolated lifecycle deadline reached during result"
+  }
+}

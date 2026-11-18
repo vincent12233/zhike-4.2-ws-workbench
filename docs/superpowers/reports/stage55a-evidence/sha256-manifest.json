@@ -1,0 +1,208 @@
+{
+  "stage": "5.5A",
+  "entries": [
+    {
+      "path": "stage55a-evidence/native-events.jsonl",
+      "bytes": 45643,
+      "sha256": "0cb0910b9aa8398661c3f64ec494198f5a20cc9566f0cc865448316bbc27bec2"
+    },
+    {
+      "path": "stage55a-evidence/native-summary.json",
+      "bytes": 13569,
+      "sha256": "0479ef646fec3850fc208e611e6d0da59f83a76e75c3d37970817c15e63c5404"
+    },
+    {
+      "path": "stage55a-evidence/source-hashes.json",
+      "bytes": 728,
+      "sha256": "6bae81d6e1c486e24f37debcfdf6f77587c90c8d13dbd7aabff823c9db54063a"
+    },
+    {
+      "path": "stage55a-evidence/stage55a-final-native-close-check.json",
+      "bytes": 413,
+      "sha256": "62c3f066d7c6978276ad73367701dd8ff3262513abe317474c2e152815a00eaf"
+    },
+    {
+      "path": "stage55a-evidence/stage55a-final-resource-samples.context.json",
+      "bytes": 1916,
+      "sha256": "8064a0e6ac28f9c5c33915583cd6c3e4cf2aa68dface1c289e2fe815c6060127"
+    },
+    {
+      "path": "stage55a-evidence/stage55a-final-resource-samples.jsonl",
+      "bytes": 121139,
+      "sha256": "a48b8d74ceb268854af5b15640443d52a3528c65de9c22dc32249a48efa53a65"
+    },
+    {
+      "path": "stage55a-evidence/stage55a-native-close-check.json",
+      "bytes": 382,
+      "sha256": "8bd0bafbc4f70ce1b11d6c6d6508161201b28e9932734f58cc1c571b856d9a8a"
+    },
+    {
+      "path": "stage55a-evidence/test-counts.json",
+      "bytes": 257,
+      "sha256": "dfc2cf1de204ac5df856f498b892009713cd6585e8ed0400764ad4141de89d73"
+    },
+    {
+      "path": "stage55a-evidence/test-executions.json",
+      "bytes": 121069,
+      "sha256": "78834e820913326b2e4b691f7d29f316a0b942d9d335569b226d07e8758b9274"
+    },
+    {
+      "path": "stage55a-screenshots/01-before-ws-normal.jpg",
+      "bytes": 147029,
+      "sha256": "c214660271541ecf76014ea3d088a9cd93a3c372c66683b1069d6c75dc5b783d"
+    },
+    {
+      "path": "stage55a-screenshots/02-before-ws-entry.jpg",
+      "bytes": 146927,
+      "sha256": "3a8c1329d5d219343e09864eef86040381eb56d9609e7c5a4fab194c221df490"
+    },
+    {
+      "path": "stage55a-screenshots/03-workspace-home-maximized.jpg",
+      "bytes": 152635,
+      "sha256": "cb75cbb4f5c1088016d883fe558541d5489d5aaa4f720179a13b49ec8a8f80b6"
+    },
+    {
+      "path": "stage55a-screenshots/04-final-chat-maximized-crm-closed.jpg",
+      "bytes": 109575,
+      "sha256": "b353ecdce426e1fffa97acd5f1a93862435ad0931149bc696ea7cc5e841f7656"
+    },
+    {
+      "path": "stage55a-screenshots/05-final-chat-crm-open.jpg",
+      "bytes": 145291,
+      "sha256": "9175827faa090329281910d08cef6b942de0a966d02f5dd6b05d2ccb13e15e54"
+    },
+    {
+      "path": "stage55a-screenshots/06-final-workspace-home.jpg",
+      "bytes": 158239,
+      "sha256": "7c35d19c5781de3224d3e96b80988e33695c7bb335d98a3428d91f76562fa4f9"
+    },
+    {
+      "path": "stage55a-screenshots/07-final-accounts.jpg",
+      "bytes": 136392,
+      "sha256": "44b73d3148265f8a6cd3ac7aeaf8ad3f65ebfa07de7c80e18b165651c3964803"
+    },
+    {
+      "path": "stage55a-screenshots/08-final-groups-full-width.jpg",
+      "bytes": 164338,
+      "sha256": "db746b00b3e3faf5e8ef4a532ea068d4f5772cf9536146a69e41f017c567fcc5"
+    },
+    {
+      "path": "stage55a-screenshots/09-groups-detail-before-right-column-fix.jpg",
+      "bytes": 161213,
+      "sha256": "32d56c69608b0067581ab92faec2b6b34e7fef62caaa0f60102f3b1f044c268c"
+    },
+    {
+      "path": "stage55a-screenshots/10-final-members.jpg",
+      "bytes": 141834,
+      "sha256": "ee65464d47bb2fc02523762a3418402bed33206a1d6881522f5e7498998e1208"
+    },
+    {
+      "path": "stage55a-screenshots/11-final-collection.jpg",
+      "bytes": 166089,
+      "sha256": "cf74a46d00ff09e2e0d673ececfa815c204958d158410bc036c950a29c816772"
+    },
+    {
+      "path": "stage55a-screenshots/12-final-contacts-pending.jpg",
+      "bytes": 106586,
+      "sha256": "a321d70e4dad9dec8ba39fc7715232660ee47d266d89b79fb95cad8716c8df47"
+    },
+    {
+      "path": "stage55a-screenshots/13-final-ai.jpg",
+      "bytes": 142964,
+      "sha256": "1e90acffd4c23f8beafaf6df1754c8891f62f9b880403ba39935860c4b331502"
+    },
+    {
+      "path": "stage55a-screenshots/14-final-crm.jpg",
+      "bytes": 141787,
+      "sha256": "b39423b1e97698f6520bc216137d80403916b45a31c594e918e696c9c4191236"
+    },
+    {
+      "path": "stage55a-screenshots/14b-tasks-before-duplicate-strip-fix.jpg",
+      "bytes": 124882,
+      "sha256": "d46274936c630df4a7327dca8d698f8f93ef0c0d5a395aeae2ebc267cfe22101"
+    },
+    {
+      "path": "stage55a-screenshots/15-final-operation-status.jpg",
+      "bytes": 131790,
+      "sha256": "7cad1458f70da5420255ffa370fa8fc86568942ebdefe4007904589e652dcc69"
+    },
+    {
+      "path": "stage55a-screenshots/16-final-settings.jpg",
+      "bytes": 162916,
+      "sha256": "34ebc0a39231b1394dd42d90643409a2367bc66cce4457ba23131f4e6de8ed69"
+    },
+    {
+      "path": "stage55a-screenshots/17-final-sidebar-collapsed.jpg",
+      "bytes": 145452,
+      "sha256": "3121605927a528fa0c35848895bc2c2e9d81fecb9d84af07e31e1d05dd721bf3"
+    },
+    {
+      "path": "stage55a-screenshots/18-final-returned-zhike-normal.jpg",
+      "bytes": 147240,
+      "sha256": "9e9c8e4b891e1b5ef3570bf17baa256053b350ed084549fe4497e89d1aee7ea3"
+    },
+    {
+      "path": "stage55a-screenshots/19-final-ten-account-switches.jpg",
+      "bytes": 118431,
+      "sha256": "1a38a2f8be6ef779f11ad71224d2139740374410173399404963b84baadff4c9"
+    },
+    {
+      "path": "stage55a-screenshots/20-final-groups-detail-closed.jpg",
+      "bytes": 142634,
+      "sha256": "e1304fe6225c3911900be1a958c55d275fafdf249606e2bf93c23187ddc1d964"
+    },
+    {
+      "path": "stage55a-screenshots/21-final-groups-right-detail.jpg",
+      "bytes": 149350,
+      "sha256": "a335ac7f735a7f2343519c5dfe97c5907cc90ae936cf71e2d039e16249ad30fa"
+    },
+    {
+      "path": "stage55a-screenshots/22-final-tasks.jpg",
+      "bytes": 98048,
+      "sha256": "c2f7f87b673c52b3de7bba5ae358ca01eb789770337172648c434dedb689e704"
+    },
+    {
+      "path": "stage55a-screenshots/23-native-bridge-timeout-after-account-switches.jpg",
+      "bytes": 163141,
+      "sha256": "d56dbad83c973e3d49ab59dcc7909407b0b43a5282b60a5120307e3168210a54"
+    },
+    {
+      "path": "stage55a-screenshots/24-native-chat-recovered-before-race-fix.jpg",
+      "bytes": 108191,
+      "sha256": "38ce5e37d17ce7e8601bc2bf72c856f4619580730e92558fbb831389ee647da0"
+    },
+    {
+      "path": "stage55a-screenshots/25-final-chat-after-race-fix.jpg",
+      "bytes": 109430,
+      "sha256": "55b975075b784852ac24c635d1df0c08bcaad806f0031fc599569938ede36008"
+    },
+    {
+      "path": "stage55a-screenshots/26-final-race-fixed-ten-switches.jpg",
+      "bytes": 136901,
+      "sha256": "dd433923c405908d923a6ae3a683a77a579d3be9ad2f1bcf60a83582e5c2057a"
+    },
+    {
+      "path": "stage55a-screenshots/27-final-native-chat-restored.jpg",
+      "bytes": 108055,
+      "sha256": "752fe75faf827808b144d5e6b56b846c83af9a69c03b4f461722d4cbc5dcb8a7"
+    },
+    {
+      "path": "stage55a-screenshots/28-final-crm-open-after-race-fix.jpg",
+      "bytes": 145068,
+      "sha256": "e8712ea7d7bc7f0970c9eaf8c682e5a6fdbf7e9b9e3b012036a98be16dbdd9ec"
+    },
+    {
+      "path": "stage55a-screenshots/29-final-chat-wide.jpg",
+      "bytes": 107995,
+      "sha256": "8a33388e5daeccc2579b7f917ee21fc4aa2846d65075d90060b2236331d70aa5"
+    }
+  ],
+  "excluded": [
+    "connection.private.json",
+    "SQLite databases",
+    "all WebView2 profiles",
+    "credentials",
+    "raw business messages"
+  ],
+  "copiedProductionData": false
+}

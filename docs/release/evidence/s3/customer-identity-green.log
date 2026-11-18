@@ -1,0 +1,15 @@
+PASS same-name customers use the drawer customer ID, never the first name match
+PASS renaming the display heading does not change the authoritative customer link
+PASS unknown or missing drawer IDs never fall back to a matching name
+PASS deleted and duplicate master IDs are not silently treated as one active customer
+PASS late A response cannot populate reused B drawer before B response
+PASS closing a drawer before completion prevents late insertion
+PASS an older failed read cannot replace the current customer successful history
+PASS replacing the drawer DOM prevents insertion into detached old content
+PASS same-ID drawer rerender rejects the old actions/content generation
+PASS overlapping refreshes share one read and append at most one current history section
+PASS read failure shows a real retry state, never fake empty history, and explicit retry recovers
+PASS valid empty history remains distinct and all rendered evidence is escaped
+PASS explicit first drawer-open event reaches the enhancer after lazy drawer creation
+PASS drawer lifecycle event data cannot override the live authoritative customer ID
+Delivery S3 customer identity runtime: 14/14; real enhancer, synthetic read transport, no browser/database/writes

@@ -1,0 +1,84 @@
+{
+  "baseline": "9aacf56",
+  "scope": "test helper and lifecycle test only; not a real Edge hang fix",
+  "originalFailure": {
+    "source": ".tools\\isolated-edge-runner-lifecycle\\1794923478784-1665f981-1a2e-4b73-b95e-71a6cc5e034c.json",
+    "exitObservedMs": 2269,
+    "closeBudgetRemainingMs": 731,
+    "rootQuery": "Redundant new PowerShell process after a directly owned exact child OS exit"
+  },
+  "changes": [
+    "Use verified direct ChildProcess exit and actual stream close as root release proof.",
+    "Keep real PID plus creation-time verification for every other observed process.",
+    "Record secondary release failure without replacing the primary error.",
+    "Add forwarding-only actual subprocess query observation and actual surviving-child rejection."
+  ],
+  "unchanged": [
+    "3000ms controlled timeout",
+    "30000ms real Edge deadline",
+    "exit0/closed streams requirement",
+    "PID/starttime startup verification",
+    "observed descendant rejection",
+    "failure status and cleanup boundary",
+    "all production code"
+  ],
+  "validation": {
+    "beforeOriginalSuite": "Passed separately; does not erase full-run failure",
+    "red": "Failed as expected: same directly owned PID queried twice",
+    "initialNewFixture": "Failed because Windows job ended non-detached child; fixture was corrected to deliberately outlive its parent",
+    "finalSuite": {
+      "suite": "isolated-edge-runner-lifecycle",
+      "parameterChecks": 13,
+      "actualControlledChildCases": 10,
+      "passed": 10,
+      "realEdgeStarted": false,
+      "realBrowserAccepted": false
+    },
+    "repeat": {
+      "passed": 20,
+      "minMs": 2263,
+      "maxMs": 2282,
+      "unchangedTimeoutMs": 3000
+    },
+    "concurrent": [
+      {
+        "index": 1,
+        "pid": 20932,
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 7625,
+        "file": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\acceptance-followup-edge\\controlled-concurrent-1.log"
+      },
+      {
+        "index": 2,
+        "pid": 19348,
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 7612,
+        "file": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\acceptance-followup-edge\\controlled-concurrent-2.log"
+      },
+      {
+        "index": 3,
+        "pid": 20436,
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 7556,
+        "file": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\acceptance-followup-edge\\controlled-concurrent-3.log"
+      },
+      {
+        "index": 4,
+        "pid": 31648,
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 7609,
+        "file": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\知客 4.1 运营增强版\\.tools\\acceptance-followup-edge\\controlled-concurrent-4.log"
+      }
+    ],
+    "transport": {
+      "suite": "isolated-edge-transport",
+      "passed": 4,
+      "realBrowserAccepted": false
+    }
+  },
+  "production": "FROZEN"
+}

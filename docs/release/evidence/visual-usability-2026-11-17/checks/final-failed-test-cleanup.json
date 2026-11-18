@@ -1,0 +1,9 @@
+{
+  "source": "final full regression",
+  "observedIdentities": 12,
+  "ownedStillRunning": 0,
+  "root": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-layout-uCyc66",
+  "existsAfter": false,
+  "originalStatus": "Failed",
+  "originalFailure": "EDGE_RUNNER_TIMEOUT"
+}

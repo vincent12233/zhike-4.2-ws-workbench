@@ -1,0 +1,3 @@
+# Keep the recorded archive SHA-256 byte-stable across checkouts.
+*.json -text
+*.log -text

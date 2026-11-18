@@ -1,0 +1,75 @@
+{
+  "mode": "baseline",
+  "evidence": "[STABILITY_WORKTREE]\\.tools\\v41-edge-investigation\\targets\\baseline-BDt88d",
+  "code": 0,
+  "status": "Passed",
+  "elapsedMs": 6111,
+  "timeoutMs": 30000,
+  "resultSha256": "9aa006d55d26f227de0b550e656066e44f30f3da72d1ed00641d87efd711675a",
+  "events": [
+    {
+      "event": "experiment-launch-pages",
+      "elapsedMs": 825,
+      "count": 1,
+      "fixture": false,
+      "launchBlank": true,
+      "other": []
+    },
+    {
+      "event": "result-verified",
+      "elapsedMs": 2693,
+      "cases": 6
+    },
+    {
+      "event": "experiment-before-fixture-close",
+      "elapsedMs": 2798,
+      "count": 3,
+      "fixture": true,
+      "launchBlank": true,
+      "other": [
+        {
+          "category": "edge://sync-confirmation-dialog",
+          "attached": false,
+          "hasOpener": false,
+          "sameContext": true
+        }
+      ]
+    },
+    {
+      "event": "experiment-before-browser-close",
+      "elapsedMs": 2823,
+      "count": 2,
+      "fixture": false,
+      "launchBlank": true,
+      "other": [
+        {
+          "category": "edge://sync-confirmation-dialog",
+          "attached": false,
+          "hasOpener": false,
+          "sameContext": true
+        }
+      ]
+    },
+    {
+      "event": "browser-close-acknowledged",
+      "elapsedMs": 2825,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "cdp-transport-closed",
+      "elapsedMs": 2830,
+      "code": 1000
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 6015,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 6023
+    }
+  ],
+  "outstanding": 0
+}

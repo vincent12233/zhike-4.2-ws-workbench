@@ -1,0 +1,5 @@
+{"palette":"atelier-dawn","legacyTheme":"light","labels":21,"actualLabelColor":"rgb(225, 235, 255)","token":"#e1ebff","minContrast":10.8,"labelOpacity":"1","parentOpacity":"1","effectiveOpacity":1}
+{"palette":"atelier-dawn","legacyTheme":"dark","labels":21,"actualLabelColor":"rgb(225, 235, 255)","token":"#e1ebff","minContrast":10.8,"labelOpacity":"1","parentOpacity":"1","effectiveOpacity":1}
+{"palette":"horizon-night","legacyTheme":"light","labels":21,"actualLabelColor":"rgb(233, 239, 255)","token":"#e9efff","minContrast":13.01,"labelOpacity":"1","parentOpacity":"1","effectiveOpacity":1}
+{"palette":"horizon-night","legacyTheme":"dark","labels":21,"actualLabelColor":"rgb(233, 239, 255)","token":"#e9efff","minContrast":13.01,"labelOpacity":"1","parentOpacity":"1","effectiveOpacity":1}
+{"suite":"inactive-main-nav-full-css","passed":true,"cases":4,"lifecycle":"Passed","cleanupSafe":true}

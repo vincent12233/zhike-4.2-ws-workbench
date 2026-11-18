@@ -1,0 +1,75 @@
+{
+  "at": "2026-11-17T02:32:02.0965233Z",
+  "invocation": "1794882646495-28920277-ad81-4bfc-b8eb-f3623667c3ea",
+  "scope": "Read-only exact observed PIDs and creation identity",
+  "sourceStatus": "Failed",
+  "observedIdentities": 12,
+  "observations": [
+    {
+      "pid": 6928,
+      "status": "Absent"
+    },
+    {
+      "pid": 18428,
+      "status": "Absent"
+    },
+    {
+      "pid": 12772,
+      "status": "Absent"
+    },
+    {
+      "pid": 17672,
+      "status": "Absent"
+    },
+    {
+      "pid": 17376,
+      "status": "Absent"
+    },
+    {
+      "pid": 26352,
+      "status": "Absent"
+    },
+    {
+      "pid": 28804,
+      "status": "Absent"
+    },
+    {
+      "pid": 20880,
+      "status": "Unverified",
+      "errorType": "System.Management.Automation.RuntimeException"
+    },
+    {
+      "pid": 26620,
+      "status": "Absent"
+    },
+    {
+      "pid": 7408,
+      "status": "Absent"
+    },
+    {
+      "pid": 29940,
+      "status": "Absent"
+    },
+    {
+      "pid": 9852,
+      "status": "Absent"
+    }
+  ],
+  "processesTerminated": false,
+  "sourceMetadataChanged": false,
+  "additionalIdentityVerification": {
+    "at": "2026-11-17T02:33:32.7601314Z",
+    "pid": 20880,
+    "status": "PidReused",
+    "method": "CIM exact ProcessId filter, creation timestamp only",
+    "expectedStartedUtc": "2026-11-17T02:30:47.3647256Z",
+    "currentCreatedUtc": "2026-11-17T02:31:37.7142930Z",
+    "expectedStartedTicks": "639304794473647256",
+    "currentCreatedTicks": "639304794977142930",
+    "currentProcessName": "svchost.exe",
+    "currentSessionId": 0,
+    "processesTerminated": false
+  },
+  "finalOriginalIdentitiesRemaining": 0,
+  "originalFailureStillFailed": true
+}

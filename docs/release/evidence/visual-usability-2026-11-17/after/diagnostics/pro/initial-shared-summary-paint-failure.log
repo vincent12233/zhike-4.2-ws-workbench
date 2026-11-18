@@ -1,0 +1,257 @@
+AssertionError [ERR_ASSERTION]: Ordinary text contrast stays at least 4.5:1 under the actual full legacy + current cascade
++ actual - expected
+
++ [
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.31,
++     selector: 'span.',
++     text: '已进群',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.515,
++     selector: 'span.',
++     text: '已进群',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.107,
++     selector: 'strong.',
++     text: '0',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.205,
++     selector: 'strong.',
++     text: '0',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.31,
++     selector: 'span.',
++     text: '未进群',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.515,
++     selector: 'span.',
++     text: '未进群',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.107,
++     selector: 'strong.',
++     text: '18',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.205,
++     selector: 'strong.',
++     text: '18',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.31,
++     selector: 'span.',
++     text: '已退群',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.515,
++     selector: 'span.',
++     text: '已退群',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.107,
++     selector: 'strong.',
++     text: '0',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.205,
++     selector: 'strong.',
++     text: '0',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.31,
++     selector: 'span.',
++     text: '热聊',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.515,
++     selector: 'span.',
++     text: '热聊',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.107,
++     selector: 'strong.',
++     text: '4',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.205,
++     selector: 'strong.',
++     text: '4',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.31,
++     selector: 'span.',
++     text: 'VIP',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.515,
++     selector: 'span.',
++     text: 'VIP',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.107,
++     selector: 'strong.',
++     text: '0',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.205,
++     selector: 'strong.',
++     text: '0',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.31,
++     selector: 'span.',
++     text: '跟票',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.515,
++     selector: 'span.',
++     text: '跟票',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.107,
++     selector: 'strong.',
++     text: '0',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.205,
++     selector: 'strong.',
++     text: '0',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.31,
++     selector: 'span.',
++     text: '入金',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.515,
++     selector: 'span.',
++     text: '入金',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.107,
++     selector: 'strong.',
++     text: '0',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.205,
++     selector: 'strong.',
++     text: '0',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.31,
++     selector: 'span.',
++     text: '待跟进',
++     view: 'segments'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.515,
++     selector: 'span.',
++     text: '待跟进',
++     view: 'segments'
++   }
++ ]
+- []
+
+    at verifyContrast (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\scripts\delivery\s1-main-visual.test.cjs:167:10)
+    at main (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\scripts\delivery\s1-main-visual.test.cjs:229:201)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [Array],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}

@@ -1,0 +1,50 @@
+{
+  "stage": "5.1",
+  "status": "Observed",
+  "test": "V3 isolated native wait and confirmed desktop-operation periods",
+  "rootPid": 32904,
+  "excludedEarlierSessionPids": [18128, 30308],
+  "samples": 61,
+  "sampleIntervalSeconds": 10,
+  "durationMs": 622274.6,
+  "first": { "atUtc": "2026-11-16T12:59:30.1240885Z", "elapsedMs": 403.3, "sample": 0, "processCount": 9, "webViewProcessCount": 6, "workingSetBytes": 889303040, "privateBytes": 496951296, "threads": 228, "handles": 5860 },
+  "last": { "atUtc": "2026-11-16T13:09:51.9999555Z", "elapsedMs": 622274.6, "sample": 60, "processCount": 15, "webViewProcessCount": 12, "workingSetBytes": 1335459840, "privateBytes": 732925952, "threads": 382, "handles": 9286 },
+  "workingSetDeltaBytes": 446156800,
+  "privateDeltaBytes": 235974656,
+  "observedPeaks": { "workingSetBytes": 1367166976, "privateBytes": 767340544, "threads": 392, "handles": 9304 },
+  "observedCpuDeltaSeconds": 273.6406,
+  "observedProcessIdentities": 15,
+  "createdWebViewCores": [
+    { "atUtc": "2026-11-16T12:58:52.3749292+00:00", "role": "shell", "accountId": "workbench-ui", "browserProcessId": 11476 },
+    { "atUtc": "2026-11-16T13:03:32.5129611+00:00", "role": "ws-visible", "accountId": "native-b", "browserProcessId": 11216 }
+  ],
+  "postSecondCoreBaseline": { "atUtc": "2026-11-16T13:03:48.0314112Z", "elapsedMs": 258306, "sample": 25, "processCount": 15, "webViewProcessCount": 12, "workingSetBytes": 1296478208, "privateBytes": 720723968, "threads": 354, "handles": 8809 },
+  "postSecondCoreDelta": { "workingSetBytes": 38981632, "privateBytes": 12201984, "threads": 28, "handles": 477 },
+  "allPerProcessAggregatesVerified": true,
+  "rootAliveAtEnd": true,
+  "nativeInteraction": "Parent confirmed user brought exact window forward at approximately13:03UTC and actual first-seven-page navigation, AI retry/cancel and CRM approve/reject/conflict with API rereads Passed; later occlusion paused native input. This observer does not treat the entire window as continuous stress.",
+  "interactionPeriods": {
+    "approximateBoundaryUtc": "2026-11-16T13:03:00Z",
+    "boundaryIsApproximate": true,
+    "waitingSamples": 21,
+    "postBoundarySamples": 40,
+    "waitingLast": { "atUtc": "2026-11-16T13:02:56.3271195Z", "sample": 20, "workingSetBytes": 854122496, "privateBytes": 463077376, "threads": 198, "handles": 5784 },
+    "postBoundaryFirst": { "atUtc": "2026-11-16T13:03:06.6230764Z", "sample": 21, "workingSetBytes": 861343744, "privateBytes": 471285760, "threads": 201, "handles": 5805 },
+    "limitation": "Post-boundary samples span confirmed operations and pauses; individual samples are not proof of an input action"
+  },
+  "expectedThreeCoreAccountLoop": "NotTested: only shell and native-b visible cores observed for PID32904",
+  "performanceThreshold": "NotDefined",
+  "archivedNavigationConfound": {
+    "source": "stage51-native-lifecycle-events.jsonl, filtered by pid32904",
+    "wsVisibleNavigationEvents": 11208,
+    "successTrue": 5603,
+    "successFalse": 5605,
+    "shellNavigationEvents": 1,
+    "medianAdjacentWsNavigationIntervalMilliseconds": 25.965,
+    "status": "Blocked",
+    "limitation": "Repeated isolated about:blank navigation confounds CPU/resource and visual stability observations; raw counters remain actual observations but are not normal WhatsApp performance acceptance"
+  },
+  "gateInference": "No automatic desktop performance pass or leak-free claim inferred",
+  "productionWorkerStarted": false,
+  "productionDatabaseOpened": false
+}

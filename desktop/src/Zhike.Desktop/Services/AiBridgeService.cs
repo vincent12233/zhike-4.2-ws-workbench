@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Zhike.Desktop.Services;
 
@@ -22,8 +23,90 @@ public sealed class AiBridgeService
     private static readonly TimeSpan DefaultControlBudget = TimeSpan.FromSeconds(55);
     private sealed record Provider(string Name, string BaseUrl, string DefaultModel);
     private sealed record AiSendResult(HttpResponseMessage Response, string Model, bool ModelFallback);
+    // A provider timeout is different from a user cancellation. It is an
+    // upstream failure that can safely be retried by the durable WS AI queue,
+    // so keep it as a normal provider error instead of a local timeout.
     private sealed class ProviderAttemptTimeoutException(string message, Exception innerException)
-        : OperationCanceledException(message, innerException);
+        : InvalidOperationException(message, innerException)
+    {
+        public bool Retryable => true;
+    }
+
+    private sealed class ProviderHealth
+    {
+        private readonly object _sync = new();
+        private int _consecutiveFailures;
+        private int _totalFailures;
+        private int _totalSuccesses;
+        private long _lastLatencyMs;
+        private DateTimeOffset? _lastFailureAt;
+        private DateTimeOffset? _lastSuccessAt;
+        private DateTimeOffset? _retryAfterAt;
+        private int _lastStatusCode;
+        private bool _lastRetryable;
+        private string _lastError = "";
+
+        public void RecordSuccess(long latencyMs, int statusCode)
+        {
+            lock (_sync)
+            {
+                _consecutiveFailures = 0;
+                _totalSuccesses++;
+                _lastLatencyMs = Math.Max(0, latencyMs);
+                _lastStatusCode = statusCode;
+                _lastSuccessAt = DateTimeOffset.UtcNow;
+                _retryAfterAt = null;
+                _lastRetryable = false;
+                _lastError = "";
+            }
+        }
+
+        public void RecordFailure(long latencyMs, int statusCode, bool retryable, string error)
+        {
+            lock (_sync)
+            {
+                _consecutiveFailures++;
+                _totalFailures++;
+                _lastLatencyMs = Math.Max(0, latencyMs);
+                _lastStatusCode = statusCode;
+                _lastFailureAt = DateTimeOffset.UtcNow;
+                _lastRetryable = retryable;
+                _lastError = error.Length > 240 ? error[..240] : error;
+                // Keep the same bounded exponential backoff semantics as the
+                // persistent AI queue. The next request owns the retry choice;
+                // this timestamp is exposed for the UI and diagnostics.
+                var backoffMs = retryable
+                    ? Math.Min(60_000, 250 * (1L << Math.Min(8, Math.Max(0, _consecutiveFailures - 1))))
+                    : 0;
+                _retryAfterAt = backoffMs > 0 ? DateTimeOffset.UtcNow.AddMilliseconds(backoffMs) : null;
+            }
+        }
+
+        public object Snapshot()
+        {
+            lock (_sync)
+            {
+                var retryAfterMs = _retryAfterAt is { } retryAt
+                    ? Math.Max(0, (long)(retryAt - DateTimeOffset.UtcNow).TotalMilliseconds)
+                    : 0;
+                var state = _consecutiveFailures >= 3 ? "degraded" : _totalFailures > 0 ? "watch" : "healthy";
+                return new
+                {
+                    state,
+                    consecutiveFailures = _consecutiveFailures,
+                    totalFailures = _totalFailures,
+                    totalSuccesses = _totalSuccesses,
+                    lastFailureAt = _lastFailureAt?.ToString("O") ?? "",
+                    lastSuccessAt = _lastSuccessAt?.ToString("O") ?? "",
+                    lastLatencyMs = _lastLatencyMs,
+                    lastStatusCode = _lastStatusCode,
+                    retryable = _lastRetryable,
+                    retryAfterMs,
+                    lastError = _lastError,
+                };
+            }
+        }
+    }
     private static readonly string[] TeamorouterFallbackModels = { "gpt-5.6-sol", "gpt-5.4", "gpt-5.5", "gpt-6.1-sol", "gpt-5.4-mini" };
     private static readonly IReadOnlyDictionary<string, Provider> Providers = new Dictionary<string, Provider>(StringComparer.OrdinalIgnoreCase)
     {
@@ -38,6 +121,7 @@ public sealed class AiBridgeService
     private readonly TimeSpan _requestBudget;
     private readonly TimeSpan _providerAttemptBudget;
     private readonly TimeSpan _controlBudget;
+    private readonly ConcurrentDictionary<string, ProviderHealth> _providerHealth = new(StringComparer.OrdinalIgnoreCase);
 
     public AiBridgeService(
         string? root = null,
@@ -47,6 +131,9 @@ public sealed class AiBridgeService
         TimeSpan? controlBudget = null)
     {
         var directory = root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Zhike6");
+#if STAGE51_ISOLATED_UI
+        directory = Stage51Isolation.MapDataPath(directory);
+#endif
         Directory.CreateDirectory(directory);
         _path = Path.Combine(directory, "ai-credentials-winui.json");
         _requestBudget = PositiveBudget(requestBudget ?? DefaultRequestBudget, nameof(requestBudget));
@@ -60,6 +147,10 @@ public sealed class AiBridgeService
 
     public async Task<JsonElement> InvokeAsync(string action, JsonElement payload, CancellationToken cancellationToken = default)
     {
+#if STAGE51_ISOLATED_UI
+        if (action.ToLowerInvariant() is not ("status" or "cancel" or "selectworkspace"))
+            throw new InvalidOperationException("隔离桌面验收禁止连接真实 AI Provider 或保存凭据。");
+#endif
         return action.ToLowerInvariant() switch
         {
             "status" => await StatusAsync(payload, cancellationToken),
@@ -76,7 +167,11 @@ public sealed class AiBridgeService
 
     private async Task<JsonElement> StatusAsync(JsonElement payload, CancellationToken cancellationToken)
     {
-        var document = await ReadAsync(cancellationToken);
+        return await WithCredentialDocumentAsync(document => Task.FromResult(Status(document, payload)), cancellationToken);
+    }
+
+    private JsonElement Status(CredentialDocument document, JsonElement payload)
+    {
         var providerKey = CleanProvider(StringValue(payload, "provider"), document.ActiveProvider);
         var provider = Providers[providerKey];
         var key = ReadKey(document, providerKey);
@@ -90,13 +185,15 @@ public sealed class AiBridgeService
             defaultIncludePhone = document.DefaultIncludePhone,
             secureStorage = true,
             configuredProviders = Providers.Keys.ToDictionary(item => item, item => !string.IsNullOrWhiteSpace(ReadKey(document, item)), StringComparer.OrdinalIgnoreCase),
+            providerHealth = Providers.Keys.ToDictionary(item => item, item => HealthFor(item).Snapshot(), StringComparer.OrdinalIgnoreCase),
         });
     }
 
     private async Task<JsonElement> SaveKeyAsync(JsonElement payload, CancellationToken cancellationToken)
     {
         var providerKey = CleanProvider(StringValue(payload, "provider"), "openai");
-        var document = await ReadAsync(cancellationToken);
+        return await WithCredentialDocumentAsync(async document =>
+        {
         var requestedModel = StringValue(payload, "model");
         var model = string.IsNullOrWhiteSpace(requestedModel) ? ReadModel(document, providerKey, Providers[providerKey].DefaultModel) : ValidateModel(providerKey, requestedModel);
         // Older installations stored gpt-5-mini before the gateway exposed the
@@ -116,17 +213,20 @@ public sealed class AiBridgeService
         document.Providers[providerKey] = existing;
         document.ActiveProvider = providerKey;
         document.DefaultIncludePhone = payload.TryGetProperty("defaultIncludePhone", out var include) && include.ValueKind == JsonValueKind.True;
-        await WriteAsync(document, cancellationToken);
-        return await StatusAsync(JsonSerializer.SerializeToElement(new { provider = providerKey }), cancellationToken);
+        await WriteUnlockedAsync(document, cancellationToken);
+        return Status(document, JsonSerializer.SerializeToElement(new { provider = providerKey }));
+        }, cancellationToken);
     }
 
     private async Task<JsonElement> RemoveKeyAsync(JsonElement payload, CancellationToken cancellationToken)
     {
         var providerKey = CleanProvider(StringValue(payload, "provider"), "openai");
-        var document = await ReadAsync(cancellationToken);
-        document.Providers.Remove(providerKey);
-        await WriteAsync(document, cancellationToken);
-        return JsonSerializer.SerializeToElement(new { removed = true });
+        return await WithCredentialDocumentAsync(async document =>
+        {
+            document.Providers.Remove(providerKey);
+            await WriteUnlockedAsync(document, cancellationToken);
+            return JsonSerializer.SerializeToElement(new { removed = true });
+        }, cancellationToken);
     }
 
     private async Task<JsonElement> TestConnectionAsync(JsonElement payload, CancellationToken cancellationToken)
@@ -297,25 +397,49 @@ public sealed class AiBridgeService
             Content = new StringContent(JsonSerializer.Serialize(body, _json), Encoding.UTF8, "application/json"),
         };
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", credential.ApiKey);
-        return await SendProviderAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        return await SendProviderAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken, credential.ProviderKey);
     }
 
     private async Task<HttpResponseMessage> SendProviderAsync(
         HttpRequestMessage request,
         HttpCompletionOption completionOption,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string providerKey = "")
     {
         using var attemptTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         attemptTimeout.CancelAfter(_providerAttemptBudget);
+        var stopwatch = Stopwatch.StartNew();
         try
         {
-            return await _http.SendAsync(request, completionOption, attemptTimeout.Token);
+            var response = await _http.SendAsync(request, completionOption, attemptTimeout.Token);
+            if (!string.IsNullOrWhiteSpace(providerKey))
+            {
+                var health = HealthFor(providerKey);
+                if (response.IsSuccessStatusCode)
+                    health.RecordSuccess(stopwatch.ElapsedMilliseconds, (int)response.StatusCode);
+                else
+                    health.RecordFailure(stopwatch.ElapsedMilliseconds, (int)response.StatusCode, IsRetryableStatus(response.StatusCode), $"HTTP {(int)response.StatusCode}");
+            }
+            return response;
         }
         catch (OperationCanceledException error) when (!cancellationToken.IsCancellationRequested && attemptTimeout.IsCancellationRequested)
         {
+            if (!string.IsNullOrWhiteSpace(providerKey))
+                HealthFor(providerKey).RecordFailure(stopwatch.ElapsedMilliseconds, 0, true, "timeout");
             throw new ProviderAttemptTimeoutException(
                 $"AI 单次请求超过 {_providerAttemptBudget.TotalSeconds:0} 秒，已取消本次尝试。",
                 error);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Caller cancellation is not a provider health failure.
+            throw;
+        }
+        catch (Exception error)
+        {
+            if (!string.IsNullOrWhiteSpace(providerKey))
+                HealthFor(providerKey).RecordFailure(stopwatch.ElapsedMilliseconds, 0, true, error.Message);
+            throw;
         }
     }
 
@@ -382,7 +506,7 @@ public sealed class AiBridgeService
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, $"{credential.Provider.BaseUrl}/models");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", credential.ApiKey);
-        using var response = await SendProviderAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        using var response = await SendProviderAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken, credential.ProviderKey);
         var text = await ReadContentWithLimitAsync(response, cancellationToken);
         if (!response.IsSuccessStatusCode) throw new InvalidOperationException(FriendlyError(credential.ProviderKey, (int)response.StatusCode, text));
         using var document = JsonDocument.Parse(text);
@@ -397,6 +521,13 @@ public sealed class AiBridgeService
     }
 
     private static bool IsTransient(HttpStatusCode status) => status is HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout;
+
+    private static bool IsRetryableStatus(HttpStatusCode status)
+        => status is HttpStatusCode.RequestTimeout or (HttpStatusCode)425 or HttpStatusCode.TooManyRequests
+            or HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout;
+
+    private ProviderHealth HealthFor(string providerKey)
+        => _providerHealth.GetOrAdd(providerKey, _ => new ProviderHealth());
 
     private static TimeSpan PositiveBudget(TimeSpan value, string parameterName)
     {
@@ -436,29 +567,96 @@ public sealed class AiBridgeService
     }
 
     private async Task<CredentialDocument> ReadAsync(CancellationToken cancellationToken)
+        => await WithCredentialDocumentAsync(document => Task.FromResult(document), cancellationToken);
+
+    private static InvalidOperationException CredentialFailure(string code)
+        => new(code switch
+        {
+            "AI_CREDENTIAL_CORRUPT" => "API Key 配置文件损坏或格式不兼容，原文件已保留；请先恢复有效备份。 [AI_CREDENTIAL_CORRUPT]",
+            "AI_CREDENTIAL_UNREADABLE" => "API Key 密文无法由当前 Windows 用户解密，原文件已保留；请在原用户恢复配置。 [AI_CREDENTIAL_UNREADABLE]",
+            "AI_CREDENTIAL_BUSY" => "API Key 配置正在被其他进程修改，请稍后重试。 [AI_CREDENTIAL_BUSY]",
+            _ => "API Key 配置存储无法访问，原文件未被重置，请检查本机访问权限。 [AI_CREDENTIAL_IO]",
+        });
+
+    private async Task<T> WithCredentialDocumentAsync<T>(Func<CredentialDocument, Task<T>> action, CancellationToken cancellationToken)
     {
         await _gate.WaitAsync(cancellationToken);
         try
         {
-            if (!File.Exists(_path)) return new();
-            await using var stream = File.OpenRead(_path);
-            var document = await JsonSerializer.DeserializeAsync<CredentialDocument>(stream, _json, cancellationToken) ?? new();
-            return document;
+            // The OS file lock coordinates different service instances and
+            // processes. It spans validation, read-modify-write and replace;
+            // closing/crashing releases ownership without copying credentials.
+            await using var storageLock = await AcquireCredentialLockAsync(cancellationToken);
+            var document = await ReadUnlockedAsync(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            return await action(document);
         }
-        catch { return new(); }
         finally { _gate.Release(); }
     }
 
-    private async Task WriteAsync(CredentialDocument value, CancellationToken cancellationToken)
+    private async Task<FileStream> AcquireCredentialLockAsync(CancellationToken cancellationToken)
     {
-        await _gate.WaitAsync(cancellationToken);
+        var watch = Stopwatch.StartNew();
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try { return new FileStream(_path + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None); }
+            catch (UnauthorizedAccessException) { throw CredentialFailure("AI_CREDENTIAL_IO"); }
+            catch (IOException)
+            {
+                if (watch.Elapsed >= TimeSpan.FromSeconds(5)) throw CredentialFailure("AI_CREDENTIAL_BUSY");
+                await Task.Delay(20, cancellationToken);
+            }
+        }
+    }
+
+    private async Task<CredentialDocument> ReadUnlockedAsync(CancellationToken cancellationToken)
+    {
         try
         {
-            var temporary = $"{_path}.{Guid.NewGuid():N}.tmp";
-            await File.WriteAllTextAsync(temporary, JsonSerializer.Serialize(value, _json), cancellationToken);
+            await using var stream = File.OpenRead(_path);
+            using var json = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+            var root = json.RootElement;
+            if (root.ValueKind != JsonValueKind.Object || !root.EnumerateObject().Any(property => property.Name.Equals("providers", StringComparison.OrdinalIgnoreCase) && property.Value.ValueKind == JsonValueKind.Object))
+                throw CredentialFailure("AI_CREDENTIAL_CORRUPT");
+            var document = root.Deserialize<CredentialDocument>(_json);
+            if (document?.Providers is null || string.IsNullOrWhiteSpace(document.ActiveProvider) || !Providers.ContainsKey(document.ActiveProvider)) throw CredentialFailure("AI_CREDENTIAL_CORRUPT");
+            foreach (var pair in document.Providers)
+            {
+                if (!Providers.ContainsKey(pair.Key) || pair.Value is null) throw CredentialFailure("AI_CREDENTIAL_CORRUPT");
+                // Validate every existing provider before any mutation. Saving
+                // one provider cannot discard an unreadable other credential.
+                _ = ReadKey(document, pair.Key);
+            }
+            return document;
+        }
+        catch (FileNotFoundException) { return new(); }
+        catch (JsonException) { throw CredentialFailure("AI_CREDENTIAL_CORRUPT"); }
+        catch (IOException) { throw CredentialFailure("AI_CREDENTIAL_IO"); }
+        catch (UnauthorizedAccessException) { throw CredentialFailure("AI_CREDENTIAL_IO"); }
+    }
+
+    private async Task WriteUnlockedAsync(CredentialDocument value, CancellationToken cancellationToken)
+    {
+        var temporary = $"{_path}.{Guid.NewGuid():N}.tmp";
+        try
+        {
+            await using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous | FileOptions.WriteThrough))
+            {
+                await JsonSerializer.SerializeAsync(stream, value, _json, cancellationToken);
+                await stream.FlushAsync(cancellationToken);
+                stream.Flush(flushToDisk: true);
+            }
+            cancellationToken.ThrowIfCancellationRequested();
             File.Move(temporary, _path, true);
         }
-        finally { _gate.Release(); }
+        catch (IOException) { throw CredentialFailure("AI_CREDENTIAL_IO"); }
+        catch (UnauthorizedAccessException) { throw CredentialFailure("AI_CREDENTIAL_IO"); }
+        finally
+        {
+            try { if (File.Exists(temporary)) File.Delete(temporary); }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException) { Trace.TraceWarning("AI_CREDENTIAL_TEMP_CLEANUP_FAILED"); }
+        }
     }
 
     private static string ReadKey(CredentialDocument document, string provider)
@@ -468,7 +666,10 @@ public sealed class AiBridgeService
             if (!document.Providers.TryGetValue(provider, out var row) || string.IsNullOrWhiteSpace(row.EncryptedKey)) return "";
             return Encoding.UTF8.GetString(Dpapi.Unprotect(Convert.FromBase64String(row.EncryptedKey)));
         }
-        catch { return ""; }
+        catch (Exception error) when (error is FormatException or CryptographicException)
+        {
+            throw CredentialFailure("AI_CREDENTIAL_UNREADABLE");
+        }
     }
 
     private static string ReadModel(CredentialDocument document, string provider, string fallback)
@@ -522,11 +723,11 @@ public sealed class AiBridgeService
         if (status is 401 or 403) return $"{name} API Key 无效或已被删除。";
         if (status == 402 || code.Contains("insufficient", StringComparison.OrdinalIgnoreCase)) return $"{name} 额度不足，请先检查账户余额。";
         if (status == 400 && (code.Contains("model", StringComparison.OrdinalIgnoreCase) || message.Contains("model", StringComparison.OrdinalIgnoreCase))) return $"{name} 模型不可用：{message.Trim()} 请点击“获取可用模型”后选择目录中的 GPT 模型。";
-        if (status is 502 or 503 or 504)
+        if (IsRetryableStatus((HttpStatusCode)status))
         {
             var detail = string.IsNullOrWhiteSpace(message) ? "服务端暂时无法处理请求" : message.Trim();
             var traceText = string.IsNullOrWhiteSpace(trace) ? "" : $" 追踪号：{trace}";
-            return $"{name} 暂时不可用（{status}）。已自动重试并检查可用模型；服务端提示：{detail}{traceText}";
+            return $"{name} 暂时不可用（{status}）。这是可重试错误，已自动重试并检查可用模型；服务端提示：{detail}{traceText}";
         }
         return string.IsNullOrWhiteSpace(message) ? $"{name} 请求失败（{status}）。" : $"{name} 请求失败（{status}）：{message.Trim()}";
     }

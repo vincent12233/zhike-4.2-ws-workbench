@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794924551013-281b9cc4-1df4-4f3b-8190-f6406d6cea6b",
+  "mode": "controlled-node-early-exit",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 10000,
+  "launchedAt": "2026-11-17T14:09:11.013Z",
+  "events": [
+    {
+      "event": "stderr-close",
+      "elapsedMs": 133
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 133
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 140,
+      "code": 7,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 140
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 140
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 140,
+      "acknowledgement": "already-exited"
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 140
+    }
+  ],
+  "identities": [],
+  "exit": {
+    "code": 7,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": false,
+  "pid": 25724,
+  "elapsedMs": 140,
+  "stdoutBytes": 6,
+  "stderrBytes": 0,
+  "failure": {
+    "code": "PROCESS_EARLY_EXIT",
+    "phase": "process-exit",
+    "message": "Isolated process exited before explicit close"
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "stage": "5.2",
+  "pid": 3884,
+  "snapshotRootPid": 3884,
+  "closed": {
+    "status": "Passed",
+    "checkedAtUtc": "2026-11-16T15:48:20.0464679Z",
+    "evidenceFile": "stage52-before-close-snapshot-0afc7f04f6084924ab94b22ec2c821e1.jsonl",
+    "observedProcessIdentities": 21,
+    "remainingCount": 0,
+    "remainingProcesses": [],
+    "unverifiedCount": 0,
+    "unverifiedProcesses": [],
+    "processTerminatedByCheck": false,
+    "scope": "read-only process identity checks after application close"
+  },
+  "workbenchLockExists": false,
+  "finalCounters": {
+    "at": "2026-11-16T21:11:12.2774847+05:30",
+    "pid": 3884,
+    "limitPerKind": 256,
+    "counts": {
+      "application-start": {
+        "total": 1,
+        "emitted": 1,
+        "suppressed": 0
+      },
+      "sidecar-created": {
+        "total": 1,
+        "emitted": 1,
+        "suppressed": 0
+      },
+      "window-initialize-start": {
+        "total": 1,
+        "emitted": 1,
+        "suppressed": 0
+      },
+      "window-initialize-completed": {
+        "total": 1,
+        "emitted": 1,
+        "suppressed": 0
+      },
+      "window-created": {
+        "total": 1,
+        "emitted": 1,
+        "suppressed": 0
+      },
+      "host-route-request": {
+        "total": 2,
+        "emitted": 2,
+        "suppressed": 0
+      },
+      "shell-initialize-requested": {
+        "total": 3,
+        "emitted": 3,
+        "suppressed": 0
+      },
+      "host-loaded": {
+        "total": 1,
+        "emitted": 1,
+        "suppressed": 0
+      },
+      "sidecar-ready": {
+        "total": 1,
+        "emitted": 1,
+        "suppressed": 0
+      },
+      "shell-profile-created": {
+        "total": 1,
+        "emitted": 1,
+        "suppressed": 0
+      },
+      "webview-created": {
+        "total": 3,
+        "emitted": 3,
+        "suppressed": 0
+      },
+      "webview-source-changed": {
+        "total": 1,
+        "emitted": 1,
+        "suppressed": 0
+      },
+      "webview-navigation": {
+        "total": 6,
+        "emitted": 6,
+        "suppressed": 0
+      },
+      "workspace-page": {
+        "total": 13,
+        "emitted": 13,
+        "suppressed": 0
+      },
+      "ws-initialize": {
+        "total": 2,
+        "emitted": 2,
+        "suppressed": 0
+      },
+      "ws-account-selected": {
+        "total": 6,
+        "emitted": 6,
+        "suppressed": 0
+      },
+      "navigation-starting": {
+        "total": 5,
+        "emitted": 5,
+        "suppressed": 0
+      },
+      "navigation-completed": {
+        "total": 5,
+        "emitted": 5,
+        "suppressed": 0
+      },
+      "application-stopping": {
+        "total": 1,
+        "emitted": 1,
+        "suppressed": 0
+      },
+      "host-unloaded": {
+        "total": 1,
+        "emitted": 1,
+        "suppressed": 0
+      }
+    }
+  },
+  "productionOpened": false
+}

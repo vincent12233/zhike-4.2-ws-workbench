@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794924749733-a1e28d57-665a-45a1-959b-fc1f4411c31a",
+  "mode": "controlled-node-early-exit",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 10000,
+  "launchedAt": "2026-11-17T14:12:29.733Z",
+  "events": [
+    {
+      "event": "stderr-close",
+      "elapsedMs": 122
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 122
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 128,
+      "code": 7,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 128
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 128
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 128,
+      "acknowledgement": "already-exited"
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 129
+    }
+  ],
+  "identities": [],
+  "exit": {
+    "code": 7,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": false,
+  "pid": 22452,
+  "remainingIdentities": [],
+  "releaseFailure": {
+    "code": "OWNED_PROCESSES_REMAIN",
+    "phase": "resource-release"
+  },
+  "elapsedMs": 129,
+  "stdoutBytes": 6,
+  "stderrBytes": 0,
+  "failure": {
+    "code": "PROCESS_EARLY_EXIT",
+    "phase": "process-exit",
+    "message": "Isolated process exited before explicit close"
+  }
+}

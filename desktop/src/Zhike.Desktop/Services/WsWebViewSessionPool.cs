@@ -4,7 +4,8 @@ namespace Zhike.Desktop.Services;
 
 public sealed record WsWebViewSessionRegistration(
     WebView2 View,
-    Action<WebView2>? Release = null);
+    Action<WebView2>? Release = null,
+    WebView2? CollectorView = null);
 
 public sealed class WsWebViewSession
 {
@@ -17,6 +18,7 @@ public sealed class WsWebViewSession
         AccountId = accountId;
         Generation = generation;
         View = registration.View;
+        CollectorView = registration.CollectorView;
         Release = registration.Release;
         CreatedAt = createdAt;
         LastUsedAt = createdAt;
@@ -25,6 +27,12 @@ public sealed class WsWebViewSession
     public string AccountId { get; }
     public long Generation { get; }
     public WebView2 View { get; }
+    /// <summary>
+    /// Isolated, non-interactive view backed by a collector profile snapshot;
+    /// it is the only surface allowed to scroll/open chats for full-history
+    /// work. It is created lazily after the foreground account is connected.
+    /// </summary>
+    public WebView2? CollectorView { get; }
     public DateTimeOffset CreatedAt { get; }
     public DateTimeOffset LastUsedAt { get; internal set; }
     public bool IsReady => View.CoreWebView2 is not null;
@@ -108,19 +116,48 @@ public sealed class WsWebViewSessionPool
                     if (victimId is null)
                         throw new InvalidOperationException("WS session pool is busy with protected foreground/background accounts; retry after the current lease.");
                     retired = _sessions[victimId];
-                    _sessions.Remove(victimId);
                 }
             }
-            if (retired is not null) ReleaseSession(retired);
-
             var generation = Interlocked.Increment(ref _generation);
-            var registration = await factory(normalizedId, generation, cancellationToken);
-            cancellationToken.ThrowIfCancellationRequested();
-            if (registration.View is null) throw new InvalidOperationException("WS session factory returned no WebView2 instance.");
-            var now = DateTimeOffset.UtcNow;
-            var created = new WsWebViewSession(normalizedId, generation, registration, now);
-            lock (_sync) _sessions[normalizedId] = created;
-            return new WsWebViewSessionAcquireResult(created, true, retired?.AccountId);
+            try
+            {
+                // Build the replacement before releasing the LRU victim. A
+                // failed WebView2 environment/navigation must not destroy a
+                // healthy account session and leave the pool with less
+                // capacity than before.
+                var registration = await factory(normalizedId, generation, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                if (registration.View is null) throw new InvalidOperationException("WS session factory returned no WebView2 instance.");
+                var now = DateTimeOffset.UtcNow;
+                var created = new WsWebViewSession(normalizedId, generation, registration, now);
+                if (retired is not null)
+                {
+                    // Keep the victim addressable while the replacement is
+                    // being built. This prevents foreground callbacks from
+                    // observing a transient "account missing" state during
+                    // the asynchronous WebView factory/navigation step.
+                    var removed = false;
+                    lock (_sync)
+                    {
+                        if (_sessions.TryGetValue(retired.AccountId, out var current)
+                            && ReferenceEquals(current, retired))
+                        {
+                            _sessions.Remove(retired.AccountId);
+                            removed = true;
+                        }
+                    }
+                    if (removed) ReleaseSession(retired);
+                }
+                lock (_sync) _sessions[normalizedId] = created;
+                return new WsWebViewSessionAcquireResult(created, true, retired?.AccountId);
+            }
+            catch
+            {
+                // The victim remains in the dictionary until the registration
+                // succeeds, so a transient factory failure leaves the healthy
+                // account session untouched and retryable.
+                throw;
+            }
         }
         finally
         {
@@ -147,7 +184,7 @@ public sealed class WsWebViewSessionPool
         lock (_sync)
             return _sessions.TryGetValue(accountId.Trim(), out var current)
                 && current.Generation == generation
-                && (view is null || ReferenceEquals(current.View, view));
+                && (view is null || ReferenceEquals(current.View, view) || ReferenceEquals(current.CollectorView, view));
     }
 
     public IReadOnlyList<WsWebViewSession> Sessions()
@@ -237,7 +274,11 @@ public sealed class WsWebViewSessionPool
     private static void ReleaseSession(WsWebViewSession session)
     {
         try { session.Release?.Invoke(session.View); }
-        catch { try { session.View.Close(); } catch { } }
+        catch
+        {
+            try { session.View.Close(); } catch { }
+            try { session.CollectorView?.Close(); } catch { }
+        }
     }
 
     private static void ValidateAccountId(string? accountId)

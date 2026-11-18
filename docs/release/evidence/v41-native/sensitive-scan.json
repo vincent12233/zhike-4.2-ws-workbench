@@ -1,0 +1,776 @@
+{
+  "scope": "Explicit 32-file allowlist. JPEG filenames corrected without changing pixels or bytes.",
+  "fixture": "Synthetic client and account values are intentionally retained. PID, HWND, and OS creation/time counters are retained for lifecycle matching.",
+  "sourceSensitivePathMatches": 2,
+  "sourceCredentialOrTokenMatches": 0,
+  "archivePatternMatches": 0,
+  "patterns": [
+    "absoluteWindowsPath",
+    "userSid",
+    "websocketOrCdpToken",
+    "openAiStyleKey",
+    "googleApiKey",
+    "googleOAuthToken",
+    "awsAccessKey",
+    "jwtCredential",
+    "bearerCredential",
+    "assignedCredential",
+    "privateKey"
+  ],
+  "results": [
+    {
+      "path": "captures/01-home-light-windowed.jpg",
+      "kind": "JPEG",
+      "width": 1422,
+      "height": 815,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ],
+      "visualReview": "Only isolated UI, synthetic values and safe wheel diagnostics visible"
+    },
+    {
+      "path": "captures/01-home-light-windowed.txt",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archivedMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "emptySource": false
+    },
+    {
+      "path": "captures/02-home-light-maximized.jpg",
+      "kind": "JPEG",
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ],
+      "visualReview": "Only isolated UI, synthetic values and safe wheel diagnostics visible"
+    },
+    {
+      "path": "captures/02-home-light-maximized.txt",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archivedMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "emptySource": false
+    },
+    {
+      "path": "captures/03-appearance-light.jpg",
+      "kind": "JPEG",
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ],
+      "visualReview": "Only isolated UI, synthetic values and safe wheel diagnostics visible"
+    },
+    {
+      "path": "captures/03-appearance-light.txt",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archivedMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "emptySource": false
+    },
+    {
+      "path": "captures/04-appearance-dark.jpg",
+      "kind": "JPEG",
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ],
+      "visualReview": "Only isolated UI, synthetic values and safe wheel diagnostics visible"
+    },
+    {
+      "path": "captures/04-appearance-dark.txt",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archivedMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "emptySource": false
+    },
+    {
+      "path": "captures/05-home-dark.jpg",
+      "kind": "JPEG",
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ],
+      "visualReview": "Only isolated UI, synthetic values and safe wheel diagnostics visible"
+    },
+    {
+      "path": "captures/05-home-dark.txt",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archivedMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "emptySource": false
+    },
+    {
+      "path": "captures/06-customer-dark.jpg",
+      "kind": "JPEG",
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ],
+      "visualReview": "Only isolated UI, synthetic values and safe wheel diagnostics visible"
+    },
+    {
+      "path": "captures/06-customer-dark.txt",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archivedMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "emptySource": false
+    },
+    {
+      "path": "captures/07-wheel-no-movement.jpg",
+      "kind": "JPEG",
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ],
+      "visualReview": "Only isolated UI, synthetic values and safe wheel diagnostics visible"
+    },
+    {
+      "path": "captures/07-wheel-no-movement.txt",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archivedMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "emptySource": false
+    },
+    {
+      "path": "captures/08-home-chart-scroll.jpg",
+      "kind": "JPEG",
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ],
+      "visualReview": "Only isolated UI, synthetic values and safe wheel diagnostics visible"
+    },
+    {
+      "path": "captures/08-home-chart-scroll.txt",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archivedMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "emptySource": true
+    },
+    {
+      "path": "captures/09-wheel-footer-hit-diagnostic.jpg",
+      "kind": "JPEG",
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ],
+      "visualReview": "Only isolated UI, synthetic values and safe wheel diagnostics visible"
+    },
+    {
+      "path": "captures/09-wheel-footer-hit-diagnostic.txt",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archivedMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "emptySource": false
+    },
+    {
+      "path": "captures/10-wheel-table67.jpg",
+      "kind": "JPEG",
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ],
+      "visualReview": "Only isolated UI, synthetic values and safe wheel diagnostics visible"
+    },
+    {
+      "path": "captures/10-wheel-table67.txt",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archivedMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "emptySource": false
+    },
+    {
+      "path": "captures/11-ws-home-dark.jpg",
+      "kind": "JPEG",
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ],
+      "visualReview": "Only isolated UI, synthetic values and safe wheel diagnostics visible"
+    },
+    {
+      "path": "captures/11-ws-home-dark.txt",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archivedMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "emptySource": false
+    },
+    {
+      "path": "captures/12-ws-open-attempt.jpg",
+      "kind": "JPEG",
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ],
+      "visualReview": "Only isolated UI, synthetic values and safe wheel diagnostics visible"
+    },
+    {
+      "path": "captures/12-ws-open-attempt.txt",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archivedMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "emptySource": true
+    },
+    {
+      "path": "captures/13-wheel-coordinate-mismatch.jpg",
+      "kind": "JPEG",
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ],
+      "visualReview": "Only isolated UI, synthetic values and safe wheel diagnostics visible"
+    },
+    {
+      "path": "captures/13-wheel-coordinate-mismatch.txt",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archivedMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "emptySource": true
+    },
+    {
+      "path": "captures/14-motion-off.jpg",
+      "kind": "JPEG",
+      "width": 1920,
+      "height": 1140,
+      "markers": [
+        "e0",
+        "db",
+        "c0",
+        "c4",
+        "da"
+      ],
+      "visualReview": "Only isolated UI, synthetic values and safe wheel diagnostics visible"
+    },
+    {
+      "path": "captures/14-motion-off.txt",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archivedMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "emptySource": true
+    },
+    {
+      "path": "resources/v41-resources.jsonl",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archivedMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "emptySource": false
+    },
+    {
+      "path": "resources/resource-observe.log",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archivedMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "emptySource": false
+    },
+    {
+      "path": "lifecycle/native-events.jsonl",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 2,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archivedMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "emptySource": false
+    },
+    {
+      "path": "lifecycle/native-event-counts-24196.json",
+      "kind": "UTF-8",
+      "sourceMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "archivedMatches": {
+        "absoluteWindowsPath": 0,
+        "userSid": 0,
+        "websocketOrCdpToken": 0,
+        "openAiStyleKey": 0,
+        "googleApiKey": 0,
+        "googleOAuthToken": 0,
+        "awsAccessKey": 0,
+        "jwtCredential": 0,
+        "bearerCredential": 0,
+        "assignedCredential": 0,
+        "privateKey": 0
+      },
+      "emptySource": false
+    }
+  ]
+}

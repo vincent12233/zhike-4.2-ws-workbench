@@ -1,0 +1,4 @@
+{"case":"limited fixture plain Set","selectedType":"Set","selectedIds":["0"],"hasNumericId":false,"customerPhonePresentInCsv":false}
+{"case":"actual production SelectionSet","selectedType":"SelectionSet","selectedIds":["0"],"hasNumericId":true,"customerPhonePresentInCsv":true}
+{"case":"existing hidden followups route/open tab","actualDueCount":13,"ids":["CORE_0","CORE_3","CORE_6","CORE_9","CORE_12","CORE_1","CORE_2","CORE_4","CORE_5","CORE_7","CORE_8","CORE_10","CORE_11"],"staleCustomerFiltersRemainStored":{"source":"群粉"},"customerSearch":"stale-filter"}
+S3 readonly correction: numeric export product counterexample withdrawn; existing hidden followups open scope matches 13 due clients

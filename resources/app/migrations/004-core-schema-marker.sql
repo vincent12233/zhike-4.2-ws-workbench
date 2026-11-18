@@ -1,0 +1,3 @@
+-- Schema marker for the base CRM tables created before versioned migrations.
+-- This file intentionally has no DDL; it records the 4.0 baseline in the
+-- migration registry so every supported schema has one source of truth.

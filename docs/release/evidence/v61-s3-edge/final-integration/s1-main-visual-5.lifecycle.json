@@ -1,0 +1,694 @@
+{
+  "schemaVersion": 2,
+  "invocation": "1795013084831-eeadead2-f7e2-4d42-aacb-ecd4e454bbeb",
+  "mode": "real-edge-synthetic-layout",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Passed",
+  "timeoutMs": 30000,
+  "launchedAt": "2026-11-18T14:44:44.831Z",
+  "timebase": "node-monotonic-ms",
+  "startedMonotonicMs": 23690.9771,
+  "events": [
+    {
+      "event": "process-spawned",
+      "elapsedMs": 7.901300000001356,
+      "pid": 38724
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 13.738399999998364,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 892.7144000000008,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 892.8650000000016
+    },
+    {
+      "event": "cdp-readiness-wait",
+      "elapsedMs": 893.759399999999,
+      "code": "ENOENT"
+    },
+    {
+      "event": "cdp-ready",
+      "elapsedMs": 1413.8607999999986
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 1436.7396999999983,
+      "phase": "observation",
+      "count": 5
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 1485.018,
+      "phase": "observation",
+      "count": 5
+    },
+    {
+      "event": "owned-target-created",
+      "elapsedMs": 1539.1162000000004
+    },
+    {
+      "event": "owned-session-attached",
+      "elapsedMs": 1556.3084999999992
+    },
+    {
+      "event": "viewport-configured",
+      "elapsedMs": 1620.0764999999992,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1621.6939999999995,
+      "name": "DOMContentLoaded",
+      "loaderId": "A031EC40E7CFFCF534E93B7F9AA99C76",
+      "frameId": "9F5FD785E5A4D052D867F1F28F63077C"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1621.9278000000013,
+      "name": "load",
+      "loaderId": "A031EC40E7CFFCF534E93B7F9AA99C76",
+      "frameId": "9F5FD785E5A4D052D867F1F28F63077C"
+    },
+    {
+      "event": "navigation-started",
+      "elapsedMs": 1624.1182999999983
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 1624.1353000000017,
+      "phase": "navigation-response"
+    },
+    {
+      "event": "navigation-request-sent",
+      "elapsedMs": 1624.3123000000014,
+      "commandId": 9
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1636.7335999999996,
+      "state": "started",
+      "frameId": "9F5FD785E5A4D052D867F1F28F63077C"
+    },
+    {
+      "event": "navigation-response-received",
+      "elapsedMs": 1683.0023,
+      "commandId": 9,
+      "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+      "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+      "protocolError": false,
+      "navigationError": false
+    },
+    {
+      "event": "cdp-work-completed",
+      "elapsedMs": 1683.0337,
+      "phase": "navigation-response"
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 1683.0479000000014,
+      "phase": "navigation-load"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1701.5678000000007,
+      "name": "init",
+      "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+      "frameId": "9F5FD785E5A4D052D867F1F28F63077C"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 2669.364600000001,
+      "name": "DOMContentLoaded",
+      "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+      "frameId": "9F5FD785E5A4D052D867F1F28F63077C"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 2669.744200000001,
+      "name": "load",
+      "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+      "frameId": "9F5FD785E5A4D052D867F1F28F63077C"
+    },
+    {
+      "event": "cdp-work-completed",
+      "elapsedMs": 2669.7934999999998,
+      "phase": "navigation-load"
+    },
+    {
+      "event": "navigation-load-matched",
+      "elapsedMs": 2669.8986000000004,
+      "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+      "frameId": "9F5FD785E5A4D052D867F1F28F63077C"
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 2669.904699999999,
+      "phase": "viewport-read"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 2671.4893999999986,
+      "state": "stopped",
+      "frameId": "9F5FD785E5A4D052D867F1F28F63077C"
+    },
+    {
+      "event": "cdp-work-completed",
+      "elapsedMs": 2674.9805000000015,
+      "phase": "viewport-read"
+    },
+    {
+      "event": "viewport-verified",
+      "elapsedMs": 2675.0437999999995,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 2675.0541999999987,
+      "phase": "matrix-result"
+    },
+    {
+      "event": "cdp-work-completed",
+      "elapsedMs": 2699.4684000000016,
+      "phase": "matrix-result"
+    },
+    {
+      "event": "result-validation-started",
+      "elapsedMs": 2699.487000000001
+    },
+    {
+      "event": "result-verified",
+      "elapsedMs": 2700.0558999999994,
+      "cases": 1
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 2700.0632000000005,
+      "phase": "screenshot-capture"
+    },
+    {
+      "event": "cdp-work-completed",
+      "elapsedMs": 2958.572899999999,
+      "phase": "screenshot-capture"
+    },
+    {
+      "event": "screenshot-written",
+      "elapsedMs": 2997.960299999999,
+      "bytes": 359856,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 2997.970300000001,
+      "phase": "result-process-identities"
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 3005.4480000000003,
+      "phase": "observation",
+      "count": 16
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 3134.455099999999,
+      "phase": "observation",
+      "count": 16
+    },
+    {
+      "event": "cdp-work-completed",
+      "elapsedMs": 3134.493999999999,
+      "phase": "result-process-identities"
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 3134.5237000000016
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 3134.5254999999997
+    },
+    {
+      "event": "owned-session-detached",
+      "elapsedMs": 3162.899699999998
+    },
+    {
+      "event": "owned-target-close-confirmed",
+      "elapsedMs": 3169.589
+    },
+    {
+      "event": "owned-browser-close-requested",
+      "elapsedMs": 3169.5940999999984
+    },
+    {
+      "event": "browser-close-request-sent",
+      "elapsedMs": 3169.7672999999995,
+      "commandId": 16
+    },
+    {
+      "event": "browser-close-response-received",
+      "elapsedMs": 3170.9943999999996,
+      "commandId": 16,
+      "protocolError": false
+    },
+    {
+      "event": "browser-close-acknowledged",
+      "elapsedMs": 3171.0384000000013,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "cdp-transport-close-requested",
+      "elapsedMs": 3171.045399999999
+    },
+    {
+      "event": "cdp-transport-closed",
+      "elapsedMs": 3171.8699000000015,
+      "code": 1000
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 3171.9804000000004,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 4849.0661,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 4857.1911
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 4857.215199999999,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 4857.219099999998
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 4857.2471000000005
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 4857.265299999999,
+      "phase": "release",
+      "count": 15
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 4899.5869999999995,
+      "phase": "release",
+      "count": 0
+    },
+    {
+      "event": "node-release-state",
+      "elapsedMs": 4899.663100000002,
+      "exitObserved": true,
+      "closeObserved": true,
+      "stdoutCloseObserved": true,
+      "stderrCloseObserved": true,
+      "exitCode": 0,
+      "signalCode": null
+    },
+    {
+      "event": "identity-probe-closed",
+      "elapsedMs": 4932.5675999999985
+    },
+    {
+      "event": "runner-lifecycle-complete",
+      "elapsedMs": 4932.677199999998,
+      "cleanupSafe": true,
+      "forceTerminated": false
+    },
+    {
+      "event": "runner-final",
+      "elapsedMs": 4934.1486,
+      "status": "Passed",
+      "cleanupSafe": true,
+      "forceTerminated": false
+    }
+  ],
+  "identities": [
+    {
+      "pid": 38724,
+      "startedTicks": "639306098848443300",
+      "startedUtc": "2026-11-18T14:44:44.8443300Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 26580,
+      "startedTicks": "639306098861654618",
+      "startedUtc": "2026-11-18T14:44:46.1654618Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 16600,
+      "startedTicks": "639306098858075222",
+      "startedUtc": "2026-11-18T14:44:45.8075222Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 30188,
+      "startedTicks": "639306098858117596",
+      "startedUtc": "2026-11-18T14:44:45.8117596Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 35548,
+      "startedTicks": "639306098859709089",
+      "startedUtc": "2026-11-18T14:44:45.9709089Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 19584,
+      "startedTicks": "639306098873634920",
+      "startedUtc": "2026-11-18T14:44:47.3634920Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 19624,
+      "startedTicks": "639306098873358931",
+      "startedUtc": "2026-11-18T14:44:47.3358931Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 38796,
+      "startedTicks": "639306098863404544",
+      "startedUtc": "2026-11-18T14:44:46.3404544Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 13764,
+      "startedTicks": "639306098863088200",
+      "startedUtc": "2026-11-18T14:44:46.3088200Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 28744,
+      "startedTicks": "639306098863058578",
+      "startedUtc": "2026-11-18T14:44:46.3058578Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 29908,
+      "startedTicks": "639306098863047631",
+      "startedUtc": "2026-11-18T14:44:46.3047631Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 6004,
+      "startedTicks": "639306098878109737",
+      "startedUtc": "2026-11-18T14:44:47.8109737Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 35312,
+      "startedTicks": "639306098862918974",
+      "startedUtc": "2026-11-18T14:44:46.2918974Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 13028,
+      "startedTicks": "639306098862994044",
+      "startedUtc": "2026-11-18T14:44:46.2994044Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 35800,
+      "startedTicks": "639306098871950630",
+      "startedUtc": "2026-11-18T14:44:47.1950630Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 21008,
+      "startedTicks": "639306098878242773",
+      "startedUtc": "2026-11-18T14:44:47.8242773Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "profile": "<temp>/zhike-s1-main-style-Ucrnsw/edge-profile-601c78f5-7e71-4d62-8c0b-afea8719876c",
+  "pid": 38724,
+  "kernelObserver": {
+    "file": "<local-user>/Documents/Codex/2026-11-04/new-chat/work/project-review/知客 4.1 运营增强版/.tools/visual-usability/main-visual/1795013084831-eeadead2-f7e2-4d42-aacb-ecd4e454bbeb.kernel.jsonl",
+    "pid": 37076
+  },
+  "identityProbePid": 19800,
+  "resourceReleaseOrder": "owned-session-target-browser",
+  "devToolsReadiness": {
+    "polls": 8,
+    "enoent": 7,
+    "ebusy": 0,
+    "partial": 0
+  },
+  "navigationResources": {
+    "limit": 512,
+    "omitted": 0,
+    "requests": [
+      {
+        "resource": "<fixture>/fixture.html",
+        "requestedMs": 1639.1591999999982,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 1682.7952000000005,
+        "status": 200,
+        "finishedMs": 1977.4012000000002
+      },
+      {
+        "resource": "<app>/styles.css",
+        "requestedMs": 1717.773000000001,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 1741.3777999999984,
+        "status": 200,
+        "finishedMs": 1968.4831000000013
+      },
+      {
+        "resource": "<app>/modules/v4.css",
+        "requestedMs": 1718.2442999999985,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 1742.1584000000003,
+        "status": 200,
+        "finishedMs": 1969.1723999999995
+      },
+      {
+        "resource": "<app>/modules/gpt-assistant.css",
+        "requestedMs": 1718.5456999999988,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 1742.8966,
+        "status": 200,
+        "finishedMs": 1969.7445999999982
+      },
+      {
+        "resource": "<app>/modules/gpt-workbench.css",
+        "requestedMs": 1718.885699999999,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 1743.8342000000011,
+        "status": 200,
+        "finishedMs": 1971.715400000001
+      },
+      {
+        "resource": "<app>/modules/gpt-modern.css",
+        "requestedMs": 1719.244200000001,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 1744.8665,
+        "status": 200,
+        "finishedMs": 1972.9400999999998
+      },
+      {
+        "resource": "<app>/modules/gpt-management.css",
+        "requestedMs": 1719.5959000000003,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 1748.044600000001,
+        "status": 200,
+        "finishedMs": 1749.2981
+      },
+      {
+        "resource": "<app>/modules/phone-registry.css",
+        "requestedMs": 1719.930400000001,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 1749.6071999999986,
+        "status": 200,
+        "finishedMs": 1973.4062999999987
+      },
+      {
+        "resource": "<app>/modules/business-enhancements.css",
+        "requestedMs": 1985.2943999999989,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 2002.7805000000008,
+        "status": 200,
+        "finishedMs": 2017.155200000001
+      },
+      {
+        "resource": "<app>/modules/v41-ui.css",
+        "requestedMs": 1985.7428,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 2003.7258000000002,
+        "status": 200,
+        "finishedMs": 2018.3516999999993
+      },
+      {
+        "resource": "<app>/modules/operations-upgrade.css",
+        "requestedMs": 1986.0944999999992,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 2005.6175000000003,
+        "status": 200,
+        "finishedMs": 2018.6769999999997
+      },
+      {
+        "resource": "<app>/modules/ui-refresh.css",
+        "requestedMs": 1986.4370000000017,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 2006.1209999999992,
+        "status": 200,
+        "finishedMs": 2019.2204999999994
+      },
+      {
+        "resource": "<app>/modules/ws-workbench.css",
+        "requestedMs": 1986.7796000000017,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 2007.4412999999986,
+        "status": 200,
+        "finishedMs": 2022.433000000001
+      },
+      {
+        "resource": "<app>/modules/design-system.css",
+        "requestedMs": 1987.3038000000015,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 2009.3506000000016,
+        "status": 200,
+        "finishedMs": 2019.7772000000004
+      },
+      {
+        "resource": "<app>/modules/horizon-atelier.css",
+        "requestedMs": 1987.6936999999998,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 2011.5426000000007,
+        "status": 200,
+        "finishedMs": 2023.0999999999985
+      },
+      {
+        "resource": "<app>/modules/business-6.css",
+        "requestedMs": 1988.0563000000002,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 2012.1045000000013,
+        "status": 200,
+        "finishedMs": 2024.0568999999996
+      },
+      {
+        "resource": "<app>/modules/operations-6.css",
+        "requestedMs": 1988.3261999999995,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 2013.1483999999982,
+        "status": 200,
+        "finishedMs": 2024.412400000001
+      },
+      {
+        "resource": "<app>/modules/global-6.css",
+        "requestedMs": 1988.6425999999992,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 2013.704600000001,
+        "status": 200,
+        "finishedMs": 2025.4949000000015
+      },
+      {
+        "resource": "<app>/modules/home-6.css",
+        "requestedMs": 1988.9483,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 2014.6248000000014,
+        "status": 200,
+        "finishedMs": 2026.114300000001
+      },
+      {
+        "resource": "<app>/modules/scroll-system.css",
+        "requestedMs": 1989.3862000000008,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 2015.8797999999988,
+        "status": 200,
+        "finishedMs": 2026.384399999999
+      },
+      {
+        "resource": "<app>/assets/zhike-horizon-logo.png",
+        "requestedMs": 1989.8064999999988,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 2016.7511000000013,
+        "status": 200,
+        "finishedMs": 2026.6339999999982
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 2659.497299999999,
+        "frameId": "9F5FD785E5A4D052D867F1F28F63077C",
+        "loaderId": "669B53E926F572E7D6CE2C98296B2282",
+        "responseMs": 2660.3212999999996,
+        "status": 200,
+        "finishedMs": 2660.8545999999988
+      }
+    ],
+    "captureEndedMs": 3134.6166999999987,
+    "pendingCount": 0
+  },
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "resultCases": 1,
+  "resultBytes": 26846,
+  "resultSha256": "9cfc63488577644b427bcf4d24538f9cc7c31fdb2bbe7071fe16692a880b6367",
+  "resultFile": "<local-user>/Documents/Codex/2026-11-04/new-chat/work/project-review/知客 4.1 运营增强版/.tools/visual-usability/main-visual/1795013084831-eeadead2-f7e2-4d42-aacb-ecd4e454bbeb.result.json",
+  "screenshot": {
+    "path": "<local-user>/Documents/Codex/2026-11-04/new-chat/work/project-review/知客 4.1 运营增强版/.tools/visual-usability/main-visual/customers-atelier-dawn.png",
+    "bytes": 359856,
+    "width": 1920,
+    "height": 1080,
+    "sha256": "ae0f94ae34762207770a28bada78d962d1503debb8dab4fbbc28189b6d658cea"
+  },
+  "resultReady": true,
+  "rootExitProof": "verified-spawn-handle-exit-and-streams",
+  "remainingIdentities": [],
+  "identityProbeClosed": true,
+  "elapsedMs": 4932.646499999999,
+  "stdoutBytes": 0,
+  "stderrBytes": 281
+}

@@ -1,0 +1,46 @@
+[
+  {
+    "at": "2026-11-17T16:54:29.7677165+05:30",
+    "pid": 2776,
+    "kind": "application-start",
+    "fields": {
+      "dataRoot": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-native-9ec88a8a71b245838360aa26e2b9551f\\data",
+      "productionEntry": "FROZEN"
+    }
+  },
+  {
+    "at": "2026-11-17T16:54:40.0051609+05:30",
+    "pid": 2776,
+    "kind": "webview-created",
+    "fields": {
+      "role": "shell",
+      "accountId": "workbench-ui",
+      "browserProcessId": 34664
+    }
+  },
+  {
+    "at": "2026-11-17T16:54:56.87394+05:30",
+    "pid": 2776,
+    "kind": "webview-navigation",
+    "fields": {
+      "role": "shell",
+      "accountId": "workbench-ui",
+      "success": true,
+      "target": "isolated-local"
+    }
+  },
+  {
+    "at": "2026-11-17T17:32:04.9212759+05:30",
+    "pid": 2776,
+    "kind": "application-stopping",
+    "fields": null
+  },
+  {
+    "at": "2026-11-17T17:32:05.176448+05:30",
+    "pid": 2776,
+    "kind": "host-unloaded",
+    "fields": {
+      "route": "legacy-background"
+    }
+  }
+]

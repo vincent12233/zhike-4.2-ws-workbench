@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 2,
+  "invocation": "1795013045805-6e3ec754-d5c9-425a-be78-7c8cc03f0628",
+  "mode": "controlled-powershell-exclusive-readiness",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Passed",
+  "timeoutMs": 10000,
+  "launchedAt": "2026-11-18T14:44:05.803Z",
+  "timebase": "node-monotonic-ms",
+  "startedMonotonicMs": 117.695,
+  "events": [
+    {
+      "event": "process-spawned",
+      "elapsedMs": 784.5055,
+      "pid": 40944
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 784.7313999999999,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 1781.2933,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 1781.4545
+    },
+    {
+      "event": "cdp-readiness-wait",
+      "elapsedMs": 1783.8721,
+      "code": "EBUSY"
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 1811.106
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 1811.1133
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 1811.7456,
+      "acknowledgement": "stdin-request"
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 1827.7977
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 1827.8554000000001
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 1835.3322,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 1835.3946,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 1835.6251
+    },
+    {
+      "event": "node-release-state",
+      "elapsedMs": 1836.0583000000001,
+      "exitObserved": true,
+      "closeObserved": true,
+      "stdoutCloseObserved": true,
+      "stderrCloseObserved": true,
+      "exitCode": 0,
+      "signalCode": null
+    },
+    {
+      "event": "identity-probe-closed",
+      "elapsedMs": 1864.4886000000001
+    },
+    {
+      "event": "runner-lifecycle-complete",
+      "elapsedMs": 1864.5387,
+      "cleanupSafe": true,
+      "forceTerminated": false
+    },
+    {
+      "event": "runner-final",
+      "elapsedMs": 1864.5539,
+      "status": "Passed",
+      "cleanupSafe": true,
+      "forceTerminated": false
+    }
+  ],
+  "identities": [
+    {
+      "pid": 40944,
+      "startedTicks": "639306098458103642",
+      "startedUtc": "2026-11-18T14:44:05.8103642Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "pid": 40944,
+  "identityProbePid": 23768,
+  "profile": "<temp>/zhike-edge-runner-test-ZFLfHm/edge-profile-d68fa799-5f79-4184-8ee3-3d63ecf640f6",
+  "devToolsReadiness": {
+    "polls": 2,
+    "enoent": 0,
+    "ebusy": 1,
+    "partial": 0
+  },
+  "resultReady": true,
+  "rootExitProof": "verified-spawn-handle-exit-and-streams",
+  "remainingIdentities": [],
+  "identityProbeClosed": true,
+  "elapsedMs": 1864.5107,
+  "stdoutBytes": 18,
+  "stderrBytes": 0
+}

@@ -1,0 +1,51 @@
+{
+  "checkedAtUtc": "2026-11-17T14:22:36.350Z",
+  "scope": "read-only GET /api/state in a marker-verified synthetic root",
+  "synthetic": true,
+  "productionOpened": false,
+  "realWs": false,
+  "realAi": false,
+  "counts": {
+    "customers": 52,
+    "registrations": 3,
+    "followups": 2,
+    "tickets": 1,
+    "deposits": 1
+  },
+  "manualTasks": [
+    {
+      "id": "ISOLATED_S3_TASK_TODAY",
+      "done": false
+    },
+    {
+      "id": "ISOLATED_S3_TASK_MANUAL",
+      "status": "done",
+      "done": true
+    }
+  ],
+  "phaseHistory": [
+    {
+      "id": "ISOLATED_S3_001",
+      "phase": "潜在客户",
+      "history": [
+        {
+          "from": "新客户",
+          "to": "潜在客户",
+          "at": "2026-11-17T13:50:05.094Z"
+        }
+      ]
+    },
+    {
+      "id": "ISOLATED_S3_043",
+      "phase": "潜在客户",
+      "history": [
+        {
+          "from": "新客户",
+          "to": "潜在客户",
+          "at": "2026-11-17T13:51:37.458Z"
+        }
+      ]
+    }
+  ],
+  "manualOccupationProtected": true
+}

@@ -1,0 +1,140 @@
+{
+  "head": "af71fd9e2c7e9425e9def8463b1c39c5a150de45",
+  "node": "<local-user>/Documents/Codex/2026-11-04/new-chat/work/project-review/知客 4.1 运营增强版/resources/app/node.exe",
+  "nodeVersion": "v24.22.1",
+  "edge": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+  "dotnet": "<local-user>/Documents/Codex/2026-11-04/new-chat/work/project-review/知客 4.1 运营增强版/.tools/dotnet10/dotnet.exe",
+  "startUtc": "2026-11-18T13:21:40.622Z",
+  "calibration": {
+    "label": "observer-calibration",
+    "args": [
+      "scripts/diagnostics/edge-exit-observer/calibrate-invocation.cjs",
+      "<local-user>/Documents/Codex/2026-11-04/new-chat/work/project-review/知客 4.1 运营增强版/.tools/dotnet10/dotnet.exe"
+    ],
+    "startUtc": "2026-11-18T13:21:40.623Z",
+    "endUtc": "2026-11-18T13:21:46.847Z",
+    "elapsedMs": 6223.6657000000005,
+    "timeoutMs": 45000,
+    "exitCode": 0,
+    "signal": null,
+    "errorCode": null
+  },
+  "results": [
+    {
+      "label": "s1-main-visual",
+      "args": [
+        "scripts/delivery/s1-main-visual.test.cjs"
+      ],
+      "startUtc": "2026-11-18T13:21:46.851Z",
+      "endUtc": "2026-11-18T13:22:26.204Z",
+      "elapsedMs": 39353.4847,
+      "timeoutMs": 180000,
+      "exitCode": 0,
+      "signal": null,
+      "errorCode": null,
+      "evidenceDirectory": ".tools/visual-usability/main-visual",
+      "expectedCalls": 7,
+      "files": [
+        "1795008106985-6c6ea590-bc7f-4a30-be64-e02c3eb8023c.assertions.json",
+        "1795008106985-6c6ea590-bc7f-4a30-be64-e02c3eb8023c.json",
+        "1795008106985-6c6ea590-bc7f-4a30-be64-e02c3eb8023c.kernel.jsonl",
+        "1795008106985-6c6ea590-bc7f-4a30-be64-e02c3eb8023c.result.json",
+        "1795008117745-e16da5f3-f360-418d-8dc3-a1bb1de5a06d.assertions.json",
+        "1795008117745-e16da5f3-f360-418d-8dc3-a1bb1de5a06d.json",
+        "1795008117745-e16da5f3-f360-418d-8dc3-a1bb1de5a06d.kernel.jsonl",
+        "1795008117745-e16da5f3-f360-418d-8dc3-a1bb1de5a06d.result.json",
+        "1795008122323-1f7fe84f-7528-4109-94bc-90b1e83ae56b.assertions.json",
+        "1795008122323-1f7fe84f-7528-4109-94bc-90b1e83ae56b.json",
+        "1795008122323-1f7fe84f-7528-4109-94bc-90b1e83ae56b.kernel.jsonl",
+        "1795008122323-1f7fe84f-7528-4109-94bc-90b1e83ae56b.result.json",
+        "1795008127173-18149bc1-d266-4bda-a1f4-d5c5eb0c6fb6.assertions.json",
+        "1795008127173-18149bc1-d266-4bda-a1f4-d5c5eb0c6fb6.json",
+        "1795008127173-18149bc1-d266-4bda-a1f4-d5c5eb0c6fb6.kernel.jsonl",
+        "1795008127173-18149bc1-d266-4bda-a1f4-d5c5eb0c6fb6.result.json",
+        "1795008131909-b8735165-ed0b-4685-a4e7-9c7207e9021d.assertions.json",
+        "1795008131909-b8735165-ed0b-4685-a4e7-9c7207e9021d.json",
+        "1795008131909-b8735165-ed0b-4685-a4e7-9c7207e9021d.kernel.jsonl",
+        "1795008131909-b8735165-ed0b-4685-a4e7-9c7207e9021d.result.json",
+        "1795008136359-de3787c3-9fb5-4cb9-98ea-e9e85e3c6df6.assertions.json",
+        "1795008136359-de3787c3-9fb5-4cb9-98ea-e9e85e3c6df6.json",
+        "1795008136359-de3787c3-9fb5-4cb9-98ea-e9e85e3c6df6.kernel.jsonl",
+        "1795008136359-de3787c3-9fb5-4cb9-98ea-e9e85e3c6df6.result.json",
+        "1795008140212-d603bd6f-5c7e-4a87-b8d4-6df0237ff4b4.assertions.json",
+        "1795008140212-d603bd6f-5c7e-4a87-b8d4-6df0237ff4b4.json",
+        "1795008140212-d603bd6f-5c7e-4a87-b8d4-6df0237ff4b4.kernel.jsonl",
+        "1795008140212-d603bd6f-5c7e-4a87-b8d4-6df0237ff4b4.result.json",
+        "computed-styles.json",
+        "customers-atelier-dawn.png",
+        "dawn-dark-legacy-computed.json",
+        "home-atelier-dawn.png",
+        "home-horizon-night.png",
+        "night-computed.json",
+        "operations-atelier-dawn.png"
+      ]
+    },
+    {
+      "label": "s1-ws-visual",
+      "args": [
+        "scripts/delivery/s1-ws-visual.test.cjs"
+      ],
+      "startUtc": "2026-11-18T13:22:26.207Z",
+      "endUtc": "2026-11-18T13:22:44.282Z",
+      "elapsedMs": 18074.338800000005,
+      "timeoutMs": 180000,
+      "exitCode": 0,
+      "signal": null,
+      "errorCode": null,
+      "evidenceDirectory": ".tools/delivery-s1-ws-visual",
+      "expectedCalls": 1,
+      "files": [
+        "1795008146513-dceac4a0-a99a-40b4-874f-94e2af96d5f3.assertions.json",
+        "1795008146513-dceac4a0-a99a-40b4-874f-94e2af96d5f3.json",
+        "1795008146513-dceac4a0-a99a-40b4-874f-94e2af96d5f3.kernel.jsonl",
+        "1795008146513-dceac4a0-a99a-40b4-874f-94e2af96d5f3.result.json"
+      ]
+    },
+    {
+      "label": "s2-metrics-visual",
+      "args": [
+        "scripts/delivery/s2-metrics-visual.test.cjs"
+      ],
+      "startUtc": "2026-11-18T13:22:44.285Z",
+      "endUtc": "2026-11-18T13:22:47.105Z",
+      "elapsedMs": 2820.205700000006,
+      "timeoutMs": 180000,
+      "exitCode": 0,
+      "signal": null,
+      "errorCode": null,
+      "evidenceDirectory": ".tools/delivery-s2-metrics-visual",
+      "expectedCalls": 1,
+      "files": [
+        "1795008164444-d8891b4f-e573-4992-aa2f-7292b368afa2.assertions.json",
+        "1795008164444-d8891b4f-e573-4992-aa2f-7292b368afa2.json",
+        "1795008164444-d8891b4f-e573-4992-aa2f-7292b368afa2.kernel.jsonl",
+        "1795008164444-d8891b4f-e573-4992-aa2f-7292b368afa2.result.json"
+      ]
+    },
+    {
+      "label": "s3-customer-table-visual",
+      "args": [
+        "scripts/delivery/s3-customer-table-visual.test.cjs"
+      ],
+      "startUtc": "2026-11-18T13:22:47.110Z",
+      "endUtc": "2026-11-18T13:23:19.006Z",
+      "elapsedMs": 31896.326299999986,
+      "timeoutMs": 180000,
+      "exitCode": 1,
+      "signal": null,
+      "errorCode": null,
+      "evidenceDirectory": ".tools/delivery-s3-customer-table",
+      "expectedCalls": 1,
+      "files": [
+        "1795008167315-6c18f709-e9e2-47f1-b031-eb97532cfa19.json",
+        "1795008167315-6c18f709-e9e2-47f1-b031-eb97532cfa19.kernel.jsonl",
+        "1795008167315-6c18f709-e9e2-47f1-b031-eb97532cfa19.stderr.log",
+        "1795008167315-6c18f709-e9e2-47f1-b031-eb97532cfa19.stdout.log"
+      ]
+    }
+  ],
+  "endUtc": "2026-11-18T13:23:19.009Z"
+}

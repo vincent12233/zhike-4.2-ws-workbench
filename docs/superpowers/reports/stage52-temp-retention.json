@@ -1,0 +1,30 @@
+{
+  "stage": "5.2",
+  "checkedAtUtc": "2026-11-16T15:55:01.7932968Z",
+  "userDecision": "暂时保留",
+  "status": "NotCleaned",
+  "retainedPath": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-native-9ea0b959844a45e082f7955053e5126e",
+  "retainedExists": true,
+  "oldPaths": [
+    {
+      "path": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-native-248a3820ba4f4b6abbfa8c09fd957da5",
+      "exists": false
+    },
+    {
+      "path": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-native-92eccfc80f164b15b7fcd1618058cb21",
+      "exists": false
+    },
+    {
+      "path": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-native-95d5941432654bf9906247471c41ddce",
+      "exists": false
+    }
+  ],
+  "newRootAutomaticDeletionAttempted": false,
+  "priorPolicyRejection": "blocked by policy; no bypass",
+  "activeResourceEvidence": "stage52-native-final-close.json",
+  "archive": ".tools/stage52-native-evidence-final/manifest.json",
+  "archiveManifestSha256": "6A935AA86B6006F45D920938FBFFBCB63FFEAF548A92F04009E9A7D882517DA4",
+  "gate": "Blocked",
+  "reason": "Existing cleanup gate retained; user chose to preserve this isolated root.",
+  "productionDataIncluded": false
+}

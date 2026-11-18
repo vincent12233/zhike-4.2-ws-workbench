@@ -1,0 +1,172 @@
+{
+  "pid": 37872,
+  "monitorHandle": 65537,
+  "hwndAwareness": "per-monitor-v2",
+  "source": "Same-run Stage 5.1 isolated Windows native-events.jsonl",
+  "additionalTransitions": [
+    {
+      "fromPercent": 100,
+      "toPercent": 150,
+      "samples": [
+        {
+          "at": "2026-11-18T12:02:06.5001216+00:00",
+          "tick": 250034781,
+          "kind": "stage51-native-dpi",
+          "dpi": 144,
+          "xaml": 1,
+          "client": [
+            1920,
+            1094
+          ],
+          "state": "Maximized"
+        },
+        {
+          "at": "2026-11-18T12:02:06.5806879+00:00",
+          "tick": 250034859,
+          "kind": "stage51-native-dpi",
+          "dpi": 144,
+          "xaml": 1.5,
+          "client": [
+            1920,
+            1094
+          ],
+          "state": "Maximized"
+        },
+        {
+          "at": "2026-11-18T12:02:07.1202652+00:00",
+          "tick": 250035390,
+          "kind": "stage51-dom-layout",
+          "dpi": 144,
+          "xaml": 1.5,
+          "client": [
+            1920,
+            1094
+          ],
+          "state": "Maximized",
+          "domDpr": 1.5,
+          "domViewport": [
+            1278,
+            715
+          ]
+        },
+        {
+          "at": "2026-11-18T12:02:46.4144264+00:00",
+          "tick": 250074687,
+          "kind": "stage51-dom-layout",
+          "dpi": 144,
+          "xaml": 1.5,
+          "client": [
+            1840,
+            1058
+          ],
+          "state": "Restored",
+          "domDpr": 1.5,
+          "domViewport": [
+            1224,
+            691
+          ]
+        },
+        {
+          "at": "2026-11-18T12:04:02.7532151+00:00",
+          "tick": 250151031,
+          "kind": "stage51-dom-layout",
+          "dpi": 144,
+          "xaml": 1.5,
+          "client": [
+            1920,
+            1094
+          ],
+          "state": "Maximized",
+          "domDpr": 1.5,
+          "domViewport": [
+            1278,
+            715
+          ]
+        }
+      ]
+    },
+    {
+      "fromPercent": 150,
+      "toPercent": 125,
+      "samples": [
+        {
+          "at": "2026-11-18T12:06:23.0466535+00:00",
+          "tick": 250291312,
+          "kind": "stage51-native-dpi",
+          "dpi": 120,
+          "xaml": 1.5,
+          "client": [
+            1920,
+            1111
+          ],
+          "state": "Maximized"
+        },
+        {
+          "at": "2026-11-18T12:06:23.090043+00:00",
+          "tick": 250291359,
+          "kind": "stage51-native-dpi",
+          "dpi": 120,
+          "xaml": 1.25,
+          "client": [
+            1920,
+            1111
+          ],
+          "state": "Maximized"
+        },
+        {
+          "at": "2026-11-18T12:06:23.5811605+00:00",
+          "tick": 250291859,
+          "kind": "stage51-dom-layout",
+          "dpi": 120,
+          "xaml": 1.25,
+          "client": [
+            1920,
+            1111
+          ],
+          "state": "Maximized",
+          "domDpr": 1.25,
+          "domViewport": [
+            1535,
+            876
+          ]
+        }
+      ]
+    }
+  ],
+  "coreCreationCounter": {
+    "total": 2,
+    "emitted": 2,
+    "suppressed": 0
+  },
+  "coreCreationEvents": [
+    {
+      "at": "2026-11-18T11:27:27.6735217+00:00",
+      "role": "shell",
+      "browserPid": 38916
+    },
+    {
+      "at": "2026-11-18T11:55:53.7439525+00:00",
+      "role": "ws-visible",
+      "browserPid": 19152
+    }
+  ],
+  "shutdown": {
+    "applicationStoppingAt": "2026-11-18T12:10:44.8477438+00:00",
+    "sidecarStoppedAt": "2026-11-18T12:10:45.093422+00:00",
+    "hostUnloadedAt": "2026-11-18T12:10:45.1080338+00:00",
+    "identityFollowupAtUtc": "2026-11-18T12:11:47.886Z",
+    "identitiesChecked": 15,
+    "alive": 0,
+    "unverified": 0
+  },
+  "localScreenshots": [
+    {
+      "file": "12-150-dark-restored.png",
+      "sha256": "BE253DF08EB700E3FFE96DFEA710E311B65E63E7DADBCFE309958557AA23482B"
+    },
+    {
+      "file": "13-150-dark-maximized.png",
+      "sha256": "96D138A081BCFDEC0E0E7694179AD1321BE194CC3EE92B29F048B933C8399018"
+    }
+  ]
+}

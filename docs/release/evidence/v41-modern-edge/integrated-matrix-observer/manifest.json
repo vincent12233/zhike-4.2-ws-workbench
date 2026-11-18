@@ -1,0 +1,65 @@
+{
+  "base": "420b9d4",
+  "diagnosticCommit": "df3129e",
+  "records": [
+    {
+      "file": "lifecycle.json",
+      "source": "1794997382764-ceb6b6fc-1d18-43fa-be94-df6cd0483ab0.json",
+      "sourceSha256": "621d1ed7c4676383eac80d63da26e431e658ba808ef78c9ce51363297c6ecddd",
+      "sha256": "16241d5d9e8ee98f77fd98c7da6d35b9554aa86f3dd96d97c2d0b7f3eaebb896"
+    },
+    {
+      "file": "observer.jsonl",
+      "source": "observer.jsonl",
+      "sourceSha256": "784e2440d1e8b6fe27b471bc03ad48cf8b91996d74415269eccd4825e33dfd3d",
+      "sha256": "784e2440d1e8b6fe27b471bc03ad48cf8b91996d74415269eccd4825e33dfd3d"
+    },
+    {
+      "file": "matrix.log",
+      "source": "matrix.log",
+      "sourceSha256": "483bb8b8fc1bbdb56c613401ffad2c8048070df8ac79b69774422a0d18e60f8e",
+      "sha256": "c84f9ac82791bb600557b5e9df6e3880c44e1a7e13c01992335faa25eddfabc8"
+    },
+    {
+      "file": "result.json",
+      "source": "matrix.log",
+      "sourceSha256": "483bb8b8fc1bbdb56c613401ffad2c8048070df8ac79b69774422a0d18e60f8e",
+      "sha256": "68f4659eb8136487b04b4a5f196b07024c1aa60ca87ac14a780a55d1eef6feee"
+    },
+    {
+      "file": "matrix.exit",
+      "source": "matrix.exit",
+      "sourceSha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "file": "build.log",
+      "source": "build.log",
+      "sourceSha256": "24ce78cc8dda7bb4c941a0b7394082cbd2ce32fd75fd49ff0da26773ed3e1000",
+      "sha256": "a7873352ffd12e886c9df841c7de6bfb0949df97f8869f27ad65091b6e39ade3"
+    },
+    {
+      "file": "build.exit",
+      "source": "build.exit",
+      "sourceSha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "file": "full-failure-summary.json",
+      "sha256": "8cd3cbb79d843993ea75e4adcbed77f7b209728bb8a18756a85828be2799b77f",
+      "source": "Source metadata hashes included per failure"
+    }
+  ],
+  "rawFixtureContentNotArchived": [
+    {
+      "source": "1794997382764-ceb6b6fc-1d18-43fa-be94-df6cd0483ab0.result.json",
+      "bytes": 2099875,
+      "sourceSha256": "d7ed4ee5e63e094ed94fabe7de5d8313d94dd16684ab65409828c8d28f847ef0"
+    },
+    {
+      "source": "computed-styles.json",
+      "bytes": 4301386,
+      "sourceSha256": "2af399c22e8b0c194162bbde25419fbb7eec3a4b846901bfaaafef52191f0b85"
+    }
+  ]
+}

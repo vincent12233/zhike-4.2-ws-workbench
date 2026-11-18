@@ -8,9 +8,10 @@
   const phone=value=>{const n=String(value||'').replace(/\D/g,'');return n.length===12&&n.startsWith('91')?n.slice(2):n;};
   function readLocal(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}}
   function writeLocal(key,value){try{localStorage.setItem(key,JSON.stringify(value));}catch{}}
-  async function modify(id,label,apply){
-    const h=host(),c=customer(id);if(!c)return;
+  async function modify(id,label,apply,canApply=()=>true){
+    const h=host(),c=customer(id);if(!c||!canApply(c))return;
     if(!await h.snapshotBeforeWrite(label))return;
+    if(!canApply(c))return;
     const before=JSON.parse(JSON.stringify(c)),activitiesBefore=JSON.parse(JSON.stringify(h.state.activities||[]));
     try{apply(c);c.touched=true;h.persist();h.activity(label+'：'+c.name);await h.flushStateWrites();h.render();h.toast('已保存');}
     catch(error){for(const key of Object.keys(c))if(!Object.hasOwn(before,key))delete c[key];Object.assign(c,before);h.state.activities=activitiesBefore;h.persist();h.render();h.toast('保存失败，已恢复客户资料','x');}
@@ -35,13 +36,16 @@
     box=document.createElement('div');box.id='duplicateCustomers';box.dataset.signature=signature;box.className='duplicate-customers';
     box.innerHTML='<strong>重复号码已属于以下客户，点击查看档案：</strong>'+matches.slice(0,30).map(c=>'<button class="btn small" data-product-customer="'+esc(c.id)+'">'+esc(c.name)+' · '+esc(c.rawPhone||c.phone)+'</button>').join('');panel.prepend(box);
   }
-  let dragged=null;
+  let stageMovePending=false;
   function homeLayout(){
     if(host()?.state.view!=='home')return;
     const groups=[['home-main','.home-main-grid'],['home-bottom','.home-bottom-grid']];
     [...view.querySelectorAll('.metric-grid>.metric-card')].forEach((card,index)=>card.dataset.layoutKey='home-metric-'+index);
     for(const [key,selector] of groups){const parent=view.querySelector(selector);if(!parent||parent.dataset.reorderReady)return;parent.dataset.reorderReady='1';const cards=[...parent.children];cards.forEach((card,index)=>card.dataset.layoutKey=key+'-'+index);const order=readLocal('zhike-layout-'+key,[]);for(const id of order){const card=cards.find(c=>c.dataset.layoutKey===id);if(card)parent.append(card);}
-      for(const card of cards){const heading=card.querySelector('.panel-heading');if(!heading)continue;heading.draggable=true;heading.title='拖动调整模块顺序';heading.classList.add('home-drag-handle');heading.addEventListener('dragstart',e=>{dragged={kind:'home',card,parent};e.dataTransfer.setData('text/plain',card.dataset.layoutKey);});card.addEventListener('dragover',e=>{if(dragged?.kind==='home'&&dragged.parent===parent)e.preventDefault();});card.addEventListener('drop',e=>{if(dragged?.kind!=='home'||dragged.parent!==parent)return;e.preventDefault();parent.insertBefore(dragged.card,card);writeLocal('zhike-layout-'+key,[...parent.children].map(c=>c.dataset.layoutKey));dragged=null;});}
+      for(const card of cards){const heading=card.querySelector('.panel-heading');if(!heading)continue;heading.title='拖动调整模块顺序';heading.classList.add('home-drag-handle');bindPointerGesture(heading,event=>{
+        const h=host();if(h?.state.view!=='home'||event.target.closest?.('button,a,input,select,textarea,[role="button"]'))return null;
+        return {adapter:homePointerAdapter,host:h,viewName:'home',container:parent,card,selector,layoutKey:key,sourceKey:card.dataset.layoutKey};
+      });}
     }
     if(!view.querySelector('#homeLayoutButton')){const b=document.createElement('button');b.id='homeLayoutButton';b.className='btn';b.textContent='自定义首页';view.querySelector('.heading-actions')?.prepend(b);b.onclick=()=>{
       const panels=[...view.querySelectorAll('.metric-grid>.metric-card,.home-main-grid>.panel,.home-bottom-grid>.panel')],hidden=readLocal('zhike-home-hidden',[]);
@@ -51,12 +55,136 @@
     };}
     const hidden=readLocal('zhike-home-hidden',[]);for(const panel of view.querySelectorAll('[data-layout-key]'))panel.hidden=hidden.includes(panel.dataset.layoutKey);
   }
-  function stageDrag(){
-    if(host()?.state.view!=='stage-board')return;
-    for(const card of view.querySelectorAll('[data-ops-customer]')){if(card.dataset.dragReady)continue;card.dataset.dragReady='1';card.draggable=true;card.addEventListener('dragstart',e=>{dragged={kind:'customer',id:card.dataset.opsCustomer};e.dataTransfer.setData('text/plain',card.dataset.opsCustomer);});}
-    for(const column of view.querySelectorAll('.ops-column')){if(column.dataset.dropReady)continue;column.dataset.dropReady='1';column.addEventListener('dragover',e=>{if(dragged?.kind==='customer'){e.preventDefault();column.classList.add('drag-target');}});column.addEventListener('dragleave',()=>column.classList.remove('drag-target'));column.addEventListener('drop',async e=>{column.classList.remove('drag-target');if(dragged?.kind!=='customer')return;e.preventDefault();const id=dragged.id;dragged=null;const phase=column.querySelector('.ops-stage-open strong')?.textContent,c=customer(id);if(!phase||!c||c.phase===phase)return;await modify(id,'拖动调整客户阶段',c=>{const from=c.phase||'未设置';c.phase=phase;c.phaseHistory=[...(c.phaseHistory||[]),{from,to:phase,at:new Date().toISOString()}].slice(-100);});});}
+  // One in-document pointer lifecycle for the two existing draggable UIs.
+  // Adapters own only target identity and the original stage/layout commit.
+  // Neither path requires an OS/WebView HTML drag-drop bridge.
+  let pointerGesture=null,gestureClickToSuppress=null;
+  const stagePointerAdapter={
+    sourceClass:'is-stage-dragging',targetClass:'drag-target',
+    current:g=>g.card.closest('.ops-board')===g.container&&String(g.card.dataset.opsCustomer)===g.id
+      &&customer(g.id)===g.customer&&String(g.customer.phase||'未设置')===g.from,
+    target(g,node){
+      const column=node?.closest?.('.ops-column'),phase=column?.dataset.stageName;
+      return column?.isConnected&&view.contains(column)&&column.closest('.ops-board')===g.container
+        &&typeof phase==='string'&&phase&&phase!==g.from?column:null;
+    },
+    commit:commitStagePointer,
+  };
+  const homePointerAdapter={
+    sourceClass:'is-home-dragging',targetClass:'home-drag-target',
+    current:g=>view.querySelector(g.selector)===g.container&&g.card.parentElement===g.container&&g.card.dataset.layoutKey===g.sourceKey,
+    target(g,node){
+      if(!node?.isConnected||!g.container.contains(node))return null;
+      let card=node;while(card&&card.parentElement!==g.container)card=card.parentElement;
+      return card&&card!==g.card&&card.dataset.layoutKey&&card.querySelector('.panel-heading')?card:null;
+    },
+    commit(g,target){
+      if(!currentPointerGesture(g)||g.adapter.target(g,target)!==target)return;
+      g.container.insertBefore(g.card,target);
+      writeLocal('zhike-layout-'+g.layoutKey,[...g.container.children].map(card=>card.dataset.layoutKey));
+    },
+  };
+  function currentPointerGesture(g){
+    return host()===g.host&&g.host.state.view===g.viewName&&view.isConnected
+      &&g.container.isConnected&&view.contains(g.container)&&g.card.isConnected&&g.container.contains(g.card)
+      &&g.owner.isConnected&&g.card.contains(g.owner)&&g.adapter.current(g);
   }
-  document.addEventListener('dragend',()=>{dragged=null;document.querySelectorAll('.drag-target').forEach(x=>x.classList.remove('drag-target'));});
+  function pointerTargetAt(g,x,y){
+    return currentPointerGesture(g)&&Number.isFinite(x)&&Number.isFinite(y)?g.adapter.target(g,document.elementFromPoint(x,y)):null;
+  }
+  function detachPendingPointer(){
+    document.removeEventListener('pointermove',trackPendingPointer,true);
+    document.removeEventListener('pointerup',endPendingPointer,true);
+    document.removeEventListener('pointercancel',endPendingPointer,true);
+  }
+  function clearPointerGesture(suppressClick=false){
+    const g=pointerGesture;if(!g)return;pointerGesture=null;detachPendingPointer();
+    g.owner.classList.remove(g.adapter.sourceClass);g.target?.classList.remove(g.adapter.targetClass);
+    if(suppressClick&&g.dragging)gestureClickToSuppress=g.owner;
+    try{if(g.owner.hasPointerCapture(g.pointerId))g.owner.releasePointerCapture(g.pointerId);}catch{}
+  }
+  function trackPendingPointer(event){if(pointerGesture&&!pointerGesture.dragging)movePointer(event,true);}
+  function endPendingPointer(event){if(pointerGesture&&!pointerGesture.dragging&&event.pointerId===pointerGesture.pointerId)clearPointerGesture();}
+  function movePointer(event,uncaptured=false){
+    const g=pointerGesture;
+    if(!g||event.pointerId!==g.pointerId||(!uncaptured&&event.currentTarget!==g.owner))return;
+    if(!currentPointerGesture(g)||event.buttons===0){clearPointerGesture(true);return;}
+    if(!g.dragging){
+      if(Math.hypot(event.clientX-g.x,event.clientY-g.y)<6)return;
+      try{g.owner.setPointerCapture(g.pointerId);}catch{clearPointerGesture();return;}
+      g.dragging=true;detachPendingPointer();g.owner.classList.add(g.adapter.sourceClass);
+    }
+    if(event.cancelable)event.preventDefault();
+    const target=pointerTargetAt(g,event.clientX,event.clientY);
+    if(target!==g.target){g.target?.classList.remove(g.adapter.targetClass);g.target=target;target?.classList.add(g.adapter.targetClass);}
+  }
+  async function finishPointer(event){
+    const g=pointerGesture;if(!g||event.pointerId!==g.pointerId||event.currentTarget!==g.owner)return;
+    if(!g.dragging){clearPointerGesture();return;}
+    if(event.cancelable)event.preventDefault();
+    const target=pointerTargetAt(g,event.clientX,event.clientY);clearPointerGesture(true);
+    if(target)await g.adapter.commit(g,target);
+  }
+  function bindPointerGesture(owner,create){
+    owner.draggable=false;if(owner.dataset.productivityPointerReady)return;owner.dataset.productivityPointerReady='1';
+    owner.addEventListener('pointerdown',event=>{
+      if(event.button!==0||event.isPrimary===false||pointerGesture)return;
+      const context=create(event);if(!context)return;
+      pointerGesture={...context,owner,pointerId:event.pointerId,x:event.clientX,y:event.clientY,dragging:false,target:null};
+      if(!currentPointerGesture(pointerGesture)){pointerGesture=null;return;}
+      // Before capture, an edge movement can leave the source. These three
+      // listeners exist only for this pending gesture, without changing tap,
+      // focus or scrolling below the threshold.
+      document.addEventListener('pointermove',trackPendingPointer,{capture:true,passive:false});
+      document.addEventListener('pointerup',endPendingPointer,{capture:true,passive:true});
+      document.addEventListener('pointercancel',endPendingPointer,{capture:true,passive:true});
+    },{passive:true});
+    owner.addEventListener('pointermove',movePointer,{passive:false});
+    owner.addEventListener('pointerup',finishPointer,{passive:false});
+    for(const kind of ['pointercancel','lostpointercapture'])owner.addEventListener(kind,event=>{
+      if(pointerGesture?.pointerId===event.pointerId&&pointerGesture.owner===owner)clearPointerGesture(true);
+    });
+  }
+  async function commitStagePointer(g,target){
+    const phase=target.dataset.stageName;if(!phase)return;
+    if(stageMovePending){host()?.toast('正在保存阶段调整，请稍候再移动客户');return;}
+    // Revalidate after the existing snapshot await too: a replaced board,
+    // stale customer reference or changed canonical stage must not commit.
+    const canApply=c=>currentPointerGesture(g)&&c===g.customer&&g.adapter.target(g,target)===target&&target.dataset.stageName===phase;
+    stageMovePending=true;
+    try{
+      await modify(g.id,'拖动调整客户阶段',c=>{
+        const from=c.phase||'未设置';c.phase=phase;
+        c.phaseHistory=[...(c.phaseHistory||[]),{from,to:phase,at:new Date().toISOString()}].slice(-100);
+      },canApply);
+    }catch{host()?.toast('无法完成阶段调整，请稍后重试','x');}
+    finally{stageMovePending=false;}
+  }
+  function stageDrag(){
+    if(pointerGesture&&!currentPointerGesture(pointerGesture))clearPointerGesture(true);
+    if(host()?.state.view!=='stage-board')return;
+    for(const card of view.querySelectorAll('.ops-card[data-ops-customer]')){
+      bindPointerGesture(card,()=>{
+        if(stageMovePending)return null;
+        const h=host(),id=String(card.dataset.opsCustomer??''),c=customer(id),board=card.closest('.ops-board');
+        if(!id||!c||h?.state.view!=='stage-board'||!card.isConnected||!board?.isConnected||!view.contains(board))return null;
+        return {adapter:stagePointerAdapter,host:h,viewName:'stage-board',id,customer:c,from:String(c.phase||'未设置'),container:board,card};
+      });
+    }
+  }
+  // Clear an unused suppression token on the next genuine interaction, rather
+  // than swallowing a later normal tap if this drag produced no browser click.
+  document.addEventListener('pointerdown',()=>{gestureClickToSuppress=null;},{capture:true,passive:true});
+  document.addEventListener('click',event=>{
+    const owner=gestureClickToSuppress;gestureClickToSuppress=null;
+    if(owner&&event.detail!==0&&owner.contains(event.target)){event.preventDefault();event.stopImmediatePropagation();}
+  },{capture:true});
+  document.addEventListener('keydown',event=>{
+    gestureClickToSuppress=null;
+    if(event.key==='Escape'&&pointerGesture){clearPointerGesture(true);event.preventDefault();}
+  },{capture:true});
+  window.addEventListener('blur',()=>clearPointerGesture(true));
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)clearPointerGesture(true);});
   let menu;
   function closeMenu(){menu?.remove();menu=null;}
   document.addEventListener('contextmenu',e=>{
@@ -73,7 +201,39 @@
   });
   document.addEventListener('click',e=>{if(menu&&!menu.contains(e.target))closeMenu();});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();});window.addEventListener('blur',closeMenu);
   function columnSizes(){
-    for(const table of view.querySelectorAll('.data-table')){if(table.dataset.resizeReady)continue;table.dataset.resizeReady='1';const key='zhike-columns-'+host()?.state.view,sizes=readLocal(key,{});for(const [index,th] of [...table.querySelectorAll('thead th')].entries()){if(sizes[index])th.style.width=th.style.minWidth=sizes[index]+'px';const handle=document.createElement('span');handle.className='column-resizer';handle.title='拖动调整列宽';th.append(handle);handle.onpointerdown=e=>{e.preventDefault();e.stopPropagation();const start=e.clientX,width=th.getBoundingClientRect().width;handle.setPointerCapture(e.pointerId);handle.onpointermove=event=>{const size=Math.max(48,Math.min(800,width+event.clientX-start));th.style.width=th.style.minWidth=size+'px';sizes[index]=size;};handle.onpointerup=()=>{handle.onpointermove=null;writeLocal(key,sizes);};};}}
+    const route=host()?.state.view,key='zhike-columns-'+route;
+    for(const table of view.querySelectorAll('.data-table')){
+      if(table.dataset.resizeReady)continue;
+      table.dataset.resizeReady='1';
+      const sizes=readLocal(key,{});
+      for(const [index,th] of [...table.querySelectorAll('thead th')].entries()){
+        const customerColumn=(route==='customers'||route==='segments')&&th.dataset.column==='customer';
+        const minimum=customerColumn?Math.max(48,Number.parseFloat(getComputedStyle(th).minWidth)||0):48;
+        const clamp=width=>Math.max(minimum,Math.min(800,width));
+        const setWidth=width=>{th.style.width=th.style.minWidth=width+'px';};
+        const saved=Number(sizes[index]);
+        if(saved&&Number.isFinite(saved))setWidth(customerColumn?clamp(saved):saved);
+        const handle=document.createElement('span');
+        handle.className='column-resizer';
+        handle.title='拖动调整列宽';
+        th.append(handle);
+        handle.onpointerdown=e=>{
+          e.preventDefault();
+          e.stopPropagation();
+          const start=e.clientX,width=th.getBoundingClientRect().width;
+          handle.setPointerCapture(e.pointerId);
+          handle.onpointermove=event=>{
+            const size=clamp(width+event.clientX-start);
+            setWidth(size);
+            sizes[index]=size;
+          };
+          handle.onpointerup=()=>{
+            handle.onpointermove=null;
+            writeLocal(key,sizes);
+          };
+        };
+      }
+    }
   }
   function businessEditButtons(){
     const h=host();if(!h||!['tickets','deposits'].includes(h.state.view))return;

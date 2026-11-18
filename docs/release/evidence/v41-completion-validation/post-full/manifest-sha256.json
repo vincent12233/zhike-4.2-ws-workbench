@@ -1,0 +1,138 @@
+{
+  "entries": [
+    {
+      "path": "package-final.log",
+      "archiveSha256": "3c1212447c2e8536f713cc2dfd72fc03f5a4b6cb0af44bd008fc067d8f407de4",
+      "archiveBytes": 1352,
+      "sources": [
+        {
+          "location": "main-repository",
+          "path": ".tools/v41-completion/package-final.log",
+          "sha256": "0c975f7d724d96eb182e96e7a8aa2bcd72674885d169ad1d1be05a43cec557d3",
+          "bytes": 1372
+        },
+        {
+          "location": "main-repository",
+          "path": ".tools/v41-completion/package-final.exit",
+          "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+          "bytes": 3
+        }
+      ],
+      "treatment": "Line endings normalized to LF. Independent command exit recorded in runs.json."
+    },
+    {
+      "path": "export-final.log",
+      "archiveSha256": "9ae4eaa4f7cc2f5d6661adc2e0436c1b0656d7632277bf0c40a9991c13804735",
+      "archiveBytes": 433,
+      "sources": [
+        {
+          "location": "main-repository",
+          "path": ".tools/v41-completion/export-final.log",
+          "sha256": "7f9c57bbd5144c15daa930c9926b81284b77c0f8765032e3d767930196bdc771",
+          "bytes": 444
+        },
+        {
+          "location": "main-repository",
+          "path": ".tools/v41-completion/export-final.exit",
+          "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+          "bytes": 3
+        }
+      ],
+      "treatment": "Line endings normalized to LF. Independent command exit recorded in runs.json."
+    },
+    {
+      "path": "settled-release-build.log",
+      "archiveSha256": "d76d6429e82354ddd938c38fea23640da597a7e3c584b8ac8c3650f70bd06000",
+      "archiveBytes": 200,
+      "sources": [
+        {
+          "location": "main-repository",
+          "path": ".tools/v41-completion/settled-release-build.log",
+          "sha256": "d6faf8f2adafaf6817cd5e850cf4ac6c9f0c1fce0d60b5761a4254f4358b546b",
+          "bytes": 299
+        },
+        {
+          "location": "main-repository",
+          "path": ".tools/v41-completion/settled-release-build.exit",
+          "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+          "bytes": 3
+        }
+      ],
+      "treatment": "Repository path redacted. Independent command exit and log write time recorded in runs.json."
+    },
+    {
+      "path": "runs.json",
+      "archiveSha256": "6bb1cdfbf80f58a3302f8f1970cb69c357435d81c970a57f64439447d2ac086b",
+      "archiveBytes": 2354,
+      "sources": [
+        {
+          "location": "main-repository",
+          "path": ".tools/v41-completion/package-final.log",
+          "sha256": "0c975f7d724d96eb182e96e7a8aa2bcd72674885d169ad1d1be05a43cec557d3",
+          "bytes": 1372
+        },
+        {
+          "location": "main-repository",
+          "path": ".tools/v41-completion/package-final.exit",
+          "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+          "bytes": 3
+        },
+        {
+          "location": "main-repository",
+          "path": ".tools/v41-completion/export-final.log",
+          "sha256": "7f9c57bbd5144c15daa930c9926b81284b77c0f8765032e3d767930196bdc771",
+          "bytes": 444
+        },
+        {
+          "location": "main-repository",
+          "path": ".tools/v41-completion/export-final.exit",
+          "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+          "bytes": 3
+        },
+        {
+          "location": "main-repository",
+          "path": "docs/release/v41-completion-sidecar-startup.md",
+          "sha256": "6ef5f67d8cdaba8df56aa2aedcff03b37e86a7d7d254713f093d23f3bfddd6bf",
+          "bytes": 3200
+        },
+        {
+          "location": "main-repository",
+          "path": ".tools/v41-completion/full-regression.log",
+          "sha256": "9e91a3d153c9fa6c5f52e2e5a046e9c7ae02f375201b13ee41ae2c6a5fa3a9e1",
+          "bytes": 109257
+        },
+        {
+          "location": "main-repository",
+          "path": ".tools/v41-completion/final-full-regression.log",
+          "sha256": "a9823aadbfbd1e9769ea495d1fa0cca0587143ca3c9f85b30fcf72d9a2e1fb66",
+          "bytes": 446426
+        },
+        {
+          "location": "capability-worktree",
+          "path": ".tools/v41-archive-summary-replay/data-archive-summary.log",
+          "sha256": "7fd25b5875ba57b32d2491d0cd7df8e4ee99143f662c3b1be38261154849fa04",
+          "bytes": 87
+        },
+        {
+          "location": "main-repository",
+          "path": "docs/release/evidence/v41-archive-summary-replay/run.json",
+          "sha256": "2e283b6fe771339eb9a530426459a82ca71034078668b776f2e844f35beda4af",
+          "bytes": 923
+        },
+        {
+          "location": "main-repository",
+          "path": ".tools/v41-completion/settled-release-build.log",
+          "sha256": "d6faf8f2adafaf6817cd5e850cf4ac6c9f0c1fce0d60b5761a4254f4358b546b",
+          "bytes": 299
+        },
+        {
+          "location": "main-repository",
+          "path": ".tools/v41-completion/settled-release-build.exit",
+          "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+          "bytes": 3
+        }
+      ],
+      "treatment": "Selected results, historical source links and known provenance limits."
+    }
+  ]
+}

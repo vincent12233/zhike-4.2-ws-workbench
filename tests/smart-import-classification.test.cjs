@@ -162,6 +162,20 @@ assert.equal(mixedMapping.product, 3);
 assert.equal(mixedMapping.direction, 4);
 assert.equal(api.inferRecordType({ recordType: '跟票', product: 'AAPL', direction: '买入', amount: '' }), 'ticket');
 assert.equal(api.inferRecordType({ recordType: '入金', product: '', direction: '', amount: '1500' }), 'deposit');
+const typedBusinessHeaders = ['客户号码', '记录类型', '业务日期', '金额', '股票代码', '买卖方向'];
+const typedBusinessRows = [
+  ['9876543250', '跟票', '2026-11-13', '800', 'AAPL', '买入'],
+  ['9876543251', '入金', '2026-11-14', '1500', '', ''],
+];
+const typedBusinessMapping = api.inferHeaderMapping(typedBusinessHeaders, typedBusinessRows);
+const typedBusinessSummary = api.summarizeImportBatch({
+  headers: typedBusinessHeaders,
+  rows: [typedBusinessHeaders, ...typedBusinessRows],
+  mapping: typedBusinessMapping,
+});
+assert.equal(typedBusinessSummary.mode, 'mixed');
+assert.equal(typedBusinessSummary.ticketRows, 1, 'a typed deposit row must not also appear as a ticket in preview');
+assert.equal(typedBusinessSummary.depositRows, 1, 'a typed ticket with purchase amount must not also appear as a deposit');
 const customerInterestMapping = api.inferHeaderMapping(['客户姓名', '联系人号码', '产品兴趣', '登记日期'], [
   ['李四', '9876543221', 'AAPL、ETF', '2026-11-12'],
 ]);

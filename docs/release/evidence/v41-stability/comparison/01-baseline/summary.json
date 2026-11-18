@@ -1,0 +1,61 @@
+{
+  "mode": "baseline",
+  "evidence": "[STABILITY_WORKTREE]\\.tools\\v41-edge-investigation\\targets\\baseline-kcGm9S",
+  "code": 0,
+  "status": "Passed",
+  "elapsedMs": 4128,
+  "timeoutMs": 30000,
+  "resultSha256": "9aa006d55d26f227de0b550e656066e44f30f3da72d1ed00641d87efd711675a",
+  "events": [
+    {
+      "event": "experiment-launch-pages",
+      "elapsedMs": 1180,
+      "count": 1,
+      "fixture": false,
+      "launchBlank": true,
+      "other": 0
+    },
+    {
+      "event": "result-verified",
+      "elapsedMs": 3098,
+      "cases": 6
+    },
+    {
+      "event": "experiment-before-fixture-close",
+      "elapsedMs": 3199,
+      "count": 2,
+      "fixture": true,
+      "launchBlank": true,
+      "other": 0
+    },
+    {
+      "event": "experiment-before-browser-close",
+      "elapsedMs": 3224,
+      "count": 1,
+      "fixture": false,
+      "launchBlank": true,
+      "other": 0
+    },
+    {
+      "event": "browser-close-acknowledged",
+      "elapsedMs": 3226,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "cdp-transport-closed",
+      "elapsedMs": 3230,
+      "code": 1000
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 4043,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 4052
+    }
+  ],
+  "outstanding": 0
+}

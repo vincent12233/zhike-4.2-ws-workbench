@@ -1,0 +1,29 @@
+[
+  {
+    "case": "control",
+    "event": "identity-confirmed",
+    "atUnixMs": 1794977634384,
+    "pid": 8876,
+    "startedTicks": "639305744323235553",
+    "deadlineUnixMs": 1794977640318,
+    "elapsedMs": 2066
+  },
+  {
+    "case": "control",
+    "event": "close-requested",
+    "atUnixMs": 1794977635299,
+    "elapsedMs": 2067
+  },
+  {
+    "case": "control",
+    "event": "process-exit",
+    "atUnixMs": 1794977636427,
+    "elapsedMs": 4109
+  },
+  {
+    "case": "control",
+    "event": "streams-close",
+    "atUnixMs": 1794977636429,
+    "elapsedMs": 4111
+  }
+]

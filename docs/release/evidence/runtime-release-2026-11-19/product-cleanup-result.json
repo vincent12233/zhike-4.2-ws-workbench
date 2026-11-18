@@ -1,0 +1,48 @@
+{
+  "scope": "only this observed isolated process tree",
+  "normalShutdownAcceptance": "NotTested; CUA blocked",
+  "processes": [
+    {
+      "pid": 16004,
+      "name": "Zhike.Stage51.Acceptance",
+      "identityVerified": true,
+      "controlledTermination": true,
+      "exited": true
+    },
+    {
+      "pid": 13608,
+      "name": "msedgewebview2",
+      "identityVerified": true,
+      "controlledTermination": true,
+      "exited": true
+    },
+    {
+      "pid": 18360,
+      "name": "msedgewebview2",
+      "identityVerified": true,
+      "controlledTermination": true,
+      "exited": true
+    },
+    {
+      "pid": 20036,
+      "name": "msedgewebview2",
+      "identityVerified": true,
+      "controlledTermination": true,
+      "exited": true
+    },
+    {
+      "pid": 21092,
+      "name": "conhost",
+      "identityVerified": true,
+      "controlledTermination": true,
+      "exited": true
+    },
+    {
+      "pid": 30676,
+      "name": "node",
+      "identityVerified": true,
+      "controlledTermination": true,
+      "exited": true
+    }
+  ]
+}

@@ -1,0 +1,529 @@
+{
+  "stage": "5.2",
+  "baseline": "37449b2",
+  "diagnosticSequences": [
+    {
+      "name": "unmodified-baseline",
+      "classification": "Valid original control path: timeout at rotation.begin",
+      "source": ".tools\\stage52-worker-raw\\baseline-cc10cd3b-14f5-430b-9bec-b154dc61d431\\results.json",
+      "sourceSha256": "5d0faebbb1da7b04b341f9abbfdaf7e9b61eb97e5bda66eb068985d94aec7b6a",
+      "planned": 20,
+      "executed": 2,
+      "passed": 1,
+      "failed": 1,
+      "runs": [
+        {
+          "index": 1,
+          "passed": true,
+          "elapsedMs": 3327,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 2,
+          "passed": false,
+          "elapsedMs": 120020,
+          "lastPhase": "rotation.begin",
+          "errorCode": "ETIMEDOUT",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "name": "unsafe-diagnostic-observer",
+      "classification": "Excluded from product root-cause proof: observer IO could leak an acquired gate before try/finally",
+      "source": ".tools\\stage52-worker-raw\\diagnosed-baseline-3c0f4b47-6aa0-41e1-bdca-f1c184a7e939\\results.json",
+      "sourceSha256": "758cc16c86ee86e164027ee4fa2d303f0143723378a98a60182f2f4c02cc1d8a",
+      "planned": 20,
+      "executed": 1,
+      "passed": 0,
+      "failed": 1,
+      "runs": [
+        {
+          "index": 1,
+          "passed": false,
+          "elapsedMs": 120016,
+          "lastPhase": "supervisor.heartbeat.gate.wait",
+          "errorCode": "ETIMEDOUT",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "name": "safe-diagnostic-baseline",
+      "classification": "Valid trace: monitor waits for heartbeat caller-cancel write without a deadline",
+      "source": ".tools\\stage52-worker-raw\\safe-diagnosed-baseline-8ed8cf8e-7abd-4a00-841f-cc3ffffc8ead\\results.json",
+      "sourceSha256": "4485e39ab2e8db54a9c45cdc331f07e1d27282f93bf156512dc4aa3fd1afdf19",
+      "planned": 20,
+      "executed": 8,
+      "passed": 7,
+      "failed": 1,
+      "runs": [
+        {
+          "index": 1,
+          "passed": true,
+          "elapsedMs": 3302,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 2,
+          "passed": true,
+          "elapsedMs": 6016,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 3,
+          "passed": true,
+          "elapsedMs": 4800,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 4,
+          "passed": true,
+          "elapsedMs": 3513,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 5,
+          "passed": true,
+          "elapsedMs": 3093,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 6,
+          "passed": true,
+          "elapsedMs": 3565,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 7,
+          "passed": true,
+          "elapsedMs": 6055,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 8,
+          "passed": false,
+          "elapsedMs": 120024,
+          "lastPhase": "supervisor.heartbeat.caller.cancel.begin",
+          "errorCode": "ETIMEDOUT",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "name": "first-write-boundary-fix",
+      "classification": "Retained failure: invalid pipe left an owned process, rotation did not restart it",
+      "source": ".tools\\stage52-worker-raw\\fixed-02130c3c-2c9d-4060-93a3-17f1a74ebeb9\\results.json",
+      "sourceSha256": "b35d26c464316988fc8df7220b80b7d206458f9ca281e312ca7075c07220eb85",
+      "planned": 20,
+      "executed": 7,
+      "passed": 6,
+      "failed": 1,
+      "runs": [
+        {
+          "index": 1,
+          "passed": true,
+          "elapsedMs": 7345,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 2,
+          "passed": true,
+          "elapsedMs": 3161,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 3,
+          "passed": true,
+          "elapsedMs": 3181,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 4,
+          "passed": true,
+          "elapsedMs": 3197,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 5,
+          "passed": true,
+          "elapsedMs": 3227,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 6,
+          "passed": true,
+          "elapsedMs": 3172,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 7,
+          "passed": false,
+          "elapsedMs": 2236,
+          "lastPhase": "supervisor.process.exited",
+          "errorCode": null,
+          "stderrSha256": "f645a1d20aade70bbc27119ff6fee21e4204a374678b82c78d39792c23f4a8d1"
+        }
+      ]
+    },
+    {
+      "name": "synchronous-trace-perturbation",
+      "classification": "Retained fast failure with multi-second synchronous trace/scheduling gap; not used as final acceptance",
+      "source": ".tools\\stage52-worker-raw\\fixed-recovery-d68ed568-653c-42b9-a8f8-871a1390c378\\results.json",
+      "sourceSha256": "26fefb8ed10f2234f6e40236203536eba57cccb031b68b5c579583bc54f272da",
+      "planned": 20,
+      "executed": 14,
+      "passed": 13,
+      "failed": 1,
+      "runs": [
+        {
+          "index": 1,
+          "passed": true,
+          "elapsedMs": 7529,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 2,
+          "passed": true,
+          "elapsedMs": 6283,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 3,
+          "passed": true,
+          "elapsedMs": 6664,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 4,
+          "passed": true,
+          "elapsedMs": 13338,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 5,
+          "passed": true,
+          "elapsedMs": 10160,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 6,
+          "passed": true,
+          "elapsedMs": 7353,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 7,
+          "passed": true,
+          "elapsedMs": 18602,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 8,
+          "passed": true,
+          "elapsedMs": 6467,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 9,
+          "passed": true,
+          "elapsedMs": 15873,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 10,
+          "passed": true,
+          "elapsedMs": 5525,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 11,
+          "passed": true,
+          "elapsedMs": 8329,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 12,
+          "passed": true,
+          "elapsedMs": 10086,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 13,
+          "passed": true,
+          "elapsedMs": 9746,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 14,
+          "passed": false,
+          "elapsedMs": 6270,
+          "lastPhase": "runtime.monitor.await.end",
+          "errorCode": null,
+          "stderrSha256": "4bed9c1f2efec741a4cd2c11796e4b2402c536b2402c9013ea877c93a39e5a17"
+        }
+      ]
+    },
+    {
+      "name": "final-no-fine-trace",
+      "classification": "Final uninterrupted 20-run sequence after both fixes; fine observer and file IO disabled",
+      "source": ".tools\\stage52-worker-raw\\fixed-no-trace-b85b6e94-1be5-4259-900b-63ea52e48e5a\\results.json",
+      "sourceSha256": "0942b22480b4e04e0d137681909e48a98586174cf8bcbf5496fa0e6c5af155b0",
+      "planned": 20,
+      "executed": 20,
+      "passed": 20,
+      "failed": 0,
+      "runs": [
+        {
+          "index": 1,
+          "passed": true,
+          "elapsedMs": 3866,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 2,
+          "passed": true,
+          "elapsedMs": 3493,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 3,
+          "passed": true,
+          "elapsedMs": 4228,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 4,
+          "passed": true,
+          "elapsedMs": 4965,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 5,
+          "passed": true,
+          "elapsedMs": 5663,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 6,
+          "passed": true,
+          "elapsedMs": 4604,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 7,
+          "passed": true,
+          "elapsedMs": 4249,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 8,
+          "passed": true,
+          "elapsedMs": 3410,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 9,
+          "passed": true,
+          "elapsedMs": 3484,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 10,
+          "passed": true,
+          "elapsedMs": 3378,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 11,
+          "passed": true,
+          "elapsedMs": 3760,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 12,
+          "passed": true,
+          "elapsedMs": 3598,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 13,
+          "passed": true,
+          "elapsedMs": 5239,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 14,
+          "passed": true,
+          "elapsedMs": 4630,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 15,
+          "passed": true,
+          "elapsedMs": 3398,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 16,
+          "passed": true,
+          "elapsedMs": 3379,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 17,
+          "passed": true,
+          "elapsedMs": 3506,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 18,
+          "passed": true,
+          "elapsedMs": 4273,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 19,
+          "passed": true,
+          "elapsedMs": 3479,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "index": 20,
+          "passed": true,
+          "elapsedMs": 3608,
+          "lastPhase": "dispose.end",
+          "errorCode": null,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    }
+  ],
+  "concurrent": {
+    "sourceSha256": "87fecd9ddf8bdfffb111a3414393872705c50e727f592c1544db8d49123b1dbd",
+    "source": ".tools\\stage52-worker-raw\\concurrent-6105265e-e0c0-4138-937a-89719aa35eaa\\results.json",
+    "passed": 4,
+    "failed": 0,
+    "runs": [
+      {
+        "index": 1,
+        "elapsedMs": 3385,
+        "passed": true,
+        "errorCode": null
+      },
+      {
+        "index": 2,
+        "elapsedMs": 4254,
+        "passed": true,
+        "errorCode": null
+      },
+      {
+        "index": 3,
+        "elapsedMs": 4251,
+        "passed": true,
+        "errorCode": null
+      },
+      {
+        "index": 4,
+        "elapsedMs": 3475,
+        "passed": true,
+        "errorCode": null
+      }
+    ],
+    "processes": 4
+  },
+  "productionWorkerStarted": false,
+  "productionDatabaseOpened": false
+}

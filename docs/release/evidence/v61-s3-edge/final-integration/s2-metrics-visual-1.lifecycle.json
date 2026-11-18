@@ -1,0 +1,1334 @@
+{
+  "schemaVersion": 2,
+  "invocation": "1795013121429-1ef378be-0c94-47c9-8e31-3c431a09606b",
+  "mode": "real-edge-synthetic-layout",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Passed",
+  "timeoutMs": 30000,
+  "launchedAt": "2026-11-18T14:45:21.427Z",
+  "timebase": "node-monotonic-ms",
+  "startedMonotonicMs": 99.8407,
+  "events": [
+    {
+      "event": "process-spawned",
+      "elapsedMs": 13.704000000000008,
+      "pid": 30284
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 24.823700000000002,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 1017.6084000000001,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 1017.9198000000001
+    },
+    {
+      "event": "cdp-ready",
+      "elapsedMs": 1079.9476
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 1085.9318,
+      "phase": "observation",
+      "count": 10
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 1161.9129,
+      "phase": "observation",
+      "count": 10
+    },
+    {
+      "event": "owned-target-created",
+      "elapsedMs": 1210.727
+    },
+    {
+      "event": "owned-session-attached",
+      "elapsedMs": 1221.3501
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1231.7261,
+      "name": "DOMContentLoaded",
+      "loaderId": "DC7F0CBCC6D337118A39BC17139E1547",
+      "frameId": "604CD8A5E2F7155F6EF044984DA59ABF"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1232.24,
+      "name": "load",
+      "loaderId": "DC7F0CBCC6D337118A39BC17139E1547",
+      "frameId": "604CD8A5E2F7155F6EF044984DA59ABF"
+    },
+    {
+      "event": "navigation-started",
+      "elapsedMs": 1238.0788
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 1238.2605,
+      "phase": "navigation-response"
+    },
+    {
+      "event": "navigation-request-sent",
+      "elapsedMs": 1238.9767,
+      "commandId": 8
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1256.8864,
+      "state": "started",
+      "frameId": "604CD8A5E2F7155F6EF044984DA59ABF"
+    },
+    {
+      "event": "navigation-response-received",
+      "elapsedMs": 1271.1911,
+      "commandId": 8,
+      "loaderId": "5DE0E7AD42F895770389C45603F0F981",
+      "frameId": "604CD8A5E2F7155F6EF044984DA59ABF",
+      "protocolError": false,
+      "navigationError": false
+    },
+    {
+      "event": "cdp-work-completed",
+      "elapsedMs": 1271.2378,
+      "phase": "navigation-response"
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 1271.2477000000001,
+      "phase": "navigation-load"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1279.8557,
+      "name": "init",
+      "loaderId": "5DE0E7AD42F895770389C45603F0F981",
+      "frameId": "604CD8A5E2F7155F6EF044984DA59ABF"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1298.1842,
+      "name": "init",
+      "loaderId": "3966E905CC11700CB0CE03615DAB72C4",
+      "frameId": "6F8636372F59E9F74E6C73C37AC1B274"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1299.3953000000001,
+      "state": "started",
+      "frameId": "6F8636372F59E9F74E6C73C37AC1B274"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1302.3727000000001,
+      "name": "init",
+      "loaderId": "0540634511D55860629F6880E593594A",
+      "frameId": "4CE71F152AB35723CD1F6343B3188FD4"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1303.9491,
+      "state": "started",
+      "frameId": "4CE71F152AB35723CD1F6343B3188FD4"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1306.9493,
+      "name": "init",
+      "loaderId": "2BEF1356F6166C3758E7880FF46B20F6",
+      "frameId": "53B8B555F6D5BD73107396F74A732199"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1308.383,
+      "state": "started",
+      "frameId": "53B8B555F6D5BD73107396F74A732199"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1311.5663,
+      "name": "init",
+      "loaderId": "EA90E68971F18E783DE16447275FC4E2",
+      "frameId": "A67AD496AF5D4029DC31DFB58677710F"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1312.7092,
+      "state": "started",
+      "frameId": "A67AD496AF5D4029DC31DFB58677710F"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1314.9783,
+      "name": "DOMContentLoaded",
+      "loaderId": "5DE0E7AD42F895770389C45603F0F981",
+      "frameId": "604CD8A5E2F7155F6EF044984DA59ABF"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1343.0312000000001,
+      "name": "init",
+      "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+      "frameId": "6F8636372F59E9F74E6C73C37AC1B274"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1355.4849,
+      "name": "init",
+      "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+      "frameId": "4CE71F152AB35723CD1F6343B3188FD4"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1367.3618000000001,
+      "name": "init",
+      "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+      "frameId": "53B8B555F6D5BD73107396F74A732199"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1378.233,
+      "name": "init",
+      "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+      "frameId": "A67AD496AF5D4029DC31DFB58677710F"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1696.2699,
+      "state": "stopped",
+      "frameId": "6F8636372F59E9F74E6C73C37AC1B274"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1705.2505,
+      "state": "stopped",
+      "frameId": "A67AD496AF5D4029DC31DFB58677710F"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1709.0835,
+      "state": "stopped",
+      "frameId": "4CE71F152AB35723CD1F6343B3188FD4"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1710.8534,
+      "state": "stopped",
+      "frameId": "53B8B555F6D5BD73107396F74A732199"
+    },
+    {
+      "event": "navigation-lifecycle-received",
+      "elapsedMs": 1711.6226,
+      "name": "load",
+      "loaderId": "5DE0E7AD42F895770389C45603F0F981",
+      "frameId": "604CD8A5E2F7155F6EF044984DA59ABF"
+    },
+    {
+      "event": "cdp-work-completed",
+      "elapsedMs": 1711.6839,
+      "phase": "navigation-load"
+    },
+    {
+      "event": "navigation-load-matched",
+      "elapsedMs": 1711.7022,
+      "loaderId": "5DE0E7AD42F895770389C45603F0F981",
+      "frameId": "604CD8A5E2F7155F6EF044984DA59ABF"
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 1711.7151000000001,
+      "phase": "matrix-result"
+    },
+    {
+      "event": "navigation-frame-load",
+      "elapsedMs": 1714.075,
+      "state": "stopped",
+      "frameId": "604CD8A5E2F7155F6EF044984DA59ABF"
+    },
+    {
+      "event": "cdp-work-completed",
+      "elapsedMs": 1718.7363,
+      "phase": "matrix-result"
+    },
+    {
+      "event": "result-validation-started",
+      "elapsedMs": 1718.7465
+    },
+    {
+      "event": "result-verified",
+      "elapsedMs": 1720.587,
+      "cases": 4
+    },
+    {
+      "event": "cdp-work-started",
+      "elapsedMs": 1720.5971,
+      "phase": "result-process-identities"
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 1723.7106,
+      "phase": "observation",
+      "count": 14
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 1822.9609,
+      "phase": "observation",
+      "count": 14
+    },
+    {
+      "event": "cdp-work-completed",
+      "elapsedMs": 1823.06,
+      "phase": "result-process-identities"
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 1823.0845
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 1823.0859
+    },
+    {
+      "event": "owned-session-detached",
+      "elapsedMs": 1824.8258
+    },
+    {
+      "event": "owned-target-close-confirmed",
+      "elapsedMs": 1825.7649000000001
+    },
+    {
+      "event": "owned-browser-close-requested",
+      "elapsedMs": 1825.7681
+    },
+    {
+      "event": "browser-close-request-sent",
+      "elapsedMs": 1826.0716,
+      "commandId": 13
+    },
+    {
+      "event": "browser-close-response-received",
+      "elapsedMs": 1851.5617,
+      "commandId": 13,
+      "protocolError": false
+    },
+    {
+      "event": "browser-close-acknowledged",
+      "elapsedMs": 1851.6056,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "cdp-transport-close-requested",
+      "elapsedMs": 1851.7138
+    },
+    {
+      "event": "cdp-transport-closed",
+      "elapsedMs": 1855.5952,
+      "code": 1000
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 1855.7466,
+      "acknowledgement": "protocol-response"
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 3152.8228,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 3162.2693
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 3162.3727999999996,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 3162.4033999999997
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 3162.4721999999997
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 3162.5964,
+      "phase": "release",
+      "count": 13
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 3279.1937,
+      "phase": "release",
+      "count": 0
+    },
+    {
+      "event": "node-release-state",
+      "elapsedMs": 3279.2879,
+      "exitObserved": true,
+      "closeObserved": true,
+      "stdoutCloseObserved": true,
+      "stderrCloseObserved": true,
+      "exitCode": 0,
+      "signalCode": null
+    },
+    {
+      "event": "identity-probe-closed",
+      "elapsedMs": 3308.477
+    },
+    {
+      "event": "runner-lifecycle-complete",
+      "elapsedMs": 3309.0051,
+      "cleanupSafe": true,
+      "forceTerminated": false
+    },
+    {
+      "event": "runner-final",
+      "elapsedMs": 3311.2808,
+      "status": "Passed",
+      "cleanupSafe": true,
+      "forceTerminated": false
+    }
+  ],
+  "identities": [
+    {
+      "pid": 30284,
+      "startedTicks": "639306099214365707",
+      "startedUtc": "2026-11-18T14:45:21.4365707Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 39016,
+      "startedTicks": "639306099223019799",
+      "startedUtc": "2026-11-18T14:45:22.3019799Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 15084,
+      "startedTicks": "639306099222980220",
+      "startedUtc": "2026-11-18T14:45:22.2980220Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 1656,
+      "startedTicks": "639306099222913784",
+      "startedUtc": "2026-11-18T14:45:22.2913784Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 18416,
+      "startedTicks": "639306099222629371",
+      "startedUtc": "2026-11-18T14:45:22.2629371Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 2088,
+      "startedTicks": "639306099222802323",
+      "startedUtc": "2026-11-18T14:45:22.2802323Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 13520,
+      "startedTicks": "639306099222024509",
+      "startedUtc": "2026-11-18T14:45:22.2024509Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 8432,
+      "startedTicks": "639306099218891246",
+      "startedUtc": "2026-11-18T14:45:21.8891246Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 35760,
+      "startedTicks": "639306099218942469",
+      "startedUtc": "2026-11-18T14:45:21.8942469Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 23584,
+      "startedTicks": "639306099219494878",
+      "startedUtc": "2026-11-18T14:45:21.9494878Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 28008,
+      "startedTicks": "639306099230284581",
+      "startedUtc": "2026-11-18T14:45:23.0284581Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 21788,
+      "startedTicks": "639306099230236627",
+      "startedUtc": "2026-11-18T14:45:23.0236627Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 17092,
+      "startedTicks": "639306099225973780",
+      "startedUtc": "2026-11-18T14:45:22.5973780Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 31740,
+      "startedTicks": "639306099228199862",
+      "startedUtc": "2026-11-18T14:45:22.8199862Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "profile": "<temp>/zhike-s2-metrics-style-ObMHGY/edge-profile-e9ba3587-1bbd-43c8-8748-2fcaf7218fdf",
+  "pid": 30284,
+  "kernelObserver": {
+    "file": "<local-user>/Documents/Codex/2026-11-04/new-chat/work/project-review/知客 4.1 运营增强版/.tools/delivery-s2-metrics-visual/1795013121429-1ef378be-0c94-47c9-8e31-3c431a09606b.kernel.jsonl",
+    "pid": 35988
+  },
+  "identityProbePid": 41932,
+  "resourceReleaseOrder": "owned-session-target-browser",
+  "devToolsReadiness": {
+    "polls": 1,
+    "enoent": 0,
+    "ebusy": 0,
+    "partial": 0
+  },
+  "navigationResources": {
+    "limit": 512,
+    "omitted": 0,
+    "requests": [
+      {
+        "resource": "<fixture>/matrix.html",
+        "requestedMs": 1259.4007000000001,
+        "frameId": "604CD8A5E2F7155F6EF044984DA59ABF",
+        "loaderId": "5DE0E7AD42F895770389C45603F0F981",
+        "responseMs": 1270.8988,
+        "status": 200,
+        "finishedMs": 1297.335
+      },
+      {
+        "resource": "<fixture>/fixture.html",
+        "requestedMs": 1300.3575,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1324.1891,
+        "status": 200,
+        "finishedMs": 1355.1943
+      },
+      {
+        "resource": "<fixture>/fixture.html",
+        "requestedMs": 1304.5491,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1333.5141,
+        "status": 200,
+        "finishedMs": 1387.8413
+      },
+      {
+        "resource": "<fixture>/fixture.html",
+        "requestedMs": 1309.2616,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1338.5588,
+        "status": 200,
+        "finishedMs": 1388.0256
+      },
+      {
+        "resource": "<fixture>/fixture.html",
+        "requestedMs": 1313.3736000000001,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1340.7823,
+        "status": 200,
+        "finishedMs": 1393.4521
+      },
+      {
+        "resource": "<app>/styles.css",
+        "requestedMs": 1346.4485,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1388.4049,
+        "status": 200,
+        "finishedMs": 1428.7277000000001
+      },
+      {
+        "resource": "<app>/modules/v4.css",
+        "requestedMs": 1347.1633,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1388.8084000000001,
+        "status": 200,
+        "finishedMs": 1428.9557
+      },
+      {
+        "resource": "<app>/modules/gpt-assistant.css",
+        "requestedMs": 1347.7807,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1389.2936,
+        "status": 200,
+        "finishedMs": 1429.1602
+      },
+      {
+        "resource": "<app>/modules/gpt-workbench.css",
+        "requestedMs": 1348.5058000000001,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1391.0358,
+        "status": 200,
+        "finishedMs": 1429.3537000000001
+      },
+      {
+        "resource": "<app>/modules/gpt-modern.css",
+        "requestedMs": 1348.9283,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1393.8082,
+        "status": 200,
+        "finishedMs": 1429.8797
+      },
+      {
+        "resource": "<app>/modules/gpt-management.css",
+        "requestedMs": 1349.6343,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1395.4453,
+        "status": 200,
+        "finishedMs": 1395.919
+      },
+      {
+        "resource": "<app>/modules/phone-registry.css",
+        "requestedMs": 1350.1452,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1397.7407,
+        "status": 200,
+        "finishedMs": 1430.1397
+      },
+      {
+        "resource": "<app>/modules/business-enhancements.css",
+        "requestedMs": 1350.4856,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1399.7933,
+        "status": 200,
+        "finishedMs": 1430.3327
+      },
+      {
+        "resource": "<app>/modules/v41-ui.css",
+        "requestedMs": 1350.8372,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1402.3768,
+        "status": 200,
+        "finishedMs": 1430.4959000000001
+      },
+      {
+        "resource": "<app>/modules/operations-upgrade.css",
+        "requestedMs": 1351.1325,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1404.1503,
+        "status": 200,
+        "finishedMs": 1430.6960000000001
+      },
+      {
+        "resource": "<app>/modules/ui-refresh.css",
+        "requestedMs": 1351.4894,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1406.0289,
+        "status": 200,
+        "finishedMs": 1430.9695
+      },
+      {
+        "resource": "<app>/modules/ws-workbench.css",
+        "requestedMs": 1352.0235,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1407.6349,
+        "status": 200,
+        "finishedMs": 1431.2111
+      },
+      {
+        "resource": "<app>/modules/design-system.css",
+        "requestedMs": 1352.4733,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1410.2244,
+        "status": 200,
+        "finishedMs": 1432.2864
+      },
+      {
+        "resource": "<app>/modules/horizon-atelier.css",
+        "requestedMs": 1352.7572,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1412.5709,
+        "status": 200,
+        "finishedMs": 1433.2519
+      },
+      {
+        "resource": "<app>/modules/business-6.css",
+        "requestedMs": 1353.0113000000001,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1415.3331,
+        "status": 200,
+        "finishedMs": 1433.6954
+      },
+      {
+        "resource": "<app>/modules/operations-6.css",
+        "requestedMs": 1353.4031,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1417.7296000000001,
+        "status": 200,
+        "finishedMs": 1434.6793
+      },
+      {
+        "resource": "<app>/modules/global-6.css",
+        "requestedMs": 1353.7242,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1420.1683,
+        "status": 200,
+        "finishedMs": 1434.8398
+      },
+      {
+        "resource": "<app>/modules/home-6.css",
+        "requestedMs": 1354.0481,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1423.9548,
+        "status": 200,
+        "finishedMs": 1435.075
+      },
+      {
+        "resource": "<app>/modules/scroll-system.css",
+        "requestedMs": 1354.3998000000001,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1425.9445,
+        "status": 200,
+        "finishedMs": 1435.2976
+      },
+      {
+        "resource": "<app>/assets/zhike-horizon-logo.png",
+        "requestedMs": 1354.9266,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1427.8398,
+        "status": 200,
+        "finishedMs": 1435.6921
+      },
+      {
+        "resource": "<app>/styles.css",
+        "requestedMs": 1358.3669,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1390.1168,
+        "status": 200,
+        "finishedMs": 1440.5501
+      },
+      {
+        "resource": "<app>/modules/v4.css",
+        "requestedMs": 1358.9080000000001,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1392.3673000000001,
+        "status": 200,
+        "finishedMs": 1441.2554
+      },
+      {
+        "resource": "<app>/modules/gpt-assistant.css",
+        "requestedMs": 1359.3227,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1395.0789,
+        "status": 200,
+        "finishedMs": 1442.0984
+      },
+      {
+        "resource": "<app>/modules/gpt-workbench.css",
+        "requestedMs": 1359.7747,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1397.2272,
+        "status": 200,
+        "finishedMs": 1442.3673000000001
+      },
+      {
+        "resource": "<app>/modules/gpt-modern.css",
+        "requestedMs": 1360.1803,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1398.8955,
+        "status": 200,
+        "finishedMs": 1442.8712
+      },
+      {
+        "resource": "<app>/modules/gpt-management.css",
+        "requestedMs": 1360.6003,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1401.6597,
+        "status": 200,
+        "finishedMs": 1402.1392
+      },
+      {
+        "resource": "<app>/modules/phone-registry.css",
+        "requestedMs": 1361.0034,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1404.6155,
+        "status": 200,
+        "finishedMs": 1443.8128
+      },
+      {
+        "resource": "<app>/modules/business-enhancements.css",
+        "requestedMs": 1361.6536,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1406.5503,
+        "status": 200,
+        "finishedMs": 1444.5275
+      },
+      {
+        "resource": "<app>/modules/v41-ui.css",
+        "requestedMs": 1361.9967,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1409.7644,
+        "status": 200,
+        "finishedMs": 1445.1043
+      },
+      {
+        "resource": "<app>/modules/operations-upgrade.css",
+        "requestedMs": 1362.46,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1411.953,
+        "status": 200,
+        "finishedMs": 1445.6987
+      },
+      {
+        "resource": "<app>/modules/ui-refresh.css",
+        "requestedMs": 1362.9962,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1414.3982,
+        "status": 200,
+        "finishedMs": 1446.5065
+      },
+      {
+        "resource": "<app>/modules/ws-workbench.css",
+        "requestedMs": 1363.5213,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1417.1490000000001,
+        "status": 200,
+        "finishedMs": 1447.2595000000001
+      },
+      {
+        "resource": "<app>/modules/design-system.css",
+        "requestedMs": 1363.9904000000001,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1419.6832,
+        "status": 200,
+        "finishedMs": 1447.7441000000001
+      },
+      {
+        "resource": "<app>/modules/horizon-atelier.css",
+        "requestedMs": 1364.4134000000001,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1422.0164,
+        "status": 200,
+        "finishedMs": 1448.5114
+      },
+      {
+        "resource": "<app>/modules/business-6.css",
+        "requestedMs": 1364.8324,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1424.3996,
+        "status": 200,
+        "finishedMs": 1449.7543
+      },
+      {
+        "resource": "<app>/modules/operations-6.css",
+        "requestedMs": 1365.189,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1426.5199,
+        "status": 200,
+        "finishedMs": 1450.7162
+      },
+      {
+        "resource": "<app>/modules/global-6.css",
+        "requestedMs": 1365.4829,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1428.2193,
+        "status": 200,
+        "finishedMs": 1453.5222
+      },
+      {
+        "resource": "<app>/modules/home-6.css",
+        "requestedMs": 1365.8459,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1433.8997,
+        "status": 200,
+        "finishedMs": 1434.394
+      },
+      {
+        "resource": "<app>/modules/scroll-system.css",
+        "requestedMs": 1366.305,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1437.2133000000001,
+        "status": 200,
+        "finishedMs": 1437.7153
+      },
+      {
+        "resource": "<app>/assets/zhike-horizon-logo.png",
+        "requestedMs": 1366.7939000000001,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1438.742,
+        "status": 200,
+        "finishedMs": 1439.1991
+      },
+      {
+        "resource": "<app>/styles.css",
+        "requestedMs": 1368.9581,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1390.6102,
+        "status": 200,
+        "finishedMs": 1439.4734
+      },
+      {
+        "resource": "<app>/modules/v4.css",
+        "requestedMs": 1369.4189000000001,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1393.0382,
+        "status": 200,
+        "finishedMs": 1440.7827
+      },
+      {
+        "resource": "<app>/modules/gpt-assistant.css",
+        "requestedMs": 1369.8702,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1394.7043,
+        "status": 200,
+        "finishedMs": 1441.5195
+      },
+      {
+        "resource": "<app>/modules/gpt-workbench.css",
+        "requestedMs": 1370.3331,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1396.6721,
+        "status": 200,
+        "finishedMs": 1442.6817
+      },
+      {
+        "resource": "<app>/modules/gpt-modern.css",
+        "requestedMs": 1370.7987,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1399.3329,
+        "status": 200,
+        "finishedMs": 1443.2778
+      },
+      {
+        "resource": "<app>/modules/gpt-management.css",
+        "requestedMs": 1371.289,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1400.7450000000001,
+        "status": 200,
+        "finishedMs": 1401.2662
+      },
+      {
+        "resource": "<app>/modules/phone-registry.css",
+        "requestedMs": 1371.7097,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1403.5896,
+        "status": 200,
+        "finishedMs": 1444.0097
+      },
+      {
+        "resource": "<app>/modules/business-enhancements.css",
+        "requestedMs": 1372.1545,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1405.5835,
+        "status": 200,
+        "finishedMs": 1444.7275
+      },
+      {
+        "resource": "<app>/modules/v41-ui.css",
+        "requestedMs": 1372.5257000000001,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1408.0912,
+        "status": 200,
+        "finishedMs": 1445.4525
+      },
+      {
+        "resource": "<app>/modules/operations-upgrade.css",
+        "requestedMs": 1373.0036,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1410.9195,
+        "status": 200,
+        "finishedMs": 1446.2735
+      },
+      {
+        "resource": "<app>/modules/ui-refresh.css",
+        "requestedMs": 1373.7523,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1413.9381,
+        "status": 200,
+        "finishedMs": 1446.9165
+      },
+      {
+        "resource": "<app>/modules/ws-workbench.css",
+        "requestedMs": 1374.2925,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1416.3698,
+        "status": 200,
+        "finishedMs": 1447.9512
+      },
+      {
+        "resource": "<app>/modules/design-system.css",
+        "requestedMs": 1374.6957,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1418.6781,
+        "status": 200,
+        "finishedMs": 1449.318
+      },
+      {
+        "resource": "<app>/modules/horizon-atelier.css",
+        "requestedMs": 1375.0174,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1421.1722,
+        "status": 200,
+        "finishedMs": 1449.9634
+      },
+      {
+        "resource": "<app>/modules/business-6.css",
+        "requestedMs": 1375.4599,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1423.4176,
+        "status": 200,
+        "finishedMs": 1451.6469
+      },
+      {
+        "resource": "<app>/modules/operations-6.css",
+        "requestedMs": 1375.8823,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1425.361,
+        "status": 200,
+        "finishedMs": 1453.9656
+      },
+      {
+        "resource": "<app>/modules/global-6.css",
+        "requestedMs": 1376.4172,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1427.328,
+        "status": 200,
+        "finishedMs": 1454.8166
+      },
+      {
+        "resource": "<app>/modules/home-6.css",
+        "requestedMs": 1376.8842,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1431.4213,
+        "status": 200,
+        "finishedMs": 1431.8868
+      },
+      {
+        "resource": "<app>/modules/scroll-system.css",
+        "requestedMs": 1377.386,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1435.9352000000001,
+        "status": 200,
+        "finishedMs": 1436.406
+      },
+      {
+        "resource": "<app>/assets/zhike-horizon-logo.png",
+        "requestedMs": 1377.8709000000001,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1437.9725,
+        "status": 200,
+        "finishedMs": 1438.5454
+      },
+      {
+        "resource": "<app>/styles.css",
+        "requestedMs": 1379.484,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1391.6185,
+        "status": 200,
+        "finishedMs": 1441.0264
+      },
+      {
+        "resource": "<app>/modules/v4.css",
+        "requestedMs": 1379.8944000000001,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1394.2881,
+        "status": 200,
+        "finishedMs": 1441.865
+      },
+      {
+        "resource": "<app>/modules/gpt-assistant.css",
+        "requestedMs": 1380.2367,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1396.0622,
+        "status": 200,
+        "finishedMs": 1442.1891
+      },
+      {
+        "resource": "<app>/modules/gpt-workbench.css",
+        "requestedMs": 1380.6336000000001,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1398.4046,
+        "status": 200,
+        "finishedMs": 1443.0352
+      },
+      {
+        "resource": "<app>/modules/gpt-modern.css",
+        "requestedMs": 1381.001,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1400.2312,
+        "status": 200,
+        "finishedMs": 1443.505
+      },
+      {
+        "resource": "<app>/modules/gpt-management.css",
+        "requestedMs": 1381.4221,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1402.9299,
+        "status": 200,
+        "finishedMs": 1403.3499
+      },
+      {
+        "resource": "<app>/modules/phone-registry.css",
+        "requestedMs": 1381.7667000000001,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1405.1486,
+        "status": 200,
+        "finishedMs": 1444.2726
+      },
+      {
+        "resource": "<app>/modules/business-enhancements.css",
+        "requestedMs": 1383.3727000000001,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1406.998,
+        "status": 200,
+        "finishedMs": 1444.9222
+      },
+      {
+        "resource": "<app>/modules/v41-ui.css",
+        "requestedMs": 1383.781,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1409.1153,
+        "status": 200,
+        "finishedMs": 1445.2615
+      },
+      {
+        "resource": "<app>/modules/operations-upgrade.css",
+        "requestedMs": 1384.1506,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1411.4552,
+        "status": 200,
+        "finishedMs": 1446.0795
+      },
+      {
+        "resource": "<app>/modules/ui-refresh.css",
+        "requestedMs": 1384.4612,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1413.3528000000001,
+        "status": 200,
+        "finishedMs": 1446.7475
+      },
+      {
+        "resource": "<app>/modules/ws-workbench.css",
+        "requestedMs": 1384.8288,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1415.9414,
+        "status": 200,
+        "finishedMs": 1447.4342
+      },
+      {
+        "resource": "<app>/modules/design-system.css",
+        "requestedMs": 1385.2727,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1418.1984,
+        "status": 200,
+        "finishedMs": 1448.2774
+      },
+      {
+        "resource": "<app>/modules/horizon-atelier.css",
+        "requestedMs": 1385.6248,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1420.7527,
+        "status": 200,
+        "finishedMs": 1448.8874
+      },
+      {
+        "resource": "<app>/modules/business-6.css",
+        "requestedMs": 1385.9855,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1422.7843,
+        "status": 200,
+        "finishedMs": 1449.547
+      },
+      {
+        "resource": "<app>/modules/operations-6.css",
+        "requestedMs": 1386.2844,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1424.8508,
+        "status": 200,
+        "finishedMs": 1450.3723
+      },
+      {
+        "resource": "<app>/modules/global-6.css",
+        "requestedMs": 1386.5516,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1426.8182,
+        "status": 200,
+        "finishedMs": 1452.4397000000001
+      },
+      {
+        "resource": "<app>/modules/home-6.css",
+        "requestedMs": 1386.9782,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1432.5691,
+        "status": 200,
+        "finishedMs": 1432.9873
+      },
+      {
+        "resource": "<app>/modules/scroll-system.css",
+        "requestedMs": 1387.2449000000001,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1436.5674000000001,
+        "status": 200,
+        "finishedMs": 1436.9302
+      },
+      {
+        "resource": "<app>/assets/zhike-horizon-logo.png",
+        "requestedMs": 1387.5923,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1439.7217,
+        "status": 200,
+        "finishedMs": 1440.3718000000001
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 1558.3365000000001,
+        "frameId": "6F8636372F59E9F74E6C73C37AC1B274",
+        "loaderId": "5BCF3B82D1DC69BD15BCCBB4A389D479",
+        "responseMs": 1558.8978,
+        "status": 200,
+        "finishedMs": 1559.3497
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 1661.7744,
+        "frameId": "A67AD496AF5D4029DC31DFB58677710F",
+        "loaderId": "2FCEF34FBA1A3B828BD3DC70EE6C5E95",
+        "responseMs": 1662.2295000000001,
+        "status": 200,
+        "finishedMs": 1662.7493
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 1678.205,
+        "frameId": "4CE71F152AB35723CD1F6343B3188FD4",
+        "loaderId": "A70376B69DA7C42D7C0088F508DB7661",
+        "responseMs": 1678.5971,
+        "status": 200,
+        "finishedMs": 1678.9232
+      },
+      {
+        "resource": "<non-file>",
+        "requestedMs": 1694.787,
+        "frameId": "53B8B555F6D5BD73107396F74A732199",
+        "loaderId": "8DD2EF783214223C2115F82AFFB5A383",
+        "responseMs": 1695.3424,
+        "status": 200,
+        "finishedMs": 1695.7717
+      }
+    ],
+    "captureEndedMs": 1823.4135,
+    "pendingCount": 0
+  },
+  "resultCases": 4,
+  "resultBytes": 16157,
+  "resultSha256": "9ac5dc6f4c2ebe883ce2892dd43eefd98201f22b0410284673a1fc5d4379ac26",
+  "resultFile": "<local-user>/Documents/Codex/2026-11-04/new-chat/work/project-review/知客 4.1 运营增强版/.tools/delivery-s2-metrics-visual/1795013121429-1ef378be-0c94-47c9-8e31-3c431a09606b.result.json",
+  "resultReady": true,
+  "rootExitProof": "verified-spawn-handle-exit-and-streams",
+  "remainingIdentities": [],
+  "identityProbeClosed": true,
+  "elapsedMs": 3308.9597999999996,
+  "stdoutBytes": 0,
+  "stderrBytes": 100
+}

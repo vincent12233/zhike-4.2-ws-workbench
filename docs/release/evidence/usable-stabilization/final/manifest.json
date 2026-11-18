@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "e44518d",
+  "baseline": "17aaecf",
+  "productionEntry": "FROZEN",
+  "scope": "Isolated local synthetic tests; no profiles, databases, connection tokens, real WhatsApp or paid AI data",
+  "createdAtUtc": "2026-11-18T19:07:43.086Z",
+  "files": [
+    {
+      "file": "full-regression.log",
+      "sourceBytes": 534142,
+      "sourceSha256": "2d8f71f99d229db222b04e3cbbe833c099a8edb6a2b9ec0e3fa30a54a3a4f0be",
+      "archivedBytes": 534056,
+      "archivedSha256": "8ef2fdb557804147a6c62a6a626a78163b9f410f8e04f1ea49461565330b20aa",
+      "transformation": "User-path and isolated-root redaction; secret-pattern review"
+    },
+    {
+      "file": "final-regression.log",
+      "sourceBytes": 511618,
+      "sourceSha256": "e8565789f0baee14f1b10976af3203975d0b3aeeb9d6b11bed2c164911ec4bf5",
+      "archivedBytes": 511516,
+      "archivedSha256": "333ddba51b5583d86c124d675c7f63a2a9b1a347a292398094bd45d555433897",
+      "transformation": "User-path and isolated-root redaction; secret-pattern review"
+    },
+    {
+      "file": "release-build.log",
+      "sourceBytes": 308,
+      "sourceSha256": "3eaf16401d5ddca39dd4609c288df2f617ea054b35045e537fc47b44055898d5",
+      "archivedBytes": 306,
+      "archivedSha256": "b013c96d8648944973d7731c205c0be043db7a0cd14f4ec075a9bb5bd996c4c8",
+      "transformation": "User-path and isolated-root redaction; secret-pattern review"
+    },
+    {
+      "file": "isolated-build.log",
+      "sourceBytes": 266,
+      "sourceSha256": "a62017d67018c18699948cec6e177fb415042b2976665d79ea561d20cbc5c23a",
+      "archivedBytes": 264,
+      "archivedSha256": "48977637a5c9e19ce2987b1e3bdb1edcee4d0a518f1b05f6cec370e83f49d151",
+      "transformation": "User-path and isolated-root redaction; secret-pattern review"
+    },
+    {
+      "file": "resource-analysis.json",
+      "sourceBytes": 22002,
+      "sourceSha256": "3d023874c350a83468b8cf24abbec10b24c0ac6c0c72a34dacb2743c2693e7d6",
+      "archivedBytes": 22002,
+      "archivedSha256": "3d023874c350a83468b8cf24abbec10b24c0ac6c0c72a34dacb2743c2693e7d6",
+      "transformation": "User-path and isolated-root redaction; secret-pattern review"
+    },
+    {
+      "file": "native-exit-analysis.json",
+      "sourceBytes": 2123,
+      "sourceSha256": "fb04ba3cca2124a78039ea849ea6d39e12abac69b6f7505ce39b23a087094c85",
+      "archivedBytes": 2123,
+      "archivedSha256": "fb04ba3cca2124a78039ea849ea6d39e12abac69b6f7505ce39b23a087094c85",
+      "transformation": "User-path and isolated-root redaction; secret-pattern review"
+    },
+    {
+      "file": "native-verification.json",
+      "sourceBytes": 5943,
+      "sourceSha256": "e3cb718cf78486dd4c74fd4424d3ecdbb17fac2cef5bcfa9bc50bd7fa7fb5daf",
+      "archivedBytes": 5943,
+      "archivedSha256": "e3cb718cf78486dd4c74fd4424d3ecdbb17fac2cef5bcfa9bc50bd7fa7fb5daf",
+      "transformation": "User-path and isolated-root redaction; secret-pattern review"
+    },
+    {
+      "file": "native-ai-explicit-retry.jpg",
+      "sourceBytes": 115171,
+      "sourceSha256": "ae4b06ffd1966120df4b1e395a6ed0b53696b8659f05897ca682490da5da2504",
+      "archivedBytes": 115171,
+      "archivedSha256": "ae4b06ffd1966120df4b1e395a6ed0b53696b8659f05897ca682490da5da2504",
+      "transformation": "Unchanged synthetic screenshot"
+    },
+    {
+      "file": "native-audit-after-review.jpg",
+      "sourceBytes": 158084,
+      "sourceSha256": "d775da8b8116d36ece4372db37a61cdf87c8cbc0f8bac2692d2c0bfae784c626",
+      "archivedBytes": 158084,
+      "archivedSha256": "d775da8b8116d36ece4372db37a61cdf87c8cbc0f8bac2692d2c0bfae784c626",
+      "transformation": "Unchanged synthetic screenshot"
+    },
+    {
+      "file": "native-chat-a.jpg",
+      "sourceBytes": 86275,
+      "sourceSha256": "a32073cb82dac414ed35e6f4d2111d397f068e7fde913ff8ee54bd629d179f47",
+      "archivedBytes": 86275,
+      "archivedSha256": "a32073cb82dac414ed35e6f4d2111d397f068e7fde913ff8ee54bd629d179f47",
+      "transformation": "Unchanged synthetic screenshot"
+    },
+    {
+      "file": "native-chat-restored-after-pages.jpg",
+      "sourceBytes": 83771,
+      "sourceSha256": "6ced87dc3a3f4dccede14c42675580f16ec2b2d9ec3b2600bfa9f0bd1b6db832",
+      "archivedBytes": 83771,
+      "archivedSha256": "6ced87dc3a3f4dccede14c42675580f16ec2b2d9ec3b2600bfa9f0bd1b6db832",
+      "transformation": "Unchanged synthetic screenshot"
+    },
+    {
+      "file": "native-created-account-c.jpg",
+      "sourceBytes": 87852,
+      "sourceSha256": "9627d464e85ba00debe536916c71b58e93428f5b90a6332e1793dbb15262af11",
+      "archivedBytes": 87852,
+      "archivedSha256": "9627d464e85ba00debe536916c71b58e93428f5b90a6332e1793dbb15262af11",
+      "transformation": "Unchanged synthetic screenshot"
+    },
+    {
+      "file": "native-crm-conflict-protected.jpg",
+      "sourceBytes": 120547,
+      "sourceSha256": "3767bcbc21e0d35769f6de99903f591608810b0213b97be48e8fc3d9cd4d29bc",
+      "archivedBytes": 120547,
+      "archivedSha256": "3767bcbc21e0d35769f6de99903f591608810b0213b97be48e8fc3d9cd4d29bc",
+      "transformation": "Unchanged synthetic screenshot"
+    },
+    {
+      "file": "native-crm-review-three-outcomes.jpg",
+      "sourceBytes": 120161,
+      "sourceSha256": "1e546a6323bf1acffdc604426ebe7c18cc250d927ec2fc360a1f6edafd90d61d",
+      "archivedBytes": 120161,
+      "archivedSha256": "1e546a6323bf1acffdc604426ebe7c18cc250d927ec2fc360a1f6edafd90d61d",
+      "transformation": "Unchanged synthetic screenshot"
+    },
+    {
+      "file": "native-main-dark-restored.jpg",
+      "sourceBytes": 103186,
+      "sourceSha256": "e9d56c20c216c93d26e665e30988a8d0b193f1c45a0c31ae4e357eee6ed72ff3",
+      "archivedBytes": 103186,
+      "archivedSha256": "e9d56c20c216c93d26e665e30988a8d0b193f1c45a0c31ae4e357eee6ed72ff3",
+      "transformation": "Unchanged synthetic screenshot"
+    },
+    {
+      "file": "native-members-default.jpg",
+      "sourceBytes": 146182,
+      "sourceSha256": "0ab0cdb85015942a126e39280af41a6f85cc20df841242f828ca8c21b096487f",
+      "archivedBytes": 146182,
+      "archivedSha256": "0ab0cdb85015942a126e39280af41a6f85cc20df841242f828ca8c21b096487f",
+      "transformation": "Unchanged synthetic screenshot"
+    },
+    {
+      "file": "native-new-account-empty-contacts.jpg",
+      "sourceBytes": 129800,
+      "sourceSha256": "d188c1d9a3f2cc4de2caa9faa40ad81b6d49554050c465461a032db505cf4035",
+      "archivedBytes": 129800,
+      "archivedSha256": "d188c1d9a3f2cc4de2caa9faa40ad81b6d49554050c465461a032db505cf4035",
+      "transformation": "Unchanged synthetic screenshot"
+    },
+    {
+      "file": "native-ten-account-switches.jpg",
+      "sourceBytes": 133782,
+      "sourceSha256": "9c5cdc77592fb07ac2b78b535a769600f41382008626921d8cf26dd6ec8f1a30",
+      "archivedBytes": 133782,
+      "archivedSha256": "9c5cdc77592fb07ac2b78b535a769600f41382008626921d8cf26dd6ec8f1a30",
+      "transformation": "Unchanged synthetic screenshot"
+    }
+  ]
+}

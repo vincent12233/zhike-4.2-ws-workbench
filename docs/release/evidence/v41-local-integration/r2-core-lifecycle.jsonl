@@ -1,0 +1,4 @@
+{"at":"2026-11-18T09:19:38.5973928+00:00","pid":15644,"kind":"webview-created","fields":{"role":"shell","accountId":"workbench-ui","browserProcessId":31820}}
+{"at":"2026-11-18T09:19:41.0434121+00:00","pid":15644,"kind":"webview-navigation","fields":{"role":"shell","accountId":"workbench-ui","success":true,"target":"isolated-local"}}
+{"at":"2026-11-18T09:30:34.8349244+00:00","pid":15644,"kind":"webview-created","fields":{"role":"ws-visible","accountId":"default","browserProcessId":17760}}
+{"at":"2026-11-18T09:30:34.9726791+00:00","pid":15644,"kind":"webview-navigation","fields":{"role":"ws-visible","accountId":"default","success":true,"target":"about:blank"}}

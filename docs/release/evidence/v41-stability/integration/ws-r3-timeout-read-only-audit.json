@@ -1,0 +1,25 @@
+{
+  "baseline": "88cf98b",
+  "sourceLog": ".tools/v41/full-regression-r3.log",
+  "sourceLogModifiedUtc": "2026-11-17T20:20:40.8675380Z",
+  "check": "Delivery S1 WS computed layout and retained host",
+  "checkedAtUtc": "2026-11-17T20:34:17.4920853Z",
+  "method": "Read-only GetProcessById only for the captured WS browser stderr PID",
+  "originalStatus": "Failed",
+  "originalTimeoutMs": 45000,
+  "capturedOutputHasClosingResultTag": true,
+  "capturedOutputHasDocumentEnd": true,
+  "readableCompleteResultMarkers": 0,
+  "fixtureAssertionsReached": false,
+  "timeoutStage": "Unknown",
+  "spawnedRootIdentity": "unknown; assertion did not save child PID and creation time",
+  "exactTemporaryRootIdentified": false,
+  "descendants": "unknown; no descendant identities were recorded",
+  "observed": [
+    {
+      "pid": 36556,
+      "source": "captured isolated msedge stderr",
+      "status": "absent"
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+{"case":"numeric-ID selected export","selectedIds":["0"],"customerId":0,"phonePresentInCsv":false,"expected":true}
+{"case":"home followup drilldown scope","route":"customers","expectedDueIds":["CORE_0","CORE_1","CORE_2","CORE_3","CORE_4","CORE_5","CORE_6","CORE_7","CORE_8","CORE_9","CORE_10","CORE_11","CORE_12"],"actualIds":["CORE_0","CORE_1","CORE_2","CORE_3","CORE_4","CORE_5","CORE_6","CORE_7","CORE_8","CORE_9","CORE_10","CORE_11","CORE_12","CORE_13","CORE_14"],"extraFilters":{},"customerScope":""}
+Read-only S3 review counterexamples: 2/2 reproduced; actual shipped functions in existing synthetic fixture, no browser/service/DB

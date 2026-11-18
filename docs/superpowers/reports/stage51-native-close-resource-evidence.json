@@ -1,0 +1,22 @@
+{
+  "stage": "5.1",
+  "status": "Passed",
+  "scope": "V2 isolated native application normal-close resource checks",
+  "closedByParent": "Native CUA Alt+F4; window disappearance observed by parent",
+  "checks": [
+    { "checkedAtUtc": "2026-11-16T12:48:24.9671155Z", "evidenceFile": "native-ui-resource.jsonl", "observedProcessIdentities": 17, "remainingCount": 0 },
+    { "checkedAtUtc": "2026-11-16T12:48:25.0131568Z", "evidenceFile": "native-before-close.jsonl", "observedProcessIdentities": 21, "remainingCount": 0 }
+  ],
+  "applicationStoppingUtc": "2026-11-16T12:47:47.36345+00:00",
+  "sidecarStoppedUtc": "2026-11-16T12:47:47.6226296+00:00",
+  "sidecarStopReportedRunning": false,
+  "isolatedSidecarPort": 54239,
+  "listenerCheckedAtUtc": "2026-11-16T12:49:39.6243742Z",
+  "listenerCount": 0,
+  "workbenchLockExists": false,
+  "isolatedWorkerProcessesRemaining": 0,
+  "checkerTerminatedAnyProcess": false,
+  "nativeRootRetainedForEvidence": true,
+  "apiTokenInReport": false,
+  "limitations": "Checks cover the observed PID+creation-time identities and assigned local endpoint; not a system-wide file-access audit"
+}

@@ -82,7 +82,7 @@ assert.match(server, /writeState\(state, false\)/);
 assert.match(app, /\/api\/ws\/followup-alerts\?allAccounts=1&limit=5/);
 assert.match(operations, /\/api\/ws\/followup-action/);
 assert.match(app, /new CustomEvent\('zhike:followups-changed'\)/);
-assert.match(app, /state\.view==='home'\)loadHomeWsFollowups\(\);else if\(state\.view==='operations'\)/);
+assert.match(app, /state\.view==='home'\)scheduleHomeWsFollowups\(\);else if\(state\.view==='operations'\)/);
 
 // Completing the task is the only point at which an actual follow-up record is
 // written and the same customer master gets lastFollow / due for every view.

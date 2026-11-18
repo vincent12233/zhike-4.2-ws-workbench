@@ -1,0 +1,49 @@
+'use strict';
+
+// New negative-control run. The original loopback test source is used verbatim.
+const assert = require('node:assert/strict');
+const { createHash } = require('node:crypto');
+const fs = require('node:fs');
+const path = require('node:path');
+const Module = require('node:module');
+
+const repo = path.resolve(__dirname, '../..');
+const baseline = '3c35db1cb28715088916920acfc0fc2bde270522';
+const runnerFile = path.join(repo, 'tests/helpers/isolated-edge-runner.cjs');
+const testFile = path.join(repo, 'tests/isolated-edge-transport.test.cjs');
+const runnerBlob = '93cfa80916314b0645d88cb78d7d85ff356778d1';
+const testBlob = '0f76fa10549d7a7621f7969c1ec64153ea0b07af';
+
+function readVerified(filename, expectedBlob) {
+  const source = fs.readFileSync(filename, 'utf8');
+  const canonical = source.replace(/\r\n/g, '\n');
+  const blob = createHash('sha1')
+    .update('blob ' + Buffer.byteLength(canonical) + '\0')
+    .update(canonical).digest('hex');
+  assert.equal(blob, expectedBlob, 'Unexpected source change: ' + path.relative(repo, filename));
+  return source;
+}
+
+function compile(filename, source, dependencies = {}) {
+  const compiled = new Module(filename, module);
+  compiled.filename = filename;
+  compiled.paths = Module._nodeModulePaths(path.dirname(filename));
+  const originalRequire = compiled.require.bind(compiled);
+  compiled.require = name => Object.hasOwn(dependencies, name) ? dependencies[name] : originalRequire(name);
+  compiled._compile(source, filename);
+  return compiled.exports;
+}
+
+const runner = readVerified(runnerFile, runnerBlob);
+const test = readVerified(testFile, testBlob);
+const gate = "      await this.context.wait(destroyed.promise, 'target-destroyed', true);";
+assert.equal(runner.split(gate).length, 2, 'Expected one owned target destruction wait');
+const overlay = runner.replace(gate, '      // Negative control completes the target close after the ACK.');
+const overlaySha256 = createHash('sha256').update(overlay).digest('hex');
+console.log(JSON.stringify({
+  run: 'reexecuted negative control', recordedAtUtc: new Date().toISOString(),
+  baseline, runnerBlob, testBlob, overlaySha256, loopbackOnly: true,
+}));
+const patched = compile(runnerFile, overlay);
+assert.equal(typeof patched.CdpConnection.prototype.closeTarget, 'function');
+compile(testFile, test, { './helpers/isolated-edge-runner.cjs': patched });

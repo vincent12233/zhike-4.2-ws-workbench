@@ -1,0 +1,184 @@
+{
+  "pid": 37872,
+  "source": "Stage 5.1 isolated WinUI native-events.jsonl, selected fields for PID 37872",
+  "buildManifestEvidence": "manifest-proof.json",
+  "scope": "Same Windows monitor and running process. Runtime samples below cover the observed 125% to 100% transition and two home page wheel deliveries.",
+  "displayScaleTransition": {
+    "monitorHandle": 65537,
+    "hwndAwareness": "per-monitor-v2",
+    "samples": [
+      {
+        "at": "2026-11-18T17:11:02.2319108+05:30",
+        "tickMs": 248770515,
+        "kind": "stage51-dom-layout",
+        "hwndDpi": 120,
+        "xamlRootScale": 1.25,
+        "winUiWebViewElementScale": 1,
+        "domDpr": 1.25,
+        "clientSizePx": [
+          1920,
+          1111
+        ],
+        "domViewportCss": [
+          1535,
+          876
+        ]
+      },
+      {
+        "at": "2026-11-18T17:14:45.0064443+05:30",
+        "tickMs": 248993281,
+        "kind": "stage51-native-dpi",
+        "hwndDpi": 96,
+        "xamlRootScale": 1.25,
+        "winUiWebViewElementScale": 1,
+        "clientSizePx": [
+          1920,
+          1129
+        ]
+      },
+      {
+        "at": "2026-11-18T17:14:45.0314291+05:30",
+        "tickMs": 248993296,
+        "kind": "stage51-native-dpi",
+        "hwndDpi": 96,
+        "xamlRootScale": 1,
+        "winUiWebViewElementScale": 1,
+        "clientSizePx": [
+          1920,
+          1129
+        ]
+      },
+      {
+        "at": "2026-11-18T17:14:45.4593292+05:30",
+        "tickMs": 248993734,
+        "kind": "stage51-dom-layout",
+        "hwndDpi": 96,
+        "xamlRootScale": 1,
+        "winUiWebViewElementScale": 1,
+        "domDpr": 1,
+        "clientSizePx": [
+          1920,
+          1129
+        ],
+        "domViewportCss": [
+          1918,
+          1115
+        ]
+      }
+    ],
+    "webViewCreatedCountThroughLastSample": 1,
+    "webViewRole": "shell",
+    "controllerMetrics": "unavailable"
+  },
+  "homeWheel": {
+    "visualContext": "Home (Today workbench) main content, visible light atelier-dawn palette. The legacy document data-theme field emitted by the probe was dark.",
+    "operatorAction": "One sky-injected downward scroll at the home main content. The second sample was observed while the operator moved to and clicked the title bar.",
+    "screenshotName": "02-125-home-wheel.png",
+    "hwndDpi": 120,
+    "hwndAwareness": "per-monitor-v2",
+    "xamlRootScale": 1.25,
+    "winUiWebViewElementScale": 1,
+    "domDpr": 1.25,
+    "samples": [
+      {
+        "nativeSequence": 1,
+        "domWheelCount": 1,
+        "nativeAt": "2026-11-18T17:04:23.4605113+05:30",
+        "domAt": "2026-11-18T17:04:23.510722+05:30",
+        "nativeReceivedTickMs": 248371734,
+        "domReceivedTickMs": 248371796,
+        "nativePointerTimestampUs": 248371749154,
+        "nativeRoutedSource": "WebView2",
+        "nativeRoutedPointDip": [
+          728.8,
+          416
+        ],
+        "nativeWheelDelta": -520,
+        "win32CursorAtReceiptScreenPx": [
+          920,
+          558
+        ],
+        "win32CursorAtReceiptClientPx": [
+          911,
+          520
+        ],
+        "win32Hit": "child",
+        "domWheelPointClientCss": [
+          728,
+          415
+        ],
+        "domPreviousPointerAgeMs": 2.8,
+        "domDeltaCss": 433.3333,
+        "domTarget": "page",
+        "domPointHit": "page",
+        "domCanceled": false,
+        "overlappingDomWheelDuringSample": false,
+        "scrollTopCssBeforeAndAfterTwoFrames": {
+          "homeMain": [
+            0,
+            109.6
+          ],
+          "sidebar": [
+            0,
+            0
+          ],
+          "document": [
+            0,
+            0
+          ]
+        }
+      },
+      {
+        "nativeSequence": 2,
+        "domWheelCount": 2,
+        "nativeAt": "2026-11-18T17:05:30.8970099+05:30",
+        "domAt": "2026-11-18T17:05:30.9146012+05:30",
+        "nativeReceivedTickMs": 248439171,
+        "domReceivedTickMs": 248439187,
+        "nativePointerTimestampUs": 248371749154,
+        "nativeRoutedSource": "WebView2",
+        "nativeRoutedPointDip": [
+          728.8,
+          416
+        ],
+        "nativeWheelDelta": -520,
+        "win32CursorAtReceiptScreenPx": [
+          1454,
+          17
+        ],
+        "win32CursorAtReceiptClientPx": [
+          1445,
+          -21
+        ],
+        "win32Hit": "window",
+        "domWheelPointClientCss": [
+          728,
+          415
+        ],
+        "domPreviousPointerAgeMs": 67447.7,
+        "domDeltaCss": 433.3333,
+        "domTarget": "page",
+        "domPointHit": "page",
+        "domCanceled": false,
+        "overlappingDomWheelDuringSample": false,
+        "scrollTopCssBeforeAndAfterTwoFrames": {
+          "homeMain": [
+            433.6,
+            468
+          ],
+          "sidebar": [
+            0,
+            0
+          ],
+          "document": [
+            0,
+            0
+          ]
+        }
+      }
+    ],
+    "nativeReceiveIntervalMs": 67437,
+    "maximizeAfterSecondDomSampleAt": "2026-11-18T17:05:30.9706226+05:30",
+    "interpretation": "The first logged injection reached and moved the main content only. The later delivery reused the same native pointer timestamp, location and delta while the current Win32 cursor was over the title bar. The extra delivery cannot be attributed to a separate operator wheel gesture, or to an identified stage of the input stack. The general no-duplicate scrolling criterion remains unresolved."
+  }
+}

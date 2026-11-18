@@ -9,7 +9,7 @@ const bridge = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop'
 const host = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Views', 'LegacyUiHostPage.xaml.cs'), 'utf8');
 const adapter = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Services', 'LegacyApiAdapter.cs'), 'utf8');
 const client = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Services', 'ApiClient.cs'), 'utf8');
-const home = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Views', 'HomePage.xaml.cs'), 'utf8');
+const hostPage = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Views', 'LegacyUiHostPage.xaml.cs'), 'utf8');
 const app = fs.readFileSync(path.join(repo, 'resources', 'app', 'app.js'), 'utf8');
 
 // Regression: the WinUI shell has one authoritative local SQLite path. It
@@ -22,7 +22,7 @@ assert.match(host, /AddScriptToExecuteOnDocumentCreatedAsync\(LegacyBridgeScript
 assert.match(adapter, /raw\.Data[\s\S]*TryGetProperty\("error"/, 'native bridge preserves the API error reason');
 assert.match(client, /App\.LocalService\?\.IsRunning == true/, 'native API client is created only from the local service');
 assert.match(client, /ConfigureLocalSidecar\(\)/, 'local sidecar client is explicitly marked');
-assert.match(home, /EnsureLocalServiceAsync\(\)/, 'diagnostic page waits for the local service');
+assert.match(hostPage, /App\.EnsureLocalServiceAsync\(/, 'desktop host waits for the local service');
 
 // Regression: server-side validation errors must reach the user instead of
 // being collapsed into the misleading generic “写入失败” message.

@@ -1,0 +1,770 @@
+{
+  "checkedAtUtc": "2026-11-17T14:51:56.0380609Z",
+  "scope": "Only six exact current full-run test roots",
+  "status": "Passed",
+  "production": "FROZEN",
+  "nativeRootExcluded": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-native-93ba09c523d1423e9be6ad07d6779bd8",
+  "records": [
+    {
+      "path": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-layout-Z2orqH",
+      "sourceLog": "full-regression.log",
+      "metadataCount": 1,
+      "preservedStatuses": [
+        {
+          "invocation": "1794923352824-012991e9-d248-4939-b305-75e3b1fad40a",
+          "status": "Failed",
+          "sha256": "be1c2b00763d5886cd6934fcd80c327bd14094808d049f5b2bb3692adf9c9360"
+        }
+      ],
+      "observedIdentityCount": 12,
+      "identityChecks": [
+        {
+          "pid": 22380,
+          "expectedStartedTicks": "639305201528306145",
+          "state": "Absent"
+        },
+        {
+          "pid": 15216,
+          "expectedStartedTicks": "639305201551930038",
+          "state": "Absent"
+        },
+        {
+          "pid": 13868,
+          "expectedStartedTicks": "639305201551989236",
+          "state": "Absent"
+        },
+        {
+          "pid": 17676,
+          "expectedStartedTicks": "639305201553315483",
+          "state": "Absent"
+        },
+        {
+          "pid": 28180,
+          "expectedStartedTicks": "639305201578079866",
+          "state": "Absent"
+        },
+        {
+          "pid": 16548,
+          "expectedStartedTicks": "639305201577856821",
+          "state": "Absent"
+        },
+        {
+          "pid": 20044,
+          "expectedStartedTicks": "639305201577710934",
+          "state": "Absent"
+        },
+        {
+          "pid": 9828,
+          "expectedStartedTicks": "639305201577708181",
+          "state": "Absent"
+        },
+        {
+          "pid": 1128,
+          "expectedStartedTicks": "639305201577704477",
+          "state": "Absent"
+        },
+        {
+          "pid": 9572,
+          "expectedStartedTicks": "639305201577704436",
+          "state": "Absent"
+        },
+        {
+          "pid": 33896,
+          "expectedStartedTicks": "639305201566227775",
+          "state": "Absent"
+        },
+        {
+          "pid": 15872,
+          "expectedStartedTicks": "639305201613986671",
+          "state": "Absent"
+        }
+      ],
+      "remainingOriginalIdentities": 0,
+      "containedInTemp": true,
+      "noReparse": true,
+      "fileCount": 261,
+      "directoryCount": 132,
+      "bytes": 7871661,
+      "existed": true,
+      "removed": true,
+      "forceUsed": false
+    },
+    {
+      "path": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-edge-runner-test-ZLlDUX",
+      "sourceLog": "full-regression.log",
+      "metadataCount": 5,
+      "preservedStatuses": [
+        {
+          "invocation": "1794923468262-ec86ba0d-98bf-44f1-8def-0b84576f27cf",
+          "status": "Passed",
+          "sha256": "34c711814d00901272f21052d876b8add28768bf46880aca609b3571643f7cfa"
+        },
+        {
+          "invocation": "1794923470436-0e53f94a-3aa3-41d4-a28d-cfd1f5d6462a",
+          "status": "Failed",
+          "sha256": "b592c1ebf7ae7b9e2395c343dbb96d1b7cbe0e524d02d5277a0dc71e288dd879"
+        },
+        {
+          "invocation": "1794923474402-8b9eff30-b52f-4aa5-b13a-b825a7ee2a42",
+          "status": "Passed",
+          "sha256": "7e285c1524274c8e0ff5899aaab111a6400f613df0f32c34183161abb279c334"
+        },
+        {
+          "invocation": "1794923476736-d44a5df8-8933-4dea-8529-a928cd232031",
+          "status": "Failed",
+          "sha256": "92f8bbeebcfde69d2bb61aa1f142a12cd192db2ab99944356655995ab05cd07b"
+        },
+        {
+          "invocation": "1794923478784-1665f981-1a2e-4b73-b95e-71a6cc5e034c",
+          "status": "Failed",
+          "sha256": "09c945b96a1edf2071a50caa470a7db34734514d99c03e5c5a7f0cd96bb23eee"
+        }
+      ],
+      "observedIdentityCount": 5,
+      "identityChecks": [
+        {
+          "pid": 22572,
+          "expectedStartedTicks": "639305202682732550",
+          "state": "Absent"
+        },
+        {
+          "pid": 20108,
+          "expectedStartedTicks": "639305202704458065",
+          "state": "Absent"
+        },
+        {
+          "pid": 23780,
+          "expectedStartedTicks": "639305202744125234",
+          "state": "Absent"
+        },
+        {
+          "pid": 25060,
+          "expectedStartedTicks": "639305202767462842",
+          "state": "Absent"
+        },
+        {
+          "pid": 12704,
+          "expectedStartedTicks": "639305202787946029",
+          "state": "Absent"
+        }
+      ],
+      "remainingOriginalIdentities": 0,
+      "containedInTemp": true,
+      "noReparse": true,
+      "fileCount": 5,
+      "directoryCount": 6,
+      "bytes": 298,
+      "existed": true,
+      "removed": true,
+      "forceUsed": false
+    },
+    {
+      "path": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s1-main-style-ZWiOXB",
+      "sourceLog": "full-regression.log",
+      "metadataCount": 1,
+      "preservedStatuses": [
+        {
+          "invocation": "1794923489958-bf423a6e-2861-4d7e-b47d-9ea0a83d7343",
+          "status": "Failed",
+          "sha256": "88be2a28179d1fc49f8c834f42d7a4e7c93e5d1157bc81cb84a85bde283a27a4"
+        }
+      ],
+      "observedIdentityCount": 18,
+      "identityChecks": [
+        {
+          "pid": 15792,
+          "expectedStartedTicks": "639305202899746686",
+          "state": "Absent"
+        },
+        {
+          "pid": 5200,
+          "expectedStartedTicks": "639305202912617061",
+          "state": "Absent"
+        },
+        {
+          "pid": 20156,
+          "expectedStartedTicks": "639305202912672290",
+          "state": "Absent"
+        },
+        {
+          "pid": 20660,
+          "expectedStartedTicks": "639305202913247070",
+          "state": "Absent"
+        },
+        {
+          "pid": 18864,
+          "expectedStartedTicks": "639305202961269314",
+          "state": "Absent"
+        },
+        {
+          "pid": 25928,
+          "expectedStartedTicks": "639305202961178457",
+          "state": "Absent"
+        },
+        {
+          "pid": 8432,
+          "expectedStartedTicks": "639305202956550358",
+          "state": "Absent"
+        },
+        {
+          "pid": 13272,
+          "expectedStartedTicks": "639305202951380740",
+          "state": "Absent"
+        },
+        {
+          "pid": 33304,
+          "expectedStartedTicks": "639305202951366127",
+          "state": "Absent"
+        },
+        {
+          "pid": 14796,
+          "expectedStartedTicks": "639305202951357152",
+          "state": "Absent"
+        },
+        {
+          "pid": 20328,
+          "expectedStartedTicks": "639305202970033049",
+          "state": "Absent"
+        },
+        {
+          "pid": 20516,
+          "expectedStartedTicks": "639305202951240641",
+          "state": "Absent"
+        },
+        {
+          "pid": 6380,
+          "expectedStartedTicks": "639305202951282749",
+          "state": "Absent"
+        },
+        {
+          "pid": 31764,
+          "expectedStartedTicks": "639305202959597587",
+          "state": "Absent"
+        },
+        {
+          "pid": 8180,
+          "expectedStartedTicks": "639305202937343574",
+          "state": "Absent"
+        },
+        {
+          "pid": 34780,
+          "expectedStartedTicks": "639305202970207965",
+          "state": "Absent"
+        },
+        {
+          "pid": 13868,
+          "expectedStartedTicks": "639305202972135724",
+          "state": "Absent"
+        },
+        {
+          "pid": 34468,
+          "expectedStartedTicks": "639305202986331535",
+          "state": "Absent"
+        }
+      ],
+      "remainingOriginalIdentities": 0,
+      "containedInTemp": true,
+      "noReparse": true,
+      "fileCount": 303,
+      "directoryCount": 144,
+      "bytes": 14336155,
+      "existed": true,
+      "removed": true,
+      "forceUsed": false
+    },
+    {
+      "path": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s2-metrics-style-1xwAOy",
+      "sourceLog": "full-regression.log",
+      "metadataCount": 1,
+      "preservedStatuses": [
+        {
+          "invocation": "1794923553405-82a6cd3a-d3a9-4bca-ae19-fc3c81e6b08f",
+          "status": "Failed",
+          "sha256": "435cba710d3999be84f48371946a78beae3889389556e951b402327e1597c40c"
+        }
+      ],
+      "observedIdentityCount": 14,
+      "identityChecks": [
+        {
+          "pid": 34788,
+          "expectedStartedTicks": "639305203534213045",
+          "state": "Absent"
+        },
+        {
+          "pid": 25720,
+          "expectedStartedTicks": "639305203541960811",
+          "state": "Absent"
+        },
+        {
+          "pid": 25372,
+          "expectedStartedTicks": "639305203541281629",
+          "state": "Absent"
+        },
+        {
+          "pid": 19516,
+          "expectedStartedTicks": "639305203538328168",
+          "state": "Absent"
+        },
+        {
+          "pid": 22184,
+          "expectedStartedTicks": "639305203538391266",
+          "state": "Absent"
+        },
+        {
+          "pid": 16556,
+          "expectedStartedTicks": "639305203538896267",
+          "state": "Absent"
+        },
+        {
+          "pid": 23616,
+          "expectedStartedTicks": "639305203549949668",
+          "state": "Absent"
+        },
+        {
+          "pid": 23940,
+          "expectedStartedTicks": "639305203549461027",
+          "state": "Absent"
+        },
+        {
+          "pid": 10256,
+          "expectedStartedTicks": "639305203547674041",
+          "state": "Absent"
+        },
+        {
+          "pid": 16888,
+          "expectedStartedTicks": "639305203542144240",
+          "state": "Absent"
+        },
+        {
+          "pid": 3364,
+          "expectedStartedTicks": "639305203542140177",
+          "state": "Absent"
+        },
+        {
+          "pid": 27088,
+          "expectedStartedTicks": "639305203542101680",
+          "state": "Absent"
+        },
+        {
+          "pid": 15504,
+          "expectedStartedTicks": "639305203542076715",
+          "state": "Absent"
+        },
+        {
+          "pid": 24040,
+          "expectedStartedTicks": "639305203548759332",
+          "state": "Absent"
+        }
+      ],
+      "remainingOriginalIdentities": 0,
+      "containedInTemp": true,
+      "noReparse": true,
+      "fileCount": 251,
+      "directoryCount": 121,
+      "bytes": 7235990,
+      "existed": true,
+      "removed": true,
+      "forceUsed": false
+    },
+    {
+      "path": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s3-customer-table-rHHe1Q",
+      "sourceLog": "full-regression.log",
+      "metadataCount": 1,
+      "preservedStatuses": [
+        {
+          "invocation": "1794923590076-deeda4c8-d8b1-4a90-bbdf-31946b3fe084",
+          "status": "Failed",
+          "sha256": "4546ad901f270b5a3b9525d16622b400947d603e110650487c1a49ac261be82e"
+        }
+      ],
+      "observedIdentityCount": 17,
+      "identityChecks": [
+        {
+          "pid": 35700,
+          "expectedStartedTicks": "639305203900879987",
+          "state": "Absent"
+        },
+        {
+          "pid": 16068,
+          "expectedStartedTicks": "639305204005026568",
+          "state": "Absent"
+        },
+        {
+          "pid": 24076,
+          "expectedStartedTicks": "639305204005161948",
+          "state": "Absent"
+        },
+        {
+          "pid": 35540,
+          "expectedStartedTicks": "639305204004228555",
+          "state": "Absent"
+        },
+        {
+          "pid": 27608,
+          "expectedStartedTicks": "639305203966918419",
+          "state": "Absent"
+        },
+        {
+          "pid": 11600,
+          "expectedStartedTicks": "639305203966995014",
+          "state": "Absent"
+        },
+        {
+          "pid": 17400,
+          "expectedStartedTicks": "639305203967526328",
+          "state": "Absent"
+        },
+        {
+          "pid": 31032,
+          "expectedStartedTicks": "639305204015792862",
+          "state": "Absent"
+        },
+        {
+          "pid": 18816,
+          "expectedStartedTicks": "639305204015453920",
+          "state": "Absent"
+        },
+        {
+          "pid": 18448,
+          "expectedStartedTicks": "639305204012049288",
+          "state": "Absent"
+        },
+        {
+          "pid": 34348,
+          "expectedStartedTicks": "639305204006104085",
+          "state": "Absent"
+        },
+        {
+          "pid": 16712,
+          "expectedStartedTicks": "639305204006103460",
+          "state": "Absent"
+        },
+        {
+          "pid": 17976,
+          "expectedStartedTicks": "639305204006031616",
+          "state": "Absent"
+        },
+        {
+          "pid": 33932,
+          "expectedStartedTicks": "639305204021112264",
+          "state": "Absent"
+        },
+        {
+          "pid": 18572,
+          "expectedStartedTicks": "639305204012892923",
+          "state": "Absent"
+        },
+        {
+          "pid": 8064,
+          "expectedStartedTicks": "639305204021195720",
+          "state": "Absent"
+        },
+        {
+          "pid": 20504,
+          "expectedStartedTicks": "639305204031251661",
+          "state": "Absent"
+        }
+      ],
+      "remainingOriginalIdentities": 0,
+      "containedInTemp": true,
+      "noReparse": true,
+      "fileCount": 261,
+      "directoryCount": 133,
+      "bytes": 13885513,
+      "existed": true,
+      "removed": true,
+      "forceUsed": false
+    },
+    {
+      "path": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s1-main-style-XkSnvy",
+      "sourceLog": "full-regression-after-helper.log",
+      "metadataCount": 3,
+      "preservedStatuses": [
+        {
+          "invocation": "1794925559649-a5ead72a-d32c-4323-9b4d-d3a4414db24b",
+          "status": "Passed",
+          "sha256": "11a5b9652ba3eda8ac95e1cea4aa2d8d2dfbc612b01864da94bacc98621f4d2b"
+        },
+        {
+          "invocation": "1794925570958-a27632ab-8868-4c03-acd8-c59919eb3e04",
+          "status": "Passed",
+          "sha256": "95dfdcbae712ad564688c31fad92122665921c32c276d8951dd276f5d0a67add"
+        },
+        {
+          "invocation": "1794925576024-f768686a-1ef2-4f0f-9f57-f853ad481c31",
+          "status": "Failed",
+          "sha256": "ccf6949f753031e63ae8f4d9c2acf56c51984c0c6e333499bb8f4951a5b2bfc0"
+        }
+      ],
+      "observedIdentityCount": 51,
+      "identityChecks": [
+        {
+          "pid": 19328,
+          "expectedStartedTicks": "639305223596641505",
+          "state": "Absent"
+        },
+        {
+          "pid": 21060,
+          "expectedStartedTicks": "639305223604517219",
+          "state": "Absent"
+        },
+        {
+          "pid": 34500,
+          "expectedStartedTicks": "639305223604510839",
+          "state": "Absent"
+        },
+        {
+          "pid": 10256,
+          "expectedStartedTicks": "639305223604476175",
+          "state": "Absent"
+        },
+        {
+          "pid": 21312,
+          "expectedStartedTicks": "639305223604324081",
+          "state": "Absent"
+        },
+        {
+          "pid": 35172,
+          "expectedStartedTicks": "639305223604452960",
+          "state": "Absent"
+        },
+        {
+          "pid": 552,
+          "expectedStartedTicks": "639305223603444372",
+          "state": "Absent"
+        },
+        {
+          "pid": 16856,
+          "expectedStartedTicks": "639305223600457528",
+          "state": "Absent"
+        },
+        {
+          "pid": 26204,
+          "expectedStartedTicks": "639305223600519780",
+          "state": "Absent"
+        },
+        {
+          "pid": 26716,
+          "expectedStartedTicks": "639305223601054978",
+          "state": "Absent"
+        },
+        {
+          "pid": 11020,
+          "expectedStartedTicks": "639305223613416214",
+          "state": "Absent"
+        },
+        {
+          "pid": 22044,
+          "expectedStartedTicks": "639305223612766237",
+          "state": "Absent"
+        },
+        {
+          "pid": 17228,
+          "expectedStartedTicks": "639305223610919281",
+          "state": "Absent"
+        },
+        {
+          "pid": 31228,
+          "expectedStartedTicks": "639305223626554662",
+          "state": "Absent"
+        },
+        {
+          "pid": 30272,
+          "expectedStartedTicks": "639305223611589614",
+          "state": "Absent"
+        },
+        {
+          "pid": 35812,
+          "expectedStartedTicks": "639305223626719647",
+          "state": "Absent"
+        },
+        {
+          "pid": 34832,
+          "expectedStartedTicks": "639305223626885969",
+          "state": "Absent"
+        },
+        {
+          "pid": 35088,
+          "expectedStartedTicks": "639305223636602250",
+          "state": "Absent"
+        },
+        {
+          "pid": 20972,
+          "expectedStartedTicks": "639305223709711157",
+          "state": "Absent"
+        },
+        {
+          "pid": 34424,
+          "expectedStartedTicks": "639305223716081891",
+          "state": "Absent"
+        },
+        {
+          "pid": 14768,
+          "expectedStartedTicks": "639305223713668549",
+          "state": "Absent"
+        },
+        {
+          "pid": 16264,
+          "expectedStartedTicks": "639305223713726385",
+          "state": "Absent"
+        },
+        {
+          "pid": 32796,
+          "expectedStartedTicks": "639305223714310806",
+          "state": "Absent"
+        },
+        {
+          "pid": 35024,
+          "expectedStartedTicks": "639305223726056389",
+          "state": "Absent"
+        },
+        {
+          "pid": 28720,
+          "expectedStartedTicks": "639305223725410251",
+          "state": "Absent"
+        },
+        {
+          "pid": 18272,
+          "expectedStartedTicks": "639305223723659258",
+          "state": "Absent"
+        },
+        {
+          "pid": 7708,
+          "expectedStartedTicks": "639305223717618484",
+          "state": "Absent"
+        },
+        {
+          "pid": 6416,
+          "expectedStartedTicks": "639305223717617625",
+          "state": "Absent"
+        },
+        {
+          "pid": 18224,
+          "expectedStartedTicks": "639305223717588889",
+          "state": "Absent"
+        },
+        {
+          "pid": 21936,
+          "expectedStartedTicks": "639305223737104762",
+          "state": "Absent"
+        },
+        {
+          "pid": 17388,
+          "expectedStartedTicks": "639305223717471897",
+          "state": "Absent"
+        },
+        {
+          "pid": 5140,
+          "expectedStartedTicks": "639305223717538576",
+          "state": "Absent"
+        },
+        {
+          "pid": 5220,
+          "expectedStartedTicks": "639305223725175464",
+          "state": "Absent"
+        },
+        {
+          "pid": 29808,
+          "expectedStartedTicks": "639305223737284772",
+          "state": "Absent"
+        },
+        {
+          "pid": 7156,
+          "expectedStartedTicks": "639305223760367331",
+          "state": "Absent"
+        },
+        {
+          "pid": 30392,
+          "expectedStartedTicks": "639305223767622331",
+          "state": "Absent"
+        },
+        {
+          "pid": 8088,
+          "expectedStartedTicks": "639305223767763640",
+          "state": "Absent"
+        },
+        {
+          "pid": 20360,
+          "expectedStartedTicks": "639305223766757226",
+          "state": "Absent"
+        },
+        {
+          "pid": 34912,
+          "expectedStartedTicks": "639305223764283856",
+          "state": "Absent"
+        },
+        {
+          "pid": 26224,
+          "expectedStartedTicks": "639305223764359539",
+          "state": "Absent"
+        },
+        {
+          "pid": 16600,
+          "expectedStartedTicks": "639305223764917404",
+          "state": "Absent"
+        },
+        {
+          "pid": 496,
+          "expectedStartedTicks": "639305223785396735",
+          "state": "Absent"
+        },
+        {
+          "pid": 23528,
+          "expectedStartedTicks": "639305223782999054",
+          "state": "Absent"
+        },
+        {
+          "pid": 5240,
+          "expectedStartedTicks": "639305223775114587",
+          "state": "Absent"
+        },
+        {
+          "pid": 16112,
+          "expectedStartedTicks": "639305223768767785",
+          "state": "Absent"
+        },
+        {
+          "pid": 23988,
+          "expectedStartedTicks": "639305223768766310",
+          "state": "Absent"
+        },
+        {
+          "pid": 11108,
+          "expectedStartedTicks": "639305223768705337",
+          "state": "Absent"
+        },
+        {
+          "pid": 35384,
+          "expectedStartedTicks": "639305223785153420",
+          "state": "Absent"
+        },
+        {
+          "pid": 31500,
+          "expectedStartedTicks": "639305223777866686",
+          "state": "Absent"
+        },
+        {
+          "pid": 35692,
+          "expectedStartedTicks": "639305223783212399",
+          "state": "Absent"
+        },
+        {
+          "pid": 6416,
+          "expectedStartedTicks": "639305223793287179",
+          "state": "Absent"
+        }
+      ],
+      "remainingOriginalIdentities": 0,
+      "containedInTemp": true,
+      "noReparse": true,
+      "fileCount": 842,
+      "directoryCount": 410,
+      "bytes": 39964056,
+      "existed": true,
+      "removed": true,
+      "forceUsed": false
+    }
+  ],
+  "nativeRootStillPresent": true,
+  "completedAtUtc": "2026-11-17T14:51:57.5666684Z"
+}

@@ -1,0 +1,7 @@
+[PASS] prepare rejects before copying or replacing existing synthetic profiles
+[PASS] collector environment is denied without creating a profile or environment
+[PASS] missing roots and cancelled collector calls remain blocked with no directory creation
+[PASS] foreground environment and its cache remain usable without changing existing data
+[PASS] ordinary scheduler ticks do not lease, create, navigate or drive hidden accounts
+[PASS] manual A-B-A switches retain pooled foreground views and safe shutdown
+{"suite":"RD02 linked production C# boundaries","passed":6,"failed":0,"syntheticDirectoriesOnly":true,"platformAdapters":"synthetic; not native WinUI acceptance","realProfile":false,"realWhatsApp":false,"realSqlite":false}

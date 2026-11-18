@@ -1,0 +1,448 @@
+{
+  "source": "Historical Stage 5.1 isolated events for PID 37872 and committed screenshots. The original captures are unchanged.",
+  "pid": 37872,
+  "eventSource": "native-events.jsonl, selected allowlisted wheel and input-focus fields only",
+  "wheelRecords": [
+    {
+      "kind": "stage51-native-wheel",
+      "at": "2026-11-18T17:04:23.4605113+05:30",
+      "receiptTickMs": 248371734,
+      "nativeSequence": 1,
+      "nativePointerTimestampUs": 248371749154,
+      "nativePointDip": [
+        728.7999877929688,
+        416
+      ],
+      "nativeDelta": -520,
+      "nativeSource": "WebView2",
+      "domSequence": null,
+      "domEventMs": null,
+      "domPointCss": null,
+      "domTarget": null,
+      "domDeltaY": null,
+      "hwndDpi": 120,
+      "cursorHit": "child",
+      "cursorScreenPx": [
+        920,
+        558
+      ],
+      "foreground": true,
+      "hwndFocus": "window",
+      "xamlFocus": "WebView2",
+      "domFocus": null,
+      "domFocused": null
+    },
+    {
+      "kind": "stage51-dom-wheel",
+      "at": "2026-11-18T17:04:23.510722+05:30",
+      "receiptTickMs": 248371796,
+      "nativeSequence": null,
+      "nativePointerTimestampUs": null,
+      "nativePointDip": null,
+      "nativeDelta": null,
+      "nativeSource": null,
+      "domSequence": 1,
+      "domEventMs": 415612.1999999881,
+      "domPointCss": [
+        728,
+        415,
+        736,
+        446
+      ],
+      "domTarget": "page",
+      "domDeltaY": 433.33330078125,
+      "hwndDpi": 120,
+      "cursorHit": "child",
+      "cursorScreenPx": [
+        920,
+        558
+      ],
+      "foreground": true,
+      "hwndFocus": "window",
+      "xamlFocus": "WebView2",
+      "domFocus": "other",
+      "domFocused": false
+    },
+    {
+      "kind": "stage51-native-wheel",
+      "at": "2026-11-18T17:05:30.8970099+05:30",
+      "receiptTickMs": 248439171,
+      "nativeSequence": 2,
+      "nativePointerTimestampUs": 248371749154,
+      "nativePointDip": [
+        728.7999877929688,
+        416
+      ],
+      "nativeDelta": -520,
+      "nativeSource": "WebView2",
+      "domSequence": null,
+      "domEventMs": null,
+      "domPointCss": null,
+      "domTarget": null,
+      "domDeltaY": null,
+      "hwndDpi": 120,
+      "cursorHit": "window",
+      "cursorScreenPx": [
+        1454,
+        17
+      ],
+      "foreground": true,
+      "hwndFocus": "window",
+      "xamlFocus": "WebView2",
+      "domFocus": null,
+      "domFocused": null
+    },
+    {
+      "kind": "stage51-dom-wheel",
+      "at": "2026-11-18T17:05:30.9146012+05:30",
+      "receiptTickMs": 248439187,
+      "nativeSequence": null,
+      "nativePointerTimestampUs": null,
+      "nativePointDip": null,
+      "nativeDelta": null,
+      "nativeSource": null,
+      "domSequence": 2,
+      "domEventMs": 483057.09999999404,
+      "domPointCss": [
+        728,
+        415,
+        736,
+        446
+      ],
+      "domTarget": "page",
+      "domDeltaY": 433.33330078125,
+      "hwndDpi": 120,
+      "cursorHit": "window",
+      "cursorScreenPx": [
+        1454,
+        17
+      ],
+      "foreground": true,
+      "hwndFocus": "window",
+      "xamlFocus": "WebView2",
+      "domFocus": "other",
+      "domFocused": false
+    },
+    {
+      "kind": "stage51-native-wheel",
+      "at": "2026-11-18T17:24:27.4613423+05:30",
+      "receiptTickMs": 249575734,
+      "nativeSequence": 3,
+      "nativePointerTimestampUs": 249575758067,
+      "nativePointDip": [
+        1000,
+        727
+      ],
+      "nativeDelta": -400,
+      "nativeSource": "WebView2",
+      "domSequence": null,
+      "domEventMs": null,
+      "domPointCss": null,
+      "domTarget": null,
+      "domDeltaY": null,
+      "hwndDpi": 96,
+      "cursorHit": "child",
+      "cursorScreenPx": [
+        1000,
+        750
+      ],
+      "foreground": true,
+      "hwndFocus": "child",
+      "xamlFocus": "WebView2",
+      "domFocus": null,
+      "domFocused": null
+    },
+    {
+      "kind": "stage51-dom-wheel",
+      "at": "2026-11-18T17:24:27.4925838+05:30",
+      "receiptTickMs": 249575765,
+      "nativeSequence": null,
+      "nativePointerTimestampUs": null,
+      "nativePointDip": null,
+      "nativeDelta": null,
+      "nativeSource": null,
+      "domSequence": 3,
+      "domEventMs": 1619622.5,
+      "domPointCss": [
+        999,
+        726,
+        1000,
+        750
+      ],
+      "domTarget": "table",
+      "domDeltaY": 333.33331298828125,
+      "hwndDpi": 96,
+      "cursorHit": "child",
+      "cursorScreenPx": [
+        1000,
+        750
+      ],
+      "foreground": true,
+      "hwndFocus": "child",
+      "xamlFocus": "WebView2",
+      "domFocus": "sidebar",
+      "domFocused": true
+    },
+    {
+      "kind": "stage51-native-wheel",
+      "at": "2026-11-18T17:29:17.8177348+05:30",
+      "receiptTickMs": 249866093,
+      "nativeSequence": 4,
+      "nativePointerTimestampUs": 249866102353,
+      "nativePointDip": [
+        1350,
+        282
+      ],
+      "nativeDelta": -400,
+      "nativeSource": "WebView2",
+      "domSequence": null,
+      "domEventMs": null,
+      "domPointCss": null,
+      "domTarget": null,
+      "domDeltaY": null,
+      "hwndDpi": 96,
+      "cursorHit": "child",
+      "cursorScreenPx": [
+        1350,
+        305
+      ],
+      "foreground": true,
+      "hwndFocus": "child",
+      "xamlFocus": "WebView2",
+      "domFocus": null,
+      "domFocused": null
+    },
+    {
+      "kind": "stage51-dom-wheel",
+      "at": "2026-11-18T17:29:17.8447785+05:30",
+      "receiptTickMs": 249866125,
+      "nativeSequence": null,
+      "nativePointerTimestampUs": null,
+      "nativePointDip": null,
+      "nativeDelta": null,
+      "nativeSource": null,
+      "domSequence": 4,
+      "domEventMs": 1909979.199999988,
+      "domPointCss": [
+        1349,
+        281,
+        1350,
+        305
+      ],
+      "domTarget": "page",
+      "domDeltaY": 333.33331298828125,
+      "hwndDpi": 96,
+      "cursorHit": "child",
+      "cursorScreenPx": [
+        1350,
+        305
+      ],
+      "foreground": true,
+      "hwndFocus": "child",
+      "xamlFocus": "WebView2",
+      "domFocus": "other",
+      "domFocused": true
+    },
+    {
+      "kind": "stage51-native-wheel",
+      "at": "2026-11-18T17:31:22.2219379+05:30",
+      "receiptTickMs": 249990500,
+      "nativeSequence": 5,
+      "nativePointerTimestampUs": 249866102353,
+      "nativePointDip": [
+        1350,
+        282
+      ],
+      "nativeDelta": -400,
+      "nativeSource": "WebView2",
+      "domSequence": null,
+      "domEventMs": null,
+      "domPointCss": null,
+      "domTarget": null,
+      "domDeltaY": null,
+      "hwndDpi": 96,
+      "cursorHit": "outside",
+      "cursorScreenPx": null,
+      "foreground": false,
+      "hwndFocus": "unavailable",
+      "xamlFocus": "WebView2",
+      "domFocus": null,
+      "domFocused": null
+    },
+    {
+      "kind": "stage51-dom-wheel",
+      "at": "2026-11-18T17:31:22.2497879+05:30",
+      "receiptTickMs": 249990531,
+      "nativeSequence": null,
+      "nativePointerTimestampUs": null,
+      "nativePointDip": null,
+      "nativeDelta": null,
+      "nativeSource": null,
+      "domSequence": 5,
+      "domEventMs": 2034382.900000006,
+      "domPointCss": [
+        1349,
+        281,
+        1350,
+        305
+      ],
+      "domTarget": "table",
+      "domDeltaY": 333.33331298828125,
+      "hwndDpi": 96,
+      "cursorHit": "outside",
+      "cursorScreenPx": null,
+      "foreground": false,
+      "hwndFocus": "unavailable",
+      "xamlFocus": "WebView2",
+      "domFocus": "other",
+      "domFocused": false
+    }
+  ],
+  "captureSource": "../v41-s3-native/manifest-sha256.json",
+  "captures": [
+    {
+      "file": "01-125-light-max.png",
+      "sha256": "316B0C5339A4CFBD7EE82CDF596E62D0BC8D2BA7BE3E242122133421AA69558F",
+      "format": "JPEG",
+      "width": 1229,
+      "height": 736,
+      "horizontalDensityDpi": 120.0,
+      "verticalDensityDpi": 120.0
+    },
+    {
+      "file": "02-125-home-wheel.png",
+      "sha256": "F07A21592725114E7E346AB661C50B2AB69934DFB7EDE6D5D61025A1182FB369",
+      "format": "JPEG",
+      "width": 1229,
+      "height": 736,
+      "horizontalDensityDpi": 120.0,
+      "verticalDensityDpi": 120.0
+    },
+    {
+      "file": "03-125-light-maximized.png",
+      "sha256": "A5E681923ACD52D2C41C4F43DDCF3EF298E77D29903C6E9A1962361530BE0FDC",
+      "format": "JPEG",
+      "width": 1536,
+      "height": 912,
+      "horizontalDensityDpi": 120.0,
+      "verticalDensityDpi": 120.0
+    },
+    {
+      "file": "04-125-dark-preview.png",
+      "sha256": "837DB402FC7B09C376E466F5234A65EC48605235441BE12BFF86968C9A763D86",
+      "format": "JPEG",
+      "width": 1536,
+      "height": 912,
+      "horizontalDensityDpi": 120.0,
+      "verticalDensityDpi": 120.0
+    },
+    {
+      "file": "05-125-dark-maximized.png",
+      "sha256": "0DFFE999B4290DB212B99A0D7D0F3C6C6BA7FFCAE02F19A0FA72F1A7FEACB05E",
+      "format": "JPEG",
+      "width": 1536,
+      "height": 912,
+      "horizontalDensityDpi": 120.0,
+      "verticalDensityDpi": 120.0
+    },
+    {
+      "file": "06-100-dark-restored.png",
+      "sha256": "5304BD3E8C747CA563843FD7765C3E2A775868C8F9ED876D5D9467B82D9429E2",
+      "format": "JPEG",
+      "width": 1228,
+      "height": 735,
+      "horizontalDensityDpi": 96.0,
+      "verticalDensityDpi": 96.0
+    },
+    {
+      "file": "07-100-dark-maximized.png",
+      "sha256": "FE360AA79A40F5E1C055C966CC5F5A4EE5EE9B0FF8FAF1AEEA19C58234065A36",
+      "format": "JPEG",
+      "width": 1920,
+      "height": 1152,
+      "horizontalDensityDpi": 96.0,
+      "verticalDensityDpi": 96.0
+    },
+    {
+      "file": "08-100-dark-customers.png",
+      "sha256": "4700D1028D6FD677F38800DDC2AA54CD12EA3D7EB855ED5933C58D7384B84B3D",
+      "format": "JPEG",
+      "width": 1920,
+      "height": 1152,
+      "horizontalDensityDpi": 96.0,
+      "verticalDensityDpi": 96.0
+    },
+    {
+      "file": "09-100-customers-wheel.png",
+      "sha256": "917DE597000550622BC6DA0CB73501E284246B009FA33B25F2527AB1AEB5AC5B",
+      "format": "JPEG",
+      "width": 1920,
+      "height": 1152,
+      "horizontalDensityDpi": 96.0,
+      "verticalDensityDpi": 96.0
+    },
+    {
+      "file": "10-100-ws-open-pending.png",
+      "sha256": "86CD592D25EEEAA7C895DC7446328457DC01DACCA7617BF4CC73A343D5DB377F",
+      "format": "JPEG",
+      "width": 1920,
+      "height": 1152,
+      "horizontalDensityDpi": 96.0,
+      "verticalDensityDpi": 96.0
+    },
+    {
+      "file": "11-100-customers-outside-wheel.png",
+      "sha256": "1D4ACDB5E4850818E9ED2424795B15224644F1212133E750B36D2180A32FF5C1",
+      "format": "JPEG",
+      "width": 1920,
+      "height": 1152,
+      "horizontalDensityDpi": 96.0,
+      "verticalDensityDpi": 96.0
+    },
+    {
+      "file": "12-150-dark-restored.png",
+      "sha256": "BE253DF08EB700E3FFE96DFEA710E311B65E63E7DADBCFE309958557AA23482B",
+      "format": "JPEG",
+      "width": 1229,
+      "height": 737,
+      "horizontalDensityDpi": 144.0,
+      "verticalDensityDpi": 144.0
+    },
+    {
+      "file": "13-150-dark-maximized.png",
+      "sha256": "96D138A081BCFDEC0E0E7694179AD1321BE194CC3EE92B29F048B933C8399018",
+      "format": "JPEG",
+      "width": 1280,
+      "height": 752,
+      "horizontalDensityDpi": 144.0,
+      "verticalDensityDpi": 144.0
+    },
+    {
+      "file": "14-fixed-css-customer-before.png",
+      "sha256": "E1858C01BFEC5C94A40403E55374EE2A8DC29CC12E0082CB823B41759F1A8D76",
+      "format": "JPEG",
+      "width": 1536,
+      "height": 912,
+      "horizontalDensityDpi": 120.0,
+      "verticalDensityDpi": 120.0
+    },
+    {
+      "file": "15-fixed-css-inner-consumed.png",
+      "sha256": "20A02FD1FD85DCCBEC64A317848760935362F619752FBB9F341F34A7686EEBE7",
+      "format": "JPEG",
+      "width": 1536,
+      "height": 912,
+      "horizontalDensityDpi": 120.0,
+      "verticalDensityDpi": 120.0
+    },
+    {
+      "file": "16-fixed-css-page-handoff.png",
+      "sha256": "D7A13AA06C464A09A9DA94807A57891F0B4F096A982E695969B9B748FD1A8766",
+      "format": "JPEG",
+      "width": 1536,
+      "height": 912,
+      "horizontalDensityDpi": 120.0,
+      "verticalDensityDpi": 120.0
+    }
+  ]
+}

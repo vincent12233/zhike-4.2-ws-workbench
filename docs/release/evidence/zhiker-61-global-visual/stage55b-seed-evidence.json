@@ -1,0 +1,10 @@
+{
+  "stage": "5.5B",
+  "synthetic": true,
+  "contactsDefault": 49,
+  "auditDefault": 54,
+  "crmCustomers": 2,
+  "realWs": false,
+  "paidAi": false,
+  "productionOpened": false
+}

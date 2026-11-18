@@ -10,21 +10,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\zhike.ico</ApplicationIcon>
-    <Version>6.0.1</Version>
-    <AssemblyVersion>6.0.1.0</AssemblyVersion>
-    <FileVersion>6.0.1.0</FileVersion>
-    <InformationalVersion>6.0.1</InformationalVersion>
+    <Version>6.1.0</Version>
+    <AssemblyVersion>6.1.0.0</AssemblyVersion>
+    <FileVersion>6.1.0.0</FileVersion>
+    <InformationalVersion>6.1.0</InformationalVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Stage51IsolatedUi)' == 'true'">
+    <DefineConstants>$(DefineConstants);STAGE51_ISOLATED_UI</DefineConstants>
+    <AssemblyName>Zhike.Stage51.Acceptance</AssemblyName>
+    <RootNamespace>Zhike.Desktop</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.4" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3719.77" />
-  </ItemGroup>
-  <ItemGroup>
-    <!-- 6.0 ships one complete workbench.  These partial native pages were a
-         compatibility fallback and must not be compiled into the formal
-         desktop binary, otherwise an environment flag or stale route can
-         silently revive a second UI/client implementation. -->
-    <Page Remove="Views\HomePage.xaml;Views\CustomersPage.xaml;Views\ImportPage.xaml;Views\OperationsPage.xaml;Views\AiFollowupPage.xaml;Views\WsWorkbenchPage.xaml" />
-    <Compile Remove="Views\HomePage.xaml.cs;Views\CustomersPage.xaml.cs;Views\ImportPage.xaml.cs;Views\OperationsPage.xaml.cs;Views\AiFollowupPage.xaml.cs;Views\WsWorkbenchPage.xaml.cs" />
   </ItemGroup>
 </Project>

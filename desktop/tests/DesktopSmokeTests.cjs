@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const repo = path.resolve(__dirname, '..', '..');
+const { version } = require(path.join(repo, 'resources', 'app', 'package.json'));
 const desktopRoot = path.join(repo, 'desktop', 'src', 'Zhike.Desktop');
 const readDesktop = relative => fs.readFileSync(path.join(desktopRoot, relative), 'utf8');
 
@@ -23,7 +24,8 @@ for (const token of ['ZhikePageBackgroundBrush', 'ZhikeNavyBrush', 'ZhikeTealBru
   assert.match(appXaml, new RegExp(token), `App.xaml missing visual token ${token}`);
 assert.match(windowXaml, /<Frame x:Name="ContentFrame"/);
 assert.doesNotMatch(windowXaml, /<NavigationView\b|NativeHeader/);
-assert.match(windowCode, /知客 6\.0\.1  Horizon Atelier/, 'native window title must show the installed release version');
+assert.equal(windowCode.match(/_normalTitle\s*=\s*"知客 ([^"]+)  Horizon Atelier"/)?.[1], version,
+  'native window title must show the installed release version');
 assert.match(windowCode, /OnAppWindowClosing/);
 assert.match(windowCode, /FlushThenCloseAsync/);
 assert.match(windowCode, /ContentFrame\.Navigate\(typeof\(LegacyUiHostPage\)\)/);
@@ -46,11 +48,9 @@ assert.match(hostCode, /__zhikeWsDiscoverAll/);
 assert.match(hostCode, /lastMessagePreview/);
 assert.match(hostCode, /unreadCount/);
 
-const excludedPages = project.match(/<Page Remove="([^"]+)"/)?.[1] || '';
-const excludedCode = project.match(/<Compile Remove="([^"]+)"/)?.[1] || '';
 for (const page of ['HomePage', 'CustomersPage', 'ImportPage', 'OperationsPage', 'AiFollowupPage', 'WsWorkbenchPage']) {
-  assert.match(excludedPages, new RegExp(`${page}\\.xaml`));
-  assert.match(excludedCode, new RegExp(`${page}\\.xaml\\.cs`));
+  assert.equal(fs.existsSync(path.join(desktopRoot, 'Views', `${page}.xaml`)), false, `${page} XAML must be retired`);
+  assert.equal(fs.existsSync(path.join(desktopRoot, 'Views', `${page}.xaml.cs`)), false, `${page} code-behind must be retired`);
 }
 
 const layout = readDesktop('Services/WindowLayoutService.cs');

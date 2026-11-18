@@ -1,0 +1,154 @@
+{
+  "checkedAtUtc": "2026-11-17T17:53:04.6336628Z",
+  "mode": "ReadOnly",
+  "terminated": false,
+  "observations": [
+    {
+      "evidence": ".tools/delivery-s1-edge-layout/1794936204015-b2044039-c780-43a0-a01a-b4f98c881679.json",
+      "originalStatus": "Failed",
+      "originalCleanupSafe": false,
+      "root": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-layout-Ga1QyY",
+      "rootExists": true,
+      "identities": [
+        {
+          "pid": 7556,
+          "status": "Exited"
+        },
+        {
+          "pid": 26220,
+          "status": "Exited"
+        },
+        {
+          "pid": 34640,
+          "status": "Exited"
+        },
+        {
+          "pid": 23564,
+          "status": "Exited"
+        },
+        {
+          "pid": 30904,
+          "status": "Exited"
+        },
+        {
+          "pid": 17080,
+          "status": "Exited"
+        },
+        {
+          "pid": 29804,
+          "status": "Exited"
+        },
+        {
+          "pid": 18988,
+          "status": "Exited"
+        },
+        {
+          "pid": 15668,
+          "status": "Exited"
+        },
+        {
+          "pid": 31576,
+          "status": "Exited"
+        },
+        {
+          "pid": 34128,
+          "status": "Exited"
+        },
+        {
+          "pid": 11168,
+          "status": "Exited"
+        }
+      ]
+    },
+    {
+      "evidence": ".tools/delivery-s1-edge-layout/1794936944713-5e93f3ef-8e30-4a57-94d1-7958951ecfb3.json",
+      "originalStatus": "Failed",
+      "originalCleanupSafe": false,
+      "root": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-layout-eYTIjH",
+      "rootExists": true,
+      "identities": [
+        {
+          "pid": 35772,
+          "status": "Exited"
+        },
+        {
+          "pid": 33460,
+          "status": "Exited"
+        },
+        {
+          "pid": 21112,
+          "status": "Exited"
+        },
+        {
+          "pid": 18256,
+          "status": "Exited"
+        },
+        {
+          "pid": 24864,
+          "status": "Exited"
+        },
+        {
+          "pid": 35388,
+          "status": "Exited"
+        },
+        {
+          "pid": 17928,
+          "status": "Exited"
+        },
+        {
+          "pid": 15644,
+          "status": "Exited"
+        },
+        {
+          "pid": 13480,
+          "status": "Exited"
+        },
+        {
+          "pid": 13708,
+          "status": "Exited"
+        },
+        {
+          "pid": 21160,
+          "status": "Exited"
+        },
+        {
+          "pid": 17748,
+          "status": "Exited"
+        }
+      ]
+    },
+    {
+      "evidence": ".tools/visual-usability/main-visual/1794937090207-b9cbe0f2-2291-40c2-8c13-d4fedbc08485.json",
+      "originalStatus": "Failed",
+      "originalCleanupSafe": true,
+      "root": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s1-main-style-tZqAdl",
+      "rootExists": false,
+      "identities": [
+        {
+          "pid": 35752,
+          "status": "Exited"
+        },
+        {
+          "pid": 19852,
+          "status": "Exited"
+        },
+        {
+          "pid": 25944,
+          "status": "Exited"
+        },
+        {
+          "pid": 22764,
+          "status": "Exited"
+        },
+        {
+          "pid": 26992,
+          "status": "Exited"
+        },
+        {
+          "pid": 29284,
+          "status": "Exited"
+        }
+      ]
+    }
+  ]
+}

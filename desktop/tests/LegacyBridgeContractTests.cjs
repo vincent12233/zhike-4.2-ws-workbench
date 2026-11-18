@@ -6,12 +6,13 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const repo = path.resolve(__dirname, '..', '..');
+const { version } = require(path.join(repo, 'resources', 'app', 'package.json'));
 const root = path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Services');
 const currentIndex = fs.readFileSync(path.join(repo, 'docs', 'current-release-index.md'), 'utf8');
 
 for (const file of ['DesktopBridgeService.cs', 'LegacyApiAdapter.cs', 'BridgeContracts.cs', 'LegacyBridgeScript.cs'])
   assert.equal(fs.existsSync(path.join(root, file)), true, `missing bridge service ${file}`);
-assert.match(currentIndex, /6\.0\.0[\s\S]*WinUI[\s\S]*SQLite/i,
+assert.equal(currentIndex.match(/^\| 源码与安装版本 \| \*\*([^*]+)\*\*[^\r\n]*WinUI[^\r\n]*SQLite/im)?.[1], version,
   'bridge contract must be anchored to the current local release, not the retired compatibility document');
 
 const bridge = fs.readFileSync(path.join(root, 'DesktopBridgeService.cs'), 'utf8');

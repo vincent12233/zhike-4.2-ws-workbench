@@ -1,0 +1,47 @@
+{
+  "files": [
+    {
+      "file": "integration-full-regression.log",
+      "bytes": 456890,
+      "sha256": "E261E4028DBA77C4A1AD992AB27B546DE62A17C1A0C7742CC9BE7AABB95C0759"
+    },
+    {
+      "file": "integration-full-result.json",
+      "bytes": 128,
+      "sha256": "274B1F59F6F48F6D7166378545BCA831460C2BE6E494490070BE3FAB4CFAF6D7"
+    },
+    {
+      "file": "integration-release-build.log",
+      "bytes": 299,
+      "sha256": "12B6E65060B0ED79595520842E5DD56F8678BDA5FB8D17018635F987F43E918F"
+    },
+    {
+      "file": "integration-release-result.json",
+      "bytes": 128,
+      "sha256": "76BBB9639EE552E7EF3EA36C0BB305C4402EA022946278353E4A13DBAD2C4F37"
+    },
+    {
+      "file": "integration-observer-build.log",
+      "bytes": 515,
+      "sha256": "79872ADD449158D4BE5E2B915E99F1477EC5ACBD62D7975B22FC71E1EFE20471"
+    },
+    {
+      "file": "native-build.log",
+      "bytes": 257,
+      "sha256": "A521FF9EFB7087BB007A3CC2FC3447D146B0301633B4E6E57A685143BB5A98B2"
+    },
+    {
+      "file": "native-build-dpi-fixed.log",
+      "bytes": 257,
+      "sha256": "02C1940B2EE7C119F37265B0DE6CB117E5274D136CC8DD3FF14CB479B1515AFE"
+    }
+  ],
+  "scope": "Single integrated regression run and Release builds; no production execution",
+  "productAndTestCode": "4e2af3c",
+  "releaseWarnings": 0,
+  "fullFailed": 0,
+  "releaseErrors": 0,
+  "embeddedWsChecksIncludingSyntax": 197,
+  "fullPassed": 312,
+  "wsSyntaxChecks": 50
+}

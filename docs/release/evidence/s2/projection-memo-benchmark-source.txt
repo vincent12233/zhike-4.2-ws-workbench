@@ -1,0 +1,24 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),os=require('node:os');
+const {performance}=require('node:perf_hooks');
+const profilePath=path.join(__dirname,'delivery-s2-projection-profile.cjs'),text=fs.readFileSync(profilePath,'utf8'),prefix=text.slice(0,text.indexOf('const freshResult='));
+assert.ok(prefix.length>1000,'Reuse the exact real-owner/realm profiling loader');
+const {create,source,ownerHashes}=new Function('require','__dirname',prefix+';return {create,source,ownerHashes};')(require,__dirname);
+const output=path.join(__dirname,'delivery-s2-priority-memo-performance.json');
+const summary=values=>{const s=[...values].sort((a,b)=>a-b);return {minMs:s[0],medianMs:s[Math.floor(s.length/2)],maxMs:s.at(-1)};};
+const result={schemaVersion:1,kind:'same-realm-approved-priority-memo-readonly-baseline',command:'node --expose-gc .tools/delivery-s2-priority-memo-performance.cjs',startedAt:new Date().toISOString(),sourceSha256:crypto.createHash('sha256').update(source).digest('hex'),ownerHashes,environment:{platform:process.platform,release:os.release(),arch:process.arch,node:process.version,v8:process.versions.v8,cpu:os.cpus()[0]?.model},method:{realm:'Functions and synthetic data in the same JavaScript realm, fixed asOfDay and Date.now snapshot; Node, not WinUI/browser.',cold:'Fresh actual app helpers and synthetic arrays; source compilation/generation/GC excluded; time only getMetricsProjection.',counts:'5 cold calls each at 1k and 10k; one cold call at 50k. Five 1000-call warm batches per scale.',boundary:'Original smartPriority/CRM/date/amount owners unchanged. Local priority map lasts only this preparation; private prepared cache retains existing revision/day semantics. No assertion about dynamically moving Date.now during one sort.',noProduction:'No boot/service/database/config/credentials/WS/AI/Edge/native opened.'},runs:[]};
+for(const [size,count] of [[1000,5],[10000,5],[50000,1]]){
+ const row={customers:size,cold:[],warm:[]};
+ for(let iteration=0;iteration<count;iteration++){
+  global.gc?.();let api=create('same-realm',size);const cpu=process.cpuUsage(),start=performance.now(),dto=api.getMetricsProjection(),durationMs=performance.now()-start,usage=process.cpuUsage(cpu);
+  assert.equal(dto.sourceState.status,'loaded');assert.equal(dto.metrics['customers.total'].value,api.model.customers.filter(c=>!c.deleted).length);
+  row.cold.push({iteration:iteration+1,durationMs,cpuMs:(usage.user+usage.system)/1000});
+  if(iteration===count-1){
+   for(let batch=0;batch<5;batch++){let last;const begin=performance.now();for(let index=0;index<1000;index++)last=api.getMetricsProjection();const elapsedMs=performance.now()-begin;assert.equal(last,dto);row.warm.push({batch:batch+1,calls:1000,totalMs:elapsedMs,perCallMs:elapsedMs/1000});}
+   row.data={activeCustomers:dto.metrics['customers.total'].value,followups:api.model.followups.length,registrations:api.model.registrations.length,tickets:api.model.tickets.length,deposits:api.model.deposits.length};
+  }
+  console.log(JSON.stringify({size,iteration:iteration+1,coldMs:durationMs}));api=null;
+ }
+ row.coldSummary=summary(row.cold.map(v=>v.durationMs));row.warmPerCallSummary=summary(row.warm.map(v=>v.perCallMs));result.runs.push(row);fs.writeFileSync(output,JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify({size,cold:row.coldSummary,warm:row.warmPerCallSummary}));
+}
+result.finishedAt=new Date().toISOString();fs.writeFileSync(output,JSON.stringify(result,null,2)+'\n');console.log('Approved priority memo evidence: '+output);

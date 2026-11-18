@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "invocation": "1794924546095-384c3678-6df8-4b9f-ab9e-91eebe85c14a",
+  "mode": "controlled-node-close-timeout",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 3000,
+  "launchedAt": "2026-11-17T14:09:06.095Z",
+  "events": [
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 548
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 548
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 548
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 548,
+      "acknowledgement": "stdin-request"
+    },
+    {
+      "event": "failure-owned-handle-termination",
+      "elapsedMs": 3013,
+      "requested": true
+    }
+  ],
+  "identities": [
+    {
+      "pid": 15812,
+      "startedTicks": "639305213461063948",
+      "startedUtc": "2026-11-17T14:09:06.1063948Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": null,
+  "streamsClosed": false,
+  "forceTerminated": true,
+  "cleanupSafe": false,
+  "pid": 15812,
+  "resultReady": true,
+  "elapsedMs": 3014,
+  "stdoutBytes": 37,
+  "stderrBytes": 0,
+  "failure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "process-exit",
+    "message": "Isolated lifecycle deadline reached during process-exit"
+  }
+}

@@ -1,0 +1,333 @@
+{
+  "stage": "5.5B",
+  "entries": [
+    {
+      "path": "stage55b-evidence/archive-context.json",
+      "bytes": 1689,
+      "sha256": "542625101ca833f49cb57a52d6b0caa22e3c946f1025d4763989f8c48850d315"
+    },
+    {
+      "path": "stage55b-evidence/native-events.jsonl",
+      "bytes": 29513,
+      "sha256": "175a1102c71ff840635f00bbe7965784acb44f7ceb2653da7a1e925d0ee630ea"
+    },
+    {
+      "path": "stage55b-evidence/native-summary.json",
+      "bytes": 6484,
+      "sha256": "4605239c70e6f89a30cbe4182679ed9874c26fb3d94cf5214658b9d7a3355e97"
+    },
+    {
+      "path": "stage55b-evidence/source-hashes.json",
+      "bytes": 1135,
+      "sha256": "7e68130810bb87b1ddf847b10aef0f520fa50898485c503f992d2982b5aa92ce"
+    },
+    {
+      "path": "stage55b-evidence/stage55b-business-evidence.json",
+      "bytes": 828,
+      "sha256": "3ea0fd52fcd54a554cc08505b23ef2027f45ce42d7c10df23c1b0dfffe0ff1fc"
+    },
+    {
+      "path": "stage55b-evidence/stage55b-resource-samples.context.json",
+      "bytes": 1740,
+      "sha256": "87861e3969be441dec202ad32b86ac4d47101b7d0dd166e6c1209214e69702e2"
+    },
+    {
+      "path": "stage55b-evidence/stage55b-resource-samples.jsonl",
+      "bytes": 93179,
+      "sha256": "6eb8de9c4a55370d0174ef2261c67297f2fda000046277e19772a8bc9f82eb68"
+    },
+    {
+      "path": "stage55b-evidence/stage55b-seed-evidence.json",
+      "bytes": 178,
+      "sha256": "35a22bd64d2818ab0985de9725c4d71bd4c4f56a2d432e9eee95f401bbc2142e"
+    },
+    {
+      "path": "stage55b-evidence/test-executions.json",
+      "bytes": 95853,
+      "sha256": "be004986848a938bb599526813eca53f1b7282e6aaa1c95772022569b9450980"
+    },
+    {
+      "path": "stage55b-screenshots/01-initial-window.jpg",
+      "bytes": 147142,
+      "sha256": "8b974b097c50cf7d4fbc07cb5afd4f0fc15c248cbd4748077934daf783a37c18",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/02-overview-maximized.jpg",
+      "bytes": 150990,
+      "sha256": "1a599884f3ce60c2b7fe950bc99e77732696f69985bef2a872a6c01604ef9080",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/03-contacts-first-page.jpg",
+      "bytes": 214722,
+      "sha256": "34249db97c6becb0cbbc3963b1442a5c81ee80017fa4a7da20b5dd4a79f3fb6c",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/04-contacts-enter-search.jpg",
+      "bytes": 145951,
+      "sha256": "ba6325f70b96453cd8977128e1d1e65cf4498d5891c7f70a3c1c2dafefe6683e",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/05-contact-detail.jpg",
+      "bytes": 171377,
+      "sha256": "f223a27c2e588b76f4a4b3d018bba6c900a41dd2b0c2e80c2ecb20a61254aa1a",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/06-contacts-page-two.jpg",
+      "bytes": 215965,
+      "sha256": "cb9574576f140971cb154b3130c2a70aa1dc9bda85030ed17a7815526efb537b",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/07-contacts-page-two-scroll.jpg",
+      "bytes": 230382,
+      "sha256": "f22c58745b5f3e5024540092f7132690de4ca336363f16c443099b54fe79033d",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/08-audit-list.jpg",
+      "bytes": 192914,
+      "sha256": "cadc10c5b84d24f393d615f84a99f04a16a164b80c98026324d10ae68c987288",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/09-audit-detail.jpg",
+      "bytes": 196058,
+      "sha256": "2ebf67118c490e98588e1dafed167a041cb35f570a6ebae354d9c33c1d68b1ba",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/10-runtime-snapshots.jpg",
+      "bytes": 196960,
+      "sha256": "f1c722c73e9d41e9cc38aad72f0b7bb8a67e26eb53cbfa7de9c730d2700558fe",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/11-diagnostic-unavailable.jpg",
+      "bytes": 161143,
+      "sha256": "9c273e4a9683ba1a2b6644bbde433494655fa173a7ea48800b47364796984204",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/12-groups.jpg",
+      "bytes": 164480,
+      "sha256": "6244cd5adef663d292413428e8786f62a9a3fe46e44987b86d5bb119de3373ce",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/13-members.jpg",
+      "bytes": 165168,
+      "sha256": "852b25c3eb559670dd07c7710108c6980bd653a94d0eef96a39be73f4635665b",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/14-member-details.jpg",
+      "bytes": 160275,
+      "sha256": "4c3b92d0a2ded2edda6b61304dd216188151f120d97590b9060d8cb0a315c500",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/15-collection.jpg",
+      "bytes": 164815,
+      "sha256": "f9e6423d27a244ce2245c550b60bbedb054a71837480c466745ceb506e3ffc9d",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/16-ai-page.jpg",
+      "bytes": 142705,
+      "sha256": "c3b5ea8d31488f00bf301110270936e582f1f2ed9ac1edf4b63ebfadbc15c2cc",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/17-ai-tasks.jpg",
+      "bytes": 163743,
+      "sha256": "7850d28ba599bd781ca45531e35726b136456bd25206918b815e75957a4dd7e5",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/18-crm-customer-list.jpg",
+      "bytes": 161438,
+      "sha256": "64c6e085723fd1870fee549b21444ba475dce6bb8e8116cc967566002fe3fdd6",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/19-crm-approved.jpg",
+      "bytes": 162271,
+      "sha256": "6640949f256941ac4ad4913ddd38dd64f41bd04d9a4d7d6264c0c1634c0bd6b1",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/20-crm-rejected.jpg",
+      "bytes": 161493,
+      "sha256": "b8b2f776fbc9608689cda025b401bfbf51f7b0c817a998313505dd5e3d603eb3",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/21-crm-manual-conflict.jpg",
+      "bytes": 161379,
+      "sha256": "90f93abc7cdb109c52f655dd1d6d5902934b45fd0884b5656463d3d6c1a8e92f",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/22-tasks.jpg",
+      "bytes": 140439,
+      "sha256": "d6d00ee030dabc9174f283f231de7cf4c73d9c45dcb0a5ffed1c8963e0f8c5e7",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/23-tools-settings.jpg",
+      "bytes": 162391,
+      "sha256": "62c4e6acab5ef4de6ab0d4d93debb98a205bb18ced0fdc07c4fa316e55455a14",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/24-gpt-settings-owned-modal.jpg",
+      "bytes": 131046,
+      "sha256": "b4b0948ea28ac184e79ce8b49b32738811e151e6548ea274190c8cd8a4f07251",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/25-gpt-close-keeps-ws.jpg",
+      "bytes": 170832,
+      "sha256": "067b30e095c627b7978a8e2767245d067128d9f7ef31696b65a23718f872b02b",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/26-accounts.jpg",
+      "bytes": 137857,
+      "sha256": "d60bd89a27b0434d632d645d9537aee26bac703b10c74e81a24bc201163e5acf",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/27-native-chat.jpg",
+      "bytes": 108496,
+      "sha256": "bccc0b0ee8d986b942ba64d209ee367b4297779f6ed246c1cc516292f7263e8b",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/28-native-chat-open.jpg",
+      "bytes": 108180,
+      "sha256": "6b2981e3dab4abcab05afc62ef67557c26a35c927899421642a4da85b0e61f76",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/29-chat-crm-panel.jpg",
+      "bytes": 145592,
+      "sha256": "ee348bd731af663be10b03b24ad57302ab432ddb8c15bc259d21c63417184032",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/30-switch-01-B.jpg",
+      "bytes": 83810,
+      "sha256": "b6544ebb2cff5a8b7135c620aab89f4ccf14afca0887df1d34ab59323af1d589",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/31-B-scoped-contacts.jpg",
+      "bytes": 108192,
+      "sha256": "280163f988c15d48d58e9cd2989a8d9b6c0e4cc8591e754457728376391ee04c",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/32-B-contact-rows.jpg",
+      "bytes": 107587,
+      "sha256": "3cc3b4104b4017a155d2975d5c606bfcb93dffeaa818980c482543d2cb634695",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/33-B-contact-scope.jpg",
+      "bytes": 119248,
+      "sha256": "b655f13d766a1bc96e794ab8153732b13fa046177532e678f01d44861582d4cf",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/34-switch-02-A.jpg",
+      "bytes": 83779,
+      "sha256": "95af5c76c696a80ffd831040219ce5bea7e0145fa14f048a20deaaf1af4ab584",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/35-switch-03-B.jpg",
+      "bytes": 83906,
+      "sha256": "0bda52ea6033fe518b00ce06909c8fe40d7a7500cf7f296b5cbfeb40e74a7ad6",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/36-switch-04-A.jpg",
+      "bytes": 83779,
+      "sha256": "95af5c76c696a80ffd831040219ce5bea7e0145fa14f048a20deaaf1af4ab584",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/37-switch-05-B.jpg",
+      "bytes": 83906,
+      "sha256": "0bda52ea6033fe518b00ce06909c8fe40d7a7500cf7f296b5cbfeb40e74a7ad6",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/38-switch-06-A.jpg",
+      "bytes": 83779,
+      "sha256": "95af5c76c696a80ffd831040219ce5bea7e0145fa14f048a20deaaf1af4ab584",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/39-switch-07-B.jpg",
+      "bytes": 83906,
+      "sha256": "0bda52ea6033fe518b00ce06909c8fe40d7a7500cf7f296b5cbfeb40e74a7ad6",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/40-switch-08-A.jpg",
+      "bytes": 83779,
+      "sha256": "95af5c76c696a80ffd831040219ce5bea7e0145fa14f048a20deaaf1af4ab584",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/41-switch-09-B.jpg",
+      "bytes": 83677,
+      "sha256": "b6f6792b8d276e19c49245a0229497da176c2fa75e4124dc285a15f3071ae288",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/42-switch-10-A.jpg",
+      "bytes": 83613,
+      "sha256": "a555b6a11dcf05c53d71044c5e53ff939fe9ae965de68b05a669a3f9460d8845",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/43-A-directory-restored.jpg",
+      "bytes": 119329,
+      "sha256": "dca57ecf7a5096e18fa36170730aa877ff6a2857c86744863d8b7e83b5733d6f",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-screenshots/44-return-zhike-window.jpg",
+      "bytes": 147223,
+      "sha256": "9d1f095ae8a670fb8e41f464ffb79b885c7dfe4df72f0d040d9fc85ac203011f",
+      "contentReview": "OperatorRequired"
+    },
+    {
+      "path": "stage55b-evidence/native-final-verification.json",
+      "bytes": 9337,
+      "sha256": "33fdc91de034ad306607156da43a620cbf3a44902f39f49373eac4dee2f87e20",
+      "contentReview": "Synthetic identities, counters and checks only; no credentials or message content"
+    }
+  ],
+  "screenshotCount": 44,
+  "screenshotStatus": "ProvidedRequiresOperatorReview",
+  "excluded": [
+    "connection.private.json",
+    "SQLite databases",
+    "WebView2 profiles",
+    "keys and credentials",
+    "chat content",
+    "raw test logs",
+    "unapproved diagnostic fields"
+  ],
+  "copiedProductionData": false,
+  "gate": "NotEvaluated"
+}

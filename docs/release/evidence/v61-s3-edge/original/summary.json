@@ -1,0 +1,205 @@
+{
+  "head": "118b263d6c7873efa2420eced29f4b886e05f58b",
+  "results": [
+    {
+      "label": "s1-main-visual",
+      "invocation": "1794999314350-88ac9c27-408a-4930-8823-12f36f20afb6",
+      "pid": 25060,
+      "startedTicks": "639305961143695122",
+      "timeoutMs": 30000,
+      "navigationResponseMs": 1678.0656000000001,
+      "matchingLoadMs": 9533.090699999999,
+      "receivedLoadEvents": 10,
+      "domContentLoadedEvents": 10,
+      "initializationEvents": 17,
+      "matrixResponseMs": 9727.2385,
+      "matrixVerifiedMs": 9798.617199999999,
+      "pageAssertionsCompleted": false,
+      "resultCases": 8,
+      "closeSentMs": 9958.026999999998,
+      "closeAcknowledgedMs": 9958.7779,
+      "transportClosedMs": 9963.548499999999,
+      "forcedTerminationStartedMs": 30003.5224,
+      "independentKernel": {
+        "stateAtSample": "running",
+        "minimumObservedRunningMs": 30014.904200010824,
+        "maximumObservedRunningMs": 30050.413000010823,
+        "readByNodeMs": 40848.6178,
+        "observerExitCode": null,
+        "observerExitSignal": "SIGTERM"
+      },
+      "nodeAtRelease": {
+        "event": "node-release-state",
+        "elapsedMs": 30003.511000000002,
+        "exitObserved": false,
+        "closeObserved": false,
+        "stdoutCloseObserved": false,
+        "stderrCloseObserved": false,
+        "exitCode": null,
+        "signalCode": null
+      },
+      "failure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit",
+        "message": "Isolated lifecycle deadline reached during process-exit"
+      },
+      "releaseFailure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit"
+      },
+      "cleanupSafe": false,
+      "forceTerminated": true,
+      "profileRetained": true
+    },
+    {
+      "label": "s1-ws-visual",
+      "invocation": "1794999357000-5e3318a3-0535-40e6-b52c-e2f17d28c04c",
+      "pid": 12408,
+      "startedTicks": "639305961570078119",
+      "timeoutMs": 30000,
+      "navigationResponseMs": 5692.7372,
+      "matchingLoadMs": 16878.6783,
+      "receivedLoadEvents": 9,
+      "domContentLoadedEvents": 9,
+      "initializationEvents": 15,
+      "matrixResponseMs": 26255.7849,
+      "matrixVerifiedMs": 34981.781800000004,
+      "pageAssertionsCompleted": false,
+      "resultCases": 7,
+      "closeSentMs": null,
+      "closeAcknowledgedMs": null,
+      "transportClosedMs": null,
+      "forcedTerminationStartedMs": 34982.877,
+      "independentKernel": {
+        "stateAtSample": "running",
+        "minimumObservedRunningMs": 30009.75560000539,
+        "maximumObservedRunningMs": 30040.91480000539,
+        "readByNodeMs": 39212.3922,
+        "observerExitCode": null,
+        "observerExitSignal": "SIGTERM"
+      },
+      "nodeAtRelease": {
+        "event": "node-release-state",
+        "elapsedMs": 34982.862100000006,
+        "exitObserved": false,
+        "closeObserved": false,
+        "stdoutCloseObserved": false,
+        "stderrCloseObserved": false,
+        "exitCode": null,
+        "signalCode": null
+      },
+      "failure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "cdp-connect",
+        "message": "Isolated lifecycle deadline reached during cdp-connect"
+      },
+      "releaseFailure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit"
+      },
+      "cleanupSafe": false,
+      "forceTerminated": true,
+      "profileRetained": true
+    },
+    {
+      "label": "s2-metrics-visual",
+      "invocation": "1794999397596-a82a9590-cda3-499a-8e37-64d61d96022d",
+      "pid": 21160,
+      "startedTicks": "639305961976091906",
+      "timeoutMs": 30000,
+      "navigationResponseMs": 6780.7133,
+      "matchingLoadMs": 10267.7336,
+      "receivedLoadEvents": 2,
+      "domContentLoadedEvents": 2,
+      "initializationEvents": 9,
+      "matrixResponseMs": 10276.9687,
+      "matrixVerifiedMs": 11222.027199999999,
+      "pageAssertionsCompleted": false,
+      "resultCases": 4,
+      "closeSentMs": 11309.4254,
+      "closeAcknowledgedMs": 11335.846599999999,
+      "transportClosedMs": 11340.124,
+      "forcedTerminationStartedMs": 30010.376200000002,
+      "independentKernel": {
+        "stateAtSample": "running",
+        "minimumObservedRunningMs": 30001.638600023794,
+        "maximumObservedRunningMs": 30068.919900023793,
+        "readByNodeMs": 31741.328700000002,
+        "observerExitCode": 0,
+        "observerExitSignal": null
+      },
+      "nodeAtRelease": {
+        "event": "node-release-state",
+        "elapsedMs": 30010.3613,
+        "exitObserved": false,
+        "closeObserved": false,
+        "stdoutCloseObserved": false,
+        "stderrCloseObserved": false,
+        "exitCode": null,
+        "signalCode": null
+      },
+      "failure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit",
+        "message": "Isolated lifecycle deadline reached during process-exit"
+      },
+      "releaseFailure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit"
+      },
+      "cleanupSafe": false,
+      "forceTerminated": true,
+      "profileRetained": true
+    },
+    {
+      "label": "s3-customer-table-visual",
+      "invocation": "1794999433928-0e2e7d7b-e253-4c97-bbf6-225a1b306899",
+      "pid": 38156,
+      "startedTicks": "639305962339418371",
+      "timeoutMs": 30000,
+      "navigationResponseMs": 6339.9808,
+      "matchingLoadMs": null,
+      "receivedLoadEvents": 1,
+      "domContentLoadedEvents": 2,
+      "initializationEvents": 21,
+      "matrixResponseMs": null,
+      "matrixVerifiedMs": null,
+      "pageAssertionsCompleted": false,
+      "resultCases": null,
+      "closeSentMs": 28505.436700000002,
+      "closeAcknowledgedMs": 28506.126500000002,
+      "transportClosedMs": 28511.3652,
+      "forcedTerminationStartedMs": 30005.6487,
+      "independentKernel": {
+        "stateAtSample": "running",
+        "minimumObservedRunningMs": 30001.84779999919,
+        "maximumObservedRunningMs": 30033.54199999919,
+        "readByNodeMs": 32802.025799999996,
+        "observerExitCode": null,
+        "observerExitSignal": "SIGTERM"
+      },
+      "nodeAtRelease": {
+        "event": "node-release-state",
+        "elapsedMs": 30005.634400000003,
+        "exitObserved": false,
+        "closeObserved": false,
+        "stdoutCloseObserved": false,
+        "stderrCloseObserved": false,
+        "exitCode": null,
+        "signalCode": null
+      },
+      "failure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "result",
+        "message": "Isolated lifecycle deadline reached during result"
+      },
+      "releaseFailure": {
+        "code": "EDGE_RUNNER_TIMEOUT",
+        "phase": "process-exit"
+      },
+      "cleanupSafe": false,
+      "forceTerminated": true,
+      "profileRetained": true
+    }
+  ]
+}

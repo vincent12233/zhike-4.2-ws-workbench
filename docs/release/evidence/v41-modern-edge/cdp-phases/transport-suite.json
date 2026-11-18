@@ -1,0 +1,63 @@
+{
+  "suite": "isolated-edge-transport",
+  "passed": 5,
+  "realBrowserAccepted": false,
+  "cases": [
+    {
+      "mode": "ack-only",
+      "status": "Passed",
+      "actualLoopbackWebSocket": true,
+      "realEdgeStarted": false,
+      "realBrowserAccepted": false,
+      "events": [
+        "browser-close-acknowledged",
+        "cdp-transport-close-requested",
+        "cdp-transport-closed"
+      ]
+    },
+    {
+      "mode": "peer-close",
+      "status": "Passed",
+      "actualLoopbackWebSocket": true,
+      "realEdgeStarted": false,
+      "realBrowserAccepted": false,
+      "events": [
+        "cdp-transport-closed",
+        "browser-close-acknowledged"
+      ]
+    },
+    {
+      "mode": "stall-close",
+      "status": "Passed",
+      "actualLoopbackWebSocket": true,
+      "realEdgeStarted": false,
+      "realBrowserAccepted": false,
+      "events": [
+        "browser-close-acknowledged",
+        "cdp-transport-close-requested"
+      ]
+    },
+    {
+      "mode": "premature-disconnect",
+      "status": "Passed",
+      "actualLoopbackWebSocket": true,
+      "realEdgeStarted": false,
+      "realBrowserAccepted": false,
+      "events": [
+        "cdp-transport-closed"
+      ]
+    },
+    {
+      "mode": "work-phase-observation",
+      "status": "Passed",
+      "actualLoopbackWebSocket": true,
+      "realEdgeStarted": false,
+      "realBrowserAccepted": false,
+      "events": [
+        "cdp-work-started",
+        "cdp-work-completed",
+        "cdp-work-started"
+      ]
+    }
+  ]
+}

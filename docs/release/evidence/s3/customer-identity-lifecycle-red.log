@@ -1,0 +1,59 @@
+FAIL same-name customers use the drawer customer ID, never the first name match: The input did not match the regular expression /B_ONLY_EVIDENCE/. Input:
+
+'<div class="customer-360-section-title"><strong>报名历史</strong><span>1 条</span></div><div class="timeline"><div class="timeline-item"><i></i><div><strong>已报名</strong><span>2026-11-16 · 未记录来源 · 未分配</span><p>A_ONLY_EVIDENCE</p></div></div></div>'
+
+FAIL renaming the display heading does not change the authoritative customer link: Expected values to be strictly equal:
+
+0 !== 1
+
+FAIL unknown or missing drawer IDs never fall back to a matching name: untrusted identity cannot display another customer history
+
+1 !== 0
+
+FAIL deleted and duplicate master IDs are not silently treated as one active customer: Expected values to be strictly equal:
+
+1 !== 0
+
+FAIL late A response cannot populate reused B drawer before B response: the old request owns A, even if its snapshot also contains B
+
+1 !== 0
+
+FAIL closing a drawer before completion prevents late insertion: Expected values to be strictly equal:
+
+1 !== 0
+
+FAIL an older failed read cannot replace the current customer successful history: Expected values to be strictly equal:
++ actual - expected
+
++ undefined
+- 'loaded'
+
+FAIL replacing the drawer DOM prevents insertion into detached old content: Expected values to be strictly equal:
+
+1 !== 0
+
+FAIL same-ID drawer rerender rejects the old actions/content generation: a same-ID reopen is still a new content generation
+
+1 !== 0
+
+FAIL overlapping refreshes share one read and append at most one current history section: an already pending read for the same drawer content is reused
+
+2 !== 1
+
+FAIL read failure shows a real retry state, never fake empty history, and explicit retry recovers: Expected values to be strictly equal:
+
+0 !== 1
+
+FAIL valid empty history remains distinct and all rendered evidence is escaped: The input did not match the regular expression /&lt;img/. Input:
+
+'<div class="customer-360-section-title"><strong>报名历史</strong><span>0 条</span></div><div class="timeline"><div class="muted-cell">暂无报名历史</div></div>'
+
+FAIL explicit first drawer-open event reaches the enhancer after lazy drawer creation: no global body observer is needed to discover the new drawer
+
+0 !== 1
+
+FAIL drawer lifecycle event data cannot override the live authoritative customer ID: Expected values to be strictly equal:
+
+0 !== 1
+
+Delivery S3 customer identity runtime: 0/14; real enhancer, synthetic read transport, no browser/database/writes

@@ -6,7 +6,7 @@ param(
   [string]$StageDir = '',
   [string]$OutputDir = '',
   [ValidatePattern('^\d+\.\d+\.\d+$')]
-  [string]$AppVersion = '6.0.1',
+  [string]$AppVersion = '6.1.0',
   [switch]$SkipWebView2Check,
   [switch]$AllowUnsigned,
   # A publishable installer must come from a bundle built with -ReleaseGate.
@@ -81,13 +81,16 @@ $requiredStageFiles = @(
   'resources\app\app.js',
   'resources\app\styles.css',
   'resources\app\server.mjs',
+  'resources\app\node.exe',
   'resources\app\modules\horizon-atelier.css',
+  'resources\app\modules\design-system.css',
   'resources\app\modules\business-6.css',
   'resources\app\modules\operations-6.css',
   'resources\app\modules\global-6.css',
   'resources\app\modules\home-6.css',
   'resources\app\modules\scroll-system.css',
   'resources\app\assets\zhike-horizon-logo.png',
+  'resources\app\assets\atelier-dawn.svg',
   'resources\app\assets\horizon-ridge-6.png',
   'resources\app\assets\horizon-flow-6.png',
   'resources\app\assets\horizon-topline-6.png',
@@ -125,19 +128,30 @@ $stagedIndex = [IO.File]::ReadAllText((Join-Path $stage 'resources\app\index.htm
 if (-not $stagedIndex.Contains(" &middot; v$AppVersion<!-- ZHIKE_BUILD_VERSION --></span>")) {
   throw "staged sidebar version mismatch: expected v$AppVersion in resources/app/index.html; rebuild the WinUI bundle."
 }
-if (-not $stagedIndex.Contains('<title>知客 6.0 · Horizon Atelier</title>')) { throw 'staged UI title is not Horizon Atelier 6.0; refusing an old UI stage.' }
+$versionInfo = [Version]$AppVersion
+$displayVersion = "$($versionInfo.Major).$($versionInfo.Minor)"
+if (-not $stagedIndex.Contains("<title>知客 $displayVersion · Horizon Atelier</title>")) { throw "staged UI title is not Horizon Atelier $displayVersion; refusing an old UI stage." }
 $stagedScrollIndex = $stagedIndex.IndexOf('scroll-system.css', [StringComparison]::Ordinal)
 $stagedHorizonIndex = $stagedIndex.IndexOf('horizon-atelier.css', [StringComparison]::Ordinal)
 if ($stagedHorizonIndex -lt 0 -or $stagedScrollIndex -le $stagedHorizonIndex) { throw 'staged scroll interaction layer is missing or ordered before Horizon Atelier.' }
+$stagedDesignIndex = $stagedIndex.IndexOf('design-system.css', [StringComparison]::Ordinal)
+if ($stagedDesignIndex -lt 0 -or $stagedDesignIndex -ge $stagedHorizonIndex) { throw 'staged shared palette layer is missing or ordered incorrectly.' }
 $stagedHomeIndex = $stagedIndex.IndexOf('home-6.css', [StringComparison]::Ordinal)
 if ($stagedHomeIndex -le $stagedHorizonIndex -or $stagedHomeIndex -ge $stagedScrollIndex) { throw 'staged compact home layer is missing or ordered incorrectly.' }
 $stagedServer = [IO.File]::ReadAllText((Join-Path $stage 'resources\app\server.mjs'))
 if ($stagedServer -notmatch "const APP_VERSION = '$([regex]::Escape($AppVersion))'") { throw "staged server version mismatch: expected $AppVersion" }
 if (-not $stagedServer.Contains("'/modules/horizon-atelier.css'")) { throw 'staged local service does not allow the Horizon Atelier resource.' }
+if (-not $stagedServer.Contains("'/modules/design-system.css'")) { throw 'staged local service does not serve the shared palette stylesheet.' }
 if (-not $stagedServer.Contains("'/modules/home-6.css'")) { throw 'staged local service does not allow the compact home resource.' }
 $stagedHomeCss = [IO.File]::ReadAllText((Join-Path $stage 'resources\app\modules\home-6.css'))
-foreach ($artwork in @('horizon-ridge-6.png', 'horizon-flow-6.png', 'horizon-topline-6.png', 'horizon-rock-6.png')) {
-  if (-not $stagedHomeCss.Contains("../assets/$artwork")) { throw "staged home stylesheet is missing artwork reference: $artwork" }
+if (-not $stagedHomeCss.Contains('var(--ds-flow-art)')) { throw 'staged home stylesheet does not use the shared palette artwork.' }
+$stagedPaletteCss = [IO.File]::ReadAllText((Join-Path $stage 'resources\app\modules\design-system.css'))
+$paletteArtwork = @('atelier-dawn.svg', 'horizon-flow-6.png')
+foreach ($artwork in $paletteArtwork) {
+  $reference = '--ds-flow-art\s*:\s*url\(\s*["'']?\.\./assets/' + [regex]::Escape($artwork) + '["'']?\s*\)'
+  if ($stagedPaletteCss -notmatch $reference) { throw "staged palette stylesheet is missing artwork reference: $artwork" }
+}
+foreach ($artwork in ($paletteArtwork + @('horizon-ridge-6.png', 'horizon-topline-6.png', 'horizon-rock-6.png'))) {
   if (-not $stagedServer.Contains("'/assets/$artwork'")) { throw "staged local service does not allow home artwork: $artwork" }
 }
 
@@ -276,6 +290,9 @@ if ($ReleaseGate) {
     product = 'Zhike Desktop'
     version = $AppVersion
     installer = $installerItem.Name
+    releaseAsset = "zhike-$AppVersion-win-x64-setup.exe"
+    sourceCommit = $bundleManifest.sourceCommit
+    signingStatus = if ($certificate) { 'signed-and-verified' } else { 'unsigned' }
     sha256 = $installerHash
     bytes = $installerItem.Length
     releaseGate = 'passed'

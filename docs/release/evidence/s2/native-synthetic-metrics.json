@@ -1,0 +1,15 @@
+{
+  "synthetic": true,
+  "productionOpened": false,
+  "realWs": false,
+  "realAi": false,
+  "customers": 2,
+  "dates": [
+    "2026-11-16",
+    "2026-11-17"
+  ],
+  "registrations": 1,
+  "followups": 2,
+  "homeWeekDepositIncludesPending": 100,
+  "confirmedDeposit": 75
+}

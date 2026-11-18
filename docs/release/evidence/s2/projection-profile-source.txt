@@ -1,0 +1,101 @@
+'use strict';
+// Test-only profiling/candidate experiment. Does not modify or boot the app.
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),crypto=require('node:crypto'),os=require('node:os');
+const {performance}=require('node:perf_hooks');const {execFileSync}=require('node:child_process');
+const repo=path.resolve(__dirname,'..'),source=fs.readFileSync(path.join(repo,'resources/app/app.js'),'utf8');
+const legacySource=execFileSync('git',['show','591d372:resources/app/app.js'],{cwd:repo,encoding:'utf8',maxBuffer:4*1024*1024});
+const out=path.join(__dirname,'delivery-s2-projection-profile.json');
+const slice=(s,a,b)=>{const start=s.indexOf(a),end=s.indexOf(b,start);assert.ok(start>=0&&end>start,a);return s.slice(start,end);};
+const between=(a,b)=>slice(source,a,b);
+const owners=[['  const normalizeObjectRows =','  const normalizeCustomerRows ='],['  function isGroupFanSource(','  function effectiveCustomerSource('],['  let activeCustomerCache=','  function isIntakeHeaderLine('],['  const money =','  function backupHealth('],['  const buildCounts =','  function updateCounts('],['  function isStatusBaseline(','  function recordCustomerStatus('],['  function todayStatusCounts(','  function currentSourceStatusCounts(']];
+const ownerHashes=owners.map(([a,b])=>{const actual=between(a,b);assert.equal(actual,slice(legacySource,a,b),'Business owner changed: '+a);return {boundary:a,sha256:crypto.createHash('sha256').update(actual).digest('hex'),identicalTo:'591d372'};});
+const shared=owners.map(([a,b])=>between(a,b)).join('\n')+between('  let metricsReadState=','  const cloneStateData=')+between('  let homeMetricsCache=','  function renderHome()');
+const legacyPrep=slice(legacySource,'  function renderHome() {','    const tasks=rows.map').replace('  function renderHome() {','');
+const legacyTrend=slice(legacySource,'  function renderTrendChart(customers){','    if(days.every(').replace('  function renderTrendChart(customers){','');
+const returnFields='return {n,list,daily,business,weekRegistrations,weekAmount,allDue,overdue,planned,rows,pendingRegistered,high,profileGaps};';
+const profileLines=legacyPrep.split('\n').filter(line=>line.trim());
+const labels=['counts-active-daily-business','calendar-window','registrations-filter-and-set','week-registration-set','week-deposit-filter-sum','due-date-filtering','due-smartPriority-sort-top5','customer-map','pending-registered','all-customer-high-grade-filter','profile-gaps','coverage-array','kpi-array'];
+assert.equal(profileLines.length,labels.length);
+const profileBody=profileLines.map((line,index)=>line+`;mark(${JSON.stringify(labels[index])});`).join('\n');
+const originalRows=profileLines.find(line=>line.includes('const rows='));assert.ok(originalRows);
+const candidateRows="    const selectedRows=(homeTaskFilter==='overdue'?overdue:homeTaskFilter==='today'?planned:allDue),priorityByCustomer=new Map(selectedRows.map(customer=>[customer,smartPriority(customer,business)]));const rows=selectedRows.sort((a,b)=>priorityByCustomer.get(b)-priorityByCustomer.get(a)||String(a.due).localeCompare(String(b.due))).slice(0,5);";
+const candidatePrep=legacyPrep.replace(originalRows,candidateRows);
+function generate(size){
+ const state={dataRevision:1,customers:[],tickets:[],deposits:[],followups:[],registrations:[],activities:[],settings:{groupFanKnown:['群粉','FB群粉']}};
+ const dateOffset=offset=>{const d=new Date(2026,10,17+offset,12);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
+ for(let i=0;i<size;i++){
+  const id='SYNTH_'+i,source=i%3===0?'单导':i%3===1?'群粉':'FB群粉';
+  state.customers.push({id,name:'合成客户 '+i,phone:String(9000000000+i),source,assistant:i%11===0?'未分配':'合成助理',registered:dateOffset(-(i%21)),due:dateOffset((i%9)-5),lastFollow:dateOffset(-2),country:'合成地区',occupation:i%13===0?'':'合成职业',group:i%4===0?'—':'合成组'+(i%20),status:i%4===0?'未进群':i%4===1?'已退群':'在群',hot:i%7===0,investor:i%6===0,vipNumber:i%17===0?'SYNTH-VIP-'+i:'',deleted:i%49===0,statusHistory:i%3===0?[{initial:false,from:'未进群',type:'joined',date:'2026-11-17',source}]:[]});
+  for(let j=0;j<2;j++)state.followups.push({id:'SYNTH_F_'+i+'_'+j,customerId:id,date:dateOffset(-((i+j)%7))});
+  if(i%4===0)state.registrations.push({id:'SYNTH_R_'+i,customerId:id,status:'已报名',date:dateOffset(-(i%7))});
+  if(i%5===0)state.tickets.push({id:'SYNTH_T_'+i,customerId:id,status:i%10===0?'待确认':'已确认'});
+  if(i%8===0)state.deposits.push({id:'SYNTH_D_'+i,customerId:id,amount:100+(i%20),date:dateOffset(-(i%7)),status:i%16===0?'待确认':'已确认'});
+ }
+ return state;
+}
+const fixedMs=new Date(2026,10,17,12).getTime();
+class ExternalFixedDate extends Date{constructor(...args){super(...(args.length?args:[fixedMs]));}static now(){return fixedMs;}}
+const commonSetup="const window={__LOCAL_DB__:true};let homeTaskFilter='all',localDataRevision=0,stateVersion='synthetic-read-v1',pendingStateData=null,queuedWriteCount=0,writeConflict=null;const groupFanSources=['群粉','FB群粉'];const fetch=()=>{throw new Error('Forbidden network')};const persist=()=>{throw new Error('Forbidden persist')};const statePayload=()=>{throw new Error('Forbidden statePayload')};";
+const diagnostic=`
+function legacyPrepare(){${legacyPrep}${returnFields}}
+function legacyBuildTrend(customers){${legacyTrend}return days;}
+function candidatePrepare(){${candidatePrep}${returnFields}}
+function profiledPrepare(){let last=performance.now();const stages=[];const mark=label=>{const now=performance.now();stages.push({label,durationMs:now-last});last=now;};${profileBody}return {stages,value:{n,list,daily,business,weekRegistrations,weekAmount,allDue,overdue,planned,rows,pendingRegistered,high,profileGaps}};}
+function installCounts(){const counters={smartPriority:0,crmProfile:0,computeCrmProfile:0,customerBusinessSummary:0,crmFollowCounts:0};for(const name of Object.keys(counters)){const original=eval(name);eval(name+'=function(...args){counters[name]++;return original(...args);}');}return counters;}
+const token=beginMetricsRead();completeMetricsRead(token,'applied');
+return {getMetricsProjection,prepareHomeMetrics,buildHomeTrendSeries,legacyPrepare,legacyBuildTrend,candidatePrepare,profiledPrepare,installCounts,activeCustomers,businessSummaryIndex,buildCounts,crmProfile,smartPriority,isValidDateKey,model:state};`;
+function create(mode,size){
+ if(mode==='same-realm')return new Function('state','Date','performance',commonSetup+shared+diagnostic)(generate(size),ExternalFixedDate,performance);
+ const sandbox={performance};vm.createContext(sandbox);
+ if(mode==='vm-external'){sandbox.state=generate(size);sandbox.Date=ExternalFixedDate;}
+ else vm.runInContext(`this.Date=class InRealmFixedDate extends Date{constructor(...args){super(...(args.length?args:[${fixedMs}]));}static now(){return ${fixedMs};}};this.state=(${generate.toString()})(${size});`,sandbox);
+ return vm.runInContext('(function(){'+commonSetup+shared+diagnostic+'})()',sandbox);
+}
+function summary(v){const sorted=[...v].sort((a,b)=>a-b);return {minMs:sorted[0],medianMs:sorted[Math.floor(sorted.length/2)],maxMs:sorted.at(-1)};}
+function digest(prepared,trend){return JSON.stringify({counts:prepared.n,daily:prepared.daily,weekRegistrations:prepared.weekRegistrations,weekAmount:prepared.weekAmount,rows:prepared.rows.map(c=>c.id),pendingRegistered:prepared.pendingRegistered,high:prepared.high,profileGaps:prepared.profileGaps,trend});}
+const freshResult={schemaVersion:1,kind:'read-only-owner-and-realm-profile',command:'node --expose-gc .tools/delivery-s2-projection-profile.cjs',startedAt:new Date().toISOString(),sourceSha256:crypto.createHash('sha256').update(source).digest('hex'),legacyRef:'591d372',ownerHashes,environment:{platform:process.platform,release:os.release(),arch:process.arch,node:process.version,v8:process.versions.v8,cpu:os.cpus()[0]?.model},method:{runsPerModeSize:3,sizes:[1000,10000],modes:['vm-external','vm-internal','same-realm'],excluded:'Source compilation, VM/dataset creation and explicit pre-run GC are excluded from durations.',noProduction:'Only app source and git history read. No app bootstrap, disk database, credentials, WS, AI, browser or native process.',candidate:'Test-only memoized smartPriority per due customer before the identical stable comparator. Product source remains unchanged.'},runs:[],breakdowns:[]};
+const ownersOnly=process.argv.includes('--owners-only'),result=ownersOnly?JSON.parse(fs.readFileSync(out,'utf8')):freshResult;
+if(!ownersOnly)for(const size of [1000,10000])for(const mode of result.method.modes){
+ const row={size,mode,legacy:[],current:[],candidate:[]};
+ for(let iteration=0;iteration<3;iteration++){
+  const digests=[];
+  for(const kind of ['legacy','current','candidate']){
+   if(global.gc)global.gc();let api=create(mode,size);let prepared,trend,dto;const cpu=process.cpuUsage(),start=performance.now();
+   if(kind==='current'){dto=api.getMetricsProjection();prepared=api.prepareHomeMetrics();trend=dto.series.sevenDayActivity;}
+   else{prepared=kind==='legacy'?api.legacyPrepare():api.candidatePrepare();trend=api.legacyBuildTrend(prepared.list);}
+   const durationMs=performance.now()-start,usage=process.cpuUsage(cpu);row[kind].push({iteration:iteration+1,durationMs,cpuMs:(usage.user+usage.system)/1000});
+   digests.push(digest(prepared,trend));api=null;
+  }
+  assert.equal(digests[1],digests[0],'current owner/amount/date/sort digest matches legacy');assert.equal(digests[2],digests[0],'candidate owner/amount/date/sort digest matches legacy');
+ }
+ for(const kind of ['legacy','current','candidate'])row[kind+'Summary']=summary(row[kind].map(x=>x.durationMs));
+ result.runs.push(row);fs.writeFileSync(out,JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify({size,mode,legacy:row.legacySummary,current:row.currentSummary,candidate:row.candidateSummary}));
+}
+if(!ownersOnly)for(const mode of ['vm-internal','same-realm']){
+ if(global.gc)global.gc();let api=create(mode,10000);const started=performance.now(),prepared=api.prepareHomeMetrics(),preparedMs=performance.now()-started,trendStart=performance.now();api.buildHomeTrendSeries(prepared.list);const trendMs=performance.now()-trendStart,dtoStart=performance.now();api.getMetricsProjection();const dtoAfterPreparedMs=performance.now()-dtoStart;api=null;
+ api=create(mode,10000);const profile=api.profiledPrepare();const rawStages=profile.stages;api=null;
+ api=create(mode,10000);const counters=api.installCounts();api.legacyPrepare();result.breakdowns.push({mode,size:10000,prepareHomeMetricsMs:preparedMs,trendReaggregationMs:trendMs,projectionAfterPrepareMs:dtoAfterPreparedMs,legacyPreparationStages:rawStages,legacyCallCounts:counters});
+}
+if(ownersOnly){
+ result.ownerDetails=[];
+ for(const mode of ['vm-internal','same-realm']){
+  if(global.gc)global.gc();const api=create(mode,10000),measures=[];
+  const time=(label,run)=>{const before=performance.now(),value=run();measures.push({label,durationMs:performance.now()-before});return value;};
+  const active=time('activeCustomers first normalized filter',()=>api.activeCustomers());
+  const business=time('businessSummaryIndex first build (phone owners + record indices)',()=>api.businessSummaryIndex());
+  time('buildCounts with business index already available',()=>api.buildCounts());
+  time('crmProfile first pass all active customers (cold profile cache)',()=>{for(const customer of active)api.crmProfile(customer,business);});
+  time('crmProfile second pass all active customers (signature cache hit)',()=>{for(const customer of active)api.crmProfile(customer,business);});
+  const due=time('valid due <= today filtering',()=>active.filter(c=>api.isValidDateKey(c.due)&&c.due<='2026-11-17'));
+  time('smartPriority once per due customer (CRM cache warm)',()=>{for(const customer of due)api.smartPriority(customer,business);});
+  let comparisons=0;
+  const sorted=time('original comparator sort due customers (CRM cache warm)',()=>[...due].sort((a,b)=>{comparisons++;return api.smartPriority(b,business)-api.smartPriority(a,business)||String(a.due).localeCompare(String(b.due));}));
+  const keys=time('one priority per due customer (candidate private map)',()=>new Map(due.map(customer=>[customer,api.smartPriority(customer,business)])));
+  const candidate=time('candidate comparator sort from unchanged priority keys',()=>[...due].sort((a,b)=>keys.get(b)-keys.get(a)||String(a.due).localeCompare(String(b.due))));
+  assert.equal(JSON.stringify(candidate.map(c=>c.id)),JSON.stringify(sorted.map(c=>c.id)),'full sorted order (not just first five) must match');
+  let counterApi=create(mode,10000);const counters=counterApi.installCounts();counterApi.candidatePrepare();
+  result.ownerDetails.push({mode,size:10000,activeCustomers:active.length,dueCustomers:due.length,originalComparatorCalls:comparisons,measurements:measures,candidateCallCounts:counters,fullSortIdentitySha256:crypto.createHash('sha256').update(JSON.stringify(sorted.map(c=>c.id))).digest('hex'),fullSortIdentityMatches:true});
+ }
+ result.ownerDetailsCommand='node --expose-gc .tools/delivery-s2-projection-profile.cjs --owners-only';
+}
+result.finishedAt=new Date().toISOString();fs.writeFileSync(out,JSON.stringify(result,null,2)+'\n');console.log('Profile evidence: '+out);

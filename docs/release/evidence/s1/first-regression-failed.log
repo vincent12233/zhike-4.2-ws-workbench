@@ -1,0 +1,1961 @@
+
+[RUN] isolated app fixture safety
+isolated app fixture: source/assets copied; user data, credentials and redundant runtime excluded
+[PASS] isolated app fixture safety
+
+[RUN] 6.0 no legacy data migration contract
+no legacy data migration contract: fresh empty 6.0 runtime, no old API and byte-identical old data pass
+[PASS] 6.0 no legacy data migration contract
+
+[RUN] backup integrity contract
+backup integrity contract: byte counts, timestamps, SHA-256 verification and tamper detection pass
+[PASS] backup integrity contract
+
+[RUN] manual multi-account backup contract
+manual backup: all WS accounts, integrity, fail-closed export and post-download status pass
+[PASS] manual multi-account backup contract
+
+[RUN] local-first sidecar contract
+local-first sidecar contract: Node runtime and SQLite service assets are eligible for the WinUI bundle
+[PASS] local-first sidecar contract
+
+[RUN] WS local ingest runtime
+WS local ingest runtime: list-only discovery, message persistence and idempotent replay pass
+[PASS] WS local ingest runtime
+
+[RUN] WS direction effects repair runtime
+WS direction repair runtime: dry-run, audited compare-after rollback, manual protection, original/business preservation, projection, invalidated effects, idempotence and failure rollback passed
+[PASS] WS direction effects repair runtime
+
+[RUN] WS identity effects repair runtime
+WS identity-effects repair runtime: explicit targets, correct event/phone protection, 00 normalization, same-customer reverse patches, exact unlink, alias cleanup, original/other effects preservation, manual edits, dry-run, backup, rollback and idempotence passed
+[PASS] WS identity effects repair runtime
+
+[RUN] WS unverified association-only scoped repair
+WS association-only repair: explicit four targets, empty/new baseline, manual/candidate/effect refusal, default dry-run, exact backup, original/business preservation, rollback and idempotence passed
+[PASS] WS unverified association-only scoped repair
+
+[RUN] local service manager contract
+local service manager contract: guarded loopback sidecar, health wait, bounded stop and parent lifecycle are wired
+[PASS] local service manager contract
+
+[RUN] resource lifecycle contract
+resource lifecycle contract: ApiClient disposal, WS callback ownership, serialized initialization and stream error handling are required
+[PASS] resource lifecycle contract
+
+[RUN] local service hang recovery
+本机 SQLite sidecar 假死恢复回归测试通过
+[PASS] local service hang recovery
+
+[RUN] local service port race regression
+local service port race regression: fixed-port sidecar and bounded owner retry are wired
+[PASS] local service port race regression
+
+[RUN] local bridge contract
+local bridge contract: token header, local WS route forwarding and shutdown guard present
+[PASS] local bridge contract
+
+[RUN] design system contract
+node:assert:885
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: missing visual token --zk-bg:#f4f7fb
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\design-system-contract.test.cjs:29:10)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '/* Shared palette and control primitives. Business state and WS/GPT layout stay\n' +
+    ' * with their existing owners. Native CSS nesting keeps the workspace boundary\n' +
+    ' * explicit instead of repeating selectors and competing override chains. */\n' +
+    'html[data-palette="atelier-dawn"] {\n' +
+    ' color-scheme:light;--ds-color-scheme:light;--ds-on-primary:#fff;\n' +
+    ' --ds-primary:#326bdf;--ds-secondary:#6275e8;--ds-accent:#12afa6;\n' +
+    ' --ds-bg:#f3f6fd;--ds-surface:#fff;--ds-surface-soft:#eef3fd;\n' +
+    ' --ds-text:#172a4d;--ds-muted:#5a6d88;--ds-border:#d7e0f2;--ds-border-strong:#b8c9e6;\n' +
+    ' --ds-hover:#e7eefc;--ds-active-text:#285cc6;--ds-success:#167548;--ds-success-bg:#e8f7ee;\n' +
+    ' --ds-warning:#8d5a0c;--ds-warning-bg:#fff5dc;--ds-danger:#b33f45;--ds-danger-bg:#fff0f1;\n' +
+    ' --ds-ai:#5a48b6;--ds-ai-bg:#f0edff;--ds-focus:rgba(50,107,223,.26);\n' +
+    ' --ds-shadow:0 8px 28px rgba(35,66,120,.055);--ds-shadow-raised:0 14px 36px rgba(35,66,120,.11);\n' +
+    ' --ds-scrim:rgba(20,38,70,.32);--ds-nav-bg:#fdfefe;--ds-nav-active:#e9efff;--ds-nav-text:#435b7b;\n' +
+    ' --ds-flow-art:url("../assets/atelier-dawn.svg");\n' +
+    '}\n' +
+    'html[data-palette="horizon-night"] {\n' +
+    ' color-scheme:dark;--ds-color-scheme:dark;--ds-on-primary:#172a4d;\n' +
+    ' --ds-primary:#78a5ff;--ds-secondary:#b2a0ff;--ds-accent:#51e1cc;\n' +
+    ' --ds-bg:#071017;--ds-surface:#0d1d28;--ds-surface-soft:#142a38;\n' +
+    ' --ds-text:#edf6f5;--ds-muted:#a1b5c2;--ds-border:#294452;--ds-border-strong:#496576;\n' +
+    ' --ds-hover:#183744;--ds-active-text:#78a5ff;--ds-success:#7ee3ac;--ds-success-bg:#123a2d;\n' +
+    ' --ds-warning:#e7c788;--ds-warning-bg:#40341f;--ds-danger:#ffaca2;--ds-danger-bg:#48252b;\n' +
+    ' --ds-ai:#c7b7ff;--ds-ai-bg:#30274c;--ds-focus:rgba(81,225,204,.28);\n' +
+    ' --ds-shadow:0 12px 30px rgba(0,0,0,.18);--ds-shadow-raised:0 20px 46px rgba(0,0,0,.3);\n' +
+    ' --ds-scrim:rgba(2,9,15,.72);--ds-nav-bg:#0b1820;--ds-nav-active:#173d42;--ds-nav-text:#bed0d5;\n' +
+    ' --ds-flow-art:url("../assets/horizon-flow-6.png");\n' +
+    '}\n' +
+    'html[data-palette] {\n' +
+    ' --ds-radius:14px;--ds-radius-large:22px;--ds-control-height:44px;--ds-body-size:16px;\n' +
+    ' --ds-font-body:var(--ds-body-size);--ds-font-nav:16px;--ds-row-height:50px;\n' +
+    ' --ds-ink:var(--ds-text);--ds-teal:var(--ds-accent);\n' +
+    ' --ds-space-1:4px;--ds-space-2:8px;--ds-space-3:12px;--ds-space-4:16px;--ds-space-5:24px;--ds-space-6:32px;\n' +
+    ' --zk-bg:var(--ds-bg);--zk-surface:var(--ds-surface);--zk-surface-soft:var(--ds-surface-soft);--zk-surface-elevated:var(--ds-surface);\n' +
+    ' --zk-ink:var(--ds-text);--zk-muted:var(--ds-muted);--zk-border:var(--ds-border);--zk-border-strong:var(--ds-border-strong);\n' +
+    ' --zk-accent:var(--ds-primary);--zk-accent-strong:var(--ds-primary);--zk-blue:var(--ds-primary);\n' +
+    ' --zk-success:var(--ds-success);--zk-success-bg:var(--ds-success-bg);--zk-warning:var(--ds-warning);--zk-warning-bg:var(--ds-warning-bg);\n' +
+    ' --zk-danger:var(--ds-danger);--zk-danger-bg:var(--ds-danger-bg);--zk-ai:var(--ds-ai);--zk-ai-bg:var(--ds-ai-bg);\n' +
+    ' --zk-radius-control:var(--ds-radius);--zk-radius-card:var(--ds-radius);--zk-radius-panel:var(--ds-radius-large);\n' +
+    ' --zk-shadow:var(--ds-shadow);--zk-focus:0 0 0 3px var(--ds-focus);\n' +
+    ' --text:var(--ds-text);--muted:var(--ds-muted);--line:var(--ds-border);--soft:var(--ds-surface-soft);--white:var(--ds-surface);\n' +
+    ' --panel:var(--ds-surface);--input:var(--ds-surface);--surface:var(--ds-surface);--surface-soft:var(--ds-surface-soft);\n' +
+    ' --surface-border:var(--ds-border);--surface-ink:var(--ds-text);--surface-muted:var(--ds-muted);\n' +
+    ' --teal:var(--ds-accent);--teal-dark:var(--ds-primary);--blue:var(--ds-primary);--green:var(--ds-success);--red:var(--ds-danger);\n' +
+    ' --hz-bg:var(--ds-bg);--hz-bg-deep:var(--ds-bg);--hz-surface:var(--ds-surface);--hz-surface-2:var(--ds-surface-soft);\n' +
+    ' --hz-surface-3:var(--ds-surface-soft);--hz-line:var(--ds-border);--hz-line-strong:var(--ds-border-strong);\n' +
+    ' --hz-text:var(--ds-text);--hz-muted:var(--ds-muted);--hz-teal:var(--ds-accent);--hz-cyan:var(--ds-primary);\n' +
+    ' --hz-violet:var(--ds-secondary);--hz-gold:var(--ds-warning);--hz-green:var(--ds-success);--hz-danger:var(--ds-danger);\n' +
+    ' --hz-radius:var(--ds-radius);--hz-radius-sm:var(--ds-radius);--hz-shadow:var(--ds-shadow);\n' +
+    '}\n' +
+    '/* Body copy defaults stay less specific than component headings and KPI\n' +
+    ' * numerals, so those keep their hierarchy instead of needing undo rules. */\n' +
+    'html[data-palette]:where(:not([data-view="ws-workbench"]):not([data-view="gpt"])) .view-container :where(p,span,small,b,strong,label,summary,dt,dd,time) {font-size:15px;line-height:1.6;color:var(--ds-text)}\n' +
+    'html[data-palette]:not([data-view="ws-workbench"]):not([data-view="gpt"]) {\n' +
+    ' body {font-family:"Segoe UI Variable","Microsoft YaHei UI","Microsoft YaHei",sans-serif;font-size:var(--ds-body-size);line-height:1.6;letter-spacing:0;background:var(--ds-bg)!important;color:var(--ds-text)!important}\n' +
+    ' :is(button,input,select,textarea) {font:inherit;letter-spacing:inherit}\n' +
+    ' /* Scoped important declarations replace legacy component important colors. */\n' +
+    ' :is(.btn,.btn.small,.page-btn,.table-action,.link-button) {min-height:44px!important;height:auto;padding:8px 16px!important;border:1px solid var(--ds-border)!important;border-radius:14px!important;background:var(--ds-surface)!important;color:var(--ds-text)!important;font-size:16px!important;line-height:1.45;white-space:nowrap;box-shadow:none!important;animation:none!important;transition:background-color .16s ease,border-color .16s ease,color .16s ease}\n' +
+    ' :is(.btn,.page-btn,.table-action,.link-button):hover:not(:disabled) {background:var(--ds-hover)!important;border-color:var(--ds-border-strong)!important;color:var(--ds-primary)!important;transform:none!important}\n' +
+    ' .btn.primary {background:linear-gradient(115deg,#326bdf,#5261c9)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 5px 14px rgba(50,107,223,.16)!important}\n' +
+    ' .btn.primary:hover:not(:disabled) {background:linear-gradient(115deg,#285ac0,#454fb0)!important;color:#fff!important}\n' +
+    ' :is(.btn.danger,.danger-text) {color:var(--ds-danger)!important}\n' +
+    ' :is(button,input,select,textarea,a,summary):focus-visible {outline:3px solid var(--ds-primary);outline-offset:3px;box-shadow:0 0 0 4px var(--ds-focus)!important}\n' +
+    ' :is(button,input,select,textarea):disabled {opacity:.55;cursor:not-allowed}\n' +
+    ' :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) {min-height:44px!important;border:1px solid var(--ds-border)!important;border-radius:14px!important;background:var(--ds-surface)!important;color:var(--ds-text)!important;padding:9px 12px!important;font-size:16px!important}\n' +
+    ' :is(input,textarea)::placeholder {color:var(--ds-muted)!important;opacity:.85}\n' +
+    ' select option {background:var(--ds-surface);color:var(--ds-text)}\n' +
+    ' :is(input[type="checkbox"],input[type="radio"]) {width:18px;height:18px;min-width:18px;accent-color:var(--ds-primary)}\n' +
+    ' :is(.status-tag,.tag,.quality-tag) {padding:4px 10px;font-size:14px!important;line-height:1.5;border-radius:999px!important}\n' +
+    ' .tag-green {color:var(--ds-success)!important;background:var(--ds-success-bg)!important}\n' +
+    ' .tag-amber {color:var(--ds-warning)!important;background:var(--ds-warning-bg)!important}\n' +
+    ' .tag-red {color:var(--ds-danger)!important;background:var(--ds-danger-bg)!important}\n' +
+    '}\n' +
+    '@media(prefers-reduced-motion:reduce) {\n' +
+    ' html[data-palette]:not([data-view="ws-workbench"]):not([data-view="gpt"]) :is(button,input,select,textarea) {transition:none!important}\n' +
+    '}\r\n',
+  expected: /--zk-bg:\#f4f7fb/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+[FAIL] design system contract
+
+[RUN] Horizon Atelier 6.0 dynamic UI contract
+node:assert:885
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /--hz-sidebar-expanded:246px/. Input:
+
+'/* Workspace shell. The scroll-system remains the last stylesheet and owns\n' +
+  ' * scroll ranges. Palette variants share geometry and all business selectors. */\n' +
+  'html[data-palette] {--zhike-sidebar-expanded:248px;--zhike-sidebar-collapsed:72px;--hz-sidebar-expanded:248px;--hz-sidebar-collapsed:72px}\n' +
+  'html[data-palette]:not([data-view="ws-workbench"]):not([data-view="gpt"]) {\n' +
+  ' .app-shell {background:var(--ds-bg)!important;color:var(--ds-text)}\n' +
+  ' #sidebar {width:var(--zhike-sidebar-expanded)!important;flex-basis:var(--zhike-sidebar-expanded)!important;margin:8px 0 8px 8px;height:calc(100% - 16px)!important;border:1px solid var(--ds-border)!important;border-radius:28px 36px 34px 24px!important;background:var(--ds-nav-bg)!important;box-shadow:var(--ds-shadow)!important;-webkit-mask-image:none;mask-image:none;filter:none;transition:none!important}\n' +
+  ' #sidebar:before,#sidebar:after {display:none!important}\n' +
+  ' #sidebar.collapsed {width:72px!important;flex-basis:72px!important;border-radius:24px!important}\n' +
+  ' #sidebar .brand {height:72px;min-height:72px;padding:14px 18px;gap:10px;position:relative;border:0}\n' +
+  ' #sidebar .brand-mark {display:grid;flex:0 0 34px;width:34px;height:34px;border:0;background:none;box-shadow:none}\n' +
+  ' #sidebar .brand-mark img {width:34px;height:34px;object-fit:contain}\n' +
+  ' #sidebar .brand-copy {display:grid;min-width:0}\n' +
+  ' #sidebar .brand-copy strong {color:var(--ds-text);font-size:18px}\n' +
+  ' #sidebar .brand-copy span {color:var(--ds-muted);font-size:12px}\n' +
+  ' #collapseNav {position:absolute;right:12px;top:22px;width:30px;height:30px;min-width:30px;border-radius:10px;color:var(--ds-muted);background:var(--ds-surface-soft)}\n' +
+  ' #sidebar .workspace-switch {width:calc(100% - 28px);min-height:54px;margin:0 14px 12px;padding:10px 12px;border:1px solid var(--ds-border);border-radius:16px;background:var(--ds-surface-soft);color:var(--ds-text)}\n' +
+  ' #sidebar .workspace-switch strong {font-size:14px;color:var(--ds-text)}\n' +
+  ' #sidebar .workspace-switch span {font-size:12px;color:var(--ds-muted)}\n' +
+  ' #mainNav {padding:0 12px 16px;scrollbar-color:var(--ds-border-strong) transparent}\n' +
+  ' #mainNav .nav-group-label {margin:10px 0 5px;padding:8px 12px 5px;color:var(--ds-muted);font-size:13px;letter-spacing:.06em}\n' +
+  ' #mainNav .nav-item {min-height:44px;height:auto;margin:3px 0;padding:10px 12px;gap:12px;border:1px solid transparent;border-radius:14px;font-size:16px;line-height:1.45;color:var(--ds-nav-text);background:transparent;transition:color .16s ease,background-color .16s ease;animation:none!important}\n' +
+  ' #mainNav .nav-item svg {width:21px;height:21px;flex-shrink:0;color:currentColor!important}\n' +
+  ' #mainNav .nav-item:hover {background:var(--ds-hover);color:var(--ds-primary)}\n' +
+  ' #mainNav .nav-item.active {background:var(--ds-nav-active)!important;border-color:var(--ds-border)!important;color:var(--ds-active-text)!important;box-shadow:inset 3px 0 var(--ds-primary)!important;font-weight:650}\n' +
+  ' #mainNav .nav-item.active:after {display:none}\n' +
+  ' #mainNav .nav-count {padding:1px 7px;border-radius:8px;font-size:12px;background:var(--ds-surface-soft);color:var(--ds-muted)}\n' +
+  ' #sidebar .sidebar-bottom {padding:10px 14px 14px;border-top:1px solid var(--ds-border);background:none}\n' +
+  ' #sidebar .storage-card {height:46px;margin:0 0 8px;border:0;border-radius:12px;background:var(--ds-surface-soft);color:var(--ds-muted)}\n' +
+  ' #sidebar :is(.storage-copy strong,.profile-button strong) {font-size:13px;color:var(--ds-text)}\n' +
+  ' #sidebar :is(.storage-copy span,.profile-button span) {font-size:12px;color:var(--ds-muted)}\n' +
+  ' #sidebar .profile-button {min-height:44px;color:var(--ds-muted)}\n' +
+  ' #sidebar .profile-avatar {border-radius:12px;background:var(--ds-nav-active);color:var(--ds-primary)}\n' +
+  ' #sidebar.collapsed :is(.brand-copy,.workspace-switch>div:nth-child(2),.workspace-switch>svg,.nav-group-label,.nav-item span,.nav-count,.live-dot,.storage-copy,.profile-button>div:nth-child(2),.profile-button>svg) {display:none!important}\n' +
+  ' #sidebar.collapsed .brand {min-height:96px;padding:14px 18px 42px}\n' +
+  ' #sidebar.collapsed #collapseNav {display:grid!important;top:58px;right:20px}\n' +
+  ' #sidebar.collapsed .workspace-switch {width:44px;margin-inline:auto;padding:0;justify-content:center}\n' +
+  ' #sidebar.collapsed #mainNav {padding-inline:8px}\n' +
+  ' #sidebar.collapsed .nav-item {justify-content:center;padding:10px}\n' +
+  ' #sidebar.collapsed .sidebar-bottom {padding-inline:8px}\n' +
+  ' #sidebar.collapsed :is(.storage-card,.profile-button) {width:44px;padding:0;margin-inline:auto;justify-content:center}\n' +
+  ' .main-area {background:transparent!important;container-type:inline-size;container-name:main-workspace}\n' +
+  ' .topbar {min-height:72px!important;height:auto!important;padding:8px 28px!important;gap:20px;flex-wrap:nowrap;border-bottom:1px solid var(--ds-border)!important;background:var(--ds-surface)!important;box-shadow:none!important}\n' +
+  ' .topbar:before,.topbar:after {display:none}\n' +
+  ' .breadcrumbs {font-size:14px!important;color:var(--ds-muted)!important;white-space:nowrap}\n' +
+  ' .breadcrumbs strong {font-size:14px!important;color:var(--ds-text)!important}\n' +
+  ' .home-top-title {display:none}\n' +
+  ' .top-actions {min-width:0;margin-left:auto;gap:10px;flex-wrap:nowrap}\n' +
+  ' .global-search {width:clamp(180px,22vw,340px)!important;min-width:0;height:44px!important;padding:0 14px!important;border:1px solid var(--ds-border)!important;border-radius:14px!important;background:var(--ds-surface-soft)!important;color:var(--ds-muted)!important;font-size:14px}\n' +
+  ' .global-search kbd {font-size:11px;color:var(--ds-muted);background:var(--ds-surface);border-color:var(--ds-border)}\n' +
+  ' :is(.top-icon,.top-avatar) {width:44px;height:44px;min-width:44px;flex-shrink:0;border:1px solid var(--ds-border)!important;border-radius:13px!important;color:var(--ds-muted)!important;background:var(--ds-surface)!important}\n' +
+  ' :is(.offline-pill,.sync-status) {font-size:12px!important;color:var(--ds-muted)!important;border-color:var(--ds-border)!important;background:var(--ds-surface-soft)!important}\n' +
+  ' .view-container {max-width:none;padding:28px 30px 32px!important;background:transparent!important}\n' +
+  ' .app-footer {height:30px!important;min-height:30px;padding:0 28px;border-top:1px solid var(--ds-border)!important;background:var(--ds-surface)!important;color:var(--ds-muted)!important;font-size:12px}\n' +
+  '}\n' +
+  'html[data-palette="horizon-night"]:not([data-view="ws-workbench"]):not([data-view="gpt"]) #sidebar:not(.collapsed) {background:#0b1820 url("../assets/horizon-sidebar-shell-6.svg") center/100% 100% no-repeat!important;border-color:rgba(231,199,136,.32)!important;border-radius:34px 48px 76px 28px!important}\n' +
+  '/* Shared topbar switch, not a duplicate outer toolbar. */\n' +
+  'html[data-palette] .workspace-switcher {display:flex;align-items:center;flex:0 0 auto;min-width:0;height:56px;gap:6px;padding:4px;border:1px solid var(--ds-border);border-radius:17px;background:var(--ds-surface-soft)}\n' +
+  'html[data-palette] .workspace-switcher :is(button,a) {display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 16px;border:1px solid transparent;border-radius:12px;font-size:16px;font-weight:600;color:var(--ds-muted);background:transparent;text-decoration:none;white-space:nowrap}\n' +
+  'html[data-palette] .workspace-switcher :is([aria-selected="true"],.active) {color:var(--ds-active-text);background:var(--ds-surface);border-color:var(--ds-border);box-shadow:0 3px 8px rgba(50,107,223,.07)}\n' +
+  'html[data-palette] .workspace-switcher :is(button,a):focus-visible {outline:3px solid var(--ds-primary);outline-offset:2px}\n' +
+  'html[data-palette] .workspace-switcher :is(button,a):hover {background:var(--ds-hover);color:var(--ds-primary)}\n' +
+  '@container main-workspace (max-width:1320px) {\n' +
+  ' html[data-palette]:not([data-view="ws-workbench"]):not([data-view="gpt"]) {\n' +
+  '  .topbar {padding-inline:20px!important;gap:12px}\n' +
+  '  :is(.breadcrumbs,.sync-status,.offline-pill) {display:none}\n' +
+  ' }\n' +
+  '}\n' +
+  '@container main-workspace (max-width:1000px) {\n' +
+  ' html[data-palette]:not([data-view="ws-workbench"]):not([data-view="gpt"]) {\n' +
+  '  .global-search {width:44px!important;min-width:44px;padding:0!important;justify-content:center}\n' +
+  '  .global-search :is(span,kbd) {display:none}\n' +
+  ' }\n' +
+  '}\n' +
+  '@container main-workspace (max-width:660px) {\n' +
+  ' html[data-palette]:not([data-view="ws-workbench"]):not([data-view="gpt"]) {\n' +
+  '  .topbar {flex-wrap:wrap;gap:6px;padding:6px 12px!important}\n' +
+  '  .top-actions {flex:1 1 100%;justify-content:flex-start;gap:8px}\n' +
+  ' }\n' +
+  '}\n' +
+  '@media(max-width:820px) {\n' +
+  ' html[data-palette] {--zhike-sidebar-expanded:220px;--hz-sidebar-expanded:220px}\n' +
+  ' html[data-palette]:not([data-view="ws-workbench"]):not([data-view="gpt"]) {\n' +
+  '  .view-container {padding:20px 18px!important}\n' +
+  '  .topbar {padding-inline:14px!important}\n' +
+  '  .global-search {width:44px!important;min-width:44px;padding:0!important;justify-content:center}\n' +
+  '  .global-search :is(span,kbd) {display:none}\n' +
+  ' }\n' +
+  ' html[data-palette] .workspace-switcher :is(button,a) {padding-inline:10px}\n' +
+  '}\n' +
+  '@media(max-width:560px) {\n' +
+  ' html[data-palette]:not([data-view="ws-workbench"]):not([data-view="gpt"]) {\n' +
+  '  .topbar {flex-wrap:wrap;gap:4px;padding:6px 10px!important}\n' +
+  '  .top-actions {gap:6px}\n' +
+  '  .view-container {padding:16px 12px!important}\n' +
+  ' }\n' +
+  ' html[data-palette] .workspace-switcher {max-width:100%}\n' +
+  '}\n' +
+  '@media(max-height:620px) {\n' +
+  ' html[data-palette]:not([data-view="ws-workbench"]):not([data-view="gpt"]) {\n' +
+  '  .topbar {min-height:64px!important;padding-block:4px!important}\n' +
+  '  .view-container {padding-top:16px!important}\n' +
+  ' }\n' +
+  '}\r\n'
+
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\horizon-atelier-contract.test.cjs:39:8)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '/* Workspace shell. The scroll-system remains the last stylesheet and owns\n' +
+    ' * scroll ranges. Palette variants share geometry and all business selectors. */\n' +
+    'html[data-palette] {--zhike-sidebar-expanded:248px;--zhike-sidebar-collapsed:72px;--hz-sidebar-expanded:248px;--hz-sidebar-collapsed:72px}\n' +
+    'html[data-palette]:not([data-view="ws-workbench"]):not([data-view="gpt"]) {\n' +
+    ' .app-shell {background:var(--ds-bg)!important;color:var(--ds-text)}\n' +
+    ' #sidebar {width:var(--zhike-sidebar-expanded)!important;flex-basis:var(--zhike-sidebar-expanded)!important;margin:8px 0 8px 8px;height:calc(100% - 16px)!important;border:1px solid var(--ds-border)!important;border-radius:28px 36px 34px 24px!important;background:var(--ds-nav-bg)!important;box-shadow:var(--ds-shadow)!important;-webkit-mask-image:none;mask-image:none;filter:none;transition:none!important}\n' +
+    ' #sidebar:before,#sidebar:after {display:none!important}\n' +
+    ' #sidebar.collapsed {width:72px!important;flex-basis:72px!important;border-radius:24px!important}\n' +
+    ' #sidebar .brand {height:72px;min-height:72px;padding:14px 18px;gap:10px;position:relative;border:0}\n' +
+    ' #sidebar .brand-mark {display:grid;flex:0 0 34px;width:34px;height:34px;border:0;background:none;box-shadow:none}\n' +
+    ' #sidebar .brand-mark img {width:34px;height:34px;object-fit:contain}\n' +
+    ' #sidebar .brand-copy {display:grid;min-width:0}\n' +
+    ' #sidebar .brand-copy strong {color:var(--ds-text);font-size:18px}\n' +
+    ' #sidebar .brand-copy span {color:var(--ds-muted);font-size:12px}\n' +
+    ' #collapseNav {position:absolute;right:12px;top:22px;width:30px;height:30px;min-width:30px;border-radius:10px;color:var(--ds-muted);background:var(--ds-surface-soft)}\n' +
+    ' #sidebar .workspace-switch {width:calc(100% - 28px);min-height:54px;margin:0 14px 12px;padding:10px 12px;border:1px solid var(--ds-border);border-radius:16px;background:var(--ds-surface-soft);color:var(--ds-text)}\n' +
+    ' #sidebar .workspace-switch strong {font-size:14px;color:var(--ds-text)}\n' +
+    ' #sidebar .workspace-switch span {font-size:12px;color:var(--ds-muted)}\n' +
+    ' #mainNav {padding:0 12px 16px;scrollbar-color:var(--ds-border-strong) transparent}\n' +
+    ' #mainNav .nav-group-label {margin:10px 0 5px;padding:8px 12px 5px;color:var(--ds-muted);font-size:13px;letter-spacing:.06em}\n' +
+    ' #mainNav .nav-item {min-height:44px;height:auto;margin:3px 0;padding:10px 12px;gap:12px;border:1px solid transparent;border-radius:14px;font-size:16px;line-height:1.45;color:var(--ds-nav-text);background:transparent;transition:color .16s ease,background-color .16s ease;animation:none!important}\n' +
+    ' #mainNav .nav-item svg {width:21px;height:21px;flex-shrink:0;color:currentColor!important}\n' +
+    ' #mainNav .nav-item:hover {background:var(--ds-hover);color:var(--ds-primary)}\n' +
+    ' #mainNav .nav-item.active {background:var(--ds-nav-active)!important;border-color:var(--ds-border)!important;color:var(--ds-active-text)!important;box-shadow:inset 3px 0 var(--ds-primary)!important;font-weight:650}\n' +
+    ' #mainNav .nav-item.active:after {display:none}\n' +
+    ' #mainNav .nav-count {padding:1px 7px;border-radius:8px;font-size:12px;background:var(--ds-surface-soft);color:var(--ds-muted)}\n' +
+    ' #sidebar .sidebar-bottom {padding:10px 14px 14px;border-top:1px solid var(--ds-border);background:none}\n' +
+    ' #sidebar .storage-card {height:46px;margin:0 0 8px;border:0;border-radius:12px;background:var(--ds-surface-soft);color:var(--ds-muted)}\n' +
+    ' #sidebar :is(.storage-copy strong,.profile-button strong) {font-size:13px;color:var(--ds-text)}\n' +
+    ' #sidebar :is(.storage-copy span,.profile-button span) {font-size:12px;color:var(--ds-muted)}\n' +
+    ' #sidebar .profile-button {min-height:44px;color:var(--ds-muted)}\n' +
+    ' #sidebar .profile-avatar {border-radius:12px;background:var(--ds-nav-active);color:var(--ds-primary)}\n' +
+    ' #sidebar.collapsed :is(.brand-copy,.workspace-switch>div:nth-child(2),.workspace-switch>svg,.nav-group-label,.nav-item span,.nav-count,.live-dot,.storage-copy,.profile-button>div:nth-child(2),.profile-button>svg) {display:none!important}\n' +
+    ' #sidebar.collapsed .brand {min-height:96px;padding:14px 18px 42px}\n' +
+    ' #sidebar.collapsed #collapseNav {display:grid!important;top:58px;right:20px}\n' +
+    ' #sidebar.collapsed .workspace-switch {width:44px;margin-inline:auto;padding:0;justify-content:center}\n' +
+    ' #sidebar.collapsed #mainNav {padding-inline:8px}\n' +
+    ' #sidebar.collapsed .nav-item {justify-content:center;padding:10px}\n' +
+    ' #sidebar.collapsed .sidebar-bottom {padding-inline:8px}\n' +
+    ' #sidebar.collapsed :is(.storage-card,.profile-button) {width:44px;padding:0;margin-inline:auto;justify-content:center}\n' +
+    ' .main-area {background:transparent!important;container-type:inline-size;container-name:main-workspace}\n' +
+    ' .topbar {min-height:72px!important;height:auto!important;padding:8px 28px!important;gap:20px;flex-wrap:nowrap;border-bottom:1px solid var(--ds-border)!important;background:var(--ds-surface)!important;box-shadow:none!important}\n' +
+    ' .topbar:before,.topbar:after {display:none}\n' +
+    ' .breadcrumbs {font-size:14px!important;color:var(--ds-muted)!important;white-space:nowrap}\n' +
+    ' .breadcrumbs strong {font-size:14px!important;color:var(--ds-text)!important}\n' +
+    ' .home-top-title {display:none}\n' +
+    ' .top-actions {min-width:0;margin-left:auto;gap:10px;flex-wrap:nowrap}\n' +
+    ' .global-search {width:clamp(180px,22vw,340px)!important;min-width:0;height:44px!important;padding:0 14px!important;border:1px solid var(--ds-border)!important;border-radius:14px!important;background:var(--ds-surface-soft)!important;color:var(--ds-muted)!important;font-size:14px}\n' +
+    ' .global-search kbd {font-size:11px;color:var(--ds-muted);background:var(--ds-surface);border-color:var(--ds-border)}\n' +
+    ' :is(.top-icon,.top-avatar) {width:44px;height:44px;min-width:44px;flex-shrink:0;border:1px solid var(--ds-border)!important;border-radius:13px!important;color:var(--ds-muted)!important;background:var(--ds-surface)!important}\n' +
+    ' :is(.offline-pill,.sync-status) {font-size:12px!important;color:var(--ds-muted)!important;border-color:var(--ds-border)!important;background:var(--ds-surface-soft)!important}\n' +
+    ' .view-container {max-width:none;padding:28px 30px 32px!important;background:transparent!important}\n' +
+    ' .app-footer {height:30px!important;min-height:30px;padding:0 28px;border-top:1px solid var(--ds-border)!important;background:var(--ds-surface)!important;color:var(--ds-muted)!important;font-size:12px}\n' +
+    '}\n' +
+    'html[data-palette="horizon-night"]:not([data-view="ws-workbench"]):not([data-view="gpt"]) #sidebar:not(.collapsed) {background:#0b1820 url("../assets/horizon-sidebar-shell-6.svg") center/100% 100% no-repeat!important;border-color:rgba(231,199,136,.32)!important;border-radius:34px 48px 76px 28px!important}\n' +
+    '/* Shared topbar switch, not a duplicate outer toolbar. */\n' +
+    'html[data-palette] .workspace-switcher {display:flex;align-items:center;flex:0 0 auto;min-width:0;height:56px;gap:6px;padding:4px;border:1px solid var(--ds-border);border-radius:17px;background:var(--ds-surface-soft)}\n' +
+    'html[data-palette] .workspace-switcher :is(button,a) {display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 16px;border:1px solid transparent;border-radius:12px;font-size:16px;font-weight:600;color:var(--ds-muted);background:transparent;text-decoration:none;white-space:nowrap}\n' +
+    'html[data-palette] .workspace-switcher :is([aria-selected="true"],.active) {color:var(--ds-active-text);background:var(--ds-surface);border-color:var(--ds-border);box-shadow:0 3px 8px rgba(50,107,223,.07)}\n' +
+    'html[data-palette] .workspace-switcher :is(button,a):focus-visible {outline:3px solid var(--ds-primary);outline-offset:2px}\n' +
+    'html[data-palette] .workspace-switcher :is(button,a):hover {background:var(--ds-hover);color:var(--ds-primary)}\n' +
+    '@container main-workspace (max-width:1320px) {\n' +
+    ' html[data-palette]:not([data-view="ws-workbench"]):not([data-view="gpt"]) {\n' +
+    '  .topbar {padding-inline:20px!important;gap:12px}\n' +
+    '  :is(.breadcrumbs,.sync-status,.offline-pill) {display:none}\n' +
+    ' }\n' +
+    '}\n' +
+    '@container main-workspace (max-width:1000px) {\n' +
+    ' html[data-palette]:not([data-view="ws-workbench"]):not([data-view="gpt"]) {\n' +
+    '  .global-search {width:44px!important;min-width:44px;padding:0!important;justify-content:center}\n' +
+    '  .global-search :is(span,kbd) {display:none}\n' +
+    ' }\n' +
+    '}\n' +
+    '@container main-workspace (max-width:660px) {\n' +
+    ' html[data-palette]:not([data-view="ws-workbench"]):not([data-view="gpt"]) {\n' +
+    '  .topbar {flex-wrap:wrap;gap:6px;padding:6px 12px!important}\n' +
+    '  .top-actions {flex:1 1 100%;justify-content:flex-start;gap:8px}\n' +
+    ' }\n' +
+    '}\n' +
+    '@media(max-width:820px) {\n' +
+    ' html[data-palette] {--zhike-sidebar-expanded:220px;--hz-sidebar-expanded:220px}\n' +
+    ' html[data-palette]:not([data-view="ws-workbench"]):not([data-view="gpt"]) {\n' +
+    '  .view-container {padding:20px 18px!important}\n' +
+    '  .topbar {padding-inline:14px!important}\n' +
+    '  .global-search {width:44px!important;min-width:44px;padding:0!important;justify-content:center}\n' +
+    '  .global-search :is(span,kbd) {display:none}\n' +
+    ' }\n' +
+    ' html[data-palette] .workspace-switcher :is(button,a) {padding-inline:10px}\n' +
+    '}\n' +
+    '@media(max-width:560px) {\n' +
+    ' html[data-palette]:not([data-view="ws-workbench"]):not([data-view="gpt"]) {\n' +
+    '  .topbar {flex-wrap:wrap;gap:4px;padding:6px 10px!important}\n' +
+    '  .top-actions {gap:6px}\n' +
+    '  .view-container {padding:16px 12px!important}\n' +
+    ' }\n' +
+    ' html[data-palette] .workspace-switcher {max-width:100%}\n' +
+    '}\n' +
+    '@media(max-height:620px) {\n' +
+    ' html[data-palette]:not([data-view="ws-workbench"]):not([data-view="gpt"]) {\n' +
+    '  .topbar {min-height:64px!important;padding-block:4px!important}\n' +
+    '  .view-container {padding-top:16px!important}\n' +
+    ' }\n' +
+    '}\r\n',
+  expected: /--hz-sidebar-expanded:246px/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+
+[RUN] Horizon Atelier AI alert ordering
+[FAIL] Horizon Atelier 6.0 dynamic UI contract
+home AI priority: truthful source and server alert order passed
+[PASS] Horizon Atelier AI alert ordering
+
+[RUN] GPT Horizon 6.0 workspace contract
+GPT Horizon workspace: real status/history, safe writes, isolated scrolling, error recovery and 820x540 reflow pass
+[PASS] GPT Horizon 6.0 workspace contract
+
+[RUN] Horizon Atelier governance/settings UI contract
+node:internal/assert/utils:77
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: missing governance design-system selector: .governance-page-hero
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\governance-horizon-contract.test.cjs:24:10)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+[FAIL] Horizon Atelier governance/settings UI contract
+
+[RUN] 6.0 linked business workspace shell
+Business 6.0 shell contract: linked records, settings-driven channels and redesigned dynamic workspaces
+[PASS] 6.0 linked business workspace shell
+
+[RUN] 6.0 global Horizon visual finish
+Shared visual contract: explicit chrome/control/business ownership, guarded palettes, accessible targets and unchanged scroll ownership
+[PASS] 6.0 global Horizon visual finish
+
+[RUN] save error regression
+save-error regression contracts passed
+[PASS] save error regression
+
+[RUN] snapshot before write regression
+snapshot before-write regression: empty workspace, first write and repeated channel-write snapshots passed
+[PASS] snapshot before write regression
+
+[RUN] local health contract
+local health contract passed
+[PASS] local health contract
+
+[RUN] desktop/runtime version anti-rollback contract
+version lock contract: desktop and local resources must match 6.0 and cannot silently roll back
+[PASS] desktop/runtime version anti-rollback contract
+
+[RUN] 6.0 isolated data-root contract
+data-root isolation: 6.0 uses a new %LOCALAPPDATA%\Zhike6 workspace and never reads the old Zhike root
+[PASS] 6.0 isolated data-root contract
+
+[RUN] 6.0 single runtime and route contract
+single runtime contract: one WinUI/WebView2 workbench, one router and no production native/Electron fallback
+[PASS] 6.0 single runtime and route contract
+
+[RUN] local write flush race contract
+local write flush race contract passed
+[PASS] local write flush race contract
+
+[RUN] desktop startup XAML contract
+desktop startup contract: all MainWindow navigation icons resolve to WinUI Symbol values
+[PASS] desktop startup XAML contract
+
+[RUN] desktop visual single-shell contract
+desktop visual contract: one Horizon workbench route system and one WinUI host boundary are present
+[PASS] desktop visual single-shell contract
+
+[RUN] desktop native smoke contract
+desktop smoke contract: single workbench, WebView2 boundary, SQLite services, close safety and retired fallback exclusion pass
+[PASS] desktop native smoke contract
+
+[RUN] desktop local service flow
+desktop local service flow: single workbench, SQLite sidecar, guarded bridge and close flush pass
+[PASS] desktop local service flow
+
+[RUN] desktop local SQLite storage mode
+desktop storage mode: one local SQLite sidecar is the only production storage path
+[PASS] desktop local SQLite storage mode
+
+[RUN] desktop bridge response matching and import timeout
+legacy bridge contract: runtime request/response matching and import/state timeout pass
+[PASS] desktop bridge response matching and import timeout
+
+[RUN] desktop ApiClient local-only routes
+desktop ApiClient local-only contract passed
+[PASS] desktop ApiClient local-only routes
+
+[RUN] AI followup startup recovery
+AI 跟进页启动恢复回归测试通过
+[PASS] AI followup startup recovery
+
+[RUN] AI credential DPAPI persistence
+PASS DPAPI persistence and status minimization
+PASS Corrupt malformed is rejected without replacement
+PASS Corrupt null-document is rejected without replacement
+PASS Corrupt missing-document-shape is rejected without replacement
+PASS Corrupt null-providers is rejected without replacement
+PASS Corrupt null-active-provider is rejected without replacement
+PASS Undecryptable DPAPI blocks all mutations
+FAIL Concurrent service instances preserve both providers: unexpected storage failure
+PASS Independent processes preserve both provider updates
+PASS Cancellation while waiting for ownership never writes
+PASS Failed atomic replacement preserves original and clears staging file
+AI credential isolated runtime: 10/11; network calls=0
+[FAIL] AI credential DPAPI persistence
+
+[RUN] AI provider 503 recovery and model fallback
+AI bridge runtime passed: fallback, 16.2s response, scaled 100s budget, single-attempt timeout, total timeout, and explicit cancellation
+[PASS] AI provider 503 recovery and model fallback
+
+[RUN] AI provider health and retry contract
+ai-provider-health-contract: provider health and retry classification required
+[PASS] AI provider health and retry contract
+
+[RUN] WS runtime login detection and ingest resilience
+WS 运行时恢复与节流回归测试通过
+[PASS] WS runtime login detection and ingest resilience
+
+[RUN] desktop responsive contract
+node:assert:885
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: main content scroll area must reserve a stable scrollbar gutter
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\desktop\tests\DesktopResponsiveContractTests.cjs:23:8)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '/* Shared palette and control primitives. Business state and WS/GPT layout stay\n' +
+    ' * with their existing owners. Native CSS nesting keeps the workspace boundary\n' +
+    ' * explicit instead of repeating selectors and competing override chains. */\n' +
+    'html[data-palette="atelier-dawn"] {\n' +
+    ' color-scheme:light;--ds-color-scheme:light;--ds-on-primary:#fff;\n' +
+    ' --ds-primary:#326bdf;--ds-secondary:#6275e8;--ds-accent:#12afa6;\n' +
+    ' --ds-bg:#f3f6fd;--ds-surface:#fff;--ds-surface-soft:#eef3fd;\n' +
+    ' --ds-text:#172a4d;--ds-muted:#5a6d88;--ds-border:#d7e0f2;--ds-border-strong:#b8c9e6;\n' +
+    ' --ds-hover:#e7eefc;--ds-active-text:#285cc6;--ds-success:#167548;--ds-success-bg:#e8f7ee;\n' +
+    ' --ds-warning:#8d5a0c;--ds-warning-bg:#fff5dc;--ds-danger:#b33f45;--ds-danger-bg:#fff0f1;\n' +
+    ' --ds-ai:#5a48b6;--ds-ai-bg:#f0edff;--ds-focus:rgba(50,107,223,.26);\n' +
+    ' --ds-shadow:0 8px 28px rgba(35,66,120,.055);--ds-shadow-raised:0 14px 36px rgba(35,66,120,.11);\n' +
+    ' --ds-scrim:rgba(20,38,70,.32);--ds-nav-bg:#fdfefe;--ds-nav-active:#e9efff;--ds-nav-text:#435b7b;\n' +
+    ' --ds-flow-art:url("../assets/atelier-dawn.svg");\n' +
+    '}\n' +
+    'html[data-palette="horizon-night"] {\n' +
+    ' color-scheme:dark;--ds-color-scheme:dark;--ds-on-primary:#172a4d;\n' +
+    ' --ds-primary:#78a5ff;--ds-secondary:#b2a0ff;--ds-accent:#51e1cc;\n' +
+    ' --ds-bg:#071017;--ds-surface:#0d1d28;--ds-surface-soft:#142a38;\n' +
+    ' --ds-text:#edf6f5;--ds-muted:#a1b5c2;--ds-border:#294452;--ds-border-strong:#496576;\n' +
+    ' --ds-hover:#183744;--ds-active-text:#78a5ff;--ds-success:#7ee3ac;--ds-success-bg:#123a2d;\n' +
+    ' --ds-warning:#e7c788;--ds-warning-bg:#40341f;--ds-danger:#ffaca2;--ds-danger-bg:#48252b;\n' +
+    ' --ds-ai:#c7b7ff;--ds-ai-bg:#30274c;--ds-focus:rgba(81,225,204,.28);\n' +
+    ' --ds-shadow:0 12px 30px rgba(0,0,0,.18);--ds-shadow-raised:0 20px 46px rgba(0,0,0,.3);\n' +
+    ' --ds-scrim:rgba(2,9,15,.72);--ds-nav-bg:#0b1820;--ds-nav-active:#173d42;--ds-nav-text:#bed0d5;\n' +
+    ' --ds-flow-art:url("../assets/horizon-flow-6.png");\n' +
+    '}\n' +
+    'html[data-palette] {\n' +
+    ' --ds-radius:14px;--ds-radius-large:22px;--ds-control-height:44px;--ds-body-size:16px;\n' +
+    ' --ds-font-body:var(--ds-body-size);--ds-font-nav:16px;--ds-row-height:50px;\n' +
+    ' --ds-ink:var(--ds-text);--ds-teal:var(--ds-accent);\n' +
+    ' --ds-space-1:4px;--ds-space-2:8px;--ds-space-3:12px;--ds-space-4:16px;--ds-space-5:24px;--ds-space-6:32px;\n' +
+    ' --zk-bg:var(--ds-bg);--zk-surface:var(--ds-surface);--zk-surface-soft:var(--ds-surface-soft);--zk-surface-elevated:var(--ds-surface);\n' +
+    ' --zk-ink:var(--ds-text);--zk-muted:var(--ds-muted);--zk-border:var(--ds-border);--zk-border-strong:var(--ds-border-strong);\n' +
+    ' --zk-accent:var(--ds-primary);--zk-accent-strong:var(--ds-primary);--zk-blue:var(--ds-primary);\n' +
+    ' --zk-success:var(--ds-success);--zk-success-bg:var(--ds-success-bg);--zk-warning:var(--ds-warning);--zk-warning-bg:var(--ds-warning-bg);\n' +
+    ' --zk-danger:var(--ds-danger);--zk-danger-bg:var(--ds-danger-bg);--zk-ai:var(--ds-ai);--zk-ai-bg:var(--ds-ai-bg);\n' +
+    ' --zk-radius-control:var(--ds-radius);--zk-radius-card:var(--ds-radius);--zk-radius-panel:var(--ds-radius-large);\n' +
+    ' --zk-shadow:var(--ds-shadow);--zk-focus:0 0 0 3px var(--ds-focus);\n' +
+    ' --text:var(--ds-text);--muted:var(--ds-muted);--line:var(--ds-border);--soft:var(--ds-surface-soft);--white:var(--ds-surface);\n' +
+    ' --panel:var(--ds-surface);--input:var(--ds-surface);--surface:var(--ds-surface);--surface-soft:var(--ds-surface-soft);\n' +
+    ' --surface-border:var(--ds-border);--surface-ink:var(--ds-text);--surface-muted:var(--ds-muted);\n' +
+    ' --teal:var(--ds-accent);--teal-dark:var(--ds-primary);--blue:var(--ds-primary);--green:var(--ds-success);--red:var(--ds-danger);\n' +
+    ' --hz-bg:var(--ds-bg);--hz-bg-deep:var(--ds-bg);--hz-surface:var(--ds-surface);--hz-surface-2:var(--ds-surface-soft);\n' +
+    ' --hz-surface-3:var(--ds-surface-soft);--hz-line:var(--ds-border);--hz-line-strong:var(--ds-border-strong);\n' +
+    ' --hz-text:var(--ds-text);--hz-muted:var(--ds-muted);--hz-teal:var(--ds-accent);--hz-cyan:var(--ds-primary);\n' +
+    ' --hz-violet:var(--ds-secondary);--hz-gold:var(--ds-warning);--hz-green:var(--ds-success);--hz-danger:var(--ds-danger);\n' +
+    ' --hz-radius:var(--ds-radius);--hz-radius-sm:var(--ds-radius);--hz-shadow:var(--ds-shadow);\n' +
+    '}\n' +
+    '/* Body copy defaults stay less specific than component headings and KPI\n' +
+    ' * numerals, so those keep their hierarchy instead of needing undo rules. */\n' +
+    'html[data-palette]:where(:not([data-view="ws-workbench"]):not([data-view="gpt"])) .view-container :where(p,span,small,b,strong,label,summary,dt,dd,time) {font-size:15px;line-height:1.6;color:var(--ds-text)}\n' +
+    'html[data-palette]:not([data-view="ws-workbench"]):not([data-view="gpt"]) {\n' +
+    ' body {font-family:"Segoe UI Variable","Microsoft YaHei UI","Microsoft YaHei",sans-serif;font-size:var(--ds-body-size);line-height:1.6;letter-spacing:0;background:var(--ds-bg)!important;color:var(--ds-text)!important}\n' +
+    ' :is(button,input,select,textarea) {font:inherit;letter-spacing:inherit}\n' +
+    ' /* Scoped important declarations replace legacy component important colors. */\n' +
+    ' :is(.btn,.btn.small,.page-btn,.table-action,.link-button) {min-height:44px!important;height:auto;padding:8px 16px!important;border:1px solid var(--ds-border)!important;border-radius:14px!important;background:var(--ds-surface)!important;color:var(--ds-text)!important;font-size:16px!important;line-height:1.45;white-space:nowrap;box-shadow:none!important;animation:none!important;transition:background-color .16s ease,border-color .16s ease,color .16s ease}\n' +
+    ' :is(.btn,.page-btn,.table-action,.link-button):hover:not(:disabled) {background:var(--ds-hover)!important;border-color:var(--ds-border-strong)!important;color:var(--ds-primary)!important;transform:none!important}\n' +
+    ' .btn.primary {background:linear-gradient(115deg,#326bdf,#5261c9)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 5px 14px rgba(50,107,223,.16)!important}\n' +
+    ' .btn.primary:hover:not(:disabled) {background:linear-gradient(115deg,#285ac0,#454fb0)!important;color:#fff!important}\n' +
+    ' :is(.btn.danger,.danger-text) {color:var(--ds-danger)!important}\n' +
+    ' :is(button,input,select,textarea,a,summary):focus-visible {outline:3px solid var(--ds-primary);outline-offset:3px;box-shadow:0 0 0 4px var(--ds-focus)!important}\n' +
+    ' :is(button,input,select,textarea):disabled {opacity:.55;cursor:not-allowed}\n' +
+    ' :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) {min-height:44px!important;border:1px solid var(--ds-border)!important;border-radius:14px!important;background:var(--ds-surface)!important;color:var(--ds-text)!important;padding:9px 12px!important;font-size:16px!important}\n' +
+    ' :is(input,textarea)::placeholder {color:var(--ds-muted)!important;opacity:.85}\n' +
+    ' select option {background:var(--ds-surface);color:var(--ds-text)}\n' +
+    ' :is(input[type="checkbox"],input[type="radio"]) {width:18px;height:18px;min-width:18px;accent-color:var(--ds-primary)}\n' +
+    ' :is(.status-tag,.tag,.quality-tag) {padding:4px 10px;font-size:14px!important;line-height:1.5;border-radius:999px!important}\n' +
+    ' .tag-green {color:var(--ds-success)!important;background:var(--ds-success-bg)!important}\n' +
+    ' .tag-amber {color:var(--ds-warning)!important;background:var(--ds-warning-bg)!important}\n' +
+    ' .tag-red {color:var(--ds-danger)!important;background:var(--ds-danger-bg)!important}\n' +
+    '}\n' +
+    '@media(prefers-reduced-motion:reduce) {\n' +
+    ' html[data-palette]:not([data-view="ws-workbench"]):not([data-view="gpt"]) :is(button,input,select,textarea) {transition:none!important}\n' +
+    '}\r\n',
+  expected: /\.view-container\{[^}]*scrollbar-gutter:stable/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+[FAIL] desktop responsive contract
+
+[RUN] desktop icon contract
+desktop icon contract: 9 PNG-backed sizes (16, 20, 24, 32, 40, 48, 64, 128, 256) are valid
+[PASS] desktop icon contract
+
+[RUN] customer governance core
+customer governance core: profile normalization, protected fields, evidence dedupe, soft-delete threshold passed
+[PASS] customer governance core
+
+[RUN] business rule baseline and compatibility migration
+business rule core: baseline, source IDs, authoritative ledger and reminder dedupe pass
+[PASS] business rule baseline and compatibility migration
+
+[RUN] business P1 batching, source subtype, ledger rollback and import rollback
+business P1 regression: 10k 65.2ms, 50k 348.1ms; rollback/source/ledger pass
+[PASS] business P1 batching, source subtype, ledger rollback and import rollback
+
+[RUN] customer governance API
+customer governance api: profile, soft-delete, restore, batch delete, audit and one-time purge passed
+[PASS] customer governance API
+
+[RUN] customer purge completeness
+customer purge completeness: all customer-linked WS, AI, task and group records removed
+[PASS] customer purge completeness
+
+[RUN] customer governance UI
+customer governance ui: loaded and exposes audit, soft-delete, restore and purge confirmation controls
+[PASS] customer governance UI
+
+[RUN] settings option synchronization
+settings option synchronization: delete, rename, dependent records, refresh and rollback contracts pass
+[PASS] settings option synchronization
+
+[RUN] cross-workspace business chain
+cross-workspace chain contract: customer master, settings taxonomy, WS AI tasks and shared refresh are connected
+[PASS] cross-workspace business chain
+
+[RUN] stage 1.5 queue compatibility review
+{"ok":true,"scope":"isolated-only","manifestMax":25,"legacyRunRetained":true,"legacyItemRetained":true,"aiAnalysisRetained":true,"aiJobRetained":true,"noSecondAiOutbox":true,"noDualWrite":true,"doubleReadWrite":false,"productionWorkerStarted":false,"productionDatabaseOpened":false,"tempRoot":"C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage1-5-queue-M4rNdU"}
+[PASS] stage 1.5 queue compatibility review
+
+[RUN] stage 1.5 IPC real WinUI supervisor integration
+{
+  "ok": true,
+  "status": "NotTested",
+  "integrationStatus": "Passed",
+  "transport": "Windows Named Pipe",
+  "currentSid": "S-1-5-21-3081219656-3052428467-741099362-1001",
+  "peerSid": "S-1-5-21-3081219656-3052428467-741099362-1001",
+  "acl": "current SID only",
+  "anonymous": false,
+  "wrongTokenRejected": true,
+  "tokenRotationRejected": true,
+  "timeoutCancelled": true,
+  "callerCancelled": true,
+  "invalidFrameRejected": true,
+  "crashRecovered": true,
+  "reconnect": true,
+  "differentWindowsUser": "NotTested",
+  "productionWorkerStarted": false,
+  "productionDatabaseOpened": false,
+  "tempRootClean": true
+}
+[PASS] stage 1.5 IPC real WinUI supervisor integration
+
+[RUN] stage 1.5 sidecar fencing real writer integration
+stage1.5 sidecar fencing integration: real ws_messages write, lease takeover, stale rollback, checkpoint atomicity and idempotent replay passed
+[PASS] stage 1.5 sidecar fencing real writer integration
+
+[RUN] stage 1.5 fencing failure and BUSY recovery
+stage1.5 fencing coordinator failure paths: callback rollback and SQLite BUSY fail closed without business/fact/checkpoint residue passed
+[PASS] stage 1.5 fencing failure and BUSY recovery
+
+[RUN] stage 2 controlled worker fencing gate
+stage2 worker fencing gate: disabled fail-closed and enabled transactional delegation passed
+[PASS] stage 2 controlled worker fencing gate
+
+[RUN] stage 2 read-only legacy queue adapter
+{"ok":true,"stableCollectionJob":true,"stableAiJob":true,"legacyRowsUnchanged":true,"dualConsumerRejected":true,"productionQueueWritten":false}
+[PASS] stage 2 read-only legacy queue adapter
+
+[RUN] stage 2 controlled Worker lifecycle integration
+  正在确定要还原的项目…
+  所有项目均是最新的，无法还原。
+  WorkerRuntimeIntegration -> C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\scripts\stage2\WorkerRuntimeIntegration\bin\Release\net10.0-windows\WorkerRuntimeIntegration.dll
+
+已成功生成。
+    0 个警告
+    0 个错误
+
+已用时间 00:00:02.06
+stage2 controlled Worker lifecycle, heartbeat, recovery and token rotation passed
+[PASS] stage 2 controlled Worker lifecycle integration
+
+[RUN] stage 2 Worker feature flags
+  正在确定要还原的项目…
+  所有项目均是最新的，无法还原。
+  WorkerRuntimeIntegration -> C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\scripts\stage2\WorkerRuntimeIntegration\bin\Release\net10.0-windows\WorkerRuntimeIntegration.dll
+
+已成功生成。
+    0 个警告
+    0 个错误
+
+已用时间 00:00:01.65
+stage2 feature flags default-off, invalid-safe and auditable-file loading passed
+[PASS] stage 2 Worker feature flags
+
+[RUN] stage 2 Worker disabled-path integration
+  正在确定要还原的项目…
+  所有项目均是最新的，无法还原。
+  WorkerRuntimeIntegration -> C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\scripts\stage2\WorkerRuntimeIntegration\bin\Release\net10.0-windows\WorkerRuntimeIntegration.dll
+
+已成功生成。
+    0 个警告
+    0 个错误
+
+已用时间 00:00:01.70
+stage2 Worker runtime disabled gate leaves legacy execution path untouched
+[PASS] stage 2 Worker disabled-path integration
+
+[RUN] syntax resources\app\app.js
+[PASS] syntax resources\app\app.js
+
+[RUN] syntax resources\app\migration-runner.cjs
+[PASS] syntax resources\app\migration-runner.cjs
+
+[RUN] syntax resources\app\modules\accessibility-enhancements.js
+[PASS] syntax resources\app\modules\accessibility-enhancements.js
+
+[RUN] syntax resources\app\modules\ai-crm-suggestion-core.js
+[PASS] syntax resources\app\modules\ai-crm-suggestion-core.js
+
+[RUN] syntax resources\app\modules\ai-job-pipeline-core.js
+[PASS] syntax resources\app\modules\ai-job-pipeline-core.js
+
+[RUN] syntax resources\app\modules\ai-mock-provider.js
+[PASS] syntax resources\app\modules\ai-mock-provider.js
+
+[RUN] syntax resources\app\modules\ai-review-center-ui.js
+[PASS] syntax resources\app\modules\ai-review-center-ui.js
+
+[RUN] syntax resources\app\modules\business-enhancements.js
+[PASS] syntax resources\app\modules\business-enhancements.js
+
+[RUN] syntax resources\app\modules\business-rule-core.js
+[PASS] syntax resources\app\modules\business-rule-core.js
+
+[RUN] syntax resources\app\modules\customer-governance-core.js
+[PASS] syntax resources\app\modules\customer-governance-core.js
+
+[RUN] syntax resources\app\modules\customer-governance-ui.js
+[PASS] syntax resources\app\modules\customer-governance-ui.js
+
+[RUN] syntax resources\app\modules\desktop-host.js
+[PASS] syntax resources\app\modules\desktop-host.js
+
+[RUN] syntax resources\app\modules\desktop-performance.js
+[PASS] syntax resources\app\modules\desktop-performance.js
+
+[RUN] syntax resources\app\modules\gpt-assistant.js
+[PASS] syntax resources\app\modules\gpt-assistant.js
+
+[RUN] syntax resources\app\modules\hot-chat-profile-core.js
+[PASS] syntax resources\app\modules\hot-chat-profile-core.js
+
+[RUN] syntax resources\app\modules\operations-core.cjs
+[PASS] syntax resources\app\modules\operations-core.cjs
+
+[RUN] syntax resources\app\modules\operations-ui.js
+[PASS] syntax resources\app\modules\operations-ui.js
+
+[RUN] syntax resources\app\modules\operations-upgrade.js
+[PASS] syntax resources\app\modules\operations-upgrade.js
+
+[RUN] syntax resources\app\modules\performance-enhancements.js
+[PASS] syntax resources\app\modules\performance-enhancements.js
+
+[RUN] syntax resources\app\modules\phone-registry.js
+[PASS] syntax resources\app\modules\phone-registry.js
+
+[RUN] syntax resources\app\modules\productivity.js
+[PASS] syntax resources\app\modules\productivity.js
+
+[RUN] syntax resources\app\modules\runtime-customizer.js
+[PASS] syntax resources\app\modules\runtime-customizer.js
+
+[RUN] syntax resources\app\modules\scroll-coordinator.js
+[PASS] syntax resources\app\modules\scroll-coordinator.js
+
+[RUN] syntax resources\app\modules\smart-import.js
+[PASS] syntax resources\app\modules\smart-import.js
+
+[RUN] syntax resources\app\modules\ticket-record-core.js
+[PASS] syntax resources\app\modules\ticket-record-core.js
+
+[RUN] syntax resources\app\modules\v4-data-center.js
+[PASS] syntax resources\app\modules\v4-data-center.js
+
+[RUN] syntax resources\app\modules\workspace-shell.js
+[PASS] syntax resources\app\modules\workspace-shell.js
+
+[RUN] syntax resources\app\modules\ws-business-pages.js
+[PASS] syntax resources\app\modules\ws-business-pages.js
+
+[RUN] syntax resources\app\modules\ws-crm-sync-core.js
+[PASS] syntax resources\app\modules\ws-crm-sync-core.js
+
+[RUN] syntax resources\app\modules\ws-group-manager-core.js
+[PASS] syntax resources\app\modules\ws-group-manager-core.js
+
+[RUN] syntax resources\app\modules\ws-group-mock-transport.js
+[PASS] syntax resources\app\modules\ws-group-mock-transport.js
+
+[RUN] syntax resources\app\modules\ws-group-monitor-core.js
+[PASS] syntax resources\app\modules\ws-group-monitor-core.js
+
+[RUN] syntax resources\app\modules\ws-media-core.js
+[PASS] syntax resources\app\modules\ws-media-core.js
+
+[RUN] syntax resources\app\modules\ws-scope.js
+[PASS] syntax resources\app\modules\ws-scope.js
+
+[RUN] syntax resources\app\modules\ws-workbench-core.js
+[PASS] syntax resources\app\modules\ws-workbench-core.js
+
+[RUN] syntax resources\app\modules\ws-workbench.js
+[PASS] syntax resources\app\modules\ws-workbench.js
+
+[RUN] syntax resources\app\modules\ws-workspace-query.cjs
+[PASS] syntax resources\app\modules\ws-workspace-query.cjs
+
+[RUN] syntax resources\app\server.mjs
+[PASS] syntax resources\app\server.mjs
+
+[RUN] syntax resources\app\sidecar-write-coordinator.cjs
+[PASS] syntax resources\app\sidecar-write-coordinator.cjs
+
+[RUN] syntax resources\app\state-delta.cjs
+[PASS] syntax resources\app\state-delta.cjs
+
+[RUN] syntax resources\app\worker-fencing-gate.cjs
+[PASS] syntax resources\app\worker-fencing-gate.cjs
+
+[RUN] syntax resources\app\worker-queue-adapter.cjs
+[PASS] syntax resources\app\worker-queue-adapter.cjs
+
+[RUN] Stage 3 group feature flags
+stage3 worker group feature flags contract: pass
+[PASS] Stage 3 group feature flags
+
+[RUN] Stage 3 Worker and group-manager isolation gate
+stage3 Worker and group-manager isolation gate: pass
+[PASS] Stage 3 Worker and group-manager isolation gate
+
+[RUN] Stage 3 group manager migration
+stage3 group manager migration contract: pass
+[PASS] Stage 3 group manager migration
+
+[RUN] Stage 3 group manager core
+stage3 group manager core contract: pass
+[PASS] Stage 3 group manager core
+
+[RUN] Stage 3 group manager isolated API and Mock Transport
+stage3 group manager API, account isolation, CRM gate, idempotency and mock transport: pass
+[PASS] Stage 3 group manager isolated API and Mock Transport
+
+[RUN] Stage 3 WS workspace navigation
+stage3 WS workspace navigation contract: pass
+[PASS] Stage 3 WS workspace navigation
+
+[RUN] Stage 4 AI job pipeline core
+ai job pipeline core: PASS
+[PASS] Stage 4 AI job pipeline core
+
+[RUN] Stage 4 CRM suggestion core
+ai crm suggestion core: PASS
+[PASS] Stage 4 CRM suggestion core
+
+[RUN] Stage 4 migration and schema
+stage4 migration: PASS
+[PASS] Stage 4 migration and schema
+
+[RUN] Stage 4 Worker AI flags
+stage4 worker AI feature flags contract: pass
+[PASS] Stage 4 Worker AI flags
+
+[RUN] Stage 4 Mock AI provider
+ai mock provider: PASS
+[PASS] Stage 4 Mock AI provider
+
+[RUN] Stage 4 AI review center UI
+ai review center ui: PASS
+[PASS] Stage 4 AI review center UI
+
+[RUN] Stage 4 desktop ApiClient queue and CRM contract
+desktop ApiClient Stage 4 queue and CRM contract passed
+[PASS] Stage 4 desktop ApiClient queue and CRM contract
+
+[RUN] Stage 4 isolated AI pipeline API
+stage4 isolated AI queue, fencing, evidence, CRM review and rollback boundaries: PASS
+[PASS] Stage 4 isolated AI pipeline API
+
+[RUN] WS core rules
+ws-workbench-core: pass; shared-login isolation and live discovery payloads verified
+[PASS] WS core rules
+
+[RUN] WS direct-only collection and AI policy
+WS direct-only policy: core identity, mixed ingest, unknown rejection, legacy group retirement, late-write guards pass
+[PASS] WS direct-only collection and AI policy
+
+[RUN] WS VIP member task and alert isolation
+VIP member reminders: two customers, distinct tasks and alerts, idempotent polling and reanalysis pass
+[PASS] WS VIP member task and alert isolation
+
+[RUN] WS and GPT Horizon visual reachability
+WS and GPT Horizon visual scope, dark states, narrow control reachability and scroll contract pass
+[PASS] WS and GPT Horizon visual reachability
+
+[RUN] WS AI CRM sync rules
+ws-crm-sync-core: pass
+[PASS] WS AI CRM sync rules
+
+[RUN] WS unified customer archive UI contract
+ws-hot-chat-profile-ui: source wiring contract passed; live UI behavior requires separate native acceptance
+[PASS] WS unified customer archive UI contract
+
+[RUN] WS CRM customer-link trust boundary
+WS CRM link trust: pending wrong links and shared accounts are blocked; manual and independent WS identity links pass
+[PASS] WS CRM customer-link trust boundary
+
+[RUN] WS workbench initialization
+ws-workbench-init: pass
+[PASS] WS workbench initialization
+
+[RUN] WS API and SQLite
+ws-workbench-api: pass
+[PASS] WS API and SQLite
+
+[RUN] WS export streaming contract
+WS export streaming contract: bounded SQLite iteration, disconnect handling and backpressure are present
+[PASS] WS export streaming contract
+
+[RUN] WS export and media schema
+[PASS] WS export and media schema
+
+[RUN] WS complete export and export jobs
+ws-export-complete: pass
+[PASS] WS complete export and export jobs
+
+[RUN] WS media staging and attachment broadcast
+ws-media-api: staging, account isolation, raw download, attachment broadcast, idempotency and deletion guard contracts pass
+[PASS] WS media staging and attachment broadcast
+
+[RUN] WS media send runtime contract
+ws-media-send-runtime: attachment upload, media-id plans and send-media dispatch required
+[PASS] WS media send runtime contract
+
+[RUN] WS broadcast, translation and send audit
+ws-broadcast-translation: translation preservation, explicit broadcast confirmation, account isolation, rate limiting, native bridge and audit contracts pass
+[PASS] WS broadcast, translation and send audit
+
+[RUN] WS VIP customer and group-monitor scope separation
+VIP scope separation: customer VIP and WS group monitoring remain independent
+[PASS] WS VIP customer and group-monitor scope separation
+
+[RUN] WS conversation cursor pagination
+WS conversation pagination: 5205 conversations loaded without gaps or duplicates
+[PASS] WS conversation cursor pagination
+
+[RUN] WS conversation incremental watermark runtime
+WS conversation delta runtime: unchanged=1 page, 1105 updates=5 pages, late update recovered
+[PASS] WS conversation incremental watermark runtime
+
+[RUN] WS list preview update
+ws-list-preview-update: pass
+[PASS] WS list preview update
+
+[RUN] WS follow-up chain dedupe and refresh
+ws-followup-chain: isolated repeated-analysis dedupe, no-reply cooldown and current-alert refresh pass
+[PASS] WS follow-up chain dedupe and refresh
+
+[RUN] WS task lifecycle and multi-account history ingest
+WS lifecycle: multi-account radar, plan/statistics separation, snooze, completion idempotency, reopen and dismiss pass
+[PASS] WS task lifecycle and multi-account history ingest
+
+[RUN] WS complete original text and backup roundtrip
+WS original roundtrip: long text, whitespace, backup/restore and explicit oversized rejection passed
+[PASS] WS complete original text and backup roundtrip
+
+[RUN] WS intelligent follow-up strategy and CRM persistence
+WS follow-up intelligence: structured strategy, priority and CRM persistence pass
+[PASS] WS intelligent follow-up strategy and CRM persistence
+
+[RUN] WS live refresh event contract
+WS live refresh contract: heartbeat is WS-only; real ingestion and changed business versions refresh safely
+[PASS] WS live refresh event contract
+
+[RUN] WS non-blocking AI pump runtime
+WS non-blocking AI pump runtime checks passed.
+[PASS] WS non-blocking AI pump runtime
+
+[RUN] Home WS follow-up runtime
+home WS follow-up runtime: fallback, placeholder, stale guard, five-card identity/score layout, bridge priority, visible retry and filter-safe task deep-link passed
+[PASS] Home WS follow-up runtime
+
+[RUN] WS SQLite v6 migration
+ws-workbench-migration-v6/v9: pass
+[PASS] WS SQLite v6 migration
+
+[RUN] WS external-id uniqueness migration
+ws external-id migration: duplicate repair and unique account/conversation index pass
+[PASS] WS external-id uniqueness migration
+
+[RUN] WS local security contract
+ws-workbench-security: local bridge, authorized capture and secret-boundary contracts pass
+[PASS] WS local security contract
+
+[RUN] WS multi-account database isolation
+ws-multi-account: pass
+[PASS] WS multi-account database isolation
+
+[RUN] WS account runtime recovery
+ws-account-runtime-recovery: pass
+[PASS] WS account runtime recovery
+
+[RUN] WS native collector async full-list scan contract
+WS native collector contract: virtualized full-list scan yields across frames, restores scroll and schedules background scans
+[PASS] WS native collector async full-list scan contract
+
+[RUN] WS native collector P0 durability contract
+WS collector P0 contract: top-first scan, identity guard, durable checkpoints, final-packet semantics and incremental recapture are wired
+[PASS] WS native collector P0 durability contract
+
+[RUN] WS native collector diagnostics contract
+WS collector diagnostics contract: fixed-field lifecycle telemetry is local, sanitized and bounded to 256 KB
+[PASS] WS native collector diagnostics contract
+
+[RUN] WS native group monitor bridge contract
+WS native group monitor contract: DTO, queue bridge, collector-only lifecycle and group event forwarding are wired
+[PASS] WS native group monitor bridge contract
+
+[RUN] WS group monitor core
+ok - normalizes WhatsApp phone JIDs and phone text deterministically
+ok - creates a stable idempotency key for replayed events
+ok - resolves participant id before external ids, phone and manual mapping
+ok - returns pending for ambiguous and unmatched identities without creating a customer
+ok - counts only confirmed joins and excludes approval requests
+ok - projects a joined event per account, group and customer and protects manual locks
+ok - maps left and removed events to distinct customer relationship states
+ok - does not treat two distinct id-less events as duplicates
+ws-group-monitor-core: pass
+[PASS] WS group monitor core
+
+[RUN] WS group monitor migration
+ws-group-monitor-migration: pass
+[PASS] WS group monitor migration
+
+[RUN] WS group monitor sidecar API
+ws-group-monitor-api: pass
+[PASS] WS group monitor sidecar API
+
+[RUN] WS group monitor ingest
+ws-group-monitor-ingest: pass
+[PASS] WS group monitor ingest
+
+[RUN] WS customer group status projection
+customer-group-membership: status projection contract present
+[PASS] WS customer group status projection
+
+[RUN] WS customer group status projection runtime
+ws-group-status-projection-runtime: pass
+[PASS] WS customer group status projection runtime
+
+[RUN] WS native background lifecycle and bounds contract
+WS background lifecycle contract: retained pooled WebViews, metadata heartbeat, stable DPI bounds and direct/VIP ingress are wired
+[PASS] WS native background lifecycle and bounds contract
+
+[RUN] WS process runtime coordinator contract
+WS runtime coordinator contract: process-owned multi-account policy, foreground isolation, fair leases and retry backoff pass
+[PASS] WS process runtime coordinator contract
+
+[RUN] WS process WebView session pool contract
+WS process session pool contract: finite multi-account LRU, leases, generation fencing, background lifecycle, shutdown and popup isolation pass
+[PASS] WS process WebView session pool contract
+
+[RUN] WS process runtime coordinator scheduling
+WS runtime coordinator scheduling: foreground isolation, fair rotation, per-account backoff and collection policy pass
+[PASS] WS process runtime coordinator scheduling
+
+[RUN] WS parent-route visibility runtime
+WS route visibility runtime: 12 pages, chat-only native anchor, account fencing and ordered WS enter/exit pass
+[PASS] WS parent-route visibility runtime
+
+[RUN] WS hidden native scheduler runtime
+WS hidden scheduler runtime: dormant rAF/page timers are advanced safely by the native heartbeat
+[PASS] WS hidden native scheduler runtime
+
+[RUN] WS native group exclusion runtime
+WS VIP-group runtime: explicit whitelist allows one VIP group, ordinary groups stay excluded, and unread policy remains fail-closed
+[PASS] WS native group exclusion runtime
+
+[RUN] WS native conversation identity runtime
+WS conversation identity runtime: data-jid/data-chat-id/data-group-id are extracted and groups are surfaced separately
+[PASS] WS native conversation identity runtime
+
+[RUN] WS durable queue Web JSON and API roundtrip
+WS queue Web JSON/API roundtrip passed: account, bidirectional evidence, checkpoint coverage and original body preserved
+[PASS] WS durable queue Web JSON and API roundtrip
+
+[RUN] WS native collector chunk runtime
+WS native collector chunk runtime: 5,000 rows remain complete and each WebView2 payload stays below 700k
+[PASS] WS native collector chunk runtime
+
+[RUN] WS native collector physical-bottom runtime
+WS full-list runtime: the physical bottom window is rendered and collected before completion
+[PASS] WS native collector physical-bottom runtime
+
+[RUN] WS native collector in-flight discovery runtime
+WS discover-all progress runtime: in-flight reads expose partial rows and completion publishes all rows
+[PASS] WS native collector in-flight discovery runtime
+
+[RUN] WS native collector full-list stall runtime
+WS full-list stall runtime: a frozen virtual list yields after 30 seconds with partial checkpoints
+[PASS] WS native collector full-list stall runtime
+
+[RUN] WS native collector navigation/retry runtime
+WS navigation/retry runtime: archive rows are excluded and identity failures do not block later customers
+[PASS] WS native collector navigation/retry runtime
+
+[RUN] WS native collector history packet runtime
+WS history packet runtime: bidirectional roles, multiline fidelity, 600 KB chunking, durable resume, phone increment and retry safety pass
+[PASS] WS native collector history packet runtime
+
+[RUN] WS native collector foreground isolation runtime
+WS foreground isolation runtime: no persistent collector is injected; manual capture is read-only and on-demand
+[PASS] WS native collector foreground isolation runtime
+
+[RUN] WS native media bridge contract
+ws-media-bridge-contract: explicit media action, safety refusal and conversation guard required
+[PASS] WS native media bridge contract
+
+[RUN] WS unread skip contract
+WS unread skip contract: unread conversations are never eligible for automatic opening
+[PASS] WS unread skip contract
+
+[RUN] WS strict unread detection runtime
+WS unread detection runtime: strict badges pass, action/preview false positives are rejected, unknown DOM is conservative
+[PASS] WS strict unread detection runtime
+
+[RUN] WS read-history collector runtime
+WS read-history collector runtime: read-only collection, unknown fail-safe, busy guard and delayed-history quiet window passed
+[PASS] WS read-history collector runtime
+
+[RUN] WS ChatKnow UI contract
+node:assert:885
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: foreground chat reserves one stable readable command band
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\ws-workbench-ui.test.cjs:81:8)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '/* The main application keeps a wide desktop minimum for its data tables, but\r\n' +
+    '   WS has its own responsive layout and must be able to enter the mobile-panel\r\n' +
+    '   mode at 820px instead of forcing horizontal overflow. */\r\n' +
+    ':root{--ws-left-min:198px;--ws-left-max:240px;--ws-center-min:360px;--ws-right-min:300px;--ws-right-max:360px;--ws-rail:52px;--ws-layout-gap:6px;--ws-layout-vars:stable}\r\n' +
+    'body.ws-mode{min-width:0;height:100vh;overflow:hidden}\r\n' +
+    'body.ws-mode .app-shell,body.ws-mode .main-area{min-width:0;overflow:hidden}\r\n' +
+    'body.ws-mode .view-container{max-width:none;padding:10px 18px 12px}\r\n' +
+    '.ws-workbench-page{min-width:0;height:100%;display:flex;flex-direction:column;gap:6px;overflow:hidden}\r\n' +
+    '.ws-page-heading{margin-bottom:0;padding:0;gap:6px;min-height:38px;align-items:center}\r\n' +
+    '.ws-page-heading .page-title{font-size:21px;line-height:1}\r\n' +
+    '.ws-page-heading .page-subtitle{font-size:10px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\r\n' +
+    '.ws-page-heading .heading-actions{gap:4px}\r\n' +
+    '.ws-page-heading .heading-actions .btn{height:25px;padding:0 7px;font-size:9px}\r\n' +
+    ' .ws-layout{display:grid;grid-template-columns:minmax(180px,232px) minmax(0,1fr) minmax(250px,332px);gap:var(--ws-layout-gap);min-height:0;flex:1;overflow:hidden}\r\n' +
+    ' .ws-layout.left-collapsed{grid-template-columns:var(--ws-rail) minmax(0,1fr) minmax(250px,332px)}\r\n' +
+    ' .ws-layout.right-collapsed{grid-template-columns:minmax(180px,232px) minmax(0,1fr) var(--ws-rail)}\r\n' +
+    ' .ws-layout.left-collapsed.right-collapsed{grid-template-columns:var(--ws-rail) minmax(0,1fr) var(--ws-rail)}\r\n' +
+    '.ws-sessions-panel,.ws-center-panel,.ws-assist-panel{min-width:0;min-height:0;overflow:hidden}\r\n' +
+    '.ws-sessions-panel,.ws-assist-panel{display:flex;flex-direction:column;gap:10px}\r\n' +
+    '.ws-sessions-panel{position:relative;background:var(--panel,#fff);border:1px solid var(--line,#dfe5ee);border-radius:12px;padding:10px}.ws-account-list{display:flex;flex-direction:column;gap:5px;max-height:180px;overflow:auto;padding-right:2px}.ws-account-row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:7px;width:100%;border:1px solid transparent;border-radius:9px;background:transparent;padding:7px;text-align:left;color:inherit;cursor:pointer}.ws-account-row:hover,.ws-account-row.active{background:var(--soft,#f1f5fa);border-color:var(--line,#dfe5ee)}.ws-account-row.active{box-shadow:inset 3px 0 #36a99f}.ws-account-avatar{display:grid;place-items:center;width:27px;height:27px;border-radius:50%;background:#e4f4f3;color:#197873;font-weight:700;font-size:11px}.ws-account-copy{min-width:0}.ws-account-copy strong,.ws-account-copy small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ws-account-copy strong{font-size:11px}.ws-account-copy small{font-size:9px;color:var(--muted,#77839a);margin-top:2px}.ws-account-status{font-size:9px;color:#6d7785;white-space:nowrap}.ws-account-status[data-status="已连接"]{color:#147a45}.ws-account-status[data-status="连接失败"],.ws-account-status[data-status="会话过期"]{color:#a3332e}.ws-conversation-heading{border-top:1px solid var(--line,#e7ebf2);padding-top:8px}\r\n' +
+    '.ws-sidebar-collapse{display:flex;align-items:center;justify-content:center;gap:4px;border:1px solid #d9e7ee;background:#f7fbfc;color:#53717c;border-radius:8px;min-height:25px;padding:0 7px;font-size:9px;cursor:pointer}.ws-sidebar-collapse span{font-size:18px;line-height:1}.ws-sidebar-collapse b{font-size:9px;font-weight:600}.ws-sidebar-collapse:focus-visible,.ws-heading-collapse:focus-visible{outline:2px solid #62d8c4;outline-offset:2px}.ws-sidebar-collapse-left{margin-bottom:5px}.ws-sidebar-collapse-right{margin-bottom:5px}\r\n' +
+    '.ws-layout.left-collapsed .ws-sessions-panel,.ws-layout.right-collapsed .ws-assist-panel{padding:5px;align-items:stretch;overflow:hidden}.ws-layout.left-collapsed .ws-sessions-panel>*:not(.ws-sidebar-collapse-left),.ws-layout.right-collapsed .ws-assist-panel>*:not(.ws-sidebar-collapse-right){display:none}.ws-layout.left-collapsed .ws-sidebar-collapse-left,.ws-layout.right-collapsed .ws-sidebar-collapse-right{height:100%;min-height:80px;flex-direction:column;padding:5px 2px;margin:0}.ws-layout.left-collapsed .ws-sidebar-collapse-left b,.ws-layout.right-collapsed .ws-sidebar-collapse-right b{writing-mode:vertical-rl;letter-spacing:1px}\r\n' +
+    '.ws-panel-heading,.ws-card-heading,.ws-login-toolbar,.ws-capture-heading,.ws-capture-actions,.ws-message-meta,.ws-reply-actions{display:flex;align-items:center;justify-content:space-between;gap:8px}\r\n' +
+    '.ws-top-switch{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line,#dfe5ee);border-radius:999px;padding:5px 8px;font-size:11px;background:var(--panel,#fff)}.ws-page-heading select,.ws-search-input{border:1px solid var(--line,#dfe5ee);border-radius:7px;padding:6px 8px;background:var(--input,#fff);color:inherit;font:inherit;font-size:11px}.ws-search-input{width:100%;box-sizing:border-box}.ws-mobile-tabs{display:none;gap:5px}.ws-mobile-tabs button{flex:1;border:1px solid var(--line,#dfe5ee);border-radius:8px;background:var(--panel,#fff);padding:7px;color:inherit}.ws-mobile-tabs button.active{background:#e9f4f6;border-color:#71c4bd;color:#146d6c}.ws-error-banner,.ws-loading-banner{display:flex;align-items:center;justify-content:space-between;gap:8px;border-radius:8px;padding:8px 10px;font-size:11px}.ws-error-banner{background:#fff0ee;border:1px solid #f2c8c4;color:#9a332e}.ws-loading-banner{background:#eef7f7;color:#287878}.ws-capture-preview{margin-top:6px;font-size:11px;color:#397a7b}.ws-message-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px}.ws-message-heading span{color:var(--muted,#77839a);font-size:10px}.ws-wide-control{grid-column:1/-1}.ws-span-2{grid-column:1/-1}.ws-session-copy time{display:block;font-size:9px;color:var(--muted,#77839a);margin-top:2px}.ws-session-side{display:flex;flex-direction:column;align-items:flex-end;gap:4px}.ws-session-side b{display:grid;place-items:center;min-width:16px;height:16px;border-radius:999px;background:#df675a;color:#fff;font-size:9px}.ws-match-candidates{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;font-size:11px}.ws-ai-reply{background:#f7fafc;padding:7px;border-radius:7px}.ws-reply-history{margin-top:10px;border-top:1px solid var(--line,#e7ebf2);padding-top:8px;font-size:10px}.ws-reply-history ul{list-style:none;margin:5px 0 0;padding:0}.ws-reply-history li{display:flex;justify-content:space-between;gap:8px;padding:4px 0;color:var(--muted,#77839a)}.ws-reply-history span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ws-reply-history time{white-space:nowrap}.ws-message-row.failed{border-color:#efc5c0}.ws-message-row button:disabled{opacity:.6;cursor:wait}\r\n' +
+    '.ws-panel-heading strong,.ws-card-heading strong,.ws-login-toolbar strong,.ws-capture-heading strong{display:block;font-size:14px}\r\n' +
+    '.ws-panel-heading span,.ws-card-heading span,.ws-login-toolbar span,.ws-capture-heading span{display:block;color:var(--muted,#77839a);font-size:11px;margin-top:3px}\r\n' +
+    '.ws-create-session{display:grid;gap:6px}\r\n' +
+    '.ws-account-form{display:grid;gap:6px;padding:8px;border:1px solid #b8ddda;border-radius:9px;background:#f5fbfb}.ws-account-form label{font-size:10px;color:#516074}.ws-account-form input{width:100%;box-sizing:border-box;border:1px solid var(--line,#dfe5ee);border-radius:7px;padding:7px 8px;background:var(--input,#fff);color:var(--text,#172033);font:inherit;font-size:11px}.ws-account-form-actions{display:flex;justify-content:flex-end;gap:5px}.ws-account-form-error{margin:0;color:#a3332e;font-size:10px;line-height:1.4}\r\n' +
+    '.ws-create-session input,.ws-capture-panel textarea,.ws-customer-fields input,.ws-customer-fields textarea,.ws-card textarea,.ws-follow-date input{width:100%;border:1px solid var(--line,#dfe5ee);border-radius:8px;padding:8px 9px;background:var(--input,#fff);color:var(--text,#172033);font:inherit;font-size:12px;box-sizing:border-box}\r\n' +
+    '.ws-session-list{overflow:auto;display:flex;flex-direction:column;gap:5px;padding-right:2px}\r\n' +
+    '.ws-session-row{display:grid;grid-template-columns:30px 1fr auto;gap:7px;align-items:center;text-align:left;border:1px solid transparent;border-radius:9px;background:transparent;padding:8px;cursor:pointer;color:inherit}\r\n' +
+    '.ws-session-row:hover,.ws-session-row.active{background:var(--soft,#f1f5fa);border-color:var(--line,#dfe5ee)}\r\n' +
+    '.ws-session-avatar{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#e9eef8;color:#3b5ca7;font-weight:700}\r\n' +
+    '.ws-session-copy{min-width:0}.ws-session-copy strong,.ws-session-copy small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ws-session-copy strong{font-size:12px}.ws-session-copy small{font-size:10px;color:var(--muted,#77839a);margin-top:3px}.ws-session-row em{font-style:normal;font-size:10px;color:#7b5b1c;white-space:nowrap}\r\n' +
+    '.ws-center-panel{display:flex;flex-direction:column;gap:7px;min-height:0;overflow:hidden}\r\n' +
+    '.ws-login-toolbar{display:grid;grid-template-columns:minmax(0,1fr);gap:5px;background:var(--panel,#fff);border:1px solid var(--line,#dfe5ee);border-radius:8px;padding:5px 8px}.ws-login-summary{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:8px;min-width:0}.ws-login-summary strong{min-width:0;white-space:nowrap}.ws-login-summary .ws-login-status{min-width:0;margin-top:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ws-toolbar-actions{display:flex;width:100%;min-width:0;align-items:center;gap:3px;flex-wrap:wrap;justify-content:flex-start}.ws-toolbar-actions .btn{flex:0 0 auto;font-size:9px;padding:3px 6px;height:28px}.ws-login-toolbar .ws-toolbar-actions .btn{min-height:28px;height:28px}.ws-toolbar-open{min-width:72px}.ws-toolbar-collect{min-width:116px}\r\n' +
+    '.ws-status-badge{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;font-size:11px;background:#edf1f6;color:#5f6b7d}.ws-status-badge[data-status="已连接"]{background:#e0f5e9;color:#147a45}.ws-status-badge[data-status="连接失败"],.ws-status-badge[data-st'... 120373 more characters,
+  expected: /\.workspace-chat \.ws-login-toolbar\{[^}]*display:flex[^}]*min-height:68px/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+[FAIL] WS ChatKnow UI contract
+
+[RUN] WS group monitor UI contract
+ws-group-monitor-ui: pass
+[PASS] WS group monitor UI contract
+
+[RUN] WS group discovery contract
+ws-group-discovery-contract: pass
+[PASS] WS group discovery contract
+
+[RUN] WS broadcast and translation UI contract
+ws-broadcast-ui: read-direct recipient filtering, translation preview, audited queue and foreground safety pass
+[PASS] WS broadcast and translation UI contract
+
+[RUN] WS collection and CRM sync contract
+ws-workbench-sync: idempotent messages, account linkage, AI CRM sync and follow-up contracts pass
+[PASS] WS collection and CRM sync contract
+
+[RUN] WS complete per-customer history contract
+ws full-history contract: complete per-customer message loading and AI transcript coverage are wired
+[PASS] WS complete per-customer history contract
+
+[RUN] WS chunked full-history AI and checkpoint contract
+WS chunked AI analysis: 4 chunks, 5 calls, middle evidence retention, full coverage and durable checkpoint contracts pass
+[PASS] WS chunked full-history AI and checkpoint contract
+
+[RUN] WS durable AI queue contract
+AI durable queue contract: idempotent enqueue, restart recovery, claim, backoff and stats passed
+[PASS] WS durable AI queue contract
+
+[RUN] WS AI queue UI metrics contract
+ai queue UI metrics contract: retry and dead-letter indicators are visible and refresh-safe
+[PASS] WS AI queue UI metrics contract
+
+[RUN] WS resize performance contract
+ws resize performance contract: native resize is probe-free and web resize calls are coalesced
+[PASS] WS resize performance contract
+
+[RUN] WS frontend high-priority fixes
+frontend high-priority fixes: WS mount, scroll boundaries, responsive layout, customer links and GPT errors contract pass
+[PASS] WS frontend high-priority fixes
+
+[RUN] project stability and lifecycle contract
+node:assert:885
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: home content must reserve the fixed footer height
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\project-stability-contract.test.cjs:111:8)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '/* Today workspace: a flowing open landscape above real business panels.\n' +
+    ' * Decorative art has no customer data, statuses, gauges, or click targets. */\n' +
+    'html[data-palette][data-view="home"] {\n' +
+    ' #viewContainer {display:flex;flex-direction:column;gap:24px}\n' +
+    ' #viewContainer>* {flex:0 0 auto;min-width:0}\n' +
+    ' .horizon-workbench-hero {position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.34fr);grid-template-rows:auto auto;align-items:start;gap:24px;padding:0;border:0;border-radius:0;background:transparent!important;box-shadow:none!important;isolation:isolate}\n' +
+    ' .horizon-workbench-hero:before,.horizon-workbench-hero:after {display:none}\n' +
+    ' .horizon-flow-stage {position:relative;min-width:0;min-height:280px;padding:24px;border:1px solid var(--ds-border);border-radius:24px 42px 28px 20px;background:var(--ds-flow-art) center/cover no-repeat,var(--ds-surface);color:var(--ds-text)}\n' +
+    ' .horizon-hero-heading {display:flex;align-items:flex-start;justify-content:space-between;gap:20px}\n' +
+    ' .horizon-hero-heading>div {min-width:0}\n' +
+    ' .horizon-eyebrow {display:block;margin-bottom:6px;font-size:13px;color:var(--ds-primary);letter-spacing:.07em}\n' +
+    ' .horizon-hero-heading h2 {margin:0;color:var(--ds-text);font-size:24px;line-height:1.45;font-weight:700}\n' +
+    ' .horizon-flow-description {display:block;margin-top:8px;color:var(--ds-muted);font-size:15px;line-height:1.7}\n' +
+    ' .horizon-flow-source {max-width:220px;font-size:14px;line-height:1.6;color:var(--ds-muted);text-align:right}\n' +
+    ' .horizon-flow-nodes {position:relative;display:flex;gap:12px;align-items:center;flex-wrap:wrap;min-height:150px;margin:16px 0}\n' +
+    ' .horizon-flow-node {position:relative;inset:auto!important;transform:none!important;display:flex;align-items:center;gap:10px;flex:1 1 150px;min-width:0;padding:12px;border:1px solid var(--ds-border);border-radius:18px;background:var(--ds-surface)!important;text-align:left;color:var(--ds-text);box-shadow:var(--ds-shadow)}\n' +
+    ' .horizon-node-avatar {width:44px;height:44px;flex:0 0 44px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--ds-border);background:var(--ds-surface-soft);color:var(--ds-primary)}\n' +
+    ' .horizon-node-copy {min-width:0}\n' +
+    ' .horizon-node-copy strong {display:block;font-size:16px;color:var(--ds-text)}\n' +
+    ' .horizon-node-copy span {display:block;font-size:14px;color:var(--ds-muted);line-height:1.5}\n' +
+    ' .horizon-node-grade {font-size:13px;color:var(--ds-primary);background:var(--ds-surface-soft);border:0;border-radius:8px;padding:2px 5px}\n' +
+    ' .horizon-process {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:100%;gap:12px}\n' +
+    ' .horizon-process-step {position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-width:0;min-height:126px;padding:12px 6px;text-align:center}\n' +
+    ' .horizon-process-icon {display:grid;place-items:center;width:48px;height:48px;border:1px solid var(--ds-border);border-radius:18px;background:var(--ds-surface);color:var(--ds-primary);box-shadow:var(--ds-shadow)}\n' +
+    ' .horizon-process-icon svg {width:24px;height:24px}\n' +
+    ' .horizon-process-step strong {font-size:16px;font-weight:650;color:var(--ds-text)}\n' +
+    ' .horizon-process-step span {font-size:14px;line-height:1.5;color:var(--ds-muted)}\n' +
+    ' .horizon-flow-empty {font-size:15px;line-height:1.7;color:var(--ds-muted)}\n' +
+    ' .horizon-weight-legend {display:flex;align-items:center;gap:18px;flex-wrap:wrap;font-size:14px;line-height:1.6;color:var(--ds-muted)}\n' +
+    ' .horizon-weight-legend span {white-space:nowrap}\n' +
+    ' .horizon-weight-legend b {margin-left:6px;color:var(--ds-text);font-size:16px}\n' +
+    ' .horizon-weight-legend i {display:inline-block;width:18px;height:3px;border-radius:4px;margin-right:7px;background:var(--ds-accent);vertical-align:middle}\n' +
+    ' .horizon-weight-legend span:nth-child(2) i {background:var(--ds-secondary)}\n' +
+    ' .horizon-weight-legend small {font-size:13px}\n' +
+    ' .horizon-spotlight {grid-column:2;grid-row:1/span 2;align-self:stretch;min-width:0;padding:24px;border:1px solid var(--ds-border);border-radius:32px 26px 24px 20px;background:linear-gradient(155deg,var(--ds-surface),var(--ds-surface-soft));box-shadow:var(--ds-shadow);color:var(--ds-text)}\n' +
+    ' .horizon-spotlight:before {display:none}\n' +
+    ' .horizon-spotlight-head {display:flex;align-items:center;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--ds-border)}\n' +
+    ' .horizon-spotlight-avatar {display:grid;place-items:center;width:44px;height:44px;flex-shrink:0;border:1px solid var(--ds-border);border-radius:16px;background:var(--ds-surface);color:var(--ds-primary);font-size:18px}\n' +
+    ' .horizon-spotlight-head strong {font-size:18px;color:var(--ds-text)}\n' +
+    ' .horizon-spotlight-head span {font-size:14px;color:var(--ds-muted)}\n' +
+    ' .horizon-spotlight-badge {font-size:13px;background:var(--ds-ai-bg);color:var(--ds-ai);border-radius:10px;padding:4px 8px}\n' +
+    ' .horizon-insight-list {display:grid;gap:14px;margin-top:18px}\n' +
+    ' .horizon-insight {padding:0 0 14px;border:0;border-bottom:1px solid var(--ds-border);background:transparent}\n' +
+    ' .horizon-insight span {display:block;margin-bottom:5px;font-size:14px;color:var(--ds-muted)}\n' +
+    ' .horizon-insight strong,.horizon-insight p {margin:0;font-size:15px;line-height:1.7;color:var(--ds-text);font-weight:400}\n' +
+    ' .horizon-spotlight-actions {display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}\n' +
+    ' .horizon-spotlight-empty {display:flex;flex-direction:column;justify-content:center;min-height:230px;gap:14px;text-align:left;color:var(--ds-muted);font-size:15px}\n' +
+    ' .horizon-spotlight-empty-head {display:flex;align-items:center;gap:12px}\n' +
+    ' .horizon-spotlight-empty-head strong {font-size:20px;color:var(--ds-text)}\n' +
+    ' .horizon-spotlight-capabilities {display:grid;gap:12px}\n' +
+    ' .horizon-spotlight-capabilities>span {display:grid;grid-template-columns:24px minmax(0,1fr);gap:4px 10px;padding:10px 0;border-bottom:1px solid var(--ds-border)}\n' +
+    ' .horizon-spotlight-capabilities svg {width:21px;height:21px;grid-row:1/3;color:var(--ds-primary)}\n' +
+    ' .horizon-spotlight-capabilities :is(strong,b) {font-size:16px;color:var(--ds-text)}\n' +
+    ' .horizon-spotlight-capabilities :is(small,p) {font-size:14px;line-height:1.6;color:var(--ds-muted)}\n' +
+    ' .horizon-kpis {grid-column:1;grid-row:2;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px;margin:0}\n' +
+    ' .horizon-kpi {position:relative;min-height:120px;padding:18px 20px;border:1px solid var(--ds-border);border-radius:16px;background:var(--ds-surface);color:var(--ds-text);box-shadow:var(--ds-shadow)}\n' +
+    ' .horizon-kpi:after {content:"";position:absolute;left:20px;right:20px;bottom:0;height:3px;border-radius:3px;background:linear-gradient(90deg,var(--ds-primary),var(--ds-secondary));opacity:.5}\n' +
+    ' .horizon-kpi-heading {display:flex;align-items:center;gap:9px;font-size:15px;color:var(--ds-muted)}\n' +
+    ' .horizon-kpi-heading svg {width:20px;height:20px;color:var(--ds-primary)}\n' +
+    ' .horizon-kpi strong {display:block;margin:10px 0 4px;font-size:30px;line-height:1.25;font-weight:650;color:var(--ds-text);font-variant-numeric:tabular-nums}\n' +
+    ' .horizon-kpi small {font-size:13px;color:var(--ds-muted)}\n' +
+    ' .home-dashboard-grid {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) minmax(280px,.8fr);gap:20px;align-items:stretch}\n' +
+    ' .home-dashboard-grid>.panel {margin:0;min-width:0}\n' +
+    ' .home-dashboard-grid .panel-heading {min-height:66px}\n' +
+    ' .home-dashboard-grid .link-button {padding:6px 10px!important;font-size:14px!important;border:0!important}\n' +
+    ' .activity-list {padding:8px 20px 18px}\n' +
+    ' .activity-item {gap:12px;min-height:58px;padding:12px 0;border-bottom:1px solid var(--ds-border)}\n' +
+    ' .activity-dot {background:var(--ds-accent);box-shadow:none}\n' +
+    ' .activity-text {font-size:15px;line-height:1.6;color:var(--ds-text)}\n' +
+    ' .activity-time {font-size:13px;color:var(--ds-muted)}\n' +
+    ' .chart-wrap {padding:20px}\n' +
+    ' .chart-legend {font-size:14px;color:var(--ds-muted);gap:16px;margin-bottom:20px}\n' +
+    ' .trend-svg {width:100%;height:210px}\n' +
+    ' .trend-svg .grid {stroke:var(--ds-border);opacity:.7}\n' +
+    ' .trend-svg .area {fill:var(--ds-surface-soft)}\n' +
+    ' .trend-svg .line1 {stroke:var(--ds-accent)}\n' +
+    ' .trend-svg .line2 {stroke:var(--ds-primary)}\n' +
+    ' .trend-svg text {font-size:12px!important;fill:var(--ds-muted)}\n' +
+    ' .horizon-trend-empty {display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:230px;padding:20px;text-align:center;font-size:15px;color:var(--ds-muted)}\n' +
+    ' .horizon-trend-empty svg {width:36px;height:36px;color:var(--ds-primary)}\n' +
+    ' .horizon-trend-empty strong {font-size:18px;color:var(--ds-text)}\n' +
+    ' .home-health-list {padding:0 20px 16px}\n' +
+    ' .home-health-row {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 16px;min-height:78px;width:100%;padding:15px 0;border:0;border-bottom:1px solid var(--ds-border);border-radius:0;background:transparent;color:var(--ds-text);text-align:left}\n' +
+    ' .home-health-row span {font-size:16px;color:var(--ds-text)}\n' +
+    ' .home-health-row strong {font-size:23px;color:var(--ds-primary)}\n' +
+    ' .home-health-row small {font-size:14px;grid-column:1/-1;color:var(--ds-muted)}\n' +
+    ' .home-detail-sections {border:1px solid var(--ds-border);border-radius:16px;background:var(--ds-surface)}\n' +
+    ' .home-detail-sections>summary {padding:18px 22px;min-height:56px;font-size:16px;color:var(--ds-text);cursor:pointer}\n' +
+    ' .home-detail-content {padding:0 22px 22px}\n' +
+    ' .home-action-row {display:flex;gap:12px;flex-wrap:wrap;margin:18px 0}\n' +
+    ' .home-detail-content :is(.home-main-grid,.home-bottom-grid) {gap:20px;margin-top:20px}\n' +
+    ' .home-ai-followup {font-size:16px!important;background:var(--ds-surface)!important;color:var(--ds-text)!important;border-color:var(--ds-border)!important;box-shadow:var(--ds-shadow)!important}\n' +
+    ' .home-ai-followup :is(small,.home-ai-followup-meta,.home-ai-followup-score,.home-ai-followup-opener) {font-size:14px!important;color:var(--ds-muted)!important;line-height:1.7}\n' +
+    '}\n' +
+    '@media(max-width:1440px) {\n' +
+    ' html[data-palette][data-view="home"] {\n' +
+    '  .horizon-workbench-hero {grid-template-columns:minmax(0,1fr) minmax(280px,.42fr);gap:18px}\n' +
+    '  .horizon-kpis {grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}\n' +
+    '  .horizon-kpi {padding:16px}\n' +
+    '  .home-dashboard-grid {grid-template-colum'... 1440 more characters,
+  expected: /html\[data-view="home"\] #viewContainer\{[\s\S]*padding:5px 12px calc\(/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+[FAIL] project stability and lifecycle contract
+
+[RUN] WS 50k conversation list render budget
+WS conversation list performance: 50k filter/window 35.3 ms, DOM capped at 120 rows
+[PASS] WS 50k conversation list render budget
+
+[RUN] WS bridge recovery contract
+ws bridge recovery contract: stale sidecar clients rebind and actionable errors survive
+[PASS] WS bridge recovery contract
+
+[RUN] WS scroll routing contract
+ws scroll routing contract: nested panes contain wheel/touch scrolling
+[PASS] WS scroll routing contract
+
+[RUN] WS A+ dual-layer layout contract
+ws-workbench-a-plus-layout: compact rail, max WebView, collapsible local workspace and stable process rail required
+[PASS] WS A+ dual-layer layout contract
+
+[RUN] WS data archive customer bridge
+ws-data-archive-api: unified CRM/WS archive read, business records, account isolation and non-mutating contract passed
+[PASS] WS data archive customer bridge
+
+[RUN] WS data archive summary bridge
+data archive summary: SQLite archive, CRM links, WS counts and account isolation pass
+[PASS] WS data archive summary bridge
+
+[RUN] WS data archive UI bridge
+data-archive-ui: data center renders the SQLite archive bridge and refresh contract
+[PASS] WS data archive UI bridge
+
+[RUN] WS data archive drilldown UI
+data-archive-drilldown-ui: lightweight customer archive drilldown contract
+[PASS] WS data archive drilldown UI
+
+[RUN] WS group catalog runtime
+ws-group-catalog-runtime: pass
+[PASS] WS group catalog runtime
+
+[RUN] WS background isolation runtime
+ws-background-isolation: per-account heartbeat and non-UI parsing contract
+[PASS] WS background isolation runtime
+
+[RUN] WS multi-account detection contract
+ws-multi-account-detection: persisted waiting accounts are probed and status events are surfaced
+[PASS] WS multi-account detection contract
+
+[RUN] WS scroll stability contract
+ws-scroll-stability: closed rail, single owner, bounded tables, refresh backpressure and cancellable reads are required
+[PASS] WS scroll stability contract
+
+[RUN] WS assistant drawer runtime
+ws-assist-drawer-runtime: persistence, focus, drag, layer and scroll contracts are present
+[PASS] WS assistant drawer runtime
+
+[RUN] hot-chat profile API
+hot-chat-profile-api: migration, non-mutating reads, isolation, merge, confirm/reject/lock, colors, events and retry passed
+[PASS] hot-chat profile API
+
+[RUN] hot-chat profile core
+hot-chat-profile-core: pass
+[PASS] hot-chat profile core
+
+[RUN] hot-chat profile migration
+hot-chat-profile-migration: idempotent pass
+[PASS] hot-chat profile migration
+
+[RUN] request coalescer cancellation
+request coalescer cancellation: caller abort does not cancel or await shared read
+[PASS] request coalescer cancellation
+
+[RUN] task6 stability contract
+task6 stability contract: bounded local writes, adaptive sync, WS/AI retry and WinUI installer gates pass
+[PASS] task6 stability contract
+
+[RUN] desktop performance contract
+desktop performance contract: budgets, hidden-poll pause and request coalescing are present
+[PASS] desktop performance contract
+
+[RUN] CRM phone index and archive diagnostics
+customer-phone-index: canonical WS/CRM phone index and diagnostics pass
+[PASS] CRM phone index and archive diagnostics
+
+[RUN] unified scroll system contract
+scroll system contract: single-axis ownership, accessible bars, modal freeze and bounded WS telemetry pass
+[PASS] unified scroll system contract
+
+[RUN] unified scroll coordinator runtime
+scroll coordinator runtime: scroll ownership, wheel units, boundaries and state retention pass
+[PASS] unified scroll coordinator runtime
+
+[RUN] WS route sidebar policy runtime
+sidebar WS route policy: independent navigation, hidden/inert main sidebar, preference and viewport restoration pass
+[PASS] WS route sidebar policy runtime
+
+[RUN] Stage 5.5C-1A real isolated send/media/AI risk API
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"queued","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"sending","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"sent","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"failed","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"cancelled","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[PASS] R04 all attachment states retain bytes and references
+[PASS] R04 database failure leaves original bytes intact
+[PASS] R04 cleanup failure has a durable tombstone and explicit retry
+[PASS] R04 legacy audit references and post-cleanup database failure remain recoverable
+[PASS] R01 same-key changed full content is rejected without changing the old plan
+[PASS] R01 legacy rows and maximum-length idempotency keys remain compatible
+[PASS] R02 planning 30 targets does not reserve actual send quota
+[PASS] R03 begin token, per-attachment outcome, unknown blocking and untrusted receipt rejection
+[PASS] R03 concurrent begin grants one token and a proven preflight failure can retry safely
+[PASS] R03 partial attachment attempt plus later failure is unknown and cannot resend
+[OBSERVED] {"scenario":"local-evidence-consistency","httpStatus":422,"storedDeliveryState":"unknown"}
+[OBSERVED] {"scenario":"local-evidence-consistency","httpStatus":422,"storedDeliveryState":"unknown"}
+[OBSERVED] {"scenario":"local-evidence-consistency","httpStatus":422,"storedDeliveryState":"unknown"}
+[PASS] R03 contradictory or missing local-attempt evidence cannot upgrade unknown intent
+[OBSERVED] {"scenario":"failed-evidence-consistency","httpStatus":409,"retryAllowed":false}
+[OBSERVED] {"scenario":"failed-evidence-consistency","httpStatus":409,"retryAllowed":false}
+[OBSERVED] {"scenario":"failed-evidence-consistency","httpStatus":409,"retryAllowed":false}
+[OBSERVED] {"scenario":"failed-evidence-consistency","httpStatus":409,"retryAllowed":false}
+[PASS] R03 contradictory or missing preflight evidence cannot authorize retry
+[PASS] R02 actual attempt reservations are per account and bounded
+[PASS] R03 prepared unknown intent survives a real isolated sidecar restart
+[PASS] R05 24 MiB upper bound and executable signature or extension rejection
+[PASS] R07 AI GET is read-only and explicit legacy recovery does not touch Worker jobs
+{"stage":"5.5C-1A","checks":16,"passed":16,"failed":0,"results":[{"name":"R04 all attachment states retain bytes and references","result":"PASS"},{"name":"R04 database failure leaves original bytes intact","result":"PASS"},{"name":"R04 cleanup failure has a durable tombstone and explicit retry","result":"PASS"},{"name":"R04 legacy audit references and post-cleanup database failure remain recoverable","result":"PASS"},{"name":"R01 same-key changed full content is rejected without changing the old plan","result":"PASS"},{"name":"R01 legacy rows and maximum-length idempotency keys remain compatible","result":"PASS"},{"name":"R02 planning 30 targets does not reserve actual send quota","result":"PASS"},{"name":"R03 begin token, per-attachment outcome, unknown blocking and untrusted receipt rejection","result":"PASS"},{"name":"R03 concurrent begin grants one token and a proven preflight failure can retry safely","result":"PASS"},{"name":"R03 partial attachment attempt plus later failure is unknown and cannot resend","result":"PASS"},{"name":"R03 contradictory or missing local-attempt evidence cannot upgrade unknown intent","result":"PASS"},{"name":"R03 contradictory or missing preflight evidence cannot authorize retry","result":"PASS"},{"name":"R02 actual attempt reservations are per account and bounded","result":"PASS"},{"name":"R03 prepared unknown intent survives a real isolated sidecar restart","result":"PASS"},{"name":"R05 24 MiB upper bound and executable signature or extension rejection","result":"PASS"},{"name":"R07 AI GET is read-only and explicit legacy recovery does not touch Worker jobs","result":"PASS"}],"productionOpened":false,"realWs":false,"paidAi":false,"workerStarted":false}
+[PASS] Stage 5.5C-1A real isolated send/media/AI risk API
+
+[RUN] Stage 5.5C-1A send UI evidence and async ownership
+PASS R01 fingerprint includes every effective payload field
+PASS R03 local click is not platform acceptance or delivery and cannot blindly retry
+PASS R03 partial attachment execution is unknown and does not replay first attachment
+PASS R06 switch while native response is pending never writes new account state
+PASS R03 transport loss after authorization is unknown and blocked from replay
+PASS R03 duplicate manual clicks cannot start concurrent native attempts
+PASS R06 switch during authorization aborts before touching native UI
+PASS R03 acknowledgement loss preserves unknown and stops remaining attachments
+PASS R03 lost authorization response is not presented as a fresh replayable item
+PASS R03 definite preflight refusal is distinct from an uncertain attempt
+PASS R03 incomplete native proof stays unknown instead of inventing a local attempt
+PASS R03 actual attachment captions are exactly those frozen in the plan
+PASS R03 rejected native promise records the individual preflight refusal
+PASS R03 UI labels preserve all five evidence levels and distrust legacy sent
+Stage 5.5C-1A WS UI: 14/14
+[PASS] Stage 5.5C-1A send UI evidence and async ownership
+
+[RUN] Stage 5.5C-1A production native send qualification
+已成功生成。
+    0 个警告
+    0 个错误
+
+已用时间 00:00:02.04
+{"stage":"5.5C-1A","nativeHandlersFromProductionSource":true,"cases":[{"name":"media-await-cancel","passed":true},{"name":"media-await-account-switch","passed":true},{"name":"media-await-A-B-A","passed":true},{"name":"media-await-session-replaced","passed":true},{"name":"media-await-same-generation-session-replaced","passed":true},{"name":"media-await-core-replaced","passed":true},{"name":"media-await-close","passed":true},{"name":"media-await-window-hidden","passed":true},{"name":"text-local-attempt-only","passed":true},{"name":"media-local-attempt-only","passed":true},{"name":"dispatch-exception-is-unknown","passed":true},{"name":"invalid-dispatch-result-is-unknown","passed":true},{"name":"post-dispatch-cancel-is-unknown","passed":true},{"name":"page-pre-click-refusal-is-failed","passed":true},{"name":"missing-target-never-dispatches","passed":true},{"name":"in-flight-cancel-releases-wait-as-unknown","passed":true},{"name":"post-dispatch-A-B-A-remains-unknown","passed":true},{"name":"webview-string-wrapped-result-is-parsed","passed":true}],"productionOpened":false,"realWs":false,"network":false}
+[PASS] Stage 5.5C-1A production native send qualification
+
+[RUN] Stage 5.5C-1A actual send DOM and bridge outcomes
+{"stage":"5.5C-1A","actualProductionScripts":true,"cases":[{"name":"text-click-only-local-attempt","passed":true},{"name":"text-click-exception-unknown","passed":true},{"name":"text-noSend-before-click-failed","passed":true},{"name":"text-noComposer-before-click-failed","passed":true},{"name":"text-wrongConversation-before-click-failed","passed":true},{"name":"media-click-only-local-attempt","passed":true},{"name":"media-click-exception-unknown","passed":true},{"name":"media-noSend-before-click-failed","passed":true},{"name":"media-noComposer-before-click-failed","passed":true},{"name":"media-wrongConversation-before-click-failed","passed":true},{"name":"media-no-file-input-before-click-failed","passed":true},{"name":"ws-bridge-whitelist-preserves-non-attempt","passed":true},{"name":"ws-prefixed-bridge-preserves-unknown","passed":true},{"name":"non-ws-bridge-does-not-forward-send-metadata","passed":true},{"name":"bridge-invalid-state-types-not-trusted","passed":true},{"name":"unknown-never-exposes-a-retryable-preflight","passed":true}],"realWs":false,"network":false,"productionOpened":false}
+[PASS] Stage 5.5C-1A actual send DOM and bridge outcomes
+
+[RUN] Stage 5.5C-1A provider modal generation and stale responses
+PASS provider change immediately clears temporary secret
+PASS late provider status cannot replace current provider model
+PASS late status error cannot notify or overwrite reopened settings
+PASS save is single flight and closing does not allow stale completion to close a new modal
+PASS late initial open cannot replace a newer settings session
+PASS provider loading blocks save and rejects a mismatched response
+PASS late model results cannot populate another provider catalog
+PASS delete is single flight and its late error cannot affect a closed session
+PASS storage read failure remains explicit and cannot authorize overwrite
+PASS initial settings response cannot replace another module modal
+PASS current save failure keeps modal open and clears temporary input
+GPT provider isolated race runtime: 11/11; network calls=0
+[PASS] Stage 5.5C-1A provider modal generation and stale responses
+
+[RUN] Stage 5 baseline
+stage5 baseline: HEAD 377632e, schema 25
+[PASS] Stage 5 baseline
+
+[RUN] Stage 5 WS workspace pages
+stage5 twelve-page rendering: navigation, independent home/chat, honest contacts, real scoped group table, unknown metadata, safe selection/native clipboard, filters, 40-row pagination and scroll restoration PASS; native rendering NotTested
+[PASS] Stage 5 WS workspace pages
+
+[RUN] Stage 5 business integration
+stage5 business integration: two-account group isolation, correlation propagation, AI evidence and CRM chain PASS
+[PASS] Stage 5 business integration
+
+[RUN] Stage 5 migration drill
+{"stage":5,"migration":"Passed","scenarios":["upgrade 0->25, history, repeat, integrity","upgrade 19->25, history, repeat, integrity","upgrade 22->25, history, repeat, integrity","upgrade 23->25, history, repeat, integrity","byte-exact extra-LF legacy 024 accepted with immutable audit; original registry retained","upgrade 24->25, history, repeat, integrity","process interruption rollback, failed DDL rollback, tamper rejection","duplicate identity upgrade fails closed and preserves both records"],"productionDatabaseOpened":false,"tempRootRemoved":true}
+[PASS] Stage 5 migration drill
+
+[RUN] Stage 5 backup and restore drill
+stage5 backup and restore drill: isolated snapshot, state rollback and integrity boundary PASS
+[PASS] Stage 5 backup and restore drill
+
+[RUN] Stage 5 Worker security and performance
+stage5 worker/security/performance batch: feature flags, worker isolation, IPC contract and fencing PASS
+[PASS] Stage 5 Worker security and performance
+
+[RUN] Stage 5 UI automation contract
+stage5 UI controller: read-only refresh, account/page races, errors, busy recovery and review routing PASS; native visual acceptance NotTested
+[PASS] Stage 5 UI automation contract
+
+[RUN] Stage 5 review center runtime
+stage5 review runtime: account scope, stable mount, isolated review actions and account switch PASS
+[PASS] Stage 5 review center runtime
+
+[RUN] Stage 5 indexed business data performance
+{"stage":5,"status":"Passed","scope":"synthetic SQLite queries only","counts":{"accounts":4,"groups":2000,"members":20000,"messages":50000,"jobs":10000,"evidence":10000,"suggestions":10000,"audit":20000},"migrationMs":323.9,"seedMs":3186,"seedRowsPerSecond":38294.1,"rssBeforeBytes":44797952,"rssAfterBytes":71602176,"rssDeltaBytes":26804224,"cpuUserMs":3015,"cpuSystemMs":1562,"measurements":[{"name":"group-page","rows":100,"repetitions":100,"p50Ms":0.327,"p95Ms":0.674,"maxMs":1.369,"plan":["SEARCH ws_group_catalog USING INDEX idx_ws_group_catalog_account_status (account_id=? AND status=?)"]},{"name":"member-page","rows":10,"repetitions":100,"p50Ms":0.044,"p95Ms":0.06,"maxMs":0.379,"plan":["SEARCH ws_group_members USING INDEX idx_ws_group_members_account_group_status (account_id=? AND group_jid=? AND status=?)"]},{"name":"message-page","rows":25,"repetitions":100,"p50Ms":0.089,"p95Ms":0.137,"maxMs":0.448,"plan":["SEARCH ws_group_messages USING INDEX idx_ws_group_messages_scope (account_id=? AND group_jid=?)"]},{"name":"ai-queue-page","rows":100,"repetitions":100,"p50Ms":0.567,"p95Ms":0.89,"maxMs":1.016,"plan":["SEARCH ai_jobs USING INDEX idx_ai_jobs_pipeline_claim (account_id=? AND status=?)"]},{"name":"crm-review-page","rows":100,"repetitions":100,"p50Ms":0.512,"p95Ms":0.846,"maxMs":1.18,"plan":["SEARCH ai_crm_suggestions USING INDEX idx_ai_crm_suggestions_review (account_id=? AND verification_status=?)"]},{"name":"evidence-detail","rows":1,"repetitions":100,"p50Ms":0.011,"p95Ms":0.018,"maxMs":0.112,"plan":["SEARCH ai_job_evidence USING INDEX idx_ai_job_evidence_job (account_id=? AND job_id=?)"]},{"name":"audit-detail","rows":2,"repetitions":100,"p50Ms":0.012,"p95Ms":0.015,"maxMs":0.319,"plan":["SEARCH ai_task_audit USING INDEX idx_ai_task_audit_job (account_id=? AND job_id=?)"]}],"winUiFrameTime":"NotTested","workerThroughput":"NotTested","productionDatabaseOpened":false}
+[PASS] Stage 5 indexed business data performance
+
+[RUN] Stage 5.1 real workspace collapsed layout
+node:assert:152
+  throw new AssertionError(obj);
+  ^
+
+AssertionError [ERR_ASSERTION]: spawnSync C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe ETIMEDOUT
+[17824:32152:1117/045852.508:ERROR:chrome\browser\task_manager\providers\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a "Renderer" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.
+
+[17824:32152:1117/045852.508:ERROR:chrome\browser\task_manager\providers\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a "Renderer" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.
+
+[17824:32152:1117/045852.508:ERROR:chrome\browser\task_manager\providers\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a "Renderer" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.
+
+[17824:32152:1117/045852.693:ERROR:chrome\browser\task_manager\providers\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a "Renderer" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.
+
+[17824:32152:1117/045852.827:ERROR:chrome\browser\task_manager\providers\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a "Renderer" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.
+
+
+stdout tail: tom":696},"localTools":{"display":"flex","overflow":"auto","button":{"x":642,"y":522.140625,"width":94,"height":44,"bottom":566.140625},"font":"16px"},"home":{"chrome":[{"display":"none","height":0},{"display":"none","height":0}],"primary":"linear-gradient(110deg, rgb(50, 107, 223), color(srgb 0.355608 0.427765 0.837804))"},"tasks":{"chrome":[{"display":"none","height":0},{"display":"none","height":0}],"flow":null,"flowRect":null,"statsCount":3},"collection":{"chrome":[{"display":"none","height":0},{"display":"none","height":0}],"nestedFlow":{"font":"16px","display":"block","overscroll":"contain"},"flowRect":{"x":274,"y":1142.15625,"width":968,"height":195.1875,"bottom":1337.34375},"stripRect":{"x":274,"y":1142.15625,"width":968,"height":195.1875,"bottom":1337.34375}},"stable":true,"sameWhileHidden":true,"sameAfterReturn":true,"expectedPrimary":"linear-gradient(110deg, rgb(50, 107, 223), color(srgb 0.355608 0.427765 0.837804))"},{"viewport":{"width":2560,"height":1440},"media":{"compact":false,"narrow":false},"expanded":{"nav":{"x":0,"y":0,"width":250,"height":1440,"bottom":1440},"content":{"x":274,"y":24,"width":2262,"height":1392,"bottom":1416},"type":{"font":"16px","display":"flex","overscroll":"contain"},"title":{"font":"28px","display":"block","overscroll":"auto"},"navType":{"font":"17px","display":"block","overscroll":"auto"},"button":{"x":2456,"y":35.5,"width":66,"height":44,"bottom":79.5},"input":{"x":373,"y":251.390625,"width":360,"height":44.390625,"bottom":295.78125},"tableType":{"font":"16px","display":"table-cell","overscroll":"auto"},"row":{"x":300,"y":460.09375,"width":2196,"height":76,"bottom":536.09375},"scrollable":true,"overflow":false,"navScrollable":false,"navReachable":true,"chrome":[{"display":"none","height":0},{"display":"none","height":0}],"primary":"linear-gradient(rgb(28, 59, 74), rgb(22, 49, 64))"},"collapsed":{"nav":{"x":0,"y":0,"width":76,"height":1440,"bottom":1440},"content":{"x":100,"y":24,"width":2436,"height":1392,"bottom":1416}},"monitorCollapsed":63.5,"monitorExpanded":300.1875,"closedGroupMain":{"x":299,"y":406.09375,"width":2198,"height":2415,"bottom":2821.09375},"groupDetail":{"main":{"x":299,"y":406.09375,"width":1838,"height":2415,"bottom":2821.09375},"panel":{"x":2157,"y":406.09375,"width":340,"height":517.90625,"bottom":924},"position":"static","close":{"x":2359,"y":431.09375,"width":98,"height":44,"bottom":475.09375},"overflow":false},"groupDetailClosed":{"main":{"x":299,"y":406.09375,"width":2198,"height":2415,"bottom":2821.09375},"panelCount":0},"frontChat":{"browser":{"x":274,"y":168,"width":1862,"height":1248,"bottom":1416},"title":{"font":"28px","display":"block","overscroll":"auto"},"sessions":{"font":"16px","display":"none","overscroll":"contain"},"local":{"font":"16px","display":"none","overscroll":"contain"},"runtime":{"font":"16px","display":"none","overscroll":"auto"},"crm":{"x":2156,"y":98,"width":380,"height":1318,"bottom":1416},"body":{"font":"16px","display":"flex","overscroll":"contain"},"button":{"x":287,"y":105,"width":90.5625,"height":44,"bottom":149},"overflow":false,"chrome":[{"display":"none","height":0},{"display":"none","height":0}],"primary":"linear-gradient(110deg, rgb(50, 107, 223), color(srgb 0.355608 0.427765 0.837804))","toolbar":{"x":274,"y":98,"width":1862,"height":58,"bottom":156},"backgroundPill":{"font":"14px","display":"flex","overscroll":"auto"}},"closedChat":{"x":274,"y":168,"width":2190,"height":1248,"bottom":1416},"localTools":{"display":"flex","overflow":"auto","button":{"x":1878,"y":1011.75,"width":94,"height":44,"bottom":1055.75},"font":"16px"},"home":{"chrome":[{"display":"none","height":0},{"display":"none","height":0}],"primary":"linear-gradient(110deg, rgb(50, 107, 223), color(srgb 0.355608 0.427765 0.837804))"},"tasks":{"chrome":[{"display":"none","height":0},{"display":"none","height":0}],"flow":null,"flowRect":null,"statsCount":3},"collection":{"chrome":[{"display":"none","height":0},{"display":"none","height":0}],"nestedFlow":{"font":"16px","display":"block","overscroll":"contain"},"flowRect":{"x":274,"y":1116.5625,"width":2248,"height":195.1875,"bottom":1311.75},"stripRect":{"x":274,"y":1116.5625,"width":2248,"height":195.1875,"bottom":1311.75}},"stable":true,"sameWhileHidden":true,"sameAfterReturn":true,"expectedPrimary":"linear-gradient(110deg, rgb(50, 107, 223), color(srgb 0.355608 0.427765 0.837804))"},{"viewport":{"width":2048,"height":1152},"media":{"compact":false,"narrow":false},"expanded":{"nav":{"x":0,"y":0,"width":250,"height":1152,"bottom":1152},"content":{"x":274,"y":24,"width":1750,"height":1104,"bottom":1128},"type":{"font":"16px","display":"flex","overscroll":"contain"},"title":{"font":"28px","display":"block","overscroll":"auto"},"navType":{"font":"17px","display":"block","overscroll":"auto"},"button":{"x":1944,"y":35.5,"width":66,"height":44,"bottom":79.5},"input":{"x":373,"y":251.390625,"width":360,"height":44.390625,"bottom":295.78125},"tableType":{"font":"16px","display":"table-cell","overscroll":"auto"},"row":{"x":300,"y":460.09375,"width":1684,"height":76,"bottom":536.09375},"scrollable":true,"overflow":false,"navScrollable":false,"navReachable":true,"chrome":[{"display":"none","height":0},{"display":"none","height":0}],"primary":"linear-gradient(rgb(28, 59, 74), rgb(22, 49, 64))"},"collapsed":{"nav":{"x":0,"y":0,"width":76,"height":1152,"bottom":1152},"content":{"x":100,"y":24,"width":1924,"height":1104,"bottom":1128}},"monitorCollapsed":63.5,"monitorExpanded":300.1875,"closedGroupMain":{"x":299,"y":406.09375,"width":1686,"height":2415,"bottom":2821.09375},"groupDetail":{"main":{"x":299,"y":406.09375,"width":1326,"height":2415,"bottom":2821.09375},"panel":{"x":1645,"y":406.09375,"width":340,"height":517.90625,"bottom":924},"position":"static","close":{"x":1847,"y":431.09375,"width":98,"height":44,"bottom":475.09375},"overflow":false},"groupDetailClosed":{"main":{"x":299,"y":406.09375,"width":1686,"height":2415,"bottom":2821.09375},"panelCount":0},"frontChat":{"browser":{"x":274,"y":168,"width":1350,"height":960,"bottom":1128},"title":{"font":"28px","display":"block","overscroll":"auto"},"sessions":{"font":"16px","display":"none","overscroll":"contain"},"local":{"font":"16px","display":"none","overscroll":"contain"},"runtime":{"font":"16px","display":"none","overscroll":"auto"},"crm":{"x":1644,"y":98,"width":380,"height":1030,"bottom":1128},"body":{"font":"16px","display":"flex","overscroll":"contain"},"button":{"x":287,"y":105,"width":90.5625,"height":44,"bottom":149},"overflow":false,"chrome":[{"display":"none","height":0},{"display":"none","height":0}],"primary":"linear-gradient(110deg, rgb(50, 107, 223), color(srgb 0.355608 0.427765 0.837804))","toolbar":{"x":274,"y":98,"width":1350,"height":58,"bottom":156},"backgroundPill":{"font":"14px","display":"flex","overscroll":"auto"}},"closedChat":{"x":274,"y":168,"width":1678,"height":960,"bottom":1128},"localTools":{"display":"flex","overflow":"auto","button":{"x":1366,"y":815.90625,"width":94,"height":44,"bottom":859.90625},"font":"16px"},"home":{"chrome":[{"display":"none","height":0},{"display":"none","height":0}],"primary":"linear-gradient(110deg, rgb(50, 107, 223), color(srgb 0.355608 0.427765 0.837804))"},"tasks":{"chrome":[{"display":"none","height":0},{"display":"none","height":0}],"flow":null,"flowRect":null,"statsCount":3},"collection":{"chrome":[{"display":"none","height":0},{"display":"none","height":0}],"nestedFlow":{"font":"16px","display":"block","overscroll":"contain"},"flowRect":{"x":274,"y":1116.5625,"width":1736,"height":195.1875,"bottom":1311.75},"stripRect":{"x":274,"y":1116.5625,"width":1736,"height":195.1875,"bottom":1311.75}},"stable":true,"sameWhileHidden":true,"sameAfterReturn":true,"expectedPrimary":"linear-gradient(110deg, rgb(50, 107, 223), color(srgb 0.355608 0.427765 0.837804))"},{"viewport":{"width":1707,"height":960},"media":{"compact":false,"narrow":false},"expanded":{"nav":{"x":0,"y":0,"width":250,"height":960,"bottom":960},"content":{"x":274,"y":24,"width":1409,"height":912,"bottom":936},"type":{"font":"16px","display":"flex","overscroll":"contain"},"title":{"font":"28px","display":"block","overscroll":"auto"},"navType":{"font":"17px","display":"block","overscroll":"auto"},"button":{"x":1603,"y":35.5,"width":66,"height":44,"bottom":79.5},"input":{"x":373,"y":251.390625,"width":360,"height":44.390625,"bottom":295.78125},"tableType":{"font":"16px","display":"table-cell","overscroll":"auto"},"row":{"x":300,"y":460.09375,"width":1343,"height":76,"bottom":536.09375},"scrollable":true,"overflow":false,"navScrollable":false,"navReachable":true,"chrome":[{"display":"none","height":0},{"display":"none","height":0}],"primary":"linear-gradient(rgb(28, 59, 74), rgb(22, 49, 64))"},"collapsed":{"nav":{"x":0,"y":0,"width":76,"height":960,"bottom":960},"content":{"x":100,"y":24,"width":1583,"height":912,"bottom":936}},"monitorCollapsed":63.5,"monitorExpanded":300.1875,"closedGroupMain":{"x":299,"y":406.09375,"width":1345,"height":2415,"bottom":2821.09375},"groupDetail":{"main":{"x":299,"y":406.09375,"width":985,"height":2415,"bottom":2821.09375},"panel":{"x":1304,"y":406.09375,"width":340,"height":517.90625,"bottom":924},"position":"static","close":{"x":1506,"y":431.09375,"width":98,"height":44,"bottom":475.09375},"overflow":false},"groupDetailClosed":{"main":{"x":299,"y":406.09375,"width":1345,"height":2415,"bottom":2821.09375},"panelCount":0},"frontChat":{"browser":{"x":274,"y":168,"width":1009,"height":768,"bottom":936},"title":{"font":"28px","display":"block","overscroll":"auto"},"sessions":{"font":"16px","display":"none","overscroll":"contain"},"local":{"font":"16px","display":"none","overscroll":"contain"},"runtime":{"font":"16px","display":"none","overscroll":"auto"},"crm":{"x":1303,"y":98,"width":380,"height":838,"bottom":936},"body":{"font":"16px","display":"flex","overscroll":"contain"},"button":{"x":287,"y":105,"width":90.5625,"height":44,"bottom":149},"overflow":false,"chrome":[{"display":"none","height":0},{"display":"none","height":0}],"primary":"linear-gradient(110deg, rgb(50, 107, 223), color(srgb 0.355608 0.427765 0.837804))","toolbar":{"x":274,"y":98,"width":1009,"height":58,"bottom":156},"backgroundPill":{"font":"14px","display":"flex","overscroll":"auto"}},"closedChat":{"x":274,"y":168,"width":1337,"height":768,"bottom":936},"localTools":{"display":"flex","overflow":"auto","button":{"x":1025,"y":685.34375,"width":94,"height":44,"bottom":729.34375},"font":"16px"},"home":{"chrome":[{"display":"none","height":0},{"display":"none","height":0}],"primary":"linear-gradient(110deg, rgb(50, 107, 223), color(srgb 0.355608 0.427765 0.837804))"},"tasks":{"chrome":[{"display":"none","height":0},{"display":"none","height":0}],"flow":null,"flowRect":null,"statsCount":3},"collection":{"chrome":[{"display":"none","height":0},{"display":"none","height":0}],"nestedFlow":{"font":"16px","display":"block","overscroll":"contain"},"flowRect":{"x":274,"y":1116.5625,"width":1395,"height":195.1875,"bottom":1311.75},"stripRect":{"x":274,"y":1116.5625,"width":1395,"height":195.1875,"bottom":1311.75}},"stable":true,"sameWhileHidden":true,"sameAfterReturn":true,"expectedPrimary":"linear-gradient(110deg, rgb(50, 107, 223), color(srgb 0.355608 0.427765 0.837804))"}]</pre><script>const cases=[[1920,1080,1],[1920,1080,1.25],[1920,1080,1.5],[2560,1440,1],[2560,1440,1.25],[2560,1440,1.5]],results=[],viewportFrames=[];window.addEventListener('message',event=>{if(event.data?.kind!=='ws-layout')return;results[event.data.index]=event.data.payload;viewportFrames[event.data.index]?.remove();if(results.filter(Boolean).length===cases.length)document.getElementById('result').textContent=JSON.stringify(results)});cases.forEach((item,index)=>{const frame=document.createElement('iframe');viewportFrames[index]=frame;frame.style.width=Math.round(item[0]/item[2])+'px';frame.style.height=Math.round(item[1]/item[2])+'px';frame.src='layout.html?case='+index;document.body.appendChild(frame)});</script></body></html>
+
+
+
+null !== 0
+
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\scripts\stage51\workspace-layout.test.cjs:72:10)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: null,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+[FAIL] Stage 5.1 real workspace collapsed layout
+
+[RUN] Stage 5.1 historical 024 compatibility and real startup
+{"stage":"5.1","checksum":"Passed","evidence":["exact legacy SQL applied, upgrade to25, historical records, original checksum preserved, immutable audit, repeat and backup restore","unknown-hash rejected without upgrade or metadata override","schema-drift rejected without upgrade or metadata override","backup-disabled rejected without upgrade or metadata override","fresh canonical database remains canonical","failed subsequent DDL rolls back its transaction and pre-upgrade backup retains original24 registry/data","audit persistence failure stops before schema upgrade","tampered audit rejected without rewrite","current migration file hash validation still rejects even known extra-LF bytes without matching manifest","backup-missing rejected with history preserved","backup-tampered rejected with history preserved","actual current sidecar boots genuine legacy024 database twice with CRM and AI history retained"],"productionDatabaseOpened":false}
+[PASS] Stage 5.1 historical 024 compatibility and real startup
+
+[RUN] Stage 5.1 isolated native entry safety
+stage5.1 native isolation: compile opt-in, all data roots mapped, unsafe paths rejected, private ACL and external WS/AI blocks PASS
+[PASS] Stage 5.1 isolated native entry safety
+
+[RUN] Stage 5.1 Worker lifecycle resource observation
+  正在确定要还原的项目…
+  所有项目均是最新的，无法还原。
+  WorkerRuntimeIntegration -> C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\scripts\stage2\WorkerRuntimeIntegration\bin\Release\net10.0-windows\WorkerRuntimeIntegration.dll
+
+已成功生成。
+    0 个警告
+    0 个错误
+
+已用时间 00:00:02.01
+{"stage":"5.1","status":"Passed","test":"existing isolated WorkerRuntimeController lifecycle","durationMs":8030.2,"parentCpuUserMs":16,"parentCpuSystemMs":0,"lifecycle":{"heartbeat":true,"cancellation":true,"crashRecovery":true,"tokenRotation":true,"restartStorm":true,"concurrentLifecycle":true,"stopped":true,"temporaryRootClean":true},"matchingTestProcessesRemaining":0,"workerCpuAndMemory":"NotMeasuredByThisWrapper","productionWorkerStarted":false,"productionDatabaseOpened":false}
+[PASS] Stage 5.1 Worker lifecycle resource observation
+
+[RUN] Stage 5.1 real member API and account-scoped UI binding
+stage5.1 member binding: real account/group-scoped read API, CRM no-create, actual member rows, legacy disabled fallback and stale UI response rejection PASS
+[PASS] Stage 5.1 real member API and account-scoped UI binding
+
+[RUN] Stage 5.1 review actions through real isolated service
+stage5.1 real Service + UI event review: approve, reject, manual conflict, audit and bridge error detail PASS
+[PASS] Stage 5.1 review actions through real isolated service
+
+[RUN] Stage 5.1 workspace wheel ownership and navigation restoration
+scroll coordinator runtime: scroll ownership, wheel units, boundaries and state retention pass
+[PASS] Stage 5.1 workspace wheel ownership and navigation restoration
+
+[RUN] Stage 5.1 resource observer process identity safety
+Stage 5.1 resource identity: live PID detection, creation-time mismatch rejection, unverifiable identity fail-closed and marker rejection Passed
+[PASS] Stage 5.1 resource observer process identity safety
+
+[RUN] Stage 5.1 sidecar readiness without UI pump and bounded shutdown
+{"ok":true,"readyWithoutUiPump":true,"cancellationPropagated":true,"unauthorizedShutdownRejected":true,"authenticatedGracefulShutdown":true,"exitCode":0,"startupMs":653,"productionOpened":false,"pendingUiCallbacks":0}
+[PASS] Stage 5.1 sidecar readiness without UI pump and bounded shutdown
+
+[RUN] Stage 5.2 Worker real pipe IO deadlines and recovery
+  正在确定要还原的项目…
+  所有项目均是最新的，无法还原。
+  WorkerRuntimeIntegration -> C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\scripts\stage2\WorkerRuntimeIntegration\bin\Release\net10.0-windows\WorkerRuntimeIntegration.dll
+
+已成功生成。
+    0 个警告
+    0 个错误
+
+已用时间 00:00:01.67
+{"ok":true,"cases":[{"caseName":"deadline-during-write","elapsedMs":170,"oldConnectionInvalidated":true,"freshGenerationWorks":true,"previousProcessExited":true},{"caseName":"caller-cancellation-during-write","elapsedMs":89,"oldConnectionInvalidated":true,"freshGenerationWorks":true,"previousProcessExited":true},{"caseName":"missing-cancel-acknowledgement","elapsedMs":867,"oldConnectionInvalidated":true},{"caseName":"setup-exception-gate-release","rejectedWithoutGateLeak":true},{"caseName":"stopped-rotation-does-not-start-worker","noProcessStarted":true}],"productionWorkerStarted":false,"productionDatabaseOpened":false}
+[PASS] Stage 5.2 Worker real pipe IO deadlines and recovery
+
+[RUN] Stage 5.2 navigation cancellation and bounded session recovery
+{"ok":true,"legacyWrapperRetries":1000,"stableSurfaceRetries":1,"policyCancellationNeverRetries":true,"explicitRefreshAndReconnect":true,"cancelledAndDuplicateCompletions":true,"staleRecoveryRejected":true,"accountAndSurfaceIsolation":true,"representativePageSelections":100,"realWebViewCore":"NotMeasuredByThisProbe"}
+[PASS] Stage 5.2 navigation cancellation and bounded session recovery
+
+[RUN] Stage 5.5A same-window presentation and exact restoration
+{"kind":"real-win32-placement-runtime","passed":true,"cases":[{"initial":"normal","before":{"ShowCommand":1,"Flags":0,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":false,"IsMinimized":false},"enter":{"Changed":true,"Succeeded":true,"Observed":{"ShowCommand":3,"Flags":2,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":true,"IsMinimized":false},"Phase":"enter"},"after":{"ShowCommand":1,"Flags":0,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":false,"IsMinimized":false},"sameHwnd":658570},{"initial":"maximized","before":{"ShowCommand":3,"Flags":2,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":true,"IsMinimized":false},"enter":{"Changed":true,"Succeeded":true,"Observed":{"ShowCommand":3,"Flags":2,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":true,"IsMinimized":false},"Phase":"enter"},"after":{"ShowCommand":3,"Flags":2,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":true,"IsMinimized":false},"sameHwnd":658570},{"initial":"minimized","before":{"ShowCommand":2,"Flags":0,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":false,"IsMinimized":true},"enter":{"Changed":true,"Succeeded":true,"Observed":{"ShowCommand":3,"Flags":2,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":true,"IsMinimized":false},"Phase":"enter"},"after":{"ShowCommand":2,"Flags":0,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":false,"IsMinimized":true},"sameHwnd":658570},{"initial":"minimized-from-maximized","before":{"ShowCommand":2,"Flags":2,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":false,"IsMinimized":true},"enter":{"Changed":true,"Succeeded":true,"Observed":{"ShowCommand":3,"Flags":2,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":true,"IsMinimized":false},"Phase":"enter"},"after":{"ShowCommand":2,"Flags":2,"X":137,"Y":119,"Width":913,"Height":647,"IsMaximized":false,"IsMinimized":true},"sameHwnd":658570}]}
+[PASS] Stage 5.5A same-window presentation and exact restoration
+
+[RUN] Stage 5.5A account switch monitor request ownership
+WS account runtime: scoped monitor/profile state, every switch await boundary, stale native/API errors, rollback completion races and three-account sequence ownership PASS
+[PASS] Stage 5.5A account switch monitor request ownership
+
+[RUN] Stage 5.5A reply copy uses real native acknowledgement
+WS reply copy runtime: native copied DTO, legacy exact-length confirmation, safe failure/audit behavior and sensitive-copy cancellation PASS
+[PASS] Stage 5.5A reply copy uses real native acknowledgement
+
+[RUN] Stage 5.5B read-only contacts and authoritative audit queries
+{"kind":"read-only-audit-query-observation","round":1,"scopedRecords":3006,"queries":10,"pageSize":40,"elapsedMs":593.83,"threshold":"NotDefined","onlyTemporarySqlite":true}
+{"kind":"read-only-audit-query-observation","round":2,"scopedRecords":3006,"queries":10,"pageSize":40,"elapsedMs":582.26,"threshold":"NotDefined","onlyTemporarySqlite":true}
+{"kind":"read-only-audit-query-observation","round":3,"scopedRecords":3006,"queries":10,"pageSize":40,"elapsedMs":597.88,"threshold":"NotDefined","onlyTemporarySqlite":true}
+AssertionError [ERR_ASSERTION]: sidecar normal shutdown
+
+null !== 0
+
+    at C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\scripts\stage55b\workspace-queries.test.cjs:186:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: null,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+[FAIL] Stage 5.5B read-only contacts and authoritative audit queries
+
+[RUN] Stage 5.5B business pages and scoped async ownership
+Stage 5.5B business UI runtime: real module queries, scope rejection, phone/source display, escaped contact/audit text, honest states, and stale request/loading ownership PASS
+[PASS] Stage 5.5B business pages and scoped async ownership
+
+[RUN] Stage 5.5B existing GPT settings from WS
+stage5.5B GPT settings: real off-route modal actions, owner boundary, password clearing, no WS navigation takeover or paid network PASS
+[PASS] Stage 5.5B existing GPT settings from WS
+
+[RUN] Delivery S1 actual workspace shell and preference rollback
+S1 workspace shell: scoped navigation, no duplicate route, local appearance, owned modal and real legacy preference rollback PASS
+[PASS] Delivery S1 actual workspace shell and preference rollback
+
+[RUN] Delivery S1 native wheel gestures and modal ownership
+[PASS] ctrlKey wheel remains an unclaimed native zoom gesture
+[PASS] metaKey wheel remains an unclaimed native zoom gesture
+[PASS] a native zoom gesture is preserved even over the modal backdrop
+[PASS] an already claimed or noncancelable wheel is not routed again
+[PASS] sidebar chrome and inner contained owner keep the existing vertical policy
+[PASS] nested contained panes hand off within their rail but not manually to the page
+[PASS] table trackpad, shift-wheel and vertical axes remain independent
+[PASS] registered WS regions, drawers and modal body consume only their own axis
+[PASS] editable focus and modified keys retain native caret and shortcut behavior
+[PASS] scrollable textarea and its boundary retain native ownership without manually scrolling the outer pane
+[PASS] native editing gestures preserve text input, selection and shift-wheel axis behavior
+[PASS] modal keyboard scrolling cannot choose a stale background focus or pointer owner
+[PASS] scroll activity defers and deduplicates idle callbacks until the real timer settles
+{"suite":"delivery-S1-scroll-gestures","checks":13,"passed":13,"failed":0,"nativeZoomValidated":false,"realWebViewTested":false}
+[PASS] Delivery S1 native wheel gestures and modal ownership
+
+[RUN] Delivery S1 actual main renderers and shared design system
+node:assert:152
+  throw new AssertionError(obj);
+  ^
+
+AssertionError [ERR_ASSERTION]: spawnSync C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe ETIMEDOUT
+[20320:4080:1117/050145.552:ERROR:chrome\browser\task_manager\providers\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a "Renderer" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.
+
+
+
+null !== 0
+
+    at run (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\scripts\delivery\s1-main-visual.test.cjs:58:337)
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\scripts\delivery\s1-main-visual.test.cjs:94:18)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: null,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+[FAIL] Delivery S1 actual main renderers and shared design system
+
+[RUN] Delivery S1 WS computed layout and retained host
+{"kind":"real-computed-css","palette":"atelier-dawn","physical":[1920,1080],"scale":1,"viewport":{"width":1920,"height":1080},"pages":12,"topbar":56,"navigation":[250,76],"beforeCompression":{"x":274,"y":224,"width":1222,"height":832,"bottom":1056},"chat":{"x":274,"y":188,"width":1222,"height":876,"bottom":1064},"gradientContrast":[4.878907170229452,4.561951740806526],"mountUpdates":20,"hostStable":true}
+{"kind":"real-computed-css","palette":"atelier-dawn","physical":[1920,1080],"scale":1.25,"viewport":{"width":1536,"height":864},"pages":12,"topbar":56,"navigation":[250,76],"beforeCompression":{"x":274,"y":224,"width":838,"height":616,"bottom":840},"chat":{"x":274,"y":188,"width":838,"height":660,"bottom":848},"gradientContrast":[4.878907170229452,4.561951740806526],"mountUpdates":20,"hostStable":true}
+{"kind":"real-computed-css","palette":"atelier-dawn","physical":[1920,1080],"scale":1.5,"viewport":{"width":1280,"height":720},"pages":12,"topbar":56,"navigation":[250,76],"beforeCompression":{"x":274,"y":224,"width":626,"height":472,"bottom":696},"chat":{"x":274,"y":188,"width":626,"height":516,"bottom":704},"gradientContrast":[4.878907170229452,4.561951740806526],"mountUpdates":20,"hostStable":true}
+{"kind":"real-computed-css","palette":"atelier-dawn","physical":[2560,1440],"scale":1,"viewport":{"width":2560,"height":1440},"pages":12,"topbar":56,"navigation":[250,76],"beforeCompression":{"x":274,"y":224,"width":1862,"height":1192,"bottom":1416},"chat":{"x":274,"y":188,"width":1862,"height":1236,"bottom":1424},"gradientContrast":[4.878907170229452,4.561951740806526],"mountUpdates":20,"hostStable":true}
+{"kind":"real-computed-css","palette":"atelier-dawn","physical":[2560,1440],"scale":1.25,"viewport":{"width":2048,"height":1152},"pages":12,"topbar":56,"navigation":[250,76],"beforeCompression":{"x":274,"y":224,"width":1350,"height":904,"bottom":1128},"chat":{"x":274,"y":188,"width":1350,"height":948,"bottom":1136},"gradientContrast":[4.878907170229452,4.561951740806526],"mountUpdates":20,"hostStable":true}
+{"kind":"real-computed-css","palette":"atelier-dawn","physical":[2560,1440],"scale":1.5,"viewport":{"width":1707,"height":960},"pages":12,"topbar":56,"navigation":[250,76],"beforeCompression":{"x":274,"y":224,"width":1009,"height":712,"bottom":936},"chat":{"x":274,"y":188,"width":1009,"height":756,"bottom":944},"gradientContrast":[4.878907170229452,4.561951740806526],"mountUpdates":20,"hostStable":true}
+{"kind":"real-computed-css","palette":"horizon-night","physical":[1920,1080],"scale":1,"viewport":{"width":1920,"height":1080},"pages":12,"topbar":56,"navigation":[250,76],"beforeCompression":{"x":274,"y":224,"width":1222,"height":832,"bottom":1056},"chat":{"x":274,"y":188,"width":1222,"height":876,"bottom":1064},"gradientContrast":[5.848097160492954,5.34113137924387],"mountUpdates":20,"hostStable":true}
+S1 WS computed design system: 12 routes x 6 daylight viewports + night, 44px controls, readable palettes, 20-update native DOM anchor stability PASS
+[PASS] Delivery S1 WS computed layout and retained host
+
+[RUN] operations core
+operations-core: 33 assertions passed
+[PASS] operations core
+
+[RUN] operations task center UI contract
+operations-ui contract: action lifecycle, filters, customer jump and incremental loading pass
+[PASS] operations task center UI contract
+
+[RUN] operations and stage-board 6.0 workspace
+Operations 6.0 workspace contract: live tasks, settings-driven stages, shared customer actions and responsive UI
+[PASS] operations and stage-board 6.0 workspace
+
+[RUN] group management malformed-data regression
+group management regression: malformed rows are isolated before rendering
+[PASS] group management malformed-data regression
+
+[RUN] group configured-channel runtime separation
+group channel runtime: same group code remains separated by configured channel and join/leave counts
+[PASS] group configured-channel runtime separation
+
+[RUN] group summary server event link
+group-summary-server-link: pass
+[PASS] group summary server event link
+
+[RUN] smart import classification
+smart import classification: explicit single-group and group-fan sources normalize correctly
+[PASS] smart import classification
+
+[RUN] customer center registration date column
+customer center date column: registration date is displayed while follow-up data remains separate
+[PASS] customer center registration date column
+
+[RUN] customer import routing (163 rows)
+customer import routing: 163 customer rows stay customer-only while explicit business rows remain routable
+customer import submit: rejected rows, valid rows, reimport and save-failure rollback pass
+[PASS] customer import routing (163 rows)
+
+[RUN] phone registry file import
+phone registry import: flat/sectioned layouts, blank rows, separate domain, save rollback pass
+[PASS] phone registry file import
+
+[RUN] ticket record separation
+ticket record separation: buy/sell dates and same-customer trade records stay independent
+[PASS] ticket record separation
+
+[RUN] 10k/50k performance scale
+performance 10000: index=141.0ms search=11.7ms
+performance 50000: index=735.3ms search=27.7ms
+performance-scale: 10k/50k synthetic search and pagination pass
+[PASS] 10k/50k performance scale
+
+[RUN] 50k customer list cached ordering budget
+customer list performance: 50k build=111.2ms, 200 cached pages=0.1ms, filter=6.5ms
+[PASS] 50k customer list cached ordering budget
+
+[RUN] 50k analytics aggregation budget
+analytics performance: 50k x 3 dimensions aggregated in 20.1 ms
+[PASS] 50k analytics aggregation budget
+
+[RUN] desktop packaging contract
+desktop packaging contract: resources, version, traceability, icon and user-data retention are present
+[PASS] desktop packaging contract
+
+[RUN] 6.0 publish anti-rollback gate
+release gate contract: development snapshots remain possible; publishable 6.0 bundles reject dirty, stale or mixed-version resources
+[PASS] 6.0 publish anti-rollback gate
+
+[RUN] legacy Electron installation retirement
+legacy install retirement: old Electron entry points are removed, old data stays untouched and 6.0 uses an isolated data root
+[PASS] legacy Electron installation retirement
+
+[RUN] release output single-version contract
+release output contract: the formal output is manifest-backed and contains one current 6.0 installer only
+[PASS] release output single-version contract
+
+[RUN] desktop reminders and automatic backup contract
+desktop productivity tools contract: native reminders, atomic backups, retention safety and obsolete-file cleanup passed
+[PASS] desktop reminders and automatic backup contract
+
+[RUN] native backup retention runtime
+native backup retention: exact generated names, unrelated files, nested files and keep floor pass
+native backup envelope: workspace, WS shape and row limits pass
+[PASS] native backup retention runtime
+
+[RUN] native backup to browser restore roundtrip
+native .NET backup -> production JS decoder -> isolated CRM/2-account WS restore: roundtrip, rollback, tamper rejection and manual format pass
+[PASS] native backup to browser restore roundtrip
+
+[RUN] retired runtime removal contract
+docker/electron removal contract passed: local WinUI + SQLite is the only production path
+[PASS] retired runtime removal contract
+
+[RUN] HTTP asset smoke
+upgrade HTTP smoke: isolated server served all new module assets
+[PASS] HTTP asset smoke
+
+[RUN] static assets contract
+node:internal/assert/utils:77
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: home-6.css does not reference required artwork: ../assets/horizon-ridge-6.png
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\static-assets-contract.test.cjs:21:3)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+[FAIL] static assets contract
+
+[RUN] CSS cleanup contract
+css cleanup contract: dead onboarding selectors removed; active shell and GPT layout remain
+[PASS] CSS cleanup contract
+
+[RUN] sidebar scroll contract
+sidebar layout contract: consolidated viewport shell, independent nav scroll and collapse rules present
+[PASS] sidebar scroll contract
+
+[RUN] release 6.0 consistency
+release consistency: one 6.0.3 Horizon Atelier WinUI + SQLite production line is documented
+[PASS] release 6.0 consistency
+
+[RUN] current docs consistency
+current docs consistency: only current 6.0 WinUI/SQLite documentation and release boundaries remain
+[PASS] current docs consistency
+
+[RUN] session persistence contract
+session persistence contract: isolated SQLite session, guarded loopback token and restart-safe sidecar pass
+[PASS] session persistence contract
+
+[RUN] backup and restore drill
+backup-restore drill: snapshot restore, portable backup, multi-ticket/deposit preservation, integrity check passed
+[PASS] backup and restore drill
+
+[RUN] project audit regression
+project audit regression: local data guards, import routing, WS/AI sync, VIP and single-shell entry pass
+[PASS] project audit regression
+
+Completed 277 checks: 266 passed, 11 failed.
+- design system contract: exit 1
+- Horizon Atelier 6.0 dynamic UI contract: exit 1
+- Horizon Atelier governance/settings UI contract: exit 1
+- AI credential DPAPI persistence: exit 1
+- desktop responsive contract: exit 1
+- WS ChatKnow UI contract: exit 1
+- project stability and lifecycle contract: exit 1
+- Stage 5.1 real workspace collapsed layout: exit 1
+- Stage 5.5B read-only contacts and authoritative audit queries: exit 1
+- Delivery S1 actual main renderers and shared design system: exit 1
+- static assets contract: exit 1

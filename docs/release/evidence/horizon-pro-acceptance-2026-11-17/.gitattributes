@@ -1,0 +1,4 @@
+# Immutable evidence; retain source bytes and SHA-256.
+* -text whitespace=cr-at-eol
+*.log -whitespace
+*.txt -whitespace

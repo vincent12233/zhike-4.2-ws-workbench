@@ -1,0 +1,1 @@
+{"code":"ERR_ASSERTION","phase":"diagnostic-assertion","message":"Zero page targets must be verified before Browser.close\n\n1 !== 0\n","evidence":"<WS_WORKTREE>/.tools/edge-exit-observer/zero-page-c53961f5-e486-46c7-8bbf-8b1b02212595/1795023406701-ffbd6620-c244-472f-b993-7f657c51cd57.json"}

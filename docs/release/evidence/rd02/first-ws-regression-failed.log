@@ -1,0 +1,2571 @@
+
+[RUN] syntax resources\app\app.js
+[PASS] syntax resources\app\app.js
+
+[RUN] syntax resources\app\migration-runner.cjs
+[PASS] syntax resources\app\migration-runner.cjs
+
+[RUN] syntax resources\app\modules\accessibility-enhancements.js
+[PASS] syntax resources\app\modules\accessibility-enhancements.js
+
+[RUN] syntax resources\app\modules\ai-crm-suggestion-core.js
+[PASS] syntax resources\app\modules\ai-crm-suggestion-core.js
+
+[RUN] syntax resources\app\modules\ai-job-pipeline-core.js
+[PASS] syntax resources\app\modules\ai-job-pipeline-core.js
+
+[RUN] syntax resources\app\modules\ai-mock-provider.js
+[PASS] syntax resources\app\modules\ai-mock-provider.js
+
+[RUN] syntax resources\app\modules\ai-review-center-ui.js
+[PASS] syntax resources\app\modules\ai-review-center-ui.js
+
+[RUN] syntax resources\app\modules\business-enhancements.js
+[PASS] syntax resources\app\modules\business-enhancements.js
+
+[RUN] syntax resources\app\modules\business-rule-core.js
+[PASS] syntax resources\app\modules\business-rule-core.js
+
+[RUN] syntax resources\app\modules\customer-governance-core.js
+[PASS] syntax resources\app\modules\customer-governance-core.js
+
+[RUN] syntax resources\app\modules\customer-governance-ui.js
+[PASS] syntax resources\app\modules\customer-governance-ui.js
+
+[RUN] syntax resources\app\modules\desktop-host.js
+[PASS] syntax resources\app\modules\desktop-host.js
+
+[RUN] syntax resources\app\modules\desktop-performance.js
+[PASS] syntax resources\app\modules\desktop-performance.js
+
+[RUN] syntax resources\app\modules\gpt-assistant.js
+[PASS] syntax resources\app\modules\gpt-assistant.js
+
+[RUN] syntax resources\app\modules\hot-chat-profile-core.js
+[PASS] syntax resources\app\modules\hot-chat-profile-core.js
+
+[RUN] syntax resources\app\modules\metrics-charts.js
+[PASS] syntax resources\app\modules\metrics-charts.js
+
+[RUN] syntax resources\app\modules\operations-core.cjs
+[PASS] syntax resources\app\modules\operations-core.cjs
+
+[RUN] syntax resources\app\modules\operations-ui.js
+[PASS] syntax resources\app\modules\operations-ui.js
+
+[RUN] syntax resources\app\modules\operations-upgrade.js
+[PASS] syntax resources\app\modules\operations-upgrade.js
+
+[RUN] syntax resources\app\modules\performance-enhancements.js
+[PASS] syntax resources\app\modules\performance-enhancements.js
+
+[RUN] syntax resources\app\modules\phone-registry.js
+[PASS] syntax resources\app\modules\phone-registry.js
+
+[RUN] syntax resources\app\modules\productivity.js
+[PASS] syntax resources\app\modules\productivity.js
+
+[RUN] syntax resources\app\modules\runtime-customizer.js
+[PASS] syntax resources\app\modules\runtime-customizer.js
+
+[RUN] syntax resources\app\modules\scroll-coordinator.js
+[PASS] syntax resources\app\modules\scroll-coordinator.js
+
+[RUN] syntax resources\app\modules\smart-import.js
+[PASS] syntax resources\app\modules\smart-import.js
+
+[RUN] syntax resources\app\modules\ticket-record-core.js
+[PASS] syntax resources\app\modules\ticket-record-core.js
+
+[RUN] syntax resources\app\modules\v4-data-center.js
+[PASS] syntax resources\app\modules\v4-data-center.js
+
+[RUN] syntax resources\app\modules\workspace-shell.js
+[PASS] syntax resources\app\modules\workspace-shell.js
+
+[RUN] syntax resources\app\modules\ws-business-pages.js
+[PASS] syntax resources\app\modules\ws-business-pages.js
+
+[RUN] syntax resources\app\modules\ws-crm-sync-core.js
+[PASS] syntax resources\app\modules\ws-crm-sync-core.js
+
+[RUN] syntax resources\app\modules\ws-group-manager-core.js
+[PASS] syntax resources\app\modules\ws-group-manager-core.js
+
+[RUN] syntax resources\app\modules\ws-group-mock-transport.js
+[PASS] syntax resources\app\modules\ws-group-mock-transport.js
+
+[RUN] syntax resources\app\modules\ws-group-monitor-core.js
+[PASS] syntax resources\app\modules\ws-group-monitor-core.js
+
+[RUN] syntax resources\app\modules\ws-media-core.js
+[PASS] syntax resources\app\modules\ws-media-core.js
+
+[RUN] syntax resources\app\modules\ws-scope.js
+[PASS] syntax resources\app\modules\ws-scope.js
+
+[RUN] syntax resources\app\modules\ws-workbench-core.js
+[PASS] syntax resources\app\modules\ws-workbench-core.js
+
+[RUN] syntax resources\app\modules\ws-workbench.js
+[PASS] syntax resources\app\modules\ws-workbench.js
+
+[RUN] syntax resources\app\modules\ws-workspace-query.cjs
+[PASS] syntax resources\app\modules\ws-workspace-query.cjs
+
+[RUN] syntax resources\app\server.mjs
+[PASS] syntax resources\app\server.mjs
+
+[RUN] syntax resources\app\sidecar-write-coordinator.cjs
+[PASS] syntax resources\app\sidecar-write-coordinator.cjs
+
+[RUN] syntax resources\app\state-delta.cjs
+[PASS] syntax resources\app\state-delta.cjs
+
+[RUN] syntax resources\app\worker-fencing-gate.cjs
+[PASS] syntax resources\app\worker-fencing-gate.cjs
+
+[RUN] syntax resources\app\worker-queue-adapter.cjs
+[PASS] syntax resources\app\worker-queue-adapter.cjs
+
+[RUN] Stage 3 group feature flags
+stage3 worker group feature flags contract: pass
+[PASS] Stage 3 group feature flags
+
+[RUN] Stage 3 Worker and group-manager isolation gate
+stage3 Worker and group-manager isolation gate: pass
+[PASS] Stage 3 Worker and group-manager isolation gate
+
+[RUN] Stage 3 group manager migration
+stage3 group manager migration contract: pass
+[PASS] Stage 3 group manager migration
+
+[RUN] Stage 3 group manager core
+stage3 group manager core contract: pass
+[PASS] Stage 3 group manager core
+
+[RUN] Stage 3 group manager isolated API and Mock Transport
+stage3 group manager API, account isolation, CRM gate, idempotency and mock transport: pass
+[PASS] Stage 3 group manager isolated API and Mock Transport
+
+[RUN] Stage 3 WS workspace navigation
+stage3 WS workspace navigation contract: pass
+[PASS] Stage 3 WS workspace navigation
+
+[RUN] Stage 4 AI job pipeline core
+ai job pipeline core: PASS
+[PASS] Stage 4 AI job pipeline core
+
+[RUN] Stage 4 CRM suggestion core
+ai crm suggestion core: PASS
+[PASS] Stage 4 CRM suggestion core
+
+[RUN] Stage 4 migration and schema
+stage4 migration: PASS
+[PASS] Stage 4 migration and schema
+
+[RUN] Stage 4 Worker AI flags
+stage4 worker AI feature flags contract: pass
+[PASS] Stage 4 Worker AI flags
+
+[RUN] Stage 4 Mock AI provider
+ai mock provider: PASS
+[PASS] Stage 4 Mock AI provider
+
+[RUN] Stage 4 AI review center UI
+ai review center ui: PASS
+[PASS] Stage 4 AI review center UI
+
+[RUN] Stage 4 desktop ApiClient queue and CRM contract
+desktop ApiClient Stage 4 queue and CRM contract passed
+[PASS] Stage 4 desktop ApiClient queue and CRM contract
+
+[RUN] Stage 4 isolated AI pipeline API
+stage4 isolated AI queue, fencing, evidence, CRM review and rollback boundaries: PASS
+[PASS] Stage 4 isolated AI pipeline API
+
+[RUN] WS core rules
+ws-workbench-core: pass; shared-login isolation and live discovery payloads verified
+[PASS] WS core rules
+
+[RUN] WS direct-only collection and AI policy
+WS direct-only policy: core identity, mixed ingest, unknown rejection, legacy group retirement, late-write guards pass
+[PASS] WS direct-only collection and AI policy
+
+[RUN] WS VIP member task and alert isolation
+VIP member reminders: two customers, distinct tasks and alerts, idempotent polling and reanalysis pass
+[PASS] WS VIP member task and alert isolation
+
+[RUN] WS and GPT Horizon visual reachability
+WS and GPT Horizon visual scope, dark states, narrow control reachability and scroll contract pass
+[PASS] WS and GPT Horizon visual reachability
+
+[RUN] WS AI CRM sync rules
+ws-crm-sync-core: pass
+[PASS] WS AI CRM sync rules
+
+[RUN] WS unified customer archive UI contract
+ws-hot-chat-profile-ui: source wiring contract passed; live UI behavior requires separate native acceptance
+[PASS] WS unified customer archive UI contract
+
+[RUN] WS CRM customer-link trust boundary
+WS CRM link trust: pending wrong links and shared accounts are blocked; manual and independent WS identity links pass
+[PASS] WS CRM customer-link trust boundary
+
+[RUN] WS workbench initialization
+ws-workbench-init: pass
+[PASS] WS workbench initialization
+
+[RUN] WS API and SQLite
+ws-workbench-api: pass
+[PASS] WS API and SQLite
+
+[RUN] WS export streaming contract
+WS export streaming contract: bounded SQLite iteration, disconnect handling and backpressure are present
+[PASS] WS export streaming contract
+
+[RUN] WS export and media schema
+[PASS] WS export and media schema
+
+[RUN] WS complete export and export jobs
+ws-export-complete: pass
+[PASS] WS complete export and export jobs
+
+[RUN] WS media staging and attachment broadcast
+ws-media-api: staging, account isolation, raw download, attachment broadcast, idempotency and deletion guard contracts pass
+[PASS] WS media staging and attachment broadcast
+
+[RUN] WS media send runtime contract
+ws-media-send-runtime: attachment upload, media-id plans and send-media dispatch required
+[PASS] WS media send runtime contract
+
+[RUN] WS broadcast, translation and send audit
+ws-broadcast-translation: translation preservation, explicit broadcast confirmation, account isolation, rate limiting, native bridge and audit contracts pass
+[PASS] WS broadcast, translation and send audit
+
+[RUN] WS VIP customer and group-monitor scope separation
+VIP scope separation: customer VIP and WS group monitoring remain independent
+[PASS] WS VIP customer and group-monitor scope separation
+
+[RUN] WS conversation cursor pagination
+WS conversation pagination: 5205 conversations loaded without gaps or duplicates
+[PASS] WS conversation cursor pagination
+
+[RUN] WS conversation incremental watermark runtime
+WS conversation delta runtime: unchanged=1 page, 1105 updates=5 pages, late update recovered
+[PASS] WS conversation incremental watermark runtime
+
+[RUN] WS list preview update
+ws-list-preview-update: pass
+[PASS] WS list preview update
+
+[RUN] WS follow-up chain dedupe and refresh
+ws-followup-chain: isolated repeated-analysis dedupe, no-reply cooldown and current-alert refresh pass
+[PASS] WS follow-up chain dedupe and refresh
+
+[RUN] WS task lifecycle and multi-account history ingest
+WS lifecycle: multi-account radar, plan/statistics separation, snooze, completion idempotency, reopen and dismiss pass
+[PASS] WS task lifecycle and multi-account history ingest
+
+[RUN] WS complete original text and backup roundtrip
+WS original roundtrip: long text, whitespace, backup/restore and explicit oversized rejection passed
+[PASS] WS complete original text and backup roundtrip
+
+[RUN] WS intelligent follow-up strategy and CRM persistence
+WS follow-up intelligence: structured strategy, priority and CRM persistence pass
+[PASS] WS intelligent follow-up strategy and CRM persistence
+
+[RUN] WS live refresh event contract
+WS live refresh contract: heartbeat is WS-only; real ingestion/version guards and actual read provenance recover safely without rebuilding WS
+[PASS] WS live refresh event contract
+
+[RUN] WS non-blocking AI pump runtime
+Error: condition was not reached in time
+    at waitFor (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\ws-ai-pump-runtime.test.cjs:309:42)
+    at async C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\ws-ai-pump-runtime.test.cjs:316:3
+[FAIL] WS non-blocking AI pump runtime
+
+[RUN] Home WS follow-up runtime
+home WS follow-up runtime: fallback, placeholder, stale guard, five-card identity/score layout, bridge priority, visible retry and filter-safe task deep-link passed
+[PASS] Home WS follow-up runtime
+
+[RUN] WS SQLite v6 migration
+ws-workbench-migration-v6/v9: pass
+[PASS] WS SQLite v6 migration
+
+[RUN] WS external-id uniqueness migration
+ws external-id migration: duplicate repair and unique account/conversation index pass
+[PASS] WS external-id uniqueness migration
+
+[RUN] WS local security contract
+node:assert:885
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /WS 页面未返回采集结果/. Input:
+
+'using Microsoft.UI.Dispatching;\n' +
+  'using Microsoft.UI.Xaml.Input;\n' +
+  'using Microsoft.UI.Xaml;\n' +
+  'using Microsoft.UI.Xaml.Controls;\n' +
+  'using Microsoft.Web.WebView2.Core;\n' +
+  'using Windows.ApplicationModel.DataTransfer;\n' +
+  'using System.Diagnostics;\n' +
+  'using System.Net.Http;\n' +
+  'using System.Text.Json;\n' +
+  'using System.Runtime.InteropServices.WindowsRuntime;\n' +
+  'using System.Collections.Concurrent;\n' +
+  'using Zhike.Desktop.Services;\n' +
+  '\n' +
+  'namespace Zhike.Desktop.Views;\n' +
+  '\n' +
+  'public sealed partial class LegacyUiHostPage : Page\n' +
+  '{\n' +
+  '    private const int MaxBridgeMessageChars = 50 * 1024 * 1024;\n' +
+  '    private const int MaxBridgePayloadChars = 48 * 1024 * 1024;\n' +
+  '    private readonly WebViewProfileService _profiles = new();\n' +
+  '    private readonly WebViewProfileService _wsProfiles = new();\n' +
+  '    private readonly WsAccountStore _wsAccountStore = new();\n' +
+  '    private readonly LocalQueue _wsQueue = new();\n' +
+  '    private readonly SemaphoreSlim _wsGate = new(1, 1);\n' +
+  '    private readonly SemaphoreSlim _wsFlushGate = new(1, 1);\n' +
+  '    private readonly SemaphoreSlim _wsMessageGate = new(1, 1);\n' +
+  '    private readonly SemaphoreSlim _wsDeferredDrainGate = new(1, 1);\n' +
+  '    private readonly SemaphoreSlim _wsStatusGate = new(1, 1);\n' +
+  '    private readonly SemaphoreSlim _initializeGate = new(1, 1);\n' +
+  '    private readonly WsSendOperationGuard _wsSendGuard = new();\n' +
+  '    private readonly AiBridgeService _ai = new();\n' +
+  '    private readonly DesktopToolsService _desktopTools = new();\n' +
+  '    private ApiClient? _api;\n' +
+  '    private DesktopBridgeService? _bridge;\n' +
+  '    private ApiClient? _bridgeApi;\n' +
+  '    private WebView2? _webView;\n' +
+  '    private WebView2? _wsView;\n' +
+  '    private DispatcherQueueTimer? _wsResizeTimer;\n' +
+  '    private DispatcherQueueTimer? _desktopBackupTimer;\n' +
+  '    private string _activeWsAccountId = "default";\n' +
+  '    private string _wsViewAccountId = "";\n' +
+  '    private long _wsGeneration;\n' +
+  '    private bool _initialized;\n' +
+  '    private string _currentRoute = "home";\n' +
+  '    private bool _wsChatPageActive;\n' +
+  '    private string _wsPresentationAccountId = string.Empty;\n' +
+  '    private long _routeGeneration;\n' +
+  '    private bool _hostWindowRenderable = true;\n' +
+  '    private int _wsBoundsRefreshInFlight;\n' +
+  '    private string _wsBoundsDocumentId = string.Empty;\n' +
+  '    private long _lastWsBoundsSequence;\n' +
+  '    // The shell is redrawn when collection/AI state changes. During that\n' +
+  '    // synchronous redraw #wsBrowserHost can report a transient 0x0 or a\n' +
+  '    // fractional geometry for one frame. Applying every sample directly to\n' +
+  '    // the native WebView makes the visible WhatsApp surface shiver. Keep the\n' +
+  '    // last stable rectangle and only touch WinUI when a meaningful change is\n' +
+  '    // observed.\n' +
+  '    private bool _wsOverlayGeometryApplied;\n' +
+  '    private double _lastWsOverlayX;\n' +
+  '    private double _lastWsOverlayY;\n' +
+  '    private double _lastWsOverlayWidth;\n' +
+  '    private double _lastWsOverlayHeight;\n' +
+  '    // Heartbeats are account-scoped. A single timestamp used to suppress a\n' +
+  '    // newly selected account for the remainder of the 15-second probe window,\n' +
+  '    // which made multi-account login/collector startup appear stuck.\n' +
+  '    private readonly ConcurrentDictionary<string, DateTimeOffset> _lastForegroundWsHeartbeatAtByAccount = new(StringComparer.OrdinalIgnoreCase);\n' +
+  '    private bool _wsRuntimeBound;\n' +
+  '    private EventHandler? _wsSessionsChangedHandler;\n' +
+  '    private readonly ConcurrentDictionary<string, long> _wsStatusSequence = new(StringComparer.OrdinalIgnoreCase);\n' +
+  '    private readonly Dictionary<WebView2, WsNavigationLifecycle> _wsNavigation = new();\n' +
+  '    private readonly ConcurrentQueue<DeferredWsMessage> _wsDeferredMessages = new();\n' +
+  '    private int _wsDeferredMessageCount;\n' +
+  '    private const int MaxDeferredWsMessages = 128;\n' +
+  '\n' +
+  '    private sealed record DeferredWsMessage(\n' +
+  '        string AccountId,\n' +
+  '        long Generation,\n' +
+  '        CoreWebView2 Sender,\n' +
+  '        CoreWebView2WebMessageReceivedEventArgs Args,\n' +
+  '        string RawMessage);\n' +
+  '\n' +
+  '    public LegacyUiHostPage()\n' +
+  '    {\n' +
+  '        InitializeComponent();\n' +
+  '        // The 6.0 workbench shell always uses the guarded local SQLite service.\n' +
+  '        // There is one production storage path; old connection profiles are\n' +
+  '        // intentionally ignored instead of creating a second data source.\n' +
+  '        _api = null;\n' +
+  '        Loaded += OnLoaded;\n' +
+  '        Unloaded += OnUnloaded;\n' +
+  '        _wsResizeTimer = DispatcherQueue.GetForCurrentThread()?.CreateTimer();\n' +
+  '        if (_wsResizeTimer is not null)\n' +
+  '        {\n' +
+  '            _wsResizeTimer.Interval = TimeSpan.FromMilliseconds(150);\n' +
+  '            _wsResizeTimer.IsRepeating = false;\n' +
+  '            _wsResizeTimer.Tick += async (_, _) =>\n' +
+  '            {\n' +
+  '                _wsResizeTimer.Stop();\n' +
+  '                await ResizeWsOverlayFromDomAsync();\n' +
+  '            };\n' +
+  '        }\n' +
+  '        _desktopTools.CustomerNotificationInvoked += customerId =>\n' +
+  '        {\n' +
+  '            _ = DispatcherQueue.TryEnqueue(() =>\n' +
+  '            {\n' +
+  '                try\n' +
+  '                {\n' +
+  '                    App.MainWindowInstance?.Activate();\n' +
+  '                    GetBridge().Publish("open.customer", JsonSerializer.SerializeToElement(new { id = customerId }));\n' +
+  '                }\n' +
+  '                catch { }\n' +
+  '            });\n' +
+  '        };\n' +
+  '        _desktopBackupTimer = DispatcherQueue.GetForCurrentThread()?.CreateTimer();\n' +
+  '        if (_desktopBackupTimer is not null)\n' +
+  '        {\n' +
+  '            _desktopBackupTimer.Interval = TimeSpan.FromMinutes(1);\n' +
+  '            _desktopBackupTimer.Tick += async (_, _) =>\n' +
+  '            {\n' +
+  '                try\n' +
+  '                {\n' +
+  '                    if (_api is not null)\n' +
+  '                    {\n' +
+  '                        await _desktopTools.TryRunScheduledBackupAsync(_api, _activeWsAccountId);\n' +
+  '                        await _desktopTools.PollDueRemindersAsync(_api);\n' +
+  '                    }\n' +
+  '                }\n' +
+  '                catch { /* status retains the actionable error for Settings */ }\n' +
+  '            };\n' +
+  '        }\n' +
+  '    }\n' +
+  '\n' +
+  '    public async Task NavigateRouteAsync(string route, CancellationToken cancellationToken = default)\n' +
+  '    {\n' +
+  '        var requestedRoute = string.IsNullOrWhiteSpace(route) ? "home" : route;\n' +
+  '        if (!string.Equals(requestedRoute, _currentRoute, StringComparison.OrdinalIgnoreCase)) _wsSendGuard.Invalidate();\n' +
+  '        var generation = Interlocked.Increment(ref _routeGeneration);\n' +
+  '        _currentRoute = requestedRoute;\n' +
+  '        if (!string.Equals(requestedRoute, "ws-workbench", StringComparison.OrdinalIgnoreCase))\n' +
+  '        {\n' +
+  '            _wsChatPageActive = false;\n' +
+  '            App.MainWindowInstance?.NotifyWorkspaceRouteVisibility(this, false);\n' +
+  '        }\n' +
+  '#if STAGE51_ISOLATED_UI\n' +
+  '        Stage51Isolation.Record("host-route-request", new { route = requestedRoute, routeGeneration = generation });\n' +
+  '#endif\n' +
+  '        await EnsureInitializedAsync(cancellationToken);\n' +
+  '        if (_webView?.CoreWebView2 is null || generation != Volatile.Read(ref _routeGeneration)) return;\n' +
+  '\n' +
+  '        var selector = requestedRoute == "gpt"\n' +
+  '            ? "#gptAssistantNav"\n' +
+  '            : $"[data-view=\\"{EscapeJs(requestedRoute)}\\"]";\n' +
+  '        var script = $"document.querySelector({JsonSerializer.Serialize(selector)})?.click(); void 0;";\n' +
+  '        await _webView.CoreWebView2.ExecuteScriptAsync(script);\n' +
+  '        if (!string.Equals(requestedRoute, "ws-workbench", StringComparison.OrdinalIgnoreCase))\n' +
+  '        {\n' +
+  '            // Route changes only hide the native surface. The isolated WS\n' +
+  '            // WebView, login session, durable collector and queue stay alive\n' +
+  '            // so switching to customers/tasks does not interrupt collection.\n' +
+  '            // Explicit Close WS / clear-session and desktop shutdown still\n' +
+  '            // call CloseWsOverlayAsync and remain the only stop boundaries.\n' +
+  '            App.WsService.HideForeground();\n' +
+  '            HideWsOverlay();\n' +
+  '        }\n' +
+  '        else\n' +
+  '        {\n' +
+  '            // Route presentation never opens/recreates an account. The\n' +
+  '            // trusted shell observer selects the existing chat presentation;\n' +
+  '            // explicit WS Open remains the session-creation boundary.\n' +
+  '            RequestWsOverlayResize();\n' +
+  '            _ = ResizeWsOverlayFromDomAsync();\n' +
+  '        }\n' +
+  '    }\n' +
+  '\n' +
+  '    public async Task<bool> TryReloadAsync(CancellationToken cancellationToken = default)\n' +
+  '    {\n' +
+  '        try\n' +
+  '        {\n' +
+  '            await EnsureInitializedAsync(cancellationToken);\n' +
+  '            _webView?.CoreWebView2?.Reload();\n' +
+  '            return true;\n' +
+  '        }\n' +
+  '        catch\n' +
+  '        {\n' +
+  '            ShowStatus("知客页面加载失败，请检查本机服务后重试。", InfoBarSeverity.Error);\n' +
+  '            return false;\n' +
+  '        }\n' +
+  '    }\n' +
+  '\n' +
+  '    private async void OnLoaded(object sender, RoutedEventArgs args)\n' +
+  '    {\n' +
+  '#if STAGE51_ISOLATED_UI\n' +
+  '        Stage51Isolation.Record("host-loaded", new { route = _currentRoute });\n' +
+  '#endif\n' +
+  '        try { await EnsureInitializedAsync(); }\n' +
+  '        catch\n' +
+  '        {\n' +
+  '            ShowStatus("知客页面资源暂时不可用，请点击重试；本机数据不会受影响。", InfoBarSeverity.Error);\n' +
+  '            HostActions.Visibility = Visibility.Visible;\n' +
+  '        }\n' +
+  '    }\n' +
+  '\n' +
+  '    public async Task<bool> FlushBeforeCloseAsync(bool snapshot)\n' +
+  '    {\n' +
+  '        _wsSendGuard.Invalidate();\n' +
+  '        using var closeTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));\n' +
+  '        var wsClosed = true;\n' +
+  '        try { await App.WsService.ShutdownAsync(closeTimeout.Token); }\n' +
+  '        catch (OperationCanceledException) when (closeTimeout.IsCancellationRequested)\n' +
+  '        {\n' +
+  '            wsClosed = false;\n' +
+  '            Debug.WriteLine("WS overlay close timed out during desktop shutdown.");\n' +
+  '        }\n' +
+  '        catch (Exception error)\n' +
+  '        {\n' +
+  '            wsClosed = false;\n' +
+  '            Debug.WriteLine($"WS overlay close failed during desktop shutdown: {error.GetType().Name}");\n' +
+  '        }\n' +
+  '        if (!wsClosed) return false;\n' +
+  '        var webView = _webView;\n' +
+  '        if (webView?.CoreWebView2 is null) return true;\n' +
+  '        try\n' +
+  '        {\n' +
+  '            var options = snapshot ? "{snapshot:true}" : "{snapshot:false}";\n' +
+  '            // ExecuteScriptAsync serializes the immediate JavaScript return\n' +
+  '            // value; it does not reliably await a returned Promise. Start the\n' +
+  '            // async flush and publish a small boolean acknowledgement instead.\n' +
+  '            var startScript = "(()=>{window.__zhikeFlushResult=null;Prom'... 261986 more characters
+
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\ws-workbench-security.test.cjs:17:8)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'using Microsoft.UI.Dispatching;\n' +
+    'using Microsoft.UI.Xaml.Input;\n' +
+    'using Microsoft.UI.Xaml;\n' +
+    'using Microsoft.UI.Xaml.Controls;\n' +
+    'using Microsoft.Web.WebView2.Core;\n' +
+    'using Windows.ApplicationModel.DataTransfer;\n' +
+    'using System.Diagnostics;\n' +
+    'using System.Net.Http;\n' +
+    'using System.Text.Json;\n' +
+    'using System.Runtime.InteropServices.WindowsRuntime;\n' +
+    'using System.Collections.Concurrent;\n' +
+    'using Zhike.Desktop.Services;\n' +
+    '\n' +
+    'namespace Zhike.Desktop.Views;\n' +
+    '\n' +
+    'public sealed partial class LegacyUiHostPage : Page\n' +
+    '{\n' +
+    '    private const int MaxBridgeMessageChars = 50 * 1024 * 1024;\n' +
+    '    private const int MaxBridgePayloadChars = 48 * 1024 * 1024;\n' +
+    '    private readonly WebViewProfileService _profiles = new();\n' +
+    '    private readonly WebViewProfileService _wsProfiles = new();\n' +
+    '    private readonly WsAccountStore _wsAccountStore = new();\n' +
+    '    private readonly LocalQueue _wsQueue = new();\n' +
+    '    private readonly SemaphoreSlim _wsGate = new(1, 1);\n' +
+    '    private readonly SemaphoreSlim _wsFlushGate = new(1, 1);\n' +
+    '    private readonly SemaphoreSlim _wsMessageGate = new(1, 1);\n' +
+    '    private readonly SemaphoreSlim _wsDeferredDrainGate = new(1, 1);\n' +
+    '    private readonly SemaphoreSlim _wsStatusGate = new(1, 1);\n' +
+    '    private readonly SemaphoreSlim _initializeGate = new(1, 1);\n' +
+    '    private readonly WsSendOperationGuard _wsSendGuard = new();\n' +
+    '    private readonly AiBridgeService _ai = new();\n' +
+    '    private readonly DesktopToolsService _desktopTools = new();\n' +
+    '    private ApiClient? _api;\n' +
+    '    private DesktopBridgeService? _bridge;\n' +
+    '    private ApiClient? _bridgeApi;\n' +
+    '    private WebView2? _webView;\n' +
+    '    private WebView2? _wsView;\n' +
+    '    private DispatcherQueueTimer? _wsResizeTimer;\n' +
+    '    private DispatcherQueueTimer? _desktopBackupTimer;\n' +
+    '    private string _activeWsAccountId = "default";\n' +
+    '    private string _wsViewAccountId = "";\n' +
+    '    private long _wsGeneration;\n' +
+    '    private bool _initialized;\n' +
+    '    private string _currentRoute = "home";\n' +
+    '    private bool _wsChatPageActive;\n' +
+    '    private string _wsPresentationAccountId = string.Empty;\n' +
+    '    private long _routeGeneration;\n' +
+    '    private bool _hostWindowRenderable = true;\n' +
+    '    private int _wsBoundsRefreshInFlight;\n' +
+    '    private string _wsBoundsDocumentId = string.Empty;\n' +
+    '    private long _lastWsBoundsSequence;\n' +
+    '    // The shell is redrawn when collection/AI state changes. During that\n' +
+    '    // synchronous redraw #wsBrowserHost can report a transient 0x0 or a\n' +
+    '    // fractional geometry for one frame. Applying every sample directly to\n' +
+    '    // the native WebView makes the visible WhatsApp surface shiver. Keep the\n' +
+    '    // last stable rectangle and only touch WinUI when a meaningful change is\n' +
+    '    // observed.\n' +
+    '    private bool _wsOverlayGeometryApplied;\n' +
+    '    private double _lastWsOverlayX;\n' +
+    '    private double _lastWsOverlayY;\n' +
+    '    private double _lastWsOverlayWidth;\n' +
+    '    private double _lastWsOverlayHeight;\n' +
+    '    // Heartbeats are account-scoped. A single timestamp used to suppress a\n' +
+    '    // newly selected account for the remainder of the 15-second probe window,\n' +
+    '    // which made multi-account login/collector startup appear stuck.\n' +
+    '    private readonly ConcurrentDictionary<string, DateTimeOffset> _lastForegroundWsHeartbeatAtByAccount = new(StringComparer.OrdinalIgnoreCase);\n' +
+    '    private bool _wsRuntimeBound;\n' +
+    '    private EventHandler? _wsSessionsChangedHandler;\n' +
+    '    private readonly ConcurrentDictionary<string, long> _wsStatusSequence = new(StringComparer.OrdinalIgnoreCase);\n' +
+    '    private readonly Dictionary<WebView2, WsNavigationLifecycle> _wsNavigation = new();\n' +
+    '    private readonly ConcurrentQueue<DeferredWsMessage> _wsDeferredMessages = new();\n' +
+    '    private int _wsDeferredMessageCount;\n' +
+    '    private const int MaxDeferredWsMessages = 128;\n' +
+    '\n' +
+    '    private sealed record DeferredWsMessage(\n' +
+    '        string AccountId,\n' +
+    '        long Generation,\n' +
+    '        CoreWebView2 Sender,\n' +
+    '        CoreWebView2WebMessageReceivedEventArgs Args,\n' +
+    '        string RawMessage);\n' +
+    '\n' +
+    '    public LegacyUiHostPage()\n' +
+    '    {\n' +
+    '        InitializeComponent();\n' +
+    '        // The 6.0 workbench shell always uses the guarded local SQLite service.\n' +
+    '        // There is one production storage path; old connection profiles are\n' +
+    '        // intentionally ignored instead of creating a second data source.\n' +
+    '        _api = null;\n' +
+    '        Loaded += OnLoaded;\n' +
+    '        Unloaded += OnUnloaded;\n' +
+    '        _wsResizeTimer = DispatcherQueue.GetForCurrentThread()?.CreateTimer();\n' +
+    '        if (_wsResizeTimer is not null)\n' +
+    '        {\n' +
+    '            _wsResizeTimer.Interval = TimeSpan.FromMilliseconds(150);\n' +
+    '            _wsResizeTimer.IsRepeating = false;\n' +
+    '            _wsResizeTimer.Tick += async (_, _) =>\n' +
+    '            {\n' +
+    '                _wsResizeTimer.Stop();\n' +
+    '                await ResizeWsOverlayFromDomAsync();\n' +
+    '            };\n' +
+    '        }\n' +
+    '        _desktopTools.CustomerNotificationInvoked += customerId =>\n' +
+    '        {\n' +
+    '            _ = DispatcherQueue.TryEnqueue(() =>\n' +
+    '            {\n' +
+    '                try\n' +
+    '                {\n' +
+    '                    App.MainWindowInstance?.Activate();\n' +
+    '                    GetBridge().Publish("open.customer", JsonSerializer.SerializeToElement(new { id = customerId }));\n' +
+    '                }\n' +
+    '                catch { }\n' +
+    '            });\n' +
+    '        };\n' +
+    '        _desktopBackupTimer = DispatcherQueue.GetForCurrentThread()?.CreateTimer();\n' +
+    '        if (_desktopBackupTimer is not null)\n' +
+    '        {\n' +
+    '            _desktopBackupTimer.Interval = TimeSpan.FromMinutes(1);\n' +
+    '            _desktopBackupTimer.Tick += async (_, _) =>\n' +
+    '            {\n' +
+    '                try\n' +
+    '                {\n' +
+    '                    if (_api is not null)\n' +
+    '                    {\n' +
+    '                        await _desktopTools.TryRunScheduledBackupAsync(_api, _activeWsAccountId);\n' +
+    '                        await _desktopTools.PollDueRemindersAsync(_api);\n' +
+    '                    }\n' +
+    '                }\n' +
+    '                catch { /* status retains the actionable error for Settings */ }\n' +
+    '            };\n' +
+    '        }\n' +
+    '    }\n' +
+    '\n' +
+    '    public async Task NavigateRouteAsync(string route, CancellationToken cancellationToken = default)\n' +
+    '    {\n' +
+    '        var requestedRoute = string.IsNullOrWhiteSpace(route) ? "home" : route;\n' +
+    '        if (!string.Equals(requestedRoute, _currentRoute, StringComparison.OrdinalIgnoreCase)) _wsSendGuard.Invalidate();\n' +
+    '        var generation = Interlocked.Increment(ref _routeGeneration);\n' +
+    '        _currentRoute = requestedRoute;\n' +
+    '        if (!string.Equals(requestedRoute, "ws-workbench", StringComparison.OrdinalIgnoreCase))\n' +
+    '        {\n' +
+    '            _wsChatPageActive = false;\n' +
+    '            App.MainWindowInstance?.NotifyWorkspaceRouteVisibility(this, false);\n' +
+    '        }\n' +
+    '#if STAGE51_ISOLATED_UI\n' +
+    '        Stage51Isolation.Record("host-route-request", new { route = requestedRoute, routeGeneration = generation });\n' +
+    '#endif\n' +
+    '        await EnsureInitializedAsync(cancellationToken);\n' +
+    '        if (_webView?.CoreWebView2 is null || generation != Volatile.Read(ref _routeGeneration)) return;\n' +
+    '\n' +
+    '        var selector = requestedRoute == "gpt"\n' +
+    '            ? "#gptAssistantNav"\n' +
+    '            : $"[data-view=\\"{EscapeJs(requestedRoute)}\\"]";\n' +
+    '        var script = $"document.querySelector({JsonSerializer.Serialize(selector)})?.click(); void 0;";\n' +
+    '        await _webView.CoreWebView2.ExecuteScriptAsync(script);\n' +
+    '        if (!string.Equals(requestedRoute, "ws-workbench", StringComparison.OrdinalIgnoreCase))\n' +
+    '        {\n' +
+    '            // Route changes only hide the native surface. The isolated WS\n' +
+    '            // WebView, login session, durable collector and queue stay alive\n' +
+    '            // so switching to customers/tasks does not interrupt collection.\n' +
+    '            // Explicit Close WS / clear-session and desktop shutdown still\n' +
+    '            // call CloseWsOverlayAsync and remain the only stop boundaries.\n' +
+    '            App.WsService.HideForeground();\n' +
+    '            HideWsOverlay();\n' +
+    '        }\n' +
+    '        else\n' +
+    '        {\n' +
+    '            // Route presentation never opens/recreates an account. The\n' +
+    '            // trusted shell observer selects the existing chat presentation;\n' +
+    '            // explicit WS Open remains the session-creation boundary.\n' +
+    '            RequestWsOverlayResize();\n' +
+    '            _ = ResizeWsOverlayFromDomAsync();\n' +
+    '        }\n' +
+    '    }\n' +
+    '\n' +
+    '    public async Task<bool> TryReloadAsync(CancellationToken cancellationToken = default)\n' +
+    '    {\n' +
+    '        try\n' +
+    '        {\n' +
+    '            await EnsureInitializedAsync(cancellationToken);\n' +
+    '            _webView?.CoreWebView2?.Reload();\n' +
+    '            return true;\n' +
+    '        }\n' +
+    '        catch\n' +
+    '        {\n' +
+    '            ShowStatus("知客页面加载失败，请检查本机服务后重试。", InfoBarSeverity.Error);\n' +
+    '            return false;\n' +
+    '        }\n' +
+    '    }\n' +
+    '\n' +
+    '    private async void OnLoaded(object sender, RoutedEventArgs args)\n' +
+    '    {\n' +
+    '#if STAGE51_ISOLATED_UI\n' +
+    '        Stage51Isolation.Record("host-loaded", new { route = _currentRoute });\n' +
+    '#endif\n' +
+    '        try { await EnsureInitializedAsync(); }\n' +
+    '        catch\n' +
+    '        {\n' +
+    '            ShowStatus("知客页面资源暂时不可用，请点击重试；本机数据不会受影响。", InfoBarSeverity.Error);\n' +
+    '            HostActions.Visibility = Visibility.Visible;\n' +
+    '        }\n' +
+    '    }\n' +
+    '\n' +
+    '    public async Task<bool> FlushBeforeCloseAsync(bool snapshot)\n' +
+    '    {\n' +
+    '        _wsSendGuard.Invalidate();\n' +
+    '        using var closeTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));\n' +
+    '        var wsClosed = true;\n' +
+    '        try { await App.WsService.ShutdownAsync(closeTimeout.Token); }\n' +
+    '        catch (OperationCanceledException) when (closeTimeout.IsCancellationRequested)\n' +
+    '        {\n' +
+    '            wsClosed = false;\n' +
+    '            Debug.WriteLine("WS overlay close timed out during desktop shutdown.");\n' +
+    '        }\n' +
+    '        catch (Exception error)\n' +
+    '        {\n' +
+    '            wsClosed = false;\n' +
+    '            Debug.WriteLine($"WS overlay close failed during desktop shutdown: {error.GetType().Name}");\n' +
+    '        }\n' +
+    '        if (!wsClosed) return false;\n' +
+    '        var webView = _webView;\n' +
+    '        if (webView?.CoreWebView2 is null) return true;\n' +
+    '        try\n' +
+    '        {\n' +
+    '            var options = snapshot ? "{snapshot:true}" : "{snapshot:false}";\n' +
+    '            // ExecuteScriptAsync serializes the immediate JavaScript return\n' +
+    '            // value; it does not reliably await a returned Promise. Start the\n' +
+    '            // async flush and publish a small boolean acknowledgement instead.\n' +
+    '            var startScript = "(()=>{window.__zhikeFlushResult=null;Prom'... 261986 more characters,
+  expected: /WS 页面未返回采集结果/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+[FAIL] WS local security contract
+
+[RUN] WS multi-account database isolation
+ws-multi-account: pass
+[PASS] WS multi-account database isolation
+
+[RUN] WS account runtime recovery
+ws-account-runtime-recovery: pass
+[PASS] WS account runtime recovery
+
+[RUN] WS native collector async full-list scan contract
+WS native collector contract: virtualized full-list scan yields across frames, restores scroll and schedules background scans
+[PASS] WS native collector async full-list scan contract
+
+[RUN] WS native collector P0 durability contract
+WS collector P0 contract: top-first scan, identity guard, durable checkpoints, final-packet semantics and incremental recapture are wired
+[PASS] WS native collector P0 durability contract
+
+[RUN] WS native collector diagnostics contract
+WS collector diagnostics contract: fixed-field lifecycle telemetry is local, sanitized and bounded to 256 KB
+[PASS] WS native collector diagnostics contract
+
+[RUN] WS native group monitor bridge contract
+node:assert:885
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: configuration must execute on the hidden collector WebView
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\desktop\tests\WsGroupMonitorNativeContractTests.cjs:42:8)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '',
+  expected: /CollectorView\.CoreWebView2\.ExecuteScriptAsync/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+[FAIL] WS native group monitor bridge contract
+
+[RUN] WS group monitor core
+ok - normalizes WhatsApp phone JIDs and phone text deterministically
+ok - creates a stable idempotency key for replayed events
+ok - resolves participant id before external ids, phone and manual mapping
+ok - returns pending for ambiguous and unmatched identities without creating a customer
+ok - counts only confirmed joins and excludes approval requests
+ok - projects a joined event per account, group and customer and protects manual locks
+ok - maps left and removed events to distinct customer relationship states
+ok - does not treat two distinct id-less events as duplicates
+ws-group-monitor-core: pass
+[PASS] WS group monitor core
+
+[RUN] WS group monitor migration
+ws-group-monitor-migration: pass
+[PASS] WS group monitor migration
+
+[RUN] WS group monitor sidecar API
+ws-group-monitor-api: pass
+[PASS] WS group monitor sidecar API
+
+[RUN] WS group monitor ingest
+ws-group-monitor-ingest: pass
+[PASS] WS group monitor ingest
+
+[RUN] WS customer group status projection
+customer-group-membership: status projection contract present
+[PASS] WS customer group status projection
+
+[RUN] WS customer group status projection runtime
+ws-group-status-projection-runtime: pass
+[PASS] WS customer group status projection runtime
+
+[RUN] WS native background lifecycle and bounds contract
+node:assert:885
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: a native heartbeat must wake throttled background collector timers
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\desktop\tests\WsBackgroundLifecycleContractTests.cjs:33:8)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'using Microsoft.UI.Dispatching;\n' +
+    'using Microsoft.UI.Xaml.Input;\n' +
+    'using Microsoft.UI.Xaml;\n' +
+    'using Microsoft.UI.Xaml.Controls;\n' +
+    'using Microsoft.Web.WebView2.Core;\n' +
+    'using Windows.ApplicationModel.DataTransfer;\n' +
+    'using System.Diagnostics;\n' +
+    'using System.Net.Http;\n' +
+    'using System.Text.Json;\n' +
+    'using System.Runtime.InteropServices.WindowsRuntime;\n' +
+    'using System.Collections.Concurrent;\n' +
+    'using Zhike.Desktop.Services;\n' +
+    '\n' +
+    'namespace Zhike.Desktop.Views;\n' +
+    '\n' +
+    'public sealed partial class LegacyUiHostPage : Page\n' +
+    '{\n' +
+    '    private const int MaxBridgeMessageChars = 50 * 1024 * 1024;\n' +
+    '    private const int MaxBridgePayloadChars = 48 * 1024 * 1024;\n' +
+    '    private readonly WebViewProfileService _profiles = new();\n' +
+    '    private readonly WebViewProfileService _wsProfiles = new();\n' +
+    '    private readonly WsAccountStore _wsAccountStore = new();\n' +
+    '    private readonly LocalQueue _wsQueue = new();\n' +
+    '    private readonly SemaphoreSlim _wsGate = new(1, 1);\n' +
+    '    private readonly SemaphoreSlim _wsFlushGate = new(1, 1);\n' +
+    '    private readonly SemaphoreSlim _wsMessageGate = new(1, 1);\n' +
+    '    private readonly SemaphoreSlim _wsDeferredDrainGate = new(1, 1);\n' +
+    '    private readonly SemaphoreSlim _wsStatusGate = new(1, 1);\n' +
+    '    private readonly SemaphoreSlim _initializeGate = new(1, 1);\n' +
+    '    private readonly WsSendOperationGuard _wsSendGuard = new();\n' +
+    '    private readonly AiBridgeService _ai = new();\n' +
+    '    private readonly DesktopToolsService _desktopTools = new();\n' +
+    '    private ApiClient? _api;\n' +
+    '    private DesktopBridgeService? _bridge;\n' +
+    '    private ApiClient? _bridgeApi;\n' +
+    '    private WebView2? _webView;\n' +
+    '    private WebView2? _wsView;\n' +
+    '    private DispatcherQueueTimer? _wsResizeTimer;\n' +
+    '    private DispatcherQueueTimer? _desktopBackupTimer;\n' +
+    '    private string _activeWsAccountId = "default";\n' +
+    '    private string _wsViewAccountId = "";\n' +
+    '    private long _wsGeneration;\n' +
+    '    private bool _initialized;\n' +
+    '    private string _currentRoute = "home";\n' +
+    '    private bool _wsChatPageActive;\n' +
+    '    private string _wsPresentationAccountId = string.Empty;\n' +
+    '    private long _routeGeneration;\n' +
+    '    private bool _hostWindowRenderable = true;\n' +
+    '    private int _wsBoundsRefreshInFlight;\n' +
+    '    private string _wsBoundsDocumentId = string.Empty;\n' +
+    '    private long _lastWsBoundsSequence;\n' +
+    '    // The shell is redrawn when collection/AI state changes. During that\n' +
+    '    // synchronous redraw #wsBrowserHost can report a transient 0x0 or a\n' +
+    '    // fractional geometry for one frame. Applying every sample directly to\n' +
+    '    // the native WebView makes the visible WhatsApp surface shiver. Keep the\n' +
+    '    // last stable rectangle and only touch WinUI when a meaningful change is\n' +
+    '    // observed.\n' +
+    '    private bool _wsOverlayGeometryApplied;\n' +
+    '    private double _lastWsOverlayX;\n' +
+    '    private double _lastWsOverlayY;\n' +
+    '    private double _lastWsOverlayWidth;\n' +
+    '    private double _lastWsOverlayHeight;\n' +
+    '    // Heartbeats are account-scoped. A single timestamp used to suppress a\n' +
+    '    // newly selected account for the remainder of the 15-second probe window,\n' +
+    '    // which made multi-account login/collector startup appear stuck.\n' +
+    '    private readonly ConcurrentDictionary<string, DateTimeOffset> _lastForegroundWsHeartbeatAtByAccount = new(StringComparer.OrdinalIgnoreCase);\n' +
+    '    private bool _wsRuntimeBound;\n' +
+    '    private EventHandler? _wsSessionsChangedHandler;\n' +
+    '    private readonly ConcurrentDictionary<string, long> _wsStatusSequence = new(StringComparer.OrdinalIgnoreCase);\n' +
+    '    private readonly Dictionary<WebView2, WsNavigationLifecycle> _wsNavigation = new();\n' +
+    '    private readonly ConcurrentQueue<DeferredWsMessage> _wsDeferredMessages = new();\n' +
+    '    private int _wsDeferredMessageCount;\n' +
+    '    private const int MaxDeferredWsMessages = 128;\n' +
+    '\n' +
+    '    private sealed record DeferredWsMessage(\n' +
+    '        string AccountId,\n' +
+    '        long Generation,\n' +
+    '        CoreWebView2 Sender,\n' +
+    '        CoreWebView2WebMessageReceivedEventArgs Args,\n' +
+    '        string RawMessage);\n' +
+    '\n' +
+    '    public LegacyUiHostPage()\n' +
+    '    {\n' +
+    '        InitializeComponent();\n' +
+    '        // The 6.0 workbench shell always uses the guarded local SQLite service.\n' +
+    '        // There is one production storage path; old connection profiles are\n' +
+    '        // intentionally ignored instead of creating a second data source.\n' +
+    '        _api = null;\n' +
+    '        Loaded += OnLoaded;\n' +
+    '        Unloaded += OnUnloaded;\n' +
+    '        _wsResizeTimer = DispatcherQueue.GetForCurrentThread()?.CreateTimer();\n' +
+    '        if (_wsResizeTimer is not null)\n' +
+    '        {\n' +
+    '            _wsResizeTimer.Interval = TimeSpan.FromMilliseconds(150);\n' +
+    '            _wsResizeTimer.IsRepeating = false;\n' +
+    '            _wsResizeTimer.Tick += async (_, _) =>\n' +
+    '            {\n' +
+    '                _wsResizeTimer.Stop();\n' +
+    '                await ResizeWsOverlayFromDomAsync();\n' +
+    '            };\n' +
+    '        }\n' +
+    '        _desktopTools.CustomerNotificationInvoked += customerId =>\n' +
+    '        {\n' +
+    '            _ = DispatcherQueue.TryEnqueue(() =>\n' +
+    '            {\n' +
+    '                try\n' +
+    '                {\n' +
+    '                    App.MainWindowInstance?.Activate();\n' +
+    '                    GetBridge().Publish("open.customer", JsonSerializer.SerializeToElement(new { id = customerId }));\n' +
+    '                }\n' +
+    '                catch { }\n' +
+    '            });\n' +
+    '        };\n' +
+    '        _desktopBackupTimer = DispatcherQueue.GetForCurrentThread()?.CreateTimer();\n' +
+    '        if (_desktopBackupTimer is not null)\n' +
+    '        {\n' +
+    '            _desktopBackupTimer.Interval = TimeSpan.FromMinutes(1);\n' +
+    '            _desktopBackupTimer.Tick += async (_, _) =>\n' +
+    '            {\n' +
+    '                try\n' +
+    '                {\n' +
+    '                    if (_api is not null)\n' +
+    '                    {\n' +
+    '                        await _desktopTools.TryRunScheduledBackupAsync(_api, _activeWsAccountId);\n' +
+    '                        await _desktopTools.PollDueRemindersAsync(_api);\n' +
+    '                    }\n' +
+    '                }\n' +
+    '                catch { /* status retains the actionable error for Settings */ }\n' +
+    '            };\n' +
+    '        }\n' +
+    '    }\n' +
+    '\n' +
+    '    public async Task NavigateRouteAsync(string route, CancellationToken cancellationToken = default)\n' +
+    '    {\n' +
+    '        var requestedRoute = string.IsNullOrWhiteSpace(route) ? "home" : route;\n' +
+    '        if (!string.Equals(requestedRoute, _currentRoute, StringComparison.OrdinalIgnoreCase)) _wsSendGuard.Invalidate();\n' +
+    '        var generation = Interlocked.Increment(ref _routeGeneration);\n' +
+    '        _currentRoute = requestedRoute;\n' +
+    '        if (!string.Equals(requestedRoute, "ws-workbench", StringComparison.OrdinalIgnoreCase))\n' +
+    '        {\n' +
+    '            _wsChatPageActive = false;\n' +
+    '            App.MainWindowInstance?.NotifyWorkspaceRouteVisibility(this, false);\n' +
+    '        }\n' +
+    '#if STAGE51_ISOLATED_UI\n' +
+    '        Stage51Isolation.Record("host-route-request", new { route = requestedRoute, routeGeneration = generation });\n' +
+    '#endif\n' +
+    '        await EnsureInitializedAsync(cancellationToken);\n' +
+    '        if (_webView?.CoreWebView2 is null || generation != Volatile.Read(ref _routeGeneration)) return;\n' +
+    '\n' +
+    '        var selector = requestedRoute == "gpt"\n' +
+    '            ? "#gptAssistantNav"\n' +
+    '            : $"[data-view=\\"{EscapeJs(requestedRoute)}\\"]";\n' +
+    '        var script = $"document.querySelector({JsonSerializer.Serialize(selector)})?.click(); void 0;";\n' +
+    '        await _webView.CoreWebView2.ExecuteScriptAsync(script);\n' +
+    '        if (!string.Equals(requestedRoute, "ws-workbench", StringComparison.OrdinalIgnoreCase))\n' +
+    '        {\n' +
+    '            // Route changes only hide the native surface. The isolated WS\n' +
+    '            // WebView, login session, durable collector and queue stay alive\n' +
+    '            // so switching to customers/tasks does not interrupt collection.\n' +
+    '            // Explicit Close WS / clear-session and desktop shutdown still\n' +
+    '            // call CloseWsOverlayAsync and remain the only stop boundaries.\n' +
+    '            App.WsService.HideForeground();\n' +
+    '            HideWsOverlay();\n' +
+    '        }\n' +
+    '        else\n' +
+    '        {\n' +
+    '            // Route presentation never opens/recreates an account. The\n' +
+    '            // trusted shell observer selects the existing chat presentation;\n' +
+    '            // explicit WS Open remains the session-creation boundary.\n' +
+    '            RequestWsOverlayResize();\n' +
+    '            _ = ResizeWsOverlayFromDomAsync();\n' +
+    '        }\n' +
+    '    }\n' +
+    '\n' +
+    '    public async Task<bool> TryReloadAsync(CancellationToken cancellationToken = default)\n' +
+    '    {\n' +
+    '        try\n' +
+    '        {\n' +
+    '            await EnsureInitializedAsync(cancellationToken);\n' +
+    '            _webView?.CoreWebView2?.Reload();\n' +
+    '            return true;\n' +
+    '        }\n' +
+    '        catch\n' +
+    '        {\n' +
+    '            ShowStatus("知客页面加载失败，请检查本机服务后重试。", InfoBarSeverity.Error);\n' +
+    '            return false;\n' +
+    '        }\n' +
+    '    }\n' +
+    '\n' +
+    '    private async void OnLoaded(object sender, RoutedEventArgs args)\n' +
+    '    {\n' +
+    '#if STAGE51_ISOLATED_UI\n' +
+    '        Stage51Isolation.Record("host-loaded", new { route = _currentRoute });\n' +
+    '#endif\n' +
+    '        try { await EnsureInitializedAsync(); }\n' +
+    '        catch\n' +
+    '        {\n' +
+    '            ShowStatus("知客页面资源暂时不可用，请点击重试；本机数据不会受影响。", InfoBarSeverity.Error);\n' +
+    '            HostActions.Visibility = Visibility.Visible;\n' +
+    '        }\n' +
+    '    }\n' +
+    '\n' +
+    '    public async Task<bool> FlushBeforeCloseAsync(bool snapshot)\n' +
+    '    {\n' +
+    '        _wsSendGuard.Invalidate();\n' +
+    '        using var closeTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));\n' +
+    '        var wsClosed = true;\n' +
+    '        try { await App.WsService.ShutdownAsync(closeTimeout.Token); }\n' +
+    '        catch (OperationCanceledException) when (closeTimeout.IsCancellationRequested)\n' +
+    '        {\n' +
+    '            wsClosed = false;\n' +
+    '            Debug.WriteLine("WS overlay close timed out during desktop shutdown.");\n' +
+    '        }\n' +
+    '        catch (Exception error)\n' +
+    '        {\n' +
+    '            wsClosed = false;\n' +
+    '            Debug.WriteLine($"WS overlay close failed during desktop shutdown: {error.GetType().Name}");\n' +
+    '        }\n' +
+    '        if (!wsClosed) return false;\n' +
+    '        var webView = _webView;\n' +
+    '        if (webView?.CoreWebView2 is null) return true;\n' +
+    '        try\n' +
+    '        {\n' +
+    '            var options = snapshot ? "{snapshot:true}" : "{snapshot:false}";\n' +
+    '            // ExecuteScriptAsync serializes the immediate JavaScript return\n' +
+    '            // value; it does not reliably await a returned Promise. Start the\n' +
+    '            // async flush and publish a small boolean acknowledgement instead.\n' +
+    '            var startScript = "(()=>{window.__zhikeFlushResult=null;Prom'... 261986 more characters,
+  expected: /window\.__zhikeWsBackgroundTick\?\.\(\)/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+
+[RUN] WS process runtime coordinator contract
+[FAIL] WS native background lifecycle and bounds contract
+WS runtime coordinator contract: process-owned multi-account policy, foreground isolation, fair leases and retry backoff pass
+[PASS] WS process runtime coordinator contract
+
+[RUN] WS process WebView session pool contract
+node:assert:885
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /LeaseNextBackgroundAccount\(\)/. Input:
+
+'public async Task TickAsync(CancellationToken cancellationToken = default)\n' +
+  '    {\n' +
+  '#if STAGE51_ISOLATED_UI\n' +
+  '        // The native UI acceptance process never drives a WhatsApp collector.\n' +
+  '        await Task.CompletedTask;\n' +
+  '        return;\n' +
+  '#else\n' +
+  '        if (!await _tickGate.WaitAsync(0, cancellationToken)) return;\n' +
+  '        try\n' +
+  '        {\n' +
+  '            var factory = _factory;\n' +
+  '            var heartbeat = _heartbeat;\n' +
+  '            if (factory is null || heartbeat is null) return;\n' +
+  '            var snapshot = _coordinator.Snapshot();\n' +
+  '            if (!string.IsNullOrWhiteSpace(snapshot.ForegroundAccountId)\n' +
+  '                && _pool.TryGet(snapshot.ForegroundAccountId, out var foreground)\n' +
+  '                && foreground is not null)\n' +
+  '                await RunHeartbeatAsync(foreground, false, heartbeat, cancellationToken).ConfigureAwait(false);\n' +
+  '\n' +
+  '            // RD02: no automatic background lease, WebView creation, profile\n' +
+  '            // preparation or collection heartbeat. Manual foreground selection\n' +
+  '            // is the only account creation boundary.\n' +
+  '            if (_flush is not null) await _flush(cancellationToken).ConfigureAwait(false);\n' +
+  '        }\n' +
+  '        finally { _tickGate.Release(); }\n' +
+  '#endif\n' +
+  '    }\n' +
+  '\n' +
+  '    '
+
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\desktop\tests\WsProcessSessionPoolContractTests.cjs:96:8)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'public async Task TickAsync(CancellationToken cancellationToken = default)\n' +
+    '    {\n' +
+    '#if STAGE51_ISOLATED_UI\n' +
+    '        // The native UI acceptance process never drives a WhatsApp collector.\n' +
+    '        await Task.CompletedTask;\n' +
+    '        return;\n' +
+    '#else\n' +
+    '        if (!await _tickGate.WaitAsync(0, cancellationToken)) return;\n' +
+    '        try\n' +
+    '        {\n' +
+    '            var factory = _factory;\n' +
+    '            var heartbeat = _heartbeat;\n' +
+    '            if (factory is null || heartbeat is null) return;\n' +
+    '            var snapshot = _coordinator.Snapshot();\n' +
+    '            if (!string.IsNullOrWhiteSpace(snapshot.ForegroundAccountId)\n' +
+    '                && _pool.TryGet(snapshot.ForegroundAccountId, out var foreground)\n' +
+    '                && foreground is not null)\n' +
+    '                await RunHeartbeatAsync(foreground, false, heartbeat, cancellationToken).ConfigureAwait(false);\n' +
+    '\n' +
+    '            // RD02: no automatic background lease, WebView creation, profile\n' +
+    '            // preparation or collection heartbeat. Manual foreground selection\n' +
+    '            // is the only account creation boundary.\n' +
+    '            if (_flush is not null) await _flush(cancellationToken).ConfigureAwait(false);\n' +
+    '        }\n' +
+    '        finally { _tickGate.Release(); }\n' +
+    '#endif\n' +
+    '    }\n' +
+    '\n' +
+    '    ',
+  expected: /LeaseNextBackgroundAccount\(\)/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+[FAIL] WS process WebView session pool contract
+
+[RUN] WS process runtime coordinator scheduling
+WS runtime coordinator scheduling: foreground isolation, fair rotation, per-account backoff and collection policy pass
+[PASS] WS process runtime coordinator scheduling
+
+[RUN] WS parent-route visibility runtime
+WS route visibility runtime: 12 pages, chat-only native anchor, account fencing and ordered WS enter/exit pass
+[PASS] WS parent-route visibility runtime
+
+[RUN] WS hidden native scheduler runtime
+WS hidden scheduler runtime: dormant rAF/page timers are advanced safely by the native heartbeat
+[PASS] WS hidden native scheduler runtime
+
+[RUN] WS native group exclusion runtime
+WS VIP-group runtime: explicit whitelist allows one VIP group, ordinary groups stay excluded, and unread policy remains fail-closed
+[PASS] WS native group exclusion runtime
+
+[RUN] WS native conversation identity runtime
+WS conversation identity runtime: data-jid/data-chat-id/data-group-id are extracted and groups are surfaced separately
+[PASS] WS native conversation identity runtime
+
+[RUN] WS durable queue Web JSON and API roundtrip
+WS queue Web JSON/API roundtrip passed: account, bidirectional evidence, checkpoint coverage and original body preserved
+[PASS] WS durable queue Web JSON and API roundtrip
+
+[RUN] WS native collector chunk runtime
+WS native collector chunk runtime: 5,000 rows remain complete and each WebView2 payload stays below 700k
+[PASS] WS native collector chunk runtime
+
+[RUN] WS native collector physical-bottom runtime
+WS full-list runtime: the physical bottom window is rendered and collected before completion
+[PASS] WS native collector physical-bottom runtime
+
+[RUN] WS native collector in-flight discovery runtime
+WS discover-all progress runtime: in-flight reads expose partial rows and completion publishes all rows
+[PASS] WS native collector in-flight discovery runtime
+
+[RUN] WS native collector full-list stall runtime
+WS full-list stall runtime: a frozen virtual list yields after 30 seconds with partial checkpoints
+[PASS] WS native collector full-list stall runtime
+
+[RUN] WS native collector navigation/retry runtime
+WS navigation/retry runtime: archive rows are excluded and identity failures do not block later customers
+[PASS] WS native collector navigation/retry runtime
+
+[RUN] WS native collector history packet runtime
+WS history packet runtime: bidirectional roles, multiline fidelity, 600 KB chunking, durable resume, phone increment and retry safety pass
+[PASS] WS native collector history packet runtime
+
+[RUN] WS native collector foreground isolation runtime
+WS foreground isolation runtime: no persistent collector is injected; manual capture is read-only and on-demand
+[PASS] WS native collector foreground isolation runtime
+
+[RUN] WS native media bridge contract
+ws-media-bridge-contract: explicit media action, safety refusal and conversation guard required
+[PASS] WS native media bridge contract
+
+[RUN] WS unread skip contract
+WS unread skip contract: unread conversations are never eligible for automatic opening
+[PASS] WS unread skip contract
+
+[RUN] WS strict unread detection runtime
+WS unread detection runtime: strict badges pass, action/preview false positives are rejected, unknown DOM is conservative
+[PASS] WS strict unread detection runtime
+
+[RUN] WS read-history collector runtime
+WS read-history collector runtime: read-only collection, unknown fail-safe, busy guard and delayed-history quiet window passed
+[PASS] WS read-history collector runtime
+
+[RUN] WS ChatKnow UI contract
+node:assert:885
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /自动采集已读会话/. Input:
+
+'(() => {\n' +
+  '  const core = window.ZhikeWsCore;\n' +
+  '  const businessPages = window.ZhikeWsBusinessPages;\n' +
+  '  const hotProfileCore = window.ZhikeHotChatProfile || {};\n' +
+  '  const getHost = () => window.__zhikeRegistryHost;\n' +
+  '  const readPanelCollapsed = panel => {\n' +
+  '    try {\n' +
+  '      const saved = localStorage.getItem(`zhike.ws.${panel}.collapsed`);\n' +
+  "      return saved == null ? panel === 'capture' : saved === 'true';\n" +
+  "    } catch { return panel === 'capture'; }\n" +
+  '  };\n' +
+  '  const writePanelCollapsed = (panel, value) => {\n' +
+  '    try { localStorage.setItem(`zhike.ws.${panel}.collapsed`, String(Boolean(value))); } catch {}\n' +
+  '  };\n' +
+  "  const ASSIST_DRAWER_TABS = new Set(['ai', 'profile', 'reply', 'broadcast', 'export', 'diagnostics']);\n" +
+  '  const WS_WORKSPACE_VIEW_META = Object.freeze([\n' +
+  "    { id: 'overview', label: '工作台首页', icon: 'home', hint: '账号、采集与工作入口' },\n" +
+  "    { id: 'accounts', label: '账号管理', icon: 'phone', hint: '多账号与连接状态' },\n" +
+  "    { id: 'chat', label: '前台聊天', icon: 'message', hint: '原生 WS 聊天与客户档案' },\n" +
+  "    { id: 'groups', label: '群组管理', icon: 'layers', hint: '群组目录与监测端口' },\n" +
+  "    { id: 'members', label: '群成员管理', icon: 'users', hint: '成员事件与 CRM 关系' },\n" +
+  "    { id: 'collection', label: '数据采集', icon: 'database', hint: '采集任务、断点与跳过规则' },\n" +
+  "    { id: 'contacts', label: '通讯录管理', icon: 'users', hint: '已同步联系人与号码核验' },\n" +
+  "    { id: 'ai', label: 'AI助手', icon: 'spark', hint: '队列、证据与分析结果' },\n" +
+  "    { id: 'crm', label: 'CRM客户', icon: 'users', hint: '客户主档匹配与冲突' },\n" +
+  "    { id: 'tasks', label: '任务中心', icon: 'calendar', hint: '跟进任务与提醒' },\n" +
+  "    { id: 'logs', label: '操作日志', icon: 'history', hint: '审计记录、运行快照与关联查询' },\n" +
+  "    { id: 'settings', label: '工具与设置', icon: 'settings', hint: '翻译、导入、导出与安全开关' },\n" +
+  '  ]);\n' +
+  '  const WS_WORKSPACE_VIEW_IDS = new Set(WS_WORKSPACE_VIEW_META.map(item => item.id));\n' +
+  '  function readWsWorkspaceView() {\n' +
+  '    try {\n' +
+  "      const value = localStorage.getItem('zhike.ws.workspace-view');\n" +
+  "      return WS_WORKSPACE_VIEW_IDS.has(value) ? value : 'overview';\n" +
+  "    } catch { return 'overview'; }\n" +
+  '  }\n' +
+  '  function readWsWorkspaceCollapsed() {\n' +
+  '    try {\n' +
+  "      const saved = localStorage.getItem('zhike.ws.workspace-nav-collapsed');\n" +
+  "      return saved == null ? false : saved === 'true';\n" +
+  '    } catch { return false; }\n' +
+  '  }\n' +
+  '  function writeWsWorkspaceState(view, collapsed) {\n' +
+  '    try {\n' +
+  "      const normalized = WS_WORKSPACE_VIEW_IDS.has(view) ? view : 'overview';\n" +
+  "      localStorage.setItem('zhike.ws.workspace-view', normalized);\n" +
+  "      localStorage.setItem('zhike.ws.workspace-nav-collapsed', String(Boolean(collapsed)));\n" +
+  '    } catch {}\n' +
+  '  }\n' +
+  '  function wsWorkspacePageState(view = state?.wsWorkspaceView, accountId = state?.activeAccountId) {\n' +
+  "    const key = `${text(accountId || 'default')}:${WS_WORKSPACE_VIEW_IDS.has(view) ? view : 'overview'}`;\n" +
+  "    if (!state.wsWorkspacePageState[key]) state.wsWorkspacePageState[key] = { scrollTop: 0, filter: '', statusFilter: 'all', page: 1, busy: false, status: '尚未刷新', error: '' };\n" +
+  '    return state.wsWorkspacePageState[key];\n' +
+  '  }\n' +
+  '  function clampAssistDrawerWidth(value) {\n' +
+  '    const numeric = Number(value);\n' +
+  '    return Math.min(620, Math.max(360, Number.isFinite(numeric) ? Math.round(numeric) : 460));\n' +
+  '  }\n' +
+  "  function assistDrawerColumnWidth(layout = $('.ws-layout')) {\n" +
+  '    const desired = clampAssistDrawerWidth(state?.assistDrawerWidth ?? 460);\n' +
+  '    const viewportWidth = Number(window.innerWidth || 0);\n' +
+  '    if (viewportWidth > 0 && viewportWidth <= 900) return desired;\n' +
+  '    const layoutWidth = Number(layout?.getBoundingClientRect?.().width || layout?.clientWidth || viewportWidth || 1280);\n' +
+  "    const leftWidth = state?.wsWorkspaceView === 'chat' ? 0 : state?.leftCollapsed ? 48 : (viewportWidth > 0 && viewportWidth <= 1060 ? 180 : viewportWidth <= 1320 ? 204 : 232);\n" +
+  '    const centerMin = viewportWidth > 0 && viewportWidth <= 1060 ? 300 : 360;\n' +
+  '    const available = Math.floor(layoutWidth - leftWidth - centerMin - 16);\n' +
+  '    return Math.max(250, Math.min(desired, available > 0 ? available : desired));\n' +
+  '  }\n' +
+  '  function normalizeAssistDrawerOffset(value) {\n' +
+  "    const candidate = value && typeof value === 'object' ? value : {};\n" +
+  '    const y = Number(candidate.y);\n' +
+  '    const viewportHeight = Number(window.innerHeight || 900);\n' +
+  '    // The drawer fills its page column. Keep the persisted nudge deliberately\n' +
+  '    // small so its header and close button cannot be dragged off-screen.\n' +
+  '    const maxY = Math.min(64, Math.max(0, viewportHeight - 180));\n' +
+  '    return {\n' +
+  '      // Horizontal movement is intentionally disabled. The drawer must stay\n' +
+  '      // inside the right page column and never overlap the native WS surface.\n' +
+  '      x: 0,\n' +
+  '      y: Number.isFinite(y) ? Math.max(-maxY, Math.min(maxY, Math.round(y))) : 0,\n' +
+  '    };\n' +
+  '  }\n' +
+  '  function readAssistDrawerState(key) {\n' +
+  "    const defaults = { open: Number(window.innerWidth || 1440) >= 1200 && !readPanelCollapsed('right'), tab: 'profile', width: 360, offset: { x: 0, y: 0 } };\n" +
+  '    try {\n' +
+  '      const raw = localStorage.getItem(`zhike.ws.assist-drawer.${key}`);\n' +
+  '      if (raw == null) return defaults[key];\n' +
+  "      if (key === 'open') return raw === 'true';\n" +
+  "      if (key === 'tab') return ASSIST_DRAWER_TABS.has(raw) ? raw : defaults.tab;\n" +
+  "      if (key === 'width') return clampAssistDrawerWidth(raw);\n" +
+  "      if (key === 'offset') return normalizeAssistDrawerOffset(JSON.parse(raw));\n" +
+  '    } catch {}\n' +
+  '    return defaults[key];\n' +
+  '  }\n' +
+  '  function writeAssistDrawerState(key, value) {\n' +
+  '    try {\n' +
+  "      const normalized = key === 'width'\n" +
+  '        ? clampAssistDrawerWidth(value)\n' +
+  "        : key === 'tab'\n" +
+  "          ? (ASSIST_DRAWER_TABS.has(String(value)) ? String(value) : 'ai')\n" +
+  "          : key === 'offset'\n" +
+  '            ? normalizeAssistDrawerOffset(value)\n' +
+  '            : Boolean(value);\n' +
+  "      localStorage.setItem(`zhike.ws.assist-drawer.${key}`, key === 'offset' ? JSON.stringify(normalized) : String(normalized));\n" +
+  '    } catch {}\n' +
+  '  }\n' +
+  `  const esc = value => getHost()?.esc?.(value) || String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));\n` +
+  '  const $ = (selector, root = document) => root.querySelector(selector);\n' +
+  '  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];\n' +
+  '  const nowIso = () => new Date().toISOString();\n' +
+  "  const text = value => String(value == null ? '' : value).trim();\n" +
+  "  const COLLECTION_CAPABILITY_BLOCKED = 'COLLECTION_CAPABILITY_BLOCKED';\n" +
+  "  const BLOCKED_COLLECTION_CAPABILITY = Object.freeze({ state: 'blocked', code: COLLECTION_CAPABILITY_BLOCKED, reason: '后台采集依赖复制认证状态，已按安全边界停用；前台聊天和手动导入可用。', backgroundCollection: false, automaticHistory: false, groupMonitoring: false, foregroundFallback: false, manualVisibleImport: true });\n" +
+  "  const BLOCKED_COLLECTOR_ACTIONS = new Set(['discover-conversations', 'collect-all-read', 'configure-group-monitor', 'start-group-monitor', 'configure-ws-groups', 'configure-vip-groups']);\n" +
+  '  function collectionCapability(accountId = state.activeAccountId) {\n' +
+  '    const native = state.accounts.find(account => String(account.id) === String(accountId))?.collectionCapability;\n' +
+  '    // This release has no independently authorized background provider. An\n' +
+  '    // omitted/unknown capability must never unlock the old profile collector.\n' +
+  "    return { ...BLOCKED_COLLECTION_CAPABILITY, reason: native?.state === 'blocked' && native?.code === COLLECTION_CAPABILITY_BLOCKED ? text(native.reason).slice(0, 500) || BLOCKED_COLLECTION_CAPABILITY.reason : BLOCKED_COLLECTION_CAPABILITY.reason };\n" +
+  '  }\n' +
+  '  function rememberCollectionCapability(payload, accountId = payload?.accountId) {\n' +
+  '    if (!payload?.collectionCapability || !accountId) return;\n' +
+  "    const received = payload.collectionCapability, recognized = received.state === 'blocked' && received.code === COLLECTION_CAPABILITY_BLOCKED;\n" +
+  '    const capability = { ...BLOCKED_COLLECTION_CAPABILITY, reason: recognized ? text(received.reason).slice(0, 500) || BLOCKED_COLLECTION_CAPABILITY.reason : BLOCKED_COLLECTION_CAPABILITY.reason };\n' +
+  '    const previous = state.accounts.find(account => String(account.id) === String(accountId))?.collectionCapability;\n' +
+  '    if (previous?.state === capability.state && previous.code === capability.code && previous.reason === capability.reason) return;\n' +
+  '    state.accounts = state.accounts.map(account => String(account.id) === String(accountId) ? { ...account, collectionCapability: capability } : account);\n' +
+  '  }\n' +
+  '  function collectionBlockedResult(accountId = state.activeAccountId) {\n' +
+  '    const capability = collectionCapability(accountId);\n' +
+  '    return { blocked: true, supported: false, started: false, retryable: false, code: capability.code, error: `${capability.code}：${capability.reason}`, collectionCapability: capability };\n' +
+  '  }\n' +
+  "  function rejectCollectionAction(context = captureContext('')) {\n" +
+  '    const result = collectionBlockedResult(context.accountId);\n' +
+  '    if (!contextCurrent(context)) return result;\n' +
+  "    state.error = result.error;toast(result.error, 'x');render();return result;\n" +
+  '  }\n' +
+  '  function collectionCapabilityNotice(accountId = state.activeAccountId) {\n' +
+  '    const result = collectionBlockedResult(accountId);\n' +
+  '    return `<p class="ws-coverage-warning" role="status" data-collection-capability="blocked">${esc(result.error)}</p>`;\n' +
+  '  }\n' +
+  '  function collectionControlAttributes() {\n' +
+  '    return `disabled aria-disabled="true" title="${esc(collectionBlockedResult().error)}"`;\n' +
+  '  }\n' +
+  "  function createGroupMonitorState(accountId = 'default') {\n" +
+  "    return { accountId: String(accountId || 'default'), profile: null, health: null, events: [], loading: false, busy: false, error: '', statusFilter: 'all', draftJid: '', draftName: '', lastLoadedAt: '', catalog: [] };\n" +
+  '  }\n' +
+  '  const CONVERSATION_RENDER_BATCH = 120;\n' +
+  '  const VERIFIED_NATIVE_DIRECTION_SOURCE_MAP = new Map([\n' +
+  "    ['class-message-out', 'send'], ['class-message-in', 'receive'],\n" +
+  "    ['data-id-outgoing', 'send'], ['data-id-incoming', 'receive'],\n" +
+  "    ['icon-tail-out', 'send'], ['icon-tail-in', 'receive'],\n" +
+  "    ['palette-outgoing', 'send'], ['palette-incoming', 'receive'],\n" +
+  "    ['geometry-align-outgoing', 'send'], ['geometry-align-incoming', 'receive'],\n" +
+  "    ['geometry-right', 'send'], ['geometry-left"... 372834 more characters
+
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\ws-workbench-ui.test.cjs:42:8)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '(() => {\n' +
+    '  const core = window.ZhikeWsCore;\n' +
+    '  const businessPages = window.ZhikeWsBusinessPages;\n' +
+    '  const hotProfileCore = window.ZhikeHotChatProfile || {};\n' +
+    '  const getHost = () => window.__zhikeRegistryHost;\n' +
+    '  const readPanelCollapsed = panel => {\n' +
+    '    try {\n' +
+    '      const saved = localStorage.getItem(`zhike.ws.${panel}.collapsed`);\n' +
+    "      return saved == null ? panel === 'capture' : saved === 'true';\n" +
+    "    } catch { return panel === 'capture'; }\n" +
+    '  };\n' +
+    '  const writePanelCollapsed = (panel, value) => {\n' +
+    '    try { localStorage.setItem(`zhike.ws.${panel}.collapsed`, String(Boolean(value))); } catch {}\n' +
+    '  };\n' +
+    "  const ASSIST_DRAWER_TABS = new Set(['ai', 'profile', 'reply', 'broadcast', 'export', 'diagnostics']);\n" +
+    '  const WS_WORKSPACE_VIEW_META = Object.freeze([\n' +
+    "    { id: 'overview', label: '工作台首页', icon: 'home', hint: '账号、采集与工作入口' },\n" +
+    "    { id: 'accounts', label: '账号管理', icon: 'phone', hint: '多账号与连接状态' },\n" +
+    "    { id: 'chat', label: '前台聊天', icon: 'message', hint: '原生 WS 聊天与客户档案' },\n" +
+    "    { id: 'groups', label: '群组管理', icon: 'layers', hint: '群组目录与监测端口' },\n" +
+    "    { id: 'members', label: '群成员管理', icon: 'users', hint: '成员事件与 CRM 关系' },\n" +
+    "    { id: 'collection', label: '数据采集', icon: 'database', hint: '采集任务、断点与跳过规则' },\n" +
+    "    { id: 'contacts', label: '通讯录管理', icon: 'users', hint: '已同步联系人与号码核验' },\n" +
+    "    { id: 'ai', label: 'AI助手', icon: 'spark', hint: '队列、证据与分析结果' },\n" +
+    "    { id: 'crm', label: 'CRM客户', icon: 'users', hint: '客户主档匹配与冲突' },\n" +
+    "    { id: 'tasks', label: '任务中心', icon: 'calendar', hint: '跟进任务与提醒' },\n" +
+    "    { id: 'logs', label: '操作日志', icon: 'history', hint: '审计记录、运行快照与关联查询' },\n" +
+    "    { id: 'settings', label: '工具与设置', icon: 'settings', hint: '翻译、导入、导出与安全开关' },\n" +
+    '  ]);\n' +
+    '  const WS_WORKSPACE_VIEW_IDS = new Set(WS_WORKSPACE_VIEW_META.map(item => item.id));\n' +
+    '  function readWsWorkspaceView() {\n' +
+    '    try {\n' +
+    "      const value = localStorage.getItem('zhike.ws.workspace-view');\n" +
+    "      return WS_WORKSPACE_VIEW_IDS.has(value) ? value : 'overview';\n" +
+    "    } catch { return 'overview'; }\n" +
+    '  }\n' +
+    '  function readWsWorkspaceCollapsed() {\n' +
+    '    try {\n' +
+    "      const saved = localStorage.getItem('zhike.ws.workspace-nav-collapsed');\n" +
+    "      return saved == null ? false : saved === 'true';\n" +
+    '    } catch { return false; }\n' +
+    '  }\n' +
+    '  function writeWsWorkspaceState(view, collapsed) {\n' +
+    '    try {\n' +
+    "      const normalized = WS_WORKSPACE_VIEW_IDS.has(view) ? view : 'overview';\n" +
+    "      localStorage.setItem('zhike.ws.workspace-view', normalized);\n" +
+    "      localStorage.setItem('zhike.ws.workspace-nav-collapsed', String(Boolean(collapsed)));\n" +
+    '    } catch {}\n' +
+    '  }\n' +
+    '  function wsWorkspacePageState(view = state?.wsWorkspaceView, accountId = state?.activeAccountId) {\n' +
+    "    const key = `${text(accountId || 'default')}:${WS_WORKSPACE_VIEW_IDS.has(view) ? view : 'overview'}`;\n" +
+    "    if (!state.wsWorkspacePageState[key]) state.wsWorkspacePageState[key] = { scrollTop: 0, filter: '', statusFilter: 'all', page: 1, busy: false, status: '尚未刷新', error: '' };\n" +
+    '    return state.wsWorkspacePageState[key];\n' +
+    '  }\n' +
+    '  function clampAssistDrawerWidth(value) {\n' +
+    '    const numeric = Number(value);\n' +
+    '    return Math.min(620, Math.max(360, Number.isFinite(numeric) ? Math.round(numeric) : 460));\n' +
+    '  }\n' +
+    "  function assistDrawerColumnWidth(layout = $('.ws-layout')) {\n" +
+    '    const desired = clampAssistDrawerWidth(state?.assistDrawerWidth ?? 460);\n' +
+    '    const viewportWidth = Number(window.innerWidth || 0);\n' +
+    '    if (viewportWidth > 0 && viewportWidth <= 900) return desired;\n' +
+    '    const layoutWidth = Number(layout?.getBoundingClientRect?.().width || layout?.clientWidth || viewportWidth || 1280);\n' +
+    "    const leftWidth = state?.wsWorkspaceView === 'chat' ? 0 : state?.leftCollapsed ? 48 : (viewportWidth > 0 && viewportWidth <= 1060 ? 180 : viewportWidth <= 1320 ? 204 : 232);\n" +
+    '    const centerMin = viewportWidth > 0 && viewportWidth <= 1060 ? 300 : 360;\n' +
+    '    const available = Math.floor(layoutWidth - leftWidth - centerMin - 16);\n' +
+    '    return Math.max(250, Math.min(desired, available > 0 ? available : desired));\n' +
+    '  }\n' +
+    '  function normalizeAssistDrawerOffset(value) {\n' +
+    "    const candidate = value && typeof value === 'object' ? value : {};\n" +
+    '    const y = Number(candidate.y);\n' +
+    '    const viewportHeight = Number(window.innerHeight || 900);\n' +
+    '    // The drawer fills its page column. Keep the persisted nudge deliberately\n' +
+    '    // small so its header and close button cannot be dragged off-screen.\n' +
+    '    const maxY = Math.min(64, Math.max(0, viewportHeight - 180));\n' +
+    '    return {\n' +
+    '      // Horizontal movement is intentionally disabled. The drawer must stay\n' +
+    '      // inside the right page column and never overlap the native WS surface.\n' +
+    '      x: 0,\n' +
+    '      y: Number.isFinite(y) ? Math.max(-maxY, Math.min(maxY, Math.round(y))) : 0,\n' +
+    '    };\n' +
+    '  }\n' +
+    '  function readAssistDrawerState(key) {\n' +
+    "    const defaults = { open: Number(window.innerWidth || 1440) >= 1200 && !readPanelCollapsed('right'), tab: 'profile', width: 360, offset: { x: 0, y: 0 } };\n" +
+    '    try {\n' +
+    '      const raw = localStorage.getItem(`zhike.ws.assist-drawer.${key}`);\n' +
+    '      if (raw == null) return defaults[key];\n' +
+    "      if (key === 'open') return raw === 'true';\n" +
+    "      if (key === 'tab') return ASSIST_DRAWER_TABS.has(raw) ? raw : defaults.tab;\n" +
+    "      if (key === 'width') return clampAssistDrawerWidth(raw);\n" +
+    "      if (key === 'offset') return normalizeAssistDrawerOffset(JSON.parse(raw));\n" +
+    '    } catch {}\n' +
+    '    return defaults[key];\n' +
+    '  }\n' +
+    '  function writeAssistDrawerState(key, value) {\n' +
+    '    try {\n' +
+    "      const normalized = key === 'width'\n" +
+    '        ? clampAssistDrawerWidth(value)\n' +
+    "        : key === 'tab'\n" +
+    "          ? (ASSIST_DRAWER_TABS.has(String(value)) ? String(value) : 'ai')\n" +
+    "          : key === 'offset'\n" +
+    '            ? normalizeAssistDrawerOffset(value)\n' +
+    '            : Boolean(value);\n' +
+    "      localStorage.setItem(`zhike.ws.assist-drawer.${key}`, key === 'offset' ? JSON.stringify(normalized) : String(normalized));\n" +
+    '    } catch {}\n' +
+    '  }\n' +
+    `  const esc = value => getHost()?.esc?.(value) || String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));\n` +
+    '  const $ = (selector, root = document) => root.querySelector(selector);\n' +
+    '  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];\n' +
+    '  const nowIso = () => new Date().toISOString();\n' +
+    "  const text = value => String(value == null ? '' : value).trim();\n" +
+    "  const COLLECTION_CAPABILITY_BLOCKED = 'COLLECTION_CAPABILITY_BLOCKED';\n" +
+    "  const BLOCKED_COLLECTION_CAPABILITY = Object.freeze({ state: 'blocked', code: COLLECTION_CAPABILITY_BLOCKED, reason: '后台采集依赖复制认证状态，已按安全边界停用；前台聊天和手动导入可用。', backgroundCollection: false, automaticHistory: false, groupMonitoring: false, foregroundFallback: false, manualVisibleImport: true });\n" +
+    "  const BLOCKED_COLLECTOR_ACTIONS = new Set(['discover-conversations', 'collect-all-read', 'configure-group-monitor', 'start-group-monitor', 'configure-ws-groups', 'configure-vip-groups']);\n" +
+    '  function collectionCapability(accountId = state.activeAccountId) {\n' +
+    '    const native = state.accounts.find(account => String(account.id) === String(accountId))?.collectionCapability;\n' +
+    '    // This release has no independently authorized background provider. An\n' +
+    '    // omitted/unknown capability must never unlock the old profile collector.\n' +
+    "    return { ...BLOCKED_COLLECTION_CAPABILITY, reason: native?.state === 'blocked' && native?.code === COLLECTION_CAPABILITY_BLOCKED ? text(native.reason).slice(0, 500) || BLOCKED_COLLECTION_CAPABILITY.reason : BLOCKED_COLLECTION_CAPABILITY.reason };\n" +
+    '  }\n' +
+    '  function rememberCollectionCapability(payload, accountId = payload?.accountId) {\n' +
+    '    if (!payload?.collectionCapability || !accountId) return;\n' +
+    "    const received = payload.collectionCapability, recognized = received.state === 'blocked' && received.code === COLLECTION_CAPABILITY_BLOCKED;\n" +
+    '    const capability = { ...BLOCKED_COLLECTION_CAPABILITY, reason: recognized ? text(received.reason).slice(0, 500) || BLOCKED_COLLECTION_CAPABILITY.reason : BLOCKED_COLLECTION_CAPABILITY.reason };\n' +
+    '    const previous = state.accounts.find(account => String(account.id) === String(accountId))?.collectionCapability;\n' +
+    '    if (previous?.state === capability.state && previous.code === capability.code && previous.reason === capability.reason) return;\n' +
+    '    state.accounts = state.accounts.map(account => String(account.id) === String(accountId) ? { ...account, collectionCapability: capability } : account);\n' +
+    '  }\n' +
+    '  function collectionBlockedResult(accountId = state.activeAccountId) {\n' +
+    '    const capability = collectionCapability(accountId);\n' +
+    '    return { blocked: true, supported: false, started: false, retryable: false, code: capability.code, error: `${capability.code}：${capability.reason}`, collectionCapability: capability };\n' +
+    '  }\n' +
+    "  function rejectCollectionAction(context = captureContext('')) {\n" +
+    '    const result = collectionBlockedResult(context.accountId);\n' +
+    '    if (!contextCurrent(context)) return result;\n' +
+    "    state.error = result.error;toast(result.error, 'x');render();return result;\n" +
+    '  }\n' +
+    '  function collectionCapabilityNotice(accountId = state.activeAccountId) {\n' +
+    '    const result = collectionBlockedResult(accountId);\n' +
+    '    return `<p class="ws-coverage-warning" role="status" data-collection-capability="blocked">${esc(result.error)}</p>`;\n' +
+    '  }\n' +
+    '  function collectionControlAttributes() {\n' +
+    '    return `disabled aria-disabled="true" title="${esc(collectionBlockedResult().error)}"`;\n' +
+    '  }\n' +
+    "  function createGroupMonitorState(accountId = 'default') {\n" +
+    "    return { accountId: String(accountId || 'default'), profile: null, health: null, events: [], loading: false, busy: false, error: '', statusFilter: 'all', draftJid: '', draftName: '', lastLoadedAt: '', catalog: [] };\n" +
+    '  }\n' +
+    '  const CONVERSATION_RENDER_BATCH = 120;\n' +
+    '  const VERIFIED_NATIVE_DIRECTION_SOURCE_MAP = new Map([\n' +
+    "    ['class-message-out', 'send'], ['class-message-in', 'receive'],\n" +
+    "    ['data-id-outgoing', 'send'], ['data-id-incoming', 'receive'],\n" +
+    "    ['icon-tail-out', 'send'], ['icon-tail-in', 'receive'],\n" +
+    "    ['palette-outgoing', 'send'], ['palette-incoming', 'receive'],\n" +
+    "    ['geometry-align-outgoing', 'send'], ['geometry-align-incoming', 'receive'],\n" +
+    "    ['geometry-right', 'send'], ['geometry-left"... 372834 more characters,
+  expected: /自动采集已读会话/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+[FAIL] WS ChatKnow UI contract
+
+[RUN] WS group monitor UI contract
+ws-group-monitor-ui: pass
+[PASS] WS group monitor UI contract
+
+[RUN] WS group discovery contract
+ws-group-discovery-contract: pass
+[PASS] WS group discovery contract
+
+[RUN] WS broadcast and translation UI contract
+ws-broadcast-ui: read-direct recipient filtering, translation preview, audited queue and foreground safety pass
+[PASS] WS broadcast and translation UI contract
+
+[RUN] WS collection and CRM sync contract
+node:assert:885
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /列表级自动采集/. Input:
+
+'(() => {\n' +
+  '  const core = window.ZhikeWsCore;\n' +
+  '  const businessPages = window.ZhikeWsBusinessPages;\n' +
+  '  const hotProfileCore = window.ZhikeHotChatProfile || {};\n' +
+  '  const getHost = () => window.__zhikeRegistryHost;\n' +
+  '  const readPanelCollapsed = panel => {\n' +
+  '    try {\n' +
+  '      const saved = localStorage.getItem(`zhike.ws.${panel}.collapsed`);\n' +
+  "      return saved == null ? panel === 'capture' : saved === 'true';\n" +
+  "    } catch { return panel === 'capture'; }\n" +
+  '  };\n' +
+  '  const writePanelCollapsed = (panel, value) => {\n' +
+  '    try { localStorage.setItem(`zhike.ws.${panel}.collapsed`, String(Boolean(value))); } catch {}\n' +
+  '  };\n' +
+  "  const ASSIST_DRAWER_TABS = new Set(['ai', 'profile', 'reply', 'broadcast', 'export', 'diagnostics']);\n" +
+  '  const WS_WORKSPACE_VIEW_META = Object.freeze([\n' +
+  "    { id: 'overview', label: '工作台首页', icon: 'home', hint: '账号、采集与工作入口' },\n" +
+  "    { id: 'accounts', label: '账号管理', icon: 'phone', hint: '多账号与连接状态' },\n" +
+  "    { id: 'chat', label: '前台聊天', icon: 'message', hint: '原生 WS 聊天与客户档案' },\n" +
+  "    { id: 'groups', label: '群组管理', icon: 'layers', hint: '群组目录与监测端口' },\n" +
+  "    { id: 'members', label: '群成员管理', icon: 'users', hint: '成员事件与 CRM 关系' },\n" +
+  "    { id: 'collection', label: '数据采集', icon: 'database', hint: '采集任务、断点与跳过规则' },\n" +
+  "    { id: 'contacts', label: '通讯录管理', icon: 'users', hint: '已同步联系人与号码核验' },\n" +
+  "    { id: 'ai', label: 'AI助手', icon: 'spark', hint: '队列、证据与分析结果' },\n" +
+  "    { id: 'crm', label: 'CRM客户', icon: 'users', hint: '客户主档匹配与冲突' },\n" +
+  "    { id: 'tasks', label: '任务中心', icon: 'calendar', hint: '跟进任务与提醒' },\n" +
+  "    { id: 'logs', label: '操作日志', icon: 'history', hint: '审计记录、运行快照与关联查询' },\n" +
+  "    { id: 'settings', label: '工具与设置', icon: 'settings', hint: '翻译、导入、导出与安全开关' },\n" +
+  '  ]);\n' +
+  '  const WS_WORKSPACE_VIEW_IDS = new Set(WS_WORKSPACE_VIEW_META.map(item => item.id));\n' +
+  '  function readWsWorkspaceView() {\n' +
+  '    try {\n' +
+  "      const value = localStorage.getItem('zhike.ws.workspace-view');\n" +
+  "      return WS_WORKSPACE_VIEW_IDS.has(value) ? value : 'overview';\n" +
+  "    } catch { return 'overview'; }\n" +
+  '  }\n' +
+  '  function readWsWorkspaceCollapsed() {\n' +
+  '    try {\n' +
+  "      const saved = localStorage.getItem('zhike.ws.workspace-nav-collapsed');\n" +
+  "      return saved == null ? false : saved === 'true';\n" +
+  '    } catch { return false; }\n' +
+  '  }\n' +
+  '  function writeWsWorkspaceState(view, collapsed) {\n' +
+  '    try {\n' +
+  "      const normalized = WS_WORKSPACE_VIEW_IDS.has(view) ? view : 'overview';\n" +
+  "      localStorage.setItem('zhike.ws.workspace-view', normalized);\n" +
+  "      localStorage.setItem('zhike.ws.workspace-nav-collapsed', String(Boolean(collapsed)));\n" +
+  '    } catch {}\n' +
+  '  }\n' +
+  '  function wsWorkspacePageState(view = state?.wsWorkspaceView, accountId = state?.activeAccountId) {\n' +
+  "    const key = `${text(accountId || 'default')}:${WS_WORKSPACE_VIEW_IDS.has(view) ? view : 'overview'}`;\n" +
+  "    if (!state.wsWorkspacePageState[key]) state.wsWorkspacePageState[key] = { scrollTop: 0, filter: '', statusFilter: 'all', page: 1, busy: false, status: '尚未刷新', error: '' };\n" +
+  '    return state.wsWorkspacePageState[key];\n' +
+  '  }\n' +
+  '  function clampAssistDrawerWidth(value) {\n' +
+  '    const numeric = Number(value);\n' +
+  '    return Math.min(620, Math.max(360, Number.isFinite(numeric) ? Math.round(numeric) : 460));\n' +
+  '  }\n' +
+  "  function assistDrawerColumnWidth(layout = $('.ws-layout')) {\n" +
+  '    const desired = clampAssistDrawerWidth(state?.assistDrawerWidth ?? 460);\n' +
+  '    const viewportWidth = Number(window.innerWidth || 0);\n' +
+  '    if (viewportWidth > 0 && viewportWidth <= 900) return desired;\n' +
+  '    const layoutWidth = Number(layout?.getBoundingClientRect?.().width || layout?.clientWidth || viewportWidth || 1280);\n' +
+  "    const leftWidth = state?.wsWorkspaceView === 'chat' ? 0 : state?.leftCollapsed ? 48 : (viewportWidth > 0 && viewportWidth <= 1060 ? 180 : viewportWidth <= 1320 ? 204 : 232);\n" +
+  '    const centerMin = viewportWidth > 0 && viewportWidth <= 1060 ? 300 : 360;\n' +
+  '    const available = Math.floor(layoutWidth - leftWidth - centerMin - 16);\n' +
+  '    return Math.max(250, Math.min(desired, available > 0 ? available : desired));\n' +
+  '  }\n' +
+  '  function normalizeAssistDrawerOffset(value) {\n' +
+  "    const candidate = value && typeof value === 'object' ? value : {};\n" +
+  '    const y = Number(candidate.y);\n' +
+  '    const viewportHeight = Number(window.innerHeight || 900);\n' +
+  '    // The drawer fills its page column. Keep the persisted nudge deliberately\n' +
+  '    // small so its header and close button cannot be dragged off-screen.\n' +
+  '    const maxY = Math.min(64, Math.max(0, viewportHeight - 180));\n' +
+  '    return {\n' +
+  '      // Horizontal movement is intentionally disabled. The drawer must stay\n' +
+  '      // inside the right page column and never overlap the native WS surface.\n' +
+  '      x: 0,\n' +
+  '      y: Number.isFinite(y) ? Math.max(-maxY, Math.min(maxY, Math.round(y))) : 0,\n' +
+  '    };\n' +
+  '  }\n' +
+  '  function readAssistDrawerState(key) {\n' +
+  "    const defaults = { open: Number(window.innerWidth || 1440) >= 1200 && !readPanelCollapsed('right'), tab: 'profile', width: 360, offset: { x: 0, y: 0 } };\n" +
+  '    try {\n' +
+  '      const raw = localStorage.getItem(`zhike.ws.assist-drawer.${key}`);\n' +
+  '      if (raw == null) return defaults[key];\n' +
+  "      if (key === 'open') return raw === 'true';\n" +
+  "      if (key === 'tab') return ASSIST_DRAWER_TABS.has(raw) ? raw : defaults.tab;\n" +
+  "      if (key === 'width') return clampAssistDrawerWidth(raw);\n" +
+  "      if (key === 'offset') return normalizeAssistDrawerOffset(JSON.parse(raw));\n" +
+  '    } catch {}\n' +
+  '    return defaults[key];\n' +
+  '  }\n' +
+  '  function writeAssistDrawerState(key, value) {\n' +
+  '    try {\n' +
+  "      const normalized = key === 'width'\n" +
+  '        ? clampAssistDrawerWidth(value)\n' +
+  "        : key === 'tab'\n" +
+  "          ? (ASSIST_DRAWER_TABS.has(String(value)) ? String(value) : 'ai')\n" +
+  "          : key === 'offset'\n" +
+  '            ? normalizeAssistDrawerOffset(value)\n' +
+  '            : Boolean(value);\n' +
+  "      localStorage.setItem(`zhike.ws.assist-drawer.${key}`, key === 'offset' ? JSON.stringify(normalized) : String(normalized));\n" +
+  '    } catch {}\n' +
+  '  }\n' +
+  `  const esc = value => getHost()?.esc?.(value) || String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));\n` +
+  '  const $ = (selector, root = document) => root.querySelector(selector);\n' +
+  '  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];\n' +
+  '  const nowIso = () => new Date().toISOString();\n' +
+  "  const text = value => String(value == null ? '' : value).trim();\n" +
+  "  const COLLECTION_CAPABILITY_BLOCKED = 'COLLECTION_CAPABILITY_BLOCKED';\n" +
+  "  const BLOCKED_COLLECTION_CAPABILITY = Object.freeze({ state: 'blocked', code: COLLECTION_CAPABILITY_BLOCKED, reason: '后台采集依赖复制认证状态，已按安全边界停用；前台聊天和手动导入可用。', backgroundCollection: false, automaticHistory: false, groupMonitoring: false, foregroundFallback: false, manualVisibleImport: true });\n" +
+  "  const BLOCKED_COLLECTOR_ACTIONS = new Set(['discover-conversations', 'collect-all-read', 'configure-group-monitor', 'start-group-monitor', 'configure-ws-groups', 'configure-vip-groups']);\n" +
+  '  function collectionCapability(accountId = state.activeAccountId) {\n' +
+  '    const native = state.accounts.find(account => String(account.id) === String(accountId))?.collectionCapability;\n' +
+  '    // This release has no independently authorized background provider. An\n' +
+  '    // omitted/unknown capability must never unlock the old profile collector.\n' +
+  "    return { ...BLOCKED_COLLECTION_CAPABILITY, reason: native?.state === 'blocked' && native?.code === COLLECTION_CAPABILITY_BLOCKED ? text(native.reason).slice(0, 500) || BLOCKED_COLLECTION_CAPABILITY.reason : BLOCKED_COLLECTION_CAPABILITY.reason };\n" +
+  '  }\n' +
+  '  function rememberCollectionCapability(payload, accountId = payload?.accountId) {\n' +
+  '    if (!payload?.collectionCapability || !accountId) return;\n' +
+  "    const received = payload.collectionCapability, recognized = received.state === 'blocked' && received.code === COLLECTION_CAPABILITY_BLOCKED;\n" +
+  '    const capability = { ...BLOCKED_COLLECTION_CAPABILITY, reason: recognized ? text(received.reason).slice(0, 500) || BLOCKED_COLLECTION_CAPABILITY.reason : BLOCKED_COLLECTION_CAPABILITY.reason };\n' +
+  '    const previous = state.accounts.find(account => String(account.id) === String(accountId))?.collectionCapability;\n' +
+  '    if (previous?.state === capability.state && previous.code === capability.code && previous.reason === capability.reason) return;\n' +
+  '    state.accounts = state.accounts.map(account => String(account.id) === String(accountId) ? { ...account, collectionCapability: capability } : account);\n' +
+  '  }\n' +
+  '  function collectionBlockedResult(accountId = state.activeAccountId) {\n' +
+  '    const capability = collectionCapability(accountId);\n' +
+  '    return { blocked: true, supported: false, started: false, retryable: false, code: capability.code, error: `${capability.code}：${capability.reason}`, collectionCapability: capability };\n' +
+  '  }\n' +
+  "  function rejectCollectionAction(context = captureContext('')) {\n" +
+  '    const result = collectionBlockedResult(context.accountId);\n' +
+  '    if (!contextCurrent(context)) return result;\n' +
+  "    state.error = result.error;toast(result.error, 'x');render();return result;\n" +
+  '  }\n' +
+  '  function collectionCapabilityNotice(accountId = state.activeAccountId) {\n' +
+  '    const result = collectionBlockedResult(accountId);\n' +
+  '    return `<p class="ws-coverage-warning" role="status" data-collection-capability="blocked">${esc(result.error)}</p>`;\n' +
+  '  }\n' +
+  '  function collectionControlAttributes() {\n' +
+  '    return `disabled aria-disabled="true" title="${esc(collectionBlockedResult().error)}"`;\n' +
+  '  }\n' +
+  "  function createGroupMonitorState(accountId = 'default') {\n" +
+  "    return { accountId: String(accountId || 'default'), profile: null, health: null, events: [], loading: false, busy: false, error: '', statusFilter: 'all', draftJid: '', draftName: '', lastLoadedAt: '', catalog: [] };\n" +
+  '  }\n' +
+  '  const CONVERSATION_RENDER_BATCH = 120;\n' +
+  '  const VERIFIED_NATIVE_DIRECTION_SOURCE_MAP = new Map([\n' +
+  "    ['class-message-out', 'send'], ['class-message-in', 'receive'],\n" +
+  "    ['data-id-outgoing', 'send'], ['data-id-incoming', 'receive'],\n" +
+  "    ['icon-tail-out', 'send'], ['icon-tail-in', 'receive'],\n" +
+  "    ['palette-outgoing', 'send'], ['palette-incoming', 'receive'],\n" +
+  "    ['geometry-align-outgoing', 'send'], ['geometry-align-incoming', 'receive'],\n" +
+  "    ['geometry-right', 'send'], ['geometry-left"... 372834 more characters
+
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\ws-workbench-sync.test.cjs:19:8)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '(() => {\n' +
+    '  const core = window.ZhikeWsCore;\n' +
+    '  const businessPages = window.ZhikeWsBusinessPages;\n' +
+    '  const hotProfileCore = window.ZhikeHotChatProfile || {};\n' +
+    '  const getHost = () => window.__zhikeRegistryHost;\n' +
+    '  const readPanelCollapsed = panel => {\n' +
+    '    try {\n' +
+    '      const saved = localStorage.getItem(`zhike.ws.${panel}.collapsed`);\n' +
+    "      return saved == null ? panel === 'capture' : saved === 'true';\n" +
+    "    } catch { return panel === 'capture'; }\n" +
+    '  };\n' +
+    '  const writePanelCollapsed = (panel, value) => {\n' +
+    '    try { localStorage.setItem(`zhike.ws.${panel}.collapsed`, String(Boolean(value))); } catch {}\n' +
+    '  };\n' +
+    "  const ASSIST_DRAWER_TABS = new Set(['ai', 'profile', 'reply', 'broadcast', 'export', 'diagnostics']);\n" +
+    '  const WS_WORKSPACE_VIEW_META = Object.freeze([\n' +
+    "    { id: 'overview', label: '工作台首页', icon: 'home', hint: '账号、采集与工作入口' },\n" +
+    "    { id: 'accounts', label: '账号管理', icon: 'phone', hint: '多账号与连接状态' },\n" +
+    "    { id: 'chat', label: '前台聊天', icon: 'message', hint: '原生 WS 聊天与客户档案' },\n" +
+    "    { id: 'groups', label: '群组管理', icon: 'layers', hint: '群组目录与监测端口' },\n" +
+    "    { id: 'members', label: '群成员管理', icon: 'users', hint: '成员事件与 CRM 关系' },\n" +
+    "    { id: 'collection', label: '数据采集', icon: 'database', hint: '采集任务、断点与跳过规则' },\n" +
+    "    { id: 'contacts', label: '通讯录管理', icon: 'users', hint: '已同步联系人与号码核验' },\n" +
+    "    { id: 'ai', label: 'AI助手', icon: 'spark', hint: '队列、证据与分析结果' },\n" +
+    "    { id: 'crm', label: 'CRM客户', icon: 'users', hint: '客户主档匹配与冲突' },\n" +
+    "    { id: 'tasks', label: '任务中心', icon: 'calendar', hint: '跟进任务与提醒' },\n" +
+    "    { id: 'logs', label: '操作日志', icon: 'history', hint: '审计记录、运行快照与关联查询' },\n" +
+    "    { id: 'settings', label: '工具与设置', icon: 'settings', hint: '翻译、导入、导出与安全开关' },\n" +
+    '  ]);\n' +
+    '  const WS_WORKSPACE_VIEW_IDS = new Set(WS_WORKSPACE_VIEW_META.map(item => item.id));\n' +
+    '  function readWsWorkspaceView() {\n' +
+    '    try {\n' +
+    "      const value = localStorage.getItem('zhike.ws.workspace-view');\n" +
+    "      return WS_WORKSPACE_VIEW_IDS.has(value) ? value : 'overview';\n" +
+    "    } catch { return 'overview'; }\n" +
+    '  }\n' +
+    '  function readWsWorkspaceCollapsed() {\n' +
+    '    try {\n' +
+    "      const saved = localStorage.getItem('zhike.ws.workspace-nav-collapsed');\n" +
+    "      return saved == null ? false : saved === 'true';\n" +
+    '    } catch { return false; }\n' +
+    '  }\n' +
+    '  function writeWsWorkspaceState(view, collapsed) {\n' +
+    '    try {\n' +
+    "      const normalized = WS_WORKSPACE_VIEW_IDS.has(view) ? view : 'overview';\n" +
+    "      localStorage.setItem('zhike.ws.workspace-view', normalized);\n" +
+    "      localStorage.setItem('zhike.ws.workspace-nav-collapsed', String(Boolean(collapsed)));\n" +
+    '    } catch {}\n' +
+    '  }\n' +
+    '  function wsWorkspacePageState(view = state?.wsWorkspaceView, accountId = state?.activeAccountId) {\n' +
+    "    const key = `${text(accountId || 'default')}:${WS_WORKSPACE_VIEW_IDS.has(view) ? view : 'overview'}`;\n" +
+    "    if (!state.wsWorkspacePageState[key]) state.wsWorkspacePageState[key] = { scrollTop: 0, filter: '', statusFilter: 'all', page: 1, busy: false, status: '尚未刷新', error: '' };\n" +
+    '    return state.wsWorkspacePageState[key];\n' +
+    '  }\n' +
+    '  function clampAssistDrawerWidth(value) {\n' +
+    '    const numeric = Number(value);\n' +
+    '    return Math.min(620, Math.max(360, Number.isFinite(numeric) ? Math.round(numeric) : 460));\n' +
+    '  }\n' +
+    "  function assistDrawerColumnWidth(layout = $('.ws-layout')) {\n" +
+    '    const desired = clampAssistDrawerWidth(state?.assistDrawerWidth ?? 460);\n' +
+    '    const viewportWidth = Number(window.innerWidth || 0);\n' +
+    '    if (viewportWidth > 0 && viewportWidth <= 900) return desired;\n' +
+    '    const layoutWidth = Number(layout?.getBoundingClientRect?.().width || layout?.clientWidth || viewportWidth || 1280);\n' +
+    "    const leftWidth = state?.wsWorkspaceView === 'chat' ? 0 : state?.leftCollapsed ? 48 : (viewportWidth > 0 && viewportWidth <= 1060 ? 180 : viewportWidth <= 1320 ? 204 : 232);\n" +
+    '    const centerMin = viewportWidth > 0 && viewportWidth <= 1060 ? 300 : 360;\n' +
+    '    const available = Math.floor(layoutWidth - leftWidth - centerMin - 16);\n' +
+    '    return Math.max(250, Math.min(desired, available > 0 ? available : desired));\n' +
+    '  }\n' +
+    '  function normalizeAssistDrawerOffset(value) {\n' +
+    "    const candidate = value && typeof value === 'object' ? value : {};\n" +
+    '    const y = Number(candidate.y);\n' +
+    '    const viewportHeight = Number(window.innerHeight || 900);\n' +
+    '    // The drawer fills its page column. Keep the persisted nudge deliberately\n' +
+    '    // small so its header and close button cannot be dragged off-screen.\n' +
+    '    const maxY = Math.min(64, Math.max(0, viewportHeight - 180));\n' +
+    '    return {\n' +
+    '      // Horizontal movement is intentionally disabled. The drawer must stay\n' +
+    '      // inside the right page column and never overlap the native WS surface.\n' +
+    '      x: 0,\n' +
+    '      y: Number.isFinite(y) ? Math.max(-maxY, Math.min(maxY, Math.round(y))) : 0,\n' +
+    '    };\n' +
+    '  }\n' +
+    '  function readAssistDrawerState(key) {\n' +
+    "    const defaults = { open: Number(window.innerWidth || 1440) >= 1200 && !readPanelCollapsed('right'), tab: 'profile', width: 360, offset: { x: 0, y: 0 } };\n" +
+    '    try {\n' +
+    '      const raw = localStorage.getItem(`zhike.ws.assist-drawer.${key}`);\n' +
+    '      if (raw == null) return defaults[key];\n' +
+    "      if (key === 'open') return raw === 'true';\n" +
+    "      if (key === 'tab') return ASSIST_DRAWER_TABS.has(raw) ? raw : defaults.tab;\n" +
+    "      if (key === 'width') return clampAssistDrawerWidth(raw);\n" +
+    "      if (key === 'offset') return normalizeAssistDrawerOffset(JSON.parse(raw));\n" +
+    '    } catch {}\n' +
+    '    return defaults[key];\n' +
+    '  }\n' +
+    '  function writeAssistDrawerState(key, value) {\n' +
+    '    try {\n' +
+    "      const normalized = key === 'width'\n" +
+    '        ? clampAssistDrawerWidth(value)\n' +
+    "        : key === 'tab'\n" +
+    "          ? (ASSIST_DRAWER_TABS.has(String(value)) ? String(value) : 'ai')\n" +
+    "          : key === 'offset'\n" +
+    '            ? normalizeAssistDrawerOffset(value)\n' +
+    '            : Boolean(value);\n' +
+    "      localStorage.setItem(`zhike.ws.assist-drawer.${key}`, key === 'offset' ? JSON.stringify(normalized) : String(normalized));\n" +
+    '    } catch {}\n' +
+    '  }\n' +
+    `  const esc = value => getHost()?.esc?.(value) || String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));\n` +
+    '  const $ = (selector, root = document) => root.querySelector(selector);\n' +
+    '  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];\n' +
+    '  const nowIso = () => new Date().toISOString();\n' +
+    "  const text = value => String(value == null ? '' : value).trim();\n" +
+    "  const COLLECTION_CAPABILITY_BLOCKED = 'COLLECTION_CAPABILITY_BLOCKED';\n" +
+    "  const BLOCKED_COLLECTION_CAPABILITY = Object.freeze({ state: 'blocked', code: COLLECTION_CAPABILITY_BLOCKED, reason: '后台采集依赖复制认证状态，已按安全边界停用；前台聊天和手动导入可用。', backgroundCollection: false, automaticHistory: false, groupMonitoring: false, foregroundFallback: false, manualVisibleImport: true });\n" +
+    "  const BLOCKED_COLLECTOR_ACTIONS = new Set(['discover-conversations', 'collect-all-read', 'configure-group-monitor', 'start-group-monitor', 'configure-ws-groups', 'configure-vip-groups']);\n" +
+    '  function collectionCapability(accountId = state.activeAccountId) {\n' +
+    '    const native = state.accounts.find(account => String(account.id) === String(accountId))?.collectionCapability;\n' +
+    '    // This release has no independently authorized background provider. An\n' +
+    '    // omitted/unknown capability must never unlock the old profile collector.\n' +
+    "    return { ...BLOCKED_COLLECTION_CAPABILITY, reason: native?.state === 'blocked' && native?.code === COLLECTION_CAPABILITY_BLOCKED ? text(native.reason).slice(0, 500) || BLOCKED_COLLECTION_CAPABILITY.reason : BLOCKED_COLLECTION_CAPABILITY.reason };\n" +
+    '  }\n' +
+    '  function rememberCollectionCapability(payload, accountId = payload?.accountId) {\n' +
+    '    if (!payload?.collectionCapability || !accountId) return;\n' +
+    "    const received = payload.collectionCapability, recognized = received.state === 'blocked' && received.code === COLLECTION_CAPABILITY_BLOCKED;\n" +
+    '    const capability = { ...BLOCKED_COLLECTION_CAPABILITY, reason: recognized ? text(received.reason).slice(0, 500) || BLOCKED_COLLECTION_CAPABILITY.reason : BLOCKED_COLLECTION_CAPABILITY.reason };\n' +
+    '    const previous = state.accounts.find(account => String(account.id) === String(accountId))?.collectionCapability;\n' +
+    '    if (previous?.state === capability.state && previous.code === capability.code && previous.reason === capability.reason) return;\n' +
+    '    state.accounts = state.accounts.map(account => String(account.id) === String(accountId) ? { ...account, collectionCapability: capability } : account);\n' +
+    '  }\n' +
+    '  function collectionBlockedResult(accountId = state.activeAccountId) {\n' +
+    '    const capability = collectionCapability(accountId);\n' +
+    '    return { blocked: true, supported: false, started: false, retryable: false, code: capability.code, error: `${capability.code}：${capability.reason}`, collectionCapability: capability };\n' +
+    '  }\n' +
+    "  function rejectCollectionAction(context = captureContext('')) {\n" +
+    '    const result = collectionBlockedResult(context.accountId);\n' +
+    '    if (!contextCurrent(context)) return result;\n' +
+    "    state.error = result.error;toast(result.error, 'x');render();return result;\n" +
+    '  }\n' +
+    '  function collectionCapabilityNotice(accountId = state.activeAccountId) {\n' +
+    '    const result = collectionBlockedResult(accountId);\n' +
+    '    return `<p class="ws-coverage-warning" role="status" data-collection-capability="blocked">${esc(result.error)}</p>`;\n' +
+    '  }\n' +
+    '  function collectionControlAttributes() {\n' +
+    '    return `disabled aria-disabled="true" title="${esc(collectionBlockedResult().error)}"`;\n' +
+    '  }\n' +
+    "  function createGroupMonitorState(accountId = 'default') {\n" +
+    "    return { accountId: String(accountId || 'default'), profile: null, health: null, events: [], loading: false, busy: false, error: '', statusFilter: 'all', draftJid: '', draftName: '', lastLoadedAt: '', catalog: [] };\n" +
+    '  }\n' +
+    '  const CONVERSATION_RENDER_BATCH = 120;\n' +
+    '  const VERIFIED_NATIVE_DIRECTION_SOURCE_MAP = new Map([\n' +
+    "    ['class-message-out', 'send'], ['class-message-in', 'receive'],\n" +
+    "    ['data-id-outgoing', 'send'], ['data-id-incoming', 'receive'],\n" +
+    "    ['icon-tail-out', 'send'], ['icon-tail-in', 'receive'],\n" +
+    "    ['palette-outgoing', 'send'], ['palette-incoming', 'receive'],\n" +
+    "    ['geometry-align-outgoing', 'send'], ['geometry-align-incoming', 'receive'],\n" +
+    "    ['geometry-right', 'send'], ['geometry-left"... 372834 more characters,
+  expected: /列表级自动采集/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+[FAIL] WS collection and CRM sync contract
+
+[RUN] WS complete per-customer history contract
+node:assert:885
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: list discovery count must not be labelled as completed chat collection
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\ws-full-history.test.cjs:76:8)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '(() => {\n' +
+    '  const core = window.ZhikeWsCore;\n' +
+    '  const businessPages = window.ZhikeWsBusinessPages;\n' +
+    '  const hotProfileCore = window.ZhikeHotChatProfile || {};\n' +
+    '  const getHost = () => window.__zhikeRegistryHost;\n' +
+    '  const readPanelCollapsed = panel => {\n' +
+    '    try {\n' +
+    '      const saved = localStorage.getItem(`zhike.ws.${panel}.collapsed`);\n' +
+    "      return saved == null ? panel === 'capture' : saved === 'true';\n" +
+    "    } catch { return panel === 'capture'; }\n" +
+    '  };\n' +
+    '  const writePanelCollapsed = (panel, value) => {\n' +
+    '    try { localStorage.setItem(`zhike.ws.${panel}.collapsed`, String(Boolean(value))); } catch {}\n' +
+    '  };\n' +
+    "  const ASSIST_DRAWER_TABS = new Set(['ai', 'profile', 'reply', 'broadcast', 'export', 'diagnostics']);\n" +
+    '  const WS_WORKSPACE_VIEW_META = Object.freeze([\n' +
+    "    { id: 'overview', label: '工作台首页', icon: 'home', hint: '账号、采集与工作入口' },\n" +
+    "    { id: 'accounts', label: '账号管理', icon: 'phone', hint: '多账号与连接状态' },\n" +
+    "    { id: 'chat', label: '前台聊天', icon: 'message', hint: '原生 WS 聊天与客户档案' },\n" +
+    "    { id: 'groups', label: '群组管理', icon: 'layers', hint: '群组目录与监测端口' },\n" +
+    "    { id: 'members', label: '群成员管理', icon: 'users', hint: '成员事件与 CRM 关系' },\n" +
+    "    { id: 'collection', label: '数据采集', icon: 'database', hint: '采集任务、断点与跳过规则' },\n" +
+    "    { id: 'contacts', label: '通讯录管理', icon: 'users', hint: '已同步联系人与号码核验' },\n" +
+    "    { id: 'ai', label: 'AI助手', icon: 'spark', hint: '队列、证据与分析结果' },\n" +
+    "    { id: 'crm', label: 'CRM客户', icon: 'users', hint: '客户主档匹配与冲突' },\n" +
+    "    { id: 'tasks', label: '任务中心', icon: 'calendar', hint: '跟进任务与提醒' },\n" +
+    "    { id: 'logs', label: '操作日志', icon: 'history', hint: '审计记录、运行快照与关联查询' },\n" +
+    "    { id: 'settings', label: '工具与设置', icon: 'settings', hint: '翻译、导入、导出与安全开关' },\n" +
+    '  ]);\n' +
+    '  const WS_WORKSPACE_VIEW_IDS = new Set(WS_WORKSPACE_VIEW_META.map(item => item.id));\n' +
+    '  function readWsWorkspaceView() {\n' +
+    '    try {\n' +
+    "      const value = localStorage.getItem('zhike.ws.workspace-view');\n" +
+    "      return WS_WORKSPACE_VIEW_IDS.has(value) ? value : 'overview';\n" +
+    "    } catch { return 'overview'; }\n" +
+    '  }\n' +
+    '  function readWsWorkspaceCollapsed() {\n' +
+    '    try {\n' +
+    "      const saved = localStorage.getItem('zhike.ws.workspace-nav-collapsed');\n" +
+    "      return saved == null ? false : saved === 'true';\n" +
+    '    } catch { return false; }\n' +
+    '  }\n' +
+    '  function writeWsWorkspaceState(view, collapsed) {\n' +
+    '    try {\n' +
+    "      const normalized = WS_WORKSPACE_VIEW_IDS.has(view) ? view : 'overview';\n" +
+    "      localStorage.setItem('zhike.ws.workspace-view', normalized);\n" +
+    "      localStorage.setItem('zhike.ws.workspace-nav-collapsed', String(Boolean(collapsed)));\n" +
+    '    } catch {}\n' +
+    '  }\n' +
+    '  function wsWorkspacePageState(view = state?.wsWorkspaceView, accountId = state?.activeAccountId) {\n' +
+    "    const key = `${text(accountId || 'default')}:${WS_WORKSPACE_VIEW_IDS.has(view) ? view : 'overview'}`;\n" +
+    "    if (!state.wsWorkspacePageState[key]) state.wsWorkspacePageState[key] = { scrollTop: 0, filter: '', statusFilter: 'all', page: 1, busy: false, status: '尚未刷新', error: '' };\n" +
+    '    return state.wsWorkspacePageState[key];\n' +
+    '  }\n' +
+    '  function clampAssistDrawerWidth(value) {\n' +
+    '    const numeric = Number(value);\n' +
+    '    return Math.min(620, Math.max(360, Number.isFinite(numeric) ? Math.round(numeric) : 460));\n' +
+    '  }\n' +
+    "  function assistDrawerColumnWidth(layout = $('.ws-layout')) {\n" +
+    '    const desired = clampAssistDrawerWidth(state?.assistDrawerWidth ?? 460);\n' +
+    '    const viewportWidth = Number(window.innerWidth || 0);\n' +
+    '    if (viewportWidth > 0 && viewportWidth <= 900) return desired;\n' +
+    '    const layoutWidth = Number(layout?.getBoundingClientRect?.().width || layout?.clientWidth || viewportWidth || 1280);\n' +
+    "    const leftWidth = state?.wsWorkspaceView === 'chat' ? 0 : state?.leftCollapsed ? 48 : (viewportWidth > 0 && viewportWidth <= 1060 ? 180 : viewportWidth <= 1320 ? 204 : 232);\n" +
+    '    const centerMin = viewportWidth > 0 && viewportWidth <= 1060 ? 300 : 360;\n' +
+    '    const available = Math.floor(layoutWidth - leftWidth - centerMin - 16);\n' +
+    '    return Math.max(250, Math.min(desired, available > 0 ? available : desired));\n' +
+    '  }\n' +
+    '  function normalizeAssistDrawerOffset(value) {\n' +
+    "    const candidate = value && typeof value === 'object' ? value : {};\n" +
+    '    const y = Number(candidate.y);\n' +
+    '    const viewportHeight = Number(window.innerHeight || 900);\n' +
+    '    // The drawer fills its page column. Keep the persisted nudge deliberately\n' +
+    '    // small so its header and close button cannot be dragged off-screen.\n' +
+    '    const maxY = Math.min(64, Math.max(0, viewportHeight - 180));\n' +
+    '    return {\n' +
+    '      // Horizontal movement is intentionally disabled. The drawer must stay\n' +
+    '      // inside the right page column and never overlap the native WS surface.\n' +
+    '      x: 0,\n' +
+    '      y: Number.isFinite(y) ? Math.max(-maxY, Math.min(maxY, Math.round(y))) : 0,\n' +
+    '    };\n' +
+    '  }\n' +
+    '  function readAssistDrawerState(key) {\n' +
+    "    const defaults = { open: Number(window.innerWidth || 1440) >= 1200 && !readPanelCollapsed('right'), tab: 'profile', width: 360, offset: { x: 0, y: 0 } };\n" +
+    '    try {\n' +
+    '      const raw = localStorage.getItem(`zhike.ws.assist-drawer.${key}`);\n' +
+    '      if (raw == null) return defaults[key];\n' +
+    "      if (key === 'open') return raw === 'true';\n" +
+    "      if (key === 'tab') return ASSIST_DRAWER_TABS.has(raw) ? raw : defaults.tab;\n" +
+    "      if (key === 'width') return clampAssistDrawerWidth(raw);\n" +
+    "      if (key === 'offset') return normalizeAssistDrawerOffset(JSON.parse(raw));\n" +
+    '    } catch {}\n' +
+    '    return defaults[key];\n' +
+    '  }\n' +
+    '  function writeAssistDrawerState(key, value) {\n' +
+    '    try {\n' +
+    "      const normalized = key === 'width'\n" +
+    '        ? clampAssistDrawerWidth(value)\n' +
+    "        : key === 'tab'\n" +
+    "          ? (ASSIST_DRAWER_TABS.has(String(value)) ? String(value) : 'ai')\n" +
+    "          : key === 'offset'\n" +
+    '            ? normalizeAssistDrawerOffset(value)\n' +
+    '            : Boolean(value);\n' +
+    "      localStorage.setItem(`zhike.ws.assist-drawer.${key}`, key === 'offset' ? JSON.stringify(normalized) : String(normalized));\n" +
+    '    } catch {}\n' +
+    '  }\n' +
+    `  const esc = value => getHost()?.esc?.(value) || String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));\n` +
+    '  const $ = (selector, root = document) => root.querySelector(selector);\n' +
+    '  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];\n' +
+    '  const nowIso = () => new Date().toISOString();\n' +
+    "  const text = value => String(value == null ? '' : value).trim();\n" +
+    "  const COLLECTION_CAPABILITY_BLOCKED = 'COLLECTION_CAPABILITY_BLOCKED';\n" +
+    "  const BLOCKED_COLLECTION_CAPABILITY = Object.freeze({ state: 'blocked', code: COLLECTION_CAPABILITY_BLOCKED, reason: '后台采集依赖复制认证状态，已按安全边界停用；前台聊天和手动导入可用。', backgroundCollection: false, automaticHistory: false, groupMonitoring: false, foregroundFallback: false, manualVisibleImport: true });\n" +
+    "  const BLOCKED_COLLECTOR_ACTIONS = new Set(['discover-conversations', 'collect-all-read', 'configure-group-monitor', 'start-group-monitor', 'configure-ws-groups', 'configure-vip-groups']);\n" +
+    '  function collectionCapability(accountId = state.activeAccountId) {\n' +
+    '    const native = state.accounts.find(account => String(account.id) === String(accountId))?.collectionCapability;\n' +
+    '    // This release has no independently authorized background provider. An\n' +
+    '    // omitted/unknown capability must never unlock the old profile collector.\n' +
+    "    return { ...BLOCKED_COLLECTION_CAPABILITY, reason: native?.state === 'blocked' && native?.code === COLLECTION_CAPABILITY_BLOCKED ? text(native.reason).slice(0, 500) || BLOCKED_COLLECTION_CAPABILITY.reason : BLOCKED_COLLECTION_CAPABILITY.reason };\n" +
+    '  }\n' +
+    '  function rememberCollectionCapability(payload, accountId = payload?.accountId) {\n' +
+    '    if (!payload?.collectionCapability || !accountId) return;\n' +
+    "    const received = payload.collectionCapability, recognized = received.state === 'blocked' && received.code === COLLECTION_CAPABILITY_BLOCKED;\n" +
+    '    const capability = { ...BLOCKED_COLLECTION_CAPABILITY, reason: recognized ? text(received.reason).slice(0, 500) || BLOCKED_COLLECTION_CAPABILITY.reason : BLOCKED_COLLECTION_CAPABILITY.reason };\n' +
+    '    const previous = state.accounts.find(account => String(account.id) === String(accountId))?.collectionCapability;\n' +
+    '    if (previous?.state === capability.state && previous.code === capability.code && previous.reason === capability.reason) return;\n' +
+    '    state.accounts = state.accounts.map(account => String(account.id) === String(accountId) ? { ...account, collectionCapability: capability } : account);\n' +
+    '  }\n' +
+    '  function collectionBlockedResult(accountId = state.activeAccountId) {\n' +
+    '    const capability = collectionCapability(accountId);\n' +
+    '    return { blocked: true, supported: false, started: false, retryable: false, code: capability.code, error: `${capability.code}：${capability.reason}`, collectionCapability: capability };\n' +
+    '  }\n' +
+    "  function rejectCollectionAction(context = captureContext('')) {\n" +
+    '    const result = collectionBlockedResult(context.accountId);\n' +
+    '    if (!contextCurrent(context)) return result;\n' +
+    "    state.error = result.error;toast(result.error, 'x');render();return result;\n" +
+    '  }\n' +
+    '  function collectionCapabilityNotice(accountId = state.activeAccountId) {\n' +
+    '    const result = collectionBlockedResult(accountId);\n' +
+    '    return `<p class="ws-coverage-warning" role="status" data-collection-capability="blocked">${esc(result.error)}</p>`;\n' +
+    '  }\n' +
+    '  function collectionControlAttributes() {\n' +
+    '    return `disabled aria-disabled="true" title="${esc(collectionBlockedResult().error)}"`;\n' +
+    '  }\n' +
+    "  function createGroupMonitorState(accountId = 'default') {\n" +
+    "    return { accountId: String(accountId || 'default'), profile: null, health: null, events: [], loading: false, busy: false, error: '', statusFilter: 'all', draftJid: '', draftName: '', lastLoadedAt: '', catalog: [] };\n" +
+    '  }\n' +
+    '  const CONVERSATION_RENDER_BATCH = 120;\n' +
+    '  const VERIFIED_NATIVE_DIRECTION_SOURCE_MAP = new Map([\n' +
+    "    ['class-message-out', 'send'], ['class-message-in', 'receive'],\n" +
+    "    ['data-id-outgoing', 'send'], ['data-id-incoming', 'receive'],\n" +
+    "    ['icon-tail-out', 'send'], ['icon-tail-in', 'receive'],\n" +
+    "    ['palette-outgoing', 'send'], ['palette-incoming', 'receive'],\n" +
+    "    ['geometry-align-outgoing', 'send'], ['geometry-align-incoming', 'receive'],\n" +
+    "    ['geometry-right', 'send'], ['geometry-left"... 372834 more characters,
+  expected: /<span>列表已同步<\/span>/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+[FAIL] WS complete per-customer history contract
+
+[RUN] WS chunked full-history AI and checkpoint contract
+WS chunked AI analysis: 4 chunks, 5 calls, middle evidence retention, full coverage and durable checkpoint contracts pass
+[PASS] WS chunked full-history AI and checkpoint contract
+
+[RUN] WS durable AI queue contract
+AI durable queue contract: idempotent enqueue, restart recovery, claim, backoff and stats passed
+[PASS] WS durable AI queue contract
+
+[RUN] WS AI queue UI metrics contract
+ai queue UI metrics contract: retry and dead-letter indicators are visible and refresh-safe
+[PASS] WS AI queue UI metrics contract
+
+[RUN] WS resize performance contract
+ws resize performance contract: native resize is probe-free and web resize calls are coalesced
+[PASS] WS resize performance contract
+
+[RUN] WS frontend high-priority fixes
+frontend high-priority fixes: WS mount, scroll boundaries, responsive layout, customer links and GPT errors contract pass
+[PASS] WS frontend high-priority fixes
+
+[RUN] project stability and lifecycle contract
+project-stability-contract: routing, request lifecycles, WS layout and accessibility contracts are present
+[PASS] project stability and lifecycle contract
+
+[RUN] WS 50k conversation list render budget
+WS conversation list performance: 50k filter/window 34.8 ms, DOM capped at 120 rows
+[PASS] WS 50k conversation list render budget
+
+[RUN] WS bridge recovery contract
+ws bridge recovery contract: stale sidecar clients rebind and actionable errors survive
+[PASS] WS bridge recovery contract
+
+[RUN] WS scroll routing contract
+ws scroll routing contract: nested panes contain wheel/touch scrolling
+[PASS] WS scroll routing contract
+
+[RUN] WS A+ dual-layer layout contract
+ws-workbench-a-plus-layout: compact rail, max WebView, collapsible local workspace and stable process rail required
+[PASS] WS A+ dual-layer layout contract
+
+[RUN] WS data archive customer bridge
+ws-data-archive-api: unified CRM/WS archive read, business records, account isolation and non-mutating contract passed
+[PASS] WS data archive customer bridge
+
+[RUN] WS data archive summary bridge
+data archive summary: SQLite archive, CRM links, WS counts and account isolation pass
+[PASS] WS data archive summary bridge
+
+[RUN] WS data archive UI bridge
+data-archive-ui: data center renders the SQLite archive bridge and refresh contract
+[PASS] WS data archive UI bridge
+
+[RUN] WS data archive drilldown UI
+data-archive-drilldown-ui: lightweight customer archive drilldown contract
+[PASS] WS data archive drilldown UI
+
+[RUN] WS group catalog runtime
+ws-group-catalog-runtime: pass
+[PASS] WS group catalog runtime
+
+[RUN] WS background isolation runtime
+node:assert:885
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: runtime must keep an explicit background lease boundary
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\ws-background-isolation.test.cjs:15:8)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'using Microsoft.UI.Dispatching;\n' +
+    '\n' +
+    'namespace Zhike.Desktop.Services;\n' +
+    '\n' +
+    '/// <summary>\n' +
+    '/// Process-level owner of the finite WebView session pool and its scheduler.\n' +
+    '/// A XAML host supplies only UI-thread factories/heartbeat adapters; account\n' +
+    '/// selection, foreground protection, LRU rotation and lifetime live here.\n' +
+    '/// </summary>\n' +
+    'public sealed class WsRuntimeService\n' +
+    '{\n' +
+    '    private readonly WsRuntimeCoordinator _coordinator;\n' +
+    '    private readonly WsWebViewSessionPool _pool;\n' +
+    '    private readonly SemaphoreSlim _tickGate = new(1, 1);\n' +
+    '    private Func<string, long, CancellationToken, Task<WsWebViewSessionRegistration>>? _factory;\n' +
+    '    private Func<WsWebViewSession, bool, CancellationToken, Task>? _heartbeat;\n' +
+    '    private Func<CancellationToken, Task>? _flush;\n' +
+    '    private DispatcherQueueTimer? _timer;\n' +
+    '    private string _activeAccountId = string.Empty;\n' +
+    '\n' +
+    '    public WsRuntimeService(WsRuntimeCoordinator coordinator, WsWebViewSessionPool pool)\n' +
+    '    {\n' +
+    '        _coordinator = coordinator ?? throw new ArgumentNullException(nameof(coordinator));\n' +
+    '        _pool = pool ?? throw new ArgumentNullException(nameof(pool));\n' +
+    '    }\n' +
+    '\n' +
+    '    public string ActiveAccountId => _activeAccountId;\n' +
+    '    public WsWebViewSession? ActiveSession\n' +
+    '        => _pool.TryGet(_activeAccountId, out var session) ? session : null;\n' +
+    '\n' +
+    '    public event EventHandler? SessionsChanged;\n' +
+    '\n' +
+    '    public void BindHost(\n' +
+    '        DispatcherQueue dispatcher,\n' +
+    '        Func<string, long, CancellationToken, Task<WsWebViewSessionRegistration>> factory,\n' +
+    '        Func<WsWebViewSession, bool, CancellationToken, Task> heartbeat,\n' +
+    '        Func<CancellationToken, Task> flush)\n' +
+    '    {\n' +
+    '        ArgumentNullException.ThrowIfNull(dispatcher);\n' +
+    '        _factory = factory ?? throw new ArgumentNullException(nameof(factory));\n' +
+    '        _heartbeat = heartbeat ?? throw new ArgumentNullException(nameof(heartbeat));\n' +
+    '        _flush = flush ?? throw new ArgumentNullException(nameof(flush));\n' +
+    '        if (_timer is not null) return;\n' +
+    '        _timer = dispatcher.CreateTimer();\n' +
+    '        _timer.Interval = TimeSpan.FromSeconds(10);\n' +
+    '        // DispatcherQueueTimer has an async-void event surface. Never allow a\n' +
+    '        // transient WebView/service exception to escape the event handler and\n' +
+    '        // tear down the dispatcher pump (which used to look like periodic WS\n' +
+    '        // flicker or a frozen workbench).\n' +
+    '        _timer.Tick += async (_, _) =>\n' +
+    '        {\n' +
+    '            try { await TickAsync(); }\n' +
+    '            catch (OperationCanceledException) { }\n' +
+    '            catch (Exception error)\n' +
+    '            {\n' +
+    '                System.Diagnostics.Debug.WriteLine($"WS runtime tick failed: {error.GetType().Name}: {error.Message}");\n' +
+    '            }\n' +
+    '        };\n' +
+    '        _timer.Start();\n' +
+    '    }\n' +
+    '\n' +
+    '    public async Task<WsWebViewSessionAcquireResult> ShowAccountAsync(string accountId, CancellationToken cancellationToken = default)\n' +
+    '    {\n' +
+    '        var factory = _factory ?? throw new InvalidOperationException("WS runtime host is not bound.");\n' +
+    '        _coordinator.RegisterAccount(accountId, accountId, WsAccountRuntimeState.Connecting);\n' +
+    '        // An explicit Close WS disables background recreation. Opening the\n' +
+    '        // same account is the equally explicit resume boundary.\n' +
+    '        _coordinator.SetAccountEnabled(accountId, true);\n' +
+    '        var previous = _coordinator.Snapshot().ForegroundAccountId;\n' +
+    '        _coordinator.SetForegroundAccount(accountId);\n' +
+    '        try\n' +
+    '        {\n' +
+    '            var result = await _pool.GetOrCreateAsync(accountId, factory, cancellationToken);\n' +
+    '            if (result.Created)\n' +
+    '            {\n' +
+    '#if STAGE51_ISOLATED_UI\n' +
+    '                // This build has no WS authorization. A local blank entry is\n' +
+    '                // not a failed network login and must not enter recovery.\n' +
+    '                result.Session.View.Source = new Uri("about:blank");\n' +
+    '#else\n' +
+    '                result.Session.View.Source = new Uri("https://web.whatsapp.com/");\n' +
+    '#endif\n' +
+    '            }\n' +
+    '            _activeAccountId = accountId;\n' +
+    '            SessionsChanged?.Invoke(this, EventArgs.Empty);\n' +
+    '            return result;\n' +
+    '        }\n' +
+    '        catch\n' +
+    '        {\n' +
+    '            _coordinator.SetForegroundAccount(previous);\n' +
+    '            throw;\n' +
+    '        }\n' +
+    '    }\n' +
+    '\n' +
+    '    public void HideForeground()\n' +
+    '    {\n' +
+    '        _coordinator.SetForegroundAccount(null);\n' +
+    '        SessionsChanged?.Invoke(this, EventArgs.Empty);\n' +
+    '    }\n' +
+    '\n' +
+    '    public async Task<bool> CloseAccountAsync(string accountId, CancellationToken cancellationToken = default)\n' +
+    '    {\n' +
+    '        // Disable before releasing the WebView so the next scheduler tick\n' +
+    '        // cannot immediately lease and recreate an account the user just\n' +
+    '        // closed. HideForeground is the non-destructive route-change path.\n' +
+    '        _coordinator.SetAccountEnabled(accountId, false);\n' +
+    '        var removed = await _pool.RemoveAsync(accountId, cancellationToken);\n' +
+    '        if (string.Equals(_activeAccountId, accountId, StringComparison.OrdinalIgnoreCase))\n' +
+    '        {\n' +
+    '            _activeAccountId = string.Empty;\n' +
+    '            _coordinator.SetForegroundAccount(null);\n' +
+    '        }\n' +
+    '        if (removed) SessionsChanged?.Invoke(this, EventArgs.Empty);\n' +
+    '        return removed;\n' +
+    '    }\n' +
+    '\n' +
+    '    public async Task TickAsync(CancellationToken cancellationToken = default)\n' +
+    '    {\n' +
+    '#if STAGE51_ISOLATED_UI\n' +
+    '        // The native UI acceptance process never drives a WhatsApp collector.\n' +
+    '        await Task.CompletedTask;\n' +
+    '        return;\n' +
+    '#else\n' +
+    '        if (!await _tickGate.WaitAsync(0, cancellationToken)) return;\n' +
+    '        try\n' +
+    '        {\n' +
+    '            var factory = _factory;\n' +
+    '            var heartbeat = _heartbeat;\n' +
+    '            if (factory is null || heartbeat is null) return;\n' +
+    '            var snapshot = _coordinator.Snapshot();\n' +
+    '            if (!string.IsNullOrWhiteSpace(snapshot.ForegroundAccountId)\n' +
+    '                && _pool.TryGet(snapshot.ForegroundAccountId, out var foreground)\n' +
+    '                && foreground is not null)\n' +
+    '                await RunHeartbeatAsync(foreground, false, heartbeat, cancellationToken).ConfigureAwait(false);\n' +
+    '\n' +
+    '            // RD02: no automatic background lease, WebView creation, profile\n' +
+    '            // preparation or collection heartbeat. Manual foreground selection\n' +
+    '            // is the only account creation boundary.\n' +
+    '            if (_flush is not null) await _flush(cancellationToken).ConfigureAwait(false);\n' +
+    '        }\n' +
+    '        finally { _tickGate.Release(); }\n' +
+    '#endif\n' +
+    '    }\n' +
+    '\n' +
+    '    public async Task ShutdownAsync(CancellationToken cancellationToken = default)\n' +
+    '    {\n' +
+    '        _timer?.Stop();\n' +
+    '        _timer = null;\n' +
+    '        _coordinator.SetForegroundAccount(null);\n' +
+    '        await _pool.ReleaseAllAsync(cancellationToken);\n' +
+    '        _activeAccountId = string.Empty;\n' +
+    '        SessionsChanged?.Invoke(this, EventArgs.Empty);\n' +
+    '    }\n' +
+    '\n' +
+    '    public void Abort()\n' +
+    '    {\n' +
+    '        _timer?.Stop();\n' +
+    '        _timer = null;\n' +
+    '        _coordinator.SetForegroundAccount(null);\n' +
+    '        _pool.ReleaseAll();\n' +
+    '        _activeAccountId = string.Empty;\n' +
+    '        SessionsChanged?.Invoke(this, EventArgs.Empty);\n' +
+    '    }\n' +
+    '\n' +
+    '    public IReadOnlyList<WsWebViewSession> Sessions() => _pool.Sessions();\n' +
+    '    public bool TryGetSession(string accountId, out WsWebViewSession? session) => _pool.TryGet(accountId, out session);\n' +
+    '\n' +
+    '    private async Task RunHeartbeatAsync(\n' +
+    '        WsWebViewSession session,\n' +
+    '        bool driveCollection,\n' +
+    '        Func<WsWebViewSession, bool, CancellationToken, Task> heartbeat,\n' +
+    '        CancellationToken cancellationToken)\n' +
+    '    {\n' +
+    '        try\n' +
+    '        {\n' +
+    '            await heartbeat(session, driveCollection, cancellationToken);\n' +
+    '            _coordinator.RecordHeartbeat(session.AccountId);\n' +
+    '        }\n' +
+    '        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }\n' +
+    '        catch (Exception error)\n' +
+    '        {\n' +
+    '            _coordinator.RecordFailure(session.AccountId, error.Message);\n' +
+    '        }\n' +
+    '    }\n' +
+    '}\n',
+  expected: /LeaseNextBackgroundAccount\(\)/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+[FAIL] WS background isolation runtime
+
+[RUN] WS multi-account detection contract
+C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\ws-multi-account-detection.test.cjs:12
+  throw new Error('background probe must persist and publish the detected status for non-foreground accounts');
+  ^
+
+Error: background probe must persist and publish the detected status for non-foreground accounts
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\tests\ws-multi-account-detection.test.cjs:12:9)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+
+Node.js v24.22.1
+[FAIL] WS multi-account detection contract
+
+[RUN] WS scroll stability contract
+ws-scroll-stability: closed rail, single owner, bounded tables, refresh backpressure and cancellable reads are required
+[PASS] WS scroll stability contract
+
+[RUN] WS assistant drawer runtime
+ws-assist-drawer-runtime: persistence, focus, drag, layer and scroll contracts are present
+[PASS] WS assistant drawer runtime
+
+[RUN] hot-chat profile API
+hot-chat-profile-api: migration, non-mutating reads, isolation, merge, confirm/reject/lock, colors, events and retry passed
+[PASS] hot-chat profile API
+
+[RUN] hot-chat profile core
+hot-chat-profile-core: pass
+[PASS] hot-chat profile core
+
+[RUN] hot-chat profile migration
+hot-chat-profile-migration: idempotent pass
+[PASS] hot-chat profile migration
+
+[RUN] request coalescer cancellation
+request coalescer cancellation: caller abort does not cancel or await shared read
+[PASS] request coalescer cancellation
+
+[RUN] task6 stability contract
+task6 stability contract: bounded local writes, adaptive sync, WS/AI retry and WinUI installer gates pass
+[PASS] task6 stability contract
+
+[RUN] desktop performance contract
+desktop performance contract: budgets, hidden-poll pause and request coalescing are present
+[PASS] desktop performance contract
+
+[RUN] CRM phone index and archive diagnostics
+customer-phone-index: canonical WS/CRM phone index and diagnostics pass
+[PASS] CRM phone index and archive diagnostics
+
+[RUN] unified scroll system contract
+scroll system contract: single-axis ownership, accessible bars, modal freeze and bounded WS telemetry pass
+[PASS] unified scroll system contract
+
+[RUN] unified scroll coordinator runtime
+scroll coordinator runtime: scroll ownership, wheel units, boundaries and state retention pass
+[PASS] unified scroll coordinator runtime
+
+[RUN] WS route sidebar policy runtime
+sidebar WS route policy: independent navigation, hidden/inert main sidebar, preference and viewport restoration pass
+[PASS] WS route sidebar policy runtime
+
+[RUN] Stage 5.5C-1A real isolated send/media/AI risk API
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"queued","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"sending","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"sent","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"failed","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"cancelled","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[PASS] R04 all attachment states retain bytes and references
+[PASS] R04 database failure leaves original bytes intact
+[PASS] R04 cleanup failure has a durable tombstone and explicit retry
+[PASS] R04 legacy audit references and post-cleanup database failure remain recoverable
+[PASS] R01 same-key changed full content is rejected without changing the old plan
+[PASS] R01 legacy rows and maximum-length idempotency keys remain compatible
+[PASS] R02 planning 30 targets does not reserve actual send quota
+[PASS] R03 begin token, per-attachment outcome, unknown blocking and untrusted receipt rejection
+[PASS] R03 concurrent begin grants one token and a proven preflight failure can retry safely
+[PASS] R03 partial attachment attempt plus later failure is unknown and cannot resend
+[OBSERVED] {"scenario":"local-evidence-consistency","httpStatus":422,"storedDeliveryState":"unknown"}
+[OBSERVED] {"scenario":"local-evidence-consistency","httpStatus":422,"storedDeliveryState":"unknown"}
+[OBSERVED] {"scenario":"local-evidence-consistency","httpStatus":422,"storedDeliveryState":"unknown"}
+[PASS] R03 contradictory or missing local-attempt evidence cannot upgrade unknown intent
+[OBSERVED] {"scenario":"failed-evidence-consistency","httpStatus":409,"retryAllowed":false}
+[OBSERVED] {"scenario":"failed-evidence-consistency","httpStatus":409,"retryAllowed":false}
+[OBSERVED] {"scenario":"failed-evidence-consistency","httpStatus":409,"retryAllowed":false}
+[OBSERVED] {"scenario":"failed-evidence-consistency","httpStatus":409,"retryAllowed":false}
+[PASS] R03 contradictory or missing preflight evidence cannot authorize retry
+[PASS] R02 actual attempt reservations are per account and bounded
+[PASS] R03 prepared unknown intent survives a real isolated sidecar restart
+[PASS] R05 24 MiB upper bound and executable signature or extension rejection
+[PASS] R07 AI GET is read-only and explicit legacy recovery does not touch Worker jobs
+{"stage":"5.5C-1A","checks":16,"passed":16,"failed":0,"results":[{"name":"R04 all attachment states retain bytes and references","result":"PASS"},{"name":"R04 database failure leaves original bytes intact","result":"PASS"},{"name":"R04 cleanup failure has a durable tombstone and explicit retry","result":"PASS"},{"name":"R04 legacy audit references and post-cleanup database failure remain recoverable","result":"PASS"},{"name":"R01 same-key changed full content is rejected without changing the old plan","result":"PASS"},{"name":"R01 legacy rows and maximum-length idempotency keys remain compatible","result":"PASS"},{"name":"R02 planning 30 targets does not reserve actual send quota","result":"PASS"},{"name":"R03 begin token, per-attachment outcome, unknown blocking and untrusted receipt rejection","result":"PASS"},{"name":"R03 concurrent begin grants one token and a proven preflight failure can retry safely","result":"PASS"},{"name":"R03 partial attachment attempt plus later failure is unknown and cannot resend","result":"PASS"},{"name":"R03 contradictory or missing local-attempt evidence cannot upgrade unknown intent","result":"PASS"},{"name":"R03 contradictory or missing preflight evidence cannot authorize retry","result":"PASS"},{"name":"R02 actual attempt reservations are per account and bounded","result":"PASS"},{"name":"R03 prepared unknown intent survives a real isolated sidecar restart","result":"PASS"},{"name":"R05 24 MiB upper bound and executable signature or extension rejection","result":"PASS"},{"name":"R07 AI GET is read-only and explicit legacy recovery does not touch Worker jobs","result":"PASS"}],"productionOpened":false,"realWs":false,"paidAi":false,"workerStarted":false}
+[PASS] Stage 5.5C-1A real isolated send/media/AI risk API
+
+[RUN] Stage 5.5C-1A send UI evidence and async ownership
+PASS R01 fingerprint includes every effective payload field
+PASS R03 local click is not platform acceptance or delivery and cannot blindly retry
+PASS R03 partial attachment execution is unknown and does not replay first attachment
+PASS R06 switch while native response is pending never writes new account state
+PASS R03 transport loss after authorization is unknown and blocked from replay
+PASS R03 duplicate manual clicks cannot start concurrent native attempts
+PASS R06 switch during authorization aborts before touching native UI
+PASS R03 acknowledgement loss preserves unknown and stops remaining attachments
+PASS R03 lost authorization response is not presented as a fresh replayable item
+PASS R03 definite preflight refusal is distinct from an uncertain attempt
+PASS R03 incomplete native proof stays unknown instead of inventing a local attempt
+PASS R03 actual attachment captions are exactly those frozen in the plan
+PASS R03 rejected native promise records the individual preflight refusal
+PASS R03 UI labels preserve all five evidence levels and distrust legacy sent
+Stage 5.5C-1A WS UI: 14/14
+[PASS] Stage 5.5C-1A send UI evidence and async ownership
+
+[RUN] Stage 5.5C-1A production native send qualification
+node:internal/assert/utils:77
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]:     private static string BuildWsSendTextScript(
+    at take (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\scripts\stage55c\native-send-safety.test.cjs:10:100)
+    at Object.<anonymous> (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\scripts\stage55c\native-send-safety.test.cjs:14:5)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+[FAIL] Stage 5.5C-1A production native send qualification
+
+[RUN] Stage 5.5C-1A actual send DOM and bridge outcomes
+{"stage":"5.5C-1A","actualProductionScripts":true,"cases":[{"name":"text-click-only-local-attempt","passed":true},{"name":"text-click-exception-unknown","passed":true},{"name":"text-noSend-before-click-failed","passed":true},{"name":"text-noComposer-before-click-failed","passed":true},{"name":"text-wrongConversation-before-click-failed","passed":true},{"name":"media-click-only-local-attempt","passed":true},{"name":"media-click-exception-unknown","passed":true},{"name":"media-noSend-before-click-failed","passed":true},{"name":"media-noComposer-before-click-failed","passed":true},{"name":"media-wrongConversation-before-click-failed","passed":true},{"name":"media-no-file-input-before-click-failed","passed":true},{"name":"ws-bridge-whitelist-preserves-non-attempt","passed":true},{"name":"ws-prefixed-bridge-preserves-unknown","passed":true},{"name":"non-ws-bridge-does-not-forward-send-metadata","passed":true},{"name":"bridge-invalid-state-types-not-trusted","passed":true},{"name":"unknown-never-exposes-a-retryable-preflight","passed":true}],"realWs":false,"network":false,"productionOpened":false}
+[PASS] Stage 5.5C-1A actual send DOM and bridge outcomes
+
+[RUN] Stage 5.5C-1A provider modal generation and stale responses
+PASS provider change immediately clears temporary secret
+PASS late provider status cannot replace current provider model
+PASS late status error cannot notify or overwrite reopened settings
+PASS save is single flight and closing does not allow stale completion to close a new modal
+PASS late initial open cannot replace a newer settings session
+PASS provider loading blocks save and rejects a mismatched response
+PASS late model results cannot populate another provider catalog
+PASS delete is single flight and its late error cannot affect a closed session
+PASS storage read failure remains explicit and cannot authorize overwrite
+PASS initial settings response cannot replace another module modal
+PASS current save failure keeps modal open and clears temporary input
+GPT provider isolated race runtime: 11/11; network calls=0
+[PASS] Stage 5.5C-1A provider modal generation and stale responses
+
+Completed 158 checks: 147 passed, 11 failed.
+- WS non-blocking AI pump runtime: exit 1
+- WS local security contract: exit 1
+- WS native group monitor bridge contract: exit 1
+- WS native background lifecycle and bounds contract: exit 1
+- WS process WebView session pool contract: exit 1
+- WS ChatKnow UI contract: exit 1
+- WS collection and CRM sync contract: exit 1
+- WS complete per-customer history contract: exit 1
+- WS background isolation runtime: exit 1
+- WS multi-account detection contract: exit 1
+- Stage 5.5C-1A production native send qualification: exit 1

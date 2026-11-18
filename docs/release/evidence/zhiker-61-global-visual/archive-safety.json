@@ -1,0 +1,6 @@
+{
+  "checkedUtc": "2026-11-18T17:18:10.904Z",
+  "scope": "Only explicitly selected synthetic test logs, measurements and actual isolated screenshots; connection.private.json, profiles, SQLite and media excluded.",
+  "suspiciousFiles": [],
+  "patternScanIsNotProofOfAbsence": true
+}

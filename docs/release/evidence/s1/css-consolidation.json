@@ -1,0 +1,30 @@
+[
+  {
+    "file": "design-system.css",
+    "beforeBytes": 16501,
+    "afterBytes": 9462,
+    "beforeImportant": 13,
+    "afterImportant": 40
+  },
+  {
+    "file": "horizon-atelier.css",
+    "beforeBytes": 39227,
+    "afterBytes": 9342,
+    "beforeImportant": 245,
+    "afterImportant": 69
+  },
+  {
+    "file": "global-6.css",
+    "beforeBytes": 17221,
+    "afterBytes": 19560,
+    "beforeImportant": 168,
+    "afterImportant": 220
+  },
+  {
+    "file": "home-6.css",
+    "beforeBytes": 49216,
+    "afterBytes": 11440,
+    "beforeImportant": 205,
+    "afterImportant": 18
+  }
+]

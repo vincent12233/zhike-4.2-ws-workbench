@@ -1,0 +1,109 @@
+{
+  "scope": "isolated native final CSS e545292; synthetic only",
+  "launch": {
+    "startedUtc": "2026-11-18T16:58:40.3978993Z",
+    "root": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-stage51-native-dc52bb8893c043b4a7d4813039e5a21c",
+    "binary": "C:\\Users\\酷酷\\Documents\\Codex\\2026-11-04\\new-chat\\work\\project-review\\visual-system-worktrees\\integration\\.tools\\stage51-native-v2\\Zhike.Stage51.Acceptance.exe",
+    "pid": 35508,
+    "webAssetCommit": "e545292",
+    "productionOpened": false
+  },
+  "counts": {
+    "application-start": 1,
+    "sidecar-created": 1,
+    "window-initialize-start": 1,
+    "window-initialize-completed": 1,
+    "window-created": 1,
+    "host-route-request": 2,
+    "shell-initialize-requested": 3,
+    "sidecar-ready": 1,
+    "stage51-native-dpi": 2,
+    "window-presentation-state": 4,
+    "shell-profile-created": 1,
+    "host-loaded": 1,
+    "stage53-drag-attached": 1,
+    "stage53-drag-summary": 2,
+    "webview-created": 1,
+    "webview-source-changed": 1,
+    "webview-navigation": 1,
+    "stage51-dom-layout": 7,
+    "ws-bounds-decision": 1,
+    "stage51-dom-frame": 2,
+    "stage51-preview-start": 2,
+    "stage51-preview-complete": 2,
+    "stage51-native-wheel": 2,
+    "stage51-dom-wheel-arrival": 2,
+    "stage51-dom-wheel": 2,
+    "stage51-dom-wheel-settled": 2,
+    "application-stopping": 1,
+    "sidecar-stopped": 1,
+    "host-unloaded": 1
+  },
+  "events": [
+    {
+      "at": "2026-11-18T16:58:41.038267+00:00",
+      "pid": 35508,
+      "kind": "application-start",
+      "fields": {}
+    },
+    {
+      "at": "2026-11-18T16:58:43.0022876+00:00",
+      "pid": 35508,
+      "kind": "webview-created",
+      "fields": {
+        "role": "shell",
+        "accountId": "workbench-ui",
+        "browserProcessId": 26652
+      }
+    },
+    {
+      "at": "2026-11-18T16:58:45.3691267+00:00",
+      "pid": 35508,
+      "kind": "webview-navigation",
+      "fields": {
+        "role": "shell",
+        "accountId": "workbench-ui",
+        "success": true,
+        "target": "isolated-local"
+      }
+    },
+    {
+      "at": "2026-11-18T17:01:58.4657995+00:00",
+      "pid": 35508,
+      "kind": "stage51-preview-complete",
+      "fields": {
+        "surface": "shell-webview"
+      }
+    },
+    {
+      "at": "2026-11-18T17:07:38.4664195+00:00",
+      "pid": 35508,
+      "kind": "stage51-preview-complete",
+      "fields": {
+        "surface": "shell-webview"
+      }
+    },
+    {
+      "at": "2026-11-18T17:09:29.4752709+00:00",
+      "pid": 35508,
+      "kind": "application-stopping",
+      "fields": {}
+    },
+    {
+      "at": "2026-11-18T17:09:29.67953+00:00",
+      "pid": 35508,
+      "kind": "sidecar-stopped",
+      "fields": {
+        "running": false
+      }
+    },
+    {
+      "at": "2026-11-18T17:09:29.6950618+00:00",
+      "pid": 35508,
+      "kind": "host-unloaded",
+      "fields": {
+        "route": "legacy-background"
+      }
+    }
+  ]
+}

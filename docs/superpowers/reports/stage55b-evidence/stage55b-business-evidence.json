@@ -1,0 +1,35 @@
+{
+  "stage": "5.5B",
+  "verifiedAt": "2026-11-16T18:40:41.419Z",
+  "synthetic": true,
+  "mode": "read-only-after-real-WinUI-actions",
+  "crmCustomerCount": 2,
+  "emptyFieldApproved": true,
+  "rejectedFieldUnchanged": true,
+  "manualFieldProtected": true,
+  "otherAccountSuggestionsUnchanged": true,
+  "contactsTotal": 49,
+  "secondPageRows": 9,
+  "duplicateRows": 2,
+  "diagnosticUnavailable": true,
+  "productionOpened": false,
+  "realWs": false,
+  "paidAi": false,
+  "reviewActions": [
+    {
+      "action": "suggestion.conflict",
+      "outcome": "conflict",
+      "source": "ai_task_audit"
+    },
+    {
+      "action": "suggestion.reject",
+      "outcome": "rejected",
+      "source": "ai_task_audit"
+    },
+    {
+      "action": "suggestion.approve",
+      "outcome": "applied",
+      "source": "ai_task_audit"
+    }
+  ]
+}

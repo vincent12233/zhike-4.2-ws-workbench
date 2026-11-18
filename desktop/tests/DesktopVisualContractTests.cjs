@@ -31,7 +31,12 @@ assert.doesNotMatch(main, /<NavigationView\b|NativeHeader|HeaderRow/,
 assert.doesNotMatch(mainCode, /ApplyShellChrome|NativeFallbackRoutes|ZHIKE_(?:DESKTOP_)?LEGACY_UI_HOST/);
 for (const token of ['ZhikeSuccessBrush', 'ZhikeSuccessBackgroundBrush', 'ZhikeWarningBrush', 'ZhikeDangerBrush', 'ZhikeAiBrush'])
   assert.match(app, new RegExp(token), `native host missing semantic token ${token}`);
-assert.match(app, /ZhikePageBackgroundBrush[^\n]*Color="#F4F7FB"/);
-assert.match(app, /ZhikeTealBrush[^\n]*Color="#0EA991"/);
+const light = app.match(/<ResourceDictionary x:Key="Light">([\s\S]*?)<\/ResourceDictionary>/)?.[1];
+const dark = app.match(/<ResourceDictionary x:Key="Dark">([\s\S]*?)<\/ResourceDictionary>/)?.[1];
+assert.ok(light && dark, 'native host retains distinct light and dark token owners');
+assert.match(light, /ZhikePageBackgroundBrush[^\n]*Color="#F7F9FC"/);
+assert.match(light, /ZhikeTealBrush[^\n]*Color="#006972"/);
+assert.match(dark, /ZhikePageBackgroundBrush[^\n]*Color="#10182B"/);
+assert.match(main, /Background="\{ThemeResource ZhikePageBackgroundBrush\}"/);
 
 console.log('desktop visual contract: one Horizon workbench route system and one WinUI host boundary are present');

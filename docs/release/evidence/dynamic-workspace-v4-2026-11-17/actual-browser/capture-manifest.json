@@ -1,0 +1,1086 @@
+{
+  "schemaVersion": 1,
+  "scope": "BrowserOnly actual production renderers with explicitly synthetic records; no native acceptance",
+  "fixtureRoot": "C:\\Users\\酷酷\\AppData\\Local\\Temp\\zhike-s1-main-style-koL3qO",
+  "createdAt": "2026-11-17T16:23:48.000Z",
+  "cases": [
+    {
+      "name": "main-home-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "home"
+      }
+    },
+    {
+      "name": "main-intake-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "intake"
+      }
+    },
+    {
+      "name": "main-operations-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "operations"
+      }
+    },
+    {
+      "name": "main-stage-board-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "stage-board"
+      }
+    },
+    {
+      "name": "main-customers-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "customers"
+      }
+    },
+    {
+      "name": "main-segments-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "segments"
+      }
+    },
+    {
+      "name": "main-hot-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "hot"
+      }
+    },
+    {
+      "name": "main-groups-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "groups"
+      }
+    },
+    {
+      "name": "main-vip-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "vip"
+      }
+    },
+    {
+      "name": "main-tickets-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "tickets"
+      }
+    },
+    {
+      "name": "main-registrations-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "registrations"
+      }
+    },
+    {
+      "name": "main-deposits-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "deposits"
+      }
+    },
+    {
+      "name": "main-analytics-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "analytics"
+      }
+    },
+    {
+      "name": "main-automation-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "automation"
+      }
+    },
+    {
+      "name": "main-quality-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "quality"
+      }
+    },
+    {
+      "name": "main-data-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "data"
+      }
+    },
+    {
+      "name": "main-activity-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "activity"
+      }
+    },
+    {
+      "name": "main-recycle-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "recycle"
+      }
+    },
+    {
+      "name": "main-settings-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "settings"
+      }
+    },
+    {
+      "name": "main-phone-registry-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "phone-registry"
+      }
+    },
+    {
+      "name": "main-followups-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "followups"
+      }
+    },
+    {
+      "name": "main-gpt-atelier-dawn",
+      "file": "gpt.html",
+      "query": {
+        "palette": "atelier-dawn"
+      }
+    },
+    {
+      "name": "main-ws-entry-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "chat"
+      }
+    },
+    {
+      "name": "ws-overview-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "overview"
+      }
+    },
+    {
+      "name": "ws-accounts-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "accounts"
+      }
+    },
+    {
+      "name": "ws-chat-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "chat"
+      }
+    },
+    {
+      "name": "ws-groups-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "groups"
+      }
+    },
+    {
+      "name": "ws-members-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "members"
+      }
+    },
+    {
+      "name": "ws-collection-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "collection"
+      }
+    },
+    {
+      "name": "ws-contacts-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "contacts"
+      }
+    },
+    {
+      "name": "ws-ai-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "ai"
+      }
+    },
+    {
+      "name": "ws-crm-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "crm"
+      }
+    },
+    {
+      "name": "ws-tasks-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "tasks"
+      }
+    },
+    {
+      "name": "ws-logs-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "logs"
+      }
+    },
+    {
+      "name": "ws-settings-atelier-dawn",
+      "file": "ws.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "settings"
+      }
+    },
+    {
+      "name": "main-home-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "home"
+      }
+    },
+    {
+      "name": "main-intake-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "intake"
+      }
+    },
+    {
+      "name": "main-operations-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "operations"
+      }
+    },
+    {
+      "name": "main-stage-board-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "stage-board"
+      }
+    },
+    {
+      "name": "main-customers-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "customers"
+      }
+    },
+    {
+      "name": "main-segments-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "segments"
+      }
+    },
+    {
+      "name": "main-hot-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "hot"
+      }
+    },
+    {
+      "name": "main-groups-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "groups"
+      }
+    },
+    {
+      "name": "main-vip-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "vip"
+      }
+    },
+    {
+      "name": "main-tickets-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "tickets"
+      }
+    },
+    {
+      "name": "main-registrations-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "registrations"
+      }
+    },
+    {
+      "name": "main-deposits-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "deposits"
+      }
+    },
+    {
+      "name": "main-analytics-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "analytics"
+      }
+    },
+    {
+      "name": "main-automation-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "automation"
+      }
+    },
+    {
+      "name": "main-quality-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "quality"
+      }
+    },
+    {
+      "name": "main-data-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "data"
+      }
+    },
+    {
+      "name": "main-activity-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "activity"
+      }
+    },
+    {
+      "name": "main-recycle-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "recycle"
+      }
+    },
+    {
+      "name": "main-settings-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "settings"
+      }
+    },
+    {
+      "name": "main-phone-registry-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "phone-registry"
+      }
+    },
+    {
+      "name": "main-followups-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "followups"
+      }
+    },
+    {
+      "name": "main-gpt-horizon-night",
+      "file": "gpt.html",
+      "query": {
+        "palette": "horizon-night"
+      }
+    },
+    {
+      "name": "main-ws-entry-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "chat"
+      }
+    },
+    {
+      "name": "ws-overview-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "overview"
+      }
+    },
+    {
+      "name": "ws-accounts-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "accounts"
+      }
+    },
+    {
+      "name": "ws-chat-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "chat"
+      }
+    },
+    {
+      "name": "ws-groups-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "groups"
+      }
+    },
+    {
+      "name": "ws-members-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "members"
+      }
+    },
+    {
+      "name": "ws-collection-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "collection"
+      }
+    },
+    {
+      "name": "ws-contacts-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "contacts"
+      }
+    },
+    {
+      "name": "ws-ai-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "ai"
+      }
+    },
+    {
+      "name": "ws-crm-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "crm"
+      }
+    },
+    {
+      "name": "ws-tasks-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "tasks"
+      }
+    },
+    {
+      "name": "ws-logs-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "logs"
+      }
+    },
+    {
+      "name": "ws-settings-horizon-night",
+      "file": "ws.html",
+      "query": {
+        "palette": "horizon-night",
+        "view": "settings"
+      }
+    },
+    {
+      "name": "dialog-appearance-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "customers",
+        "dialog": "appearance"
+      }
+    },
+    {
+      "name": "dialog-customer-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "customers",
+        "dialog": "customer"
+      }
+    },
+    {
+      "name": "dialog-new-customer-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "customers",
+        "dialog": "new-customer"
+      }
+    },
+    {
+      "name": "dialog-edit-customer-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "customers",
+        "dialog": "edit-customer"
+      }
+    },
+    {
+      "name": "dialog-follow-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "customers",
+        "dialog": "follow"
+      }
+    },
+    {
+      "name": "dialog-ticket-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "customers",
+        "dialog": "ticket"
+      }
+    },
+    {
+      "name": "dialog-deposit-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "customers",
+        "dialog": "deposit"
+      }
+    },
+    {
+      "name": "dialog-registration-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "customers",
+        "dialog": "registration"
+      }
+    },
+    {
+      "name": "dialog-security-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "customers",
+        "dialog": "security"
+      }
+    },
+    {
+      "name": "dialog-help-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "customers",
+        "dialog": "help"
+      }
+    },
+    {
+      "name": "dialog-search-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "customers",
+        "dialog": "search"
+      }
+    },
+    {
+      "name": "dialog-notification-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "customers",
+        "dialog": "notification"
+      }
+    },
+    {
+      "name": "dialog-workspace-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "customers",
+        "dialog": "workspace"
+      }
+    },
+    {
+      "name": "dialog-avatar-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "customers",
+        "dialog": "avatar"
+      }
+    },
+    {
+      "name": "dialog-phone-new-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "phone-registry",
+        "dialog": "phone-new"
+      }
+    },
+    {
+      "name": "empty-customers-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "customers",
+        "state": "empty"
+      }
+    },
+    {
+      "name": "empty-operations-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "operations",
+        "state": "empty"
+      }
+    },
+    {
+      "name": "empty-recycle-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "recycle",
+        "state": "empty"
+      }
+    },
+    {
+      "name": "empty-phone-registry-atelier-dawn",
+      "file": "main.html",
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "phone-registry",
+        "state": "empty"
+      }
+    },
+    {
+      "name": "compact-small-customers-atelier-dawn",
+      "file": "main.html",
+      "width": 820,
+      "height": 540,
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "customers",
+        "density": "compact",
+        "collapsed": "1"
+      }
+    },
+    {
+      "name": "compact-small-operations-atelier-dawn",
+      "file": "main.html",
+      "width": 820,
+      "height": 540,
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "operations",
+        "density": "compact",
+        "collapsed": "1"
+      }
+    },
+    {
+      "name": "compact-small-stage-board-atelier-dawn",
+      "file": "main.html",
+      "width": 820,
+      "height": 540,
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "stage-board",
+        "density": "compact",
+        "collapsed": "1"
+      }
+    },
+    {
+      "name": "compact-small-phone-registry-atelier-dawn",
+      "file": "main.html",
+      "width": 820,
+      "height": 540,
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "phone-registry",
+        "density": "compact",
+        "collapsed": "1"
+      }
+    },
+    {
+      "name": "compact-small-settings-atelier-dawn",
+      "file": "main.html",
+      "width": 820,
+      "height": 540,
+      "query": {
+        "palette": "atelier-dawn",
+        "screenshot": "settings",
+        "density": "compact",
+        "collapsed": "1"
+      }
+    },
+    {
+      "name": "gpt-setup-small-atelier-dawn",
+      "file": "gpt.html",
+      "width": 820,
+      "height": 540,
+      "query": {
+        "palette": "atelier-dawn",
+        "configured": "false"
+      }
+    },
+    {
+      "name": "ws-chat-compact-small-atelier-dawn",
+      "file": "ws.html",
+      "width": 820,
+      "height": 540,
+      "query": {
+        "palette": "atelier-dawn",
+        "view": "chat-compact"
+      }
+    },
+    {
+      "name": "dialog-appearance-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "customers",
+        "dialog": "appearance"
+      }
+    },
+    {
+      "name": "dialog-customer-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "customers",
+        "dialog": "customer"
+      }
+    },
+    {
+      "name": "dialog-new-customer-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "customers",
+        "dialog": "new-customer"
+      }
+    },
+    {
+      "name": "dialog-edit-customer-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "customers",
+        "dialog": "edit-customer"
+      }
+    },
+    {
+      "name": "dialog-follow-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "customers",
+        "dialog": "follow"
+      }
+    },
+    {
+      "name": "dialog-ticket-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "customers",
+        "dialog": "ticket"
+      }
+    },
+    {
+      "name": "dialog-deposit-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "customers",
+        "dialog": "deposit"
+      }
+    },
+    {
+      "name": "dialog-registration-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "customers",
+        "dialog": "registration"
+      }
+    },
+    {
+      "name": "dialog-security-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "customers",
+        "dialog": "security"
+      }
+    },
+    {
+      "name": "dialog-help-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "customers",
+        "dialog": "help"
+      }
+    },
+    {
+      "name": "dialog-search-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "customers",
+        "dialog": "search"
+      }
+    },
+    {
+      "name": "dialog-notification-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "customers",
+        "dialog": "notification"
+      }
+    },
+    {
+      "name": "dialog-workspace-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "customers",
+        "dialog": "workspace"
+      }
+    },
+    {
+      "name": "dialog-avatar-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "customers",
+        "dialog": "avatar"
+      }
+    },
+    {
+      "name": "dialog-phone-new-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "phone-registry",
+        "dialog": "phone-new"
+      }
+    },
+    {
+      "name": "empty-customers-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "customers",
+        "state": "empty"
+      }
+    },
+    {
+      "name": "empty-operations-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "operations",
+        "state": "empty"
+      }
+    },
+    {
+      "name": "empty-recycle-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "recycle",
+        "state": "empty"
+      }
+    },
+    {
+      "name": "empty-phone-registry-horizon-night",
+      "file": "main.html",
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "phone-registry",
+        "state": "empty"
+      }
+    },
+    {
+      "name": "compact-small-customers-horizon-night",
+      "file": "main.html",
+      "width": 820,
+      "height": 540,
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "customers",
+        "density": "compact",
+        "collapsed": "1"
+      }
+    },
+    {
+      "name": "compact-small-operations-horizon-night",
+      "file": "main.html",
+      "width": 820,
+      "height": 540,
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "operations",
+        "density": "compact",
+        "collapsed": "1"
+      }
+    },
+    {
+      "name": "compact-small-stage-board-horizon-night",
+      "file": "main.html",
+      "width": 820,
+      "height": 540,
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "stage-board",
+        "density": "compact",
+        "collapsed": "1"
+      }
+    },
+    {
+      "name": "compact-small-phone-registry-horizon-night",
+      "file": "main.html",
+      "width": 820,
+      "height": 540,
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "phone-registry",
+        "density": "compact",
+        "collapsed": "1"
+      }
+    },
+    {
+      "name": "compact-small-settings-horizon-night",
+      "file": "main.html",
+      "width": 820,
+      "height": 540,
+      "query": {
+        "palette": "horizon-night",
+        "screenshot": "settings",
+        "density": "compact",
+        "collapsed": "1"
+      }
+    },
+    {
+      "name": "gpt-setup-small-horizon-night",
+      "file": "gpt.html",
+      "width": 820,
+      "height": 540,
+      "query": {
+        "palette": "horizon-night",
+        "configured": "false"
+      }
+    },
+    {
+      "name": "ws-chat-compact-small-horizon-night",
+      "file": "ws.html",
+      "width": 820,
+      "height": 540,
+      "query": {
+        "palette": "horizon-night",
+        "view": "chat-compact"
+      }
+    }
+  ],
+  "loadedMainModules": [
+    "ticket-record-core.js",
+    "business-rule-core.js",
+    "metrics-charts.js",
+    "app.js",
+    "operations-core.cjs",
+    "operations-ui.js",
+    "phone-registry.js",
+    "workspace-shell.js"
+  ],
+  "limits": [
+    "Native Core lifecycle, real WS and AI are not tested.",
+    "Optional late enhancement scripts not loaded by existing S1 fixture are source-audited, not asserted as native/browser functional acceptance.",
+    "Previous historical screenshots may be used only with their original commit/date."
+  ],
+  "results": [],
+  "status": "Prepared",
+  "fixtureCleaned": true
+}

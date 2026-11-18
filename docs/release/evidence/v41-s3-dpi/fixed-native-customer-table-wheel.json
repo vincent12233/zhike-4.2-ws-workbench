@@ -1,0 +1,221 @@
+{
+  "pid": 37872,
+  "source": "Stage 5.1 isolated WinUI native-events.jsonl, selected fields for PID 37872",
+  "route": "customers",
+  "operatorAction": "One downward sky-injected scroll over the Customer Center table at Windows 100%. The operator observed the page remain at the top.",
+  "hwndAwareness": "per-monitor-v2",
+  "hwndDpi": 96,
+  "xamlRootScale": 1,
+  "domDpr": 1,
+  "nativeWheel": {
+    "at": "2026-11-18T17:24:27.4613423+05:30",
+    "sequence": 3,
+    "tickMs": 249575734,
+    "pointerTimestampUs": 249575758067,
+    "inputSource": "WebView2",
+    "wheelDelta": -400,
+    "horizontal": false,
+    "modifiers": "None",
+    "cursorScreenPx": [
+      1000,
+      750
+    ],
+    "clientPx": [
+      1000,
+      727
+    ],
+    "win32Hit": "child"
+  },
+  "domWheel": {
+    "at": "2026-11-18T17:24:27.4925838+05:30",
+    "wheelCount": 3,
+    "receivedTickMs": 249575765,
+    "target": "table",
+    "pointHit": "table",
+    "pointClientCss": [
+      999,
+      726
+    ],
+    "pointerAgeMs": 9.2,
+    "deltaMode": 0,
+    "deltaX": 0,
+    "deltaY": 333.3333,
+    "shift": false,
+    "ctrl": false,
+    "defaultPreventedBefore": false,
+    "defaultPreventedAfter": false,
+    "overlappingWheelDuringSample": false,
+    "offsetColumns": [
+      "scrollTop",
+      "scrollLeft",
+      "clientHeight",
+      "scrollHeight",
+      "clientWidth",
+      "scrollWidth"
+    ],
+    "candidates": [
+      {
+        "region": "table",
+        "before": [
+          0,
+          0,
+          601,
+          601,
+          1221,
+          1559
+        ],
+        "afterDispatch": [
+          0,
+          0,
+          601,
+          601,
+          1221,
+          1559
+        ],
+        "afterFrames": [
+          0,
+          0,
+          601,
+          601,
+          1221,
+          1559
+        ]
+      },
+      {
+        "region": "page",
+        "before": [
+          0,
+          0,
+          1013,
+          1454,
+          1647,
+          1647
+        ],
+        "afterDispatch": [
+          0,
+          0,
+          1013,
+          1454,
+          1647,
+          1647
+        ],
+        "afterFrames": [
+          0,
+          0,
+          1013,
+          1454,
+          1647,
+          1647
+        ]
+      },
+      {
+        "region": "document",
+        "before": [
+          0,
+          0,
+          1115,
+          1115,
+          1918,
+          1918
+        ],
+        "afterDispatch": [
+          0,
+          0,
+          1115,
+          1115,
+          1918,
+          1918
+        ],
+        "afterFrames": [
+          0,
+          0,
+          1115,
+          1115,
+          1918,
+          1918
+        ]
+      },
+      {
+        "region": "sidebar",
+        "before": [
+          0,
+          0,
+          825,
+          1212,
+          236,
+          236
+        ],
+        "afterDispatch": [
+          0,
+          0,
+          825,
+          1212,
+          236,
+          236
+        ],
+        "afterFrames": [
+          0,
+          0,
+          825,
+          1212,
+          236,
+          236
+        ]
+      }
+    ]
+  },
+  "outsideTableControl": {
+    "samePid": true,
+    "sameDpi": 96,
+    "nativeAt": "2026-11-18T17:29:17.8177348+05:30",
+    "nativeTickMs": 249866093,
+    "nativePointerTimestampUs": 249866102353,
+    "nativeWheelDelta": -400,
+    "nativeHorizontal": false,
+    "domAt": "2026-11-18T17:29:17.8447785+05:30",
+    "domTickMs": 249866125,
+    "domWheelCount": 4,
+    "screenPx": [1350, 305],
+    "domPointCss": [1349, 281],
+    "domTarget": "page",
+    "domDeltaX": 0,
+    "domDeltaY": 333.3333,
+    "domDefaultPrevented": false,
+    "pageScrollTopCss": {
+      "beforeInLog": 0,
+      "afterTwoFramesInLog": 0,
+      "settledReportedByOperator": 333.33,
+      "settledAtNextWheelReceipt": 333
+    },
+    "comparison": "With an independent pointer timestamp and the same wheel delta, the page moved when the pointer was over page content outside the table. The settled movement was observed after the probe's two-frame offset sample."
+  },
+  "laterReceiptWithRepeatedPointerTimestamp": {
+    "nativeAtUtc": "2026-11-18T12:01:22.2219379+00:00",
+    "nativeTickMs": 249990500,
+    "nativeSequence": 5,
+    "nativePointerTimestampUs": 249866102353,
+    "nativeWheelDelta": -400,
+    "millisecondsSinceOutsideTableNativeReceipt": 124407,
+    "appForeground": false,
+    "win32Hit": "outside",
+    "domAtUtc": "2026-11-18T12:01:22.2497879+00:00",
+    "domWheelCount": 5,
+    "domTarget": "table",
+    "domPointCss": [1349, 281],
+    "domPreviousPointerAgeMs": 124417.7,
+    "pageScrollTopBeforeAndAfterTwoFramesCss": [333, 333],
+    "interpretation": "The received event reused the previous native pointer timestamp and location while the app was not foreground. The page had already moved before this later receipt. The source of the repeat remains unresolved."
+  },
+  "diagnosis": {
+    "result": "Vertical input reached the table but did not scroll any observed candidate. The table had 338 CSS px of horizontal range and no vertical range. The page had 441 CSS px of vertical range.",
+    "routing": "The coordinator selects Y for this input and leaves the DOM event uncanceled when the table has no vertical overflow. The table scrollLeft stayed zero.",
+    "likelyCause": "The production table's authored overscroll containment can prevent native vertical chaining, including at an axis with no scroll range. The native inside/outside comparison isolates the condition to a table hit. The scoped CSS change still requires a post-fix native retest.",
+    "cssFixCommit": "1dfdba2",
+    "sources": [
+      "resources/app/modules/scroll-coordinator.js:341",
+      "resources/app/modules/scroll-system.css:79",
+      "resources/app/modules/business-6.css:166",
+      "https://www.w3.org/TR/css-overscroll-1/"
+    ]
+  }
+}

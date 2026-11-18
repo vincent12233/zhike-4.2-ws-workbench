@@ -8,7 +8,7 @@ const repo = path.resolve(__dirname, '..');
 const read = relative => fs.readFileSync(path.join(repo, relative), 'utf8');
 const app = read('resources/app/app.js');
 const registry = read('resources/app/modules/phone-registry.js');
-const css = read('resources/app/modules/horizon-atelier.css');
+const css = read('resources/app/modules/global-6.css');
 
 assert.match(app, /function governanceHeading\(title,subtitle,eyebrow,actions='',signals=\[\]\)/, 'governance routes need one shared 6.0 shell');
 for (const title of ['助理分配建议','本地自动化','数据治理','数据中心','操作记录','回收站','系统设置']) {
@@ -23,9 +23,16 @@ assert.match(app, /\['业务选项',opts\.length/, 'settings hero must derive it
 for (const selector of ['.governance-page-hero','.governance-hero-signals','.governance-signal-grid','.governance-action-grid','.automation-rules','.governance-table-empty']) {
   assert.ok(css.includes(selector), `missing governance design-system selector: ${selector}`);
 }
-assert.match(css, /:root:is\(\[data-view="quality"\],[\s\S]*?\[data-view="automation"\]\) \.modal/, 'governance modals must share one route-scoped visual contract');
-assert.match(css, /@media \(max-width:1040px\)\{[\s\S]*?\.governance-page-hero/, 'governance shell must reflow at compact desktop widths');
-assert.match(css, /@media \(max-width:560px\)\{[\s\S]*?\.governance-hero-signals/, 'governance context signals must stay reachable at high zoom');
+function governancePresentation(source) {
+  assert.match(source, /html\[data-palette\]:not\(\[data-view="ws-workbench"\]\):not\(\[data-view="gpt"\]\)/, 'governance presentation shares the business scope and cannot restyle WS/GPT');
+  assert.match(source, /\.modal\s*\{[^}]*background:var\(--ds-surface\)!important/, 'governance modals consume the same palette-aware business surface');
+  assert.match(source, /\.governance-page-hero\s*\{display:grid!important;grid-template-columns:minmax\(0,1fr\) auto/, 'governance hero retains a real copy/actions layout');
+  assert.match(source, /\.governance-hero-signals\s*\{[^}]*display:grid;[^}]*minmax\(180px,1fr\)/, 'live hero signals retain their own responsive grid');
+  assert.match(source, /@media\(max-width:1000px\)[\s\S]*?\.governance-page-hero\s*\{grid-template-columns:1fr\}/, 'compact governance copy/actions reflow without reducing readable type');
+  assert.match(source, /@media\(max-width:560px\)[\s\S]*?:is\(\.governance-hero-signals,\.governance-signal-grid,\.governance-action-grid,\.governance-data-state\)\s*\{grid-template-columns:1fr\}/, 'high-zoom signals, actions and status remain in reachable single-column flow');
+}
+governancePresentation(css);
+assert.throws(() => governancePresentation(css.replace('display:grid!important;grid-template-columns:minmax(0,1fr) auto', 'display:block')), /governance hero retains/, 'removing governance layout is a real regression even if the selector remains');
 
 assert.doesNotMatch(app, /font-size:9px;color:#8490a0;line-height:1\.7/, 'data center copy must not keep legacy 9px inline styling');
 assert.doesNotMatch(app, /style="width:150px"><strong>\$\{name\}/, 'settings keys must not use legacy inline sizing');

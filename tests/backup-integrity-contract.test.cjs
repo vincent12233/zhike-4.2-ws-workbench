@@ -7,8 +7,9 @@ const path = require('node:path');
 const { createBackupManifest, sha256File } = require('./helpers/backup-integrity.cjs');
 
 const app = fs.readFileSync(path.resolve(__dirname, '../resources/app/app.js'), 'utf8');
+const currentVersion = require('../resources/app/package.json').version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 assert.match(app, /backupFormat:'zhike-6-workspace'/);
-assert.match(app, /version:6,productVersion:'6\.0\.0'/);
+assert.match(app, new RegExp(`version:6,productVersion:'${currentVersion}'`));
 assert.match(app, /integrity=\{algorithm:'SHA-256',payloadSha256:await sha256Text/);
 assert.match(app, /backup\?\.backupFormat!==['"]zhike-6-workspace['"]/);
 assert.match(app, /备份完整性校验失败/);

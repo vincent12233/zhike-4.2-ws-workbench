@@ -1,0 +1,53 @@
+{
+  "invocation": "1794988640016-f9b69d2c-93cc-4254-b219-73df804bc060",
+  "rootPid": 19784,
+  "observerPid": 15084,
+  "observerExitProof": [
+    0,
+    null
+  ],
+  "verifiedHandleCount": 1,
+  "unavailableAtArmCount": 0,
+  "samples": [
+    {
+      "afterArmRequestMs": 40,
+      "scheduledOffsetMs": 0,
+      "rootState": "running",
+      "rootKernel100ns": 156250,
+      "rootUser100ns": 468750,
+      "countByRoleAndState": {
+        "root/running": 1
+      },
+      "rootThreadStates": {
+        "status": "observed",
+        "states": {
+          "unnamed/Wait:EventPairLow": 7,
+          "unnamed/Wait:Unknown": 4,
+          "unnamed/Wait:UserRequest": 2
+        }
+      }
+    },
+    {
+      "afterArmRequestMs": 265,
+      "scheduledOffsetMs": 250,
+      "rootState": "running",
+      "rootKernel100ns": 156250,
+      "rootUser100ns": 468750,
+      "countByRoleAndState": {
+        "root/running": 1
+      },
+      "rootThreadStates": {
+        "status": "observed",
+        "states": {
+          "unnamed/Wait:EventPairLow": 7,
+          "unnamed/Wait:Unknown": 4,
+          "unnamed/Wait:UserRequest": 2
+        }
+      }
+    }
+  ],
+  "rootKernelExitUnixMs": 1794988643859,
+  "rootKernelExitAfterArmRequestMs": 1308,
+  "observerReceivedExitAfterArmRequestMs": 1348,
+  "lastObservedChildExitBeforeRootMs": null
+}

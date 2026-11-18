@@ -1,0 +1,67 @@
+{
+  "status": "Passed",
+  "documentOnly": true,
+  "productAcceptanceRerun": false,
+  "results": [
+    {
+      "case": "responsive-width",
+      "width": 1920,
+      "scrollWidth": 1920,
+      "brokenAnchors": 0
+    },
+    {
+      "case": "responsive-width",
+      "width": 1536,
+      "scrollWidth": 1536,
+      "brokenAnchors": 0
+    },
+    {
+      "case": "responsive-width",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "brokenAnchors": 0
+    },
+    {
+      "case": "responsive-width",
+      "width": 768,
+      "scrollWidth": 768,
+      "brokenAnchors": 0
+    },
+    {
+      "case": "responsive-width",
+      "width": 390,
+      "scrollWidth": 390,
+      "brokenAnchors": 0
+    },
+    {
+      "case": "review-opinions",
+      "persistence": true,
+      "jsonExport": true,
+      "markdownExport": true,
+      "safeTextRendering": true,
+      "emptyExportFeedback": true,
+      "testNotesRemoved": true
+    },
+    {
+      "case": "original-image-enlargement",
+      "passed": true
+    },
+    {
+      "case": "all-tables",
+      "tables": 20,
+      "noVerticalTextClipping": true
+    },
+    {
+      "case": "actual-directory-jump",
+      "targetTop": 85.25,
+      "imageSpaceReserved": true
+    },
+    {
+      "case": "offline-and-content",
+      "externalRequests": 0,
+      "scriptErrors": [],
+      "originalImagesLoaded": 6,
+      "productDatabaseOpened": false
+    }
+  ]
+}

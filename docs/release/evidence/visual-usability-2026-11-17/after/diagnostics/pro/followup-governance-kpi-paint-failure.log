@@ -1,0 +1,257 @@
+AssertionError [ERR_ASSERTION]: Ordinary text contrast stays at least 4.5:1 under the actual full legacy + current cascade
++ actual - expected
+
++ [
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.31,
++     selector: 'span.',
++     text: '号码重复',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.515,
++     selector: 'span.',
++     text: '号码重复',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.107,
++     selector: 'strong.',
++     text: '0',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.205,
++     selector: 'strong.',
++     text: '0',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.31,
++     selector: 'span.',
++     text: 'VIP编号重复',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.515,
++     selector: 'span.',
++     text: 'VIP编号重复',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.107,
++     selector: 'strong.',
++     text: '0',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.205,
++     selector: 'strong.',
++     text: '0',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.31,
++     selector: 'span.',
++     text: '号码异常',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.515,
++     selector: 'span.',
++     text: '号码异常',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.107,
++     selector: 'strong.',
++     text: '0',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.205,
++     selector: 'strong.',
++     text: '0',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.31,
++     selector: 'span.',
++     text: '导入待复核',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.515,
++     selector: 'span.',
++     text: '导入待复核',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.107,
++     selector: 'strong.',
++     text: '0',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.205,
++     selector: 'strong.',
++     text: '0',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.31,
++     selector: 'span.',
++     text: '已处理导入行',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.515,
++     selector: 'span.',
++     text: '已处理导入行',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.107,
++     selector: 'strong.',
++     text: '0',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.205,
++     selector: 'strong.',
++     text: '0',
++     view: 'quality'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.31,
++     selector: 'span.',
++     text: '本地客户',
++     view: 'data'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.515,
++     selector: 'span.',
++     text: '本地客户',
++     view: 'data'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.107,
++     selector: 'strong.',
++     text: '18',
++     view: 'data'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(30, 47, 80)',
++     ratio: 1.205,
++     selector: 'strong.',
++     text: '18',
++     view: 'data'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.31,
++     selector: 'span.',
++     text: '本机存储状态',
++     view: 'data'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.515,
++     selector: 'span.',
++     text: '本机存储状态',
++     view: 'data'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(18, 104, 66)',
++     ratio: 2.164,
++     selector: 'strong.governance-status-value success',
++     text: 'SQLite 正常',
++     view: 'data'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(18, 104, 66)',
++     ratio: 2.356,
++     selector: 'strong.governance-status-value success',
++     text: 'SQLite 正常',
++     view: 'data'
++   },
++   {
++     background: 'rgb(24, 42, 55)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.31,
++     selector: 'span.',
++     text: '最近快照',
++     view: 'data'
++   },
++   {
++     background: 'rgb(19, 35, 47)',
++     foreground: 'rgb(76, 96, 128)',
++     ratio: 2.515,
++     selector: 'span.',
++     text: '最近快照',
++     view: 'data'
++   }
++ ]
+- []
+
+    at verifyContrast (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\scripts\delivery\s1-main-visual.test.cjs:172:10)
+    at main (C:\Users\酷酷\Documents\Codex\2026-11-04\new-chat\work\project-review\知客 4.1 运营增强版\scripts\delivery\s1-main-visual.test.cjs:234:201)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [Array],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}

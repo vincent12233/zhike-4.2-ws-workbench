@@ -2,16 +2,26 @@
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
 const { once } = require('node:events');
+const net = require('node:net');
 const { mkdtempSync, rmSync } = require('node:fs');
 const path = require('node:path');
 const data = mkdtempSync(path.join(require('node:os').tmpdir(), 'zhike-original-'));
-const port = 30000 + (process.pid % 20000), token = 'isolated-original-roundtrip';
-const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], {
-  cwd: path.join(__dirname, '../resources/app'), windowsHide: true, stdio: 'ignore',
-  env: { ...process.env, ZHIKE_DATA_DIR: data, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token },
-});
+let port = 0;
+let child = null;
+const token = 'isolated-original-roundtrip';
 const headers = { 'content-type': 'application/json', 'x-zhike-api-token': token };
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+function reserveFreePort() {
+  return new Promise((resolve, reject) => {
+    const probe = net.createServer();
+    probe.once('error', reject);
+    probe.listen(0, '127.0.0.1', () => {
+      const address = probe.address();
+      const selected = typeof address === 'object' && address ? address.port : 0;
+      probe.close(error => error ? reject(error) : resolve(selected));
+    });
+  });
+}
 async function api(route, body, expected = 200) {
   const version = await fetch(`http://127.0.0.1:${port}/api/state/version`, { headers }).then(r => r.json());
   const response = await fetch(`http://127.0.0.1:${port}${route}`, {
@@ -24,6 +34,11 @@ async function api(route, body, expected = 200) {
 }
 (async () => {
   try {
+    port = await reserveFreePort();
+    child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], {
+      cwd: path.join(__dirname, '../resources/app'), windowsHide: true, stdio: 'ignore',
+      env: { ...process.env, ZHIKE_DATA_DIR: data, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token },
+    });
     let ready = false;
     for (let i = 0; i < 100; i++) { try { await api('/api/health'); ready = true; break; } catch { await wait(50); } }
     assert.equal(ready, true, 'isolated service must start');
@@ -43,7 +58,7 @@ async function api(route, body, expected = 200) {
     await api('/api/ws/import', exported);
     messages = await api(`/api/ws/messages?conversationId=${conversation.id}`);
     assert.equal(messages.messages[0].originalText, original, 'restore must preserve whitespace and long originals');
-    await api('/api/ws/messages', { conversationId: conversation.id, externalId: 'single-long', direction: 'receive', originalText: original, order: 2 });
+    await api('/api/ws/messages', { conversationId: conversation.id, externalId: 'single-long', direction: 'send', originalText: original, order: 2 });
     const single = await api(`/api/ws/messages?conversationId=${conversation.id}`);
     assert.equal(single.messages.find(row => row.externalId === 'single-long').originalText, original);
     const overlong = 'x'.repeat(128001);

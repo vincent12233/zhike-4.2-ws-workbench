@@ -1,0 +1,748 @@
+{
+  "schemaVersion": 1,
+  "kind": "read-only-owner-and-realm-profile",
+  "command": "node --expose-gc .tools/delivery-s2-projection-profile.cjs",
+  "startedAt": "2026-11-17T02:32:37.287Z",
+  "sourceSha256": "81e3b87098afb30ab85392de462989367a1c1f77cc1cb95bf4eeedc3865d84b1",
+  "legacyRef": "591d372",
+  "ownerHashes": [
+    {
+      "boundary": "  const normalizeObjectRows =",
+      "sha256": "c8fd03ce648622930a1e640b320001554f85e2eaf9f6d85540956670ef5bc63c",
+      "identicalTo": "591d372"
+    },
+    {
+      "boundary": "  function isGroupFanSource(",
+      "sha256": "957a01606f4f0b4b07c8e7c1ca7a4de62e3c8817fd44fde0cb6f260ba29a782e",
+      "identicalTo": "591d372"
+    },
+    {
+      "boundary": "  let activeCustomerCache=",
+      "sha256": "b27e34da00a001a13c5bface569457a94dddf4766e2de1e3099b512e22662189",
+      "identicalTo": "591d372"
+    },
+    {
+      "boundary": "  const money =",
+      "sha256": "779e94498d5cc53a614b8742ba8eda60932342ccde809e88caf151e6207f1ae2",
+      "identicalTo": "591d372"
+    },
+    {
+      "boundary": "  const buildCounts =",
+      "sha256": "5bdc5d0b3c0bb0e8525b0e7e141a197c66ad8f0a1aaa79bdcfff96c298d6d7b6",
+      "identicalTo": "591d372"
+    },
+    {
+      "boundary": "  function isStatusBaseline(",
+      "sha256": "00d35274063ce6f05f86d2d118dbf8f07919040709b2d222232d703bf917e2b6",
+      "identicalTo": "591d372"
+    },
+    {
+      "boundary": "  function todayStatusCounts(",
+      "sha256": "52fea4a89d862288767abad4a1c9595bab120591bda4bf2a8e6155f4062e54a6",
+      "identicalTo": "591d372"
+    }
+  ],
+  "environment": {
+    "platform": "win32",
+    "release": "10.0.26300",
+    "arch": "x64",
+    "node": "v24.22.1",
+    "v8": "13.6.233.17-node.58",
+    "cpu": "13th Gen Intel(R) Core(TM) i7-13650HX"
+  },
+  "method": {
+    "runsPerModeSize": 3,
+    "sizes": [
+      1000,
+      10000
+    ],
+    "modes": [
+      "vm-external",
+      "vm-internal",
+      "same-realm"
+    ],
+    "excluded": "Source compilation, VM/dataset creation and explicit pre-run GC are excluded from durations.",
+    "noProduction": "Only app source and git history read. No app bootstrap, disk database, credentials, WS, AI, browser or native process.",
+    "candidate": "Test-only memoized smartPriority per due customer before the identical stable comparator. Product source remains unchanged."
+  },
+  "runs": [
+    {
+      "size": 1000,
+      "mode": "vm-external",
+      "legacy": [
+        {
+          "iteration": 1,
+          "durationMs": 153.94950000000003,
+          "cpuMs": 234
+        },
+        {
+          "iteration": 2,
+          "durationMs": 122.94910000000004,
+          "cpuMs": 187
+        },
+        {
+          "iteration": 3,
+          "durationMs": 123.86450000000002,
+          "cpuMs": 172
+        }
+      ],
+      "current": [
+        {
+          "iteration": 1,
+          "durationMs": 125.09960000000001,
+          "cpuMs": 235
+        },
+        {
+          "iteration": 2,
+          "durationMs": 123.66159999999991,
+          "cpuMs": 156
+        },
+        {
+          "iteration": 3,
+          "durationMs": 119.64679999999998,
+          "cpuMs": 157
+        }
+      ],
+      "candidate": [
+        {
+          "iteration": 1,
+          "durationMs": 48.78339999999997,
+          "cpuMs": 63
+        },
+        {
+          "iteration": 2,
+          "durationMs": 45.46530000000007,
+          "cpuMs": 63
+        },
+        {
+          "iteration": 3,
+          "durationMs": 43.89480000000003,
+          "cpuMs": 46
+        }
+      ],
+      "legacySummary": {
+        "minMs": 122.94910000000004,
+        "medianMs": 123.86450000000002,
+        "maxMs": 153.94950000000003
+      },
+      "currentSummary": {
+        "minMs": 119.64679999999998,
+        "medianMs": 123.66159999999991,
+        "maxMs": 125.09960000000001
+      },
+      "candidateSummary": {
+        "minMs": 43.89480000000003,
+        "medianMs": 45.46530000000007,
+        "maxMs": 48.78339999999997
+      }
+    },
+    {
+      "size": 1000,
+      "mode": "vm-internal",
+      "legacy": [
+        {
+          "iteration": 1,
+          "durationMs": 118.64710000000014,
+          "cpuMs": 203
+        },
+        {
+          "iteration": 2,
+          "durationMs": 117.94280000000003,
+          "cpuMs": 202
+        },
+        {
+          "iteration": 3,
+          "durationMs": 122.24399999999991,
+          "cpuMs": 156
+        }
+      ],
+      "current": [
+        {
+          "iteration": 1,
+          "durationMs": 119.39969999999994,
+          "cpuMs": 219
+        },
+        {
+          "iteration": 2,
+          "durationMs": 120.37930000000006,
+          "cpuMs": 156
+        },
+        {
+          "iteration": 3,
+          "durationMs": 119.4965000000002,
+          "cpuMs": 171
+        }
+      ],
+      "candidate": [
+        {
+          "iteration": 1,
+          "durationMs": 44.85439999999994,
+          "cpuMs": 47
+        },
+        {
+          "iteration": 2,
+          "durationMs": 44.17340000000013,
+          "cpuMs": 78
+        },
+        {
+          "iteration": 3,
+          "durationMs": 46.63160000000016,
+          "cpuMs": 78
+        }
+      ],
+      "legacySummary": {
+        "minMs": 117.94280000000003,
+        "medianMs": 118.64710000000014,
+        "maxMs": 122.24399999999991
+      },
+      "currentSummary": {
+        "minMs": 119.39969999999994,
+        "medianMs": 119.4965000000002,
+        "maxMs": 120.37930000000006
+      },
+      "candidateSummary": {
+        "minMs": 44.17340000000013,
+        "medianMs": 44.85439999999994,
+        "maxMs": 46.63160000000016
+      }
+    },
+    {
+      "size": 1000,
+      "mode": "same-realm",
+      "legacy": [
+        {
+          "iteration": 1,
+          "durationMs": 67.36739999999963,
+          "cpuMs": 125
+        },
+        {
+          "iteration": 2,
+          "durationMs": 60.134700000000066,
+          "cpuMs": 63
+        },
+        {
+          "iteration": 3,
+          "durationMs": 56.7814000000003,
+          "cpuMs": 47
+        }
+      ],
+      "current": [
+        {
+          "iteration": 1,
+          "durationMs": 63.10009999999966,
+          "cpuMs": 125
+        },
+        {
+          "iteration": 2,
+          "durationMs": 57.85499999999956,
+          "cpuMs": 63
+        },
+        {
+          "iteration": 3,
+          "durationMs": 58.261799999999766,
+          "cpuMs": 63
+        }
+      ],
+      "candidate": [
+        {
+          "iteration": 1,
+          "durationMs": 24.939700000000357,
+          "cpuMs": 62
+        },
+        {
+          "iteration": 2,
+          "durationMs": 21.0940999999998,
+          "cpuMs": 16
+        },
+        {
+          "iteration": 3,
+          "durationMs": 21.591499999999996,
+          "cpuMs": 62
+        }
+      ],
+      "legacySummary": {
+        "minMs": 56.7814000000003,
+        "medianMs": 60.134700000000066,
+        "maxMs": 67.36739999999963
+      },
+      "currentSummary": {
+        "minMs": 57.85499999999956,
+        "medianMs": 58.261799999999766,
+        "maxMs": 63.10009999999966
+      },
+      "candidateSummary": {
+        "minMs": 21.0940999999998,
+        "medianMs": 21.591499999999996,
+        "maxMs": 24.939700000000357
+      }
+    },
+    {
+      "size": 10000,
+      "mode": "vm-external",
+      "legacy": [
+        {
+          "iteration": 1,
+          "durationMs": 1379.0886,
+          "cpuMs": 1578
+        },
+        {
+          "iteration": 2,
+          "durationMs": 1391.9664000000002,
+          "cpuMs": 1609
+        },
+        {
+          "iteration": 3,
+          "durationMs": 1414.6090999999997,
+          "cpuMs": 1657
+        }
+      ],
+      "current": [
+        {
+          "iteration": 1,
+          "durationMs": 1387.4946,
+          "cpuMs": 1485
+        },
+        {
+          "iteration": 2,
+          "durationMs": 1430.7404000000006,
+          "cpuMs": 1656
+        },
+        {
+          "iteration": 3,
+          "durationMs": 1371.8147000000008,
+          "cpuMs": 1609
+        }
+      ],
+      "candidate": [
+        {
+          "iteration": 1,
+          "durationMs": 449.34429999999975,
+          "cpuMs": 640
+        },
+        {
+          "iteration": 2,
+          "durationMs": 480.6823999999997,
+          "cpuMs": 593
+        },
+        {
+          "iteration": 3,
+          "durationMs": 446.14830000000075,
+          "cpuMs": 578
+        }
+      ],
+      "legacySummary": {
+        "minMs": 1379.0886,
+        "medianMs": 1391.9664000000002,
+        "maxMs": 1414.6090999999997
+      },
+      "currentSummary": {
+        "minMs": 1371.8147000000008,
+        "medianMs": 1387.4946,
+        "maxMs": 1430.7404000000006
+      },
+      "candidateSummary": {
+        "minMs": 446.14830000000075,
+        "medianMs": 449.34429999999975,
+        "maxMs": 480.6823999999997
+      }
+    },
+    {
+      "size": 10000,
+      "mode": "vm-internal",
+      "legacy": [
+        {
+          "iteration": 1,
+          "durationMs": 1285.8179999999993,
+          "cpuMs": 1500
+        },
+        {
+          "iteration": 2,
+          "durationMs": 1304.2127,
+          "cpuMs": 1469
+        },
+        {
+          "iteration": 3,
+          "durationMs": 1324.857500000002,
+          "cpuMs": 1421
+        }
+      ],
+      "current": [
+        {
+          "iteration": 1,
+          "durationMs": 1355.7356,
+          "cpuMs": 1437
+        },
+        {
+          "iteration": 2,
+          "durationMs": 1300.3876999999993,
+          "cpuMs": 1468
+        },
+        {
+          "iteration": 3,
+          "durationMs": 1359.5637000000024,
+          "cpuMs": 1516
+        }
+      ],
+      "candidate": [
+        {
+          "iteration": 1,
+          "durationMs": 456.84330000000045,
+          "cpuMs": 624
+        },
+        {
+          "iteration": 2,
+          "durationMs": 444.0779999999977,
+          "cpuMs": 564
+        },
+        {
+          "iteration": 3,
+          "durationMs": 442.35129999999845,
+          "cpuMs": 577
+        }
+      ],
+      "legacySummary": {
+        "minMs": 1285.8179999999993,
+        "medianMs": 1304.2127,
+        "maxMs": 1324.857500000002
+      },
+      "currentSummary": {
+        "minMs": 1300.3876999999993,
+        "medianMs": 1355.7356,
+        "maxMs": 1359.5637000000024
+      },
+      "candidateSummary": {
+        "minMs": 442.35129999999845,
+        "medianMs": 444.0779999999977,
+        "maxMs": 456.84330000000045
+      }
+    },
+    {
+      "size": 10000,
+      "mode": "same-realm",
+      "legacy": [
+        {
+          "iteration": 1,
+          "durationMs": 619.3257999999987,
+          "cpuMs": 843
+        },
+        {
+          "iteration": 2,
+          "durationMs": 604.1722000000009,
+          "cpuMs": 797
+        },
+        {
+          "iteration": 3,
+          "durationMs": 611.5334999999977,
+          "cpuMs": 814
+        }
+      ],
+      "current": [
+        {
+          "iteration": 1,
+          "durationMs": 618.7590000000018,
+          "cpuMs": 704
+        },
+        {
+          "iteration": 2,
+          "durationMs": 619.8221999999987,
+          "cpuMs": 798
+        },
+        {
+          "iteration": 3,
+          "durationMs": 582.6491999999998,
+          "cpuMs": 765
+        }
+      ],
+      "candidate": [
+        {
+          "iteration": 1,
+          "durationMs": 212.6209000000017,
+          "cpuMs": 297
+        },
+        {
+          "iteration": 2,
+          "durationMs": 206.6196000000018,
+          "cpuMs": 297
+        },
+        {
+          "iteration": 3,
+          "durationMs": 206.1056000000026,
+          "cpuMs": 280
+        }
+      ],
+      "legacySummary": {
+        "minMs": 604.1722000000009,
+        "medianMs": 611.5334999999977,
+        "maxMs": 619.3257999999987
+      },
+      "currentSummary": {
+        "minMs": 582.6491999999998,
+        "medianMs": 618.7590000000018,
+        "maxMs": 619.8221999999987
+      },
+      "candidateSummary": {
+        "minMs": 206.1056000000026,
+        "medianMs": 206.6196000000018,
+        "maxMs": 212.6209000000017
+      }
+    }
+  ],
+  "breakdowns": [
+    {
+      "mode": "vm-internal",
+      "size": 10000,
+      "prepareHomeMetricsMs": 1289.1045999999988,
+      "trendReaggregationMs": 9.372800000001007,
+      "projectionAfterPrepareMs": 0.36929999999847496,
+      "legacyPreparationStages": [
+        {
+          "label": "counts-active-daily-business",
+          "durationMs": 127.8608000000022
+        },
+        {
+          "label": "calendar-window",
+          "durationMs": 0.06590000000142027
+        },
+        {
+          "label": "registrations-filter-and-set",
+          "durationMs": 2.8189999999995052
+        },
+        {
+          "label": "week-registration-set",
+          "durationMs": 1.8896999999997206
+        },
+        {
+          "label": "week-deposit-filter-sum",
+          "durationMs": 1.4941999999973632
+        },
+        {
+          "label": "due-date-filtering",
+          "durationMs": 27.664700000001176
+        },
+        {
+          "label": "due-smartPriority-sort-top5",
+          "durationMs": 1052.5115000000005
+        },
+        {
+          "label": "customer-map",
+          "durationMs": 4.019199999998818
+        },
+        {
+          "label": "pending-registered",
+          "durationMs": 2.3532000000013795
+        },
+        {
+          "label": "all-customer-high-grade-filter",
+          "durationMs": 92.3739999999998
+        },
+        {
+          "label": "profile-gaps",
+          "durationMs": 9.519100000001345
+        },
+        {
+          "label": "coverage-array",
+          "durationMs": 0.02779999999984284
+        },
+        {
+          "label": "kpi-array",
+          "durationMs": 0.07119999999849824
+        }
+      ],
+      "legacyCallCounts": {
+        "smartPriority": 124692,
+        "crmProfile": 134487,
+        "computeCrmProfile": 9795,
+        "customerBusinessSummary": 154077,
+        "crmFollowCounts": 144282
+      }
+    },
+    {
+      "mode": "same-realm",
+      "size": 10000,
+      "prepareHomeMetricsMs": 599.2824,
+      "trendReaggregationMs": 3.8677999999999884,
+      "projectionAfterPrepareMs": 0.35020000000076834,
+      "legacyPreparationStages": [
+        {
+          "label": "counts-active-daily-business",
+          "durationMs": 54.45469999999841
+        },
+        {
+          "label": "calendar-window",
+          "durationMs": 0.0470000000022992
+        },
+        {
+          "label": "registrations-filter-and-set",
+          "durationMs": 1.3549999999995634
+        },
+        {
+          "label": "week-registration-set",
+          "durationMs": 0.931799999998475
+        },
+        {
+          "label": "week-deposit-filter-sum",
+          "durationMs": 0.6766999999999825
+        },
+        {
+          "label": "due-date-filtering",
+          "durationMs": 10.466100000001461
+        },
+        {
+          "label": "due-smartPriority-sort-top5",
+          "durationMs": 478.2154999999984
+        },
+        {
+          "label": "customer-map",
+          "durationMs": 2.7459000000017113
+        },
+        {
+          "label": "pending-registered",
+          "durationMs": 1.3261999999995169
+        },
+        {
+          "label": "all-customer-high-grade-filter",
+          "durationMs": 44.37830000000031
+        },
+        {
+          "label": "profile-gaps",
+          "durationMs": 1.9086999999999534
+        },
+        {
+          "label": "coverage-array",
+          "durationMs": 0.023399999998218846
+        },
+        {
+          "label": "kpi-array",
+          "durationMs": 0.028899999997520354
+        }
+      ],
+      "legacyCallCounts": {
+        "smartPriority": 124692,
+        "crmProfile": 134487,
+        "computeCrmProfile": 9795,
+        "customerBusinessSummary": 154077,
+        "crmFollowCounts": 144282
+      }
+    }
+  ],
+  "finishedAt": "2026-11-17T02:34:50.976Z",
+  "ownerDetails": [
+    {
+      "mode": "vm-internal",
+      "size": 10000,
+      "activeCustomers": 9795,
+      "dueCustomers": 6531,
+      "originalComparatorCalls": 62346,
+      "measurements": [
+        {
+          "label": "activeCustomers first normalized filter",
+          "durationMs": 2.807399999999973
+        },
+        {
+          "label": "businessSummaryIndex first build (phone owners + record indices)",
+          "durationMs": 41.73419999999999
+        },
+        {
+          "label": "buildCounts with business index already available",
+          "durationMs": 71.4128
+        },
+        {
+          "label": "crmProfile first pass all active customers (cold profile cache)",
+          "durationMs": 156.30770000000007
+        },
+        {
+          "label": "crmProfile second pass all active customers (signature cache hit)",
+          "durationMs": 58.800500000000056
+        },
+        {
+          "label": "valid due <= today filtering",
+          "durationMs": 17.302599999999984
+        },
+        {
+          "label": "smartPriority once per due customer (CRM cache warm)",
+          "durationMs": 49.661699999999996
+        },
+        {
+          "label": "original comparator sort due customers (CRM cache warm)",
+          "durationMs": 865.0781
+        },
+        {
+          "label": "one priority per due customer (candidate private map)",
+          "durationMs": 48.211900000000014
+        },
+        {
+          "label": "candidate comparator sort from unchanged priority keys",
+          "durationMs": 10.249000000000024
+        }
+      ],
+      "candidateCallCounts": {
+        "smartPriority": 6531,
+        "crmProfile": 16326,
+        "computeCrmProfile": 9795,
+        "customerBusinessSummary": 35916,
+        "crmFollowCounts": 26121
+      },
+      "fullSortIdentitySha256": "69f4bf4f2543a0ab8c01cc2d5c9e1a0c9c3139e90134b468d4c227e5cd9e88b5",
+      "fullSortIdentityMatches": true
+    },
+    {
+      "mode": "same-realm",
+      "size": 10000,
+      "activeCustomers": 9795,
+      "dueCustomers": 6531,
+      "originalComparatorCalls": 62346,
+      "measurements": [
+        {
+          "label": "activeCustomers first normalized filter",
+          "durationMs": 1.0502000000001317
+        },
+        {
+          "label": "businessSummaryIndex first build (phone owners + record indices)",
+          "durationMs": 13.616599999999835
+        },
+        {
+          "label": "buildCounts with business index already available",
+          "durationMs": 44.38369999999986
+        },
+        {
+          "label": "crmProfile first pass all active customers (cold profile cache)",
+          "durationMs": 64.19610000000011
+        },
+        {
+          "label": "crmProfile second pass all active customers (signature cache hit)",
+          "durationMs": 34.399500000000444
+        },
+        {
+          "label": "valid due <= today filtering",
+          "durationMs": 13.717099999999846
+        },
+        {
+          "label": "smartPriority once per due customer (CRM cache warm)",
+          "durationMs": 24.2512999999999
+        },
+        {
+          "label": "original comparator sort due customers (CRM cache warm)",
+          "durationMs": 379.7715000000003
+        },
+        {
+          "label": "one priority per due customer (candidate private map)",
+          "durationMs": 23.23299999999972
+        },
+        {
+          "label": "candidate comparator sort from unchanged priority keys",
+          "durationMs": 11.096700000000055
+        }
+      ],
+      "candidateCallCounts": {
+        "smartPriority": 6531,
+        "crmProfile": 16326,
+        "computeCrmProfile": 9795,
+        "customerBusinessSummary": 35916,
+        "crmFollowCounts": 26121
+      },
+      "fullSortIdentitySha256": "69f4bf4f2543a0ab8c01cc2d5c9e1a0c9c3139e90134b468d4c227e5cd9e88b5",
+      "fullSortIdentityMatches": true
+    }
+  ],
+  "ownerDetailsCommand": "node --expose-gc .tools/delivery-s2-projection-profile.cjs --owners-only"
+}

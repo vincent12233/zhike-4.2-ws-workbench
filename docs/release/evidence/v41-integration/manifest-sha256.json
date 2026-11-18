@@ -1,0 +1,177 @@
+{
+  "files": [
+    {
+      "archiveFile": "r1/full-regression.log",
+      "sourceFile": "v41/full-regression.log",
+      "sourceBytes": 421538,
+      "sourceSha256": "5e6ffd0b5308e5f29e8ad4b57bbce881cdc0bb99683542b9f6af68c6b56fbb28",
+      "archiveBytes": 419390,
+      "archiveSha256": "bb0bdbbe3d9aa9d74c97ead72898d6ed0d6408a6e82862aa979a92e8d24127b8",
+      "preservesSourceBytes": false
+    },
+    {
+      "archiveFile": "r1/full-regression.exit",
+      "sourceFile": "v41/full-regression.exit",
+      "sourceBytes": 3,
+      "sourceSha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04",
+      "archiveBytes": 3,
+      "archiveSha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04",
+      "preservesSourceBytes": true
+    },
+    {
+      "archiveFile": "r2/full-regression-final.log",
+      "sourceFile": "v41/full-regression-final.log",
+      "sourceBytes": 426797,
+      "sourceSha256": "df0414eeb97ac76703121b8c3ab96adb46b6d67d281b88eec69590c6d1da9bf8",
+      "archiveBytes": 424232,
+      "archiveSha256": "a3cc99dd8b6ff250aa64235eaed819fb8d944cc9c5b385a620f4727b49a4e2f2",
+      "preservesSourceBytes": false
+    },
+    {
+      "archiveFile": "r2/full-regression-final.exit",
+      "sourceFile": "v41/full-regression-final.exit",
+      "sourceBytes": 3,
+      "sourceSha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04",
+      "archiveBytes": 3,
+      "archiveSha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04",
+      "preservesSourceBytes": true
+    },
+    {
+      "archiveFile": "diagnostics/main-visual-fixed.log",
+      "sourceFile": "v41/main-visual-fixed.log",
+      "sourceBytes": 235,
+      "sourceSha256": "7f1d244b4bd2b93288ac42a7d7553bef32109312f260532e9501cd40d36f0f42",
+      "archiveBytes": 143,
+      "archiveSha256": "b4e12bf47afa27935047ac14dfe53273baa0dbb2f3a7cfffaeff9f2ae0683b85",
+      "preservesSourceBytes": false
+    },
+    {
+      "archiveFile": "diagnostics/ws-visual-fixed.log",
+      "sourceFile": "v41/ws-visual-fixed.log",
+      "sourceBytes": 3020,
+      "sourceSha256": "3b652728839b811cd993ee63816d9f3dcb447b0b11bae062b577a1a606f21f36",
+      "archiveBytes": 3020,
+      "archiveSha256": "3b652728839b811cd993ee63816d9f3dcb447b0b11bae062b577a1a606f21f36",
+      "preservesSourceBytes": true
+    },
+    {
+      "archiveFile": "build/release-build.log",
+      "sourceFile": "v41/release-build.log",
+      "sourceBytes": 299,
+      "sourceSha256": "4f335be17a9a0c433a85a95e68927482b757dee255befa44ceef7b9174f49b65",
+      "archiveBytes": 207,
+      "archiveSha256": "af568f42721de39efa36b2ac679012de4e369f39470d795681144b647f5e9136",
+      "preservesSourceBytes": false
+    },
+    {
+      "archiveFile": "build/release-build.exit",
+      "sourceFile": "v41/release-build.exit",
+      "sourceBytes": 3,
+      "sourceSha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+      "archiveBytes": 3,
+      "archiveSha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+      "preservesSourceBytes": true
+    },
+    {
+      "archiveFile": "build/native-build.log",
+      "sourceFile": "v41-native-build.log",
+      "sourceBytes": 257,
+      "sourceSha256": "f146641337b4c36fad6c722e10710b405ef33c37c21d60dfff5e0c69905d3f44",
+      "archiveBytes": 165,
+      "archiveSha256": "9d45406e88e87ac01401ca775687cf7ecddb936845e69c024474fd60005a8755",
+      "preservesSourceBytes": false
+    },
+    {
+      "archiveFile": "r3/full-regression-r3.log",
+      "sourceFile": "v41/full-regression-r3.log",
+      "sourceBytes": 430130,
+      "sourceSha256": "61876bd564c990837444480ff2419829ffe4eaa24c096798e5a57ab4455eb2dc",
+      "archiveBytes": 422104,
+      "archiveSha256": "093f41c5a2f34a0c39af7e9623bbeb45ef9ac06e0db9a20d11ca5aec9555eb27",
+      "preservesSourceBytes": false
+    },
+    {
+      "archiveFile": "r3/full-regression-r3.exit",
+      "sourceFile": "v41/full-regression-r3.exit",
+      "sourceBytes": 3,
+      "sourceSha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04",
+      "archiveBytes": 3,
+      "archiveSha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04",
+      "preservesSourceBytes": true
+    },
+    {
+      "archiveFile": "r3/ws-suite-labels.json",
+      "sourceFile": "v41/ws-suite-labels.json",
+      "sourceBytes": 7310,
+      "sourceSha256": "3e0ef1055406e0f20c74cdc84b76718333ac17c0c457cd63c2bd65878a8c403a",
+      "archiveBytes": 7310,
+      "archiveSha256": "3e0ef1055406e0f20c74cdc84b76718333ac17c0c457cd63c2bd65878a8c403a",
+      "preservesSourceBytes": true
+    },
+    {
+      "archiveFile": "diagnostics/gpt-visual-fixed.log",
+      "sourceFile": "v41/gpt-visual-fixed.log",
+      "sourceBytes": 2506,
+      "sourceSha256": "a2a928fe30121046ed317f8d138c8000d388fe363c041c520d623674b135bd4d",
+      "archiveBytes": 2279,
+      "archiveSha256": "2c91409818758e328ec5d09a46f5a5cfbed61bdc0a3336019d5a837db921aa8b",
+      "preservesSourceBytes": false
+    },
+    {
+      "archiveFile": "diagnostics/gpt-visual-diagnostic.log",
+      "sourceFile": "v41/gpt-visual-diagnostic.log",
+      "sourceBytes": 2657,
+      "sourceSha256": "30c21ef79e456d38b21e7b9ff87c34e536268f027a309308afd82cb8d94f842e",
+      "archiveBytes": 2657,
+      "archiveSha256": "30c21ef79e456d38b21e7b9ff87c34e536268f027a309308afd82cb8d94f842e",
+      "preservesSourceBytes": true
+    },
+    {
+      "archiveFile": "diagnostics/gpt-visual-diagnostic.exit",
+      "sourceFile": "v41/gpt-visual-diagnostic.exit",
+      "sourceBytes": 3,
+      "sourceSha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+      "archiveBytes": 3,
+      "archiveSha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+      "preservesSourceBytes": true
+    },
+    {
+      "archiveFile": "build/release-build-final.log",
+      "sourceFile": "v41/release-build-final.log",
+      "sourceBytes": 299,
+      "sourceSha256": "a66b7f5fbe2fad90ce3872b395ce108d4ce0c0874a1632cd52ffd1ca424271b6",
+      "archiveBytes": 207,
+      "archiveSha256": "c2c215b3c316c284d3cdccd671e2e05a4570088f7438fb76f97be9af0e6be704",
+      "preservesSourceBytes": false
+    },
+    {
+      "archiveFile": "build/release-build-final.exit",
+      "sourceFile": "v41/release-build-final.exit",
+      "sourceBytes": 3,
+      "sourceSha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+      "archiveBytes": 3,
+      "archiveSha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354",
+      "preservesSourceBytes": true
+    },
+    {
+      "archiveFile": "r3/ws-browser-timeout.json",
+      "archiveBytes": 529,
+      "archiveSha256": "a8541da007b9482f1b85e0787b99bb7e5419490d4fc513d3f514a2d816fcc1ef"
+    },
+    {
+      "archiveFile": "r3/ws-suite-verification.json",
+      "archiveBytes": 23352,
+      "archiveSha256": "d6058a46dc1784af1f78f6673f785cb16636ad9c23d8a00283f54b9600e0c005"
+    },
+    {
+      "archiveFile": "runs.json",
+      "archiveBytes": 771,
+      "archiveSha256": "6a82bdd7c2aa448f185c043761cc673fd9a7535a0e65874d257c9c8f697d5016"
+    },
+    {
+      "archiveFile": "sensitive-scan.json",
+      "archiveBytes": 5027,
+      "archiveSha256": "34ecf3205c49dadccff46646116a8f6b75e30b019568ccdad58cd82506b187d8"
+    }
+  ]
+}

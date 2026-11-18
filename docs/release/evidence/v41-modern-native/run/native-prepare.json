@@ -1,0 +1,9 @@
+{
+  "root": "<test-temp>",
+  "reused": false,
+  "binary": "<repo>/.tools/stage51-native-v2/Zhike.Stage51.Acceptance.exe",
+  "buildProperty": "Stage51IsolatedUi=true",
+  "productionOpened": false,
+  "wsNetwork": "blocked",
+  "paidAiNetwork": "blocked"
+}

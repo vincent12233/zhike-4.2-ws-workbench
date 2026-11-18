@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 2,
+  "invocation": "1795008102805-b7503375-2496-4d8c-bbde-e8eaf25328a8",
+  "mode": "kernel-calibration",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 4000,
+  "launchedAt": "2026-11-18T13:21:42.805Z",
+  "timebase": "node-monotonic-ms",
+  "startedMonotonicMs": 2133.0788,
+  "events": [
+    {
+      "event": "process-spawned",
+      "elapsedMs": 9.669800000000123,
+      "pid": 29700
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 15.81020000000035,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 509.8479000000002,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 510.00170000000026
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 510.0757000000003
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 510.0774000000001
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 510.1768000000002,
+      "acknowledgement": "requested"
+    },
+    {
+      "event": "deadline-timeout",
+      "elapsedMs": 4001.3812000000003,
+      "phase": "process-exit",
+      "deadlineMs": 3999.9999999999995
+    },
+    {
+      "event": "node-release-state",
+      "elapsedMs": 4001.7609000000007,
+      "exitObserved": false,
+      "closeObserved": false,
+      "stdoutCloseObserved": false,
+      "stderrCloseObserved": false,
+      "exitCode": null,
+      "signalCode": null
+    },
+    {
+      "event": "failure-owned-handle-termination-started",
+      "elapsedMs": 4001.7677
+    },
+    {
+      "event": "failure-owned-handle-termination",
+      "elapsedMs": 4002.2361000000005,
+      "requested": true
+    },
+    {
+      "event": "node-stdio-disposal",
+      "elapsedMs": 4002.2424000000005
+    },
+    {
+      "event": "deadline-timeout",
+      "elapsedMs": 4002.5800000000004,
+      "phase": "identity-probe-close",
+      "deadlineMs": 3999.9999999999995
+    },
+    {
+      "event": "identity-probe-termination-requested",
+      "elapsedMs": 4003.3108000000007,
+      "attempted": true,
+      "requested": true
+    },
+    {
+      "event": "deadline-timeout",
+      "elapsedMs": 4003.3852,
+      "phase": "identity-probe-termination",
+      "deadlineMs": 3999.9999999999995
+    },
+    {
+      "event": "identity-probe-termination-unverified",
+      "elapsedMs": 4003.7815000000005
+    },
+    {
+      "event": "runner-lifecycle-complete",
+      "elapsedMs": 4003.8293,
+      "cleanupSafe": false,
+      "forceTerminated": true
+    },
+    {
+      "event": "runner-final",
+      "elapsedMs": 4003.9142000000006,
+      "status": "Failed",
+      "cleanupSafe": false,
+      "forceTerminated": true
+    }
+  ],
+  "identities": [
+    {
+      "pid": 29700,
+      "startedTicks": "639306049028090410",
+      "startedUtc": "2026-11-18T13:21:42.8090410Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": null,
+  "streamsClosed": false,
+  "forceTerminated": true,
+  "cleanupSafe": false,
+  "pid": 29700,
+  "kernelObserver": {
+    "file": "<worktree>/.tools/edge-exit-observer/1795008102805-b7503375-2496-4d8c-bbde-e8eaf25328a8.kernel.jsonl",
+    "pid": 39264
+  },
+  "identityProbePid": 31484,
+  "resultReady": true,
+  "releaseFailure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "process-exit"
+  },
+  "identityProbeTermination": {
+    "attempted": true,
+    "requested": true,
+    "observedClose": null,
+    "status": "unknown"
+  },
+  "elapsedMs": 4003.8052000000002,
+  "stdoutBytes": 5,
+  "stderrBytes": 0,
+  "failure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "process-exit",
+    "message": "<raw failure message retained locally>"
+  }
+}

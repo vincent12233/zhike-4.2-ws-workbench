@@ -19,27 +19,32 @@ public sealed class LocalServiceManager : IAsyncDisposable
     private static readonly string ExpectedAppVersion =
         (typeof(LocalServiceManager).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
             ?? typeof(LocalServiceManager).Assembly.GetName().Version?.ToString(3)
-            ?? "6.0.1").Split('+', 2)[0];
+            ?? "6.1.0").Split('+', 2)[0];
     private readonly string _resourceRoot;
     private readonly string _dataRoot;
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(2) };
     private readonly SemaphoreSlim _gate = new(1, 1);
     private Process? _process;
     private LocalServiceInfo? _info;
+    private volatile bool _ready;
     private string? _healthVersionMismatch;
 
     public LocalServiceManager(string resourceRoot, string dataRoot)
     {
         _resourceRoot = Path.GetFullPath(resourceRoot);
         _dataRoot = Path.GetFullPath(dataRoot);
+#if STAGE51_ISOLATED_UI
+        // Fail closed before StartAsync can create any caller-supplied path.
+        _dataRoot = Stage51Isolation.MapDataPath(_dataRoot);
+#endif
     }
 
-    public LocalServiceInfo? Info => _info;
-    public bool IsRunning => _process is { HasExited: false } && _info is not null;
+    public LocalServiceInfo? Info => _ready ? _info : null;
+    public bool IsRunning => _ready && _process is { HasExited: false } && _info is not null;
 
     public async Task<LocalServiceInfo> StartAsync(CancellationToken cancellationToken = default)
     {
-        await _gate.WaitAsync(cancellationToken);
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             if (IsRunning) return _info!;
@@ -59,14 +64,14 @@ public sealed class LocalServiceManager : IAsyncDisposable
                 var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLowerInvariant();
                 try
                 {
-                    return await StartProcessAsync(port, token, cancellationToken);
+                    return await StartProcessAsync(port, token, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception error) when (error is not OperationCanceledException)
                 {
                     lastError = error;
-                    await StopCoreAsync(CancellationToken.None);
+                    await StopCoreAsync(CancellationToken.None).ConfigureAwait(false);
                     if (attempt == maxAttempts) throw;
-                    await Task.Delay(TimeSpan.FromMilliseconds(150 * attempt), cancellationToken);
+                    await Task.Delay(TimeSpan.FromMilliseconds(150 * attempt), cancellationToken).ConfigureAwait(false);
                 }
             }
 
@@ -86,9 +91,24 @@ public sealed class LocalServiceManager : IAsyncDisposable
             stopTimeout.CancelAfter(TimeSpan.FromSeconds(5));
             await StopCoreAsync(stopTimeout.Token);
             EnsureResources();
-            // Keep the same loopback endpoint and session token so existing
-            // WebView/API clients recover without switching data sources.
-            return await StartProcessAsync(previous.Port, previous.ApiToken, cancellationToken);
+            // Prefer the previous endpoint for existing clients, then retry
+            // the complete process/health handshake with a fresh port if a
+            // competing local process wins the race during restart. The token
+            // remains stable so the recovered client keeps the same session.
+            Exception? lastError = null;
+            for (var attempt = 0; attempt < 3; attempt++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var port = attempt == 0 ? previous.Port : FindFreePort();
+                try { return await StartProcessAsync(port, previous.ApiToken, cancellationToken); }
+                catch (Exception error) when (error is not OperationCanceledException)
+                {
+                    lastError = error;
+                    await StopCoreAsync(CancellationToken.None);
+                    if (attempt < 2) await Task.Delay(TimeSpan.FromMilliseconds(150 * (attempt + 1)), cancellationToken);
+                }
+            }
+            throw lastError ?? new InvalidOperationException("无法恢复本机数据服务。");
         }
         finally { _gate.Release(); }
     }
@@ -99,9 +119,9 @@ public sealed class LocalServiceManager : IAsyncDisposable
         if (info is null || _process is null || _process.HasExited) return false;
         try
         {
-            using var response = await _http.GetAsync(new Uri(info.BaseAddress, "api/health"), cancellationToken);
+            using var response = await _http.GetAsync(new Uri(info.BaseAddress, "api/health"), cancellationToken).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode) return false;
-            var payload = await response.Content.ReadAsStringAsync(cancellationToken);
+            var payload = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
             using var document = JsonDocument.Parse(payload);
             var actual = document.RootElement.TryGetProperty("appVersion", out var version) ? version.GetString() : null;
             if (!string.Equals(actual, ExpectedAppVersion, StringComparison.Ordinal))
@@ -117,7 +137,7 @@ public sealed class LocalServiceManager : IAsyncDisposable
 
     public ApiClient CreateApiClient()
     {
-        var info = _info ?? throw new InvalidOperationException("本机数据服务尚未启动。");
+        var info = Info ?? throw new InvalidOperationException("本机数据服务尚未启动。");
         var client = new ApiClient(new HttpClient
         {
             BaseAddress = info.BaseAddress,
@@ -139,28 +159,37 @@ public sealed class LocalServiceManager : IAsyncDisposable
     {
         var process = _process;
         var info = _info;
+        _ready = false;
         _process = null;
         _info = null;
         if (process is null) return;
+        using var stopBudget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        stopBudget.CancelAfter(TimeSpan.FromSeconds(5));
         try
         {
             if (info is not null && !process.HasExited)
             {
                 using var request = new HttpRequestMessage(HttpMethod.Post, new Uri(info.BaseAddress, "api/shutdown"));
+                request.Headers.Add("X-Zhike-Api-Token", info.ApiToken);
                 request.Headers.Add("X-Zhike-Shutdown-Token", info.ApiToken);
-                using var response = await _http.SendAsync(request, cancellationToken);
+                using var response = await _http.SendAsync(request, stopBudget.Token).ConfigureAwait(false);
             }
         }
         catch { }
         try
         {
-            await process.WaitForExitAsync(cancellationToken);
+            await process.WaitForExitAsync(stopBudget.Token).ConfigureAwait(false);
         }
-        catch
+        catch (OperationCanceledException)
         {
-            try { if (!process.HasExited) process.Kill(entireProcessTree: true); } catch { }
+            // The process reference was created and retained by this owner;
+            // never look up or terminate a different process by name or port.
+            if (!process.HasExited) process.Kill(entireProcessTree: true);
+            using var killBudget = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+            await process.WaitForExitAsync(killBudget.Token).ConfigureAwait(false);
         }
-        process.Dispose();
+        finally { process.Dispose(); }
+        cancellationToken.ThrowIfCancellationRequested();
     }
 
     private async Task WaitForHealthAsync(LocalServiceInfo info, CancellationToken cancellationToken)
@@ -170,10 +199,10 @@ public sealed class LocalServiceManager : IAsyncDisposable
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (_process?.HasExited == true) throw new InvalidOperationException("本机数据服务启动后立即退出，请检查安装资源或数据目录权限。");
-            if (await HealthAsync(cancellationToken)) return;
+            if (await HealthAsync(cancellationToken).ConfigureAwait(false)) return;
             if (!string.IsNullOrWhiteSpace(_healthVersionMismatch))
-                throw new InvalidOperationException($"检测到知客安装文件混装：{_healthVersionMismatch}。请使用同一份 6.0 安装包修复安装，程序不会回退到旧资源。");
-            await Task.Delay(150, cancellationToken);
+                throw new InvalidOperationException($"检测到知客安装文件混装：{_healthVersionMismatch}。请使用同一版本的安装包修复安装，程序不会回退到旧资源。");
+            await Task.Delay(150, cancellationToken).ConfigureAwait(false);
         }
         throw new TimeoutException("本机数据服务启动超时，请重试或检查本机数据目录。");
     }
@@ -196,21 +225,56 @@ public sealed class LocalServiceManager : IAsyncDisposable
             RedirectStandardError = true,
         };
         startInfo.ArgumentList.Add(Path.Combine(_resourceRoot, "server.mjs"));
+        // Environment variables are configuration input, not authority. Normal
+        // builds must never inherit development/test gates from the parent.
+        // Retain Windows/runtime environment; rebuild only our own namespace.
+        foreach (var key in startInfo.Environment.Keys.Where(key =>
+                     key.StartsWith("ZHIKE_", StringComparison.OrdinalIgnoreCase)).ToArray())
+            startInfo.Environment.Remove(key);
         startInfo.Environment["ZHIKE_DATA_DIR"] = _dataRoot;
         startInfo.Environment["ZHIKE_PORT"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
         startInfo.Environment["ZHIKE_API_TOKEN"] = token;
         startInfo.Environment["ZHIKE_SHUTDOWN_TOKEN"] = token;
         startInfo.Environment["ZHIKE_PARENT_PID"] = Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture);
         startInfo.Environment["ZHIKE_STORAGE_MODE"] = "local";
+#if STAGE51_ISOLATED_UI
+        if (!string.Equals(Path.GetFullPath(_dataRoot), Stage51Isolation.DataRoot, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Isolated sidecar data root mismatch.");
+        startInfo.Environment["ZHIKE_GROUP_MANAGER_MODE"] = "isolated";
+        startInfo.Environment["ZHIKE_STAGE3_MOCK"] = "1";
+        startInfo.Environment["ZHIKE_FENCING_MODE"] = "isolated";
+        startInfo.Environment["ZHIKE_AI_PIPELINE_MODE"] = "isolated";
+        startInfo.Environment["ZHIKE_STAGE4_MOCK"] = "1";
+#endif
         var process = Process.Start(startInfo) ?? throw new InvalidOperationException("无法启动本机数据服务。");
-        process.OutputDataReceived += (_, e) => { if (!string.IsNullOrWhiteSpace(e.Data)) Debug.WriteLine($"[ZhikeLocal] {e.Data}"); };
-        process.ErrorDataReceived += (_, e) => { if (!string.IsNullOrWhiteSpace(e.Data)) Debug.WriteLine($"[ZhikeLocal:error] {e.Data}"); };
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
         _process = process;
         _info = new LocalServiceInfo(new Uri($"http://127.0.0.1:{port}/"), token, port);
-        await WaitForHealthAsync(_info, cancellationToken);
-        return _info;
+        _healthVersionMismatch = null;
+        try
+        {
+            process.OutputDataReceived += (_, e) => { if (!string.IsNullOrWhiteSpace(e.Data)) Debug.WriteLine($"[ZhikeLocal] {e.Data}"); };
+            process.ErrorDataReceived += (_, e) => { if (!string.IsNullOrWhiteSpace(e.Data)) Debug.WriteLine($"[ZhikeLocal:error] {e.Data}"); };
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+#if STAGE51_ISOLATED_UI
+            Stage51Isolation.PublishConnection(_info);
+#endif
+            await WaitForHealthAsync(_info, cancellationToken).ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+            _ready = true;
+#if STAGE51_ISOLATED_UI
+            Stage51Isolation.Record("sidecar-ready", new { _info.Port });
+#endif
+            return _info;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // A startup cancelled before health must not leave an owned process
+            // published as the next attempt's endpoint.
+            try { await StopCoreAsync(CancellationToken.None).ConfigureAwait(false); }
+            catch (Exception error) { Debug.WriteLine($"[ZhikeLocal] Cancelled startup cleanup failed: {error.GetType().Name}"); }
+            throw;
+        }
     }
 
     private static int FindFreePort()

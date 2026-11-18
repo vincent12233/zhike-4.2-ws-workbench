@@ -1,0 +1,95 @@
+
+[RUN] Stage 5.5C-1A real isolated send/media/AI risk API
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"queued","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"sending","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"sent","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"failed","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[OBSERVED] {"scenario":"referenced-media-deletion","referenceState":"cancelled","httpStatus":409,"bytesPreserved":true,"rowPreserved":true}
+[PASS] R04 all attachment states retain bytes and references
+[PASS] R04 database failure leaves original bytes intact
+[PASS] R04 cleanup failure has a durable tombstone and explicit retry
+[PASS] R04 legacy audit references and post-cleanup database failure remain recoverable
+[PASS] R01 same-key changed full content is rejected without changing the old plan
+[PASS] R01 legacy rows and maximum-length idempotency keys remain compatible
+[PASS] R02 planning 30 targets does not reserve actual send quota
+[PASS] R03 begin token, per-attachment outcome, unknown blocking and untrusted receipt rejection
+[PASS] R03 concurrent begin grants one token and a proven preflight failure can retry safely
+[PASS] R03 partial attachment attempt plus later failure is unknown and cannot resend
+[OBSERVED] {"scenario":"local-evidence-consistency","httpStatus":422,"storedDeliveryState":"unknown"}
+[OBSERVED] {"scenario":"local-evidence-consistency","httpStatus":422,"storedDeliveryState":"unknown"}
+[OBSERVED] {"scenario":"local-evidence-consistency","httpStatus":422,"storedDeliveryState":"unknown"}
+[PASS] R03 contradictory or missing local-attempt evidence cannot upgrade unknown intent
+[OBSERVED] {"scenario":"failed-evidence-consistency","httpStatus":409,"retryAllowed":false}
+[OBSERVED] {"scenario":"failed-evidence-consistency","httpStatus":409,"retryAllowed":false}
+[OBSERVED] {"scenario":"failed-evidence-consistency","httpStatus":409,"retryAllowed":false}
+[OBSERVED] {"scenario":"failed-evidence-consistency","httpStatus":409,"retryAllowed":false}
+[PASS] R03 contradictory or missing preflight evidence cannot authorize retry
+[PASS] R02 actual attempt reservations are per account and bounded
+[PASS] R03 prepared unknown intent survives a real isolated sidecar restart
+[PASS] R05 24 MiB upper bound and executable signature or extension rejection
+[PASS] R07 AI GET is read-only and explicit legacy recovery does not touch Worker jobs
+{"stage":"5.5C-1A","checks":16,"passed":16,"failed":0,"results":[{"name":"R04 all attachment states retain bytes and references","result":"PASS"},{"name":"R04 database failure leaves original bytes intact","result":"PASS"},{"name":"R04 cleanup failure has a durable tombstone and explicit retry","result":"PASS"},{"name":"R04 legacy audit references and post-cleanup database failure remain recoverable","result":"PASS"},{"name":"R01 same-key changed full content is rejected without changing the old plan","result":"PASS"},{"name":"R01 legacy rows and maximum-length idempotency keys remain compatible","result":"PASS"},{"name":"R02 planning 30 targets does not reserve actual send quota","result":"PASS"},{"name":"R03 begin token, per-attachment outcome, unknown blocking and untrusted receipt rejection","result":"PASS"},{"name":"R03 concurrent begin grants one token and a proven preflight failure can retry safely","result":"PASS"},{"name":"R03 partial attachment attempt plus later failure is unknown and cannot resend","result":"PASS"},{"name":"R03 contradictory or missing local-attempt evidence cannot upgrade unknown intent","result":"PASS"},{"name":"R03 contradictory or missing preflight evidence cannot authorize retry","result":"PASS"},{"name":"R02 actual attempt reservations are per account and bounded","result":"PASS"},{"name":"R03 prepared unknown intent survives a real isolated sidecar restart","result":"PASS"},{"name":"R05 24 MiB upper bound and executable signature or extension rejection","result":"PASS"},{"name":"R07 AI GET is read-only and explicit legacy recovery does not touch Worker jobs","result":"PASS"}],"productionOpened":false,"realWs":false,"paidAi":false,"workerStarted":false}
+[PASS] Stage 5.5C-1A real isolated send/media/AI risk API
+
+[RUN] Stage 5.5C-1A send UI evidence and async ownership
+PASS R01 fingerprint includes every effective payload field
+PASS R03 local click is not platform acceptance or delivery and cannot blindly retry
+PASS R03 partial attachment execution is unknown and does not replay first attachment
+PASS R06 switch while native response is pending never writes new account state
+PASS R03 transport loss after authorization is unknown and blocked from replay
+PASS R03 duplicate manual clicks cannot start concurrent native attempts
+PASS R06 switch during authorization aborts before touching native UI
+PASS R03 acknowledgement loss preserves unknown and stops remaining attachments
+PASS R03 lost authorization response is not presented as a fresh replayable item
+PASS R03 definite preflight refusal is distinct from an uncertain attempt
+PASS R03 incomplete native proof stays unknown instead of inventing a local attempt
+PASS R03 actual attachment captions are exactly those frozen in the plan
+PASS R03 rejected native promise records the individual preflight refusal
+PASS R03 UI labels preserve all five evidence levels and distrust legacy sent
+Stage 5.5C-1A WS UI: 14/14
+[PASS] Stage 5.5C-1A send UI evidence and async ownership
+
+[RUN] Stage 5.5C-1A production native send qualification
+已成功生成。
+    0 个警告
+    0 个错误
+
+已用时间 00:00:01.84
+{"stage":"5.5C-1A","nativeHandlersFromProductionSource":true,"cases":[{"name":"media-await-cancel","passed":true},{"name":"media-await-account-switch","passed":true},{"name":"media-await-A-B-A","passed":true},{"name":"media-await-session-replaced","passed":true},{"name":"media-await-same-generation-session-replaced","passed":true},{"name":"media-await-core-replaced","passed":true},{"name":"media-await-close","passed":true},{"name":"media-await-window-hidden","passed":true},{"name":"text-local-attempt-only","passed":true},{"name":"media-local-attempt-only","passed":true},{"name":"dispatch-exception-is-unknown","passed":true},{"name":"invalid-dispatch-result-is-unknown","passed":true},{"name":"post-dispatch-cancel-is-unknown","passed":true},{"name":"page-pre-click-refusal-is-failed","passed":true},{"name":"missing-target-never-dispatches","passed":true},{"name":"in-flight-cancel-releases-wait-as-unknown","passed":true},{"name":"post-dispatch-A-B-A-remains-unknown","passed":true},{"name":"webview-string-wrapped-result-is-parsed","passed":true}],"productionOpened":false,"realWs":false,"network":false}
+[PASS] Stage 5.5C-1A production native send qualification
+
+[RUN] Stage 5.5C-1A actual send DOM and bridge outcomes
+{"stage":"5.5C-1A","actualProductionScripts":true,"cases":[{"name":"text-click-only-local-attempt","passed":true},{"name":"text-click-exception-unknown","passed":true},{"name":"text-noSend-before-click-failed","passed":true},{"name":"text-noComposer-before-click-failed","passed":true},{"name":"text-wrongConversation-before-click-failed","passed":true},{"name":"media-click-only-local-attempt","passed":true},{"name":"media-click-exception-unknown","passed":true},{"name":"media-noSend-before-click-failed","passed":true},{"name":"media-noComposer-before-click-failed","passed":true},{"name":"media-wrongConversation-before-click-failed","passed":true},{"name":"media-no-file-input-before-click-failed","passed":true},{"name":"ws-bridge-whitelist-preserves-non-attempt","passed":true},{"name":"ws-prefixed-bridge-preserves-unknown","passed":true},{"name":"non-ws-bridge-does-not-forward-send-metadata","passed":true},{"name":"bridge-invalid-state-types-not-trusted","passed":true},{"name":"unknown-never-exposes-a-retryable-preflight","passed":true}],"realWs":false,"network":false,"productionOpened":false}
+[PASS] Stage 5.5C-1A actual send DOM and bridge outcomes
+
+[RUN] Stage 5.5C-1A DPAPI corruption and process-safe mutation
+PASS DPAPI persistence and status minimization
+PASS Corrupt malformed is rejected without replacement
+PASS Corrupt null-document is rejected without replacement
+PASS Corrupt missing-document-shape is rejected without replacement
+PASS Corrupt null-providers is rejected without replacement
+PASS Corrupt null-active-provider is rejected without replacement
+PASS Undecryptable DPAPI blocks all mutations
+PASS Concurrent service instances preserve both providers
+PASS Independent processes preserve both provider updates
+PASS Cancellation while waiting for ownership never writes
+PASS Failed atomic replacement preserves original and clears staging file
+AI credential isolated runtime: 11/11; network calls=0
+[PASS] Stage 5.5C-1A DPAPI corruption and process-safe mutation
+
+[RUN] Stage 5.5C-1A provider modal generation and stale responses
+PASS provider change immediately clears temporary secret
+PASS late provider status cannot replace current provider model
+PASS late status error cannot notify or overwrite reopened settings
+PASS save is single flight and closing does not allow stale completion to close a new modal
+PASS late initial open cannot replace a newer settings session
+PASS provider loading blocks save and rejects a mismatched response
+PASS late model results cannot populate another provider catalog
+PASS delete is single flight and its late error cannot affect a closed session
+PASS storage read failure remains explicit and cannot authorize overwrite
+PASS initial settings response cannot replace another module modal
+PASS current save failure keeps modal open and clears temporary input
+GPT provider isolated race runtime: 11/11; network calls=0
+[PASS] Stage 5.5C-1A provider modal generation and stale responses
+
+Completed 6 checks: 6 passed, 0 failed.
