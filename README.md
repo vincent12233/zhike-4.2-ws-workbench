@@ -29,3 +29,5 @@ VIP 群按可信发言人身份拆分手动导入的消息，只有唯一匹配�
 
 - [故障排查](docs/local-desktop-troubleshooting.md)
 - [6.1.0 候选发布说明](docs/release/release-notes-6.1.0.md)
+- [本轮实际验收与未完成项](docs/release/runtime-release-acceptance.md)
+- [开发、测试与交付约定](CONTRIBUTING.md)
