@@ -1,44 +1,63 @@
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
-using Windows.Graphics;
 
 namespace Zhike.IsolatedWebViewHost;
 
-public sealed partial class App : Application
+// A real HWND and STA pump for CSS fixtures. Product WinUI acceptance is separate.
+public sealed class App : Form
 {
     private const int MaximumLineBytes = 32 * 1024 * 1024;
-    private const uint KeepPositionAndSizeWithoutActivation = 0x0010 | 0x0002 | 0x0001;
-    private Window? _window;
+    private int _exitCode = 1;
     private sealed class CloseRequested : Exception { }
-
+    private sealed record BrowserExit(uint Pid, CoreWebView2BrowserProcessExitKind Kind);
     [DllImport("user32.dll")]
-    private static extern bool SetWindowPos(IntPtr window, IntPtr position, int x, int y, int width, int height, uint flags);
+    private static extern bool SetWindowPos(IntPtr window, IntPtr after, int x, int y, int width, int height, uint flags);
 
-    public App() => InitializeComponent();
-
-    protected override async void OnLaunched(LaunchActivatedEventArgs args)
+    [STAThread]
+    private static int Main()
     {
-        WebView2? view = null;
+        Application.SetHighDpiMode(HighDpiMode.DpiUnaware);
+        using var window = new App();
+        Application.Run(window);
+        return window._exitCode;
+    }
+
+    protected override bool ShowWithoutActivation => true;
+    public App()
+    {
+        Text = "Isolated WebView renderer test";
+        ClientSize = new Size(640, 480);
+        ShowInTaskbar = false;
+        ControlBox = false;
+        StartPosition = FormStartPosition.Manual;
+    }
+
+    protected override async void OnShown(EventArgs args)
+    {
+        base.OnShown(args);
+        // The fixture renders without taking focus or covering the user's work.
+        SetWindowPos(Handle, new IntPtr(1), 0, 0, 0, 0, 0x0010 | 0x0002 | 0x0001);
+        CoreWebView2Controller? controller = null;
         var phase = "request";
         var clock = Stopwatch.StartNew();
+        var uiThread = Environment.CurrentManagedThreadId;
         void ReportStage(string stage)
         {
-            phase = stage;
-            Console.Error.WriteLine(JsonSerializer.Serialize(new { kind = "webview-stage", phase, elapsedMs = clock.Elapsed.TotalMilliseconds }));
+            if (Environment.CurrentManagedThreadId == uiThread) phase = stage;
+            Console.Error.WriteLine(JsonSerializer.Serialize(new { kind = "webview-stage", phase = stage, elapsedMs = clock.Elapsed.TotalMilliseconds,
+                thread = Environment.CurrentManagedThreadId, uiThread = Environment.CurrentManagedThreadId == uiThread }));
         }
         try
         {
             Console.OutputEncoding = new UTF8Encoding(false);
             var request = HostRequest.Load();
             // The parent can request cleanup during any pending renderer operation.
-            var closeCommand = Task.Run(ReadCloseCommand);
+            var closeCommand = Task.Run(() => { var result = ReadCloseCommand(); ReportStage("close-command-read"); return result; });
             ReportStage("environment");
-            var environment = await CoreWebView2Environment.CreateWithOptionsAsync(null, request.Profile,
+            var environment = await CoreWebView2Environment.CreateAsync(null, request.Profile,
                 new CoreWebView2EnvironmentOptions
                 {
                     ExclusiveUserDataFolderAccess = true,
@@ -50,27 +69,21 @@ public sealed partial class App : Application
                 "PROFILE_MISMATCH", "WebView2 did not use the isolated profile");
 
             var failure = Signal<HostFailure>();
-            var browserExit = Signal<CoreWebView2BrowserProcessExitedEventArgs>();
+            var browserExit = Signal<BrowserExit>();
             bool closing = false;
-            environment.BrowserProcessExited += (_, info) =>
+            EventHandler<CoreWebView2BrowserProcessExitedEventArgs> onBrowserExit = (_, info) =>
             {
-                browserExit.TrySetResult(info);
+                ReportStage("browser-exit-event");
+                browserExit.TrySetResult(new BrowserExit(info.BrowserProcessId, info.BrowserProcessExitKind));
                 if (!closing) failure.TrySetResult(new HostFailure("BROWSER_EARLY_EXIT", "WebView2 exited before the close request"));
             };
+            environment.BrowserProcessExited += onBrowserExit;
 
             ReportStage("core");
-            view = new WebView2();
-            var loaded = Signal<bool>();
-            view.Loaded += (_, _) => loaded.TrySetResult(true);
-            _window = new Window { Title = "Isolated WebView renderer test", Content = view };
-            _window.AppWindow.Resize(new SizeInt32(640, 480));
-            var windowHandle = WinRT.Interop.WindowNative.GetWindowHandle(_window);
-            SetWindowPos(windowHandle, new IntPtr(1), 0, 0, 0, 0, KeepPositionAndSizeWithoutActivation);
-            _window.AppWindow.Show(false);
-            SetWindowPos(windowHandle, new IntPtr(1), 0, 0, 0, 0, KeepPositionAndSizeWithoutActivation);
-            await loaded.Task;
-            await view.EnsureCoreWebView2Async(environment);
-            var core = view.CoreWebView2;
+            controller = await environment.CreateCoreWebView2ControllerAsync(Handle);
+            controller.Bounds = ClientRectangle;
+            controller.ZoomFactor = 1;
+            var core = controller.CoreWebView2;
             var browserPid = core.BrowserProcessId;
             Require(browserPid > 0, "BROWSER_IDENTITY", "WebView2 did not report a browser PID");
             core.ProcessFailed += (_, _) => failure.TrySetResult(new HostFailure("WEBVIEW_PROCESS_FAILED", "A WebView2 process failed"));
@@ -83,9 +96,9 @@ public sealed partial class App : Application
             core.WebResourceRequested += (_, info) =>
             {
                 if (!request.IsAllowedResource(info.Request.Uri))
-                    info.Response = environment.CreateWebResourceResponse(null!, 403, "Forbidden", "");
+                    info.Response = environment.CreateWebResourceResponse(Stream.Null, 403, "Forbidden", "");
             };
-            Emit(new { kind = "ready", browserPid, processIds = ProcessIds(environment, browserPid),
+            Emit(new { kind = "ready", hostBackend = "win32-controller", browserPid, processIds = ProcessIds(environment, browserPid),
                 profile = request.Profile, runtimeVersion = environment.BrowserVersionString });
 
             var renderInterrupted = false;
@@ -104,24 +117,28 @@ public sealed partial class App : Application
             ReportStage("browser-exit");
             Require(!browserExit.Task.IsCompleted, "BROWSER_EARLY_EXIT", "WebView2 exited before the close request");
             closing = true;
-            view.Close();
-            view = null;
+            ReportStage("controller-close-begin");
+            var retiringController = controller;
+            controller = null;
+            retiringController.Close();
+            ReportStage("controller-close-returned");
             var exited = await browserExit.Task;
-            Require(exited.BrowserProcessId == browserPid && exited.BrowserProcessExitKind == CoreWebView2BrowserProcessExitKind.Normal,
+            Require(exited.Pid == browserPid && exited.Kind == CoreWebView2BrowserProcessExitKind.Normal,
                 "BROWSER_EXIT_UNVERIFIED", "WebView2 did not report a normal exit for its owned browser PID");
+            environment.BrowserProcessExited -= onBrowserExit;
             Emit(new { kind = "closed", browserPid, normal = true });
-            // The isolated renderer has released its browser and flushed its terminal message.
-            Environment.Exit(renderInterrupted ? 1 : 0);
+            _exitCode = renderInterrupted ? 1 : 0;
+            ReportStage("window-close");
+            Close();
         }
         catch (Exception error)
         {
-            Environment.ExitCode = 1;
+            _exitCode = 1;
             var known = error as HostFailure;
             Emit(new { kind = "error", phase, code = known?.Code ?? "WEBVIEW_HOST_ERROR",
                 message = known?.Message ?? $"{phase}: {error.GetType().Name} (0x{error.HResult:X8})" });
-            view?.Close();
-            _window?.Close();
-            Exit();
+            try { controller?.Close(); }
+            finally { Close(); }
         }
     }
 
@@ -136,11 +153,13 @@ public sealed partial class App : Application
         var observedLoads = new HashSet<(string? Loader, string? Frame)>();
         core.NavigationStarting += (_, info) =>
         {
+            reportStage("navigation-starting");
             if (request.IsTarget(info.Uri)) navigationId = info.NavigationId;
             else if (info.Uri != "about:blank") info.Cancel = true;
         };
         core.NavigationCompleted += (_, info) =>
         {
+            reportStage("navigation-completed");
             if (navigationId == info.NavigationId) navigation.TrySetResult(info.IsSuccess);
         };
         core.GetDevToolsProtocolEventReceiver("Page.lifecycleEvent").DevToolsProtocolEventReceived += (_, info) =>
@@ -162,14 +181,17 @@ public sealed partial class App : Application
             new { width = requested.Width, height = requested.Height, deviceScaleFactor = 1, mobile = false });
         // Render Blink's focus-dependent styles while leaving the Windows test window inactive.
         await Call(core, failure, closeCommand, "Emulation.setFocusEmulationEnabled", new { enabled = true });
+        reportStage("navigation-call");
         var navigationResponse = await Call(core, failure, closeCommand, "Page.navigate", new { url = request.Target.AbsoluteUri });
         Require(!navigationResponse.TryGetProperty("errorText", out _), "NAVIGATION_REJECTED", "WebView2 rejected the fixture navigation");
         expectedLoader = navigationResponse.GetProperty("loaderId").GetString();
         expectedFrame = navigationResponse.GetProperty("frameId").GetString();
+        reportStage("navigation-response");
         Require(!string.IsNullOrEmpty(expectedLoader) && !string.IsNullOrEmpty(expectedFrame),
             "NAVIGATION_IDENTITY", "CDP did not report a fixture loader and frame");
         if (observedLoads.Contains((expectedLoader, expectedFrame))) lifecycle.TrySetResult(true);
         Require(await Checked(navigation.Task, failure, closeCommand), "NAVIGATION_FAILED", "WebView2 fixture navigation did not complete successfully");
+        reportStage("navigation-complete-verified");
         await Checked(lifecycle.Task, failure, closeCommand);
 
         reportStage("viewport-read");
@@ -233,7 +255,7 @@ public sealed partial class App : Application
     private static async Task<JsonElement> Call(CoreWebView2 core, TaskCompletionSource<HostFailure> failure,
         Task<bool> closeCommand, string method, object parameters)
     {
-        var payload = await Checked(core.CallDevToolsProtocolMethodAsync(method, JsonSerializer.Serialize(parameters)).AsTask(), failure, closeCommand);
+        var payload = await Checked(core.CallDevToolsProtocolMethodAsync(method, JsonSerializer.Serialize(parameters)), failure, closeCommand);
         using var document = JsonDocument.Parse(payload);
         return document.RootElement.Clone();
     }

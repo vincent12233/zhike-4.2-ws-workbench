@@ -134,6 +134,9 @@ function runStage55b() {
 function runDeliveryS1() {
   run('Isolated visual aggregation rejects stale host builds and focused runs', [path.join(repo, 'tests/isolated-visual-aggregator.test.cjs')]);
   run('Native WebView2 isolated renderer protocol and strict matrix contract', [path.join(repo, 'tests/isolated-webview-protocol.test.cjs')]);
+  if ((process.env.ZHIKE_VISUAL_BACKEND || 'webview2') === 'webview2') {
+    run('Native WebView2 controller normal exit and blocked network resource', [path.join(repo, 'tests/isolated-webview-native.test.cjs')]);
+  }
   run('Visual customer column minimum and preference compatibility', [path.join(repo, 'tests/customer-column-width-runtime.test.cjs')]);
   run('Visual shared Unicode avatar and safe image fallback', [path.join(repo, 'tests/customer-avatar-runtime.test.cjs')]);
   run('Visual customer 360 real-data and retained action contract', [path.join(repo, 'tests/customer-360-visual-contract.test.cjs')]);
