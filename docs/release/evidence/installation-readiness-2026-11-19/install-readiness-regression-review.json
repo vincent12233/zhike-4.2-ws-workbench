@@ -1,0 +1,347 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-11-19",
+  "sourceLog": ".tools/native-renderer/install-readiness-full-regression.log",
+  "sourceLogMetadata": {
+    "bytes": 130856,
+    "lastWriteUtc": "2026-11-19T06:44:42.5297067Z",
+    "summaryLine": 2235,
+    "checks": 324,
+    "passed": 293,
+    "failed": 31,
+    "runnerExitCode": 1
+  },
+  "evidenceBoundary": {
+    "isFinalFrozenRegression": false,
+    "reason": "The run observed a live worktree while installation-readiness fixes were landing. The log has no immutable revision marker at its start and therefore cannot prove that all 324 checks exercised one revision.",
+    "reportedStartRevision": "fa557e4",
+    "onlyRevisionPrintedByLog": {
+      "revision": "5a7dabe",
+      "line": 1286,
+      "context": "Stage 5 baseline"
+    },
+    "repositorySequenceDuringRunWindow": [
+      "fa557e4",
+      "f60760f",
+      "ac27ef8",
+      "60c2f76",
+      "5a7dabe"
+    ],
+    "interpretation": "Individual results are useful diagnostic observations, but the aggregate is not release acceptance for the final clean revision. No individual failure is attributed to a revision unless the log itself records one."
+  },
+  "failureSummary": {
+    "exitStatus": {
+      "exitCode1": 26,
+      "spawnErrorWithNullStatus": 5
+    },
+    "categories": [
+      {
+        "id": "runner_spawn_timeout",
+        "count": 5,
+        "evidence": "The outer spawnSync budget expired with ETIMEDOUT. This proves budget exhaustion only; it does not by itself identify disk, crypto, migration, or application logic as the root cause."
+      },
+      {
+        "id": "sidecar_or_loopback_not_ready",
+        "count": 19,
+        "evidence": "The test could not observe the isolated local service listening, or could not verify its child exit. These failures share an availability symptom but not a proven common root cause."
+      },
+      {
+        "id": "webview_or_edge_lifecycle",
+        "count": 7,
+        "evidence": "Six isolated renderer runs reached an EDGE_RUNNER_TIMEOUT and one lifecycle check failed closed because process identity could not be verified. This is separate from the sidecar readiness symptom."
+      }
+    ]
+  },
+  "failures": [
+    {
+      "label": "6.0 no legacy data migration contract",
+      "test": "tests/no-legacy-data-migration-contract.test.cjs",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 18, "fail": 33, "evidence": [19, 31] },
+      "keyEvidence": "The fresh isolated sidecar never became ready; the start assertion was false. Its subsequent close also timed out and the isolated evidence root was retained."
+    },
+    {
+      "label": "6.0 no legacy migration with delayed sidecar shutdown",
+      "test": "tests/no-legacy-data-migration-contract.test.cjs --delayed-shutdown",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 35, "fail": 49, "evidence": [36, 47] },
+      "keyEvidence": "The delayed-shutdown variant failed the same fresh-sidecar start assertion before migration behavior could be accepted."
+    },
+    {
+      "label": "device migration schema snapshot and compatibility projection",
+      "test": "tests/device-migration-snapshot.test.cjs",
+      "category": "runner_spawn_timeout",
+      "exit": { "kind": "spawn_error", "code": null, "errorCode": "ETIMEDOUT", "budgetMs": 120000 },
+      "logLines": { "run": 82, "fail": 83, "summary": 2238 },
+      "keyEvidence": "The child produced no retained test output before the default outer 120-second spawnSync budget expired."
+    },
+    {
+      "label": "isolated v2 device envelope and exact compatibility",
+      "test": "tests/device-migration-package-v2.test.cjs",
+      "category": "runner_spawn_timeout",
+      "exit": { "kind": "spawn_error", "code": null, "errorCode": "ETIMEDOUT", "budgetMs": 180000 },
+      "logLines": { "run": 85, "fail": 89, "evidence": [86, 88], "summary": 2239 },
+      "keyEvidence": "Three subcases passed in approximately 70.3, 53.3 and 49.2 seconds; the outer 180-second budget then expired before suite completion."
+    },
+    {
+      "label": "isolated v2 generation restore, frozen recovery and publication faults",
+      "test": "tests/device-migration-restore.test.cjs",
+      "category": "runner_spawn_timeout",
+      "exit": { "kind": "spawn_error", "code": null, "errorCode": "ETIMEDOUT", "budgetMs": 240000 },
+      "logLines": { "run": 91, "fail": 95, "evidence": [92, 94], "summary": 2240 },
+      "keyEvidence": "Three subcases passed in approximately 135.8, 1.9 and 93.2 seconds; the outer 240-second budget then expired before suite completion."
+    },
+    {
+      "label": "WS local ingest runtime",
+      "test": "tests/ws-local-ingest-runtime.test.cjs",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 111, "fail": 133, "evidence": [112, 130] },
+      "keyEvidence": "SIDECAR_READINESS_TIMEOUT after 18.665 seconds and 300 attempts at 50 ms; child was still alive, stderr was empty, and the last request error was ECONNREFUSED."
+    },
+    {
+      "label": "WS identity effects repair runtime",
+      "test": "tests/ws-identity-effects-repair.test.cjs",
+      "category": "runner_spawn_timeout",
+      "exit": { "kind": "spawn_error", "code": null, "errorCode": "ETIMEDOUT", "budgetMs": 120000 },
+      "logLines": { "run": 139, "fail": 140, "summary": 2242 },
+      "keyEvidence": "No child output was retained before the default outer 120-second spawnSync budget expired."
+    },
+    {
+      "label": "stage 1.5 sidecar fencing real writer integration",
+      "test": "scripts/stage1/sqlite-fencing-sidecar-integration.test.cjs",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 394, "fail": 398, "evidence": [395, 397] },
+      "keyEvidence": "The integration request exhausted its readiness path with 'isolated sidecar did not become available'."
+    },
+    {
+      "label": "WS isolated group reading routes and UI account lifetime",
+      "test": "tests/ws-group-reading-isolated.test.cjs",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 682, "fail": 699, "evidence": [683, 698] },
+      "keyEvidence": "The real loopback sidecar subtest timed out after 60 seconds; the DOM fixture passed, and the test runner reported one cancelled subtest."
+    },
+    {
+      "label": "WS CRM customer-link trust boundary",
+      "test": "tests/ws-crm-link-trust.test.cjs",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 739, "fail": 743, "evidence": [740, 742] },
+      "keyEvidence": "The isolated server did not become available, so the trust-boundary assertions were not reached."
+    },
+    {
+      "label": "WS conversation cursor pagination",
+      "test": "tests/ws-conversation-pagination.test.cjs",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 784, "fail": 788, "evidence": [785, 787] },
+      "keyEvidence": "The isolated pagination server did not become available."
+    },
+    {
+      "label": "WS list preview update",
+      "test": "tests/ws-list-preview-update.test.cjs",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 794, "fail": 798, "evidence": [795, 797] },
+      "keyEvidence": "The isolated server did not become available."
+    },
+    {
+      "label": "WS follow-up chain dedupe and refresh",
+      "test": "tests/ws-followup-chain.test.cjs",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 800, "fail": 810, "evidence": [802, 809] },
+      "keyEvidence": "The isolated follow-up-chain server did not become available; the child ended with a Node error before the behavior checks."
+    },
+    {
+      "label": "WS task lifecycle and multi-account history ingest",
+      "test": "tests/ws-task-lifecycle.test.cjs",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 812, "fail": 825, "evidence": [813, 823] },
+      "keyEvidence": "The isolated lifecycle service start assertion was false."
+    },
+    {
+      "label": "WS complete original text and backup roundtrip",
+      "test": "tests/ws-original-text-roundtrip.test.cjs",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 827, "fail": 840, "evidence": [828, 838] },
+      "keyEvidence": "The isolated service start assertion was false, so the roundtrip was not exercised."
+    },
+    {
+      "label": "WS SQLite v6 migration",
+      "test": "tests/ws-workbench-migration-v6.test.cjs",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 858, "fail": 862, "evidence": [859, 861] },
+      "keyEvidence": "The migrated server did not become available."
+    },
+    {
+      "label": "WS multi-account database isolation",
+      "test": "tests/ws-multi-account.test.cjs",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 872, "fail": 877, "evidence": [873, 875] },
+      "keyEvidence": "The server did not become available before database-isolation assertions."
+    },
+    {
+      "label": "WS account runtime recovery",
+      "test": "tests/ws-account-runtime-recovery.test.cjs",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 878, "fail": 882, "evidence": [879, 881] },
+      "keyEvidence": "The server did not become available before recovery assertions."
+    },
+    {
+      "label": "WS customer group status projection runtime",
+      "test": "tests/ws-group-status-projection-runtime.test.cjs",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 945, "fail": 949, "evidence": [946, 948] },
+      "keyEvidence": "The group-status projection server did not become available."
+    },
+    {
+      "label": "WS group catalog runtime",
+      "test": "tests/ws-group-catalog-runtime.test.cjs",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 1122, "fail": 1126, "evidence": [1123, 1125] },
+      "keyEvidence": "The group-catalog server did not become available."
+    },
+    {
+      "label": "hot-chat profile API",
+      "test": "tests/hot-chat-profile-api.test.cjs",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 1148, "fail": 1158, "evidence": [1150, 1157] },
+      "keyEvidence": "The request helper exhausted its readiness retries and raised 'server unavailable'."
+    },
+    {
+      "label": "Stage 5.5C-1A real isolated send/media/AI risk API",
+      "test": "tests/stage55c-send-media-api.test.cjs",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 1196, "fail": 1200, "evidence": [1197, 1199] },
+      "keyEvidence": "The isolated sidecar hit its startup timeout, and the test retained its root because the created child did not exit."
+    },
+    {
+      "label": "Stage 5 migration drill",
+      "test": "scripts/stage5/migration-drill.test.cjs",
+      "category": "runner_spawn_timeout",
+      "exit": { "kind": "spawn_error", "code": null, "errorCode": "ETIMEDOUT", "budgetMs": 180000 },
+      "logLines": { "run": 1297, "fail": 1298, "summary": 2258 },
+      "keyEvidence": "No child output was retained before the outer 180-second spawnSync budget expired."
+    },
+    {
+      "label": "Stage 5.1 real workspace collapsed layout",
+      "test": "scripts/stage51/workspace-layout.test.cjs",
+      "category": "webview_or_edge_lifecycle",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 1332, "fail": 1394, "evidence": [1333, 1392] },
+      "keyEvidence": "EDGE_RUNNER_TIMEOUT after about 30 seconds in phase webview-core-ready; no host exit was observed, the process was force-terminated, cleanupSafe was false, and process-exit release also timed out."
+    },
+    {
+      "label": "Native WebView2 controller normal exit and blocked network resource",
+      "test": "tests/isolated-webview-native.test.cjs",
+      "category": "webview_or_edge_lifecycle",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 1541, "fail": 1608, "evidence": [1542, 1606] },
+      "keyEvidence": "EDGE_RUNNER_TIMEOUT after about 30 seconds in phase result; SIGTERM was observed, streams remained open, the process was force-terminated, cleanupSafe was false, and process-exit release timed out."
+    },
+    {
+      "label": "Delivery S1 isolated browser process ownership and safe release",
+      "test": "tests/isolated-edge-runner-lifecycle.test.cjs",
+      "category": "webview_or_edge_lifecycle",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 1638, "fail": 1669, "evidence": [1652, 1667] },
+      "keyEvidence": "Several controlled lifecycle modes passed, then the real process identity query failed closed with PROCESS_IDENTITY_UNVERIFIED in phase identity."
+    },
+    {
+      "label": "Delivery S1 actual main renderers and shared design system",
+      "test": "scripts/delivery/s1-main-visual.test.cjs",
+      "category": "webview_or_edge_lifecycle",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 1706, "fail": 1772, "evidence": [1707, 1770] },
+      "keyEvidence": "EDGE_RUNNER_TIMEOUT after about 30 seconds in phase webview-render-result; no host exit was observed, the process was force-terminated, cleanupSafe was false, and process-exit release timed out."
+    },
+    {
+      "label": "Delivery S1 WS computed layout and retained host",
+      "test": "scripts/delivery/s1-ws-visual.test.cjs",
+      "category": "webview_or_edge_lifecycle",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 1774, "fail": 1841, "evidence": [1775, 1839] },
+      "keyEvidence": "EDGE_RUNNER_TIMEOUT after about 30 seconds in phase result; SIGTERM was observed, the process was force-terminated, cleanupSafe was false, and process-exit release timed out."
+    },
+    {
+      "label": "Delivery S2 actual shipped CSS and accessible chart rendering",
+      "test": "scripts/delivery/s2-metrics-visual.test.cjs",
+      "category": "webview_or_edge_lifecycle",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 1873, "fail": 1942, "evidence": [1874, 1939] },
+      "keyEvidence": "EDGE_RUNNER_TIMEOUT after about 30 seconds in phase result; SIGTERM was observed, the process was force-terminated, cleanupSafe was false, and process-exit release timed out. The fail marker was interleaved after the next stdout RUN marker."
+    },
+    {
+      "label": "Delivery S3 full-CSS customer table, drawer and modal ownership",
+      "test": "scripts/delivery/s3-customer-table-visual.test.cjs",
+      "category": "webview_or_edge_lifecycle",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 2036, "fail": 2103, "evidence": [2037, 2101] },
+      "keyEvidence": "EDGE_RUNNER_TIMEOUT after about 30 seconds in phase result; SIGTERM was observed, the process was force-terminated, cleanupSafe was false, and process-exit release timed out."
+    },
+    {
+      "label": "group summary server event link",
+      "test": "tests/group-summary-server-link.test.cjs",
+      "category": "sidecar_or_loopback_not_ready",
+      "exit": { "kind": "status", "code": 1 },
+      "logLines": { "run": 2125, "fail": 2129, "evidence": [2126, 2128] },
+      "keyEvidence": "The group-summary server did not become available."
+    }
+  ],
+  "diagnosticCoverage": {
+    "newDiagnosticTestPresentInFullLog": false,
+    "expectedLabel": "test-only device migration and sidecar startup phase diagnostics",
+    "reason": "The test registration and diagnostic implementation were added while this already-running process was in progress.",
+    "supplementalEvidenceNote": "A lightweight standalone pass was reported after the instrumentation change, but it is not present in this source log and is therefore excluded from the 324-check aggregate.",
+    "requiredFollowUp": "Retain the standalone diagnostic result as supplemental evidence and include the test in the next clean-revision full regression."
+  },
+  "sensitiveContentAudit": {
+    "policy": "Counts and categories only; no matched values are reproduced here.",
+    "linesContainingWindowsAbsolutePath": 91,
+    "linesContainingUserDirectory": 71,
+    "linesContainingTempDirectory": 13,
+    "linesContainingLongHex": 18,
+    "urlOccurrences": 2,
+    "urlLines": 1,
+    "loopbackUrlOccurrences": 2,
+    "credentialKeywordLines": {
+      "token": 7,
+      "authorization": 5,
+      "password": 2,
+      "secret": 2,
+      "credential": 6
+    },
+    "credentialAssignmentLikeMatches": 0,
+    "notObserved": [
+      "Authorization header value",
+      "JWT",
+      "private-key marker",
+      "connection string",
+      "email address",
+      "international phone number",
+      "non-loopback IPv4 address"
+    ],
+    "archiveRequirement": "Before sharing or archiving outside the local workspace, replace local absolute paths and temporary/evidence locations. Retain long hexadecimal values only when explicitly needed as build or file digests; otherwise replace them."
+  },
+  "recommendedControlledFollowUp": [
+    "Do not increase timeouts or weaken durability, ACL, fencing, or process-identity checks based on this aggregate alone.",
+    "Run the new opt-in startup diagnostics on a small representative sidecar failure first, preserving only bounded phase names and approved numeric fields.",
+    "Rerun each outer ETIMEDOUT suite individually on the final clean revision and distinguish progress, phase timing, assertion failure, and outer-budget exhaustion.",
+    "Clear or account for retained isolated browser resources before rerunning the WebView lifecycle subset; keep identity verification fail-closed.",
+    "Only after targeted diagnosis, run a clean, immutable-revision full regression and record the revision at both start and finish."
+  ]
+}

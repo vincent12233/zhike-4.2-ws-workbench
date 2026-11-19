@@ -1,0 +1,745 @@
+Inno Setup 7 Command-Line Compiler
+Copyright (C) 1997-2026 Jordan Russell. All rights reserved.
+Portions Copyright (C) 2000-2026 Martijn Laan. All rights reserved.
+Portions Copyright (C) 2001-2004 Alex Yackimoff. All rights reserved.
+https://www.innosetup.com
+
+Compiler engine version: Inno Setup 7.1.1
+Non-commercial use only
+
+Preprocessing
+   Reading file: <INNO_SETUP>\ISPPBuiltins.iss
+Parsing [Setup] section, line 15
+Parsing [Setup] section, line 16
+Parsing [Setup] section, line 17
+Parsing [Setup] section, line 18
+Parsing [Setup] section, line 19
+Parsing [Setup] section, line 20
+Parsing [Setup] section, line 21
+Parsing [Setup] section, line 22
+Parsing [Setup] section, line 23
+Parsing [Setup] section, line 24
+Parsing [Setup] section, line 25
+Parsing [Setup] section, line 26
+Parsing [Setup] section, line 27
+Parsing [Setup] section, line 28
+Parsing [Setup] section, line 29
+Parsing [Setup] section, line 30
+Parsing [Setup] section, line 31
+Parsing [Setup] section, line 32
+Parsing [Setup] section, line 33
+Parsing [Setup] section, line 34
+Parsing [Setup] section, line 35
+Reading file (WizardImageFile)
+Reading file (WizardSmallImageFile)
+Preparing Setup program executable
+   Verification successful
+   Updating icons (Setup.e32)
+   Updating version info (Setup.e32)
+Determining language code pages
+Parsing [Languages] section, line 38
+   Reading file: <INNO_SETUP>\Languages\ChineseSimplified.isl
+   Messages in script file
+Reading default messages from Default.isl
+Parsing [Languages] section, line 38
+   Reading file: <INNO_SETUP>\Languages\ChineseSimplified.isl
+Parsing [LangOptions], [Messages], and [CustomMessages] sections
+   Messages in script file
+Reading [Code] section
+Parsing [Icons] section, line 114
+Parsing [Icons] section, line 118
+Parsing [InstallDelete] section, line 51
+Parsing [InstallDelete] section, line 52
+Parsing [InstallDelete] section, line 53
+Parsing [InstallDelete] section, line 54
+Parsing [InstallDelete] section, line 55
+Parsing [InstallDelete] section, line 56
+Parsing [InstallDelete] section, line 57
+Parsing [InstallDelete] section, line 58
+Parsing [InstallDelete] section, line 59
+Parsing [InstallDelete] section, line 60
+Parsing [InstallDelete] section, line 61
+Parsing [InstallDelete] section, line 65
+Parsing [InstallDelete] section, line 66
+Parsing [InstallDelete] section, line 67
+Parsing [InstallDelete] section, line 68
+Parsing [InstallDelete] section, line 69
+Parsing [InstallDelete] section, line 70
+Parsing [InstallDelete] section, line 71
+Parsing [InstallDelete] section, line 72
+Parsing [InstallDelete] section, line 73
+Parsing [InstallDelete] section, line 74
+Parsing [InstallDelete] section, line 79
+Parsing [InstallDelete] section, line 80
+Parsing [InstallDelete] section, line 81
+Parsing [InstallDelete] section, line 82
+Parsing [InstallDelete] section, line 83
+Parsing [InstallDelete] section, line 84
+Parsing [InstallDelete] section, line 85
+Parsing [InstallDelete] section, line 86
+Parsing [InstallDelete] section, line 87
+Parsing [InstallDelete] section, line 88
+Parsing [InstallDelete] section, line 89
+Parsing [InstallDelete] section, line 90
+Parsing [InstallDelete] section, line 91
+Parsing [InstallDelete] section, line 92
+Parsing [InstallDelete] section, line 93
+Parsing [InstallDelete] section, line 94
+Parsing [InstallDelete] section, line 95
+Parsing [InstallDelete] section, line 96
+Parsing [InstallDelete] section, line 97
+Parsing [InstallDelete] section, line 98
+Parsing [InstallDelete] section, line 102
+Parsing [InstallDelete] section, line 103
+Parsing [InstallDelete] section, line 104
+Parsing [InstallDelete] section, line 105
+Parsing [InstallDelete] section, line 106
+Parsing [InstallDelete] section, line 107
+Parsing [InstallDelete] section, line 108
+Parsing [InstallDelete] section, line 109
+Parsing [InstallDelete] section, line 110
+Parsing [InstallDelete] section, line 111
+Parsing [Run] section, line 121
+Parsing [Files] section, line 41
+Parsing [Files] section, line 44
+Compiling [Code] section
+Creating setup files
+   Verification successful
+   Updating icons (Setup.exe)
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\bundle-manifest.json
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\clretwrc.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\clrgc.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\clrgcexp.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\clrjit.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\coreclr.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\CoreMessagingXP.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\createdump.exe
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\dcompi.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\DirectML.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\dwmcorei.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\DwmSceneI.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\DWriteCore.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\hostfxr.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\hostpolicy.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\hot-chat-profile-usage.md
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\local-desktop-deployment.md
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\local-desktop-troubleshooting.md
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\marshal.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Asg.SemanticIndex.AiFabric.Compatibility.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.CSharp.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.DiaSymReader.Native.amd64.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.DirectManipulation.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Foundation.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Graphics.Display.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Graphics.Imaging.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Graphics.Imaging.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Graphics.Imaging.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Graphics.ImagingInternal.ImageObjectRemover.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Graphics.ImagingInternal.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Graphics.Internal.Imaging.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Graphics.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.InputStateManager.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.InteractiveExperiences.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Internal.FrameworkUdk.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.ML.OnnxRuntime.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Security.Authentication.OAuth.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Security.Authentication.OAuth.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.UI.Composition.OSSupport.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.UI.Designer.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.UI.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.UI.Input.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.UI.pri
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.UI.Text.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.UI.Windowing.Core.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.UI.Windowing.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.UI.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.UI.Xaml.Controls.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.UI.Xaml.Controls.pri
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.ui.xaml.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.UI.Xaml.Internal.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.UI.Xaml.Phone.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.ui.xaml.resources.19h1.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.ui.xaml.resources.common.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.UI.Xaml.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.VisualBasic.Core.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.VisualBasic.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Web.WebView2.Core.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Web.WebView2.Core.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Win32.Primitives.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Win32.Registry.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.AICapabilities.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.ContentModerationInternal.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.ContentSafety.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.ContentSafety.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.ContentSafety.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.Foundation.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.Foundation.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.FoundationInternal.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.GenerativeInternal.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.Imaging.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.Imaging.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.Imaging.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.MachineLearning.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.MachineLearning.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.Search.Experimental.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.Text.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.Text.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.Text.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.Video.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.Video.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.Video.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AI.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.ApplicationModel.Background.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.ApplicationModel.Background.UniversalBGTask.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.ApplicationModel.Background.UniversalBGTask.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.ApplicationModel.Background.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.ApplicationModel.DynamicDependency.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.ApplicationModel.DynamicDependency.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.ApplicationModel.Resources.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.ApplicationModel.Resources.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.ApplicationModel.Resources.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.ApplicationModel.WindowsAppRuntime.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.ApplicationModel.WindowsAppRuntime.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AppLifecycle.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AppLifecycle.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AppNotifications.Builder.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AppNotifications.Builder.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AppNotifications.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.AppNotifications.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.BadgeNotifications.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.BadgeNotifications.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Foundation.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Foundation.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Globalization.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.ImageCreationInternal.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Internal.AI.ContentModeration.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Internal.AI.Generative.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Internal.ImageCreation.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Internal.SemanticSearch.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Internal.Vision.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Management.Deployment.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Management.Deployment.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Media.Capture.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Media.Capture.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Private.Workloads.SessionManager.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.PrivateCommon.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.PushNotifications.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.PushNotifications.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.SDK.NET.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Search.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Search.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Search.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Security.AccessControl.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Security.AccessControl.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.SemanticSearch.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.SemanticSearchInternal.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Storage.Pickers.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Storage.Pickers.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Storage.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Storage.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.System.Power.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.System.Power.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.System.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.System.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Vision.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.VisionInternal.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Widgets.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Widgets.Projection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Widgets.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Workloads.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Workloads.pri
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Workloads.Resources.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Workloads.Resources_ec.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.Windows.Workloads.winmd
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.WindowsAppRuntime.Bootstrap.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.WindowsAppRuntime.Bootstrap.Net.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.WindowsAppRuntime.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.WindowsAppRuntime.pri
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.WinUI.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\MRM.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\mscordaccore.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\mscordaccore_amd64_amd64_10.0.25.52411.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\mscordbi.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\mscorlib.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\mscorrc.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\msquic.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\netstandard.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\NPUDetect.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\onnxruntime.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\PerceptiveStreaming.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\PushNotificationsLongRunningTask.ProxyStub.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\README-desktop.md
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\release-notes-6.1.0.md
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\RestartAgent.exe
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\SessionHandleIPCProxyStub.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.AppContext.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Buffers.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Collections.Concurrent.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Collections.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Collections.Immutable.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Collections.NonGeneric.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Collections.Specialized.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.ComponentModel.Annotations.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.ComponentModel.DataAnnotations.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.ComponentModel.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.ComponentModel.EventBasedAsync.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.ComponentModel.Primitives.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.ComponentModel.TypeConverter.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Configuration.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Console.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Core.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Data.Common.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Data.DataSetExtensions.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Data.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Diagnostics.Contracts.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Diagnostics.Debug.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Diagnostics.DiagnosticSource.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Diagnostics.FileVersionInfo.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Diagnostics.Process.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Diagnostics.StackTrace.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Diagnostics.TextWriterTraceListener.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Diagnostics.Tools.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Diagnostics.TraceSource.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Diagnostics.Tracing.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Drawing.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Drawing.Primitives.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Dynamic.Runtime.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Formats.Asn1.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Formats.Tar.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Globalization.Calendars.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Globalization.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Globalization.Extensions.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.IO.Compression.Brotli.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.IO.Compression.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.IO.Compression.FileSystem.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.IO.Compression.Native.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.IO.Compression.ZipFile.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.IO.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.IO.FileSystem.AccessControl.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.IO.FileSystem.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.IO.FileSystem.DriveInfo.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.IO.FileSystem.Primitives.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.IO.FileSystem.Watcher.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.IO.IsolatedStorage.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.IO.MemoryMappedFiles.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.IO.Pipelines.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.IO.Pipes.AccessControl.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.IO.Pipes.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.IO.UnmanagedMemoryStream.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Linq.AsyncEnumerable.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Linq.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Linq.Expressions.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Linq.Parallel.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Linq.Queryable.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Memory.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.Http.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.Http.Json.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.HttpListener.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.Mail.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.NameResolution.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.NetworkInformation.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.Ping.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.Primitives.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.Quic.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.Requests.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.Security.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.ServerSentEvents.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.ServicePoint.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.Sockets.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.WebClient.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.WebHeaderCollection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.WebProxy.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.WebSockets.Client.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Net.WebSockets.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Numerics.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Numerics.Tensors.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Numerics.Vectors.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.ObjectModel.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Private.CoreLib.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Private.DataContractSerialization.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Private.Uri.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Private.Xml.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Private.Xml.Linq.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Reflection.DispatchProxy.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Reflection.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Reflection.Emit.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Reflection.Emit.ILGeneration.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Reflection.Emit.Lightweight.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Reflection.Extensions.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Reflection.Metadata.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Reflection.Primitives.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Reflection.TypeExtensions.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Resources.Reader.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Resources.ResourceManager.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Resources.Writer.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Runtime.CompilerServices.Unsafe.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Runtime.CompilerServices.VisualC.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Runtime.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Runtime.Extensions.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Runtime.Handles.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Runtime.InteropServices.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Runtime.InteropServices.JavaScript.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Runtime.InteropServices.RuntimeInformation.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Runtime.Intrinsics.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Runtime.Loader.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Runtime.Numerics.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Runtime.Serialization.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Runtime.Serialization.Formatters.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Runtime.Serialization.Json.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Runtime.Serialization.Primitives.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Runtime.Serialization.Xml.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Security.AccessControl.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Security.Claims.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Security.Cryptography.Algorithms.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Security.Cryptography.Cng.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Security.Cryptography.Csp.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Security.Cryptography.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Security.Cryptography.Encoding.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Security.Cryptography.OpenSsl.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Security.Cryptography.Primitives.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Security.Cryptography.X509Certificates.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Security.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Security.Principal.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Security.Principal.Windows.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Security.SecureString.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.ServiceModel.Web.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.ServiceProcess.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Text.Encoding.CodePages.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Text.Encoding.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Text.Encoding.Extensions.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Text.Encodings.Web.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Text.Json.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Text.RegularExpressions.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Threading.AccessControl.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Threading.Channels.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Threading.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Threading.Overlapped.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Threading.Tasks.Dataflow.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Threading.Tasks.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Threading.Tasks.Extensions.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Threading.Tasks.Parallel.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Threading.Thread.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Threading.ThreadPool.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Threading.Timer.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Transactions.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Transactions.Local.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.ValueTuple.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Web.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Web.HttpUtility.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Windows.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Xml.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Xml.Linq.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Xml.ReaderWriter.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Xml.Serialization.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Xml.XDocument.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Xml.XmlDocument.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Xml.XmlSerializer.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Xml.XPath.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\System.Xml.XPath.XDocument.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\WebView2Loader.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\WindowsBase.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\WinRT.Runtime.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\WinUIEdit.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\workloads.365.json
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\workloads.j32.json
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\workloads.json
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\workloads.lnl.json
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\workloads.qnn.json
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\workloads.stx.json
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\wuceffectsi.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Zhike.Desktop.deps.json
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Zhike.Desktop.dll
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Zhike.Desktop.exe
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Zhike.Desktop.pdb
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Zhike.Desktop.pri
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Zhike.Desktop.runtimeconfig.json
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\zhike.ico
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\af-ZA\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\af-ZA\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\am-ET\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\am-ET\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ar-SA\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ar-SA\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\as-IN\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\as-IN\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\az-Latn-AZ\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\az-Latn-AZ\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\bg-BG\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\bg-BG\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\bn-IN\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\bn-IN\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\bs-Latn-BA\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\bs-Latn-BA\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ca-ES\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ca-ES\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ca-Es-VALENCIA\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ca-Es-VALENCIA\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\cs-CZ\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\cs-CZ\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\cy-GB\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\cy-GB\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\da-DK\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\da-DK\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\de-DE\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\de-DE\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\el-GR\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\el-GR\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\en-GB\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\en-GB\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\en-us\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\en-us\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\es-ES\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\es-ES\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\es-MX\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\es-MX\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\et-EE\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\et-EE\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\eu-ES\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\eu-ES\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\fa-IR\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\fa-IR\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\fi-FI\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\fi-FI\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\fil-PH\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\fil-PH\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\fr-CA\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\fr-CA\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\fr-FR\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\fr-FR\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ga-IE\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ga-IE\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\gd-gb\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\gd-gb\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\gl-ES\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\gl-ES\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\gu-IN\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\gu-IN\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\he-IL\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\he-IL\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\hi-IN\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\hi-IN\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\hr-HR\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\hr-HR\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\hu-HU\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\hu-HU\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\hy-AM\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\hy-AM\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\id-ID\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\id-ID\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\is-IS\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\is-IS\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\it-IT\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\it-IT\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ja-JP\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ja-JP\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ka-GE\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ka-GE\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\kk-KZ\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\kk-KZ\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\km-KH\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\km-KH\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\kn-IN\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\kn-IN\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ko-KR\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ko-KR\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\kok-IN\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\kok-IN\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\lb-LU\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\lb-LU\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\lo-LA\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\lo-LA\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\lt-LT\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\lt-LT\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\lv-LV\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\lv-LV\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\mi-NZ\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\mi-NZ\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.UI.Xaml\Assets\map.html
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\Microsoft.UI.Xaml\Assets\NoiseAsset_256x256_PNG.png
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\mk-MK\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\mk-MK\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ml-IN\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ml-IN\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\mr-IN\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\mr-IN\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ms-MY\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ms-MY\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\mt-MT\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\mt-MT\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\nb-NO\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\nb-NO\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ne-NP\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ne-NP\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\nl-NL\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\nl-NL\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\nn-NO\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\nn-NO\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\or-IN\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\or-IN\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\pa-IN\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\pa-IN\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\pl-PL\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\pl-PL\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\pt-BR\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\pt-BR\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\pt-PT\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\pt-PT\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\quz-PE\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\quz-PE\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\app.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\index.html
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migration-runner.cjs
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\node.exe
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\server.mjs
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\sidecar-write-coordinator.cjs
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\state-delta.cjs
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\styles.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\test-diagnostics.cjs
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\assets\atelier-dawn.svg
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\assets\horizon-flow-6.png
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\assets\horizon-ridge-6.png
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\assets\horizon-rock-6.png
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\assets\horizon-sidebar-shell-6.svg
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\assets\horizon-topline-6.png
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\assets\zhike-horizon-logo.png
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\004-core-schema-marker.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\005-ws-workbench.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\006-ws-workbench-hardening.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\007-ws-collection-followup.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\008-ws-accounts.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\009-ws-resume-alerts.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\010-ai-customer-governance.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\011-hot-chat-profile.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\012-empty-data-space-marker.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\013-ws-account-runtime.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\014-ws-message-external-unique.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\015-ws-group-monitor.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\016-ws-send-audit.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\017-ws-group-catalog.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\018-ws-export-media.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\019-crm-base-schema.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\020-ai-schema-authority.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\021-crm-authority.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\022-ws-group-identity.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\023-ws-group-manager.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\024-ai-pipeline-crm-review.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\025-stage5-correlation-id.sql
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\migrations\manifest.json
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\accessibility-enhancements.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ai-crm-suggestion-core.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ai-job-pipeline-core.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ai-mock-provider.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ai-review-center-ui.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\business-6.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\business-enhancements.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\business-enhancements.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\business-rule-core.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\customer-avatar.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\customer-governance-core.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\customer-governance-ui.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\design-system.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\desktop-host.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\desktop-performance.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\global-6.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\gpt-assistant.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\gpt-assistant.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\gpt-management.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\gpt-modern.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\gpt-workbench.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\home-6.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\horizon-atelier.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\hot-chat-profile-core.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\metrics-charts.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\operations-6.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\operations-core.cjs
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\operations-ui.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\operations-upgrade.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\operations-upgrade.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\performance-enhancements.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\phone-registry.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\phone-registry.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\productivity.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\runtime-customizer.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\scroll-coordinator.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\scroll-system.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\smart-import.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ticket-record-core.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ui-refresh.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\v4-data-center.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\v4.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\v41-ui.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\workspace-shell.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ws-business-pages.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ws-crm-sync-core.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ws-customer-reading-query.cjs
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ws-group-manager-core.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ws-group-mock-transport.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ws-group-monitor-core.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ws-group-reading-ui.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ws-media-core.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ws-scope.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ws-workbench-core.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ws-workbench.css
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ws-workbench.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\modules\ws-workspace-query.cjs
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\vendor\xlsx\LICENSE
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\resources\app\vendor\xlsx\xlsx.js
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ro-RO\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ro-RO\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ru-RU\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ru-RU\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\sk-SK\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\sk-SK\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\sl-SI\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\sl-SI\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\sq-AL\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\sq-AL\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\sr-Cyrl-BA\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\sr-Cyrl-BA\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\sr-Cyrl-RS\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\sr-Cyrl-RS\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\sr-Latn-RS\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\sr-Latn-RS\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\sv-SE\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\sv-SE\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ta-IN\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ta-IN\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\te-IN\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\te-IN\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\th-TH\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\th-TH\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\tr-TR\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\tr-TR\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\tt-RU\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\tt-RU\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ug-CN\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ug-CN\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\uk-UA\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\uk-UA\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ur-PK\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\ur-PK\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\uz-Latn-UZ\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\uz-Latn-UZ\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\vi-VN\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\vi-VN\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\zh-CN\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\zh-CN\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\zh-TW\Microsoft.ui.xaml.dll.mui
+   Compressing: \\?\<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\zh-TW\Microsoft.UI.Xaml.Phone.dll.mui
+   Compressing Setup program executable
+   Updating version info (Setup.exe)
+
+
+Successful compile (27.172 sec). Resulting Setup program filename is:
+<REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\installer\知客-6.1.0-WinUI桌面版.exe
+{
+  "signingStatus": "unsigned",
+  "recovery": "6.0 仅使用 %LOCALAPPDATA%\\Zhike6；不读取、迁移或删除旧 %LOCALAPPDATA%\\Zhike。程序恢复使用 6.0 安装包和 6.0 本机备份，不重新启用旧客户端。",
+  "bytes": 114280989,
+  "installer": "<REPO>\\work\\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\\installer\\知客-6.1.0-WinUI桌面版.exe",
+  "sha256": "51DEF93516FA321D621CD5988469F7F8FEBB283EDF4851DD6296091B065539C3",
+  "webView2Version": "157.0.4341.60"
+}

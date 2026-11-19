@@ -1,0 +1,27 @@
+Error: Isolated sidecar request failed (SIDECAR_READINESS_TIMEOUT): {"elapsedMs":18713,"spawnErrorCode":null,"exited":false,"exitCode":null,"signal":null,"exitElapsedMs":null,"stderrBytes":673,"stderrRetainedBytes":673,"stderrTruncated":false,"stderr":"[ZHIKE_TEST_SIDECAR_STARTUP] {\"sequence\":1,\"event\":\"modules-loaded\",\"processElapsedMs\":128}\n[ZHIKE_TEST_SIDECAR_STARTUP] {\"sequence\":2,\"event\":\"data-directory-ready\",\"processElapsedMs\":129}\n[ZHIKE_TEST_SIDECAR_STARTUP] {\"sequence\":3,\"event\":\"workspace-lock-start\",\"processElapsedMs\":129}\n[ZHIKE_TEST_SIDECAR_STARTUP] {\"sequence\":4,\"event\":\"workspace-lock-acquired\",\"processElapsedMs\":130}\n[ZHIKE_TEST_SIDECAR_STARTUP] {\"sequence\":5,\"event\":\"database-open-start\",\"processElapsedMs\":130}\n[ZHIKE_TEST_SIDECAR_STARTUP] {\"sequence\":6,\"event\":\"database-opened\",\"processElapsedMs\":130}\n[ZHIKE_TEST_SIDECAR_STARTUP] {\"sequence\":7,\"event\":\"migrations-start\",\"processElapsedMs\":131}\n","attempts":300,"retryDelayMs":50,"lastRequestErrorCode":"ECONNREFUSED"}
+    at Object.failure (<REPO>\tests\helpers\sidecar-startup-observer.cjs:53:19)
+    at requestWithStartupDiagnostics (<REPO>\tests\helpers\sidecar-startup-observer.cjs:78:21)
+    at async <REPO>\tests\ws-local-ingest-runtime.test.cjs:59:20 {
+  code: 'SIDECAR_READINESS_TIMEOUT',
+  diagnostics: {
+    elapsedMs: 18713,
+    spawnErrorCode: null,
+    exited: false,
+    exitCode: null,
+    signal: null,
+    exitElapsedMs: null,
+    stderrBytes: 673,
+    stderrRetainedBytes: 673,
+    stderrTruncated: false,
+    stderr: '[ZHIKE_TEST_SIDECAR_STARTUP] {"sequence":1,"event":"modules-loaded","processElapsedMs":128}\n' +
+      '[ZHIKE_TEST_SIDECAR_STARTUP] {"sequence":2,"event":"data-directory-ready","processElapsedMs":129}\n' +
+      '[ZHIKE_TEST_SIDECAR_STARTUP] {"sequence":3,"event":"workspace-lock-start","processElapsedMs":129}\n' +
+      '[ZHIKE_TEST_SIDECAR_STARTUP] {"sequence":4,"event":"workspace-lock-acquired","processElapsedMs":130}\n' +
+      '[ZHIKE_TEST_SIDECAR_STARTUP] {"sequence":5,"event":"database-open-start","processElapsedMs":130}\n' +
+      '[ZHIKE_TEST_SIDECAR_STARTUP] {"sequence":6,"event":"database-opened","processElapsedMs":130}\n' +
+      '[ZHIKE_TEST_SIDECAR_STARTUP] {"sequence":7,"event":"migrations-start","processElapsedMs":131}\n',
+    attempts: 300,
+    retryDelayMs: 50,
+    lastRequestErrorCode: 'ECONNREFUSED'
+  }
+}

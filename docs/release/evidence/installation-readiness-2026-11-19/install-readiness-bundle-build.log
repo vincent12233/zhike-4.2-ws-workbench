@@ -1,0 +1,15 @@
+  正在确定要还原的项目…
+  已还原 <REPO>\desktop\src\Zhike.Desktop\Zhike.Desktop.csproj (用时 1.78 秒)。
+  Zhike.Desktop -> <REPO>\desktop\src\Zhike.Desktop\bin\x64\Release\net10.0-windows10.0.22621.0\win-x64\Zhike.Desktop.dll
+  Zhike.Desktop -> <REPO>\work\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\bundle\zhike-winui-6.1.0-win-x64\
+{
+  "runtime": "win-x64",
+  "archive": "<REPO>\\work\\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\\bundle\\zhike-winui-6.1.0-win-x64.zip",
+  "releaseGate": "passed",
+  "version": "6.1.0",
+  "sha256": "21C51E3BB5945200ABB3924EA6EA1649B7BD5BE30922934695BB8E7034C2FA93",
+  "sourceArchive": "<REPO>\\work\\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\\bundle\\zhike-source-6.1.0.zip",
+  "sourceSha256": "024542FD4CEF1514D7B41C657C77BE2405DA2183E945337556C547A03A3D9283",
+  "stage": "<REPO>\\work\\release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d\\bundle\\zhike-winui-6.1.0-win-x64",
+  "selfContained": true
+}

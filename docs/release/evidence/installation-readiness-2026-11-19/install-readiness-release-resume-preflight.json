@@ -1,0 +1,19 @@
+{
+  "preflight": "passed",
+  "mode": "resume",
+  "resumeDraftId": 451004886,
+  "tag": "v6.1.0-rc.2",
+  "commit": "5a7dabe7321f7682b2cb518aeb9d4a1c2c89ace1",
+  "assets": [
+    "zhike-6.1.0-win-x64-setup.exe",
+    "release-output-manifest.json"
+  ],
+  "skipAssets": [],
+  "uploadAssets": [
+    "zhike-6.1.0-win-x64-setup.exe",
+    "release-output-manifest.json"
+  ],
+  "signature": "NotSigned",
+  "uploadTimeoutSeconds": 600,
+  "remoteWrites": false
+}

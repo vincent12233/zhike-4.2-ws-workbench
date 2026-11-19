@@ -1,0 +1,1 @@
+{"source":"exec session 60801 terminal result","exitCode":1,"step":"Upload zhike-6.1.0-win-x64-setup.exe","httpStatus":null,"error":"failed without an HTTP status; review existing GitHub draft before retrying","remotePublished":false,"subsequentReadOnlyAudit":"install-readiness-draft-audit.json"}

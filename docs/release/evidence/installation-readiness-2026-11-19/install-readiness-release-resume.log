@@ -1,0 +1,13 @@
+{
+  "prerelease": true,
+  "resumedDraft": true,
+  "releaseId": 451004886,
+  "tag": "v6.1.0-rc.2",
+  "commit": "5a7dabe7321f7682b2cb518aeb9d4a1c2c89ace1",
+  "url": "https://github.com/vincent12233/zhike-4.2-ws-workbench/releases/tag/v6.1.0-rc.2",
+  "assets": [
+    "zhike-6.1.0-win-x64-setup.exe",
+    "release-output-manifest.json"
+  ],
+  "uploadTimeoutSeconds": 600
+}

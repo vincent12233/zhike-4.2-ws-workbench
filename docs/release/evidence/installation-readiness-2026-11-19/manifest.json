@@ -1,0 +1,507 @@
+{
+  "schemaVersion": 1,
+  "createdAtUtc": "2026-11-19T07:15:25.6416781Z",
+  "archivePurpose": "Actual rc.2 candidate evidence; S3 remains Blocked. Build integrity is not production acceptance.",
+  "archiveTrackedByGit": true,
+  "sanitization": {
+    "encoding": "UTF-8 without BOM",
+    "orderedRules": [
+      {
+        "name": "repository-root",
+        "match": "Exact resolved repository root in native, JSON-escaped, or forward-slash form; case-insensitive",
+        "replacement": "<REPO>"
+      },
+      {
+        "name": "system-temp-root",
+        "match": "Exact resolved system TEMP root in native, JSON-escaped, or forward-slash form; case-insensitive",
+        "replacement": "<TEMP>"
+      },
+      {
+        "name": "user-profile-root",
+        "match": "Exact resolved user profile root in native, JSON-escaped, or forward-slash form; case-insensitive",
+        "replacement": "<USERPROFILE>"
+      },
+      {
+        "name": "inno-install-root",
+        "match": "Exact C:/Program Files/Inno Setup 7 in native, JSON or forward-slash form",
+        "replacement": "<INNO_SETUP>"
+      }
+    ],
+    "preserved": [
+      "Error codes and assertion messages",
+      "Exit codes and timeout phases",
+      "Durations, counters and test totals",
+      "Loopback addresses without query strings",
+      "Build and file digests that are evidence rather than credentials"
+    ],
+    "credentialReview": {
+      "policy": "Credential words alone were not redacted because doing so would hide test meaning. Only actual credential values would be removed.",
+      "credentialAssignmentMatchesAfterSanitization": 0,
+      "bearerValueMatchesAfterSanitization": 0,
+      "jwtMatchesAfterSanitization": 0,
+      "privateKeyMarkerMatchesAfterSanitization": 0,
+      "remainingAbsoluteWindowsPathMatches": 0,
+      "remainingRepositoryTailMatches": 0
+    },
+    "archiveTextNormalization": "UTF-8 without BOM, LF line endings, trailing horizontal whitespace and extra blank EOF lines removed; original byte count and SHA-256 retained separately."
+  },
+  "resultBoundary": {
+    "candidateRevision": "5a7dabe7321f7682b2cb518aeb9d4a1c2c89ace1",
+    "targetedRegression": {
+      "result": "Passed",
+      "passed": 10,
+      "total": 10,
+      "scope": "Final targeted contracts on 5a7dabe; not a full regression"
+    },
+    "fullRegression": {
+      "result": "Failed",
+      "passed": 293,
+      "total": 324,
+      "failed": 31,
+      "runnerExitCode": 1,
+      "scope": "Mixed-revision run that began from fa557e4 and observed later changes; not a frozen final-HEAD regression"
+    },
+    "packagedSidecar": {
+      "result": "Passed",
+      "exitCode": 0,
+      "startupMs": 42620,
+      "verified": [
+        "Inherited isolation rejected",
+        "Health scope truthful",
+        "Ready without UI pump",
+        "Cancellation propagated",
+        "Unauthorized shutdown rejected",
+        "Authenticated graceful shutdown",
+        "Cancelled start and restart retired",
+        "Normal process exit"
+      ],
+      "productionOpened": false,
+      "doesNotVerify": [
+        "Real WinUI UI",
+        "Installer installation, upgrade or uninstall",
+        "Real WhatsApp",
+        "Paid AI"
+      ]
+    },
+    "bundleBuild": {
+      "result": "Passed",
+      "exitCode": 0,
+      "sourceCommit": "5a7dabe7321f7682b2cb518aeb9d4a1c2c89ace1",
+      "sourceWorktreeDirty": false,
+      "releaseGate": "passed",
+      "runtime": "win-x64",
+      "bundleManifestFileCount": 622,
+      "doesNotVerify": "Successful bundle compilation is not successful installation or product acceptance."
+    },
+    "isolatedNativeBuildCurrentTurn": {
+      "result": "Passed",
+      "session": 67171,
+      "exitCode": 0,
+      "warnings": 0,
+      "errors": 0,
+      "durationSeconds": 100.03,
+      "scope": "Current-turn isolated native build only",
+      "newNativeWindow": {
+        "result": "NotRun",
+        "reason": "The desktop tool timed out three times and was stopped without opening a new native UI."
+      }
+    },
+    "installer": {
+      "result": "Built",
+      "bytes": 114280989,
+      "sha256": "51DEF93516FA321D621CD5988469F7F8FEBB283EDF4851DD6296091B065539C3",
+      "signingStatus": "unsigned",
+      "actualInstall": "NotTested"
+    },
+    "publication": {
+      "result": "PublishedPrerelease",
+      "releaseId": 451004886,
+      "url": "https://github.com/vincent12233/zhike-4.2-ws-workbench/releases/tag/v6.1.0-rc.2",
+      "sourceCommit": "5a7dabe7321f7682b2cb518aeb9d4a1c2c89ace1",
+      "assetDigestVerified": true,
+      "acceptanceGate": "Blocked",
+      "productionEntry": "FROZEN"
+    },
+    "releaseToolChecks": {
+      "result": "Passed",
+      "checks": 3,
+      "fullRegression": false
+    }
+  },
+  "artifacts": [
+    {
+      "name": "install-readiness-full-regression.log",
+      "source": ".tools/native-renderer/install-readiness-full-regression.log",
+      "originalBytes": 130856,
+      "originalSha256": "244602c4d80dd99bd191cfc9335da3d4b2778ce0b547b47f8bb79ae54c36f473",
+      "archiveBytes": 120268,
+      "archiveSha256": "71d4bddf104f13d059fd7e060b6f674a40d3745a640b8dbca996da5cde2393c6",
+      "replacements": {
+        "repositoryRoot": 77,
+        "tempRoot": 13,
+        "userProfileRoot": 0
+      },
+      "result": "Failed",
+      "notes": "Mixed-revision 293/324 result; retained for diagnosis, not final acceptance.",
+      "textNormalization": {
+        "crlf": 2266,
+        "trailingHorizontalWhitespaceRuns": 26
+      }
+    },
+    {
+      "name": "install-readiness-final-targeted.log",
+      "source": ".tools/native-renderer/install-readiness-final-targeted.log",
+      "originalBytes": 1864,
+      "originalSha256": "99341bc8734616498cca788dcf265bc2a49852dba43a4980cd94b5bfeb05054b",
+      "archiveBytes": 1822,
+      "archiveSha256": "f836fdd5fb25cabe3aad9f82f48ca788cddbdb54ac3ef59df24cc37f43f2a72f",
+      "replacements": {
+        "repositoryRoot": 0,
+        "tempRoot": 0,
+        "userProfileRoot": 0
+      },
+      "result": "Passed",
+      "notes": "10/10 targeted checks on 5a7dabe; scope is not full regression.",
+      "textNormalization": {
+        "crlf": 42,
+        "trailingHorizontalWhitespaceRuns": 0
+      }
+    },
+    {
+      "name": "install-readiness-observations.json",
+      "source": ".tools/native-renderer/install-readiness-observations.json",
+      "originalBytes": 1442,
+      "originalSha256": "a776050170dddccb607841bc9af108259a1b2f876c814455c04682d03548e87d",
+      "archiveBytes": 1442,
+      "archiveSha256": "a776050170dddccb607841bc9af108259a1b2f876c814455c04682d03548e87d",
+      "replacements": {
+        "repositoryRoot": 0,
+        "tempRoot": 0,
+        "userProfileRoot": 0
+      },
+      "result": "Observed",
+      "notes": "Point-in-time local measurements; not benchmark thresholds and not proof of a single failure cause.",
+      "textNormalization": {
+        "crlf": 0,
+        "trailingHorizontalWhitespaceRuns": 0
+      }
+    },
+    {
+      "name": "install-readiness-ingest-diagnostic.log",
+      "source": ".tools/native-renderer/install-readiness-ingest-diagnostic.log",
+      "originalBytes": 2749,
+      "originalSha256": "f13e571d457538a0238ccce235353ff420a3572dedf68a6d267632dc355b59f5",
+      "archiveBytes": 2419,
+      "archiveSha256": "96814d548dabe7d632b98a5ac134d34af4459d8b2f244f69d46d5bc17dec7759",
+      "replacements": {
+        "repositoryRoot": 3,
+        "tempRoot": 0,
+        "userProfileRoot": 0
+      },
+      "result": "FailedAsDiagnostic",
+      "notes": "Bounded opt-in startup phases reached migrations-start before readiness timed out; this narrows observation but does not prove the migration or storage root cause.",
+      "textNormalization": {
+        "crlf": 27,
+        "trailingHorizontalWhitespaceRuns": 0
+      }
+    },
+    {
+      "name": "install-readiness-packaged-sidecar.log",
+      "source": ".tools/native-renderer/install-readiness-packaged-sidecar.log",
+      "originalBytes": 321,
+      "originalSha256": "ece8f8a6b8ba691564a5021204894b2b87b6c5a716883aee3ddf659c078f17e6",
+      "archiveBytes": 320,
+      "archiveSha256": "68dff0c7dd7bb757e3f169af99b7d44c35a3b8b43d8b13ae8666baf9d817570c",
+      "replacements": {
+        "repositoryRoot": 0,
+        "tempRoot": 0,
+        "userProfileRoot": 0
+      },
+      "result": "Passed",
+      "notes": "Packaged local sidecar lifecycle and authorization only; productionOpened=false.",
+      "textNormalization": {
+        "crlf": 1,
+        "trailingHorizontalWhitespaceRuns": 0
+      }
+    },
+    {
+      "name": "install-readiness-isolated-build.log",
+      "source": ".tools/native-renderer/install-readiness-isolated-build.log",
+      "originalBytes": 266,
+      "originalSha256": "56a9044f725d1ab1e531df0e2c15550c58c16ae9055c9a0a000a48cd14f5607c",
+      "archiveBytes": 158,
+      "archiveSha256": "fe8a730a4476c475d7662e42a77f9d55a9696131b848ab2fb3f383d70925a558",
+      "replacements": {
+        "repositoryRoot": 1,
+        "tempRoot": 0,
+        "userProfileRoot": 0
+      },
+      "result": "Passed",
+      "notes": "Current-turn isolated native build session 67171 exited 0 with 0 warnings, 0 errors in 100.03 seconds. This is compile evidence only; no new native UI window was run.",
+      "textNormalization": {
+        "crlf": 7,
+        "trailingHorizontalWhitespaceRuns": 0
+      }
+    },
+    {
+      "name": "install-readiness-bundle-build.log",
+      "source": ".tools/native-renderer/install-readiness-bundle-build.log",
+      "originalBytes": 1596,
+      "originalSha256": "6f4c117803c6aedc0edeba4de8c2da62aa17acf703916c1c3d9cfae91a649369",
+      "archiveBytes": 945,
+      "archiveSha256": "3e51168483a6316bdafd853ff459a4a88f460ecb2cf4cf6f00dfc270bcf35d55",
+      "replacements": {
+        "repositoryRoot": 6,
+        "tempRoot": 0,
+        "userProfileRoot": 0
+      },
+      "result": "Passed",
+      "notes": "Bundle build exit 0 from clean source commit 5a7dabe; not installation acceptance.",
+      "textNormalization": {
+        "crlf": 15,
+        "trailingHorizontalWhitespaceRuns": 0
+      }
+    },
+    {
+      "name": "install-readiness-regression-review.json",
+      "source": "work/install-readiness-regression-review.json",
+      "originalBytes": 18586,
+      "originalSha256": "7cf82fc966ca27e461de3f359cd26e5952605d185777f361f8fc29f49c2877dd",
+      "archiveBytes": 18586,
+      "archiveSha256": "7cf82fc966ca27e461de3f359cd26e5952605d185777f361f8fc29f49c2877dd",
+      "replacements": {
+        "repositoryRoot": 0,
+        "tempRoot": 0,
+        "userProfileRoot": 0
+      },
+      "result": "Review",
+      "notes": "Structured 31-failure analysis with explicit evidence boundaries.",
+      "textNormalization": {
+        "crlf": 0,
+        "trailingHorizontalWhitespaceRuns": 0
+      }
+    },
+    {
+      "name": "install-readiness-installer-build.log",
+      "source": ".tools/native-renderer/install-readiness-installer-build.log",
+      "originalBytes": 156998,
+      "originalSha256": "510981d02bad323967afba70eb4923c10a6a129bb5c69dbc4698882c5d3f02d5",
+      "archiveBytes": 93067,
+      "archiveSha256": "007742e8520d1786565b84e8ed3c30caa0c5f0f996a43cb8f392e0819612bd6e",
+      "replacements": {
+        "repositoryRoot": 625,
+        "tempRoot": 0,
+        "userProfileRoot": 0,
+        "innoRoot": 3
+      },
+      "result": "Passed",
+      "textNormalization": {
+        "crlf": 745,
+        "trailingHorizontalWhitespaceRuns": 0
+      }
+    },
+    {
+      "name": "install-readiness-package-audit.json",
+      "source": ".tools/native-renderer/install-readiness-package-audit.json",
+      "originalBytes": 222,
+      "originalSha256": "ec8e9d4aefc83c52d48c2496de331738eeba6e2f3f2f35b236c7ef53af748e7f",
+      "archiveBytes": 213,
+      "archiveSha256": "5b31a2fa0d63e8cf8678641bd08b531f556b21b55e5804c5afc6a1201dd33a9a",
+      "replacements": {
+        "repositoryRoot": 0,
+        "tempRoot": 0,
+        "userProfileRoot": 0,
+        "innoRoot": 0
+      },
+      "result": "Passed",
+      "textNormalization": {
+        "crlf": 9,
+        "trailingHorizontalWhitespaceRuns": 0
+      }
+    },
+    {
+      "name": "release-output-manifest.json",
+      "source": "work/release-6.1.0-rc2-bb2d3b7b466a1a1f287d86d/installer/release-output-manifest.json",
+      "originalBytes": 442,
+      "originalSha256": "81d5120559d7f72548282d870bce29ee8d810a04af7d85632cdb442bc57a3367",
+      "archiveBytes": 430,
+      "archiveSha256": "b93601e3e2febef6be3e5e213f6bf6e4b347d7bcbf0fe5d76e52175cf8af5e79",
+      "replacements": {
+        "repositoryRoot": 0,
+        "tempRoot": 0,
+        "userProfileRoot": 0,
+        "innoRoot": 0
+      },
+      "result": "Candidate",
+      "textNormalization": {
+        "crlf": 12,
+        "trailingHorizontalWhitespaceRuns": 0
+      }
+    },
+    {
+      "name": "install-readiness-release-preflight.log",
+      "source": ".tools/native-renderer/install-readiness-release-preflight.log",
+      "originalBytes": 238,
+      "originalSha256": "76d3c7a978a1cf70da32159071dce1f8924f593c84f79e018a4d9ed4bc52f787",
+      "archiveBytes": 229,
+      "archiveSha256": "35a12a6e7e58f88b03f11cae1a5013ba06a4fc06e96e31f96e46f9a2da48e159",
+      "replacements": {
+        "repositoryRoot": 0,
+        "tempRoot": 0,
+        "userProfileRoot": 0,
+        "innoRoot": 0
+      },
+      "result": "Passed",
+      "textNormalization": {
+        "crlf": 8,
+        "trailingHorizontalWhitespaceRuns": 0
+      }
+    },
+    {
+      "name": "install-readiness-draft-audit.json",
+      "source": ".tools/native-renderer/install-readiness-draft-audit.json",
+      "originalBytes": 314,
+      "originalSha256": "c36e16fcc80d8801f0a85f54cfb95abcfbbad69180d24236452c4f8542475084",
+      "archiveBytes": 304,
+      "archiveSha256": "5bc56106bedbed994047abf54bbe42141c9e1d21dbe147fd65b6897d4ffa304e",
+      "replacements": {
+        "repositoryRoot": 0,
+        "tempRoot": 0,
+        "userProfileRoot": 0,
+        "innoRoot": 0
+      },
+      "result": "Draft",
+      "notes": "Historical inline draft listing only; authoritative final assets endpoint is install-readiness-release-remote-final.json.",
+      "textNormalization": {
+        "crlf": 10,
+        "trailingHorizontalWhitespaceRuns": 0
+      }
+    },
+    {
+      "name": "install-readiness-publish-failure.json",
+      "source": ".tools/native-renderer/install-readiness-publish-failure.json",
+      "originalBytes": 298,
+      "originalSha256": "990966892a4a47825ddaf7bfdfc199bf601a73572fb35368d8cf44a858ffc6bc",
+      "archiveBytes": 298,
+      "archiveSha256": "990966892a4a47825ddaf7bfdfc199bf601a73572fb35368d8cf44a858ffc6bc",
+      "replacements": {
+        "repositoryRoot": 0,
+        "tempRoot": 0,
+        "userProfileRoot": 0,
+        "innoRoot": 0
+      },
+      "result": "Failed",
+      "textNormalization": {
+        "crlf": 0,
+        "trailingHorizontalWhitespaceRuns": 0
+      }
+    },
+    {
+      "name": "install-readiness-release-resume.log",
+      "source": ".tools/native-renderer/install-readiness-release-resume.log",
+      "originalBytes": 382,
+      "originalSha256": "a876653de90f8086f6a9e140408ac2946bcf62e84570a4cfcc0bde9b08e8b83b",
+      "archiveBytes": 369,
+      "archiveSha256": "e4f7c7821eb1e3f619f0492c749099caff70c62192cb6b3606f5fd8f5f342c80",
+      "replacements": {
+        "repositoryRoot": 0,
+        "tempRoot": 0,
+        "userProfileRoot": 0,
+        "innoRoot": 0
+      },
+      "result": "Published",
+      "textNormalization": {
+        "crlf": 13,
+        "trailingHorizontalWhitespaceRuns": 0
+      }
+    },
+    {
+      "name": "install-readiness-owned-upload-cleanup.json",
+      "source": ".tools/native-renderer/install-readiness-owned-upload-cleanup.json",
+      "originalBytes": 291,
+      "originalSha256": "8ca463c05b13765dee1cee70136b1d95c251f1ecdc1d3a41e0c4a2cbe0c57e4e",
+      "archiveBytes": 280,
+      "archiveSha256": "0c150ffc256bd8823a6870d17df870679478f207ba77f8a2cf41d159e2e770bf",
+      "replacements": {
+        "repositoryRoot": 0,
+        "tempRoot": 0,
+        "userProfileRoot": 0,
+        "innoRoot": 0
+      },
+      "result": "Passed",
+      "textNormalization": {
+        "crlf": 11,
+        "trailingHorizontalWhitespaceRuns": 0
+      }
+    },
+    {
+      "name": "install-readiness-release-resume-preflight.json",
+      "source": ".tools/native-renderer/install-readiness-release-resume-preflight.json",
+      "originalBytes": 469,
+      "originalSha256": "3d351115c7542409ec0eecba174dee0f0565a76ac3ffe2e42c993fd6f68f6911",
+      "archiveBytes": 450,
+      "archiveSha256": "7c3fe4d75c026b813b76011f130151f453c65d6baec9c22fb717750c61699a99",
+      "replacements": {
+        "repositoryRoot": 0,
+        "tempRoot": 0,
+        "userProfileRoot": 0,
+        "innoRoot": 0
+      },
+      "result": "Passed",
+      "textNormalization": {
+        "crlf": 19,
+        "trailingHorizontalWhitespaceRuns": 0
+      }
+    },
+    {
+      "name": "install-readiness-release-remote-final.json",
+      "source": ".tools/native-renderer/install-readiness-release-remote-final.json",
+      "originalBytes": 937,
+      "originalSha256": "38c37c04c48890c3044012f5616bac5a4e33ee7a47b53b443495de934480f617",
+      "archiveBytes": 908,
+      "archiveSha256": "ff1348c11c3c8dd529fc4901fa3e2e015f8a5f9673b5ee9d3b7d6d480e529c6d",
+      "replacements": {
+        "repositoryRoot": 0,
+        "tempRoot": 0,
+        "userProfileRoot": 0,
+        "innoRoot": 0
+      },
+      "result": "Published",
+      "textNormalization": {
+        "crlf": 29,
+        "trailingHorizontalWhitespaceRuns": 0
+      }
+    },
+    {
+      "name": "install-readiness-release-tools-tests.log",
+      "source": ".tools/native-renderer/install-readiness-release-tools-tests.log",
+      "originalBytes": 303,
+      "originalSha256": "ecd280493cb34d75f1ed3b307c7ae6ceace19d57e0cef39671b9de0d71adcae2",
+      "archiveBytes": 300,
+      "archiveSha256": "63071095a20625a6109a4c054550a348343ca05e6c16e237b66c7e458627396c",
+      "replacements": {
+        "repositoryRoot": 0,
+        "tempRoot": 0,
+        "userProfileRoot": 0,
+        "innoRoot": 0
+      },
+      "result": "Passed",
+      "textNormalization": {
+        "crlf": 3,
+        "trailingHorizontalWhitespaceRuns": 0
+      }
+    }
+  ],
+  "updatedAtUtc": "2026-11-19T08:40:00.690Z",
+  "finalArchiveReview": {
+    "files": 19,
+    "patternMatches": {
+      "credentialValue": 0,
+      "bearer": 0,
+      "jwt": 0,
+      "privateKey": 0,
+      "localPath": 0
+    },
+    "sourceTypes": "Synthetic isolated test logs, build and prerelease metadata only; no production SQLite or login profiles copied."
+  }
+}

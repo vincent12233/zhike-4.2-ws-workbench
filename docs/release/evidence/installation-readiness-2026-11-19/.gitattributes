@@ -1,0 +1,2 @@
+# Evidence is normalized to LF before hashing; keep committed and checked-out bytes identical.
+* text eol=lf

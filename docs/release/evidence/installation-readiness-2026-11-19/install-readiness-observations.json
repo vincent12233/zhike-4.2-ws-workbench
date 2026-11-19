@@ -1,0 +1,11 @@
+{
+  "date": "2026-11-19",
+  "source": "Observed command results in the installation-readiness turn; not a benchmark threshold",
+  "environment": { "windowsBuild": "26300", "administrator": false, "sandboxExecutable": false },
+  "desktopTool": { "operation": "list_windows", "attempts": 3, "recovery": "retry and kernel reset", "result": "timeout", "newNativeWindowLaunched": false },
+  "simpleNodeSqliteRequire": { "nodeVersion": "v24.22.1", "elapsedMs": 243, "exitCode": 0 },
+  "freshTempSQLite": { "scope": "one table and five synthetic rows, default durable transactions, no application migrations", "totalMs": 27436, "insertMs": [5308, 5427, 5543, 1846, 2377], "cleaned": true },
+  "freshTempFileFlush": { "scope": "three 512-byte writes and fsync, no SQLite or PowerShell child", "samples": [{"writeMs":0,"flushMs":1699},{"writeMs":350,"flushMs":1017},{"writeMs":0,"flushMs":1052}], "cleaned": true },
+  "pointInTimeCounters": { "cpuPercent": 1, "freePhysicalMemoryKiB": 17545632, "totalPhysicalMemoryKiB": 33280964, "freeCDriveBytes": 219589808128, "physicalDiskQueue": 9, "diskMedia": "SSD", "diskReportedHealth": "Healthy", "diskReportedState": "OK" },
+  "interpretation": "Basic durable filesystem operations were slow during this run. This is evidence of environmental IO latency, not proof of a hardware defect or the sole cause of every failed test. No durability, ACL, timeout, security policy or system setting was weakened."
+}

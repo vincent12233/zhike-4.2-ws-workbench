@@ -1,0 +1,9 @@
+{
+  "sourceCommit": "5a7dabe7321f7682b2cb518aeb9d4a1c2c89ace1",
+  "selfContained": true,
+  "files": 622,
+  "mismatches": 0,
+  "diagnosticsIncluded": true,
+  "migrations": 22,
+  "installerSignature": "NotSigned"
+}

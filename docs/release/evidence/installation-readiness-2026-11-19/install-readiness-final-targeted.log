@@ -1,0 +1,42 @@
+[RUN] tests/desktop-startup-contract.test.cjs
+desktop startup contract: all MainWindow navigation icons resolve to WinUI Symbol values
+desktop startup contract: the native status tracks local navigation and application rendering replaces the initial data status
+
+[EXIT] 0
+[RUN] tests/governance-horizon-contract.test.cjs
+governance Horizon contract: dynamic page shells, responsive structure and shared table/modal/empty-state presentation
+
+[EXIT] 0
+[RUN] tests/desktop-packaging-contract.test.cjs
+desktop packaging contract: resources, version, traceability, icon and user-data retention are present
+
+[EXIT] 0
+[RUN] tests/desktop-tools-contract.test.cjs
+desktop productivity tools contract: native reminders, atomic backups, retention safety and obsolete-file cleanup passed
+
+[EXIT] 0
+[RUN] tests/legacy-install-retirement.test.cjs
+legacy install retirement: old Electron entry points are removed, old data stays untouched and 6.0 uses an isolated data root
+
+[EXIT] 0
+[RUN] tests/test-only-phase-diagnostics-contract.test.cjs
+test-only phase diagnostics contract: opt-in, bounded and free of path or credential payloads
+
+[EXIT] 0
+[RUN] tests/local-first-sidecar-contract.test.cjs
+local-first sidecar contract: Node runtime and SQLite service assets are eligible for the WinUI bundle
+
+[EXIT] 0
+[RUN] tests/isolated-app-fixture.test.cjs
+isolated app fixture: source/assets copied; user data, credentials and redundant runtime excluded
+
+[EXIT] 0
+[RUN] tests/current-docs-consistency.test.cjs
+current docs consistency: current candidate and known historical WinUI records have distinct links
+
+[EXIT] 0
+[RUN] tests/static-assets-contract.test.cjs
+static assets contract: 53 HTML assets and 2 actual CSS artwork references are local, served and present; legacy artwork retained
+
+[EXIT] 0
+Completed 10 targeted checks; failed=0
