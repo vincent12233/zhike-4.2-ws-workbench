@@ -140,7 +140,11 @@ def download_artifact(client, artifact, directory, installer_name, repository_ro
     for path in (raw, *raw.parents):
         require(not path.is_symlink(), "Artifact directory cannot traverse a link")
     root = raw.resolve()
-    require(root.is_relative_to(repository_root / "work") and root != repository_root / "work"
+    # Resolve both sides: Windows TEMP may use an 8.3 alias (RUNNER~1),
+    # while resolving the candidate expands it to the long directory name.
+    # Inspect the original path for links above, before canonicalizing it.
+    work_root = repository_root.resolve(strict=True) / "work"
+    require(root.is_relative_to(work_root) and root != work_root
             and not root.exists(), "Artifact directory must be a fresh child of repository work/")
     root.parent.mkdir(parents=True, exist_ok=True)
     expected = EVIDENCE | {installer_name}

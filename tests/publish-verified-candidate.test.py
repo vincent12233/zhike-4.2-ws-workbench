@@ -2,10 +2,12 @@
 import argparse
 import base64
 import copy
+from contextlib import chdir
 import hashlib
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -169,6 +171,52 @@ class CandidatePublisherTests(unittest.TestCase):
         self.assertEqual(result["preflight"], "passed")
         self.assertTrue(result["createTag"])
         self.assertFalse(result["remoteWrites"])
+        self.assertEqual(self.client.mutations, [])
+
+    def test_equivalent_relative_repository_path_uses_same_boundary(self):
+        canonical = self.root.resolve(strict=True)
+        with chdir(self.root.parent):
+            relative_root = Path(self.root.name)
+            self.assertTrue(relative_root.samefile(canonical))
+            downloaded = publisher.download_artifact(self.client, self.client.artifact,
+                Path("work/relative-root"), INSTALLER, relative_root)
+        self.assertEqual(downloaded, canonical / "work" / "relative-root")
+        self.assertTrue((downloaded / INSTALLER).is_file())
+        self.assertEqual(self.client.mutations, [])
+
+    @unittest.skipUnless(os.name == "nt", "Windows native 8.3 path equivalence")
+    def test_windows_short_repository_path_matches_long_candidate_path(self):
+        import ctypes
+        canonical = self.root.resolve(strict=True)
+        get_short_path = ctypes.WinDLL("kernel32", use_last_error=True).GetShortPathNameW
+        get_short_path.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint32]
+        get_short_path.restype = ctypes.c_uint32
+        size = get_short_path(str(canonical), None, 0)
+        self.assertGreater(size, 0, "GetShortPathNameW failed for the temporary repository")
+        buffer = ctypes.create_unicode_buffer(size)
+        self.assertGreater(get_short_path(str(canonical), buffer, size), 0)
+        alias = Path(buffer.value)
+        self.assertTrue(alias.samefile(canonical))
+        if alias == canonical:
+            self.skipTest("This Windows volume does not expose a distinct 8.3 alias")
+        downloaded = publisher.download_artifact(self.client, self.client.artifact,
+            canonical / "work" / "short-alias", INSTALLER, alias)
+        self.assertEqual(downloaded, canonical / "work" / "short-alias")
+        self.assertTrue((downloaded / INSTALLER).is_file())
+
+    def test_symlink_directory_is_rejected_before_resolution(self):
+        work = self.root / "work"
+        work.mkdir()
+        outside = self.root / "outside"
+        outside.mkdir()
+        link = work / "linked"
+        try:
+            link.symlink_to(outside, target_is_directory=True)
+        except OSError as error:
+            self.skipTest(f"Host does not permit directory symlinks: {error}")
+        with self.assertRaisesRegex(RuntimeError, "cannot traverse a link"):
+            self.invoke(artifact_directory=link / "candidate")
+        self.assertFalse((outside / "candidate").exists())
         self.assertEqual(self.client.mutations, [])
 
     def test_new_candidate_is_created_as_draft_then_verified_and_published(self):
