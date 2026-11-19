@@ -24,8 +24,16 @@ const postInstall = setup.match(/procedure CurStepChanged\([^\n]+\)[\s\S]*?\nend
 assert.match(postInstall ?? '', /if CurStep <> ssPostInstall then Exit;[\s\S]*RetirePreviousElectronClient/,
   'retire the legacy client only after the new application was installed');
 assert.match(postInstall, /WizardSilent\(\)/, 'a legacy retirement failure must not block silent installs with a dialog');
-assert.match(setup, /DirectoryAtOrBelow\(UninstallerDirectory, NormalizeLocalDirectory\(WizardDirValue\(\)\)\)[\s\S]*Result := False;[\s\S]*Exec\(Filename/,
+const retirement = setup.match(/function RetirePreviousElectronClient\([^)\n]*\)[\s\S]*?\nend;/)?.[0];
+assert.ok(retirement);
+const overlapGuard = retirement.match(/if \(UninstallerDirectory = ''\)[\s\S]*?end;/)?.[0];
+assert.ok(overlapGuard);
+assert.match(overlapGuard, /DirectoryAtOrBelow\(UninstallerDirectory, InstallDirectory\)/,
   'a stale legacy registration must not execute the new installation’s uninstaller');
+assert.match(overlapGuard, /DirectoryAtOrBelow\(InstallDirectory, UninstallerDirectory\)/,
+  'an older installation must not be removed when it contains the new installation');
+assert.match(overlapGuard, /Result := False;\s*Exit;/);
+assert.ok(retirement.indexOf('Exec(Filename') > retirement.indexOf(overlapGuard));
 for (const switchName of ['VERYSILENT', 'SUPPRESSMSGBOXES', 'NORESTART'])
   assert.match(setup, new RegExp(switchName));
 

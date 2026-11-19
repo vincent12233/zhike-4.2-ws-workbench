@@ -271,6 +271,7 @@ var
   Filename: String;
   Parameters: String;
   UninstallerDirectory: String;
+  InstallDirectory: String;
   ExitCode: Integer;
 begin
   Result := True;
@@ -284,9 +285,11 @@ begin
     Exit;
   end;
   UninstallerDirectory := NormalizeLocalDirectory(ExtractFileDir(Filename));
-  if (UninstallerDirectory = '') or
-     DirectoryAtOrBelow(UninstallerDirectory, NormalizeLocalDirectory(WizardDirValue())) then begin
-    Log('Previous Electron uninstall entry did not name a separate absolute application directory.');
+  InstallDirectory := NormalizeLocalDirectory(WizardDirValue());
+  if (UninstallerDirectory = '') or (InstallDirectory = '') or
+     DirectoryAtOrBelow(UninstallerDirectory, InstallDirectory) or
+     DirectoryAtOrBelow(InstallDirectory, UninstallerDirectory) then begin
+    Log('Previous Electron uninstall entry did not name a non-overlapping absolute application directory.');
     Result := False;
     Exit;
   end;
