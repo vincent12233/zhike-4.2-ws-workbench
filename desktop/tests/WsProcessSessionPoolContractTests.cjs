@@ -20,8 +20,8 @@ const between = (source, start, end) => {
   return source.slice(from, to);
 };
 
-// The process pool retains manually opened foreground account views. RD02
-// removes automatic hidden collection, not multi-account Core continuity.
+// The process pool retains explicitly opened foreground and independent
+// collector controls with account/generation ownership and bounded capacity.
 assert.match(pool, /WsWebViewSessionPool\(WsRuntimeCoordinator runtime, int capacity = 3\)/);
 assert.match(pool, /if \(capacity < 2\) throw new ArgumentOutOfRangeException/);
 assert.match(pool, /public int Capacity => _capacity/);
@@ -38,7 +38,7 @@ assert.match(acquire, /session pool is busy with protected foreground\/backgroun
   'capacity pressure must defer instead of destroying either protected session');
 assert.doesNotMatch(acquire, /retired = _sessions\[victimId\];\s*_sessions\.Remove\(victimId\)/,
   'the LRU victim must stay addressable while the asynchronous replacement is being built');
-assert.match(acquire, /var registration = await factory\(normalizedId, generation, cancellationToken\)[\s\S]*?ReferenceEquals\(current, retired\)/,
+assert.match(acquire, /registration = await factory\(normalizedId, generation, cancellationToken\)[\s\S]*?ReferenceEquals\(current, retired\)/,
   'the replacement must be published only after the factory succeeds and the victim identity is rechecked');
 
 const lru = between(pool, 'internal static string? SelectLruVictim', 'private static void ReleaseSession');
@@ -75,12 +75,12 @@ assert.match(current, /current\.Generation == generation/);
 assert.match(current, /view is null \|\| ReferenceEquals\(current\.View, view\)/);
 assert.match(host, /App\.WsSessions\.IsCurrent\(accountId, generation, view\)/,
   'navigation completion must be generation-fenced');
-assert.match(host, /App\.WsSessions\.IsCurrent\(sessionAccountId, sessionGeneration\)/,
+assert.match(host, /App\.WsSessions\.IsCurrent\(sessionAccountId, sessionGeneration(?:, sourceView)?\)/,
   'message ingestion must be generation-fenced');
 
 // The runtime service, rather than a route, owns the 10-second scheduler. It
 // gives foreground chat a non-driving heartbeat and flushes existing durable
-// capture state; RD02 forbids automatic background leases/factory calls.
+// capture state; independent collectors must already have an initialized login.
 const bind = between(runtime, 'public void BindHost', 'public async Task<WsWebViewSessionAcquireResult> ShowAccountAsync');
 assert.match(bind, /dispatcher\.CreateTimer\(\)/);
 assert.match(bind, /_timer\.Interval = TimeSpan\.FromSeconds\(10\)/);
@@ -92,9 +92,9 @@ assert.match(host, /App\.WsService\.BindHost\(DispatcherQueue, CreatePooledWsSes
 const tick = between(runtime, 'public async Task TickAsync', 'public async Task ShutdownAsync');
 assert.match(tick, /RunHeartbeatAsync\(foreground, false/,
   'foreground WhatsApp must remain usable while still receiving a lightweight heartbeat');
-assert.doesNotMatch(tick, /LeaseNextBackgroundAccount\(\)/, 'RD02 cannot lease an authenticated background collector');
+assert.doesNotMatch(tick, /LeaseNextBackgroundAccount\(\)/, 'independent collection does not acquire a foreground account through the old lease path');
 assert.doesNotMatch(tick, /GetOrCreateAsync\(backgroundId, factory, cancellationToken\)/, 'background ticks cannot create account views without manual selection');
-assert.doesNotMatch(tick, /RunHeartbeatAsync\([^\n]*true/, 'no periodic heartbeat may drive collection');
+assert.match(tick, /session\.IsCollectorReady[\s\S]*session\.CollectorState is not \("running" or "awaiting-login" or "login-visible"\)[\s\S]*RunHeartbeatAsync\(session, true/, 'only initialized running/login collector sessions may receive a driving heartbeat');
 assert.match(tick, /_flush\(cancellationToken\)/);
 
 const route = between(host, 'public async Task NavigateRouteAsync', 'public async Task<bool> TryReloadAsync');
@@ -111,14 +111,16 @@ assert.match(showAccount, /_coordinator\.SetAccountEnabled\(accountId, true\)/,
 const closeAccount = between(runtime, 'public async Task<bool> CloseAccountAsync', 'public async Task TickAsync');
 assert.match(closeAccount, /_coordinator\.SetAccountEnabled\(accountId, false\)[\s\S]*_pool\.RemoveAsync/,
   'Close WS must disable the account before releasing its session so the scheduler cannot recreate it');
-const heartbeat = between(host, 'private async Task HeartbeatPooledWsSessionAsync', 'private void SyncPooledWsPresentation');
-assert.match(heartbeat, /if \(driveCollection\) return;/);
-assert.doesNotMatch(heartbeat, /__zhikeWsDiscoverAll|__zhikeWsCollectAllRead|CollectorView|EnsureWsCollector/, 'foreground heartbeat cannot fall back to collection');
+const heartbeat = between(host, 'private async Task HeartbeatPooledWsSessionAsync', 'private JsonElement CollectionCapabilityFor');
+assert.match(heartbeat, /if \(driveCollection\)[\s\S]*var collector = session\.CollectorView[\s\S]*publishStatus: false/, 'collector probing is separate from foreground connection status');
+const foregroundHeartbeat = heartbeat.slice(heartbeat.indexOf('        var view = session.View;'));
+assert.doesNotMatch(foregroundHeartbeat, /__zhikeWsBackgroundTick|BuildWsCollectorScript|CollectorView/, 'foreground heartbeat cannot fall back to collection');
 const presentation = between(host, 'private void SyncPooledWsPresentation', 'private void AttachLegacyHandlers');
 assert.match(presentation, /var sessions = App\.WsService\.Sessions\(\)/);
 assert.match(presentation, /var layoutAnchor = active \?\? sessions\.FirstOrDefault\(\)/,
   'a surviving manually opened account must retain layout/Core identity after another foreground account closes');
-assert.match(presentation, /_wsView = layoutAnchor\.View[\s\S]*_wsViewAccountId = layoutAnchor\.AccountId/);
+assert.match(presentation, /_wsViewAccountId = layoutAnchor\.AccountId/);
+assert.match(presentation, /_wsCollectorVisibleAccountId[\s\S]*CollectorView/, 'only explicit collector login presentation may select the independent view');
 
 // Graceful desktop close and the bounded emergency path must both release all
 // WebViews and detach native event handlers without a capture-script fallback.
@@ -134,39 +136,45 @@ assert.match(host, /ForceDetachWsOverlay\(\)[\s\S]*App\.WsService\.Abort\(\)/);
 const factory = between(host, 'private async Task<WsWebViewSessionRegistration> CreatePooledWsSessionAsync', 'private static void OnWsNewWindowRequested');
 assert.match(factory, /_wsProfiles\.GetOrCreateProfileAsync\(accountId\)/,
   'each account must use its isolated WebView2 profile');
-assert.doesNotMatch(factory, /PrepareCollectorProfileAsync|GetOrCreateCollectorProfileAsync|BuildWsCollectorScript|AddScriptToExecuteOnDocumentCreatedAsync|WsCollectorHost/,
-  'RD02 foreground factory cannot copy/bootstrap or inject a hidden/foreground collector');
-assert.equal((factory.match(/new WebView2\b/g) || []).length, 1, 'each explicit account factory creates exactly one foreground WebView');
+assert.doesNotMatch(factory, /PrepareCollectorProfileAsync|GetOrCreateCollectorProfileAsync|BuildWsCollectorScript|AddScriptToExecuteOnDocumentCreatedAsync/,
+  'account creation must leave the independent collector uninitialized until explicit login');
+assert.equal((factory.match(/new WebView2\b/g) || []).length, 2, 'each account owns distinct foreground and uninitialized collector controls');
 assert.match(host, /BuildWsVisibleCaptureScript\(accountId\)/, 'manual import retains its one-shot read-only capture');
-assert.doesNotMatch(runtime, /CollectorView\.Source\s*=/, 'runtime cannot navigate a hidden account page');
-assert.match(host, /fromBackgroundCollector = collectorRole == "background";[\s\S]{0,150}if \(fromBackgroundCollector\) return;/,
-  'RD02 rejects background packets instead of deriving collection authority from a foreground login');
+assert.doesNotMatch(runtime, /CollectorView\.Source\s*=/, 'timer runtime cannot navigate an unopened collector');
 const collectorProfile = between(profiles, 'public Task<CoreWebView2Environment> GetOrCreateCollectorProfileAsync', 'public Task PrepareCollectorProfileAsync');
 const prepareProfile = between(profiles, 'public Task PrepareCollectorProfileAsync', 'private async Task<CoreWebView2Environment> GetOrCreateEnvironmentAsync');
-assert.match(collectorProfile, /Task\.FromException<CoreWebView2Environment>\(WsCollectionCapability\.Denied\(\)\)/);
+assert.match(collectorProfile, /GetOrCreateEnvironmentAsync\(accountId, collector: true\)/);
 assert.match(prepareProfile, /Task\.FromException\(WsCollectionCapability\.Denied\(\)\)/);
-for (const deniedBody of [collectorProfile, prepareProfile]) {
-  assert.doesNotMatch(deniedBody, /Directory\.|File\.|_environments|GetOrCreateEnvironmentAsync|Task\.Run|if\s*\(/,
-    'compatibility collector entries deny before IO/environment/cache work, with no flag bypass');
-}
+assert.doesNotMatch(prepareProfile, /Directory\.|File\.|_environments|GetOrCreateEnvironmentAsync|Task\.Run|if\s*\(/,
+  'retired profile preparation denies before filesystem/environment/cache work');
 assert.doesNotMatch(profiles, /CopyProfileDirectory|File\.Copy|Directory\.Move|stagingPath|backupPath/,
-  'authenticated copy/replacement code is removed, rather than protected by a filename exclusion list');
-const foregroundProfile = between(profiles, 'private async Task<CoreWebView2Environment> GetOrCreateEnvironmentAsync', 'public async Task<bool> ClearProfileAsync');
-assert.match(foregroundProfile, /var profileId = safeId;/, 'foreground cache uses the original account identity');
-assert.match(foregroundProfile, /CreateEnvironmentAsync\(id\)/, 'normal foreground environment creation remains');
+  'independent login must not copy or replace an authenticated profile');
+assert.match(profiles, /\.independent-collectors-v2[\s\S]*collector-v2/,
+  'collector directory namespace must not collide with an account named with the collector suffix');
+assert.match(profiles, /collector:\{safeId\}/, 'role-separated cache must not inherit a foreground environment');
 assert.match(profiles, /public async Task<bool> ClearProfileAsync/, 'explicit selected-session clearing remains available');
 assert.match(factory, /core\.NewWindowRequested \+= NewWindowRequested/);
 assert.match(factory, /released\.CoreWebView2\.NewWindowRequested -= NewWindowRequested/,
-  'release must detach popup handling from every retired session');
-assert.doesNotMatch(factory, /window\.__zhikeStopCapture/, 'foreground release does not inject collector commands');
-assert.match(factory, /(?:released\.Close\(\)|target\.Close\(\))/);
-
-assert.doesNotMatch(host, /EnsureWsCollectorStartedAsync|WaitForWsCollectorReadyAsync|_wsCollectorBootstraps|WsCollectorHost\.Children\.Add/,
-  'RD02 has no hidden startup, readiness retry or registration path');
+  'release must detach popup handling from retired foreground views');
+assert.match(factory, /_wsCollectorCleanup\.Remove\(collector, out var cleanup\).*cleanup\(\)/,
+  'release must detach the independently initialized collector events');
+assert.match(factory, /collector\.Close\(\)/);
+assert.match(factory, /released\.Close\(\)/);
+const initializeCollector = between(host, 'private async Task EnsureWsCollectorInitializedAsync', 'private async Task StopWsCollectorAsync');
+assert.match(initializeCollector, /#if STAGE51_ISOLATED_UI[\s\S]*throw new InvalidOperationException[\s\S]*#else/,
+  'isolated UI builds cannot authenticate a collector');
+assert.match(initializeCollector, /GetOrCreateCollectorProfileAsync\(session\.AccountId\)/);
+assert.match(initializeCollector, /App\.WsSessions\.IsCurrent\(session\.AccountId, session\.Generation, view\)/);
+assert.doesNotMatch(initializeCollector, /PrepareCollectorProfileAsync/);
 const capture = between(host, 'private async Task<BridgeResponse> ExecuteWsCaptureAsync', 'private static JsonElement ParseWebViewJsonResult');
-assert.ok(capture.indexOf('WsCollectionBlocked(') < capture.indexOf('TryGetSession('), 'automatic collection is denied before session/Core access');
-assert.doesNotMatch(capture, /CollectorView|WaitForWsCollector|__zhikeWsDiscoverAll|__zhikeWsCollectAllRead/,
-  'manual import cannot activate a hidden collector or foreground automatic fallback');
+assert.match(capture, /ExecuteCollectorCommandAsync/, 'automatic discovery and history use the collector-only command gateway');
+assert.match(capture, /BuildWsVisibleCaptureScript\(accountId\)/, 'manual visible import stays on its original surface');
+const collectorCommand = between(host, 'private async Task<BridgeResponse> ExecuteCollectorCommandAsync', 'private void SyncPooledWsPresentation');
+assert.match(collectorCommand, /session\.CollectorState != "running"/);
+assert.match(collectorCommand, /ExecuteCollectorScriptAsync\(session, script, cancellationToken\)/);
+assert.match(host, /session\.CollectorView[\s\S]*ExecuteScriptAsync\(script\)/, 'script dispatch helper must target the independent collector');
+assert.doesNotMatch(collectorCommand, /session\.View\.CoreWebView2\.ExecuteScriptAsync/,
+  'missing collector must never fall back to foreground DOM');
 
 // Popup policy is deny-by-default: mark every request handled before any early
 // return, and navigate only a valid HTTPS web.whatsapp.com URI in the existing
@@ -185,4 +193,4 @@ assert.match(popupPolicy, /uri\.Host, "web\.whatsapp\.com"/);
 assert.doesNotMatch(popupPolicy, /about:blank|UriSchemeHttp\b/,
   'popup policy must not inherit about:blank or plain HTTP navigation allowances');
 
-console.log('WS process pool contract: manual multi-account LRU/Core/generation/shutdown/popup safety retained; RD02 copy/hidden/automatic leases forbidden');
+console.log('WS process pool contract: bounded independent sessions, explicit login, no profile copying, foreground isolation and shutdown/popup safety pass');

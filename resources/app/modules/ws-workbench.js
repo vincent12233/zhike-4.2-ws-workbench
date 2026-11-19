@@ -110,25 +110,51 @@
   const nowIso = () => new Date().toISOString();
   const text = value => String(value == null ? '' : value).trim();
   const COLLECTION_CAPABILITY_BLOCKED = 'COLLECTION_CAPABILITY_BLOCKED';
-  const BLOCKED_COLLECTION_CAPABILITY = Object.freeze({ state: 'blocked', code: COLLECTION_CAPABILITY_BLOCKED, reason: '后台采集依赖复制认证状态，已按安全边界停用；前台聊天和手动导入可用。', backgroundCollection: false, automaticHistory: false, groupMonitoring: false, foregroundFallback: false, manualVisibleImport: true });
-  const BLOCKED_COLLECTOR_ACTIONS = new Set(['discover-conversations', 'collect-all-read', 'configure-group-monitor', 'start-group-monitor', 'configure-ws-groups', 'configure-vip-groups']);
-  function collectionCapability(accountId = state.activeAccountId) {
-    const native = state.accounts.find(account => String(account.id) === String(accountId))?.collectionCapability;
-    // This release has no independently authorized background provider. An
-    // omitted/unknown capability must never unlock the old profile collector.
+  const BLOCKED_COLLECTION_CAPABILITY = Object.freeze({ state: 'blocked', code: COLLECTION_CAPABILITY_BLOCKED, reason: '当前桌面未提供独立采集会话；前台聊天和手动导入可用。', backgroundCollection: false, automaticHistory: false, groupMonitoring: false, automaticAi: false, foregroundFallback: false, manualVisibleImport: true, collectorState: 'not-started' });
+  const COLLECTOR_STATES = new Set(['not-started', 'awaiting-login', 'login-visible', 'running', 'paused', 'error']);
+  const COLLECTOR_ACTION_FEATURES = Object.freeze({ 'discover-conversations': 'backgroundCollection', 'collect-all-read': 'automaticHistory', 'configure-group-monitor': 'groupMonitoring', 'start-group-monitor': 'groupMonitoring', 'configure-ws-groups': 'backgroundCollection', 'configure-vip-groups': 'backgroundCollection' });
+  const COLLECTOR_SESSION_ACTIONS = new Set(['open-collector', 'hide-collector', 'pause-collector', 'resume-collector']);
+  function normalizeCollectionCapability(native) {
+    if (native?.state === 'available' && native.code === 'COLLECTION_INDEPENDENT_SESSION'
+        && native.provider === 'native-independent-session' && native.protocolVersion === 1
+        && native.backgroundCollection === true && native.automaticHistory === true && native.groupMonitoring === true
+        && native.automaticAi === false && native.foregroundFallback === false && native.manualVisibleImport === true
+        && COLLECTOR_STATES.has(native.collectorState)) {
+      return { state: 'available', code: native.code, provider: native.provider, protocolVersion: 1,
+        backgroundCollection: true, automaticHistory: true, groupMonitoring: true, automaticAi: false,
+        foregroundFallback: false, manualVisibleImport: true, collectorState: native.collectorState,
+        reason: text(native.reason).slice(0, 500) || '请使用当前所选账号的手机扫码登录独立采集会话；前台聊天与后台采集分别运行，不复制登录资料。' };
+    }
     return { ...BLOCKED_COLLECTION_CAPABILITY, reason: native?.state === 'blocked' && native?.code === COLLECTION_CAPABILITY_BLOCKED ? text(native.reason).slice(0, 500) || BLOCKED_COLLECTION_CAPABILITY.reason : BLOCKED_COLLECTION_CAPABILITY.reason };
   }
+  function collectionCapability(accountId = state.activeAccountId) {
+    const native = state.accounts.find(account => String(account.id) === String(accountId))?.collectionCapability;
+    return normalizeCollectionCapability(native);
+  }
+  function collectionReady(feature = 'backgroundCollection', accountId = state.activeAccountId) {
+    const capability = collectionCapability(accountId);
+    return capability.state === 'available' && capability[feature] === true && capability.collectorState === 'running';
+  }
   function rememberCollectionCapability(payload, accountId = payload?.accountId) {
-    if (!payload?.collectionCapability || !accountId) return;
-    const received = payload.collectionCapability, recognized = received.state === 'blocked' && received.code === COLLECTION_CAPABILITY_BLOCKED;
-    const capability = { ...BLOCKED_COLLECTION_CAPABILITY, reason: recognized ? text(received.reason).slice(0, 500) || BLOCKED_COLLECTION_CAPABILITY.reason : BLOCKED_COLLECTION_CAPABILITY.reason };
+    if (!payload?.collectionCapability || !accountId || String(payload.accountId || '') !== String(accountId)) return false;
+    const capability = normalizeCollectionCapability(payload.collectionCapability);
     const previous = state.accounts.find(account => String(account.id) === String(accountId))?.collectionCapability;
-    if (previous?.state === capability.state && previous.code === capability.code && previous.reason === capability.reason) return;
+    if (JSON.stringify(previous) === JSON.stringify(capability)) return false;
     state.accounts = state.accounts.map(account => String(account.id) === String(accountId) ? { ...account, collectionCapability: capability } : account);
+    if (String(accountId) === String(state.activeAccountId)) {
+      state.readHistoryAutoStarted = false;
+      state.vipGroupConfigSignatures.delete(String(accountId));
+      groupMonitorNativeSignature = '';
+      restartBackgroundPolling();
+      updateStatusDom();
+    }
+    return true;
   }
   function collectionBlockedResult(accountId = state.activeAccountId) {
     const capability = collectionCapability(accountId);
-    return { blocked: true, supported: false, started: false, retryable: false, code: capability.code, error: `${capability.code}：${capability.reason}`, collectionCapability: capability };
+    const code = capability.state === 'available' ? 'COLLECTOR_NOT_READY' : COLLECTION_CAPABILITY_BLOCKED;
+    const reason = capability.state === 'available' ? collectorStatusLabel(capability) + '；请打开独立采集会话完成登录或继续采集。' : capability.reason;
+    return { blocked: true, supported: false, started: false, retryable: false, code, error: `${code}：${reason}`, collectionCapability: capability };
   }
   function rejectCollectionAction(context = captureContext('')) {
     const result = collectionBlockedResult(context.accountId);
@@ -136,11 +162,50 @@
     state.error = result.error;toast(result.error, 'x');render();return result;
   }
   function collectionCapabilityNotice(accountId = state.activeAccountId) {
+    const capability = collectionCapability(accountId);
+    if (capability.state === 'available') return `<p class="ws-coverage-warning" role="status" data-collection-capability="available">${esc(collectorStatusLabel(capability))}。独立采集会话需单独扫码，请使用当前所选账号的手机扫码；前台聊天可同时使用。自动 AI 处理关闭，分析由你手动发起。</p>`;
     const result = collectionBlockedResult(accountId);
     return `<p class="ws-coverage-warning" role="status" data-collection-capability="blocked">${esc(result.error)}</p>`;
   }
-  function collectionControlAttributes() {
-    return `disabled aria-disabled="true" title="${esc(collectionBlockedResult().error)}"`;
+  function collectionControlAttributes(feature = 'backgroundCollection') {
+    return collectionReady(feature) ? '' : `disabled aria-disabled="true" title="${esc(collectionBlockedResult().error)}"`;
+  }
+  function collectorStatusLabel(capability = collectionCapability()) {
+    if (capability.state !== 'available') return '后台采集不可用';
+    return ({ 'not-started': '采集会话未启动', 'awaiting-login': '采集会话等待扫码', 'login-visible': '正在显示采集登录页', running: '后台采集中', paused: '后台采集已暂停', error: '采集会话异常' })[capability.collectorState];
+  }
+  function renderCollectorControls() {
+    const capability = collectionCapability();
+    if (capability.state !== 'available') return '';
+    const busy = state.busy?.collector ? 'disabled aria-disabled="true"' : '';
+    const running = capability.collectorState === 'running';
+    return `<div class="ws-runtime-actions" data-collector-controls><button type="button" class="btn small" data-ws-action="open-collector" ${busy}>${running ? '打开采集会话' : '采集会话扫码登录'}</button><button type="button" class="btn small" data-ws-action="hide-collector" ${busy}>返回前台聊天</button>${running ? `<button type="button" class="btn small" data-ws-action="pause-collector" ${busy}>暂停后台采集</button>` : `<button type="button" class="btn small primary" data-ws-action="resume-collector" ${busy}>${capability.collectorState === 'paused' ? '继续后台采集' : '登录后开始采集'}</button>`}</div>`;
+  }
+  async function collectorAction(action) {
+    if (!COLLECTOR_SESSION_ACTIONS.has(action) || state.busy.collector) return;
+    const context = captureContext('');
+    if (collectionCapability(context.accountId).state !== 'available') return rejectCollectionAction(context);
+    const operation = state.collectorActionSequence = Number(state.collectorActionSequence || 0) + 1;
+    state.busy.collector = true;
+    try {
+      if (action === 'open-collector' || action === 'hide-collector') {
+        state.wsWorkspaceView = 'chat';
+        state.active = true;
+        render({ skipNativeResize: true });
+      }
+      if (action === 'open-collector' || action === 'resume-collector') startBackgroundRuntime();
+      const result = await wsBridge(action, context);
+      assertContext(context);
+      if (result?.ok === false || result?.error) throw new Error(result.error || '采集会话操作失败。');
+      state.error = '';
+      if (action === 'hide-collector') state.wsWorkspaceView = 'chat';
+      if (collectionReady('backgroundCollection', context.accountId)) void refreshCollectionSummary({ background: true });
+      return result;
+    } catch (error) {
+      if (contextCurrent(context)) { state.error = error.message || '采集会话操作失败。'; toast(state.error, 'x'); }
+    } finally {
+      if (operation === state.collectorActionSequence) { state.busy.collector = false; render({ skipNativeResize: true }); }
+    }
   }
   function createGroupMonitorState(accountId = 'default') {
     return { accountId: String(accountId || 'default'), profile: null, health: null, events: [], loading: false, busy: false, error: '', statusFilter: 'all', draftJid: '', draftName: '', lastLoadedAt: '', catalog: [] };
@@ -342,7 +407,7 @@
     // background (the native collector owns full-history capture there). The
     // visible WebView has no persistent capture script and is never polled
     // for message DOM while the operator is chatting.
-    if (!state.backgroundActive || !collectionCapability().backgroundCollection) return;
+    if (!state.backgroundActive || !collectionReady('backgroundCollection')) return;
     // Keep one background scheduler for both the collection pipeline and the
     // fixed group seat. Two independent intervals race on account switches
     // and make the runtime contract report duplicate hidden refresh timers.
@@ -436,6 +501,8 @@
     state.busy.capture = false;
     state.busy.connection = false;
     state.busy.readHistory = false;
+    state.collectorActionSequence = Number(state.collectorActionSequence || 0) + 1;
+    state.busy.collector = false;
     state.translationBusy.clear();
     clearInterval(collectionRefreshTimer);
     collectionRefreshTimer = undefined;
@@ -494,7 +561,7 @@
   function updateAccountStatus(payload) {
     const id = text(payload?.accountId);
     if (!id) return;
-    rememberCollectionCapability(payload, id);
+    const capabilityChanged = rememberCollectionCapability(payload, id);
     // Native heartbeats are emitted by both the visible read-only probe and
     // the isolated collector. They carry telemetry only; rebuilding the
     // entire WS shell for every tick detaches the browser anchor long enough
@@ -502,7 +569,7 @@
     const isBackgroundTick = payload?.eventName === 'background-tick' || payload?.background === true;
     const current = state.accounts.find(item => String(item.id) === id);
     const nextStatus = payload.status || current?.status;
-    const nextDetail = payload.detail || current?.statusDetail;
+    const nextDetail = payload.collectorOnly === true ? current?.statusDetail : payload.detail || current?.statusDetail;
     const isTelemetryTick = payload?.eventName === 'background-tick' && !text(payload?.detail);
     const statusChanged = Boolean(current && current.status !== nextStatus);
     const detailChanged = Boolean(current && current.statusDetail !== nextDetail);
@@ -511,7 +578,7 @@
     if (id === String(state.activeAccountId) && payload.status
         && !(isTelemetryTick && payload.status === state.wsStatus)) setStatus(payload.status, payload.detail || '');
     const host = getHost();
-    if (!isBackgroundTick && statusChanged && id === String(state.activeAccountId) && state.active && host?.state?.view === 'ws-workbench') render();
+    if ((capabilityChanged || (!isBackgroundTick && statusChanged)) && id === String(state.activeAccountId) && state.active && host?.state?.view === 'ws-workbench') render({ skipNativeResize: true });
   }
   // Background account probes must update only the account rail. Re-rendering
   // the entire shell here would detach the native WebView anchor and recreate
@@ -702,6 +769,7 @@
 
   function resetAccountPresentation(accountId) {
     ++state.accountPresentationGeneration;
+    state.collectorActionSequence = Number(state.collectorActionSequence || 0) + 1;
     // Clear only the account-scoped UI projection. Persisted tasks, leases,
     // providers and native chat instances are owned by their existing services.
     const id = String(accountId || 'default');
@@ -715,7 +783,7 @@
     state.visibleConversationFingerprint = '';
     state.aiBackgroundError = '';
     clearTimeout(settingsSaveTimer); settingsSaveTimer = undefined; ++settingsSaveSequence;
-    state.busy.import = false; state.busy.customer = false; state.busy.followup = false; state.busy.connection = false; state.busy.reply = false; state.busy.capture = false; state.busy.readHistory = false; state.aiBusy = false; state.translationBusy.clear();
+    state.busy.import = false; state.busy.customer = false; state.busy.followup = false; state.busy.connection = false; state.busy.reply = false; state.busy.capture = false; state.busy.readHistory = false; state.busy.collector = false; state.aiBusy = false; state.translationBusy.clear();
     state.activeAccountId = id;
     state.lastLoadedAt = '';
     state.collectionRun = null; state.followupAlerts = []; state.readHistorySkipped = [];
@@ -1341,17 +1409,20 @@
     return values.some(value => configured.has(normalize(value)));
   }
   async function wsBridge(action, context = null, extra = null) {
-    if (BLOCKED_COLLECTOR_ACTIONS.has(action)) {
+    if ((COLLECTOR_ACTION_FEATURES[action] && !collectionReady(COLLECTOR_ACTION_FEATURES[action], context?.accountId || state.activeAccountId))
+        || (COLLECTOR_SESSION_ACTIONS.has(action) && collectionCapability(context?.accountId || state.activeAccountId).state !== 'available')) {
       const result = collectionBlockedResult(context?.accountId || state.activeAccountId);
       const error = new Error(result.error);Object.assign(error, result, { data: { collectionCapability: result.collectionCapability } });throw error;
     }
     if (!window.zhikeDesktop?.ws) throw new Error('当前页面没有桌面 WS 视图能力，请从知客安装版打开。');
     const result = await window.zhikeDesktop.ws({ ...(extra && typeof extra === 'object' ? extra : {}), action, accountId: context?.accountId || state.activeAccountId || 'default', bounds: boundsForBrowserView() });
     const requestedId = String(context?.accountId || state.activeAccountId || 'default');
-    if (!result?.accountId || String(result.accountId) === requestedId) rememberCollectionCapability(result, requestedId);return result;
+    if ((COLLECTOR_SESSION_ACTIONS.has(action) || COLLECTOR_ACTION_FEATURES[action]) && String(result?.accountId || '') !== requestedId) throw new Error('采集会话账号不匹配，已丢弃返回结果。');
+    if ((!context || contextCurrent({ ...context, conversationId: '' })) && String(result?.accountId || '') === requestedId) rememberCollectionCapability(result, requestedId);
+    return result;
   }
   async function syncVipGroupAllowlist(context = captureContext(''), force = false) {
-    if (!collectionCapability(context.accountId).backgroundCollection) return collectionBlockedResult(context.accountId);
+    if (!collectionReady('backgroundCollection', context.accountId)) return collectionBlockedResult(context.accountId);
     const accountId = String(context?.accountId || state.activeAccountId || 'default');
     const vipGroups = configuredVipGroups(accountId);
     const signature = JSON.stringify(vipGroups);
@@ -1384,7 +1455,7 @@
     return type === 'joined' ? '进群' : type === 'removed' ? '被移除' : type === 'left' ? '退群' : '未知事件';
   }
   function groupMonitorStatusLabel(profile) {
-    if (!collectionCapability().groupMonitoring) return '群组监测不可用';
+    if (!collectionReady('groupMonitoring')) return '群组监测不可用';
     if (!profile) return '未配置';
     if (!profile.enabled) return '已暂停';
     if (profile.status === 'running') return '监控中';
@@ -1448,13 +1519,13 @@
     return (Array.isArray(customers) ? customers : []).filter(item => item && item.deleted !== true).slice(0, 300);
   }
   function renderGroupMonitorBody() {
-    const capabilityBlocked = !collectionCapability().groupMonitoring;
+    const capabilityBlocked = !collectionReady('groupMonitoring');
     const monitor = state.groupMonitor || {};
     const profile = monitor.profile;
     const health = monitor.health || {};
     const eventCounts = health.eventCounts || {};
-    if (!profile) return `${collectionCapabilityNotice()}<div class="ws-group-monitor-empty"><p>固定席位尚未创建。当前后台群组监测不可用；已保存的群组、客户关系和历史事件保留。监测群组与 VIP 客户管理完全独立。</p><button class="btn small primary" data-ws-action="group-monitor-create" ${collectionControlAttributes()}>${monitor.busy ? '创建中…' : '创建固定席位'}</button></div>`;
-    const targetRows = (Array.isArray(profile.targets) ? profile.targets : []).map(target => { const channel = text(target.data?.channelName || target.data?.sourceName || ''); const groupFanType = text(target.data?.groupFanType || target.data?.groupFanSource || ''); return `<div class="ws-group-monitor-target"><div><strong>${esc(target.groupName || target.groupJid)}</strong><small>${esc(target.groupJid)}${channel ? ` · 渠道：${esc(channel)}` : ''}${groupFanType ? ` · 群粉类型：${esc(groupFanType)}` : ''} · ${target.enabled ? '历史配置已启用（当前不可采集）' : '未启用'}${target.lastSeenAt ? ` · ${esc(displayTime(target.lastSeenAt))}` : ''}</small></div><button class="btn small ${target.enabled ? '' : 'primary'}" data-ws-action="group-monitor-target-toggle" data-target-id="${esc(target.id)}" data-enabled="${target.enabled ? 'true' : 'false'}" ${!target.enabled ? collectionControlAttributes() : ''}>${target.enabled ? '停止' : '启用'}</button></div>`; }).join('');
+    if (!profile) return `${collectionCapabilityNotice()}<div class="ws-group-monitor-empty"><p>固定席位尚未创建。独立采集会话就绪后可配置监测；已保存的群组、客户关系和历史事件保留。监测群组与 VIP 客户管理完全独立。</p><button class="btn small primary" data-ws-action="group-monitor-create" ${collectionControlAttributes('groupMonitoring')}>${monitor.busy ? '创建中…' : '创建固定席位'}</button></div>`;
+    const targetRows = (Array.isArray(profile.targets) ? profile.targets : []).map(target => { const channel = text(target.data?.channelName || target.data?.sourceName || ''); const groupFanType = text(target.data?.groupFanType || target.data?.groupFanSource || ''); return `<div class="ws-group-monitor-target"><div><strong>${esc(target.groupName || target.groupJid)}</strong><small>${esc(target.groupJid)}${channel ? ` · 渠道：${esc(channel)}` : ''}${groupFanType ? ` · 群粉类型：${esc(groupFanType)}` : ''} · ${target.enabled ? (capabilityBlocked ? '已配置，等待采集会话' : '已启用') : '未启用'}${target.lastSeenAt ? ` · ${esc(displayTime(target.lastSeenAt))}` : ''}</small></div><button class="btn small ${target.enabled ? '' : 'primary'}" data-ws-action="group-monitor-target-toggle" data-target-id="${esc(target.id)}" data-enabled="${target.enabled ? 'true' : 'false'}" ${!target.enabled ? collectionControlAttributes('groupMonitoring') : ''}>${target.enabled ? '停止' : '启用'}</button></div>`; }).join('');
     const customers = groupMonitorCustomers();
     const eventRows = (Array.isArray(monitor.events) ? monitor.events : []).map(event => {
       const groupName = text(event.data?.groupName || event.groupJid);
@@ -1473,10 +1544,10 @@
     const pickerOptions = discoveredGroups.map(group => `<option value="${esc(group.groupJid)}">${esc(group.groupName || group.groupJid)}</option>`).join('');
     const groupPicker = `<div class="ws-group-monitor-picker"><select id="wsGroupMonitorPicker" aria-label="从当前 WS 群组选择"><option value="">${discoveredGroups.length ? '从当前 WS 群组选择' : '登录 WS 后显示可选群组'}</option>${pickerOptions}</select><button class="btn small" data-ws-action="group-monitor-add-selected" ${monitor.busy || capabilityBlocked || !discoveredGroups.length ? 'disabled' : ''}>添加所选群组</button></div>`;
     const addTargetForm = `<div class="ws-group-monitor-add">${groupPicker}<div class="ws-group-monitor-manual"><input id="wsGroupMonitorJid" value="${esc(draft.draftJid || '')}" placeholder="高级入口：群组 JID（可选）" maxlength="180"><input id="wsGroupMonitorName" value="${esc(draft.draftName || '')}" placeholder="群组名称（可选）" maxlength="240"><button class="btn small primary" data-ws-action="group-monitor-add-target" ${monitor.busy || capabilityBlocked ? 'disabled' : ''}>手动添加</button></div></div>`;
-    return `${collectionCapabilityNotice()}<div class="ws-group-monitor-toolbar"><div><span class="ws-group-monitor-status status-blocked"><i></i>${esc(groupMonitorStatusLabel(profile))}</span><small>${health.targetCount || (profile.targets || []).filter(item => item.enabled).length} 个群组 · 最近心跳 ${esc(displayTime(profile.lastHeartbeatAt) || '暂无')}</small></div><div class="ws-group-monitor-actions"><button class="btn small" data-ws-action="group-monitor-scan" ${monitor.busy || capabilityBlocked ? 'disabled' : ''}>${monitor.busy ? '扫描中…' : '扫描已配置群组'}</button><button class="btn small ${profile.enabled ? '' : 'primary'}" data-ws-action="group-monitor-toggle" data-enabled="${profile.enabled ? 'true' : 'false'}" ${!profile.enabled ? collectionControlAttributes() : ''}>${profile.enabled ? '暂停监控' : '启动监控'}</button></div></div><div class="ws-group-monitor-stats"><span>已写入 <b>${Number(eventCounts.applied || 0)}</b></span><span>自动登记 <b>${autoRegisteredCount}</b></span><span>待关联 <b>${Number(eventCounts.pending || 0)}</b></span><span>待确认 <b>${Number(eventCounts.review || 0)}</b></span><span>已忽略 <b>${Number(eventCounts.ignored || 0)}</b></span></div><div class="ws-group-monitor-targets"><div class="ws-group-monitor-section-title"><strong>监控群组</strong><small>只监测明确添加的 WS 群组</small></div>${addTargetForm}${targetRows || '<p class="ws-muted">尚未添加监测群组；登录 WS 后从群组列表选择即可，无需查找 JID。</p>'}</div><div class="ws-group-monitor-events"><div class="ws-group-monitor-section-title"><strong>最近进退群事件</strong><select id="wsGroupMonitorStatusFilter"><option value="all" ${filter === 'all' ? 'selected' : ''}>全部</option><option value="pending" ${filter === 'pending' ? 'selected' : ''}>待关联</option><option value="review" ${filter === 'review' ? 'selected' : ''}>待确认</option><option value="applied" ${filter === 'applied' ? 'selected' : ''}>已写入</option></select></div>${eventRows || '<p class="ws-muted">暂无本机已保存进退群事件；当前后台群组监测不可用。</p>'}</div>${monitor.error ? `<p class="ws-error-line">${esc(monitor.error)}</p>` : ''}<p class="ws-muted">监测群组绑定只决定 WS 监测范围，与 VIP 客户管理完全独立。确认进入群组的成员会自动登记客户档案并写入“已进群”状态；审核中、待批准和无法确认的事件不会建档，保留记录供人工处理。</p>`;
+    return `${collectionCapabilityNotice()}<div class="ws-group-monitor-toolbar"><div><span class="ws-group-monitor-status ${capabilityBlocked ? 'status-blocked' : profile.enabled ? 'status-running' : 'status-paused'}"><i></i>${esc(groupMonitorStatusLabel(profile))}</span><small>${health.targetCount || (profile.targets || []).filter(item => item.enabled).length} 个群组 · 最近心跳 ${esc(displayTime(profile.lastHeartbeatAt) || '暂无')}</small></div><div class="ws-group-monitor-actions"><button class="btn small" data-ws-action="group-monitor-scan" ${monitor.busy || capabilityBlocked ? 'disabled' : ''}>${monitor.busy ? '扫描中…' : '扫描已配置群组'}</button><button class="btn small ${profile.enabled ? '' : 'primary'}" data-ws-action="group-monitor-toggle" data-enabled="${profile.enabled ? 'true' : 'false'}" ${!profile.enabled ? collectionControlAttributes('groupMonitoring') : ''}>${profile.enabled ? '暂停监控' : '启动监控'}</button></div></div><div class="ws-group-monitor-stats"><span>已写入 <b>${Number(eventCounts.applied || 0)}</b></span><span>自动登记 <b>${autoRegisteredCount}</b></span><span>待关联 <b>${Number(eventCounts.pending || 0)}</b></span><span>待确认 <b>${Number(eventCounts.review || 0)}</b></span><span>已忽略 <b>${Number(eventCounts.ignored || 0)}</b></span></div><div class="ws-group-monitor-targets"><div class="ws-group-monitor-section-title"><strong>监控群组</strong><small>只监测明确添加的 WS 群组</small></div>${addTargetForm}${targetRows || '<p class="ws-muted">尚未添加监测群组；登录 WS 后从群组列表选择即可，无需查找 JID。</p>'}</div><div class="ws-group-monitor-events"><div class="ws-group-monitor-section-title"><strong>最近进退群事件</strong><select id="wsGroupMonitorStatusFilter"><option value="all" ${filter === 'all' ? 'selected' : ''}>全部</option><option value="pending" ${filter === 'pending' ? 'selected' : ''}>待关联</option><option value="review" ${filter === 'review' ? 'selected' : ''}>待确认</option><option value="applied" ${filter === 'applied' ? 'selected' : ''}>已写入</option></select></div>${eventRows || '<p class="ws-muted">暂无本机已保存进退群事件。</p>'}</div>${monitor.error ? `<p class="ws-error-line">${esc(monitor.error)}</p>` : ''}<p class="ws-muted">监测群组绑定只决定 WS 监测范围，与 VIP 客户管理完全独立。确认进入群组的成员会自动登记客户档案并写入“已进群”状态；审核中、待批准和无法确认的事件不会建档，保留记录供人工处理。</p>`;
   }
   function renderGroupMonitorCard() {
-    return `<section id="wsGroupMonitorCard" class="ws-card ws-group-monitor-card" data-assist-section="diagnostics"><div class="ws-card-heading"><div><strong>固定 WS 群组监测端口</strong><span>本机历史群组与监测配置 · 后台采集不可用 · 前台聊天保留</span></div><button class="btn small" data-ws-action="group-monitor-refresh" ${state.groupMonitor?.loading ? 'disabled' : ''}>${state.groupMonitor?.loading ? '刷新中…' : '刷新'}</button></div><div data-group-monitor-body>${renderGroupMonitorBody()}</div></section>`;
+    return `<section id="wsGroupMonitorCard" class="ws-card ws-group-monitor-card" data-assist-section="diagnostics"><div class="ws-card-heading"><div><strong>固定 WS 群组监测端口</strong><span>本机群组与监测配置 · 独立采集会话 · 前台聊天保留</span></div><button class="btn small" data-ws-action="group-monitor-refresh" ${state.groupMonitor?.loading ? 'disabled' : ''}>${state.groupMonitor?.loading ? '刷新中…' : '刷新'}</button></div><div data-group-monitor-body>${renderGroupMonitorBody()}</div></section>`;
   }
   function renderBroadcastCard() {
     const b = state.broadcast || {};
@@ -1525,7 +1596,7 @@
   async function syncGroupMonitorNative(profile, context = groupMonitorContext()) {
     if (!window.zhikeDesktop?.ws) return { skipped: true };
     assertContext(context);
-    if (!collectionCapability(context.accountId).groupMonitoring) {
+    if (!collectionReady('groupMonitoring', context.accountId)) {
       if (!profile || !profile.enabled) return wsBridge(profile ? 'pause-group-monitor' : 'stop-group-monitor', context);
       return collectionBlockedResult(context.accountId);
     }
@@ -1628,7 +1699,7 @@
     return monitor;
   }
   async function createGroupMonitor() {
-    if (!collectionCapability().groupMonitoring) return rejectCollectionAction();
+    if (!collectionReady('groupMonitoring')) return rejectCollectionAction();
     const monitor = state.groupMonitor;
     if (monitor.busy) return;
     monitor.busy = true; updateGroupMonitorDom();
@@ -1640,7 +1711,7 @@
     finally { monitor.busy = false; updateGroupMonitorDom(); render(); }
   }
   async function scanGroupMonitorTargets() {
-    if (!collectionCapability().groupMonitoring) return rejectCollectionAction();
+    if (!collectionReady('groupMonitoring')) return rejectCollectionAction();
     const monitor = state.groupMonitor;
     if (monitor.busy) return;
     monitor.busy = true; updateGroupMonitorDom();
@@ -1658,7 +1729,7 @@
     finally { monitor.busy = false; updateGroupMonitorDom(); render(); }
   }
   async function addGroupMonitorTarget(selectedGroup = null) {
-    if (!collectionCapability().groupMonitoring) return rejectCollectionAction();
+    if (!collectionReady('groupMonitoring')) return rejectCollectionAction();
     const monitor = state.groupMonitor;
     if (monitor.busy) return;
     const rawJid = text(selectedGroup?.groupJid || monitor.draftJid);
@@ -1707,7 +1778,7 @@
     return addGroupMonitorTarget(selectedGroup);
   }
   async function toggleGroupMonitor(enabled) {
-    if (enabled && !collectionCapability().groupMonitoring) return rejectCollectionAction();
+    if (enabled && !collectionReady('groupMonitoring')) return rejectCollectionAction();
     const monitor = state.groupMonitor;
     if (!monitor.profile || monitor.busy) return;
     monitor.busy = true; updateGroupMonitorDom();
@@ -1722,7 +1793,7 @@
     const monitor = state.groupMonitor;
     const targetId = text(element?.dataset?.targetId);
     const enabled = element?.dataset?.enabled !== 'true';
-    if (enabled && !collectionCapability().groupMonitoring) return rejectCollectionAction();
+    if (enabled && !collectionReady('groupMonitoring')) return rejectCollectionAction();
     if (!monitor.profile || !targetId || monitor.busy) return;
     monitor.busy = true; updateGroupMonitorDom();
     try {
@@ -1746,10 +1817,11 @@
     finally { monitor.busy = false; updateGroupMonitorDom(); render(); }
   }
   function wsBackgroundStatus() {
-    if (!collectionCapability().backgroundCollection) return { label: '后台采集不可用', tone: 'blocked', code: COLLECTION_CAPABILITY_BLOCKED };
+    const capability = collectionCapability();
+    if (capability.state !== 'available') return { label: '后台采集不可用', tone: 'blocked', code: COLLECTION_CAPABILITY_BLOCKED };
     return {
-      label: state.backgroundActive ? (state.wsStatus === '已连接' ? '后台持续运行' : '后台等待连接') : '后台未启动',
-      tone: state.backgroundActive && state.wsStatus === '已连接' ? 'running' : state.backgroundActive ? 'waiting' : 'idle',
+      label: collectorStatusLabel(capability),
+      tone: capability.collectorState === 'running' ? 'running' : capability.collectorState === 'error' ? 'blocked' : capability.collectorState === 'paused' ? 'idle' : 'waiting',
     };
   }
   function updateStatusDom() {
@@ -1758,6 +1830,10 @@
       const current = wsBackgroundStatus();
       if (backgroundStatus.textContent !== current.label) backgroundStatus.textContent = current.label;
       if (backgroundStatus.dataset.tone !== current.tone) backgroundStatus.dataset.tone = current.tone;
+      const capability = collectionCapability();
+      backgroundStatus.dataset.collectionCapability = capability.state;
+      backgroundStatus.title = capability.state === 'available' ? capability.reason : collectionBlockedResult().error;
+      backgroundStatus.setAttribute?.('aria-label', capability.state === 'available' ? current.label : collectionBlockedResult().error);
     }
     const badge = $('#wsStatusBadge');
     if (badge) {
@@ -2018,7 +2094,7 @@
     }
   }
   async function refreshCollectionSummary(options = {}) {
-    if (!collectionCapability().backgroundCollection) return collectionBlockedResult();
+    if (!collectionReady('backgroundCollection')) return collectionBlockedResult();
     if (!state.backgroundActive) return;
     if (state.loading || state.collectionRefreshing) { state.collectionRefreshQueued = true; return; }
     const backgroundRefresh = options?.background === true;
@@ -2046,7 +2122,7 @@
       state.followupAlerts = alerts.alerts || [];
       if (aiQueue?.stats) state.aiQueueStats = aiQueue.stats;
       let listSyncResult = { synced: 0, analyzed: 0 };
-      if (state.wsStatus === '已连接' && (!state.collectionRun || !['paused', 'stopped', 'completed'].includes(state.collectionRun.status))) {
+      if (collectionReady() && (!state.collectionRun || !['paused', 'stopped', 'completed'].includes(state.collectionRun.status))) {
          const visible = await wsBridge('discover-conversations', context).catch(error => {
           if (contextCurrent(context)) {
             const message = String(error?.message || '页面暂不可读');
@@ -2110,7 +2186,7 @@
     }
   }
   function requestAccountPipelineRefresh(accountId = '') {
-    if (!collectionCapability(accountId || state.activeAccountId).backgroundCollection) return Promise.resolve(collectionBlockedResult(accountId || state.activeAccountId));
+    if (!collectionReady('backgroundCollection', accountId || state.activeAccountId)) return Promise.resolve(collectionBlockedResult(accountId || state.activeAccountId));
     const targetId = text(accountId) || String(state.activeAccountId || 'default');
     if (!state.backgroundActive) return Promise.resolve({ skipped: true });
     if (targetId === String(state.activeAccountId || 'default')) return refreshCollectionSummary({ background: true });
@@ -2187,9 +2263,10 @@
     const analysis = [state.analysisMeta?.id, state.analysisMeta?.updatedAt || state.analysisMeta?.updated_at || state.analysisMeta?.createdAt, state.analysisRefreshPending.has(String(state.currentConversationId || '')) ? 1 : 0].join('\u0001');
     return `${list}|${run}|${alerts}|${queue}|${messages}|${analysis}|${state.error || ''}|${state.aiBackgroundError || ''}`;
   }
-  function scheduleAiQueuePump(context = captureContext('')) {
+  function scheduleAiQueuePump(context = captureContext(''), options = {}) {
     const pumpContext = { ...context, conversationId: '' };
-    if (!state.backgroundActive || !state.aiEnabled || !contextCurrent(pumpContext)) return aiPumpPromise || Promise.resolve({ skipped: true });
+    const explicit = options.explicit === true;
+    if ((!explicit && !collectionCapability(pumpContext.accountId).automaticAi) || !state.backgroundActive || !state.aiEnabled || !contextCurrent(pumpContext)) return aiPumpPromise || Promise.resolve({ skipped: true });
     aiPumpQueued = true;
     if (aiPumpPromise || aiPumpScheduled || state.aiBusy) return aiPumpPromise || Promise.resolve({ queued: true });
     aiPumpScheduled = true;
@@ -2205,9 +2282,9 @@
           aiPumpQueued = false;
           throwIfAiCancelled(controller.signal);
           if (!contextCurrent(pumpContext) || !state.backgroundActive || !state.aiEnabled || state.aiBusy) throw aiCancellationError();
-          const result = await resumeQueuedAiJobs(pumpContext, { signal: controller.signal });
+          const result = await resumeQueuedAiJobs(pumpContext, { signal: controller.signal, explicit });
           succeeded += Number(result?.succeeded || 0);
-        } while (aiPumpQueued && !controller.signal.aborted && contextCurrent(pumpContext) && state.backgroundActive && state.aiEnabled && !state.aiBusy);
+        } while (!explicit && aiPumpQueued && !controller.signal.aborted && contextCurrent(pumpContext) && state.backgroundActive && state.aiEnabled && !state.aiBusy);
         if (contextCurrent(pumpContext)) state.aiBackgroundError = '';
         updateAiBackgroundErrorDom();
         return { succeeded };
@@ -2225,7 +2302,7 @@
       }).finally(() => {
         if (aiPumpController === controller) aiPumpController = null;
         aiPumpPromise = null;
-        const restart = aiPumpQueued && state.backgroundActive && state.aiEnabled && !state.aiBusy && contextCurrent(pumpContext);
+        const restart = !explicit && aiPumpQueued && state.backgroundActive && state.aiEnabled && !state.aiBusy && contextCurrent(pumpContext);
         if (restart) scheduleAiQueuePump(pumpContext);
         else if (succeeded > 0 && state.backgroundActive && contextCurrent(pumpContext)) {
           // Refresh the shared customer/task state once per completed pump
@@ -2241,7 +2318,7 @@
   }
   async function resumeQueuedAiJobs(context = captureContext(''), options = {}) {
     const signal = options.signal;
-    if (!state.aiEnabled || state.loading || state.aiBusy) return { processed: 0, succeeded: 0 };
+    if ((options.explicit !== true && !collectionCapability(context.accountId).automaticAi) || !state.aiEnabled || state.loading || state.aiBusy) return { processed: 0, succeeded: 0 };
     let processed = 0, succeeded = 0;
     throwIfAiCancelled(signal);
     // Only the existing consumer performs recovery. Read-only queue views must
@@ -2872,21 +2949,20 @@
     } finally { state.listSyncBusy = false; }
   }
   async function createCollectionRun() {
-    if (!collectionCapability().automaticHistory) return rejectCollectionAction();
-    const context = captureContext();
+    if (!collectionReady('automaticHistory')) return rejectCollectionAction();
+    const context = captureContext('');
     try {
       const result = await api('/api/ws/collection-runs', { method: 'POST', body: JSON.stringify({}) }, context);
       assertContext(context);
       state.collectionRun = result.run;
       render();
-      if (state.wsStatus === '已连接') await collectAllReadConversations();
+      if (collectionReady('automaticHistory')) await collectAllReadConversations();
       else toast('已创建采集任务，请登录并保持 WS 连接后开始自动采集');
     } catch (error) { if (contextCurrent(context)) { state.error = error.message; render(); } }
   }
   async function collectAllReadConversations() {
-    if (!collectionCapability().automaticHistory) return rejectCollectionAction();
+    if (!collectionReady('automaticHistory')) return rejectCollectionAction();
     if (state.busy.readHistory) return;
-    if (state.wsStatus !== '已连接') { toast('请先登录并保持 WS 已连接。', 'x'); return; }
     const context = captureContext();
     state.busy.readHistory = true;
     state.readHistoryAutoStarted = true;
@@ -2916,8 +2992,8 @@
     }
   }
   function maybeStartAutomaticReadHistoryCollection(context = captureContext()) {
-    if (!collectionCapability(context.accountId).automaticHistory) return collectionBlockedResult(context.accountId);
-    if (!state.backgroundActive || state.wsStatus !== '已连接' || state.readHistoryAutoStarted || state.busy.readHistory) return;
+    if (!collectionReady('automaticHistory', context.accountId)) return collectionBlockedResult(context.accountId);
+    if (!state.backgroundActive || !collectionReady('automaticHistory', context.accountId) || state.readHistoryAutoStarted || state.busy.readHistory) return;
     if (state.collectionRun && ['paused', 'stopped', 'completed'].includes(state.collectionRun.status)) return;
     // List discovery and preview sync always happen first. Once the page is
     // connected, start one durable read-history pass for this account. The
@@ -2930,11 +3006,24 @@
     });
   }
   async function updateCollectionRun(status) {
-    if (['running', 'discovering'].includes(status) && !collectionCapability().automaticHistory) return rejectCollectionAction();
     if (!state.collectionRun?.id) return;
-    const context = captureContext();
+    const context = captureContext('');
     const runId = state.collectionRun.id;
     try {
+      const capability = collectionCapability(context.accountId);
+      if (status === 'paused' || status === 'stopped') {
+        if (capability.state === 'available') {
+          const paused = await wsBridge('pause-collector', context);
+          assertContext(context);
+          if (paused?.ok === false || paused?.error || collectionCapability(context.accountId).collectorState !== 'paused') throw new Error(paused?.error || '后台采集暂停尚未确认，任务状态未修改。');
+        }
+      } else if (status === 'running' || status === 'discovering') {
+        if (capability.state === 'available' && capability.collectorState === 'paused') {
+          await wsBridge('resume-collector', context);
+          assertContext(context);
+        }
+        if (!collectionReady('automaticHistory', context.accountId)) return rejectCollectionAction(context);
+      }
       const result = await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: runId, status }) }, context);
       assertContext(context);
       state.collectionRun = result.run;
@@ -2943,8 +3032,8 @@
     } catch (error) { if (contextCurrent(context)) { state.error = error.message; render(); } }
   }
   async function resumeCollectionFromCheckpoint(context = captureContext()) {
-    if (!collectionCapability(context.accountId).automaticHistory) return rejectCollectionAction(context);
-    if (!state.collectionRun?.id || !['running','discovering'].includes(state.collectionRun.status) || state.wsStatus !== '已连接') return;
+    if (!collectionReady('automaticHistory', context.accountId)) return rejectCollectionAction(context);
+    if (!state.collectionRun?.id || !['running','discovering'].includes(state.collectionRun.status) || !collectionReady('automaticHistory', context.accountId)) return;
     assertContext(context);
     const visible = await wsBridge('discover-conversations', context).catch(() => null);
     assertContext(context);
@@ -2966,7 +3055,7 @@
     await collectAllReadConversations();
   }
   async function discoverConversations() {
-    if (!collectionCapability().backgroundCollection) return rejectCollectionAction();
+    if (!collectionReady('backgroundCollection')) return rejectCollectionAction();
     const context = captureContext();
     try {
       const result = await wsBridge('discover-conversations'); assertContext(context); if (!result?.supported) throw new Error(result?.error || '当前页面结构未识别'); const visibleRows = (result.conversations || []).map(normalizeListItem); mergeDiscoveredGroupRows(discoveryGroupRows(result)); state.discoveredConversations = visibleRows.filter(isAutomaticCollectibleConversation);
@@ -3046,7 +3135,7 @@
   function renderWsCockpit() {
     const run = state.collectionRun;
     const status = state.wsStatus === '已连接' ? '已连接' : state.wsStatus || '等待登录';
-    const background = '后台采集不可用';
+    const background = collectorStatusLabel();
     const activeId = String(state.activeAccountId || '');
     const accountPills = state.accounts.length
       ? state.accounts.map(account => {
@@ -3055,10 +3144,10 @@
         return `<button class="ws-account-pill ${active ? 'active' : ''}" data-ws-action="switch-account" data-account-id="${esc(account.id)}" aria-pressed="${active ? 'true' : 'false'}"><i></i><span>${esc(accountDisplayName(account))}</span><small>${esc(accountStatus)}</small></button>`;
       }).join('')
       : '<span class="ws-cockpit-empty">暂无账号</span>';
-    const collectionAction = `<button class="ws-cockpit-action" data-ws-action="create-collection-run" ${collectionControlAttributes()}>后台采集不可用</button>`;
+    const collectionAction = renderCollectorControls();
     return `<div class="ws-command-rail" aria-label="WS 账号与采集控制舱"><div class="ws-cockpit-bar">
       <div class="ws-cockpit-accounts" aria-label="WS 账号列表"><span class="ws-cockpit-label">账号</span>${accountPills}<button class="ws-account-pill add" data-ws-action="create-account" ${state.accountBusy ? 'disabled' : ''}>＋ 添加账号</button></div>
-      <div class="ws-cockpit-controls" aria-label="WS 连接与采集控制"><button class="ws-cockpit-action primary" data-ws-action="open" ${state.busy.connection ? 'disabled' : ''}>${state.wsStatus === '已连接' ? '已打开 WS' : '扫码登录'}</button><span class="ws-cockpit-status ${state.wsStatus === '已连接' ? 'is-online' : ''}" title="WS 连接状态" aria-label="WS 连接状态"><i></i>${esc(status)}</span><span class="ws-cockpit-status" title="${esc(collectionBlockedResult().error)}" aria-label="后台采集能力不可用"><i></i>${esc(background)}</span>${collectionAction}<button class="ws-cockpit-action" data-ws-action="reconnect">重新连接</button></div>
+      <div class="ws-cockpit-controls" aria-label="WS 连接与采集控制"><button class="ws-cockpit-action primary" data-ws-action="open" ${state.busy.connection ? 'disabled' : ''}>${state.wsStatus === '已连接' ? '已打开 WS' : '扫码登录'}</button><span class="ws-cockpit-status ${state.wsStatus === '已连接' ? 'is-online' : ''}" title="WS 连接状态" aria-label="WS 连接状态"><i></i>${esc(status)}</span><span class="ws-cockpit-status" title="${esc(collectionCapability().state === 'available' ? collectionCapability().reason : collectionBlockedResult().error)}" aria-label="${esc(background)}"><i></i>${esc(background)}</span>${collectionAction}<button class="ws-cockpit-action" data-ws-action="reconnect">重新连接</button></div>
     </div></div>`;
   }
   function assistDrawerTabMeta(tab) {
@@ -3085,7 +3174,7 @@
     const followupCount = Array.isArray(state.followupAlerts) ? state.followupAlerts.length : 0;
     const stages = [
       ['列表同步', discovered, run ? '会话列表已同步' : '等待登录'],
-      ['完整历史', fullHistoryCount, fullHistoryCount ? '双方消息已落库' : '后台采集不可用'],
+      ['完整历史', fullHistoryCount, fullHistoryCount ? '双方消息已落库' : collectorStatusLabel()],
       ['AI 分析', analyzed, state.aiEnabled ? '本机历史分析' : 'AI 已关闭'],
       ['档案补齐', profileReady, profileReady ? '只补现有客户空字段' : '等待分析结果'],
       ['跟进任务', followupCount, followupCount ? '已进入任务中心' : '暂无待跟进'],
@@ -3110,7 +3199,7 @@
     // mounted while only the secondary navigation rail changes width.
     const collapsed = Boolean(state.wsWorkspaceNavCollapsed);
     const active = WS_WORKSPACE_VIEW_IDS.has(state.wsWorkspaceView) ? state.wsWorkspaceView : 'overview';
-    return `<aside class="ws-workspace-nav ${collapsed ? 'is-collapsed' : ''}" aria-label="WS 工作台功能导航"><div class="ws-workspace-nav-heading"><span class="ws-workspace-nav-mark">WS</span><div><strong>WS 工作台</strong><small>知客 · 运营工作区</small></div><button type="button" class="ws-workspace-nav-toggle" data-ws-action="toggle-workspace-nav" aria-expanded="${collapsed ? 'false' : 'true'}" title="${collapsed ? '展开 WS 工作区导航' : '收起 WS 工作区导航'}">${collapsed ? '›' : '‹'}</button></div><nav class="ws-workspace-nav-list">${WS_WORKSPACE_VIEW_META.map(item => `<button type="button" class="ws-workspace-nav-item ${item.id === active ? 'active' : ''}" data-ws-workspace-view="${item.id}" aria-current="${item.id === active ? 'page' : 'false'}" title="${esc(item.label)} · ${esc(item.hint)}"><span class="ws-workspace-nav-icon" aria-hidden="true"><svg class="zk-icon" viewBox="0 0 24 24" focusable="false"><use href="#i-${esc(item.icon)}"/></svg></span><span class="ws-workspace-nav-copy"><strong>${esc(item.label)}</strong><small>${esc(item.hint)}</small></span></button>`).join('')}</nav><div class="ws-workspace-nav-foot"><span class="ws-workspace-nav-status" title="${esc(collectionBlockedResult().error)}"><i></i><span>后台采集不可用</span></span><button type="button" class="ws-workspace-return" data-ws-action="return-zhike" title="返回知客"><span aria-hidden="true">↩</span><span>返回知客</span></button></div></aside>`;
+    return `<aside class="ws-workspace-nav ${collapsed ? 'is-collapsed' : ''}" aria-label="WS 工作台功能导航"><div class="ws-workspace-nav-heading"><span class="ws-workspace-nav-mark">WS</span><div><strong>WS 工作台</strong><small>知客 · 运营工作区</small></div><button type="button" class="ws-workspace-nav-toggle" data-ws-action="toggle-workspace-nav" aria-expanded="${collapsed ? 'false' : 'true'}" title="${collapsed ? '展开 WS 工作区导航' : '收起 WS 工作区导航'}">${collapsed ? '›' : '‹'}</button></div><nav class="ws-workspace-nav-list">${WS_WORKSPACE_VIEW_META.map(item => `<button type="button" class="ws-workspace-nav-item ${item.id === active ? 'active' : ''}" data-ws-workspace-view="${item.id}" aria-current="${item.id === active ? 'page' : 'false'}" title="${esc(item.label)} · ${esc(item.hint)}"><span class="ws-workspace-nav-icon" aria-hidden="true"><svg class="zk-icon" viewBox="0 0 24 24" focusable="false"><use href="#i-${esc(item.icon)}"/></svg></span><span class="ws-workspace-nav-copy"><strong>${esc(item.label)}</strong><small>${esc(item.hint)}</small></span></button>`).join('')}</nav><div class="ws-workspace-nav-foot"><span class="ws-workspace-nav-status" title="${esc(collectionCapability().state === 'available' ? collectionCapability().reason : collectionBlockedResult().error)}"><i></i><span>${esc(collectorStatusLabel())}</span></span><button type="button" class="ws-workspace-return" data-ws-action="return-zhike" title="返回知客"><span aria-hidden="true">↩</span><span>返回知客</span></button></div></aside>`;
   }
   function groupDirectoryState() {
     const page = wsWorkspacePageState('groups');
@@ -3379,7 +3468,7 @@
     const stats = state.aiQueueStats || {};
     let body = '';
     if (activeView === 'overview') body = `<section class="ws-workspace-card ws-workspace-welcome zk-surface zk-surface--accent"><span class="ws-workspace-eyebrow">WORKSPACE / OVERVIEW</span><h3>开始今天的客户运营</h3><p>在独立工作区管理账号、查看真实采集记录，并随时回到前台聊天。</p><button type="button" class="btn primary" data-ws-workspace-view="chat">进入前台聊天 <span aria-hidden="true">↗</span></button></section><section class="ws-workspace-metrics" aria-label="已加载工作区概况"><div><span>已加载账号</span><strong>${state.accounts.length || '—'}</strong><small>本机隔离会话</small></div><div><span>已加载会话</span><strong>${state.lastLoadedAt ? (state.conversations || []).length : '—'}</strong><small>${state.lastLoadedAt ? '当前账号本地记录' : '等待读取本地记录'}</small></div><div><span>已加载群组</span><strong>${state.groupMonitor?.lastLoadedAt ? groupDirectoryRows().length : '—'}</strong><small>${state.groupMonitor?.lastLoadedAt ? '当前账号同步目录' : '等待同步群组目录'}</small></div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>工作区入口</strong><span>每项功能拥有独立页面，页面切换保留账号会话。</span></div><span class="ws-status-badge">${esc(state.wsStatus)}</span></div><div class="ws-workspace-entry-grid">${WS_WORKSPACE_VIEW_META.filter(item => !['overview', 'chat'].includes(item.id)).map(item => `<button type="button" class="ws-workspace-entry zk-surface zk-surface--interactive" data-ws-workspace-view="${item.id}"><span class="ws-workspace-nav-icon" aria-hidden="true"><svg class="zk-icon" viewBox="0 0 24 24" focusable="false"><use href="#i-${esc(item.icon)}"/></svg></span><span><strong>${esc(item.label)}</strong><small>${esc(item.hint)}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>运行边界</strong><span>仅展示现有业务服务与账号状态。</span></div><span class="ws-status-badge" data-status="disabled">FROZEN</span></div><p class="ws-muted">生产 Worker、AI 自动处理和群组自动建档保持当前关闭配置。工作区导航不会启动新的消费者或付费 AI 请求。</p></section>`;
-    else if (activeView === 'accounts') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>账号与连接</strong><span>账号作用域独立，切换保留各账号隔离会话。</span></div><button class="btn small" data-ws-action="create-account">＋ 添加账号</button></div>${renderAccountForm()}<div class="ws-workspace-metrics"><div><span>已加载 WS 账号</span><strong>${state.accounts.length}</strong><small>本机隔离会话</small></div><div><span>当前账号</span><strong>${esc(account)}</strong><small>${esc(state.wsStatus)}</small></div><div><span>后台状态</span><strong>后台采集不可用</strong><small>页面切换不影响任务</small></div></div>${renderWorkspaceList('accounts', state.accounts, rows => renderAccountList(rows))}</section>`;
+    else if (activeView === 'accounts') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>账号与连接</strong><span>账号作用域独立，切换保留各账号隔离会话。</span></div><button class="btn small" data-ws-action="create-account">＋ 添加账号</button></div>${renderAccountForm()}<div class="ws-workspace-metrics"><div><span>已加载 WS 账号</span><strong>${state.accounts.length}</strong><small>本机隔离会话</small></div><div><span>当前账号</span><strong>${esc(account)}</strong><small>${esc(state.wsStatus)}</small></div><div><span>后台状态</span><strong>${esc(collectorStatusLabel())}</strong><small>独立采集会话，需单独扫码登录</small></div></div>${renderCollectorControls()}${renderWorkspaceList('accounts', state.accounts, rows => renderAccountList(rows))}</section>`;
     else if (activeView === 'groups') body = renderGroupDirectory() + (groupReading?.render() || '');
     else if (activeView === 'members') body = renderWorkspaceMembers();
     else if (activeView === 'collection') { const page = wsWorkspacePageState('collection'); body = `${renderCollectionCard()}${businessPages ? businessPages.renderRunDetails(state.collectionRun, page.collectionItems, collectionCapability()) : ''}<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>当前任务采集项</strong><span>当前账号、当前任务已读取的最多 1000 条采集项，保留失败原因与 checkpoint。</span></div><button type="button" class="btn small" data-ws-action="collection-history">查看任务历史</button></div>${renderWorkspaceList('collection', page.collectionItems || [], rows => businessPages ? businessPages.renderCollectionItems(rows) : renderWorkspaceSummaryRows(rows, 'collection'))}</section>${renderWsFlowStrip()}`; }
@@ -3400,14 +3489,17 @@
     return `<div class="ws-error-banner" role="alert"><span>${esc(state.error)}</span><button class="btn small" data-ws-action="${reconnect ? 'open' : 'retry-load'}" ${state.busy.connection ? 'disabled' : ''}>${reconnect ? '重试打开 WS' : '重试加载'}</button></div>`;
   }
   function renderCollectionCard() {
-    const { run, fullHistoryCount, discovered, skipped, analyzed, retryable, pendingHistory, pipeline } = wsCollectionPipelineStages();
-    const disabled=collectionControlAttributes();
-    const pipelineHtml=`<div class="ws-collection-pipeline">${pipeline.map(([label,value],index)=>`<div class="ws-pipeline-stage ${value?'has-progress':''}"><span class="ws-pipeline-index">${index+1}</span><div><strong>${esc(label)}</strong><b>${Number(value).toLocaleString()}</b><small>本机历史记录</small></div></div>`).join('')}</div><p class="ws-coverage-warning">以下数量来自本机已保存记录；连接正常不代表后台采集可用。</p>`;
-    const notice=collectionCapabilityNotice();
-    if(!run)return `<section class="ws-card ws-collection-card" data-assist-section="diagnostics" data-collection-capability="blocked"><div class="ws-card-heading"><div><strong>采集任务与历史</strong><span>当前没有本机采集任务；前台聊天和手动导入仍可使用</span></div></div>${notice}${pipelineHtml}<button class="btn small primary ws-full-button" data-ws-action="create-collection-run" ${disabled}>后台采集不可用</button><button class="btn small" data-ws-action="collect-all-read" ${disabled}>补采完整聊天</button></section>`;
-    const pending=Math.max(0,run.total-run.completed-run.failed-run.skipped);
-    const controls=run.status==='paused'?`<button class="btn small" data-ws-action="resume-collection" ${disabled}>继续</button>`:['created','running','discovering'].includes(run.status)?`<button class="btn small" data-ws-action="pause-collection" ${disabled}>暂停</button><button class="btn small danger" data-ws-action="stop-collection" ${disabled}>停止</button>`:'';
-    return `<section class="ws-card ws-collection-card" data-assist-section="diagnostics" data-run-status="${esc(run.status)}" data-collection-capability="blocked"><div class="ws-card-heading"><div><strong>采集任务与历史</strong><span>历史保存状态：${esc(run.status)} · 更新于 ${esc(displayTime(run.updatedAt))}${run.lastSuccessAt?` · 上次成功 ${esc(displayTime(run.lastSuccessAt))}`:''}</span></div><div>${controls}<button class="btn small" data-ws-action="resume-collection-checkpoint" ${disabled}>从断点继续</button><button class="btn small" data-ws-action="collect-all-read" ${disabled}>补采完整聊天</button><button class="btn small" data-ws-action="create-collection-run" ${disabled}>新建任务</button></div></div>${notice}${pipelineHtml}<div class="ws-collection-stats"><b>${run.completed}/${run.total||run.discovered}</b><span>历史列表已同步</span><b>${run.analyzed}</b><span>历史已分析</span><b>${fullHistoryCount}</b><span>历史完整聊天</span><b>${run.skipped||0}</b><span>历史跳过未读</span><b>${run.retryable}</b><span>原待重试</span><b>${pending}</b><span>原待处理</span><b>${run.resumeCount||0}</b><span>历史续采次数</span></div>${run.lastError?`<p class="ws-error-line">${esc(run.lastError)}</p>`:''}<p class="ws-muted">任务、checkpoint、消息与原队列保留；本次能力停用不会自动改写其历史状态。前台手动聊天、切换账号和既有手动导入继续使用。</p></section>`;
+    const { run, fullHistoryCount, pipeline } = wsCollectionPipelineStages();
+    const capability = collectionCapability();
+    const available = capability.state === 'available';
+    const disabled = collectionControlAttributes('automaticHistory');
+    const pipelineHtml = `<div class="ws-collection-pipeline">${pipeline.map(([label, value], index) => `<div class="ws-pipeline-stage ${value ? 'has-progress' : ''}"><span class="ws-pipeline-index">${index + 1}</span><div><strong>${esc(label)}</strong><b>${Number(value).toLocaleString()}</b><small>本机已保存记录</small></div></div>`).join('')}</div><p class="ws-coverage-warning">数量以本机已保存数据为准；采集会话状态与前台聊天连接分别显示。自动 AI 处理关闭。</p>`;
+    const notice = collectionCapabilityNotice();
+    const sessionControls = renderCollectorControls();
+    if (!run) return `<section class="ws-card ws-collection-card" data-assist-section="diagnostics" data-collection-capability="${esc(capability.state)}"><div class="ws-card-heading"><div><strong>采集任务与历史</strong><span>先为独立采集会话扫码登录，再开始采集已读聊天</span></div></div>${notice}${sessionControls}${pipelineHtml}<button class="btn small primary ws-full-button" data-ws-action="create-collection-run" ${disabled}>新建采集任务</button><button class="btn small" data-ws-action="collect-all-read" ${disabled}>补采完整聊天</button></section>`;
+    const pending = Math.max(0, Number(run.total || 0) - Number(run.completed || 0) - Number(run.failed || 0) - Number(run.skipped || 0));
+    const controls = run.status === 'paused' ? `<button class="btn small" data-ws-action="resume-collection" ${available && capability.collectorState === 'paused' ? '' : disabled}>继续任务</button>` : ['created', 'running', 'discovering'].includes(run.status) ? `<button class="btn small" data-ws-action="pause-collection">暂停任务</button><button class="btn small danger" data-ws-action="stop-collection">停止任务</button>` : '';
+    return `<section class="ws-card ws-collection-card" data-assist-section="diagnostics" data-run-status="${esc(run.status)}" data-collection-capability="${esc(capability.state)}"><div class="ws-card-heading"><div><strong>采集任务与历史</strong><span>${available ? '任务保存状态' : '历史保存状态'}：${esc(run.status)} · 更新于 ${esc(displayTime(run.updatedAt))}${run.lastSuccessAt ? ` · 上次成功 ${esc(displayTime(run.lastSuccessAt))}` : ''}</span></div><div>${controls}<button class="btn small" data-ws-action="resume-collection-checkpoint" ${disabled}>从断点继续</button><button class="btn small" data-ws-action="collect-all-read" ${disabled}>补采完整聊天</button><button class="btn small" data-ws-action="create-collection-run" ${disabled}>新建任务</button></div></div>${notice}${sessionControls}${pipelineHtml}<div class="ws-collection-stats"><b>${Number(run.completed || 0)}/${Number(run.total || run.discovered || 0)}</b><span>列表已同步</span><b>${Number(run.analyzed || 0)}</b><span>已分析</span><b>${fullHistoryCount}</b><span>完整聊天</span><b>${Number(run.skipped || 0)}</b><span>跳过未读</span><b>${Number(run.retryable || 0)}</b><span>待重试</span><b>${pending}</b><span>待处理</span><b>${Number(run.resumeCount || 0)}</b><span>续采次数</span></div>${run.lastError ? `<p class="ws-error-line">${esc(run.lastError)}</p>` : ''}<p class="ws-muted">任务、checkpoint、消息与原队列保留。后台只读取已读且已确认身份的会话；前台聊天和手动导入可同时使用。</p></section>`;
   }
   async function loadConversationData(id, redraw = true, parentContext = null) {
     const conversationId = String(id || '');
@@ -3955,9 +4047,10 @@
       <div class="ws-workbench-page workspace-${WS_WORKSPACE_VIEW_IDS.has(state.wsWorkspaceView) ? state.wsWorkspaceView : 'overview'} ${loginFocus ? 'is-login-focus' : ''} ${state.manualToolsVisible ? 'ws-local-tools-open' : ''}" data-ws-account-id="${esc(state.activeAccountId || 'default')}">
         ${renderWsWorkspacePage(state.wsWorkspaceView)}
         <div class="page-heading ws-page-heading">
-          <div><h1 class="page-title">前台聊天</h1><p class="page-subtitle" title="不保存密码、Cookie、二维码或秘密 Token" aria-label="内嵌 WhatsApp Web；前台聊天可用；后台采集按安全边界停用；不保存密码、Cookie、二维码或秘密 Token">内嵌 WhatsApp Web · 前台聊天可用；后台采集按安全边界停用</p></div>
+          <div><h1 class="page-title">前台聊天</h1><p class="page-subtitle" title="登录资料由各自的 WebView2 会话保存，不复制账号认证数据" aria-label="内嵌 WhatsApp Web；前台聊天可用；后台采集使用独立扫码会话；登录资料由各自的 WebView2 会话保存，不复制账号认证数据">内嵌 WhatsApp Web · 前台聊天可用；后台采集使用独立扫码会话</p></div>
           <div class="heading-actions">
-            <span class="ws-chat-background-status" data-tone="${runtimeTone}" data-collection-capability="blocked" role="status" title="${esc(collectionBlockedResult().error)}" aria-label="${esc(collectionBlockedResult().error)}">${esc(runtimeStatus)}</span>
+            <span class="ws-chat-background-status" data-tone="${runtimeTone}" data-collection-capability="${esc(collectionCapability().state)}" role="status" title="${esc(collectionCapability().state === 'available' ? collectionCapability().reason : collectionBlockedResult().error)}" aria-label="${esc(collectionCapability().state === 'available' ? runtimeStatus : collectionBlockedResult().error)}">${esc(runtimeStatus)}</span>
+            ${renderCollectorControls()}
             <span id="wsStatusBadge" class="ws-status-badge" data-status="${esc(state.wsStatus)}">${esc(state.wsStatus)}</span>
             <select id="wsTopAccount" class="ws-top-account" title="切换 WS 账号">${state.accounts.map(account => `<option value="${esc(account.id)}" ${String(account.id) === String(state.activeAccountId) ? 'selected' : ''}>${esc(accountDisplayName(account))}</option>`).join('')}</select>
             <label class="ws-top-switch"><input id="wsTopTranslateEnabled" type="checkbox" ${state.settings.enabled ? 'checked' : ''}>翻译</label>
@@ -4002,7 +4095,7 @@
                 ${state.wsStatus !== '已连接' ? `<button class="btn small" data-ws-action="toggle-login-layout">${loginFocus ? '显示工作区' : '扩大登录区'}</button>` : ''}
                 <button class="btn small" data-ws-action="probe">检测状态</button>
                 <button class="btn small" data-ws-action="discover-conversations" ${collectionControlAttributes()}>扫描全部会话列表</button>
-                <button class="btn small primary ws-toolbar-collect" data-ws-action="collect-all-read" ${collectionControlAttributes()}>自动采集已停用</button>
+                <button class="btn small primary ws-toolbar-collect" data-ws-action="collect-all-read" ${collectionControlAttributes('automaticHistory')}>采集已读完整聊天</button>
                 <button class="btn small" data-ws-action="reconnect">重新连接</button>
                 <button class="btn small" data-ws-action="reload">刷新页面</button>
                 <button class="btn small danger" data-ws-action="close">关闭 WS</button>
@@ -5216,6 +5309,7 @@
       writeWsWorkspaceState('logs', state.wsWorkspaceNavCollapsed); render();
       return refreshWorkspacePage();
     }
+    if (COLLECTOR_SESSION_ACTIONS.has(action)) return collectorAction(action);
     if (['open', 'login', 'reload', 'reconnect', 'close', 'clear-session', 'probe'].includes(action)) return connectionAction(action);
     if (action === 'create-account') return openAccountForm();
     if (action === 'submit-account') return createAccount();
@@ -5338,7 +5432,7 @@
     if (action === 'import-visible') return importVisible();
     if (action === 'translate-message') return translateMessage(element.dataset.id);
     if (action === 'retry-failed') return retryFailedTranslations();
-    if (action === 'resume-ai-queue') { state.aiBackgroundError = ''; render(); return scheduleAiQueuePump(captureContext('')); }
+    if (action === 'resume-ai-queue') { state.aiBackgroundError = ''; render(); return scheduleAiQueuePump(captureContext(''), { explicit: true }); }
     if (action === 'open-home' || action === 'open-tasks') {
       const route = action === 'open-home' ? 'home' : 'operations';
       document.querySelector(`.nav-item[data-view="${route}"]`)?.click();
@@ -5756,7 +5850,7 @@
       const isTelemetryTick = payload.eventName === 'background-tick' && !text(payload.detail);
       if (isTelemetryTick && payload.status === state.wsStatus) updateStatusDom();
       else if (!payloadAccountId && payload.status) setStatus(payload.status, payload.detail || '');
-      if (state.backgroundActive && payload.status === '已连接') {
+      if (state.backgroundActive && collectionReady()) {
         if (payload.accepted != null || payload.queuedForRetry) state.wsDetail = payload.detail || state.wsDetail;
         // QR login completes asynchronously after the Open/Reload action.
         // The first connected status event is therefore the other discovery

@@ -1,5 +1,18 @@
 # 知客 Windows 本机版候选发布计划
 
+## 当前 rc.3 交付与后续构建
+
+`v6.1.0-rc.3` 已发布，安装包对应源码 `bddb8ae33604110cdd191d7b7589fc8fe9d692bf`。下载资产与校验值见[当前版本索引](../current-release-index.md)；独立扫码采集的操作和验证范围见[独立采集说明](independent-collector-followup.md)。生产 Worker、自动 AI 和旧认证 profile 复制仍关闭，独立采集使用用户另行扫码的会话。
+
+- 当前构建入口为 `.github/workflows/windows-validation.yml`，在 Windows 2025 runner 上编译、回归、自包含打包并执行首次安装、同候选覆盖安装和卸载检查。它只上传 CI 产物，不自动替换已发布安装包。
+- rc.3 的[构建验证记录](https://github.com/vincent12233/zhike-4.2-ws-workbench/actions/runs/44510928815)和[发布记录](https://github.com/vincent12233/zhike-4.2-ws-workbench/actions/runs/44512599386)均已通过。合成安装检查不代表真实 WhatsApp 或用户数据跨候选升级验收。
+- `.github/workflows/publish-rc3.yml` 和 `scripts/publish-verified-rc3.py` 是绑定该次构建、标签、草稿 ID 和资产哈希的专用交付记录，不能作为下一个版本的通用发布器。下次候选需选择新标签、完成相应构建和校验，再使用明确的发布参数；不得移动 rc.3 标签或覆盖它的资产。
+- 手动构建继续使用下文的 bundle/installer `-ReleaseGate` 命令与全新 `work/` 输出目录。下文 rc.1 的快照推送与标签命令仅保留作历史记录，不是当前主分支操作步骤。后续源码通过 PR 检查后合并。
+
+## rc.1 历史发布计划（保留记录）
+
+以下内容描述 rc.1 当时的环境和发布安排，不表示 rc.3 的功能、构建或发布状态。
+
 2026-11-19。分支 `integration/61-runtime-release`，审计基线 `54d33f6`。当前候选版本为 `6.1.0`，预发行标签为 `v6.1.0-rc.1`。本次用户已授权构建安装包并将仓库和候选发布交付到现有 GitHub 仓库。采用预发行标记，保留已知阻断和所有历史发布。仓库沿用现有私有可见性，生产 Worker、自动 AI 消费者及 RD02 后台采集继续关闭。
 
 ## 用户从哪里开始

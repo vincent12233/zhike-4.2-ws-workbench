@@ -27,8 +27,16 @@ assert.match(host, /_initializeGate\.WaitAsync|_initializ(?:e|ation)Gate\.WaitAs
   'WebView initialization must be serialized across Loaded and Navigated callers');
 assert.match(host, /await\s+ReleaseForgottenWsAccountAsync\(forgottenId,\s*cancellationToken\)/,
   'forgetting an account must close its pooled WebView before removing the runtime record');
-assert.doesNotMatch(host, /\b_wsCollectorSyncGates\b|\b_wsGroupMonitorConfigs\b/,
-  'RD02 removes the unsafe collector-owned dictionaries entirely; forgotten accounts cannot retain entries in them');
+const factoryStart = host.indexOf('    private async Task<WsWebViewSessionRegistration> CreatePooledWsSessionAsync(');
+const factoryEnd = host.indexOf('    private static void OnWsNewWindowRequested', factoryStart);
+const factory = host.slice(factoryStart, factoryEnd);
+for (const field of ['_wsCollectorGates', '_wsCollectorStarted', '_wsCollectorCleanup']) {
+  assert.ok(factory.includes(field + '.Remove(collector'), 'session retirement must clear collector-owned state: ' + field);
+}
+for (const field of ['_wsCollectorGroups', '_wsCollectorMonitor', '_wsCollectorMonitorRunning']) {
+  assert.ok(factory.includes(field + '.Remove(accountId'), 'session retirement must clear account-owned collection state: ' + field);
+}
+assert.match(factory, /collector\.Close\(\)/, 'retiring an account must close its independent collector control');
 const releaseStart = host.indexOf('    private async Task ReleaseForgottenWsAccountAsync(');
 const releaseEnd = host.indexOf('    private async Task<BridgeResponse> HandleWsActionAsync(', releaseStart);
 assert.ok(releaseStart >= 0 && releaseEnd > releaseStart, 'the actual account release boundary must remain present');

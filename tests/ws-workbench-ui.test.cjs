@@ -39,8 +39,8 @@ assert.match(ui, /function loadAllConversationPages\(context/);
 assert.match(ui, /conversations\?limit=1000/);
 assert.match(ui, /nextCursor/);
 assert.match(ui, /\/api\/ws\/crm-sync/);
-assert.match(ui, /自动采集已停用/,
-  'RD02 must disclose that the old automatic collector is disabled');
+assert.match(ui, /独立采集会话需单独扫码/,
+  'background collection must disclose its independent login requirement');
 assert.match(ui, /COLLECTION_CAPABILITY_BLOCKED/);
 assert.match(ui, /class="ws-login-summary"/);
 assert.match(ui, /id="wsStatusDetail" class="ws-login-status" title=/);
@@ -49,8 +49,8 @@ assert.match(ui, /ws-toolbar-open[^"\n]*" data-ws-action="open"/);
 assert.match(ui, /ws-toolbar-collect[^"\n]*" data-ws-action="collect-all-read"/);
 assert.match(ui, /conversation\.unread === true \|\| Number\(conversation\.unreadCount \|\| 0\) > 0 \|\| text\(conversation\.collectionStatus\) === 'skipped_unread'/,
   'the retained manual AI/history guards must continue to identify unread conversations');
-assert.match(ui, /后台采集依赖复制认证状态，已按安全边界停用；前台聊天和手动导入可用/,
-  'collection copy must not promise live VIP-group collection while the old provider is blocked');
+assert.match(ui, /当前桌面未提供独立采集会话；前台聊天和手动导入可用/,
+  'missing native capability must preserve the explicit unavailable state');
 assert.match(ui, /function isConfiguredVipGroupIdentifier\(\.\.\.values\)/,
   'manual group entry must consult the same configured VIP-group bindings as native discovery');
 assert.match(ui, /const vipGroup = groupJid && isConfiguredVipGroupIdentifier\(externalId, title\)/,
@@ -108,9 +108,9 @@ assert.match(css, /@media \(max-width:900px\)[\s\S]*?\.ws-message-list\{max-heig
 assert.match(css, /body\.ws-mode \.ws-runtime-strip\{[^}]*display:grid/,
   'the 6.0 WS cockpit must give its runtime overview a stable responsive layout');
 assert.match(ui, /class="ws-cockpit-bar"/, 'WS reference layout needs a dedicated account and collector cockpit');
-assert.match(ui, /内嵌 WhatsApp Web · 前台聊天可用；后台采集按安全边界停用/,
-  'WS heading must preserve manual chat while accurately disclosing the blocked provider');
-assert.match(ui, /title="不保存密码、Cookie、二维码或秘密 Token"/, 'WS privacy disclosure should remain available without consuming header height');
+assert.match(ui, /内嵌 WhatsApp Web/, 'WS heading preserves the official foreground chat surface');
+assert.match(ui, /独立采集会话需单独扫码/, 'WS controls disclose separate collector authentication');
+assert.match(ui, /title="登录资料由各自的 WebView2 会话保存，不复制账号认证数据"/, 'WS privacy disclosure describes actual profile persistence');
 assert.match(ui, /class="ws-assist-tabs"/, 'WS reference layout needs the right-side assistant tab strip');
 for (const label of ['AI 分析', '客户档案', '回复建议', '采集诊断']) assert.match(ui, new RegExp(`title="${label}"`), `WS assistant tab ${label} needs an accessible title`);
 assert.match(ui, /class="ws-assist-drawer(?:\s|\")/, 'WS assistant content must be hosted in a floating drawer');
@@ -163,8 +163,8 @@ assert.match(ui, /!\(isTelemetryTick && payload\.status === state\.wsStatus\)\) 
   'unchanged telemetry must not clear or rewrite the foreground status state');
 assert.match(ui, /if \(badge\.textContent !== state\.wsStatus\)/,
   'status DOM updates must be value guarded to avoid needless layout measurement');
-assert.match(ui, /if \(!isBackgroundTick && statusChanged && id === String\(state\.activeAccountId\) && state\.active && host\?\.state\?\.view === 'ws-workbench'\) render\(\)/,
-  'background WS heartbeats must not rebuild the foreground chat shell');
+assert.match(ui, /if \(\(capabilityChanged \|\| \(!isBackgroundTick && statusChanged\)\) && id === String\(state\.activeAccountId\) && state\.active && host\?\.state\?\.view === 'ws-workbench'\) render\(\{ skipNativeResize: true \}\)/,
+  'unchanged background heartbeats must not rebuild the shell; collector state changes update controls without resizing native chat');
 assert.match(ui, /async function refreshCollectionSummary\(options = \{\}\)/,
   'collection refreshes must distinguish background telemetry from explicit foreground refreshes');
 assert.match(ui, /if \(\(!backgroundRefresh \|\| !state\.active\) && collectionRenderSignature\(\) !== beforeRenderSignature\) renderPreservingScroll\(\)/,

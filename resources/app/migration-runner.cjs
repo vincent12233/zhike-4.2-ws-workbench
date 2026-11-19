@@ -382,6 +382,44 @@ function preflightMigrationConflicts(db, entry) {
   }
 }
 
+function applyMigration(db, entry) {
+  applyMigrationCompatibility(db, entry);
+  db.exec(entry.sql);
+  db.prepare('INSERT INTO schema_migrations(version,applied_at,description,checksum) VALUES(?,?,?,?)').run(entry.version, new Date().toISOString(), entry.description, entry.checksum);
+  setUserVersion(db, entry.version);
+  const integrity = assertIntegrity(db, `迁移 ${entry.version}`);
+  return { version: entry.version, file: entry.file, checksum: entry.checksum, integrity };
+}
+
+function initializeEmptyDatabase(db, manifest) {
+  // The caller has verified an entirely empty schema under the migration
+  // lease. Keep the registry, all DDL and user_version in the same transaction
+  // so first use needs one durable commit and cannot leave a partial schema.
+  const applied = [];
+  try {
+    db.exec('BEGIN IMMEDIATE');
+    ensureSchemaMigrationsTable(db);
+    for (const entry of manifest.migrations) {
+      preflightMigrationConflicts(db, entry);
+      try {
+        applied.push(applyMigration(db, entry));
+      } catch (error) {
+        if (error instanceof MigrationError && error.code === 'MIGRATION_INTEGRITY_FAILED') throw error;
+        throw migrationError('MIGRATION_FAILED', `迁移 ${entry.version} (${entry.file}) 失败: ${error.message}`, { version: entry.version, file: entry.file, cause: error });
+      }
+    }
+    const integrity = assertIntegrity(db, '迁移后');
+    db.exec('COMMIT');
+    return { applied, integrity };
+  } catch (error) {
+    // Also cover registry creation, conflict preflights, the final integrity
+    // gate and COMMIT failures, not just errors inside a migration's SQL.
+    try { db.exec('ROLLBACK'); } catch {}
+    if (error instanceof MigrationError) throw error;
+    throw migrationError('MIGRATION_FAILED', `空数据库初始化失败: ${error.message}`, { cause: error });
+  }
+}
+
 function runMigrations(options = {}) {
   const { db } = options;
   if (!db || typeof db.prepare !== 'function' || typeof db.exec !== 'function') throw new TypeError('db DatabaseSync connection is required');
@@ -424,6 +462,13 @@ function runMigrations(options = {}) {
     const backupPath = (pending.length || needsMetadata || (appliedBefore.compatibility.length && !auditState.exists)) && options.backup !== false ? backupDatabase(db, options.dbPath, options.backupDir || path.join(path.dirname(options.dbPath || ''), '.backups')) : null;
     writeCompatibilityAudit(options, auditState, appliedBefore.compatibility, backupPath);
     db.exec('PRAGMA journal_mode = WAL;');
+    // Version zero alone is not evidence of a new database: legacy workspaces
+    // may already contain data, views or a migration registry. Only a schema
+    // with no objects at all may take the atomic initialization path.
+    if (current === 0 && !db.prepare('SELECT 1 FROM sqlite_master LIMIT 1').get()) {
+      const { applied, integrity } = initializeEmptyDatabase(db, manifest);
+      return { version: readVersion(), applied, backupPath, integrity, preIntegrity, manifest: manifest.path, compatibility: appliedBefore.compatibility, compatibilityAuditPath: auditState.path };
+    }
     ensureSchemaMigrationsTable(db);
     const applied = [];
     for (const entry of manifest.migrations) {
@@ -441,13 +486,9 @@ function runMigrations(options = {}) {
       preflightMigrationConflicts(db, entry);
       try {
         db.exec('BEGIN IMMEDIATE');
-        applyMigrationCompatibility(db, entry);
-        db.exec(entry.sql);
-        db.prepare('INSERT INTO schema_migrations(version,applied_at,description,checksum) VALUES(?,?,?,?)').run(entry.version, new Date().toISOString(), entry.description, entry.checksum);
-        setUserVersion(db, entry.version);
-        const migrationIntegrity = assertIntegrity(db, `迁移 ${entry.version}`);
+        const migration = applyMigration(db, entry);
         db.exec('COMMIT');
-        applied.push({ version: entry.version, file: entry.file, checksum: entry.checksum, integrity: migrationIntegrity });
+        applied.push(migration);
         current = entry.version;
       } catch (error) {
         try { db.exec('ROLLBACK'); } catch {}

@@ -1,0 +1,38 @@
+name: Publish verified rc.3 candidate
+
+on:
+  push:
+    branches: [codex/restore-independent-ws-collection]
+    paths:
+      - .github/workflows/publish-rc3.yml
+      - scripts/publish-verified-rc3.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-verified-rc3
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: zhike-6.1.0-rc.3-win-x64
+          run-id: 44510928815
+          path: work/rc3-download
+          github-token: ${{ github.token }}
+      - name: Validate the exact candidate and publish its verified draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/publish-verified-rc3.py work/rc3-download --publish

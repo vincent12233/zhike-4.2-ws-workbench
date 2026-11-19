@@ -1,6 +1,6 @@
 'use strict';
 
-// Stage 3 keeps the production Worker and group-manager paths inert.  This
+// Stage 3 keeps the production Worker and mock mutation paths inert.  This
 // contract test deliberately stays source-level: a real Worker is only
 // started by the isolated Stage 2 harness, never by the desktop shell or by
 // the Stage 3 test runner.
@@ -44,9 +44,11 @@ assert.match(serverSource, /ZHIKE_GROUP_MANAGER_MODE/);
 assert.match(serverSource, /ZHIKE_STAGE3_MOCK/);
 assert.match(serverSource, /groupManagerIsolationMode\s*=\s*String\(process\.env\.ZHIKE_GROUP_MANAGER_MODE/);
 assert.match(serverSource, /ws\/group-manager/);
-assert.match(serverSource, /function stage3GroupManagerGuard[\s\S]*?error\.status\s*=\s*404/,
-  'group-manager boundary must fail closed while isolated mode is disabled');
-assert.match(serverSource, /url\.pathname\.startsWith\('\/api\/ws\/group-manager\/'\)[\s\S]*?(?:stage3MockMode|stage3GroupManagerGuard)[\s\S]*?json\(res,\s*404/,
-  'group-manager HTTP routes must reject requests while isolated mode is disabled');
+assert.match(serverSource, /function stage3GroupManagerGuard[\s\S]*?method !== 'GET'[\s\S]*?error\.status\s*=\s*405/,
+  'production group-manager mock writes must remain disabled');
+assert.match(serverSource, /groupManagerReadRoutes\.has\(suffix\)/,
+  'production reads must use an explicit read-only route allowlist');
+assert.match(serverSource, /url\.pathname\.startsWith\('\/api\/ws\/group-manager\/'\)[\s\S]*?stage3GroupManagerGuard\(req\.method, suffix\)/,
+  'group-manager HTTP routes must apply the write boundary');
 
 console.log('stage3 Worker and group-manager isolation gate: pass');

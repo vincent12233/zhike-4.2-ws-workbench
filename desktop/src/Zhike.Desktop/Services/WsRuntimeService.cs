@@ -30,6 +30,17 @@ public sealed class WsRuntimeService
 
     public event EventHandler? SessionsChanged;
 
+    public bool SetCollectorState(string accountId, string state)
+    {
+        if (state is not ("not-started" or "awaiting-login" or "login-visible" or "running" or "paused" or "error"))
+            throw new ArgumentOutOfRangeException(nameof(state));
+        if (!_pool.TryGet(accountId, out var session) || session is null) return false;
+        if (string.Equals(session.CollectorState, state, StringComparison.Ordinal)) return true;
+        session.CollectorState = state;
+        SessionsChanged?.Invoke(this, EventArgs.Empty);
+        return true;
+    }
+
     public void BindHost(
         DispatcherQueue dispatcher,
         Func<string, long, CancellationToken, Task<WsWebViewSessionRegistration>> factory,
@@ -131,12 +142,24 @@ public sealed class WsRuntimeService
             if (!string.IsNullOrWhiteSpace(snapshot.ForegroundAccountId)
                 && _pool.TryGet(snapshot.ForegroundAccountId, out var foreground)
                 && foreground is not null)
-                await RunHeartbeatAsync(foreground, false, heartbeat, cancellationToken).ConfigureAwait(false);
+                await RunHeartbeatAsync(foreground, false, heartbeat, cancellationToken);
 
-            // RD02: no automatic background lease, WebView creation, profile
-            // preparation or collection heartbeat. Manual foreground selection
-            // is the only account creation boundary.
-            if (_flush is not null) await _flush(cancellationToken).ConfigureAwait(false);
+            // Only explicitly initialized collector sessions participate.
+            // Never create an account/profile here or infer collector login
+            // from the foreground. The bounded pool limits active collectors.
+            // Login surfaces receive a read-only collector probe in the host;
+            // only the running state permits the host to execute capture.
+            foreach (var session in _pool.Sessions())
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (!session.IsCollectorReady
+                    || session.CollectorState is not ("running" or "awaiting-login" or "login-visible")
+                    || !_pool.IsCurrent(session.AccountId, session.Generation, session.CollectorView)
+                    || !snapshot.Accounts.Any(account => account.Enabled
+                        && string.Equals(account.AccountId, session.AccountId, StringComparison.OrdinalIgnoreCase))) continue;
+                await RunHeartbeatAsync(session, true, heartbeat, cancellationToken);
+            }
+            if (_flush is not null) await _flush(cancellationToken);
         }
         finally { _tickGate.Release(); }
 #endif
@@ -174,12 +197,17 @@ public sealed class WsRuntimeService
         try
         {
             await heartbeat(session, driveCollection, cancellationToken);
-            _coordinator.RecordHeartbeat(session.AccountId);
+            if (!driveCollection && _pool.IsCurrent(session.AccountId, session.Generation))
+                _coordinator.RecordHeartbeat(session.AccountId);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch (Exception error)
         {
-            _coordinator.RecordFailure(session.AccountId, error.Message);
+            if (!_pool.IsCurrent(session.AccountId, session.Generation)) return;
+            // A separate collector may expire or fail while the user's chat
+            // remains connected. Keep these two connection states independent.
+            if (driveCollection) SetCollectorState(session.AccountId, "error");
+            else _coordinator.RecordFailure(session.AccountId, error.Message);
         }
     }
 }

@@ -35,12 +35,26 @@ try
     if (!readyWithoutUiPump) throw new Exception("Sidecar readiness incorrectly depends on a running UI synchronization context.");
     using var authenticated = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
     authenticated.DefaultRequestHeaders.Add("X-Zhike-Api-Token", start.Result.ApiToken);
-    foreach (var route in new[] { "api/ws/fencing", "api/ws/group-manager/groups", "api/ws/ai-pipeline/jobs" })
+    foreach (var route in new[] { "api/ws/fencing", "api/ws/ai-pipeline/jobs" })
     {
         using var gateResponse = await authenticated.GetAsync(new Uri(start.Result.BaseAddress, route));
         if (gateResponse.StatusCode != System.Net.HttpStatusCode.NotFound)
             throw new Exception($"Normal host inherited isolated authority at {route}: HTTP {(int)gateResponse.StatusCode}.");
     }
+    // Production can read its saved group catalog. This must not grant the
+    // isolated mock mutations even when the parent carries both test flags.
+    var groupRoute = new Uri(start.Result.BaseAddress, "api/ws/group-manager/groups?accountId=default");
+    using var groupResponse = await authenticated.GetAsync(groupRoute);
+    using var groups = JsonDocument.Parse(await groupResponse.Content.ReadAsStringAsync());
+    if (!groupResponse.IsSuccessStatusCode || groups.RootElement.GetProperty("accountId").GetString() != "default"
+        || groups.RootElement.GetProperty("groups").ValueKind != JsonValueKind.Array
+        || groups.RootElement.GetProperty("groups").GetArrayLength() != 0)
+        throw new Exception("Normal host must expose the empty isolated workspace's saved group catalog.");
+    using var groupWrite = await authenticated.PostAsync(groupRoute, new StringContent("{}", System.Text.Encoding.UTF8, "application/json"));
+    using var groupWriteResult = JsonDocument.Parse(await groupWrite.Content.ReadAsStringAsync());
+    if (groupWrite.StatusCode != System.Net.HttpStatusCode.MethodNotAllowed
+        || groupWriteResult.RootElement.GetProperty("code").GetString() != "GROUP_MANAGER_WRITE_DISABLED")
+        throw new Exception("Normal host inherited isolated mock group-write authority.");
     using var healthResponse = await authenticated.GetAsync(new Uri(start.Result.BaseAddress, "api/health"));
     using var health = JsonDocument.Parse(await healthResponse.Content.ReadAsStringAsync());
     if (!healthResponse.IsSuccessStatusCode || health.RootElement.GetProperty("databaseStatus").GetString() != "queryable"
@@ -63,7 +77,7 @@ try
     await service.StopAsync();
     if (!observed.HasExited || observed.ExitCode != 0) throw new Exception("Sidecar failed authenticated graceful shutdown.");
     await VerifyCancelledStartupAsync(Path.GetFullPath(args[0]), Path.Combine(root, "cancelled-start"));
-    Console.WriteLine(JsonSerializer.Serialize(new { ok = true, inheritedIsolationRejected = true, healthScopeTruthful = true, readyWithoutUiPump, cancellationPropagated, unauthorizedShutdownRejected = true, authenticatedGracefulShutdown = true, exitCode = observed.ExitCode, cancelledStartAndRestartRetired = true, startupMs, productionOpened = false, pendingUiCallbacks = paused.Count }));
+    Console.WriteLine(JsonSerializer.Serialize(new { ok = true, inheritedIsolationRejected = true, productionGroupReadsAvailable = true, mockGroupWritesRejected = true, healthScopeTruthful = true, readyWithoutUiPump, cancellationPropagated, unauthorizedShutdownRejected = true, authenticatedGracefulShutdown = true, exitCode = observed.ExitCode, cancelledStartAndRestartRetired = true, startupMs, productionOpened = false, pendingUiCallbacks = paused.Count }));
 }
 finally {
     foreach (var entry in inheritedFlags) Environment.SetEnvironmentVariable(entry.Key, entry.Value);

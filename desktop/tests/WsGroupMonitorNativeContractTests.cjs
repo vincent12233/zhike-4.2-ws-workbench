@@ -17,8 +17,8 @@ assert.match(host, /groupEvents/, 'native WS bridge must parse groupEvents from 
 assert.match(host, /new WsGroupMembershipEventDto\(/, 'native bridge must normalize group event DTOs before queueing');
 assert.match(host, /new WsIngestBatchRequestDto\([\s\S]*groupEvents/, 'group events must be sent with the normal durable WS ingest batch');
 assert.match(host, /sharedState\s*=\s*request\.GroupEvents is \{ Count: > 0 \}/, 'group event sync must refresh the shared CRM state');
-assert.match(host, /fromBackgroundCollector = collectorRole == "background";[\s\S]{0,150}if \(fromBackgroundCollector\) return;/,
-  'RD02 denies newly submitted background packets before the retained group-event parser');
+assert.match(host, /WsCollectorIngress\.TryAuthorize\([\s\S]*out fromBackgroundCollector/,
+  'group-event authority must derive from host-owned source control, not the page role claim');
 assert.match(host, /if \(fromBackgroundCollector && root\.TryGetProperty\("groupEvents"/,
   'historical group parsing remains origin-scoped; disabling runtime must not rewrite the group DTO rules');
 assert.match(host, /ws-native-group-monitor/, 'native bridge must reject untrusted group-event sources');
@@ -42,20 +42,18 @@ assert.match(script, /申请加入|等待审核|join request|approval pending/, 
 assert.match(script, /mergeRows\(run\.seen, readRows\(\)[\s\S]*collectGroupMonitorPreviewEvents/, 'full hidden list sweep must feed each rendered window to group monitoring');
 assert.match(script, /const groupMonitor = backgroundCollectorRole \? groupMonitorTick\(\)/, 'background heartbeat must drive the passive group monitor');
 assert.match(script, /advanced, queuedTasks:collectorTasks\.size, groupMonitor/, 'background heartbeat must expose monitor health counters');
-const begin = host.indexOf('private Task<BridgeResponse> ConfigureVipGroupsAsync(');
+const begin = host.indexOf('private async Task<BridgeResponse> ConfigureVipGroupsAsync(');
 const end = host.indexOf('private async Task<List<StoredWsAccount>> LoadWsAccountsAsync(', begin);
-assert.ok(begin > 0 && end > begin, 'RD02 group entry boundaries must exist');
+assert.ok(begin > 0 && end > begin, 'independent group configuration boundaries must exist');
 const groupMonitorMethod = host.slice(begin, end);
-assert.match(groupMonitorMethod, /ConfigureGroupMonitorAsync[\s\S]*Task\.FromResult\(WsCollectionBlocked\(requestId, accountId\)\)/,
-  'configuration must be explicitly blocked rather than persisted as enabled');
-assert.match(groupMonitorMethod, /action is not \("pause" or "stop"\)[\s\S]*WsCollectionBlocked/,
-  'only safe local pause/stop acknowledgements remain');
-assert.match(groupMonitorMethod, /localOnly = true[\s\S]*collectionCapability = WsCollectionCapability\.Current/);
-assert.doesNotMatch(groupMonitorMethod, /ExecuteScriptAsync|CollectorView|_wsGroupMonitorConfigs\[/,
-  'blocked monitor configuration must not execute on either hidden or foreground WebViews');
-assert.doesNotMatch(host, /ExecuteGroupMonitorScriptAsync|ApplyGroupMonitorConfigurationAsync|_wsCollectorBootstraps/,
-  'there is no alternate production bootstrap or script-execution entry');
-assert.match(capability, /"configure-group-monitor"[\s\S]*"start-group-monitor"/);
-assert.match(host, /if \(WsCollectionCapability\.BlocksAction\(action\)\) return WsCollectionBlocked\(requestId, id\)/);
+assert.match(groupMonitorMethod, /ConfigureGroupMonitorAsync[\s\S]*ExecuteCollectorCommandAsync/,
+  'configuration executes through the running independent collector gateway');
+assert.match(groupMonitorMethod, /"pause" => "Pause"[\s\S]*"Stop"/,
+  'safe monitor stop and pause remain available');
+assert.doesNotMatch(groupMonitorMethod, /session\.View\.CoreWebView2\.ExecuteScriptAsync/,
+  'group monitor never falls back to foreground chat');
+assert.match(capability, /GroupMonitoring => true/);
+assert.match(host, /case "configure-group-monitor":[\s\S]*ConfigureGroupMonitorAsync/);
+assert.match(host, /case "start-group-monitor":[\s\S]*SetGroupMonitorStateAsync/);
 
-console.log('WS native group contract: historical DTO/queue/parser retained; RD02 runtime/config/start blocked with local-only safe stop');
+console.log('WS native group contract: independently authenticated collector DTO/queue/provenance/configuration and safe monitor controls pass');
