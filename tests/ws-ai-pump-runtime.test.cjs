@@ -320,7 +320,7 @@ const waitFor = async (predicate, ms = 500) => {
   await runtime.loadConversations();
   assert.equal(aiRequestCount, 0, 'an explicit local-history read does not implicitly request AI');
   assert.equal(claimCount, 0, 'only the following explicit AI action can claim a stored job');
-  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence });
+  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence }, { explicit: true });
   await waitFor(() => aiRequestCount === 1);
   assert.equal(runtime.state.collectionRefreshing, false, 'collection refresh lock must clear while AI request remains pending');
   assert.equal(runtime.getAiPumpState().running, true, 'explicitly requested AI work continues on the independent pump');
@@ -389,7 +389,7 @@ const waitFor = async (predicate, ms = 500) => {
 
   aiSignalAborted = false;
   runtime.state.aiEnabled = true;
-  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence });
+  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence }, { explicit: true });
   await waitFor(() => aiRequestCount === 2);
   assert.deepEqual(claimedJobIds, ['job-read', 'job-read'], 're-enabling AI resumes exactly one eligible direct job');
 
@@ -408,7 +408,7 @@ const waitFor = async (predicate, ms = 500) => {
 
   await runtime.switchAccount('default');
   resolveAiImmediately = true;
-  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence });
+  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence }, { explicit: true });
   await waitFor(() => hostRefreshCount === 1, 1000);
   await waitFor(() => !runtime.getAiPumpState().running, 1000);
   assert.equal(aiRequestCount, 3, 'the new account context resumes a single background model request');
@@ -438,7 +438,7 @@ const waitFor = async (predicate, ms = 500) => {
   assert.equal(messageBatchWrites, writesBeforeGroupExport + 1, 'a two-party manual export remains importable as a personal conversation');
 
   failQueuedJobs = true;
-  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence });
+  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence }, { explicit: true });
   await waitFor(() => Boolean(runtime.state.aiBackgroundError));
   assert.match(runtime.state.aiBackgroundError, /AI queue temporarily unavailable/, 'background queue failures remain visible and retryable');
   assert.match(view.innerHTML, /立即重试/, 'visible AI error includes an explicit retry action');
@@ -449,7 +449,7 @@ const waitFor = async (predicate, ms = 500) => {
   resolveAiImmediately = false;
   aiSignalAborted = false;
   runtime.state.aiBackgroundError = '';
-  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence });
+  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence }, { explicit: true });
   await waitFor(() => aiRequestCount === 4);
   const writesBeforeClose = staleAnalysisWrites;
   let rejectCloseBridge;

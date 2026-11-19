@@ -13,27 +13,31 @@ public sealed class WebViewProfileService(string? root = null)
     private readonly string _root = root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Zhike6", "ws-profiles");
 #endif
     // Foreground accounts retain their existing account-scoped environment.
-    // RD02 forbids a second environment bootstrapped by authenticated copying.
+    // Collector profiles are independently signed in by the user and never
+    // read, clone or bootstrap from the foreground or historical collector.
     private readonly ConcurrentDictionary<string, Lazy<Task<CoreWebView2Environment>>> _environments = new(StringComparer.OrdinalIgnoreCase);
 
     public async Task<CoreWebView2Environment> GetOrCreateProfileAsync(string accountId)
         => await GetOrCreateEnvironmentAsync(accountId).ConfigureAwait(true);
 
-    /// <summary>Compatibility entry: denied before any filesystem/environment operation.</summary>
+    /// <summary>Independent profile; authentication requires its own user login.</summary>
     public Task<CoreWebView2Environment> GetOrCreateCollectorProfileAsync(string accountId)
-        => Task.FromException<CoreWebView2Environment>(WsCollectionCapability.Denied());
+        => GetOrCreateEnvironmentAsync(accountId, collector: true);
 
-    /// <summary>RD02 cannot be reopened by a flag or a caller-provided profile path.</summary>
+    /// <summary>The retired authenticated-copy API remains permanently denied.</summary>
     public Task PrepareCollectorProfileAsync(string accountId, CancellationToken cancellationToken = default)
         => Task.FromException(WsCollectionCapability.Denied());
 
-    private async Task<CoreWebView2Environment> GetOrCreateEnvironmentAsync(string accountId)
+    private async Task<CoreWebView2Environment> GetOrCreateEnvironmentAsync(string accountId, bool collector = false)
     {
         var safeId = SafeId(accountId);
         if (string.IsNullOrWhiteSpace(safeId)) throw new ArgumentException("accountId is required", nameof(accountId));
-        var profileId = safeId;
+        // A reserved directory/cache namespace prevents account "a-collector-v2"
+        // from sharing foreground authentication with collector "a".
+        var profileId = collector ? $"collector:{safeId}" : safeId;
+        var profilePath = collector ? CollectorPath(safeId) : Path.Combine(_root, safeId);
         var lazy = _environments.GetOrAdd(profileId, id => new Lazy<Task<CoreWebView2Environment>>(
-            () => CreateEnvironmentAsync(id), LazyThreadSafetyMode.ExecutionAndPublication));
+            () => CreateEnvironmentAsync(profilePath), LazyThreadSafetyMode.ExecutionAndPublication));
         try { return await lazy.Value.ConfigureAwait(true); }
         catch
         {
@@ -42,9 +46,11 @@ public sealed class WebViewProfileService(string? root = null)
         }
     }
 
-    private async Task<CoreWebView2Environment> CreateEnvironmentAsync(string safeId)
+    private string CollectorPath(string safeId)
+        => Path.Combine(_root, ".independent-collectors-v2", $"{safeId}-collector-v2");
+
+    private static async Task<CoreWebView2Environment> CreateEnvironmentAsync(string profilePath)
     {
-        var profilePath = Path.Combine(_root, safeId);
         Directory.CreateDirectory(profilePath);
         return await CoreWebView2Environment.CreateWithOptionsAsync(null, profilePath, new CoreWebView2EnvironmentOptions());
     }
@@ -53,9 +59,9 @@ public sealed class WebViewProfileService(string? root = null)
     {
         var safeId = SafeId(accountId);
         if (string.IsNullOrWhiteSpace(safeId)) return false;
-        var profileIds = new[] { safeId, $"{safeId}-collector" };
+        var profileIds = new[] { safeId, $"{safeId}-collector", $"collector:{safeId}" };
         foreach (var profileId in profileIds) _environments.TryRemove(profileId, out _);
-        var profilePaths = profileIds.Select(profileId => Path.Combine(_root, profileId)).ToArray();
+        var profilePaths = new[] { Path.Combine(_root, safeId), Path.Combine(_root, $"{safeId}-collector"), CollectorPath(safeId) };
         if (profilePaths.All(path => !Directory.Exists(path))) return true;
         // WebView2 may release profile files slightly after Close(). Retry a
         // bounded number of times and report failure to the caller so the UI

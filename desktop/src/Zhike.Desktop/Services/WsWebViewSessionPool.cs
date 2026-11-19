@@ -28,11 +28,13 @@ public sealed class WsWebViewSession
     public long Generation { get; }
     public WebView2 View { get; }
     /// <summary>
-    /// Isolated, non-interactive view backed by a collector profile snapshot;
-    /// it is the only surface allowed to scroll/open chats for full-history
-    /// work. It is created lazily after the foreground account is connected.
+    /// Independent collector view with its own user-authenticated profile.
+    /// The host initializes it only after an explicit collector action;
+    /// foreground connectivity cannot authenticate or activate this surface.
     /// </summary>
     public WebView2? CollectorView { get; }
+    public string CollectorState { get; internal set; } = "not-started";
+    public bool IsCollectorReady => CollectorView?.CoreWebView2 is not null;
     public DateTimeOffset CreatedAt { get; }
     public DateTimeOffset LastUsedAt { get; internal set; }
     public bool IsReady => View.CoreWebView2 is not null;
@@ -51,7 +53,8 @@ public sealed record WsWebViewSessionSnapshot(
     DateTimeOffset LastUsedAt,
     bool IsReady,
     bool IsForeground,
-    bool IsBackgroundLease);
+    bool IsBackgroundLease,
+    string CollectorState = "not-started");
 
 /// <summary>
 /// Process-owned finite pool for isolated WhatsApp WebView2 sessions.
@@ -119,13 +122,15 @@ public sealed class WsWebViewSessionPool
                 }
             }
             var generation = Interlocked.Increment(ref _generation);
+            WsWebViewSessionRegistration? registration = null;
+            var published = false;
             try
             {
                 // Build the replacement before releasing the LRU victim. A
                 // failed WebView2 environment/navigation must not destroy a
                 // healthy account session and leave the pool with less
                 // capacity than before.
-                var registration = await factory(normalizedId, generation, cancellationToken);
+                registration = await factory(normalizedId, generation, cancellationToken);
                 cancellationToken.ThrowIfCancellationRequested();
                 if (registration.View is null) throw new InvalidOperationException("WS session factory returned no WebView2 instance.");
                 var now = DateTimeOffset.UtcNow;
@@ -149,10 +154,13 @@ public sealed class WsWebViewSessionPool
                     if (removed) ReleaseSession(retired);
                 }
                 lock (_sync) _sessions[normalizedId] = created;
+                published = true;
                 return new WsWebViewSessionAcquireResult(created, true, retired?.AccountId);
             }
             catch
             {
+                if (!published && registration is not null)
+                    ReleaseRegistration(registration.View, registration.CollectorView, registration.Release);
                 // The victim remains in the dictionary until the registration
                 // succeeds, so a transient factory failure leaves the healthy
                 // account session untouched and retryable.
@@ -205,7 +213,8 @@ public sealed class WsWebViewSessionPool
                     item.LastUsedAt,
                     item.IsReady,
                     string.Equals(runtime.ForegroundAccountId, item.AccountId, StringComparison.OrdinalIgnoreCase),
-                    string.Equals(runtime.BackgroundAccountId, item.AccountId, StringComparison.OrdinalIgnoreCase)))
+                    string.Equals(runtime.BackgroundAccountId, item.AccountId, StringComparison.OrdinalIgnoreCase),
+                    item.CollectorState))
                 .ToArray();
     }
 
@@ -273,11 +282,21 @@ public sealed class WsWebViewSessionPool
 
     private static void ReleaseSession(WsWebViewSession session)
     {
-        try { session.Release?.Invoke(session.View); }
+        session.CollectorState = "not-started";
+        ReleaseRegistration(session.View, session.CollectorView, session.Release);
+    }
+
+    private static void ReleaseRegistration(WebView2 view, WebView2? collector, Action<WebView2>? release)
+    {
+        try { release?.Invoke(view); }
         catch
         {
-            try { session.View.Close(); } catch { }
-            try { session.CollectorView?.Close(); } catch { }
+            // Even a failed event-detachment callback must release both views.
+        }
+        finally
+        {
+            try { view.Close(); } catch { }
+            try { collector?.Close(); } catch { }
         }
     }
 

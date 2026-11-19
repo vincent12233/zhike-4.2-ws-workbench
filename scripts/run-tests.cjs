@@ -66,6 +66,7 @@ function runStage3(options = {}) {
   run('Stage 3 group manager migration', [path.join(repo, 'scripts', 'stage3', 'ws-group-manager-migration.test.cjs')]);
   run('Stage 3 group manager core', [path.join(repo, 'scripts', 'stage3', 'ws-group-manager.test.cjs')]);
   run('Stage 3 group manager isolated API and Mock Transport', [path.join(repo, 'scripts', 'stage3', 'ws-group-manager-api.test.cjs')], { timeout: 180000 });
+  run('Production group manager local data and account isolation', [path.join(repo, 'tests', 'ws-group-manager-production.test.cjs')], { timeout: 180000 });
   run('Stage 3 WS workspace navigation', [path.join(repo, 'scripts', 'stage3', 'ws-workbench-navigation.test.cjs')]);
 }
 
@@ -167,6 +168,7 @@ function runDeliveryS3() {
 function runDeliveryRd02() {
   run('RD02 actual Native authenticated-profile and hidden-collector boundary', [path.join(repo, 'tests/rd02-authenticated-profile-boundary.test.cjs')]);
   run('RD02 WS blocked collection capability and preserved foreground actions', [path.join(repo, 'tests/delivery-rd02-ws-capability.test.cjs')]);
+  run('Independent collector login, status, controls and manual AI boundary', [path.join(repo, 'tests/ws-independent-collector-runtime.test.cjs')]);
 }
 
 function runStage55c1a(options = {}) {

@@ -16,7 +16,7 @@ assert.deepEqual(customer.tags, ['old', 'new']);
 assert.equal(crm.deriveCustomerProfile({ contact: { name: '客户', phone: '+91 99999 11111' } }, { externalId: 'x', title: '客户' }, 'two').wsExternalId, 'x');
 assert.match(ui, /syncConversationListPreviews/);
 assert.match(ui, /discover-conversations/);
-assert.match(ui, /历史列表发现/, 'stored discovery counts remain readable without claiming automatic collection');
+assert.match(ui, /列表发现/, 'discovery counts remain readable for both stored and active collection');
 assert.match(ui, /COLLECTION_CAPABILITY_BLOCKED/, 'unavailable legacy collection must be explicit');
 assert.match(ui, /maybeStartAutomaticReadHistoryCollection/);
 assert.match(ui, /readHistoryAutoStarted/);
@@ -25,10 +25,10 @@ assert.match(ui, /unreadCount\)\s*>\s*0|unreadCount\s*\|\|\s*conversation\.unrea
 assert.match(ui, /analysisStatus/);
 assert.match(ui, /coverageStatus:\s*unreadConversation\s*\?\s*'unread-skipped'\s*:\s*'list-only'/, '列表无预览时仍需标记采集完成');
 assert.match(ui, /progressed/, '列表采集进度需要在无预览行时继续推进');
-assert.match(ui, /if \(!state\.backgroundActive \|\| !collectionCapability\(\)\.backgroundCollection\) return;/,
-  'the shared session lifetime cannot register a legacy collector timer when capability is blocked');
-assert.match(ui, /async function refreshCollectionSummary\(options = \{\}\) \{\s*if \(!collectionCapability\(\)\.backgroundCollection\) return collectionBlockedResult\(\);/,
-  'automatic refresh must stop before queue reads/writes or AI scheduling, preserving existing persisted work');
+assert.match(ui, /if \(!state\.backgroundActive \|\| !collectionReady\('backgroundCollection'\)\) return;/,
+  'the shared session lifetime cannot poll before the independent collector is running');
+assert.match(ui, /async function refreshCollectionSummary\(options = \{\}\) \{\s*if \(!collectionReady\('backgroundCollection'\)\) return collectionBlockedResult\(\);/,
+  'automatic refresh must stop before queue reads/writes when independent login is not ready');
 assert.match(ui, /syncAnalysisToCrm/);
 assert.match(ui, /phone:\s*core\.extractPhone\(`\$\{externalId\} \$\{title\}`\)/, 'automatic identity matching may only inspect conversation identity fields');
 assert.doesNotMatch(ui, /phone:\s*core\.extractPhone\(`\$\{externalId\} \$\{title\} \$\{preview\}`\)/, 'message previews must not supply customer identity phone numbers');

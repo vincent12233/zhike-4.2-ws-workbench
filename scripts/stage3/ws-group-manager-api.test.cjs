@@ -65,9 +65,12 @@ async function json(response) { return { response, value: await response.json() 
   const disabledPort = await freePort();
   const disabled = startServer(disabledRoot, disabledPort, false);
   try {
-    const blocked = await json(await request(disabledPort, disabled.token, '/api/ws/group-manager/groups?accountId=default'));
-    assert.equal(blocked.response.status, 404);
-    assert.equal(blocked.value.code, 'GROUP_MANAGER_DISABLED');
+    const local = await json(await request(disabledPort, disabled.token, '/api/ws/group-manager/groups?accountId=default'));
+    assert.equal(local.response.status, 200);
+    assert.deepEqual(local.value.groups, []);
+    const blocked = await json(await request(disabledPort, disabled.token, '/api/ws/group-manager/groups?accountId=default', { method: 'POST', body: '{}' }));
+    assert.equal(blocked.response.status, 405);
+    assert.equal(blocked.value.code, 'GROUP_MANAGER_WRITE_DISABLED');
   } finally {
     await stopServer(disabled.child);
     rmSync(disabledRoot, { recursive: true, force: true });

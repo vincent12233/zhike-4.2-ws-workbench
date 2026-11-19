@@ -75,6 +75,14 @@ public sealed partial class LegacyUiHostPage : Page
     private EventHandler? _wsSessionsChangedHandler;
     private readonly ConcurrentDictionary<string, long> _wsStatusSequence = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<WebView2, WsNavigationLifecycle> _wsNavigation = new();
+    private readonly Dictionary<WebView2, Action> _wsCollectorCleanup = new();
+    private readonly Dictionary<WebView2, SemaphoreSlim> _wsCollectorGates = new();
+    private readonly HashSet<WebView2> _wsCollectorStarted = new();
+    private readonly Dictionary<WebView2, long> _wsCollectorEpoch = new();
+    private readonly Dictionary<string, JsonElement> _wsCollectorGroups = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, JsonElement> _wsCollectorMonitor = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _wsCollectorMonitorRunning = new(StringComparer.OrdinalIgnoreCase);
+    private string _wsCollectorVisibleAccountId = string.Empty;
     private readonly ConcurrentQueue<DeferredWsMessage> _wsDeferredMessages = new();
     private int _wsDeferredMessageCount;
     private const int MaxDeferredWsMessages = 128;
@@ -82,6 +90,8 @@ public sealed partial class LegacyUiHostPage : Page
     private sealed record DeferredWsMessage(
         string AccountId,
         long Generation,
+        long SourceEpoch,
+        WebView2 SourceView,
         CoreWebView2 Sender,
         CoreWebView2WebMessageReceivedEventArgs Args,
         string RawMessage);
@@ -448,6 +458,16 @@ public sealed partial class LegacyUiHostPage : Page
             IsHitTestVisible = false,
             Opacity = 0.01,
         };
+        // The independent collector has no environment, login or navigation
+        // until the operator explicitly opens its own QR login surface.
+        var collector = new WebView2
+        {
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            IsHitTestVisible = false,
+        };
+        _wsCollectorGates[collector] = new SemaphoreSlim(1, 1);
+        WsCollectorHost.Children.Add(collector);
         WsOverlayHost.Children.Add(view);
         try
         {
@@ -466,7 +486,7 @@ public sealed partial class LegacyUiHostPage : Page
             core.Settings.AreDevToolsEnabled = false;
             core.Settings.AreDefaultContextMenusEnabled = true;
             void MessageReceived(CoreWebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
-                => OnWsWebMessageReceived(accountId, generation, sender, args);
+                => OnWsWebMessageReceived(accountId, generation, view, sender, args);
             void NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs args)
             {
                 if (string.Equals(App.WsService.ActiveAccountId, accountId, StringComparison.OrdinalIgnoreCase)) _wsSendGuard.Invalidate();
@@ -511,9 +531,8 @@ public sealed partial class LegacyUiHostPage : Page
             core.NavigationStarting += NavigationStarting;
             core.NavigationCompleted += NavigationCompleted;
             core.NewWindowRequested += NewWindowRequested;
-            // RD02: only the normal foreground account surface is created.
-            // No hidden collector, profile snapshot, bootstrap or persistent
-            // capture script is installed; manual one-shot import stays separate.
+            // Foreground and collector are separate controls. Initialization
+            // of the collector is an explicit user action with its own login.
             return new WsWebViewSessionRegistration(view, released =>
             {
                 visibleNavigation.Dispose();
@@ -526,14 +545,26 @@ public sealed partial class LegacyUiHostPage : Page
                     released.CoreWebView2.NewWindowRequested -= NewWindowRequested;
                     try { released.CoreWebView2.Navigate("about:blank"); } catch { }
                 }
+                if (_wsCollectorCleanup.Remove(collector, out var cleanup)) cleanup();
+                _wsCollectorStarted.Remove(collector);
+                _wsCollectorGates.Remove(collector);
+                if (collector.Parent is Panel collectorParent) collectorParent.Children.Remove(collector);
+                try { collector.Close(); } catch { }
+                _wsCollectorGroups.Remove(accountId);
+                _wsCollectorMonitor.Remove(accountId);
+                _wsCollectorMonitorRunning.Remove(accountId);
+                if (string.Equals(_wsCollectorVisibleAccountId, accountId, StringComparison.OrdinalIgnoreCase)) _wsCollectorVisibleAccountId = string.Empty;
                 if (released.Parent is Panel parent) parent.Children.Remove(released);
                 try { released.Close(); } catch { }
-            });
+            }, collector);
         }
         catch
         {
             if (_wsNavigation.Remove(view, out var failedNavigation)) failedNavigation.Dispose();
             WsOverlayHost.Children.Remove(view);
+            _wsCollectorGates.Remove(collector);
+            WsCollectorHost.Children.Remove(collector);
+            try { collector.Close(); } catch { }
             try { view.Close(); } catch { }
             throw;
         }
@@ -555,11 +586,37 @@ public sealed partial class LegacyUiHostPage : Page
 
     private async Task HeartbeatPooledWsSessionAsync(WsWebViewSession session, bool driveCollection, CancellationToken cancellationToken)
     {
-        if (driveCollection) return;
+        if (driveCollection)
+        {
+            var collector = session.CollectorView;
+            if (collector?.CoreWebView2 is null || !_wsCollectorGates.TryGetValue(collector, out var gate)
+                || !await gate.WaitAsync(0, cancellationToken)) return;
+            try
+            {
+                if (!App.WsSessions.IsCurrent(session.AccountId, session.Generation, collector)) return;
+                if (session.CollectorState is "paused" or "not-started" or "error") return;
+                var status = await ProbeWsLoginStateAsync(session.AccountId, collector, session.Generation, cancellationToken, publishStatus: false);
+                if (!App.WsSessions.IsCurrent(session.AccountId, session.Generation, collector)) return;
+                if (session.CollectorState is "login-visible" or "paused" or "error") return;
+                if (status.status != "已连接")
+                {
+                    await StopWsCollectorAsync(session, status.status == "连接失败" ? "error" : "awaiting-login");
+                    return;
+                }
+                await StartWsCollectorAsync(session, cancellationToken);
+                if (session.CollectorState == "running" && App.WsSessions.IsCurrent(session.AccountId, session.Generation, collector))
+                    await ExecuteCollectorScriptAsync(session, "window.__zhikeWsBackgroundTick?.(); void 0;");
+            }
+            catch
+            {
+                await StopWsCollectorAsync(session, "error");
+                throw;
+            }
+            finally { gate.Release(); }
+            return;
+        }
         var view = session.View;
         if (!App.WsSessions.IsCurrent(session.AccountId, session.Generation, view) || view.CoreWebView2 is null) return;
-        // The only automatic foreground operation is the existing sparse,
-        // read-only connection probe. Never discover, scroll, click or capture.
         var now = DateTimeOffset.UtcNow;
         var lastHeartbeat = _lastForegroundWsHeartbeatAtByAccount.TryGetValue(session.AccountId, out var recorded)
             ? recorded : DateTimeOffset.MinValue;
@@ -568,13 +625,263 @@ public sealed partial class LegacyUiHostPage : Page
         await ProbeWsLoginStateAsync(session.AccountId, view, session.Generation, cancellationToken);
     }
 
+    private JsonElement CollectionCapabilityFor(string accountId)
+    {
+        App.WsService.TryGetSession(accountId, out var session);
+        var fields = JsonSerializer.SerializeToElement(WsCollectionCapability.Current).EnumerateObject()
+            .ToDictionary(property => property.Name, property => property.Value.Clone());
+        fields["collectorState"] = JsonSerializer.SerializeToElement(session?.CollectorState ?? "not-started");
+        return JsonSerializer.SerializeToElement(fields);
+    }
+
+    private void PublishCollectorState(WsWebViewSession session, string state, string? detail = null)
+    {
+        if (!App.WsSessions.IsCurrent(session.AccountId, session.Generation, session.CollectorView)) return;
+        var changed = !string.Equals(session.CollectorState, state, StringComparison.Ordinal);
+        if (!App.WsService.SetCollectorState(session.AccountId, state) || !changed && detail is null) return;
+        // Never report foreground "已连接" based on the independent login.
+        PublishWsStatus(JsonSerializer.SerializeToElement(new
+        {
+            accountId = session.AccountId, collectorState = state, collectorOnly = true,
+            detail = detail ?? (state == "running" ? "独立采集会话正在后台运行。" : "独立采集会话状态已更新。"),
+        }));
+    }
+
+    private async Task EnsureWsCollectorInitializedAsync(WsWebViewSession session, CancellationToken cancellationToken)
+    {
+#if STAGE51_ISOLATED_UI
+        await Task.CompletedTask;
+        throw new InvalidOperationException("隔离验收环境不连接采集会话。");
+#else
+        var view = session.CollectorView ?? throw new InvalidOperationException("独立采集容器不存在。");
+        if (view.CoreWebView2 is not null && _wsCollectorCleanup.ContainsKey(view)) return;
+        var environment = await _wsProfiles.GetOrCreateCollectorProfileAsync(session.AccountId).WaitAsync(TimeSpan.FromSeconds(25), cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!App.WsSessions.IsCurrent(session.AccountId, session.Generation, view)) throw new InvalidOperationException("采集会话已关闭。");
+        await view.EnsureCoreWebView2Async(environment).AsTask().WaitAsync(TimeSpan.FromSeconds(25), cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!App.WsSessions.IsCurrent(session.AccountId, session.Generation, view)) throw new InvalidOperationException("采集会话已关闭。");
+        var core = view.CoreWebView2 ?? throw new InvalidOperationException("独立采集页面初始化失败。");
+        core.Settings.AreDevToolsEnabled = false;
+        core.Settings.AreDefaultContextMenusEnabled = true;
+        var navigation = new WsNavigationLifecycle(session.AccountId, session.Generation, "collector");
+        _wsNavigation[view] = navigation;
+        _wsCollectorEpoch[view] = 0;
+        void MessageReceived(CoreWebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
+            => OnWsWebMessageReceived(session.AccountId, session.Generation, view, sender, args);
+        void NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs args)
+        {
+            OnWsNavigationStarting(sender, args);
+            navigation.Starting(args.NavigationId, args.Cancel, args.IsUserInitiated && !args.IsRedirected);
+            if (args.Cancel || !App.WsSessions.IsCurrent(session.AccountId, session.Generation, view)) return;
+            _wsCollectorStarted.Remove(view);
+            _wsCollectorEpoch[view] = _wsCollectorEpoch.GetValueOrDefault(view) + 1;
+            if (session.CollectorState is not ("paused" or "login-visible")) PublishCollectorState(session, "awaiting-login");
+        }
+        async void NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs args)
+        {
+            try
+            {
+                if (!App.WsSessions.IsCurrent(session.AccountId, session.Generation, view)) return;
+                var completion = navigation.Completed(args.NavigationId, args.IsSuccess,
+                    args.WebErrorStatus == CoreWebView2WebErrorStatus.OperationCanceled,
+                    string.Equals(core.Source, "about:blank", StringComparison.OrdinalIgnoreCase));
+                if (completion.Outcome is "policy-cancelled" or "operation-cancelled" or "stale-navigation" or "ignored-duplicate-or-disposed" or "isolated-document") return;
+                if (!args.IsSuccess)
+                {
+                    PublishCollectorState(session, "error", "独立采集页面加载失败，请重新打开采集登录。");
+                    return;
+                }
+                await HeartbeatPooledWsSessionAsync(session, true, CancellationToken.None);
+            }
+            catch { PublishCollectorState(session, "error", "独立采集页面初始化失败，请重新打开采集登录。"); }
+        }
+        void NewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs args) => OnWsNewWindowRequested(sender, args);
+        core.WebMessageReceived += MessageReceived;
+        core.NavigationStarting += NavigationStarting;
+        core.NavigationCompleted += NavigationCompleted;
+        core.NewWindowRequested += NewWindowRequested;
+        _wsCollectorCleanup[view] = () =>
+        {
+            navigation.Dispose();
+            _wsNavigation.Remove(view);
+            _wsCollectorEpoch.Remove(view);
+            core.WebMessageReceived -= MessageReceived;
+            core.NavigationStarting -= NavigationStarting;
+            core.NavigationCompleted -= NavigationCompleted;
+            core.NewWindowRequested -= NewWindowRequested;
+        };
+        navigation.Request("explicit-collector-login", explicitBoundary: true);
+        core.Navigate("https://web.whatsapp.com/");
+#endif
+    }
+
+    private static async Task<string> ExecuteCollectorScriptAsync(WsWebViewSession session, string script, CancellationToken cancellationToken = default)
+    {
+        var core = session.CollectorView?.CoreWebView2 ?? throw new InvalidOperationException("独立采集页面尚未打开。");
+        return await core.ExecuteScriptAsync(script).AsTask().WaitAsync(TimeSpan.FromSeconds(12), cancellationToken);
+    }
+
+    private async Task StopWsCollectorAsync(WsWebViewSession session, string state)
+    {
+        var view = session.CollectorView;
+        if (view is null || !App.WsSessions.IsCurrent(session.AccountId, session.Generation, view)) return;
+        // Revoke host ingress first; callbacks queued before pause cannot write.
+        PublishCollectorState(session, state);
+        _wsCollectorEpoch[view] = _wsCollectorEpoch.GetValueOrDefault(view) + 1;
+        _wsCollectorStarted.Remove(view);
+        if (view.CoreWebView2 is not null)
+            try { await ExecuteCollectorScriptAsync(session, "window.__zhikeStopCapture?.(); void 0;"); } catch { }
+    }
+
+    // Caller owns the collector operation gate and has independently probed login.
+    private async Task StartWsCollectorAsync(WsWebViewSession session, CancellationToken cancellationToken)
+    {
+#if STAGE51_ISOLATED_UI
+        await Task.CompletedTask;
+#else
+        var view = session.CollectorView;
+        if (view?.CoreWebView2 is null || !App.WsSessions.IsCurrent(session.AccountId, session.Generation, view)
+            || session.CollectorState is "paused" or "login-visible" or "not-started" or "error") return;
+        if (!IsAllowedWsPopupNavigation(view.CoreWebView2.Source)) return;
+        if (_wsCollectorStarted.Contains(view)) { PublishCollectorState(session, "running"); return; }
+        var epoch = _wsCollectorEpoch.GetValueOrDefault(view);
+        cancellationToken.ThrowIfCancellationRequested();
+        PublishCollectorState(session, "running");
+        try
+        {
+            var installed = ParseWebViewJsonResult(await ExecuteCollectorScriptAsync(session,
+                "window.__zhikeWsCollectorRole='background';\n" + BuildWsCollectorScript(session.AccountId)
+                + "\nJSON.stringify({supported:typeof window.__zhikeWsCollectAllRead==='function' && typeof window.__zhikeWsBackgroundTick==='function'});", cancellationToken));
+            if (installed.ValueKind != JsonValueKind.Object || !GetBool(installed, "supported"))
+                throw new InvalidOperationException("独立采集脚本未就绪。");
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!App.WsSessions.IsCurrent(session.AccountId, session.Generation, view)
+                || _wsCollectorEpoch.GetValueOrDefault(view) != epoch || session.CollectorState != "running") return;
+            if (_wsCollectorGroups.TryGetValue(session.AccountId, out var groups))
+                await ExecuteCollectorScriptAsync(session, $"window.__zhikeWsConfigureWsGroups?.({groups.GetRawText()}); void 0;");
+            if (_wsCollectorMonitor.TryGetValue(session.AccountId, out var monitor))
+                await ExecuteCollectorScriptAsync(session, $"window.__zhikeWsConfigureGroupMonitor?.({monitor.GetRawText()}); void 0;");
+            if (_wsCollectorMonitorRunning.Contains(session.AccountId))
+                await ExecuteCollectorScriptAsync(session, "window.__zhikeWsGroupMonitorStart?.(); void 0;");
+            if (App.WsSessions.IsCurrent(session.AccountId, session.Generation, view)
+                && _wsCollectorEpoch.GetValueOrDefault(view) == epoch && session.CollectorState == "running") _wsCollectorStarted.Add(view);
+        }
+        catch
+        {
+            await StopWsCollectorAsync(session, "error");
+            throw;
+        }
+#endif
+    }
+
+    private async Task<BridgeResponse> HandleCollectorActionAsync(string requestId, string accountId, string action,
+        JsonElement payload, CancellationToken cancellationToken)
+    {
+#if STAGE51_ISOLATED_UI
+        await Task.CompletedTask;
+        return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_ISOLATED_PREVIEW", "隔离验收环境不会连接 WhatsApp 采集会话。");
+#else
+        _wsSendGuard.Invalidate();
+        if (action == "open-collector") await OpenWsOverlayAsync(accountId, payload, cancellationToken: cancellationToken);
+        if (!App.WsService.TryGetSession(accountId, out var session) || session?.CollectorView is not { } collector
+            || !_wsCollectorGates.TryGetValue(collector, out var gate))
+            return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_NOT_STARTED", "请先打开独立采集登录并扫码。");
+        if (action == "pause-collector")
+        {
+            PublishCollectorState(session, "paused");
+            _wsCollectorEpoch[collector] = _wsCollectorEpoch.GetValueOrDefault(collector) + 1;
+        }
+        if (!await gate.WaitAsync(TimeSpan.FromSeconds(15), cancellationToken))
+            return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_BUSY", "独立采集页面正在响应，请稍后重试。");
+        try
+        {
+            if (!App.WsSessions.IsCurrent(accountId, session.Generation, collector))
+                return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_NOT_STARTED", "采集会话已关闭，请重新打开。");
+            if (action == "open-collector")
+            {
+                var wasError = session.CollectorState == "error";
+                await StopWsCollectorAsync(session, "login-visible");
+                await EnsureWsCollectorInitializedAsync(session, cancellationToken);
+                if (wasError && collector.CoreWebView2 is not null)
+                {
+                    if (_wsNavigation.TryGetValue(collector, out var navigation)) navigation.Request("explicit-collector-reconnect", explicitBoundary: true);
+                    collector.CoreWebView2.Reload();
+                }
+                _wsCollectorVisibleAccountId = accountId;
+                SyncPooledWsPresentation();
+                ApplyWsBounds(payload);
+                RequestWsOverlayResize();
+                return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new
+                {
+                    accountId, collectorState = session.CollectorState, loginVisible = true,
+                    detail = "请在独立采集会话中扫码；它与前台聊天使用不同登录。完成后返回聊天并开始后台采集。",
+                }));
+            }
+            if (collector.CoreWebView2 is null)
+                return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_NOT_STARTED", "请先打开独立采集登录并扫码。");
+            if (string.Equals(_wsCollectorVisibleAccountId, accountId, StringComparison.OrdinalIgnoreCase)) _wsCollectorVisibleAccountId = string.Empty;
+            if (action == "pause-collector" || action == "hide-collector" && session.CollectorState == "paused")
+                await StopWsCollectorAsync(session, "paused");
+            else
+            {
+                var status = await ProbeWsLoginStateAsync(accountId, collector, session.Generation, cancellationToken, publishStatus: false);
+                if (!App.WsSessions.IsCurrent(accountId, session.Generation, collector))
+                    return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_NOT_STARTED", "采集会话已关闭。");
+                PublishCollectorState(session, status.status == "连接失败" ? "error" : "awaiting-login");
+                if (status.status == "已连接") await StartWsCollectorAsync(session, cancellationToken);
+            }
+            SyncPooledWsPresentation();
+            ApplyWsBounds(payload);
+            RequestWsOverlayResize();
+            return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion,
+                JsonSerializer.SerializeToElement(new { accountId, collectorState = session.CollectorState, loginVisible = false }));
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            await StopWsCollectorAsync(session, "paused");
+            throw;
+        }
+        catch
+        {
+            await StopWsCollectorAsync(session, "error");
+            throw;
+        }
+        finally { gate.Release(); }
+#endif
+    }
+
+    private async Task<BridgeResponse> ExecuteCollectorCommandAsync(string requestId, string accountId, string script, CancellationToken cancellationToken)
+    {
+        if (!App.WsService.TryGetSession(accountId, out var session) || session?.CollectorView is not { } collector
+            || collector.CoreWebView2 is null || !_wsCollectorGates.TryGetValue(collector, out var gate))
+            return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_NOT_STARTED", "请先打开独立采集登录并扫码。");
+        if (!await gate.WaitAsync(TimeSpan.FromSeconds(15), cancellationToken))
+            return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_BUSY", "独立采集页面正在响应，请稍后重试。");
+        try
+        {
+            if (!App.WsSessions.IsCurrent(accountId, session.Generation, collector) || session.CollectorState != "running")
+                return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_NOT_READY", "独立采集会话尚未运行，请完成登录并恢复采集。");
+            var epoch = _wsCollectorEpoch.GetValueOrDefault(collector);
+            var raw = await ExecuteCollectorScriptAsync(session, script, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!App.WsSessions.IsCurrent(accountId, session.Generation, collector) || session.CollectorState != "running"
+                || epoch != _wsCollectorEpoch.GetValueOrDefault(collector))
+                return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_CONTEXT_CHANGED", "采集页面已改变，请重试。");
+            var result = ParseWebViewJsonResult(raw);
+            if (result.ValueKind != JsonValueKind.Object || result.TryGetProperty("supported", out var supported) && supported.ValueKind == JsonValueKind.False)
+                return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_NOT_READY", "独立采集页面尚未就绪，请稍后重试。");
+            return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, result);
+        }
+        finally { gate.Release(); }
+    }
+
     private void SyncPooledWsPresentation()
     {
         var sessions = App.WsService.Sessions();
         var active = App.WsService.ActiveSession;
-        // Retain existing foreground-account Core instances across navigation.
-        // A surviving pooled account remains only a layout anchor; RD02 does
-        // not lease or activate an authenticated background collector.
+        // Keep the foreground Core as the stable account/send identity even
+        // while the independently authenticated collector login is displayed.
         var layoutAnchor = active ?? sessions.FirstOrDefault();
         if (layoutAnchor is not null)
         {
@@ -592,12 +899,21 @@ public sealed partial class LegacyUiHostPage : Page
             if (session.View.Parent is Panel prior && !ReferenceEquals(prior, WsOverlayHost)) prior.Children.Remove(session.View);
             if (!WsOverlayHost.Children.Contains(session.View)) WsOverlayHost.Children.Add(session.View);
             var selected = active is not null && ReferenceEquals(active.View, session.View);
+            var showCollector = selected && string.Equals(_wsCollectorVisibleAccountId, session.AccountId, StringComparison.OrdinalIgnoreCase);
             session.View.Visibility = Visibility.Visible;
-            session.View.Opacity = selected ? 1d : 0.01d;
-            session.View.IsHitTestVisible = selected && _hostWindowRenderable && IsWsChatPresentationActive;
-            Canvas.SetZIndex(session.View, selected ? 20 : 0);
-
-
+            session.View.Opacity = selected && !showCollector ? 1d : 0.01d;
+            session.View.IsHitTestVisible = selected && !showCollector && _hostWindowRenderable && IsWsChatPresentationActive;
+            Canvas.SetZIndex(session.View, selected && !showCollector ? 20 : 0);
+            if (session.CollectorView is { } collector)
+            {
+                var target = showCollector ? WsOverlayHost : WsCollectorHost;
+                if (collector.Parent is Panel priorCollector && !ReferenceEquals(priorCollector, target)) priorCollector.Children.Remove(collector);
+                if (!target.Children.Contains(collector)) target.Children.Add(collector);
+                collector.Visibility = Visibility.Visible;
+                collector.Opacity = 1d;
+                collector.IsHitTestVisible = showCollector && _hostWindowRenderable && IsWsChatPresentationActive;
+                Canvas.SetZIndex(collector, showCollector ? 30 : 0);
+            }
         }
         if (!IsWsChatPresentationActive)
         {
@@ -1175,16 +1491,37 @@ public sealed partial class LegacyUiHostPage : Page
 
     private async Task<BridgeResponse> HandleWsActionAsync(string requestId, JsonElement payload, string? requestAccountId, CancellationToken cancellationToken)
     {
+        var accountId = StringValue(payload, "accountId");
+        if (string.IsNullOrWhiteSpace(accountId)) accountId = requestAccountId ?? _activeWsAccountId;
+        if (string.IsNullOrWhiteSpace(accountId)) accountId = "default";
+        BridgeResponse response;
+        try { response = await HandleWsActionCoreAsync(requestId, payload, requestAccountId, cancellationToken); }
+        catch (OperationCanceledException) { response = BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "TIMEOUT", "desktop bridge request timed out"); }
+        catch { response = BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "BRIDGE_ERROR", "desktop WS operation failed"); }
+        var fields = response.Data is { ValueKind: JsonValueKind.Object } data
+            ? data.EnumerateObject().ToDictionary(property => property.Name, property => property.Value.Clone())
+            : new Dictionary<string, JsonElement>();
+        fields["accountId"] = JsonSerializer.SerializeToElement(accountId);
+        fields["collectionCapability"] = CollectionCapabilityFor(accountId);
+        return response with { Data = JsonSerializer.SerializeToElement(fields) };
+    }
+
+    private async Task<BridgeResponse> HandleWsActionCoreAsync(string requestId, JsonElement payload, string? requestAccountId, CancellationToken cancellationToken)
+    {
         cancellationToken.ThrowIfCancellationRequested();
         var action = StringValue(payload, "action").ToLowerInvariant();
         var id = StringValue(payload, "accountId");
         if (string.IsNullOrWhiteSpace(id)) id = requestAccountId ?? _activeWsAccountId;
         if (string.IsNullOrWhiteSpace(id)) id = "default";
-        if (WsCollectionCapability.BlocksAction(action)) return WsCollectionBlocked(requestId, id);
         if (action is "open" or "hide" or "close" or "clear-session" or "reload" or "reconnect") _wsSendGuard.Invalidate();
         _activeWsAccountId = id;
         switch (action)
         {
+            case "open-collector":
+            case "hide-collector":
+            case "pause-collector":
+            case "resume-collector":
+                return await HandleCollectorActionAsync(requestId, id, action, payload, cancellationToken);
             case "open":
                 await OpenWsOverlayAsync(id, payload, cancellationToken: cancellationToken);
                 return await WsStatusResponseAsync(requestId, id, cancellationToken);
@@ -1287,6 +1624,7 @@ public sealed partial class LegacyUiHostPage : Page
             return _wsSendGuard.IsCurrent(ticket, App.WsService.ActiveAccountId, current.Generation,
                 current, current.View, current.View.CoreWebView2,
                 _hostWindowRenderable && IsWsChatPresentationActive
+                    && string.IsNullOrWhiteSpace(_wsCollectorVisibleAccountId)
                     && string.Equals(App.WsRuntime.Snapshot().ForegroundAccountId, ticket.AccountId, StringComparison.OrdinalIgnoreCase));
         }
         catch (ObjectDisposedException) { return false; }
@@ -1547,18 +1885,42 @@ public sealed partial class LegacyUiHostPage : Page
 """;
     }
 
-    private Task<BridgeResponse> ConfigureVipGroupsAsync(string requestId, string accountId, JsonElement payload, CancellationToken cancellationToken)
-        => Task.FromResult(WsCollectionBlocked(requestId, accountId));
+    private async Task<BridgeResponse> ConfigureVipGroupsAsync(string requestId, string accountId, JsonElement payload, CancellationToken cancellationToken)
+    {
+        var values = payload.TryGetProperty("wsGroups", out var wsGroups) ? wsGroups
+            : payload.TryGetProperty("vipGroups", out var vipGroups) ? vipGroups : default;
+        if (values.ValueKind != JsonValueKind.Array)
+            return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "INVALID_REQUEST", "采集群组白名单必须是数组。");
+        var groups = JsonSerializer.SerializeToElement(values.EnumerateArray().Where(value => value.ValueKind == JsonValueKind.String)
+            .Select(value => value.GetString() ?? "").Where(value => value.Length > 0 && value.Length <= 240).Take(500).ToArray());
+        var response = await ExecuteCollectorCommandAsync(requestId, accountId,
+            $"JSON.stringify(window.__zhikeWsConfigureWsGroups?.({groups.GetRawText()}) ?? {{supported:false}})", cancellationToken);
+        if (response.Ok) _wsCollectorGroups[accountId] = groups;
+        return response;
+    }
 
-    private Task<BridgeResponse> ConfigureGroupMonitorAsync(string requestId, string accountId, JsonElement payload, CancellationToken cancellationToken)
-        => Task.FromResult(WsCollectionBlocked(requestId, accountId));
+    private async Task<BridgeResponse> ConfigureGroupMonitorAsync(string requestId, string accountId, JsonElement payload, CancellationToken cancellationToken)
+    {
+        if (!payload.TryGetProperty("targets", out var targets) || targets.ValueKind != JsonValueKind.Array || targets.GetArrayLength() > 500)
+            return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "INVALID_REQUEST", "群组监控目标无效或超过 500 项。");
+        var response = await ExecuteCollectorCommandAsync(requestId, accountId,
+            $"JSON.stringify(window.__zhikeWsConfigureGroupMonitor?.({payload.GetRawText()}) ?? {{supported:false}})", cancellationToken);
+        if (response.Ok) _wsCollectorMonitor[accountId] = payload.Clone();
+        return response;
+    }
 
-    private Task<BridgeResponse> SetGroupMonitorStateAsync(string requestId, string accountId, string action, CancellationToken cancellationToken)
+    private async Task<BridgeResponse> SetGroupMonitorStateAsync(string requestId, string accountId, string action, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        if (action is not ("pause" or "stop")) return Task.FromResult(WsCollectionBlocked(requestId, accountId));
-        return Task.FromResult(BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion,
-            JsonSerializer.SerializeToElement(new { accountId, action, applied = true, localOnly = true, monitorState = action == "pause" ? "paused" : "stopped", collectionCapability = WsCollectionCapability.Current })));
+        if (action is "pause" or "stop") _wsCollectorMonitorRunning.Remove(accountId);
+        var method = action switch { "start" => "Start", "pause" => "Pause", _ => "Stop" };
+        var response = await ExecuteCollectorCommandAsync(requestId, accountId,
+            $"JSON.stringify(window.__zhikeWsGroupMonitor{method}?.() ?? {{supported:false}})", cancellationToken);
+        if (response.Ok && action == "start") _wsCollectorMonitorRunning.Add(accountId);
+        if (!response.Ok && action is "pause" or "stop")
+            return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion,
+                JsonSerializer.SerializeToElement(new { accountId, action, applied = true, monitorState = action == "pause" ? "paused" : "stopped" }));
+        return response;
     }
 
     private async Task<List<StoredWsAccount>> LoadWsAccountsAsync(CancellationToken cancellationToken = default)
@@ -1628,13 +1990,12 @@ public sealed partial class LegacyUiHostPage : Page
             Stage51Isolation.Record("ws-account-selected", new { accountId, generation = acquired.Session.Generation, created = acquired.Created, reload });
 #endif
             _activeWsAccountId = accountId;
+            _wsCollectorVisibleAccountId = string.Empty;
             SyncPooledWsPresentation();
             if (reload)
             {
                 if (_wsNavigation.TryGetValue(acquired.Session.View, out var visibleNavigation)) visibleNavigation.Request("explicit-refresh-or-reconnect", explicitBoundary: true);
-                if (acquired.Session.CollectorView is not null && _wsNavigation.TryGetValue(acquired.Session.CollectorView, out var collectorNavigation)) collectorNavigation.Request("explicit-refresh-or-reconnect", explicitBoundary: true);
                 if (acquired.Session.View.CoreWebView2 is not null) acquired.Session.View.CoreWebView2.Reload();
-                if (acquired.Session.CollectorView?.CoreWebView2 is not null) acquired.Session.CollectorView.CoreWebView2.Reload();
             }
             ApplyWsBounds(payload);
             RequestWsOverlayResize();
@@ -1996,7 +2357,8 @@ public sealed partial class LegacyUiHostPage : Page
     private void PublishWsStatus(JsonElement payload)
     {
         var fields = payload.EnumerateObject().ToDictionary(property => property.Name, property => property.Value.Clone());
-        fields["collectionCapability"] = JsonSerializer.SerializeToElement(WsCollectionCapability.Current);
+        var accountId = StringValue(payload, "accountId");
+        fields["collectionCapability"] = CollectionCapabilityFor(accountId);
         GetBridge().Publish("ws.status", JsonSerializer.SerializeToElement(fields));
     }
 
@@ -2017,11 +2379,11 @@ public sealed partial class LegacyUiHostPage : Page
             status = "未连接",
             detail = isolatedPreview ? "隔离验收会话容器已打开，未连接 WhatsApp。" : "隔离验收会话容器尚未打开。",
             isolatedPreview,
-            collectionCapability = WsCollectionCapability.Current,
+            collectionCapability = CollectionCapabilityFor(accountId),
         })));
 #else
         var status = await ProbeWsLoginStateAsync(accountId, session?.View, session?.Generation ?? 0, cancellationToken);
-        return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { accountId, status.status, detail = status.detail, collectionCapability = WsCollectionCapability.Current }));
+        return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { accountId, status.status, detail = status.detail, collectionCapability = CollectionCapabilityFor(accountId) }));
 #endif
     }
 
@@ -2098,7 +2460,12 @@ public sealed partial class LegacyUiHostPage : Page
 
     private async Task<BridgeResponse> ExecuteWsCaptureAsync(string requestId, string accountId, string kind, CancellationToken cancellationToken = default)
     {
-        if (kind is "discover" or "collect-all-read") return WsCollectionBlocked(requestId, accountId);
+        if (kind is "discover" or "collect-all-read")
+        {
+            var method = kind == "discover" ? "__zhikeWsDiscoverAll" : "__zhikeWsCollectAllRead";
+            return await ExecuteCollectorCommandAsync(requestId, accountId,
+                $"JSON.stringify(window.{method}?.() ?? {{supported:false}})", cancellationToken);
+        }
         cancellationToken.ThrowIfCancellationRequested();
         if (!App.WsService.TryGetSession(accountId, out var session) || session is null || session.View.CoreWebView2 is null)
             return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "NOT_CONNECTED", "WS 页面尚未打开。");
@@ -2151,15 +2518,16 @@ public sealed partial class LegacyUiHostPage : Page
         }
     }
 
-    private void OnWsWebMessageReceived(CoreWebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
-        => _ = ProcessWsWebMessageAsync(_wsViewAccountId, _wsGeneration, sender, args);
-
-    private async void OnWsWebMessageReceived(string sessionAccountId, long sessionGeneration, CoreWebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
-        => await ProcessWsWebMessageAsync(sessionAccountId, sessionGeneration, sender, args);
+    private async void OnWsWebMessageReceived(string sessionAccountId, long sessionGeneration, WebView2 sourceView,
+        CoreWebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
+        => await ProcessWsWebMessageAsync(sessionAccountId, sessionGeneration, sourceView,
+            _wsCollectorEpoch.GetValueOrDefault(sourceView), sender, args);
 
     private async Task ProcessWsWebMessageAsync(
         string sessionAccountId,
         long sessionGeneration,
+        WebView2 sourceView,
+        long sourceEpoch,
         CoreWebView2 sender,
         CoreWebView2WebMessageReceivedEventArgs args,
         string? deferredRawMessage = null,
@@ -2175,14 +2543,14 @@ public sealed partial class LegacyUiHostPage : Page
             // history packet arrives while another packet is being persisted,
             // retaining this exact string lets the deferred worker replay it
             // without scrolling or reopening the foreground chat.
-            if (!IsAllowedNavigation(args.Source, "web.whatsapp.com")) return;
+            if (!IsAllowedWsPopupNavigation(args.Source)) return;
             rawMessage = deferredRawMessage ?? args.TryGetWebMessageAsString();
             if (rawMessage.Length > 1_200_000) return;
             if (!gateAlreadyHeld)
                 gateEntered = await _wsMessageGate.WaitAsync(TimeSpan.FromSeconds(8));
             if (!gateEntered)
             {
-                var queued = EnqueueDeferredWsMessage(new DeferredWsMessage(sessionAccountId, sessionGeneration, sender, args, rawMessage));
+                var queued = EnqueueDeferredWsMessage(new DeferredWsMessage(sessionAccountId, sessionGeneration, sourceEpoch, sourceView, sender, args, rawMessage));
                 try { PublishWsStatus(JsonSerializer.SerializeToElement(new { accountId = sessionAccountId, status = queued ? "已排队" : "暂存失败", detail = queued ? "WS 消息处理暂时繁忙，原文已排队等待重试。" : "WS 消息暂存队列已满，请稍后重试。", retryable = true, background = false, observedAt = DateTimeOffset.UtcNow })); } catch { }
                 return;
             }
@@ -2192,7 +2560,9 @@ public sealed partial class LegacyUiHostPage : Page
             // valid full-history packets while synchronous list discovery
             // continues to work.  Trust the handler attachment and validate
             // the source origin plus the claimed isolated account below.
-            if (!App.WsSessions.IsCurrent(sessionAccountId, sessionGeneration)) return;
+            if (!App.WsSessions.IsCurrent(sessionAccountId, sessionGeneration, sourceView)
+                || _wsCollectorEpoch.GetValueOrDefault(sourceView) != sourceEpoch
+                || !App.WsService.TryGetSession(sessionAccountId, out var sourceSession) || sourceSession is null) return;
             using var document = JsonDocument.Parse(rawMessage);
             var root = document.RootElement;
             if (!string.Equals(StringValue(root, "type"), "zhike.ws.capture", StringComparison.Ordinal)) return;
@@ -2200,9 +2570,8 @@ public sealed partial class LegacyUiHostPage : Page
             var accountId = sessionAccountId;
             if (string.IsNullOrWhiteSpace(accountId) || (!string.IsNullOrWhiteSpace(claimedAccountId) && !string.Equals(claimedAccountId, accountId, StringComparison.Ordinal))) return;
             var collectorRole = StringValue(root, "collectorRole").ToLowerInvariant();
-            fromBackgroundCollector = collectorRole == "background";
-            // RD02: background packets cannot authorize their own ingestion.
-            if (fromBackgroundCollector) return;
+            if (!WsCollectorIngress.TryAuthorize(sourceSession, sessionGeneration, sourceView, claimedAccountId, collectorRole,
+                out fromBackgroundCollector)) return;
             var capturedAt = DateTimeOffset.TryParse(StringValue(root, "capturedAt"), out var parsedCaptured) ? parsedCaptured : DateTimeOffset.UtcNow;
             var eventName = StringValue(root, "eventName");
             if (!string.IsNullOrWhiteSpace(eventName))
@@ -2243,7 +2612,10 @@ public sealed partial class LegacyUiHostPage : Page
                     "collection-complete" => $"WS 历史采集已完成：处理 {GetInt(root, "processed")} 个，会话 {GetInt(root, "discovered")} 个，待重试 {GetInt(root, "retryable")} 个。",
                     _ => "WS 自动采集状态已更新。",
                 };
-                PublishWsStatus(JsonSerializer.SerializeToElement(new { accountId, status = "已连接", detail, eventName, background = fromBackgroundCollector, observedAt = capturedAt }));
+                if (fromBackgroundCollector)
+                    PublishWsStatus(JsonSerializer.SerializeToElement(new { accountId, collectorOnly = true, collectorState = sourceSession.CollectorState, detail, eventName, background = true, observedAt = capturedAt }));
+                else
+                    PublishWsStatus(JsonSerializer.SerializeToElement(new { accountId, status = "已连接", detail, eventName, background = false, observedAt = capturedAt }));
                 if (isComplete)
                     GetBridge().Publish("ws.message", JsonSerializer.SerializeToElement(new { accountId, eventName, collectionComplete = true, background = fromBackgroundCollector, observedAt = capturedAt }));
                 return;
@@ -2366,14 +2738,15 @@ public sealed partial class LegacyUiHostPage : Page
             var requestCheckpoints = checkpoints;
             var ingestScope = fromBackgroundCollector ? "background-collector" : "visible-authorized-content";
             var request = new WsIngestBatchRequestDto("zhike.ws.ingest.batch.v1", "desktop-webview2", accountId, capturedAt, ingestScope, messages, requestCheckpoints, groupEvents);
-            await SetWsStatusAsync(accountId, "已连接");
+            if (!fromBackgroundCollector) await SetWsStatusAsync(accountId, "已连接");
             await _wsQueue.EnqueueAsync("api/ws/ingest/batch", request);
-            if (historyAcks.Count > 0 && App.WsService.TryGetSession(accountId, out var sourceSession) && sourceSession?.View.CoreWebView2 is not null)
+            if (historyAcks.Count > 0 && fromBackgroundCollector
+                && App.WsSessions.IsCurrent(accountId, sessionGeneration, sourceView)
+                && _wsCollectorEpoch.GetValueOrDefault(sourceView) == sourceEpoch
+                && sourceSession.CollectorState == "running" && sourceView.CoreWebView2 is not null)
             {
                 var ackJson = JsonSerializer.Serialize(historyAcks);
-                var collector = sourceSession.CollectorView;
-                var ackView = fromBackgroundCollector && collector?.CoreWebView2 is not null ? collector : sourceSession.View;
-                try { await ackView.CoreWebView2.ExecuteScriptAsync($"window.__zhikeWsAcknowledgeHistory?.({ackJson}); void 0;"); } catch { }
+                try { await ExecuteCollectorScriptAsync(sourceSession, $"window.__zhikeWsAcknowledgeHistory?.({ackJson}); void 0;"); } catch { }
             }
             _ = FlushWsQueueAsync();
             // Normal background batches are durable-ingest telemetry. The
@@ -2442,6 +2815,8 @@ public sealed partial class LegacyUiHostPage : Page
                     await ProcessWsWebMessageAsync(
                         deferred.AccountId,
                         deferred.Generation,
+                        deferred.SourceView,
+                        deferred.SourceEpoch,
                         deferred.Sender,
                         deferred.Args,
                         deferred.RawMessage,

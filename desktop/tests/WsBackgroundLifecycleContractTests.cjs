@@ -34,23 +34,25 @@ assert.match(hostXaml, /x:Name="WsOverlayLayer"[^>]*Visibility="Collapsed"[^>]*I
 assert.match(host, /private void HideWsOverlay\(\)[\s\S]*_wsView\?\.CoreWebView2 is null[\s\S]*Canvas\.SetZIndex\(WsOverlayLayer, -1\)[\s\S]*Visibility\.Visible/, 'an active hidden WS view must retain nonzero layout behind the parent instead of being collapsed');
 assert.match(host, /Canvas\.SetZIndex\(WsOverlayLayer, 20\)[\s\S]*IsHitTestVisible = true/, 'returning to WS restores foreground z-order and input only after trusted bounds');
 
-const heartbeat = between(host, 'private async Task HeartbeatPooledWsSessionAsync', 'private void SyncPooledWsPresentation');
-assert.match(heartbeat, /if \(driveCollection\) return;/, 'RD02 must reject a collection-driving heartbeat');
-assert.match(heartbeat, /App\.WsSessions\.IsCurrent\(session\.AccountId, session\.Generation, view\)/, 'foreground probes remain fenced by account, generation and view');
-assert.match(heartbeat, /ProbeWsLoginStateAsync\(session\.AccountId, view, session\.Generation, cancellationToken\)/, 'only the existing read-only foreground login probe remains');
-assert.doesNotMatch(heartbeat, /CollectorView|__zhikeWsBackgroundTick|__zhikeWsDiscoverAll|__zhikeWsCollectAllRead|EnsureWsCollector/,
-  'the native heartbeat cannot create/wake/fall back to a collector');
+const heartbeat = between(host, 'private async Task HeartbeatPooledWsSessionAsync', 'private JsonElement CollectionCapabilityFor');
+assert.match(heartbeat, /if \(driveCollection\)[\s\S]*var collector = session\.CollectorView/, 'collection heartbeat uses the independent control');
+assert.match(heartbeat, /ProbeWsLoginStateAsync\(session\.AccountId, collector, session\.Generation, cancellationToken, publishStatus: false\)/, 'collector authentication must not set foreground connection status');
+assert.match(heartbeat, /session\.CollectorState is "login-visible" or "paused" or "error"\) return/, 'visible collector login is never traversed automatically');
+const foregroundHeartbeat = heartbeat.slice(heartbeat.indexOf('        var view = session.View;'));
+assert.match(foregroundHeartbeat, /App\.WsSessions\.IsCurrent\(session\.AccountId, session\.Generation, view\)/, 'foreground probes remain fenced by account, generation and view');
+assert.match(foregroundHeartbeat, /ProbeWsLoginStateAsync\(session\.AccountId, view, session\.Generation, cancellationToken\)/);
+assert.doesNotMatch(foregroundHeartbeat, /CollectorView|__zhikeWsBackgroundTick|__zhikeWsDiscoverAll|__zhikeWsCollectAllRead/, 'foreground probes never fall back to collection');
 assert.doesNotMatch(workbench, /autoCaptureTimer|setInterval\(\(\) => \{ if \(state\.active && !document\.hidden\) void autoCaptureCurrentConversation\(\)/,
   'automatic message capture must stay in the hidden collector; the visible WS surface must not poll or read its chat DOM');
 assert.match(heartbeat, /_lastForegroundWsHeartbeatAtByAccount[\s\S]*now - lastHeartbeat < TimeSpan\.FromSeconds\(15\)/, 'visible WS heartbeat probes retain their actual per-account throttle while the operator chats');
 assert.doesNotMatch(host, /var foregroundScript = "\(\(\) => window\.__zhikeWsBackgroundTick/, 'foreground heartbeat must not execute the collector DOM tick');
 assert.doesNotMatch(runtime, /LeaseNextBackgroundAccount|GetOrCreateAsync\(backgroundId|RunHeartbeatAsync\(acquired\.Session, true/, 'RD02 scheduler must not keep attempting background account creation');
 assert.match(host, /var isCurrent = App\.WsSessions\.IsCurrent\(accountId, generation, view\);[\s\S]{0,100}if \(publishStatus && isCurrent\)/, 'status persistence retains its actual generation/current-view gate');
-assert.match(capability, /State => "blocked"[\s\S]*BackgroundCollection => false[\s\S]*ForegroundFallback => false/, 'collection capability is explicitly blocked independent of login');
-assert.match(host, /fields\["collectionCapability"\] = JsonSerializer\.SerializeToElement\(WsCollectionCapability\.Current\)/, 'all status events carry the typed capability instead of implying background collection');
-assert.doesNotMatch(host, /Publish\("ws\.background-tick"/, 'an unavailable collector cannot produce a live background wake event');
-// Legacy parsing/scheduling algorithms remain regression-tested as dormant
-// code, never as evidence of an active or authorized collector.
+assert.match(capability, /State => "available"[\s\S]*BackgroundCollection => true[\s\S]*AutomaticAi => false[\s\S]*ForegroundFallback => false/, 'independent collection support never enables foreground fallback or automatic AI');
+assert.match(host, /fields\["collectionCapability"\] = CollectionCapabilityFor\(accountId\)/, 'status events carry account-scoped collector state separately from foreground login');
+assert.doesNotMatch(host, /Publish\("ws\.background-tick"/, 'internal ticks do not cause unsolicited shell redraws');
+// The parsing/scheduling algorithms retain their bounded pagination, unread
+// handling and durable checkpoint rules when used by the independent collector.
 const legacyScript = host.match(/internal static string BuildWsCollectorScript\(string accountId\)\s*\{[\s\S]*?return \$\$"""([\s\S]*?)""";/)?.[1] || '';
 assert.match(legacyScript, /window\.__zhikeWsBackgroundTick\s*=\s*\(\)\s*=>[\s\S]*scheduleIncrementalReadHistory\(80\)/, 'retained legacy incremental scheduling semantics must not silently change');
 assert.match(legacyScript, /drainDueCollectorTasks\(\)/, 'retained legacy scheduler must preserve its bounded drain semantics');
@@ -59,7 +61,7 @@ assert.match(host, /PublishWsStatus\([\s\S]*background = fromBackgroundCollector
 assert.match(host, /Publish\("ws\.message"[\s\S]*background = fromBackgroundCollector/, 'isolated collector ingest events are marked so the foreground shell can avoid shared refreshes');
 assert.match(host, /ingestScope = fromBackgroundCollector \? "background-collector" : "visible-authorized-content"/, 'queued ingest packets preserve foreground/background origin for sync isolation');
 assert.match(host, /Publish\("sync\.updated"[\s\S]*request\.Scope, "background-collector"/, 'background queue flushes do not request a shared CRM redraw');
-assert.match(host, /supported = false, retryable = false, collectionCapability = WsCollectionCapability\.Current/, 'blocked responses carry bounded capability metadata without scheduling a collector retry');
+assert.match(host, /COLLECTOR_NOT_READY[\s\S]*独立采集/, 'unready collector commands fail explicitly rather than report empty success');
 assert.match(legacyScript, /scheduleIncrementalReadHistory\(3500, true\)[\s\S]*highPriorityHistoryRetryPending/, 'retained explicit retry ordering stays covered without enabling runtime collection');
 assert.match(legacyScript, /LIST_SCAN_STALL_MS\s*=\s*30 \* 1000[\s\S]*page-list-interrupted/, 'retained non-progress handling still preserves partial checkpoints');
 
@@ -104,7 +106,7 @@ assert.match(api, /string\s+ConversationType\s*=\s*""[\s\S]*bool\?\s+IsGroup\s*=
 assert.match(host, /allowedConversationKeys[\s\S]*item\.ConversationType, "direct"[\s\S]*item\.VipGroup[\s\S]*"vip_group"[\s\S]*messages\.RemoveAll/, 'native ingress accepts direct and explicit VIP-group bodies while discarding ordinary groups');
 assert.doesNotMatch(main, /WsWorkbenchPage/, 'the retired native fallback must not be production-routable');
 
-console.log('WS lifecycle contract: retained foreground Core/route/DPI/queue boundaries; RD02 automatic collection blocked without fallback');
+console.log('WS lifecycle contract: retained foreground Core/route/DPI/queue boundaries; explicit independent collection without foreground fallback');
 
 
 const connectionActionSource = between(workbench, '  async function connectionAction(action)', '  async function loadConversations()');

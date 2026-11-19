@@ -17,9 +17,9 @@ if (!/const payloadAccountId\s*=\s*text\(payload\.accountId\)[\s\S]{0,350}update
 }
 const tick = runtime.slice(runtime.indexOf('    public async Task TickAsync('), runtime.indexOf('    public async Task ShutdownAsync('));
 if (!tick.includes('RunHeartbeatAsync(foreground, false') || /LeaseNextBackgroundAccount\(|GetOrCreateAsync\(/.test(tick)) {
-  throw new Error('RD02 allows foreground status probing but forbids automatic background account creation/rotation');
+  throw new Error('Foreground probing must remain and timer ticks must not create unopened account sessions');
 }
-if (!/rememberCollectionCapability\(payload, id\)/.test(workbench) || !/collectionCapability = WsCollectionCapability\.Current/.test(host)) {
+if (!/rememberCollectionCapability\(payload, id\)/.test(workbench) || !/collectionCapability.*CollectionCapabilityFor|fields\["collectionCapability"\].*CollectionCapabilityFor/.test(host)) {
   throw new Error('account-scoped native status must disclose collection capability separately from login status');
 }
-console.log('ws-multi-account-detection: manual account status, per-account rail/capability and blocked automatic rotation pass');
+console.log('ws-multi-account-detection: manual account status, per-account rail/capability and independent collector capability and no automatic account creation pass');

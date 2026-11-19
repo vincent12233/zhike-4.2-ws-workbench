@@ -95,14 +95,16 @@ function url(suffix, fields = {}) {
   return route + suffix + '?' + new URLSearchParams({ accountId: 'default', groupJid, messageId, ...fields });
 }
 
-test('actual loopback sidecar gates and serves local-only observation and CSV', { timeout: 60000 }, async () => {
+test('actual loopback sidecar serves local observations with isolated writes kept separate', { timeout: 60000 }, async () => {
   for (const flags of [{ mode: '', mock: '' }, { mode: 'isolated', mock: '' }, { mode: '', mock: '1' }]) {
     await withSidecar(flags, async request => {
       for (const suffix of ['customer-reading/capability', 'customer-reading', 'customer-reading/export']) {
-        const disabled = await request(url(suffix));
-        assert.equal(disabled.status, 404);
-        assert.equal(disabled.body.code, 'GROUP_MANAGER_DISABLED');
+        const local = await request(url(suffix));
+        assert.equal(local.status, 200);
       }
+      const disabledWrite = await request(url('members'), { method: 'POST', body: '{}' });
+      assert.equal(disabledWrite.status, 405);
+      assert.equal(disabledWrite.body.code, 'GROUP_MANAGER_WRITE_DISABLED');
     });
   }
   await withSidecar({ mode: 'isolated', mock: '1' }, async request => {

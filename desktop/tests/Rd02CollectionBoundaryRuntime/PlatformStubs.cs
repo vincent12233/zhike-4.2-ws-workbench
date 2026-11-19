@@ -6,8 +6,14 @@ namespace Microsoft.Web.WebView2.Core
     public sealed class CoreWebView2Environment
     {
         public static int Created { get; private set; }
+        public static bool FailNext { get; set; }
+        public string ProfilePath { get; private init; } = string.Empty;
         public static Task<CoreWebView2Environment> CreateWithOptionsAsync(string? executable, string profile, CoreWebView2EnvironmentOptions options)
-        { Created++; return Task.FromResult(new CoreWebView2Environment()); }
+        {
+            Created++;
+            if (FailNext) { FailNext = false; return Task.FromException<CoreWebView2Environment>(new IOException("synthetic environment failure")); }
+            return Task.FromResult(new CoreWebView2Environment { ProfilePath = profile });
+        }
     }
     public sealed class CoreWebView2 { }
 }

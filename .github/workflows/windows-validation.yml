@@ -1,0 +1,42 @@
+name: Windows build and isolated WS validation
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.100
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.22.1
+      - name: Build the production WinUI application
+        run: dotnet build desktop/src/Zhike.Desktop/Zhike.Desktop.csproj -c Release -r win-x64 -p:Platform=x64 -p:PlatformTarget=x64 --nologo
+      - name: Validate isolated collection, group queries and database startup
+        shell: pwsh
+        run: |
+          $env:ZHIKE_TEST_NODE = (Get-Command node).Source
+          $tests = @(
+            'tests/rd02-authenticated-profile-boundary.test.cjs',
+            'tests/ws-independent-collector-runtime.test.cjs',
+            'tests/delivery-rd02-ws-capability.test.cjs',
+            'tests/ws-group-manager-production.test.cjs',
+            'tests/ws-background-isolation.test.cjs',
+            'tests/ws-workbench-security.test.cjs',
+            'scripts/stage1/migration-runner-fresh-atomic.test.cjs'
+          )
+          foreach ($test in $tests) {
+            node $test
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }

@@ -2,6 +2,8 @@
 
 知客使用 WinUI 3、WebView2 和随包 Node SQLite 本机服务。安装和本地服务正常后，客户、跟票、入金、报名、统计、导入和备份等本机业务不依赖外网。WhatsApp 前台聊天和用户主动调用的外部 AI 服务需要联网。
 
+开发分支正在恢复独立后台采集：采集端使用单独扫码的会话，与前台聊天同时运行；群组管理接入本机已保存的群目录及成员关系。认证 profile 复制保持禁用。此源码改动尚未包含在下面的 rc.2 安装器中，操作步骤和验证边界见[独立采集会话说明](docs/release/independent-collector-followup.md)。
+
 ## 下载与首次使用
 
 - 当前候选为 **6.1.0**，预发行标签为 **`v6.1.0-rc.2`**，已作为预发行发布。[打开候选下载页](https://github.com/vincent12233/zhike-4.2-ws-workbench/releases/tag/v6.1.0-rc.2)，同时取得 `zhike-6.1.0-win-x64-setup.exe` 和 `release-output-manifest.json`。下载需要登录已有该私有仓库访问权限的 GitHub 账号。候选状态见[当前版本索引](docs/current-release-index.md)。
@@ -12,7 +14,7 @@
 - 有已有资料时，升级前在“数据中心”导出备份。新旧版本的外置数据目录保持分离。程序不自动迁移旧 `%LOCALAPPDATA%\Zhike`。
 - rc.2 加强安装目录保护，修正旧版提前卸载，并显示首次启动的实际加载状态。候选未签名；安装及首次使用步骤请按部署说明操作，不要关闭 Windows 安全保护。
 
-## 使用范围
+## 已发布 rc.2 的使用范围
 
 | 能力 | 当前可用范围 |
 |---|---|

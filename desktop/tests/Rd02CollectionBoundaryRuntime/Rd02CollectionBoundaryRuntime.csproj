@@ -5,6 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../src/Zhike.Desktop/Services/WsCollectionCapability.cs" Link="WsCollectionCapability.cs" />
+    <Compile Include="../../src/Zhike.Desktop/Services/WsCollectorIngress.cs" Link="WsCollectorIngress.cs" />
     <Compile Include="../../src/Zhike.Desktop/Services/BridgeContracts.cs" Link="BridgeContracts.cs" />
     <Compile Include="$(Rd02GeneratedHost)" Link="NativeHost.generated.cs" Condition="'$(Rd02GeneratedHost)' != ''" />
     <Compile Include="../../src/Zhike.Desktop/Services/WebViewProfileService.cs" Link="WebViewProfileService.cs" />

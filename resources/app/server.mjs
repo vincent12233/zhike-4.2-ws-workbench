@@ -12,6 +12,7 @@ const wsCore = require('./modules/ws-workbench-core.js');
 const wsCrmSync = require('./modules/ws-crm-sync-core.js');
 const wsGroupMonitor = require('./modules/ws-group-monitor-core.js');
 const wsGroupManager = require('./modules/ws-group-manager-core.js');
+const wsGroupMemberQuery = require('./modules/ws-group-member-query.cjs');
 const customerGovernance = require('./modules/customer-governance-core.js');
 const hotChatProfile = require('./modules/hot-chat-profile-core.js');
 const wsMediaCore = require('./modules/ws-media-core.js');
@@ -906,11 +907,19 @@ function stage3GroupManagerFlags() {
   };
 }
 
-function stage3GroupManagerGuard() {
-  if (!stage3MockMode) {
-    const error = new Error('独立 WS 群组管理仅在隔离 Mock 环境启用。');
+const groupManagerReadRoutes = new Set(['groups', 'members', 'messages', 'state', 'sync', 'read-evidence', 'audit', 'errors', 'customer-reading', 'customer-reading/export', 'customer-reading/capability']);
+function stage3GroupManagerGuard(method, suffix) {
+  if (stage3MockMode) return;
+  if (method !== 'GET') {
+    const error = new Error('此接口仅查询本机已保存的群组资料；模拟写入和同步任务接口未在生产环境启用。');
+    error.status = 405;
+    error.code = 'GROUP_MANAGER_WRITE_DISABLED';
+    throw error;
+  }
+  if (!groupManagerReadRoutes.has(suffix)) {
+    const error = new Error('群组资料查询接口不存在。');
     error.status = 404;
-    error.code = 'GROUP_MANAGER_DISABLED';
+    error.code = 'GROUP_MANAGER_ROUTE_UNAVAILABLE';
     throw error;
   }
 }
@@ -1041,6 +1050,11 @@ function stage3GroupMessagePayload(row) {
   };
 }
 function stage3ReadRank(status) { return ({ unknown: 0, delivered: 1, read: 2 }[String(status || '').toLowerCase()] ?? -1); }
+function groupReadEvidencePayload(row) {
+  return { id: row.id, messageId: row.message_id, memberJid: row.member_jid,
+    status: stage3MockMode ? row.status : 'unknown', claimedStatus: row.status, verified: false,
+    evidenceSource: row.evidence_source, evidenceRef: row.evidence_ref, observedAt: row.observed_at };
+}
 function wsConversationCursor(row) {
   if (!row) return '';
   return Buffer.from(JSON.stringify([String(row.updated_at || ''), String(row.id || '')]), 'utf8').toString('base64url');
@@ -2896,17 +2910,31 @@ const server = createServer(async (req, res) => {
       if (suffix === 'health' && req.method === 'GET') return json(res, 200, { health: wsGroupMonitorHealthPayload(profile) });
       return json(res, 405, { error: '群组监控接口不支持该操作。' });
     }
-    // Stage 3 isolated group-manager boundary.  The ordinary monitor and
-    // chat routes remain unchanged; these account-scoped endpoints are only
-    // reachable from the Mock Transport/temporary data root gate.
+    // Saved group information is available to the normal desktop. Mock
+    // mutations remain behind their separate gate; GET never starts a sync,
+    // creates a customer or promotes caller-provided read claims to facts.
     if (url.pathname.startsWith('/api/ws/group-manager/')) {
-      try { stage3GroupManagerGuard(); } catch (error) {
-        return json(res, error.status || 404, { error: error.message, code: error.code || 'GROUP_MANAGER_DISABLED' });
-      }
-      if (!stage3MockMode) return json(res, 404, { error: '独立 WS 群组管理仅在隔离 Mock 环境启用。', code: 'GROUP_MANAGER_DISABLED' });
-      const accountId = wsAccountId(url.searchParams.get('accountId'));
-      if (!wsAccountRow(accountId)) return json(res, 404, { error: 'WS 账号不存在。' });
       const suffix = url.pathname.slice('/api/ws/group-manager/'.length);
+      try { stage3GroupManagerGuard(req.method, suffix); } catch (error) {
+        return json(res, error.status || 404, { error: error.message, code: error.code || 'GROUP_MANAGER_ROUTE_UNAVAILABLE' });
+      }
+      const accountId = wsAccountId(url.searchParams.get('accountId'));
+      if (req.method === 'GET') {
+        const params = url.searchParams, requestedAccount = params.get('accountId'), requestedGroup = params.get('groupJid');
+        const groupRequired = ['messages', 'state', 'read-evidence', 'customer-reading', 'customer-reading/export', 'customer-reading/capability'].includes(suffix);
+        if (params.getAll('accountId').length !== 1 || requestedAccount !== accountId || /[\p{Cc}\p{Cf}]/u.test(requestedAccount) ||
+            params.getAll('groupJid').length > 1 || (groupRequired && !requestedGroup) ||
+            (requestedGroup !== null && !/^[a-z0-9._-]{1,235}@g\.us$/.test(requestedGroup))) {
+          return json(res, 400, { error: '请明确选择有效的 WS 账号和群组。', code: 'GROUP_MANAGER_SCOPE_INVALID' });
+        }
+        if (params.getAll('limit').length > 1 || (params.has('limit') && !/^\d{1,6}$/.test(params.get('limit')))) {
+          return json(res, 400, { error: '群组资料分页参数无效。', code: 'GROUP_MANAGER_PAGE_INVALID' });
+        }
+        if (!stage3MockMode && requestedGroup && !db.prepare('SELECT 1 FROM ws_group_catalog WHERE account_id=? AND group_jid=?').get(accountId, requestedGroup)) {
+          return json(res, 404, { error: '当前账号没有所选群组记录。', code: 'GROUP_MANAGER_GROUP_UNAVAILABLE' });
+        }
+      }
+      if (!wsAccountRow(accountId)) return json(res, 404, { error: 'WS 账号不存在。' });
       if (['customer-reading', 'customer-reading/export', 'customer-reading/capability'].includes(suffix)) {
         if (req.method !== 'GET') return json(res, 405, { error: '本地阅读观测只支持 GET。' });
         const params = url.searchParams;
@@ -2973,8 +3001,8 @@ const server = createServer(async (req, res) => {
         if (req.method === 'GET') {
           const requestedGroup = url.searchParams.get('groupJid'), groupJid = requestedGroup ? stage3GroupJid(requestedGroup) : '';
           const limit = Math.min(groupJid ? 5000 : 1000, Math.max(1, Number(url.searchParams.get('limit')) || 1000));
-          const rows = db.prepare('SELECT m.*,g.group_name FROM ws_group_members m LEFT JOIN ws_group_catalog g ON g.account_id=m.account_id AND g.group_jid=m.group_jid WHERE m.account_id=?' + (groupJid ? ' AND m.group_jid=?' : '') + ' ORDER BY m.updated_at DESC,m.group_jid,m.member_jid LIMIT ?').all(...(groupJid ? [accountId, groupJid, limit] : [accountId, limit]));
-          return json(res, 200, { accountId, groupJid, limit, members: rows.map(row => ({ ...stage3GroupMemberPayload(row), groupName: row.group_name || '' })) });
+          const members = wsGroupMemberQuery.queryMembers(db, { accountId, groupJid, limit, allowMock: stage3MockMode });
+          return json(res, 200, { accountId, groupJid, limit, members, readOnly: true, coverage: 'observed-local-memberships' });
         }
         if (req.method === 'POST') {
           const body = JSON.parse((await readBody(req, 256 * 1024)).toString('utf8') || '{}');
@@ -3134,13 +3162,13 @@ const server = createServer(async (req, res) => {
       if (suffix === 'read-evidence' && req.method === 'GET') {
         const groupJid = stage3GroupJid(url.searchParams.get('groupJid'));
         const rows = db.prepare('SELECT * FROM ws_group_read_evidence WHERE account_id=? AND group_jid=? ORDER BY observed_at ASC,id ASC LIMIT ?').all(accountId, groupJid, Math.min(5000, Math.max(1, Number(url.searchParams.get('limit')) || 1000)));
-        return json(res, 200, { accountId, groupJid, evidence: rows.map(row => ({ id: row.id, messageId: row.message_id, memberJid: row.member_jid, status: row.status, evidenceSource: row.evidence_source, evidenceRef: row.evidence_ref, observedAt: row.observed_at })) });
+        return json(res, 200, { accountId, groupJid, evidence: rows.map(groupReadEvidencePayload), readOnly: true });
       }
       if (suffix === 'state' && req.method === 'GET') {
         const groupJid = stage3GroupJid(url.searchParams.get('groupJid'));
         const limit = Math.min(5000, Math.max(1, Number(url.searchParams.get('limit')) || 1000));
         const group = db.prepare('SELECT * FROM ws_group_catalog WHERE account_id=? AND group_jid=?').get(accountId, groupJid);
-        const members = db.prepare('SELECT * FROM ws_group_members WHERE account_id=? AND group_jid=? ORDER BY updated_at DESC,member_jid LIMIT ?').all(accountId, groupJid, limit);
+        const members = wsGroupMemberQuery.queryMembers(db, { accountId, groupJid, limit, allowMock: stage3MockMode });
         const messages = db.prepare('SELECT * FROM ws_group_messages WHERE account_id=? AND group_jid=? ORDER BY sent_at ASC,id ASC LIMIT ?').all(accountId, groupJid, limit);
         const evidence = db.prepare('SELECT * FROM ws_group_read_evidence WHERE account_id=? AND group_jid=? ORDER BY observed_at ASC,id ASC LIMIT ?').all(accountId, groupJid, limit);
         const syncRuns = db.prepare('SELECT * FROM ws_group_sync_runs WHERE account_id=? AND group_jid=? ORDER BY updated_at DESC,id DESC LIMIT ?').all(accountId, groupJid, limit);
@@ -3150,21 +3178,26 @@ const server = createServer(async (req, res) => {
           accountId,
           groupJid,
           group: group ? { id: group.id, accountId, groupJid, name: group.group_name, channelId: group.channel_id, participantCount: group.participant_count, status: group.status, lastSeenAt: group.last_seen_at, data: wsJson(group.data_json, {}) } : null,
-          members: members.map(stage3GroupMemberPayload),
+          members,
           messages: messages.map(stage3GroupMessagePayload),
-          readEvidence: evidence.map(row => ({ id: row.id, messageId: row.message_id, memberJid: row.member_jid, status: row.status, evidenceSource: row.evidence_source, evidenceRef: row.evidence_ref, observedAt: row.observed_at })),
+          readEvidence: evidence.map(groupReadEvidencePayload),
+          readOnly: true,
+          coverage: 'observed-local-memberships',
           syncRuns: syncRuns.map(row => ({ id: row.id, groupJid: row.group_jid, kind: row.kind, status: row.status, checkpoint: row.checkpoint, itemCount: row.item_count, retryCount: row.retry_count, errorMessage: row.error_message, startedAt: row.started_at, completedAt: row.completed_at, updatedAt: row.updated_at })),
           audit: auditRows.map(row => ({ id: row.id, groupJid: row.group_jid, action: row.action, outcome: row.outcome, reason: row.reason, data: wsJson(row.data_json, {}), createdAt: row.created_at })),
           errors: errors.map(row => ({ id: row.id, groupJid: row.group_jid, runId: row.run_id, operation: row.operation, errorCode: row.error_code, errorMessage: row.error_message, retryCount: row.retry_count, status: row.status, updatedAt: row.updated_at })),
         });
       }
       if (suffix === 'audit' && req.method === 'GET') {
-        const groupJid = wsText(url.searchParams.get('groupJid'), 180);
+        const groupJid = url.searchParams.get('groupJid') || '';
         const rows = groupJid ? db.prepare('SELECT * FROM ws_group_audit WHERE account_id=? AND group_jid=? ORDER BY created_at DESC,id DESC LIMIT ?').all(accountId, groupJid, 500) : db.prepare('SELECT * FROM ws_group_audit WHERE account_id=? ORDER BY created_at DESC,id DESC LIMIT ?').all(accountId, 500);
         return json(res, 200, { accountId, audit: rows.map(row => ({ id: row.id, groupJid: row.group_jid, action: row.action, outcome: row.outcome, reason: row.reason, data: wsJson(row.data_json, {}), createdAt: row.created_at })) });
       }
       if (suffix === 'errors' && req.method === 'GET') {
-        const rows = db.prepare('SELECT * FROM ws_group_sync_errors WHERE account_id=? ORDER BY updated_at DESC,id DESC LIMIT 500').all(accountId);
+        const groupJid = url.searchParams.get('groupJid') || '';
+        const rows = groupJid
+          ? db.prepare('SELECT * FROM ws_group_sync_errors WHERE account_id=? AND group_jid=? ORDER BY updated_at DESC,id DESC LIMIT 500').all(accountId, groupJid)
+          : db.prepare('SELECT * FROM ws_group_sync_errors WHERE account_id=? ORDER BY updated_at DESC,id DESC LIMIT 500').all(accountId);
         return json(res, 200, { accountId, errors: rows.map(row => ({ id: row.id, groupJid: row.group_jid, runId: row.run_id, operation: row.operation, errorCode: row.error_code, errorMessage: row.error_message, retryCount: row.retry_count, status: row.status, updatedAt: row.updated_at })) });
       }
       return json(res, 405, { error: '独立群组管理接口不支持该操作。' });

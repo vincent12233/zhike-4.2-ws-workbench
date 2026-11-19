@@ -73,7 +73,7 @@ assert.match(ui, /loadAllConversationMessages/, 'workbench must load all pages i
 assert.match(ui, /historyLoaded|full-history|完整聊天/, 'workbench must distinguish full chat history from list preview');
 assert.match(ui, /fullHistorySourceFingerprint\(conversation\)/, 'background AI must require matching collected/latest history fingerprints instead of analysing a sidebar preview or stale transcript');
 assert.match(ui, /job\.payload\?\.sourceFingerprint.*sourceFingerprint/, 'a queued full-history AI job must match the current source fingerprint');
-assert.match(ui, /<span>历史列表已同步<\/span>/, 'stored list discovery count must not be labelled as completed chat collection');
-assert.match(ui, /历史保存状态：/, 'a saved running task does not prove current collection is executing');
+assert.match(ui, /<span>列表已同步<\/span>/, 'stored list discovery count must not be labelled as completed chat collection');
+assert.match(ui, /历史保存状态/, 'a saved running task does not prove current collection is executing');
 assert.match(ui, /collectionCapabilityNotice\(\)/, 'full-history views disclose blocked collection capability while retaining local history');
 console.log('ws full-history contract: complete per-customer message loading and AI transcript coverage are wired');
