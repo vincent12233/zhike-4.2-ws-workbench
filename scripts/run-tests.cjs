@@ -239,6 +239,7 @@ function runWs() {
     'run', '--project', path.join(repo, 'desktop', 'tests', 'WsRuntimeCoordinatorRuntime', 'WsRuntimeCoordinatorRuntime.csproj'), '-c', 'Release',
   ], { command: path.join(repo, '.tools', 'dotnet10', 'dotnet.exe') });
   run('WS parent-route visibility runtime', [path.join(repo, 'desktop', 'tests', 'WsRouteVisibilityRuntimeTests.cjs')]);
+  run('WS native presentation recovery runtime', [path.join(repo, 'desktop', 'tests', 'WsPresentationRuntimeTests.cjs')]);
   run('WS hidden native scheduler runtime', [path.join(repo, 'desktop', 'tests', 'WsHiddenBackgroundSchedulerRuntimeTests.cjs')]);
   run('WS native group exclusion runtime', [path.join(repo, 'desktop', 'tests', 'WsGroupExclusionRuntimeTests.cjs')]);
   run('WS native conversation identity runtime', [path.join(repo, 'desktop', 'tests', 'WsConversationIdentityRuntimeTests.cjs')]);

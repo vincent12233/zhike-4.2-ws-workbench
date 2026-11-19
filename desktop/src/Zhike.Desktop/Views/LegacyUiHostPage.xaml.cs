@@ -48,12 +48,14 @@ public sealed partial class LegacyUiHostPage : Page
     private long _wsGeneration;
     private bool _initialized;
     private ulong? _workbenchNavigationId;
+    private long _shellDocumentGeneration;
     private string _currentRoute = "home";
     private bool _wsChatPageActive;
     private string _wsPresentationAccountId = string.Empty;
     private long _routeGeneration;
     private bool _hostWindowRenderable = true;
     private int _wsBoundsRefreshInFlight;
+    private bool _wsBoundsRefreshPending;
     private string _wsBoundsDocumentId = string.Empty;
     private long _lastWsBoundsSequence;
     // The shell is redrawn when collection/AI state changes. During that
@@ -332,11 +334,12 @@ public sealed partial class LegacyUiHostPage : Page
     {
         if (_hostWindowRenderable && !renderable) _wsSendGuard.Invalidate();
         _hostWindowRenderable = renderable;
-        if (!renderable || !IsWsChatPresentationActive)
+        if (!renderable)
         {
             HideWsOverlay();
             return;
         }
+        if (!IsWsChatPresentationActive) HideWsOverlay();
         if (refreshBounds)
         {
             RequestWsOverlayResize();
@@ -346,8 +349,10 @@ public sealed partial class LegacyUiHostPage : Page
 
     private void RequestWsOverlayResize()
     {
-        if (!IsWsChatPresentationActive
-            || !_hostWindowRenderable
+        // A fresh shell snapshot establishes presentation state. Requiring
+        // that state here prevents recovery when the Core and route arrive
+        // in the opposite order, or a previous layout sample hid the layer.
+        if (!_hostWindowRenderable || _webView?.CoreWebView2 is null
             || _wsView?.CoreWebView2 is null)
             return;
         _wsResizeTimer?.Stop();
@@ -456,7 +461,7 @@ public sealed partial class LegacyUiHostPage : Page
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch,
             IsHitTestVisible = false,
-            Opacity = 0.01,
+            Opacity = 0d,
         };
         // The independent collector has no environment, login or navigation
         // until the operator explicitly opens its own QR login surface.
@@ -810,7 +815,7 @@ public sealed partial class LegacyUiHostPage : Page
                 }
                 _wsCollectorVisibleAccountId = accountId;
                 SyncPooledWsPresentation();
-                ApplyWsBounds(payload);
+                await ResizeWsOverlayFromDomAsync(cancellationToken);
                 RequestWsOverlayResize();
                 return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new
                 {
@@ -832,7 +837,7 @@ public sealed partial class LegacyUiHostPage : Page
                 if (status.status == "已连接") await StartWsCollectorAsync(session, cancellationToken);
             }
             SyncPooledWsPresentation();
-            ApplyWsBounds(payload);
+            await ResizeWsOverlayFromDomAsync(cancellationToken);
             RequestWsOverlayResize();
             return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion,
                 JsonSerializer.SerializeToElement(new { accountId, collectorState = session.CollectorState, loginVisible = false }));
@@ -901,7 +906,7 @@ public sealed partial class LegacyUiHostPage : Page
             var selected = active is not null && ReferenceEquals(active.View, session.View);
             var showCollector = selected && string.Equals(_wsCollectorVisibleAccountId, session.AccountId, StringComparison.OrdinalIgnoreCase);
             session.View.Visibility = Visibility.Visible;
-            session.View.Opacity = selected && !showCollector ? 1d : 0.01d;
+            session.View.Opacity = selected && !showCollector ? 1d : 0d;
             session.View.IsHitTestVisible = selected && !showCollector && _hostWindowRenderable && IsWsChatPresentationActive;
             Canvas.SetZIndex(session.View, selected && !showCollector ? 20 : 0);
             if (session.CollectorView is { } collector)
@@ -941,6 +946,7 @@ public sealed partial class LegacyUiHostPage : Page
         args.Cancel = !IsAllowedNavigation(args.Uri, "zhike.local");
         if (!args.Cancel && IsWorkbenchDocument(args.Uri))
         {
+            Interlocked.Increment(ref _shellDocumentGeneration);
             _workbenchNavigationId = args.NavigationId;
 #if STAGE51_ISOLATED_UI
             Stage51Isolation.Record("shell-workbench-navigation-started", new { navigationId = args.NavigationId });
@@ -1514,7 +1520,10 @@ public sealed partial class LegacyUiHostPage : Page
         if (string.IsNullOrWhiteSpace(id)) id = requestAccountId ?? _activeWsAccountId;
         if (string.IsNullOrWhiteSpace(id)) id = "default";
         if (action is "open" or "hide" or "close" or "clear-session" or "reload" or "reconnect") _wsSendGuard.Invalidate();
-        _activeWsAccountId = id;
+        // Layout requests may still refer to the account that was visible
+        // before a switch. They reconcile the current shell, not its default
+        // account for later commands that omit accountId.
+        if (action is not ("hide" or "resize")) _activeWsAccountId = id;
         switch (action)
         {
             case "open-collector":
@@ -1526,7 +1535,7 @@ public sealed partial class LegacyUiHostPage : Page
                 await OpenWsOverlayAsync(id, payload, cancellationToken: cancellationToken);
                 return await WsStatusResponseAsync(requestId, id, cancellationToken);
             case "resize":
-                ApplyWsBounds(payload);
+                await ResizeWsOverlayFromDomAsync(cancellationToken);
                 // Resize is called from ResizeObserver while the user is
                 // scrolling or the layout is settling.  Do not probe the
                 // entire WhatsApp DOM here: ExecuteScriptAsync on every
@@ -1543,8 +1552,10 @@ public sealed partial class LegacyUiHostPage : Page
 #endif
                 }));
             case "hide":
-                App.WsService.HideForeground();
-                HideWsOverlay();
+                // Legacy geometry requests can arrive after a newer route
+                // transition. Read the current trusted shell instead of
+                // allowing an old hide to cover the user's current chat.
+                await ResizeWsOverlayFromDomAsync(cancellationToken);
                 return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new
                 {
                     accountId = id,
@@ -1997,7 +2008,7 @@ public sealed partial class LegacyUiHostPage : Page
                 if (_wsNavigation.TryGetValue(acquired.Session.View, out var visibleNavigation)) visibleNavigation.Request("explicit-refresh-or-reconnect", explicitBoundary: true);
                 if (acquired.Session.View.CoreWebView2 is not null) acquired.Session.View.CoreWebView2.Reload();
             }
-            ApplyWsBounds(payload);
+            await ResizeWsOverlayFromDomAsync(cancellationToken);
             RequestWsOverlayResize();
 #if !STAGE51_ISOLATED_UI
             if (acquired.Created) await SetWsStatusAsync(accountId, "连接中", cancellationToken);
@@ -2040,6 +2051,7 @@ public sealed partial class LegacyUiHostPage : Page
     private void HideWsOverlay()
     {
         _wsOverlayGeometryApplied = false;
+        WsOverlayLayer.Opacity = 0d;
         WsOverlayLayer.IsHitTestVisible = false;
         if (_wsView?.CoreWebView2 is null)
         {
@@ -2049,8 +2061,9 @@ public sealed partial class LegacyUiHostPage : Page
         // Collapsing the parent also collapses WebView2's viewport. WhatsApp
         // then has no rendered list geometry and a background retry cannot
         // discover or open the next conversation even though JS still runs.
-        // Keep the isolated view laid out behind the legacy host instead: it
-        // cannot receive input or take focus, but its collector can continue.
+        // Keep its viewport laid out, but make the whole surface transparent:
+        // placing it behind a translucent shell alone lets the login QR bleed
+        // through the shell's placeholder. It cannot receive pointer input.
         // Opening can finish after the user has already left the WS route.
         // In that case no visible bounds have ever been applied to the view.
         if (!double.IsFinite(WsOverlayBorder.Width) || WsOverlayBorder.Width < 40d)
@@ -2059,6 +2072,21 @@ public sealed partial class LegacyUiHostPage : Page
             WsOverlayBorder.Height = Math.Clamp(WebViewHost.ActualHeight, 540d, 900d);
         Canvas.SetZIndex(WsOverlayLayer, -1);
         WsOverlayLayer.Visibility = Visibility.Visible;
+    }
+
+    private void ShowWsOverlay()
+    {
+        // Restore presentation even when the accepted rectangle is unchanged.
+        // Avoid redundant property writes during ordinary geometry polling.
+        var session = App.WsService.ActiveSession;
+        var presentedView = session is not null && string.Equals(_wsCollectorVisibleAccountId, session.AccountId, StringComparison.OrdinalIgnoreCase)
+            ? session.CollectorView : session?.View;
+        if (presentedView?.Opacity != 1d || presentedView?.IsHitTestVisible != true)
+            SyncPooledWsPresentation();
+        if (WsOverlayLayer.Opacity != 1d) WsOverlayLayer.Opacity = 1d;
+        if (Canvas.GetZIndex(WsOverlayLayer) != 20) Canvas.SetZIndex(WsOverlayLayer, 20);
+        if (WsOverlayLayer.Visibility != Visibility.Visible) WsOverlayLayer.Visibility = Visibility.Visible;
+        if (!WsOverlayLayer.IsHitTestVisible) WsOverlayLayer.IsHitTestVisible = true;
     }
 
     private bool IsWsChatPresentationActive
@@ -2302,9 +2330,9 @@ public sealed partial class LegacyUiHostPage : Page
             && Math.Abs(width - _lastWsOverlayWidth) < 2d
             && Math.Abs(height - _lastWsOverlayHeight) < 2d)
         {
-            // Fractional scrollbar/layout rounding is not a meaningful
-            // resize. Avoid setting any XAML property in this case because a
-            // WebView2 child can repaint while its parent is being measured.
+            // Fractional layout changes do not need another measure, but a
+            // matching rectangle must still recover a hidden presentation.
+            ShowWsOverlay();
             return;
         }
         _wsOverlayGeometryApplied = true;
@@ -2316,34 +2344,52 @@ public sealed partial class LegacyUiHostPage : Page
         WsOverlayBorder.Height = height;
         Canvas.SetLeft(WsOverlayBorder, x);
         Canvas.SetTop(WsOverlayBorder, y);
-        Canvas.SetZIndex(WsOverlayLayer, 20);
-        WsOverlayLayer.Visibility = Visibility.Visible;
-        WsOverlayLayer.IsHitTestVisible = true;
+        ShowWsOverlay();
     }
 
-    private async Task ResizeWsOverlayFromDomAsync()
+    private async Task ResizeWsOverlayFromDomAsync(CancellationToken cancellationToken = default)
     {
-        if (_webView?.CoreWebView2 is null || _wsView?.CoreWebView2 is null
-            || !_hostWindowRenderable
-            || !IsWsChatPresentationActive)
+        var shell = _webView;
+        if (shell?.CoreWebView2 is null || _wsView?.CoreWebView2 is null
+            || !_hostWindowRenderable || !IsWorkbenchDocument(shell.CoreWebView2.Source))
             return;
-        if (Interlocked.Exchange(ref _wsBoundsRefreshInFlight, 1) != 0) return;
+        if (Interlocked.Exchange(ref _wsBoundsRefreshInFlight, 1) != 0)
+        {
+            _wsBoundsRefreshPending = true;
+            return;
+        }
+        _wsBoundsRefreshPending = false;
         var routeGeneration = Volatile.Read(ref _routeGeneration);
         var wsGeneration = Volatile.Read(ref _wsGeneration);
+        var shellGeneration = Volatile.Read(ref _shellDocumentGeneration);
         try
         {
-            var json = await _webView.CoreWebView2.ExecuteScriptAsync("(() => { const n=document.querySelector('#wsBrowserHost'); const vw=window.innerWidth||document.documentElement?.clientWidth||0, vh=window.innerHeight||document.documentElement?.clientHeight||0; if(!n) return {hidden:true,viewportWidth:vw,viewportHeight:vh}; const r=n.getBoundingClientRect(), s=getComputedStyle(n); return {hidden:s.display==='none'||s.visibility==='hidden'||r.width<40||r.height<40,x:r.left,y:r.top,width:r.width,height:r.height,viewportWidth:vw,viewportHeight:vh}; })()");
+            var json = await shell.CoreWebView2.ExecuteScriptAsync(
+                "JSON.stringify(window.__zhikeWsNativeBoundsSnapshot?.() ?? null)")
+                .AsTask().WaitAsync(TimeSpan.FromSeconds(3), cancellationToken);
             if (routeGeneration != Volatile.Read(ref _routeGeneration)
                 || wsGeneration != Volatile.Read(ref _wsGeneration)
+                || shellGeneration != Volatile.Read(ref _shellDocumentGeneration)
+                || !ReferenceEquals(shell, _webView)
+                || !IsWorkbenchDocument(shell.CoreWebView2?.Source)
                 || !_hostWindowRenderable
-                || !IsWsChatPresentationActive)
+                || _wsView?.CoreWebView2 is null)
                 return;
-            using var document = JsonDocument.Parse(json);
-            var payload = JsonSerializer.SerializeToElement(new { bounds = document.RootElement });
-            ApplyWsBounds(payload);
+            var payload = ParseWebViewJsonResult(json);
+            if (payload.ValueKind != JsonValueKind.Object) return;
+            var accepted = ApplyTrustedWsRouteVisibility(payload);
+            if (accepted) ApplyWsBounds(payload);
+#if STAGE51_ISOLATED_UI
+            RecordIsolatedWsBoundsDecision(payload, accepted);
+#endif
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch { }
-        finally { Interlocked.Exchange(ref _wsBoundsRefreshInFlight, 0); }
+        finally
+        {
+            Interlocked.Exchange(ref _wsBoundsRefreshInFlight, 0);
+            if (_wsBoundsRefreshPending) RequestWsOverlayResize();
+        }
     }
 
     private static double SnapToRaster(double value, double rasterScale)
@@ -2398,7 +2444,7 @@ public sealed partial class LegacyUiHostPage : Page
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var json = await view.CoreWebView2.ExecuteScriptAsync("(() => { const body=document.body; const text=(body?.innerText||'').slice(0,6000); const login=!!document.querySelector('[data-testid=\\\"qrcode\\\"], canvas[aria-label*=\\\"QR\\\" i], [data-ref]'); const chat=!!document.querySelector('#pane-side') || (!!document.querySelector('[data-testid=\\\"chat-list\\\"], [aria-label=\\\"Chat list\\\"], [aria-label=\\\"聊天列表\\\"], [role=\\\"grid\\\"]') && !!document.querySelector('[data-testid=\\\"search-input\\\"], [contenteditable=\\\"true\\\"], [role=\\\"textbox\\\"]')); const problem=/此页面存在问题|page has a problem|update your browser|更新浏览器/i.test(text); return JSON.stringify({login,chat,problem,text:text.slice(0,2000)}); })()").AsTask().ConfigureAwait(false);
+            var json = await view.CoreWebView2.ExecuteScriptAsync("(() => { const body=document.body; const text=(body?.innerText||'').slice(0,6000); const login=!!document.querySelector('[data-testid=\\\"qrcode\\\"], canvas[aria-label*=\\\"QR\\\" i], [data-ref]'); const chat=!!document.querySelector('#pane-side') || (!!document.querySelector('[data-testid=\\\"chat-list\\\"], [aria-label=\\\"Chat list\\\"], [aria-label=\\\"聊天列表\\\"], [role=\\\"grid\\\"]') && !!document.querySelector('[data-testid=\\\"search-input\\\"], [contenteditable=\\\"true\\\"], [role=\\\"textbox\\\"]')); const problem=/此页面存在问题|page has a problem|update your browser|更新浏览器/i.test(text); return JSON.stringify({login,chat,problem,text:text.slice(0,2000)}); })()").AsTask().WaitAsync(TimeSpan.FromSeconds(3), cancellationToken).ConfigureAwait(false);
             cancellationToken.ThrowIfCancellationRequested();
             var probeText = JsonSerializer.Deserialize<string>(json) ?? "{}";
             using var probe = JsonDocument.Parse(probeText);
@@ -4837,16 +4883,24 @@ public sealed partial class LegacyUiHostPage : Page
       next.routeActive ? '1' : '0', next.workspacePage, next.accountId,
     ].join('|');
   };
+  const snapshot = next => {
+    const { routeActive, workspacePage, accountId, ...bounds } = next;
+    return {
+      type:'zhike.ws.bounds', route:'ws-workbench', routeVisible:!next.hidden,
+      routeActive, workspacePage, accountId, documentId, sequence:++sequence, bounds,
+    };
+  };
+  // Native reconciliation reads the same document/account/route authority as
+  // observer pushes. An explicit pull must work even when geometry is unchanged.
+  Object.defineProperty(window, '__zhikeWsNativeBoundsSnapshot', {
+    value:() => snapshot(bounds()), writable:false, configurable:false,
+  });
   const publishNow = next => {
     const signature = signatureOf(next);
     if (signature === lastSignature) return;
     lastSignature = signature;
     lastRouteContext = JSON.stringify([next.routeActive, next.workspacePage, next.accountId]);
-    const { routeActive, workspacePage, accountId, ...bounds } = next;
-    window.chrome?.webview?.postMessage(JSON.stringify({
-      type:'zhike.ws.bounds', route:'ws-workbench', routeVisible:!next.hidden,
-      routeActive, workspacePage, accountId, documentId, sequence:++sequence, bounds,
-    }));
+    window.chrome?.webview?.postMessage(JSON.stringify(snapshot(next)));
   };
   const publish = () => {
     frame = 0;
