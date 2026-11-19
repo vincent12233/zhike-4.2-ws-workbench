@@ -94,6 +94,8 @@ const getPort = () => new Promise((resolve, reject) => {
     fs.writeFileSync(oldDatabase, 'old-workspace-must-remain-byte-identical');
     const before = hash(oldDatabase);
     const port = await getPort();
+    const request = (route, options = {}) =>
+      fetch(`http://127.0.0.1:${port}${route}`, { ...options, signal: AbortSignal.timeout(5000) });
     const entry = path.join(repo, 'resources/app/server.mjs');
     const args = [entry];
     if (process.argv.includes('--delayed-shutdown')) {
@@ -120,7 +122,7 @@ const getPort = () => new Promise((resolve, reject) => {
       if (spawnError) throw spawnError;
       if (closeResult) assert.fail('isolated sidecar closed during startup');
       try {
-        const response = await fetch(`http://127.0.0.1:${port}/api/health`);
+        const response = await request('/api/health');
         await response.arrayBuffer();
         healthy = response.ok;
       } catch {}
@@ -129,14 +131,14 @@ const getPort = () => new Promise((resolve, reject) => {
     }
     assert.equal(healthy, true, 'fresh 6.0 sidecar must start in its isolated root');
     assert.equal(JSON.parse(fs.readFileSync(lockPath, 'utf8')).pid, child.pid, 'isolated lock must belong to this fixture child');
-    const stateResponse = await fetch(`http://127.0.0.1:${port}/api/state`, { headers: { 'X-Zhike-Api-Token': token } });
+    const stateResponse = await request('/api/state', { headers: { 'X-Zhike-Api-Token': token } });
     assert.equal(stateResponse.status, 200);
     const state = await stateResponse.json();
     assert.equal(state.initialized, false, 'a fresh 6.0 workspace must not seed an app_state row');
     for (const [collection, rows] of Object.entries(state))
       if (Array.isArray(rows)) assert.equal(rows.length, 0, `fresh 6.0 ${collection} must contain no migrated or demo rows`);
     for (const endpoint of ['/api/local-migration/status', '/api/local-migration/preview', '/api/local-migration/commit', '/api/import/legacy/preview', '/api/import/legacy/commit']) {
-      const response = await fetch(`http://127.0.0.1:${port}${endpoint}`, {
+      const response = await request(endpoint, {
         method: endpoint.endsWith('/status') ? 'GET' : 'POST',
         headers: { 'X-Zhike-Api-Token': token, 'Content-Type': 'application/json' },
         body: endpoint.endsWith('/status') ? undefined : '{}',
@@ -147,10 +149,9 @@ const getPort = () => new Promise((resolve, reject) => {
     assert.equal(fs.existsSync(path.join(newRoot, 'workspace.sqlite')), true);
     assert.equal(hash(oldDatabase), before, 'old workspace bytes must remain untouched');
     assert.equal(fs.existsSync(oldRoot), true, 'old workspace directory must not be removed');
-    const shutdown = await fetch(`http://127.0.0.1:${port}/api/shutdown`, {
+    const shutdown = await request('/api/shutdown', {
       method: 'POST',
       headers: { 'X-Zhike-Api-Token': token, 'X-Zhike-Shutdown-Token': token, Connection: 'close' },
-      signal: AbortSignal.timeout(5000),
     });
     assert.equal(shutdown.status, 200, 'the isolated sidecar must accept authenticated shutdown');
     assert.deepEqual(await shutdown.json(), { ok: true });

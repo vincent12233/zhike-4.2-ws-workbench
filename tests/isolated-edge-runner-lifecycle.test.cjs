@@ -293,16 +293,53 @@ async function runExclusiveReadinessCase(bounded=false){
  const profile=path.join(root,'edge-profile-'+randomUUID());fs.mkdirSync(profile);
  const endpointFile=path.join(profile,'DevToolsActivePort');
  const quoted="'"+endpointFile.replace(/'/g,"''")+"'";
- const lockScript="$ErrorActionPreference='Stop';$file=[IO.File]::Open("+quoted+",[IO.FileMode]::Create,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None);try{$bytes=[Text.Encoding]::UTF8.GetBytes(\"12345`n/devtools/browser/00000000-0000-0000-0000-000000000000`n\");$file.Write($bytes,0,$bytes.Length);$file.Flush();[Console]::Out.WriteLine('LOCKED');[Console]::Out.Flush();$null=[Console]::In.ReadLine()}finally{$file.Dispose()};[Console]::Out.WriteLine('UNLOCKED');[Console]::Out.Flush();$null=[Console]::In.ReadLine();exit 0";
+ const lockScript=[
+  "$ErrorActionPreference='Stop'",
+  "function Write-FixtureMarker($marker) { [Console]::Out.WriteLine($marker); [Console]::Out.Flush() }",
+  "function Read-FixtureCommand($slot) { $line=[Console]::In.ReadLine(); $action=if($null -eq $line){'EOF'}elseif($line -ceq 'CLOSE'){'CLOSE'}elseif($line -ceq 'RELEASE'){'RELEASE'}else{'OTHER'}; Write-FixtureMarker ('READ_' + $slot + '_' + $action) }",
+  "$file=[IO.File]::Open("+quoted+",[IO.FileMode]::Create,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None)",
+  "try { $bytes=[Text.Encoding]::UTF8.GetBytes(\"12345`n/devtools/browser/00000000-0000-0000-0000-000000000000`n\"); $file.Write($bytes,0,$bytes.Length); $file.Flush(); Write-FixtureMarker 'LOCKED'; Read-FixtureCommand 1 } finally { $file.Dispose() }",
+  "Write-FixtureMarker 'UNLOCKED'",
+  'Read-FixtureCommand 2',
+  "Write-FixtureMarker 'EXIT_0'",
+  'exit 0',
+ ].join('\n');
  const command=path.join(process.env.SystemRoot||'C:\\Windows','System32/WindowsPowerShell/v1.0/powershell.exe');
  let output,error;
  try{output=await runProcessLifecycle({command,args:['-NoProfile','-NonInteractive','-EncodedCommand',Buffer.from(lockScript,'utf16le').toString('base64')],root,mode:bounded?'controlled-powershell-bounded-readiness':'controlled-powershell-exclusive-readiness',timeoutMs:bounded?4000:10000,evidenceDirectory,
   async readResult(context){
-   context.metadata.profile=profile;await context.wait(context.waitForOutput(value=>value.includes('LOCKED')?true:undefined),'lock-ready');let released=false;
+   context.metadata.profile=profile;
+   let offset=0;
+   function recordLockOutput(){
+    const lines=context.stdout.slice(offset).split('\n');
+    lines.pop();
+    for(const raw of lines){
+     offset+=raw.length+1;
+     const value=raw.trim();
+     if(value==='LOCKED'||value==='UNLOCKED'||value==='EXIT_0'){
+      context.mark('lock-fixture-marker',{marker:value});
+      continue;
+     }
+     const command=/^READ_([12])_(EOF|CLOSE|RELEASE|OTHER)$/.exec(value);
+     if(command)context.mark('lock-fixture-command-read',{slot:Number(command[1]),action:command[2]});
+    }
+   }
+   recordLockOutput();
+   context.child.stdout.on('data',recordLockOutput);
+   await context.wait(context.waitForOutput(value=>/^LOCKED\r?$/m.test(value)?true:undefined),'lock-ready');let released=false;
    const scoped={...context,mark:(event,detail)=>{context.mark(event,detail);if(event==='cdp-readiness-wait'&&detail?.code==='EBUSY'&&!released&&!bounded){released=true;context.child.stdin.write('RELEASE\n')}}};
    const endpoint=await waitForOwnedDevToolsEndpoint(profile,scoped);assert.ok(endpoint.startsWith('ws://127.0.0.1:12345/devtools/browser/'),'The owned file supplies the expected isolated protocol shape');
    assert.ok(released&&context.metadata.devToolsReadiness.ebusy>0,'Actual exclusive sharing must be observed before recovery');return {syntheticReadinessRecovered:true};
-  },requestClose:context=>{if(context.child?.stdin.writable)context.child.stdin.end('CLOSE\n');return {acknowledgement:'stdin-request'}}
+  },requestClose:context=>{
+   const stdin=context.child?.stdin;
+   context.mark('lock-fixture-close-send',{writable:Boolean(stdin?.writable)});
+   if(stdin?.writable){
+    stdin.once('finish',()=>context.mark('lock-fixture-stdin-finished'));
+    stdin.once('error',error=>context.mark('lock-fixture-stdin-error',{code:error.code||error.name}));
+    stdin.end('CLOSE\n',error=>context.mark('lock-fixture-close-write',{ok:!error}));
+   }
+   return {acknowledgement:'stdin-request'};
+  }
  })}catch(caught){error=caught}
  const metadata=(error||output).metadata;known.push(metadata);await ensureGone(metadata);
  if(bounded){assert.ok(error);assert.equal(error.code,'EDGE_RUNNER_TIMEOUT');assert.equal(metadata.status,'Failed');assert.equal(metadata.timeoutMs,4000);assert.ok(metadata.devToolsReadiness.ebusy>1,'A still-locked file must stop at the existing deadline, not reset it per poll')}else{assert.ifError(error);assert.equal(metadata.status,'Passed')}
@@ -394,6 +431,12 @@ async function runResultEvidenceCase(mode) {
     await runResultEvidenceCase('old-inline');
     await runResultEvidenceCase('delayed-write');
     await runResultEvidenceCase('write-error');
+    cleanupAllowed = true;
+    return;
+  }
+  if (process.argv.includes('--exclusive-readiness-only')) {
+    await runExclusiveReadinessCase();
+    await runExclusiveReadinessCase(true);
     cleanupAllowed = true;
     return;
   }
