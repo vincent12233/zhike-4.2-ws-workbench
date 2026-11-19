@@ -316,6 +316,7 @@ function runAll() {
   run('isolated v2 generation restore, frozen recovery and publication faults', [path.join(repo, 'tests', 'device-migration-restore.test.cjs')], { timeout: 240000 });
   run('local-first sidecar contract', [path.join(repo, 'tests', 'local-first-sidecar-contract.test.cjs')]);
   run('isolated sidecar startup observation and redaction', [path.join(repo, 'tests', 'sidecar-startup-observer.test.cjs')]);
+  run('test-only device migration and sidecar startup phase diagnostics', [path.join(repo, 'tests', 'test-only-phase-diagnostics-contract.test.cjs')]);
   run('WS local ingest runtime', [path.join(repo, 'tests', 'ws-local-ingest-runtime.test.cjs')]);
   run('WS direction effects repair runtime', [path.join(repo, 'tests', 'ws-direction-effects-repair.test.cjs')]);
   run('WS identity effects repair runtime', [path.join(repo, 'tests', 'ws-identity-effects-repair.test.cjs')]);

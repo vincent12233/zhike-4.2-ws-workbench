@@ -21,6 +21,7 @@ const wsWorkspaceQuery = require('./modules/ws-workspace-query.cjs');
 const { DatabaseSync } = require('node:sqlite');
 const { runMigrations } = require('./migration-runner.cjs');
 const { SqliteFencedWriter, FencingError } = require('./sidecar-write-coordinator.cjs');
+const { createTestDiagnostic } = require('./test-diagnostics.cjs');
 const root = dirname(fileURLToPath(import.meta.url));
 const APP_VERSION = '6.1.0';
 const configuredDataDir = String(process.env.ZHIKE_DATA_DIR || '').trim();
@@ -37,6 +38,13 @@ let parentMonitor = null;
 let ownsWorkspaceLock = false;
 let port = Number(process.env.ZHIKE_PORT || 4173);
 const apiToken = String(process.env.ZHIKE_API_TOKEN || randomBytes(32).toString('hex'));
+const testStartupDiagnostics = createTestDiagnostic({
+  envName: 'ZHIKE_TEST_STARTUP_DIAGNOSTICS',
+  prefix: 'ZHIKE_TEST_SIDECAR_STARTUP',
+  allowedFields: ['errorCode', 'schemaVersion', 'appliedCount', 'compatibilityCount'],
+});
+const testStartupDiagnostic = (phase, details = {}) => testStartupDiagnostics.emit(phase, details);
+testStartupDiagnostic('modules-loaded');
 // Stage 1.5 fencing is opt-in and fixture-only. Production sidecars do not
 // create fencing tables or accept worker writes until a later approved cutover.
 const fencingIsolationMode = String(process.env.ZHIKE_FENCING_MODE || '').trim().toLowerCase() === 'isolated';
@@ -54,6 +62,7 @@ const aiPipelineIsolationMode = String(process.env.ZHIKE_AI_PIPELINE_MODE || '')
 const stage4MockMode = aiPipelineIsolationMode && String(process.env.ZHIKE_STAGE4_MOCK || '').trim() === '1';
 const stage4AiEnabled = aiPipelineIsolationMode && stage4MockMode && fencingIsolationMode;
 mkdirSync(dataDir, { recursive: true });
+testStartupDiagnostic('data-directory-ready');
 
 function processIsAlive(pid) {
   if (!Number.isInteger(pid) || pid < 1) return false;
@@ -102,14 +111,25 @@ function releaseWorkspaceLock() {
   ownsWorkspaceLock = false;
 }
 
-try { acquireWorkspaceLock(); } catch (error) { console.error(error.message || '工作目录已在运行。'); process.exit(1); }
+testStartupDiagnostic('workspace-lock-start');
+try {
+  acquireWorkspaceLock();
+  testStartupDiagnostic('workspace-lock-acquired');
+} catch (error) {
+  testStartupDiagnostic('workspace-lock-failed', { errorCode: String(error?.code || 'UNKNOWN').slice(0, 40) });
+  console.error(error.message || '工作目录已在运行。');
+  process.exit(1);
+}
 process.on('exit', releaseWorkspaceLock);
 
+testStartupDiagnostic('database-open-start');
 const db = new DatabaseSync(dbPath);
+testStartupDiagnostic('database-opened');
 // Migrations are driven exclusively by migrations/manifest.json.  The runner
 // checks the schema ceiling before changing SQLite state, coordinates other
 // sidecars with a migration-only lease, snapshots the database and verifies
 // integrity around every transactional step.
+testStartupDiagnostic('migrations-start');
 const migrationResult = runMigrations({
   db,
   dbPath,
@@ -117,6 +137,10 @@ const migrationResult = runMigrations({
   manifestPath: join(root, 'migrations', 'manifest.json'),
   backupDir: join(dataDir, '.backups'),
   lockPath: join(dataDir, '.migration.lock'),
+});
+testStartupDiagnostic('migrations-completed', {
+  schemaVersion: Number(migrationResult.version || 0), appliedCount: migrationResult.applied?.length || 0,
+  compatibilityCount: migrationResult.compatibility?.length || 0,
 });
 if (migrationResult.compatibility?.length) console.warn('迁移兼容复核：024 精确末尾换行历史变体已验证，原校验记录已保留，迁移前备份与独立审计已记录。');
 const fencedWriter = new SqliteFencedWriter(db);
@@ -139,6 +163,7 @@ if (fencingIsolationMode) fencedWriter.ensureSchema();
 // Create the default account before the first renderer request so the initial
 // account list cannot be empty while the service is still warming up.
 ensureDefaultWsAccount();
+testStartupDiagnostic('workspace-bootstrap-completed');
 
 function databaseDiagnostics() {
   const integrity = db.prepare('PRAGMA integrity_check').all().map(row => Object.values(row)[0]);
@@ -5497,6 +5522,7 @@ function startListening(nextPort) {
   server.listen(port, '127.0.0.1');
 }
 server.on('listening', () => {
+  testStartupDiagnostic('listening');
   const url = `http://127.0.0.1:${port}`;
   console.log(`知客离线工作台已启动：${url}`);
   console.log(`SQLite 数据库：${dbPath}`);
@@ -5517,7 +5543,10 @@ server.on('error', error => {
   console.error(`本地服务无法启动：${error.message}`);
   process.exit(1);
 });
+testStartupDiagnostic('phone-index-repair-start');
 repairCustomerPhoneIndex();
+testStartupDiagnostic('phone-index-repair-completed');
+testStartupDiagnostic('listen-start');
 startListening(port);
 server.on('close', () => { if (parentMonitor) clearInterval(parentMonitor); db.close(); releaseWorkspaceLock(); });
 process.on('SIGINT', () => server.close(() => process.exit(0)));

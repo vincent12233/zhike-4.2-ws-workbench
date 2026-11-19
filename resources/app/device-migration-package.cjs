@@ -8,6 +8,7 @@ const { once } = require('node:events');
 const { promisify } = require('node:util');
 const { createCipheriv, createDecipheriv, createHash, randomBytes, scrypt } = require('node:crypto');
 const { MAX_BYTES: MAX_MEDIA_BYTES } = require('./modules/ws-media-core.js');
+const { createTestDiagnostic } = require('./test-diagnostics.cjs');
 
 /*
  * Portable package v1 wraps an explicit schema-025 snapshot DTO: CRM state,
@@ -42,6 +43,18 @@ const KDF_OPTIONS = Object.freeze({ N: 65536, r: 8, p: 1, maxmem: 96 * CHUNK_BYT
 const derive = promisify(scrypt);
 const decode = new TextDecoder('utf-8', { fatal: true });
 const lower = (value) => value.toLowerCase();
+const testDiagnostics = createTestDiagnostic({
+  envName: 'ZHIKE_TEST_DEVICE_MIGRATION_DIAGNOSTICS',
+  prefix: 'ZHIKE_TEST_DEVICE_MIGRATION',
+  allowedFields: [
+    'operation', 'pathCount', 'initializePrivate', 'verifyPrivate', 'elapsedMs',
+    'code', 'signal', 'errorCode', 'activeDerivations',
+  ],
+});
+const testDiagnosticsEnabled = testDiagnostics.enabled;
+let testDiagnosticOperation = 0;
+const testDiagnostic = (event, details = {}) => testDiagnostics.emit(event, details);
+const diagnosticElapsed = started => testDiagnosticsEnabled ? Math.round(Number(process.hrtime.bigint() - started) / 1e6) : 0;
 
 const CRM_ARRAYS = Object.freeze([
   'customers', 'savedViews', 'activities', 'tickets', 'deposits', 'followups', 'registrations', 'phoneRegistry',
@@ -294,14 +307,30 @@ const WINDOW_ATTRIBUTES = [
 
 async function verifyWindowsPaths(paths, privateStage = null, verifyPrivate = null) {
   if (process.platform !== 'win32') return;
+  const started = testDiagnosticsEnabled ? process.hrtime.bigint() : 0n;
+  const operation = testDiagnosticsEnabled ? ++testDiagnosticOperation : 0;
+  testDiagnostic('windows-path.start', {
+    operation, pathCount: paths.length, initializePrivate: Boolean(privateStage), verifyPrivate: Boolean(verifyPrivate),
+  });
   const powershell = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32/WindowsPowerShell/v1.0/powershell.exe');
   const child = spawn(powershell, ['-NoProfile', '-NonInteractive', '-Command', WINDOW_ATTRIBUTES], {
     windowsHide: true, timeout: 15000, stdio: ['pipe', 'ignore', 'ignore'],
   });
   const closed = once(child, 'close');
+  if (testDiagnosticsEnabled) {
+    child.once('spawn', () => testDiagnostic('windows-path.spawned', {
+      operation, elapsedMs: diagnosticElapsed(started),
+    }));
+    child.once('error', error => testDiagnostic('windows-path.error', {
+      operation, elapsedMs: diagnosticElapsed(started), errorCode: String(error?.code || 'UNKNOWN').slice(0, 40),
+    }));
+  }
   child.stdin.on('error', () => {});
   child.stdin.end(jsonBytes({ paths, privateStage, verifyPrivate }).toString('base64'), 'ascii');
-  const [code] = await closed.catch(() => [-1]);
+  const [code, signal] = await closed.catch(() => [-1, null]);
+  testDiagnostic('windows-path.closed', {
+    operation, elapsedMs: diagnosticElapsed(started), code, signal: signal || null,
+  });
   check(code === 0, 'PATH', 'Windows path attributes or temporary-directory permissions could not be verified.');
 }
 
@@ -389,9 +418,19 @@ async function deriveKey(password, header) {
     'PASSWORD', 'A non-empty package password of at most 1024 UTF-8 bytes is required.');
   check(activeDerivations < 2, 'BUSY', 'Too many package password derivations are active.');
   const secret = Buffer.from(password, 'utf8');
+  const started = testDiagnosticsEnabled ? process.hrtime.bigint() : 0n;
+  const operation = testDiagnosticsEnabled ? ++testDiagnosticOperation : 0;
+  testDiagnostic('scrypt.start', { operation, activeDerivations });
   activeDerivations++;
   try {
-    return await derive(secret, header.subarray(SALT_OFFSET, NONCE_OFFSET), 32, KDF_OPTIONS);
+    const key = await derive(secret, header.subarray(SALT_OFFSET, NONCE_OFFSET), 32, KDF_OPTIONS);
+    testDiagnostic('scrypt.completed', { operation, elapsedMs: diagnosticElapsed(started) });
+    return key;
+  } catch (error) {
+    testDiagnostic('scrypt.failed', {
+      operation, elapsedMs: diagnosticElapsed(started), errorCode: String(error?.code || 'UNKNOWN').slice(0, 40),
+    });
+    throw error;
   } finally {
     activeDerivations--;
     secret.fill(0);
