@@ -304,6 +304,7 @@ function runWs() {
 function runAll() {
   run('isolated app fixture safety', [path.join(repo, 'tests', 'isolated-app-fixture.test.cjs')]);
   run('6.0 no legacy data migration contract', [path.join(repo, 'tests', 'no-legacy-data-migration-contract.test.cjs')]);
+  run('6.0 no legacy migration with delayed sidecar shutdown', [path.join(repo, 'tests', 'no-legacy-data-migration-contract.test.cjs'), '--delayed-shutdown']);
   run('backup integrity contract', [path.join(repo, 'tests', 'backup-integrity-contract.test.cjs')]);
   run('manual multi-account backup contract', [path.join(repo, 'tests', 'manual-backup-all-accounts.test.cjs')]);
   run('encrypted device package integrity and isolated extraction', [path.join(repo, 'tests', 'device-migration-package.test.cjs')]);
