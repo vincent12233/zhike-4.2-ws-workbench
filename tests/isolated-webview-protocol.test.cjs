@@ -1,7 +1,7 @@
 'use strict';
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
-const { hostMessages, validateResult } = require('./helpers/isolated-webview-runner.cjs');
+const { hostMessages, validateResult, assertNativeLifecycle } = require('./helpers/isolated-webview-runner.cjs');
 const { runIsolatedRenderer } = require('./helpers/isolated-renderer.cjs');
 const ready = JSON.stringify({ kind: 'ready', browserPid: 123 }) + '\n';
 
@@ -38,6 +38,57 @@ test('trailing errors and partial protocol records fail after native shutdown', 
     stream.read(output,'result');stream.armClose(output);
     assert.throws(()=>stream.finish(output+'{"kind":"closed"}\n'+trailer));
   }
+});
+
+function lifecycleMetadata(...ending) {
+  return {
+    timeoutMs: 30000, streamsClosed: true, browserPid: 123, exit: { code: 0, signal: null },
+    events: [
+      { event: 'webview-core-ready' }, { event: 'result-verified' }, { event: 'result-ready' },
+      { event: 'close-requested' }, { event: 'webview-close-requested' }, ...ending,
+    ],
+  };
+}
+
+const processExit = { event: 'process-exit', code: 0, signal: null };
+const coreExit = { event: 'webview-browser-exited', normal: true, browserPid: 123 };
+const streamsClosed = { event: 'streams-close' };
+
+test('actual host exit and the buffered Core closure can be observed in either order', () => {
+  assertNativeLifecycle(lifecycleMetadata(coreExit, processExit, streamsClosed));
+  assertNativeLifecycle(lifecycleMetadata(processExit, coreExit, streamsClosed));
+});
+
+test('host and Core exit evidence must both follow the explicit close request', () => {
+  for (const exit of [processExit, coreExit]) {
+    const remaining = exit === processExit ? coreExit : processExit;
+    const metadata = lifecycleMetadata(remaining, streamsClosed);
+    const closeRequest = metadata.events.findIndex(row => row.event === 'webview-close-requested');
+    metadata.events.splice(closeRequest, 0, exit);
+    assert.throws(() => assertNativeLifecycle(metadata), new RegExp('in order: ' + exit.event));
+  }
+});
+
+test('missing or duplicate close evidence and premature stream closure cannot pass', () => {
+  for (const event of [processExit, coreExit, streamsClosed]) {
+    const ending = [processExit, coreExit, streamsClosed];
+    assert.throws(() => assertNativeLifecycle(lifecycleMetadata(...ending.filter(row => row !== event))), /must complete once in order/);
+    assert.throws(() => assertNativeLifecycle(lifecycleMetadata(...ending, event)), /must complete once in order/);
+  }
+  for (const ending of [[processExit, streamsClosed, coreExit], [coreExit, streamsClosed, processExit]]) {
+    assert.throws(() => assertNativeLifecycle(lifecycleMetadata(...ending)), /in order: streams-close/);
+  }
+});
+
+test('the owned PID, actual exit status, complete streams and original deadline remain necessary', () => {
+  for (const wrongCore of [{ ...coreExit, browserPid: 124 }, { ...coreExit, normal: false }]) {
+    assert.throws(() => assertNativeLifecycle(lifecycleMetadata(processExit, wrongCore, streamsClosed)), /exact Core browser/);
+  }
+  const metadata = lifecycleMetadata(processExit, coreExit, streamsClosed);
+  assert.throws(() => assertNativeLifecycle({ ...metadata, exit: { code: 1, signal: null } }), /Native host must exit normally/);
+  assert.throws(() => assertNativeLifecycle(lifecycleMetadata({ ...processExit, signal: 'SIGTERM' }, coreExit, streamsClosed)), /Observed host exit/);
+  assert.throws(() => assertNativeLifecycle({ ...metadata, streamsClosed: false }), /streams must actually close/);
+  assert.throws(() => assertNativeLifecycle({ ...metadata, timeoutMs: 31000 }), /30-second deadline/);
 });
 
 const url = new URL('file:///C:/synthetic/fixture.html?case=1');

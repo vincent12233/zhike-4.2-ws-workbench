@@ -1,5 +1,6 @@
 'use strict';
-// Actual shipping WebView2 engine, in a separate test-only WinUI process.
+// Actual shipping WebView2 engine, in a test-only HWND/STA controller process.
+// This is CSS fixture acceptance, not the product WinUI lifecycle acceptance.
 // Reuses the strict process owner and PNG checks; no product bridge or service.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -12,6 +13,7 @@ const repo = path.resolve(__dirname, '../..');
 const defaultHost = path.join(repo, '.tools/isolated-webview-host/IsolatedWebViewHost.exe');
 const failure = (code, message) => Object.assign(new Error(message), { code, phase: 'webview-host' });
 const MAX_OUTPUT = 64 * 1024 * 1024;
+const HOST_TIMEOUT_MS = 30000;
 
 function hostMessages() {
   let offset = 0;
@@ -67,12 +69,49 @@ function validateResult(value, expectedViewports, targetUrl, viewport) {
   return results;
 }
 
+function assertNativeLifecycle(metadata) {
+  assert.equal(metadata.timeoutMs, HOST_TIMEOUT_MS, 'Native lifecycle requires the shared 30-second deadline');
+  const names = metadata.events.map(event => event.event);
+  const requireEvent = (name, after) => {
+    const index = names.indexOf(name);
+    assert.ok(index > after && index === names.lastIndexOf(name), 'Native owned lifecycle must complete once in order: ' + name);
+    return index;
+  };
+  let closeRequest = -1;
+  for (const name of ['webview-core-ready', 'result-verified', 'result-ready', 'close-requested', 'webview-close-requested']) {
+    closeRequest = requireEvent(name, closeRequest);
+  }
+  // Node can deliver the process exit before it drains the final stdout record.
+  const coreExit = requireEvent('webview-browser-exited', closeRequest);
+  const hostExit = requireEvent('process-exit', closeRequest);
+  requireEvent('streams-close', Math.max(coreExit, hostExit));
+  assert.equal(metadata.streamsClosed, true, 'Both renderer output streams must actually close');
+  assert.deepEqual(metadata.exit, { code: 0, signal: null }, 'Native host must exit normally');
+  assert.ok(metadata.events[hostExit].code === 0 && metadata.events[hostExit].signal === null, 'Observed host exit must be normal');
+  assert.ok(metadata.events[coreExit].normal === true && metadata.events[coreExit].browserPid === metadata.browserPid,
+    'The exact Core browser must report Normal BrowserProcessExited');
+}
+
+function fingerprintHostBuild(host) {
+  const sha256 = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+  const siblingSha256 = name => {
+    const file = path.join(path.dirname(host), name);
+    return fs.statSync(file, { throwIfNoEntry: false })?.isFile() ? sha256(file) : null;
+  };
+  return {
+    exeSha256: sha256(host),
+    dllSha256: siblingSha256('IsolatedWebViewHost.dll'),
+    runtimeConfigSha256: siblingSha256('IsolatedWebViewHost.runtimeconfig.json'),
+  };
+}
+
 async function runIsolatedWebView(options) {
   assert.equal(process.platform, 'win32', 'Actual Windows WebView2 is required');
   const host = options.host || process.env.ZHIKE_TEST_WEBVIEW_HOST || defaultHost;
   assert.ok(fs.existsSync(host), 'Build tests/native/IsolatedWebViewHost before native renderer acceptance');
   // Shared validation accepts an explicit executable; it does not start Edge.
   const { root, targetUrl, expectedViewports, viewport, screenshotPath, evidenceDirectory } = validateEdgeOptions({ ...options, edge: host });
+  const hostBuild = fingerprintHostBuild(host);
   const profile = path.join(root, 'webview-profile-' + randomUUID());
   const requestPath = path.join(root, 'webview-request-' + randomUUID() + '.json');
   const request = { root, profile, assetRoot: path.join(repo, 'resources/app'), targetUrl: targetUrl.href,
@@ -83,10 +122,12 @@ async function runIsolatedWebView(options) {
   let normalCoreExit = false;
   const output = await runProcessLifecycle({
     command: host, args: ['--request', requestPath], root, profile,
-    mode: 'real-webview2-synthetic-layout', timeoutMs: 30000, maxOutputBytes: MAX_OUTPUT, evidenceDirectory,
+    mode: 'real-webview2-synthetic-layout', timeoutMs: HOST_TIMEOUT_MS, maxOutputBytes: MAX_OUTPUT, evidenceDirectory,
     observerDotnet: process.env.ZHIKE_EDGE_OBSERVER_DOTNET,
     async readResult(context) {
       ready = await context.wait(context.waitForOutput(text => protocol.read(text, 'ready')), 'webview-core-ready');
+      assert.equal(ready.hostBackend, 'win32-controller', 'Only the freshly built controller host can supply this result');
+      context.metadata.hostBackend = ready.hostBackend;
       assert.ok(Number.isSafeInteger(ready.browserPid) && ready.browserPid > 0 && ready.browserPid !== context.child.pid);
       assert.equal(path.resolve(ready.profile).toLowerCase(), path.resolve(profile).toLowerCase(), 'Only the exclusive temporary profile may be used');
       assert.ok(typeof ready.runtimeVersion === 'string' && ready.runtimeVersion.length < 160);
@@ -126,17 +167,11 @@ async function runIsolatedWebView(options) {
       return { acknowledgement: 'webview-browser-exited-normal' };
     },
     dispose(context) {
+      context.metadata.hostBuild = hostBuild;
       if (!normalCoreExit) context.metadata.cleanupSafe = false;
       if (!context.metadata.resultReady) return;
       protocol.finish(context.stdout);
-      const names = context.metadata.events.map(event => event.event);
-      let previous = -1;
-      for (const name of ['webview-core-ready', 'result-verified', 'result-ready', 'close-requested', 'webview-close-requested', 'webview-browser-exited']) {
-        const index = names.indexOf(name);
-        assert.ok(index > previous && index === names.lastIndexOf(name), 'Native owned lifecycle must complete once: ' + name);
-        previous = index;
-      }
-      for (const name of ['process-exit', 'streams-close']) assert.ok(names.indexOf(name) > previous, 'Native host and streams must actually exit after the Core');
+      assertNativeLifecycle(context.metadata);
       assert.equal(path.dirname(context.metadata.profile), root);
     },
   });
@@ -150,4 +185,4 @@ function recordNativeVisualAssertions(metadata) {
   fs.writeFileSync(metadata.evidenceFile.replace(/\.json$/, '.assertions.json'), JSON.stringify(entry) + '\n', { flag: 'wx' });
 }
 
-module.exports = { runIsolatedWebView, recordNativeVisualAssertions, hostMessages, validateResult, defaultHost };
+module.exports = { runIsolatedWebView, recordNativeVisualAssertions, hostMessages, validateResult, assertNativeLifecycle, defaultHost };
