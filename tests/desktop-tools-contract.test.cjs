@@ -115,6 +115,8 @@ for (const evidence of [
 // outside {app} and must never appear in InstallDelete.
 assert.match(setup, /phone-registry-seed\.json/);
 assert.match(setup, /operations-core\.test\.cjs/);
-assert.doesNotMatch(setup, /\[InstallDelete\][\s\S]*\{localappdata\}\\Zhike/);
+const installDelete = setup.match(/^\[InstallDelete\][ \t]*\r?\n([\s\S]*?)(?=^\[|(?![\s\S]))/m)?.[1];
+assert.ok(installDelete, 'the installer payload cleanup section must remain present');
+assert.doesNotMatch(installDelete, /\{localappdata\}\\Zhike/i);
 
 console.log('desktop productivity tools contract: native reminders, atomic backups, retention safety and obsolete-file cleanup passed');
