@@ -1,0 +1,20 @@
+{
+  "sourceCommit": "054da7e",
+  "normalWindowCloseObserved": true,
+  "applicationStoppingAtUtc": "2026-11-19T04:27:14.0853431Z",
+  "sidecarStoppedAtUtc": "2026-11-19T04:27:14.2975356Z",
+  "sidecarReportedRunning": false,
+  "hostUnloadedAtUtc": "2026-11-19T04:27:14.3190598Z",
+  "processExitCode": null,
+  "firstReleaseCheckAtUtc": "2026-11-19T04:27:36.8355713Z",
+  "archiveRecheckAtUtc": "2026-11-19T04:39:43.5720670Z",
+  "observerSampleCount": 91,
+  "lateSnapshotAtUtc": "2026-11-19T04:13:35.4552391Z",
+  "lateSnapshotProcessCount": 21,
+  "observedProcessIdentities": 21,
+  "remainingObservedIdentities": 0,
+  "unverifiedObservedIdentities": 0,
+  "remainingExactIsolatedBinaryCount": 0,
+  "processTerminatedByCheck": false,
+  "identityMethod": "PID + process creation time across original resource samples and one later isolated process-tree snapshot"
+}

@@ -62,7 +62,7 @@
 |S0|Passed|真实清单与基线完成，本报告范围|
 |S1|Passed|设计系统、真实双工作台与Core保留；见s1-design-system-acceptance.md。S3–S7逐页业务/DPI/压力测试仍待执行|
 |S2|Passed|真实指标口径、只读全局CRM投影、未知/错误/空态和有界图表；见s2-metrics-acceptance.md。大库冷计算及逐页/DPI/长时性能仍留S3–S7|
-|S3|Blocked|2026-11-19 Edge 退出加固最终全量回归 317/319，S1 主界面和 S1 WS 两项均在隔离 Edge `process-exit` 超时，后置布局断言未全部完成。[退出加固报告](edge-exit-hardening.md) · [此前稳定化回归及有限原生验收](usable-stabilization-report.md)。完整物理输入与多 DPI 矩阵未完成，S4 未放行。|
+|S3|Blocked|2026-11-19 后续测试修正于 `dc9c372` 完整回归 **324/324**。默认真实 WebView2 引擎矩阵及严格关闭检查通过；先前失败原样留档。[渲染宿主复测](renderer-controller-acceptance.md) · [本轮有限产品 WinUI 实操](native-observation.md)。十次合成账号切换、CRM 独立滚动与正常关闭已有证据，完整物理输入、多 DPI、长期资源及其余逐页验收未完成，不能以引擎夹具代替产品验收。|
 |S4|Pending|其余业务逐页无回归|
 |S5|Pending|AI/设置/治理/审计/回收站|
 |S6|Pending|WS全部现有页、账号/Core/错误恢复|

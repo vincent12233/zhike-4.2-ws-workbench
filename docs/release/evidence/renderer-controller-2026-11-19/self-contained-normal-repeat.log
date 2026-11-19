@@ -1,0 +1,5 @@
+{"kind":"normal-1","status":"Passed","invocation":"1795059704086-9c4c77d1-fe83-40f2-9185-63df7b8cc9d2","renderer":"real-webview2-synthetic-layout","elapsedMs":3357.04,"browserPid":30612,"cleanupSafe":true}
+{"kind":"normal-2","status":"Passed","invocation":"1795059707493-b4f52fa5-773c-45b8-a6a1-7148f6f93cd8","renderer":"real-webview2-synthetic-layout","elapsedMs":2497.5038,"browserPid":16660,"cleanupSafe":true}
+{"kind":"normal-3","status":"Passed","invocation":"1795059710039-aab4f2bf-6f7f-44d9-aa2f-7dc2e7bdf455","renderer":"real-webview2-synthetic-layout","elapsedMs":2635.8259000000007,"browserPid":37748,"cleanupSafe":true}
+{"kind":"normal-4","status":"Passed","invocation":"1795059712726-22958838-ff78-47a7-b248-c6f6436ed4d6","renderer":"real-webview2-synthetic-layout","elapsedMs":2653.2888000000003,"browserPid":40188,"cleanupSafe":true}
+{"kind":"normal-5","status":"Passed","invocation":"1795059715432-f352802c-d855-47d1-9773-022d292ae1d5","renderer":"real-webview2-synthetic-layout","elapsedMs":2339.002199999999,"browserPid":15616,"cleanupSafe":true}

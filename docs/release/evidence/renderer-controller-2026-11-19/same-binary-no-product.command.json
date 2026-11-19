@@ -1,0 +1,142 @@
+{
+  "startedAtUtc": "2026-11-19T04:31:12.0922310Z",
+  "gitCommit": "8b533b0fae047cfd5be27bd7ed1d65d8b1a8ecb0",
+  "priorCommitChangedPaths": [
+    "tests/no-legacy-data-migration-contract.test.cjs"
+  ],
+  "hostFolder": "run-nfwExU",
+  "hostBuild": {
+    "exeSha256": "5dc03b5e0334a79822de9569f68ff029ae72f8c067422dea075a2310447624df",
+    "dllSha256": "fdcd52fe636133d92b83524322f6876d73b9253dd0b608fcb435671d109b271f",
+    "runtimeConfigSha256": "b8618d9d49f6da986b2c556c79b16bac7e74c83640a506bfc31ecc158c67091d"
+  },
+  "baselineInvocations": [
+    "1795061304711-37b083dc-cbf6-44c3-85c8-f13b269f20d1",
+    "1795061576081-aeef4add-23d8-4548-b1aa-2fd594d6aca2"
+  ],
+  "controlledProductUIActiveAtStart": false,
+  "timeoutMs": 30000,
+  "backend": "webview2",
+  "outcomes": [
+    {
+      "case": "stage51-layout",
+      "entry": "scripts/stage51/workspace-layout.test.cjs",
+      "startUtc": "2026-11-19T04:31:12.2863388Z",
+      "endUtc": "2026-11-19T04:31:17.4274489Z",
+      "elapsedMs": 5141.1101,
+      "exitCode": 0,
+      "stdoutSha256": "0BEDE7DDA95BB8243CD41D12C424BE97FE5C4B29CB05169E8F854488101CBF1C",
+      "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "calls": [
+        {
+          "invocation": "1795062672521-73d3ac14-3ead-4570-9115-4dc384209180",
+          "status": "Passed",
+          "failure": null,
+          "elapsedMs": 4840.1479,
+          "resultCases": 6,
+          "exitCode": 0,
+          "streamsClosed": true,
+          "cleanupSafe": true,
+          "hostFingerprintMatches": true,
+          "metadataFile": "<repo>\\.tools\\delivery-s1-edge-layout\\1795062672521-73d3ac14-3ead-4570-9115-4dc384209180.json"
+        }
+      ]
+    },
+    {
+      "case": "s1-main",
+      "entry": "scripts/delivery/s1-main-visual.test.cjs",
+      "startUtc": "2026-11-19T04:31:17.5710404Z",
+      "endUtc": "2026-11-19T04:31:58.4122577Z",
+      "elapsedMs": 40841.2173,
+      "exitCode": 0,
+      "stdoutSha256": "82F70566BB947A261D9243531FDA08AB074A21780DB105854775EB9EED794F1A",
+      "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "calls": [
+        {
+          "invocation": "1795062677699-aaedc136-a08a-4a5c-8e04-959f714963d0",
+          "status": "Passed",
+          "failure": null,
+          "elapsedMs": 11271.9389,
+          "resultCases": 8,
+          "exitCode": 0,
+          "streamsClosed": true,
+          "cleanupSafe": true,
+          "hostFingerprintMatches": true,
+          "metadataFile": "<repo>\\.tools\\native-renderer\\continuation-no-product-fb7c0573c22049698364bd9dcb1ea341\\main-visual\\1795062677699-aaedc136-a08a-4a5c-8e04-959f714963d0.json"
+        },
+        {
+          "invocation": "1795062689129-bb9c1dfe-4994-49d4-a2e2-c37a3ed7d35d",
+          "status": "Passed",
+          "failure": null,
+          "elapsedMs": 4806.5926,
+          "resultCases": 1,
+          "exitCode": 0,
+          "streamsClosed": true,
+          "cleanupSafe": true,
+          "hostFingerprintMatches": true,
+          "metadataFile": "<repo>\\.tools\\native-renderer\\continuation-no-product-fb7c0573c22049698364bd9dcb1ea341\\main-visual\\1795062689129-bb9c1dfe-4994-49d4-a2e2-c37a3ed7d35d.json"
+        },
+        {
+          "invocation": "1795062693962-7de03ecd-78de-4734-b461-5ceb65cd97d4",
+          "status": "Passed",
+          "failure": null,
+          "elapsedMs": 4380.4931,
+          "resultCases": 1,
+          "exitCode": 0,
+          "streamsClosed": true,
+          "cleanupSafe": true,
+          "hostFingerprintMatches": true,
+          "metadataFile": "<repo>\\.tools\\native-renderer\\continuation-no-product-fb7c0573c22049698364bd9dcb1ea341\\main-visual\\1795062693962-7de03ecd-78de-4734-b461-5ceb65cd97d4.json"
+        },
+        {
+          "invocation": "1795062698372-3d84ed07-b6c8-4fa6-adab-edbce2779e7a",
+          "status": "Passed",
+          "failure": null,
+          "elapsedMs": 4980.866700000002,
+          "resultCases": 1,
+          "exitCode": 0,
+          "streamsClosed": true,
+          "cleanupSafe": true,
+          "hostFingerprintMatches": true,
+          "metadataFile": "<repo>\\.tools\\native-renderer\\continuation-no-product-fb7c0573c22049698364bd9dcb1ea341\\main-visual\\1795062698372-3d84ed07-b6c8-4fa6-adab-edbce2779e7a.json"
+        },
+        {
+          "invocation": "1795062703363-26f4679a-3853-46d2-b265-e3f9d65f5b84",
+          "status": "Passed",
+          "failure": null,
+          "elapsedMs": 4328.694100000001,
+          "resultCases": 1,
+          "exitCode": 0,
+          "streamsClosed": true,
+          "cleanupSafe": true,
+          "hostFingerprintMatches": true,
+          "metadataFile": "<repo>\\.tools\\native-renderer\\continuation-no-product-fb7c0573c22049698364bd9dcb1ea341\\main-visual\\1795062703363-26f4679a-3853-46d2-b265-e3f9d65f5b84.json"
+        },
+        {
+          "invocation": "1795062707698-e90616ec-a972-446f-a806-cc16210bdc12",
+          "status": "Passed",
+          "failure": null,
+          "elapsedMs": 5088.5795,
+          "resultCases": 1,
+          "exitCode": 0,
+          "streamsClosed": true,
+          "cleanupSafe": true,
+          "hostFingerprintMatches": true,
+          "metadataFile": "<repo>\\.tools\\native-renderer\\continuation-no-product-fb7c0573c22049698364bd9dcb1ea341\\main-visual\\1795062707698-e90616ec-a972-446f-a806-cc16210bdc12.json"
+        },
+        {
+          "invocation": "1795062712798-79d31d80-021b-4e24-9417-5ebfee8e0509",
+          "status": "Passed",
+          "failure": null,
+          "elapsedMs": 5340.686499999996,
+          "resultCases": 1,
+          "exitCode": 0,
+          "streamsClosed": true,
+          "cleanupSafe": true,
+          "hostFingerprintMatches": true,
+          "metadataFile": "<repo>\\.tools\\native-renderer\\continuation-no-product-fb7c0573c22049698364bd9dcb1ea341\\main-visual\\1795062712798-79d31d80-021b-4e24-9417-5ebfee8e0509.json"
+        }
+      ]
+    }
+  ]
+}

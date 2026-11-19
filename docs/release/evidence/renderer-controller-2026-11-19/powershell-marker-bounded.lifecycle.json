@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 2,
+  "invocation": "1795062885396-91038b08-b4fa-4ac8-a9ba-9c1fbe498470",
+  "mode": "controlled-powershell-bounded-readiness",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 4000,
+  "launchedAt": "2026-11-19T04:34:45.396Z",
+  "timebase": "node-monotonic-ms",
+  "startedMonotonicMs": 4837.2168,
+  "events": [
+    {
+      "event": "process-spawned",
+      "elapsedMs": 1877.7397,
+      "pid": 24080
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 1877.7605999999996,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 2397.3252999999995,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 2397.4015
+    },
+    {
+      "event": "lock-fixture-marker",
+      "elapsedMs": 2397.4228000000003,
+      "marker": "LOCKED"
+    },
+    {
+      "event": "cdp-readiness-wait",
+      "elapsedMs": 2398.4156000000003,
+      "code": "EBUSY"
+    },
+    {
+      "event": "deadline-timeout",
+      "elapsedMs": 3007.0959999999995,
+      "phase": "result",
+      "deadlineMs": 3000
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 3007.3391999999994
+    },
+    {
+      "event": "lock-fixture-close-send",
+      "elapsedMs": 3007.4332999999997,
+      "writable": true
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 3007.6395,
+      "acknowledgement": "stdin-request"
+    },
+    {
+      "event": "deadline-timeout",
+      "elapsedMs": 3007.6868999999997,
+      "phase": "cdp-ready",
+      "deadlineMs": 3000
+    },
+    {
+      "event": "lock-fixture-close-write",
+      "elapsedMs": 3007.9092,
+      "ok": true
+    },
+    {
+      "event": "lock-fixture-stdin-finished",
+      "elapsedMs": 3007.9248
+    },
+    {
+      "event": "lock-fixture-command-read",
+      "elapsedMs": 3022.1255,
+      "slot": 1,
+      "action": "CLOSE"
+    },
+    {
+      "event": "lock-fixture-marker",
+      "elapsedMs": 3025.4784,
+      "marker": "UNLOCKED"
+    },
+    {
+      "event": "lock-fixture-command-read",
+      "elapsedMs": 3027.1721,
+      "slot": 2,
+      "action": "EOF"
+    },
+    {
+      "event": "lock-fixture-marker",
+      "elapsedMs": 3027.8805999999995,
+      "marker": "EXIT_0"
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 3043.1282999999994
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 3043.2663999999995
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 3051.2137999999995,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 3051.2643,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 3051.3504999999996
+    },
+    {
+      "event": "node-release-state",
+      "elapsedMs": 3051.5296,
+      "exitObserved": true,
+      "closeObserved": true,
+      "stdoutCloseObserved": true,
+      "stderrCloseObserved": true,
+      "exitCode": 0,
+      "signalCode": null
+    },
+    {
+      "event": "identity-probe-closed",
+      "elapsedMs": 3081.5702999999994
+    },
+    {
+      "event": "runner-lifecycle-complete",
+      "elapsedMs": 3081.6031999999996,
+      "cleanupSafe": true,
+      "forceTerminated": false
+    },
+    {
+      "event": "runner-final",
+      "elapsedMs": 3081.6261999999997,
+      "status": "Failed",
+      "cleanupSafe": true,
+      "forceTerminated": false
+    }
+  ],
+  "identities": [
+    {
+      "pid": 24080,
+      "startedTicks": "639306596854103937",
+      "startedUtc": "2026-11-19T04:34:45.4103937Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "pid": 24080,
+  "identityProbePid": 19432,
+  "profile": "<temp>\\zhike-edge-runner-test-nKrcCe\\edge-profile-e2b07057-3b7e-43ed-9c90-fa715b6f79f7",
+  "devToolsReadiness": {
+    "polls": 20,
+    "enoent": 0,
+    "ebusy": 20,
+    "partial": 0
+  },
+  "rootExitProof": "verified-spawn-handle-exit-and-streams",
+  "remainingIdentities": [],
+  "identityProbeClosed": true,
+  "elapsedMs": 3081.5820999999996,
+  "stdoutBytes": 52,
+  "stderrBytes": 0,
+  "failure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "result",
+    "message": "Isolated lifecycle deadline reached during result"
+  }
+}

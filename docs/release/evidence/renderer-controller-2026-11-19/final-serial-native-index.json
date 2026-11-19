@@ -1,0 +1,238 @@
+{
+  "sourceFreeze": "dc9c372",
+  "backend": "default WebView2",
+  "testHost": "win32-controller",
+  "hostSha256": {
+    "exeSha256": "3efa50d199b895835d8b8abe51409be267ff3acc4e6ffdf02e0e3c7f90017c95",
+    "dllSha256": "aaad8cdb31b0e8a4ec1700220f08929277b9815547a4a6e42735903313336467",
+    "runtimeConfigSha256": "b8618d9d49f6da986b2c556c79b16bac7e74c83640a506bfc31ecc158c67091d"
+  },
+  "all": {
+    "checks": 324,
+    "passed": 324,
+    "failed": 0,
+    "exitCode": 0
+  },
+  "protocol": {
+    "checks": 13,
+    "passed": 13,
+    "log": "final-serial-webview-protocol.log"
+  },
+  "calls": [
+    {
+      "label": "stage51-layout",
+      "invocation": "1795063771628-1fe21568-76fb-4e34-a0f1-371588faf448",
+      "cases": 6,
+      "lifecycle": "final-serial-stage51-layout-1.lifecycle.json",
+      "pageAssertions": "final-serial-full-regression.log",
+      "result": {
+        "source": ".tools/delivery-s1-edge-layout/1795063771628-1fe21568-76fb-4e34-a0f1-371588faf448.result.json",
+        "size": 20263,
+        "sha256": "750d4217b1af83e303959799bedd3bc3390cd711763b0a73989a511c50eb2de0",
+        "rawResultBodySha256": "4edb49cdabb617303da7ad7cd668d05cbe5285c683b5759203e56d697015a89c"
+      }
+    },
+    {
+      "label": "controlled",
+      "invocation": "1795063955818-568fd683-0017-4e04-a4ad-5020931e97a2",
+      "cases": 1,
+      "lifecycle": "final-serial-controlled-1.lifecycle.json",
+      "pageAssertions": "final-serial-controlled-1.assertions.json",
+      "result": {
+        "source": ".tools/native-renderer/controlled-fixture/1795063955818-568fd683-0017-4e04-a4ad-5020931e97a2.result.json",
+        "size": 249,
+        "sha256": "4a07fedc23227f5bd062bc5b5df2328cfd3dfaf16ea77af283aab7607739843f",
+        "rawResultBodySha256": "dc7d192cbbf86d183ce7b07e7c56e4008d18589794df688f1b8af06077698398"
+      }
+    },
+    {
+      "label": "controlled",
+      "invocation": "1795063959297-24dc0724-160c-41e6-9d1a-7fda6f391dc9",
+      "cases": 1,
+      "lifecycle": "final-serial-controlled-2.lifecycle.json",
+      "pageAssertions": "final-serial-controlled-2.assertions.json",
+      "result": {
+        "source": ".tools/native-renderer/controlled-fixture/1795063959297-24dc0724-160c-41e6-9d1a-7fda6f391dc9.result.json",
+        "size": 254,
+        "sha256": "8b0b1eff1a72739eddf78d2463a70a09748124aca3d79097f95b5170dd7c392b",
+        "rawResultBodySha256": "b5e748df1223e6ec35caeb2df2619aa41881b55984e617684846192556f33da1"
+      }
+    },
+    {
+      "label": "s1-main",
+      "invocation": "1795064056663-880397f9-b1fd-4100-9e15-df10e0a5f5ea",
+      "cases": 8,
+      "lifecycle": "final-serial-s1-main-1.lifecycle.json",
+      "pageAssertions": "final-serial-s1-main-1.assertions.json",
+      "result": {
+        "source": ".tools/visual-usability/main-visual/1795064056663-880397f9-b1fd-4100-9e15-df10e0a5f5ea.result.json",
+        "size": 2089813,
+        "sha256": "04bc8d55f94bb9be77085531f634c47652f19a726a508d0c3fc18379297c5f8e",
+        "rawResultBodySha256": "3bc4bb9eb6fb87a9dcaab81684329a1aab47b67bbd52add0c93a0ad68f93fa53"
+      }
+    },
+    {
+      "label": "s1-main",
+      "invocation": "1795064066844-26b5464b-b934-474d-81c4-d4f330d8f670",
+      "cases": 1,
+      "lifecycle": "final-serial-s1-main-2.lifecycle.json",
+      "pageAssertions": "final-serial-s1-main-2.assertions.json",
+      "result": {
+        "source": ".tools/visual-usability/main-visual/1795064066844-26b5464b-b934-474d-81c4-d4f330d8f670.result.json",
+        "size": 264371,
+        "sha256": "828eba7a00395af6a6c207cebfdde97548577d8789eee6592c7bc5c59a2715ae",
+        "rawResultBodySha256": "67da6d24eb243d7ab8b459fcfa128b0b0bba6353eeb5afe99be22a6eaeadef0a"
+      }
+    },
+    {
+      "label": "s1-main",
+      "invocation": "1795064070859-9c437eb1-4dde-4b39-a75a-95bbf7165d39",
+      "cases": 1,
+      "lifecycle": "final-serial-s1-main-3.lifecycle.json",
+      "pageAssertions": "final-serial-s1-main-3.assertions.json",
+      "result": {
+        "source": ".tools/visual-usability/main-visual/1795064070859-9c437eb1-4dde-4b39-a75a-95bbf7165d39.result.json",
+        "size": 265116,
+        "sha256": "abd656a0b23cd38d3cd8c6ed62da9dfc58246d6622cab781544dc522f12278df",
+        "rawResultBodySha256": "634790eff2cce5b96f1dee8bb5fcd2581dcc495a92cd15f74943ee208ef26d77"
+      }
+    },
+    {
+      "label": "s1-main",
+      "invocation": "1795064075036-549d821b-63ab-49e6-a234-d937c3e654c2",
+      "cases": 1,
+      "lifecycle": "final-serial-s1-main-4.lifecycle.json",
+      "pageAssertions": "final-serial-s1-main-4.assertions.json",
+      "result": {
+        "source": ".tools/visual-usability/main-visual/1795064075036-549d821b-63ab-49e6-a234-d937c3e654c2.result.json",
+        "size": 23520,
+        "sha256": "d932820cf47c842ba04646009eedd238863de47eb7367cb13fe74c50c079f3cf",
+        "rawResultBodySha256": "0d8fbcac3f4e9e0469c8f60f62158dfb8fad5d2aeb1c6e0d834b6cdacb8c9c66"
+      }
+    },
+    {
+      "label": "s1-main",
+      "invocation": "1795064092337-59815409-fa70-48ba-9db9-4611e40695b8",
+      "cases": 1,
+      "lifecycle": "final-serial-s1-main-5.lifecycle.json",
+      "pageAssertions": "final-serial-s1-main-5.assertions.json",
+      "result": {
+        "source": ".tools/visual-usability/main-visual/1795064092337-59815409-fa70-48ba-9db9-4611e40695b8.result.json",
+        "size": 27676,
+        "sha256": "0da1b0a9fe92847161b39fa8f0dd4ab6b4c54a661fca878f31ad2bc09424e429",
+        "rawResultBodySha256": "de591c2c0a6790ed3bfc203c649a0e51e1f6d092b91d2a0aaac3a4a16b487e3e"
+      }
+    },
+    {
+      "label": "s1-main",
+      "invocation": "1795064096345-6d839a32-ae99-4dd0-bb77-1474546efc3e",
+      "cases": 1,
+      "lifecycle": "final-serial-s1-main-6.lifecycle.json",
+      "pageAssertions": "final-serial-s1-main-6.assertions.json",
+      "result": {
+        "source": ".tools/visual-usability/main-visual/1795064096345-6d839a32-ae99-4dd0-bb77-1474546efc3e.result.json",
+        "size": 7782,
+        "sha256": "834c9ff92737f943706ffbf252e2b1187bde0b9459d4884676135db16a038d75",
+        "rawResultBodySha256": "532b69d600dee5531704232493709dcec78e25b6b847955f0a8ba8e505b2d767"
+      }
+    },
+    {
+      "label": "s1-main",
+      "invocation": "1795064112989-5bfd3fb5-4c60-4f1e-9dc6-a491c04fee77",
+      "cases": 1,
+      "lifecycle": "final-serial-s1-main-7.lifecycle.json",
+      "pageAssertions": "final-serial-s1-main-7.assertions.json",
+      "result": {
+        "source": ".tools/visual-usability/main-visual/1795064112989-5bfd3fb5-4c60-4f1e-9dc6-a491c04fee77.result.json",
+        "size": 23088,
+        "sha256": "47006d4a0153092b6e63276275b427a5f157d55b6c8b53bab4c7c06b9df01a6c",
+        "rawResultBodySha256": "b98dcd45b29854126da2959d1af0b3e495f3e9bf3c272cfa66e60eaaee2e56cb"
+      }
+    },
+    {
+      "label": "s1-ws",
+      "invocation": "1795064118385-1316de4f-e642-4cea-a5ff-5a221a57a7c4",
+      "cases": 7,
+      "lifecycle": "final-serial-s1-ws-1.lifecycle.json",
+      "pageAssertions": "final-serial-s1-ws-1.assertions.json",
+      "result": {
+        "source": ".tools/delivery-s1-ws-visual/1795064118385-1316de4f-e642-4cea-a5ff-5a221a57a7c4.result.json",
+        "size": 463547,
+        "sha256": "893e2b52119dbb97e535a185399b86aa380e2e7ed13ee1fb19a4d5e5256e9a8d",
+        "rawResultBodySha256": "4a778fbc2026687f3ae849a2450834dfcdfbd65fa6363a9329c52d9d0ade1468"
+      }
+    },
+    {
+      "label": "s2-metrics",
+      "invocation": "1795064148136-c5b920e6-23b5-44a5-be0b-b162402b4364",
+      "cases": 4,
+      "lifecycle": "final-serial-s2-metrics-1.lifecycle.json",
+      "pageAssertions": "final-serial-s2-metrics-1.assertions.json",
+      "result": {
+        "source": ".tools/delivery-s2-metrics-visual/1795064148136-c5b920e6-23b5-44a5-be0b-b162402b4364.result.json",
+        "size": 16158,
+        "sha256": "7360ecb6db33f3a3e5c85c00e50c68b36afcac43b8e6e54379dc978148717107",
+        "rawResultBodySha256": "9ac5dc6f4c2ebe883ce2892dd43eefd98201f22b0410284673a1fc5d4379ac26"
+      }
+    },
+    {
+      "label": "s3-customer-table",
+      "invocation": "1795064166890-96b41b4d-c862-44df-abec-87e6ec69e905",
+      "cases": 10,
+      "lifecycle": "final-serial-s3-customer-table-1.lifecycle.json",
+      "pageAssertions": "final-serial-s3-customer-table-1.assertions.json",
+      "result": {
+        "source": ".tools/delivery-s3-customer-table/1795064166890-96b41b4d-c862-44df-abec-87e6ec69e905.result.json",
+        "size": 390875,
+        "sha256": "da0c9b652fc7b24a74d72b2024804a1d47970849458fef964f4102cf7dc9deaf",
+        "rawResultBodySha256": "ee7176b76e0cb9a689abcd90fcb0b1e48d039d623fb7013f8288c8a68ce5eee1"
+      }
+    }
+  ],
+  "supplementaryWsScreenshots": {
+    "backend": "Edge",
+    "sourceLog": "final-serial-full-regression.log",
+    "palettes": [
+      "atelier-dawn",
+      "horizon-night"
+    ]
+  },
+  "s1MainScreenshotIndex": [
+    {
+      "source": ".tools/visual-usability/main-visual/home-atelier-dawn.png",
+      "invocation": "1795064075036-549d821b-63ab-49e6-a234-d937c3e654c2",
+      "lifecycle": "final-serial-s1-main-4.lifecycle.json",
+      "bytes": 898509,
+      "sha256": "c589c1ea767338b15ce91f0b0eda006b87e0d9c060250fb587bf5058969dbb70",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "source": ".tools/visual-usability/main-visual/customers-atelier-dawn.png",
+      "invocation": "1795064092337-59815409-fa70-48ba-9db9-4611e40695b8",
+      "lifecycle": "final-serial-s1-main-5.lifecycle.json",
+      "bytes": 484715,
+      "sha256": "6c75401be99de991346a63c48f115440e6d745ba60659c44582431dd13215a6e",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "source": ".tools/visual-usability/main-visual/operations-atelier-dawn.png",
+      "invocation": "1795064096345-6d839a32-ae99-4dd0-bb77-1474546efc3e",
+      "lifecycle": "final-serial-s1-main-6.lifecycle.json",
+      "bytes": 491810,
+      "sha256": "2868711fe0346e2cf79d3025b7f271d8d4f9d324212894a24d0e0a55f2a3bb3c",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "source": ".tools/visual-usability/main-visual/home-horizon-night.png",
+      "invocation": "1795064112989-5bfd3fb5-4c60-4f1e-9dc6-a491c04fee77",
+      "lifecycle": "final-serial-s1-main-7.lifecycle.json",
+      "bytes": 965971,
+      "sha256": "840bfdf0d30d9830f6010fa9fe8a6c9aba63638934bfbd5458e5438f7b3fa26b",
+      "width": 1920,
+      "height": 1080
+    }
+  ]
+}

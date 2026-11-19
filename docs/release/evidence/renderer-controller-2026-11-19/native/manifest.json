@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "evidenceScope": "Stage 5.1 isolated product WinUI only",
+  "copiesNoRawApplicationLogsOrCaptureMetadata": true,
+  "inputHashes": [
+    {
+      "source": ".tools\\native-renderer\\continuation-product-fixture.json",
+      "sha256": "25cb4a1ba4176ed01174a6f190a1a25071209d947c0b36e321c3a0390782a358"
+    },
+    {
+      "source": ".tools\\native-renderer\\continuation-product-run.json",
+      "sha256": "49f015d2c5c88571bf6cc7448eadbd3a53de0b73aebbae47830f6c2e12937289"
+    }
+  ],
+  "fixtureSeedSource": "scripts/stage51/seed-native.cjs",
+  "files": [
+    {
+      "file": "01-theme-preview-dark.jpg",
+      "bytes": 120797,
+      "sha256": "b8538b18eb8c0db142fadbac90d7cc8c1f85a8cc0030e32414eaf80c5d5bdde1",
+      "source": ".tools/native-renderer/continuation-desktop/dark-preview.jpg",
+      "sourceSha256": "b8538b18eb8c0db142fadbac90d7cc8c1f85a8cc0030e32414eaf80c5d5bdde1"
+    },
+    {
+      "file": "02-ws-account-b-dropdown.jpg",
+      "bytes": 80895,
+      "sha256": "df854695dd30da09da8d32651ac5ccb97c091f5ea54911dde15fc8df8616da8e",
+      "source": ".tools/native-renderer/continuation-desktop/ws-account-b.jpg",
+      "sourceSha256": "df854695dd30da09da8d32651ac5ccb97c091f5ea54911dde15fc8df8616da8e"
+    },
+    {
+      "file": "03-ws-account-list.jpg",
+      "bytes": 134464,
+      "sha256": "c4feb03a4afe3f1c2a60e407918d68bc2d6d7229b2da7c3502409567fda8176a",
+      "source": ".tools/native-renderer/continuation-desktop/ws-accounts-after-switches.jpg",
+      "sourceSha256": "c4feb03a4afe3f1c2a60e407918d68bc2d6d7229b2da7c3502409567fda8176a"
+    },
+    {
+      "file": "04-crm-expanded.jpg",
+      "bytes": 121275,
+      "sha256": "3fc6b983ba548a68e668aaec27631d710e1e4562b212b6e16e403b2559882948",
+      "source": ".tools/native-renderer/continuation-desktop/ws-crm-expanded.jpg",
+      "sourceSha256": "3fc6b983ba548a68e668aaec27631d710e1e4562b212b6e16e403b2559882948"
+    },
+    {
+      "file": "05-crm-inner-scroll.jpg",
+      "bytes": 132418,
+      "sha256": "a4ab7b9f87d7e2aedbfda9e6d1a12d9c33a2ba1605cfadff52e71cf7ada10490",
+      "source": ".tools/native-renderer/continuation-desktop/ws-crm-inner-scroll.jpg",
+      "sourceSha256": "a4ab7b9f87d7e2aedbfda9e6d1a12d9c33a2ba1605cfadff52e71cf7ada10490"
+    },
+    {
+      "file": "06-crm-collapsed.jpg",
+      "bytes": 80627,
+      "sha256": "0c1d2376011ba2529b5c327296c53d90c6f12bb01706854b9b2588ea541425af",
+      "source": ".tools/native-renderer/continuation-desktop/ws-crm-collapsed-after-scroll.jpg",
+      "sourceSha256": "0c1d2376011ba2529b5c327296c53d90c6f12bb01706854b9b2588ea541425af"
+    },
+    {
+      "file": "07-customers-returned-dark.jpg",
+      "bytes": 194073,
+      "sha256": "8c05af63a84fbc128c00556fbaccf30096c903cd8ca6534bbe35ad573b9ce80a",
+      "source": ".tools/native-renderer/continuation-desktop/customers-restored-after-ws.jpg",
+      "sourceSha256": "8c05af63a84fbc128c00556fbaccf30096c903cd8ca6534bbe35ad573b9ce80a"
+    },
+    {
+      "file": "08-customers-light.jpg",
+      "bytes": 193887,
+      "sha256": "626676e0750dd2260cc58774da646a3ef29a5c7b4f226d4cdeb8bd39c9d5f441",
+      "source": ".tools/native-renderer/continuation-desktop/customers-light-after-return.jpg",
+      "sourceSha256": "626676e0750dd2260cc58774da646a3ef29a5c7b4f226d4cdeb8bd39c9d5f441"
+    },
+    {
+      "file": "activity.json",
+      "bytes": 6011,
+      "sha256": "4e4ab299a4af41183eea8c2195111d7af647a57e9c5dba65f86895509aa2f3bc",
+      "source": "<isolated-temp>/native-events.jsonl",
+      "sourceSha256": "d7014cce765308cd583945e90b230461a5cf8289cc549cb7f1d291ee3e59fd71"
+    },
+    {
+      "file": "resource-samples.jsonl",
+      "bytes": 19259,
+      "sha256": "09adfe916bc75c26ee616d95b5eb03cdefa2ca1301e83c34a2e717b2c2892a0a",
+      "source": "<isolated-temp>/continuation-resource.jsonl",
+      "sourceSha256": "d0451b727bcae62d521765416b917ca79d98398dfb4abed22e4dfebcc301c16f"
+    },
+    {
+      "file": "resource-summary.json",
+      "bytes": 1713,
+      "sha256": "0308f1daa9df8b2f034eb6dcdd7247a1f32df97aed67e36a35687c4fccdc797f",
+      "source": "<isolated-temp>/continuation-resource.jsonl",
+      "sourceSha256": "d0451b727bcae62d521765416b917ca79d98398dfb4abed22e4dfebcc301c16f"
+    },
+    {
+      "file": "shutdown.json",
+      "bytes": 876,
+      "sha256": "b864dd853e524abd1be1719c5823c18cfaad6eef2264356f11105a39ac149bd1",
+      "source": "<isolated-temp>/native-events.jsonl",
+      "sourceSha256": "d7014cce765308cd583945e90b230461a5cf8289cc549cb7f1d291ee3e59fd71"
+    }
+  ]
+}

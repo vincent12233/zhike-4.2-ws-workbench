@@ -1,0 +1,69 @@
+{
+  "sourceCommit": "054da7e",
+  "sampleCount": 91,
+  "sampledSpanSeconds": 937.639,
+  "processTreeOnly": true,
+  "performanceThreshold": null,
+  "includesSecondWsCore": false,
+  "includesWindowExit": false,
+  "uniqueObservedProcessIdentities": 15,
+  "counterUnavailableSamples": 0,
+  "identityUnverifiedSamples": 0,
+  "first": {
+    "sample": 0,
+    "atUtc": "2026-11-19T03:55:40.330Z",
+    "elapsedMs": 674.4,
+    "rootAlive": true,
+    "processCount": 9,
+    "webViewProcessCount": 6,
+    "workingSetBytes": 873496576,
+    "privateBytes": 489328640,
+    "threads": 219,
+    "handles": 5702
+  },
+  "lastBeforeFirstWsCore": {
+    "sample": 27,
+    "atUtc": "2026-11-19T04:00:20.600Z",
+    "elapsedMs": 280941.8,
+    "rootAlive": true,
+    "processCount": 9,
+    "webViewProcessCount": 6,
+    "workingSetBytes": 872534016,
+    "privateBytes": 469016576,
+    "threads": 215,
+    "handles": 5915
+  },
+  "firstAfterFirstWsCore": {
+    "sample": 28,
+    "atUtc": "2026-11-19T04:00:31.039Z",
+    "elapsedMs": 291380.6,
+    "rootAlive": true,
+    "processCount": 15,
+    "webViewProcessCount": 12,
+    "workingSetBytes": 1289994240,
+    "privateBytes": 704831488,
+    "threads": 364,
+    "handles": 9040
+  },
+  "last": {
+    "sample": 90,
+    "atUtc": "2026-11-19T04:11:17.969Z",
+    "elapsedMs": 938310.3,
+    "rootAlive": true,
+    "processCount": 15,
+    "webViewProcessCount": 12,
+    "workingSetBytes": 1231589376,
+    "privateBytes": 647057408,
+    "threads": 342,
+    "handles": 9111
+  },
+  "peak": {
+    "processCount": 15,
+    "webViewProcessCount": 12,
+    "workingSetBytes": 1294675968,
+    "privateBytes": 704831488,
+    "threads": 364,
+    "handles": 9201
+  },
+  "observedProcessCpuDeltaSeconds": 168.25
+}

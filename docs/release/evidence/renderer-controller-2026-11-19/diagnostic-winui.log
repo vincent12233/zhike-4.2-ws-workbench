@@ -1,0 +1,67 @@
+Isolated browser resource ownership/exit was not verified; test root retained: <temp>\zhike-stage51-layout-UcSCgY
+Error: Isolated lifecycle deadline reached during process-exit
+    at failure (<repo>\tests\helpers\isolated-edge-runner.cjs:16:57)
+    at noteTimeout (<repo>\tests\helpers\isolated-edge-runner.cjs:152:12)
+    at Timeout.<anonymous> (<repo>\tests\helpers\isolated-edge-runner.cjs:162:82)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7) {
+  code: 'EDGE_RUNNER_TIMEOUT',
+  phase: 'process-exit',
+  metadata: {
+    schemaVersion: 2,
+    invocation: '1795058932783-5036fa35-357f-49a2-8dd4-b66eacdcc88a',
+    mode: 'real-webview2-synthetic-layout',
+    scope: 'process lifecycle; caller owns layout assertions',
+    status: 'Failed',
+    timeoutMs: 30000,
+    launchedAt: '2026-11-19T03:28:52.782Z',
+    timebase: 'node-monotonic-ms',
+    startedMonotonicMs: 183.9733,
+    events: [
+      [Object], [Object], [Object],
+      [Object], [Object], [Object],
+      [Object], [Object], [Object],
+      [Object], [Object], [Object],
+      [Object], [Object], [Object],
+      [Object], [Object], [Object],
+      [Object], [Object], [Object],
+      [Object], [Object], [Object],
+      [Object], [Object], [Object],
+      [Object]
+    ],
+    identities: [ [Object], [Object], [Object], [Object], [Object], [Object] ],
+    exit: null,
+    streamsClosed: false,
+    forceTerminated: true,
+    cleanupSafe: false,
+    profile: '<temp>\\zhike-stage51-layout-UcSCgY\\webview-profile-adc99744-114d-4985-9ddc-d9347c23e546',
+    pid: 37040,
+    identityProbePid: 41152,
+    browserPid: 9264,
+    runtimeVersion: '157.0.4341.60',
+    navigation: { id: 2, succeeded: true },
+    viewport: { width: 1280, height: 720 },
+    resultCases: 6,
+    resultBytes: 20262,
+    resultSha256: '4edb49cdabb617303da7ad7cd668d05cbe5285c683b5759203e56d697015a89c',
+    resultFile: '<repo>\\.tools\\delivery-s1-edge-layout\\1795058932783-5036fa35-357f-49a2-8dd4-b66eacdcc88a.result.json',
+    resultReady: true,
+    releaseFailure: { code: 'EDGE_RUNNER_TIMEOUT', phase: 'process-exit' },
+    identityProbeTermination: {
+      attempted: true,
+      requested: true,
+      observedClose: null,
+      status: 'unknown'
+    },
+    elapsedMs: 30008.050499999998,
+    stdoutBytes: 37658,
+    stderrBytes: 1920,
+    failure: {
+      code: 'EDGE_RUNNER_TIMEOUT',
+      phase: 'process-exit',
+      message: 'Isolated lifecycle deadline reached during process-exit'
+    },
+    evidenceFile: '<repo>\\.tools\\delivery-s1-edge-layout\\1795058932783-5036fa35-357f-49a2-8dd4-b66eacdcc88a.json'
+  },
+  cleanupSafe: false
+}

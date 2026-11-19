@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 2,
+  "invocation": "1795062880637-068344fd-c4f8-4edb-a530-edfb7cc3c275",
+  "mode": "controlled-powershell-exclusive-readiness",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Passed",
+  "timeoutMs": 10000,
+  "launchedAt": "2026-11-19T04:34:40.636Z",
+  "timebase": "node-monotonic-ms",
+  "startedMonotonicMs": 77.3443,
+  "events": [
+    {
+      "event": "process-spawned",
+      "elapsedMs": 2061.4226,
+      "pid": 33900
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 2061.6319,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 4140.7805,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 4140.9431
+    },
+    {
+      "event": "lock-fixture-marker",
+      "elapsedMs": 4141.1952,
+      "marker": "LOCKED"
+    },
+    {
+      "event": "cdp-readiness-wait",
+      "elapsedMs": 4143.898,
+      "code": "EBUSY"
+    },
+    {
+      "event": "lock-fixture-command-read",
+      "elapsedMs": 4154.6892,
+      "slot": 1,
+      "action": "RELEASE"
+    },
+    {
+      "event": "lock-fixture-marker",
+      "elapsedMs": 4156.6318,
+      "marker": "UNLOCKED"
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 4174.1655
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 4174.2285
+    },
+    {
+      "event": "lock-fixture-close-send",
+      "elapsedMs": 4174.5566,
+      "writable": true
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 4175.028600000001,
+      "acknowledgement": "stdin-request"
+    },
+    {
+      "event": "lock-fixture-close-write",
+      "elapsedMs": 4175.695900000001,
+      "ok": true
+    },
+    {
+      "event": "lock-fixture-stdin-finished",
+      "elapsedMs": 4175.7699
+    },
+    {
+      "event": "lock-fixture-command-read",
+      "elapsedMs": 4176.549800000001,
+      "slot": 2,
+      "action": "CLOSE"
+    },
+    {
+      "event": "lock-fixture-marker",
+      "elapsedMs": 4176.5569000000005,
+      "marker": "EXIT_0"
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 4193.3476
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 4193.3775000000005
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 4202.7302,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 4202.8042000000005,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 4203.003000000001
+    },
+    {
+      "event": "node-release-state",
+      "elapsedMs": 4203.4588,
+      "exitObserved": true,
+      "closeObserved": true,
+      "stdoutCloseObserved": true,
+      "stderrCloseObserved": true,
+      "exitCode": 0,
+      "signalCode": null
+    },
+    {
+      "event": "identity-probe-closed",
+      "elapsedMs": 4234.3882
+    },
+    {
+      "event": "runner-lifecycle-complete",
+      "elapsedMs": 4234.4388,
+      "cleanupSafe": true,
+      "forceTerminated": false
+    },
+    {
+      "event": "runner-final",
+      "elapsedMs": 4234.4564,
+      "status": "Passed",
+      "cleanupSafe": true,
+      "forceTerminated": false
+    }
+  ],
+  "identities": [
+    {
+      "pid": 33900,
+      "startedTicks": "639306596806536057",
+      "startedUtc": "2026-11-19T04:34:40.6536057Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "pid": 33900,
+  "identityProbePid": 38088,
+  "profile": "<temp>\\zhike-edge-runner-test-nKrcCe\\edge-profile-a4c5fe4f-c9ce-4da6-995e-dd098602f0d7",
+  "devToolsReadiness": {
+    "polls": 2,
+    "enoent": 0,
+    "ebusy": 1,
+    "partial": 0
+  },
+  "resultReady": true,
+  "rootExitProof": "verified-spawn-handle-exit-and-streams",
+  "remainingIdentities": [],
+  "identityProbeClosed": true,
+  "elapsedMs": 4234.4130000000005,
+  "stdoutBytes": 56,
+  "stderrBytes": 0
+}

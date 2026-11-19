@@ -1,0 +1,273 @@
+{
+  "nativeEventCount": 124,
+  "productTestBuild": {
+    "sourceCommit": "054da7e",
+    "executableSha256": "151f867eb73a34030b7cce0e0e5843447233d4e334552d73987d3e648f9e7da8",
+    "buildProperty": "Stage51IsolatedUi=true",
+    "productionOpened": false,
+    "wsNetwork": "blocked",
+    "paidAiNetwork": "blocked"
+  },
+  "diagnosticErrorCount": 0,
+  "dpi": [
+    {
+      "atUtc": "2026-11-19T03:53:27.459Z",
+      "systemDpi": 120,
+      "hwndDpi": 120
+    }
+  ],
+  "startup": {
+    "creationEvents": [
+      {
+        "atUtc": "2026-11-19T03:53:24.492Z",
+        "workerEnabled": false,
+        "realWsEnabled": false,
+        "paidAiEnabled": false
+      },
+      {
+        "atUtc": "2026-11-19T03:53:57.212Z",
+        "workerEnabled": false,
+        "realWsEnabled": false,
+        "paidAiEnabled": false
+      }
+    ],
+    "readyAtUtc": "2026-11-19T03:54:06.924Z",
+    "firstCreationToReadySeconds": 42.432
+  },
+  "cores": [
+    {
+      "atUtc": "2026-11-19T03:54:12.204Z",
+      "role": "shell",
+      "account": null
+    },
+    {
+      "atUtc": "2026-11-19T04:00:23.498Z",
+      "role": "ws-visible",
+      "account": "A"
+    },
+    {
+      "atUtc": "2026-11-19T04:11:38.321Z",
+      "role": "ws-visible",
+      "account": "B"
+    }
+  ],
+  "navigations": [
+    {
+      "atUtc": "2026-11-19T03:54:32.879Z",
+      "role": "shell",
+      "targetClass": "isolated-local",
+      "success": true
+    },
+    {
+      "atUtc": "2026-11-19T04:00:23.720Z",
+      "role": "ws-visible",
+      "targetClass": "about:blank",
+      "success": true
+    },
+    {
+      "atUtc": "2026-11-19T04:11:38.519Z",
+      "role": "ws-visible",
+      "targetClass": "about:blank",
+      "success": true
+    }
+  ],
+  "wsNavigationCompletions": [
+    {
+      "atUtc": "2026-11-19T04:00:23.726Z",
+      "account": "A",
+      "generation": 1,
+      "navigationId": 2,
+      "success": true,
+      "outcome": "isolated-document",
+      "retries": 0
+    },
+    {
+      "atUtc": "2026-11-19T04:11:38.527Z",
+      "account": "B",
+      "generation": 2,
+      "navigationId": 2,
+      "success": true,
+      "outcome": "isolated-document",
+      "retries": 0
+    }
+  ],
+  "selections": [
+    {
+      "atUtc": "2026-11-19T04:00:23.508Z",
+      "account": "A",
+      "generation": 1,
+      "created": true,
+      "reload": false
+    },
+    {
+      "atUtc": "2026-11-19T04:02:42.937Z",
+      "account": "A",
+      "generation": 1,
+      "created": false,
+      "reload": false
+    },
+    {
+      "atUtc": "2026-11-19T04:11:38.325Z",
+      "account": "B",
+      "generation": 2,
+      "created": true,
+      "reload": false
+    },
+    {
+      "atUtc": "2026-11-19T04:13:39.702Z",
+      "account": "A",
+      "generation": 1,
+      "created": false,
+      "reload": false
+    },
+    {
+      "atUtc": "2026-11-19T04:14:39.684Z",
+      "account": "B",
+      "generation": 2,
+      "created": false,
+      "reload": false
+    },
+    {
+      "atUtc": "2026-11-19T04:15:08.267Z",
+      "account": "A",
+      "generation": 1,
+      "created": false,
+      "reload": false
+    },
+    {
+      "atUtc": "2026-11-19T04:15:39.527Z",
+      "account": "B",
+      "generation": 2,
+      "created": false,
+      "reload": false
+    },
+    {
+      "atUtc": "2026-11-19T04:16:09.114Z",
+      "account": "A",
+      "generation": 1,
+      "created": false,
+      "reload": false
+    },
+    {
+      "atUtc": "2026-11-19T04:16:37.164Z",
+      "account": "B",
+      "generation": 2,
+      "created": false,
+      "reload": false
+    },
+    {
+      "atUtc": "2026-11-19T04:17:05.679Z",
+      "account": "A",
+      "generation": 1,
+      "created": false,
+      "reload": false
+    },
+    {
+      "atUtc": "2026-11-19T04:17:37.432Z",
+      "account": "B",
+      "generation": 2,
+      "created": false,
+      "reload": false
+    },
+    {
+      "atUtc": "2026-11-19T04:18:17.488Z",
+      "account": "A",
+      "generation": 1,
+      "created": false,
+      "reload": false
+    }
+  ],
+  "crossAccountSwitches": 10,
+  "manualSwitchActions": {
+    "dropdownKeyboard": 1,
+    "accountList": 9,
+    "source": "isolated native operator observation"
+  },
+  "workspacePages": [
+    {
+      "atUtc": "2026-11-19T04:00:22.516Z",
+      "page": "overview",
+      "phase": "enter"
+    },
+    {
+      "atUtc": "2026-11-19T04:01:30.183Z",
+      "page": "overview",
+      "phase": "exit"
+    },
+    {
+      "atUtc": "2026-11-19T04:01:30.186Z",
+      "page": "chat",
+      "phase": "enter"
+    },
+    {
+      "atUtc": "2026-11-19T04:13:05.492Z",
+      "page": "chat",
+      "phase": "exit"
+    },
+    {
+      "atUtc": "2026-11-19T04:13:05.493Z",
+      "page": "accounts",
+      "phase": "enter"
+    },
+    {
+      "atUtc": "2026-11-19T04:18:58.966Z",
+      "page": "accounts",
+      "phase": "exit"
+    },
+    {
+      "atUtc": "2026-11-19T04:18:58.967Z",
+      "page": "chat",
+      "phase": "enter"
+    },
+    {
+      "atUtc": "2026-11-19T04:21:26.288Z",
+      "page": "chat",
+      "phase": "exit"
+    }
+  ],
+  "workspacePresentationExit": [
+    {
+      "atUtc": "2026-11-19T04:21:26.379Z",
+      "succeeded": true,
+      "changed": true,
+      "rasterizationScale": 1.25
+    }
+  ],
+  "chatViewportGeometryAfterAccountSwitches": [
+    {
+      "atUtc": "2026-11-19T04:18:58.969Z",
+      "width": 1189.2000732421875,
+      "height": 673.2000122070312
+    },
+    {
+      "atUtc": "2026-11-19T04:19:33.931Z",
+      "width": 861.2000122070312,
+      "height": 673.2000122070312
+    },
+    {
+      "atUtc": "2026-11-19T04:20:46.578Z",
+      "width": 1189.2000732421875,
+      "height": 673.2000122070312
+    }
+  ],
+  "paletteStages": [
+    {
+      "atUtc": "2026-11-19T03:54:33.215Z",
+      "palette": "atelier-dawn"
+    },
+    {
+      "atUtc": "2026-11-19T03:57:53.449Z",
+      "palette": "horizon-night"
+    },
+    {
+      "atUtc": "2026-11-19T04:22:48.557Z",
+      "palette": "atelier-dawn"
+    }
+  ],
+  "crmDrawerWheel": {
+    "beforeScrollTop": 8,
+    "afterAnimationFrameScrollTop": 426,
+    "unit": "CSS px",
+    "source": "05-crm-inner-scroll.jpg trusted-input diagnostic overlay"
+  }
+}

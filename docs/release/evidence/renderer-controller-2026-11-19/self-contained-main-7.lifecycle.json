@@ -1,0 +1,235 @@
+{
+  "schemaVersion": 2,
+  "invocation": "1795059598443-a69325d9-6ec6-425b-b9e9-78980b60f583",
+  "mode": "real-webview2-synthetic-layout",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Passed",
+  "timeoutMs": 30000,
+  "launchedAt": "2026-11-19T03:39:58.443Z",
+  "timebase": "node-monotonic-ms",
+  "startedMonotonicMs": 34270.1452,
+  "events": [
+    {
+      "event": "process-spawned",
+      "elapsedMs": 8.759799999999814,
+      "pid": 40392
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 8.770199999999022,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 491.28629999999976,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 491.38030000000435
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 1105.5607000000018,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 1118.1731,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "webview-core-ready",
+      "elapsedMs": 1118.2093999999997
+    },
+    {
+      "event": "result-verified",
+      "elapsedMs": 4051.9193000000014,
+      "cases": 1
+    },
+    {
+      "event": "screenshot-written",
+      "elapsedMs": 4084.5086999999985,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 4084.525300000001,
+      "phase": "observation",
+      "count": 5
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 4119.241600000001,
+      "phase": "observation",
+      "count": 5
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 4119.286200000002
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 4119.288700000005
+    },
+    {
+      "event": "webview-close-requested",
+      "elapsedMs": 4120.337899999999
+    },
+    {
+      "event": "webview-browser-exited",
+      "elapsedMs": 4765.406600000002,
+      "normal": true,
+      "browserPid": 21232
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 4765.475599999998,
+      "acknowledgement": "webview-browser-exited-normal"
+    },
+    {
+      "event": "stdout-close",
+      "elapsedMs": 4802.597999999998
+    },
+    {
+      "event": "stderr-close",
+      "elapsedMs": 4802.732900000003
+    },
+    {
+      "event": "process-exit",
+      "elapsedMs": 4818.1975999999995,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "child-close",
+      "elapsedMs": 4818.242100000003,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "event": "streams-close",
+      "elapsedMs": 4818.337100000004
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 4818.351500000004,
+      "phase": "release",
+      "count": 5
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 4847.608500000002,
+      "phase": "release",
+      "count": 0
+    },
+    {
+      "event": "node-release-state",
+      "elapsedMs": 4847.695500000002,
+      "exitObserved": true,
+      "closeObserved": true,
+      "stdoutCloseObserved": true,
+      "stderrCloseObserved": true,
+      "exitCode": 0,
+      "signalCode": null
+    },
+    {
+      "event": "identity-probe-closed",
+      "elapsedMs": 4883.921000000002
+    },
+    {
+      "event": "runner-lifecycle-complete",
+      "elapsedMs": 4886.212400000004,
+      "cleanupSafe": true,
+      "forceTerminated": false
+    },
+    {
+      "event": "runner-final",
+      "elapsedMs": 4888.669000000002,
+      "status": "Passed",
+      "cleanupSafe": true,
+      "forceTerminated": false
+    }
+  ],
+  "identities": [
+    {
+      "pid": 40392,
+      "startedTicks": "639306563984457273",
+      "startedUtc": "2026-11-19T03:39:58.4457273Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 21232,
+      "startedTicks": "639306563988516113",
+      "startedUtc": "2026-11-19T03:39:58.8516113Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 25404,
+      "startedTicks": "639306563994911800",
+      "startedUtc": "2026-11-19T03:39:59.4911800Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 34264,
+      "startedTicks": "639306563992450422",
+      "startedUtc": "2026-11-19T03:39:59.2450422Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 34348,
+      "startedTicks": "639306563992915583",
+      "startedUtc": "2026-11-19T03:39:59.2915583Z",
+      "source": "Windows-StartTime"
+    },
+    {
+      "pid": 35088,
+      "startedTicks": "639306563992404220",
+      "startedUtc": "2026-11-19T03:39:59.2404220Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "streamsClosed": true,
+  "forceTerminated": false,
+  "cleanupSafe": true,
+  "profile": "<temp>\\zhike-s1-main-style-SJpUOv\\webview-profile-bf419fe6-1871-4862-86d1-88e7a010e840",
+  "pid": 40392,
+  "identityProbePid": 22324,
+  "browserPid": 21232,
+  "runtimeVersion": "157.0.4341.60",
+  "navigation": {
+    "id": 2,
+    "succeeded": true
+  },
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "resultCases": 1,
+  "resultBytes": 23087,
+  "resultSha256": "0fb369a62a28431b5793af120de1f4f152b4580d05745975b4eac6d745eda1fc",
+  "resultFile": "<repo>\\.tools\\visual-usability\\main-visual\\1795059598443-a69325d9-6ec6-425b-b9e9-78980b60f583.result.json",
+  "screenshot": {
+    "path": "<repo>\\.tools\\visual-usability\\main-visual\\home-horizon-night.png",
+    "bytes": 966139,
+    "width": 1920,
+    "height": 1080,
+    "sha256": "5df16e98c5bbbe0e0816b464dd8c86eb47d8ba852c516c9e40ebc5b3f64e9843"
+  },
+  "resultReady": true,
+  "rootExitProof": "verified-spawn-handle-exit-and-streams",
+  "remainingIdentities": [],
+  "identityProbeClosed": true,
+  "elapsedMs": 4885.109199999999,
+  "stdoutBytes": 1436882,
+  "stderrBytes": 2028
+}

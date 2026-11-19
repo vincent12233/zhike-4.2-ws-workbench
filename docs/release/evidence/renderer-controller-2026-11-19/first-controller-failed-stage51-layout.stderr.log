@@ -1,0 +1,10 @@
+{"kind":"webview-stage","phase":"environment","elapsedMs":728.7869,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"core","elapsedMs":901.0854,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"navigation","elapsedMs":2384.7278,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"navigation-call","elapsedMs":2765.2656,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"navigation-starting","elapsedMs":2802.7646,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"close-command-read","elapsedMs":23415.5108,"thread":4,"uiThread":false}
+{"kind":"webview-stage","phase":"render-interrupted","elapsedMs":23966.3591,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"close-command","elapsedMs":23966.5446,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"browser-exit","elapsedMs":23969.2114,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"controller-close-begin","elapsedMs":23969.3065,"thread":2,"uiThread":true}

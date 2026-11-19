@@ -1,0 +1,16 @@
+{"kind":"webview-stage","phase":"environment","elapsedMs":341.3889,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"core","elapsedMs":390.1461,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"navigation","elapsedMs":10164.2384,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"navigation-call","elapsedMs":10311.0784,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"navigation-starting","elapsedMs":11216.8397,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"navigation-response","elapsedMs":12217.7036,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"navigation-completed","elapsedMs":13369.8482,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"navigation-complete-verified","elapsedMs":13372.6577,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"viewport-read","elapsedMs":13372.9061,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"fixture-result","elapsedMs":13770.1297,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"close-command-read","elapsedMs":21619.0318,"thread":4,"uiThread":false}
+{"kind":"webview-stage","phase":"render-interrupted","elapsedMs":21620.3342,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"close-command","elapsedMs":21620.3886,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"browser-exit","elapsedMs":21620.4492,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"controller-close-begin","elapsedMs":21620.4706,"thread":2,"uiThread":true}
+{"kind":"webview-stage","phase":"controller-close-returned","elapsedMs":21695.139,"thread":2,"uiThread":true}

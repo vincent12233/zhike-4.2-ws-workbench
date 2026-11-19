@@ -1,0 +1,23 @@
+[RUN] Native WebView2 isolated renderer protocol and strict matrix contract
+✔ native stream survives partial lines without inventing an initialization result (1.7994ms)
+✔ duplicate phases and out-of-order native results fail closed (1.9506ms)
+✔ invalid messages and an explicit native failure cannot become a ready result (0.9338ms)
+✔ a preemptive close cannot be replayed as an acknowledged shutdown (0.6773ms)
+✔ trailing errors and partial protocol records fail after native shutdown (1.0579ms)
+✔ actual host exit and the buffered Core closure can be observed in either order (1.1953ms)
+✔ host and Core exit evidence must both follow the explicit close request (0.5537ms)
+✔ missing or duplicate close evidence and premature stream closure cannot pass (0.8894ms)
+✔ the owned PID, actual exit status, complete streams and original deadline remain necessary (1.8741ms)
+✔ completed native matrix preserves the actual data and exact viewports (0.655ms)
+✔ missing, failed or foreign native navigation is rejected (0.5497ms)
+✔ empty, partial, reordered and incorrectly sized matrices cannot pass (1.4619ms)
+✔ an unknown backend never silently falls back to another engine (0.7179ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 27.1408
+[PASS] Native WebView2 isolated renderer protocol and strict matrix contract

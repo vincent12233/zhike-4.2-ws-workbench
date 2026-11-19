@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 2,
+  "invocation": "1795061554485-4435f6e3-5541-434b-bda1-54566c93b306",
+  "mode": "controlled-powershell-exclusive-readiness",
+  "scope": "process lifecycle; caller owns layout assertions",
+  "status": "Failed",
+  "timeoutMs": 10000,
+  "launchedAt": "2026-11-19T04:12:34.485Z",
+  "timebase": "node-monotonic-ms",
+  "startedMonotonicMs": 10396.8669,
+  "events": [
+    {
+      "event": "process-spawned",
+      "elapsedMs": 39.17179999999826,
+      "pid": 36320
+    },
+    {
+      "event": "identity-query-started",
+      "elapsedMs": 39.188499999998385,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-query-complete",
+      "elapsedMs": 571.0380999999998,
+      "phase": "observation",
+      "count": 1
+    },
+    {
+      "event": "identity-confirmed",
+      "elapsedMs": 571.0828999999994
+    },
+    {
+      "event": "cdp-readiness-wait",
+      "elapsedMs": 7647.050599999999,
+      "code": "EBUSY"
+    },
+    {
+      "event": "result-ready",
+      "elapsedMs": 7668.629199999999
+    },
+    {
+      "event": "close-requested",
+      "elapsedMs": 7668.6386999999995
+    },
+    {
+      "event": "close-request-complete",
+      "elapsedMs": 7668.975299999998,
+      "acknowledgement": "stdin-request"
+    },
+    {
+      "event": "deadline-timeout",
+      "elapsedMs": 10008.486699999998,
+      "phase": "process-exit",
+      "deadlineMs": 10000
+    },
+    {
+      "event": "node-release-state",
+      "elapsedMs": 10008.7117,
+      "exitObserved": false,
+      "closeObserved": false,
+      "stdoutCloseObserved": false,
+      "stderrCloseObserved": false,
+      "exitCode": null,
+      "signalCode": null
+    },
+    {
+      "event": "failure-owned-handle-termination-started",
+      "elapsedMs": 10008.725899999998
+    },
+    {
+      "event": "failure-owned-handle-termination",
+      "elapsedMs": 13349.2781,
+      "requested": false
+    },
+    {
+      "event": "node-stdio-disposal",
+      "elapsedMs": 13349.315200000001
+    },
+    {
+      "event": "deadline-timeout",
+      "elapsedMs": 13349.728899999998,
+      "phase": "identity-probe-close",
+      "deadlineMs": 10000
+    },
+    {
+      "event": "identity-probe-termination-requested",
+      "elapsedMs": 13350.39,
+      "attempted": true,
+      "requested": true
+    },
+    {
+      "event": "deadline-timeout",
+      "elapsedMs": 13350.4214,
+      "phase": "identity-probe-termination",
+      "deadlineMs": 10000
+    },
+    {
+      "event": "identity-probe-termination-unverified",
+      "elapsedMs": 13351.0508
+    },
+    {
+      "event": "runner-lifecycle-complete",
+      "elapsedMs": 13351.151399999999,
+      "cleanupSafe": false,
+      "forceTerminated": false
+    },
+    {
+      "event": "runner-final",
+      "elapsedMs": 13351.2821,
+      "status": "Failed",
+      "cleanupSafe": false,
+      "forceTerminated": false
+    }
+  ],
+  "identities": [
+    {
+      "pid": 36320,
+      "startedTicks": "639306583545021887",
+      "startedUtc": "2026-11-19T04:12:34.5021887Z",
+      "source": "Windows-StartTime"
+    }
+  ],
+  "exit": null,
+  "streamsClosed": false,
+  "forceTerminated": false,
+  "cleanupSafe": false,
+  "pid": 36320,
+  "identityProbePid": 9944,
+  "profile": "<temp>\\zhike-edge-runner-test-mYurVI\\edge-profile-1fe6b741-69ea-43f9-ba1c-8dd55346045f",
+  "devToolsReadiness": {
+    "polls": 2,
+    "enoent": 0,
+    "ebusy": 1,
+    "partial": 0
+  },
+  "resultReady": true,
+  "releaseFailure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "process-exit"
+  },
+  "identityProbeTermination": {
+    "attempted": true,
+    "requested": true,
+    "observedClose": null,
+    "status": "unknown"
+  },
+  "elapsedMs": 13351.089899999999,
+  "stdoutBytes": 18,
+  "stderrBytes": 0,
+  "failure": {
+    "code": "EDGE_RUNNER_TIMEOUT",
+    "phase": "process-exit",
+    "message": "Isolated lifecycle deadline reached during process-exit"
+  }
+}
