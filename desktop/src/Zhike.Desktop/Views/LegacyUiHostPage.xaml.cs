@@ -47,6 +47,7 @@ public sealed partial class LegacyUiHostPage : Page
     private string _wsViewAccountId = "";
     private long _wsGeneration;
     private bool _initialized;
+    private ulong? _workbenchNavigationId;
     private string _currentRoute = "home";
     private bool _wsChatPageActive;
     private string _wsPresentationAccountId = string.Empty;
@@ -182,13 +183,14 @@ public sealed partial class LegacyUiHostPage : Page
     {
         try
         {
+            ShowHostLoading(_api is null ? "知客页面正在连接本机服务。" : "正在加载知客页面。");
             await EnsureInitializedAsync(cancellationToken);
             _webView?.CoreWebView2?.Reload();
             return true;
         }
         catch
         {
-            ShowStatus("知客页面加载失败，请检查本机服务后重试。", InfoBarSeverity.Error);
+            ShowHostLoadError("知客页面加载失败，请检查本机服务后重试。");
             return false;
         }
     }
@@ -201,8 +203,7 @@ public sealed partial class LegacyUiHostPage : Page
         try { await EnsureInitializedAsync(); }
         catch
         {
-            ShowStatus("知客页面资源暂时不可用，请点击重试；本机数据不会受影响。", InfoBarSeverity.Error);
-            HostActions.Visibility = Visibility.Visible;
+            ShowHostLoadError("知客页面资源暂时不可用，请点击重试；本机数据不会受影响。");
         }
     }
 
@@ -364,8 +365,14 @@ public sealed partial class LegacyUiHostPage : Page
         {
             if (_api is null)
             {
+#if STAGE51_ISOLATED_UI
+                Stage51Isolation.Record("shell-service-wait-started");
+#endif
                 await App.EnsureLocalServiceAsync(cancellationToken);
                 _api = App.LocalService?.CreateApiClient() ?? throw new InvalidOperationException("本机数据服务不可用。");
+#if STAGE51_ISOLATED_UI
+                Stage51Isolation.Record("shell-service-client-ready");
+#endif
             }
             _desktopBackupTimer?.Start();
             if (_initialized && _webView?.CoreWebView2 is not null)
@@ -377,6 +384,7 @@ public sealed partial class LegacyUiHostPage : Page
                 BindWsRuntime();
                 return;
             }
+            ShowHostLoading("正在加载知客页面。");
             _webView ??= new WebView2
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -407,7 +415,6 @@ public sealed partial class LegacyUiHostPage : Page
             await core.AddScriptToExecuteOnDocumentCreatedAsync(BuildWsBoundsObserverScript());
             core.SetVirtualHostNameToFolderMapping("zhike.local", ResolveResourcesRoot(), CoreWebView2HostResourceAccessKind.Allow);
             _initialized = true;
-            HostStatus.IsOpen = false;
             BindWsRuntime();
             _webView.Source = new Uri("https://zhike.local/index.html?desktop=1");
         }
@@ -613,9 +620,16 @@ public sealed partial class LegacyUiHostPage : Page
         core.ProcessFailed += OnLegacyProcessFailed;
     }
 
-    private static void OnLegacyNavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs args)
+    private void OnLegacyNavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs args)
     {
         args.Cancel = !IsAllowedNavigation(args.Uri, "zhike.local");
+        if (!args.Cancel && IsWorkbenchDocument(args.Uri))
+        {
+            _workbenchNavigationId = args.NavigationId;
+#if STAGE51_ISOLATED_UI
+            Stage51Isolation.Record("shell-workbench-navigation-started", new { navigationId = args.NavigationId });
+#endif
+        }
     }
 
     private void OnLegacyNewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs args)
@@ -681,21 +695,31 @@ public sealed partial class LegacyUiHostPage : Page
             && string.Equals(uri.Host, "zhike.local", StringComparison.OrdinalIgnoreCase)
             && uri.IsDefaultPort && string.IsNullOrEmpty(uri.UserInfo);
 
+    private static bool IsWorkbenchDocument(string? source)
+        => IsTrustedWorkbenchOrigin(source) && new Uri(source!).AbsolutePath == "/index.html";
+
     private void OnLegacyNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs args)
     {
-        if (args.IsSuccess)
+        if (_workbenchNavigationId != args.NavigationId) return;
+        _workbenchNavigationId = null;
+        var success = args.IsSuccess && sender is CoreWebView2 core && IsWorkbenchDocument(core.Source);
+#if STAGE51_ISOLATED_UI
+        Stage51Isolation.Record("shell-workbench-navigation-completed", new { navigationId = args.NavigationId, success });
+#endif
+        if (success)
         {
-            HostActions.Visibility = Visibility.Collapsed;
+            if (HostActions.Visibility == Visibility.Collapsed && HostStatus.Severity == InfoBarSeverity.Informational)
+            {
+                HostStatus.IsOpen = false;
+            }
             return;
         }
-        ShowStatus("知客页面加载失败，请点击重试；本机数据不会受影响。", InfoBarSeverity.Error);
-        HostActions.Visibility = Visibility.Visible;
+        ShowHostLoadError("知客页面加载失败，请点击重试；本机数据不会受影响。");
     }
 
     private void OnLegacyProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs args)
     {
-        ShowStatus("知客页面进程异常，原有数据未受影响。请点击重试。", InfoBarSeverity.Error);
-        HostActions.Visibility = Visibility.Visible;
+        ShowHostLoadError("知客页面进程异常，原有数据未受影响。请点击重试。");
     }
 
     private async void OnWebMessageReceived(CoreWebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
@@ -4367,11 +4391,22 @@ public sealed partial class LegacyUiHostPage : Page
         HostStatus.IsOpen = true;
     }
 
-    private async void RetryHost(object sender, RoutedEventArgs args)
+    private void ShowHostLoading(string message)
     {
+        _workbenchNavigationId = null;
         HostActions.Visibility = Visibility.Collapsed;
-        await TryReloadAsync();
+        ShowStatus(message, InfoBarSeverity.Informational);
     }
+
+    private void ShowHostLoadError(string message)
+    {
+        _workbenchNavigationId = null;
+        ShowStatus(message, InfoBarSeverity.Error);
+        HostActions.Visibility = Visibility.Visible;
+    }
+
+    private async void RetryHost(object sender, RoutedEventArgs args)
+        => await TryReloadAsync();
 
     private void ShowHostDiagnostics(object sender, RoutedEventArgs args)
         => ShowStatus($"资源根目录：{ResolveResourcesRoot()}；WebView2：{(_webView?.CoreWebView2 is null ? "未初始化" : "已初始化")}。", InfoBarSeverity.Informational);

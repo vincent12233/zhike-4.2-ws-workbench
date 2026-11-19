@@ -29,7 +29,7 @@
                 </Canvas>
             </Grid>
         </Border>
-        <InfoBar x:Name="HostStatus" Grid.Row="1" IsOpen="False"
+        <InfoBar x:Name="HostStatus" Grid.Row="1" IsOpen="True"
                  Severity="Informational" IsClosable="False"
                  Message="知客页面正在连接本机服务。" />
         <StackPanel x:Name="HostActions" Grid.Row="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" Visibility="Collapsed">

@@ -15,8 +15,8 @@ const index=fs.readFileSync(path.join(app,'index.html'),'utf8');
 const expectedStyles=[...index.matchAll(/<link\s+rel="stylesheet"\s+href="\.\/([^"]+)"/g)].map(match=>match[1]);
 assert.ok(expectedStyles.length>10&&expectedStyles.at(-1)==='modules/scroll-system.css');
 const source=index.replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'').replace('<head>','<head><base href="'+pathToFileURL(app+path.sep).href+'">');
-const placeholder='<section class="view-container" id="viewContainer"></section>';
-assert.ok(source.includes(placeholder),'Use the actual shipped main content anchor');
+const contentAnchor=/(<section class="view-container" id="viewContainer">)[\s\S]*?(<\/section>)/;
+assert.ok(contentAnchor.test(source),'Use the actual shipped main content anchor');
 const options={id:'s2-native-inheritance',title:'SVG 图表继承回归',scopeLabel:'隔离合成数值 · 只测试 CSS，不表示真实业务状态',status:'available'};
 const points=Array.from({length:7},(_,index)=>({date:'2026-11-'+String(index+1).padStart(2,'0'),label:'11/'+String(index+1).padStart(2,'0'),customers:index+1,followups:8-index}));
 const rendered=charts.renderTrend({...options,points})+charts.renderBars({...options,id:'s2-bar-inheritance',items:[{label:'类别 A',value:2},{label:'类别 B',value:4}]})+charts.renderDistribution({...options,id:'s2-distribution-inheritance',items:[{label:'类别 A',value:2},{label:'类别 B',value:3}]});
@@ -41,7 +41,7 @@ function matrix(cases){
 const cases=[{width:1280,height:720,palette:'atelier-dawn'},{width:1920,height:1080,palette:'atelier-dawn'},{width:1280,height:720,palette:'horizon-night'},{width:1920,height:1080,palette:'horizon-night'}];
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'zhike-s2-metrics-style-'));let cleanupSafe=true;
 (async()=>{try{
- const html=source.replace(placeholder,'<section class="view-container" id="viewContainer"><section class="panel">'+rendered+'</section></section>').replace('</body>','<pre id="result" hidden></pre><script>('+inspect.toString()+')();</script></body>');
+ const html=source.replace(contentAnchor,(_,open,close)=>open+'<section class="panel">'+rendered+'</section>'+close).replace('</body>','<pre id="result" hidden></pre><script>('+inspect.toString()+')();</script></body>');
  fs.writeFileSync(path.join(root,'fixture.html'),html);
  fs.writeFileSync(path.join(root,'matrix.html'),'<!doctype html><meta charset="utf-8"><pre id="result" hidden></pre><script>('+matrix.toString()+')('+JSON.stringify(cases)+');</script>');
  const {results,metadata}=await runIsolatedRenderer({edge,root,url:pathToFileURL(path.join(root,'matrix.html')).href,expectedViewports:cases.map(({width,height})=>({width,height})),evidenceDirectory:path.join(repo,'.tools/delivery-s2-metrics-visual')});
