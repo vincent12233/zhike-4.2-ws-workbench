@@ -414,6 +414,7 @@ function runAll() {
   run('50k customer list cached ordering budget', [path.join(repo, 'tests', 'customer-list-performance-contract.test.cjs')]);
   run('50k analytics aggregation budget', [path.join(repo, 'tests', 'analytics-performance-contract.test.cjs')]);
   run('desktop packaging contract', [path.join(repo, 'tests', 'desktop-packaging-contract.test.cjs')]);
+  run('GitHub prerelease draft recovery guards', [path.join(repo, 'tests', 'github-prerelease-resume-guards.test.cjs')]);
   run('6.0 publish anti-rollback gate', [path.join(repo, 'tests', 'release-gate-contract.test.cjs')]);
   run('legacy Electron installation retirement', [path.join(repo, 'tests', 'legacy-install-retirement.test.cjs')]);
   run('release output single-version contract', [path.join(repo, 'tests', 'release-output-only-6.0.test.cjs')]);
@@ -444,6 +445,7 @@ function runAll() {
 
 function runInstaller() {
   run('WinUI packaging contract', [path.join(repo, 'tests', 'desktop-packaging-contract.test.cjs')]);
+  run('WinUI GitHub prerelease draft recovery guards', [path.join(repo, 'tests', 'github-prerelease-resume-guards.test.cjs')]);
   run('WinUI 6.0 publish anti-rollback gate', [path.join(repo, 'tests', 'release-gate-contract.test.cjs')]);
   run('WinUI legacy installation retirement', [path.join(repo, 'tests', 'legacy-install-retirement.test.cjs')]);
   run('WinUI release output single-version contract', [path.join(repo, 'tests', 'release-output-only-6.0.test.cjs')]);
