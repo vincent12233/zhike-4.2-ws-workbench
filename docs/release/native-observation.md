@@ -7,7 +7,7 @@
 | 项目 | 实际观察 |
 | --- | --- |
 | 主题与主侧栏 | 在客户中心从晨光蓝紫切到 Horizon 夜色，返回知客工作台后确认深色客户中心及主侧栏恢复，再切回晨光蓝紫。日志记录了三段主题，并确认退出工作区窗口布局成功。[夜色预览](evidence/renderer-controller-2026-11-19/native/01-theme-preview-dark.jpg) · [恢复后的主侧栏](evidence/renderer-controller-2026-11-19/native/07-customers-returned-dark.jpg) · [切回浅色](evidence/renderer-controller-2026-11-19/native/08-customers-light.jpg) |
-| 跨账号切换 | 人工完成 10 次跨账号切换，其中 1 次使用前台聊天下拉框的键盘操作，9 次使用账号管理列表。原生日志共 12 次选择，包含首次选择和 1 次同账号重复选择。两账号分别保留各自的 Core 和代次，共 2 次新建、10 次复用、0 次重载。[前台聊天选中合成账号 B](evidence/renderer-controller-2026-11-19/native/02-ws-account-b-dropdown.jpg) · [账号管理](evidence/renderer-controller-2026-11-19/native/03-ws-account-list.jpg) |
+| 跨账号切换 | 通过桌面工具逐步执行原生输入，完成 10 次跨账号切换，其中 1 次使用前台聊天下拉框的键盘操作，9 次使用账号管理列表。原生日志共 12 次选择，包含首次选择和 1 次同账号重复选择。两账号分别保留各自的 Core 和代次，共 2 次新建、10 次复用、0 次重载。[前台聊天选中合成账号 B](evidence/renderer-controller-2026-11-19/native/02-ws-account-b-dropdown.jpg) · [账号管理](evidence/renderer-controller-2026-11-19/native/03-ws-account-list.jpg) |
 | 工作区与导航 | 工作台首页、前台聊天、账号管理共记录 8 条页面进入或离开事件。创建 1 个主界面 Core 和 2 个账号可见 Core。3 次记录到的导航均成功，分别是主界面本地页面和两次合成前台文档。两个账号的导航重试合计为 0。[活动日志摘要](evidence/renderer-controller-2026-11-19/native/activity.json) |
 | CRM 展开和滚动 | 对 CRM 侧栏执行了一次物理滚轮输入。截图诊断显示侧栏的 `scrollTop` 从 8 在动画帧更新到 426 CSS px。收起 CRM 后，原生日志中的前台浏览容器宽度由约 861.2 增至 1189.2。[展开](evidence/renderer-controller-2026-11-19/native/04-crm-expanded.jpg) · [独立滚动](evidence/renderer-controller-2026-11-19/native/05-crm-inner-scroll.jpg) · [收起后扩宽](evidence/renderer-controller-2026-11-19/native/06-crm-collapsed.jpg) |
 
@@ -25,9 +25,9 @@
 | 末样本 | 15 / 12 | 1174.5 | 617.1 | 342 | 9111 |
 | 各指标采样峰值 | 15 / 12 | 1234.7 | 672.2 | 364 | 9201 |
 
-这些值按隔离进程树汇总。91 条样本中的累计观测 CPU 增量为 168.25 进程秒，采样没有身份或计数不可读的记录。本轮记录资源基线和交互期间的变化，未设性能阈值或得出长期稳定性结论。两个账号都打开后，在 04:13:35 UTC 另行取得一次只读进程树快照，当时有 21 个进程，其中 18 个为 WebView2 子进程。[资源摘要](evidence/renderer-controller-2026-11-19/native/resource-summary.json) · [关闭回查](evidence/renderer-controller-2026-11-19/native/shutdown.json)
+这些值按隔离进程树汇总。91 条样本中的累计观测 CPU 增量为 168.25 进程秒，采样没有身份或计数不可读的记录。采样窗口与自动化全量回归重叠，无法排除资源竞争。本轮仅作观察，未设性能阈值或得出长期稳定性结论。两个账号都打开后，在 04:13:35 UTC 另行取得一次只读进程树快照，当时有 21 个进程，其中 18 个为 WebView2 子进程。[资源摘要](evidence/renderer-controller-2026-11-19/native/resource-summary.json) · [关闭回查](evidence/renderer-controller-2026-11-19/native/shutdown.json)
 
-人工正常关闭窗口后，04:27:14.085 UTC 记录应用停止，约 0.212 秒后侧车报告已停止，随后记录宿主卸载。首次回查于 04:27:36.836 UTC 完成。按 PID 和进程创建时间检查了采样与后续快照合计 21 个进程身份，全部已释放，无未验证身份，也无同一隔离可执行文件的进程残留。归档时再次回查得出相同结果，未使用进程终止命令。没有记录此次产品进程的 OS 退出码。[关闭回查](evidence/renderer-controller-2026-11-19/native/shutdown.json)
+通过窗口关闭按钮正常关闭后，04:27:14.085 UTC 记录应用停止，约 0.212 秒后侧车报告已停止，随后记录宿主卸载。首次回查于 04:27:36.836 UTC 完成。按 PID 和进程创建时间检查了采样与后续快照合计 21 个进程身份，全部已释放，无未验证身份，也无同一隔离可执行文件的进程残留。归档时再次回查得出相同结果，未使用进程终止命令。没有记录此次产品进程的 OS 退出码。[关闭回查](evidence/renderer-controller-2026-11-19/native/shutdown.json)
 
 ## 验收范围
 
