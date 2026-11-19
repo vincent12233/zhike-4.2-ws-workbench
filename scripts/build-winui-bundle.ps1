@@ -229,6 +229,7 @@ Copy-Item -LiteralPath (Join-Path $repo 'docs\local-desktop-deployment.md') -Des
 Copy-Item -LiteralPath (Join-Path $repo 'docs\local-desktop-troubleshooting.md') -Destination (Join-Path $stage 'local-desktop-troubleshooting.md') -Force
 Copy-Item -LiteralPath (Join-Path $repo 'docs\hot-chat-profile-usage.md') -Destination (Join-Path $stage 'hot-chat-profile-usage.md') -Force
 Copy-Item -LiteralPath (Join-Path $repo "docs\release\release-notes-$Version.md") -Destination (Join-Path $stage "release-notes-$Version.md") -Force
+Copy-Item -LiteralPath (Join-Path $repo 'docs\release\independent-collector-followup.md') -Destination (Join-Path $stage 'independent-collector-followup.md') -Force
 $optionalMigration = Join-Path $repo "docs\migrations\$Version-ws-timestamp-provenance.sql"
 if (Test-Path -LiteralPath $optionalMigration -PathType Leaf) {
   $migrationDestination = Join-Path $stage 'migrations'

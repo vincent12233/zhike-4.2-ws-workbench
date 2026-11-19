@@ -11,7 +11,8 @@ const readme = read('README.md');
 const deployment = read('docs/local-desktop-deployment.md');
 const troubleshooting = read('docs/local-desktop-troubleshooting.md');
 const version = JSON.parse(read('resources/app/package.json')).version;
-const candidate = `v${version}-rc.2`;
+const candidate = `v${version}-rc.3`;
+const historicalCandidate = `v${version}-rc.2`;
 const versionedInstaller = `zhike-${version}-win-x64-setup.exe`;
 const releaseNotes = `release/release-notes-${version}.md`;
 const historicVersion = '6.0.3';
@@ -31,6 +32,17 @@ for (const doc of [readme, index, deployment, troubleshooting]) {
   assert.doesNotMatch(doc, /workerStatus=running|6\.0\.3-WinUI桌面版\.exe|SHA256SUMS\.txt/,
     'Current instructions cannot select a historical installer or require an enabled Worker');
 }
+for (const doc of [readme, index, deployment, troubleshooting, read('docs/' + releaseNotes), read('docs/release/independent-collector-followup.md')]) {
+  assert.ok(doc.includes(candidate) && doc.includes(`/releases/tag/${candidate}`),
+    'Current user documentation must link the rc.3 candidate and distinguish its actual release state');
+  assert.match(doc, /独立[^。\n]*采集|采集[^。\n]*独立/);
+  assert.match(doc, /当前所选账号的手机/);
+  assert.doesNotMatch(doc, /自动会话发现、自动完整历史、后台采集、后台群监测[^。\n]*保持关闭|自动会话发现、后台采集、自动完整历史和后台群监测[^。\n]*(?:保持关闭|不可用)/,
+    'Current instructions cannot describe the implemented independent collection capability as globally unavailable');
+}
+assert.ok(index.includes(`/releases/tag/${historicalCandidate}`));
+assert.match(index, /已发布 rc\.2 历史记录/);
+assert.match(index, /sourceCommit/);
 for (const doc of [readme, index, deployment]) {
   assert.match(doc, /WebView2/);
   assert.match(doc, /22621/);
