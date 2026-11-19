@@ -55,7 +55,7 @@ $resourceAllowList = @(
   'vendor\xlsx\xlsx.js',
   'vendor\xlsx\LICENSE'
 )
-$dotnetCandidates = @(
+[string[]]$dotnetCandidates = @(
   (Join-Path $repo '.tools\dotnet10\dotnet.exe'),
   (Get-Command dotnet -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue)
 ) | Where-Object { $_ -and (Test-Path -LiteralPath $_) }

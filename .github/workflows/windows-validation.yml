@@ -48,6 +48,7 @@ jobs:
       - name: Prepare the official Node runtime and Inno Setup compiler
         shell: pwsh
         run: |
+          ./tests/build-tool-discovery.test.ps1
           Copy-Item (Get-Command node).Source resources/app/node.exe
           New-Item -ItemType Directory -Force work/tools | Out-Null
           $installer = Join-Path $PWD 'work/tools/innosetup-7.1.1-x64.exe'
