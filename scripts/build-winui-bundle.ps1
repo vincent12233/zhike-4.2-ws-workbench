@@ -40,6 +40,7 @@ $resourceAllowList = @(
   'node.exe',
   'server.mjs',
   'migration-runner.cjs',
+  'test-diagnostics.cjs',
   # The isolated fencing route is opt-in, but the coordinator is a runtime
   # dependency of server.mjs and must be present in every self-contained
   # bundle so the sidecar can start deterministically.
@@ -208,7 +209,7 @@ foreach ($required in @('index.html', 'app.js', 'styles.css', 'vendor\xlsx\xlsx.
   if (-not (Test-Path -LiteralPath (Join-Path $stage "resources\app\$required") -PathType Leaf)) { throw "bundle is missing resources/app/$required" }
 }
 $requiredRuntimeFiles = @(
-  'node.exe', 'server.mjs', 'migration-runner.cjs', 'sidecar-write-coordinator.cjs',
+  'node.exe', 'server.mjs', 'migration-runner.cjs', 'test-diagnostics.cjs', 'sidecar-write-coordinator.cjs',
   'state-delta.cjs', 'migrations\manifest.json',
   'modules\horizon-atelier.css', 'modules\home-6.css', 'modules\design-system.css',
   'assets\atelier-dawn.svg', 'assets\horizon-ridge-6.png', 'assets\horizon-flow-6.png',

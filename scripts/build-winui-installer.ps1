@@ -83,6 +83,7 @@ $requiredStageFiles = @(
   'resources\app\server.mjs',
   'resources\app\node.exe',
   'resources\app\migration-runner.cjs',
+  'resources\app\test-diagnostics.cjs',
   'resources\app\sidecar-write-coordinator.cjs',
   'resources\app\state-delta.cjs',
   'resources\app\migrations\manifest.json',
