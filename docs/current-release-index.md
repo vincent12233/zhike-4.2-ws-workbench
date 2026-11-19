@@ -5,7 +5,7 @@
 | 项目 | 当前入口 |
 |---|---|
 | 源码与安装版本 | **6.1.0**，WinUI 3 + WebView2 + 随包 Node SQLite |
-| 预发行标签 | **`v6.1.0-rc.1`** |
+| 预发行标签 | **`v6.1.0-rc.2`** |
 | 下载 | 在 [GitHub Releases](https://github.com/vincent12233/zhike-4.2-ws-workbench/releases) 对应候选条目中查找 `zhike-6.1.0-win-x64-setup.exe` 与同次 `release-output-manifest.json` |
 | 使用和验收 | [本机部署说明](local-desktop-deployment.md)、[故障排查](local-desktop-troubleshooting.md)、[候选发布说明](release/release-notes-6.1.0.md) |
 

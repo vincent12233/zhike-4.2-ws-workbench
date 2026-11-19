@@ -4,10 +4,11 @@
 
 ## 下载与首次使用
 
-- 当前候选为 **6.1.0**，预发行标签为 **`v6.1.0-rc.1`**。从仓库的 [GitHub Releases](https://github.com/vincent12233/zhike-4.2-ws-workbench/releases) 选择该标签下的 `zhike-6.1.0-win-x64-setup.exe` 和 `release-output-manifest.json`。下载需要登录已有该私有仓库访问权限的 GitHub 账号。候选状态和历史版本见[当前版本索引](docs/current-release-index.md)。
+- 当前候选为 **6.1.0**，预发行标签为 **`v6.1.0-rc.2`**。从仓库的 [GitHub Releases](https://github.com/vincent12233/zhike-4.2-ws-workbench/releases) 选择该标签下的 `zhike-6.1.0-win-x64-setup.exe` 和 `release-output-manifest.json`。下载需要登录已有该私有仓库访问权限的 GitHub 账号。候选状态和历史版本见[当前版本索引](docs/current-release-index.md)。
 - 安装器要求 Windows x64、系统内部版本 22621 或以上，并要求先安装 WebView2 Evergreen Runtime。缺少此依赖时安装器会中止。随包提供 .NET、Windows App SDK 和 Node，无须另装这些运行时。干净目标机上的安装、覆盖升级和卸载仍待验收。
 - 对照候选清单校验安装器 SHA-256。安装后从桌面或开始菜单打开“知客工作台”。首次使用会在 `%LOCALAPPDATA%\Zhike6` 创建空 SQLite 库。安装和备份步骤见[本机部署说明](docs/local-desktop-deployment.md)。
 - 有已有资料时，升级前在“数据中心”导出备份。新旧版本的外置数据目录保持分离。程序不自动迁移旧 `%LOCALAPPDATA%\Zhike`。
+- rc.2 加强安装目录保护，修正旧版提前卸载，并显示首次启动的实际加载状态。候选未签名；安装及首次使用步骤请按部署说明操作，不要关闭 Windows 安全保护。
 
 ## 使用范围
 

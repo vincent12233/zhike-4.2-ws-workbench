@@ -4,7 +4,7 @@
 
 ## 安装
 
-登录有该私有仓库访问权限的 GitHub 账号，从 GitHub Releases 的预发行 `v6.1.0-rc.1` 条目获取 `zhike-6.1.0-win-x64-setup.exe` 和同次 `release-output-manifest.json`。默认安装到 `%LOCALAPPDATA%\Programs\ZhikeNative`。安装器应创建开始菜单和桌面快捷方式，并在安装结束后启动知客；覆盖安装、卸载后数据保持和实机操作仍以目标机验收记录为准。
+登录有该私有仓库访问权限的 GitHub 账号，从 GitHub Releases 的预发行 `v6.1.0-rc.2` 条目获取 `zhike-6.1.0-win-x64-setup.exe` 和同次 `release-output-manifest.json`。默认安装到 `%LOCALAPPDATA%\Programs\ZhikeNative`。安装器应创建开始菜单和桌面快捷方式，并在安装结束后启动知客；覆盖安装、卸载后数据保持和实机操作仍以目标机验收记录为准。
 
 安装器要求 Windows x64、系统内部版本 22621 或以上。运行安装器前须安装 Microsoft Edge WebView2 Evergreen Runtime。缺少时安装器会在修改文件或处理旧客户端前中止。交互安装可打开微软下载页，安装依赖后请重新运行知客安装器。静默安装会直接失败并记录缺失依赖。自包含安装包已提供 .NET、Windows App SDK 与 Node。干净 Windows、覆盖升级及卸载仍待实机验证。
 

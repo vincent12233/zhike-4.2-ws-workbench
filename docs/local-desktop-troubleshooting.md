@@ -36,4 +36,4 @@
 
 ## Windows 拦截未签名安装包
 
-从仓库 GitHub Releases 的预发行 `v6.1.0-rc.1` 条目获取 `zhike-6.1.0-win-x64-setup.exe` 和同次 `release-output-manifest.json`。核对安装包 SHA-256 与发布项签名状态。请保留 Windows 安全保护。安装器需要 Windows x64 内部版本 22621 或以上。干净目标机验收仍待完成。
+从仓库 GitHub Releases 的预发行 `v6.1.0-rc.2` 条目获取 `zhike-6.1.0-win-x64-setup.exe` 和同次 `release-output-manifest.json`。核对安装包 SHA-256 与发布项签名状态。请保留 Windows 安全保护。安装器需要 Windows x64 内部版本 22621 或以上。干净目标机验收仍待完成。
