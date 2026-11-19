@@ -22,6 +22,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24.22.1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate candidate publisher with synthetic fixtures
+        run: python tests/publish-verified-candidate.test.py
       - name: Build the production WinUI application
         run: dotnet build desktop/src/Zhike.Desktop/Zhike.Desktop.csproj -c Release -r win-x64 -p:Platform=x64 -p:PlatformTarget=x64 --nologo
       - name: Validate isolated collection, group queries and database startup
@@ -35,6 +40,11 @@ jobs:
             'tests/ws-group-manager-production.test.cjs',
             'tests/ws-background-isolation.test.cjs',
             'tests/ws-workbench-security.test.cjs',
+            'desktop/tests/WsRouteVisibilityRuntimeTests.cjs',
+            'desktop/tests/WsPresentationRuntimeTests.cjs',
+            'desktop/tests/WsProcessSessionPoolContractTests.cjs',
+            'tests/ws-workbench-ui.test.cjs',
+            'tests/ws-workbench-a-plus-layout.test.cjs',
             'tests/desktop-packaging-contract.test.cjs',
             'tests/release-gate-contract.test.cjs',
             'tests/legacy-install-retirement.test.cjs',
@@ -68,11 +78,11 @@ jobs:
         shell: pwsh
         run: |
           ./scripts/build-winui-bundle.ps1 -Version 6.1.0 -ReleaseGate
-          ./scripts/build-winui-installer.ps1 -AppVersion 6.1.0 -ReleaseGate -OutputDir (Join-Path $PWD 'work/rc3-installer')
+          ./scripts/build-winui-installer.ps1 -AppVersion 6.1.0 -ReleaseGate -OutputDir (Join-Path $PWD 'work/candidate-installer')
       - name: Probe the packaged sidecar with an isolated empty database
         shell: pwsh
         run: |
-          dotnet run --project scripts/stage51/NativeReadinessProbe/NativeReadinessProbe.csproj -c Release -- (Join-Path $PWD 'work/winui-bundle/zhike-winui-6.1.0-win-x64/resources/app') | Tee-Object -FilePath work/rc3-installer/sidecar-readiness.txt
+          dotnet run --project scripts/stage51/NativeReadinessProbe/NativeReadinessProbe.csproj -c Release -- (Join-Path $PWD 'work/winui-bundle/zhike-winui-6.1.0-win-x64/resources/app') | Tee-Object -FilePath work/candidate-installer/sidecar-readiness.txt
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify clean install, repeated install and uninstall on the CI machine
         shell: pwsh
@@ -87,25 +97,25 @@ jobs:
             $process = Start-Process $bootstrapper -ArgumentList '/silent /install' -Wait -PassThru
             if ($process.ExitCode -ne 0) { throw "WebView2 installation failed: $($process.ExitCode)" }
           }
-          $manifest = Get-Content work/rc3-installer/release-output-manifest.json -Raw | ConvertFrom-Json
-          ./scripts/verify-winui-installer.ps1 -InstallerPath (Join-Path $PWD "work/rc3-installer/$($manifest.installer)") -StageDir (Join-Path $PWD 'work/winui-bundle/zhike-winui-6.1.0-win-x64') -OutputDir (Join-Path $PWD 'work/installer-smoke')
+          $manifest = Get-Content work/candidate-installer/release-output-manifest.json -Raw | ConvertFrom-Json
+          ./scripts/verify-winui-installer.ps1 -InstallerPath (Join-Path $PWD "work/candidate-installer/$($manifest.installer)") -StageDir (Join-Path $PWD 'work/winui-bundle/zhike-winui-6.1.0-win-x64') -OutputDir (Join-Path $PWD 'work/installer-smoke')
       - name: Collect verified candidate assets
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force work/rc3-artifact | Out-Null
-          $manifest = Get-Content work/rc3-installer/release-output-manifest.json -Raw | ConvertFrom-Json
+          New-Item -ItemType Directory -Force work/candidate-artifact | Out-Null
+          $manifest = Get-Content work/candidate-installer/release-output-manifest.json -Raw | ConvertFrom-Json
           $head = git rev-parse HEAD
           if ($manifest.sourceCommit -cne $head -or $manifest.releaseGate -ne 'passed') { throw 'Installer source provenance mismatch.' }
-          $installer = Join-Path $PWD "work/rc3-installer/$($manifest.installer)"
+          $installer = Join-Path $PWD "work/candidate-installer/$($manifest.installer)"
           if ((Get-FileHash $installer -Algorithm SHA256).Hash -ne $manifest.sha256 -or (Get-Item $installer).Length -ne $manifest.bytes) { throw 'Installer digest mismatch.' }
           $signature = (Get-AuthenticodeSignature $installer).Status.ToString()
           if (@{ Valid = 'signed-and-verified'; NotSigned = 'unsigned' }[$signature] -ne $manifest.signingStatus) { throw 'Installer signature status mismatch.' }
-          Copy-Item $installer (Join-Path $PWD "work/rc3-artifact/$($manifest.releaseAsset)")
-          Copy-Item work/rc3-installer/release-output-manifest.json,work/rc3-installer/sidecar-readiness.txt,work/winui-bundle/zhike-winui-6.1.0-win-x64/bundle-manifest.json,work/installer-smoke/installer-smoke-result.json work/rc3-artifact
+          Copy-Item $installer (Join-Path $PWD "work/candidate-artifact/$($manifest.releaseAsset)")
+          Copy-Item work/candidate-installer/release-output-manifest.json,work/candidate-installer/sidecar-readiness.txt,work/winui-bundle/zhike-winui-6.1.0-win-x64/bundle-manifest.json,work/installer-smoke/installer-smoke-result.json work/candidate-artifact
       - uses: actions/upload-artifact@v4
         with:
-          name: zhike-6.1.0-rc.3-win-x64
-          path: work/rc3-artifact/
+          name: zhike-6.1.0-win-x64-${{ github.event.pull_request.head.sha || github.sha }}
+          path: work/candidate-artifact/
           if-no-files-found: error
           retention-days: 14
       - name: Preserve installer diagnostics

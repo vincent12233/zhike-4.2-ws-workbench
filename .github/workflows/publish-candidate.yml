@@ -1,0 +1,74 @@
+name: Publish verified Windows candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Target candidate tag, such as v6.1.0-rc.4
+        required: true
+        type: string
+      build_run_id:
+        description: Successful Windows validation run containing the candidate artifact
+        required: true
+        type: string
+      source_commit:
+        description: Full source commit shared by the tag and validated artifact
+        required: true
+        type: string
+      publish:
+        description: Publish after verification (false performs read-only preflight)
+        required: false
+        type: boolean
+        default: false
+      resume_draft_id:
+        description: Exact existing draft ID to resume, or 0 for a new candidate
+        required: false
+        type: string
+        default: '0'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-candidate-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: windows-2025
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate candidate publisher with synthetic fixtures
+        run: python tests/publish-verified-candidate.test.py
+      - name: Verify candidate provenance and optionally publish
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_TAG: ${{ inputs.tag }}
+          CANDIDATE_RUN_ID: ${{ inputs.build_run_id }}
+          CANDIDATE_COMMIT: ${{ inputs.source_commit }}
+          CANDIDATE_PUBLISH: ${{ inputs.publish }}
+          CANDIDATE_RESUME_DRAFT_ID: ${{ inputs.resume_draft_id }}
+        run: |
+          $arguments = @(
+            'scripts/publish-verified-candidate.py',
+            '--tag', $env:CANDIDATE_TAG,
+            '--run-id', $env:CANDIDATE_RUN_ID,
+            '--commit', $env:CANDIDATE_COMMIT,
+            '--artifact-directory', 'work/candidate-download',
+            '--resume-draft-id', $env:CANDIDATE_RESUME_DRAFT_ID
+          )
+          if ($env:CANDIDATE_PUBLISH -eq 'true') { $arguments += '--publish' }
+          & python @arguments
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
