@@ -48,67 +48,67 @@ Source: "{#StageDir}\zhike.ico"; DestDir: "{app}"; DestName: "zhike-horizon-6-1-
 ; %LOCALAPPDATA%\Zhike6 data root. Replacing these application-only payloads
 ; prevents removed 4.x/5.x modules or runtime assemblies from surviving an
 ; in-place upgrade and being mistaken for part of the current product.
-Type: filesandordirs; Name: "{app}\resources"
-Type: filesandordirs; Name: "{app}\migrations"
-Type: files; Name: "{app}\Zhike.Desktop.exe"
-Type: files; Name: "{app}\node.exe"
-Type: files; Name: "{app}\*.dll"
-Type: files; Name: "{app}\*.deps.json"
-Type: files; Name: "{app}\*.runtimeconfig.json"
-Type: files; Name: "{app}\*.pdb"
-Type: files; Name: "{app}\*.pri"
-Type: files; Name: "{app}\*.winmd"
-Type: files; Name: "{app}\zhike*.ico"
+Type: filesandordirs; Name: "{app}\resources"; Check: IsVerifiedUpgradeDirectory
+Type: filesandordirs; Name: "{app}\migrations"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\Zhike.Desktop.exe"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\node.exe"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\*.dll"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\*.deps.json"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\*.runtimeconfig.json"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\*.pdb"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\*.pri"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\*.winmd"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\zhike*.ico"; Check: IsVerifiedUpgradeDirectory
 ; Keep a single desktop entry. These names were created by earlier
 ; WinUI packages and point to the same executable, so retaining them makes one
 ; installed product look like multiple clients.
-Type: files; Name: "{autodesktop}\知客原生桌面版.lnk"
-Type: files; Name: "{autodesktop}\知客桌面版.lnk"
-Type: files; Name: "{autodesktop}\知客兼容回滚（旧版）.lnk"
-Type: files; Name: "{autodesktop}\知客运营工作台.lnk"
-Type: files; Name: "{userprograms}\知客兼容回滚（旧版）.lnk"
-Type: files; Name: "{userprograms}\知客原生桌面版\知客工作台.lnk"
-Type: files; Name: "{userprograms}\知客原生桌面版\知客原生桌面版.lnk"
-Type: dirifempty; Name: "{userprograms}\知客原生桌面版"
-Type: files; Name: "{userprograms}\知客运营工作台\知客运营工作台.lnk"
-Type: dirifempty; Name: "{userprograms}\知客运营工作台"
+Type: files; Name: "{autodesktop}\知客原生桌面版.lnk"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{autodesktop}\知客桌面版.lnk"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{autodesktop}\知客兼容回滚（旧版）.lnk"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{autodesktop}\知客运营工作台.lnk"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{userprograms}\知客兼容回滚（旧版）.lnk"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{userprograms}\知客原生桌面版\知客工作台.lnk"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{userprograms}\知客原生桌面版\知客原生桌面版.lnk"; Check: IsVerifiedUpgradeDirectory
+Type: dirifempty; Name: "{userprograms}\知客原生桌面版"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{userprograms}\知客运营工作台\知客运营工作台.lnk"; Check: IsVerifiedUpgradeDirectory
+Type: dirifempty; Name: "{userprograms}\知客运营工作台"; Check: IsVerifiedUpgradeDirectory
 ; Remove application-only debris left by older packages before copying the
 ; current manifest.  The 6.0 database lives under %LOCALAPPDATA%\Zhike6 and
 ; is deliberately outside {app}; no new or historical user data, backups or
 ; credentials are matched by this allow-list.
-Type: files; Name: "{app}\release-notes-5.2.0.md"
-Type: files; Name: "{app}\release-notes-5.3.0.md"
-Type: files; Name: "{app}\release-notes-5.3.1.md"
-Type: files; Name: "{app}\release-notes-5.3.2.md"
-Type: files; Name: "{app}\release-notes-5.3.3.md"
-Type: files; Name: "{app}\release-notes-5.3.4.md"
-Type: files; Name: "{app}\release-notes-5.3.5.md"
-Type: files; Name: "{app}\release-notes-5.3.6.md"
-Type: files; Name: "{app}\release-notes-5.3.7.md"
-Type: files; Name: "{app}\release-notes-5.3.8.md"
-Type: files; Name: "{app}\release-notes-5.3.9.md"
-Type: files; Name: "{app}\release-notes-5.3.10.md"
-Type: files; Name: "{app}\release-notes-5.3.11.md"
-Type: files; Name: "{app}\release-notes-5.3.12.md"
-Type: files; Name: "{app}\release-notes-5.3.13.md"
-Type: files; Name: "{app}\release-notes-5.3.14.md"
-Type: files; Name: "{app}\release-notes-5.3.15.md"
-Type: files; Name: "{app}\release-notes-5.3.16.md"
-Type: files; Name: "{app}\release-notes-5.3.17.md"
-Type: files; Name: "{app}\release-notes-5.3.18.md"
+Type: files; Name: "{app}\release-notes-5.2.0.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.0.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.1.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.2.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.3.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.4.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.5.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.6.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.7.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.8.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.9.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.10.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.11.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.12.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.13.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.14.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.15.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.16.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.17.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-5.3.18.md"; Check: IsVerifiedUpgradeDirectory
 ; Remove obsolete release notes from prior 5.4/6.0.0/6.0.1 packages so an
 ; in-place upgrade leaves one coherent application payload. User data
 ; remains outside {app} under %LOCALAPPDATA%\Zhike6 and is not touched.
-Type: files; Name: "{app}\release-notes-5.4.0.md"
-Type: files; Name: "{app}\release-notes-6.0.0.md"
-Type: files; Name: "{app}\release-notes-6.0.1.md"
-Type: files; Name: "{app}\test-report-5.3.9.md"
-Type: files; Name: "{app}\server-version-deployment.md"
-Type: files; Name: "{app}\server-version-troubleshooting.md"
-Type: files; Name: "{app}\migrations\5.3.17-ws-timestamp-provenance.sql"
-Type: dirifempty; Name: "{app}\migrations"
-Type: files; Name: "{app}\resources\app\modules\operations-core.test.cjs"
-Type: files; Name: "{app}\resources\app\modules\phone-registry-seed.json"
+Type: files; Name: "{app}\release-notes-5.4.0.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-6.0.0.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\release-notes-6.0.1.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\test-report-5.3.9.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\server-version-deployment.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\server-version-troubleshooting.md"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\migrations\5.3.17-ws-timestamp-provenance.sql"; Check: IsVerifiedUpgradeDirectory
+Type: dirifempty; Name: "{app}\migrations"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\resources\app\modules\operations-core.test.cjs"; Check: IsVerifiedUpgradeDirectory
+Type: files; Name: "{app}\resources\app\modules\phone-registry-seed.json"; Check: IsVerifiedUpgradeDirectory
 
 [Icons]
 Name: "{group}\知客工作台"; Filename: "{app}\Zhike.Desktop.exe"; IconFilename: "{app}\zhike-horizon-6-1-0.ico"; IconIndex: 0; WorkingDir: "{app}"
@@ -127,6 +127,105 @@ Filename: "{app}\Zhike.Desktop.exe"; Description: "启动知客工作台"; Flags
 const
   WebView2ClientKey = 'Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}';
   PreviousElectronUninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{C3EDBD10-E7B9-4C06-A297-6184F7DDE410}_is1';
+  CurrentNativeUninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{8A2E0A65-B5C8-4F74-9DD9-7AC4CE0A50B3}_is1';
+  PathTypeDirectory = $10;
+  PathTypeReparse = $400;
+  InvalidPathAttributes = $FFFFFFFF;
+
+var
+  VerifiedUpgradePath: String;
+
+function GetPathAttributes(const Filename: String): DWORD;
+  external 'GetFileAttributesW@kernel32.dll stdcall';
+
+function NormalizeLocalDirectory(Value: String): String;
+begin
+  Result := '';
+  Value := Trim(Value);
+  if Length(Value) < 3 then Exit;
+  if (Value[2] <> ':') or (Value[3] <> '\') or (Pos(':', Copy(Value, 3, Length(Value))) <> 0) then Exit;
+  Value := RemoveBackslashUnlessRoot(ExpandFileName(Value));
+  if (Length(Value) <= 3) or (Pos('.\', Value) <> 0) or (Pos(' \', Value) <> 0) then Exit;
+  if (Value[Length(Value)] = '.') or (Value[Length(Value)] = ' ') then Exit;
+  Result := Value;
+end;
+
+function DirectoryAtOrBelow(const Directory, Root: String): Boolean;
+begin
+  Result := SameText(Directory, Root) or SameText(Copy(Directory, 1, Length(Root) + 1), AddBackslash(Root));
+end;
+
+function IsSafeInstallDirectory(const Directory: String): Boolean;
+var
+  Parent: String;
+  Attributes: DWORD;
+  ErrorCode: Integer;
+begin
+  Result := False;
+  if Directory = '' then Exit;
+  if DirectoryAtOrBelow(Directory, ExpandConstant('{win}')) or
+     DirectoryAtOrBelow(Directory, ExpandConstant('{localappdata}\Zhike')) or
+     DirectoryAtOrBelow(Directory, ExpandConstant('{localappdata}\Zhike6')) or
+     SameText(Directory, ExpandConstant('{localappdata}')) or
+     SameText(Directory, GetEnv('USERPROFILE')) then Exit;
+  Parent := Directory;
+  repeat
+    Attributes := GetPathAttributes(Parent);
+    if Attributes = InvalidPathAttributes then begin
+      ErrorCode := DLLGetLastError();
+      { Only file-not-found and path-not-found identify a new path. }
+      if (ErrorCode <> 2) and (ErrorCode <> 3) then Exit;
+    end else if ((Attributes and PathTypeDirectory) = 0) or ((Attributes and PathTypeReparse) <> 0) then
+      Exit;
+    if Length(Parent) <= 3 then Break;
+    Parent := ExtractFileDir(Parent);
+  until Parent = '';
+  Result := True;
+end;
+
+function DirectoryIsEmpty(const Directory: String): Boolean;
+var
+  Entry: TFindRec;
+begin
+  Result := not DirExists(Directory);
+  if Result then Exit;
+  if not FindFirst(AddBackslash(Directory) + '*', Entry) then Exit;
+  try
+    repeat
+      if (Entry.Name <> '.') and (Entry.Name <> '..') then Exit;
+    until not FindNext(Entry);
+    Result := True;
+  finally
+    FindClose(Entry);
+  end;
+end;
+
+function DirectoryTreeHasNoReparsePoints(const Directory: String): Boolean;
+var
+  Entry: TFindRec;
+begin
+  Result := False;
+  if not FindFirst(AddBackslash(Directory) + '*', Entry) then Exit;
+  try
+    repeat
+      if (Entry.Name <> '.') and (Entry.Name <> '..') then begin
+        if (Entry.Attributes and PathTypeReparse) <> 0 then Exit;
+        if (Entry.Attributes and PathTypeDirectory) <> 0 then
+          if not DirectoryTreeHasNoReparsePoints(AddBackslash(Directory) + Entry.Name) then Exit;
+      end;
+    until not FindNext(Entry);
+    Result := True;
+  finally
+    FindClose(Entry);
+  end;
+end;
+
+function IsVerifiedUpgradeDirectory(): Boolean;
+begin
+  Result := (VerifiedUpgradePath <> '') and
+    SameText(VerifiedUpgradePath, NormalizeLocalDirectory(WizardDirValue())) and
+    IsSafeInstallDirectory(VerifiedUpgradePath);
+end;
 
 function QueryPreviousElectronUninstaller(var CommandLine: String): Boolean;
 begin
@@ -171,6 +270,7 @@ var
   CommandLine: String;
   Filename: String;
   Parameters: String;
+  UninstallerDirectory: String;
   ExitCode: Integer;
 begin
   Result := True;
@@ -181,6 +281,13 @@ begin
   if (Filename = '') or (not FileExists(Filename)) then begin
     Log('Previous Electron uninstall entry is orphaned; no executable remains to retire, so installation will continue.');
     Result := True;
+    Exit;
+  end;
+  UninstallerDirectory := NormalizeLocalDirectory(ExtractFileDir(Filename));
+  if (UninstallerDirectory = '') or
+     DirectoryAtOrBelow(UninstallerDirectory, NormalizeLocalDirectory(WizardDirValue())) then begin
+    Log('Previous Electron uninstall entry did not name a separate absolute application directory.');
+    Result := False;
     Exit;
   end;
   if Pos('/VERYSILENT', Uppercase(Parameters)) = 0 then
@@ -196,10 +303,41 @@ begin
 end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  Directory: String;
+  RegisteredDirectory: String;
+  VerifiedUpgrade: Boolean;
 begin
   Result := '';
-  if not RetirePreviousElectronClient() then
-    Result := '检测到旧版知客客户端，但未能安全卸载。请先在 Windows“已安装的应用”中卸载“知客运营工作台”，再重新运行知客安装程序。旧版数据目录不会被读取、迁移或删除。';
+  VerifiedUpgradePath := '';
+  Directory := NormalizeLocalDirectory(WizardDirValue());
+  if not IsSafeInstallDirectory(Directory) then begin
+    Result := '安装目录不可用。请选择独立的本机目录，避开系统目录、知客数据目录和链接路径。';
+    Exit;
+  end;
+  VerifiedUpgrade := False;
+  if RegQueryStringValue(HKCU, CurrentNativeUninstallKey, 'Inno Setup: App Path', RegisteredDirectory) then
+    VerifiedUpgrade := DirExists(Directory) and (CompareText(Directory, NormalizeLocalDirectory(RegisteredDirectory)) = 0);
+  if not VerifiedUpgrade and not DirectoryIsEmpty(Directory) then begin
+    Result := '安装目录中已有文件，且不是当前用户已登记的知客工作台目录。请选择空目录。';
+    Exit;
+  end;
+  if VerifiedUpgrade then begin
+    if not DirectoryTreeHasNoReparsePoints(Directory) then begin
+      Result := '现有知客安装目录中含链接或无法读取的子目录。请备份业务数据后选择空目录重新安装。';
+      Exit;
+    end;
+    VerifiedUpgradePath := Directory;
+  end;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep <> ssPostInstall then Exit;
+  if RetirePreviousElectronClient() then Exit;
+  Log('The new Zhike installation is complete. The previous Electron client was retained; uninstall it separately if needed.');
+  if not WizardSilent() then
+    MsgBox('新版知客工作台已安装。旧版客户端未能自动卸载，可在 Windows“已安装的应用”中手动卸载“知客运营工作台”。旧版数据目录不会被读取、迁移或删除。', mbInformation, MB_OK);
 end;
 
 function IsInstalledWebView2Version(const VersionText: String): Boolean;

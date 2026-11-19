@@ -16,6 +16,16 @@ assert.match(setup, /RegQueryStringValue\(HKLM/);
 assert.match(setup, /PrepareToInstall/);
 assert.match(setup, /RetirePreviousElectronClient/);
 assert.match(setup, /ewWaitUntilTerminated/);
+const prepare = setup.match(/function PrepareToInstall\([^\n]+\)[\s\S]*?\nend;/)?.[0];
+assert.ok(prepare, 'setup must validate the final destination before file operations');
+assert.doesNotMatch(prepare, /RetirePreviousElectronClient/,
+  'a cancelled or failed installation must not first remove the working legacy app');
+const postInstall = setup.match(/procedure CurStepChanged\([^\n]+\)[\s\S]*?\nend;/)?.[0];
+assert.match(postInstall ?? '', /if CurStep <> ssPostInstall then Exit;[\s\S]*RetirePreviousElectronClient/,
+  'retire the legacy client only after the new application was installed');
+assert.match(postInstall, /WizardSilent\(\)/, 'a legacy retirement failure must not block silent installs with a dialog');
+assert.match(setup, /DirectoryAtOrBelow\(UninstallerDirectory, NormalizeLocalDirectory\(WizardDirValue\(\)\)\)[\s\S]*Result := False;[\s\S]*Exec\(Filename/,
+  'a stale legacy registration must not execute the new installation’s uninstaller');
 for (const switchName of ['VERYSILENT', 'SUPPRESSMSGBOXES', 'NORESTART'])
   assert.match(setup, new RegExp(switchName));
 

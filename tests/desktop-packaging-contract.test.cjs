@@ -93,7 +93,30 @@ assert.match(setup, /\[InstallDelete\][\s\S]*release-notes-5\.3\.18\.md/);
 assert.match(setup, /\[InstallDelete\][\s\S]*release-notes-5\.4\.0\.md[\s\S]*release-notes-6\.0\.0\.md[\s\S]*release-notes-6\.0\.1\.md/, 'in-place upgrade must remove stale 5.4/6.0.0/6.0.1 release notes');
 assert.match(setup, /\[InstallDelete\][\s\S]*phone-registry-seed\.json/);
 assert.match(setup, /\[InstallDelete\][\s\S]*operations-core\.test\.cjs/);
-assert.doesNotMatch(setup, /\[InstallDelete\][\s\S]*\{localappdata\}\\Zhike/);
+const installDelete = setup.split('[InstallDelete]')[1].split('[Icons]')[0];
+assert.doesNotMatch(installDelete, /\{localappdata\}\\Zhike/i);
+for (const line of installDelete.split(/\r?\n/).filter(value => /^Type:/.test(value))) {
+  assert.match(line, /; Check: IsVerifiedUpgradeDirectory$/,
+    'only a verified upgrade may delete existing files or shortcuts: ' + line);
+}
+const appId = setup.match(/^AppId=\{\{([^}]+)\}/m)?.[1];
+assert.ok(appId);
+assert.ok(setup.includes('\\{' + appId + '}_is1'), 'directory ownership must use the actual application ID');
+assert.match(setup, /RegQueryStringValue\(HKCU, CurrentNativeUninstallKey, 'Inno Setup: App Path', RegisteredDirectory\)/);
+assert.match(setup, /CompareText\(Directory, NormalizeLocalDirectory\(RegisteredDirectory\)\) = 0/,
+  'previous install registration must match the selected absolute directory');
+assert.match(setup, /if not VerifiedUpgrade and not DirectoryIsEmpty\(Directory\) then/,
+  'a fresh install must refuse existing nonempty directories');
+assert.match(setup, /if not IsSafeInstallDirectory\(Directory\) then/);
+assert.match(setup, /Length\(Value\) <= 3/, 'a drive root is not an install directory');
+for (const protectedRoot of ['{win}', '{localappdata}\\Zhike', '{localappdata}\\Zhike6']) {
+  assert.ok(setup.includes("DirectoryAtOrBelow(Directory, ExpandConstant('" + protectedRoot + "'))"),
+    'installation must reject the protected directory and its descendants');
+}
+assert.match(setup, /Attributes := GetPathAttributes\(Parent\);[\s\S]*\(Attributes and PathTypeReparse\) <> 0[\s\S]*Parent := ExtractFileDir\(Parent\)/,
+  'the selected path and its existing ancestors must not cross a reparse point');
+assert.match(setup, /if not DirectoryTreeHasNoReparsePoints\(Directory\) then[\s\S]*VerifiedUpgradePath := Directory/,
+  'verify the existing application subtree before enabling any recursive removal');
 
 const project = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 'Zhike.Desktop.csproj'), 'utf8');
 assert.match(project, /ApplicationIcon>Assets\\zhike\.ico</);
