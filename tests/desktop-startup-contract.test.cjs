@@ -48,43 +48,74 @@ const html = fs.readFileSync(path.join(appPath, 'index.html'), 'utf8');
 const appCode = fs.readFileSync(path.join(appPath, 'app.js'), 'utf8');
 const startMarkup = html.match(/<section\b[^>]*id="viewContainer"[^>]*>([\s\S]*?)<\/section>/)?.[1];
 assert.match(startMarkup, /<p\b[^>]*role="status"[^>]*>正在读取本机资料…<\/p>/);
+const startBadge = html.match(/<span class="([^"]+)" id="syncStatus"[^>]*>([^<]+)<\/span>/);
+assert.deepEqual(startBadge?.slice(1), ['sync-status pending', '正在读取本机资料…']);
 const initializeBackend = appCode.match(/^  async function initializeBackend\(\)\{[\s\S]*?^  \}/m)?.[0];
-assert.ok(initializeBackend, 'use the application’s real backend initialization');
+const finalizeBackend = appCode.match(/^  const legacyInitializeBackend=initializeBackend;\r?\n  initializeBackend=async function\(\)\{[\s\S]*?^  \};/m)?.[0];
+const markSyncVersion = appCode.match(/^  function markSyncVersion\(version\)\{[\s\S]*?^  \}/m)?.[0];
+assert.ok(initializeBackend && finalizeBackend && markSyncVersion, 'use the application’s real backend initialization and status handling');
 assert.match(appCode, /\$\('#viewContainer'\)\.innerHTML=horizonBanner/, 'the home renderer replaces the initial view contents');
 
-async function checkInitialRead(response, expectedOutcome) {
+async function checkInitialRead(response, expectedOutcome, expectedBadge, initialWrite = false) {
   const viewContainer = { innerHTML: startMarkup };
+  const badge = { className: startBadge[1], textContent: startBadge[2] };
   const calls = [];
   let finishRead;
+  let beginWrite;
+  let finishWrite;
   const read = new Promise((resolve) => { finishRead = resolve; });
-  const initialize = vm.runInNewContext(`${initializeBackend}\ninitializeBackend`, {
-    window: { __LOCAL_DB__: true },
+  const writeStarted = new Promise((resolve) => { beginWrite = resolve; });
+  const write = new Promise((resolve) => { finishWrite = resolve; });
+  const runtime = vm.runInNewContext(`${markSyncVersion}\n${initializeBackend}\n${finalizeBackend}\n({initializeBackend,markSyncVersion})`, {
+    window: { __LOCAL_DB__: Boolean(response) },
+    $: (selector) => selector === '#syncStatus' ? badge : null,
+    initialBackendReadPending: true,
     stateVersion: '',
     lastCommittedState: null,
     dbWriteFailure: null,
+    syncReadFailure: null,
+    pendingStateData: null,
+    queuedWriteCount: 0,
+    writeConflict: null,
     beginMetricsRead: () => 1,
     completeMetricsRead: (_, outcome) => calls.push(outcome),
     fetch: (url) => { assert.equal(url, '/api/state'); return read; },
     applySharedData: () => calls.push('apply'),
     cloneStateData: (value) => value,
     statePayload: () => ({}),
+    persist: () => calls.push('initialize-write'),
+    flushStateWrites: () => { beginWrite(); return write; },
     render: () => { viewContainer.innerHTML = '<main>工作台</main>'; calls.push('render'); },
-    markSyncVersion: () => {},
     toast: () => calls.push('error-notice'),
   });
 
-  const pending = initialize();
-  assert.equal(viewContainer.innerHTML, startMarkup, 'leave the status visible while the real read is pending');
-  assert.deepEqual(calls, []);
+  const pending = runtime.initializeBackend();
+  if (response) {
+    assert.equal(viewContainer.innerHTML, startMarkup, 'leave the status visible while the real read is pending');
+    runtime.markSyncVersion();
+    assert.equal(badge.textContent, startBadge[2], 'unrelated sync updates cannot signal readiness during the initial read');
+    assert.deepEqual(calls, []);
+  }
   finishRead(response);
+  if (initialWrite) {
+    await Promise.race([writeStarted, pending.then(() => assert.fail('initialization skipped its first write'))]);
+    runtime.markSyncVersion();
+    assert.equal(viewContainer.innerHTML, startMarkup);
+    assert.equal(badge.textContent, startBadge[2], 'the first write must settle before reporting readiness');
+    finishWrite();
+  }
   await pending;
   assert.deepEqual(calls, expectedOutcome);
   assert.equal(viewContainer.innerHTML, '<main>工作台</main>');
+  assert.equal(badge.textContent, expectedBadge);
+  assert.equal(badge.className, expectedBadge === '已保存到本机' ? 'sync-status online' : 'sync-status error');
 }
 
 Promise.all([
-  checkInitialRead({ ok: true, json: async () => ({ initialized: true }) }, ['apply', 'applied', 'render']),
-  checkInitialRead({ ok: false }, ['error-notice', 'error', 'render']),
+  checkInitialRead({ ok: true, json: async () => ({ initialized: true }) }, ['apply', 'applied', 'render'], '已保存到本机'),
+  checkInitialRead({ ok: true, json: async () => ({ initialized: false }) }, ['initialize-write', 'applied', 'render'], '已保存到本机', true),
+  checkInitialRead({ ok: false }, ['error-notice', 'error', 'render'], '同步异常'),
+  checkInitialRead(null, ['error', 'render'], '未连接本机服务'),
 ]).then(() => {
   console.log('desktop startup contract: the native status tracks local navigation and application rendering replaces the initial data status');
 }).catch((error) => {
