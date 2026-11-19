@@ -78,7 +78,8 @@ const script = [
   "process.stdin.on('data',value=>{if(!value.includes('CLOSE'))return;if(mode==='close-timeout')return;",
   "if(mode==='late-release'){setTimeout(()=>process.exit(0),Math.max(0,Number(value.slice(6))-Date.now()));return}",
   "if(mode==='stream-exit-order'){require('node:fs').closeSync(1);require('node:fs').closeSync(2);setTimeout(()=>process.exit(0),400);return}",
-  "process.exit(mode==='nonzero-close'?9:0)});",
+  "if(mode==='close-final-buffer'){process.stdout.write('CLOS');setImmediate(()=>process.stdout.end('ED\\n',()=>process.exit(0)));return}",
+  "process.exit(['nonzero-close','close-output-eof','close-ack-timeout-after-exit'].includes(mode)?9:0)});",
 ].join('');
 const completed = [], known = [];
 let parameterChecks=0;
@@ -171,8 +172,16 @@ async function runCase(mode, expected) {
           // timer had already sent EOF and rejected further queries.
           const deadline = Date.parse(context.metadata.launchedAt) + context.metadata.timeoutMs;
           context.child.stdin.end('CLOSE ' + (deadline - 380) + '\n');
+        } else if (mode === 'close-final-buffer') {
+          const ended = new Promise(resolve => context.child.stdout.once('end', resolve));
+          context.child.stdin.end('CLOSE\n');
+          return ended.then(() => context.waitForOutput(stdout => /^CLOSED\n/m.test(stdout)
+            ? { acknowledgement: 'final-buffer' } : undefined));
         } else {
           context.child.stdin.end('CLOSE\n');
+          if (mode === 'close-output-eof')
+            return context.waitForOutput(stdout => /^CLOSED\n/m.test(stdout) ? { acknowledgement: 'close-output' } : undefined);
+          if (mode === 'close-ack-timeout-after-exit') return new Promise(() => {});
         }
         return { acknowledgement: 'stdin-request' };
       },
@@ -251,6 +260,25 @@ async function runCase(mode, expected) {
   }
   if(mode==='close-timeout'){assert.equal(error.phase,'process-exit');assert.equal(metadata.forceTerminated,true,'Only the retained child process handle may be terminated after failure');}
   if(mode==='nonzero-close'){assert.equal(metadata.exit.code,9);assert.equal(metadata.streamsClosed,true);assert.equal(metadata.cleanupSafe,true);}
+  if (mode === 'close-output-eof' || mode === 'close-ack-timeout-after-exit') {
+    assert.equal(error.phase, 'request-close');
+    assert.deepEqual(saved.exit, { code: 9, signal: null });
+    assert.equal(saved.streamsClosed, true);
+    const timeouts = metadata.events.filter(event => event.event === 'deadline-timeout').map(event => event.phase);
+    assert.ok(!timeouts.includes('process-exit') && !timeouts.includes('streams-close'),
+      'An actual exit and stream close observed within the budget cannot become secondary timeouts');
+    if (mode === 'close-output-eof') {
+      assert.deepEqual(timeouts, []);
+      assert.equal(saved.cleanupSafe, true, 'The failed close protocol must leave time for owned-process cleanup');
+      assert.equal(saved.identityProbeClosed, true);
+    } else {
+      assert.ok(timeouts.includes('request-close'), 'The independent close acknowledgement deadline still fails');
+      assert.equal(saved.cleanupSafe, false);
+    }
+  }
+  if (mode === 'close-final-buffer') {
+    assert.ok(metadata.events.some(event => event.event === 'close-request-complete' && event.acknowledgement === 'final-buffer'));
+  }
   if(mode==='stream-exit-order'){
     const events=metadata.events.map(event=>event.event),index=name=>events.indexOf(name);
     assert.ok(index('result-ready')<index('close-requested')&&index('close-requested')<index('process-exit'),'A completed result and explicit close request precede actual process exit');
@@ -370,6 +398,9 @@ async function runResultEvidenceCase(mode) {
     return;
   }
   validateParameters();
+  await runCase('close-output-eof','PROCESS_OUTPUT_EOF');
+  await runCase('close-ack-timeout-after-exit','EDGE_RUNNER_TIMEOUT');
+  await runCase('close-final-buffer','passed');
   await runExclusiveReadinessCase();
   await runExclusiveReadinessCase(true);
   await runCase('normal','passed');

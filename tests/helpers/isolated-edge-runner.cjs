@@ -139,8 +139,14 @@ async function runProcessLifecycle(options) {
   if (options.profile) metadata.profile = options.profile;
   const exit = deferred(), close = deferred(), stdoutClosed = deferred(), stderrClosed = deferred(), fatal = deferred(), changed = new Set();
   let stdout = '', stderr = '', child, problem, result, resultEvidence, identityProbe, probeShutdown, kernelObserver;
-  let closing = false, exitObserved = false, closeObserved = false, stdoutCloseObserved = false, stderrCloseObserved = false;
-  const mark = (event, detail = {}) => metadata.events.push({ event, elapsedMs: elapsed(), ...detail });
+  let closing = false, stdoutEnded = false;
+  let exitObservedAt, closeObservedAt, stdoutClosedAt, stderrClosedAt;
+  const mark = (event, detail = {}) => {
+    const observedAt = elapsed();
+    metadata.events.push({ event, elapsedMs: observedAt, ...detail });
+    return observedAt;
+  };
+  const observedWithinDeadline = time => time !== undefined && time < timeoutMs;
   const noteTimeout = (phase, deadline) => {
     mark('deadline-timeout', { phase, deadlineMs: deadline - started });
     return failure('EDGE_RUNNER_TIMEOUT', 'Isolated lifecycle deadline reached during ' + phase, phase);
@@ -222,7 +228,20 @@ async function runProcessLifecycle(options) {
     },
     waitForOutput(predicate) {
       return new Promise((resolve, reject) => {
-        const inspect = () => { try { const value = predicate(stdout); if (value !== undefined) { changed.delete(inspect); resolve(value); } } catch (error) { changed.delete(inspect); reject(error); } };
+        const inspect = () => {
+          try {
+            const value = predicate(stdout);
+            if (value !== undefined) {
+              changed.delete(inspect);
+              resolve(value);
+            } else if (closing && stdoutEnded) {
+              throw failure('PROCESS_OUTPUT_EOF', 'Isolated process stdout ended before the close response', 'request-close');
+            }
+          } catch (error) {
+            changed.delete(inspect);
+            reject(error);
+          }
+        };
         changed.add(inspect); inspect();
       });
     },
@@ -233,12 +252,15 @@ async function runProcessLifecycle(options) {
     child.on('error', error => fatal.reject(failure('PROCESS_START_FAILED', 'Isolated process failed: ' + error.code, 'spawn')));
     child.stdin.on('error', error => { if (!closing) fatal.reject(failure('PROCESS_STDIN_FAILED', error.code || error.message, 'stdio')); });
     child.stdout.setEncoding('utf8'); child.stderr.setEncoding('utf8');
-    child.stdout.on('close', () => { stdoutCloseObserved = true; mark('stdout-close'); stdoutClosed.resolve(); });
-    child.stderr.on('close', () => { stderrCloseObserved = true; mark('stderr-close'); stderrClosed.resolve(); });
-    child.stdout.on('data', value => { stdout += value; if (Buffer.byteLength(stdout) > (options.maxOutputBytes || 8 * 1024 * 1024)) fatal.reject(failure('OUTPUT_LIMIT', 'Isolated process stdout exceeds the diagnostic bound', 'stdout')); for (const listener of [...changed]) listener(); });
+    const notifyOutput = () => { for (const listener of [...changed]) listener(); };
+    const finishOutput = () => { stdoutEnded = true; notifyOutput(); };
+    child.stdout.on('end', finishOutput);
+    child.stdout.on('close', () => { stdoutClosedAt = mark('stdout-close'); stdoutClosed.resolve(); finishOutput(); });
+    child.stderr.on('close', () => { stderrClosedAt = mark('stderr-close'); stderrClosed.resolve(); });
+    child.stdout.on('data', value => { stdout += value; if (Buffer.byteLength(stdout) > (options.maxOutputBytes || 8 * 1024 * 1024)) fatal.reject(failure('OUTPUT_LIMIT', 'Isolated process stdout exceeds the diagnostic bound', 'stdout')); notifyOutput(); });
     child.stderr.on('data', value => { stderr += value; if (Buffer.byteLength(stderr) > 1024 * 1024) fatal.reject(failure('OUTPUT_LIMIT', 'Isolated process stderr exceeds the diagnostic bound', 'stderr')); });
-    child.on('exit', (code, signal) => { exitObserved = true; metadata.exit = { code, signal }; mark('process-exit', metadata.exit); exit.resolve(metadata.exit); if (!closing) fatal.reject(failure('PROCESS_EARLY_EXIT', 'Isolated process exited before explicit close', 'process-exit')); });
-    child.on('close', (code, signal) => { closeObserved = true; mark('child-close', { code, signal }); close.resolve(); });
+    child.on('exit', (code, signal) => { metadata.exit = { code, signal }; exitObservedAt = mark('process-exit', metadata.exit); exit.resolve(metadata.exit); if (!closing) fatal.reject(failure('PROCESS_EARLY_EXIT', 'Isolated process exited before explicit close', 'process-exit')); });
+    child.on('close', (code, signal) => { closeObservedAt = mark('child-close', { code, signal }); close.resolve(); });
     if (!child.pid) throw failure('PROCESS_START_FAILED', 'Isolated process has no PID', 'spawn');
     mark('process-spawned', { pid: child.pid });
     if (options.observerDotnet) {
@@ -263,9 +285,13 @@ async function runProcessLifecycle(options) {
     try { const outcome = await wait(Promise.resolve().then(() => options.requestClose(context)), 'request-close', true); mark('close-request-complete', { acknowledgement: outcome?.acknowledgement || 'requested' }); }
     catch (error) { problem ||= error; mark('close-request-failed', { code: error.code || 'ERROR' }); }
     try {
-      const ended = await wait(exit.promise, 'process-exit', true);
+      // The close protocol can consume its deadline after an actual child exit.
+      // Use the event's original timestamp for exit and stream evidence.
+      const ended = observedWithinDeadline(exitObservedAt) ? metadata.exit : await wait(exit.promise, 'process-exit', true);
       if (ended.code !== 0 || ended.signal) problem ||= failure('PROCESS_EXIT_NONZERO', 'Isolated process did not exit normally', 'process-exit');
-      await wait(Promise.all([close.promise, stdoutClosed.promise, stderrClosed.promise]), 'streams-close', true);
+      if (![closeObservedAt, stdoutClosedAt, stderrClosedAt].every(observedWithinDeadline)) {
+        await wait(Promise.all([close.promise, stdoutClosed.promise, stderrClosed.promise]), 'streams-close', true);
+      }
       metadata.streamsClosed = true; mark('streams-close');
       // The retained ChildProcess has already supplied the actual OS exit and
       // closed streams for its startup-verified identity. Re-querying that PID
@@ -289,7 +315,8 @@ async function runProcessLifecycle(options) {
       metadata.cleanupSafe = verifiedRoot && alive.length === 0;
       if (!metadata.cleanupSafe) throw failure('OWNED_PROCESSES_REMAIN', 'Observed isolated processes remain after close', 'resource-release');
     } catch (error) { metadata.releaseFailure = { code: error.code || error.name, phase: error.phase || 'resource-release' }; problem ||= error; }
-    mark('node-release-state', { exitObserved, closeObserved, stdoutCloseObserved, stderrCloseObserved,
+    const exitObserved = exitObservedAt !== undefined, closeObserved = closeObservedAt !== undefined;
+    mark('node-release-state', { exitObserved, closeObserved, stdoutCloseObserved: stdoutClosedAt !== undefined, stderrCloseObserved: stderrClosedAt !== undefined,
       exitCode: child?.exitCode ?? null, signalCode: child?.signalCode ?? null });
     if (!exitObserved && child) {
       // This ChildProcess retains the OS process handle. Never kill by image
