@@ -42,6 +42,35 @@ assert.doesNotMatch(setup, /\[InstallDelete\][\s\S]*Type:\s*filesandordirs;[^\r\
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const tempParent = path.resolve(os.tmpdir());
+const tempPrefix = 'zhike6-no-legacy-';
+
+async function waitForClose(closed, timeoutMs) {
+  let timer;
+  try {
+    return await Promise.race([closed, new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error('Timed out waiting for the isolated sidecar to close')), timeoutMs);
+    })]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function removeFixture(root) {
+  const resolved = path.resolve(root);
+  assert.equal(path.dirname(resolved), tempParent);
+  assert.ok(path.basename(resolved).startsWith(tempPrefix) && !fs.lstatSync(resolved).isSymbolicLink());
+  for (let attempt = 0; ; attempt++) {
+    try {
+      fs.rmSync(resolved, { recursive: true });
+      return;
+    } catch (error) {
+      if (attempt === 14 || !['EPERM', 'EBUSY', 'ENOTEMPTY'].includes(error.code)) throw error;
+      await delay(100);
+    }
+  }
+}
+
 const getPort = () => new Promise((resolve, reject) => {
   const listener = net.createServer();
   listener.once('error', reject);
@@ -52,30 +81,54 @@ const getPort = () => new Promise((resolve, reject) => {
 });
 
 (async () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'zhike6-no-legacy-'));
+  const tempRoot = fs.mkdtempSync(path.join(tempParent, tempPrefix));
   const oldRoot = path.join(tempRoot, 'Zhike');
   const newRoot = path.join(tempRoot, 'Zhike6');
   const oldDatabase = path.join(oldRoot, 'workspace.sqlite');
+  const lockPath = path.join(newRoot, '.workbench.lock');
   const token = 'no-legacy-runtime-token';
-  let child;
+  let child, closed, closeResult, spawnError;
+  let removed = false;
   try {
     fs.mkdirSync(oldRoot, { recursive: true });
     fs.writeFileSync(oldDatabase, 'old-workspace-must-remain-byte-identical');
     const before = hash(oldDatabase);
     const port = await getPort();
-    child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, [path.join(repo, 'resources/app/server.mjs')], {
+    const entry = path.join(repo, 'resources/app/server.mjs');
+    const args = [entry];
+    if (process.argv.includes('--delayed-shutdown')) {
+      const preload = path.join(tempRoot, 'delay-graceful-exit.cjs');
+      fs.writeFileSync(preload, [
+        'const exit = process.exit.bind(process);',
+        'process.exit = code => code === 0 ? setTimeout(() => exit(0), 2400) : exit(code);',
+      ].join('\n'), { flag: 'wx' });
+      args.unshift('--require', preload);
+    }
+    child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, args, {
       cwd: path.join(repo, 'resources/app'),
       windowsHide: true,
       stdio: 'ignore',
       env: { ...process.env, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token, ZHIKE_DATA_DIR: newRoot },
     });
+    closed = new Promise(resolve => child.once('close', (code, signal) => {
+      closeResult = { code, signal };
+      resolve(closeResult);
+    }));
+    child.once('error', error => { spawnError = error; });
     let healthy = false;
     for (let attempt = 0; attempt < 1200; attempt++) {
-      try { healthy = (await fetch(`http://127.0.0.1:${port}/api/health`)).ok; } catch {}
+      if (spawnError) throw spawnError;
+      if (closeResult) assert.fail('isolated sidecar closed during startup');
+      try {
+        const response = await fetch(`http://127.0.0.1:${port}/api/health`);
+        await response.arrayBuffer();
+        healthy = response.ok;
+      } catch {}
       if (healthy) break;
       await delay(25);
     }
     assert.equal(healthy, true, 'fresh 6.0 sidecar must start in its isolated root');
+    assert.equal(JSON.parse(fs.readFileSync(lockPath, 'utf8')).pid, child.pid, 'isolated lock must belong to this fixture child');
     const stateResponse = await fetch(`http://127.0.0.1:${port}/api/state`, { headers: { 'X-Zhike-Api-Token': token } });
     assert.equal(stateResponse.status, 200);
     const state = await stateResponse.json();
@@ -89,26 +142,33 @@ const getPort = () => new Promise((resolve, reject) => {
         body: endpoint.endsWith('/status') ? undefined : '{}',
       });
       assert.equal(response.status, 404, `${endpoint} must stay retired`);
+      await response.arrayBuffer();
     }
     assert.equal(fs.existsSync(path.join(newRoot, 'workspace.sqlite')), true);
     assert.equal(hash(oldDatabase), before, 'old workspace bytes must remain untouched');
     assert.equal(fs.existsSync(oldRoot), true, 'old workspace directory must not be removed');
-    await fetch(`http://127.0.0.1:${port}/api/shutdown`, {
+    const shutdown = await fetch(`http://127.0.0.1:${port}/api/shutdown`, {
       method: 'POST',
-      headers: { 'X-Zhike-Api-Token': token, 'X-Zhike-Shutdown-Token': token },
+      headers: { 'X-Zhike-Api-Token': token, 'X-Zhike-Shutdown-Token': token, Connection: 'close' },
+      signal: AbortSignal.timeout(5000),
     });
-    await Promise.race([new Promise(resolve => child.once('exit', resolve)), delay(2000)]);
-    if (child.exitCode === null) child.kill();
-    child = null;
-    console.log('no legacy data migration contract: fresh empty 6.0 runtime, no old API and byte-identical old data pass');
+    assert.equal(shutdown.status, 200, 'the isolated sidecar must accept authenticated shutdown');
+    assert.deepEqual(await shutdown.json(), { ok: true });
+    assert.deepEqual(await waitForClose(closed, 5000), { code: 0, signal: null },
+      'sidecar must exit normally and close its process handles before cleanup');
+    assert.equal(fs.existsSync(lockPath), false, 'workspace lock must be released before cleanup');
+    await removeFixture(tempRoot);
+    removed = true;
   } finally {
-    if (child?.exitCode === null) {
-      child.kill();
-      await Promise.race([new Promise(resolve => child.once('exit', resolve)), delay(1000)]);
+    if (closed && !closeResult) {
+      try {
+        if (child.pid && child.exitCode === null && child.signalCode === null) child.kill();
+        await waitForClose(closed, 2000);
+      } catch (error) {
+        console.error('Isolated sidecar close unverified: ' + error.message);
+      }
     }
-    for (let attempt = 0; attempt < 15; attempt++) {
-      try { fs.rmSync(tempRoot, { recursive: true, force: true }); break; }
-      catch (error) { if (attempt === 14) throw error; await delay(100); }
-    }
+    if (!removed) console.error('Retained isolated migration evidence: ' + path.basename(tempRoot));
   }
+  console.log('no legacy data migration contract: fresh empty runtime, retired APIs, unchanged old data and verified shutdown pass');
 })().catch(error => { console.error(error); process.exitCode = 1; });
