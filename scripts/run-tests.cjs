@@ -85,6 +85,7 @@ function runStage5(options = {}) {
   run('Stage 5 baseline', [path.join(repo, 'scripts', 'stage5', 'stage5-baseline.test.cjs')]);
   run('Stage 5 WS workspace pages', [path.join(repo, 'scripts', 'stage5', 'ws-workspace-pages.test.cjs')]);
   run('Stage 5 business integration', [path.join(repo, 'scripts', 'stage5', 'business-integration.test.cjs')], { timeout: 240000 });
+  run('Fresh database atomic initialization and recovery', [path.join(repo, 'scripts', 'stage1', 'migration-runner-fresh-atomic.test.cjs')]);
   run('Stage 5 migration drill', [path.join(repo, 'scripts', 'stage5', 'migration-drill.test.cjs')], { timeout: 180000 });
   run('Stage 5 backup and restore drill', [path.join(repo, 'scripts', 'stage5', 'backup-restore-drill.test.cjs')], { timeout: 180000 });
   run('Stage 5 Worker security and performance', [path.join(repo, 'scripts', 'stage5', 'worker-security-performance.test.cjs')]);
