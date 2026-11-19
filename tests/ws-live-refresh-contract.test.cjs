@@ -31,7 +31,11 @@ assert.match(workbench, /function deactivate\(\)[\s\S]*?state\.active = false;[\
   'route deactivation must hide the WebView without stopping the background session');
 assert.match(workbench, /async function refreshCollectionSummary\(options = \{\}\)/,
   'refresh path must use the collection/list-sync/AI pipeline');
-assert.match(workbench, /if \(state\.backgroundActive && payload\.status === '已连接'\)[\s\S]*?refreshCollectionSummary\(\s*(?:\{[^)]*\})?\s*\)/,
+// Guard moved from `payload.status === '已连接'` to `collectionReady()` in the
+// independent-QR-collection restore (1b702e0). The contract this asserts — that a
+// native WS status event refreshes the background pipeline while off-route — is
+// unchanged; only the surrounding condition text did. Match the real guard.
+assert.match(workbench, /if \(state\.backgroundActive && collectionReady\(\)\)[\s\S]*?refreshCollectionSummary\(\s*(?:\{[^)]*\})?\s*\)/,
   'native WS status events must refresh the background pipeline off-route');
 assert.match(workbench, /addEventListener\('beforeunload',[\s\S]*?stopBackgroundRuntime\(\)/,
   'application shutdown must cancel the background runtime explicitly');

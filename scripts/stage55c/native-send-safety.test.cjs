@@ -11,8 +11,8 @@ const take = (begin, end) => { const a = source.indexOf(begin), b = source.index
 const extracted = take('    private async Task<BridgeResponse> HandleWsActionAsync(', '    private async Task<BridgeResponse> SendWsTextAsync(')
   + take('    private async Task<BridgeResponse> SendWsTextAsync(', '    /// <summary>\n    /// Sends one already selected media item'.replace(/\n/g, source.includes('\r\n') ? '\r\n' : '\n'))
   + take('    private async Task<BridgeResponse> SendWsMediaAsync(', '    private async Task<BridgeResponse> BroadcastWsTextAsync(')
-  + take('    private static string BuildWsSendTextScript(', '    private Task<BridgeResponse> ConfigureVipGroupsAsync(')
-  + take('    private static JsonElement ParseWebViewJsonResult(', '    private void OnWsWebMessageReceived(')
+  + take('    private static string BuildWsSendTextScript(', '    private async Task<BridgeResponse> ConfigureVipGroupsAsync(')
+  + take('    private static JsonElement ParseWebViewJsonResult(', '    private async void OnWsWebMessageReceived(')
   + take('    private static BridgeResponse WsCollectionBlocked(', '    private void PublishWsStatus(');
 const out = path.join(repo, '.tools/stage55c-native-send'); fs.mkdirSync(out, { recursive: true });
 assert.ok(fs.existsSync(path.join(repo, 'desktop/src/Zhike.Desktop/Services/WsSendOperationGuard.cs')),

@@ -6,6 +6,11 @@ const path = require('node:path');
 
 const repo = path.resolve(__dirname, '..');
 const app = path.join(repo, 'resources', 'app');
+// The bundled runtime (resources/app/node.exe) is gitignored and only exists in
+// packaged output. When running the suite from a source checkout, fall back to
+// the Node.js binary executing this harness so child sidecars can still start.
+const bundledNode = path.join(app, 'node.exe');
+const testNode = fs.statSync(bundledNode, { throwIfNoEntry: false })?.isFile() ? bundledNode : process.execPath;
 const mode = String(process.argv[2] || 'ws').toLowerCase();
 const supported = new Set(['ws', 'all', 'installer', 'stage3', 'stage4', 'stage5', 'stage51', 'stage52', 'stage55a', 'stage55b', 'stage55c1a', 'delivery-s1', 'delivery-s2', 'delivery-s3', 'delivery-rd02']);
 if (!supported.has(mode)) throw new Error(`unknown test mode: ${mode}; use ws, all, stage3, stage4, stage5, stage51, stage52, stage55a, stage55b, stage55c1a, delivery-s1, delivery-s2, delivery-s3, delivery-rd02 or installer`);
@@ -20,7 +25,7 @@ function run(label, args, options = {}) {
     cwd: repo,
     env: {
       ...childEnvironment,
-      ZHIKE_TEST_NODE: path.join(app, 'node.exe'),
+      ZHIKE_TEST_NODE: testNode,
       ...options.env,
     },
     encoding: 'utf8',
@@ -110,7 +115,7 @@ function runStage51() {
 
 function runStage52() {
   run('S3 isolated readiness probe startup and trusted-input timing', [path.join(repo, 'scripts/stage52/resource-readiness-probe.test.cjs')]);
-  run('S3 continuous resources and observed child exit tail', ['-NoProfile', '-File', path.join(repo, 'scripts/stage52/resource-continuous.test.ps1'), '-NodePath', path.join(app, 'node.exe')], { command: 'pwsh.exe', timeout: 120000 });
+  run('S3 continuous resources and observed child exit tail', ['-NoProfile', '-File', path.join(repo, 'scripts/stage52/resource-continuous.test.ps1'), '-NodePath', testNode], { command: 'pwsh.exe', timeout: 120000 });
   run('Stage 5.2 Worker real pipe IO deadlines and recovery', [path.join(repo, 'scripts', 'stage52', 'worker-io-boundaries.test.cjs')]);
   run('Stage 5.2 navigation cancellation and bounded session recovery', [path.join(repo, 'scripts/stage52/navigation-lifecycle.test.cjs')], { timeout: 120000 });
 }
