@@ -310,5 +310,5 @@ Write-Output (ConvertTo-Json @{
   bytes = $installerItem.Length
   webView2Version = if ($webView2Version) { $webView2Version } else { 'not-detected' }
   signingStatus = if ($certificate) { 'signed-and-verified' } else { 'unsigned' }
-  recovery = '6.0 仅使用 %LOCALAPPDATA%\Zhike6；不读取、迁移或删除旧 %LOCALAPPDATA%\Zhike。程序恢复使用 6.0 安装包和 6.0 本机备份，不重新启用旧客户端。'
+  recovery = "$AppVersion 使用 %LOCALAPPDATA%\Zhike6；不读取、迁移或删除旧 %LOCALAPPDATA%\Zhike。先保留当前数据与备份，仅使用已验证兼容的安装包及备份恢复；旧版读取新库和降级恢复仍待验收，不重新启用旧客户端。"
 })
