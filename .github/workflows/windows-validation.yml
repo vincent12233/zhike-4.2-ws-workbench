@@ -1,6 +1,8 @@
 name: Windows installer and isolated WS validation
 
 on:
+  push:
+    branches: ['feature/zhike61-ws-completion']
   pull_request:
   workflow_dispatch:
 
