@@ -1151,7 +1151,7 @@ function wsGroupMonitorProfilePayload(row) {
     id: row.id,
     accountId: row.account_id,
     slotKey: row.slot_key,
-    status: row.status,
+    ...wsGroupMonitorObservationSummary(row, targets),
     enabled: Boolean(row.enabled),
     pollIntervalSec: Number(row.poll_interval_sec || 45),
     lastHeartbeatAt: row.last_heartbeat_at || '',
@@ -1279,23 +1279,52 @@ function wsGroupMembershipEventRows(accountId = '', limit = 5000) {
     ? db.prepare(query).all(normalizedAccountId, safeLimit)
     : db.prepare(query).all(safeLimit);
 }
-function wsGroupMonitorHealthPayload(profile) {
+function wsGroupMonitorObservationSummary(profile, targets) {
+  const enabled = targets.filter(target => target.enabled);
+  const resumedAt = wsJson(profile.data_json, {})?.observationStartAt || '';
+  const observed = enabled.filter(target => target.lastSeenAt >= resumedAt && target.lastSeenAt >= (target.data?.observationStartAt || ''))
+    .map(target => wsStrictIso(target.lastSeenAt)).filter(Boolean);
+  const now = Date.now();
+  const recentSince = now - Math.max(15, Number(profile.poll_interval_sec) || 45) * 3 * 1000;
+  const recentTargetCount = observed.filter(at => Date.parse(at) >= recentSince && Date.parse(at) <= now).length;
+  const lastObservedAt = observed.reduce((latest, at) => at > latest ? at : latest, '');
+  let observationState = 'waiting';
+  if (!profile.enabled) observationState = 'paused';
+  else if (!enabled.length) observationState = 'no-targets';
+  else if (recentTargetCount) observationState = 'recent';
+  else if (lastObservedAt) observationState = 'stale';
+  let status = profile.status;
+  if (status === 'running' && observationState !== 'recent') status = observationState === 'stale' ? 'degraded' : 'starting';
+  return { status, observationState, lastObservedAt, targetCount: enabled.length, observedTargetCount: observed.length, recentTargetCount };
+}
+function wsGroupMonitorHealthPayload(profile, profileTargets) {
   if (!profile) return null;
   const counts = db.prepare('SELECT status,COUNT(*) AS count FROM ws_group_membership_events WHERE profile_id=? GROUP BY status').all(profile.id);
   const countMap = Object.fromEntries(counts.map(row => [row.status, Number(row.count || 0)]));
   const autoRegistered = Number(db.prepare("SELECT COUNT(*) AS count FROM ws_group_membership_events WHERE profile_id=? AND status='applied' AND COALESCE(json_extract(data_json,'$.autoRegistered'),0)=1").get(profile.id)?.count || 0);
-  const targetCount = Number(db.prepare('SELECT COUNT(*) AS count FROM ws_group_monitor_targets WHERE profile_id=? AND enabled=1').get(profile.id)?.count || 0);
+  const targets = profileTargets || db.prepare('SELECT enabled,last_seen_at,data_json FROM ws_group_monitor_targets WHERE profile_id=? AND enabled=1').all(profile.id).map(wsGroupMonitorTargetPayload);
   return {
     profileId: profile.id,
     accountId: profile.account_id,
-    status: profile.status,
+    ...wsGroupMonitorObservationSummary(profile, targets),
     enabled: Boolean(profile.enabled),
-    targetCount,
     eventCounts: { applied: countMap.applied || 0, autoRegistered, pending: countMap.pending || 0, review: countMap.review || 0, ignored: countMap.ignored || 0 },
     lastHeartbeatAt: profile.last_heartbeat_at || '',
     lastError: profile.last_error || '',
     checkedAt: new Date().toISOString(),
   };
+}
+
+// Telemetry belongs to the exact enabled target observed by the collector.
+// Use capture time so replaying an old durable packet cannot revive a seat.
+function wsRecordGroupMonitorObservation(accountId, groupJid, observedAt, receivedAt) {
+  if (!observedAt || observedAt > receivedAt) return;
+  const target = db.prepare(`UPDATE ws_group_monitor_targets SET last_seen_at=?
+    WHERE account_id=? AND group_jid=? AND enabled=1 AND last_seen_at<?
+      AND profile_id IN (SELECT id FROM ws_group_monitor_profiles WHERE account_id=? AND enabled=1)
+    RETURNING profile_id`).get(observedAt, accountId, groupJid, observedAt, accountId);
+  if (target) db.prepare(`UPDATE ws_group_monitor_profiles SET last_heartbeat_at=MAX(last_heartbeat_at,?),status='running',last_error=''
+    WHERE id=? AND enabled=1`).run(observedAt, target.profile_id);
 }
 
 // Keep the legacy global slot-key constraint compatible while giving every
@@ -1603,7 +1632,9 @@ function wsGroupMonitorApplyEventsInTransaction(accountId, inputEvents = [], opt
     const profileId = wsText(event.profileId || event.profile_id, 160);
     const targetId = wsText(event.targetId || event.target_id, 160);
     const groupJid = wsGroupMonitor.normalizeMemberIdentity(event.groupJid || event.group_id || event.groupId).value;
-    const profile = profileId ? db.prepare('SELECT * FROM ws_group_monitor_profiles WHERE id=? AND account_id=?').get(profileId, accountId) : db.prepare('SELECT * FROM ws_group_monitor_profiles WHERE account_id=? AND enabled=1 ORDER BY updated_at DESC LIMIT 1').get(accountId);
+    const profile = profileId ? db.prepare('SELECT * FROM ws_group_monitor_profiles WHERE id=? AND account_id=?').get(profileId, accountId)
+      : db.prepare(`SELECT p.* FROM ws_group_monitor_profiles p JOIN ws_group_monitor_targets t ON t.profile_id=p.id AND t.account_id=p.account_id
+        WHERE p.account_id=? AND t.group_jid=? AND p.enabled=1 AND t.enabled=1`).get(accountId, groupJid);
     const target = profile ? wsGroupMonitorTargetRow(profile.id, targetId, groupJid) : null;
     if (!profile || !profile.enabled || !target || !target.enabled || target.account_id !== accountId) {
       result.ignored += 1;
@@ -1619,7 +1650,7 @@ function wsGroupMonitorApplyEventsInTransaction(accountId, inputEvents = [], opt
       memberId: event.memberId || event.memberJid || event.participantId || event.phone,
       type: wsText(event.type || event.eventType, 24).toLocaleLowerCase(),
       eventAt: wsStrictIso(event.eventAt || event.event_at) || now,
-      observedAt: wsStrictIso(event.observedAt || event.observed_at) || now,
+      observedAt: wsStrictIso(event.observedAt || event.observed_at) || options.capturedAt || now,
       sourceEventId: wsText(event.sourceEventId || event.source_event_id || event.externalEventId, 240),
       correlationId: wsText(event.correlationId || event.correlation_id, 160) || `wsc-${randomUUID()}`,
       confidence: Math.max(0, Math.min(1, Number(event.confidence ?? event.identityConfidence ?? 0))),
@@ -1720,8 +1751,7 @@ function wsGroupMonitorApplyEventsInTransaction(accountId, inputEvents = [], opt
     db.prepare(`INSERT INTO ws_group_monitor_checkpoints(id,profile_id,target_id,cursor,last_event_at,last_snapshot_hash,retry_count,status,updated_at)
       VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(profile_id,target_id) DO UPDATE SET cursor=excluded.cursor,last_event_at=CASE WHEN excluded.last_event_at>ws_group_monitor_checkpoints.last_event_at THEN excluded.last_event_at ELSE ws_group_monitor_checkpoints.last_event_at END,updated_at=excluded.updated_at,status='ready'`)
       .run(checkpointId, profile.id, target.id, normalizedEvent.sourceEventId || eventId, normalizedEvent.eventAt, '', 0, 'ready', now);
-    db.prepare('UPDATE ws_group_monitor_targets SET last_seen_at=?,updated_at=? WHERE id=?').run(normalizedEvent.observedAt, now, target.id);
-    db.prepare('UPDATE ws_group_monitor_profiles SET last_heartbeat_at=?,status=CASE WHEN enabled=1 THEN \'running\' ELSE status END,last_error=\'\',updated_at=? WHERE id=?').run(now, now, profile.id);
+    wsRecordGroupMonitorObservation(accountId, target.group_jid, normalizedEvent.observedAt, now);
   }
   if (stateChanged) writeState(state, false);
   return result;
@@ -3303,7 +3333,8 @@ const server = createServer(async (req, res) => {
         db.exec('BEGIN IMMEDIATE');
         try {
           db.prepare(`INSERT INTO ws_group_monitor_profiles(id,account_id,slot_key,status,enabled,poll_interval_sec,last_heartbeat_at,last_error,data_json,created_at,updated_at)
-            VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET enabled=excluded.enabled,poll_interval_sec=excluded.poll_interval_sec,status=CASE WHEN excluded.enabled=1 THEN 'starting' ELSE 'paused' END,updated_at=excluded.updated_at`)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET enabled=excluded.enabled,poll_interval_sec=excluded.poll_interval_sec,status=CASE WHEN excluded.enabled=1 THEN 'starting' ELSE 'paused' END,
+            data_json=CASE WHEN ws_group_monitor_profiles.enabled=0 AND excluded.enabled=1 THEN json_set(ws_group_monitor_profiles.data_json,'$.observationStartAt',excluded.updated_at) ELSE ws_group_monitor_profiles.data_json END,updated_at=excluded.updated_at`)
             .run(id, accountId, slotKey, body.enabled === false ? 'paused' : 'starting', body.enabled === false ? 0 : 1, Math.max(15, Math.min(3600, Number(body.pollIntervalSec) || 45)), '', '', JSON.stringify({}), existing?.created_at || now, now);
           db.exec('COMMIT');
         } catch (error) { db.exec('ROLLBACK'); throw error; }
@@ -3320,7 +3351,10 @@ const server = createServer(async (req, res) => {
       if (!requestedAccountId) return json(res, 400, { error: '群组监控请求必须提供 accountId。' });
       if (!wsGroupMonitorAccountScoped(profile, requestedAccountId)) return json(res, 404, { error: '固定群组监控席位不存在。' });
       const suffix = groupMonitorMatch[2] || '';
-      if (!suffix && req.method === 'GET') return json(res, 200, { profile: wsGroupMonitorProfilePayload(profile), health: wsGroupMonitorHealthPayload(profile) });
+      if (!suffix && req.method === 'GET') {
+        const result = wsGroupMonitorProfilePayload(profile);
+        return json(res, 200, { profile: result, health: wsGroupMonitorHealthPayload(profile, result.targets) });
+      }
       if (!suffix && (req.method === 'PATCH' || req.method === 'PUT')) {
         const body = JSON.parse((await readBody(req, 256 * 1024)).toString('utf8') || '{}');
         if (!wsText(body.accountId, 120)) return json(res, 400, { error: '群组监控请求必须提供 accountId。' });
@@ -3333,7 +3367,8 @@ const server = createServer(async (req, res) => {
         }
         const enabled = body.enabled === false ? 0 : body.enabled === true ? 1 : profile.enabled;
         const status = enabled ? (body.status ? wsText(body.status, 32) : 'starting') : 'paused';
-        db.prepare('UPDATE ws_group_monitor_profiles SET enabled=?,status=?,poll_interval_sec=?,last_error=?,updated_at=? WHERE id=?').run(enabled, status, Math.max(15, Math.min(3600, Number(body.pollIntervalSec) || Number(profile.poll_interval_sec) || 45)), wsText(body.lastError, 500), now, profileId);
+        db.prepare(`UPDATE ws_group_monitor_profiles SET data_json=CASE WHEN enabled=0 AND ?=1 THEN json_set(data_json,'$.observationStartAt',?) ELSE data_json END,
+          enabled=?,status=?,poll_interval_sec=?,last_error=?,updated_at=? WHERE id=?`).run(enabled, now, enabled, status, Math.max(15, Math.min(3600, Number(body.pollIntervalSec) || Number(profile.poll_interval_sec) || 45)), wsText(body.lastError, 500), now, profileId);
         return json(res, 200, { profile: wsGroupMonitorProfilePayload(db.prepare('SELECT * FROM ws_group_monitor_profiles WHERE id=?').get(profileId)) });
       }
       if (suffix === 'targets/scan' && req.method === 'POST') {
@@ -3349,7 +3384,7 @@ const server = createServer(async (req, res) => {
           for (const item of targets) {
             const groupJid = wsGroupMonitor.normalizeMemberIdentity(item?.groupJid || item?.jid || item?.id).value;
             if (!groupJid || !/@g\.us$/.test(groupJid)) continue;
-            const existing = db.prepare('SELECT id,group_name,source_id,channel_id,data_json FROM ws_group_monitor_targets WHERE profile_id=? AND group_jid=?').get(profileId, groupJid);
+            const existing = db.prepare('SELECT id,group_name,source_id,channel_id,data_json,enabled FROM ws_group_monitor_targets WHERE profile_id=? AND group_jid=?').get(profileId, groupJid);
             const id = existing?.id || `wsg-target-${randomUUID()}`;
             const existingMetadata = existing?.data_json ? wsJson(existing.data_json, {}) : {};
             const metadata = { ...(existingMetadata && typeof existingMetadata === 'object' && !Array.isArray(existingMetadata) ? existingMetadata : {}), ...(item?.data && typeof item.data === 'object' && !Array.isArray(item.data) ? item.data : {}) };
@@ -3361,6 +3396,11 @@ const server = createServer(async (req, res) => {
             const channelId = wsText(item.channelId || item.channel_id, 160) || wsText(existing?.channel_id, 160) || sourceId;
             const groupName = wsText(item.groupName || item.name, 240) || wsText(existing?.group_name, 240) || groupJid;
             const enabled = item.enabled === true ? 1 : 0;
+            // Only a real transition starts a new observation window. Source
+            // metadata from a directory import cannot manufacture this time.
+            delete metadata.observationStartAt;
+            if (existingMetadata?.observationStartAt) metadata.observationStartAt = existingMetadata.observationStartAt;
+            if (existing && !existing.enabled && enabled) metadata.observationStartAt = now;
             if (enabled) {
               const conflict = db.prepare(`SELECT id,profile_id,account_id,group_jid,group_name
                 FROM ws_group_monitor_targets
@@ -3410,7 +3450,8 @@ const server = createServer(async (req, res) => {
             return json(res, 409, { code: 'GROUP_MONITOR_TARGET_LIMIT', error: '每个席位最多可同时监测 500 个群组，请先停用部分目标。' });
           }
         }
-        const changed = db.prepare('UPDATE ws_group_monitor_targets SET enabled=?,updated_at=? WHERE id=? AND profile_id=?').run(enabled, now, targetId, profileId);
+        const changed = db.prepare(`UPDATE ws_group_monitor_targets SET data_json=CASE WHEN enabled=0 AND ?=1 THEN json_set(data_json,'$.observationStartAt',?) ELSE data_json END,
+          enabled=?,updated_at=? WHERE id=? AND profile_id=?`).run(enabled, now, enabled, now, targetId, profileId);
         if (!changed.changes) return json(res, 404, { error: '群组监控目标不存在。' });
         return json(res, 200, { target: wsGroupMonitorTargetPayload(db.prepare('SELECT * FROM ws_group_monitor_targets WHERE id=?').get(targetId)) });
       }
@@ -3785,7 +3826,18 @@ const server = createServer(async (req, res) => {
       const account = wsRequireAccount(accountId);
       const capturedAt = wsStrictIso(body.capturedAt) || new Date().toISOString();
       const inputMessages = Array.isArray(body.messages) ? body.messages.slice(0, 1000) : [];
-      const inputCheckpoints = Array.isArray(body.checkpoints) ? body.checkpoints.slice(0, 5000) : [];
+      const checkpoints = Array.isArray(body.checkpoints) ? body.checkpoints.slice(0, 5000) : [];
+      // A visibility sample must not create conversations or change directory,
+      // history or CRM state, even if its target was removed during delivery.
+      const inputCheckpoints = checkpoints.filter(item => item?.coverage !== 'group-monitor-visible');
+      const observedGroups = new Map();
+      if (account.workspace_mode === 'dedicated' && body.scope === 'background-collector' && wsStrictIso(body.capturedAt)) {
+        for (const item of checkpoints) {
+          if (item?.coverage !== 'group-monitor-visible' || item.conversationType !== 'group') continue;
+          const group = wsGroupMonitor.normalizeMemberIdentity(item.conversationKey);
+          if (group.kind === 'group') observedGroups.set(group.value, capturedAt);
+        }
+      }
       const inputGroupEvents = Array.isArray(body.groupEvents) ? body.groupEvents.slice(0, 1000) : [];
       const catalogNow = wsStrictIso(body.capturedAt) || new Date().toISOString();
       // Checkpoints are emitted by the isolated collector while it walks the
@@ -3876,7 +3928,7 @@ const server = createServer(async (req, res) => {
           }, time),
         });
       }
-      if (!grouped.size && !inputGroupEvents.length) return json(res, 200, { accepted: 0, skipped, skipReasons, deduplicated: 0, repairedTimestamps: 0, repairedDirections: 0, messageIds: [], groupEvents: { accepted: 0, applied: 0, pending: 0, review: 0, ignored: 0, deduplicated: 0, autoRegistered: 0, events: [] }, processedAt: new Date().toISOString() });
+      if (!grouped.size && !inputGroupEvents.length && !observedGroups.size) return json(res, 200, { accepted: 0, skipped, skipReasons, deduplicated: 0, repairedTimestamps: 0, repairedDirections: 0, messageIds: [], groupEvents: { accepted: 0, applied: 0, pending: 0, review: 0, ignored: 0, deduplicated: 0, autoRegistered: 0, events: [] }, processedAt: new Date().toISOString() });
       let accepted = 0, deduplicated = 0, repairedTimestamps = 0, repairedDirections = 0;
       const messageIds = [];
       let groupEventResult = { accepted: 0, applied: 0, pending: 0, review: 0, ignored: 0, deduplicated: 0, autoRegistered: 0, events: [] };
@@ -3892,6 +3944,15 @@ const server = createServer(async (req, res) => {
             continue;
           }
           if (type === 'direct' && !group.decision.eligible) continue;
+          if (body.scope === 'background-collector' && ['group', 'vip_group'].includes(type) && group.messages.length) {
+            const groupJid = wsGroupMonitor.normalizeMemberIdentity(externalKey).value;
+            let latest = observedGroups.get(groupJid) || '';
+            for (const message of group.messages) {
+              const at = message.data.observedAt;
+              if (at > latest && at <= now) latest = at;
+            }
+            if (latest) observedGroups.set(groupJid, latest);
+          }
           if (group.skippedMessages && ['group', 'vip_group'].includes(type)) {
             Object.assign(checkpoint, { historyLoaded: false, coverage: 'read-history-member-unresolved', collectionStatus: 'retryable' });
           }
@@ -4106,7 +4167,8 @@ const server = createServer(async (req, res) => {
             }
           }
         }
-        if (inputGroupEvents.length) groupEventResult = wsGroupMonitorApplyEventsInTransaction(accountId, inputGroupEvents, { now });
+        if (inputGroupEvents.length) groupEventResult = wsGroupMonitorApplyEventsInTransaction(accountId, inputGroupEvents, { now, capturedAt });
+        for (const [groupJid, at] of observedGroups) wsRecordGroupMonitorObservation(accountId, groupJid, at, now);
         db.exec('COMMIT');
       } catch (error) {
         try { db.exec('ROLLBACK'); } catch {}

@@ -160,6 +160,60 @@ test('production ingest separates purpose, group directory and observed member m
       assert.equal(conversation(ordinary, 'historical@g.us').data_json, beforeData); assert.equal(protectionSnapshot(), before);
       assert.equal((await request('/api/ws/analyses?accountId=' + ordinary + '&conversationId=ordinary-history')).analyses[0].id, 'analysis-ordinary-history');
     });
+    await t.test('monitor reports scoped native observations, including a visible group with zero member changes', async () => {
+      const key = 'quiet-observed@g.us', second = 'quiet-message@g.us';
+      const seat = (await request('/api/ws/group-monitors/profiles', { accountId: dedicated, slotKey: 'observation-seat', enabled: true }, 201)).profile;
+      const route = '/api/ws/group-monitors/' + seat.id, query = '?accountId=' + dedicated;
+      const read = () => request(route + query);
+      const packet = { accountId: dedicated, scope: 'background-collector', capturedAt: new Date(Date.now() - 1000).toISOString(),
+        checkpoints: [{ conversationKey: key, conversationType: 'group', coverage: 'group-monitor-visible' }] };
+      const stale = new Date(Date.now() - 600000).toISOString();
+      const sample = extra => request('/api/ws/ingest/batch', { ...packet, ...extra });
+      assert.equal(seat.observationState, 'no-targets');
+      const targets = (await request(route + '/targets/scan' + query, { accountId: dedicated, targets: [key, second].map(groupJid => ({ groupJid, enabled: true })) })).targets;
+      assert.equal((await read()).health.observationState, 'waiting');
+      await sample({ accountId: other }); await sample({ accountId: ordinary }); await sample({ scope: 'visible-authorized-content' });
+      await sample({ checkpoints: [{ ...packet.checkpoints[0], conversationKey: 'never-bound@g.us' }] });
+      assert.equal((await read()).health.lastObservedAt, '');
+      const protectedBefore = protectionSnapshot();
+      await sample({ capturedAt: stale });
+      let detail = await read();
+      assert.equal(detail.profile.observationState, 'stale'); assert.equal(detail.health.status, 'degraded');
+      assert.equal(detail.health.observedTargetCount, 1); assert.equal(detail.health.recentTargetCount, 0);
+      await sample({}); await sample({ capturedAt: stale });
+      detail = await read();
+      for (const summary of [detail.profile, detail.health]) {
+        assert.equal(summary.observationState, 'recent'); assert.equal(summary.lastObservedAt, packet.capturedAt);
+        assert.equal(summary.recentTargetCount, 1); assert.equal(summary.targetCount, 2);
+      }
+      assert.equal(detail.health.eventCounts.applied, 0); assert.equal(detail.health.eventCounts.pending, 0);
+      assert.equal(detail.profile.targets.find(target => target.groupJid === key).lastSeenAt, packet.capturedAt);
+      assert.equal(conversation(dedicated, key), undefined); assert.equal(protectionSnapshot(), protectedBefore);
+      await sample({ checkpoints: [], messages: [message(second, 'unverified', { senderId: '', senderIdentitySource: '' })] });
+      assert.equal((await read()).health.recentTargetCount, 1);
+      await sample({ checkpoints: [], messages: [message(second, 'verified', { observedAt: packet.capturedAt })] });
+      assert.equal((await read()).health.recentTargetCount, 2);
+      // Older native events can omit the profile id. A newly configured seat
+      // on the same account must not intercept a different group's event.
+      const newerSeat = (await request('/api/ws/group-monitors/profiles', { accountId: dedicated, slotKey: 'separate-seat', enabled: true }, 201)).profile;
+      const event = { groupJid: key, memberId: 'example@lid', type: 'left', confidence: 0.9, sourceEventId: 'observed-left', eventAt: packet.capturedAt };
+      assert.equal((await sample({ checkpoints: [], groupEvents: [event] })).groupEvents.accepted, 1);
+      assert.equal((await read()).health.eventCounts.pending, 1);
+      assert.equal((await request('/api/ws/group-monitors/' + newerSeat.id + '/health' + query)).health.lastObservedAt, '');
+      for (const target of targets) await request(route + '/targets/' + target.id + '/disable' + query, { accountId: dedicated });
+      await sample({});
+      assert.equal((await read()).health.observationState, 'no-targets');
+      await request(route + '/targets/' + targets.find(target => target.groupJid === key).id + '/enable' + query, { accountId: dedicated });
+      await sample({});
+      assert.equal((await read()).health.observationState, 'waiting', 'a packet from before re-enabling the target cannot establish current coverage');
+      await sample({ capturedAt: new Date().toISOString() });
+      assert.equal((await read()).health.observationState, 'recent');
+      const saveSeat = enabled => request('/api/ws/group-monitors/profiles', { accountId: dedicated, slotKey: seat.slotKey, enabled });
+      await saveSeat(false);
+      assert.equal((await read()).health.observationState, 'paused');
+      await saveSeat(true);
+      assert.equal((await read()).health.observationState, 'waiting', 'resumed seat must wait for a new observation');
+    });
   } finally {
     if (child.exitCode === null && child.signalCode === null) child.kill();
     await closed;
