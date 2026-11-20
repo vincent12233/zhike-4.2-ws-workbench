@@ -111,10 +111,14 @@ console.log('WS lifecycle contract: retained foreground Core/route/DPI/queue bou
 
 const connectionActionSource = between(workbench, '  async function connectionAction(action)', '  async function loadConversations()');
 const activateSource = between(workbench, '  function activate()', '  function deactivate()');
+const workspaceModeHelpers = between(workbench, '  function normalizeWorkspaceMode(', '  const WS_MODE_VIEW_IDS')
+  + between(workbench, '  function modeAccount(', '  const WS_WORKSPACE_VIEW_META');
 const isolatedResult = { status: '未连接', isolatedPreview: true, detail: '隔离验收会话容器已打开，未连接 WhatsApp。' };
 
 async function invokeOpen(result) {
-  const state = { busy: {}, accounts: [{}], backgroundActive: true };
+  const state = { busy: {}, accounts: [{ id: 'default', workspaceMode: 'ordinary' }], backgroundActive: true,
+    workspaceMode: 'ordinary', workspaceGeneration: 0, activeAccountId: 'default',
+    accountPresentationGeneration: 0, connectionAttemptGeneration: 0 };
   const toasts = [];
   const action = runInNewContext('(' + connectionActionSource + ')', {
     state,
@@ -155,10 +159,11 @@ test('normal Open still prompts to log in and actual bridge failures still repor
 
 test('an isolated factory failure survives the initial account and conversation refresh', async () => {
   const host = { state: {} };
-  const state = { backgroundActive: true };
+  const state = { backgroundActive: true, workspaceMode: 'ordinary', activeAccountId: 'default',
+    accounts: [{ id: 'default', workspaceMode: 'ordinary' }], accountPresentationGeneration: 0, connectionAttemptGeneration: 0 };
   const factoryFailure = new Error('isolated WS factory failed');
   const callbacks = [];
-  await runInNewContext(activateSource + '\nactivate(); backgroundStartPromise;', {
+  await runInNewContext(workspaceModeHelpers + activateSource + '\nactivate(); backgroundStartPromise;', {
     state,
     getHost: () => host,
     startBackgroundRuntime: () => true,

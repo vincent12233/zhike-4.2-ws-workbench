@@ -27,7 +27,7 @@ assert.match(ui, /coverageStatus:\s*unreadConversation\s*\?\s*'unread-skipped'\s
 assert.match(ui, /progressed/, '列表采集进度需要在无预览行时继续推进');
 assert.match(ui, /if \(!state\.backgroundActive \|\| !collectionReady\('backgroundCollection'\)\) return;/,
   'the shared session lifetime cannot poll before the independent collector is running');
-assert.match(ui, /async function refreshCollectionSummary\(options = \{\}\) \{\s*if \(!collectionReady\('backgroundCollection'\)\) return collectionBlockedResult\(\);/,
+assert.match(ui, /async function refreshCollectionSummary\(options = \{\}\) \{\s*(?:if \(!modeAccount\(state\.activeAccountId\)\) return;\s*)?if \(!collectionReady\('backgroundCollection'\)\) return collectionBlockedResult\(\);/,
   'automatic refresh must stop before queue reads/writes when independent login is not ready');
 assert.match(ui, /syncAnalysisToCrm/);
 assert.match(ui, /phone:\s*core\.extractPhone\(`\$\{externalId\} \$\{title\}`\)/, 'automatic identity matching may only inspect conversation identity fields');

@@ -142,10 +142,13 @@ public sealed class DesktopToolsService
             NativeBackupEnvelope.ValidateAccountIds(accounts.Select(account => account?.Id));
             foreach (var account in accounts)
             {
+                if (account.WorkspaceMode is not ("ordinary" or "dedicated"))
+                    throw new InvalidDataException("WS 账号用途无效，未生成不完整备份。");
                 wsAccountMetadata.Add(new JsonObject
                 {
                     ["id"] = account.Id,
                     ["displayName"] = account.DisplayName,
+                    ["workspaceMode"] = account.WorkspaceMode,
                     ["status"] = account.Status,
                 });
                 cancellationToken.ThrowIfCancellationRequested();

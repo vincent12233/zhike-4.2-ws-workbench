@@ -12,12 +12,13 @@ public sealed record BusinessRecordDto(string Id, string CustomerId, string Reco
 public sealed record ImportPreviewRequest(IReadOnlyList<string> Headers, IReadOnlyList<IReadOnlyList<string>> Rows, string Context = "", string SourceName = "", string Target = "");
 public sealed record ImportPreviewRowDto(int RowNumber, JsonElement Raw, JsonElement Classified, double Confidence, IReadOnlyList<string> Conflicts);
 public sealed record ImportPreviewResponse(string Id, string SourceHash, IReadOnlyList<ImportPreviewRowDto> Rows, string DuplicateOf = "");
-public sealed record WsAccountDto(string Id, string DisplayName, string Status, DateTimeOffset? LastSeen, string? RuntimeStatus = null, DateTimeOffset? UpdatedAt = null, string? LastKnownStatus = null);
+public sealed record WsAccountDto(string Id, string DisplayName, string Status, DateTimeOffset? LastSeen, string? RuntimeStatus = null, DateTimeOffset? UpdatedAt = null, string? LastKnownStatus = null, string WorkspaceMode = "ordinary");
 public sealed record FollowupDto(string Id, string CustomerId, string ReasonKey, string Title, string Detail, DateTimeOffset? DueAt, string Priority, string State);
 public sealed record AiJobDto(string Id, string JobType, string State, int Attempts, DateTimeOffset AvailableAt, string LastError, DateTimeOffset UpdatedAt);
 public sealed record AiPipelineLeaseDto(string ScopeKey, string LeaseId, string OwnerId, long FencingToken);
 public sealed record AiPipelineRequestResult(bool Ok, int StatusCode, JsonElement? Data, string Message);
-public sealed record WsAccountRequest(string Id, string DisplayName, string Status = "未连接");
+public sealed record WsAccountRequest(string Id, string DisplayName, string Status = "未连接",
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? WorkspaceMode = null);
 public sealed record WsMessageEnvelopeDto(
     string ConnectorId,
     string AccountId,
@@ -829,13 +830,21 @@ public sealed class ApiClient(HttpClient http) : IDisposable
         return payload.Deserialize<WsAccountDto>(JsonOptions);
     }
 
-    public async Task<WsAccountDto> EnsureWsAccountAsync(WsAccountRequest request, CancellationToken cancellationToken = default)
+    public async Task<WsAccountDto> EnsureWsAccountAsync(WsAccountRequest request, CancellationToken cancellationToken = default, string? missingAccountWorkspaceMode = null)
     {
+        if (request.WorkspaceMode is not (null or "ordinary" or "dedicated"))
+            throw new InvalidDataException("WS 账号用途必须为普通或专用。");
+        void VerifyMode(WsAccountDto account, string? expectedMode)
+        {
+            if (account.WorkspaceMode is not ("ordinary" or "dedicated")
+                || (expectedMode is not null && account.WorkspaceMode != expectedMode))
+                throw new InvalidDataException("WS 账号用途不一致，必须使用对应工作台的独立账号。");
+        }
         async Task<WsAccountDto?> FindExistingAsync()
         {
             var accounts = await GetWsAccountsAsync(cancellationToken) ?? throw new InvalidDataException("本机账号列表未返回。");
             var existing = accounts.FirstOrDefault(account => string.Equals(account.Id, request.Id, StringComparison.Ordinal));
-            if (existing is not null) return existing;
+            if (existing is not null) { VerifyMode(existing, request.WorkspaceMode); return existing; }
             if (accounts.Any(account => string.Equals(account.Id, request.Id, StringComparison.OrdinalIgnoreCase)))
                 throw new InvalidDataException("本机账号编号大小写不一致，无法确认原账号。");
             return null;
@@ -844,14 +853,22 @@ public sealed class ApiClient(HttpClient http) : IDisposable
         var existing = await FindExistingAsync();
         if (existing is not null) return existing;
 
+        // A confirmed sidecar row is authoritative. Only when it is absent do
+        // we recover purpose from the local index, without changing that purpose.
+        if (missingAccountWorkspaceMode is not (null or "ordinary" or "dedicated")
+            || (missingAccountWorkspaceMode is not null && request.WorkspaceMode is not null
+                && missingAccountWorkspaceMode != request.WorkspaceMode))
+            throw new InvalidDataException("本机 WS 账号用途无效或与恢复请求不符。");
+        var creationMode = request.WorkspaceMode ?? missingAccountWorkspaceMode;
         WsAccountDto? confirmed;
-        try { confirmed = await UpsertWsAccountAsync(request, cancellationToken); }
+        try { confirmed = await UpsertWsAccountAsync(request with { WorkspaceMode = creationMode }, cancellationToken); }
         catch (HttpRequestException error) when (error.StatusCode == System.Net.HttpStatusCode.Conflict)
         {
             confirmed = await FindExistingAsync();
         }
         if (confirmed is null || !string.Equals(confirmed.Id, request.Id, StringComparison.Ordinal))
             throw new InvalidDataException("本机数据服务未确认原账号编号。");
+        VerifyMode(confirmed, creationMode);
         return confirmed;
     }
 

@@ -13,6 +13,19 @@
     try { localStorage.setItem(`zhike.ws.${panel}.collapsed`, String(Boolean(value))); } catch {}
   };
   const ASSIST_DRAWER_TABS = new Set(['ai', 'profile', 'reply', 'broadcast', 'export', 'diagnostics']);
+  // Missing mode is the only legacy ordinary default. Explicit unknown modes
+  // never gain a workspace or an executable account selection.
+  function normalizeWorkspaceMode(value) { return value === undefined ? 'ordinary' : value === 'ordinary' || value === 'dedicated' ? value : null; }
+  function accountWorkspaceMode(account) { return normalizeWorkspaceMode(account?.workspaceMode); }
+  function workspaceLabel(mode = state.workspaceMode) { return mode === 'dedicated' ? '专用 WS' : '普通 WS'; }
+  const WS_MODE_VIEW_IDS = Object.freeze({
+    ordinary: new Set(['overview', 'accounts', 'chat', 'collection', 'ai', 'crm', 'tasks', 'logs', 'settings']),
+    dedicated: new Set(['overview', 'accounts', 'chat', 'groups', 'members', 'contacts', 'exclusions', 'collection', 'crm', 'logs', 'settings', 'group-broadcast', 'group-mentions', 'group-reading', 'group-permissions']),
+  });
+  const WS_BLOCKED_VIEWS = new Set(['group-broadcast', 'group-mentions', 'group-reading', 'group-permissions']);
+  function workspaceViewAllowed(view, mode = state.workspaceMode) { return Boolean(WS_MODE_VIEW_IDS[mode]?.has(view)); }
+  function workspaceViews(mode = state.workspaceMode) { return WS_WORKSPACE_VIEW_META.filter(item => workspaceViewAllowed(item.id, mode)).map(item => item.id === 'chat' && mode === 'dedicated' ? { ...item, label: '专用登录', hint: '独立专用账号扫码与原生会话' } : item); }
+  function modeAccount(accountId, mode = state.workspaceMode) { return state.accounts.find(item => String(item.id) === String(accountId) && accountWorkspaceMode(item) === mode); }
   const WS_WORKSPACE_VIEW_META = Object.freeze([
     { id: 'overview', label: '工作台首页', icon: 'home', hint: '账号、采集与工作入口' },
     { id: 'accounts', label: '账号管理', icon: 'phone', hint: '多账号与连接状态' },
@@ -26,13 +39,18 @@
     { id: 'crm', label: 'CRM客户', icon: 'user', hint: '客户主档匹配与冲突' },
     { id: 'tasks', label: '任务中心', icon: 'clipboard-check', hint: '跟进任务与提醒' },
     { id: 'logs', label: '操作日志', icon: 'history', hint: '审计记录、运行快照与关联查询' },
+    { id: 'group-broadcast', label: '群组发送', icon: 'message', hint: 'BLOCKED · 群组发送尚未验证' },
+    { id: 'group-mentions', label: '群组 @ 提及', icon: 'users-group', hint: 'BLOCKED · 原生提及能力未验收' },
+    { id: 'group-reading', label: '群组已读', icon: 'clipboard-check', hint: 'BLOCKED · 真实回执能力未验收' },
+    { id: 'group-permissions', label: '群组开关', icon: 'shield', hint: 'BLOCKED · 权限变更能力未验收' },
     { id: 'settings', label: '工具与设置', icon: 'settings', hint: '翻译、导入、导出与安全开关' },
   ]);
   const WS_WORKSPACE_VIEW_IDS = new Set(WS_WORKSPACE_VIEW_META.map(item => item.id));
-  function readWsWorkspaceView() {
+  function readWsWorkspaceView(mode = 'ordinary') {
     try {
-      const value = localStorage.getItem('zhike.ws.workspace-view');
-      return WS_WORKSPACE_VIEW_IDS.has(value) ? value : 'overview';
+      const value = localStorage.getItem('zhike.ws.workspace-view.' + mode)
+        ?? (mode === 'ordinary' ? localStorage.getItem('zhike.ws.workspace-view') : null);
+      return workspaceViewAllowed(value, mode) ? value : 'overview';
     } catch { return 'overview'; }
   }
   function readWsWorkspaceCollapsed() {
@@ -43,8 +61,8 @@
   }
   function writeWsWorkspaceState(view, collapsed) {
     try {
-      const normalized = WS_WORKSPACE_VIEW_IDS.has(view) ? view : 'overview';
-      localStorage.setItem('zhike.ws.workspace-view', normalized);
+      const normalized = workspaceViewAllowed(view) ? view : 'overview';
+      localStorage.setItem('zhike.ws.workspace-view.' + state.workspaceMode, normalized);
       localStorage.setItem('zhike.ws.workspace-nav-collapsed', String(Boolean(collapsed)));
     } catch {}
   }
@@ -228,7 +246,9 @@
     // displayed or the desktop window is minimised.
     backgroundActive: false,
     accounts: [],
-    activeAccountId: 'default',
+    workspaceMode: 'ordinary',
+    workspaceGeneration: 0,
+    activeAccountId: '',
     accountBusy: false,
     accountFormOpen: false,
     accountFormName: '',
@@ -335,6 +355,7 @@
     previewAnalysisSignatures: new Map(),
     analysisRefreshPending: new Set(),
     listSyncBusy: false,
+    listSyncOperation: 0,
     aiQueueStats: { queued: 0, running: 0, retryable: 0, completed: 0, failed: 0, deadLetter: 0, retryCount: 0, total: 0 },
     aiBackgroundError: '',
     vipGroupConfigSignatures: new Map(),
@@ -432,13 +453,13 @@
   function accountDisplayName(account) {
     return text(account?.displayName || account?.id || 'WS 账号');
   }
-  function accountStorageKey() { return 'zhike.ws.activeAccountId'; }
-  function readStoredAccountId() {
-    try { return text(localStorage.getItem(accountStorageKey())) || 'default'; } catch { return 'default'; }
+  function accountStorageKey(mode = state.workspaceMode) { return 'zhike.ws.activeAccountId.' + mode; }
+  function readStoredAccountId(mode = state.workspaceMode) {
+    try { return text(localStorage.getItem(accountStorageKey(mode)) ?? (mode === 'ordinary' ? localStorage.getItem('zhike.ws.activeAccountId') : '')); } catch { return ''; }
   }
-  function writeStoredAccountId(id) { try { localStorage.setItem(accountStorageKey(), String(id || 'default')); } catch {} }
+  function writeStoredAccountId(id) { try { localStorage.setItem(accountStorageKey(), String(id || '')); } catch {} }
   function captureContext(conversationId = state.currentConversationId) {
-    return { accountId: String(state.activeAccountId || 'default'), conversationId: String(conversationId || ''), sequence: Number(state.accountLoadSequence || 0) };
+    return { accountId: String(state.activeAccountId || ''), conversationId: String(conversationId || ''), sequence: Number(state.accountLoadSequence || 0) };
   }
   function contextCurrent(context) {
     return core.contextCurrent(context, { accountId: state.activeAccountId, conversationId: state.currentConversationId, sequence: state.accountLoadSequence });
@@ -494,6 +515,7 @@
     state.collectionRefreshing = false;
     state.collectionRefreshQueued = false;
     state.listSyncBusy = false;
+    state.listSyncOperation = Number(state.listSyncOperation || 0) + 1;
     state.readHistoryAutoStarted = false;
     state.busy.import = false;
     state.busy.customer = false;
@@ -515,6 +537,7 @@
   }
   async function loadAccounts() {
     const sequence = ++state.accountLoadSequence;
+    const workspaceMode = state.workspaceMode;
     state.accountsLoading = true;
     state.error = '';
     render();
@@ -527,28 +550,25 @@
         // response. The backend repairs the default row, but this guard also
         // protects the first render while the service is still opening its
         // SQLite profile.
-        if (!response.accounts.length) throw new Error('WS 账号列表为空，正在重试。');
+        if (!response.accounts.length && workspaceMode === 'ordinary') throw new Error('WS 账号列表为空，正在重试。');
         return response;
       }, { attempts: 6, delayMs: attempt => Math.min(1200, 100 * (2 ** attempt)) });
-      if (sequence !== state.accountLoadSequence && !state.pendingRestoreAccountId) return;
-      const loadedAccounts = Array.isArray(result?.accounts) ? result.accounts : [];
-      if (!loadedAccounts.length && state.accounts.length) throw new Error('WS 账号列表为空，已保留当前账号。');
+      if (sequence !== state.accountLoadSequence || workspaceMode !== state.workspaceMode) return;
+      const loadedAccounts = result.accounts.filter(account => accountWorkspaceMode(account) === workspaceMode);
       state.accounts = loadedAccounts;
-      const stored = readStoredAccountId();
-      const pending = state.pendingRestoreAccountId;
-      const preferred = pending || stored;
-      if (state.accounts.some(item => String(item.id) === preferred)) state.activeAccountId = preferred;
-      else if (state.accounts.some(item => String(item.id) === 'default')) {
-        state.activeAccountId = 'default';
-        if (pending) state.error = 'WS 上一个账号已不存在，已切换到默认账号；请重新添加并登录。';
-      }
+      const preferred = state.pendingRestoreAccountId || readStoredAccountId();
+      const selected = loadedAccounts.find(item => String(item.id) === preferred)
+        || loadedAccounts.find(item => String(item.id) === state.activeAccountId)
+        || loadedAccounts.find(item => String(item.id) === 'default') || loadedAccounts[0];
+      const selectedId = selected ? String(selected.id) : '';
+      if (selectedId !== state.activeAccountId) resetAccountPresentation(selectedId);
       state.pendingRestoreAccountId = '';
       writeStoredAccountId(state.activeAccountId);
       const active = activeAccount();
       if (active) {
         try {
           const status = await window.zhikeDesktop.ws({ action: 'status', accountId: active.id });
-          updateAccountStatus(status);
+          if (sequence === state.accountLoadSequence && workspaceMode === state.workspaceMode) updateAccountStatus(status);
          } catch (error) {
            if (sequence === state.accountLoadSequence) state.error = `WS 账号状态检测失败：${String(error?.message || '桌面视图暂不可用').slice(0, 200)}`;
          }
@@ -625,13 +645,23 @@
     return Promise.race([Promise.resolve().then(task), timeout]).finally(() => clearTimeout(timer));
   }
   async function createWsAccountRecord(account) {
+    const requestedMode = normalizeWorkspaceMode(account?.workspaceMode);
+    if (!requestedMode) throw new Error('WS 账号用途无效。');
+    account = { ...account, workspaceMode: requestedMode };
+    const validateCreated = created => {
+      if (String(created?.id || '').toLowerCase() !== String(account.id).toLowerCase() || accountWorkspaceMode(created) !== requestedMode) {
+        const error = new Error('WS 账号编号或用途不匹配，未切换账号。'); error.code = 'WS_ACCOUNT_MODE_MISMATCH'; throw error;
+      }
+      return created;
+    };
     let bridgeError = null;
     async function confirmNativeIndex(created) {
+      validateCreated(created);
       if (typeof window.zhikeDesktop?.wsAccounts !== 'function') throw new Error('账号已保存到本机服务，桌面账号索引尚不可用；请刷新账号列表后重试。');
       const listed = await withWsAccountTimeout(() => window.zhikeDesktop.wsAccounts({ action: 'list' }), 12000);
       const indexed = (Array.isArray(listed?.accounts) ? listed.accounts : []).find(item => String(item?.id || '').toLowerCase() === String(created.id).toLowerCase());
       if (!indexed) throw new Error('账号已保存到本机服务，但桌面索引尚未同步；请刷新账号列表后重试。');
-      return indexed;
+      return validateCreated(indexed);
     }
     // Prefer the native bridge because it also creates the isolated WebView2
     // profile index. A transient bridge/startup failure must not make the
@@ -639,10 +669,10 @@
     if (typeof window.zhikeDesktop?.wsAccounts === 'function') {
       try {
         const result = await withWsAccountTimeout(() => window.zhikeDesktop.wsAccounts({ action: 'create', account }), 12000);
-        if (result?.account?.id) return result.account;
+        if (result?.account?.id) return validateCreated(result.account);
         bridgeError = new Error('WS 账号创建没有返回有效账号。');
       } catch (error) {
-        if (error?.code === 'WS_ACCOUNT_INDEX_WRITE_FAILED') throw error;
+        if (error?.code === 'WS_ACCOUNT_INDEX_WRITE_FAILED' || error?.code === 'WS_ACCOUNT_MODE_MISMATCH') throw error;
         bridgeError = error;
       }
     } else {
@@ -660,6 +690,7 @@
       if (result?.account?.id) return await confirmNativeIndex(result.account);
       throw new Error('本机账号服务没有返回有效账号。');
     } catch (apiError) {
+      if (apiError?.code === 'WS_ACCOUNT_MODE_MISMATCH') throw apiError;
       // A bridge can finish its local write just after the timeout. Read back
       // the account before reporting failure so the user never creates a
       // hidden duplicate or loses a successfully committed account.
@@ -668,7 +699,7 @@
         const existing = (Array.isArray(listed?.accounts) ? listed.accounts : [])
           .find(item => String(item?.id || '').toLowerCase() === String(account?.id || '').toLowerCase());
         if (existing?.id) return await confirmNativeIndex(existing);
-      } catch {}
+      } catch (readError) { if (readError?.code === 'WS_ACCOUNT_MODE_MISMATCH') throw readError; }
       const bridgeMessage = bridgeError?.message ? `（桌面桥接：${bridgeError.message}）` : '';
       throw new Error(`${apiError?.message || 'WS 账号创建失败。'}${bridgeMessage}`);
     }
@@ -688,12 +719,18 @@
       requestAnimationFrame(() => $('#wsAccountDisplayName')?.focus());
       return;
     }
+    const workspaceMode = state.workspaceMode;
+    const generation = state.accountPresentationGeneration;
+    const workspaceGeneration = state.workspaceGeneration;
+    const ownsWorkspace = () => workspaceMode === state.workspaceMode && workspaceGeneration === state.workspaceGeneration;
+    const ownsCreate = () => ownsWorkspace() && generation === state.accountPresentationGeneration;
     state.accountBusy = true; render();
     try {
       // A lost response may follow a committed account. Explicit form retries
       // reuse the same identity instead of producing another account/profile.
       const id = state.accountFormId || (state.accountFormId = `ws-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`);
-      const result = { account: await createWsAccountRecord({ id, displayName, provider: 'WhatsApp Web', origin: 'https://web.whatsapp.com', status: '未连接' }) };
+      const result = { account: await createWsAccountRecord({ id, displayName, workspaceMode, provider: 'WhatsApp Web', origin: 'https://web.whatsapp.com', status: '未连接' }) };
+      if (!ownsCreate()) return;
       if (!result?.account?.id) throw new Error('WS 账号创建没有返回有效账号。');
       const accounts = new Map(state.accounts.map(item => [String(item.id), item]));
       accounts.set(String(result.account.id), result.account);
@@ -703,6 +740,7 @@
       state.accountFormId = '';
       state.accountFormError = '';
       const switched = await switchAccount(result.account.id);
+      if (!ownsWorkspace()) return;
       if (!switched) {
         state.accountFormError = '账号已创建，但当前窗口切换失败；请从账号列表重新选择。';
         toast(state.accountFormError, 'x');
@@ -712,15 +750,16 @@
       writeWsWorkspaceState('chat', state.wsWorkspaceNavCollapsed);
       toast('已添加 WS 账号，请在前台聊天完成扫码或登录。');
     } catch (error) {
+      if (!ownsWorkspace()) return;
       state.accountFormError = error.message || 'WS 账号创建失败。';
       toast(state.accountFormError, 'x');
     }
-    finally { state.accountBusy = false; render(); }
+    finally { if (ownsWorkspace()) { state.accountBusy = false; render(); } }
   }
   async function switchAccount(accountId) {
-    const id = text(accountId) || 'default';
+    const id = text(accountId);
+    if (!id || !modeAccount(id)) return false;
     if (id === String(state.activeAccountId)) return true;
-    if (!state.accounts.some(item => String(item.id) === id)) return false;
     const previous = state.activeAccountId;
     const sequence = ++state.accountLoadSequence;
     const ownsSwitch = () => sequence === state.accountLoadSequence;
@@ -750,6 +789,7 @@
       writeStoredAccountId(previous);
       state.error = error.message || 'WS 账号切换失败，已恢复原账号。';
       try {
+        if (!previous || !modeAccount(previous)) return false;
         try { await window.zhikeDesktop.ws({ action: 'open', accountId: previous, bounds: boundsForBrowserView() }); } catch {}
         if (!ownsSwitch()) return false;
         await loadConversations();
@@ -774,7 +814,7 @@
     state.collectorActionSequence = Number(state.collectorActionSequence || 0) + 1;
     // Clear only the account-scoped UI projection. Persisted tasks, leases,
     // providers and native chat instances are owned by their existing services.
-    const id = String(accountId || 'default');
+    const id = String(accountId || '');
     groupMonitorNativeSignature = '';
     state.collectionRefreshing = false;
     state.collectionRefreshQueued = false;
@@ -782,11 +822,13 @@
     state.previewAnalysisSignatures.clear();
     state.analysisRefreshPending.clear();
     state.listSyncBusy = false;
+    state.listSyncOperation = Number(state.listSyncOperation || 0) + 1;
     state.visibleConversationFingerprint = '';
     state.aiBackgroundError = '';
     clearTimeout(settingsSaveTimer); settingsSaveTimer = undefined; ++settingsSaveSequence;
     state.busy.import = false; state.busy.customer = false; state.busy.followup = false; state.busy.connection = false; state.busy.reply = false; state.busy.capture = false; state.busy.readHistory = false; state.busy.collector = false; state.aiBusy = false; state.translationBusy.clear();
     state.activeAccountId = id;
+    state.wsStatus = '未连接'; state.wsDetail = '';
     state.lastLoadedAt = '';
     state.collectionRun = null; state.followupAlerts = []; state.readHistorySkipped = [];
     state.aiQueueStats = { queued: 0, running: 0, retryable: 0, completed: 0, failed: 0, deadLetter: 0, retryCount: 0, total: 0 };
@@ -1284,9 +1326,11 @@
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), Number(init.timeout) || 20000);
     try {
-      const accountId = String(context?.accountId || state.activeAccountId || 'default');
       const url = new URL(pathname, window.location.origin);
-      if (url.pathname.startsWith('/api/ws/') && !url.searchParams.has('accountId')) url.searchParams.set('accountId', accountId);
+      const accountId = String(context?.accountId || url.searchParams.get('accountId') || state.activeAccountId || '');
+      const globalAccountRoute = /^\/api\/ws\/accounts(?:\/|$)/.test(url.pathname) || url.searchParams.get('allAccounts') === '1';
+      if (url.pathname.startsWith('/api/ws/') && !accountId && !globalAccountRoute) throw new Error('请先添加并选择当前用途的 WS 账号。');
+      if (url.pathname.startsWith('/api/ws/') && accountId && !url.searchParams.has('accountId')) url.searchParams.set('accountId', accountId);
       const nextInit = { ...init };
       if (nextInit.body && typeof nextInit.body === 'string' && /^\s*\{/.test(nextInit.body)) {
         try { nextInit.body = JSON.stringify({ ...JSON.parse(nextInit.body), accountId }); } catch {}
@@ -1452,6 +1496,11 @@
     return values.some(value => configured.has(normalize(value)));
   }
   async function wsBridge(action, context = null, extra = null) {
+    const scopedId = String(context?.accountId || state.activeAccountId || '');
+    if (!scopedId || !modeAccount(scopedId)) {
+      if (action === 'hide') return { skipped: true };
+      throw new Error('请先添加并选择当前用途的 WS 账号。');
+    }
     if ((COLLECTOR_ACTION_FEATURES[action] && !collectionReady(COLLECTOR_ACTION_FEATURES[action], context?.accountId || state.activeAccountId))
         || (COLLECTOR_SESSION_ACTIONS.has(action) && collectionCapability(context?.accountId || state.activeAccountId).state !== 'available')) {
       const result = collectionBlockedResult(context?.accountId || state.activeAccountId);
@@ -1693,6 +1742,7 @@
     if (refresh) { refresh.disabled = Boolean(state.groupMonitor?.loading); refresh.textContent = state.groupMonitor?.loading ? '刷新中…' : '刷新'; }
   }
   async function loadGroupMonitor(options = {}) {
+    if (!modeAccount(state.activeAccountId)) return;
     const background = options.background === true;
     const context = groupMonitorContext();
     const monitor = state.groupMonitor?.accountId === String(context.accountId)
@@ -1931,7 +1981,7 @@
     });
   }
   async function resizeWsView() {
-    if (!state.active) return;
+    if (!state.active || !modeAccount(state.activeAccountId)) return;
     const bounds = boundsForBrowserView();
     const signature = JSON.stringify(bounds);
     if (signature === lastResizeBounds && !resizeInFlight) return;
@@ -1964,13 +2014,20 @@
   async function connectionAction(action) {
     if (state.busy.connection) return;
     if (action === 'clear-session' && !confirm('清除本机 WS 会话后需要重新扫码或登录。客户资料、翻译、AI 分析和跟进记录不会删除。确认继续？')) return;
-    ++state.connectionAttemptGeneration;
+    const attempt = ++state.connectionAttemptGeneration;
+    const workspaceMode = state.workspaceMode, workspaceGeneration = state.workspaceGeneration;
+    const requestedAccountId = state.activeAccountId;
+    const presentationGeneration = state.accountPresentationGeneration;
+    const ownsRequest = () => workspaceMode === state.workspaceMode && workspaceGeneration === state.workspaceGeneration
+      && attempt === state.connectionAttemptGeneration && requestedAccountId === state.activeAccountId
+      && presentationGeneration === state.accountPresentationGeneration;
     const stopAfterAction = action === 'close' || action === 'clear-session';
     state.busy.connection = true;
     let context = null;
     try {
       const restarted = ['open', 'login', 'reload', 'reconnect'].includes(action) ? startBackgroundRuntime() : false;
       if (restarted && !state.accounts.length) await loadAccounts();
+      if (!ownsRequest()) return;
       // A deliberate Close/Clear is the user's cancellation boundary, not a
       // best-effort consequence of a successful native response. Stop model
       // work and timers before awaiting WebView2 so a slow/failed bridge can
@@ -1982,9 +2039,12 @@
       context = captureContext('');
       const result = await wsBridge(action, context);
       assertContext(context);
+      if (!ownsRequest()) return;
       state.error = '';
       if (['open', 'login', 'reload', 'reconnect', 'probe'].includes(action))
         await syncVipGroupAllowlist(context, ['open', 'login', 'reload', 'reconnect'].includes(action));
+      assertContext(context);
+      if (!ownsRequest()) return;
       setStatus(result.status || (action === 'reconnect' ? '正在重连' : action === 'close' || action === 'clear-session' ? '未连接' : '等待登录'), result.detail || '');
       if (action === 'clear-session') toast('WS 隔离登录会话已清除，本地业务记录仍保留');
       else if (action === 'close') toast('WS 页面已关闭，本地业务记录仍保留');
@@ -1999,17 +2059,19 @@
         // `!state.conversations.length` guard left the group picker stale (or
         // empty) whenever the account had any existing customer chats.
         if (state.wsStatus === '已连接' || result.status === '已连接') await loadConversations();
+        assertContext(context);
+        if (!ownsRequest()) return;
         void refreshCollectionSummary({ background: true });
       }
     } catch (error) {
-      if (!context || contextCurrent(context)) { const detail = wsErrorDetail(error); setStatus(classifyWsError(error) === 'session-expired' ? '会话过期' : classifyWsError(error) === 'unpaired' ? '等待登录' : '连接失败', detail); toast(detail, 'x'); }
+      if (ownsRequest() && (!context || contextCurrent(context))) { const detail = wsErrorDetail(error); setStatus(classifyWsError(error) === 'session-expired' ? '会话过期' : classifyWsError(error) === 'unpaired' ? '等待登录' : '连接失败', detail); toast(detail, 'x'); }
     } finally {
-      if (!context || contextCurrent(context)) { state.busy.connection = false; render(); }
-      if (stopAfterAction) stopBackgroundRuntime();
+      if (ownsRequest()) { state.busy.connection = false; render(); }
     }
   }
 
   async function loadConversations() {
+    if (!modeAccount(state.activeAccountId)) return;
     const sequence = ++loadSequence;
     const accountId = String(state.activeAccountId || 'default');
     const context = captureContext('');
@@ -2137,6 +2199,7 @@
     }
   }
   async function refreshCollectionSummary(options = {}) {
+    if (!modeAccount(state.activeAccountId)) return;
     if (!collectionReady('backgroundCollection')) return collectionBlockedResult();
     if (!state.backgroundActive) return;
     if (state.loading || state.collectionRefreshing) { state.collectionRefreshQueued = true; return; }
@@ -2229,6 +2292,7 @@
     }
   }
   function requestAccountPipelineRefresh(accountId = '') {
+    if (!modeAccount(accountId || state.activeAccountId)) return Promise.resolve({ skipped: true });
     if (!collectionReady('backgroundCollection', accountId || state.activeAccountId)) return Promise.resolve(collectionBlockedResult(accountId || state.activeAccountId));
     const targetId = text(accountId) || String(state.activeAccountId || 'default');
     if (!state.backgroundActive) return Promise.resolve({ skipped: true });
@@ -2883,11 +2947,16 @@
     }) }, context).catch(() => {});
   }
   async function syncConversationListPreviews(items, context = captureContext()) {
+    assertContext(context);
     const directItems = (Array.isArray(items) ? items : [])
       .map(normalizeListItem)
       .filter(isAutomaticCollectibleConversation);
     if (state.listSyncBusy || !directItems.length) return { synced: 0, analyzed: 0 };
     state.listSyncBusy = true;
+    const operation = state.listSyncOperation = Number(state.listSyncOperation || 0) + 1;
+    const presentationGeneration = state.accountPresentationGeneration;
+    const workspaceGeneration = state.workspaceGeneration;
+    const runId = String(state.collectionRun?.id || '');
     let synced = 0, analyzed = 0, progressed = 0;
     try {
       const byExternal = new Map(state.conversations.map(item => [String(item.externalId || ''), item]));
@@ -2910,11 +2979,11 @@
         // for an actual message transcript.
         const unreadConversation = item.status === 'skipped_unread' || item.unread === true || Number(item.unreadCount || 0) > 0 || /(?:unread|未读|new message|条未读消息)/i.test(text(item.unreadMarker));
         if (!preview) {
-          if (state.collectionRun?.id) {
+          if (runId) {
             const checkpoint = `list-only-${stableHash(JSON.stringify([externalId, text(item.title), text(item.lastMessageAt), Number(item.unreadCount || 0)]))}`;
             if (!preserveHistoryCollectionState(conversation) || unreadConversation) {
               await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify({
-                runId: state.collectionRun.id,
+                runId,
                 conversationId: conversation.id,
                 status: unreadConversation ? 'skipped_unread' : 'completed',
                 coverageStatus: unreadConversation ? 'unread-skipped' : 'list-only',
@@ -2943,12 +3012,12 @@
         const previewChanged = state.previewAnalysisSignatures.get(previewSignatureKey) !== fingerprint;
         // A repeated list refresh must not downgrade an already analyzed item
         // back to pending. Only a new preview fingerprint starts a fresh AI run.
-        if (state.collectionRun?.id) {
+        if (runId) {
           // List previews must never overwrite full-history/history-stale
           // coverage. Native ingest owns source fingerprint invalidation and
           // will queue a fresh capture when the real list fingerprint changes.
           if (!preserveHistoryCollectionState(conversation) || unreadConversation) {
-            const itemPatch = { runId: state.collectionRun.id, conversationId: conversation.id, status: unreadConversation ? 'skipped_unread' : 'completed', coverageStatus: unreadConversation ? 'unread-skipped' : 'list-preview', checkpoint: fingerprint };
+            const itemPatch = { runId, conversationId: conversation.id, status: unreadConversation ? 'skipped_unread' : 'completed', coverageStatus: unreadConversation ? 'unread-skipped' : 'list-preview', checkpoint: fingerprint };
             if (unreadConversation) itemPatch.lastError = '检测到未读会话，按规则跳过；请先在 WhatsApp 中自行阅读。';
             else if (previewChanged) itemPatch.analysisStatus = 'pending';
             await api('/api/ws/collection-items', { method: 'PATCH', body: JSON.stringify(itemPatch) }, context);
@@ -2964,6 +3033,7 @@
       const previewItems = directItems.slice(0, 5000);
       for (let offset = 0; offset < previewItems.length; offset += 8) {
         const results = await Promise.all(previewItems.slice(offset, offset + 8).map(syncOnePreview));
+        assertContext(context);
         synced += results.reduce((sum, value) => sum + Number(value?.synced || 0), 0);
         progressed += results.reduce((sum, value) => sum + Number(value?.progressed || 0), 0);
       }
@@ -2972,15 +3042,17 @@
       // collection progress never wait for an AI network request.
       scheduleAiQueuePump({ ...context, conversationId: '' });
       if (progressed) {
-        if (state.collectionRun?.id) {
-          const itemsResult = await api(`/api/ws/collection-items?runId=${encodeURIComponent(state.collectionRun.id)}`, {}, context);
+        if (runId) {
+          const itemsResult = await api(`/api/ws/collection-items?runId=${encodeURIComponent(runId)}`, {}, context);
+          assertContext(context);
           const items = Array.isArray(itemsResult.items) ? itemsResult.items : [];
           const completed = items.filter(item => item.status === 'completed').length;
           const analyzedItems = items.filter(item => item.analysisStatus === 'completed').length;
           const failed = items.filter(item => item.status === 'failed').length;
           const retryable = items.filter(item => ['failed', 'retryable'].includes(item.status) || ['retryable', 'failed'].includes(item.analysisStatus)).length;
-          const runResult = await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: state.collectionRun.id, status: 'discovering', total: items.length, discovered: items.length, completed, analyzed: Math.max(analyzedItems, analyzed), failed, retryable, cursor: JSON.stringify({ mode: 'list-preview', synced, progressed, analyzed, syncedAt: nowIso() }), lastSuccessAt: nowIso() }) }, context);
-          if (runResult?.run) state.collectionRun = runResult.run;
+          const runResult = await api('/api/ws/collection-runs', { method: 'PATCH', body: JSON.stringify({ id: runId, status: 'discovering', total: items.length, discovered: items.length, completed, analyzed: Math.max(analyzedItems, analyzed), failed, retryable, cursor: JSON.stringify({ mode: 'list-preview', synced, progressed, analyzed, syncedAt: nowIso() }), lastSuccessAt: nowIso() }) }, context);
+          assertContext(context);
+          if (runResult?.run && String(state.collectionRun?.id || '') === runId) state.collectionRun = runResult.run;
         }
         const refreshed = await loadConversationDeltaPages(context);
         assertContext(context);
@@ -2989,7 +3061,12 @@
       }
       if (analyzed && getHost()?.refreshState) await getHost().refreshState().catch(() => {});
       return { synced, progressed, analyzed };
-    } finally { state.listSyncBusy = false; }
+    } finally {
+      // A same-account directory refresh invalidates the response sequence,
+      // but the operation still owns its lock. A new account/mode does not.
+      if (operation === state.listSyncOperation && context.accountId === state.activeAccountId && presentationGeneration === state.accountPresentationGeneration
+          && workspaceGeneration === state.workspaceGeneration) state.listSyncBusy = false;
+    }
   }
   async function createCollectionRun() {
     if (!collectionReady('automaticHistory')) return rejectCollectionAction();
@@ -3206,7 +3283,7 @@
   }
   function renderWsAssistTabs() {
     // Accessible tab titles: title="AI 分析", title="客户档案", title="回复建议", title="采集诊断".
-    const tabs = [['ai', 'AI 分析'], ['profile', '客户档案'], ['reply', '回复建议'], ['broadcast', '群发中心'], ['export', '数据导出'], ['diagnostics', '采集诊断']];
+    const tabs = [['ai', 'AI 分析'], ['profile', '客户档案'], ['reply', '回复建议'], ['broadcast', '会话批量发送'], ['export', '数据导出'], ['diagnostics', '采集诊断']].filter(([id]) => state.workspaceMode !== 'dedicated' || id !== 'broadcast');
     return `<nav class="ws-assist-tabs" aria-label="WS 辅助面板" role="tablist">${tabs.map(([key, label]) => {
       const active = state.assistDrawerTab === key;
       return `<button class="ws-assist-tab ${active ? 'active' : ''}" data-ws-action="focus-assist" data-assist-target="${key}" data-assist-drawer-tab="${key}" title="${label}" role="tab" aria-selected="${active ? 'true' : 'false'}">${label}</button>`;
@@ -3241,8 +3318,8 @@
     // CSS contract: .ws-workspace-nav.is-collapsed keeps the WebView anchor
     // mounted while only the secondary navigation rail changes width.
     const collapsed = Boolean(state.wsWorkspaceNavCollapsed);
-    const active = WS_WORKSPACE_VIEW_IDS.has(state.wsWorkspaceView) ? state.wsWorkspaceView : 'overview';
-    return `<aside class="ws-workspace-nav ${collapsed ? 'is-collapsed' : ''}" aria-label="WS 工作台功能导航"><div class="ws-workspace-nav-heading"><span class="ws-workspace-nav-mark">WS</span><div><strong>WS 工作台</strong><small>知客 · 运营工作区</small></div><button type="button" class="ws-workspace-nav-toggle" data-ws-action="toggle-workspace-nav" aria-expanded="${collapsed ? 'false' : 'true'}" title="${collapsed ? '展开 WS 工作区导航' : '收起 WS 工作区导航'}">${collapsed ? '›' : '‹'}</button></div><nav class="ws-workspace-nav-list">${WS_WORKSPACE_VIEW_META.map(item => `<button type="button" class="ws-workspace-nav-item ${item.id === active ? 'active' : ''}" data-ws-workspace-view="${item.id}" aria-current="${item.id === active ? 'page' : 'false'}" title="${esc(item.label)} · ${esc(item.hint)}"><span class="ws-workspace-nav-icon" aria-hidden="true"><svg class="zk-icon" viewBox="0 0 24 24" focusable="false"><use href="#i-${esc(item.icon)}"/></svg></span><span class="ws-workspace-nav-copy"><strong>${esc(item.label)}</strong><small>${esc(item.hint)}</small></span></button>`).join('')}</nav><div class="ws-workspace-nav-foot"><span class="ws-workspace-nav-status" title="${esc(collectionCapability().state === 'available' ? collectionCapability().reason : collectionBlockedResult().error)}"><i></i><span>${esc(collectorStatusLabel())}</span></span><button type="button" class="ws-workspace-return" data-ws-action="return-zhike" title="返回知客"><span aria-hidden="true">↩</span><span>返回知客</span></button></div></aside>`;
+    const active = workspaceViewAllowed(state.wsWorkspaceView) ? state.wsWorkspaceView : 'overview';
+    return `<aside class="ws-workspace-nav ${collapsed ? 'is-collapsed' : ''}" aria-label="WS 工作台功能导航"><div class="ws-workspace-nav-heading"><span class="ws-workspace-nav-mark">WS</span><div><strong>${workspaceLabel()}</strong><small>账号用途创建后固定</small></div><button type="button" class="ws-workspace-nav-toggle" data-ws-action="toggle-workspace-nav" aria-expanded="${collapsed ? 'false' : 'true'}" title="${collapsed ? '展开 WS 工作区导航' : '收起 WS 工作区导航'}">${collapsed ? '›' : '‹'}</button></div><div class="ws-workspace-mode-switch" aria-label="切换 WS 用途">${['ordinary', 'dedicated'].map(mode => `<button type="button" data-ws-workspace-mode="${mode}" aria-pressed="${state.workspaceMode === mode}">${workspaceLabel(mode)}</button>`).join('')}</div><nav class="ws-workspace-nav-list">${workspaceViews().map(item => `<button type="button" class="ws-workspace-nav-item ${item.id === active ? 'active' : ''}" data-ws-workspace-view="${item.id}" aria-current="${item.id === active ? 'page' : 'false'}" title="${esc(item.label)} · ${esc(item.hint)}"><span class="ws-workspace-nav-icon" aria-hidden="true"><svg class="zk-icon" viewBox="0 0 24 24" focusable="false"><use href="#i-${esc(item.icon)}"/></svg></span><span class="ws-workspace-nav-copy"><strong>${esc(item.label)}</strong><small>${esc(item.hint)}</small></span></button>`).join('')}</nav><div class="ws-workspace-nav-foot"><span class="ws-workspace-nav-status" title="${esc(collectionCapability().state === 'available' ? collectionCapability().reason : collectionBlockedResult().error)}"><i></i><span>${esc(collectorStatusLabel())}</span></span><button type="button" class="ws-workspace-return" data-ws-action="return-zhike" title="返回知客"><span aria-hidden="true">↩</span><span>返回知客</span></button></div></aside>`;
   }
   function groupDirectoryState() {
     const page = wsWorkspacePageState('groups');
@@ -3394,7 +3471,8 @@
   }
   async function refreshWorkspacePage() {
     const view = state.wsWorkspaceView;
-    if (view === 'chat') return;
+    if (!workspaceViewAllowed(view) || WS_BLOCKED_VIEWS.has(view) || view === 'chat') return;
+    if (!modeAccount(state.activeAccountId)) { if (view === 'accounts' || view === 'overview') await loadAccounts(); return; }
     const accountId = String(state.activeAccountId || 'default');
     const page = wsWorkspacePageState(view, accountId);
     const accountSequence = Number(state.accountLoadSequence || 0);
@@ -3512,13 +3590,14 @@
     return businessPages ? businessPages.renderDirectory(view, wsWorkspacePageState(view), state.accounts || [], String(state.activeAccountId || 'default')) : '<p class="ws-error-line" role="alert">业务页面模块未加载，请重新打开应用。</p>';
   }
   function renderWsWorkspacePage(view) {
-    const activeView = WS_WORKSPACE_VIEW_IDS.has(view) ? view : 'overview';
-    const meta = WS_WORKSPACE_VIEW_META.find(item => item.id === activeView) || WS_WORKSPACE_VIEW_META[0];
+    const activeView = workspaceViewAllowed(view) ? view : 'overview';
+    const meta = workspaceViews().find(item => item.id === activeView) || WS_WORKSPACE_VIEW_META[0];
+    if (WS_BLOCKED_VIEWS.has(activeView)) return `<section class="ws-workspace-page-content" data-ws-workspace-page="${esc(activeView)}"><div class="ws-workspace-page-heading"><h2>${esc(meta.label)}</h2><span class="ws-status-badge" data-status="disabled">BLOCKED</span></div><section class="ws-workspace-card zk-surface"><p>${esc(meta.hint)}</p><p>此功能尚未通过真实平台验证，暂不能执行此操作。</p></section></section>`;
     const account = accountDisplayName(activeAccount()) || state.activeAccountId || 'default';
     const run = state.collectionRun || {};
     const stats = state.aiQueueStats || {};
     let body = '';
-    if (activeView === 'overview') body = `<section class="ws-workspace-card ws-workspace-welcome zk-surface zk-surface--accent"><span class="ws-workspace-eyebrow">WORKSPACE / OVERVIEW</span><h3>开始今天的客户运营</h3><p>在独立工作区管理账号、查看真实采集记录，并随时回到前台聊天。</p><button type="button" class="btn primary" data-ws-workspace-view="chat">进入前台聊天 <span aria-hidden="true">↗</span></button></section><section class="ws-workspace-metrics" aria-label="已加载工作区概况"><div><span>已加载账号</span><strong>${state.accounts.length || '—'}</strong><small>本机隔离会话</small></div><div><span>已加载会话</span><strong>${state.lastLoadedAt ? (state.conversations || []).length : '—'}</strong><small>${state.lastLoadedAt ? '当前账号本地记录' : '等待读取本地记录'}</small></div><div><span>已加载群组</span><strong>${state.groupMonitor?.lastLoadedAt ? groupDirectoryRows().length : '—'}</strong><small>${state.groupMonitor?.lastLoadedAt ? '当前账号同步目录' : '等待同步群组目录'}</small></div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>工作区入口</strong><span>每项功能拥有独立页面，页面切换保留账号会话。</span></div><span class="ws-status-badge">${esc(state.wsStatus)}</span></div><div class="ws-workspace-entry-grid">${WS_WORKSPACE_VIEW_META.filter(item => !['overview', 'chat'].includes(item.id)).map(item => `<button type="button" class="ws-workspace-entry zk-surface zk-surface--interactive" data-ws-workspace-view="${item.id}"><span class="ws-workspace-nav-icon" aria-hidden="true"><svg class="zk-icon" viewBox="0 0 24 24" focusable="false"><use href="#i-${esc(item.icon)}"/></svg></span><span><strong>${esc(item.label)}</strong><small>${esc(item.hint)}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>运行边界</strong><span>仅展示现有业务服务与账号状态。</span></div><span class="ws-status-badge" data-status="disabled">FROZEN</span></div><p class="ws-muted">生产 Worker、AI 自动处理和群组自动建档保持当前关闭配置。工作区导航不会启动新的消费者或付费 AI 请求。</p></section>`;
+    if (activeView === 'overview') body = `<section class="ws-workspace-card ws-workspace-welcome zk-surface zk-surface--accent"><span class="ws-workspace-eyebrow">WORKSPACE / OVERVIEW</span><h3>开始今天的客户运营</h3><p>在独立工作区管理账号、查看真实采集记录，并随时回到前台聊天。</p><button type="button" class="btn primary" data-ws-workspace-view="chat">进入前台聊天 <span aria-hidden="true">↗</span></button></section><section class="ws-workspace-metrics" aria-label="已加载工作区概况"><div><span>已加载账号</span><strong>${state.accounts.length || '—'}</strong><small>本机隔离会话</small></div><div><span>已加载会话</span><strong>${state.lastLoadedAt ? (state.conversations || []).length : '—'}</strong><small>${state.lastLoadedAt ? '当前账号本地记录' : '等待读取本地记录'}</small></div><div><span>已加载群组</span><strong>${state.groupMonitor?.lastLoadedAt ? groupDirectoryRows().length : '—'}</strong><small>${state.groupMonitor?.lastLoadedAt ? '当前账号同步目录' : '等待同步群组目录'}</small></div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>工作区入口</strong><span>每项功能拥有独立页面，页面切换保留账号会话。</span></div><span class="ws-status-badge">${esc(state.wsStatus)}</span></div><div class="ws-workspace-entry-grid">${workspaceViews().filter(item => !['overview', 'chat'].includes(item.id)).map(item => `<button type="button" class="ws-workspace-entry zk-surface zk-surface--interactive" data-ws-workspace-view="${item.id}"><span class="ws-workspace-nav-icon" aria-hidden="true"><svg class="zk-icon" viewBox="0 0 24 24" focusable="false"><use href="#i-${esc(item.icon)}"/></svg></span><span><strong>${esc(item.label)}</strong><small>${esc(item.hint)}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>运行说明</strong><span>任务按当前账号的配置执行。</span></div><span class="ws-status-badge">按配置运行</span></div><p class="ws-muted">自动 AI 尚未启用。群组自动建档仅处理已启用监控中确认的成员事件；请在对应账号内核对任务配置。</p></section>`;
     else if (activeView === 'accounts') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>账号与连接</strong><span>账号作用域独立，切换保留各账号隔离会话。</span></div><button class="btn small" data-ws-action="create-account">＋ 添加账号</button></div>${renderAccountForm()}<div class="ws-workspace-metrics"><div><span>已加载 WS 账号</span><strong>${state.accounts.length}</strong><small>本机隔离会话</small></div><div><span>当前账号</span><strong>${esc(account)}</strong><small>${esc(state.wsStatus)}</small></div><div><span>后台状态</span><strong>${esc(collectorStatusLabel())}</strong><small>独立采集会话，需单独扫码登录</small></div></div>${renderCollectorControls()}${renderWorkspaceList('accounts', state.accounts, rows => renderAccountList(rows))}</section>`;
     else if (activeView === 'groups') body = renderGroupDirectory() + (groupReading?.render() || '');
     else if (activeView === 'members') body = renderWorkspaceMembers();
@@ -3529,7 +3608,7 @@
     else if (activeView === 'crm') body = `${renderWorkspaceCustomers()}<details class="ws-workspace-card zk-surface"><summary>当前会话关联档案与资料补全</summary>${renderDataArchiveSummary()}${renderHotProfile()}</details><section class="ws-workspace-card zk-surface"><p class="ws-muted">CRM 主档是唯一权威来源。普通聊天只匹配已有客户；多匹配进入冲突处理；人工字段不覆盖。AI 候选、来源证据、批准/拒绝及审计继续使用原审核中心。</p></section>`;
     else if (activeView === 'tasks') body = `${renderWorkspaceTaskPage()}<section class="ws-workspace-card zk-surface"><div class="ws-workspace-metrics"><div><span>历史采集任务</span><strong>${esc(run.status || '未提供')}</strong><small>${run.id ? esc(run.id) : '尚无任务或未读取'}</small></div><div><span>已加载待跟进</span><strong>${state.summaryLoaded?.followups ? state.followupAlerts.length : '—'}</strong><small>当前服务返回范围</small></div><div><span>待重试</span><strong>${run.id ? Number(run.retryable || 0) : '—'}</strong><small>未读取不当作成功</small></div></div><button class="btn small" data-ws-action="open-tasks">打开知客任务中心</button></section>`;
     else if (activeView === 'logs') body = renderWorkspaceReadDirectory('logs');
-    else if (activeView === 'settings') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>WS 工作区设置</strong><span>只管理当前账号与工作区偏好。</span></div></div><div class="ws-workspace-settings-grid"><div><strong>翻译</strong><p>${esc(state.translationStatus)}</p><button class="btn small" data-ws-action="focus-assist" data-assist-target="diagnostics">打开翻译设置</button></div><div><strong>群组监测</strong><p>${state.groupMonitor?.profile?.enabled ? '已启用固定席位' : '未启用固定席位'}</p><button class="btn small" data-ws-action="focus-assist" data-assist-target="diagnostics">打开群组设置</button></div><div><strong>生产 Gate</strong><p>Worker、AI 自动处理和群组自动建档默认关闭。</p><span class="ws-status-badge" data-status="disabled">FROZEN</span></div></div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>会话工具</strong><span>打开现有功能；发送与采集继续遵循原有确认和账号边界。</span></div></div><div class="ws-workspace-settings-grid"><div><strong>手动导入与本地消息</strong><p>使用现有导入、译文与本地消息记录。</p><button type="button" class="btn small" data-ws-action="open-local-tools">打开本地工具</button></div><div><strong>数据导出</strong><p>导出已有客户、群组、消息和媒体索引。</p><button type="button" class="btn small" data-ws-action="focus-assist" data-assist-target="export">打开导出工具</button></div><div><strong>群发中心</strong><p>先生成发送计划，逐个会话人工确认。</p><button type="button" class="btn small" data-ws-action="focus-assist" data-assist-target="broadcast">打开群发中心</button></div><div><strong>登录会话</strong><p>清除后需要重新扫码；本地业务记录保留。</p><button type="button" class="btn small" data-ws-action="clear-session">清除登录会话</button></div></div></section>`;
+    else if (activeView === 'settings') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>WS 工作区设置</strong><span>只管理当前账号与工作区偏好。</span></div></div><div class="ws-workspace-settings-grid"><div><strong>翻译</strong><p>${esc(state.translationStatus)}</p><button class="btn small" data-ws-action="focus-assist" data-assist-target="diagnostics">打开翻译设置</button></div><div><strong>群组监测</strong><p>${state.groupMonitor?.profile?.enabled ? '已启用固定席位' : '未启用固定席位'}</p><button class="btn small" data-ws-action="focus-assist" data-assist-target="diagnostics">打开群组设置</button></div><div><strong>自动处理</strong><p>自动 AI 尚未启用。群监控按当前账号保存的配置运行。</p><span class="ws-status-badge">按配置运行</span></div></div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>会话工具</strong><span>打开现有功能；发送与采集继续遵循原有确认和账号边界。</span></div></div><div class="ws-workspace-settings-grid"><div><strong>手动导入与本地消息</strong><p>使用现有导入、译文与本地消息记录。</p><button type="button" class="btn small" data-ws-action="open-local-tools">打开本地工具</button></div><div><strong>数据导出</strong><p>导出已有客户、群组、消息和媒体索引。</p><button type="button" class="btn small" data-ws-action="focus-assist" data-assist-target="export">打开导出工具</button></div>${state.workspaceMode === 'ordinary' ? '<div><strong>会话批量发送</strong><p>仅限已有一对一会话，逐个会话人工确认。</p><button type="button" class="btn small" data-ws-action="focus-assist" data-assist-target="broadcast">打开会话发送</button></div>' : ''}<div><strong>登录会话</strong><p>清除后需要重新扫码；本地业务记录保留。</p><button type="button" class="btn small" data-ws-action="clear-session">清除登录会话</button></div></div></section>`;
     if (activeView === 'overview') body = body.replace('<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>工作区入口</strong>', renderWorkspaceOperationalOverview() + '<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>工作区入口</strong>');
     if (activeView === 'settings') body += `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>AI 配置与本机诊断</strong><span>复用现有设置与加密密钥服务，不创建第二套凭据存储。</span></div></div><div class="ws-workspace-settings-grid"><div><strong>GPT / API Key 配置</strong><p>打开原 GPT 本机设置，只显示配置状态与尾号；本页不读取或展示明文密钥。</p><button type="button" class="btn small" data-gpt-action="settings">打开 GPT 本机设置</button></div><div><strong>采集与连接诊断</strong><p>使用原 WS 诊断面板查看实际服务状态；没有可用性能采样时不伪造 CPU 或内存数据。</p><button type="button" class="btn small" data-ws-action="focus-assist" data-assist-target="diagnostics">打开现有运行诊断</button></div></div></section>`;
     const page = wsWorkspacePageState(activeView);
@@ -3791,7 +3870,7 @@
   }
   function renderAccountForm() {
     if (!state.accountFormOpen) return '';
-    return `<div class="ws-account-form" role="dialog" aria-label="添加 WS 账号"><label for="wsAccountDisplayName">本机显示名称</label><input id="wsAccountDisplayName" maxlength="80" autocomplete="off" placeholder="例如：个人号、工作号" value="${esc(state.accountFormName)}"><div class="ws-account-form-actions"><button class="btn small primary" data-ws-action="submit-account" ${state.accountBusy ? 'disabled' : ''}>${state.accountBusy ? '创建中…' : '创建并登录'}</button><button class="btn small" data-ws-action="cancel-account" ${state.accountBusy ? 'disabled' : ''}>取消</button></div>${state.accountFormError ? `<p class="ws-account-form-error">${esc(state.accountFormError)}</p>` : ''}</div>`;
+    return `<div class="ws-account-form" role="dialog" aria-label="添加 WS 账号"><p>用途：${workspaceLabel()}；创建后不可更改，登录会话独立。</p><label for="wsAccountDisplayName">本机显示名称</label><input id="wsAccountDisplayName" maxlength="80" autocomplete="off" placeholder="例如：个人号、工作号" value="${esc(state.accountFormName)}"><div class="ws-account-form-actions"><button class="btn small primary" data-ws-action="submit-account" ${state.accountBusy ? 'disabled' : ''}>${state.accountBusy ? '创建中…' : '创建并登录'}</button><button class="btn small" data-ws-action="cancel-account" ${state.accountBusy ? 'disabled' : ''}>取消</button></div>${state.accountFormError ? `<p class="ws-account-form-error">${esc(state.accountFormError)}</p>` : ''}</div>`;
   }
   function messageDirectionPresentation(message = {}) {
     const data = message.data && typeof message.data === 'object' && !Array.isArray(message.data) ? message.data : {};
@@ -4047,6 +4126,12 @@
     const target = $('#viewContainer');
     if (!target) return;
     captureWorkspaceNavScroll();
+    if (!modeAccount(state.activeAccountId)) {
+      const blocked = WS_BLOCKED_VIEWS.has(state.wsWorkspaceView) ? renderWsWorkspacePage(state.wsWorkspaceView) : '';
+      target.innerHTML = `<div class="ws-workbench-shell ${state.wsWorkspaceNavCollapsed ? 'ws-nav-collapsed' : ''}" data-ws-workspace-mode="${state.workspaceMode}">${renderWsWorkspaceNav()}<div class="ws-workbench-page ws-workspace-empty"><section class="ws-workspace-page-content"><h2>${workspaceLabel()}</h2><p role="status">${state.accountsLoading ? '正在读取此用途的账号…' : '当前用途暂无可用账号。添加账号后需独立扫码登录。'}</p>${state.error ? '<p class="ws-error-line" role="alert">' + esc(state.error) + '</p>' : ''}<button class="btn primary" data-ws-action="create-account">添加${workspaceLabel()}账号</button><button class="btn" data-ws-action="refresh-accounts">刷新账号列表</button>${renderAccountForm()}</section>${blocked}</div></div>`;
+      restoreWorkspaceNavScroll();
+      return;
+    }
     const previousWorkspacePage = $('[data-ws-workspace-page]');
     if (previousWorkspacePage) wsWorkspacePageState(previousWorkspacePage.dataset.wsWorkspacePage, previousWorkspacePage.dataset.wsAccountId).scrollTop = Number(previousWorkspacePage.scrollTop || 0);
     // Keep the native WebView host node alive while the surrounding shell is
@@ -4099,7 +4184,7 @@
       <div class="ws-workbench-page workspace-${WS_WORKSPACE_VIEW_IDS.has(state.wsWorkspaceView) ? state.wsWorkspaceView : 'overview'} ${loginFocus ? 'is-login-focus' : ''} ${state.manualToolsVisible ? 'ws-local-tools-open' : ''}" data-ws-account-id="${esc(state.activeAccountId || 'default')}">
         ${renderWsWorkspacePage(state.wsWorkspaceView)}
         <div class="page-heading ws-page-heading">
-          <div><h1 class="page-title">前台聊天</h1><p class="page-subtitle" title="登录资料由各自的 WebView2 会话保存，不复制账号认证数据" aria-label="内嵌 WhatsApp Web；前台聊天可用；后台采集使用独立扫码会话；登录资料由各自的 WebView2 会话保存，不复制账号认证数据">内嵌 WhatsApp Web · 前台聊天可用；后台采集使用独立扫码会话</p></div>
+          <div><h1 class="page-title">${state.workspaceMode === 'dedicated' ? '专用登录' : '前台聊天'}</h1><p class="page-subtitle" title="登录资料由各自的 WebView2 会话保存，不复制账号认证数据" aria-label="内嵌 WhatsApp Web；前台聊天可用；后台采集使用独立扫码会话；登录资料由各自的 WebView2 会话保存，不复制账号认证数据">内嵌 WhatsApp Web · 前台聊天可用；后台采集使用独立扫码会话</p></div>
           <div class="heading-actions">
             <span class="ws-chat-background-status" data-tone="${runtimeTone}" data-collection-capability="${esc(collectionCapability().state)}" role="status" title="${esc(collectionCapability().state === 'available' ? collectionCapability().reason : collectionBlockedResult().error)}" aria-label="${esc(collectionCapability().state === 'available' ? runtimeStatus : collectionBlockedResult().error)}">${esc(runtimeStatus)}</span>
             ${renderCollectorControls()}
@@ -4229,7 +4314,7 @@
             </section>
             ${renderCollectionCard()}
             ${renderGroupMonitorCard()}
-            ${renderBroadcastCard()}
+            ${state.workspaceMode === 'ordinary' ? renderBroadcastCard() : ''}
             ${renderWsExportCard()}
             <section class="ws-card" data-assist-section="reply">
               <div class="ws-card-heading"><div><strong>跟进记录</strong><span>保存前创建本机快照，失败自动回滚</span></div></div>
@@ -5187,6 +5272,7 @@
   }
 
   function focusAssistDrawerTab(tab, open = true) {
+    if (state.workspaceMode === 'dedicated' && tab === 'broadcast') return;
     const nextTab = ASSIST_DRAWER_TABS.has(String(tab)) ? String(tab) : 'ai';
     state.assistDrawerTab = nextTab;
     writeAssistDrawerState('tab', nextTab);
@@ -5221,6 +5307,7 @@
   }
 
   function openAssistDrawer(tab = state.assistDrawerTab, returnFocus = null) {
+    if (state.workspaceMode === 'dedicated' && tab === 'broadcast') tab = 'profile';
     const nextTab = ASSIST_DRAWER_TABS.has(String(tab)) ? String(tab) : 'ai';
     if (returnFocus) assistDrawerReturnFocus = returnFocus;
     state.assistDrawerTab = nextTab;
@@ -5406,6 +5493,7 @@
     return true;
   }
   async function handleAction(action, element) {
+    if (state.workspaceMode === 'dedicated' && (action.includes('broadcast') || (action === 'focus-assist' && element?.dataset?.assistTarget === 'broadcast'))) throw new Error('专用群组发送能力尚未验收：BLOCKED。');
     if (action === 'return-zhike') { (document.querySelector('[data-workspace-target="main"]') || document.querySelector('.nav-item[data-view="home"]'))?.click(); return; }
     if (action.startsWith('business-')) {
       const view = String(element?.dataset?.businessView || state.wsWorkspaceView);
@@ -5454,6 +5542,7 @@
     if (COLLECTOR_SESSION_ACTIONS.has(action)) return collectorAction(action);
     if (['open', 'login', 'reload', 'reconnect', 'close', 'clear-session', 'probe'].includes(action)) return connectionAction(action);
     if (action === 'create-account') return openAccountForm();
+    if (action === 'refresh-accounts') return loadAccounts();
     if (action === 'submit-account') return createAccount();
     if (action === 'cancel-account') return cancelAccountForm();
     if (action === 'switch-account') return switchAccount(element?.dataset?.accountId);
@@ -5716,18 +5805,34 @@
     }
   }
   function activate() {
+    const mode = arguments.length ? arguments[0] : state.workspaceMode;
     const host = getHost();
     if (!host) return;
+    const workspaceMode = normalizeWorkspaceMode(mode);
+    if (!workspaceMode) throw new Error('WS 工作区用途无效。');
+    if (workspaceMode !== state.workspaceMode) {
+      void wsBridge('hide').catch(() => {});
+      stopBackgroundRuntime();
+      ++state.workspaceGeneration;
+      state.workspaceMode = workspaceMode;
+      state.accounts = [];
+      state.pendingRestoreAccountId = '';
+      resetAccountPresentation('');
+      state.wsWorkspaceView = readWsWorkspaceView(workspaceMode);
+      state.accountFormOpen = false; state.accountFormName = ''; state.accountFormId = ''; state.accountFormError = '';
+      if (state.assistDrawerTab === 'broadcast') state.assistDrawerTab = 'profile';
+    }
     const firstBackgroundStart = startBackgroundRuntime();
     state.active = true;
     host.state.view = 'ws-workbench';
     document.documentElement.dataset.view = 'ws-workbench';
     state.error = '';
-    $('#crumbCurrent').textContent = 'WS 工作台';
-    $$('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.view === 'ws-workbench'));
+    $('#crumbCurrent').textContent = workspaceLabel();
+    $$('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.view === 'ws-workbench' && item.dataset.wsWorkspaceMode === state.workspaceMode));
     document.body.classList.add('ws-mode');
     render();
     if (!firstBackgroundStart) {
+      if (!modeAccount(state.activeAccountId)) return;
       // The account and native collector were intentionally kept alive while
       // another Zhike page was visible. Re-entering WS only remounts the UI;
       // it must not start another poller, queue pump or account load.
@@ -5744,7 +5849,7 @@
       && (!startAccount || (startAccount.id === state.activeAccountId && startAccount.generation === state.accountPresentationGeneration && startAccount.attempt === state.connectionAttemptGeneration));
     backgroundStartPromise = (async () => {
       await loadAccounts();
-      if (!ownsStart()) return;
+      if (!ownsStart() || !modeAccount(state.activeAccountId)) return;
       startAccount = { id: state.activeAccountId, generation: state.accountPresentationGeneration, attempt: state.connectionAttemptGeneration };
       render();
       let openError = null;
@@ -5799,12 +5904,32 @@
   }
   async function exportWsData(accountId = '') { return api('/api/ws/export'+(accountId?'?accountId='+encodeURIComponent(accountId):''), { timeout: 30000 }); }
   async function listWsBackupAccounts() { return api('/api/ws/accounts', { timeout: 30000 }); }
-  async function ensureWsBackupAccount(accountId, displayName) {
-    const id=String(accountId||'').trim();if(!id)throw new Error('备份中的 WS 账号编号为空。');
-    const listed=await listWsBackupAccounts();if(!Array.isArray(listed.accounts))throw new Error('无法读取 WS 账号清单，恢复已取消。');
-    if(listed.accounts.some(item=>String(item?.id||'').toLowerCase()===id.toLowerCase()))return {created:false};
-    try { await api('/api/ws/accounts',{method:'POST',timeout:30000,body:JSON.stringify({id,displayName:String(displayName||id)})},{accountId:id});return {created:true}; }
-    catch(error){const refreshed=await listWsBackupAccounts();if(Array.isArray(refreshed.accounts)&&refreshed.accounts.some(item=>String(item?.id||'').toLowerCase()===id.toLowerCase()))return {created:false};throw error;}
+  async function ensureWsBackupAccount(accountId, displayName, workspaceMode) {
+    const id = String(accountId || '').trim(); if (!id) throw new Error('备份中的 WS 账号编号为空。');
+    const requestedMode = normalizeWorkspaceMode(workspaceMode);
+    if (!requestedMode) throw new Error('备份中的 WS 账号用途无效。');
+    const checkExisting = row => {
+      if (String(row?.id || '') !== id) throw new Error('备份账号编号大小写与本机账号不一致，恢复已取消。');
+      const actualMode = accountWorkspaceMode(row);
+      if (!actualMode || (workspaceMode !== undefined && actualMode !== requestedMode)) throw new Error('备份账号用途与本机账号不一致，恢复已取消。');
+      return { created: false, workspaceMode: actualMode };
+    };
+    const find = rows => rows.find(item => String(item?.id || '').toLowerCase() === id.toLowerCase());
+    const listed = await listWsBackupAccounts(); if (!Array.isArray(listed.accounts)) throw new Error('无法读取 WS 账号清单，恢复已取消。');
+    const existing = find(listed.accounts); if (existing) return checkExisting(existing);
+    try {
+      const result = await api('/api/ws/accounts', { method: 'POST', timeout: 30000, body: JSON.stringify({ id, displayName: String(displayName || id), workspaceMode: requestedMode }) }, { accountId: id });
+      if (!result?.account || String(result.account.id) !== id || accountWorkspaceMode(result.account) !== requestedMode) throw new Error('恢复账号编号或用途未确认，恢复已取消。');
+      return { created: true, workspaceMode: requestedMode };
+    } catch (error) {
+      const refreshed = await listWsBackupAccounts();
+      const confirmed = Array.isArray(refreshed.accounts) && find(refreshed.accounts);
+      if (confirmed) {
+        if (accountWorkspaceMode(confirmed) !== requestedMode) throw new Error('恢复账号用途未确认，恢复已取消。');
+        return checkExisting(confirmed);
+      }
+      throw error;
+    }
   }
   async function deleteWsBackupAccount(accountId) {
     const id=String(accountId||'').trim();if(!id||id==='default')throw new Error('不能删除默认 WS 账号。');
@@ -5812,7 +5937,7 @@
   }
   async function importWsData(value, accountId = '') {
     if (!value || typeof value !== 'object') return { skipped: true };
-    return api('/api/ws/import', { method: 'POST', timeout: 60000, body: JSON.stringify({...value,accountId:accountId||value.accountId||''}) });
+    return api('/api/ws/import', { method: 'POST', timeout: 60000, body: JSON.stringify({...value,accountId:accountId||value.accountId||''}) }, { accountId: accountId || value.accountId || '' });
   }
   window.__zhikeWsBackup = Object.freeze({ exportData: exportWsData, importData: importWsData, listAccounts: listWsBackupAccounts, ensureAccount: ensureWsBackupAccount, deleteAccount: deleteWsBackupAccount });
   window.__zhikeWsFollowups = Object.freeze({
@@ -5827,8 +5952,9 @@
       const result = await api(`/api/ws/followup-alerts?allAccounts=1&limit=${safeLimit}`);
       return Array.isArray(result.alerts) ? result.alerts : [];
     },
-    openWorkspace: () => activate(),
+    openWorkspace: () => activate('ordinary'),
   });
+  window.__zhikeWsWorkspace = Object.freeze({ open: mode => activate(mode), getMode: () => state.workspaceMode });
   function boot() {
     if (bootInitialized) return;
     const host = getHost();
@@ -5850,24 +5976,27 @@
       if (item.dataset.view === 'ws-workbench') {
         event.preventDefault();
         event.stopImmediatePropagation();
-        activate();
+        activate(item.dataset.wsWorkspaceMode || 'ordinary');
       } else deactivate();
     }, true);
     const view = $('#viewContainer');
     view?.addEventListener('click', event => {
       const target = event.target;
+      const modeItem = target?.closest?.('[data-ws-workspace-mode]');
+      if (modeItem) { event.preventDefault(); event.stopImmediatePropagation(); activate(modeItem.dataset.wsWorkspaceMode); return; }
       const workspaceItem = target?.closest?.('[data-ws-workspace-view]');
       if (workspaceItem) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        const nextView = WS_WORKSPACE_VIEW_IDS.has(String(workspaceItem.dataset.wsWorkspaceView || '')) ? String(workspaceItem.dataset.wsWorkspaceView) : 'overview';
+        const nextView = String(workspaceItem.dataset.wsWorkspaceView || '');
+        if (!workspaceViewAllowed(nextView)) return;
         invalidateExclusionPage();
         wsWorkspacePageState(state.wsWorkspaceView).scrollTop = Number(document.querySelector('[data-ws-workspace-page]')?.scrollTop || 0);
         state.wsWorkspaceView = nextView;
         wsWorkspacePageState(nextView);
         writeWsWorkspaceState(nextView, state.wsWorkspaceNavCollapsed);
         render();
-        if (nextView !== 'chat' && wsWorkspacePageState(nextView).status === '尚未刷新') void refreshWorkspacePage();
+        if (modeAccount(state.activeAccountId) && !WS_BLOCKED_VIEWS.has(nextView) && nextView !== 'chat' && wsWorkspacePageState(nextView).status === '尚未刷新') void refreshWorkspacePage();
         return;
       }
       // Page-layer drawer clicks close the drawer when they land outside it.
@@ -5969,20 +6098,21 @@
     window.zhikeDesktop?.onWsStatus?.(payload => {
       if (!payload) return;
       if (payload.restoreAccountId) {
-        void cancelAllAiWork();
-        ++state.accountLoadSequence;
+        // Native restore events can belong to the other workspace. Resolve
+        // against this mode's fresh list before changing presentation/storage.
+        if (modeAccount(payload.restoreAccountId)) {
+          void cancelAllAiWork();
+          ++state.accountLoadSequence;
+          resetAccountPresentation(payload.restoreAccountId);
+          writeStoredAccountId(state.activeAccountId);
+          state.accountBusy = false;
+          updateAccountStatus({ ...payload, accountId: state.activeAccountId, status: payload.status || '连接失败' });
+        }
         state.pendingRestoreAccountId = String(payload.restoreAccountId);
-        resetAccountPresentation(payload.restoreAccountId);
-        writeStoredAccountId(state.activeAccountId);
-        state.accountBusy = false;
-        updateAccountStatus({ ...payload, accountId: state.activeAccountId, status: payload.status || '连接失败' });
-        // The restore event can arrive before the first account-list response.
-        // Always reload the list so the pending account is resolved instead of
-        // leaving the sidebar empty until a manual refresh.
         void loadAccounts();
-        render();
         return;
       }
+      if (!modeAccount(payload.accountId || state.activeAccountId)) return;
       const wasConnected = state.wsStatus === '已连接';
       const payloadAccountId = text(payload.accountId);
       updateAccountStatus(payload);

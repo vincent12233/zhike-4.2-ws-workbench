@@ -27,7 +27,7 @@ async function verifyFailedRestoreAccountRollback(backup) {
   const forgotten = [], deleted = [];
   const window = {
     __zhikeWsBackup: {
-      ensureAccount: async id => { const created = !serverIds.has(id); serverIds.add(id); return { created }; },
+      ensureAccount: async id => { const created = !serverIds.has(id); serverIds.add(id); return { created, workspaceMode: 'ordinary' }; },
       importData: async (_, id) => { if (id === 'test-account') throw new Error('isolated WS import failure'); },
       deleteAccount: async id => { deleted.push(id); serverIds.delete(id); },
     },
@@ -89,7 +89,7 @@ async function restoreIntoIsolatedServer(backup) {
 
     for (const [accountId, payload] of Object.entries(backup.wsAccounts)) {
       if (accountId !== 'default') {
-        response = await request('/api/ws/accounts', { method: 'POST', body: JSON.stringify({ id: accountId, displayName: accountId }) });
+        response = await request('/api/ws/accounts', { method: 'POST', body: JSON.stringify({ id: accountId, displayName: accountId, workspaceMode: payload.accounts?.[0]?.workspaceMode || 'ordinary' }) });
         assert.equal(response.status, 201, `isolated account create rejected: ${await response.text()}`);
       }
       response = await request('/api/ws/import', { method: 'POST', body: JSON.stringify({ ...payload, accountId }) });
@@ -104,6 +104,7 @@ async function restoreIntoIsolatedServer(backup) {
       ['test-account', 'Reply from isolated second account'],
     ]) {
       const exported = await (await request(`/api/ws/export?accountId=${encodeURIComponent(accountId)}`)).json();
+      assert.equal(exported.accounts[0].workspaceMode, accountId === 'default' ? 'ordinary' : 'dedicated', 'Native backup restoration preserves each account purpose');
       assert.equal(exported.conversations.length, 1, `${accountId} conversation must survive restore`);
       assert.equal(exported.messages.length, 1, `${accountId} message must survive restore`);
       assert.equal(exported.messages[0].originalText, expectedText);
@@ -142,8 +143,10 @@ async function main() {
   assert.equal(restored.customers[0].id, 'C123');
   assert.ok(restored.wsAccounts['test-account']);
   assert.ok(restored.wsAccounts.default);
+  assert.equal(restored.wsAccountMetadata[0].workspaceMode, 'dedicated');
+  assert.equal(restored.wsAccounts['test-account'].accounts[0].workspaceMode, 'dedicated');
   assert.deepEqual(Object.keys(restored.wsAccounts['test-account']).sort(), [
-    'analyses', 'batches', 'collectionItems', 'collectionRuns', 'conversations',
+    'accounts', 'analyses', 'batches', 'collectionItems', 'collectionRuns', 'conversations',
     'followupAlerts', 'messages', 'replies', 'schemaVersion', 'settings',
   ].sort());
 

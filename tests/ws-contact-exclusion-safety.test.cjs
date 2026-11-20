@@ -122,7 +122,7 @@ test('v26 upgrade preserves original migration, audit data, backup and rerun int
     db.prepare(`INSERT INTO ws_contact_exclusion_hits(id,exclusion_id,account_id,group_jid,member_jid,action,created_at) VALUES(?,?,?,?,?,?,?)`)
       .run('synthetic-hit', 'synthetic-rule', 'synthetic-account', 'synthetic@g.us', '7000000001', 'auto-create-blocked', '2026-01-02');
     const originalMigration = db.prepare('SELECT * FROM schema_migrations WHERE version=26').get();
-    assert.equal(loadManifest({ migrationDir }).supportedSchemaVersion, 27);
+    assert.equal(loadManifest({ migrationDir }).supportedSchemaVersion, shipped.supportedSchemaVersion);
     const failingDb = new Proxy(db, {
       get(target, key) {
         if (key === 'exec') return sql => {
@@ -141,7 +141,7 @@ test('v26 upgrade preserves original migration, audit data, backup and rerun int
     assert.equal(db.prepare('PRAGMA table_info(ws_contact_exclusion_hits)').all().some(column => column.name === 'rule_name_snapshot'), false, 'failed table rebuild must be rolled back');
     assert.deepEqual(db.prepare('SELECT * FROM schema_migrations WHERE version=26').get(), originalMigration);
     const result = runMigrations({ ...options, migrationDir });
-    assert.equal(result.version, 27);
+    assert.equal(result.version, shipped.supportedSchemaVersion);
     assert.deepEqual(db.prepare('SELECT * FROM schema_migrations WHERE version=26').get(), originalMigration);
     const engine = core.createExclusionEngine({ db });
     assert.equal(engine.listHits()[0].ruleName, 'Historical staff');

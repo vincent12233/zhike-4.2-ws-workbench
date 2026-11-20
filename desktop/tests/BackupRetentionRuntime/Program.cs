@@ -41,7 +41,7 @@ try
     Check(unrelated.All(File.Exists) && File.Exists(nested), "unrelated or nested files must remain untouched");
 
     var accountStore = new WsAccountStore(Path.Combine(root, "isolated-ws-account-index"));
-    await accountStore.SaveAsync([new StoredWsAccount("default", "Default", "未连接"), new StoredWsAccount("test-account", "Isolated second account", "未连接")]);
+    await accountStore.SaveAsync([new StoredWsAccount("default", "Default", "未连接"), new StoredWsAccount("test-account", "Isolated second account", "未连接", WorkspaceMode: "dedicated")]);
     var visibleAccounts = await accountStore.LoadAsync();
     Check(visibleAccounts.Count == 2 && visibleAccounts.Any(account => account.Id == "test-account"), "restored account registry must show the second account");
 
@@ -77,6 +77,7 @@ try
 
     var defaultWs = wsAccount.DeepClone().AsObject();
     defaultWs["schemaVersion"] = 6;
+    defaultWs["accounts"] = new JsonArray(new JsonObject { ["id"] = "default", ["workspaceMode"] = "ordinary" });
     defaultWs["conversations"] = new JsonArray(new JsonObject
     {
         ["id"] = "WS-DEFAULT-C1", ["externalId"] = "wa-default-c1", ["title"] = "Default test chat", ["customerId"] = "C123",
@@ -88,6 +89,7 @@ try
     });
     var secondWs = wsAccount.DeepClone().AsObject();
     secondWs["schemaVersion"] = 6;
+    secondWs["accounts"] = new JsonArray(new JsonObject { ["id"] = "test-account", ["workspaceMode"] = "dedicated" });
     secondWs["conversations"] = new JsonArray(new JsonObject
     {
         ["id"] = "WS-SECOND-C1", ["externalId"] = "wa-second-c1", ["title"] = "Second test chat", ["customerId"] = "C123",
@@ -106,7 +108,7 @@ try
         ["createdAt"] = "2026-11-14T10:30:20Z",
         ["customers"] = new JsonArray(new JsonObject { ["id"] = "C123", ["name"] = "Isolated test customer", ["phone"] = "1234567890" }),
         ["wsAccounts"] = new JsonObject { ["default"] = defaultWs.DeepClone(), ["test-account"] = secondWs.DeepClone() },
-        ["wsAccountMetadata"] = new JsonArray(new JsonObject { ["id"] = "test-account", ["displayName"] = "Isolated second account" }),
+        ["wsAccountMetadata"] = new JsonArray(new JsonObject { ["id"] = "test-account", ["displayName"] = "Isolated second account", ["workspaceMode"] = "dedicated" }),
         ["ws"] = defaultWs.DeepClone(),
     };
     NativeBackupEnvelope.ValidateWorkspace(state);

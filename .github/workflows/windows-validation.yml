@@ -28,11 +28,21 @@ jobs:
         shell: pwsh
         run: |
           $env:ZHIKE_TEST_NODE = (Get-Command node).Source
+          $env:ZHIKE_TEST_DOTNET = (Get-Command dotnet).Source
           $tests = @(
             'tests/rd02-authenticated-profile-boundary.test.cjs',
             'tests/ws-independent-collector-runtime.test.cjs',
             'tests/delivery-rd02-ws-capability.test.cjs',
             'tests/ws-group-manager-production.test.cjs',
+            'tests/ws-group-scope-authorization.test.cjs',
+            'tests/ws-group-scope-bridge.test.cjs',
+            'tests/ws-contact-exclusion.test.cjs',
+            'tests/ws-contact-exclusion-safety.test.cjs',
+            'tests/ws-contact-exclusion-api.test.cjs',
+            'tests/ws-contact-exclusion-ui.test.cjs',
+            'tests/ws-native-account-registration.test.cjs',
+            'tests/ws-account-workspace-mode.test.cjs',
+            'tests/ws-workspace-mode-ui.test.cjs',
             'tests/ws-background-isolation.test.cjs',
             'tests/ws-workbench-security.test.cjs',
             'tests/desktop-packaging-contract.test.cjs',

@@ -17,6 +17,8 @@ function fixture(delayB = false) {
   const contextCurrent = context => context.accountId === state.activeAccountId && context.sequence === state.accountLoadSequence;
   const sandbox = {
     state, String, Map, Set, Promise, clearTimeout, text: value => String(value ?? '').trim(), nowIso: () => '2026-11-16T12:00:00Z',
+    modeAccount: id => state.accounts.find(account => String(account.id) === String(id)),
+    invalidateExclusionPage: () => {},
     groupMonitorNativeSignature: '', settingsSaveTimer: undefined, settingsSaveSequence: 0,
     groupMonitorContext: () => ({ accountId: state.activeAccountId, sequence: state.accountLoadSequence }),
     captureContext: () => ({ accountId: state.activeAccountId, sequence: state.accountLoadSequence }),

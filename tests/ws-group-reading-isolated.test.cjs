@@ -152,7 +152,7 @@ test('WS04 actual workbench DOM fixture handles selection, pages, download and s
   assert.match(html, /ws-group-reading-ui\.js"><\/script>\s*<script src="\.\/modules\/ws-workbench\.js/);
   const target = { innerHTML: '', querySelector: () => null };
   const host = { state: { view: 'ws-workbench', settings: {}, customers: [], activities: [] } };
-  const scope = { accountId: 'default', groupJid, messageId };
+  const scope = { accountId: 'dedicated-account', groupJid, messageId };
   const requests = [];
   let downloadCount = 0;
   let delayExport;
@@ -207,9 +207,9 @@ test('WS04 actual workbench DOM fixture handles selection, pages, download and s
   assert.match(source, boot);
   vm.runInNewContext(source.replace(boot, '  globalThis.fixture = { state, render, handleAction, applyControlChange };\n})();'), context);
   const { state, render, handleAction, applyControlChange } = context.fixture;
-  Object.assign(state, { active: true, activeAccountId: 'default', wsWorkspaceView: 'groups',
-    accounts: [{ id: 'default', displayName: '默认' }, { id: 'other-account', displayName: '其他' }],
-    groupCatalog: [{ accountId: 'default', groupJid, groupName: '本地群' }] });
+  Object.assign(state, { active: true, activeAccountId: 'dedicated-account', workspaceMode: 'dedicated', wsWorkspaceView: 'groups',
+    accounts: [{ id: 'dedicated-account', displayName: '专用', workspaceMode: 'dedicated' }, { id: 'other-account', displayName: '其他', workspaceMode: 'dedicated' }],
+    groupCatalog: [{ accountId: 'dedicated-account', groupJid, groupName: '本地群' }] });
   const details = () => handleAction('group-directory-detail', { dataset: { groupId: groupJid } });
   render();
   assert.equal(requests.length, 0);
@@ -254,7 +254,7 @@ test('WS04 actual workbench DOM fixture handles selection, pages, download and s
   assert.equal(downloadCount, 1);
   assert.doesNotMatch(target.innerHTML, /data-ws-group-reading/);
 
-  state.activeAccountId = 'default';
+  state.activeAccountId = 'dedicated-account';
   state.accountLoadSequence++;
   await details();
   failMessages = true;

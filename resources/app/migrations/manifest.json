@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "supportedSchemaVersion": 27,
+  "supportedSchemaVersion": 28,
   "migrations": [
     {
       "version": 4,
@@ -145,6 +145,12 @@
       "file": "027-ws-exclusion-hit-retention.sql",
       "description": "6.1 preserve exclusion-hit evidence after rule removal",
       "checksum": "3532abd29127d9c0423bd732e8528f3ddc75dddc47c7f817888f29dc6daa04da"
+    },
+    {
+      "version": 28,
+      "file": "028-ws-account-workspace-mode.sql",
+      "description": "6.1 persist ordinary and dedicated WS account purposes",
+      "checksum": "de11272a832363dcc34a739d29fb772f2de1bc758a518a1a1ecf9de41f70d934"
     }
   ]
 }

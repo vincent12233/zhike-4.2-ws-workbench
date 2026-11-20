@@ -42,6 +42,7 @@ assert.match(service, /SendJsonAsync\("api\/state"/);
 assert.match(service, /api\/ws\/export\?accountId=/);
 assert.match(service, /state\["wsAccounts"\] = wsAccounts/);
 assert.match(service, /state\["wsAccountMetadata"\] = wsAccountMetadata/);
+assert.match(service, /\["workspaceMode"\] = account\.WorkspaceMode/, "Automatic backups include account purpose metadata");
 assert.match(service, /WS 会话导出失败，未生成不完整备份/);
 assert.doesNotMatch(service, /if \(!response\.Ok \|\| response\.Data is null\) continue/, 'account export failures must not write a partial backup');
 assert.match(service, /NativeBackupEnvelope\.ValidateWorkspace\(state\)/);
@@ -73,7 +74,7 @@ const updateEnd = accountStore.indexOf('private async Task<IReadOnlyList<StoredW
 assert.ok(updateStart >= 0 && updateEnd > updateStart);
 assert.match(accountStore.slice(updateStart, updateEnd), /await _gate\.WaitAsync\(cancellationToken\);[\s\S]*await ReadAsync\(cancellationToken\)[\s\S]*Normalize\(change\(current\)\)[\s\S]*await WriteAsync\(updated, cancellationToken\)[\s\S]*finally \{ _gate\.Release\(\); \}/,
   'Index rollback changes the latest account set while the store gate is held');
-assert.match(ws, /ensureWsBackupAccount\(accountId, displayName\)/);
+assert.match(ws, /ensureWsBackupAccount\(accountId, displayName, workspaceMode\)/);
 assert.match(ws, /deleteWsBackupAccount\(accountId\)/);
 assert.match(ws, /exportWsData\(accountId = ''\)/);
 assert.match(ws, /importWsData\(value, accountId = ''\)/);

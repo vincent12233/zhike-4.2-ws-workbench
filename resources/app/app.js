@@ -1704,12 +1704,16 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
     for(const [accountId,value] of entries){
       if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('备份中的 WS 账号数据格式异常，未执行恢复。');
       const id=String(accountId),meta=accountMeta.get(id)||{},displayName=String(meta.displayName||id);
-      const ensured=await service.ensureAccount(id,displayName);
+      const embedded=Array.isArray(value.accounts)&&value.accounts.length===1?value.accounts[0]:null;
+      if(Object.hasOwn(value,'accounts')&&(!embedded||String(embedded.id)!==id))throw new Error('WS 备份账号元数据与账号编号不一致，恢复已取消。');
+      if(Object.hasOwn(meta,'workspaceMode')&&embedded&&Object.hasOwn(embedded,'workspaceMode')&&meta.workspaceMode!==embedded.workspaceMode)throw new Error('WS 备份的两处账号用途不一致，恢复已取消。');
+      const backupMode=Object.hasOwn(meta,'workspaceMode')?meta.workspaceMode:embedded&&Object.hasOwn(embedded,'workspaceMode')?embedded.workspaceMode:undefined;
+      const ensured=await service.ensureAccount(id,displayName,backupMode);
       if(ensured?.created)createdServerIds.push(id);
       if(window.zhikeDesktop?.wsAccounts&&!existingNativeIds.has(id.toLowerCase())){
         createdNativeIds.push(id);
-        const native=await window.zhikeDesktop.wsAccounts({action:'create',account:{id,displayName}});
-        if(String(native?.account?.id||'').toLowerCase()!==id.toLowerCase())throw new Error('无法登记 WS 本机账号，恢复已取消。');
+        const native=await window.zhikeDesktop.wsAccounts({action:'create',account:{id,displayName,workspaceMode:ensured.workspaceMode}});
+        if(String(native?.account?.id||'').toLowerCase()!==id.toLowerCase()||(native.account.workspaceMode===undefined?'ordinary':native.account.workspaceMode)!==ensured.workspaceMode)throw new Error('无法登记 WS 本机账号，恢复已取消。');
       }
       await service.importData(value,id);
     }
@@ -2025,7 +2029,9 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
           if(Number(data?.schemaVersion)!==6||wsRowLimits.some(([field,limit])=>!Array.isArray(data?.[field])||data[field].length>limit))throw new Error('WS 账号导出不完整或超过可恢复记录上限，未生成备份。');
           if(new TextEncoder().encode(JSON.stringify(data)).byteLength>48*1024*1024)throw new Error('单个 WS 账号超过 48 MB 可恢复上限，未生成无法恢复的完整备份。');
           wsAccounts[accountId]=data;
-          wsAccountMetadata.push({id:accountId,displayName:String(account?.displayName||accountId),status:String(account?.status||'')});
+          const workspaceMode=account?.workspaceMode===undefined?'ordinary':account.workspaceMode;
+          if(!['ordinary','dedicated'].includes(workspaceMode))throw new Error('WS 账号用途无效，未生成备份。');
+          wsAccountMetadata.push({id:accountId,displayName:String(account?.displayName||accountId),workspaceMode,status:String(account?.status||'')});
         }
         const ws=wsAccounts.default||wsAccounts[accounts[0].id];
         const backupPayload={...workspace,backupFormat:'zhike-6-workspace',version:6,productVersion:'6.1.0',createdAt,summary:{customers:state.customers.length,tickets:state.tickets.length,deposits:state.deposits.length,followups:state.followups.length,registrations:state.registrations.length,phoneRegistry:state.phoneRegistry.length,batchOperations:state.batchOperations.length},ws,wsAccounts,wsAccountMetadata};

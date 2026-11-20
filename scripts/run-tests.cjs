@@ -213,6 +213,8 @@ function runWs() {
   run('WS CRM customer-link trust boundary', [path.join(repo, 'tests', 'ws-crm-link-trust.test.cjs')]);
   run('WS workbench initialization', [path.join(repo, 'tests', 'ws-workbench-init.test.cjs')]);
   run('WS native account registration consistency', [path.join(repo, 'tests', 'ws-native-account-registration.test.cjs')]);
+  run('WS account purpose migration and backup restoration', [path.join(repo, 'tests', 'ws-account-workspace-mode.test.cjs')], { timeout: 180000 });
+  run('WS ordinary and dedicated workspace isolation', [path.join(repo, 'tests', 'ws-workspace-mode-ui.test.cjs')]);
   run('WS API and SQLite', [path.join(repo, 'tests', 'ws-workbench-api.test.cjs')]);
   run('WS export streaming contract', [path.join(repo, 'tests', 'ws-export-streaming-contract.test.cjs')]);
   run('WS export and media schema', [path.join(repo, 'tests', 'ws-export-media-schema.test.cjs')]);

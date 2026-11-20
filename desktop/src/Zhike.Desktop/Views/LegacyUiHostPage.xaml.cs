@@ -1064,7 +1064,7 @@ public sealed partial class LegacyUiHostPage : Page
             {
                 var page = StringValue(root, "page");
                 var phase = StringValue(root, "phase");
-                if (page is "overview" or "accounts" or "chat" or "groups" or "members" or "collection" or "contacts" or "exclusions" or "ai" or "crm" or "tasks" or "logs" or "settings"
+                if (page is "overview" or "accounts" or "chat" or "groups" or "members" or "collection" or "contacts" or "exclusions" or "group-broadcast" or "group-mentions" or "group-reading" or "group-permissions" or "ai" or "crm" or "tasks" or "logs" or "settings"
                     && phase is "enter" or "exit") Stage51Isolation.Record("workspace-page", new { page, phase });
                 return;
             }
@@ -1433,15 +1433,23 @@ public sealed partial class LegacyUiHostPage : Page
             return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "INVALID_REQUEST", "account id and display name are required");
         if (id.Length > 96 || displayName.Length > 80)
             return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "INVALID_REQUEST", "account field is too long");
+        string? workspaceMode = null;
+        if (accountValue.TryGetProperty("workspaceMode", out var modeValue))
+        {
+            if (modeValue.ValueKind != JsonValueKind.String || modeValue.GetString() is not ("ordinary" or "dedicated"))
+                return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "INVALID_REQUEST", "WS 账号用途必须为普通或专用。");
+            workspaceMode = modeValue.GetString();
+        }
         var local = await _wsAccountStore.LoadAsync(cancellationToken);
         var existing = local.FirstOrDefault(item => string.Equals(item.Id, id, StringComparison.OrdinalIgnoreCase));
-        var request = new WsAccountRequest(existing?.Id ?? id, existing?.DisplayName ?? displayName);
+        var request = new WsAccountRequest(existing?.Id ?? id, existing?.DisplayName ?? displayName, WorkspaceMode: workspaceMode);
         var api = _api;
         WsAccountDto confirmed;
         try
         {
             if (api is null) throw new InvalidOperationException("本机数据服务不可用。");
-            confirmed = await api.EnsureWsAccountAsync(request, cancellationToken);
+            confirmed = await api.EnsureWsAccountAsync(request, cancellationToken,
+                missingAccountWorkspaceMode: existing is null ? null : existing.WorkspaceMode ?? string.Empty);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch
@@ -1454,7 +1462,8 @@ public sealed partial class LegacyUiHostPage : Page
         try
         {
             updated = await _wsAccountStore.UpdateAsync(rows => rows.Any(item => string.Equals(item.Id, request.Id, StringComparison.Ordinal))
-                ? rows : MergeWsAccounts(rows, [confirmed]), cancellationToken);
+                ? rows.Select(item => item.Id == request.Id ? item with { WorkspaceMode = confirmed.WorkspaceMode } : item).ToArray()
+                : MergeWsAccounts(rows, [confirmed]), cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch
@@ -1960,7 +1969,7 @@ public sealed partial class LegacyUiHostPage : Page
             var status = string.IsNullOrWhiteSpace(item.RuntimeStatus) ? item.Status : item.RuntimeStatus;
             if (index < 0)
             {
-                accounts.Add(new StoredWsAccount(item.Id, item.DisplayName, status, item.LastSeen, item.LastKnownStatus));
+                accounts.Add(new StoredWsAccount(item.Id, item.DisplayName, status, item.LastSeen, item.LastKnownStatus, item.WorkspaceMode));
                 continue;
             }
             var existing = accounts[index];
@@ -1970,13 +1979,14 @@ public sealed partial class LegacyUiHostPage : Page
                 Status = string.IsNullOrWhiteSpace(status) ? existing.Status : status,
                 LastSeen = item.LastSeen ?? existing.LastSeen,
                 LastKnownStatus = string.IsNullOrWhiteSpace(item.LastKnownStatus) ? existing.LastKnownStatus : item.LastKnownStatus,
+                WorkspaceMode = item.WorkspaceMode,
             };
         }
         return accounts;
     }
 
     private static object ToWsAccountDto(StoredWsAccount account)
-        => new { id = account.Id, displayName = account.DisplayName, status = account.Status, runtimeStatus = account.Status, lastSeen = account.LastSeen, lastKnownStatus = account.LastKnownStatus };
+        => new { id = account.Id, displayName = account.DisplayName, status = account.Status, runtimeStatus = account.Status, lastSeen = account.LastSeen, lastKnownStatus = account.LastKnownStatus, workspaceMode = account.WorkspaceMode };
 
     private async Task OpenWsOverlayAsync(string accountId, JsonElement payload, bool reload = false, CancellationToken cancellationToken = default)
     {
@@ -2175,7 +2185,7 @@ public sealed partial class LegacyUiHostPage : Page
         var routeActive = activeValue.GetBoolean();
         var workspacePage = StringValue(payload, "workspacePage");
         if (routeActive && workspacePage is not ("overview" or "accounts" or "chat" or "groups" or "members"
-            or "collection" or "contacts" or "exclusions" or "ai" or "crm" or "tasks" or "logs" or "settings")) return false;
+            or "collection" or "contacts" or "exclusions" or "group-broadcast" or "group-mentions" or "group-reading" or "group-permissions" or "ai" or "crm" or "tasks" or "logs" or "settings")) return false;
         var presentationAccountId = StringValue(payload, "accountId");
         if (presentationAccountId.Length > 200) return false;
         var documentId = StringValue(payload, "documentId");

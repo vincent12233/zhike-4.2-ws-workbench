@@ -32,6 +32,10 @@ using Zhike.Desktop.Services;
 static void Check(bool condition, string message) { if (!condition) throw new Exception(message); }
 var dir = Path.Combine(AppContext.BaseDirectory, "synthetic-account-index");
 var store = new WsAccountStore(dir);
+await File.WriteAllTextAsync(Path.Combine(dir, "accounts.json"), JsonSerializer.Serialize(new[] { new { id = "legacy-json", displayName = "Legacy without purpose", status = "未连接" } }));
+Check((await store.LoadAsync()).Single().WorkspaceMode == "ordinary", "Existing JSON indexes without purpose deserialize as ordinary");
+var legacyDto = JsonSerializer.Deserialize<WsAccountDto>(JsonSerializer.Serialize(new { id = "legacy-api", displayName = "Legacy API", status = "未连接" }), new JsonSerializerOptions(JsonSerializerDefaults.Web));
+Check(legacyDto?.WorkspaceMode == "ordinary", "Historical sidecar responses without purpose remain compatible");
 var original = new StoredWsAccount("old-native-only", "保留的本机账号", "等待登录");
 await store.SaveAsync([original]);
 var sidecar = new Sidecar();
@@ -105,7 +109,34 @@ Check(afterForget.OrderBy(row => row.Id).SequenceEqual(beforeForget.Where(row =>
 Check(sidecar.Rows.Keys.Order().SequenceEqual(originalSidecarIds) && sidecar.Posted.Count == originalSidecarWrites,
     "Forget leaves the sidecar account records and writes untouched");
 Check(await File.ReadAllTextAsync(marker) == "fixture marker", "Forget leaves the fixture marker untouched");
-Console.WriteLine("Native WS account registration and forget passed: stable retry, exact readback, index recovery and target-only rollback");
+Check(original.WorkspaceMode == "ordinary", "Legacy native accounts remain ordinary by default");
+var dedicated = await bridge.Call(new { action = "create", account = new { id = "dedicated-fixture", displayName = "Dedicated synthetic", workspaceMode = "dedicated" } });
+Check(dedicated.Ok && dedicated.Data?.GetProperty("account").GetProperty("workspaceMode").GetString() == "dedicated", "Dedicated mode reaches the confirmed native response");
+Check(sidecar.Rows["dedicated-fixture"].WorkspaceMode == "dedicated" && (await store.LoadAsync()).Single(row => row.Id == "dedicated-fixture").WorkspaceMode == "dedicated", "Dedicated mode persists in sidecar and local index");
+var modeMismatch = await bridge.Call(new { action = "create", account = new { id = "dedicated-fixture", displayName = "Wrong purpose", workspaceMode = "ordinary" } });
+Check(!modeMismatch.Ok, "An existing account cannot be reused as another workspace purpose");
+var invalidMode = await bridge.Call(new { action = "create", account = new { id = "invalid-purpose", displayName = "Invalid", workspaceMode = "vip" } });
+Check(!invalidMode.Ok && invalidMode.ErrorCode == "INVALID_REQUEST" && !sidecar.Rows.ContainsKey("invalid-purpose"), "There is no third VIP workspace purpose");
+await store.UpdateAsync(rows => rows.Select(row => row.Id == "dedicated-fixture" ? row with { WorkspaceMode = "ordinary" } : row));
+var recoveredMode = await bridge.Call(new { action = "create", account = new { id = "dedicated-fixture", displayName = "Recovery without old metadata" } });
+Check(recoveredMode.Ok && (await store.LoadAsync()).Single(row => row.Id == "dedicated-fixture").WorkspaceMode == "dedicated", "An omitted role preserves the authoritative sidecar mode during recovery");
+var nativeOnlyDedicated = new StoredWsAccount("dedicated-orphan", "Dedicated native-only", "未连接", WorkspaceMode: "dedicated");
+await store.UpdateAsync(rows => rows.Append(nativeOnlyDedicated));
+var badOrphanRestore = await bridge.Call(new { action = "create", account = new { id = nativeOnlyDedicated.Id, displayName = "Wrong purpose", workspaceMode = "ordinary" } });
+Check(!badOrphanRestore.Ok && !sidecar.Rows.ContainsKey(nativeOnlyDedicated.Id), "Restoring a native-only account cannot change its saved purpose");
+var restoredOrphan = await bridge.Call(new { action = "create", account = new { id = nativeOnlyDedicated.Id, displayName = "Restore without new metadata" } });
+Check(restoredOrphan.Ok && sidecar.Rows[nativeOnlyDedicated.Id].WorkspaceMode == "dedicated" && (await store.LoadAsync()).Contains(nativeOnlyDedicated), "A native-only dedicated account retains its purpose when sidecar registration is rebuilt");
+var concurrentDedicated = nativeOnlyDedicated with { Id = "dedicated-race" };
+await store.UpdateAsync(rows => rows.Append(concurrentDedicated));
+sidecar.NextPost = HttpStatusCode.Conflict;
+sidecar.InsertOnConflict = true;
+sidecar.ConflictWorkspaceMode = "ordinary";
+var conflictingRestore = await bridge.Call(new { action = "create", account = new { id = concurrentDedicated.Id, displayName = "Concurrent restore" } });
+Check(!conflictingRestore.Ok && (await store.LoadAsync()).Single(row => row.Id == concurrentDedicated.Id).WorkspaceMode == "dedicated", "A concurrent sidecar registration with another purpose fails without overwriting the local index");
+sidecar.ConflictWorkspaceMode = null;
+var listedModes = await bridge.Call(new { action = "list" });
+Check(listedModes.Ok && listedModes.Data?.GetProperty("accounts").EnumerateArray().Any(row => row.GetProperty("id").GetString() == "dedicated-fixture" && row.GetProperty("workspaceMode").GetString() == "dedicated") == true, "List preserves role metadata for workspace filtering");
+Console.WriteLine("Native WS account registration: retry, recovery, forget, ordinary/dedicated role persistence and purpose checks passed");
 
 static class DesktopBridgeService { public const string CurrentVersion = "fixture"; }
 static class App { public static Runtime WsRuntime { get; } = new(); }
@@ -119,6 +150,7 @@ sealed class Sidecar : HttpMessageHandler {
     public List<string> Posted { get; } = [];
     public HttpStatusCode NextPost { get; set; } = HttpStatusCode.Created;
     public bool InsertOnConflict { get; set; }
+    public string? ConflictWorkspaceMode { get; set; }
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
         if (request.RequestUri?.AbsolutePath != "/api/ws/accounts") throw new InvalidOperationException("Unexpected endpoint");
         if (request.Method == HttpMethod.Get) return Reply(HttpStatusCode.OK, new { accounts = Rows.Values });
@@ -127,7 +159,7 @@ sealed class Sidecar : HttpMessageHandler {
         Posted.Add(account!.Id);
         var status = NextPost;
         NextPost = HttpStatusCode.Created;
-        var row = new WsAccountDto(account.Id, account.DisplayName, "未连接", null);
+        var row = new WsAccountDto(account.Id, account.DisplayName, "未连接", null, WorkspaceMode: status == HttpStatusCode.Conflict ? ConflictWorkspaceMode ?? account.WorkspaceMode ?? "ordinary" : account.WorkspaceMode ?? "ordinary");
         if (status == HttpStatusCode.Created || (status == HttpStatusCode.Conflict && InsertOnConflict)) Rows.Add(account.Id, row);
         return Reply(status, new { account = row });
     }

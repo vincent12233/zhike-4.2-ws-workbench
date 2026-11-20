@@ -30,7 +30,7 @@ assert.doesNotMatch(profiles, /File\.Copy|CopyProfileDirectory|stagingPath|backu
   'excluding cookie filenames cannot substitute for prohibiting authenticated profile copying');
 assert.match(ui, /BLOCKED_COLLECTION_CAPABILITY = Object\.freeze/);
 assert.match(ui, /blocked: true, supported: false, started: false, retryable: false/);
-assert.match(ui, /async function refreshCollectionSummary\(options = \{\}\) \{\s*if \(!collectionReady\('backgroundCollection'\)\) return collectionBlockedResult\(\)/,
+assert.match(ui, /async function refreshCollectionSummary\(options = \{\}\) \{\s*(?:if \(!modeAccount\(state\.activeAccountId\)\) return;\s*)?if \(!collectionReady\('backgroundCollection'\)\) return collectionBlockedResult\(\)/,
   'refresh requires independent collector readiness before warmup/retry work');
 assert.doesNotMatch(host, /session\.cookies|document\.cookie|password/i);
 assert.match(host, /WsCollectorIngress\.TryAuthorize\(/, 'host-controlled view identity authorizes background ingress');

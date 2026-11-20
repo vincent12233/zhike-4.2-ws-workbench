@@ -44,9 +44,11 @@ assert.match(workbenchSource, /function resetAccountPresentation\(accountId\)[\s
   // Execute the actual startup body: loading local conversations clears errors,
   // but a failed native open must remain visible even without preview metadata.
   async function startup(openFails, preview = undefined, switchDuringOpen = false) {
-    const state = { activeAccountId: 'a', accountLoadSequence: 0, accountPresentationGeneration: 0, connectionAttemptGeneration: 0, error: '' };
+    const state = { workspaceMode: 'ordinary', activeAccountId: 'a', accountLoadSequence: 0, accountPresentationGeneration: 0, connectionAttemptGeneration: 0, error: '' };
     const sandbox = {
       state, getHost: () => ({ state: {} }),
+      normalizeWorkspaceMode: mode => mode,
+      workspaceLabel: () => '普通 WS', modeAccount: id => id ? { id } : null,
       startBackgroundRuntime: () => (state.backgroundActive = true),
       backgroundGeneration: 1, backgroundStartGeneration: 0, backgroundStartPromise: null,
       document: { documentElement: { dataset: {} }, body: { classList: { add() {} } } },
@@ -108,6 +110,8 @@ assert.match(workbenchSource, /function resetAccountPresentation\(accountId\)[\s
   let fallbackWrites = 0;
   const nativeFailure = Object.assign(new Error('isolated index unavailable'), { code: 'WS_ACCOUNT_INDEX_WRITE_FAILED' });
   const bridgeSandbox = {
+    normalizeWorkspaceMode: mode => mode === undefined ? 'ordinary' : mode,
+    accountWorkspaceMode: account => account.workspaceMode === undefined ? 'ordinary' : account.workspaceMode,
     window: { zhikeDesktop: { wsAccounts: async () => { throw nativeFailure; } } },
     withWsAccountTimeout: task => task(),
     api: async () => { fallbackWrites++; return { account: { id: 'partial' } }; },

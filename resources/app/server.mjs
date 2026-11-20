@@ -1109,6 +1109,7 @@ function wsAccountPayload(row) {
   return {
     id: row.id,
     displayName: row.display_name,
+    workspaceMode: row.workspace_mode || 'ordinary',
     provider: row.provider,
     origin: row.origin,
     partitionKey: row.partition_key,
@@ -2726,13 +2727,23 @@ const server = createServer(async (req, res) => {
         const body = JSON.parse((await readBody(req, 256 * 1024)).toString('utf8'));
         const id = wsText(body.id, 120);
         if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,119}$/.test(id)) return json(res, 400, { error: 'WS 账号编号无效。' });
-        if (wsAccountRow(id)) return json(res, 409, { error: 'WS 账号已存在。' });
+        const hasWorkspaceMode = Object.hasOwn(body, 'workspaceMode');
+        const workspaceMode = hasWorkspaceMode ? body.workspaceMode : 'ordinary';
+        if (!['ordinary', 'dedicated'].includes(workspaceMode)) return json(res, 400, { error: 'WS 账号用途必须是 ordinary 或 dedicated。', code: 'INVALID_WORKSPACE_MODE' });
+        // Native account indexes and Windows profile paths are case-insensitive.
+        // Reject new case variants without rewriting or merging historical rows.
+        const existingAccount = db.prepare('SELECT * FROM ws_accounts WHERE id=? COLLATE NOCASE ORDER BY CASE WHEN id=? THEN 0 ELSE 1 END, id LIMIT 1').get(id, id);
+        if (existingAccount) {
+          if (hasWorkspaceMode && workspaceMode !== existingAccount.workspace_mode) return json(res, 409, { error: '已有 WS 账号的用途与请求不符，不能覆盖。', code: 'WORKSPACE_MODE_CONFLICT' });
+          if (existingAccount.id !== id) return json(res, 409, { error: 'WS 账号编号仅大小写不同，必须使用已有账号的原始编号。', code: 'WS_ACCOUNT_ID_CASE_CONFLICT' });
+          return json(res, 409, { error: 'WS 账号已存在。' });
+        }
         const now = new Date().toISOString();
         db.exec('BEGIN IMMEDIATE');
         try {
           const status = WS_STATUSES.has(wsText(body.status, 32)) ? wsText(body.status, 32) : '未连接';
-          db.prepare('INSERT INTO ws_accounts(id,display_name,provider,origin,partition_key,status,last_status,last_seen_at,enabled,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)')
-            .run(id, wsText(body.displayName, 200) || id, wsText(body.provider, 120), wsText(body.origin, 500), wsText(body.partitionKey, 200) || `persist:${id}`, status, status === '未连接' ? '' : status, status === '已连接' ? now : '', body.enabled === false ? 0 : 1, now, now);
+          db.prepare('INSERT INTO ws_accounts(id,display_name,workspace_mode,provider,origin,partition_key,status,last_status,last_seen_at,enabled,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)')
+            .run(id, wsText(body.displayName, 200) || id, workspaceMode, wsText(body.provider, 120), wsText(body.origin, 500), wsText(body.partitionKey, 200) || `persist:${id}`, status, status === '未连接' ? '' : status, status === '已连接' ? now : '', body.enabled === false ? 0 : 1, now, now);
           wsSaveAccountSettings(id, body.settings || body, now);
           db.exec('COMMIT');
         } catch (error) { db.exec('ROLLBACK'); throw error; }
@@ -2745,8 +2756,16 @@ const server = createServer(async (req, res) => {
       const accountId = decodeURIComponent(accountMatch[1]);
       const account = wsAccountRow(accountId);
       if (!account) return json(res, 404, { error: 'WS 账号不存在。' });
+      if (req.method === 'GET') return json(res, 200, { account: wsAccountPayload(account) });
       if (req.method === 'PATCH') {
         const body = JSON.parse((await readBody(req, 256 * 1024)).toString('utf8'));
+        if (Object.hasOwn(body, 'workspaceMode')) {
+          if (!['ordinary', 'dedicated'].includes(body.workspaceMode)) return json(res, 400, { error: 'WS 账号用途必须是 ordinary 或 dedicated。', code: 'INVALID_WORKSPACE_MODE' });
+          // Sidecar status is persisted telemetry, not proof that the native
+          // collector has stopped. Fix purpose at creation until a trusted
+          // native quiescence protocol can authorize a future mode change.
+          if (body.workspaceMode !== account.workspace_mode) return json(res, 409, { error: 'WS 账号用途仅在创建时指定，现有账号不能切换用途。', code: 'WORKSPACE_MODE_IMMUTABLE' });
+        }
         const now = new Date().toISOString();
         db.exec('BEGIN IMMEDIATE');
         try {
@@ -2766,7 +2785,7 @@ const server = createServer(async (req, res) => {
         try { db.prepare('DELETE FROM ws_accounts WHERE id=?').run(accountId); db.exec('COMMIT'); } catch (error) { db.exec('ROLLBACK'); throw error; }
         return json(res, 200, { ok: true, accountId });
       }
-      return json(res, 405, { error: 'WS 账号只支持 PATCH/DELETE。' });
+      return json(res, 405, { error: 'WS 账号只支持 GET/PATCH/DELETE。' });
     }
     const groupCatalogMatch = url.pathname.match(/^\/api\/ws\/accounts\/([^/]+)\/groups$/);
     if (groupCatalogMatch) {
@@ -5243,7 +5262,18 @@ const server = createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === '/api/ws/import') {
       const body = JSON.parse((await readBody(req, 50 * 1024 * 1024)).toString('utf8'));
       const accountId = wsAccountId(body.accountId);
-      wsRequireAccount(accountId);
+      const account = wsRequireAccount(accountId);
+      // Full workspace backups preserve each per-account export verbatim.
+      // Validate its purpose before deleting any existing conversation data;
+      // restore callers must create missing accounts with that same purpose.
+      if (Object.hasOwn(body, 'accounts')) {
+        if (!Array.isArray(body.accounts) || body.accounts.length !== 1 || body.accounts[0]?.id !== accountId) return json(res, 400, { error: 'WS 备份账号清单与当前恢复账号不符，请逐账号恢复。', code: 'WORKSPACE_MODE_ACCOUNT_MISMATCH' });
+        const metadata = body.accounts[0];
+        if (Object.hasOwn(metadata, 'workspaceMode')) {
+          if (!['ordinary', 'dedicated'].includes(metadata.workspaceMode)) return json(res, 400, { error: 'WS 备份中的账号用途无效。', code: 'INVALID_WORKSPACE_MODE' });
+          if (metadata.workspaceMode !== account.workspace_mode) return json(res, 409, { error: 'WS 备份账号用途与当前账号不符，未执行恢复。', code: 'WORKSPACE_MODE_CONFLICT' });
+        }
+      }
       const schemaVersion = Number(body.schemaVersion || 5);
       if (!Number.isInteger(schemaVersion) || schemaVersion < 5 || schemaVersion > 6) return json(res, 400, { error: 'WS 备份版本不受支持，只能恢复 v5 或 v6 数据。' });
       for (const key of ['settings','conversations','messages','analyses','replies','batches','collectionRuns','collectionItems','followupAlerts']) if (Object.hasOwn(body, key) && !Array.isArray(body[key])) return json(res, 400, { error: `WS 备份中的 ${key} 不是有效数组。` });
