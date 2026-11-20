@@ -1110,8 +1110,58 @@
   }
   function currentDraft() {
     const key = `${state.activeAccountId || 'default'}:${String(state.currentConversationId || '__new__')}`;
-    if (!state.drafts.has(key)) state.drafts.set(key, blankDraft());
+    if (!state.drafts.has(key)) {
+      const restored = restoreDraftReply(key);
+      const draft = blankDraft();
+      if (restored) draft.replyInput = restored;
+      state.drafts.set(key, draft);
+    }
     return state.drafts.get(key);
+  }
+  // Reply text survives a window close/reopen. Only the operator's unsent
+  // text is stored (never AI previews, errors or captured messages), scoped by
+  // account + conversation so switching accounts cannot leak a draft across.
+  const DRAFT_STORAGE_KEY = 'zhike.ws.reply-drafts';
+  const DRAFT_MAX_ENTRIES = 60;
+  const DRAFT_MAX_CHARS = 4000;
+  let draftPersistTimer = null;
+  function readDraftStore() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || '{}');
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    } catch { return {}; }
+  }
+  function restoreDraftReply(key) {
+    const value = readDraftStore()[key];
+    return typeof value === 'string' ? value.slice(0, DRAFT_MAX_CHARS) : '';
+  }
+  function persistDraftReply(key, value) {
+    try {
+      const store = readDraftStore();
+      const text = String(value || '').slice(0, DRAFT_MAX_CHARS);
+      if (text.trim()) store[key] = text; else delete store[key];
+      const keys = Object.keys(store);
+      if (keys.length > DRAFT_MAX_ENTRIES) {
+        // Evict the oldest entries; object key order is insertion order.
+        for (const stale of keys.slice(0, keys.length - DRAFT_MAX_ENTRIES)) delete store[stale];
+      }
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(store));
+    } catch { /* a full or disabled localStorage must never break typing */ }
+  }
+  function scheduleDraftPersist(key, value) {
+    if (draftPersistTimer) clearTimeout(draftPersistTimer);
+    draftPersistTimer = setTimeout(() => {
+      draftPersistTimer = null;
+      persistDraftReply(key, value);
+    }, 250);
+  }
+  function flushDraftPersist() {
+    if (!draftPersistTimer) return;
+    clearTimeout(draftPersistTimer);
+    draftPersistTimer = null;
+    const key = `${state.activeAccountId || 'default'}:${String(state.currentConversationId || '__new__')}`;
+    const draft = state.drafts.get(key);
+    if (draft) persistDraftReply(key, draft.replyInput);
   }
   const HOT_PROFILE_LABELS = Object.freeze({
     preferred_name: '客户姓名或称呼',
@@ -4919,6 +4969,10 @@
       assertContext(context);
       state.replies = [saved, ...state.replies.filter(item => String(item.id) !== String(saved.id))].slice(0, 10);
       draft.replyOperationId = '';
+      // A copied reply is no longer an unsent draft; drop it from durable
+      // storage so a reopen does not resurrect already-handled text.
+      draft.replyInput = '';
+      persistDraftReply(`${state.activeAccountId || 'default'}:${String(state.currentConversationId || '__new__')}`, '');
       toast(`回复已完整复制（${output.length} 字），请回到 WS 页面人工发送。`);
     } catch (error) {
       if (contextCurrent(context)) { draft.replyError = error.message; toast(error.message, 'x'); }
@@ -5601,10 +5655,13 @@
     const key = fields[target.id];
     if (!key) return;
     draft[key] = target.value;
-    if (target.id === 'wsReplyInput' && draft.replyPreviewSource !== target.value) {
-      draft.replyPreview = '';
-      draft.replyPreviewSource = '';
-      draft.replyError = '';
+    if (target.id === 'wsReplyInput') {
+      if (draft.replyPreviewSource !== target.value) {
+        draft.replyPreview = '';
+        draft.replyPreviewSource = '';
+        draft.replyError = '';
+      }
+      scheduleDraftPersist(`${state.activeAccountId || 'default'}:${String(state.currentConversationId || '__new__')}`, target.value);
     }
     if (target.id === 'wsVisibleChat') {
       const rows = core.parseVisibleChat(target.value, state.captureDirection);
@@ -5982,6 +6039,7 @@
     });
     window.addEventListener('beforeunload', () => {
       if (bootRetryTimer != null) { clearTimeout(bootRetryTimer); bootRetryTimer = null; }
+      flushDraftPersist();
       stopBackgroundRuntime();
     });
     window.addEventListener('offline', () => setStatus('连接失败', '网络已断开；知客本地客户功能仍可使用。'));

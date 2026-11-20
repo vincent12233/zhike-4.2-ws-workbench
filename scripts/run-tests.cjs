@@ -80,6 +80,7 @@ function runStage3(options = {}) {
   run('WS contact exclusion platform', [path.join(repo, 'tests', 'ws-contact-exclusion.test.cjs')]);
   run('WS contact exclusion API and production gate', [path.join(repo, 'tests', 'ws-contact-exclusion-api.test.cjs')], { timeout: 180000 });
   run('WS contact exclusion page contract', [path.join(repo, 'tests', 'ws-contact-exclusion-ui.test.cjs')]);
+  run('WS reply draft persistence', [path.join(repo, 'tests', 'ws-reply-draft-persistence.test.cjs')]);
   run('Stage 3 WS workspace navigation', [path.join(repo, 'scripts', 'stage3', 'ws-workbench-navigation.test.cjs')]);
 }
 
