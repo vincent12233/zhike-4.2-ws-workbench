@@ -9,7 +9,7 @@ const host = fs.readFileSync(path.join(desktop, 'Views/LegacyUiHostPage.xaml.cs'
 function take(from, to) { const start = host.indexOf(from), end = host.indexOf(to, start); assert.ok(start >= 0 && end > start); return host.slice(start, end); }
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'zhike-account-metrics-'));
 const escapeXml = value => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
-const includes = ['WsAccountStore.cs', 'WsAccountMetrics.cs', 'WebViewProfileService.cs'].map(file => `<Compile Include="${escapeXml(path.join(desktop, 'Services', file))}" Link="${file}" />`).join('');
+const includes = ['WsAccountStore.cs', 'WsAccountMetrics.cs', 'WebViewProfileService.cs', 'WsNavigationLifecycle.cs'].map(file => `<Compile Include="${escapeXml(path.join(desktop, 'Services', file))}" Link="${file}" />`).join('');
 fs.writeFileSync(path.join(root, 'Probe.csproj'), `<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup><ItemGroup>${includes}</ItemGroup></Project>`);
 fs.writeFileSync(path.join(root, 'Program.cs'), `
 using System.Text.Json;
@@ -34,6 +34,13 @@ Check((await probe.Snapshot()).Accounts[0].SavedSession == "unknown", "directory
 var view = new WebView2 { CoreWebView2 = new CoreWebView2 { Result = Task.FromResult(ProbeResult(true)) } };
 var collector = new WebView2();
 App.WsSessions.Rows.Add(new("a0", 1, view, collector));
+var navigation = probe.TrackNavigation("a0", 1, view);
+navigation.Starting(1, false);
+Check(navigation.SetFailure(1, "synthetic navigation failure"), "current failure recorded");
+var failedLogin = await probe.Call("a0", view, 1);
+Check(failedLogin.status == "连接失败" && failedLogin.detail == "synthetic navigation failure", "probe preserves terminal navigation failure over stale chat DOM");
+navigation.Request("reopen", explicitBoundary: true);
+navigation.Starting(2, false);
 Check((await probe.Call("a0", view, 1)).status == "已连接", "current native chat observation succeeds");
 var signedIn = (await probe.Snapshot()).Accounts.First(row => row.AccountId == "a0");
 Check(signedIn.SavedSession == "confirmed" && signedIn.OnlineState == "recent" && signedIn.ForegroundInitialized && !signedIn.CollectorInitialized, "only initialized foreground counts; allocation alone is not initialization");
@@ -113,6 +120,7 @@ sealed class Probe(WsAccountStore store, WebViewProfileService profiles) {
   readonly WsAccountStore _wsAccountStore = store;
   readonly WebViewProfileService _wsProfiles = profiles;
   readonly WsAccountMetrics _wsAccountMetrics = new();
+  readonly Dictionary<WebView2, WsNavigationLifecycle> _wsNavigation = new();
   readonly HashSet<WebView2> _wsCollectorStarted = [];
   readonly System.Collections.Concurrent.ConcurrentDictionary<string, long> _wsStatusSequence = new();
   readonly SemaphoreSlim _wsStatusGate = new(1, 1);
@@ -120,6 +128,7 @@ sealed class Probe(WsAccountStore store, WebViewProfileService profiles) {
   FixtureDispatcher DispatcherQueue => FixtureDispatcher.Instance;
   public TaskCompletionSource? StatusEntered;
   public int Published;
+  public WsNavigationLifecycle TrackNavigation(string id, long generation, WebView2 view) => _wsNavigation[view] = new(id, generation, "visible");
   public Task<(string status,string detail)> Call(string id, WebView2 view, long generation, bool publish = true, CancellationToken token = default) => ProbeWsLoginStateAsync(id,view,generation,token,publish);
   public Task<WsAccountMetricsSnapshot> Snapshot() => RunWsProbeOnUiAsync(async () => BuildWsAccountMetrics(await store.LoadAsync()), CancellationToken.None);
   public WsAccountMetricsSnapshot RawSnapshot(IReadOnlyList<StoredWsAccount> rows, DateTimeOffset now) => _wsAccountMetrics.Snapshot(rows, App.WsSessions.Rows.Select(s => new WsAccountMetricRuntime(s.AccountId,s.Generation,s.IsReady,s.IsCollectorReady,s.CollectorState)).ToArray(),profiles.GetProfileDirectoryStamp,now);

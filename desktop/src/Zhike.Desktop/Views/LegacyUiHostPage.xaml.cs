@@ -2624,20 +2624,23 @@ public sealed partial class LegacyUiHostPage : Page
         var login = root.TryGetProperty("login", out var loginValue) && loginValue.ValueKind == JsonValueKind.True;
         var chat = root.TryGetProperty("chat", out var chatValue) && chatValue.ValueKind == JsonValueKind.True;
         var problem = root.TryGetProperty("problem", out var problemValue) && problemValue.ValueKind == JsonValueKind.True;
-        if (chat) return ("已连接", "已检测到 WS 主界面。");
         if (problem) return ("连接失败", "WS 页面提示浏览器或页面异常，请刷新后重试。");
         if (login) return ("等待登录", "请在 WhatsApp 登录页完成设备关联。");
+        if (chat) return ("已连接", "已检测到 WS 主界面。");
         return ("连接中", "正在加载 WhatsApp 登录页。");
     }
 
     private const string WsLoginProbeScript = """
 (() => {
   const has = selector => !!document.querySelector(selector);
+  const codes = document.querySelectorAll('[data-testid="qrcode"], canvas[aria-label*="QR" i], canvas[aria-label*="二维码"], [data-ref] canvas, [data-ref] svg');
+  for (const code of codes) {
+    if (!code.closest('#pane-side, #main, [data-testid="chat-list"], [data-testid="conversation-panel-wrapper"]')
+        && code.getClientRects().length && getComputedStyle(code).visibility === 'visible') return JSON.stringify({ login: true });
+  }
   const chat = has('#pane-side') || (has('[data-testid="chat-list"], [aria-label="Chat list"], [aria-label="聊天列表"], [role="grid"]')
     && has('[data-testid="search-input"], [contenteditable="true"], [role="textbox"]'));
   if (chat) return JSON.stringify({ chat: true });
-  if (has('[data-testid="qrcode"], canvas[aria-label*="QR" i], canvas[aria-label*="二维码"], [data-ref] canvas, [data-ref] svg'))
-    return JSON.stringify({ login: true });
   const text = (document.body?.innerText || '').slice(0, 6000);
   return JSON.stringify({
     login: /scan to log in|scan the QR code|link with phone number|扫码|扫描二维码|使用电话号码关联/i.test(text),

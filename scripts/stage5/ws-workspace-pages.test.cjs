@@ -19,7 +19,9 @@ const listStart = source.indexOf('  function workspaceListWindow(');
 const listEnd = source.indexOf('  function workspacePageHeader(', listStart);
 const capabilityStart = source.indexOf('  const COLLECTION_CAPABILITY_BLOCKED =');
 const capabilityEnd = source.indexOf('  function createGroupMonitorState(', capabilityStart);
-for (const position of [metadataStart, metadataEnd, navStart, navEnd, pageStart, pageEnd, capabilityStart, capabilityEnd]) assert.ok(position > 0);
+const monitorStatusStart = source.indexOf('  function groupMonitorStatusLabel(');
+const monitorStatusEnd = source.indexOf('  function groupMonitorDiscoveredGroups(', monitorStatusStart);
+for (const position of [metadataStart, metadataEnd, navStart, navEnd, pageStart, pageEnd, capabilityStart, capabilityEnd, monitorStatusStart, monitorStatusEnd]) assert.ok(position > 0);
 assert.ok(capabilityEnd > capabilityStart, 'render fixtures load the actual bounded capability implementation and its dependencies');
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 const state = { workspaceMode: 'ordinary', activeAccountId: 'a', accounts: [{ id: 'a', workspaceMode: 'ordinary' }], wsWorkspaceView: 'overview', wsWorkspaceNavCollapsed: true, groupCatalog: [{ accountId: 'a', groupJid: 'group-a@g.us', groupName: '<Group A>' }, { accountId: 'b', groupJid: 'group-b@g.us', groupName: 'B' }], groupMonitor: { events: [] }, aiQueueStats: {}, followupAlerts: [] };
@@ -31,7 +33,7 @@ for (const name of ['renderAccountList', 'renderAccountForm', 'renderGroupMonito
 sandbox.activeConversation = () => null;
 const aiPanel = source.slice(source.indexOf('  function renderAiAuthorization('), source.indexOf('  async function aiAuthorizationAction('));
 const metricPanel = source.slice(source.indexOf('  function summarizeAccountMetrics('), source.indexOf('  function renderAccountList('));
-vm.runInNewContext(aiPanel + metricPanel + source.slice(capabilityStart, capabilityEnd) + source.slice(metadataStart, metadataEnd) + source.slice(navStart, navEnd) + source.slice(listStart, listEnd) + source.slice(pageStart, pageEnd) + '\nglobalThis.nav=renderWsWorkspaceNav;globalThis.page=renderWsWorkspacePage;globalThis.listWindow=workspaceListWindow;globalThis.setFilter=applyWorkspaceListFilter;globalThis.groupWindow=groupDirectoryWindow;globalThis.groupControl=applyGroupDirectoryControl;globalThis.capability=collectionCapability;globalThis.blocked=collectionBlockedResult;', sandbox);
+vm.runInNewContext(aiPanel + metricPanel + source.slice(capabilityStart, capabilityEnd) + source.slice(monitorStatusStart, monitorStatusEnd) + source.slice(metadataStart, metadataEnd) + source.slice(navStart, navEnd) + source.slice(listStart, listEnd) + source.slice(pageStart, pageEnd) + '\nglobalThis.nav=renderWsWorkspaceNav;globalThis.page=renderWsWorkspacePage;globalThis.listWindow=workspaceListWindow;globalThis.setFilter=applyWorkspaceListFilter;globalThis.groupWindow=groupDirectoryWindow;globalThis.groupControl=applyGroupDirectoryControl;globalThis.capability=collectionCapability;globalThis.blocked=collectionBlockedResult;', sandbox);
 const beforeCapability = JSON.stringify(state);
 assert.equal(sandbox.capability().backgroundCollection, false);
 assert.equal(sandbox.capability().foregroundFallback, false);
@@ -52,6 +54,19 @@ for (const [mode, ids] of Object.entries(modeViews)) {
   assert.match(nav, mode === 'ordinary' ? /前台聊天/ : /专用登录/);
   assert.match(nav, new RegExp(`data-ws-workspace-view="${id}" aria-current="page"`));
   const page = sandbox.page(id);
+  if (id === 'collection') {
+    assert.match(page, mode === 'dedicated' ? /data-service-projection="renderGroupMonitorCard"/ : /data-service-projection="renderCollectionCard"/);
+    if (mode === 'dedicated') {
+      assert.match(page, /data-ws-workspace-view="groups">选择监测群组/);
+      assert.match(page, /data-ws-workspace-view="exclusions">管理建档排除名单/);
+      assert.doesNotMatch(page, /data-service-projection="renderCollectionCard"/);
+    }
+  }
+  if (mode === 'dedicated' && id === 'settings') {
+    assert.match(page, /群组监测<\/strong><p>未配置<\/p>/);
+    assert.match(page, /data-ws-workspace-view="collection">打开群组设置/);
+    assert.match(page, /data-ws-workspace-view="chat">打开账号登录/);
+  }
   if (id === 'chat') assert.equal(page, '', 'chat keeps the preserved native surface; the home page is independent');
   else {
     assert.match(page, new RegExp(`data-ws-workspace-page="${id}"`));

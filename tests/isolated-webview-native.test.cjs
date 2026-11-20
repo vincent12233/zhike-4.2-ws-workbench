@@ -25,6 +25,9 @@ const loginScenes = [
   ['<p>Link with phone number</p>', { login: true, problem: false }],
   ['<p>Update your browser</p>', { login: false, problem: true }],
   ['<div id="pane-side">扫码 / update your browser / synthetic message</div>', { chat: true }],
+  ['<div id="pane-side"></div><canvas aria-label="QR code"></canvas>', { login: true }],
+  ['<div id="pane-side"></div><div id="main"><canvas aria-label="QR code"></canvas></div>', { chat: true }],
+  ['<div id="pane-side"></div><div hidden><canvas aria-label="QR code"></canvas></div>', { chat: true }],
 ];
 
 function readOptions() {

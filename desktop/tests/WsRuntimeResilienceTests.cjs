@@ -11,6 +11,7 @@ assert.ok(loginProbe, '必须存在 WebView2 登录状态检测脚本');
 function probeChatSidebar(present) {
   const document = {
     body: { innerText: '' },
+    querySelectorAll() { return []; },
     querySelector(selectors) {
       return present && selectors.split(',').some(selector => selector.trim() === '#pane-side') ? {} : null;
     },
