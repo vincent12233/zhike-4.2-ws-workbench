@@ -2164,7 +2164,7 @@ function wsSameVipMemberIdentity(left, right) {
 function wsVipMemberEvidence(conversation, value = {}) {
   if (!wsIsVipGroup(conversation)) return { required:false, valid:true, identity:null, messageCount:0 };
   const identity = wsVipMemberIdentity(value);
-  if (!identity.trusted) return { required:true, valid:false, identity, messageCount:0, reason:'VIP 群分析缺少可信发言人 WS 标识或手机号。' };
+  if (!identity.trusted) return { required:true, valid:false, identity, messageCount:0, reason:'群分析缺少可信发言人 WS 标识或手机号。' };
   const rows = db.prepare("SELECT data_json FROM ws_messages WHERE account_id=? AND conversation_id=? AND direction='receive'").all(conversation.account_id, conversation.id);
   // Resolve the connected observed identities, not just the caller's subset.
   // A phone-only request may identify a LID whose other messages contain a
@@ -2196,7 +2196,7 @@ function wsVipMemberEvidence(conversation, value = {}) {
     }
   }
   const messageCount = seenRows.size;
-  if (!messageCount) return { required:true, valid:false, identity, messageCount:0, reason:'VIP 群内没有找到该发言人的可信原始消息，已拒绝跨客户写入。' };
+  if (!messageCount) return { required:true, valid:false, identity, messageCount:0, reason:'群内没有找到该发言人的可信原始消息，已拒绝跨客户写入。' };
   return { required:true, valid:true, identity, messageCount, observedAliases: [...observedAliases] };
 }
 function wsVipScopedAnalysis(conversation, analysis, identity) {
@@ -2229,16 +2229,16 @@ function wsVipScopedAnalysis(conversation, analysis, identity) {
 function wsRequireConversation(id, accountId = 'default') {
   const row = wsConversationRow(id, accountId);
   if (!row) throw new Error('WS 会话不存在或已被清理。');
-  if (wsIsExcludedGroup(row)) throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '普通群聊未列入 VIP 白名单，不采集、不分析，也不生成跟进提醒。');
+  if (wsIsExcludedGroup(row)) throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '此群聊不适用于当前客户会话操作。');
   return row;
 }
 function wsRequireAiConversation(id, accountId = 'default', joinedRow = null) {
   const row = joinedRow || wsRequireConversation(id, accountId);
-  if (joinedRow && wsIsExcludedGroup(row)) throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '普通群聊未列入 VIP 白名单，不采集、不分析，也不生成跟进提醒。');
+  if (joinedRow && wsIsExcludedGroup(row)) throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '此群聊不适用于当前客户会话操作。');
   const account = wsAccountId(accountId);
   const data = wsJson(row.data_json, {});
   const type = wsCore.conversationType(row);
-  if (!['direct', 'vip_group'].includes(type)) throw wsConversationPolicyError('WS_CONVERSATION_TYPE_UNCONFIRMED', 'AI 只允许一对一或白名单 VIP 群会话，当前会话类型未获授权。');
+  if (!['direct', 'vip_group'].includes(type)) throw wsConversationPolicyError('WS_CONVERSATION_TYPE_UNCONFIRMED', '当前会话类型无法用于客户分析。');
   if (data.historyLoaded !== true) throw wsConversationPolicyError('WS_HISTORY_INCOMPLETE', '聊天完整历史尚未加载，暂不能进行 AI 分析或 CRM 同步。');
   const historyFingerprint = wsText(data.historyFingerprint, 500);
   const lastMessageFingerprint = wsText(data.lastMessageFingerprint, 500);
@@ -3704,7 +3704,11 @@ const server = createServer(async (req, res) => {
         const hasTypeDirective = ['conversationType','isGroup','vipGroup'].some(key => Object.hasOwn(body, key))
           || (body.data && typeof body.data === 'object' && ['conversationType','isGroup','vipGroup'].some(key => Object.hasOwn(body.data, key)));
         const requestedType = existing && wsIsVipGroup(existing) && !hasTypeDirective ? 'vip_group' : wsCore.conversationType(body);
-        if (requestedType === 'group') throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '普通群聊未列入 VIP 白名单，不保存群聊导入。');
+        // The collector supplies group identity. Manual input cannot create a
+        // group conversation or promote a direct conversation using legacy flags.
+        if (requestedType === 'group' || (requestedType === 'vip_group' && !(existing && wsIsVipGroup(existing)))) {
+          throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '请在专用 WS 群组目录中选择已同步的群组。');
+        }
         const effectiveType = requestedType === 'unknown' && existing ? wsCore.conversationType(existing) : requestedType;
         if (existing) {
           const customerId = effectiveType === 'vip_group' ? '' : (wsText(body.customerId, 128) || existing.customer_id);
@@ -4179,7 +4183,7 @@ const server = createServer(async (req, res) => {
       if (vipGroup && (analysis.transcriptInfo?.memberScoped !== true || !memberScope.valid)) {
         return json(res, 200, {
           ok:true, skipped:true, matched:false, created:false, identityPending:true,
-          reason: memberScope.reason || 'VIP 群分析必须按单一发言人生成；其他成员消息只能作为上下文，不能写入个人客户档案或跟进评分。',
+          reason: memberScope.reason || '群分析必须按单一发言人生成；其他成员消息只能作为上下文，不能写入个人客户档案或跟进评分。',
           confidence:Number(analysisRow.confidence || analysis.confidence || 0),
         });
       }

@@ -553,7 +553,7 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
       'customers.total':metric(n.total,'客户总数','客户',active),
       'customers.joined':metric(n.joined,'已进群客户','客户',{...coverage,statusRule:'状态为已进群或在群'}),
       'customers.hot':metric(n.hot,'热聊客户','客户',{...coverage,statusRule:'现有hot标记'}),
-      'customers.vip':metric(n.vip,'VIP客户','客户',{...coverage,statusRule:'vipNumber/vipId/vipCode既有兼容规则；与VIP群无关'}),
+      'customers.vip':metric(n.vip,'VIP客户','客户',{...coverage,statusRule:'按客户主档中的 VIP 编号统计'}),
       'customers.ticket':metric(n.ticket,'跟票客户','客户',{...coverage,owner:'customerBusinessSummary / buildBusinessSummaryIndex',statusRule:'已有跟票记录优先；待确认不计入；无记录沿用旧客户标记'}),
       'customers.deposit':metric(n.deposit,'入金客户','客户',{...coverage,owner:'customerBusinessSummary / buildBusinessSummaryIndex',statusRule:'已有入金记录优先；待确认不计入；无记录沿用旧客户标记'}),
       'home.joinedToday':metric(daily.singleJoined+daily.groupJoined,'今日进群','客户事件',dailyBasis),

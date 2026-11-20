@@ -15,13 +15,13 @@ const vipTranscript=core.buildVipMemberTranscript([
   {direction:'receive',originalText:'I am an engineer',data:{conversationType:'vip_group',senderId:'919876543210@c.us',senderName:'Existing',senderIdentityTrusted:true}},
   {direction:'receive',originalText:'I am a billionaire',data:{conversationType:'vip_group',senderId:'911111111111@c.us',senderName:'Other',senderIdentityTrusted:true}},
 ],{senderId:'919876543210@c.us',senderName:'Existing',senderIdentityTrusted:true});
-assert.equal(vipTranscript.memberScoped,true);assert.equal(vipTranscript.targetStatementCount,1);assert.match(vipTranscript.text,/VIP群成员\[Existing\]/);assert.match(vipTranscript.text,/VIP群成员\[Other\]/);
+assert.equal(vipTranscript.memberScoped,true);assert.equal(vipTranscript.targetStatementCount,1);assert.match(vipTranscript.text,/群成员\[Existing\]/);assert.match(vipTranscript.text,/群成员\[Other\]/);
 const vipChunks=core.splitHistoryTranscript([
   {direction:'receive',originalText:'I am an engineer',data:{conversationType:'vip_group',senderId:'919876543210@c.us',senderName:'Existing',senderIdentityTrusted:true}},
   {direction:'receive',originalText:'I am a billionaire',data:{conversationType:'vip_group',senderId:'911111111111@c.us',senderName:'Other',senderIdentityTrusted:true}},
 ],{maxChars:16000});
-assert.match(vipChunks[0].text,/VIP群成员\[Existing\]/);
-assert.match(vipChunks[0].text,/VIP群成员\[Other\]/);
+assert.match(vipChunks[0].text,/群成员\[Existing\]/);
+assert.match(vipChunks[0].text,/群成员\[Other\]/);
 const workbenchSource=fs.readFileSync(path.join(__dirname,'../resources/app/modules/ws-workbench.js'),'utf8');
 assert.match(workbenchSource,/function vipGroupMemberAnalysisScopes\(messages\)/);
 assert.match(workbenchSource,/core\.buildVipMemberTranscript\?\.\(messages, requestedMemberIdentity/);

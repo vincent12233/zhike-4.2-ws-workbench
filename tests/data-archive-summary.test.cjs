@@ -44,8 +44,16 @@ async function stateVersion() { return (await (await request('/api/state/version
 
     const direct = await (await request('/api/ws/conversations', { method: 'POST', body: body({ accountId: 'default', externalId: 'archive-direct', title: '档案客户', customerId: 'ARCH-C1', conversationType: 'direct', data: { historyLoaded: true, historyFingerprint: 'archive-history', lastMessageFingerprint: 'archive-history', directionVersion: 4, conversationType: 'direct', isGroup: false } }) })).json();
     const unlinked = await (await request('/api/ws/conversations', { method: 'POST', body: body({ accountId: 'default', externalId: 'archive-unlinked', title: '未关联会话', conversationType: 'direct', data: { historyLoaded: false, conversationType: 'direct', isGroup: false } }) })).json();
-    const vipGroup = await (await request('/api/ws/conversations', { method: 'POST', body: body({ accountId: 'default', externalId: '1203archive@g.us', title: 'VIP 档案群', conversationType: 'vip_group', data: { conversationType: 'vip_group', isGroup: true, vipGroup: true } }) })).json();
-    assert.ok(direct.id && unlinked.id && vipGroup.id);
+    for (const input of [
+      { externalId: '1203archive@g.us', conversationType: 'direct' },
+      { externalId: '1203archive@g.us', conversationType: 'vip_group', vipGroup: true },
+      { externalId: 'archive-direct', data: { conversationType: 'vip_group' } },
+    ]) {
+      const refused = await request('/api/ws/conversations', { method: 'POST', body: body({ accountId: 'default', ...input }) });
+      assert.equal(refused.status, 422);
+      assert.equal((await refused.json()).code, 'WS_GROUP_EXCLUDED');
+    }
+    assert.ok(direct.id && unlinked.id);
     assert.equal((await request('/api/ws/messages/batch', { method: 'POST', body: body({ accountId: 'default', conversationId: direct.id, fingerprint: 'archive-batch', messages: [
       { externalId: 'archive-m1', direction: 'receive', originalText: '你好', order: 1 },
       { externalId: 'archive-m2', direction: 'send', originalText: '你好，已收到', order: 2 },
@@ -56,6 +64,11 @@ async function stateVersion() { return (await (await request('/api/state/version
     const { DatabaseSync } = require('node:sqlite');
     const db = new DatabaseSync(path.join(dataDir, 'workspace.sqlite'));
     const now = new Date().toISOString();
+    assert.equal(db.prepare('SELECT count(*) AS n FROM ws_conversations WHERE external_id=?').get('1203archive@g.us').n, 0);
+    // Exercise archive compatibility with a record from the previous schema.
+    db.prepare('INSERT INTO ws_conversations(id,account_id,external_id,title,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?)')
+      .run('archive-legacy-group', 'default', '1203archive@g.us', '历史档案群', JSON.stringify({ conversationType:'vip_group', isGroup:true, vipGroup:true }), now, now);
+
     db.prepare('INSERT INTO ws_collection_runs(id,account_id,status,total,discovered,completed,analyzing,analyzed,failed,skipped,retryable,last_error,checkpoint,resume_count,last_success_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
       .run('archive-run', 'default', 'running', 2, 2, 1, 0, 1, 0, 0, 0, '', '', 0, now, now, now);
     db.prepare('INSERT INTO ws_collection_items(id,account_id,run_id,conversation_id,status,attempts,analysis_status,followup_status,next_followup_at,last_error,checkpoint,created_at,updated_at,coverage_status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)')

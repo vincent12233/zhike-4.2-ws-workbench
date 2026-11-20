@@ -51,12 +51,9 @@ assert.match(ui, /conversation\.unread === true \|\| Number\(conversation\.unrea
   'the retained manual AI/history guards must continue to identify unread conversations');
 assert.match(ui, /当前桌面未提供独立采集会话；前台聊天和手动导入可用/,
   'missing native capability must preserve the explicit unavailable state');
-assert.match(ui, /function isConfiguredVipGroupIdentifier\(\.\.\.values\)/,
-  'manual group entry must consult the same configured VIP-group bindings as native discovery');
-assert.match(ui, /const vipGroup = groupJid && isConfiguredVipGroupIdentifier\(externalId, title\)/,
-  'a manually opened @g.us conversation is accepted only when it is an explicitly configured VIP group');
-assert.match(ui, /conversationType = vipGroup \? 'vip_group' : 'direct'/,
-  'manual VIP-group entry must retain the VIP-group type at the service boundary');
+const manualCreate = ui.slice(ui.indexOf('  async function createConversation()'), ui.indexOf('      assertContext(context);', ui.indexOf('  async function createConversation()')));
+assert.match(manualCreate, /群组目录[\s\S]*?return;[\s\S]*?api\('/, 'manual group entry ends before an API write');
+assert.doesNotMatch(manualCreate, /vip_group|vipGroup/, 'manual input cannot create group metadata');
 assert.match(ui, /const conversationType = isAutomaticVipGroupConversation\(normalized\) \? 'vip_group' : 'direct'/,
   'native list discovery must retain configured VIP-group identity');
 assert.match(ui, /customerId: vipGroup \? '' : matchedCustomerId/,

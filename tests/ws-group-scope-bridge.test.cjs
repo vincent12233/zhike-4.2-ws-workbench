@@ -7,7 +7,7 @@ const repo = path.resolve(__dirname, '..');
 const scope = require(path.join(repo, 'resources/app/modules/ws-scope.js'));
 const source = fs.readFileSync(path.join(repo, 'resources/app/modules/ws-workbench.js'), 'utf8');
 const start = source.indexOf('  function configuredVipGroups(');
-const end = source.indexOf('  function isConfiguredVipGroupIdentifier(', start);
+const end = source.indexOf('  async function wsBridge(', start);
 assert.ok(start > 0 && end > start);
 const settings = { wsGroupAllowlist: [
   { accountId: 'a', groupJid: '120-456@g.us', groupName: 'Same name' },

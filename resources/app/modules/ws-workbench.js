@@ -1006,7 +1006,7 @@
     return isAutomaticCollectibleConversation(conversation) || !isNativeManagedConversation(conversation);
   }
   function ordinaryGroupExclusionMessage(action = '采集、AI 分析或跟进提醒') {
-    return `普通群聊未绑定为 VIP 群，不纳入${action}；系统设置中已绑定的 VIP 群会按可信成员身份分别处理。`;
+    return `此群聊不适用于${action}。请在专用 WS 中选择已同步的群组。`;
   }
   function personalConversationRows(rows) {
     return (Array.isArray(rows) ? rows : []).filter(row => !isExplicitGroupConversation(row) || isAutomaticVipGroupConversation(row));
@@ -1490,11 +1490,6 @@
     return [...new Set(scoped.filter(item => item.authorized === true)
       .map(item => item.groupJid))].slice(0, 500);
   }
-  function isConfiguredVipGroupIdentifier(...values) {
-    const normalize = value => text(value).normalize('NFKC').toLocaleLowerCase();
-    const configured = new Set(configuredVipGroups().map(normalize).filter(Boolean));
-    return values.some(value => configured.has(normalize(value)));
-  }
   async function wsBridge(action, context = null, extra = null) {
     const scopedId = String(context?.accountId || state.activeAccountId || '');
     if (!scopedId || !modeAccount(scopedId)) {
@@ -1616,7 +1611,7 @@
     const profile = monitor.profile;
     const health = monitor.health || {};
     const eventCounts = health.eventCounts || {};
-    if (!profile) return `${collectionCapabilityNotice()}<div class="ws-group-monitor-empty"><p>固定席位尚未创建。独立采集会话就绪后可配置监测；已保存的群组、客户关系和历史事件保留。监测群组与 VIP 客户管理完全独立。</p><button class="btn small primary" data-ws-action="group-monitor-create" ${collectionControlAttributes('groupMonitoring')}>${monitor.busy ? '创建中…' : '创建固定席位'}</button></div>`;
+    if (!profile) return `${collectionCapabilityNotice()}<div class="ws-group-monitor-empty"><p>固定席位尚未创建。独立采集会话就绪后可配置监测；已保存的群组、客户关系和历史事件保留。</p><button class="btn small primary" data-ws-action="group-monitor-create" ${collectionControlAttributes('groupMonitoring')}>${monitor.busy ? '创建中…' : '创建固定席位'}</button></div>`;
     const targetRows = (Array.isArray(profile.targets) ? profile.targets : []).map(target => { const channel = text(target.data?.channelName || target.data?.sourceName || ''); const groupFanType = text(target.data?.groupFanType || target.data?.groupFanSource || ''); return `<div class="ws-group-monitor-target"><div><strong>${esc(target.groupName || target.groupJid)}</strong><small>${esc(target.groupJid)}${channel ? ` · 渠道：${esc(channel)}` : ''}${groupFanType ? ` · 群粉类型：${esc(groupFanType)}` : ''} · ${target.enabled ? (capabilityBlocked ? '已配置，等待采集会话' : '已启用') : '未启用'}${target.lastSeenAt ? ` · ${esc(displayTime(target.lastSeenAt))}` : ''}</small></div><button class="btn small ${target.enabled ? '' : 'primary'}" data-ws-action="group-monitor-target-toggle" data-target-id="${esc(target.id)}" data-enabled="${target.enabled ? 'true' : 'false'}" ${!target.enabled ? collectionControlAttributes('groupMonitoring') : ''}>${target.enabled ? '停止' : '启用'}</button></div>`; }).join('');
     const customers = groupMonitorCustomers();
     const eventRows = (Array.isArray(monitor.events) ? monitor.events : []).map(event => {
@@ -1677,7 +1672,7 @@
   function renderWsExportCard() {
     const exportState = state.export || {};
     return `<section id="wsExportCard" class="ws-card ws-export-card" data-assist-section="export">
-      <div class="ws-card-heading"><div><strong>导出全部 WS 数据</strong><span>联系人、客户、普通群组、VIP 群组、成员、完整消息、AI 分析、客户档案与媒体索引统一导出</span></div></div>
+      <div class="ws-card-heading"><div><strong>导出全部 WS 数据</strong><span>联系人、客户、群组、成员、完整消息、AI 分析、客户档案与媒体索引统一导出</span></div></div>
       <label class="ws-export-option"><input id="wsExportIncludeMedia" type="checkbox" ${exportState.includeMedia !== false ? 'checked' : ''}> 包含媒体元数据与下载索引（不打包本地二进制）</label>
       <p class="ws-muted">导出按当前账号隔离，服务端流式写出；前台 WS 页面保持原位，不会切换会话或滚动。</p>
       <button class="btn small primary ws-full-button" data-ws-action="export-all" ${exportState.running ? 'disabled' : ''}>${exportState.running ? '准备导出…' : '导出当前账号全部资料'}</button>
@@ -2774,7 +2769,7 @@
           ok: false,
           pending: true,
           identityPending: true,
-          reason: 'VIP 群历史已保留，但尚未读取到可信的发言人 WS ID 或手机号，暂不写入客户档案。',
+          reason: '群历史已保留，但尚未读取到可信的发言人 WS ID 或手机号，暂不写入客户档案。',
         };
       }
       const memberResults = [];
@@ -2798,14 +2793,14 @@
         memberResults,
         analysis: succeeded.at(-1)?.analysis,
         analysisMeta: succeeded.at(-1)?.analysisMeta,
-        reason: succeeded.length ? '' : (memberResults.find(item => item.reason)?.reason || 'VIP 群成员分析等待重试。'),
+        reason: succeeded.length ? '' : (memberResults.find(item => item.reason)?.reason || '群成员分析等待重试。'),
       };
     }
     let memberTranscript = null;
     if (vipGroup) {
       memberTranscript = core.buildVipMemberTranscript?.(messages, requestedMemberIdentity, { maxChars: 48000 });
       if (!memberTranscript?.memberScoped || Number(memberTranscript.targetStatementCount || 0) < 1) {
-        return { ok: false, pending: true, identityPending: true, reason: 'VIP 群当前发言人没有可归属的本人原文，已保留聊天但不写入客户档案。' };
+        return { ok: false, pending: true, identityPending: true, reason: '群当前发言人没有可归属的本人原文，已保留聊天但不写入客户档案。' };
       }
     }
     const chunks = core.splitHistoryTranscript(messages, { maxChars: 16000 });
@@ -3794,15 +3789,14 @@
     const externalId = text($('#wsConversationExternalId')?.value || state.createExternalId);
     const title = text($('#wsConversationTitle')?.value || state.createTitle);
     if (!externalId) { toast('请输入 WS 会话标识；不读取平台账号或 Cookie。', 'x'); return; }
-    const groupJid = /@g\.us$/i.test(externalId);
-    const vipGroup = groupJid && isConfiguredVipGroupIdentifier(externalId, title);
-    if (groupJid && !vipGroup) { toast(ordinaryGroupExclusionMessage(' WS 客户采集、AI 分析或跟进提醒'), 'x'); return; }
+    if (/@g\.us$/i.test(externalId)) { toast('请从专用 WS 群组目录选择已同步的群组。', 'x'); return; }
     const context = captureContext();
     state.busy.customer = true;
     render();
     try {
-      const conversationType = vipGroup ? 'vip_group' : 'direct';
-      const item = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId, title, conversationType, isGroup:vipGroup, vipGroup, data: { source: 'user-local-manual', conversationType, isGroup:vipGroup, vipGroup } }) }, context);
+      const item = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({
+        externalId, title, conversationType: 'direct', data: { source: 'user-local-manual', conversationType: 'direct' },
+      }) }, context);
       assertContext(context);
       const existing = state.conversations.find(row => String(row.id) === String(item.id));
       state.conversations = existing ? state.conversations.map(row => String(row.id) === String(item.id) ? item : row) : [item, ...state.conversations];
@@ -4660,7 +4654,7 @@
     if (isAutomaticVipGroupConversation(current)) {
       const memberScopes = vipGroupMemberAnalysisScopes(state.messages);
       if (!memberScopes.length) {
-        const reason = 'VIP 群聊天已保留，但尚未读取到可信的发言人 WS ID 或手机号，暂不写入客户档案。';
+        const reason = '群聊天已保留，但尚未读取到可信的发言人 WS ID 或手机号，暂不写入客户档案。';
         toast(reason, 'x');
         return { ok: false, pending: true, identityPending: true, reason };
       }
@@ -4675,13 +4669,13 @@
         await pendingPump.catch(() => {});
         const result = await analyzeStoredConversation(current, context, { signal: controller.signal });
         if (!result.ok) {
-          if (!result.cancelled) toast(result.reason || 'VIP 群成员分析等待重试。', 'x');
+          if (!result.cancelled) toast(result.reason || '群成员分析等待重试。', 'x');
           return result;
         }
         state.analysis = result.analysis || result.memberResults?.filter(item => item.ok).at(-1)?.analysis || {};
         state.analysisMeta = result.analysisMeta || result.memberResults?.filter(item => item.ok).at(-1)?.analysisMeta || null;
         seedDraftFromAnalysis();
-        toast(`VIP 群分析完成：已按 ${result.analyzedMembers || memberScopes.length} 位可信发言人分开处理，未归属其他成员事实。`, 'check');
+        toast(`群分析完成：已按 ${result.analyzedMembers || memberScopes.length} 位可信发言人分开处理，未归属其他成员事实。`, 'check');
         return result;
       } finally {
         if (manualAiController === controller) manualAiController = null;

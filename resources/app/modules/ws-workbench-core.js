@@ -90,7 +90,7 @@
     const member = messageMemberIdentity(message);
     const isVipGroup = conversationType(message) === 'vip_group' || conversationType(message?.data || {}) === 'vip_group';
     const memberLabel = member.senderName || member.senderPhone || member.senderId || '身份未确认成员';
-    const label = message?.direction === 'send' ? '我' : isVipGroup ? `VIP群成员[${memberLabel}]` : '客户';
+    const label = message?.direction === 'send' ? '我' : isVipGroup ? `群成员[${memberLabel}]` : '客户';
     const sentAt = messageSentAt(message);
     const timeLabel = sentAt ? `[${sentAt}]` : '[时间未知]';
     return `${timeLabel} ${label}：${text(message?.originalText).slice(0, maxMessageChars)}`;
@@ -199,7 +199,7 @@
       '真正有效的热聊不是调查问卷：不要生成问卷、不要连续追问、不要一次性索要全部资料；只给出一到三条轻量、自然的下一话题。',
       '角色归属必须严格区分：聊天行中的“客户”是客户本人，“我”或“我方”是经营者/助理的回复。不得把我方自我介绍、我方陈述、我方连续发送的内容，或我方尚未获得客户确认的问题，当成客户事实。',
       ...(vipMemberLabel ? [
-        `当前是 VIP 群成员级分析，唯一目标成员：${vipMemberLabel}。`,
+        `当前是 群成员分析，唯一目标成员：${vipMemberLabel}。`,
         '只有标为该目标成员的本人发言可以成为 profileFacts、资金实力、聊天粘度和个人跟进评分证据；我方发言及其他群成员发言只用于理解必要上下文，绝不能写成该成员事实。',
       ] : []),
       '客户姓名/称呼、年龄、性别、职业和工作情况、国家/所在地、持仓、预算及其他档案字段，只能依据客户本人明确陈述或明确确认的内容补齐。引用、转发或讨论亲友等第三方的信息属于 third_party，不得写成客户资料；证据归属不清时保持 missing 或 pending。',
@@ -636,7 +636,7 @@
       const member = messageMemberIdentity(item);
       const isVipGroup = conversationType(item) === 'vip_group' || conversationType(item?.data || {}) === 'vip_group';
       const memberLabel = member.senderName || member.senderPhone || member.senderId || '身份未确认成员';
-      const label = item.direction === 'send' ? '我' : isVipGroup ? `VIP群成员[${memberLabel}]` : '客户';
+      const label = item.direction === 'send' ? '我' : isVipGroup ? `群成员[${memberLabel}]` : '客户';
       const sentAt = messageSentAt(item);
       const timeLabel = sentAt ? `[${sentAt}]` : '[时间未知]';
       const segmentBudget = Math.max(200, maxChars - 80);
