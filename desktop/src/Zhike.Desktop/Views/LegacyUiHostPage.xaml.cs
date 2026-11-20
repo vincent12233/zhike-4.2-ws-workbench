@@ -3116,35 +3116,15 @@ public sealed partial class LegacyUiHostPage : Page
         if (_api is null || !await _wsFlushGate.WaitAsync(0, cancellationToken)) return;
         try
         {
-            foreach (var item in await _wsQueue.PeekAsync(cancellationToken))
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                if (!string.Equals(item.Route, "api/ws/ingest/batch", StringComparison.Ordinal)) continue;
-                try
+            await WsIngestQueue.FlushAsync(_wsQueue, _api, (request, result) =>
+                GetBridge().Publish("sync.updated", JsonSerializer.SerializeToElement(new
                 {
-                    var request = LocalQueue.DeserializePayload<WsIngestBatchRequestDto>(item.PayloadJson)
-                        ?? throw new InvalidDataException("WS 待同步数据无法反序列化。");
-                    using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                    timeout.CancelAfter(TimeSpan.FromSeconds(15));
-                    await _api.AuthorizeWsCollectorBatchAsync(request, timeout.Token);
-                    var result = await _api.IngestWsBatchAsync(request, timeout.Token);
-                    await _wsQueue.RemoveAsync(item.Id, cancellationToken);
-                    GetBridge().Publish("sync.updated", JsonSerializer.SerializeToElement(new
-                    {
-                        accountId = request.AccountId,
-                        accepted = result?.Accepted ?? 0,
-                        deduplicated = result?.Deduplicated ?? 0,
-                        background = string.Equals(request.Scope, "background-collector", StringComparison.Ordinal),
-                        sharedState = request.GroupEvents is { Count: > 0 },
-                    }));
-                }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
-                catch (Exception error)
-                {
-                    await _wsQueue.MarkFailureAsync(item.Id, error, cancellationToken);
-                    break;
-                }
-            }
+                    accountId = request.AccountId,
+                    accepted = result.Accepted,
+                    deduplicated = result.Deduplicated,
+                    background = string.Equals(request.Scope, "background-collector", StringComparison.Ordinal),
+                    sharedState = request.GroupEvents is { Count: > 0 },
+                })), cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch { }

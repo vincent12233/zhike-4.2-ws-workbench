@@ -92,6 +92,22 @@ try
     }
     await api.SendJsonAsync("api/ws/accounts", HttpMethod.Get, headers: new Dictionary<string, string> { ["X-Zhike-Native-Token"] = nativeToken });
     if (handler.NativeToken is not null) throw new Exception("generic API request forwarded native authority");
+    var retryQueue = new LocalQueue(Path.Combine(queueRoot, "account-retries"));
+    var retired = restored with { AccountId = "retired", Scope = "background-collector" };
+    await retryQueue.EnqueueAsync("api/ws/ingest/batch", retired);
+    await retryQueue.EnqueueAsync("api/ws/ingest/batch", retired);
+    await retryQueue.EnqueueAsync("api/ws/ingest/batch", restored);
+    var synced = new List<string>();
+    await WsIngestQueue.FlushAsync(retryQueue, api, (batch, _) => synced.Add(batch.AccountId));
+    var remaining = await retryQueue.PeekAsync();
+    if (!synced.SequenceEqual([accountId]) || remaining.Count != 2 || remaining[0].Attempts != 1 || remaining[1].Attempts != 0)
+        throw new Exception("a retired account blocked another account or reordered its pending checkpoints");
+    await retryQueue.EnqueueAsync("api/ws/ingest/batch", restored);
+    handler.Offline = true;
+    await WsIngestQueue.FlushAsync(retryQueue, api, (batch, _) => synced.Add(batch.AccountId));
+    remaining = await retryQueue.PeekAsync();
+    if (remaining.Count != 3 || remaining[0].Attempts != 2 || remaining.Skip(1).Any(item => item.Attempts != 0) || synced.Count != 1)
+        throw new Exception("a service outage should retain all later packets without retrying each account");
     Console.WriteLine("WS queue Web JSON/API roundtrip passed: native authority, bridge exclusion, account, bidirectional evidence, checkpoint coverage and original body preserved");
 }
 finally
@@ -104,12 +120,16 @@ sealed class CaptureHandler : HttpMessageHandler
     public int RequestCount { get; private set; }
     public string? Body { get; private set; }
     public string? NativeToken { get; private set; }
+    public bool Offline { get; set; }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         RequestCount += 1;
         NativeToken = request.Headers.TryGetValues("X-Zhike-Native-Token", out var values) ? values.Single() : null;
         Body = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
+        if (Offline) return new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
+        if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/api/ws/accounts")
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"accounts\":[]}", Encoding.UTF8, "application/json") };
         return new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent("{\"accepted\":1,\"deduplicated\":0,\"messageIds\":[\"message-runtime-1\"],\"processedAt\":\"2026-11-13T04:40:00Z\"}", Encoding.UTF8, "application/json"),
