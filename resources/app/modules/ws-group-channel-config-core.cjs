@@ -124,10 +124,16 @@ function configFromRow(row) {
 }
 
 const sameValue = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+/**
+ * Values a group has before it is configured. Auto-create defaults to on so
+ * that configuring only a channel does not silently stop auto-provisioning,
+ * which is how unconfigured monitored groups already behave.
+ */
+const UNCONFIGURED = Object.freeze({ groupCode: '', channel: '', pageCategory: '', assistant: '', defaultTags: [], autoCreateCustomers: true, monitorMembership: false });
 
 /** Field-level diff between the stored config and a validated patch. */
 function diffConfig(current, patch) {
-  const base = current || { groupCode: '', channel: '', pageCategory: '', assistant: '', defaultTags: [], autoCreateCustomers: false, monitorMembership: false };
+  const base = current || UNCONFIGURED;
   const changes = {};
   for (const key of CONFIG_FIELDS) {
     if (!Object.hasOwn(patch, key)) continue;
@@ -254,7 +260,7 @@ function exportCsv(rows) {
 }
 
 module.exports = {
-  BUILTIN_CHANNELS, CONFIG_FIELDS, FIELD_COLUMNS, FIELD_LABELS, CSV_COLUMNS,
+  BUILTIN_CHANNELS, CONFIG_FIELDS, UNCONFIGURED, FIELD_COLUMNS, FIELD_LABELS, CSV_COLUMNS,
   normalizeGroupCode, detectGroupCode, normalizeTags, parseSwitch, validateConfigPatch,
   configFromRow, diffConfig, resolveChannel, previewBatch, parseCsv, importRows, exportCsv,
 };

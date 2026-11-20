@@ -1257,7 +1257,7 @@ function wsGroupChannelView(catalogRow, config, rules) {
     detectedCode: detected.code, detectedCodeStatus: detected.status, detectedCandidates: detected.candidates,
     channel: resolved.channel, channelOrigin: resolved.origin, channelHint: resolved.hint,
     pageCategory: config?.pageCategory || '', assistant: config?.assistant || '', defaultTags: config?.defaultTags || [],
-    autoCreateCustomers: Boolean(config?.autoCreateCustomers), monitorMembership: Boolean(config?.monitorMembership),
+    autoCreateCustomers: config ? Boolean(config.autoCreateCustomers) : wsGroupChannel.UNCONFIGURED.autoCreateCustomers, monitorMembership: Boolean(config?.monitorMembership),
     configured: Boolean(config), revision: config?.revision || 0, updatedAt: config?.updatedAt || '',
     // Pending = needs the user: no confirmed code, or no effective channel.
     pending: !groupCode || resolved.pending,
@@ -1296,7 +1296,7 @@ function wsGroupChannelApply(entries, { origin = 'manual', actor = 'user', dryRu
       if (!Object.keys(row.changes).length) continue;
       const key = `${row.accountId}\u0000${row.groupJid}`;
       const current = configs.get(key);
-      const next = { groupCode: '', channel: '', pageCategory: '', assistant: '', defaultTags: [], autoCreateCustomers: false, monitorMembership: false, ...(current || {}), ...row.patch };
+      const next = { ...wsGroupChannel.UNCONFIGURED, ...(current || {}), ...row.patch };
       const codeOrigin = Object.hasOwn(row.changes, 'groupCode') ? (next.groupCode ? valueOrigin : '') : (current?.groupCodeOrigin || '');
       const channelOrigin = Object.hasOwn(row.changes, 'channel') ? (next.channel ? valueOrigin : '') : (current?.channelOrigin || '');
       const revision = (current?.revision || 0) + 1;
@@ -1394,6 +1394,44 @@ async function handleWsGroupChannelRequest(req, res, url) {
     return json(res, 201, { rules: [...wsGroupCodeRuleMap().values()] });
   }
   return json(res, 404, { error: '群组渠道配置接口不存在。' });
+}
+/** Effective business config of one group for CRM provisioning (or null). */
+function wsGroupChannelEffective(accountId, groupJid) {
+  const row = db.prepare('SELECT * FROM ws_group_channel_configs WHERE account_id=? AND group_jid=?').get(accountId, String(groupJid || '').toLowerCase());
+  const config = wsGroupChannel.configFromRow(row);
+  if (!config) return null;
+  const resolved = wsGroupChannel.resolveChannel(config, wsGroupCodeRuleMap(), '');
+  return { ...config, channel: resolved.channel, channelOrigin: resolved.origin };
+}
+/**
+ * Customer channel attribution (V5.0 §12). First source channel is written
+ * once from the first confirmed join into a group with an effective channel
+ * and is never overwritten by later groups. Current channels are recomputed
+ * from relations that are still 在群; history only grows.
+ */
+function wsApplyCustomerChannelAttribution(customer, accountId, groupJid, eventType, config, eventAt) {
+  if (!customer) return;
+  const channel = config?.channel || '';
+  if (eventType === 'joined' && channel) {
+    if (!customer.firstSourceChannel) {
+      customer.firstSourceChannel = channel;
+      customer.firstSourceGroupJid = groupJid;
+      customer.firstSourceGroupCode = config.groupCode || '';
+      customer.firstSourceAccountId = accountId;
+      customer.firstSourceAt = eventAt;
+    }
+    const history = Array.isArray(customer.channelHistory) ? customer.channelHistory.slice() : [];
+    if (!history.includes(channel)) history.push(channel);
+    customer.channelHistory = history.slice(-50);
+  }
+  const channelOf = new Map();
+  const relations = Array.isArray(customer.groupMemberships) ? customer.groupMemberships : [];
+  for (const relation of relations) {
+    if (!relation || relation.status !== '在群') continue;
+    const key = `${relation.accountId} ${relation.groupJid}`;
+    if (!channelOf.has(key)) channelOf.set(key, relation.groupJid === groupJid && relation.accountId === accountId ? channel : (wsGroupChannelEffective(relation.accountId, relation.groupJid)?.channel || ''));
+  }
+  customer.currentChannels = [...new Set([...channelOf.values()].filter(Boolean))];
 }
 function wsGroupMonitorEventPayload(row) {
   if (!row) return null;
@@ -1638,7 +1676,9 @@ function wsGroupMonitorAutoCustomer(accountId, target, event, now, state = null)
   const registered = eventAt.slice(0, 10);
   const displayName = wsText(event.memberName || event.member_name || event.displayName || event.display_name || event.name, 160);
   const name = displayName || phone || member.value || '新进群客户';
-  const sourceInfo = wsGroupMonitorSource(target, state);
+  const groupConfig = wsGroupChannelEffective(accountId, target.group_jid || target.groupJid);
+  const legacySource = wsGroupMonitorSource(target, state);
+  const sourceInfo = groupConfig?.channel ? { id: groupConfig.channel, label: groupConfig.channel, groupFanType: legacySource.groupFanType || '' } : legacySource;
   const source = sourceInfo.label;
   return {
     id: wsGroupMonitorAutoCustomerId(accountId, memberKey, phone),
@@ -1652,13 +1692,23 @@ function wsGroupMonitorAutoCustomer(accountId, target, event, now, state = null)
     groupFanType: sourceInfo.groupFanType,
     sourceBindingStatus: sourceInfo.unclassified ? 'unclassified' : 'bound',
     isGroupFan: true,
-    group: groupName,
+    group: groupConfig?.groupCode || groupName,
+    groupName,
+    groupCode: groupConfig?.groupCode || '',
+    page: groupConfig?.pageCategory || '',
+    tags: groupConfig?.defaultTags?.length ? groupConfig.defaultTags.slice() : [],
+    firstSourceChannel: '',
+    currentChannels: [],
+    channelHistory: [],
+    firstObservedAt: eventAt,
+    sourceAccountId: accountId,
+    sourceGroupJid: wsText(target.group_jid || target.groupJid, 240),
     groupMonitorSourceId: sourceInfo.id,
     status: '已进群',
     groupStatus: '已进群',
     phase: '新客户',
     qualification: '待评估',
-    assistant: '未分配',
+    assistant: groupConfig?.assistant || '未分配',
     hot: false,
     investor: false,
     vipNumber: '',
@@ -1863,7 +1913,12 @@ function wsGroupMonitorApplyEventsInTransaction(accountId, inputEvents = [], opt
     // A confirmed join is the only event allowed to create a customer.  A
     // pending/approval row remains an auditable ignored event and never enters
     // the customer master or group relationship projection.
-    if (match.status === 'unmatched' && normalizedEvent.type === 'joined' && wsGroupMonitor.isConfirmedJoinEvent(normalizedEvent) && normalizedEvent.confidence >= 0.6) {
+    const groupConfig = wsGroupChannelEffective(accountId, target.group_jid);
+    // A configured group with 自动建档 off records the event for manual
+    // association instead of creating a customer. Unconfigured groups keep
+    // the existing behaviour.
+    const autoCreateAllowed = !groupConfig || groupConfig.autoCreateCustomers;
+    if (autoCreateAllowed && match.status === 'unmatched' && normalizedEvent.type === 'joined' && wsGroupMonitor.isConfirmedJoinEvent(normalizedEvent) && normalizedEvent.confidence >= 0.6) {
       const candidate = wsGroupMonitorAutoCustomer(accountId, target, normalizedEvent, now, state);
       if (candidate) {
         const existingById = state.customers.find(item => String(item?.id || '') === candidate.id);
@@ -1915,6 +1970,9 @@ function wsGroupMonitorApplyEventsInTransaction(accountId, inputEvents = [], opt
       history.push(projection.statusHistoryEvent);
       customer.statusHistory = history.slice(-500);
       applyWsCustomerGroupStatus(customer, normalizedEvent.type);
+      wsApplyCustomerChannelAttribution(customer, accountId, target.group_jid, normalizedEvent.type, groupConfig, normalizedEvent.eventAt || now);
+      // Default owner is set once; joining another group never reassigns it.
+      if (normalizedEvent.type === 'joined' && groupConfig?.assistant && (!customer.assistant || customer.assistant === '未分配')) customer.assistant = groupConfig.assistant;
       customer.updatedAt = now;
       stateChanged = true;
       state.activities.unshift({ id: `AWSG-${Date.now().toString(36)}-${result.accepted}`, text: `WS 群组${normalizedEvent.type === 'joined' ? '进群' : normalizedEvent.type === 'removed' ? '移除成员' : '退群'}：${customer.name || customer.id}`, time: now, color: normalizedEvent.type === 'joined' ? 'green' : 'amber', source: 'ws-group-monitor', customerId: customer.id, groupJid: target.group_jid, eventId });
