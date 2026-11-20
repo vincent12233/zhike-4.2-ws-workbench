@@ -46,5 +46,12 @@ const output = execFileSync(process.env.ZHIKE_TEST_DOTNET || 'dotnet', [
   'run', '--project', path.join(repo, 'desktop/tests/Rd02CollectionBoundaryRuntime/Rd02CollectionBoundaryRuntime.csproj'), '-c', 'Release',
 ], { cwd: repo, encoding: 'utf8', timeout: 90000, maxBuffer: 1024 * 1024, windowsHide: true });
 process.stdout.write(output);
-assert.match(output, /"passed":13,"failed":0/, 'All linked-service and real ingress cases must execute');
+const lines = output.trim().split(/\r?\n/);
+const summary = JSON.parse(lines.at(-1));
+assert.equal(summary.suite, 'independent collector linked production C# boundaries');
+assert.equal(summary.passed, 14);
+assert.equal(summary.failed, 0);
+const passedCases = lines.filter(line => line.startsWith('[PASS] ')).map(line => line.slice(7));
+assert.equal(new Set(passedCases).size, summary.passed);
+assert.ok(passedCases.includes('independent login hands off once after a live collector probe and keeps inspection visible'), 'Verified pairing must exercise the automatic handoff and visible inspection');
 console.log(JSON.stringify({ suite: 'independent collector authentication boundary', services: 'actual linked production C#', hostIntegration: 'static source and generation/epoch guards', realWinUI: 'NotTested', realProfile: false, realWhatsApp: false }));
