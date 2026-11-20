@@ -315,7 +315,7 @@ function assertBlank(snapshot, db) {
 function prepareDatabase(generation, context, snapshot) {
   const db = new DatabaseSync(generation.dbPath, { enableForeignKeyConstraints: true });
   try {
-    runMigrations({ db, dbPath: generation.dbPath, migrationDir: path.join(__dirname, 'migrations'), backup: false });
+    runMigrations({ db, dbPath: generation.dbPath, initializeAtVersion: VERSION, migrationDir: path.join(__dirname, 'migrations'), backup: false });
     if (snapshot) {
       db.exec('BEGIN IMMEDIATE; PRAGMA defer_foreign_keys=ON');
       try {

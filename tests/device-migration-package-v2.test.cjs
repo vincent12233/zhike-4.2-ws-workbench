@@ -36,7 +36,7 @@ async function fixture(t) {
   const db = new DatabaseSync(databasePath);
   try {
     runMigrations({
-      db, dbPath: databasePath, migrationDir, manifestPath: path.join(migrationDir, 'manifest.json'),
+      db, dbPath: databasePath, initializeAtVersion: 25, migrationDir, manifestPath: path.join(migrationDir, 'manifest.json'),
       backupDir: path.join(input, 'migration-backups'), lockPath: path.join(input, '.migration.lock'),
     });
     db.prepare(`INSERT INTO ws_accounts(id,display_name,origin,partition_key,created_at,updated_at)

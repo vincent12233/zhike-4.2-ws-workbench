@@ -451,6 +451,19 @@ function runMigrations(options = {}) {
     // this read before the lease would race SQLite's schema lock and surface a
     // spurious `database is locked` error instead of waiting for the owner.
     let current = readVersion();
+    // Historical device packages have a reviewed target schema. Build only a
+    // fresh, private candidate at that version. Every SQL file has already
+    // passed manifest verification, including the migrations after the target.
+    if (Object.hasOwn(options, 'initializeAtVersion')) {
+      const version = options.initializeAtVersion;
+      if (!manifest.migrations.some(entry => entry.version === version)) {
+        throw migrationError('MIGRATION_TARGET_INVALID', '请求的初始化版本未登记。');
+      }
+      if (current !== 0 || db.prepare('SELECT 1 FROM sqlite_master LIMIT 1').get()) {
+        throw migrationError('MIGRATION_TARGET_NOT_EMPTY', '指定历史版本仅适用于空白恢复目标。');
+      }
+      manifest.migrations = manifest.migrations.filter(entry => entry.version <= version);
+    }
     if (current > maxVersion) throw migrationError('SCHEMA_VERSION_UNSUPPORTED', `数据库 schema 版本 ${current} 高于当前支持版本 ${maxVersion}，已拒绝写入。`, { currentVersion: current, supportedVersion: maxVersion, readOnly: true });
     db.exec('PRAGMA busy_timeout = 5000; PRAGMA foreign_keys = ON;');
     const appliedBefore = inspectApplied(db, manifest, current);

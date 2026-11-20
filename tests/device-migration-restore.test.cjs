@@ -38,7 +38,7 @@ before(async () => {
   const databasePath = join(sourceRoot, 'workspace.sqlite');
   const db = new DatabaseSync(databasePath);
   try {
-    runMigrations({ db, dbPath: databasePath, migrationDir: join(__dirname, '../resources/app/migrations'), backup: false });
+    runMigrations({ db, dbPath: databasePath, initializeAtVersion: 25, migrationDir: join(__dirname, '../resources/app/migrations'), backup: false });
     const dates = { created_at: time, updated_at: time };
     const customer = { id: 'customer-1', name: 'Fixture Customer', phone: '+91 95550 00101', phase: '跟进', deleted: false };
     const crm = JSON.stringify({ schemaVersion: 4, customers: [customer], tickets: [{ id: 'ticket-1', customerId: customer.id }] });

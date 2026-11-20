@@ -28,7 +28,7 @@ function fixture(t) {
     db.close();
     rmSync(root, { recursive: true, force: true, maxRetries: 3 });
   });
-  runMigrations({ db, dbPath: databasePath, migrationDir: migrations,
+  runMigrations({ db, dbPath: databasePath, initializeAtVersion: 25, migrationDir: migrations,
     manifestPath: join(migrations, 'manifest.json'), backupDir: join(root, 'backups'),
     lockPath: join(root, 'migration.lock') });
   return { root, databasePath, db };
@@ -154,6 +154,15 @@ test('projects all reviewed tables from the real 025 shape without machine colum
   assert.equal(tables.ws_account_settings.find(row => row.account_id === 'native-b').settings_json.arbitrary.maxTokens, 300);
   assert.doesNotThrow(() => validateDeviceMigrationSnapshot(JSON.parse(encoded)));
   assert.deepEqual(readFileSync(fx.databasePath), before);
+});
+
+test('historical initialization cannot alter an existing workspace', t => {
+  const fx = fixture(t);
+  assert.throws(() => runMigrations({ db: fx.db, dbPath: fx.databasePath, migrationDir: migrations, initializeAtVersion: 25 }),
+    { code: 'MIGRATION_TARGET_NOT_EMPTY' });
+  assert.equal(fx.db.prepare('PRAGMA user_version').get().user_version, 25);
+  runMigrations({ db: fx.db, dbPath: fx.databasePath, migrationDir: migrations });
+  assert.throws(() => exportDeviceMigrationSnapshot(fx.databasePath), { code:'SNAPSHOT_SCHEMA' });
 });
 
 test('a concurrent WAL write cannot mix workspace and WS generations', t => {
