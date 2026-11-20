@@ -216,6 +216,7 @@ function runStage55c1a(options = {}) {
 
 function runWs() {
   runSyntax();
+  run('WS secondary index recovery and WAL-consistent snapshot', [path.join(repo, 'tests', 'ws-index-recovery.test.cjs')]);
   runStage3();
   runStage4();
   run('WS core rules', [path.join(repo, 'tests', 'ws-workbench-core.test.cjs')]);

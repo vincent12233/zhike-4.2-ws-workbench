@@ -13,6 +13,8 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const { spawnSync } = require('node:child_process');
+const { planWsIndexRecovery } = require('./modules/migration-ws-index-recovery.cjs');
 
 const DEFAULT_LOCK_TIMEOUT_MS = 30_000;
 const DEFAULT_LOCK_POLL_MS = 25;
@@ -300,24 +302,22 @@ function inspectApplied(db, manifest, currentVersion) {
   return { rows, compatibility, hasChecksum: columns.includes('checksum'), needsTable: false, needsBackfill: [...rows.values()].some(row => !row.checksum) };
 }
 
-function backupDatabase(db, dbPath, backupDir) {
+function backupDatabase(dbPath, backupDir, integrity) {
   if (!dbPath || !backupDir) return null;
   const resolvedDb = path.resolve(dbPath);
   if (!fs.existsSync(resolvedDb)) throw migrationError('MIGRATION_BACKUP_FAILED', `数据库文件不存在，无法备份: ${resolvedDb}`);
   fs.mkdirSync(path.resolve(backupDir), { recursive: true });
-  try { db.exec('PRAGMA wal_checkpoint(TRUNCATE)'); } catch (error) {
-    throw migrationError('MIGRATION_BACKUP_FAILED', `WAL checkpoint 失败: ${error.message}`);
-  }
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const target = path.join(path.resolve(backupDir), `migration-${stamp}-${process.pid}-${crypto.randomBytes(4).toString('hex')}.sqlite`);
   try {
-    fs.copyFileSync(resolvedDb, target);
-    for (const suffix of ['-wal', '-shm']) {
-      const source = `${resolvedDb}${suffix}`;
-      if (fs.existsSync(source)) fs.copyFileSync(source, `${target}${suffix}`);
-    }
+    const result = spawnSync(process.execPath, [path.join(__dirname, 'modules', 'migration-backup.cjs'), resolvedDb, target],
+      { windowsHide: true, encoding: 'utf8', maxBuffer: 2 * 1024 * 1024 });
+    if (result.error) throw result.error;
+    if (result.status !== 0) throw new Error(result.stderr.trim() || `SQLite 备份进程退出 ${result.status}`);
+    const snapshot = JSON.parse(result.stdout);
+    if (JSON.stringify(snapshot) !== JSON.stringify(integrity)) throw new Error('独立快照与源数据库完整性检查结果不同。');
   } catch (error) {
-    try { fs.rmSync(target, { force: true }); } catch {}
+    for (const suffix of ['', '-wal', '-shm', '-journal']) { try { fs.rmSync(target + suffix, { force: true }); } catch {} }
     throw migrationError('MIGRATION_BACKUP_FAILED', `数据库备份失败: ${error.message}`, { cause: error });
   }
   return target;
@@ -471,8 +471,37 @@ function runMigrations(options = {}) {
     if (appliedBefore.compatibility.length && !auditState.exists && options.backup === false) throw migrationError('MIGRATION_COMPATIBILITY_BACKUP_REQUIRED', '024 兼容首次启用不能禁用迁移前备份。');
     const pending = manifest.migrations.filter(entry => entry.version > current);
     const needsMetadata = appliedBefore.needsTable || !appliedBefore.hasChecksum || appliedBefore.needsBackfill;
-    const preIntegrity = assertIntegrity(db, '迁移前');
-    const backupPath = (pending.length || needsMetadata || (appliedBefore.compatibility.length && !auditState.exists)) && options.backup !== false ? backupDatabase(db, options.dbPath, options.backupDir || path.join(path.dirname(options.dbPath || ''), '.backups')) : null;
+    const preIntegrity = readIntegrity(db);
+    const repairs = planWsIndexRecovery(db, manifest, current, preIntegrity);
+    if (!preIntegrity.ok && !repairs.length) {
+      throw migrationError('MIGRATION_INTEGRITY_FAILED', '迁移前完整性检查失败。', { integrity: preIntegrity });
+    }
+    const needsBackup = pending.length || needsMetadata || repairs.length || (appliedBefore.compatibility.length && !auditState.exists);
+    if (repairs.length && (options.backup === false || !options.dbPath)) {
+      throw migrationError('MIGRATION_INDEX_BACKUP_REQUIRED', '修复 WS 二级索引需要可验证的原始 SQLite 快照。', { integrity: preIntegrity });
+    }
+    const backupDir = options.backupDir || path.join(path.dirname(options.dbPath || ''), '.backups');
+    let backupPath = null;
+    if (repairs.length) {
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        const locked = readIntegrity(db);
+        const currentPlan = planWsIndexRecovery(db, manifest, current, locked);
+        if (JSON.stringify(currentPlan) !== JSON.stringify(repairs) || JSON.stringify(locked) !== JSON.stringify(preIntegrity)) {
+          throw migrationError('MIGRATION_INDEX_STATE_CHANGED', 'WS 索引在备份前已改变，请重新检查。', { integrity: locked });
+        }
+        backupPath = backupDatabase(options.dbPath, backupDir, locked);
+        for (const repair of repairs) db.exec(repair.sql);
+        assertIntegrity(db, 'WS 二级索引修复后');
+        db.exec('COMMIT');
+      } catch (error) {
+        try { db.exec('ROLLBACK'); } catch {}
+        error.backupPath = backupPath;
+        throw error;
+      }
+    } else if (needsBackup && options.backup !== false) {
+      backupPath = backupDatabase(options.dbPath, backupDir, preIntegrity);
+    }
     writeCompatibilityAudit(options, auditState, appliedBefore.compatibility, backupPath);
     db.exec('PRAGMA journal_mode = WAL;');
     // Version zero alone is not evidence of a new database: legacy workspaces
@@ -510,7 +539,7 @@ function runMigrations(options = {}) {
       }
     }
     const integrity = assertIntegrity(db, '迁移后');
-    return { version: readVersion(), applied, backupPath, integrity, preIntegrity, manifest: manifest.path, compatibility: appliedBefore.compatibility, compatibilityAuditPath: auditState.path };
+    return { version: readVersion(), applied, backupPath, integrity, preIntegrity, repairedIndexes: repairs.map(repair => repair.name), manifest: manifest.path, compatibility: appliedBefore.compatibility, compatibilityAuditPath: auditState.path };
   } finally {
     lock.release();
   }

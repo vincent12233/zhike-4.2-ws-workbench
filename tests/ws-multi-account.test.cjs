@@ -1,37 +1,15 @@
 const assert = require('node:assert/strict');
-const { spawn } = require('node:child_process');
+const { startServer } = require('./helpers/ws-account-test-sidecar.cjs');
 const { mkdtempSync, rmSync, readFileSync } = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
 
 const app = path.join(__dirname, '..', 'resources', 'app');
-const headersFor = token => ({ 'content-type': 'application/json', 'x-zhike-api-token': token });
-const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-async function startServer(dataDir, port, token) {
-  const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], { cwd: app, windowsHide: true, env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token }, stdio: 'ignore' });
-  const headers = { ...headersFor(token), origin: `http://127.0.0.1:${port}` };
-  async function request(pathname, init = {}) {
-    for (let attempt = 0; attempt < 300; attempt++) {
-      try { return await fetch(`http://127.0.0.1:${port}${pathname}`, { ...init, headers: { ...headers, ...(init.headers || {}) } }); }
-      catch { await wait(50); }
-    }
-    throw new Error('server did not become available');
-  }
-  return { child, request, stop: async () => {
-    try { await fetch(`http://127.0.0.1:${port}/api/shutdown`, { method: 'POST', headers: { ...headers, 'x-zhike-shutdown-token': token } }); } catch {}
-    if (child.exitCode === null) {
-      await Promise.race([new Promise(resolve => child.once('exit', resolve)), wait(1000)]);
-      if (child.exitCode === null) child.kill();
-      if (child.exitCode === null) await Promise.race([new Promise(resolve => child.once('exit', resolve)), wait(1000)]);
-    }
-  } };
-}
-
 async function run() {
   const dataDir = mkdtempSync(path.join(os.tmpdir(), 'zhike-ws-multi-account-'));
   const token = 'ws-multi-account-token';
-  const server = await startServer(dataDir, 4481, token);
+  const server = await startServer(dataDir, token);
   try {
     const accounts = await server.request('/api/ws/accounts');
     assert.equal(accounts.status, 200, 'account listing endpoint should exist');
@@ -82,7 +60,7 @@ async function run() {
     await server.stop();
   }
 
-  const restarted = await startServer(dataDir, 4483, 'ws-multi-account-restart-token');
+  const restarted = await startServer(dataDir, 'ws-multi-account-restart-token');
   try {
     const afterRestart = await (await restarted.request('/api/ws/accounts')).json();
     assert.ok(afterRestart.accounts.every(account => account.status === '未连接'), 'server restart should clear stale runtime account statuses');
@@ -111,7 +89,7 @@ async function run() {
   db.prepare('INSERT INTO ws_collection_runs(id,status,created_at,updated_at) VALUES(?,?,?,?)').run('legacy-run', 'created', now, now);
   db.prepare('INSERT INTO ws_collection_items(id,run_id,conversation_id,created_at,updated_at) VALUES(?,?,?,?,?)').run('legacy-item', 'legacy-run', 'legacy-conv', now, now);
   db.close();
-  const legacyServer = await startServer(legacyDir, 4482, 'legacy-token');
+  const legacyServer = await startServer(legacyDir, 'legacy-token');
   try {
     const conversations = await (await legacyServer.request('/api/ws/conversations')).json();
     assert.equal(conversations.conversations[0].accountId, 'default');
