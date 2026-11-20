@@ -201,8 +201,9 @@
     const running = capability.collectorState === 'running';
     const open = `<button type="button" class="btn small" data-ws-action="open-collector" ${busy}>${running ? '暂停并查看采集会话' : '打开独立采集登录'}</button>`;
     const visible = state.collectorLoginVisible || capability.collectorState === 'login-visible';
-    const canResume = visible || ['paused', 'awaiting-login'].includes(capability.collectorState);
-    const resume = `<button type="button" class="btn small primary" data-ws-action="resume-collector" ${busy}>${visible ? '已完成扫码，开始采集' : '继续后台采集'}</button>`;
+    const saved = state.accountMetrics?.accounts?.some(row => row.accountId === state.activeAccountId && row.workspaceMode === state.workspaceMode && row.collectorSavedSession === 'confirmed');
+    const canResume = visible || ['paused', 'awaiting-login'].includes(capability.collectorState) || (saved && capability.collectorState === 'not-started');
+    const resume = `<button type="button" class="btn small primary" data-ws-action="resume-collector" ${busy}>${visible ? '已完成扫码，开始采集' : capability.collectorState === 'not-started' ? '恢复已配对的采集会话' : '继续后台采集'}</button>`;
     const back = `<button type="button" class="btn small" data-ws-action="hide-collector" ${busy}>返回前台聊天</button>`;
     return `<div class="ws-runtime-actions" data-collector-controls>${visible ? '' : open}${running ? `<button type="button" class="btn small" data-ws-action="pause-collector" ${busy}>暂停后台采集</button>` : canResume ? resume : ''}${visible || capability.collectorState === 'awaiting-login' ? back : ''}</div>`;
   }
@@ -228,8 +229,7 @@
       state.error = '';
       if (action === 'hide-collector') state.wsWorkspaceView = 'chat';
       if (action === 'resume-collector' && !collectionReady('backgroundCollection', context.accountId)) {
-        state.error = '独立采集会话尚未登录。请点“打开独立采集登录”，用当前账号的手机扫码后再开始采集。';
-        toast(state.error, 'x');
+        toast(text(result?.detail) || '正在检查独立采集会话。如需扫码，请点“打开独立采集登录”。', 'info');
       }
       if (collectionReady('backgroundCollection', context.accountId)) void refreshCollectionSummary({ background: true });
       return result;

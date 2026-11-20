@@ -109,16 +109,17 @@ try
         runtime.SetCollectorState("pairing", "login-visible");
         runtime.SetCollectorState("inspection", "login-visible");
         pairing.StartAfterPairing = true;
-        Assert(!other.TakeCompletedPairing(true), "A different account consumed the pairing intent");
-        Assert(!pairing.TakeCompletedPairing(false), "Unpaired collector left the login surface");
-        Assert(pairing.TakeCompletedPairing(true) && !pairing.TakeCompletedPairing(true), "A verified pairing must hand off exactly once");
+        Assert(!other.ShouldResumeAfterLogin(true, true), "A different account consumed the pairing intent");
+        Assert(!pairing.ShouldResumeAfterLogin(false, true), "Unpaired collector left the login surface");
+        Assert(pairing.ShouldResumeAfterLogin(true, true) && !pairing.ShouldResumeAfterLogin(true, true), "A verified pairing must hand off exactly once");
+        Assert(!other.ShouldResumeAfterLogin(false, false) && other.ShouldResumeAfterLogin(true, false), "Leaving an inspection through workspace navigation must resume only an independently signed-in collector");
         pairing.StartAfterPairing = true;
         runtime.SetCollectorState("pairing", "paused");
-        Assert(!pairing.TakeCompletedPairing(true), "A paused collector resumed from a late login probe");
+        Assert(!pairing.ShouldResumeAfterLogin(true, false), "A paused collector resumed from a late login probe");
         await runtime.CloseAccountAsync("pairing");
         var reopened = (await runtime.ShowAccountAsync("pairing")).Session;
         runtime.SetCollectorState("pairing", "login-visible");
-        Assert(!reopened.TakeCompletedPairing(true), "A retired collector transferred its intent to the next generation");
+        Assert(!reopened.ShouldResumeAfterLogin(true, true), "A retired collector transferred its intent to the next generation");
         await runtime.ShutdownAsync();
     });
     await Check("running independent collector is driven while the same account chats in foreground", async () =>

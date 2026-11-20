@@ -634,8 +634,10 @@ public sealed partial class LegacyUiHostPage : Page
                 {
                     // A fresh pairing starts only after this collector's own login probe.
                     // An operator inspecting an already running collector keeps the surface.
-                    if (!session.TakeCompletedPairing(status.status == "已连接")) return;
-                    if (string.Equals(_wsCollectorVisibleAccountId, session.AccountId, StringComparison.OrdinalIgnoreCase))
+                    var ownsLoginSurface = string.Equals(_wsCollectorVisibleAccountId, session.AccountId, StringComparison.OrdinalIgnoreCase);
+                    var showingLogin = ownsLoginSurface && App.WsService.ActiveSession == session && IsWsChatPresentationActive;
+                    if (!session.ShouldResumeAfterLogin(status.status == "已连接", showingLogin)) return;
+                    if (ownsLoginSurface)
                     {
                         _wsCollectorVisibleAccountId = string.Empty;
                         SyncPooledWsPresentation();

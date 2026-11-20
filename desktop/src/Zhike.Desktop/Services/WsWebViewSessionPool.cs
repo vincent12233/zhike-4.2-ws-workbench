@@ -35,9 +35,9 @@ public sealed class WsWebViewSession
     public WebView2? CollectorView { get; }
     public string CollectorState { get; internal set; } = "not-started";
     internal bool StartAfterPairing { get; set; }
-    internal bool TakeCompletedPairing(bool collectorSignedIn)
+    internal bool ShouldResumeAfterLogin(bool collectorSignedIn, bool showingLogin)
     {
-        if (!collectorSignedIn || !StartAfterPairing || CollectorState != "login-visible") return false;
+        if (!collectorSignedIn || CollectorState != "login-visible" || showingLogin && !StartAfterPairing) return false;
         StartAfterPairing = false;
         return true;
     }

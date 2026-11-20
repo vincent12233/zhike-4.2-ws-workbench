@@ -402,6 +402,10 @@ function assertEnabled(html, action) {
 test('collector lifecycle controls offer login, return, pause and resume at their actual states', () => {
   const f = fixture();
   f.publish('not-started'); assertEnabled(f.renderCollectorControls(), 'open-collector');
+  f.state.accountMetrics = { accounts: [{ accountId: 'b', workspaceMode: 'ordinary', collectorSavedSession: 'confirmed' }] };
+  assert.equal(buttonTags(f.renderCollectorControls(), 'resume-collector').length, 0);
+  f.state.accountMetrics.accounts[0].accountId = 'a';
+  assertEnabled(f.renderCollectorControls(), 'resume-collector');
   f.publish('login-visible'); assertEnabled(f.renderCollectorControls(), 'hide-collector');
   f.publish('running'); assertEnabled(f.renderCollectorControls(), 'pause-collector');
   f.publish('paused'); assertEnabled(f.renderCollectorControls(), 'resume-collector');
