@@ -26,6 +26,14 @@ assert.match(probe, /return await RunWsProbeOnUiAsync\(async \(\) =>[\s\S]*?Curr
   'current-document validation and bridge publication must return to the dispatcher');
 assert.match(probe, /DispatcherQueue\.HasThreadAccess[\s\S]*DispatcherQueue\.TryEnqueue/,
   'the dispatcher helper must handle both UI callers and background callers');
+assert.match(probe, /WsAccountProbeLease\? attemptedLease = null;\s*try\s*\{\s*var work = await RunWsProbeOnUiAsync/,
+  'initial Core/Source reads and synchronous script startup must be inside the probe error boundary');
+assert.match(probe, /attemptedLease = lease;\s*if \(view\.CoreWebView2/,
+  'owned lease must be captured before COM getters can fail');
+assert.match(probe, /attemptedLease is not null && App\.WsSessions\.IsCurrent\(accountId, generation, view\)\) _wsAccountMetrics\.CompleteProbe\(attemptedLease, false/,
+  'failure may mark only the originally captured lease, never a newer observation');
+assert.match(probe, /await work\.Script\.WaitAsync\(cancellationToken\)\.ConfigureAwait\(false\)/,
+  'cancelling a request need not wait for an old WebView script to finish');
 const tick = runtime.slice(runtime.indexOf('    public async Task TickAsync('), runtime.indexOf('    public async Task ShutdownAsync('));
 assert.ok(tick.includes('RunHeartbeatAsync(foreground, false'), 'existing foreground sessions retain their read-only heartbeat');
 assert.doesNotMatch(tick, /LeaseNextBackgroundAccount\(|GetOrCreateAsync\(/,

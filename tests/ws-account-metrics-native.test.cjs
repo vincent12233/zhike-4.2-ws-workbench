@@ -70,6 +70,39 @@ probe.Invalidate("a0"); probe.UnlockStatus(); await blockedStatus;
 Check(probe.Published == priorPublish && (await store.LoadAsync()).First(row => row.Id == "a0").Status == "等待登录", "a probe invalidated while waiting for the status gate cannot persist or publish a late status");
 await Task.Run(() => probe.Call("a0", newView, 2));
 Check((await probe.Snapshot()).Accounts.First(row => row.AccountId == "a0").OnlineState == "recent", "a background caller is dispatched before reading Core or Source");
+var nativeCore = newView.CoreWebView2!;
+var beforeFailures = probe.Published;
+newView.ThrowCoreRead = true;
+Check((await probe.Call("a0", newView, 2)).status == "连接失败", "initial Core getter failure is contained before reaching an async-void navigation callback");
+newView.ThrowCoreRead = false;
+Check((await probe.Snapshot()).Accounts.First(row => row.AccountId == "a0").OnlineState == "not-online", "current Core read failure marks only its owned observation");
+nativeCore.ThrowSourceRead = true;
+Check((await probe.Call("a0", newView, 2)).status == "连接失败", "synchronous Source getter failure is contained");
+nativeCore.ThrowSourceRead = false;
+nativeCore.ThrowExecute = true;
+Check((await probe.Call("a0", newView, 2)).status == "连接失败", "synchronous ExecuteScriptAsync failure is contained");
+nativeCore.ThrowExecute = false;
+Check(probe.Published == beforeFailures, "failed native startup never publishes a success");
+var failingOld = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+nativeCore.Result = failingOld.Task;
+var failingOldCall = probe.Call("a0", newView, 2);
+nativeCore.Result = Task.FromResult(ProbeResult(true)); await probe.Call("a0", newView, 2);
+failingOld.SetException(new InvalidOperationException("old asynchronous script failed"));
+Check((await failingOldCall).status == "连接失败", "asynchronous script failure remains contained");
+Check((await probe.Snapshot()).Accounts.First(row => row.AccountId == "a0").OnlineState == "recent", "failed old probe cannot mark a newer online observation offline");
+using var cancelled = new CancellationTokenSource();
+var cancelledResult = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+nativeCore.Result = cancelledResult.Task;
+var cancelledCall = probe.Call("a0", newView, 2, token: cancelled.Token); cancelled.Cancel();
+try { await cancelledCall; throw new Exception("cancellation was swallowed"); } catch (OperationCanceledException) { }
+nativeCore.Result = Task.FromResult(ProbeResult(true)); await probe.Call("a0", newView, 2);
+var afterCancelPublish = probe.Published;
+cancelledResult.SetResult(ProbeResult(false, true)); await Task.Delay(20);
+Check(probe.Published == afterCancelPublish && (await probe.Snapshot()).Accounts.First(row => row.AccountId == "a0").OnlineState == "recent", "cancelled script completion cannot overwrite a newer successful observation");
+using var cancelledBeforeStart = new CancellationTokenSource(); cancelledBeforeStart.Cancel();
+newView.ThrowCoreRead = true;
+try { await probe.Call("a0", newView, 2, token: cancelledBeforeStart.Token); throw new Exception("pre-start cancellation was swallowed"); } catch (OperationCanceledException) { }
+newView.ThrowCoreRead = false;
 App.WsSessions.Rows.Clear();
 Check((await probe.Snapshot()).Accounts.All(row => row.OnlineState != "recent" && !row.ForegroundInitialized && !row.CollectorInitialized && !row.CollectorRunning), "destroyed sessions never remain online or initialized");
 Check(CoreWebView2Environment.Calls == 0, "metrics and login evidence must never initialize an environment");
@@ -87,7 +120,7 @@ sealed class Probe(WsAccountStore store, WebViewProfileService profiles) {
   FixtureDispatcher DispatcherQueue => FixtureDispatcher.Instance;
   public TaskCompletionSource? StatusEntered;
   public int Published;
-  public Task<(string status,string detail)> Call(string id, WebView2 view, long generation, bool publish = true) => ProbeWsLoginStateAsync(id,view,generation,publishStatus:publish);
+  public Task<(string status,string detail)> Call(string id, WebView2 view, long generation, bool publish = true, CancellationToken token = default) => ProbeWsLoginStateAsync(id,view,generation,token,publish);
   public Task<WsAccountMetricsSnapshot> Snapshot() => RunWsProbeOnUiAsync(async () => BuildWsAccountMetrics(await store.LoadAsync()), CancellationToken.None);
   public WsAccountMetricsSnapshot RawSnapshot(IReadOnlyList<StoredWsAccount> rows, DateTimeOffset now) => _wsAccountMetrics.Snapshot(rows, App.WsSessions.Rows.Select(s => new WsAccountMetricRuntime(s.AccountId,s.Generation,s.IsReady,s.IsCollectorReady,s.CollectorState)).ToArray(),profiles.GetProfileDirectoryStamp,now);
   public void Invalidate(string id) => _wsAccountMetrics.Invalidate(id);
@@ -112,9 +145,9 @@ sealed class FakePool {
 }
 sealed record FakeSession(string AccountId,long Generation,WebView2 View,WebView2? CollectorView) { public bool IsReady => View.CoreWebView2 is not null; public bool IsCollectorReady => CollectorView?.CoreWebView2 is not null; public string CollectorState => "running"; }
 static class RuntimeExtensions { public static Task<T> AsTask<T>(this Task<T> value) => value; }
-namespace Microsoft.UI.Xaml.Controls { public sealed class WebView2 { private CoreWebView2? _core; public CoreWebView2? CoreWebView2 { get { FixtureDispatcher.AssertUi(); return _core; } set { FixtureDispatcher.AssertUi(); _core = value; } } } }
+namespace Microsoft.UI.Xaml.Controls { public sealed class WebView2 { private CoreWebView2? _core; public bool ThrowCoreRead; public CoreWebView2? CoreWebView2 { get { FixtureDispatcher.AssertUi(); if (ThrowCoreRead) throw new InvalidOperationException("synthetic Core getter failure"); return _core; } set { FixtureDispatcher.AssertUi(); _core = value; } } } }
 namespace Microsoft.Web.WebView2.Core {
-  public sealed class CoreWebView2 { public string Source { get { FixtureDispatcher.AssertUi(); return "https://web.whatsapp.com/"; } } public Task<string> Result = Task.FromResult("{}"); public Task<string> ExecuteScriptAsync(string script) { FixtureDispatcher.AssertUi(); return Result; } }
+  public sealed class CoreWebView2 { public bool ThrowSourceRead, ThrowExecute; public string Source { get { FixtureDispatcher.AssertUi(); if (ThrowSourceRead) throw new InvalidOperationException("synthetic Source getter failure"); return "https://web.whatsapp.com/"; } } public Task<string> Result = Task.FromResult("{}"); public Task<string> ExecuteScriptAsync(string script) { FixtureDispatcher.AssertUi(); if (ThrowExecute) throw new InvalidOperationException("synthetic script startup failure"); return Result; } }
   public sealed class CoreWebView2EnvironmentOptions { }
   public sealed class CoreWebView2Environment { public static int Calls; public static Task<CoreWebView2Environment> CreateWithOptionsAsync(string? browser,string path,CoreWebView2EnvironmentOptions options) { Calls++; return Task.FromResult(new CoreWebView2Environment()); } }
 }

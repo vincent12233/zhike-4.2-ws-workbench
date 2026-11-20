@@ -2530,26 +2530,29 @@ public sealed partial class LegacyUiHostPage : Page
         CancellationToken cancellationToken = default,
         bool publishStatus = true)
     {
-        var work = await RunWsProbeOnUiAsync(() =>
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (view?.CoreWebView2 is not { } core) return Task.FromResult(new WsLoginProbeWork(null, null, "WS 页面尚未打开。"));
-            var session = App.WsSessions.Sessions().FirstOrDefault(item => item.AccountId.Equals(accountId, StringComparison.OrdinalIgnoreCase) && item.Generation == generation);
-            var collector = ReferenceEquals(session?.CollectorView, view);
-            if (session is null || !App.WsSessions.IsCurrent(accountId, generation, view)) return Task.FromResult(new WsLoginProbeWork(null, null, "WS 会话代数已改变。"));
-            if (!IsAllowedWsPopupNavigation(core.Source))
-            {
-                _wsAccountMetrics.Invalidate(accountId, collector);
-                return Task.FromResult(new WsLoginProbeWork(null, null, "WS 页面尚未完成有效导航。"));
-            }
-            var lease = _wsAccountMetrics.BeginProbe(accountId, generation, collector);
-            var script = core.ExecuteScriptAsync("(() => { const body=document.body; const text=(body?.innerText||'').slice(0,6000); const login=!!document.querySelector('[data-testid=\\\"qrcode\\\"], canvas[aria-label*=\\\"QR\\\" i], [data-ref]'); const chat=!!document.querySelector('#pane-side') || (!!document.querySelector('[data-testid=\\\"chat-list\\\"], [aria-label=\\\"Chat list\\\"], [aria-label=\\\"聊天列表\\\"], [role=\\\"grid\\\"]') && !!document.querySelector('[data-testid=\\\"search-input\\\"], [contenteditable=\\\"true\\\"], [role=\\\"textbox\\\"]')); const problem=/此页面存在问题|page has a problem|update your browser|更新浏览器/i.test(text); return JSON.stringify({login,chat,problem,text:text.slice(0,2000)}); })()").AsTask();
-            return Task.FromResult(new WsLoginProbeWork(lease, script, ""));
-        }, cancellationToken).ConfigureAwait(false);
-        if (work.Lease is not { } lease || work.Script is null) return ("未连接", work.NotReadyDetail);
+        WsAccountProbeLease? attemptedLease = null;
         try
         {
-            var json = await work.Script.ConfigureAwait(false);
+            var work = await RunWsProbeOnUiAsync(() =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (view is null) return Task.FromResult(new WsLoginProbeWork(null, null, "WS 页面尚未打开。"));
+                var session = App.WsSessions.Sessions().FirstOrDefault(item => item.AccountId.Equals(accountId, StringComparison.OrdinalIgnoreCase) && item.Generation == generation);
+                var collector = ReferenceEquals(session?.CollectorView, view);
+                if (session is null || !App.WsSessions.IsCurrent(accountId, generation, view)) return Task.FromResult(new WsLoginProbeWork(null, null, "WS 会话代数已改变。"));
+                var lease = _wsAccountMetrics.BeginProbe(accountId, generation, collector);
+                attemptedLease = lease;
+                if (view.CoreWebView2 is not { } core) return Task.FromResult(new WsLoginProbeWork(lease, null, "WS 页面尚未打开。"));
+                if (!IsAllowedWsPopupNavigation(core.Source))
+                {
+                    _wsAccountMetrics.Invalidate(accountId, collector);
+                    return Task.FromResult(new WsLoginProbeWork(null, null, "WS 页面尚未完成有效导航。"));
+                }
+                var script = core.ExecuteScriptAsync("(() => { const body=document.body; const text=(body?.innerText||'').slice(0,6000); const login=!!document.querySelector('[data-testid=\\\"qrcode\\\"], canvas[aria-label*=\\\"QR\\\" i], [data-ref]'); const chat=!!document.querySelector('#pane-side') || (!!document.querySelector('[data-testid=\\\"chat-list\\\"], [aria-label=\\\"Chat list\\\"], [aria-label=\\\"聊天列表\\\"], [role=\\\"grid\\\"]') && !!document.querySelector('[data-testid=\\\"search-input\\\"], [contenteditable=\\\"true\\\"], [role=\\\"textbox\\\"]')); const problem=/此页面存在问题|page has a problem|update your browser|更新浏览器/i.test(text); return JSON.stringify({login,chat,problem,text:text.slice(0,2000)}); })()").AsTask();
+                return Task.FromResult(new WsLoginProbeWork(lease, script, ""));
+            }, cancellationToken).ConfigureAwait(false);
+            if (work.Lease is not { } lease || work.Script is null) return ("未连接", work.NotReadyDetail);
+            var json = await work.Script.WaitAsync(cancellationToken).ConfigureAwait(false);
             // ConfigureAwait(false) alone can continue synchronously when a
             // script completed inline. Task.Run guarantees background parsing.
             var parsed = await Task.Run(() => ParseWsLoginProbe(json), cancellationToken).ConfigureAwait(false);
@@ -2575,7 +2578,7 @@ public sealed partial class LegacyUiHostPage : Page
         {
             // Pool ownership and metric leases are lock-protected managed
             // data; this failure path never touches a WebView/COM property.
-            if (App.WsSessions.IsCurrent(accountId, generation, view)) _wsAccountMetrics.CompleteProbe(lease, false, DateTimeOffset.UtcNow);
+            if (attemptedLease is not null && App.WsSessions.IsCurrent(accountId, generation, view)) _wsAccountMetrics.CompleteProbe(attemptedLease, false, DateTimeOffset.UtcNow);
             return ("连接失败", "WS 页面状态检测失败，请重试。");
         }
     }
