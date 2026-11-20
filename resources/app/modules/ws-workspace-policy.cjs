@@ -27,6 +27,10 @@ const RULES = Object.freeze({
   'send-direct': Object.freeze({ mode: 'ordinary', kind: 'direct' }),
   // Eligibility does not connect a group-body ingestion or sending adapter.
   'collect-group-messages': Object.freeze({ mode: 'dedicated', kind: 'group' }),
+  // The consumer must separately verify exact group authorization and a
+  // trusted, evidence-backed member. A group-wide result grants no CRM writes.
+  'analyze-group-member': Object.freeze({ mode: 'dedicated', kind: 'group' }),
+  'sync-group-member-crm': Object.freeze({ mode: 'dedicated', kind: 'group', exclusion: true }),
   'configure-group-monitor': Object.freeze({ mode: 'dedicated' }),
   'monitor-group': Object.freeze({ mode: 'dedicated', kind: 'group' }),
   'auto-create-group-member': Object.freeze({ mode: 'dedicated', kind: 'group', exclusion: true }),

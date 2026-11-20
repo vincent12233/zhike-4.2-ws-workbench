@@ -2145,6 +2145,29 @@ function wsConversationRow(id, accountId = 'default') { return db.prepare('SELEC
 function wsConversationPolicyError(code, message) { const error = new Error(message); error.code = code; error.status = 422; return error; }
 function wsIsVipGroup(value) { return wsCore.isVipGroupConversation(value); }
 function wsIsExcludedGroup(value) { return wsCore.isExcludedGroupConversation(value); }
+function wsIsAiGroupConversation(value) { return ['group', 'vip_group'].includes(wsCore.conversationType(value)); }
+function wsObservedGroupMessageData(data) {
+  return data.source === 'ws-webview2' && data.previewOnly !== true && Number(data.directionVersion || 0) >= 4
+    && WS_NATIVE_DIRECTION_SOURCE_MAP.get(data.directionSource) === 'receive' && data.senderIdentityTrusted === true;
+}
+function wsRequireAiGroupAuthorization(row) {
+  const observed = wsGroupMonitor.normalizeMemberIdentity(row.external_id);
+  // The existing group-manager JID syntax is independent of CRM labels.
+  if (observed.kind !== 'group' || !/^[a-z0-9._-]{1,235}@g\.us$/.test(observed.value)) {
+    throw wsConversationPolicyError('WS_GROUP_IDENTITY_UNCONFIRMED', '群分析缺少可核验的 WhatsApp 群组 JID。');
+  }
+  const authorized = db.prepare(`SELECT 1 FROM ws_group_monitor_targets t
+    JOIN ws_group_monitor_profiles p ON p.id=t.profile_id AND p.account_id=t.account_id
+    JOIN ws_group_catalog c ON c.account_id=t.account_id AND c.group_jid=t.group_jid
+    WHERE t.account_id=? AND t.group_jid=? AND t.enabled=1 AND p.enabled=1 AND c.status='active' LIMIT 1`).get(row.account_id, observed.value);
+  if (!authorized) throw wsConversationPolicyError('WS_GROUP_AUTHORIZATION_REQUIRED', '当前专用账号尚未启用此确切群组的监测授权，历史记录仍可查看。');
+  // targets/scan also creates catalog rows. A configured directory alone is
+  // insufficient: require independently captured member-message evidence.
+  const messages = db.prepare("SELECT data_json FROM ws_messages WHERE account_id=? AND conversation_id=? AND direction='receive'").all(row.account_id, row.id);
+  if (!messages.some(message => wsObservedGroupMessageData(wsJson(message.data_json, {})))) {
+    throw wsConversationPolicyError('WS_GROUP_OBSERVATION_REQUIRED', '群分析需要当前账号实际采集并确认方向和发言人身份的原始消息。');
+  }
+}
 const WS_TRUSTED_GROUP_SENDER_SOURCES = new Set(['data-jid','data-contact-id','message-author-jid','message-preamble','sender-phone','sender-jid']);
 function wsVipMemberIdentity(value = {}) {
   const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
@@ -2172,7 +2195,7 @@ function wsSameVipMemberIdentity(left, right) {
   return Boolean(a.senderPhone && b.senderPhone && a.senderPhone === b.senderPhone);
 }
 function wsVipMemberEvidence(conversation, value = {}) {
-  if (!wsIsVipGroup(conversation)) return { required:false, valid:true, identity:null, messageCount:0 };
+  if (!wsIsAiGroupConversation(conversation)) return { required:false, valid:true, identity:null, messageCount:0 };
   const identity = wsVipMemberIdentity(value);
   if (!identity.trusted) return { required:true, valid:false, identity, messageCount:0, reason:'群分析缺少可信发言人 WS 标识或手机号。' };
   const rows = db.prepare("SELECT data_json FROM ws_messages WHERE account_id=? AND conversation_id=? AND direction='receive'").all(conversation.account_id, conversation.id);
@@ -2185,7 +2208,7 @@ function wsVipMemberEvidence(conversation, value = {}) {
   for (const row of rows) {
     const data = wsJson(row.data_json, {});
     const observed = wsVipMemberIdentity(data);
-    if (data.senderIdentityTrusted !== true || !observed.trusted) continue;
+    if (!wsObservedGroupMessageData(data) || !observed.trusted) continue;
     const entry = { identity: observed, keys: identityKeys(observed) };
     for (const key of entry.keys) {
       if (!indexed.has(key)) indexed.set(key, []);
@@ -2210,9 +2233,9 @@ function wsVipMemberEvidence(conversation, value = {}) {
   return { required:true, valid:true, identity, messageCount, observedAliases: [...observedAliases] };
 }
 function wsVipScopedAnalysis(conversation, analysis, identity) {
-  if (!wsIsVipGroup(conversation)) return analysis;
+  if (!wsIsAiGroupConversation(conversation)) return analysis;
   const targetTexts = db.prepare("SELECT original_text,data_json FROM ws_messages WHERE account_id=? AND conversation_id=? AND direction='receive'").all(conversation.account_id, conversation.id)
-    .filter(row => { const data = wsJson(row.data_json, {}); return data.senderIdentityTrusted === true && wsSameVipMemberIdentity(data, identity); })
+    .filter(row => { const data = wsJson(row.data_json, {}); return wsObservedGroupMessageData(data) && wsSameVipMemberIdentity(data, identity); })
     .map(row => wsMessageText(row.original_text).toLocaleLowerCase()).filter(Boolean);
   const facts = analysis?.profileFacts && typeof analysis.profileFacts === 'object' && !Array.isArray(analysis.profileFacts) ? analysis.profileFacts : {};
   const profileFacts = {};
@@ -2236,19 +2259,27 @@ function wsVipScopedAnalysis(conversation, analysis, identity) {
     transcriptInfo:{ ...(analysis?.transcriptInfo || {}), memberScoped:true, memberIdentity:identity },
   };
 }
-function wsRequireConversation(id, accountId = 'default') {
+function wsRequireConversationHistory(id, accountId = 'default') {
   const row = wsConversationRow(id, accountId);
   if (!row) throw new Error('WS 会话不存在或已被清理。');
+  return row;
+}
+function wsRequireConversation(id, accountId = 'default') {
+  const row = wsRequireConversationHistory(id, accountId);
   if (wsIsExcludedGroup(row)) throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '此群聊不适用于当前客户会话操作。');
   return row;
 }
-function wsRequireAiConversation(id, accountId = 'default', joinedRow = null) {
-  const row = joinedRow || wsRequireConversation(id, accountId);
-  if (joinedRow && wsIsExcludedGroup(row)) throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '此群聊不适用于当前客户会话操作。');
+function wsRequireAiConversation(id, accountId = 'default', joinedRow = null, operation = 'analyze') {
+  const row = joinedRow || wsRequireConversationHistory(id, accountId);
   const account = wsAccountId(accountId);
   const data = wsJson(row.data_json, {});
   const type = wsCore.conversationType(row);
-  if (!['direct', 'vip_group'].includes(type)) throw wsConversationPolicyError('WS_CONVERSATION_TYPE_UNCONFIRMED', '当前会话类型无法用于客户分析。');
+  if (!['direct', 'group', 'vip_group'].includes(type)) throw wsConversationPolicyError('WS_CONVERSATION_TYPE_UNCONFIRMED', '当前会话类型尚未确认，不能执行 AI 分析或 CRM 同步。');
+  const group = wsIsAiGroupConversation(row);
+  const purpose = wsWorkspacePolicy.decideWsWorkspaceOperation({ account: wsAccountRow(account), conversationType: type,
+    operation: operation === 'sync' ? (group ? 'sync-group-member-crm' : 'sync-direct-crm') : (group ? 'analyze-group-member' : 'analyze-direct') });
+  if (!purpose.eligible) throw wsConversationPolicyError(purpose.code, '当前账号用途不允许执行此会话的 AI 分析或 CRM 同步，历史记录仍可查看。');
+  if (group) wsRequireAiGroupAuthorization(row);
   if (data.historyLoaded !== true) throw wsConversationPolicyError('WS_HISTORY_INCOMPLETE', '聊天完整历史尚未加载，暂不能进行 AI 分析或 CRM 同步。');
   const historyFingerprint = wsText(data.historyFingerprint, 500);
   const lastMessageFingerprint = wsText(data.lastMessageFingerprint, 500);
@@ -2259,6 +2290,22 @@ function wsRequireAiConversation(id, accountId = 'default', joinedRow = null) {
   const messageCount = Number(db.prepare('SELECT COUNT(*) AS count FROM ws_messages WHERE account_id=? AND conversation_id=?').get(account, row.id).count || 0);
   if (messageCount > 0 && Number(data.directionVersion || 0) < 4) throw wsConversationPolicyError('WS_DIRECTION_UNVERIFIED', '历史消息方向尚未通过 v4 校验，暂不能进行 AI 分析或 CRM 同步。');
   return row;
+}
+function wsRequireAiMemberScope(conversation, value = {}) {
+  if (!wsIsAiGroupConversation(conversation)) return { required: false, valid: true, identity: null };
+  if (value.memberScoped !== true && value.transcriptInfo?.memberScoped !== true) {
+    throw wsConversationPolicyError('WS_GROUP_MEMBER_SCOPE_REQUIRED', '群分析必须明确限定单一发言人，不能执行整群客户分析。');
+  }
+  const evidence = wsVipMemberEvidence(conversation, value.memberIdentity || value.transcriptInfo?.memberIdentity || {});
+  if (!evidence.valid) throw wsConversationPolicyError('WS_GROUP_MEMBER_IDENTITY_UNCONFIRMED', evidence.reason || '当前账号没有此成员的可信原始消息。');
+  return evidence;
+}
+function wsAiJobExecutionState(job) {
+  try {
+    const conversation = wsRequireAiConversation(job.conversation_id, job.account_id);
+    wsRequireAiMemberScope(conversation, wsJson(job.payload_json, {}));
+    return { executionEligible: true, executionBlockedCode: '' };
+  } catch (error) { return { executionEligible: false, executionBlockedCode: error.code || 'WS_CONVERSATION_UNAVAILABLE' }; }
 }
 function requireAiJobLease(row, suppliedToken) {
   const token = wsText(suppliedToken, 200);
@@ -2273,6 +2320,10 @@ function wsAiEligible(id, accountId) { try { wsRequireAiConversation(id, account
 function wsAiEligibleConversation(id, accountId, joinedRow) { try { return wsRequireAiConversation(id, accountId, joinedRow); } catch { return null; } }
 function wsQuiesceGroup(row, now = new Date().toISOString()) {
   if (!wsIsExcludedGroup(row)) return;
+  // Dedicated group history keeps its original encoding and task state.
+  // Execution is separately fenced by observed identity, authorization and
+  // member evidence; preserving history does not start a worker.
+  if (wsWorkspacePolicy.decideWsWorkspaceOperation({ account: wsAccountRow(row.account_id), operation: 'analyze-group-member', conversationType: 'group' }).eligible) return;
   db.prepare("UPDATE ai_jobs SET status='cancelled',locked_at='',next_attempt_at='',last_error='群聊已排除',updated_at=? WHERE account_id=? AND conversation_id=? AND status IN ('queued','running','retryable')").run(now, row.account_id, row.id);
   db.prepare("UPDATE ws_followup_alerts SET status='dismissed',snoozed_until='',updated_at=? WHERE account_id=? AND conversation_id=? AND status IN ('open','snoozed')").run(now, row.account_id, row.id);
   db.prepare("UPDATE ws_collection_items SET status='skipped-group',analysis_status='excluded',followup_status='dismissed',coverage_status='excluded-group',last_error='群聊已排除',updated_at=? WHERE account_id=? AND conversation_id=? AND coverage_status<>'excluded-group'").run(now, row.account_id, row.id);
@@ -3894,7 +3945,7 @@ const server = createServer(async (req, res) => {
         if (!conversationId) return json(res, 400, { error: '读取 WS 消息缺少会话编号。' });
         const limit = Math.min(1000, Math.max(1, Number(url.searchParams.get('limit')) || 500));
         const offset = Math.max(0, Math.floor(Number(url.searchParams.get('offset')) || 0));
-        wsRequireConversation(conversationId, accountId);
+        wsRequireConversationHistory(conversationId, accountId);
         const total = Number(db.prepare('SELECT COUNT(*) AS count FROM ws_messages WHERE account_id=? AND conversation_id=?').get(accountId, conversationId)?.count || 0);
         const rows = db.prepare('SELECT * FROM ws_messages WHERE account_id=? AND conversation_id=? ORDER BY order_no ASC,created_at ASC,id ASC LIMIT ? OFFSET ?').all(accountId, conversationId, limit, offset);
         return json(res, 200, { messages: rows.map(wsMessagePayload), total, limit, offset, hasMore: offset + rows.length < total });
@@ -4049,7 +4100,7 @@ const server = createServer(async (req, res) => {
         if (statuses.length) { where.push(`status IN (${statuses.map(() => '?').join(',')})`); params.push(...statuses); }
         if (statuses.length && statuses.every(status => ['queued', 'retryable'].includes(status))) { where.push("(next_attempt_at='' OR next_attempt_at<=?)"); params.push(new Date().toISOString()); }
         const rows = db.prepare(`SELECT * FROM ai_jobs WHERE ${where.join(' AND ')} ORDER BY created_at ASC,id ASC LIMIT ${limit}`).all(...params);
-        return json(res, 200, { jobs: rows.filter(row => wsAiEligible(row.conversation_id, accountId)).map(aiJobPayload), stats: aiJobStats(accountId), generatedAt: new Date().toISOString() });
+        return json(res, 200, { jobs: rows.map(row => ({ ...aiJobPayload(row), ...wsAiJobExecutionState(row) })), stats: aiJobStats(accountId), generatedAt: new Date().toISOString() });
       }
       if (req.method !== 'POST') return json(res, 405, { error: 'AI 队列只支持 GET/POST。' });
       const action = wsText(body.action || 'enqueue', 24) || 'enqueue';
@@ -4065,12 +4116,22 @@ const server = createServer(async (req, res) => {
         const conversationId = wsText(body.conversationId, 160);
         const idempotencyKey = wsText(body.idempotencyKey, 320);
         if (!conversationId || !idempotencyKey) return json(res, 400, { error: 'AI 入队缺少会话编号或幂等键。' });
-        wsRequireAiConversation(conversationId, accountId);
+        const conversation = wsRequireAiConversation(conversationId, accountId);
+        const payload = wsObject(body.payload, 128 * 1024);
+        wsRequireAiMemberScope(conversation, payload);
         const existing = db.prepare('SELECT * FROM ai_jobs WHERE account_id=? AND idempotency_key=?').get(accountId, idempotencyKey);
-        if (existing) return json(res, 200, { job: aiJobPayload(existing), existed: true, stats: aiJobStats(accountId) });
+        if (existing) {
+          if (existing.conversation_id !== conversationId) return json(res, 409, { error: '幂等键已绑定另一会话。', code: 'AI_JOB_SCOPE_CONFLICT' });
+          if (wsIsAiGroupConversation(conversation)) {
+            const prior = wsRequireAiMemberScope(conversation, wsJson(existing.payload_json, {}));
+            if (!wsSameVipMemberIdentity(prior.identity, payload.memberIdentity || payload.transcriptInfo?.memberIdentity || {})) {
+              return json(res, 409, { error: '幂等键已绑定另一群成员。', code: 'AI_JOB_MEMBER_CONFLICT' });
+            }
+          }
+          return json(res, 200, { job: aiJobPayload(existing), existed: true, stats: aiJobStats(accountId) });
+        }
         const id = wsText(body.id, 160) || wsCreateId('aij');
         const maxAttempts = Math.min(10, Math.max(1, Math.floor(Number(body.maxAttempts) || 5)));
-        const payload = wsObject(body.payload, 128 * 1024);
         db.prepare('INSERT INTO ai_jobs(id,account_id,conversation_id,idempotency_key,payload_json,status,attempts,max_attempts,next_attempt_at,locked_at,lease_token,last_error,analysis_id,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
           .run(id, accountId, conversationId, idempotencyKey, JSON.stringify(payload), 'queued', 0, maxAttempts, now, '', '', '', '', now, now);
         return json(res, 201, { job: aiJobPayload(db.prepare('SELECT * FROM ai_jobs WHERE id=? AND account_id=?').get(id, accountId)), existed: false, stats: aiJobStats(accountId) });
@@ -4079,7 +4140,8 @@ const server = createServer(async (req, res) => {
       if (!jobId) return json(res, 400, { error: 'AI 队列操作缺少任务编号。' });
       const existing = db.prepare('SELECT * FROM ai_jobs WHERE id=? AND account_id=?').get(jobId, accountId);
       if (!existing) return json(res, 404, { error: 'AI 队列任务不存在。' });
-      wsRequireAiConversation(existing.conversation_id, accountId);
+      const jobConversation = wsRequireAiConversation(existing.conversation_id, accountId);
+      wsRequireAiMemberScope(jobConversation, wsJson(existing.payload_json, {}));
       if (action === 'claim') {
         const eligible = ['queued', 'retryable'].includes(existing.status) && (!existing.next_attempt_at || existing.next_attempt_at <= now);
         if (!eligible) return json(res, 200, { claimed: false, job: aiJobPayload(existing), stats: aiJobStats(accountId) });
@@ -4132,8 +4194,7 @@ const server = createServer(async (req, res) => {
         const conversationId = wsText(url.searchParams.get('conversationId'), 160);
         const accountId = wsAccountId(url.searchParams.get('accountId'));
         if (!conversationId) return json(res, 400, { error: '读取 WS 分析缺少会话编号。' });
-        wsRequireConversation(conversationId, accountId);
-        if (!wsAiEligible(conversationId, accountId)) return json(res, 200, {analysis:null, analyses:[], total:0, awaitingConversationType:true});
+        wsRequireConversationHistory(conversationId, accountId);
         const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit')) || 20));
         const offset = Math.max(0, Math.floor(Number(url.searchParams.get('offset')) || 0));
         const rows = db.prepare(`SELECT * FROM ws_ai_analyses WHERE account_id=? AND conversation_id=? ORDER BY created_at DESC,id DESC LIMIT ${limit} OFFSET ${offset}`).all(accountId, conversationId).map(wsAnalysisPayload);
@@ -4144,14 +4205,19 @@ const server = createServer(async (req, res) => {
         const body = JSON.parse((await readBody(req, 1024 * 1024)).toString('utf8'));
         const conversationId = wsText(body.conversationId, 160);
         const accountId = wsAccountId(body.accountId);
-        wsRequireAiConversation(conversationId, accountId);
+        const conversation = wsRequireAiConversation(conversationId, accountId);
         const result = wsObject(body.result, 128 * 1024);
+        const memberScope = wsRequireAiMemberScope(conversation, result);
         const confidence = Math.min(1, Math.max(0, Number(body.confidence ?? result.confidence) || 0));
         const now = new Date().toISOString(), id = wsCreateId('wsa');
         const jobId = wsText(body.jobId, 160);
         const linkedJob = jobId ? db.prepare('SELECT * FROM ai_jobs WHERE id=? AND account_id=? AND conversation_id=?').get(jobId, accountId, conversationId) : null;
         if (jobId && !linkedJob) return json(res, 409, { error: 'AI 分析任务不存在或会话不匹配。' });
         if (linkedJob) requireAiJobLease(linkedJob, body.leaseToken);
+        if (linkedJob && memberScope.required) {
+          const claimedMember = wsRequireAiMemberScope(conversation, wsJson(linkedJob.payload_json, {}));
+          if (!wsSameVipMemberIdentity(claimedMember.identity, memberScope.identity)) return json(res, 409, { error: '分析发言人与任务绑定的群成员不一致。', code: 'AI_JOB_MEMBER_CONFLICT' });
+        }
         if (linkedJob?.analysis_id) {
           const prior = db.prepare('SELECT * FROM ws_ai_analyses WHERE id=? AND account_id=?').get(linkedJob.analysis_id, accountId);
           if (prior) return json(res, 200, { ...wsAnalysisPayload(prior), existed: true, job: aiJobPayload(linkedJob) });
@@ -4179,7 +4245,7 @@ const server = createServer(async (req, res) => {
       const body = JSON.parse((await readBody(req, 512 * 1024)).toString('utf8'));
       const accountId = wsAccountId(body.accountId);
       const conversationId = wsText(body.conversationId, 160);
-      const conversation = wsRequireAiConversation(conversationId, accountId);
+      const conversation = wsRequireAiConversation(conversationId, accountId, null, 'sync');
       const analysisId = wsText(body.analysisId, 160);
       const analysisRow = analysisId
         ? db.prepare('SELECT * FROM ws_ai_analyses WHERE id=? AND account_id=? AND conversation_id=?').get(analysisId, accountId, conversationId)
@@ -4188,8 +4254,10 @@ const server = createServer(async (req, res) => {
       let analysis = wsJson(analysisRow.result_json, {});
       const analyzedFingerprint = wsText(analysis.transcriptInfo?.sourceFingerprint, 500);
       const conversationData = wsJson(conversation.data_json, {});
-      const vipGroup = wsIsVipGroup(conversation);
-      const memberScope = wsVipMemberEvidence(conversation, body.memberIdentity || analysis.memberIdentity || analysis.transcriptInfo?.memberIdentity || {});
+      const vipGroup = wsIsAiGroupConversation(conversation);
+      const storedMemberIdentity = analysis.memberIdentity || analysis.transcriptInfo?.memberIdentity || {};
+      if (vipGroup && body.memberIdentity && !wsSameVipMemberIdentity(body.memberIdentity, storedMemberIdentity)) return json(res, 409, { error: '不能把既有分析改为另一群成员。', code: 'AI_ANALYSIS_MEMBER_CONFLICT' });
+      const memberScope = wsVipMemberEvidence(conversation, storedMemberIdentity);
       if (vipGroup && (analysis.transcriptInfo?.memberScoped !== true || !memberScope.valid)) {
         return json(res, 200, {
           ok:true, skipped:true, matched:false, created:false, identityPending:true,
@@ -5073,7 +5141,7 @@ const server = createServer(async (req, res) => {
         const conversationKey = `${row.account_id}:${row.conversation_id}`;
         if (!conversationChecks.has(conversationKey)) {
           const conversation = wsAiEligibleConversation(row.conversation_id, row.account_id, { id:row.conversation_id, account_id:row.account_id, external_id:row.external_id, title:row.title, customer_id:row.customer_id, data_json:row.conversation_data_json, unread_count:row.conversation_unread_count });
-          conversationChecks.set(conversationKey, conversation ? { row:conversation, vipGroup:wsIsVipGroup(conversation) } : null);
+          conversationChecks.set(conversationKey, conversation ? { row:conversation, vipGroup:wsIsAiGroupConversation(conversation) } : null);
         }
         const alertContext = conversationChecks.get(conversationKey);
         if (!alertContext) continue;

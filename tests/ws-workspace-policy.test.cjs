@@ -7,7 +7,7 @@ const { OPERATIONS, decideWsWorkspaceOperation: decide } = require('../resources
 const ordinary = Object.freeze({ id: 'ordinary-account', workspace_mode: 'ordinary' });
 const dedicated = Object.freeze({ id: 'dedicated-account', workspaceMode: 'dedicated' });
 const directOperations = ['collect-direct-messages', 'analyze-direct', 'sync-direct-crm', 'send-direct'];
-const groupOperations = ['collect-group-messages', 'monitor-group', 'auto-create-group-member'];
+const groupOperations = ['collect-group-messages', 'monitor-group', 'auto-create-group-member', 'analyze-group-member', 'sync-group-member-crm'];
 
 test('ordinary direct workflows cannot be reused for groups or dedicated accounts', () => {
   for (const operation of directOperations) {
@@ -29,7 +29,7 @@ test('dedicated group workflows recognize historical group spelling without gran
       const result = decide({ account: dedicated, operation, conversationType });
       assert.equal(result.eligible, true, operation + '/' + conversationType);
       assert.equal(result.conversationKind, 'group');
-      assert.equal(result.requiresContactExclusion, operation === 'auto-create-group-member');
+      assert.equal(result.requiresContactExclusion, ['auto-create-group-member', 'sync-group-member-crm'].includes(operation));
       assert.equal(decide({ account: ordinary, operation, conversationType }).code, 'WS_WORKSPACE_MODE_MISMATCH');
     }
     assert.equal(decide({ account: dedicated, operation, conversationType: 'direct' }).code, 'WS_WORKSPACE_CONVERSATION_TYPE_MISMATCH');
@@ -121,14 +121,28 @@ test('global exclusion configuration is account-independent and does not check o
   }
 });
 
-test('unsupported operations, including group sending and undeclared member AI, are never eligible', () => {
-  for (const operation of [undefined, null, '', 'send-group', 'group-send', 'analyze-group', 'sync-group-member-crm',
+test('unsupported operations, including group sending and group-wide AI, are never eligible', () => {
+  for (const operation of [undefined, null, '', 'send-group', 'group-send', 'analyze-group', 'sync-group-crm',
     'toString', 'constructor', '__proto__', ' send-direct', 'SEND-DIRECT', {}, new String('send-direct')]) {
     const result = decide({ account: dedicated, operation, conversationType: 'group', platformSupported: true });
     assert.equal(result.eligible, false); assert.equal(result.code, 'WS_WORKSPACE_OPERATION_UNSUPPORTED');
   }
   for (const input of [null, undefined, false, 1, [], 'send-direct']) {
     assert.equal(decide(input).code, 'WS_WORKSPACE_OPERATION_UNSUPPORTED');
+  }
+});
+
+test('group member AI eligibility cannot stand in for member evidence or the CRM exclusion check', () => {
+  const analysis = decide({ account: dedicated, operation: 'analyze-group-member', conversationType: 'group' });
+  const sync = decide({ account: dedicated, operation: 'sync-group-member-crm', conversationType: 'group' });
+  assert.equal(analysis.eligible, true);
+  assert.equal(analysis.requiresContactExclusion, false);
+  assert.equal(sync.eligible, true);
+  assert.equal(sync.requiresContactExclusion, true);
+  for (const result of [analysis, sync]) {
+    for (const key of ['authorized', 'memberVerified', 'groupAuthorized', 'exclusionChecked', 'supported']) {
+      assert.equal(Object.hasOwn(result, key), false, key + ' remains a downstream requirement');
+    }
   }
 });
 

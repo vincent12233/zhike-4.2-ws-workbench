@@ -41,8 +41,11 @@ const data=mkdtempSync(path.join(require('node:os').tmpdir(),'zhike-direct-polic
 const port=29000+(process.pid%18000),token='isolated-direct-policy';
 const headers={'content-type':'application/json','x-zhike-api-token':token};
 let child, logs='';
+let activeAccountId='default';
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function call(route,body,expected=200){
+  if(route.startsWith('/api/ws/')&&!/[?&](?:accountId|allAccounts)=/.test(route))route+=(route.includes('?')?'&':'?')+'accountId='+activeAccountId;
+  if(body&&route.startsWith('/api/ws/'))body={accountId:activeAccountId,...body};
   const version=await fetch(`http://127.0.0.1:${port}/api/state/version`,{headers}).then(r=>r.json());
   const response=await fetch(`http://127.0.0.1:${port}${route}`,{method:body===undefined?'GET':'POST',headers:{...headers,'x-state-version':version.version},body:body===undefined?undefined:JSON.stringify(body)});
   const result=await response.json();assert.equal(response.status,expected,JSON.stringify(result));return result;
@@ -74,6 +77,10 @@ function inspect(fn){const db=new DatabaseSync(path.join(data,'workspace.sqlite'
   assert.equal(list.conversations.some(c=>c.externalId==='123@g.us'),false,'ordinary groups stay out of personal inventory');
   assert.ok(list.groupConversations.some(c=>c.externalId==='123@g.us'),'ordinary groups remain selectable by the monitor');
   await call('/api/ws/ai-jobs',{conversationId:direct.id,idempotencyKey:'direct-allowed'},201);
+  await call('/api/ws/accounts',{id:'dedicated-policy-group',workspaceMode:'dedicated'},201);
+  activeAccountId='dedicated-policy-group';
+  const profile=(await call('/api/ws/group-monitors/profiles',{slotKey:'policy-group-seat',enabled:true},201)).profile;
+  await call('/api/ws/group-monitors/'+profile.id+'/targets/scan',{targets:[{groupJid:'vip-room@g.us',groupName:'Observed group',enabled:true}]});
   const vipIngest=await call('/api/ws/ingest/batch',{
     checkpoints:[{conversationKey:'vip-room@g.us',conversationType:'vip_group',vipGroup:true,isGroup:true,displayName:'VIP Room',unreadCount:0,historyLoaded:true,historyMessageCount:3,coverage:'read-history',directionVersion:4,directionUnresolvedCount:0,lastMessageFingerprint:'vip-list'}],
     messages:[
@@ -88,25 +95,25 @@ function inspect(fn){const db=new DatabaseSync(path.join(data,'workspace.sqlite'
   await call('/api/ws/conversations',{externalId:'vip-room@g.us',customerId:'C1'});
   assert.equal(inspect(db=>db.prepare('SELECT customer_id FROM ws_conversations WHERE id=?').get(vip.id).customer_id),'','a legacy conversation update cannot bind an entire VIP group to one customer');
   assert.equal(inspect(db=>JSON.parse(db.prepare("SELECT data_json FROM ws_messages WHERE external_id='vip-a'").get().data_json).senderId),'919876543210@c.us');
-  await call('/api/ws/ai-jobs',{conversationId:vip.id,idempotencyKey:'vip-standard-analysis'},201);
-  const genericVipAnalysis=await call('/api/ws/analyses',{conversationId:vip.id,result:{summary:'Whole room summary',confidence:.9,profileFacts:{occupation:{value:'Billionaire',state:'known',confidence:.9,evidence:'I am a billionaire',sourceRole:'customer'}},followupStrategy:{shouldFollowUp:true,priorityScore:99}},confidence:.9});
-  const genericVipSync=await call('/api/ws/crm-sync',{conversationId:vip.id,analysisId:genericVipAnalysis.id});
-  assert.equal(genericVipSync.skipped,true);assert.equal(genericVipSync.identityPending,true,'whole-group AI output cannot modify a personal customer');
+  assert.equal((await call('/api/ws/ai-jobs',{conversationId:vip.id,idempotencyKey:'vip-standard-analysis'},422)).code,'WS_GROUP_MEMBER_SCOPE_REQUIRED');
+  const genericVipAnalysis=await call('/api/ws/analyses',{conversationId:vip.id,result:{summary:'Whole room summary',confidence:.9,profileFacts:{occupation:{value:'Billionaire',state:'known',confidence:.9,evidence:'I am a billionaire',sourceRole:'customer'}},followupStrategy:{shouldFollowUp:true,priorityScore:99}},confidence:.9},422);
+  assert.equal(genericVipAnalysis.code,'WS_GROUP_MEMBER_SCOPE_REQUIRED','whole-group AI output cannot enter the personal analysis pipeline');
   const memberIdentity={senderId:'919876543210@c.us',senderPhone:'9876543210',senderName:'Existing',identitySource:'sender-jid',trusted:true};
+  await call('/api/ws/ai-jobs',{conversationId:vip.id,idempotencyKey:'group-member-analysis',payload:{memberScoped:true,memberIdentity}},201);
   const scopedVipAnalysis=await call('/api/ws/analyses',{conversationId:vip.id,result:{summary:'Engineer member is engaged',confidence:.9,memberIdentity,transcriptInfo:{memberScoped:true,memberIdentity,directionVersion:4},profileFacts:{occupation:{value:'Engineer',state:'known',confidence:.9,evidence:'I am an engineer',sourceRole:'customer'},future_plans:{value:'Buy an island',state:'known',confidence:.9,evidence:'I am a billionaire',sourceRole:'customer'}},followupStrategy:{shouldFollowUp:true,qualificationScore:70,engagementScore:80,priorityScore:75,scoreConfidence:.8,reason:'Member replied',objective:'Discuss needs'}},confidence:.9});
   const scopedVipSync=await call('/api/ws/crm-sync',{conversationId:vip.id,analysisId:scopedVipAnalysis.id});
   assert.equal(scopedVipSync.matched,true);assert.equal(scopedVipSync.created,false);assert.equal(scopedVipSync.customer.occupation,'Engineer');assert.notEqual(scopedVipSync.customer.future_plans,'Buy an island','another member evidence cannot fill the matched customer');
   assert.equal(inspect(db=>db.prepare('SELECT customer_id FROM ws_conversations WHERE id=?').get(vip.id).customer_id),'','VIP group remains multi-member after a customer-level sync');
   const unknownMember={senderId:'919222222222@c.us',senderPhone:'2222222222',identitySource:'sender-jid',trusted:true};
-  const unknownScoped=await call('/api/ws/analyses',{conversationId:vip.id,result:{summary:'Unknown member',confidence:.9,memberIdentity:unknownMember,transcriptInfo:{memberScoped:true,memberIdentity:unknownMember,directionVersion:4},profileFacts:{occupation:{value:'Doctor',state:'known',confidence:.9,evidence:'Unknown',sourceRole:'customer'}}},confidence:.9});
-  const unknownSync=await call('/api/ws/crm-sync',{conversationId:vip.id,analysisId:unknownScoped.id});
-  assert.equal(unknownSync.skipped,true);assert.equal(unknownSync.created,false);assert.equal((await call('/api/state')).customers.length,1,'VIP member analysis never auto-creates a customer');
+  const unknownScoped=await call('/api/ws/analyses',{conversationId:vip.id,result:{summary:'Unknown member',confidence:.9,memberIdentity:unknownMember,transcriptInfo:{memberScoped:true,memberIdentity:unknownMember,directionVersion:4},profileFacts:{occupation:{value:'Doctor',state:'known',confidence:.9,evidence:'Unknown',sourceRole:'customer'}}},confidence:.9},422);
+  assert.equal(unknownScoped.code,'WS_GROUP_MEMBER_IDENTITY_UNCONFIRMED');assert.equal((await call('/api/state')).customers.length,1,'unobserved member analysis never auto-creates a customer');
+  activeAccountId='default';
   await call('/api/ws/ingest/batch',{checkpoints:[{conversationKey:'unknown-row',conversationType:'unknown',historyLoaded:true,historyMessageCount:1,coverage:'read-history'}],messages:[{conversationKey:'unknown-row',externalMessageId:'unknown-new',body:'UNKNOWN_BODY_MUST_NOT_SAVE',direction:'incoming'}]});
   const unknown=(await call('/api/ws/conversations')).conversations.find(c=>c.externalId==='unknown-row');assert.ok(unknown);assert.equal(unknown.data.historyLoaded,false);
   assert.equal(inspect(db=>db.prepare("SELECT COUNT(*) n FROM ws_messages WHERE conversation_id=?").get(unknown.id).n),0);
   const unknownDenied=await call('/api/ws/ai-jobs',{conversationId:unknown.id,idempotencyKey:'unknown-denied'},422);assert.equal(unknownDenied.code,'WS_CONVERSATION_TYPE_UNCONFIRMED');
   const awaiting=await call(`/api/ws/analyses?conversationId=${unknown.id}`);
-  assert.equal(awaiting.awaitingConversationType,true);assert.equal(awaiting.analysis,null);assert.equal(awaiting.total,0,'waiting for identity is an empty view, not a service failure');
+  assert.equal(awaiting.analysis,null);assert.equal(awaiting.total,0,'history with no saved analysis is an empty view, not a service failure');
   await call('/api/ws/conversations',{externalId:'new-group@g.us',title:'Group'},422);
 
   // Create a genuine pre-upgrade fixture while the service is stopped. The old
@@ -135,7 +142,7 @@ function inspect(fn){const db=new DatabaseSync(path.join(data,'workspace.sqlite'
   blocked.push(['/api/ws/followup-alerts',{id:'legacy-alert',status:'open'}]);
   blocked.push(['/api/ws/hot-chat/profile/events',{customerId:'C1',conversationId:legacy.id,type:'analysis_profile',source:'AI',payload:{summary:'Late group facts'}}]);
   blocked.push(['/api/ws/hot-chat/profile/facts',{customerId:'C1',conversationId:legacy.id,source:'AI',fields:{occupation:{value:'Engineer',state:'known',confidence:.9,evidence:'Group member: I am an engineer'}}}]);
-  for(const [route,body] of blocked){const denied=await call(route,body,422);assert.equal(denied.code,'WS_GROUP_EXCLUDED',route);}
+  for(const [route,body] of blocked){const denied=await call(route,body,422);assert.equal(denied.code,['/api/ws/ai-jobs','/api/ws/analyses','/api/ws/crm-sync'].includes(route)?'WS_WORKSPACE_MODE_MISMATCH':'WS_GROUP_EXCLUDED',route);}
   assert.equal(inspect(db=>db.prepare('SELECT COUNT(*) n FROM ws_ai_analyses WHERE conversation_id=?').get(legacy.id).n),1,'late analysis must not be saved; preserved historical analysis remains archived');
   assert.equal((await call('/api/ws/followup-alerts?allAccounts=1')).alerts.length,0);
   const exported=await call('/api/ws/export');
@@ -149,11 +156,11 @@ function inspect(fn){const db=new DatabaseSync(path.join(data,'workspace.sqlite'
   topLevelRow.externalId='opaque-legacy-group';topLevelRow.data={};topLevelRow.conversationType='group';
   await call('/api/ws/import',topLevelGroup);
   const topLevelDenied=await call('/api/ws/analyses',{conversationId:legacy.id,result:{summary:'Must retain imported group classification',confidence:.9}},422);
-  assert.equal(topLevelDenied.code,'WS_GROUP_EXCLUDED','top-level group metadata must survive restore');
+  assert.equal(topLevelDenied.code,'WS_WORKSPACE_MODE_MISMATCH','top-level group metadata must survive restore');
   const olderBackup=await call('/api/ws/export');
   const olderRow=olderBackup.conversations.find(row=>row.id===legacy.id);olderRow.data={};delete olderRow.conversationType;delete olderRow.isGroup;
   await call('/api/ws/import',olderBackup);
   const olderDenied=await call('/api/ws/analyses',{conversationId:legacy.id,result:{summary:'An older backup cannot erase known group identity',confidence:.9}},422);
-  assert.equal(olderDenied.code,'WS_GROUP_EXCLUDED','known group identity must survive restoring an older untyped backup');
+  assert.equal(olderDenied.code,'WS_WORKSPACE_MODE_MISMATCH','known group identity must survive restoring an older untyped backup');
   console.log('WS direct-only policy: core identity, mixed ingest, unknown rejection, legacy group retirement, late-write guards pass');
 }finally{await stop();rmSync(data,{recursive:true,force:true});}})().catch(error=>{console.error(error);process.exitCode=1;});

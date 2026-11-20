@@ -13,8 +13,11 @@ const token = 'isolated-vip-member-alerts';
 const headers = { 'content-type':'application/json', 'x-zhike-api-token':token };
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 let child, logs = '';
+const groupAccountId = 'dedicated-member-alerts';
 
 async function call(route, body, expected = 200) {
+  if (route.startsWith('/api/ws/') && !/[?&](?:accountId|allAccounts)=/.test(route)) route += (route.includes('?') ? '&' : '?') + 'accountId=' + groupAccountId;
+  if (body && route.startsWith('/api/ws/')) body = { accountId: groupAccountId, ...body };
   const version = await fetch(`http://127.0.0.1:${port}/api/state/version`, { headers }).then(response => response.json());
   const response = await fetch(`http://127.0.0.1:${port}${route}`, {
     method:body === undefined ? 'GET' : 'POST',
@@ -52,10 +55,14 @@ function inspect(fn) {
 
 (async () => { try {
   await start();
+  await call('/api/ws/accounts', { id: groupAccountId, workspaceMode: 'dedicated' }, 201);
+  const monitor = (await call('/api/ws/group-monitors/profiles', { slotKey: 'member-alerts-seat', enabled: true }, 201)).profile;
+  const authorizeGroup = groupJid => call('/api/ws/group-monitors/' + monitor.id + '/targets/scan', { targets: [{ groupJid, groupName: 'Observed fixture group', enabled: true }] });
   await call('/api/state', {
     customers:[{ id:'C1', name:'Member One', phone:'9876543210' }, { id:'C2', name:'Member Two', phone:'1111111111' }, { id:'C3', name:'Direct Customer', phone:'9876000000' }],
     settings:{ operatingTasks:[] }, tickets:[], deposits:[], followups:[], activities:[],
   });
+  await authorizeGroup('vip-two-members@g.us');
   await call('/api/ws/ingest/batch', {
     checkpoints:[{ conversationKey:'vip-two-members@g.us', conversationType:'vip_group', vipGroup:true, isGroup:true, displayName:'VIP Two Members', unreadCount:0, historyLoaded:true, historyMessageCount:2, coverage:'read-history', directionVersion:4, directionUnresolvedCount:0, historyFingerprint:'vip-list', lastMessageFingerprint:'vip-list' }],
     messages:[
@@ -108,8 +115,8 @@ function inspect(fn) {
   assert.equal(alerts.find(item => item.customerId === 'C2').analysisId, second.analysis.id);
   assert.equal(alerts.find(item => item.customerId === 'C1').id, initialAlertIds.get('C1'), 'new analysis updates the member alert');
   assert.equal(alerts.find(item => item.customerId === 'C2').id, initialAlertIds.get('C2'), 'other member alert remains intact');
-  const direct = await call('/api/ws/conversations', { externalId:'9876000000', title:'Direct Customer', conversationType:'direct', unreadCount:0, data:{ conversationType:'direct', historyLoaded:true, historyFingerprint:'direct-history', lastMessageFingerprint:'direct-history', directionVersion:4 } });
-  const directAnalysis = await call('/api/ws/analyses', { conversationId:direct.id, result:{ summary:'Direct customer asks for a call', confidence:.9, profileFacts:{ occupation:{ value:'Synthetic shopkeeper', state:'known', confidence:.9, evidence:'I run a synthetic shop', sourceRole:'customer' } }, followupStrategy:{ shouldFollowUp:true, priorityScore:55, reason:'Customer requested a call', objective:'Return call' } }, confidence:.9 });
+  const direct = await call('/api/ws/conversations', { accountId:'default', externalId:'9876000000', title:'Direct Customer', conversationType:'direct', unreadCount:0, data:{ conversationType:'direct', historyLoaded:true, historyFingerprint:'direct-history', lastMessageFingerprint:'direct-history', directionVersion:4 } });
+  const directAnalysis = await call('/api/ws/analyses', { accountId:'default', conversationId:direct.id, result:{ summary:'Direct customer asks for a call', confidence:.9, profileFacts:{ occupation:{ value:'Synthetic shopkeeper', state:'known', confidence:.9, evidence:'I run a synthetic shop', sourceRole:'customer' } }, followupStrategy:{ shouldFollowUp:true, priorityScore:55, reason:'Customer requested a call', objective:'Return call' } }, confidence:.9 });
   const directState = await call('/api/state');
   directState.settings.operatingTasks.unshift({ id:'legacy-direct-task', aiGenerated:true, wsAccountId:'default', wsConversationId:direct.id, customerId:'C3', due:'2020-01-01', done:false, status:'open' });
   await call('/api/state', directState);
@@ -129,6 +136,7 @@ function inspect(fn) {
   assert.ok(hits.hits.some(hit => hit.action === 'auto-fill-blocked' && hit.memberPhone === one.senderPhone));
   async function analyzeObservedAliases(key, phones, phoneOnly = false) {
     const senderId = '123456789012345@lid';
+    await authorizeGroup(key);
     await call('/api/ws/ingest/batch', {
       checkpoints: [{ conversationKey:key, conversationType:'vip_group', vipGroup:true, isGroup:true, unreadCount:0,
         historyLoaded:true, historyMessageCount:phones.length, coverage:'read-history', directionVersion:4,
@@ -159,7 +167,7 @@ function inspect(fn) {
   const phoneOnlyConflict = await analyzeObservedAliases('legacy-phone-only-conflict@g.us', ['8000000004', '8000000005'], true);
   assert.equal(phoneOnlyConflict.code, 'CONTACT_IDENTITY_UNRELIABLE', 'phone-only requests cannot hide a conflicting observed phone');
   await call('/api/ws/contact-exclusions', { identity: '9876000000', displayName: 'Synthetic direct staff' }, 201);
-  const directSync = await call('/api/ws/crm-sync', { conversationId: direct.id, analysisId: directAnalysis.id });
+  const directSync = await call('/api/ws/crm-sync', { accountId:'default', conversationId: direct.id, analysisId: directAnalysis.id });
   assert.equal(directSync.matched, true, JSON.stringify(directSync));
   assert.notEqual(directSync.excluded, true, 'ordinary direct maintenance is outside group exclusion scope');
   console.log('Legacy group member reminders and exclusion: per-member tasks, immutable blocked CRM, direct maintenance PASS');
