@@ -5,9 +5,11 @@ const path = require('node:path');
 const vm = require('node:vm');
 const repo = path.resolve(__dirname, '..', '..');
 const source = fs.readFileSync(path.join(repo, 'resources/app/modules/ws-workbench.js'), 'utf8');
-const ids = ['overview', 'accounts', 'chat', 'groups', 'members', 'collection', 'contacts', 'ai', 'crm', 'tasks', 'logs', 'settings'];
-const labels = ['工作台首页', '账号管理', '前台聊天', '群组管理', '群成员管理', '数据采集', '通讯录管理', 'AI助手', 'CRM客户', '任务中心', '操作日志', '工具与设置'];
-const metadataStart = source.indexOf('  const WS_WORKSPACE_VIEW_META =');
+const modeViews = {
+  ordinary: ['overview', 'accounts', 'chat', 'collection', 'ai', 'crm', 'tasks', 'logs', 'settings'],
+  dedicated: ['overview', 'accounts', 'chat', 'groups', 'members', 'collection', 'contacts', 'exclusions', 'crm', 'logs', 'group-broadcast', 'group-mentions', 'group-reading', 'group-permissions', 'settings'],
+};
+const metadataStart = source.indexOf('  function normalizeWorkspaceMode(');
 const metadataEnd = source.indexOf('  function readWsWorkspaceView(', metadataStart);
 const navStart = source.indexOf('  function renderWsWorkspaceNav(');
 const navEnd = source.indexOf('  function workspacePageHeader(', navStart);
@@ -20,7 +22,7 @@ const capabilityEnd = source.indexOf('  function createGroupMonitorState(', capa
 for (const position of [metadataStart, metadataEnd, navStart, navEnd, pageStart, pageEnd, capabilityStart, capabilityEnd]) assert.ok(position > 0);
 assert.ok(capabilityEnd > capabilityStart, 'render fixtures load the actual bounded capability implementation and its dependencies');
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
-const state = { activeAccountId: 'a', accounts: [{ id: 'a' }], wsWorkspaceView: 'overview', wsWorkspaceNavCollapsed: true, groupCatalog: [{ accountId: 'a', groupJid: 'group-a@g.us', groupName: '<Group A>' }, { accountId: 'b', groupJid: 'group-b@g.us', groupName: 'B' }], groupMonitor: { events: [] }, aiQueueStats: {}, followupAlerts: [] };
+const state = { workspaceMode: 'ordinary', activeAccountId: 'a', accounts: [{ id: 'a', workspaceMode: 'ordinary' }], wsWorkspaceView: 'overview', wsWorkspaceNavCollapsed: true, groupCatalog: [{ accountId: 'a', groupJid: 'group-a@g.us', groupName: '<Group A>' }, { accountId: 'b', groupJid: 'group-b@g.us', groupName: 'B' }], groupMonitor: { events: [] }, aiQueueStats: {}, followupAlerts: [] };
 const pages = new Map();
 const sandbox = { state, esc, text: value => String(value ?? '').trim(), getHost: () => null, displayTime: value => value ? String(value) : '', activeAccount: () => state.accounts[0], accountDisplayName: account => account.id, wsWorkspacePageState: (view = state.wsWorkspaceView) => { const key = state.activeAccountId + ':' + view; if (!pages.has(key)) pages.set(key, { busy: false, error: '', status: '尚未刷新', filter: '', statusFilter: 'all', page: 1 }); return pages.get(key); }, workspacePageHeader: meta => `<h2>${esc(meta.label)}</h2>` };
 sandbox.businessPages = require('../../resources/app/modules/ws-business-pages.js');
@@ -33,18 +35,30 @@ assert.equal(sandbox.capability().foregroundFallback, false);
 assert.equal(sandbox.capability().manualVisibleImport, true);
 assert.equal(sandbox.blocked().code, 'COLLECTION_CAPABILITY_BLOCKED');
 assert.equal(JSON.stringify(state), beforeCapability, 'rendering the true capability disclosure must not alter account or queue state');
-for (const id of ids) {
+for (const [mode, ids] of Object.entries(modeViews)) {
+  state.workspaceMode = mode;
+  state.accounts[0].workspaceMode = mode;
+  for (const id of ids) {
   state.wsWorkspaceView = id;
   const nav = sandbox.nav();
   assert.match(nav, /后台采集不可用/);
   assert.match(nav, /COLLECTION_CAPABILITY_BLOCKED/,
-    'all twelve navigation renders use the real blocked capability, not a fabricated running state');
-  assert.equal((nav.match(/data-ws-workspace-view=/g) || []).length, 12);
-  for (const label of labels) assert.ok(nav.includes(label));
+    'both purposes disclose the actual blocked collection capability');
+  assert.deepEqual([...nav.matchAll(/data-ws-workspace-view="([^"]+)"/g)].map(match => match[1]), ids);
+  assert.match(nav, new RegExp(`data-ws-workspace-mode="${mode}" aria-pressed="true"`));
+  assert.match(nav, mode === 'ordinary' ? /前台聊天/ : /专用登录/);
   assert.match(nav, new RegExp(`data-ws-workspace-view="${id}" aria-current="page"`));
   const page = sandbox.page(id);
   if (id === 'chat') assert.equal(page, '', 'chat keeps the preserved native surface; the home page is independent');
-  else { assert.match(page, new RegExp(`data-ws-workspace-page="${id}"`)); assert.match(page, /data-ws-account-id="a"/); assert.match(page, /aria-busy="false"/); }
+  else {
+    assert.match(page, new RegExp(`data-ws-workspace-page="${id}"`));
+    if (id.startsWith('group-')) assert.match(page, /BLOCKED/, 'Unverified platform actions remain blocked');
+    else { assert.match(page, /data-ws-account-id="a"/); assert.match(page, /aria-busy="false"/); }
+  }
+  }
+  for (const disallowed of Object.values(modeViews).flat().filter(id => !ids.includes(id))) {
+    assert.match(sandbox.page(disallowed), /data-ws-workspace-page="overview"/, mode + ' cannot render another purpose route');
+  }
 }
 assert.match(sandbox.page('groups'), /&lt;Group A&gt;/); assert.doesNotMatch(sandbox.page('groups'), /group-b@g.us/);
 assert.doesNotMatch(sandbox.page('groups'), /data-ws-group-reading/, 'The real reading module requires an enabled isolated scope.');
@@ -128,5 +142,5 @@ vm.runInNewContext(source.slice(actionStart, actionEnd) + '\nglobalThis.action=h
   await assert.rejects(sandbox.action('group-directory-copy'), /复制失败/);
   assert.equal(notices.length, 1, 'failed native copy must not emit a success toast');
   assert.deepEqual(Array.from(groupPage.selectedGroupIds), ['two@g.us'], 'clipboard failure must preserve the selection');
-  console.log('stage5 twelve-page rendering: navigation, independent home/chat, honest contacts, real scoped group table, unknown metadata, safe selection/native clipboard, filters, 40-row pagination and scroll restoration PASS; native rendering NotTested');
+  console.log('stage5 purpose-scoped rendering: ordinary 9 / dedicated 15 routes, forbidden-route fallback, scoped directory, safe clipboard, filters and pagination PASS; native rendering NotTested');
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -8,12 +8,14 @@ const path = require('node:path');
 const vm = require('node:vm');
 const repo = path.resolve(__dirname, '..', '..');
 const source = fs.readFileSync(path.join(repo, 'resources/app/modules/ws-workbench.js'), 'utf8');
+const purposeStart = source.indexOf('  function normalizeWorkspaceMode(');
+const purposeEnd = source.indexOf('  function readWsWorkspaceView(', purposeStart);
 const start = source.indexOf('  function workspacePageHeader(');
 const end = source.indexOf('  function renderWsWorkspacePage(', start);
 assert.ok(start > 0 && end > start);
 const pending = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
-function fixture(view = 'collection') {
-  const state = { activeAccountId: 'a', accountLoadSequence: 1, wsWorkspaceView: view, error: '', groupMonitor: {}, currentConversationId: 'chat-a', wsWorkspacePageState: {} };
+function fixture(view = 'collection', workspaceMode = 'ordinary') {
+  const state = { workspaceMode, accounts: [{ id: 'a', workspaceMode }], activeAccountId: 'a', accountLoadSequence: 1, wsWorkspaceView: view, error: '', groupMonitor: {}, currentConversationId: 'chat-a', wsWorkspacePageState: {} };
   const calls = []; let renders = 0;
   const sandbox = {
     state, String, Number, Date, Promise, esc: String,
@@ -31,7 +33,8 @@ function fixture(view = 'collection') {
     core: { normalizeTranslationSettings: value => value },
     window: { ZhikeAiReviewCenter: { refresh: async () => { calls.push('review'); } } },
   };
-  vm.runInNewContext(source.slice(start, end) + '\n globalThis.runRefresh=refreshWorkspacePage; globalThis.header=workspacePageHeader;', sandbox);
+  assert.ok(purposeStart > 0 && purposeEnd > purposeStart);
+  vm.runInNewContext(source.slice(purposeStart, purposeEnd) + source.slice(start, end) + '\n globalThis.runRefresh=refreshWorkspacePage; globalThis.header=workspacePageHeader;', sandbox);
   return { sandbox, state, calls, page: () => sandbox.wsWorkspacePageState(), renders: () => renders };
 }
 (async () => {
@@ -68,7 +71,7 @@ function fixture(view = 'collection') {
   assert.match(error.sandbox.header({ id: 'collection', label: '采集', hint: '' }, 'A'), /aria-live="polite"/);
   const ai = fixture('ai'); await ai.sandbox.runRefresh(); assert.ok(ai.calls.includes('review'));
   const crm = fixture('crm'); await crm.sandbox.runRefresh(); assert.deepEqual(crm.calls, ['archive', 'profile', 'review']);
-  const contacts = fixture('contacts');
+  const contacts = fixture('contacts', 'dedicated');
   contacts.sandbox.api = async route => { contacts.calls.push(route); return { accountId: 'a', rows: [], total: 0, page: 1, pageCount: 1 }; };
   await contacts.sandbox.runRefresh();
   assert.equal(contacts.calls.length, 1, 'contacts uses its real read-only directory rather than the collection poller');
@@ -77,5 +80,10 @@ function fixture(view = 'collection') {
   const chat = fixture('chat'); await chat.sandbox.runRefresh();
   assert.equal(chat.calls.length, 0, 'chat refresh must not start a query, collection or AI service');
   assert.equal(chat.renders(), 0);
+  for (const [mode, view] of [['ordinary', 'groups'], ['ordinary', 'contacts'], ['ordinary', 'exclusions'], ['dedicated', 'ai'], ['dedicated', 'tasks']]) {
+    const forbidden = fixture(view, mode); await forbidden.sandbox.runRefresh();
+    assert.deepEqual(forbidden.calls, [], mode + '/' + view + ' cannot query another purpose page');
+    assert.equal(forbidden.renders(), 0); assert.equal(forbidden.page().busy, false);
+  }
   console.log('stage5 UI controller: read-only refresh, account/page races, errors, busy recovery and review routing PASS; native visual acceptance NotTested');
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -18,20 +18,25 @@ const wsSource = fs.readFileSync(path.join(repo, 'resources/app/modules/ws-workb
 const mountStart = wsSource.indexOf('  function syncWorkbenchAttributes('), mountEnd = wsSource.indexOf('  function render(options = {})', mountStart);
 assert.ok(mountStart >= 0 && mountEnd > mountStart, 'Use production incremental mount helpers for DOM identity checks');
 const mountHelpers = wsSource.slice(mountStart, mountEnd);
-const groupCatalog = Array.from({ length:30 }, (_, i) => ({ accountId:'default', groupJid:'layout-'+i+'@g.us', groupName:'布局验收群组 '+(i+1), participantCount:42, permissions:'所有成员', collectionStatus:'已同步', lastSyncAt:'2026-11-16T10:00:00Z' }));
-const base = { assistOpen:true, groupCatalog, groupMonitor:{lastLoadedAt:'2026-11-16T10:00:00Z'}, backgroundActive:true };
+const groupCatalog = Array.from({ length:30 }, (_, i) => ({ accountId:'dedicated-layout', groupJid:'layout-'+i+'@g.us', groupName:'布局验收群组 '+(i+1), participantCount:42, permissions:'所有成员', collectionStatus:'已同步', lastSyncAt:'2026-11-16T10:00:00Z' }));
+const base = { workspaceMode:'ordinary', accounts:[{id:'default',workspaceMode:'ordinary'}], assistOpen:true, backgroundActive:true };
+const dedicated = { ...base, workspaceMode:'dedicated', activeAccountId:'dedicated-layout', accounts:[{id:'dedicated-layout',workspaceMode:'dedicated'}], groupCatalog, groupMonitor:{lastLoadedAt:'2026-11-16T10:00:00Z'} };
 const fixtures = {
-  groups:renderWsWorkbenchFixture({...base,view:'groups'}),
-  groupsDetail:renderWsWorkbenchFixture({...base,view:'groups',detailGroupId:'layout-0@g.us'}),
-  groupsExpanded:renderWsWorkbenchFixture({...base,view:'groups',monitorDetailsOpen:true}),
+  groups:renderWsWorkbenchFixture({...dedicated,view:'groups'}),
+  groupsDetail:renderWsWorkbenchFixture({...dedicated,view:'groups',detailGroupId:'layout-0@g.us'}),
+  groupsExpanded:renderWsWorkbenchFixture({...dedicated,view:'groups',monitorDetailsOpen:true}),
   chat:renderWsWorkbenchFixture({...base,view:'chat'}),
   home:renderWsWorkbenchFixture({...base,view:'overview'}),
   tasks:renderWsWorkbenchFixture({...base,view:'tasks'}),
   collection:renderWsWorkbenchFixture({...base,view:'collection'}),
   tools:renderWsWorkbenchFixture({...base,view:'chat',manualToolsVisible:true,localPanelsCollapsed:false,captureCollapsed:true}),
 };
-for (const markup of Object.values(fixtures)) {
+for (const [name, markup] of Object.entries(fixtures)) {
   assert.ok(markup.includes('ws-command-rail') && markup.includes('ws-process-rail'), 'Complete production fixtures must include the legacy chrome that caused the real WinUI regression');
+  const mode = name.startsWith('groups') ? 'dedicated' : 'ordinary';
+  assert.match(markup, new RegExp('data-ws-workspace-mode="'+mode+'" aria-pressed="true"'));
+  assert.equal(/data-ws-workspace-view="groups"/.test(markup), mode === 'dedicated');
+  assert.equal(/data-ws-workspace-view="tasks"/.test(markup), mode === 'ordinary');
 }
 const html = `<!doctype html><html lang="zh-CN" data-theme="dark" data-palette="horizon-night" data-view="ws-workbench" data-desktop-host="webview2"><meta charset="utf-8"><style>${css}</style><style>html,body{margin:0}#fixture{height:100vh;width:100%}</style><body class="ws-mode ws-workspace-active"><div id="fixture">${fixtures.groups}</div><pre id="result" hidden></pre><script>
 ${mountHelpers}
