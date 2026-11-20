@@ -11,6 +11,10 @@ const app = path.join(repo, 'resources', 'app');
 // the Node.js binary executing this harness so child sidecars can still start.
 const bundledNode = path.join(app, 'node.exe');
 const testNode = fs.statSync(bundledNode, { throwIfNoEntry: false })?.isFile() ? bundledNode : process.execPath;
+// Native compile/run suites default to `dotnet` on PATH. Source checkouts keep
+// the SDK at .tools/dotnet10 (see CONTRIBUTING.md), so inject it when present.
+const bundledDotnet = path.join(repo, '.tools', 'dotnet10', 'dotnet.exe');
+const testDotnet = fs.statSync(bundledDotnet, { throwIfNoEntry: false })?.isFile() ? bundledDotnet : 'dotnet';
 const mode = String(process.argv[2] || 'ws').toLowerCase();
 const supported = new Set(['ws', 'all', 'installer', 'stage3', 'stage4', 'stage5', 'stage51', 'stage52', 'stage55a', 'stage55b', 'stage55c1a', 'delivery-s1', 'delivery-s2', 'delivery-s3', 'delivery-rd02']);
 if (!supported.has(mode)) throw new Error(`unknown test mode: ${mode}; use ws, all, stage3, stage4, stage5, stage51, stage52, stage55a, stage55b, stage55c1a, delivery-s1, delivery-s2, delivery-s3, delivery-rd02 or installer`);
@@ -26,6 +30,7 @@ function run(label, args, options = {}) {
     env: {
       ...childEnvironment,
       ZHIKE_TEST_NODE: testNode,
+      ZHIKE_TEST_DOTNET: testDotnet,
       ...options.env,
     },
     encoding: 'utf8',

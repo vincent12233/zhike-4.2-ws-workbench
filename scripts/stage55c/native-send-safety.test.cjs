@@ -26,6 +26,19 @@ public sealed class NativeSendHost {
   private FakeView? _wsView => App.WsService.Sessions.GetValueOrDefault(App.WsService.ActiveAccountId)?.View;
   private ApiClient? _api = new();
   private bool _hostWindowRenderable = true;
+  // The extracted send/action methods consult the collector capability surface
+  // and the deferred collector gateway; provide test doubles with the same
+  // signatures as the real host members so the real code compiles unchanged.
+  private string _wsCollectorVisibleAccountId = string.Empty;
+  private JsonElement CollectionCapabilityFor(string accountId)
+  {
+    var fields = JsonSerializer.SerializeToElement(WsCollectionCapability.Current).EnumerateObject()
+      .ToDictionary(property => property.Name, property => property.Value.Clone());
+    fields["collectorState"] = JsonSerializer.SerializeToElement("not-started");
+    return JsonSerializer.SerializeToElement(fields);
+  }
+  private Task<BridgeResponse> HandleCollectorActionAsync(string requestId, string accountId, string action, JsonElement payload, CancellationToken token)
+    => WsStatusResponseAsync(requestId, accountId, token);
   private bool IsWsChatPresentationActive => App.WsRuntime.ForegroundAccountId == App.WsService.ActiveAccountId && _hostWindowRenderable;
   public void InvalidateForTest() => _wsSendGuard.Invalidate();
   public void HideForTest() { _hostWindowRenderable = false; _wsSendGuard.Invalidate(); }
