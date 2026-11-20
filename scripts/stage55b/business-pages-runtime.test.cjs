@@ -145,19 +145,21 @@ async function loadingOwnership() {
   assert.equal(categoryPage.business.rows.length, 0);
 }
 
+const purposeHelpers = source => source.slice(source.indexOf('  function normalizeWorkspaceMode('), source.indexOf('  const WS_WORKSPACE_VIEW_META'));
+
 async function accountSummaryReset() {
   const source = fs.readFileSync(path.resolve(__dirname, '../../resources/app/modules/ws-workbench.js'), 'utf8');
   const extract = (start, end) => { const from = source.indexOf(start), to = source.indexOf(end, from); assert.ok(from > 0 && to > from); return source.slice(from, to); };
   const native = deferred();
-  const state = { activeAccountId: 'a', accountLoadSequence: 1, accounts: [{ id: 'a' }, { id: 'b' }], wsWorkspaceView: 'tasks', busy: {}, previewAnalysisSignatures: new Map(), analysisRefreshPending: new Set(), translationBusy: new Set(), conversations: [], backgroundActive: false, followupAlerts: [{ id: 'private-account-a-task', accountId: 'a' }], collectionRun: { id: 'private-account-a-run', accountId: 'a' }, aiQueueStats: { queued: 73, running: 4, total: 80 } };
+  const state = { workspaceMode: 'ordinary', accountPresentationGeneration: 0, activeAccountId: 'a', accountLoadSequence: 1, accounts: [{ id: 'a' }, { id: 'b' }], wsWorkspaceView: 'tasks', busy: {}, previewAnalysisSignatures: new Map(), analysisRefreshPending: new Set(), translationBusy: new Set(), conversations: [], backgroundActive: false, followupAlerts: [{ id: 'private-account-a-task', accountId: 'a' }], collectionRun: { id: 'private-account-a-run', accountId: 'a' }, aiQueueStats: { queued: 73, running: 4, total: 80 } };
   const contextCurrent = context => context.accountId === state.activeAccountId && context.sequence === state.accountLoadSequence;
   const sandbox = { state, String, Number, Map, Set, Promise, clearTimeout, text: value => String(value ?? '').trim(), nowIso: () => '2026-11-16T12:00:00Z', groupMonitorNativeSignature: '', settingsSaveTimer: undefined, settingsSaveSequence: 0, loadSequence: 0,
-    createGroupMonitorState: accountId => ({ accountId }), cancelAllAiWork: async () => {}, writeStoredAccountId: () => {}, render: () => {}, boundsForBrowserView: () => ({ hidden: true }), window: { zhikeDesktop: { ws: () => native.promise } },
+    invalidateExclusionPage: () => {}, createGroupMonitorState: accountId => ({ accountId }), cancelAllAiWork: async () => {}, writeStoredAccountId: () => {}, render: () => {}, boundsForBrowserView: () => ({ hidden: true }), window: { zhikeDesktop: { ws: () => native.promise } },
     captureContext: () => ({ accountId: state.activeAccountId, sequence: state.accountLoadSequence }), contextCurrent, assertContext: context => assert.ok(contextCurrent(context)), syncVipGroupAllowlist: async () => {}, loadGroupMonitor: async () => {}, loadGroupMembers: async () => {},
     loadAllConversationPages: async () => ({ conversations: [], groupConversations: [] }), api: async () => { throw new Error('summary read unavailable'); }, applyConversationInventory: result => { state.conversations = result.conversations; }, mergeDiscoveredGroupRows: () => {}, resolveInitialConversationId: () => '', loadConversationData: async () => {},
     businessPages: ui, esc: ui.esc, wsWorkspacePageState: () => ({ status: '已刷新 · 旧缓存状态' }),
   };
-  vm.runInNewContext(extract('  async function loadConversations()', '  function currentConversationRefreshSignature(') + extract('  async function switchAccount(', '  function toast(') + extract('  function renderWorkspaceOperationalOverview()', '  function renderWorkspaceMembers(') + '\nglobalThis.switchAccountForTest=switchAccount;globalThis.overviewForTest=renderWorkspaceOperationalOverview;', sandbox);
+  vm.runInNewContext(purposeHelpers(source) + extract('  async function loadConversations()', '  function currentConversationRefreshSignature(') + extract('  async function switchAccount(', '  function toast(') + extract('  function renderWorkspaceOperationalOverview()', '  function renderWorkspaceMembers(') + '\nglobalThis.switchAccountForTest=switchAccount;globalThis.overviewForTest=renderWorkspaceOperationalOverview;', sandbox);
   const switching = sandbox.switchAccountForTest('b');
   const assertNoForeignSummaries = () => {
     assert.equal(state.followupAlerts.length, 0, 'account A tasks must disappear synchronously before opening B');
@@ -179,7 +181,7 @@ async function mainRefreshOwnership() {
   const from = source.indexOf('  async function refreshWorkspacePage()'), to = source.indexOf('  function renderWorkspaceOperationalOverview()', from);
   assert.ok(from > 0 && to > from);
   const pages = new Map(), requests = [], renders = [], gateA = deferred(), gateB = deferred(), gateA2 = deferred();
-  const state = { activeAccountId: 'a', accountLoadSequence: 1, wsWorkspaceView: 'contacts' };
+  const state = { workspaceMode: 'dedicated', accounts: ['a', 'b'].map(id => ({ id, workspaceMode: 'dedicated' })), activeAccountId: 'a', accountLoadSequence: 1, wsWorkspaceView: 'contacts' };
   const pageFor = (view = state.wsWorkspaceView, accountId = state.activeAccountId) => {
     const key = accountId + ':' + view;
     if (!pages.has(key)) pages.set(key, page());
@@ -192,7 +194,7 @@ async function mainRefreshOwnership() {
     render: () => renders.push({ accountId: state.activeAccountId, sequence: state.accountLoadSequence }),
     api: (pathname, init, context) => { requests.push({ pathname, context }); return context.sequence === 1 ? gateA.promise : context.sequence === 2 ? gateB.promise : gateA2.promise; },
   };
-  vm.runInNewContext(source.slice(from, to) + '\nglobalThis.refreshForTest=refreshWorkspacePage;', sandbox);
+  vm.runInNewContext(purposeHelpers(source) + source.slice(from, to) + '\nglobalThis.refreshForTest=refreshWorkspacePage;', sandbox);
   const first = sandbox.refreshForTest(), oldPage = pageFor();
   state.activeAccountId = 'b'; state.accountLoadSequence = 2;
   const second = sandbox.refreshForTest(), pageB = pageFor();
@@ -222,7 +224,7 @@ async function nativeRestoreReset() {
   const source = fs.readFileSync(path.resolve(__dirname, '../../resources/app/modules/ws-workbench.js'), 'utf8');
   const extract = (start, end) => { const from = source.indexOf(start), to = source.indexOf(end, from); assert.ok(from > 0 && to > from); return source.slice(from, to); };
   const listing = deferred();
-  const state = { activeAccountId: 'a', accountLoadSequence: 1, accounts: [{ id: 'a' }, { id: 'b' }], busy: {}, previewAnalysisSignatures: new Map(), analysisRefreshPending: new Set(['private-a-analysis']), translationBusy: new Set(),
+  const state = { workspaceMode: 'ordinary', accountPresentationGeneration: 0, activeAccountId: 'a', accountLoadSequence: 1, accounts: [{ id: 'a' }, { id: 'b' }], busy: {}, previewAnalysisSignatures: new Map(), analysisRefreshPending: new Set(['private-a-analysis']), translationBusy: new Set(),
     followupAlerts: [{ id: 'private-a-task' }], collectionRun: { id: 'private-a-run' }, aiQueueStats: { queued: 73 }, summaryLoaded: { collection: true, followups: true, ai: true },
     currentConversationId: 'private-a-conversation', conversations: [{ id: 'private-a-conversation' }], discoveredConversations: [{ id: 'private-a-discovered' }], discoveredGroupConversations: [{ id: 'private-a-group' }], messages: [{ text: 'private-a-message' }],
     analysis: { occupation: 'private-a-occupation' }, analysisMeta: { id: 'private-a-meta' }, replies: ['private-a-reply'], hotProfile: { id: 'private-a-profile' }, hotProfileEdits: { private: 'a' }, archive: { id: 'private-a-archive' }, matchCandidates: ['private-a-candidate'],
@@ -230,11 +232,11 @@ async function nativeRestoreReset() {
   };
   let registered, requested = 0;
   const sandbox = { state, String, Number, Map, Set, Promise, clearTimeout, settingsSaveTimer: undefined, settingsSaveSequence: 0, groupMonitorNativeSignature: '',
-    text: value => String(value ?? '').trim(), createGroupMonitorState: accountId => ({ accountId, rows: [] }), cancelAllAiWork: async () => {}, writeStoredAccountId: () => {}, render: () => {}, updateAccountStatus: () => {},
+    text: value => String(value ?? '').trim(), invalidateExclusionPage: () => {}, createGroupMonitorState: accountId => ({ accountId, rows: [] }), cancelAllAiWork: async () => {}, writeStoredAccountId: () => {}, render: () => {}, updateAccountStatus: () => {},
     core: { retryTransient: work => work() }, window: { zhikeDesktop: { onWsStatus: callback => { registered = callback; }, wsAccounts: () => { ++requested; return listing.promise; } } },
   };
   const reset = extract('  function resetAccountPresentation(', '  function toast(');
-  vm.runInNewContext(reset + extract('  async function loadAccounts()', '  function updateAccountStatus(') + '\nconst actualLoadAccounts=loadAccounts;loadAccounts=function(){accountLoad=actualLoadAccounts();return accountLoad;};' + extract('    window.zhikeDesktop?.onWsStatus?.(', '    window.addEventListener(\'resize\','), sandbox);
+  vm.runInNewContext(purposeHelpers(source) + reset + extract('  async function loadAccounts()', '  function updateAccountStatus(') + '\nconst actualLoadAccounts=loadAccounts;loadAccounts=function(){accountLoad=actualLoadAccounts();return accountLoad;};' + extract('    window.zhikeDesktop?.onWsStatus?.(', '    window.addEventListener(\'resize\','), sandbox);
   assert.equal(typeof registered, 'function', 'exercise the registered native restore callback, not an invented account-switch approximation');
   registered({ restoreAccountId: 'b', accountId: 'b', status: '连接失败' });
   const assertCleared = () => {
@@ -260,7 +262,14 @@ function directoryFormSubmission() {
   const source = fs.readFileSync(path.resolve(__dirname, '../../resources/app/modules/ws-workbench.js'), 'utf8');
   const extract = (start, end) => { const from = source.indexOf(start), to = source.indexOf(end, from); assert.ok(from > 0 && to > from); return source.slice(from, to); };
   const handlers = new Map(), actions = [];
-  const sandbox = { view: { addEventListener: (type, callback) => handlers.set(type, callback) }, state: { wsWorkspaceView: 'contacts' },
+  function dispatch(type, event) {
+    let stopped = false;
+    for (const callback of handlers.get(type) || []) {
+      callback({ ...event, stopImmediatePropagation: () => { stopped = true; } });
+      if (stopped) break;
+    }
+  }
+  const sandbox = { view: { addEventListener: (type, callback) => handlers.set(type, [...(handlers.get(type) || []), callback]) }, state: { wsWorkspaceView: 'contacts' },
     handleAction: (action, element) => { actions.push({ action, view: element.dataset.businessView }); }, Promise,
   };
   vm.runInNewContext(extract("    view?.addEventListener('click',", "    view?.addEventListener('toggle',") + extract("    view?.addEventListener('submit',", '    // keydown Escape'), sandbox);
@@ -279,12 +288,12 @@ function directoryFormSubmission() {
     let prevented = false;
     const pointer = { target, preventDefault: () => { prevented = true; }, stopImmediatePropagation: () => {} };
     const before = actions.length;
-    handlers.get('click')(pointer);
+    dispatch('click', pointer);
     assert.equal(prevented, false, 'delegated action handler must let the normal submit default occur');
-    handlers.get('submit')({ target, preventDefault: () => {}, stopImmediatePropagation: () => {} });
+    dispatch('submit', { target, preventDefault: () => {}, stopImmediatePropagation: () => {} });
     assert.equal(actions.length, before + 1, 'one pointer query results in exactly one business-search');
     assert.deepEqual(actions.at(-1), { action: 'business-search', view: businessView });
-    handlers.get('submit')({ target, preventDefault: () => {}, stopImmediatePropagation: () => {} });
+    dispatch('submit', { target, preventDefault: () => {}, stopImmediatePropagation: () => {} });
     assert.equal(actions.length, before + 2, 'one Enter submit results in exactly one additional business-search');
   }
 }

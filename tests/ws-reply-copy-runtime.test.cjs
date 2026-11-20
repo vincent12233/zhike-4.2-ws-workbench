@@ -8,10 +8,12 @@ const start = source.indexOf('  async function copyReply('), end = source.indexO
 assert.ok(start > 0 && end > start);
 const input = 'Hello from the workspace';
 function fixture(copyResult, sensitive = false) {
-  const state = { activeAccountId: 'a', accountLoadSequence: 1, busy: { reply: false }, settings: {}, replies: [] };
+  const store = new Map([['zhike.ws.reply-drafts', JSON.stringify({'a:chat-a': input, 'b:chat-a': 'other draft'})]]);
+  const state = { activeAccountId: 'a', currentConversationId: 'chat-a', accountLoadSequence: 1, busy: { reply: false }, settings: {}, replies: [] };
   const draft = { replyInput: input, replyError: '', replyOperationId: '' };
   const copies = [], saves = [], notices = [];
   const sandbox = {
+    localStorage: { getItem: key => store.get(key), setItem: (key, value) => store.set(key, value) },
     state, text: value => String(value ?? '').trim(), activeConversation: () => ({ id: 'chat-a' }), currentDraft: () => draft,
     captureContext: () => ({ accountId: state.activeAccountId, sequence: state.accountLoadSequence }),
     contextCurrent: context => context.accountId === state.activeAccountId && context.sequence === state.accountLoadSequence,
@@ -22,8 +24,8 @@ function fixture(copyResult, sensitive = false) {
     window: { zhikeDesktop: { tools: async payload => { copies.push(payload); return copyResult; } } },
     api: async (route, init, context) => { saves.push({ route, body: JSON.parse(init.body), context }); return { id: 'saved-reply-a' }; },
   };
-  vm.runInNewContext(source.slice(start, end) + '\nglobalThis.copy=copyReply;', sandbox);
-  return { state, draft, copies, saves, notices, run: () => sandbox.copy() };
+  vm.runInNewContext(source.slice(source.indexOf('  const DRAFT_STORAGE_KEY'), source.indexOf('  function scheduleDraftPersist(')) + source.slice(start, end) + '\nglobalThis.copy=copyReply;', sandbox);
+  return { state, draft, store, copies, saves, notices, run: () => sandbox.copy() };
 }
 (async () => {
   for (const response of [{ copied: true }, { ok: true, length: input.length }]) {
@@ -34,6 +36,7 @@ function fixture(copyResult, sensitive = false) {
     assert.equal(success.saves[0].body.translatedText, input); assert.equal(success.saves[0].body.status, 'copied');
     assert.equal(success.state.replies[0].id, 'saved-reply-a'); assert.equal(success.draft.replyError, '');
     assert.equal(success.draft.replyOperationId, ''); assert.equal(success.state.busy.reply, false);
+    assert.deepEqual(JSON.parse(success.store.get('zhike.ws.reply-drafts')), { 'b:chat-a': 'other draft' });
     assert.match(success.notices[0].message, /回复已完整复制/);
   }
   for (const response of [{ copied: false }, { copied: true, truncated: true }, { copied: true, length: input.length - 1 }, { ok: true }]) {

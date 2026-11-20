@@ -124,7 +124,7 @@ function runStage51() {
   run('Stage 5.1 review actions through real isolated service', [path.join(repo, 'scripts/stage51/ai-review-service-ui.test.cjs')], { timeout: 180000 });
   run('Stage 5.1 workspace wheel ownership and navigation restoration', [path.join(repo, 'tests/scroll-coordinator-runtime.test.cjs')]);
   run('Stage 5.1 resource observer process identity safety', ['-NoProfile', '-File', path.join(repo, 'scripts/stage51/resource-observer-safety.test.ps1')], { command: 'pwsh.exe', timeout: 120000 });
-  run('Stage 5.1 sidecar readiness without UI pump and bounded shutdown', ['run', '--project', path.join(repo, 'scripts/stage51/NativeReadinessProbe/NativeReadinessProbe.csproj'), '-c', 'Release', '--', app], { command: path.join(repo, '.tools/dotnet10/dotnet.exe'), timeout: 120000 });
+  run('Stage 5.1 sidecar readiness without UI pump and bounded shutdown', [path.join(repo, 'scripts/stage51/native-readiness.test.cjs')], { timeout: 120000 });
 }
 
 function runStage52() {
