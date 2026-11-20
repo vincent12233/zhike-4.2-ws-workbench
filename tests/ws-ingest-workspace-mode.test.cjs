@@ -61,17 +61,27 @@ test('production ingest separates purpose, group directory and observed member m
   });
   const closed = new Promise(resolve => child.once('close', resolve));
   const observation = observeSidecarStartup(child, { secrets: [token, nativeAuthorityToken] });
-  const request = async (route, body, expected = 200) => {
+  const request = async (route, body, expected = 200, retryClock = false) => {
     const headers = { origin, 'x-zhike-native-token': nativeAuthorityToken, 'x-zhike-api-token': token, 'content-type': 'application/json' };
     if (body !== undefined) headers['x-state-version'] = (await fetch(origin + '/api/state/version', { headers }).then(response => response.json())).version;
     const response = await fetch(origin + route, { method: body === undefined ? 'GET' : 'POST', signal: AbortSignal.timeout(5000), headers,
       ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
-    const result = await response.json(); assert.equal(response.status, expected, `${route}: ${JSON.stringify(result)}`); return result;
+    const result = await response.json();
+    if (retryClock && response.status === 503 && result.code === 'WS_OBSERVATION_CLOCK_PENDING') {
+      // Retry the same durable packet, including its captured time and message identity.
+      await new Promise(resolve => setTimeout(resolve, 25));
+      return request(route, body, expected);
+    }
+    assert.equal(response.status, expected, `${route}: ${JSON.stringify(result)}`); return result;
   };
   const inspect = fn => { const db = new DatabaseSync(path.join(dataDir, 'workspace.sqlite'), { readOnly: true }); try { return fn(db); } finally { db.close(); } };
   const protectionSnapshot = () => inspect(db => JSON.stringify(['app_state', 'customers', 'ai_jobs', 'ws_ai_analyses', 'ws_messages', 'ws_ingest_batches',
     'ws_group_membership_events', 'customer_group_memberships', 'ws_contact_exclusion_hits'].map(table => [table, db.prepare('SELECT * FROM ' + table + ' ORDER BY id').all()])));
   const conversation = (accountId, key) => inspect(db => db.prepare('SELECT * FROM ws_conversations WHERE account_id=? AND external_id=?').get(accountId, key));
+  const collectorClock = async accountId => {
+    const receipt = await request('/api/ws/ingest/batch', { accountId, messages: [], checkpoints: [] });
+    return receipt.processedAt;
+  };
   const ingest = (accountId, checkpoints, messages) => request('/api/ws/ingest/batch', { accountId, checkpoints, messages, workspaceMode: 'dedicated', vipGroup: true });
   try {
     await requestWithStartupDiagnostics(() => request('/api/health'), observation);
@@ -172,7 +182,7 @@ test('production ingest separates purpose, group directory and observed member m
       const sample = extra => request('/api/ws/ingest/batch', { ...packet, ...extra });
       assert.equal(seat.observationState, 'no-targets');
       const targets = (await request(route + '/targets/scan' + query, { accountId: dedicated, targets: [key, second].map(groupJid => ({ groupJid, enabled: true })) })).targets;
-      packet.capturedAt = new Date().toISOString();
+      packet.capturedAt = await collectorClock(dedicated);
       assert.equal((await read()).health.observationState, 'waiting');
       await sample({ accountId: other }); await sample({ accountId: ordinary }); await sample({ scope: 'visible-authorized-content' });
       await sample({ checkpoints: [{ ...packet.checkpoints[0], conversationKey: 'never-bound@g.us' }] });
@@ -208,7 +218,7 @@ test('production ingest separates purpose, group directory and observed member m
       await request(route + '/targets/' + targets.find(target => target.groupJid === key).id + '/enable' + query, { accountId: dedicated });
       await sample({});
       assert.equal((await read()).health.observationState, 'waiting', 'a packet from before re-enabling the target cannot establish current coverage');
-      await sample({ capturedAt: new Date().toISOString() });
+      await sample({ capturedAt: await collectorClock(dedicated) });
       assert.equal((await read()).health.observationState, 'recent');
       const saveSeat = enabled => request('/api/ws/group-monitors/profiles', { accountId: dedicated, slotKey: seat.slotKey, enabled });
       await saveSeat(false);
@@ -237,7 +247,7 @@ test('production ingest separates purpose, group directory and observed member m
     const sideEffects = () => inspect(db => Object.fromEntries(['ws_group_membership_events', 'customer_group_memberships', 'ws_ai_analyses', 'ai_jobs', 'customers', 'app_state']
       .map(table => [table, db.prepare('SELECT * FROM ' + table + ' ORDER BY id').all()])));
     const baseline = sideEffects();
-    const packet = extra => ({ accountId: dedicated, scope: 'background-collector', capturedAt: new Date().toISOString(), ...extra });
+    const packet = async extra => ({ accountId: dedicated, scope: 'background-collector', capturedAt: await collectorClock(dedicated), ...extra });
     const submit = body => request('/api/ws/ingest/batch', body);
     const person = (phone, displayName) => ({ memberId: '91' + phone + '@s.whatsapp.net', displayName });
     const panel = (key, observedMembers) => ({ conversationKey: key, displayName: 'Authorized group', conversationType: 'group', isGroup: true, coverage: 'group-monitor-visible', observedMembers });
@@ -255,7 +265,7 @@ test('production ingest separates purpose, group directory and observed member m
 
     await t.test('only an authorized native collector writes observed roster identities', async () => {
       const people = [person(knownPhone, 'Real identity')];
-      const body = packet({ checkpoints: [panel(visibleKey, people)] });
+      const body = await packet({ checkpoints: [panel(visibleKey, people)] });
       const unauthenticated = await fetch(origin + '/api/ws/ingest/batch', { method: 'POST',
         headers: { origin, 'x-zhike-api-token': token, 'content-type': 'application/json' }, body: JSON.stringify(body) });
       assert.equal(unauthenticated.status, 403);
@@ -274,7 +284,7 @@ test('production ingest separates purpose, group directory and observed member m
     await t.test('paused targets and replay from before reauthorization cannot contribute member evidence', async () => {
       const id = boundLiveTargets.find(target => target.groupJid === authorKey).id;
       const toggle = action => request('/api/ws/group-monitors/' + liveSeat.id + '/targets/' + id + '/' + action + '?accountId=' + dedicated, { accountId: dedicated });
-      const body = packet({ checkpoints: [panel(authorKey, [person(knownPhone, 'Previous authorization')])] });
+      const body = await packet({ checkpoints: [panel(authorKey, [person(knownPhone, 'Previous authorization')])] });
       await toggle('disable');
       await submit(body);
       assert.equal(countMembers(dedicated, authorKey), 0);
@@ -282,12 +292,12 @@ test('production ingest separates purpose, group directory and observed member m
       await submit(body);
       assert.equal(countMembers(dedicated, authorKey), 0);
       const stale = message(authorKey, 'stale-observation', { observedAt: body.capturedAt });
-      await submit(packet({ messages: [stale] }));
+      await submit(await packet({ messages: [stale] }));
       assert.equal(countMembers(dedicated, authorKey), 0);
     });
 
     await t.test('an incoming message alone discovers its author, rebuilds the missing directory and survives replay', async () => {
-      const body = packet({ messages: [message(authorKey, 'verified-author', { senderId: person(knownPhone).memberId, senderName: 'Verified author' })] });
+      const body = await packet({ messages: [message(authorKey, 'verified-author', { senderId: person(knownPhone).memberId, senderName: 'Verified author' })] });
       assert.equal(group(dedicated, authorKey), undefined);
       assert.equal((await submit(body)).accepted, 1);
       const rows = await members(dedicated, authorKey);
@@ -305,7 +315,7 @@ test('production ingest separates purpose, group directory and observed member m
     await t.test('a partial visible roster restores the group without messages, links verified CRM only and never infers departures', async () => {
       const known = person(knownPhone, 'Verified person'), excluded = person(excludedPhone, 'Excluded person');
       const opaque = { memberId: '7755588221@lid', displayName: 'live-known' };
-      const body = packet({ checkpoints: [panel(visibleKey, [known, excluded, opaque, known, { memberId: '', displayName: 'live-known' }, { memberId: 'invalid', displayName: knownPhone }])] });
+      const body = await packet({ checkpoints: [panel(visibleKey, [known, excluded, opaque, known, { memberId: '', displayName: 'live-known' }, { memberId: 'invalid', displayName: knownPhone }])] });
       await submit(body);
       assert.ok(group(dedicated, visibleKey));
       assert.equal(conversation(dedicated, visibleKey), undefined);
@@ -322,7 +332,7 @@ test('production ingest separates purpose, group directory and observed member m
       assert.equal(unknown.customerId, '');
       await submit(body);
       assert.deepEqual(await members(dedicated, visibleKey), rows);
-      await submit(packet({ checkpoints: [panel(visibleKey, [known])] }));
+      await submit(await packet({ checkpoints: [panel(visibleKey, [known])] }));
       const reduced = await members(dedicated, visibleKey);
       assert.equal(reduced.length, 3);
       assert.deepEqual(reduced.find(row => row.id === blocked.id), blocked);
@@ -431,6 +441,36 @@ test('production ingest separates purpose, group directory and observed member m
       assert.ok(conversation(ordinary, direct.conversationKey));
       assert.deepEqual(readGroups(), [group.conversationKey,group2.conversationKey]);
       assert.equal(protectionSnapshot(), baseline);
+    });
+    await t.test('small native clock differences preserve original capture time, deduplication and authorization boundaries', async () => {
+      // The sidecar and native process have independent clock resolution on Windows.
+      const nearFuture = async () => new Date(Date.parse(await collectorClock(dedicated)) + 150).toISOString();
+      const capturedAt = await nearFuture();
+      const directId = '919990010001@c.us';
+      const directory = { scope: 'foreground-visible-directory', accountId: ordinary, capturedAt,
+        checkpoints: [{ accountId: ordinary, conversationKey: directId, displayName: 'Clock fixture', coverage: 'foreground-visible-directory', conversationType: 'direct', isGroup: false }] };
+      const save = body => request('/api/ws/ingest/batch', body, 200, true);
+      const first = await save(directory);
+      assert.ok(first.processedAt >= capturedAt, 'an index acknowledgement must not predate the captured evidence');
+      const saved = conversation(ordinary, directId);
+      assert.equal(JSON.parse(saved.data_json).directoryObservedAt, capturedAt);
+      await save(directory);
+      assert.equal(conversation(ordinary, directId).id, saved.id);
+
+      const batchAt = await collectorClock(dedicated);
+      const observedAt = await nearFuture();
+      const packet = { scope: 'background-collector', accountId: dedicated, capturedAt: batchAt,
+        messages: [message(authorKey, 'near-clock-boundary', {senderId:'clock-proof@lid', observedAt})] };
+      const result = await save(packet);
+      assert.equal(result.accepted, 1); assert.ok(result.processedAt >= observedAt);
+      const [observed] = (await members(dedicated, authorKey)).filter(row => row.memberJid === 'clock-proof@lid');
+      assert.ok(observed); assert.equal(observed.lastSeenAt, observedAt);
+      assert.equal((await save(packet)).deduplicated, 1);
+
+      const distant = new Date(Date.parse(await collectorClock(dedicated)) + 86400000).toISOString();
+      const rejectedId = '919990010002@c.us';
+      await save({ ...directory, capturedAt:distant, checkpoints:[{...directory.checkpoints[0],conversationKey:rejectedId}] });
+      assert.equal(conversation(ordinary, rejectedId), undefined);
     });
   } finally {
     if (child.exitCode === null && child.signalCode === null) child.kill();

@@ -3002,7 +3002,12 @@ public sealed partial class LegacyUiHostPage : Page
     }
     return keys.size > 1 ? {status:'conflicting-identities'} : {key:[...keys][0] || ''};
   }
-  const pane = document.querySelector('#main');
+  const visiblePane = node => node?.getClientRects?.().length && !node.closest?.('[hidden],[aria-hidden="true"]');
+  let pane = document.querySelector('#main');
+  if (!visiblePane(pane)) {
+    const alternatives = [...document.querySelectorAll('[data-testid="conversation-panel-wrapper"]')].filter(visiblePane);
+    if (alternatives.length === 1) pane = alternatives[0];
+  }
   const header = pane?.querySelector('header,[data-testid="conversation-header"],[data-testid="conversation-info-header"],[data-testid="chat-header"]');
   if (!pane?.getClientRects?.().length || !header?.getClientRects?.().length || pane.closest?.('[hidden],[aria-hidden="true"]')) return {status:'no-open-chat'};
   const normalize = value => typeof value === 'string' && /^(?:\d{1,20}(?:-\d{1,20})?@g\.us|\d{1,20}@(c\.us|s\.whatsapp\.net|lid))$/i.test(value) ? value.toLowerCase() : '';
@@ -3018,11 +3023,14 @@ public sealed partial class LegacyUiHostPage : Page
   const declared = new Set([...explicit(header), ...[...selected].flatMap(explicit)]);
   if (declared.size > 1) return {status:'conflicting-identities'};
   const owners = new Map();
-  const bubble = '[data-testid="msg-container"],.message-in,.message-out';
+  const bubble = '[data-testid="msg-container"],.message-in,.message-out,[data-testid="system-message"],[data-testid="msg-system"]';
+  const transcript = '[data-testid="conversation-panel-messages"],[data-testid="conversation-panel-body"],[role="log"]';
   let inspected = 0;
   for (const node of pane.querySelectorAll('[data-id^="true_"],[data-id^="false_"]')) {
     if (++inspected > 256) break;
-    if (!node.getClientRects().length || node.closest(excluded) || node.closest('[data-testid*="message-preview" i]') || !(node.matches(bubble) || node.closest(bubble) || node.querySelector(bubble))) continue;
+    if (!node.getClientRects().length || node.closest(excluded) || node.closest('header,footer,[data-testid*="message-preview" i]')) continue;
+    const timelineRow = node.closest('[role="row"],[role="listitem"]');
+    if (!(node.matches(bubble) || node.closest(bubble) || node.querySelector(bubble) || timelineRow?.closest?.(transcript))) continue;
     const record = parse(node.getAttribute('data-id'));
     if (!record) continue;
     const chat = record.key;
@@ -4366,7 +4374,11 @@ public sealed partial class LegacyUiHostPage : Page
         const vipGroup = isVipGroupIdentity(identity, displayName, ...identifiers);
         return { conversationType:vipGroup ? 'vip_group' : 'group', isGroup:true, vipGroup, source:'jid-g.us' };
       }
-      if (semanticValues.some(value => /^(?:true|group|group-chat|groupchat|community|default-group|default-community|multi-user|multiuser)$/.test(value) || /(?:^|[-_:])(?:group-chat|group-info|group-avatar|community)(?:[-_:]|$)/.test(value))) {
+      // Only accept an explicitly labelled avatar or chat-type badge. Chat titles,
+      // message previews and arbitrary aria-label text can be user supplied.
+      const groupBadges = root.querySelectorAll?.('[data-testid="chat-type"],[data-testid="chat-type-icon"],[data-testid="cell-frame-avatar"],[data-testid="avatar"] [role="img"],[data-testid="cell-frame-avatar"] [role="img"]') || [];
+      const labelledGroup = [...groupBadges].some(node => /^(?:group chat|group avatar|group profile picture|群聊头像|群组头像|群組頭像|群組聊天室)$/i.test(clean(node.getAttribute?.('aria-label'))));
+      if (labelledGroup || semanticValues.some(value => /^(?:true|group|group-chat|groupchat|community|default-group|default-community|multi-user|multiuser)$/.test(value) || /(?:^|[-_:])(?:group-chat|group-info|group-avatar|community)(?:[-_:]|$)/.test(value))) {
         const vipGroup = isVipGroupIdentity(identity, displayName, ...identifiers);
         return { conversationType:vipGroup ? 'vip_group' : 'group', isGroup:true, vipGroup, source:'dom-group' };
       }
@@ -4414,9 +4426,128 @@ public sealed partial class LegacyUiHostPage : Page
    let unresolvedWindowRows = 0;
    let latestWindow = {};
    let probeCandidates = [];
-   const groupFilterSelected = () => {
-     const tab = document.querySelector('[data-testid="chat-filter-groups"][aria-pressed="true"],[data-testid="chat-filter-groups"][aria-selected="true"],[data-testid="filter-groups"][aria-pressed="true"],[data-testid="chat-list-filters"] [role="tab"][aria-selected="true"]:is([aria-label="Groups" i],[aria-label="群组"],[aria-label="群聊"])');
-     return tab?.getAttribute?.('aria-selected') === 'true' || tab?.getAttribute?.('aria-pressed') === 'true';
+   // Only built-in category controls in the chat filter bar may qualify a row.
+   // Business labels and chats may have the same display name as a system filter.
+   const directoryFilterUi = doc => {
+     const all = (root, selector) => Array.from(root?.querySelectorAll?.(selector) || []);
+     const visible = n => Boolean(n?.isConnected && n.getClientRects?.().length && !n.closest?.('[hidden],[inert],[aria-hidden="true"]') && doc.defaultView?.getComputedStyle(n).visibility !== 'hidden');
+     const active = n => ['aria-selected','aria-pressed','aria-checked'].some(k => n?.getAttribute(k) === 'true');
+     const controls = root => all(root,'button,[role="button"],[role="tab"],[role="menuitem"],[role="menuitemradio"],[role="menuitemcheckbox"],[role="option"]').filter(n => visible(n) && !n.matches('[disabled],[aria-disabled="true"]'));
+     const popups = () => all(doc,'[role="menu"],[role="listbox"],[role="dialog"],[aria-modal="true"]').filter(visible);
+     const builtin = (n,group) => {
+       const names=group ? ['groups-filter','group-filter','chat-filter-groups','filter-groups'] : ['all-filter','chat-filter-all','filter-all'];
+       if (names.includes(n.id) || names.includes(n.getAttribute('data-testid')) || n.getAttribute('data-filter') === (group ? 'groups' : 'all')) return true;
+       return group && Boolean(n.querySelector('[data-icon="group"],[data-icon="groups"],[data-icon="group-filled"]'))
+         && /^(?:groups|群组|群聊|群組)$/i.test((n.getAttribute('aria-label') || n.textContent || '').trim());
+     };
+     const groupButtons = scope => controls(scope).filter(n => builtin(n,true));
+     const inspect = () => {
+       const bars=all(doc,'[data-testid="chat-list-filters"],[data-testid="chat-filters"],#side [role="tablist"],[aria-controls="pane-side"][role="tablist"]').filter(visible);
+       if (!bars.length) {
+         for (const chip of all(doc,'#side #all-filter,#side [data-testid="chat-filter-all"],#side [data-testid="filter-all"]')) {
+           for (let p=chip.parentElement;p && p.id !== 'side';p=p.parentElement) {
+             if (p.querySelector('#pane-side,[role="grid"],[role="row"],input,[contenteditable="true"]')) break;
+             if (visible(p) && p.querySelector('#unread-filter,[data-testid="chat-filter-unread"],[data-testid="filter-unread"]')) { bars.push(p); break; }
+           }
+         }
+       }
+       const scopes=bars.filter(n => !bars.some(other => other !== n && n.contains(other)));
+       if (scopes.length !== 1) return {status:scopes.length ? 'ambiguous' : 'not-offered'};
+       const items=controls(scopes[0]), groups=groupButtons(scopes[0]), defaults=items.filter(n => builtin(n,false));
+       const overflow=items.filter(n => {
+         if (n.matches('[data-testid="chat-filter-overflow"],[data-testid="filter-overflow"],[data-testid="chat-list-filters-menu"]')) return true;
+         const label=(n.getAttribute('aria-label') || n.getAttribute('title') || '').trim();
+         if (n.getAttribute('role') === 'tab' || (n.textContent || '').trim() || n.matches('[aria-selected],[aria-pressed]')) return false;
+         const arrow=n.querySelector('[data-icon="chevron-down"],[data-icon="down"],[data-icon="filter"]');
+         return Boolean(arrow) && (!label || /^(?:more filters|chat filters|filter chats|more lists|lists|更多筛选|聊天筛选|更多列表)$/i.test(label));
+       });
+       if (groups.length > 1 || defaults.length > 1 || !groups.length && overflow.length > 1) return {status:'ambiguous'};
+       return {status:active(groups[0]) ? 'selected' : 'not-offered', original:defaults[0], group:groups[0], overflow:overflow[0]};
+     };
+     const ownedPopup = button => {
+       if (!button?.isConnected || button.getAttribute('aria-expanded') === 'false') return null;
+       const ids=[button.getAttribute('aria-controls'),button.getAttribute('aria-owns')].filter(Boolean).join(' ').trim();
+       const open=popups();
+       if (open.length !== 1 || !open[0].matches('[role="menu"],[role="listbox"]')) return null;
+       const owned=ids ? ids.split(/\s+/).includes(open[0].id) : button.getAttribute('aria-expanded') === 'true' || button.contains(open[0]);
+       return owned ? open[0] : null;
+     };
+     return {active,inspect,groupButtons,popups,ownedPopup};
+   };
+   const filterUi = directoryFilterUi(document);
+   let groupFilterStatus = 'not-checked';
+   let lastFilterAttempt = 0;
+   let previousFilterRows = null;
+   const filterRowStamp = row => JSON.stringify([
+     row.getAttribute?.('data-id'),row.getAttribute?.('data-jid'),row.getAttribute?.('data-chat-id'),row.getAttribute?.('data-group-id'),
+     row.querySelector?.('[data-testid="cell-frame-title"] [title],span[dir="auto"][title]')?.getAttribute?.('title')
+   ]);
+   const filteredRow = (state,row) => {
+     if (state.status !== 'selected') return false;
+     if (!previousFilterRows?.has(row)) return true;
+     // React can recycle one mounted row for a different conversation on scroll.
+     // A preview text update alone does not establish that the binding changed.
+     if (previousFilterRows.get(row) !== filterRowStamp(row)) return true;
+     const panel=row.closest?.('#pane-side,[role="tabpanel"],[data-testid="chat-list"]');
+     return Boolean(state.group?.id && panel?.getAttribute('aria-labelledby')?.split(/\s+/).includes(state.group.id));
+   };
+   const groupFilterSelected = row => {
+     const state=filterUi.inspect();
+     return row ? filteredRow(state,row) : state.status === 'selected';
+   };
+   const restoreDirectoryFilter = run => {
+     if (!run) return;
+     if (cancelRowMenu) cancelRowMenu();
+     if (run.overflow && filterUi.ownedPopup(run.overflow)) run.overflow.click();
+     run.overflow = null;
+     if (run.changedFilter) {
+       const state=filterUi.inspect();
+       if (state.status === 'selected' && state.original && !filterUi.popups().length) state.original.click();
+       run.changedFilter=false;
+     }
+   };
+   const prepareDirectoryFilter = (run,resume) => {
+     const allowed = () => backgroundCollectorRole && groupMonitoringAllowed && !run.monitorOnly && allScan === run
+       && run.generation === allScanGeneration && !readHistoryScan && !highPriorityHistoryRetryPending && Date.now()-lastListInteractionAt >= 1500
+       && !(groupMonitorState.enabled && groupMonitorState.status === 'running' && groupMonitorState.targets.some(t => t.enabled !== false));
+     if (!allowed() || cancelRowMenu) { resume(); return; }
+     const state=filterUi.inspect();
+     if (state.status === 'selected') { groupFilterStatus='selected'; resume(); return; }
+     if (Date.now()-lastFilterAttempt < 90000) { if (groupFilterStatus === 'selected') groupFilterStatus='not-checked'; resume(); return; }
+     lastFilterAttempt=Date.now();
+     groupFilterStatus=state.status;
+     if (!state.group && !state.overflow) { resume(); return; }
+     if (!filterUi.active(state.original) || filterUi.popups().length) { groupFilterStatus='ambiguous'; resume(); return; }
+     const later = callback => scheduleCollectorTask(() => {
+       if (allScan !== run || run.generation !== allScanGeneration) return;
+       if (!allowed()) { groupFilterStatus='selection-unconfirmed'; restoreDirectoryFilter(run); resume(); return; }
+       callback();
+     },300);
+     const select = button => {
+       previousFilterRows = new WeakMap(rowNodes().map(n => [n,filterRowStamp(n)]));
+       run.changedFilter=true;
+       groupFilterStatus='selecting';
+       button.click();
+       let checks=0;
+       const confirm = () => {
+         if (filterUi.inspect().status === 'selected' && !filterUi.popups().length) { groupFilterStatus='selected'; run.overflow=null; resume(); }
+         else if (++checks < 4) later(confirm);
+         else { groupFilterStatus='selection-unconfirmed'; restoreDirectoryFilter(run); resume(); }
+       };
+       later(confirm);
+     };
+     if (state.group) { select(state.group); return; }
+     run.overflow=state.overflow;
+     groupFilterStatus='selecting';
+     state.overflow.click();
+     later(() => {
+       const popup=filterUi.ownedPopup(run.overflow);
+       const candidates=popup ? filterUi.groupButtons(popup) : [];
+       if (candidates.length === 1) { select(candidates[0]); return; }
+       groupFilterStatus=!popup || candidates.length > 1 ? 'ambiguous' : 'not-offered';
+       restoreDirectoryFilter(run);
+       resume();
+     });
    };
    const explicitRead = node => node?.getAttribute?.('data-unread-count') === '0'
      || node?.getAttribute?.('data-unread') === 'false' || node?.getAttribute?.('data-is-unread') === 'false';
@@ -4424,10 +4555,11 @@ public sealed partial class LegacyUiHostPage : Page
      || node?.getAttribute?.('data-unread') === 'true' || node?.getAttribute?.('data-is-unread') === 'true';
    const readRows = () => {
     unresolvedWindowRows = 0;
-    latestWindow = {listPresent:Boolean(listContainer()),renderedRows:0,stableRows:0,unresolvedRows:0,skippedUnread:0,skippedReadUnknown:0,skippedTypeUnknown:0};
+    latestWindow = {groupFilterStatus,listPresent:Boolean(listContainer()),renderedRows:0,stableRows:0,unresolvedRows:0,skippedUnread:0,skippedReadUnknown:0,skippedTypeUnknown:0};
     probeCandidates = [];
-    const groupsOnly = groupMonitoringAllowed && groupFilterSelected();
+    const filterState = groupMonitoringAllowed ? filterUi.inspect() : null;
     return rowNodes().map((row, index) => {
+    const groupsOnly = Boolean(filterState && filteredRow(filterState,row));
     const labels = [row, ...row.querySelectorAll('[aria-label], [aria-description], [title], [data-pre-plain-text]')].map(node => clean(node.getAttribute?.('aria-label') || node.getAttribute?.('aria-description') || node.getAttribute?.('title') || node.getAttribute?.('data-pre-plain-text') || '')).filter(Boolean);
     const pageText = labels.join(' ').slice(0, 2000);
     const nativeKey = conversationIdentityFromRow(row);
@@ -4457,7 +4589,10 @@ public sealed partial class LegacyUiHostPage : Page
         if ((!typeEvidence.isGroup && !(groupsOnly && typeEvidence.conversationType === 'unknown')) || conflict) { if (typeEvidence.conversationType === 'unknown' || conflict) latestWindow.skippedTypeUnknown++; }
         else if (unread.unread || unreadCount > 0 || explicitUnread(row)) latestWindow.skippedUnread++;
         else if (unread.uncertainUnread || !explicitRead(row)) latestWindow.skippedReadUnknown++;
-        else probeCandidates.push({node:row,index});
+        else probeCandidates.push({node:row,index,needsMenu:false});
+        if (!conflict && !unread.unread && !(unreadCount > 0) && !explicitUnread(row) && typeEvidence.conversationType !== 'direct'
+            && (!explicitRead(row) || !typeEvidence.isGroup && !groupsOnly))
+          probeCandidates.push({node:row,index,needsMenu:true});
       }
       if (externalId && (directHistoryAllowed ? collectibleConversationType(typeEvidence.conversationType) : typeEvidence.isGroup && /@g\.us$/i.test(externalId))) latestWindow.stableRows++;
       if (!externalId) return null;
@@ -4505,6 +4640,139 @@ public sealed partial class LegacyUiHostPage : Page
   let lastDirectorySweepAt = Date.now();
   let lastDirectoryProbeAt = 0;
   const probePositions = new Map();
+  let lastMenuProbeStatus = '';
+  let cancelRowMenu = null;
+  // Only read an action menu opened in this isolated view for this exact mounted row.
+  // Menu items are evidence; no menu item (including read, leave or delete) is activated.
+  const inspectChatRowMenu = (row, owns, done) => {
+    const visible = node => !!(node?.isConnected && node.getClientRects?.().length &&
+      !node.closest?.('[hidden],[aria-hidden="true"],[inert]') && getComputedStyle(node).visibility === 'visible');
+    const menuWrapper = '[data-testid="chat-context-menu"],[data-testid="context-menu"],[data-testid="context-menu-wrapper"],[data-animate-dropdown-menu="true"]';
+    const menuSelector = '[role="menu"],' + menuWrapper;
+    const menus = () => [...document.querySelectorAll(menuSelector)].filter(node => visible(node) && (node.getAttribute('role') === 'menu'
+      || !node.closest('[role="menu"]') && ![...node.querySelectorAll(menuSelector)].some(visible)));
+    const initialMenus = menus();
+    if (initialMenus.length || !visible(row) || !owns()) return false;
+    const title = row.querySelector('[data-testid="cell-frame-title"],[data-testid="conversation-title"],span[dir="auto"][title],[role="gridcell"] [title]');
+    const description = row.querySelector('[data-testid="last-msg"],[data-testid="cell-frame-secondary"],[data-testid="message-preview"]');
+    const identityAttributes = ['data-id','data-jid','data-chat-id','data-group-id','aria-rowindex','data-unread','data-is-unread','data-unread-count'];
+    const parent = row.parentElement;
+    const stamp = () => JSON.stringify([...identityAttributes.map(field => row.getAttribute(field)),title?.textContent,description?.textContent]);
+    const baseline = stamp();
+    let changed = false, interrupted = false, trigger = null, anchor = null, ownedMenu = null;
+    const openedByEvent = new Set();
+    const changedRow = records => {
+      for (const record of records) {
+        if (record.target.closest?.(menuSelector) || record.target.parentElement?.closest(menuSelector)) continue;
+        if (record.target === row && record.type === 'attributes' || title?.contains(record.target) || description?.contains(record.target)
+            || record.type === 'childList' && [...record.removedNodes].some(node => title && node.contains?.(title) || description && node.contains?.(description))) changed = true;
+      }
+    };
+    const observer = new MutationObserver(changedRow);
+    observer.observe(row,{attributes:true,attributeFilter:identityAttributes,subtree:true,characterData:true,childList:true});
+    const onInput = event => { if (event.isTrusted) interrupted = true; };
+    const inputEvents = ['pointerdown','wheel','keydown'];
+    for (const type of inputEvents) document.addEventListener(type,onInput,true);
+    const rowCurrent = () => {
+      changedRow(observer.takeRecords());
+      return !changed && !interrupted && owns() && visible(row) && row.parentElement === parent && (!title || row.contains(title))
+        && (!description || row.contains(description)) && stamp() === baseline;
+    };
+    const ownsMenu = menu => {
+      if (!menu || menus().length !== 1 || !visible(menu) || menu.closest('[role="dialog"],[aria-modal="true"]')) return false;
+      const ownerIds = [menu.id,menu.parentElement?.closest(menuWrapper)?.id].filter(Boolean);
+      const explicitOwner = [...document.querySelectorAll('[aria-controls],[aria-owns]')].filter(node =>
+        [node.getAttribute('aria-controls'),node.getAttribute('aria-owns')].some(value => (value || '').split(/\s+/).some(id => ownerIds.includes(id))));
+      if (explicitOwner?.length) return explicitOwner.every(node => node === row || row.contains(node));
+      if (row.contains(menu)) return true;
+      if (!anchor || !openedByEvent.has(menu) || !rowCurrent()) return false;
+      const rect = menu.getBoundingClientRect();
+      const nearX = anchor.x >= rect.left-18 && anchor.x <= rect.right+18;
+      const nearY = anchor.y >= rect.top-18 && anchor.y <= rect.bottom+18;
+      const edge = Math.min(Math.abs(anchor.x-rect.left),Math.abs(anchor.x-rect.right),Math.abs(anchor.y-rect.top),Math.abs(anchor.y-rect.bottom));
+      return nearX && nearY && edge <= 18;
+    };
+    let complete = false;
+    const cleanup = () => {
+      observer.disconnect();
+      for (const type of inputEvents) document.removeEventListener(type,onInput,true);
+      cancelRowMenu = null;
+    };
+    const closeOwned = () => {
+      if (!interrupted && ownedMenu && ownsMenu(ownedMenu))
+        ownedMenu.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',code:'Escape',keyCode:27,which:27,bubbles:true,cancelable:true}));
+    };
+    cancelRowMenu = () => {
+      if (complete) return;
+      complete = true;
+      closeOwned(); cleanup();
+    };
+    const finish = (status, evidence = null) => {
+      if (complete) return;
+      if (ownedMenu) closeOwned();
+      const closed = () => {
+        if (complete) return;
+        const current = rowCurrent();
+        const stillOpen = menus().length > 0;
+        complete = true;
+        cleanup();
+        done(!current ? 'row-changed' : stillOpen ? 'menu-unowned' : status, current && !stillOpen ? evidence : null);
+      };
+      scheduleCollectorTask(closed,120);
+    };
+    const labels = nodes => {
+      const result = new Set();
+      for (const item of nodes) {
+        if (!visible(item) || item.getAttribute('aria-disabled') === 'true' || item.closest(menuSelector) !== ownedMenu) continue;
+        for (const raw of [item.getAttribute('aria-label'),item.getAttribute('data-testid'),(item.innerText || '').trim().split('\n')[0]]) {
+          const label = (raw || '').trim().toLowerCase();
+          if (label) result.add(label);
+        }
+      }
+      return result;
+    };
+    const inspect = attempts => {
+      if (complete) return;
+      const opened = menus();
+      if (opened.length === 1 && ownsMenu(opened[0])) ownedMenu = opened[0];
+      if (!rowCurrent()) { finish('row-changed'); return; }
+      if (!opened.length && attempts > 0) { scheduleCollectorTask(() => inspect(attempts-1),120); return; }
+      if (!opened.length) { finish('menu-unavailable'); return; }
+      if (!ownedMenu || opened.length !== 1 || opened[0] !== ownedMenu) { finish('menu-unowned'); return; }
+      const actions = labels(ownedMenu.querySelectorAll('[role="menuitem"],li[tabindex],[data-animate-dropdown-item="true"],button,[role="button"]'));
+      const has = (...values) => values.some(value => actions.has(value));
+      const group = has('group info','group information','exit group','leave group','群组信息','群聊信息','群组资料','退出群组','退出群聊','mi-group-info','mi-exit-group');
+      const direct = has('contact info','contact information','联系人信息','联系人资料','mi-contact-info');
+      const read = has('mark as unread','标为未读','标记为未读','mi-mark-unread');
+      const unread = has('mark as read','标为已读','标记为已读','mi-mark-read');
+      finish(unread ? 'unread' : !group || direct ? 'type-unconfirmed' : read ? 'verified-read-group' : 'read-state-unknown',{group,direct,read,unread});
+    };
+    const openMenu = () => {
+      if (complete) return;
+      if (!rowCurrent()) { finish('row-changed'); return; }
+      if (menus().length) { finish('menu-unowned'); return; }
+      const hits = [...row.querySelectorAll('[data-testid="cell-frame-chevron"],[data-testid="down-context"],[data-icon="down-context"],[aria-haspopup="menu"]')]
+        .map(node => node.closest('button,[role="button"],[aria-haspopup="menu"]')).filter(node => node && row.contains(node) && visible(node));
+      const buttons = [...new Set(hits)];
+      if (buttons.length > 1) { finish('menu-unowned'); return; }
+      trigger = buttons[0];
+      const rect = (trigger || row).getBoundingClientRect();
+      anchor = {x:Math.floor(trigger ? rect.left+rect.width/2 : rect.left + Math.min(rect.width/2,50)),y:Math.floor(rect.top+rect.height/2)};
+      const prior = new Set(document.querySelectorAll(menuSelector));
+      const recordOpenedMenus = () => {
+        if (complete || !rowCurrent()) return;
+        for (const popup of document.querySelectorAll(menuSelector)) if (!prior.has(popup)) openedByEvent.add(popup);
+      };
+      if (trigger) trigger.click();
+      else row.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2,clientX:anchor.x,clientY:anchor.y,view:window}));
+      recordOpenedMenus();
+      queueMicrotask(recordOpenedMenus);
+      scheduleCollectorTask(() => inspect(5),120);
+    };
+    row.dispatchEvent(new MouseEvent('mouseover',{bubbles:true,view:window}));
+    scheduleCollectorTask(openMenu,100);
+    return true;
+  };
   const verifyReadGroup = (run, resume) => {
     const now = Date.now();
     const allowed = () => groupMonitoringAllowed && backgroundCollectorRole && allScan === run && !run.monitorOnly && !readHistoryScan
@@ -4513,39 +4781,56 @@ public sealed partial class LegacyUiHostPage : Page
     if (typeof __zhikeReadOpenChat !== 'function' || !allowed() || now - lastDirectoryProbeAt < 90000 || !probeCandidates.length) return false;
     for (const [position, time] of probePositions) if (now - time >= 1800000) probePositions.delete(position);
     const slot = candidate => Math.round(run.container.scrollTop || 0) + '/' + candidate.index;
-    const candidate = probeCandidates.find(item => !probePositions.has(slot(item)));
+    const available = probeCandidates.filter(item => !probePositions.has(slot(item)));
+    const candidate = available.find(item => !item.needsMenu) || available[0];
     if (!candidate) return false;
     const node = candidate.node;
-    const flags = unreadBadgeState(node);
-    if (!node.isConnected || !run.container.contains?.(node) || (node.getClientRects && !node.getClientRects().length)
-      || !explicitRead(node) || explicitUnread(node) || flags.unread || flags.unreadCount > 0) return false;
-    const category = conversationTypeFromNode(node, conversationIdentityFromRow(node), '');
-    if (!category.isGroup && !(category.conversationType === 'unknown' && groupFilterSelected())) return false;
-    const previous = openDirectoryEvidence();
-    if (previous.status === 'conflicting-identities') return false;
+    const current = () => allowed() && node.isConnected && run.container.contains?.(node)
+      && (!node.getClientRects || node.getClientRects().length) && rowNodes()[candidate.index] === node;
+    if (!current()) return false;
+    const openReadGroup = evidence => {
+      const flags = unreadBadgeState(node);
+      const category = conversationTypeFromNode(node, conversationIdentityFromRow(node), '');
+      if (!current() || flags.unread || flags.unreadCount > 0 || explicitUnread(node) || evidence?.unread || evidence?.direct
+        || category.conversationType === 'direct' || (!explicitRead(node) && !evidence?.read)
+        || (!category.isGroup && !groupFilterSelected(node) && !evidence?.group)) return false;
+      const previous = openDirectoryEvidence();
+      const titleAtClick = primaryConversationTitles(node)[0];
+      const interactionAtClick = lastListInteractionAt;
+      if (previous.status === 'conflicting-identities') return false;
+      try { node.click(); } catch { return false; }
+      let confirmed = '';
+      const inspect = () => {
+        if (allScan !== run) return;
+        const sameRow = current() && interactionAtClick === lastListInteractionAt && titleAtClick === primaryConversationTitles(node)[0];
+        const open = sameRow ? openDirectoryEvidence() : {};
+        const key = open.row?.isGroup && open.row.conversationKey;
+        if (key && key !== previous.row?.conversationKey && key === confirmed) {
+          mergeRows(run.seen,[open.row],run.maxConversations);
+          publishDirectory(run,[open.row]);
+          postAllScan([open.row],'group-open-verified',[]);
+        } else if (sameRow && Date.now() - now < 3500) {
+          confirmed = key || '';
+          scheduleCollectorTask(inspect,250);
+          return;
+        }
+        scheduleCollectorPaint(resume);
+      };
+      scheduleCollectorTask(inspect,250);
+      return true;
+    };
     probePositions.set(slot(candidate),now);
     lastDirectoryProbeAt = now;
-    // Reserve this list scan's next step until the selected chat settles. The
-    // hidden view stays on the verified group; no unread chat is reopened to restore it.
-    try { node.click(); } catch { return false; }
-    let confirmed = '';
-    const inspect = () => {
+    if (!candidate.needsMenu) return openReadGroup(null);
+    if (!node.getBoundingClientRect || !document.addEventListener) return false;
+    const started = inspectChatRowMenu(node,current,(status,evidence) => {
       if (allScan !== run) return;
-      const open = allowed() ? openDirectoryEvidence() : {};
-      const key = open.row?.isGroup && open.row.conversationKey;
-      if (key && key !== previous.row?.conversationKey && key === confirmed) {
-        mergeRows(run.seen,[open.row],run.maxConversations);
-        publishDirectory(run,[open.row]);
-        postAllScan([open.row],'group-open-verified',[]);
-      } else if (allowed() && Date.now() - now < 2500) {
-        confirmed = key || '';
-        scheduleCollectorTask(inspect,250);
-        return;
-      }
+      lastMenuProbeStatus = status;
+      if (evidence?.read && openReadGroup(evidence)) { lastMenuProbeStatus = 'verified-read-group'; return; }
       scheduleCollectorPaint(resume);
-    };
-    scheduleCollectorTask(inspect,250);
-    return true;
+    });
+    if (!started) lastMenuProbeStatus = 'navigation-busy';
+    return started;
   };
   let directorySequence = 0;
   const newDirectory = () => ({ id:++directorySequence, chunk:0, seen:new Map(), unresolved:0,diagnostics:{} });
@@ -4561,6 +4846,8 @@ public sealed partial class LegacyUiHostPage : Page
       stream.diagnostics[field] = Math.max(stream.diagnostics[field] || 0, latestWindow[field] || 0);
     stream.diagnostics.listPresent = Boolean(stream.diagnostics.listPresent || latestWindow.listPresent);
     stream.diagnostics.confirmedOpen = Boolean(open.row);
+    stream.diagnostics.groupFilterStatus = groupFilterStatus;
+    if (lastMenuProbeStatus) stream.diagnostics.menuProbeStatus = lastMenuProbeStatus;
     for (const row of open.row ? [...rows,open.row] : rows) {
       const key = row.conversationKey;
       if (!key || (directHistoryAllowed ? !collectibleConversationType(row.conversationType) : !row.isGroup || !/@g\.us$/i.test(key))) continue;
@@ -4602,6 +4889,7 @@ public sealed partial class LegacyUiHostPage : Page
       const run = allScan;
       publishDirectory(run, [], 'page-list-interrupted', true);
       allScanGeneration += 1;
+      restoreDirectoryFilter(run);
       allScan = null;
       try { run.container.scrollTop = run.initial; } catch {}
     }
@@ -4705,6 +4993,7 @@ public sealed partial class LegacyUiHostPage : Page
     if (!run) return false;
     publishDirectory(run, [], 'page-list-interrupted', true);
     allScanGeneration += 1;
+    restoreDirectoryFilter(run);
     allScan = null;
     lastAllScanAt = Date.now();
     try {
@@ -4723,7 +5012,7 @@ public sealed partial class LegacyUiHostPage : Page
       const snapshot = discover();
       return { ...snapshot, scanned:false, scanning:false, coverage:'foreground-visible-only' };
     }
-    const container = listContainer();
+    let container = listContainer();
     if (!container) return discover();
     if (!monitorOnly) lastDirectorySweepAt = Date.now();
     if (readHistoryScan) return { ...discover(), supported:true, scanId:readHistoryScan.directory.id, scanned:true, scanning:true, coverage:'read-history-in-progress' };
@@ -4748,12 +5037,9 @@ public sealed partial class LegacyUiHostPage : Page
     run.directory = monitorOnly ? null : newDirectory();
     mergeRows(current, readRows(), maxConversations);
     publishDirectory(run, [...current.values()]);
-    // Always discover from the physical top. Starting from the user's current
-    // scroll position permanently omitted every conversation above it.
-    container.scrollTop = 0;
-    try { container.dispatchEvent(new Event('scroll', { bubbles:true })); } catch {}
     const finish = (coverageOverride = '') => {
       if (allScan !== run || run.generation !== allScanGeneration) return;
+      restoreDirectoryFilter(run);
       container.scrollTop = run.initial;
       scheduleCollectorPaint(() => {
         if (allScan !== run || run.generation !== allScanGeneration) return;
@@ -4764,6 +5050,9 @@ public sealed partial class LegacyUiHostPage : Page
     };
     const step = () => {
       if (allScan !== run || run.generation !== allScanGeneration) return;
+      if (run.changedFilter && groupMonitorState.enabled && groupMonitorState.status === 'running' && groupMonitorState.targets.some(t => t.enabled !== false)) {
+        finish('page-list-interrupted'); return;
+      }
       if (run.monitorOnly && (!groupMonitorState.enabled || groupMonitorState.status !== 'running')) { finish(); return; }
       const rows = readRows();
       mergeRows(run.seen, rows, run.maxConversations);
@@ -4830,7 +5119,15 @@ public sealed partial class LegacyUiHostPage : Page
       // Two frames let the virtualized list unmount/mount its next window.
       scheduleCollectorPaint(step);
     };
-    scheduleCollectorPaint(step);
+    prepareDirectoryFilter(run,() => {
+      if (allScan !== run || run.generation !== allScanGeneration) return;
+      container=listContainer();
+      if (!container) { container=run.container; finish('page-list-interrupted'); return; }
+      run.container=container;
+      container.scrollTop=0;
+      try { container.dispatchEvent(new Event('scroll',{bubbles:true})); } catch {}
+      scheduleCollectorPaint(step);
+    });
     return { supported:true, scanId:run.directory?.id || 0, conversations:[...current.values()].filter(row => collectibleConversationType(row.conversationType)), excludedConversations:[...current.values()].filter(row => !collectibleConversationType(row.conversationType)), groupConversations:[...current.values()].filter(row => row?.isGroup === true || row?.conversationType === 'group' || row?.conversationType === 'vip_group'), scanned:true, scanning:true, coverage:'scan-started' };
   };
    const waitForMessagePane = () => {
@@ -5109,6 +5406,7 @@ public sealed partial class LegacyUiHostPage : Page
      if (!container) return { supported:false, error:'当前 WS 页面未找到会话列表。' };
      if (allScan) {
        publishDirectory(allScan, [], 'page-list-interrupted', true);
+       restoreDirectoryFilter(allScan);
        allScanGeneration += 1;
        allScan = null;
      }
@@ -5578,6 +5876,7 @@ public sealed partial class LegacyUiHostPage : Page
     emitTimer = scheduleCollectorTask(() => { emitTimer = null; emit(false); }, 350);
   };
   window.__zhikeStopCapture = () => {
+    if (cancelRowMenu) cancelRowMenu();
     if (window.__zhikeCaptureTimer) { clearInterval(window.__zhikeCaptureTimer); window.__zhikeCaptureTimer = null; }
     if (emitTimer) { cancelCollectorTask(emitTimer); emitTimer = null; }
     if (allScanTimer) { cancelCollectorTask(allScanTimer); allScanTimer = null; }
@@ -5585,6 +5884,7 @@ public sealed partial class LegacyUiHostPage : Page
     highPriorityHistoryRetryPending = false;
     cancelAllCollectorTasks();
     allScanGeneration += 1;
+    restoreDirectoryFilter(allScan);
     if (allScan) { try { allScan.container.scrollTop = allScan.initial; } catch {} }
     allScan = null;
     if (readHistoryScan) {

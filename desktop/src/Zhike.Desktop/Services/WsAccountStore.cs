@@ -5,7 +5,8 @@ namespace Zhike.Desktop.Services;
 public sealed record StoredWsLoginObservation(DateTimeOffset ObservedAt, long ProfileCreatedUtcTicks, bool SignedIn);
 public sealed record StoredWsDirectoryDiagnostics(DateTimeOffset ObservedAt, string Source, string WorkspaceMode,
     bool ListPresent, int RenderedRows, int StableRows, int UnresolvedRows, bool ConfirmedOpen,
-    int? SkippedUnread = null, int? SkippedReadUnknown = null, int? SkippedTypeUnknown = null, string? OpenIdentityStatus = null);
+    int? SkippedUnread = null, int? SkippedReadUnknown = null, int? SkippedTypeUnknown = null, string? OpenIdentityStatus = null,
+    string? GroupFilterStatus = null, string? MenuProbeStatus = null);
 public sealed record StoredWsAccount(string Id, string DisplayName, string Status, DateTimeOffset? LastSeen = null, string? LastKnownStatus = null, string WorkspaceMode = "ordinary",
     StoredWsLoginObservation? ForegroundLoginObservation = null, StoredWsLoginObservation? CollectorLoginObservation = null,
     bool DirectoryPurposeConfirmed = false, StoredWsDirectoryDiagnostics? ForegroundDirectoryDiagnostics = null,
@@ -69,9 +70,15 @@ public sealed class WsAccountStore
             ? status.GetString() : null;
         if (openStatus is not ("verified" or "no-open-chat" or "insufficient-message-identities" or "conflicting-identities"
             or "workspace-type-mismatch" or "source-unavailable")) openStatus = null;
+        string? ProbeStatus(string key) => source == "collector" && data.TryGetProperty(key, out var value)
+            && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+        var filter = ProbeStatus("groupFilterStatus");
+        var menu = ProbeStatus("menuProbeStatus");
+        if (filter is not ("not-checked" or "not-offered" or "ambiguous" or "selecting" or "selected" or "selection-unconfirmed")) filter = null;
+        if (menu is not ("verified-read-group" or "unread" or "read-state-unknown" or "type-unconfirmed" or "menu-unavailable" or "menu-unowned" or "row-changed" or "navigation-busy")) menu = null;
         // No raw WebView payload, title, identifiers or message text cross this boundary.
         var sample = new StoredWsDirectoryDiagnostics(observedAt, source, workspaceMode, present, rendered, stable, unresolved, open,
-            OptionalCount("skippedUnread"), OptionalCount("skippedReadUnknown"), OptionalCount("skippedTypeUnknown"), openStatus);
+            OptionalCount("skippedUnread"), OptionalCount("skippedReadUnknown"), OptionalCount("skippedTypeUnknown"), openStatus, filter, menu);
         lock (_probes)
         {
             var key = (accountId, source);

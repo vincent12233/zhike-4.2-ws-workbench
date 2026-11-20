@@ -69,7 +69,8 @@ public static class WsLiveDirectory
         if (packet.TryGetProperty("directoryDiagnostics", out var diag) && diag.ValueKind == JsonValueKind.Object)
             directoryDiagnostics = new { listPresent = Flag(diag, "listPresent"), renderedRows = Number(diag, "renderedRows"),
                 stableRows = Number(diag, "stableRows"), unresolvedRows = Number(diag, "unresolvedRows"), confirmedOpen = Flag(diag, "confirmedOpen"),
-                skippedUnread = Number(diag, "skippedUnread"), skippedReadUnknown = Number(diag, "skippedReadUnknown"), skippedTypeUnknown = Number(diag, "skippedTypeUnknown") };
+                skippedUnread = Number(diag, "skippedUnread"), skippedReadUnknown = Number(diag, "skippedReadUnknown"), skippedTypeUnknown = Number(diag, "skippedTypeUnknown"),
+                groupFilterStatus = Text(diag, "groupFilterStatus", 24), menuProbeStatus = Text(diag, "menuProbeStatus", 24) };
         return JsonSerializer.SerializeToElement(new { supported = true, accountId = purpose.AccountId, workspaceMode = purpose.WorkspaceMode, activeGroup, openIdentityStatus, directoryDiagnostics,
             sessionGeneration = generation, collectorEpoch = epoch, source, collectorOnly = source == "collector",
             eventName = "live-directory", scanId = Number(packet, "scanId"), chunkIndex = Number(packet, "chunkIndex"),

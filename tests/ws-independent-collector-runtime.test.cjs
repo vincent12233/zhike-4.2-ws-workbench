@@ -163,9 +163,11 @@ test('dedicated verification distinguishes no receipt, missing structure, confli
   f.updateAccountStatus({ ...lease, collectionCapability: capability('running') });
   const chunk = { ...lease, eventName: 'live-directory', scanId: 1, chunkIndex: 0, groupConversations: [] };
   f.receiveWorkspaceLiveEvent({ ...chunk, directoryDiagnostics: { skippedUnread: 3, skippedReadUnknown: 0, skippedTypeUnknown: 2 } });
-  f.receiveWorkspaceLiveEvent({ ...chunk, chunkIndex: 1, directoryDiagnostics: { skippedUnread: 3, skippedReadUnknown: 1, skippedTypeUnknown: 0 } });
+  f.receiveWorkspaceLiveEvent({ ...chunk, chunkIndex: 1, directoryDiagnostics: { groupFilterStatus: 'selected', menuProbeStatus: 'verified-read-group', skippedUnread: 3, skippedReadUnknown: 1, skippedTypeUnknown: 0 } });
   f.state.liveDirectory.showGroupDiagnostics = true;
   const diagnostics = f.renderGroupVerification('chat');
+  assert.match(diagnostics, /后台群组筛选 · 已确认 WhatsApp 群组列表/);
+  assert.match(diagnostics, /后台行菜单 · 已确认一条已读群聊/);
   assert.match(diagnostics, /后台跳过 · 未读至少 3 行/);
   assert.match(diagnostics, /已读状态无法确认至少 1 行/);
   assert.match(diagnostics, /会话类型无法确认至少 2 行/);

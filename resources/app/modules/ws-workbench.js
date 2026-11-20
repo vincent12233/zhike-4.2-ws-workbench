@@ -986,7 +986,7 @@
       directory.scanId = scanId; directory.chunks.clear(); directory.scannedKeys.clear(); directory.lastChunk = null; directory.finalized = false;
       directory.incomplete = false;
       directory.collectorGaps = null;
-      directory.collectorSkipped = null;
+      directory.collectorSkipped = null; directory.probeControls = null;
     }
     if (pushed) {
       if (!Number.isSafeInteger(payload.chunkIndex) || payload.chunkIndex < 0 || directory.chunks.has(payload.chunkIndex)) return;
@@ -998,6 +998,10 @@
       directory.collectorGaps = Math.max(directory.collectorGaps || 0, payload.unresolvedRowCount);
     }
     if (state.workspaceMode === 'dedicated' && payload.directoryDiagnostics) {
+      const chunk = Number.isSafeInteger(payload.chunkIndex) ? payload.chunkIndex : -1;
+      if (!directory.probeControls || directory.probeControls.chunk <= chunk) {
+        directory.probeControls = { chunk, filter: payload.directoryDiagnostics.groupFilterStatus, menu: payload.directoryDiagnostics.menuProbeStatus };
+      }
       directory.collectorSkipped ||= {};
       for (const key of ['skippedUnread', 'skippedReadUnknown', 'skippedTypeUnknown']) {
         const count = payload.directoryDiagnostics[key];
@@ -1096,7 +1100,7 @@
     directory.scanId = 0; directory.scannedKeys.clear(); directory.chunks.clear(); directory.lastChunk = null; directory.finalized = false;
     directory.collectorObserved = false; directory.incomplete = false; directory.nextCollectorReadAt = 0;
     directory.collectorGaps = null;
-    directory.collectorSkipped = null;
+    directory.collectorSkipped = null; directory.probeControls = null;
     directory.historyRetryAt = 0; directory.historyFailures = 0;
     if (directory.collector.size) { directory.collector.clear(); updateLiveDirectoryDom(); }
   }
@@ -4305,6 +4309,18 @@
           if (Number.isSafeInteger(diag[key]) && diag[key] >= 0) diagnosticLines.push(label + ' · ' + diag[key]);
         }
       }
+      const filterReasons = {
+        'not-checked':'尚未检查', 'not-offered':'没有可确认的群组筛选控件', ambiguous:'筛选控件有歧义',
+        selecting:'正在切换', selected:'已确认 WhatsApp 群组列表', 'selection-unconfirmed':'WhatsApp 尚未确认已选群组筛选'
+      };
+      const menuReasons = {
+        'verified-read-group':'已确认一条已读群聊，等待核验群号', unread:'会话未读，已跳过', 'read-state-unknown':'菜单未确认已读状态',
+        'type-unconfirmed':'菜单未确认群组类型', 'menu-unavailable':'未找到可读的行菜单', 'menu-unowned':'无法确定菜单对应哪一行',
+        'row-changed':'列表行已变化', 'navigation-busy':'采集窗口正处理其他操作'
+      };
+      const modes = directory.probeControls;
+      if (modes && Object.hasOwn(filterReasons, modes.filter)) diagnosticLines.push('后台群组筛选 · ' + filterReasons[modes.filter]);
+      if (modes && Object.hasOwn(menuReasons, modes.menu)) diagnosticLines.push('后台行菜单 · ' + menuReasons[modes.menu]);
       if (directory.collectorError) diagnosticLines.push('后台读取失败 · ' + directory.collectorError);
       for (const [key, label] of [['skippedUnread','未读'], ['skippedReadUnknown','已读状态无法确认'], ['skippedTypeUnknown','会话类型无法确认']]) {
         const skipped = directory.collectorSkipped?.[key];

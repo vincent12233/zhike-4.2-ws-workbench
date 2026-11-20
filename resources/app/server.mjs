@@ -2357,6 +2357,27 @@ function wsIngestConversationDecision(account, externalId, conversationType) {
   }
   return decision;
 }
+// Windows WebView and sidecar clocks can differ by a few milliseconds. Preserve
+// the original observation time and never wait while holding a SQLite write lock.
+async function wsAwaitObservationClock(capturedAt, messages) {
+  const received = Date.now();
+  let latest = received;
+  const nearby = value => {
+    const time = Date.parse(value);
+    if (time > latest && time <= received + 250) latest = time;
+  };
+  nearby(capturedAt);
+  for (const message of messages) nearby(message?.observedAt || message?.data?.observedAt);
+  if (latest === received) return true;
+  const deadline = performance.now() + 250;
+  while (Date.now() < latest) {
+    const remaining = Math.min(latest - Date.now(), deadline - performance.now());
+    if (remaining <= 0) return Date.now() >= latest;
+    await new Promise(resolve => setTimeout(resolve, Math.max(1, Math.ceil(remaining))));
+  }
+  return true;
+}
+
 // A foreground directory packet contains only identities actually shown in the current session.
 // Keep its writes independent of historical message, cursor, monitor and AI state.
 function wsStoreForegroundDirectory(account, checkpoints, observedAt, now) {
@@ -3924,6 +3945,8 @@ const server = createServer(async (req, res) => {
       const capturedAt = wsStrictIso(body.capturedAt) || new Date().toISOString();
       const inputMessages = Array.isArray(body.messages) ? body.messages.slice(0, 1000).filter(item => !item?.accountId || item.accountId === accountId) : [];
       const checkpoints = Array.isArray(body.checkpoints) ? body.checkpoints.slice(0, 5000) : [];
+      if (!await wsAwaitObservationClock(capturedAt, inputMessages))
+        return json(res, 503, { code:'WS_OBSERVATION_CLOCK_PENDING', error:'本机时钟尚未达到采样时间，此批次保留重试。' });
       if (body.scope === 'foreground-visible-directory') {
         const now = new Date().toISOString();
         wsStoreForegroundDirectory(account, checkpoints, wsStrictIso(body.capturedAt), now);

@@ -215,6 +215,9 @@ function runStage55c1a(options = {}) {
 }
 
 function runWs() {
+  if (mode === 'ws' && process.platform === 'win32' && (process.env.ZHIKE_VISUAL_BACKEND || 'webview2') === 'webview2') {
+    run('WS directory discovery and filters in Windows WebView2', [path.join(repo, 'tests/isolated-webview-native.test.cjs'), '--repeat-normal', '1']);
+  }
   runSyntax();
   run('WS secondary index recovery and WAL-consistent snapshot', [path.join(repo, 'tests', 'ws-index-recovery.test.cjs')]);
   runStage3();
@@ -504,7 +507,8 @@ function runInstaller() {
 }
 
 function prepareVisualHost() {
-  if (!['all', 'stage51', 'stage55a', 'delivery-s1', 'delivery-s2', 'delivery-s3'].includes(mode)) return true;
+  if (mode === 'ws' && process.platform !== 'win32') return true;
+  if (!['ws', 'all', 'stage51', 'stage55a', 'delivery-s1', 'delivery-s2', 'delivery-s3'].includes(mode)) return true;
   const env = process.env;
   const focusedOptions = [];
   if (['all', 'stage51', 'stage55a'].includes(mode) && env.ZHIKE_LAYOUT_CASE) focusedOptions.push('ZHIKE_LAYOUT_CASE');

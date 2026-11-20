@@ -10,6 +10,8 @@ const { createHash, randomUUID } = require('node:crypto');
 const { pathToFileURL } = require('node:url');
 const { runIsolatedWebView, recordNativeVisualAssertions, assertNativeLifecycle } = require('./helpers/isolated-webview-runner.cjs');
 
+const { scenes:rowMenuScenes, runScenes:runRowMenuScenes, runCollectorScene } = require('./helpers/ws-row-menu-scenes.cjs');
+const { filterCases, runFilterScenes } = require('./helpers/ws-group-filter-scenes.cjs');
 const repo = path.resolve(__dirname, '..');
 const evidenceDirectory = path.join(repo, '.tools/native-renderer/controlled-fixture');
 const viewport = { width: 640, height: 480 };
@@ -21,11 +23,25 @@ assert.ok(loginScript, 'Run the native login detector against local real-WebView
 const directoryScript = hostSource.match(/private const string WsVisibleDirectoryScript = """\s*([\s\S]*?)\s*""";/)?.[1];
 const chatEvidenceScript = hostSource.match(/private const string WsOpenChatEvidenceScript = """\s*([\s\S]*?)\s*""";/)?.[1];
 assert.ok(directoryScript && chatEvidenceScript, 'Exercise the packaged native session readers in a real WebView');
+const collectorScript = hostSource.match(/internal static string BuildWsCollectorScript\(string accountId\)\s*\{[\s\S]*?return \$\$"""([\s\S]*?)""";/)?.[1].replaceAll('{{encodedAccount}}', '"qa-menu-slot"');
+assert.ok(collectorScript);
+const menuScript = hostSource.match(/(  const inspectChatRowMenu = [\s\S]+?)  const verifyReadGroup = /)?.[1];
+assert.ok(menuScript, 'Exercise the isolated collector row inspector in a real WebView');
+const filterReader = hostSource.match(/(const directoryFilterUi = doc => \{[\s\S]*?)(?=\s*const explicitRead =)/)?.[1];
+assert.ok(filterReader, 'Exercise the packaged filter scanner in a real WebView');
 const weakList = '<div id="pane-side">' + '<div role="row"><span dir="auto" title="Same title">Same title</span></div>'.repeat(20) + '</div>';
 const qaGroup = '120300000012345678@g.us', qaMember = '910000000099@lid';
 const bubble = (key, id) => '<div class="message-in" data-id="false_' + key + '_' + id + '_' + qaMember + '">fixture</div>';
 const pane = content => '<div id="main"><header>Display title</header>' + content + '</div>';
+const eventLog = '<div role="log">' + ['EVENT1','EVENT2'].map(id =>
+  '<div role="row" data-id="false_' + qaGroup + '_' + id + '">System update</div>').join('') + '</div>';
+const transcriptPane = content => '<section data-testid="conversation-panel-wrapper"><header>Group</header>' + content + '</section>';
+const eventTranscript = transcriptPane(eventLog);
 const directoryScenes = [
+  [weakList + eventTranscript, [qaGroup]],
+  [weakList + transcriptPane('') + eventLog, []],
+  [weakList + transcriptPane('<aside data-testid="quoted-message">' + eventLog + '</aside>'), []],
+  [weakList + '<aside role="dialog">' + eventTranscript + '</aside>', []],
   [weakList, []],
   [weakList + pane(bubble(qaGroup,'AAA01')), []],
   [weakList + pane(bubble(qaGroup,'AAA01') + bubble(qaGroup,'AAA02')), [qaGroup]],
@@ -69,7 +85,7 @@ function fixtureHtml(id, networkUrl) {
 <style>#sample { width: 137px; height: 29px; background: rgb(12, 34, 56); }</style>
 <div id="sample"></div><pre id="result" hidden></pre>
 <script>
-  function collect(network) {
+  async function collect(network) {
     const sample = document.getElementById('sample');
     const bounds = sample.getBoundingClientRect();
     const loginResults = ${JSON.stringify(loginScenes.map(([markup]) => markup))}.map(markup => {
@@ -82,14 +98,19 @@ function fixtureHtml(id, networkUrl) {
       const directory = JSON.parse((${directoryScript})('dedicated', (${chatEvidenceScript})));
       return { keys:directory.rows.map(row => row.conversationKey), unresolved:directory.unresolvedRowCount };
     });
-    sample.replaceChildren();
+    let cancelRowMenu = null;
+    const scheduleCollectorTask = (callback,delay) => setTimeout(callback,Math.min(35,delay));
+    ${menuScript}
+    const filterResults = (${runFilterScenes.toString()})(sample,${JSON.stringify(filterCases)},${JSON.stringify(filterReader)});
+    const rowMenuResults = await (${runRowMenuScenes.toString()})(sample,${JSON.stringify(rowMenuScenes)},inspectChatRowMenu);
+    const collectorResult = await (${runCollectorScene.toString()})(${JSON.stringify(collectorScript)},${JSON.stringify(chatEvidenceScript)},${JSON.stringify(qaGroup)});
     document.getElementById('result').textContent = JSON.stringify([{
       viewport: { width: innerWidth, height: innerHeight },
       fixtureId: ${JSON.stringify(id)},
       queryId: new URLSearchParams(location.search).get('case'),
       box: { width: bounds.width, height: bounds.height, background: getComputedStyle(sample).backgroundColor },
       network,
-      loginResults, directoryResults,
+      loginResults, directoryResults, rowMenuResults, collectorResult, filterResults,
       remoteScriptExecuted: window.__syntheticWireScript === true
     }]);
   }
@@ -143,6 +164,11 @@ async function runFixture(host, kind, network) {
       box: { width: 137, height: 29, background: 'rgb(12, 34, 56)' },
       loginResults: loginScenes.map(([, expected]) => expected),
       directoryResults: directoryScenes.map(([, keys]) => ({ keys, unresolved:20 })),
+      collectorResult: { actions:0, chatOpens:1, keys:[qaGroup], verified:true },
+      rowMenuResults: rowMenuScenes.map(([mode,,status,escaped]) => ({
+        status, escaped, itemClicks:0, rowClicks:0, openings:mode === 'preexisting' ? 0 : 1, canOpen:status === 'verified-read-group',
+      })),
+      filterResults: Object.values(filterCases),
       network: network ? 'blocked' : null, remoteScriptExecuted: false,
     }]);
     if (network) assert.deepEqual(network.observed, { connections: 0, requests: 0 });

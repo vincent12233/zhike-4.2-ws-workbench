@@ -66,14 +66,14 @@ Check(latest.CollectorDirectoryDiagnostics is { RenderedRows:25, StableRows:0, S
 Check(latest.CollectorDirectoryDiagnostics is { SkippedUnread:null, SkippedReadUnknown:null, SkippedTypeUnknown:null, OpenIdentityStatus:null }, "unreported ledgers remain unavailable");
 var details = JsonSerializer.SerializeToElement(new { openIdentityStatus = "insufficient-message-identities", directoryDiagnostics = new
     { listPresent = true, renderedRows = 25, stableRows = 0, unresolvedRows = 25, confirmedOpen = false,
-      skippedUnread = 0, skippedReadUnknown = 2, skippedTypeUnknown = 12 } });
+      skippedUnread = 0, skippedReadUnknown = 2, skippedTypeUnknown = 12, groupFilterStatus="selected", menuProbeStatus="verified-read-group" } });
 await SaveDiagnostic("a","ordinary","collector",details,stamp.AddSeconds(60));
 Check((await diagnosticStore.LoadAsync()).Single(row=>row.Id=="a").CollectorDirectoryDiagnostics is {
-    SkippedUnread:0, SkippedReadUnknown:2, SkippedTypeUnknown:12, OpenIdentityStatus:"insufficient-message-identities" },
+    SkippedUnread:0, SkippedReadUnknown:2, SkippedTypeUnknown:12, OpenIdentityStatus:"insufficient-message-identities", GroupFilterStatus:"selected", MenuProbeStatus:"verified-read-group" },
     "registered skip counts distinguish verified zero from unavailable and only allow a known open-identity result");
 var invalidExtras = JsonSerializer.SerializeToElement(new { openIdentityStatus = "private-fixture-marker", directoryDiagnostics = new
     { listPresent = true, renderedRows = 1, stableRows = 0, unresolvedRows = 1, confirmedOpen = false,
-      skippedUnread = -8, skippedReadUnknown = "private-fixture-marker", skippedTypeUnknown = 1000001 } });
+      groupFilterStatus="private-fixture-marker", menuProbeStatus="private-fixture-marker", skippedUnread = -8, skippedReadUnknown = "private-fixture-marker", skippedTypeUnknown = 1000001 } });
 await SaveDiagnostic("a","ordinary","collector",invalidExtras,stamp.AddSeconds(61));
 Check((await diagnosticStore.LoadAsync()).Single(row=>row.Id=="a").CollectorDirectoryDiagnostics is {
     SkippedUnread:null, SkippedReadUnknown:null, SkippedTypeUnknown:null, OpenIdentityStatus:null } && !(await File.ReadAllTextAsync(probeFile)).Contains("private-fixture-marker"),
