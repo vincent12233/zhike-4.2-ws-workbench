@@ -49,6 +49,7 @@ jobs:
             'tests/ws-contact-exclusion-api.test.cjs',
             'tests/ws-contact-exclusion-ui.test.cjs',
             'tests/ws-native-account-registration.test.cjs',
+            'tests/ws-native-purpose-policy.test.cjs',
             'tests/ws-account-workspace-mode.test.cjs',
             'tests/ws-workspace-mode-ui.test.cjs',
             'tests/ws-background-isolation.test.cjs',

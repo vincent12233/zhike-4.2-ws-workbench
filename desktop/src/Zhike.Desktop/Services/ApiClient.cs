@@ -820,6 +820,69 @@ public sealed class ApiClient(HttpClient http) : IDisposable
         return payload.Deserialize<WsAccountDto[]>(JsonOptions) ?? [];
     }
 
+    public async Task<WsCollectorPurposePolicy> GetWsCollectorPurposeAsync(string accountId, CancellationToken cancellationToken = default)
+    {
+        var accounts = await GetWsAccountsAsync(cancellationToken) ?? throw new InvalidDataException("WS 账号用途未确认。");
+        var account = accounts.SingleOrDefault(row => row.Id == accountId) ?? throw new InvalidDataException("WS 账号用途未确认。");
+        return WsCollectorPurposePolicy.Confirm(account, accountId);
+    }
+
+    public async Task<WsCollectorMonitorPolicy> GetWsCollectorMonitorAsync(string accountId, string profileId, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(profileId)) throw new InvalidDataException("WS 群监控席位未确认。");
+        using var response = await http.GetAsync($"api/ws/group-monitors/{Uri.EscapeDataString(profileId)}?accountId={Uri.EscapeDataString(accountId)}", cancellationToken);
+        response.EnsureSuccessStatusCode();
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+        return ParseWsCollectorMonitor(document.RootElement.GetProperty("profile"), accountId, profileId);
+    }
+
+    public async Task<IReadOnlyList<WsCollectorMonitorPolicy>> GetWsCollectorMonitorsAsync(string accountId, CancellationToken cancellationToken = default)
+    {
+        using var response = await http.GetAsync($"api/ws/group-monitors/profiles?accountId={Uri.EscapeDataString(accountId)}", cancellationToken);
+        response.EnsureSuccessStatusCode();
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+        return document.RootElement.GetProperty("profiles").EnumerateArray()
+            .Select(profile => ParseWsCollectorMonitor(profile, accountId, profile.GetProperty("id").GetString() ?? "")).ToArray();
+    }
+
+    private static WsCollectorMonitorPolicy ParseWsCollectorMonitor(JsonElement profile, string accountId, string profileId)
+    {
+        string Value(JsonElement row, string key) => row.TryGetProperty(key, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() ?? "" : "";
+        bool Enabled(JsonElement row) => row.TryGetProperty("enabled", out var value) && value.ValueKind == JsonValueKind.True;
+        if (string.IsNullOrWhiteSpace(profileId) || Value(profile, "id") != profileId || Value(profile, "accountId") != accountId) throw new InvalidDataException("WS 群监控席位账号不匹配。");
+        var targets = new List<WsCollectorMonitorTarget>();
+        foreach (var row in profile.GetProperty("targets").EnumerateArray())
+        {
+            var jid = Value(row, "groupJid");
+            var id = Value(row, "id");
+            if (Value(row, "accountId") != accountId || Value(row, "profileId") != profileId || !Enabled(row)
+                || string.IsNullOrWhiteSpace(id) || !WsCollectorPurposePolicy.IsGroupJid(jid)) continue;
+            targets.Add(new(id, jid, Value(row, "groupName"), Value(row, "sourceId"), true));
+            if (targets.Count > 500) throw new InvalidDataException("WS 群监控目标超过 500 项。");
+        }
+        var interval = profile.TryGetProperty("pollIntervalSec", out var value) && value.TryGetInt32(out var parsed) ? Math.Clamp(parsed, 15, 3600) : 45;
+        return new(accountId, profileId, Enabled(profile), interval, targets);
+    }
+
+    public async Task AuthorizeWsCollectorBatchAsync(WsIngestBatchRequestDto request, CancellationToken cancellationToken = default)
+    {
+        if (request.Scope != "background-collector") return;
+        var purpose = await GetWsCollectorPurposeAsync(request.AccountId, cancellationToken);
+        var monitors = purpose.AllowsGroupMonitoring && request.Messages.Count > 0
+            ? await GetWsCollectorMonitorsAsync(request.AccountId, cancellationToken) : [];
+        if (request.Messages.Any(row => !purpose.AllowsMessage(row, monitors)) || request.Checkpoints.Any(row => !purpose.AllowsCheckpoint(row)))
+            throw new InvalidDataException("WS_COLLECTOR_PURPOSE_BLOCKED: 旧采集包与当前账号用途不符，保留待恢复。");
+        // Legacy ordinary packets may contain direct history plus passive
+        // directory/event observations. The sidecar ignores forbidden events
+        // individually, so a stale event cannot permanently stall direct data.
+        if (!purpose.AllowsGroupMonitoring) return;
+        foreach (var group in (request.GroupEvents ?? []).GroupBy(item => item.ProfileId))
+        {
+            var monitor = await GetWsCollectorMonitorAsync(request.AccountId, group.Key, cancellationToken);
+            if (group.Any(item => !monitor.AllowsEvent(item))) throw new InvalidDataException("WS_COLLECTOR_TARGET_BLOCKED: 群监控目标未确认，保留待恢复。");
+        }
+    }
+
     public async Task<WsAccountDto?> UpsertWsAccountAsync(WsAccountRequest request, CancellationToken cancellationToken = default)
     {
         using var response = await http.PostAsJsonAsync("api/ws/accounts", request, JsonOptions, cancellationToken);

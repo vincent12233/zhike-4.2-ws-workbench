@@ -78,6 +78,9 @@ public sealed partial class LegacyUiHostPage : Page
     private readonly Dictionary<WebView2, Action> _wsCollectorCleanup = new();
     private readonly Dictionary<WebView2, SemaphoreSlim> _wsCollectorGates = new();
     private readonly HashSet<WebView2> _wsCollectorStarted = new();
+    private sealed record CollectorPurposeLease(long Generation, long Epoch, WsCollectorPurposePolicy Policy);
+    private readonly Dictionary<WebView2, CollectorPurposeLease> _wsCollectorPurposes = new();
+    private readonly Dictionary<string, WsCollectorMonitorPolicy> _wsCollectorMonitorPolicies = new(StringComparer.Ordinal);
     private readonly Dictionary<WebView2, long> _wsCollectorEpoch = new();
     private readonly Dictionary<string, JsonElement> _wsCollectorGroups = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, JsonElement> _wsCollectorMonitor = new(StringComparer.OrdinalIgnoreCase);
@@ -675,6 +678,7 @@ public sealed partial class LegacyUiHostPage : Page
             navigation.Starting(args.NavigationId, args.Cancel, args.IsUserInitiated && !args.IsRedirected);
             if (args.Cancel || !App.WsSessions.IsCurrent(session.AccountId, session.Generation, view)) return;
             _wsCollectorStarted.Remove(view);
+        _wsCollectorPurposes.Remove(view);
             _wsCollectorEpoch[view] = _wsCollectorEpoch.GetValueOrDefault(view) + 1;
             if (session.CollectorState is not ("paused" or "login-visible")) PublishCollectorState(session, "awaiting-login");
         }
@@ -706,6 +710,7 @@ public sealed partial class LegacyUiHostPage : Page
             navigation.Dispose();
             _wsNavigation.Remove(view);
             _wsCollectorEpoch.Remove(view);
+            _wsCollectorPurposes.Remove(view);
             core.WebMessageReceived -= MessageReceived;
             core.NavigationStarting -= NavigationStarting;
             core.NavigationCompleted -= NavigationCompleted;
@@ -747,23 +752,37 @@ public sealed partial class LegacyUiHostPage : Page
         if (_wsCollectorStarted.Contains(view)) { PublishCollectorState(session, "running"); return; }
         var epoch = _wsCollectorEpoch.GetValueOrDefault(view);
         cancellationToken.ThrowIfCancellationRequested();
-        PublishCollectorState(session, "running");
         try
         {
+            var purpose = await (_api ?? throw new InvalidOperationException("本机服务不可用，未启动采集。"))
+                .GetWsCollectorPurposeAsync(session.AccountId, cancellationToken);
+            bool OwnsStart() => App.WsSessions.IsCurrent(session.AccountId, session.Generation, view)
+                && _wsCollectorEpoch.GetValueOrDefault(view) == epoch && session.CollectorState is not ("paused" or "not-started" or "error" or "login-visible");
+            if (!OwnsStart()) return;
+            WsCollectorMonitorPolicy? monitorPolicy = null;
+            if (purpose.AllowsGroupMonitoring && _wsCollectorMonitor.TryGetValue(session.AccountId, out var savedMonitor))
+            {
+                monitorPolicy = await _api.GetWsCollectorMonitorAsync(session.AccountId, StringValue(savedMonitor, "profileId"), cancellationToken);
+                if (!OwnsStart()) return;
+            }
+            _wsCollectorPurposes[view] = new(session.Generation, epoch, purpose);
+            PublishCollectorState(session, "running");
             var installed = ParseWebViewJsonResult(await ExecuteCollectorScriptAsync(session,
-                "window.__zhikeWsCollectorRole='background';\n" + BuildWsCollectorScript(session.AccountId)
+                "window.__zhikeWsCollectorRole='background';\n" + BuildWsCollectorScript(session.AccountId, purpose)
                 + "\nJSON.stringify({supported:typeof window.__zhikeWsCollectAllRead==='function' && typeof window.__zhikeWsBackgroundTick==='function'});", cancellationToken));
             if (installed.ValueKind != JsonValueKind.Object || !GetBool(installed, "supported"))
                 throw new InvalidOperationException("独立采集脚本未就绪。");
             cancellationToken.ThrowIfCancellationRequested();
             if (!App.WsSessions.IsCurrent(session.AccountId, session.Generation, view)
                 || _wsCollectorEpoch.GetValueOrDefault(view) != epoch || session.CollectorState != "running") return;
-            if (_wsCollectorGroups.TryGetValue(session.AccountId, out var groups))
-                await ExecuteCollectorScriptAsync(session, $"window.__zhikeWsConfigureWsGroups?.({groups.GetRawText()}); void 0;");
-            if (_wsCollectorMonitor.TryGetValue(session.AccountId, out var monitor))
-                await ExecuteCollectorScriptAsync(session, $"window.__zhikeWsConfigureGroupMonitor?.({monitor.GetRawText()}); void 0;");
-            if (_wsCollectorMonitorRunning.Contains(session.AccountId))
-                await ExecuteCollectorScriptAsync(session, "window.__zhikeWsGroupMonitorStart?.(); void 0;");
+            if (monitorPolicy is not null)
+            {
+                _wsCollectorMonitorPolicies[session.AccountId] = monitorPolicy;
+                await ExecuteCollectorScriptAsync(session, $"window.__zhikeWsConfigureGroupMonitor?.({MonitorScriptConfig(monitorPolicy).GetRawText()}); void 0;");
+                if (!OwnsStart()) return;
+                if (monitorPolicy.Enabled && _wsCollectorMonitorRunning.Contains(session.AccountId))
+                    await ExecuteCollectorScriptAsync(session, "window.__zhikeWsGroupMonitorStart?.(); void 0;");
+            }
             if (App.WsSessions.IsCurrent(session.AccountId, session.Generation, view)
                 && _wsCollectorEpoch.GetValueOrDefault(view) == epoch && session.CollectorState == "running") _wsCollectorStarted.Add(view);
         }
@@ -851,7 +870,7 @@ public sealed partial class LegacyUiHostPage : Page
 #endif
     }
 
-    private async Task<BridgeResponse> ExecuteCollectorCommandAsync(string requestId, string accountId, string script, CancellationToken cancellationToken)
+    private async Task<BridgeResponse> ExecuteCollectorCommandAsync(string requestId, string accountId, string script, CancellationToken cancellationToken, string requiredMode = "")
     {
         if (!App.WsService.TryGetSession(accountId, out var session) || session?.CollectorView is not { } collector
             || collector.CoreWebView2 is null || !_wsCollectorGates.TryGetValue(collector, out var gate))
@@ -863,6 +882,14 @@ public sealed partial class LegacyUiHostPage : Page
             if (!App.WsSessions.IsCurrent(accountId, session.Generation, collector) || session.CollectorState != "running")
                 return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_NOT_READY", "独立采集会话尚未运行，请完成登录并恢复采集。");
             var epoch = _wsCollectorEpoch.GetValueOrDefault(collector);
+            var purpose = await (_api ?? throw new InvalidOperationException("本机服务不可用，采集用途未确认。"))
+                .GetWsCollectorPurposeAsync(accountId, cancellationToken);
+            if (!App.WsSessions.IsCurrent(accountId, session.Generation, collector) || session.CollectorState != "running"
+                || epoch != _wsCollectorEpoch.GetValueOrDefault(collector))
+                return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_CONTEXT_CHANGED", "采集页面已改变，请重试。");
+            if (!_wsCollectorPurposes.TryGetValue(collector, out var lease) || lease.Generation != session.Generation || lease.Epoch != epoch
+                || lease.Policy != purpose || requiredMode.Length > 0 && purpose.WorkspaceMode != requiredMode)
+                return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "WS_COLLECTOR_PURPOSE_BLOCKED", "当前账号用途不支持此采集操作。");
             var raw = await ExecuteCollectorScriptAsync(session, script, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
             if (!App.WsSessions.IsCurrent(accountId, session.Generation, collector) || session.CollectorState != "running"
@@ -1671,6 +1698,26 @@ public sealed partial class LegacyUiHostPage : Page
         return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(output));
     }
 
+    private async Task<BridgeResponse?> AuthorizeWsDirectSendAsync(string requestId, string accountId,
+        string expected, WsSendOperationTicket ticket, CancellationToken cancellationToken)
+    {
+        if (expected.Contains("@g.us", StringComparison.OrdinalIgnoreCase))
+            return WsSendFailure(requestId, "GROUP_SEND_BLOCKED", "群组发送尚未验收；未调用页面发送流程。");
+        try
+        {
+            _api ??= App.LocalService?.IsRunning == true ? App.LocalService.CreateApiClient() : null;
+            if (_api is null) return WsSendFailure(requestId, "WS_ACCOUNT_PURPOSE_UNCONFIRMED", "本机服务未确认账号用途；未发送。");
+            var purpose = await _api.GetWsCollectorPurposeAsync(accountId, cancellationToken);
+            if (!purpose.AllowsDirectHistory)
+                return WsSendFailure(requestId, "WS_SEND_PURPOSE_BLOCKED", "此发送入口仅供普通 WS 的一对一会话使用；未发送。");
+            if (cancellationToken.IsCancellationRequested) return WsSendFailure(requestId, "CANCELLED", "发送已取消；未调用页面发送流程。");
+            if (!IsWsSendCurrent(ticket)) return WsSendFailure(requestId, "SEND_CONTEXT_CHANGED", "确认账号用途期间前台会话已改变；未发送。");
+            return null;
+        }
+        catch (OperationCanceledException) { return WsSendFailure(requestId, "CANCELLED", "发送已取消；未调用页面发送流程。"); }
+        catch { return WsSendFailure(requestId, "WS_ACCOUNT_PURPOSE_UNCONFIRMED", "本机服务未确认账号用途；未发送。"); }
+    }
+
     private async Task<BridgeResponse> SendWsTextAsync(string requestId, string accountId, JsonElement payload, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -1691,6 +1738,8 @@ public sealed partial class LegacyUiHostPage : Page
         var expected = StringValue(payload, "conversationKey");
         if (string.IsNullOrWhiteSpace(expected)) expected = StringValue(payload, "conversationId");
         if (string.IsNullOrWhiteSpace(expected)) return WsSendFailure(requestId, "TARGET_REQUIRED", "发送缺少目标会话标识；未调用页面发送流程。");
+        var denied = await AuthorizeWsDirectSendAsync(requestId, accountId, expected, ticket, cancellationToken);
+        if (denied is not null) return denied;
         var script = BuildWsSendTextScript(expected, text);
         return await ExecuteWsSendScriptAsync(requestId, ticket, async () => await core.ExecuteScriptAsync(script), cancellationToken);
     }
@@ -1725,6 +1774,8 @@ public sealed partial class LegacyUiHostPage : Page
         var expected = StringValue(payload, "conversationKey");
         if (string.IsNullOrWhiteSpace(expected)) expected = StringValue(payload, "conversationId");
         if (string.IsNullOrWhiteSpace(expected)) return WsSendFailure(requestId, "TARGET_REQUIRED", "媒体发送缺少目标会话标识；未调用页面发送流程。");
+        var denied = await AuthorizeWsDirectSendAsync(requestId, accountId, expected, ticket, cancellationToken);
+        if (denied is not null) return denied;
         if (string.IsNullOrWhiteSpace(mediaId) && string.IsNullOrWhiteSpace(dataBase64))
             return WsSendFailure(requestId, "MEDIA_BYTES_UNAVAILABLE", "媒体没有可发送的内容；请重新选择附件。未发送。");
         if (string.IsNullOrWhiteSpace(dataBase64) && !string.IsNullOrWhiteSpace(mediaId))
@@ -1766,8 +1817,23 @@ public sealed partial class LegacyUiHostPage : Page
         if (!payload.TryGetProperty("recipients", out var recipients) || recipients.ValueKind != JsonValueKind.Array)
             return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "INVALID_REQUEST", "群发缺少会话列表。");
         var values = recipients.EnumerateArray().ToArray();
-        if (values.Length > 50)
+        if (values.Length is 0 or > 50)
             return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "INVALID_REQUEST", "单次群发最多 50 个目标；未执行任何发送。");
+        foreach (var recipient in values)
+        {
+            if (recipient.ValueKind != JsonValueKind.Object)
+                return WsSendFailure(requestId, "INVALID_REQUEST", "发送队列项无效；未开始发送。");
+            var target = StringValue(recipient, "conversationKey");
+            if (string.IsNullOrWhiteSpace(target)) target = StringValue(recipient, "conversationId");
+            if (string.IsNullOrWhiteSpace(target) || target.Contains("@g.us", StringComparison.OrdinalIgnoreCase))
+                return WsSendFailure(requestId, "GROUP_SEND_BLOCKED", "队列含缺失或群组目标；未开始发送。");
+        }
+        if (!App.WsService.TryGetSession(accountId, out var session) || session?.View.CoreWebView2 is null)
+            return WsSendFailure(requestId, "NOT_CONNECTED", "WS 页面尚未打开；未开始发送。");
+        var ticket = _wsSendGuard.Capture(accountId, session.Generation, session, session.View, session.View.CoreWebView2);
+        if (!IsWsSendCurrent(ticket)) return WsSendFailure(requestId, "NOT_FOREGROUND", "WS 聊天未处于当前前台；未开始发送。");
+        var denied = await AuthorizeWsDirectSendAsync(requestId, accountId, StringValue(values[0], "conversationKey"), ticket, cancellationToken);
+        if (denied is not null) return denied;
         var results = new List<object>(values.Length);
         foreach (var recipient in values)
         {
@@ -1801,7 +1867,8 @@ public sealed partial class LegacyUiHostPage : Page
   const clean = input => String(input ?? '').replace(/\s+/g, ' ').trim().toLocaleLowerCase();
   const comparable = input => clean(input).replace(/^\+/, '').replace(/[^\p{L}\p{N}]+/gu, '');
   const header = document.querySelector('[data-testid="conversation-header"], [data-testid*="conversation-header" i], [data-testid*="chat-header" i], #main header, #main [role="heading"]');
-  const observed = [header?.getAttribute?.('data-id'), header?.getAttribute?.('data-chat-id'), header?.getAttribute?.('aria-label'), header?.innerText, header?.textContent].map(clean).filter(Boolean);
+  const observed = [header?.getAttribute?.('data-id'), header?.getAttribute?.('data-chat-id'), header?.getAttribute?.('data-jid'), header?.getAttribute?.('data-group-id'), header?.getAttribute?.('aria-label'), header?.innerText, header?.textContent].map(clean).filter(Boolean);
+  if (/@g\.us\b/i.test(expected) || observed.some(item => /@g\.us\b/i.test(item))) return failed('GROUP_SEND_BLOCKED', '群组发送尚未验收；未发送。');
   const target = comparable(expected);
   if (!value.trim()) return failed('INVALID_REQUEST', '发送内容不能为空。');
   if (target && !observed.some(item => comparable(item) === target || (comparable(item).length >= 7 && target.length >= 7 && (comparable(item).endsWith(target) || target.endsWith(comparable(item))))))
@@ -1849,7 +1916,8 @@ public sealed partial class LegacyUiHostPage : Page
   const clean = input => String(input ?? '').replace(/\s+/g, ' ').trim().toLocaleLowerCase();
   const comparable = input => clean(input).replace(/^\+/, '').replace(/[^\p{L}\p{N}]+/gu, '');
   const header = document.querySelector('[data-testid="conversation-header"], [data-testid*="conversation-header" i], [data-testid*="chat-header" i], #main header, #main [role="heading"]');
-  const observed = [header?.getAttribute?.('data-id'), header?.getAttribute?.('data-chat-id'), header?.getAttribute?.('aria-label'), header?.innerText, header?.textContent].map(clean).filter(Boolean);
+  const observed = [header?.getAttribute?.('data-id'), header?.getAttribute?.('data-chat-id'), header?.getAttribute?.('data-jid'), header?.getAttribute?.('data-group-id'), header?.getAttribute?.('aria-label'), header?.innerText, header?.textContent].map(clean).filter(Boolean);
+  if (/@g\.us\b/i.test(expected) || observed.some(item => /@g\.us\b/i.test(item))) return failed('GROUP_SEND_BLOCKED', '群组发送尚未验收；未发送。');
   const target = comparable(expected);
   if (target && !observed.some(item => comparable(item) === target || (comparable(item).length >= 7 && target.length >= 7 && (comparable(item).endsWith(target) || target.endsWith(comparable(item))))))
     return failed('WRONG_CONVERSATION', '当前 WS 会话与目标不一致；未发送媒体。');
@@ -1894,27 +1962,39 @@ public sealed partial class LegacyUiHostPage : Page
 """;
     }
 
-    private async Task<BridgeResponse> ConfigureVipGroupsAsync(string requestId, string accountId, JsonElement payload, CancellationToken cancellationToken)
+    private Task<BridgeResponse> ConfigureVipGroupsAsync(string requestId, string accountId, JsonElement payload, CancellationToken cancellationToken)
     {
-        var values = payload.TryGetProperty("wsGroups", out var wsGroups) ? wsGroups
-            : payload.TryGetProperty("vipGroups", out var vipGroups) ? vipGroups : default;
-        if (values.ValueKind != JsonValueKind.Array)
-            return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "INVALID_REQUEST", "采集群组白名单必须是数组。");
-        var groups = JsonSerializer.SerializeToElement(values.EnumerateArray().Where(value => value.ValueKind == JsonValueKind.String)
-            .Select(value => value.GetString() ?? "").Where(value => value.Length > 0 && value.Length <= 240).Take(500).ToArray());
-        var response = await ExecuteCollectorCommandAsync(requestId, accountId,
-            $"JSON.stringify(window.__zhikeWsConfigureWsGroups?.({groups.GetRawText()}) ?? {{supported:false}})", cancellationToken);
-        if (response.Ok) _wsCollectorGroups[accountId] = groups;
-        return response;
+        // Kept for old renderers. Neither VIP flags nor this former allowlist
+        // may upgrade a group into a personal-history collection target.
+        cancellationToken.ThrowIfCancellationRequested();
+        _wsCollectorGroups.Remove(accountId);
+        return Task.FromResult(BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion,
+            JsonSerializer.SerializeToElement(new { accountId, configured = 0, legacyIgnored = true })));
     }
+
+    private static JsonElement MonitorScriptConfig(WsCollectorMonitorPolicy policy)
+        => JsonSerializer.SerializeToElement(new { accountId = policy.AccountId, profileId = policy.ProfileId,
+            enabled = policy.Enabled, intervalSec = policy.IntervalSec,
+            targets = policy.Targets.Select(row => new { targetId = row.TargetId, groupJid = row.GroupJid,
+                groupName = row.GroupName, sourceId = row.SourceId, enabled = row.Enabled }).ToArray() });
 
     private async Task<BridgeResponse> ConfigureGroupMonitorAsync(string requestId, string accountId, JsonElement payload, CancellationToken cancellationToken)
     {
-        if (!payload.TryGetProperty("targets", out var targets) || targets.ValueKind != JsonValueKind.Array || targets.GetArrayLength() > 500)
-            return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "INVALID_REQUEST", "群组监控目标无效或超过 500 项。");
+        if (!App.WsService.TryGetSession(accountId, out var session) || session?.CollectorView is not { } collector)
+            return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_NOT_STARTED", "请先打开独立采集登录并扫码。");
+        var epoch = _wsCollectorEpoch.GetValueOrDefault(collector);
+        var api = _api ?? throw new InvalidOperationException("本机服务不可用，群监控目标未确认。");
+        var purpose = await api.GetWsCollectorPurposeAsync(accountId, cancellationToken);
+        if (!purpose.AllowsGroupMonitoring)
+            return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "WS_COLLECTOR_PURPOSE_BLOCKED", "普通账号不执行群监控。");
+        var monitor = await api.GetWsCollectorMonitorAsync(accountId, StringValue(payload, "profileId"), cancellationToken);
+        if (!App.WsSessions.IsCurrent(accountId, session.Generation, collector) || epoch != _wsCollectorEpoch.GetValueOrDefault(collector))
+            return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_CONTEXT_CHANGED", "采集页面已改变，请重试。");
+        var config = MonitorScriptConfig(monitor);
         var response = await ExecuteCollectorCommandAsync(requestId, accountId,
-            $"JSON.stringify(window.__zhikeWsConfigureGroupMonitor?.({payload.GetRawText()}) ?? {{supported:false}})", cancellationToken);
-        if (response.Ok) _wsCollectorMonitor[accountId] = payload.Clone();
+            $"JSON.stringify(window.__zhikeWsConfigureGroupMonitor?.({config.GetRawText()}) ?? {{supported:false}})", cancellationToken, "dedicated");
+        if (response.Ok && App.WsSessions.IsCurrent(accountId, session.Generation, collector) && epoch == _wsCollectorEpoch.GetValueOrDefault(collector))
+        { _wsCollectorMonitor[accountId] = config; _wsCollectorMonitorPolicies[accountId] = monitor; }
         return response;
     }
 
@@ -1922,9 +2002,18 @@ public sealed partial class LegacyUiHostPage : Page
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (action is "pause" or "stop") _wsCollectorMonitorRunning.Remove(accountId);
+        if (action == "start")
+        {
+            if (!_wsCollectorMonitor.TryGetValue(accountId, out var configuration))
+                return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "WS_COLLECTOR_TARGET_BLOCKED", "请先确认群监控席位。");
+            var configured = await ConfigureGroupMonitorAsync(requestId, accountId, configuration, cancellationToken);
+            if (!configured.Ok) return configured;
+            if (!_wsCollectorMonitorPolicies.TryGetValue(accountId, out var monitor) || !monitor.Enabled)
+                return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "WS_COLLECTOR_TARGET_BLOCKED", "群监控席位已暂停。");
+        }
         var method = action switch { "start" => "Start", "pause" => "Pause", _ => "Stop" };
         var response = await ExecuteCollectorCommandAsync(requestId, accountId,
-            $"JSON.stringify(window.__zhikeWsGroupMonitor{method}?.() ?? {{supported:false}})", cancellationToken);
+            $"JSON.stringify(window.__zhikeWsGroupMonitor{method}?.() ?? {{supported:false}})", cancellationToken, "dedicated");
         if (response.Ok && action == "start") _wsCollectorMonitorRunning.Add(accountId);
         if (!response.Ok && action is "pause" or "stop")
             return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion,
@@ -2474,7 +2563,7 @@ public sealed partial class LegacyUiHostPage : Page
         {
             var method = kind == "discover" ? "__zhikeWsDiscoverAll" : "__zhikeWsCollectAllRead";
             return await ExecuteCollectorCommandAsync(requestId, accountId,
-                $"JSON.stringify(window.{method}?.() ?? {{supported:false}})", cancellationToken);
+                $"JSON.stringify(window.{method}?.() ?? {{supported:false}})", cancellationToken, kind == "collect-all-read" ? "ordinary" : "");
         }
         cancellationToken.ThrowIfCancellationRequested();
         if (!App.WsService.TryGetSession(accountId, out var session) || session is null || session.View.CoreWebView2 is null)
@@ -2582,10 +2671,17 @@ public sealed partial class LegacyUiHostPage : Page
             var collectorRole = StringValue(root, "collectorRole").ToLowerInvariant();
             if (!WsCollectorIngress.TryAuthorize(sourceSession, sessionGeneration, sourceView, claimedAccountId, collectorRole,
                 out fromBackgroundCollector)) return;
+            WsCollectorPurposePolicy? purpose = null;
+            if (fromBackgroundCollector)
+            {
+                if (!_wsCollectorPurposes.TryGetValue(sourceView, out var lease) || lease.Generation != sessionGeneration || lease.Epoch != sourceEpoch) return;
+                purpose = lease.Policy;
+            }
             var capturedAt = DateTimeOffset.TryParse(StringValue(root, "capturedAt"), out var parsedCaptured) ? parsedCaptured : DateTimeOffset.UtcNow;
             var eventName = StringValue(root, "eventName");
             if (!string.IsNullOrWhiteSpace(eventName))
             {
+                if (purpose is { AllowsDirectHistory: false }) return;
                 if (string.Equals(eventName, "direction-unresolved-structure", StringComparison.Ordinal))
                 {
                     if (root.TryGetProperty("directionSignals", out var directionSignals))
@@ -2693,6 +2789,7 @@ public sealed partial class LegacyUiHostPage : Page
                             isGroup,
                             vipGroup));
                         if (historyLoaded && directionVersion >= 4 && directionUnresolvedCount == 0
+                            && (!fromBackgroundCollector || purpose?.AllowsHistory(key, conversationType, isGroup, vipGroup) == true)
                             && conversationType is "direct" or "vip_group")
                             historyAcks.Add(new { conversationKey = key, fingerprint = StringValue(item, "lastMessageFingerprint"), historyMessageCount, conversationType, vipGroup });
                     }
@@ -2734,8 +2831,24 @@ public sealed partial class LegacyUiHostPage : Page
                         source));
                 }
             }
+            if (purpose is not null)
+            {
+                checkpoints.RemoveAll(item => !purpose.AllowsCheckpoint(item));
+                checkpoints = checkpoints.Select(item => WsCollectorPurposePolicy.IsGroupJid(item.ConversationKey)
+                    ? item with { ConversationType = "group", IsGroup = true, VipGroup = false } : item).ToList();
+                var monitors = _wsCollectorMonitorPolicies.TryGetValue(accountId, out var confirmedMonitor)
+                    ? new[] { confirmedMonitor } : [];
+                messages.RemoveAll(item => !purpose.AllowsMessage(item, monitors));
+                if (purpose.AllowsGroupMonitoring)
+                    messages = messages.Select(item => item with { ConversationType = "group", VipGroup = false }).ToList();
+                groupEvents.RemoveAll(item => !purpose.AllowsGroupMonitoring
+                    || !_wsCollectorMonitorPolicies.TryGetValue(accountId, out var monitor) || !monitor.AllowsEvent(item));
+                // Legacy group history acknowledgements never survive purpose filtering.
+                if (!purpose.AllowsDirectHistory) historyAcks.Clear();
+            }
             var allowedConversationKeys = checkpoints
                 .Where(item => string.Equals(item.ConversationType, "direct", StringComparison.OrdinalIgnoreCase)
+                    || purpose?.AllowsGroupMonitoring == true && WsCollectorPurposePolicy.IsGroupJid(item.ConversationKey)
                     || item.VipGroup && string.Equals(item.ConversationType, "vip_group", StringComparison.OrdinalIgnoreCase))
                 .Select(item => item.ConversationKey)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -2863,6 +2976,7 @@ public sealed partial class LegacyUiHostPage : Page
                         ?? throw new InvalidDataException("WS 待同步数据无法反序列化。");
                     using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                     timeout.CancelAfter(TimeSpan.FromSeconds(15));
+                    await _api.AuthorizeWsCollectorBatchAsync(request, timeout.Token);
                     var result = await _api.IngestWsBatchAsync(request, timeout.Token);
                     await _wsQueue.RemoveAsync(item.Id, cancellationToken);
                     GetBridge().Publish("sync.updated", JsonSerializer.SerializeToElement(new
@@ -2951,6 +3065,13 @@ public sealed partial class LegacyUiHostPage : Page
 """;
     }
 
+    internal static string BuildWsCollectorScript(string accountId, WsCollectorPurposePolicy purpose)
+    {
+        if (purpose.AccountId != accountId || purpose.WorkspaceMode is not ("ordinary" or "dedicated"))
+            throw new InvalidDataException("采集用途未确认。");
+        return "(function(__zhikeWsTrustedPurpose){" + BuildWsCollectorScript(accountId) + "})(" + JsonSerializer.Serialize(purpose.WorkspaceMode) + ");";
+    }
+
     internal static string BuildWsCollectorScript(string accountId)
     {
         var encodedAccount = JsonSerializer.Serialize(accountId);
@@ -2960,6 +3081,9 @@ public sealed partial class LegacyUiHostPage : Page
   // this hand-off reconnects accumulate observers, timers and wheel handlers.
   try { window.__zhikeStopCapture?.(); } catch {}
   const accountId = {{encodedAccount}};
+  const workspaceMode = typeof __zhikeWsTrustedPurpose === 'string' ? __zhikeWsTrustedPurpose : 'ordinary';
+  const directHistoryAllowed = workspaceMode === 'ordinary';
+  const groupMonitoringAllowed = workspaceMode === 'dedicated';
   // The visible WebView is a passive realtime surface. Only the offscreen
   // collector role may mutate WhatsApp's virtualized list or open chats.
   const backgroundCollectorRole = String(window.__zhikeWsCollectorRole || 'background').toLocaleLowerCase() === 'background';
@@ -2975,24 +3099,16 @@ public sealed partial class LegacyUiHostPage : Page
   });
   const collectibleConversationType = value => {
     const type = String(value ?? '').trim().toLocaleLowerCase();
-    return type === 'direct' || type === 'vip_group';
+    return directHistoryAllowed && type === 'direct';
   };
   window.__zhikeWsConfigureVipGroups = values => {
-    vipGroupAllowlist = new Set((Array.isArray(values) ? values : [])
-      .map(normalizeVipGroupKey)
-      .filter(Boolean)
-      .slice(0, 500));
-    if (backgroundCollectorRole) {
-      try { scheduleAllScan(10); } catch {}
-      try { scheduleIncrementalReadHistory(20); } catch {}
-    }
-    try { emit(true); } catch {}
-    return { configured:vipGroupAllowlist.size };
+    vipGroupAllowlist.clear();
+    return { configured:0, legacyIgnored:true };
   };
   // Canonical name: this is a WS monitoring allowlist, not customer VIP data.
   window.__zhikeWsConfigureWsGroups = values => window.__zhikeWsConfigureVipGroups?.(values);
   // Fixed-seat group monitor. It is deliberately a passive observer of the
-  // currently rendered VIP-group pane: no row click, scroll, navigation or
+  // currently rendered, JID-bound group pane: no row click, scroll, navigation or
   // focus operation is performed here. The native host starts/pauses/stops
   // this worker only on the hidden collector WebView.
   const groupMonitorState = { profileId:'', intervalSec:45, targets:[], status:'stopped', enabled:false, timer:0, seen:new Set() };
@@ -3006,13 +3122,16 @@ public sealed partial class LegacyUiHostPage : Page
   };
   const groupMonitorCurrentIdentity = () => {
     const header = document.querySelector('#main header, #main [data-testid*="conversation-header" i], #main [data-testid*="chat-header" i]');
-    const values = [];
-    const add = value => { const normalized = clean(value); if (normalized && !values.includes(normalized)) values.push(normalized); };
+    const ids = [], values = [];
+    const add = (list, value) => { const normalized = clean(value); if (normalized && !list.includes(normalized)) list.push(normalized); };
     for (const node of [header, ...[...(header?.querySelectorAll?.('[data-id], [data-jid], [data-chat-id], [data-group-id], [title], [aria-label]') || [])]]) {
-      for (const key of ['data-id','data-jid','data-chat-id','data-group-id','title','aria-label']) add(node?.getAttribute?.(key));
+      for (const key of ['data-id','data-jid','data-chat-id','data-group-id']) add(ids, node?.getAttribute?.(key));
+      for (const key of ['title','aria-label']) add(values, node?.getAttribute?.(key));
     }
-    add(text(header));
-    const jid = values.find(value => /@g\.us(?:\b|$)/i.test(value)) || values.find(value => /^\d{5,}@/i.test(value)) || '';
+    add(values, text(header));
+    // A title that happens to look like a JID is still only a display name.
+    const groupJids = ids.filter(value => /^[a-z0-9._-]+@g\.us$/.test(value));
+    const jid = groupJids.length === 1 ? groupJids[0] : '';
     const groupName = values.find(value => !/@/.test(value) && value.length <= 200) || '';
     return { jid, groupName, header };
   };
@@ -3136,6 +3255,7 @@ public sealed partial class LegacyUiHostPage : Page
     window.chrome.webview.postMessage(JSON.stringify({ type:'zhike.ws.capture', accountId, capturedAt:new Date().toISOString(), collectorRole:'background', groupEvents:events }));
   };
   const groupMonitorTick = () => {
+    if (!groupMonitoringAllowed) return { supported:false, reason:'workspace-purpose' };
     if (!backgroundCollectorRole) return { supported:false, reason:'collector-only' };
     const events = collectGroupMonitorEvents();
     postGroupMonitorEvents(events);
@@ -3147,15 +3267,16 @@ public sealed partial class LegacyUiHostPage : Page
     groupMonitorState.timer = scheduleCollectorTask(() => { groupMonitorState.timer = 0; groupMonitorTick(); scheduleGroupMonitorTick(); }, Math.max(15000, groupMonitorState.intervalSec * 1000));
   };
   window.__zhikeWsConfigureGroupMonitor = config => {
+    if (!groupMonitoringAllowed) return { supported:false, reason:'workspace-purpose' };
     const source = config && typeof config === 'object' ? config : {};
     groupMonitorState.profileId = clean(source.profileId).slice(0, 160);
     groupMonitorState.intervalSec = Math.max(15, Math.min(3600, Number(source.intervalSec) || 45));
-    groupMonitorState.targets = (Array.isArray(source.targets) ? source.targets : []).slice(0, 500).map(item => ({ targetId:clean(item?.targetId).slice(0, 160), groupJid:clean(item?.groupJid).slice(0, 240), groupName:clean(item?.groupName).slice(0, 200), sourceId:clean(item?.sourceId).slice(0, 160), vipOnly:item?.vipOnly !== false, enabled:item?.enabled !== false })).filter(item => item.groupJid || item.groupName);
+    groupMonitorState.targets = (Array.isArray(source.targets) ? source.targets : []).slice(0, 500).map(item => ({ targetId:clean(item?.targetId).slice(0, 160), groupJid:clean(item?.groupJid).slice(0, 240), groupName:clean(item?.groupName).slice(0, 200), sourceId:clean(item?.sourceId).slice(0, 160), vipOnly:item?.vipOnly !== false, enabled:item?.enabled !== false })).filter(item => /^[a-z0-9._-]+@g\.us$/.test(item.groupJid));
     if (source.enabled === false && groupMonitorState.status === 'running') { groupMonitorState.status = 'paused'; groupMonitorState.enabled = false; }
     return { supported:backgroundCollectorRole, configured:groupMonitorState.targets.length, status:groupMonitorState.status };
   };
   window.__zhikeWsGroupMonitorStart = () => {
-    if (!backgroundCollectorRole) return { supported:false, reason:'collector-only' };
+    if (!backgroundCollectorRole || !groupMonitoringAllowed) return { supported:false, reason:'workspace-purpose' };
     groupMonitorState.enabled = true; groupMonitorState.status = 'running'; scheduleGroupMonitorTick(); return groupMonitorTick();
   };
   window.__zhikeWsGroupMonitorPause = () => { groupMonitorState.enabled = false; groupMonitorState.status = 'paused'; if (groupMonitorState.timer) { cancelCollectorTask(groupMonitorState.timer); groupMonitorState.timer = 0; } return { supported:backgroundCollectorRole, status:groupMonitorState.status }; };
@@ -4118,7 +4239,7 @@ public sealed partial class LegacyUiHostPage : Page
        senderId:`self:${accountId}`, senderName:'我', senderPhone:'',
        senderIdentitySource:'account-self', senderIdentityTrusted:true,
      };
-     if (conversationType !== 'vip_group') return {
+     if (!['group', 'vip_group'].includes(conversationType)) return {
        senderId:'', senderName:'', senderPhone:'', senderIdentitySource:'direct-peer', senderIdentityTrusted:false,
      };
      const candidates = [];
@@ -4134,13 +4255,14 @@ public sealed partial class LegacyUiHostPage : Page
      for (let current = wrapper || node, depth = 0; current && depth < 8; current = current.parentElement, depth += 1) inspect(current);
      try { for (const target of wrapper?.querySelectorAll?.('[data-sender-id], [data-author], [data-participant], [data-jid], [data-contact-id]') || []) inspect(target); } catch {}
      const preambleAuthor = clean(String(rawPreamble ?? '').match(/\]\s*([^:\n]{1,160})\s*:\s*$/)?.[1] || '');
-     const stableJid = candidates.find(item => /@(?:s\.whatsapp\.net|c\.us|lid)(?:\b|$)/i.test(item.value)) || null;
+     const stableJid = candidates.find(item => /^[a-z0-9._:-]+@(?:s\.whatsapp\.net|c\.us|lid)$/i.test(item.value)) || null;
      const stablePhone = candidates.find(item => {
        const digits = item.value.replace(/\D/g, '');
        return digits.length >= 7 && digits.length <= 15 && /^\+?[\d\s().-]+$/.test(item.value);
      }) || null;
      const senderId = clean(stableJid?.value || '');
-     const idDigits = senderId.replace(/@.*$/, '').replace(/\D/g, '');
+     // A LID is opaque identity, never an inferred phone number.
+     const idDigits = /@(?:s\.whatsapp\.net|c\.us)$/i.test(senderId) ? senderId.replace(/[:@].*$/, '').replace(/\D/g, '') : '';
      const stablePhoneDigits = clean(stablePhone?.value || '').replace(/\D/g, '');
      const authorDigits = preambleAuthor.replace(/\D/g, '');
      const authorLooksPhone = authorDigits.length >= 7 && authorDigits.length <= 15 && /^\+?[\d\s().-]+$/.test(preambleAuthor);
@@ -4524,9 +4646,10 @@ public sealed partial class LegacyUiHostPage : Page
      scheduleCollectorPaint(processNext);
      return { supported:true, started:true, scanning:true, scanId:run.id, resumed:Object.keys(checkpointState.completed || {}).length > 0, skippedUnread:[] };
    };
-   window.__zhikeWsCollectAllRead = collectAllRead;
+   window.__zhikeWsCollectAllRead = (...args) => directHistoryAllowed ? collectAllRead(...args) : { supported:false, reason:'workspace-purpose' };
    window.__zhikeWsCollectorDiagnostics = Object.freeze({ matchesCurrentConversation, parseMessageTimestamp, checkpointMatches, isHistoryTopBusy });
     const scheduleIncrementalReadHistory = (delay = 1800, highPriority = false) => {
+      if (!directHistoryAllowed) return;
       if (!backgroundCollectorRole) return;
       if (highPriority) highPriorityHistoryRetryPending = true;
       if (readHistoryScan || incrementalHistoryTimer) return;
@@ -4568,10 +4691,15 @@ public sealed partial class LegacyUiHostPage : Page
     if (!currentRow) {
       try { currentRow = readRows().find(row => matchesCurrentConversation(row)) || null; } catch {}
     }
-    const conversationKey = clean(currentRow?.conversationKey || currentConversationIdentity().key);
+    const observedGroupJid = groupMonitoringAllowed ? clean(groupMonitorCurrentIdentity().jid) : '';
+    const conversationKey = clean(observedGroupJid || currentRow?.conversationKey || currentConversationIdentity().key);
     if (!conversationKey) return { supported:true, messages:[] };
     const typeEvidence = currentConversationType(currentRow);
-    if (!collectibleConversationType(typeEvidence.conversationType)) {
+    const passiveGroupCapture = backgroundCollectorRole && groupMonitoringAllowed
+      && groupMonitorState.enabled && groupMonitorState.status === 'running'
+      && observedGroupJid === conversationKey
+      && ['group', 'vip_group'].includes(typeEvidence.conversationType) && Boolean(groupMonitorTarget(conversationKey));
+    if (!collectibleConversationType(typeEvidence.conversationType) && !passiveGroupCapture) {
       const identity = currentConversationIdentity();
       return {
         supported:true, messages:[], conversationKey,
@@ -4589,6 +4717,7 @@ public sealed partial class LegacyUiHostPage : Page
       const preamble = clean(rawPreamble);
       const explicitExternalMessageId = clean(evidence.externalMessageId) || messageExternalId(node, wrapper);
       const sender = resolveMessageSender(node, wrapper, rawPreamble, evidence.direction, typeEvidence.conversationType);
+      if (passiveGroupCapture && (evidence.direction !== 'incoming' || !sender.senderIdentityTrusted)) return;
       const syntheticId = `wa-${compactId(`${conversationKey}|${sender.senderId || sender.senderPhone || sender.senderName}|${preamble}|${evidence.direction}|${body}`)}`;
       const externalMessageId = explicitExternalMessageId || syntheticId;
       const legacyExternalMessageId = legacyMessageExternalId(node, conversationKey, rawPreamble, externalMessageId);
@@ -4596,12 +4725,12 @@ public sealed partial class LegacyUiHostPage : Page
       if (seen.has(key)) return;
       seen.add(key);
       const sentAt = parseMessageTimestamp(rawPreamble);
-      messages.push({ conversationKey, externalMessageId, legacyExternalMessageId, directionSource:evidence.source, conversationType:typeEvidence.conversationType, isGroup:typeEvidence.conversationType === 'vip_group', vipGroup:typeEvidence.conversationType === 'vip_group', ...sender, body, direction:evidence.direction, sentAt, timestampText:timestampTextFromPreamble(rawPreamble), timestampSource:sentAt ? 'whatsapp-preamble' : 'unparsed', cursor:externalMessageId, preamble, order:order + 1 });
+      messages.push({ conversationKey, externalMessageId, legacyExternalMessageId, directionSource:evidence.source, conversationType:passiveGroupCapture ? 'group' : typeEvidence.conversationType, isGroup:passiveGroupCapture, vipGroup:false, ...sender, body, direction:evidence.direction, sentAt, timestampText:timestampTextFromPreamble(rawPreamble), timestampSource:sentAt ? 'whatsapp-preamble' : 'unparsed', cursor:externalMessageId, preamble, order:order + 1 });
     });
     return {
       supported:true, messages, conversationKey,
       displayName:clean(currentRow?.displayName || currentConversationIdentity().title).slice(0, 200),
-      conversationType:typeEvidence.conversationType, isGroup:typeEvidence.conversationType === 'vip_group', vipGroup:typeEvidence.conversationType === 'vip_group',
+      conversationType:passiveGroupCapture ? 'group' : typeEvidence.conversationType, isGroup:passiveGroupCapture, vipGroup:false,
     };
   };
   window.__zhikeWsDiscover = discover;
@@ -4664,7 +4793,7 @@ public sealed partial class LegacyUiHostPage : Page
     // Keep background collection independent of the currently rendered list
     // window.  The full scan is throttled and non-blocking; only its completed
     // payload is sent to the native host.
-    if (backgroundCollectorRole) {
+    if (backgroundCollectorRole && directHistoryAllowed) {
       scheduleAllScan(force ? 120 : 900);
       if (force || listChanged) scheduleIncrementalReadHistory(force ? 1200 : 1800);
     }

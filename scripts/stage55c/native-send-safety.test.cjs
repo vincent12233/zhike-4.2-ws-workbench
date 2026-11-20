@@ -11,7 +11,8 @@ const take = (begin, end) => { const a = source.indexOf(begin), b = source.index
 const extracted = take('    private async Task<BridgeResponse> HandleWsActionAsync(', '    private async Task<BridgeResponse> SendWsTextAsync(')
   + take('    private async Task<BridgeResponse> SendWsTextAsync(', '    /// <summary>\n    /// Sends one already selected media item'.replace(/\n/g, source.includes('\r\n') ? '\r\n' : '\n'))
   + take('    private async Task<BridgeResponse> SendWsMediaAsync(', '    private async Task<BridgeResponse> BroadcastWsTextAsync(')
-  + take('    private static string BuildWsSendTextScript(', '    private async Task<BridgeResponse> ConfigureVipGroupsAsync(')
+  + take('    private async Task<BridgeResponse> BroadcastWsTextAsync(', '    private static string BuildWsSendTextScript(')
+  + take('    private static string BuildWsSendTextScript(', '    private Task<BridgeResponse> ConfigureVipGroupsAsync(')
   + take('    private static JsonElement ParseWebViewJsonResult(', '    private async void OnWsWebMessageReceived(')
   + take('    private static BridgeResponse WsCollectionBlocked(', '    private void PublishWsStatus(');
 const out = path.join(repo, '.tools/stage55c-native-send'); fs.mkdirSync(out, { recursive: true });
@@ -44,6 +45,7 @@ public sealed class NativeSendHost {
   public void HideForTest() { _hostWindowRenderable = false; _wsSendGuard.Invalidate(); }
   public Task<BridgeResponse> SendMedia(JsonElement payload, CancellationToken token) => SendWsMediaAsync("test", "a", payload, token);
   public Task<BridgeResponse> SendText(JsonElement payload, CancellationToken token) => SendWsTextAsync("test", "a", payload, token);
+  public Task<BridgeResponse> Broadcast(JsonElement payload, CancellationToken token) => BroadcastWsTextAsync("test", "a", payload, token);
   public Task<BridgeResponse> Action(string action, string accountId) => HandleWsActionAsync("test", JsonSerializer.SerializeToElement(new {action,accountId}), accountId, CancellationToken.None);
   private static string StringValue(JsonElement element,string name) => element.TryGetProperty(name,out var value) && value.ValueKind==JsonValueKind.String ? value.GetString() ?? "" : "";
   private static bool GetBool(JsonElement element,string name) => element.TryGetProperty(name,out var value) && value.ValueKind==JsonValueKind.True;
@@ -57,7 +59,6 @@ public sealed class NativeSendHost {
   private Task<BridgeResponse> ConfigureGroupMonitorAsync(string requestId,string id,JsonElement payload,CancellationToken token) => WsStatusResponseAsync(requestId,id,token);
   private Task<BridgeResponse> SetGroupMonitorStateAsync(string requestId,string id,string action,CancellationToken token) => WsStatusResponseAsync(requestId,id,token);
   private Task<BridgeResponse> ExecuteWsCaptureAsync(string requestId,string id,string action,CancellationToken token) => WsStatusResponseAsync(requestId,id,token);
-  private Task<BridgeResponse> BroadcastWsTextAsync(string requestId,string id,JsonElement payload,CancellationToken token) => WsStatusResponseAsync(requestId,id,token);
 ${extracted}
 }
 `;

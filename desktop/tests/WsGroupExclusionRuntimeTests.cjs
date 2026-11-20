@@ -14,6 +14,8 @@ const script = match[1].replace(/\{\{encodedAccount\}\}/g, JSON.stringify('group
 const clicks = [];
 let activeId = '';
 let activeTitle = '';
+let activeIdentityAttribute = 'data-id';
+let messageNodes = [];
 const leaf = (attributes = {}, value = '') => ({
   innerText:value, textContent:value,
   getAttribute(name) { return attributes[name] || ''; },
@@ -65,18 +67,19 @@ const container = {
   dispatchEvent() {},
 };
 const header = {
-  getAttribute(name) { return name === 'data-id' ? activeId : ''; },
+  getAttribute(name) { return name === activeIdentityAttribute ? activeId : ''; },
   querySelector() { return null; }, querySelectorAll() { return []; }, matches() { return false; },
   get innerText() { return activeTitle; }, get textContent() { return activeTitle; },
 };
 const document = {
   body:{}, documentElement:{ clientWidth:1200, clientHeight:800 }, readyState:'complete',
   querySelector(selector) {
-    if (selector.includes('conversation-header') || selector.includes('#main header')) return activeId ? header : null;
+    if (selector.includes('conversation-header') || selector.includes('#main header')) return activeId || activeTitle ? header : null;
     if (selector.includes('#pane-side') || selector.includes('chat-list') || selector === '[role="grid"]') return container;
     return null;
   },
   querySelectorAll(selector) {
+    if (selector.includes('msg-container') || selector.includes('data-pre-plain-text')) return messageNodes;
     if (selector.includes('#pane-side') || selector.includes('chat-list') || selector === '[role="grid"]') return [container];
     if (/listitem|role="row"|cell-frame-container/.test(selector)) return rows;
     return [];
@@ -100,27 +103,32 @@ const sandbox = {
 
 vm.runInNewContext(script, sandbox);
 const configured = sandbox.window.__zhikeWsConfigureVipGroups(['group-456@g.us']);
-assert.equal(configured.configured, 1, 'an explicit per-account VIP-group allowlist is required');
+assert.equal(configured.configured, 0, 'legacy VIP allowlists never upgrade collection authority');
 sandbox.window.__zhikeStopCapture();
 timers.length = 0; frames.length = 0; posted.length = 0;
 
 const discovery = sandbox.window.__zhikeWsDiscover();
 assert.deepEqual(
   Array.from(discovery.conversations, item => item.title).sort(),
-  ['+91 98765 43210', 'Direct JID', 'Saved Contact', '+91 99999 99999'].sort(),
-  'confirmed direct chats and the explicitly whitelisted VIP group are eligible',
+  ['+91 98765 43210', 'Direct JID', 'Saved Contact'].sort(),
+  'ordinary accounts collect confirmed direct chats only',
 );
-assert.equal(discovery.excludedGroupCount, 3, 'ordinary groups remain excluded even when another group is explicitly whitelisted');
+assert.equal(discovery.excludedGroupCount, 4, 'all groups remain excluded from ordinary history');
 assert.equal(discovery.conversationTypeUnresolvedCount, 1, 'an alias without stable type evidence remains fail-closed');
 const phoneNamedGroup = discovery.excludedConversations.find(item => item.title === '+91 99999 99999');
 const vipGroup = discovery.conversations.find(item => item.title === '+91 99999 99999');
-assert.equal(vipGroup?.conversationType, 'vip_group', 'a matching stable @g.us identity is promoted only by the explicit whitelist');
-assert.equal(vipGroup?.vipGroup, true);
+assert.equal(vipGroup, undefined, 'VIP labels do not promote a group into personal history');
+assert.equal(phoneNamedGroup?.conversationType, 'group');
 assert.equal(discovery.excludedConversations.find(item => item.title === '+91 96666 66666')?.conversationType, 'group', 'default-group icon evidence wins over a phone-looking title');
 
 // Group previews are observed from the virtualized list only. Starting the
 // fixed monitor must not click, focus, scroll, or open that VIP conversation.
 activeId = ''; activeTitle = ''; clicks.length = 0; posted.length = 0;
+const blockedMonitor = sandbox.window.__zhikeWsConfigureGroupMonitor({ profileId:'monitor-profile',targets:[{groupJid:'group-456@g.us'}] });
+assert.equal(blockedMonitor.supported, false, 'ordinary account cannot monitor groups');
+assert.equal(sandbox.window.__zhikeWsGroupMonitorStart().supported, false);
+vm.runInNewContext('(function(__zhikeWsTrustedPurpose){'+script+'})("dedicated");', sandbox);
+assert.equal(sandbox.window.__zhikeWsCollectAllRead().supported, false, 'dedicated cannot collect direct history');
 const monitorConfig = sandbox.window.__zhikeWsConfigureGroupMonitor({
   profileId:'monitor-profile', enabled:true, intervalSec:45,
   targets:[{ targetId:'monitor-target', groupJid:'group-456@g.us', groupName:'+91 99999 99999', enabled:true }],
@@ -129,20 +137,48 @@ assert.equal(monitorConfig.configured, 1);
 const monitorStart = sandbox.window.__zhikeWsGroupMonitorStart();
 assert.equal(monitorStart.status, 'running');
 const previewEvents = posted.flatMap(packet => packet.groupEvents || []);
-assert.ok(previewEvents.some(event => event.type === 'joined' && event.memberPhone === '919999999999'), 'VIP group list preview emits a normalized member event');
+assert.ok(previewEvents.some(event => event.type === 'joined' && event.memberPhone === '919999999999'), 'dedicated exact group target emits a normalized member event without VIP promotion');
 assert.equal(clicks.length, 0, 'group preview monitoring never opens a chat');
+activeId = 'group-456@g.us'; activeTitle = '+91 99999 99999';
+function message(senderId, author, outgoing = false) {
+  const attrs = { 'data-id':`${outgoing ? 'true' : 'false'}_message-${senderId || author}`, 'data-testid':'msg-container', 'data-sender-id':senderId, 'data-pre-plain-text':`[10:30, 11/20/2026] ${author}: ` };
+  return { ...leaf(attrs, 'Member observed body'), classList:{ contains(name) { return name === (outgoing ? 'message-out' : 'message-in'); } }, querySelector(){ return null; }, querySelectorAll(){ return []; }, matches(){ return false; } };
+}
+messageNodes = [message('123456789@lid', 'Alice'), message('', 'Nickname Only'), message('919999999999@c.us', 'Self', true)];
+const memberCapture = sandbox.window.__zhikeWsCapture();
+assert.equal(memberCapture.messages.length, 1, 'only observed incoming member identity qualifies as group evidence');
+assert.equal(memberCapture.messages[0].conversationType, 'group');
+assert.equal(memberCapture.messages[0].vipGroup, false, 'new member evidence has no VIP permission flag');
+assert.equal(memberCapture.messages[0].senderId, '123456789@lid');
+assert.equal(memberCapture.messages[0].senderPhone, '', 'opaque LID digits are not a phone number');
+assert.equal(memberCapture.messages[0].senderIdentityTrusted, true);
+activeIdentityAttribute = 'data-jid';
+assert.equal(sandbox.window.__zhikeWsCapture().messages.length, 1, 'semantic group data-jid header also supports passive evidence');
+activeIdentityAttribute = 'data-id';
+assert.equal(clicks.length, 0, 'passive member capture does not navigate or scroll');
+activeId = 'other@g.us'; activeTitle = '+91 99999 99999';
+assert.equal(sandbox.window.__zhikeWsCapture().blocked, true, 'a same-name unconfigured group cannot supply evidence');
+activeId = ''; activeTitle = 'group-456@g.us';
+assert.equal(sandbox.window.__zhikeWsCapture().blocked, true, 'a JID-looking display title is never authoritative identity');
+activeId = 'direct-123@s.whatsapp.net'; activeTitle = 'Direct JID';
+assert.equal(sandbox.window.__zhikeWsCapture().blocked, true, 'dedicated account does not capture direct text');
+activeId = 'group-456@g.us'; activeTitle = '+91 99999 99999';
+sandbox.window.__zhikeWsGroupMonitorPause();
+assert.equal(sandbox.window.__zhikeWsCapture().blocked, true, 'pause stops passive member evidence');
+messageNodes = [];
 sandbox.window.__zhikeWsGroupMonitorStop();
+vm.runInNewContext(script, sandbox);
 
 const candidates = sandbox.window.__zhikeWsReadHistoryCandidates([...discovery.conversations, ...discovery.excludedConversations]);
-assert.equal(candidates.read.length, 4, 'confirmed direct chats and the VIP group enter automatic history collection');
-assert.equal(candidates.skipped.filter(item => item.status === 'skipped-group').length, 3);
+assert.equal(candidates.read.length, 3, 'only confirmed direct chats enter ordinary history collection');
+assert.equal(candidates.skipped.filter(item => item.status === 'skipped-group').length, 4);
 assert.equal(candidates.skipped.filter(item => item.status === 'conversation-type-unresolved').length, 1);
 
 activeId = 'group-456@g.us'; activeTitle = '+91 99999 99999';
 const manualGroupCapture = sandbox.window.__zhikeWsCapture();
-assert.equal(manualGroupCapture.conversationType, 'vip_group', 'manual opening rechecks the VIP whitelist and current header');
-assert.notEqual(manualGroupCapture.blocked, true);
-assert.deepEqual(Array.from(manualGroupCapture.messages), [], 'the fixture has no message DOM, but VIP capture is not policy-blocked');
+assert.equal(manualGroupCapture.conversationType, 'group');
+assert.equal(manualGroupCapture.blocked, true, 'legacy VIP group remains outside ordinary automatic capture');
+assert.deepEqual(Array.from(manualGroupCapture.messages), []);
 
 activeId = 'opaque-group'; activeTitle = 'Project Team';
 const ordinaryGroupCapture = sandbox.window.__zhikeWsCapture();
@@ -159,6 +195,6 @@ while (clicks.length < 4 && (timers.length || frames.length) && guard++ < 400) {
 }
 sandbox.window.__zhikeStopCapture();
 assert.ok(clicks.length > 0, 'the fixture exercises the automatic click path');
-assert.ok(clicks.every(title => ['+91 98765 43210', 'Direct JID', 'Saved Contact', '+91 99999 99999'].includes(title)), 'ordinary group and unknown rows are never clicked automatically');
+assert.ok(clicks.every(title => ['+91 98765 43210', 'Direct JID', 'Saved Contact'].includes(title)), 'groups and unknown rows are never clicked automatically');
 
-console.log('WS VIP-group runtime: explicit whitelist allows one VIP group, ordinary groups stay excluded, and unread policy remains fail-closed');
+console.log('WS purpose runtime: ordinary direct history, dedicated passive exact-JID group monitoring, VIP has no authority');

@@ -16,6 +16,7 @@ internal static class Program
         App.WsService.Sessions["b"] = new FakeSession("b", 2, new FakeView(new FakeCore()));
         ApiClient.Pending = new(TaskCreationOptions.RunContinuationsAsynchronously);
         ApiClient.FetchCount = 0;
+        ApiClient.PurposeMode = "ordinary"; ApiClient.PurposePending = null;
         return (new NativeSendHost(), core);
     }
     private static async Task CheckDelayed(Func<NativeSendHost, CancellationTokenSource, Task> change)
@@ -46,6 +47,28 @@ internal static class Program
         await Case("media-await-close", () => CheckDelayed((host, cts) => host.Action("close", "a")));
         await Case("media-await-window-hidden", () => CheckDelayed((host, cts) => { host.HideForTest(); return Task.CompletedTask; }));
         await Case("text-local-attempt-only", async () => { var (host, core)=Setup(); var r=await host.SendText(Payload(false),default); Check(core.Calls==1 && State(r)=="local_attempted" && Attempted(r), "DOM bridge success must not claim platform acceptance/delivery"); });
+        await Case("dedicated-purpose-refuses-text-media-broadcast", async () => {
+            var (host, core)=Setup(); ApiClient.PurposeMode="dedicated";
+            var text=await host.SendText(Payload(false),default); var media=await host.SendMedia(Payload(),default);
+            var batch=await host.Broadcast(JsonSerializer.SerializeToElement(new{confirmed=true,workspaceMode="ordinary",text="hello",recipients=new[]{new{conversationKey="synthetic-target"}}}),default);
+            Check(!text.Ok&&!media.Ok&&!batch.Ok&&FakeCore.TotalCalls==0&&ApiClient.FetchCount==0,"dedicated cannot dispatch or fetch media through ordinary entry points");
+        });
+        await Case("group-JID-refuses-text-media-and-entire-mixed-batch", async () => {
+            var (host, core)=Setup();var group=JsonSerializer.SerializeToElement(new{confirmed=true,conversationKey="123@g.us",text="hello",dataBase64="AQID"});
+            Check(!(await host.SendText(group,default)).Ok&&!(await host.SendMedia(group,default)).Ok,"group JID refused before DOM");
+            var batch=await host.Broadcast(JsonSerializer.SerializeToElement(new{confirmed=true,text="hello",recipients=new[]{new{conversationKey="synthetic-target"},new{conversationKey="123@G.US"}}}),default);
+            Check(!batch.Ok&&FakeCore.TotalCalls==0,"mixed batch is refused before its first direct send");
+        });
+        await Case("purpose-await-foreground-change-never-dispatches", async () => {
+            var(host,core)=Setup();ApiClient.PurposePending=new(TaskCreationOptions.RunContinuationsAsynchronously);
+            var sending=host.SendText(Payload(false),default);host.InvalidateForTest();ApiClient.PurposePending.SetResult(new("ordinary"));var result=await sending;
+            Check(!result.Ok&&!Attempted(result)&&FakeCore.TotalCalls==0,"old confirmed purpose cannot revive an invalidated foreground ticket");
+        });
+        await Case("purpose-confirmation-error-never-dispatches", async () => {
+            var(host,core)=Setup();ApiClient.PurposePending=new(TaskCreationOptions.RunContinuationsAsynchronously);
+            var sending=host.SendText(Payload(false),default);ApiClient.PurposePending.SetException(new IOException("sidecar unavailable"));var result=await sending;
+            Check(!result.Ok&&!Attempted(result)&&FakeCore.TotalCalls==0,"unconfirmed purpose fails closed");
+        });
         await Case("media-local-attempt-only", async () => { var (host, core)=Setup(); ApiClient.Pending.SetResult(new(true,200,"",[1],"image/png","")); var r=await host.SendMedia(Payload(),default); Check(core.Calls==1 && State(r)=="local_attempted" && Attempted(r), "media DOM success must report only a local attempt"); });
         await Case("dispatch-exception-is-unknown", async () => { var (host,core)=Setup(); core.Throw=true; var r=await host.SendText(Payload(false),default); Check(State(r)=="unknown" && Attempted(r), "ExecuteScript failure after invocation cannot prove not sent"); });
         await Case("invalid-dispatch-result-is-unknown", async () => { var (host,core)=Setup(); core.Raw="not-json"; var r=await host.SendText(Payload(false),default); Check(State(r)=="unknown" && Attempted(r), "missing page result cannot prove not sent"); });
@@ -88,8 +111,12 @@ public static class App { public static FakeWsService WsService=new(); public st
 public sealed class FakeLocalService { public bool IsRunning=false; public ApiClient CreateApiClient()=>new(); }
 public sealed class ApiClient
 {
+    public static string PurposeMode="ordinary";
+    public static TaskCompletionSource<FixturePurpose>? PurposePending;
+    public Task<FixturePurpose> GetWsCollectorPurposeAsync(string accountId,CancellationToken token) => (PurposePending?.Task ?? Task.FromResult(new FixturePurpose(PurposeMode))).WaitAsync(token);
     public static TaskCompletionSource<BinaryApiResponse> Pending=new(TaskCreationOptions.RunContinuationsAsynchronously);
     public static int FetchCount;
     public Task<BinaryApiResponse> GetBytesAsync(string path,CancellationToken token,int maxBytes) { ++FetchCount; return Pending.Task; }
 }
+public sealed record FixturePurpose(string WorkspaceMode) { public bool AllowsDirectHistory => WorkspaceMode=="ordinary"; }
 public static class DesktopBridgeService { public const string CurrentVersion="test"; }

@@ -42,12 +42,16 @@ assert.match(script, /申请加入|等待审核|join request|approval pending/, 
 assert.match(script, /mergeRows\(run\.seen, readRows\(\)[\s\S]*collectGroupMonitorPreviewEvents/, 'full hidden list sweep must feed each rendered window to group monitoring');
 assert.match(script, /const groupMonitor = backgroundCollectorRole \? groupMonitorTick\(\)/, 'background heartbeat must drive the passive group monitor');
 assert.match(script, /advanced, queuedTasks:collectorTasks\.size, groupMonitor/, 'background heartbeat must expose monitor health counters');
-const begin = host.indexOf('private async Task<BridgeResponse> ConfigureVipGroupsAsync(');
+const begin = host.indexOf('private Task<BridgeResponse> ConfigureVipGroupsAsync(');
 const end = host.indexOf('private async Task<List<StoredWsAccount>> LoadWsAccountsAsync(', begin);
 assert.ok(begin > 0 && end > begin, 'independent group configuration boundaries must exist');
 const groupMonitorMethod = host.slice(begin, end);
 assert.match(groupMonitorMethod, /ConfigureGroupMonitorAsync[\s\S]*ExecuteCollectorCommandAsync/,
   'configuration executes through the running independent collector gateway');
+assert.match(groupMonitorMethod, /GetWsCollectorPurposeAsync[\s\S]*GetWsCollectorMonitorAsync/,
+  'purpose and exact monitor targets are confirmed by the sidecar before execution');
+assert.doesNotMatch(groupMonitorMethod, /payload\.GetRawText\(\)/,
+  'untrusted renderer monitor targets are never injected into the collector');
 assert.match(groupMonitorMethod, /"pause" => "Pause"[\s\S]*"Stop"/,
   'safe monitor stop and pause remain available');
 assert.doesNotMatch(groupMonitorMethod, /session\.View\.CoreWebView2\.ExecuteScriptAsync/,
