@@ -7,12 +7,15 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const repo = path.resolve(__dirname, '../..');
-const core = require(path.join(repo, 'resources/app/modules/ws-workbench-core.js'));
-const businessSource = fs.readFileSync(path.join(repo, 'resources/app/modules/ws-business-pages.js'), 'utf8');
-const avatarSource = fs.readFileSync(path.join(repo, 'resources/app/modules/customer-avatar.js'), 'utf8');
-const source = fs.readFileSync(path.join(repo, 'resources/app/modules/ws-workbench.js'), 'utf8');
 
 function renderWsWorkbenchFixture(options = {}) {
+  // Packaged-content smoke must render the staged implementation, not silently
+  // fall back to checkout sources. Existing source-layout callers keep default.
+  const resourceRoot = path.resolve(options.resourceRoot || path.join(repo, 'resources/app'));
+  const core = require(path.join(resourceRoot, 'modules/ws-workbench-core.js'));
+  const businessSource = fs.readFileSync(path.join(resourceRoot, 'modules/ws-business-pages.js'), 'utf8');
+  const avatarSource = fs.readFileSync(path.join(resourceRoot, 'modules/customer-avatar.js'), 'utf8');
+  const source = fs.readFileSync(path.join(resourceRoot, 'modules/ws-workbench.js'), 'utf8');
   const width = Number(options.width) || 1440;
   const target = { innerHTML: '' };
   const host = { state: { view: 'ws-workbench', settings: {}, customers: [], activities: [] } };
@@ -39,6 +42,7 @@ function renderWsWorkbenchFixture(options = {}) {
   vm.runInNewContext(source.replace(bootCall, '  globalThis.__wsRenderFixture = { state, render, wsWorkspacePageState };\n})();'), sandbox, { filename: 'ws-workbench-full-render-fixture.js' });
   const { state, render, wsWorkspacePageState } = sandbox.__wsRenderFixture;
   state.active = true;
+  state.workspaceMode = options.workspaceMode || 'ordinary';
   state.wsWorkspaceView = options.view || 'chat';
   state.wsWorkspaceNavCollapsed = options.navCollapsed === true;
   state.assistDrawerOpen = options.assistOpen === true;

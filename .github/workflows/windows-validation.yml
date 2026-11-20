@@ -52,6 +52,7 @@ jobs:
             'tests/ws-background-isolation.test.cjs',
             'tests/ws-workbench-security.test.cjs',
             'tests/desktop-packaging-contract.test.cjs',
+            'tests/packaged-workspace-webview-contract.test.cjs',
             'tests/release-gate-contract.test.cjs',
             'tests/legacy-install-retirement.test.cjs',
             'tests/current-docs-consistency.test.cjs',
@@ -105,6 +106,21 @@ jobs:
           }
           $manifest = Get-Content work/rc3-installer/release-output-manifest.json -Raw | ConvertFrom-Json
           ./scripts/verify-winui-installer.ps1 -InstallerPath (Join-Path $PWD "work/rc3-installer/$($manifest.installer)") -StageDir (Join-Path $PWD 'work/winui-bundle/zhike-winui-6.1.0-win-x64') -OutputDir (Join-Path $PWD 'work/installer-smoke')
+      - name: Render packaged ordinary and dedicated workspaces in isolated WebView2
+        shell: pwsh
+        run: |
+          $sdk = (Get-Command dotnet).Source
+          $env:ZHIKE_EDGE_OBSERVER_DOTNET = $sdk
+          $hostOutput = Join-Path $PWD ('work/packaged-webview-host/' + [Guid]::NewGuid().ToString('N'))
+          & $sdk build tests/native/IsolatedWebViewHost/IsolatedWebViewHost.csproj -c Release -p:Platform=x64 -r win-x64 -o $hostOutput --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $sdk build scripts/diagnostics/edge-exit-observer/observer/Observer.csproj -c Release --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:ZHIKE_TEST_WEBVIEW_HOST = Join-Path $hostOutput 'IsolatedWebViewHost.exe'
+          node tests/isolated-webview-native.test.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tests/packaged-workspace-webview-smoke.test.cjs (Join-Path $PWD 'work/winui-bundle/zhike-winui-6.1.0-win-x64') (Join-Path $PWD 'work/packaged-webview-smoke')
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Collect verified candidate assets
         shell: pwsh
         run: |
@@ -117,7 +133,7 @@ jobs:
           $signature = (Get-AuthenticodeSignature $installer).Status.ToString()
           if (@{ Valid = 'signed-and-verified'; NotSigned = 'unsigned' }[$signature] -ne $manifest.signingStatus) { throw 'Installer signature status mismatch.' }
           Copy-Item $installer (Join-Path $PWD "work/rc3-artifact/$($manifest.releaseAsset)")
-          Copy-Item work/rc3-installer/release-output-manifest.json,work/rc3-installer/sidecar-readiness.txt,work/winui-bundle/zhike-winui-6.1.0-win-x64/bundle-manifest.json,work/installer-smoke/installer-smoke-result.json work/rc3-artifact
+          Copy-Item work/rc3-installer/release-output-manifest.json,work/rc3-installer/sidecar-readiness.txt,work/winui-bundle/zhike-winui-6.1.0-win-x64/bundle-manifest.json,work/installer-smoke/installer-smoke-result.json,work/packaged-webview-smoke/packaged-workspace-result.json work/rc3-artifact
       - uses: actions/upload-artifact@v4
         with:
           name: zhike-6.1.0-rc.3-win-x64
@@ -130,5 +146,15 @@ jobs:
         with:
           name: installer-diagnostics
           path: work/installer-smoke/
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Preserve isolated WebView diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: packaged-webview-diagnostics
+          path: |
+            work/packaged-webview-smoke/
+            .tools/native-renderer/controlled-fixture/
           if-no-files-found: ignore
           retention-days: 7

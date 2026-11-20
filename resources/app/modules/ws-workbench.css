@@ -993,8 +993,8 @@ html[data-motion="off"] body.ws-workspace-active .ws-workbench-shell *::after{sc
 
 /* The two business entrances share the native shell and keep distinct accounts. */
 .ws-workspace-mode-switch{display:flex;gap:6px;padding:8px 12px;flex-shrink:0}
-.ws-workspace-mode-switch button{flex:1;min-width:0;border:1px solid var(--line,#dbe3eb);border-radius:8px;padding:7px 4px;background:transparent;color:inherit;font:inherit;cursor:pointer}
-.ws-workspace-mode-switch button[aria-pressed="true"]{background:var(--accent-soft,#e9f2ff);font-weight:700}
+.ws-workspace-mode-switch button{flex:1;min-width:0;border:1px solid var(--ws-nav-line,#3e5682);border-radius:8px;padding:7px 4px;background:transparent;color:var(--ws-nav-text,#e1ebff);font:inherit;cursor:pointer}
+.ws-workspace-mode-switch button[aria-pressed="true"]{border-color:var(--ws-nav-accent,#8dbbff);background:var(--ws-nav-active,#28416d);color:var(--ws-nav-active-text,#fff);font-weight:700}
 .ws-workspace-nav.is-collapsed .ws-workspace-mode-switch{flex-direction:column;padding:5px}
 .ws-workspace-nav.is-collapsed .ws-workspace-mode-switch button{font-size:10px;padding:5px 1px}
 .ws-workspace-empty{overflow:auto!important}.ws-workspace-empty>.ws-workspace-page-content{display:block!important;position:static;min-height:0}
