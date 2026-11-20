@@ -43,6 +43,28 @@ function fixture() {
   return { controls, modal, classes, bridge, status, calls, notices, open, click, change };
 }
 const tests = [
+  ['APINebula selection tests, lists and saves the chosen custom model', async () => {
+    const f = fixture(); await f.open();
+    assert.match(f.modal.innerHTML, /<option\b[^>]*value="apinebula"[^>]*>[^<]*APINebula/i);
+    f.controls['#gptApiKey'].value = 'previous-provider-transient-input';
+    f.bridge.status = async ({ provider }) => ({ ...f.status(provider), model: 'gpt-6-astra' });
+    await f.change('apinebula');
+    assert.equal(f.controls['#gptApiKey'].value, '');
+    assert.equal(f.controls['#gptModel'].value, 'gpt-6-astra');
+    const calls = [];
+    f.bridge.listModels = async ({ provider, model }) => { calls.push(['models', provider, model]); return { models: ['gpt-6-astra', 'nebula-custom-alias'] }; };
+    f.bridge.testConnection = async ({ provider, model }) => { calls.push(['test', provider, model]); return { providerName: 'APINebula', model }; };
+    f.bridge.saveKey = async ({ provider, model, apiKey }) => { calls.push(['save', provider, model]); assert.equal(apiKey, 'nebula-fixture-key'); };
+    await f.click('models');
+    assert.match(f.controls['#gptModelList'].innerHTML, /nebula-custom-alias/);
+    f.controls['#gptApiKey'].value = 'nebula-fixture-key';
+    f.controls['#gptModel'].value = 'nebula-custom-alias';
+    await f.click('test');
+    await f.click('save-key');
+    assert.deepEqual(calls, [['models', 'apinebula', 'gpt-6-astra'], ['test', 'apinebula', 'nebula-custom-alias'], ['save', 'apinebula', 'nebula-custom-alias']]);
+    assert.equal(f.controls['#gptApiKey'].value, '');
+    assert.equal(f.classes.has('hidden'), true, 'a successful save closes the modal');
+  }],
   ['provider change immediately clears temporary secret', async () => {
     const f = fixture(); await f.open(); f.controls['#gptApiKey'].value = 'synthetic-transient-input';
     const gate = deferred(); f.bridge.status = () => gate.promise; const pending = f.change('teamorouter');

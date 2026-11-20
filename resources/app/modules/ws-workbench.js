@@ -2980,7 +2980,13 @@
       await failAiJob(aiJob?.job, context, 'AI 分析已取消，任务保留待重试。');
       return { ok: false, reason: 'AI 分析已取消。', cancelled: true };
     }
-    if (!service.configured) { await failAiJob(aiJob.job, context, 'AI 服务未配置，请先配置 TeamoRouter 或 OpenAI。'); return { ok: false, reason: 'AI 服务未配置，请先在 GPT 运营助手中配置 TeamoRouter 或 OpenAI。' }; }
+    if (!service.configured) {
+      const reason = options.automatic === true
+        ? '自动分析需要配置 OpenAI 官方 API Key。'
+        : '请在 GPT 运营助手的设置中配置 AI 服务商和 API Key。';
+      await failAiJob(aiJob.job, context, reason);
+      return { ok: false, reason };
+    }
     try {
       const analysis = await analyzeHistoryChunks(chunks, conversation, context, aiJob.job, {
         signal,

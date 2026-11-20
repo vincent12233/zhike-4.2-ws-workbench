@@ -78,6 +78,12 @@ jobs:
             node $test
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
+      - name: Verify AI provider selection and outbound requests with local fixtures
+        shell: pwsh
+        run: |
+          node scripts/stage55c/gpt-provider-race-runtime.test.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet run --project desktop/tests/AiBridgeProviderRuntime/AiBridgeProviderRuntime.csproj -c Release
       - name: Prepare the official Node runtime and Inno Setup compiler
         shell: pwsh
         run: |

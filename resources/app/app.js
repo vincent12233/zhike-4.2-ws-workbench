@@ -1494,7 +1494,7 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
         '只有明确的股票代码/买卖方向/买入卖出日期/业务日期/记录类型才可判为 ticket；只有明确的入金日期、币种、支付或入金业务记录才可判为 deposit。单独的“入金金额”在客户中心导出中仍属于摘要列。',
         '如果同一文件同时包含客户资料和真实业务行，才返回 mixed；不要因为列名包含“跟票”或“入金”就返回 mixed。',
       ].join('\n');
-      const result=await bridge.request({provider:'teamorouter',assistantMode:'operations',input:prompt,context:'表头：'+JSON.stringify(headersText)+'\n样例：'+sample});
+      const result=await bridge.request({assistantMode:'operations',input:prompt,context:'表头：'+JSON.stringify(headersText)+'\n样例：'+sample});
       const match=String(result?.text||'').match(/\{[\s\S]*\}/);if(!match)return localMapping;
       const rawParsed=JSON.parse(match[0]);
       const parsed=rawParsed?.mapping&&typeof rawParsed.mapping==='object'&&!Array.isArray(rawParsed.mapping)

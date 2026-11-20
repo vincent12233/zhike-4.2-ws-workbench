@@ -9,6 +9,7 @@ var testApiKey = string.Concat("sk-", "teamo-", "test-not-a-secret-placeholder-0
 Directory.CreateDirectory(root);
 try
 {
+    await ApiNebulaChecks.RunAsync(Path.Combine(root, "apinebula"));
     var handler = new FakeHandler();
     var service = new AiBridgeService(root, new HttpClient(handler) { BaseAddress = new Uri("https://test.invalid") });
     await service.InvokeAsync("saveKey", JsonSerializer.SerializeToElement(new { provider = "teamorouter", apiKey = testApiKey, model = "gpt-5.4-mini" }));

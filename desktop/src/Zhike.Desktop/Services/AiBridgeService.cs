@@ -112,6 +112,7 @@ public sealed class AiBridgeService
     {
         ["openai"] = new("OpenAI 官方 API", "https://api.openai.com/v1", "gpt-5-mini"),
         ["teamorouter"] = new("TeamoRouter", "https://api.teamorouter.com/v1", "gpt-5.6-sol"),
+        ["apinebula"] = new("APINebula", "https://apinebula.ai/v1", "gpt-6-astra"),
     };
     private readonly string _path;
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -203,7 +204,8 @@ public sealed class AiBridgeService
         var existing = document.Providers.TryGetValue(providerKey, out var row) ? row : new CredentialRow();
         if (!string.IsNullOrWhiteSpace(entered))
         {
-            if (!entered.StartsWith("sk-", StringComparison.OrdinalIgnoreCase) || entered.Length < 12)
+            if (entered.Length < 12 || entered.Any(c => c <= ' ' || c > '~') ||
+                (providerKey != "apinebula" && !entered.StartsWith("sk-", StringComparison.OrdinalIgnoreCase)))
                 throw new InvalidOperationException("API Key 格式不正确。");
             if (providerKey == "teamorouter" && !entered.StartsWith("sk-teamo-", StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException("TeamoRouter API Key 通常以 sk-teamo- 开头。");
@@ -232,6 +234,18 @@ public sealed class AiBridgeService
     private async Task<JsonElement> TestConnectionAsync(JsonElement payload, CancellationToken cancellationToken)
     {
         var credential = await ResolveCredentialAsync(payload, cancellationToken);
+        if (credential.ProviderKey == "apinebula")
+        {
+            var models = await FetchModelsAsync(credential, cancellationToken);
+            if (!models.Contains(credential.Model, StringComparer.Ordinal))
+                throw new InvalidOperationException("APINebula 当前令牌的模型目录中没有所选模型，请检查令牌分组或重新选择模型。");
+            return JsonSerializer.SerializeToElement(new
+            {
+                ok = true, provider = credential.ProviderKey, providerName = credential.Provider.Name,
+                model = credential.Model, requestedModel = credential.Model, modelFallback = false,
+                message = "已连接 APINebula，所选模型在当前令牌目录中。"
+            });
+        }
         var sent = await SendAiWithRecoveryAsync(credential, "Reply OK.", 8, cancellationToken);
         using var response = sent.Response;
         var responseText = await ReadContentWithLimitAsync(response, cancellationToken);
@@ -284,11 +298,27 @@ public sealed class AiBridgeService
             var managementMode = string.Equals(StringValue(payload, "mode"), "manage", StringComparison.OrdinalIgnoreCase);
             if (assistantMode is "code" or "operations") instructions += " 当前模式：" + assistantMode + "，请优先给出结构化、可核对的分析。";
             var prompt = $"用户问题：{input}\n\n最近对话：{history}\n\n{attachments}\n本地上下文：{context}";
-            var body = new Dictionary<string, object?> { ["model"] = credential.Model, ["store"] = false, ["max_output_tokens"] = 4096, ["instructions"] = instructions, ["input"] = prompt };
-            if (managementMode) { body["tools"] = new[] { ManagementTool() }; body["tool_choice"] = new { type = "function", name = "propose_data_changes" }; }
-            var sent = credential.ProviderKey.Equals("teamorouter", StringComparison.OrdinalIgnoreCase)
-                ? await SendAiWithRecoveryAsync(credential, prompt, 4096, requestTimeout.Token)
-                : new AiSendResult(await SendAsync(credential, "/responses", body, requestTimeout.Token), credential.Model, false);
+            AiSendResult sent;
+            if (credential.ProviderKey == "teamorouter")
+                sent = await SendAiWithRecoveryAsync(credential, prompt, 4096, requestTimeout.Token);
+            else
+            {
+                var chat = credential.ProviderKey == "apinebula";
+                var body = chat
+                    ? new Dictionary<string, object?> { ["model"] = credential.Model, ["max_completion_tokens"] = 4096,
+                        ["messages"] = new[] { new { role = "system", content = instructions }, new { role = "user", content = prompt } } }
+                    : new Dictionary<string, object?> { ["model"] = credential.Model, ["store"] = false,
+                        ["max_output_tokens"] = 4096, ["instructions"] = instructions, ["input"] = prompt };
+                if (managementMode)
+                {
+                    body["tools"] = new[] { ManagementTool(chat) };
+                    body["tool_choice"] = chat
+                        ? new { type = "function", function = new { name = "propose_data_changes" } }
+                        : new { type = "function", name = "propose_data_changes" };
+                }
+                var httpResponse = await SendAsync(credential, chat ? "/chat/completions" : "/responses", body, requestTimeout.Token);
+                sent = new AiSendResult(httpResponse, credential.Model, false);
+            }
             using var response = sent.Response;
             var text = await ReadContentWithLimitAsync(response, requestTimeout.Token);
             if (!response.IsSuccessStatusCode) throw new InvalidOperationException(FriendlyError(credential.ProviderKey, (int)response.StatusCode, text));
@@ -298,8 +328,11 @@ public sealed class AiBridgeService
             var responseId = document.RootElement.TryGetProperty("id", out var id) ? id.GetString() ?? "" : "";
             if (managementMode)
             {
-                var actions = ExtractManagementActions(document.RootElement);
-                return JsonSerializer.SerializeToElement(new { text = string.IsNullOrWhiteSpace(output) ? "已生成管理建议，请确认后执行。" : output, actions, model = sent.Model, requestedModel = credential.Model, modelFallback = sent.ModelFallback, providerName = credential.Provider.Name, responseId });
+                var actions = credential.ProviderKey == "teamorouter" ? Array.Empty<object>() :
+                    ExtractManagementActions(document.RootElement, credential.ProviderKey == "apinebula");
+                if (string.IsNullOrWhiteSpace(output))
+                    output = actions.Length > 0 ? "已生成管理建议，请确认后执行。" : "模型未返回可预览的管理建议。";
+                return JsonSerializer.SerializeToElement(new { text = output, actions, model = sent.Model, requestedModel = credential.Model, modelFallback = sent.ModelFallback, providerName = credential.Provider.Name, responseId });
             }
             if (string.IsNullOrWhiteSpace(output)) throw new InvalidOperationException("AI 没有返回可显示的内容。");
             return JsonSerializer.SerializeToElement(new { text = output, model = sent.Model, requestedModel = credential.Model, modelFallback = sent.ModelFallback, providerName = credential.Provider.Name, responseId });
@@ -403,13 +436,11 @@ public sealed class AiBridgeService
         return "附件内容：\n" + string.Join("\n", rows);
     }
 
-    private static object ManagementTool() => new
+    private static object ManagementTool(bool chat)
     {
-        type = "function",
-        name = "propose_data_changes",
-        description = "提出客户资料和跟进记录变更计划；只输出建议，不直接执行。",
-        strict = true,
-        parameters = new
+        const string name = "propose_data_changes";
+        const string description = "提出客户资料和跟进记录变更计划；只输出建议，不直接执行。";
+        var parameters = new
         {
             type = "object",
             additionalProperties = false,
@@ -419,26 +450,54 @@ public sealed class AiBridgeService
                 operations = new { type = "array", maxItems = 100, items = new { type = "object" } }
             },
             required = new[] { "summary", "operations" }
-        }
-    };
+        };
+        return chat ? new { type = "function", function = new { name, description, parameters } }
+            : new { type = "function", name, description, strict = true, parameters };
+    }
 
-    private static object[] ExtractManagementActions(JsonElement root)
+    private static object[] ExtractManagementActions(JsonElement root, bool chat)
     {
-        if (!root.TryGetProperty("output", out var output) || output.ValueKind != JsonValueKind.Array) return Array.Empty<object>();
-        foreach (var item in output.EnumerateArray())
+        if (!chat && root.TryGetProperty("output", out var output) && output.ValueKind == JsonValueKind.Array)
         {
-            if (!item.TryGetProperty("type", out var type) || type.GetString() != "function_call") continue;
-            if (!item.TryGetProperty("name", out var name) || name.GetString() != "propose_data_changes") continue;
-            if (!item.TryGetProperty("arguments", out var args)) continue;
-            try
+            foreach (var item in output.EnumerateArray())
             {
-                using var document = JsonDocument.Parse(args.GetString() ?? "{}");
-                if (document.RootElement.TryGetProperty("operations", out var operations) && operations.ValueKind == JsonValueKind.Array)
-                    return operations.EnumerateArray().Take(100).Select(value => (object)value.Clone()).ToArray();
+                if (item.ValueKind != JsonValueKind.Object || StringValue(item, "type") != "function_call" ||
+                    StringValue(item, "name") != "propose_data_changes") continue;
+                var operations = ReadManagementOperations(item);
+                if (operations.Length > 0) return operations;
             }
-            catch { }
+        }
+        if (chat && root.TryGetProperty("choices", out var choices) && choices.ValueKind == JsonValueKind.Array &&
+            choices.GetArrayLength() > 0 && choices[0].ValueKind == JsonValueKind.Object &&
+            choices[0].TryGetProperty("message", out var message) && message.ValueKind == JsonValueKind.Object &&
+            message.TryGetProperty("tool_calls", out var calls) && calls.ValueKind == JsonValueKind.Array)
+        {
+            var operations = new List<object>();
+            foreach (var call in calls.EnumerateArray())
+            {
+                if (call.ValueKind != JsonValueKind.Object || StringValue(call, "type") != "function" ||
+                    !call.TryGetProperty("function", out var function) || function.ValueKind != JsonValueKind.Object ||
+                    StringValue(function, "name") != "propose_data_changes") continue;
+                operations.AddRange(ReadManagementOperations(function).Take(100 - operations.Count));
+                if (operations.Count == 100) break;
+            }
+            return operations.ToArray();
         }
         return Array.Empty<object>();
+    }
+
+    private static object[] ReadManagementOperations(JsonElement function)
+    {
+        if (!function.TryGetProperty("arguments", out var args) || args.ValueKind != JsonValueKind.String) return [];
+        try
+        {
+            using var document = JsonDocument.Parse(args.GetString() ?? "{}");
+            if (document.RootElement.ValueKind == JsonValueKind.Object && document.RootElement.TryGetProperty("operations", out var operations) && operations.ValueKind == JsonValueKind.Array)
+                return operations.EnumerateArray().Where(value => value.ValueKind == JsonValueKind.Object)
+                    .Take(100).Select(value => (object)value.Clone()).ToArray();
+        }
+        catch (JsonException) { }
+        return [];
     }
 
     private async Task<Credential> ResolveCredentialAsync(JsonElement payload, CancellationToken cancellationToken)
@@ -739,10 +798,20 @@ public sealed class AiBridgeService
         => document.Providers.TryGetValue(provider, out var row) && !string.IsNullOrWhiteSpace(row.Model) ? row.Model! : fallback;
 
     private static string CleanProvider(string? value, string? fallback)
-        => Providers.ContainsKey(value ?? "") ? value!.ToLowerInvariant() : (Providers.ContainsKey(fallback ?? "") ? fallback!.ToLowerInvariant() : "openai");
+    {
+        if (string.IsNullOrWhiteSpace(value)) return Providers.ContainsKey(fallback ?? "") ? fallback!.ToLowerInvariant() : "openai";
+        if (!Providers.ContainsKey(value)) throw new InvalidOperationException("无法识别所选 AI 服务商，请重新选择。");
+        return value.ToLowerInvariant();
+    }
 
     private static string ValidateModel(string provider, string? value)
     {
+        if (provider == "apinebula" && !string.IsNullOrWhiteSpace(value))
+        {
+            var alias = value.Trim();
+            if (alias.Any(char.IsControl)) throw new InvalidOperationException("APINebula 模型名称包含无效字符。");
+            return alias;
+        }
         var model = string.IsNullOrWhiteSpace(value) ? Providers[provider].DefaultModel : value.Trim()[..Math.Min(80, value.Trim().Length)];
         if (provider == "teamorouter" && !model.StartsWith("gpt", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("当前模型不支持 TeamoRouter 的 GPT 兼容接口，请更换 GPT 系列模型。");
         return model;
@@ -783,6 +852,17 @@ public sealed class AiBridgeService
             if (document.RootElement.TryGetProperty("trace_id", out var traceValue)) trace = traceValue.GetString() ?? "";
         }
         catch { }
+        if (provider == "apinebula")
+        {
+            if (status == 401) return "APINebula API Key 无效或已过期（401）。";
+            if (status == 403) return "APINebula 拒绝访问（403），请检查令牌分组及模型权限。";
+            if (status == 402 || code.Contains("insufficient", StringComparison.OrdinalIgnoreCase)) return $"APINebula 可用额度不足（{status}），请检查令牌或账户余额。";
+            if (status == 400 && (code.Contains("model", StringComparison.OrdinalIgnoreCase) || message.Contains("model", StringComparison.OrdinalIgnoreCase)))
+                return "APINebula 模型不可用（400），请在当前令牌的模型目录中重新选择。";
+            if (status == 429) return "APINebula 请求频率受限（429），请稍后重试。";
+            if (IsRetryableStatus((HttpStatusCode)status)) return $"APINebula 暂时不可用（{status}），请稍后重试。";
+            return $"APINebula 请求失败（{status}），请检查所选模型和令牌分组。";
+        }
         if (status is 401 or 403) return $"{name} API Key 无效或已被删除。";
         if (status == 402 || code.Contains("insufficient", StringComparison.OrdinalIgnoreCase)) return $"{name} 额度不足，请先检查账户余额。";
         if (status == 400 && (code.Contains("model", StringComparison.OrdinalIgnoreCase) || message.Contains("model", StringComparison.OrdinalIgnoreCase))) return $"{name} 模型不可用：{message.Trim()} 请点击“获取可用模型”后选择目录中的 GPT 模型。";
