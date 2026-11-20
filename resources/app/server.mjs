@@ -1931,6 +1931,7 @@ function wsSendAuditPayload(row) {
     accountId: row.account_id,
     conversationId: row.conversation_id,
     batchId: row.batch_id || '',
+    customerId: wsText(metadata.auditCustomerId, 128),
     operation: row.operation || 'single',
     idempotencyKey: row.idempotency_key || '',
     originalText: row.original_text || '',
@@ -2895,12 +2896,33 @@ function restoreError(status, message, code) {
   return Object.assign(new Error(message), { status, code });
 }
 
+function purgeCustomerSendAudit(customer, customers) {
+  const owner = "COALESCE(json_extract(CASE WHEN json_valid(a.native_result_json) THEN a.native_result_json ELSE '{}' END,'$.auditCustomerId'),'')";
+  db.prepare(`DELETE FROM ws_send_audit AS a WHERE ${owner}=? OR (${owner}=''
+    AND EXISTS (SELECT 1 FROM ws_conversations c WHERE c.account_id=a.account_id AND c.id=a.conversation_id AND c.customer_id=?))`).run(customer.id,customer.id);
+
+  // Early retained audits may predate owner snapshots and no longer have a
+  // conversation row. Recover only an unambiguous CRM conversation/account link.
+  const ids = row => [row.wsConversationId,...(Array.isArray(row.wsConversationIds)?row.wsConversationIds:[])].filter(Boolean).map(String);
+  const accounts = new Set([customer.wsAccountId,...(Array.isArray(customer.wsAccountIds)?customer.wsAccountIds:[])].filter(Boolean).map(String));
+  const historical = new Set(ids(customer));
+  if (accounts.size !== 1 || !historical.size) return;
+  for (const other of customers) {
+    if (String(other.id) !== String(customer.id)) for (const id of ids(other)) historical.delete(id);
+  }
+  if (historical.size) db.prepare(`DELETE FROM ws_send_audit AS a WHERE a.account_id=? AND a.history_only=1 AND ${owner}=''
+    AND a.conversation_id IN (SELECT value FROM json_each(?))
+    AND NOT EXISTS (SELECT 1 FROM ws_conversations c WHERE c.id=a.conversation_id AND c.account_id=a.account_id)`)
+    .run([...accounts][0],JSON.stringify([...historical]));
+}
+
 function restoreSendAuditHistory(accountId, rows, now) {
   // Freeze plans targeting the old conversation set. An in-flight native
   // completion may still record its outcome, but restore never authorizes a send.
   db.prepare('UPDATE ws_send_audit SET history_only=1 WHERE account_id=? AND history_only=0').run(accountId);
   const findId = db.prepare('SELECT id,account_id,idempotency_key,conversation_id FROM ws_send_audit WHERE id=?');
   const findKey = db.prepare('SELECT id FROM ws_send_audit WHERE account_id=? AND idempotency_key=?');
+  const linkedCustomer = db.prepare('SELECT customer_id FROM ws_conversations WHERE account_id=? AND id=?');
   const insert = db.prepare(`INSERT INTO ws_send_audit
     (id,account_id,conversation_id,batch_id,operation,idempotency_key,original_text,translated_text,target_language,status,error_message,native_result_json,created_at,updated_at,payload_kind,caption,attachment_ids_json,history_only)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)`);
@@ -2913,6 +2935,7 @@ function restoreSendAuditHistory(accountId, rows, now) {
     // An external file supplies historical observations, never a native attempt
     // token, platform receipt or permission to replay an unfinished dispatch.
     const metadata = { importedHistory: true, sendAttempt: { deliveryState: 'unknown', safeToRetry: false } };
+    metadata.auditCustomerId = wsText(item.customerId,128) || linkedCustomer.get(accountId,conversation)?.customer_id || '';
     if (Array.isArray(item.attachments)) metadata.attachmentHistory = item.attachments.map((attachment,index) => ({
       id: wsText(attachment?.id,160), mediaId: wsText(attachment?.mediaId,160), orderNo: Number(attachment?.orderNo ?? index),
       fileName: wsText(attachment?.fileName,250), mediaType: wsText(attachment?.mediaType,40), mimeType: wsText(attachment?.mimeType,120),
@@ -3009,6 +3032,12 @@ function restoreWsAccount(body) {
   db.prepare('DELETE FROM ws_ai_analyses WHERE account_id=?').run(accountId);
   db.prepare('DELETE FROM ws_replies WHERE account_id=?').run(accountId);
   db.prepare('DELETE FROM ws_settings WHERE account_id=?').run(accountId);
+  // Older locally-created audits have only a conversation ID. Preserve its
+  // owner before replacing the live row so a later customer purge can find it.
+  db.prepare(`UPDATE ws_send_audit AS audit SET native_result_json=json_set(audit.native_result_json,'$.auditCustomerId',c.customer_id)
+    FROM ws_conversations AS c WHERE c.account_id=? AND audit.account_id=c.account_id
+      AND c.id=audit.conversation_id AND c.customer_id<>'' AND json_valid(audit.native_result_json)
+      AND COALESCE(json_extract(audit.native_result_json,'$.auditCustomerId'),'')=''`).run(accountId);
   db.prepare('DELETE FROM ws_conversations WHERE account_id=?').run(accountId);
   const now = new Date().toISOString();
   db.prepare("UPDATE ws_ai_authorizations SET status='revoked',revision=revision+1,updated_at=? WHERE account_id=? AND status<>'revoked'").run(now, accountId);
@@ -5298,7 +5327,7 @@ const server = createServer(async (req, res) => {
           db.prepare(`INSERT INTO ws_send_audit
             (id,account_id,conversation_id,batch_id,operation,idempotency_key,original_text,translated_text,target_language,status,error_message,native_result_json,payload_kind,caption,attachment_ids_json,created_at,updated_at)
             VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-              .run(wsCreateId('wsa'), accountId, conversation.id, batchId, operation, itemKey, originalText, translatedText, targetLanguage, 'queued', '', JSON.stringify({ planFingerprint: fingerprint }), payloadKind, caption, JSON.stringify(attachmentIds), now, now);
+              .run(wsCreateId('wsa'), accountId, conversation.id, batchId, operation, itemKey, originalText, translatedText, targetLanguage, 'queued', '', JSON.stringify({ planFingerprint: fingerprint, auditCustomerId: conversation.customer_id || '' }), payloadKind, caption, JSON.stringify(attachmentIds), now, now);
           const auditId = db.prepare('SELECT id FROM ws_send_audit WHERE account_id=? AND idempotency_key=?').get(accountId, itemKey)?.id;
           if (auditId && mediaRows.length) {
             const insertAttachment = db.prepare(`INSERT INTO ws_send_attachments
@@ -6194,6 +6223,7 @@ const server = createServer(async (req, res) => {
         const runIds = conversationIds.length
           ? db.prepare(`SELECT DISTINCT run_id FROM ws_collection_items WHERE conversation_id IN (${conversationIds.map(() => '?').join(',')})`).all(...conversationIds).map(row => String(row.run_id || '')).filter(Boolean)
           : [];
+        purgeCustomerSendAudit(customer,state.customers);
         state.customers = state.customers.filter(item => String(item.id) !== customerId);
         for (const key of ['tickets', 'deposits', 'followups', 'registrations']) state[key] = state[key].filter(item => String(item.customerId || '') !== customerId);
         state.settings.operatingTasks = state.settings.operatingTasks.filter(item => String(item.customerId || '') !== customerId);
@@ -6202,7 +6232,8 @@ const server = createServer(async (req, res) => {
           const placeholders = conversationIds.map(() => '?').join(',');
           // Child tables use ON DELETE CASCADE, so deleting the conversation
           // rows removes messages, analyses, replies, translations, ingest
-          // batches, collection items, alerts, send audits and settings.
+          // batches, collection items, alerts and settings. Send audits have
+          // already been removed by owner, including detached historical rows.
           db.prepare(`DELETE FROM ai_jobs WHERE conversation_id IN (${placeholders})`).run(...conversationIds);
           db.prepare(`UPDATE ws_ai_authorizations SET status='revoked',revision=revision+1,updated_at=? WHERE conversation_id IN (${placeholders}) AND status<>'revoked'`).run(new Date().toISOString(), ...conversationIds);
           db.prepare(`DELETE FROM ws_conversations WHERE id IN (${placeholders})`).run(...conversationIds);

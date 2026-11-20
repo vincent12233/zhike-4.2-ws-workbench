@@ -3,6 +3,7 @@ const { spawn } = require('node:child_process');
 const { mkdtempSync, rmSync } = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { DatabaseSync } = require('node:sqlite');
 
 const app = path.join(__dirname, '..', 'resources', 'app');
 const dataDir = mkdtempSync(path.join(os.tmpdir(), 'zhike-purge-completeness-'));
@@ -36,17 +37,28 @@ const iso = '2026-11-15T00:00:00.000Z';
   try {
     const initial = {
       schemaVersion: 4,
-      customers: [{ id: 'C-purge', name: '待彻底删除客户', phone: '9876500000', source: 'WS', status: '在群', deleted: false }],
+      customers: [
+        { id: 'C-purge', name: '待彻底删除客户', phone: '9876500000', source: 'WS', status: '在群', deleted: false,
+          wsAccountIds:['default'],wsConversationIds:['legacy-only','shared-id'] },
+        { id:'C-keep',wsAccountIds:['default'],wsConversationIds:['shared-id'] }
+      ],
       savedViews: [], activities: [], tickets: [], deposits: [], followups: [], registrations: [], phoneRegistry: [],
       batchOperations: [], settings: { operatingTasks: [{ id: 'task-purge', customerId: 'C-purge' }] }, channelAliases: {}, importIssues: [], qualityDecisions: {},
     };
     assert.equal((await request('/api/state', { method: 'POST', headers: { ...headers, 'x-state-version': '' }, body: JSON.stringify(initial) })).status, 200);
+    const old = await json(await request('/api/ws/conversations',{method:'POST',body:JSON.stringify({externalId:'old-link',customerId:'C-purge',data:{conversationType:'direct'}})}));
+    const previous = new DatabaseSync(path.join(dataDir,'workspace.sqlite'));
+    try {
+      previous.prepare("INSERT INTO ws_send_audit(id,account_id,conversation_id,status,created_at,updated_at) VALUES('archived-purge','default',?,'sent',?,?)").run(old.id,iso,iso);
+    } finally { previous.close(); }
+    assert.equal((await request('/api/ws/import',{method:'POST',body:JSON.stringify({schemaVersion:6,accountId:'default'})})).status,200);
+    const history = (await json(await request('/api/ws/export?accountId=default'))).sendAudit;
+    assert.equal(history.find(row=>row.id==='archived-purge').customerId,'C-purge');
     const conversation = await json(await request('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: 'purge-conversation', title: '待删除会话', customerId: 'C-purge', unreadCount: 0, data: { conversationType: 'direct', historyLoaded: true, historyFingerprint: 'purge-history', lastMessageFingerprint: 'purge-history', directionVersion: 4 } }) }));
     const analysis = await json(await request('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, result: { confidence: 0.9, summary: '待删除分析' } }) }));
     assert.ok(conversation.id, `conversation insert failed: ${JSON.stringify(conversation)}`);
     assert.ok(analysis.id, `analysis insert failed: ${JSON.stringify(analysis)}`);
 
-    const { DatabaseSync } = require('node:sqlite');
     const db = new DatabaseSync(path.join(dataDir, 'workspace.sqlite'));
     db.exec('PRAGMA foreign_keys=ON');
     const put = (table, row) => {
@@ -70,6 +82,10 @@ const iso = '2026-11-15T00:00:00.000Z';
     put('ws_group_monitor_profiles', { id: 'profile-group-purge', account_id: 'default', slot_key: 'purge-slot', status: 'paused', enabled: 0, poll_interval_sec: 45, last_heartbeat_at: '', last_error: '', data_json: '{}', created_at: iso, updated_at: iso });
     put('ws_group_monitor_targets', { id: 'target-group-purge', profile_id: 'profile-group-purge', account_id: 'default', group_jid: 'group@g.us', group_name: '删除测试群', source_id: '', channel_id: '', vip_only: 1, enabled: 0, last_snapshot_hash: '', last_seen_at: '', data_json: '{}', created_at: iso, updated_at: iso });
     put('ws_group_membership_events', { id: 'group-event-purge', account_id: 'default', profile_id: 'profile-group-purge', target_id: 'target-group-purge', group_jid: 'group@g.us', member_jid: '919876500000', member_phone: '9876500000', customer_id: 'C-purge', event_type: 'joined', event_at: iso, observed_at: iso, source: 'test', source_event_id: '', idempotency_key: 'purge-group-event', confidence: 0.9, evidence_hash: '', status: 'applied', review_reason: '', data_json: '{}', created_at: iso, updated_at: iso });
+    put('ws_accounts',{id:'other',created_at:iso,updated_at:iso});
+    for(const [id,account_id,conversation_id] of [['legacy-purge','default','legacy-only'],['other-seat','other','legacy-only'],['ambiguous','default','shared-id']]){
+      put('ws_send_audit',{id,account_id,conversation_id,status:'sent',history_only:1,created_at:iso,updated_at:iso});
+    }
     db.close();
 
     const purgeRequest = await json(await request('/api/data-governance/customers/C-purge/purge-request', { method: 'POST', body: JSON.stringify({ reason: '完整性测试' }) }));
@@ -89,6 +105,7 @@ const iso = '2026-11-15T00:00:00.000Z';
       aiJobs: checkDb.prepare('SELECT COUNT(*) AS n FROM ai_jobs WHERE conversation_id=?').get(conversation.id).n,
       alerts: checkDb.prepare('SELECT COUNT(*) AS n FROM ws_followup_alerts WHERE conversation_id=?').get(conversation.id).n,
       sends: checkDb.prepare('SELECT COUNT(*) AS n FROM ws_send_audit WHERE conversation_id=?').get(conversation.id).n,
+      archivedSends: checkDb.prepare("SELECT COUNT(*) AS n FROM ws_send_audit WHERE id IN ('archived-purge','legacy-purge')").get().n,
       evidence: checkDb.prepare('SELECT COUNT(*) AS n FROM ai_customer_field_evidence WHERE customer_id=?').get('C-purge').n,
       profiles: checkDb.prepare('SELECT COUNT(*) AS n FROM hot_chat_profiles WHERE customer_id=?').get('C-purge').n,
       profileFields: checkDb.prepare('SELECT COUNT(*) AS n FROM hot_chat_profile_fields WHERE profile_id=?').get('profile-purge').n,
@@ -97,6 +114,7 @@ const iso = '2026-11-15T00:00:00.000Z';
       groupEvents: checkDb.prepare('SELECT COUNT(*) AS n FROM ws_group_membership_events WHERE customer_id=?').get('C-purge').n,
       deleteRequests: checkDb.prepare('SELECT COUNT(*) AS n FROM customer_delete_requests WHERE customer_id=?').get('C-purge').n,
     };
+    assert.deepEqual(checkDb.prepare('SELECT id FROM ws_send_audit ORDER BY id').all().map(row=>row.id),['ambiguous','other-seat']);
     checkDb.close();
     for (const [name, count] of Object.entries(counts)) assert.equal(count, 0, `${name} should be purged, got ${count}`);
     const state = await json(await request('/api/state'));
