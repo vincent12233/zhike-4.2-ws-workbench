@@ -35,7 +35,13 @@
   const normalizeObjectRows = value => Array.isArray(value)
     ? value.filter(row => row && typeof row === 'object' && !Array.isArray(row))
     : [];
-  const normalizeCustomerRows = normalizeObjectRows;
+  function normalizeCustomerRows(value) {
+    return normalizeObjectRows(value).map(customer => {
+      const history = customer.statusHistory;
+      if (!Array.isArray(history) || !history.some(event => event?.origin === 'ws-group-monitor' && !Object.hasOwn(event, 'to'))) return customer;
+      return { ...customer, statusHistory: history.map(window.ZhikeBusinessRules.normalizeMonitorStatusHistoryEvent) };
+    });
+  }
   const state = {
     customers: normalizeCustomerRows(stored?.customers), view: 'home', vipFilter: 'all', collapsed: (()=>{try{return localStorage.getItem('zhike-sidebar-collapsed')==='true';}catch{return false;}})(), followTab: 'open',
     segment: { source: '全部', page: '全部', assistant: '全部', status: '', phase: '', hot: '', ticket: '', deposit: '', follow: '', vip: '', missingGroup: false },
@@ -1679,7 +1685,21 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
   }
   function exportImportIssues(){const list=state.importIssues;if(!list.length){toast('没有导入审计记录');return;}const csv=['文件,行号,状态,原问题,处理时间,关联客户ID,原始行,导入字段快照,修正字段快照',...list.map(x=>[x.file,x.row,x.resolved?'已导入':x.ignored?'已忽略':'待复核',x.reason,x.resolvedAt||x.ignoredAt||'',x.resolvedCustomerId||'',x.raw,JSON.stringify(x.originalValues||x.values||{}),JSON.stringify(x.values||{})].map(csvCell).join(','))].join('\r\n');download(`导入行审计_${today}.csv`,'\ufeff'+csv,'text/csv;charset=utf-8');}
   function validateBackupData(backup){const record=value=>Boolean(value&&typeof value==='object'&&!Array.isArray(value)),normalizePhone=value=>{const digits=String(value||'').replace(/\D/g,'');return digits.length===12&&digits.startsWith('91')?digits.slice(2):digits;};if(!record(backup)||!Array.isArray(backup.customers)||backup.customers.length>250000)throw new Error('备份格式不正确，无法识别客户列表。');const ids=new Set(),phones=new Set();for(const customer of backup.customers){const id=String(customer?.id??'').trim(),keys=record(customer)?[customer.phone,customer.rawPhone,...(Array.isArray(customer.legacyPhones)?customer.legacyPhones:[])].map(normalizePhone).filter(phone=>phone.length===10):[];if(!record(customer)||! /^[\p{L}\p{N}_-]{1,128}$/u.test(id)||ids.has(id))throw new Error('备份中的客户编号缺失、重复、过长或包含不支持的字符，未执行恢复。');if(!customer.deleted&&keys.some(phone=>phones.has(phone)))throw new Error('备份中存在重复客户号码。请先在原工作区数据治理中处理，未执行恢复。');ids.add(id);if(!customer.deleted)for(const phone of keys)phones.add(phone);}for(const key of ['tickets','deposits','followups','activities','savedViews','importIssues','phoneRegistry','registrations','batchOperations'])if(Object.hasOwn(backup,key)&&!Array.isArray(backup[key]))throw new Error(`备份中的${{tickets:'跟票',deposits:'入金',followups:'跟进',activities:'操作记录',savedViews:'保存视图',importIssues:'导入复核',phoneRegistry:'手机号登记',registrations:'报名',batchOperations:'批量操作'}[key]}清单格式异常，未执行恢复。`);for(const key of ['tickets','deposits','followups','activities','importIssues','phoneRegistry','registrations','batchOperations'])if(Array.isArray(backup[key])&&backup[key].some(item=>!record(item)))throw new Error(`备份中的${{tickets:'跟票',deposits:'入金',followups:'跟进',activities:'操作记录',phoneRegistry:'手机号登记',registrations:'报名',batchOperations:'批量操作'}[key]}记录格式异常，未执行恢复。`);for(const key of ['tickets','deposits','followups','registrations'])for(const item of backup[key]||[]){const customerId=String(item.customerId??'').trim();if(!customerId)continue;if(!/^[\p{L}\p{N}_-]{1,128}$/u.test(customerId)||!ids.has(customerId))throw new Error('备份中的业务记录关联了不存在或无效的客户编号，未执行恢复。');}for(const key of ['tickets','deposits','followups','activities','importIssues','phoneRegistry','registrations','batchOperations']){const seen=new Set();for(const item of backup[key]||[]){const id=String(item?.id??'').trim();if(id&&seen.has(id))throw new Error('备份中存在重复记录编号，未执行恢复。');if(id)seen.add(id);}}if(Array.isArray(backup.savedViews)&&backup.savedViews.some(item=>typeof item!=='string'&&!record(item)))throw new Error('备份中的保存视图格式异常，未执行恢复。');for(const key of ['settings','channelAliases','qualityDecisions'])if(Object.hasOwn(backup,key)&&!record(backup[key]))throw new Error(`备份中的${{settings:'系统设置',channelAliases:'渠道识别规则',qualityDecisions:'数据复核状态'}[key]}格式异常，未执行恢复。`);const operatingTasks=backup.settings?.operatingTasks;if(operatingTasks!==undefined&&(!Array.isArray(operatingTasks)||operatingTasks.some(task=>!record(task)||(task.customerId!=null&&task.customerId!==''&&!ids.has(String(task.customerId))))))throw new Error('备份中的任务记录关联了不存在的客户编号，未执行恢复。');}
-  function validateStatusHistoryData(backup){const validEvent=event=>event&&typeof event==='object'&&!Array.isArray(event)&&['joined','left'].includes(event.type)&&/^\d{4}-\d{2}-\d{2}$/.test(event.date||'')&&typeof event.to==='string'&&(!event.from||typeof event.from==='string')&&(!event.at||typeof event.at==='string'&&Number.isFinite(Date.parse(event.at)))&&(!event.source||typeof event.source==='string'&&event.source.length<=48)&&(!Object.hasOwn(event,'initial')||typeof event.initial==='boolean');for(const customer of backup.customers)if(Object.hasOwn(customer,'statusHistory')&&(!Array.isArray(customer.statusHistory)||customer.statusHistory.length>100000||customer.statusHistory.some(event=>!validEvent(event))))throw new Error('备份中的进退群状态历史格式异常，未执行恢复。');}
+  function validateStatusHistoryData(backup) {
+    const validEvent = stored => {
+      const event = window.ZhikeBusinessRules.normalizeMonitorStatusHistoryEvent(stored);
+      return event && typeof event === 'object' && !Array.isArray(event) && ['joined', 'left'].includes(event.type)
+        && /^\d{4}-\d{2}-\d{2}$/.test(event.date || '') && typeof event.to === 'string'
+        && (!event.from || typeof event.from === 'string') && (!event.at || typeof event.at === 'string' && Number.isFinite(Date.parse(event.at)))
+        && (!event.source || typeof event.source === 'string' && event.source.length <= (event.origin === 'ws-group-monitor' ? 160 : 48))
+        && (!Object.hasOwn(event, 'initial') || typeof event.initial === 'boolean');
+    };
+    for (const customer of backup.customers) {
+      if (Object.hasOwn(customer, 'statusHistory') && (!Array.isArray(customer.statusHistory) || customer.statusHistory.length > 100000 || !customer.statusHistory.every(validEvent))) {
+        throw new Error('备份中的进退群状态历史格式异常，未执行恢复。');
+      }
+    }
+  }
   async function decodeWorkspaceBackupFile(text){
     let backup=JSON.parse(text);
     if(backup?.backupFormat==='zhike-6-native-workspace'){

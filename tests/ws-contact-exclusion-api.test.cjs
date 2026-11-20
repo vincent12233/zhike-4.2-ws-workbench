@@ -185,7 +185,8 @@ async function check(name, fn) {
         groupEvents: [{ groupJid: 'exclusiongate1@g.us', memberId: '917000000001@s.whatsapp.net', type: 'joined', eventAt: new Date().toISOString(), sourceEventId: 'evt-listed-1', confidence: 0.95, memberName: 'Group Admin' }],
       });
       assert.equal(ingest.status, 200, 'ingest accepted');
-      assert.equal(ingest.value.groupEvents.ignored, 0, 'event must reach the gate, not be ignored: ' + JSON.stringify(ingest.value.groupEvents.events));
+      assert.equal(ingest.value.groupEvents.accepted, 1);
+      assert.equal(ingest.value.groupEvents.events[0].event.reviewReason, 'contact-excluded');
       const after = await customerCount();
       assert.equal(after, before, 'a listed member must not create a customer');
     });
@@ -207,6 +208,48 @@ async function check(name, fn) {
       await api('/api/ws/contact-exclusions', 'POST', { identity: '917000000999', displayName: '转为员工' });
       const after = await customerCount();
       assert.equal(after, listed, 'customer master must be untouched by exclusion');
+    });
+
+    await check('excluded existing customer retains CRM and memberships for new joins and departures', async () => {
+      const accountId = 'exclusion-dedicated', memberId = '917000000999@s.whatsapp.net';
+      await api(`/api/ws/group-monitors/${profileId}/targets/scan?accountId=${accountId}`, 'POST', {
+        accountId, targets: [{ groupJid: 'exclusiongate2@g.us', groupName: '第二个测试群', enabled: true }],
+      });
+      const customer = async () => (await getJson('/api/state')).customers.find(row => row.phone === '7000000999');
+      const hits = async () => (await getJson('/api/ws/contact-exclusions/hits?limit=200')).hits.filter(hit => hit.memberPhone === '7000000999');
+      const previous = await customer(), initialHits = (await hits()).length;
+      assert.equal(previous.groupMemberships.length, 1);
+      for (const [type, groupJid] of [['joined', 'exclusiongate2@g.us'], ['left', 'exclusiongate1@g.us'], ['removed', 'exclusiongate1@g.us']]) {
+        const event = { type, groupJid, memberId, sourceEventId: 'excluded-existing-' + type, eventAt: new Date().toISOString(), confidence: 0.95 };
+        const ingest = () => api('/api/ws/ingest/batch', 'POST', { accountId, groupEvents: [event] });
+        const { value } = await ingest();
+        assert.equal(value.groupEvents.applied, 0);
+        assert.equal(value.groupEvents.events[0].event.customerId, '');
+        assert.equal(value.groupEvents.events[0].event.reviewReason, 'contact-excluded');
+        assert.equal((await ingest()).value.groupEvents.deduplicated, 1);
+      }
+      assert.deepEqual(await customer(), previous);
+      const audit = await hits();
+      assert.equal(audit.length, initialHits + 3);
+      assert.ok(audit.every(hit => hit.action === 'auto-fill-blocked'));
+    });
+
+    await check('a LID-only event respects an excluded phone saved on the matching customer', async () => {
+      const accountId = 'exclusion-dedicated', memberId = '700000044444444@lid';
+      const ingest = event => api('/api/ws/ingest/batch', 'POST', { accountId, groupEvents: [{
+        type: 'joined', confidence: 0.95, memberId, eventAt: new Date().toISOString(), ...event,
+      }] });
+      const first = await ingest({ memberPhone: '7000000444', groupJid: 'exclusiongate1@g.us', sourceEventId: 'lid-first' });
+      assert.equal(first.value.groupEvents.autoRegistered, 1);
+      await api('/api/ws/contact-exclusions', 'POST', { identity: '7000000444' });
+      const customer = async () => (await getJson('/api/state')).customers.find(row => row.phone === '7000000444');
+      const before = await customer();
+      const next = await ingest({ groupJid: 'exclusiongate2@g.us', sourceEventId: 'lid-second' });
+      assert.equal(next.value.groupEvents.events[0].event.reviewReason, 'contact-excluded');
+      assert.deepEqual(await customer(), before);
+      const hits = (await getJson('/api/ws/contact-exclusions/hits?limit=200')).hits.filter(hit => hit.memberPhone === '7000000444');
+      assert.equal(hits.length, 1);
+      assert.equal(hits[0].action, 'auto-fill-blocked');
     });
 
     await check('oversized imports are rejected without silent truncation', async () => {
@@ -274,7 +317,8 @@ async function check(name, fn) {
     await check('blocked attempts appear in the hit ledger', async () => {
       const value = await getJson('/api/ws/contact-exclusions/hits?limit=20');
       assert.ok(value.hits.length >= 1, 'expected a recorded hit for the blocked member');
-      assert.equal(value.hits[0].action, 'auto-create-blocked');
+      assert.ok(value.hits.some(hit => hit.action === 'auto-create-blocked'));
+      assert.ok(value.hits.some(hit => hit.action === 'auto-fill-blocked'));
     });
   } finally {
     try { await fetch(base + '/api/shutdown', { method: 'POST', headers: { ...headers, 'x-zhike-shutdown-token': token }, signal: AbortSignal.timeout(3000) }); } catch {}

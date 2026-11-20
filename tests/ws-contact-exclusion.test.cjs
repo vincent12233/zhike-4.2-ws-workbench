@@ -155,18 +155,13 @@ ok('lid-form jid normalizes with its own identity and no phone', () => {
 
 // --- production wiring -------------------------------------------------------
 
-ok('server.mjs consults the exclusion engine inside the auto-create path', () => {
+ok('group ingest gates both new customers and existing relationships before projection', () => {
   const source = fs.readFileSync(path.join(app, 'server.mjs'), 'utf8');
-  const autoStart = source.indexOf('function wsGroupMonitorAutoCustomer(');
-  const autoEnd = source.indexOf('\nfunction ', autoStart + 10);
-  const body = source.slice(autoStart, autoEnd);
-  assert.ok(autoStart > 0, 'wsGroupMonitorAutoCustomer must exist');
-  assert.match(body, /wsContactExclusionEngine\(\)\.checkIdentities\(/, 'auto-create must check every observed alias with a required exclusion engine');
-  assert.match(body, /if \(!exclusion\.allowed\) return null;/, 'listed, conflicting and unreliable identities must abort creation');
-  // The gate must precede identity normalization/customer construction.
-  const gateAt = body.indexOf('checkIdentities');
-  const memberAt = body.indexOf('const member = wsGroupMonitor.normalizeMemberIdentity');
-  assert.ok(gateAt > 0 && memberAt > gateAt, 'exclusion must run before customer construction');
+  const start = source.indexOf('function wsGroupMonitorApplyEventsInTransaction(');
+  const body = source.slice(start, source.indexOf('\nfunction ', start + 10));
+  const gate = body.indexOf('wsGroupMonitorMemberMatch(');
+  assert.ok(gate > 0 && gate < body.indexOf('wsGroupMonitorAutoCustomer('));
+  assert.ok(gate < body.indexOf('applyMembershipProjection('));
 });
 
 ok('migrations manifest registers version 26 with the canonical checksum', () => {

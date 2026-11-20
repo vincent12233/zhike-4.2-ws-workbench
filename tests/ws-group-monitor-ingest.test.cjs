@@ -5,10 +5,13 @@ const nativeAuthorityToken = require('node:crypto').randomBytes(32).toString('he
 
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
-const { mkdtempSync, rmSync } = require('node:fs');
+const { mkdtempSync, readFileSync, rmSync } = require('node:fs');
+const { createHash, webcrypto } = require('node:crypto');
+const vm = require('node:vm');
 const os = require('node:os');
 const path = require('node:path');
 
+process.env.TZ = 'Asia/Kolkata';
 const app = path.join(__dirname, '..', 'resources', 'app');
 const dataDir = mkdtempSync(path.join(os.tmpdir(), 'zhike-group-monitor-ingest-'));
 const port = 4592;
@@ -30,6 +33,40 @@ async function request(pathname, init = {}) {
 }
 const json = response => response.json();
 const body = value => JSON.stringify(value);
+
+async function verifyHistoryBackup(customer, day) {
+  const source = readFileSync(path.join(app, 'app.js'), 'utf8').replace(/\r/g, '');
+  function declaration(name) {
+    const start = source.search(new RegExp('^  (?:async )?function ' + name + '\\(', 'm'));
+    assert.notEqual(start, -1, name);
+    const tail = source.slice(start + 2);
+    return tail.slice(0, tail.search(/\n  (?:async function |function |const |let )/));
+  }
+  const ui = vm.createContext({ today: day, window: { ZhikeBusinessRules: require('../resources/app/modules/business-rule-core.js') },
+    crypto: webcrypto, TextEncoder, normalizeObjectRows: rows => rows, isGroupFanSource: label => label === '群粉' });
+  vm.runInContext(['normalizeCustomerRows', 'sha256Text', 'decodeWorkspaceBackupFile', 'validateBackupData', 'validateStatusHistoryData',
+    'todayStatusCounts', 'isStatusBaseline'].map(declaration).join('\n'), ui);
+  const legacy = customer.statusHistory.map(event => {
+    const { type, membershipEventType, from, to, initial, source, group, ...previous } = event;
+    return { ...previous, type: membershipEventType, date: previous.at.slice(0, 10) };
+  });
+  for (const history of [customer.statusHistory, legacy]) {
+    const backup = { backupFormat: 'zhike-6-workspace', version: 6, customers: [{ ...customer, statusHistory: history }] };
+    backup.integrity = { algorithm: 'SHA-256', payloadSha256: createHash('sha256').update(JSON.stringify(backup)).digest('hex') };
+    const decoded = await ui.decodeWorkspaceBackupFile(JSON.stringify(backup));
+    ui.validateBackupData(decoded);
+    ui.validateStatusHistoryData(decoded);
+    const rows = ui.normalizeCustomerRows(decoded.customers);
+    assert.deepEqual(Array.from(rows[0].statusHistory, event => event.type), ['joined', 'left', 'joined', 'left']);
+    const removal = rows[0].statusHistory.at(-1);
+    assert.equal(removal.to, '被移除');
+    assert.equal(removal.membershipEventType, 'removed');
+    assert.equal(removal.initial, false);
+    const counts = ui.todayStatusCounts(rows);
+    assert.equal(counts.groupJoined, 1); assert.equal(counts.groupLeft, 1);
+  }
+  assert.throws(() => ui.validateStatusHistoryData({ customers: [{statusHistory: [{ ...legacy[0], status: '意外值' }]}] }), /历史格式异常/);
+}
 
 (async () => {
   try {
@@ -76,6 +113,17 @@ const body = value => JSON.stringify(value);
     assert.equal(unsupported.groupEvents.ignored, 1);
     const allEvents = await json(await request(`/api/ws/group-monitors/${profile.id}/events?status=all&accountId=ingest-dedicated`));
     assert.equal(allEvents.events.length, 3, 'unsupported event must not be persisted as a membership transition');
+    // Just after local midnight: the UTC date still belongs to the previous day.
+    const time = new Date('2026-11-16T19:00:00.000Z');
+    const sequence = ['joined', 'left', 'joined', 'removed'].map((type, i) => ({
+      ...event, type, memberId: '919876543229@s.whatsapp.net', sourceEventId: 'backup-' + i, eventAt: new Date(+time + i * 1000).toISOString(),
+    }));
+    const transitions = await json(await request('/api/ws/ingest/batch', { method: 'POST', body: body({ accountId: 'ingest-dedicated', groupEvents: sequence }) }));
+    assert.equal(transitions.groupEvents.applied, 4);
+    const recorded = (await json(await request('/api/state'))).customers.find(customer => customer.phone === '9876543229');
+    assert.equal(recorded.statusHistory[1].from, '在群');
+    assert.equal(recorded.statusHistory[1].group, 'VIP 群');
+    await verifyHistoryBackup(recorded, '2026-11-17');
     console.log('ws-group-monitor-ingest: pass');
   } finally {
     try { await fetch(`http://127.0.0.1:${port}/api/shutdown`, { method: 'POST', headers: { ...headers, 'x-zhike-shutdown-token': token } }); } catch {}

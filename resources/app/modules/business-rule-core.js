@@ -117,6 +117,21 @@
     return changed;
   }
 
+  // Earlier monitor versions stored the relationship status without the CRM
+  // transition fields. Only upgrade the exact shapes those versions produced.
+  function normalizeMonitorStatusHistoryEvent(event) {
+    if (event?.origin !== 'ws-group-monitor' || Object.hasOwn(event, 'to')) return event;
+    const expected = { joined: '在群', left: '已退群', removed: '被移除' };
+    if (!Object.hasOwn(expected, event.type) || event.status !== expected[event.type]) return event;
+    let date = event.date;
+    const at = new Date(event.at);
+    if (Number.isFinite(at.getTime()) && date === at.toISOString().slice(0, 10)) {
+      date = [at.getFullYear(), String(at.getMonth() + 1).padStart(2, '0'), String(at.getDate()).padStart(2, '0')].join('-');
+    }
+    return { from: '', initial: false, group: event.groupJid, ...event, date,
+      type: event.type === 'removed' ? 'left' : event.type, membershipEventType: event.type, to: event.status };
+  }
+
   function buildGroupMembershipLedger(customers = [], existing = [], definitions = [], aliases = {}) {
     const byId = new Map();
     // statusHistory is the source of truth.  Replaying the previously derived
@@ -126,7 +141,8 @@
     void existing;
     for (const customer of Array.isArray(customers) ? customers : []) {
       if (!customer || typeof customer !== 'object') continue;
-      for (const event of Array.isArray(customer.statusHistory) ? customer.statusHistory : []) {
+      for (const storedEvent of Array.isArray(customer.statusHistory) ? customer.statusHistory : []) {
+        const event = normalizeMonitorStatusHistoryEvent(storedEvent);
         const kind = text(event.type) || statusEventKind(event.to);
         if (!['joined', 'left'].includes(kind)) continue;
         const source = text(event.source || customer.channel || customer.source || '未分类');
@@ -175,5 +191,5 @@
     return { kept: [...seen.values()], dismissed };
   }
 
-  return { BUSINESS_RULES, DATA_DICTIONARY, stableSourceId, sourceKey, sourceType, reconcileSourceDefinitions, renameSourceDefinition, disableSourceDefinition, resolveSourceDefinition, stampSourceReferences, buildGroupMembershipLedger, restoreImportStaging, dedupeActiveFollowupTasks, activeAiTask };
+  return { BUSINESS_RULES, DATA_DICTIONARY, stableSourceId, sourceKey, sourceType, reconcileSourceDefinitions, renameSourceDefinition, disableSourceDefinition, resolveSourceDefinition, stampSourceReferences, normalizeMonitorStatusHistoryEvent, buildGroupMembershipLedger, restoreImportStaging, dedupeActiveFollowupTasks, activeAiTask };
 });

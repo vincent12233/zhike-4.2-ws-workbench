@@ -1378,19 +1378,53 @@ function wsGroupMonitorDeletedIdentityConflict(state, candidate) {
   });
 }
 
-function wsGroupMonitorAutoCustomer(accountId, target, event, now, state = null) {
-  if (!wsGroupMonitor.isConfirmedJoinEvent(event)) return null;
-  // WS directory exclusion is the unified pre-gate for automatic customer
-  // creation: listed identities (staff, assistants, manual picks) never become
-  // customers, whatever the join evidence says. The hit ledger keeps an audit
-  // trail without touching the customer master.
-  const exclusion = wsContactExclusionEngine().checkIdentities([
+function wsGroupMonitorMemberMatch(accountId, target, event, customers, mappings) {
+  if (event.type === 'joined' && !wsGroupMonitor.isConfirmedJoinEvent(event)) return { status: 'unmatched' };
+  const observed = [...new Set([
     event.memberId, event.memberJid, event.participantId, event.member,
     event.memberPhone, event.member_phone, event.phone,
-  ].filter(value => value != null && String(value).trim()), {
-    accountId, groupJid: wsText(target.group_jid || target.groupJid, 180), action: 'auto-create-blocked', source: 'group-monitor-ingest',
-  });
-  if (!exclusion.allowed) return null;
+  ].filter(value => value != null && String(value).trim()))];
+  const groupJid = target.group_jid;
+  const match = wsGroupMonitor.resolveMembershipIdentity(event, customers, mappings, { accountId, groupJid });
+  const engine = wsContactExclusionEngine();
+  const context = { accountId, groupJid, source: 'group-monitor-ingest',
+    action: match.customer || event.type !== 'joined' ? 'auto-fill-blocked' : 'auto-create-blocked' };
+  const decision = engine.checkIdentities(observed, context);
+  if (decision.excluded) return { status: 'excluded', reason: 'contact-excluded' };
+  // A single legacy identifier can have an explicit operator binding even if
+  // it is not itself a directory key. Never use it to create a new customer.
+  if (!decision.allowed) {
+    const explicitlyMapped = match.kind === 'manual-mapping' && match.customer && observed.length === 1 && mappings.some(mapping => {
+      if (!mapping || String(mapping.customerId || mapping.customer_id || '') !== String(match.customer.id)) return false;
+      const boundAccount = mapping.accountId || mapping.account_id, boundGroup = mapping.groupJid || mapping.group_id || mapping.groupId;
+      const boundMember = mapping.memberId || mapping.memberJid || mapping.participantId || mapping.externalId || mapping.phone;
+      return (!boundAccount || boundAccount === accountId) && (!boundGroup || wsGroupMonitor.normalizeMemberIdentity(boundGroup).value === groupJid)
+        && String(boundMember || '').trim() === String(observed[0]).trim();
+    });
+    if (!explicitlyMapped) return { status: 'unconfirmed', reason: decision.reason };
+  }
+  if (match.customer) {
+    const customer = match.customer;
+    const known = [customer.phone, customer.rawPhone, customer.wsExternalId, customer.wsParticipantId, customer.wsContactId];
+    for (const key of ['phones', 'phoneNumbers', 'legacyPhones', 'wsExternalIds', 'wsParticipantIds', 'wsContactIds']) {
+      if (Array.isArray(customer[key])) for (const value of customer[key]) known.push(value);
+    }
+    // A LID-only observation or manual mapping may identify a customer whose
+    // phone is listed. Historical aliases are alternatives, not conflicting
+    // assertions in this event. Check each distinct remaining key once.
+    const seen = new Set(decision.identities.map(identity => identity.value));
+    for (const value of known) {
+      const identity = engine.normalizeExclusionIdentity(value);
+      if (!identity || seen.has(identity.value)) continue;
+      seen.add(identity.value);
+      if (engine.checkIdentity(value, context).excluded) return { status: 'excluded', reason: 'contact-excluded' };
+    }
+  }
+  return match;
+}
+
+function wsGroupMonitorAutoCustomer(accountId, target, event, now, state = null) {
+  if (!wsGroupMonitor.isConfirmedJoinEvent(event)) return null;
   const member = wsGroupMonitor.normalizeMemberIdentity(event.memberId || event.memberJid || event.participantId || event.member || event.phone);
   const phone = member.phone || wsGroupMonitor.normalizeMemberIdentity(event.memberPhone || event.member_phone).phone;
   const memberKey = member.value || phone;
@@ -1601,7 +1635,7 @@ function wsGroupMonitorApplyEventsInTransaction(accountId, inputEvents = [], opt
       result.events.push({ status: 'duplicate', event: wsGroupMonitorEventPayload(existing) });
       continue;
     }
-    let match = wsGroupMonitor.resolveMembershipIdentity(normalizedEvent, state.customers, mappings, { accountId, groupJid: target.group_jid });
+    let match = wsGroupMonitorMemberMatch(accountId, target, normalizedEvent, state.customers, mappings);
     let customer = match.customer;
     const knownRelation = customer && Array.isArray(customer.groupMemberships)
       ? customer.groupMemberships.find(item => String(item.accountId || '') === accountId && String(item.groupJid || '') === target.group_jid)
@@ -1649,14 +1683,15 @@ function wsGroupMonitorApplyEventsInTransaction(accountId, inputEvents = [], opt
     const existingRelation = customer && Array.isArray(customer.groupMemberships)
       ? customer.groupMemberships.find(item => String(item.accountId || '') === accountId && String(item.groupJid || '') === target.group_jid)
       : null;
-    const projection = wsGroupMonitor.applyMembershipProjection(profile, target, { ...normalizedEvent, idempotencyKey }, customer, { existingRelation, now });
+    const sourceInfo = wsGroupMonitorSource(target, state);
+    const projection = match.reason ? { status: match.status === 'excluded' ? 'ignored' : 'pending', reason: match.reason }
+      : wsGroupMonitor.applyMembershipProjection(profile, target, { ...normalizedEvent, idempotencyKey }, customer, { existingRelation, sourceLabel: sourceInfo.label, now });
     const member = wsGroupMonitor.normalizeMemberIdentity(normalizedEvent.memberId);
     const eventId = wsText(event.id, 160) || `wsg-event-${randomUUID()}`;
     const evidenceHash = createHash('sha256').update(JSON.stringify({ accountId, groupJid: target.group_jid, memberJid: member.value, type: normalizedEvent.type, sourceEventId: normalizedEvent.sourceEventId, eventAt: normalizedEvent.eventAt })).digest('hex');
     const status = projection.status === 'applied' ? 'applied' : projection.status === 'review' ? 'review' : projection.status === 'pending' ? 'pending' : 'ignored';
     const customerId = projection.relation?.customerId || (customer ? String(customer.id) : '');
     const reviewReason = projection.reviewReason || projection.reason || (match.status === 'ambiguous' ? 'ambiguous-customer' : '');
-    const sourceInfo = wsGroupMonitorSource(target, state);
     if (projection.relation) wsPersistCustomerGroupMembershipLedger(accountId, target, projection.relation, { ...normalizedEvent, idempotencyKey }, sourceInfo, now);
     db.prepare(`INSERT INTO ws_group_membership_events(id,account_id,profile_id,target_id,group_jid,member_jid,member_phone,customer_id,event_type,event_at,observed_at,source,source_event_id,correlation_id,idempotency_key,confidence,evidence_hash,status,review_reason,data_json,created_at,updated_at)
       VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(eventId, accountId, profile.id, target.id, target.group_jid, member.value, member.phone || wsGroupMonitor.normalizeMemberIdentity(normalizedEvent.memberPhone || normalizedEvent.member_phone).phone, customerId, normalizedEvent.type, normalizedEvent.eventAt, normalizedEvent.observedAt, normalizedEvent.source, normalizedEvent.sourceEventId, normalizedEvent.correlationId, idempotencyKey, normalizedEvent.confidence, evidenceHash, status, String(reviewReason || ''), JSON.stringify({ identityKind: match.kind || '', identityStatus: match.status || '', groupName: target.group_name, autoRegistered }), now, now);

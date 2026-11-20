@@ -1,5 +1,7 @@
 'use strict';
 
+const { normalizeMonitorStatusHistoryEvent } = require('./business-rule-core.js');
+
 // Pure rules for the fixed WS group-monitor seat. Native collectors and the
 // server own I/O; this module normalizes identities and builds an auditable
 // per-account/per-group/customer projection.
@@ -160,7 +162,7 @@ function applyMembershipProjection(profile = {}, target = {}, event = {}, custom
     profileId: text(profile.id || profile.profileId),
     targetId: text(target.id || target.targetId),
     groupJid,
-    groupName: text(target.groupName || target.name),
+    groupName: text(target.groupName || target.group_name || target.name),
     sourceId: text(target.sourceId || target.source_id),
     customerId: text(customer?.id || existing?.customerId),
     memberJid: member.value,
@@ -202,10 +204,13 @@ function applyMembershipProjection(profile = {}, target = {}, event = {}, custom
     status: 'applied',
     relation,
     idempotencyKey: key,
-    statusHistoryEvent: {
+    statusHistoryEvent: normalizeMonitorStatusHistoryEvent({
       id: text(event.id) || key,
       type,
       status: nextStatus,
+      from: baseRelation.status,
+      group: relation.groupName || groupJid,
+      source: text(options.sourceLabel),
       accountId,
       groupJid,
       sourceId: relation.sourceId,
@@ -216,7 +221,7 @@ function applyMembershipProjection(profile = {}, target = {}, event = {}, custom
       confidence,
       origin: 'ws-group-monitor',
       locked: false,
-    },
+    }),
     customerPatch: { customerId: text(customer.id), groupMembership: relation },
   };
 }
