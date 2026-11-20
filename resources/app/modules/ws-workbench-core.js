@@ -29,20 +29,19 @@
       if (item && typeof item === 'object' && !Array.isArray(item)) layers.push(item);
     }
     const ids = layers.flatMap(item => ['externalId', 'external_id', 'conversationKey', 'jid', 'remoteJid', 'chatId'].map(key => text(item?.[key])));
-    const declaredVipGroup = layers.some(item => item?.vipGroup === true || text(item?.conversationType).toLowerCase() === 'vip_group');
-    const groupEvidence = layers.some(item => item?.isGroup === true || ['group', 'vip_group'].includes(text(item?.conversationType).toLowerCase())) || ids.some(id => /@g\.us$/i.test(id));
-    // A WhatsApp group is eligible only when the trusted desktop collector or
-    // an explicit system/VIP binding marks that exact conversation as VIP.
-    // A group-looking title, phone mention or AI guess is never a whitelist.
-    if (groupEvidence) return declaredVipGroup ? 'vip_group' : 'group';
+    // There is no VIP group: VIP is only a CRM customer tag. Legacy rows that
+    // were stored with conversationType 'vip_group' or vipGroup:true are still
+    // group evidence and are read as an ordinary 'group'. Which groups may be
+    // collected is decided by explicit group authorization (allowlist /
+    // monitor targets), never by the conversation type.
+    const groupEvidence = layers.some(item => item?.isGroup === true || item?.vipGroup === true || ['group', 'vip_group'].includes(text(item?.conversationType).toLowerCase())) || ids.some(id => /@g\.us$/i.test(id));
+    if (groupEvidence) return 'group';
     if (ids.some(id => /@(?:broadcast|newsletter)$|^status@/i.test(id))) return 'unknown';
     if (layers.some(item => text(item?.conversationType).toLowerCase() === 'direct') || ids.some(id => /@(?:c\.us|s\.whatsapp\.net|lid)$/i.test(id))) return 'direct';
     return 'unknown';
   }
 
-  function isGroupConversation(value) { return ['group', 'vip_group'].includes(conversationType(value)); }
-  function isVipGroupConversation(value) { return conversationType(value) === 'vip_group'; }
-  function isExcludedGroupConversation(value) { return conversationType(value) === 'group'; }
+  function isGroupConversation(value) { return conversationType(value) === 'group'; }
 
   function detectChatImportType(value) {
     const lines = String(value || '').replace(/\r\n?/g, '\n').split('\n');
@@ -102,9 +101,9 @@
 
   function transcriptLine(message, maxMessageChars = 2200) {
     const member = messageMemberIdentity(message);
-    const isVipGroup = conversationType(message) === 'vip_group' || conversationType(message?.data || {}) === 'vip_group';
+    const isGroup = isGroupConversation(message) || isGroupConversation(message?.data || {});
     const memberLabel = member.senderName || member.senderPhone || member.senderId || '身份未确认成员';
-    const label = message?.direction === 'send' ? '我' : isVipGroup ? `群成员[${memberLabel}]` : '客户';
+    const label = message?.direction === 'send' ? '我' : isGroup ? `群成员[${memberLabel}]` : '客户';
     const sentAt = messageSentAt(message);
     const timeLabel = sentAt ? `[${sentAt}]` : '[时间未知]';
     return `${timeLabel} ${label}：${text(message?.originalText).slice(0, maxMessageChars)}`;
@@ -201,8 +200,8 @@
     const safeTranscript = clippedTranscript.text;
     const coverageTruncated = clippedTranscript.truncated || options.truncated === true;
     const fields = HOT_CHAT_PROFILE_FIELDS.join(', ');
-    const vipMember = options.memberIdentity ? messageMemberIdentity(options.memberIdentity) : null;
-    const vipMemberLabel = vipMember ? (vipMember.senderName || vipMember.senderPhone || vipMember.senderId) : '';
+    const groupMember = options.memberIdentity ? messageMemberIdentity(options.memberIdentity) : null;
+    const groupMemberLabel = groupMember ? (groupMember.senderName || groupMember.senderPhone || groupMember.senderId) : '';
     return [
       '你是知客 WS 工作台的自然聊天客户运营分析器（prompt_version=hot-chat-2-local）。',
       `当前会话标识：${conversationId}`,
@@ -212,8 +211,8 @@
         : '聊天覆盖状态：本提示未再次截断传入文本；是否为完整历史仍以采集端状态为准，不得自行推断。',
       '真正有效的热聊不是调查问卷：不要生成问卷、不要连续追问、不要一次性索要全部资料；只给出一到三条轻量、自然的下一话题。',
       '角色归属必须严格区分：聊天行中的“客户”是客户本人，“我”或“我方”是经营者/助理的回复。不得把我方自我介绍、我方陈述、我方连续发送的内容，或我方尚未获得客户确认的问题，当成客户事实。',
-      ...(vipMemberLabel ? [
-        `当前是 群成员分析，唯一目标成员：${vipMemberLabel}。`,
+      ...(groupMemberLabel ? [
+        `当前是 群成员分析，唯一目标成员：${groupMemberLabel}。`,
         '只有标为该目标成员的本人发言可以成为 profileFacts、资金实力、聊天粘度和个人跟进评分证据；我方发言及其他群成员发言只用于理解必要上下文，绝不能写成该成员事实。',
       ] : []),
       '客户姓名/称呼、年龄、性别、职业和工作情况、国家/所在地、持仓、预算及其他档案字段，只能依据客户本人明确陈述或明确确认的内容补齐。引用、转发或讨论亲友等第三方的信息属于 third_party，不得写成客户资料；证据归属不清时保持 missing 或 pending。',
@@ -621,20 +620,6 @@
     return { text: sampledText, included: selected.length, total: all.length, omitted: Math.max(0, all.length - selected.length), truncated: true, complete: false, characters: sampledText.length };
   }
 
-  function buildVipMemberTranscript(messages, memberIdentity = {}, options = {}) {
-    const target = messageMemberIdentity(memberIdentity);
-    if (!target.trusted || (!target.senderId && !target.senderPhone)) return { text:'', included:0, total:0, truncated:false, complete:false, memberScoped:false, memberIdentity:target };
-    const all = dedupeMessages(messages).filter(item => {
-      if (item?.direction === 'send') return true;
-      // Retain other members as explicitly labelled context. The AI prompt is
-      // forbidden from using those lines as target-customer facts.
-      return conversationType(item) === 'vip_group' || conversationType(item?.data || {}) === 'vip_group';
-    });
-    const transcript = buildFullHistoryTranscript(all, options);
-    const ownStatements = all.filter(item => item?.direction !== 'send' && sameMemberIdentity(item, target)).length;
-    return { ...transcript, complete:transcript.complete && ownStatements > 0, memberScoped:true, memberIdentity:target, targetStatementCount:ownStatements };
-  }
-
   // Split a complete stored history into chronological AI-sized requests.
   // Unlike buildFullHistoryTranscript this helper never samples the middle:
   // every non-empty message character is assigned to exactly one chunk (a very
@@ -648,9 +633,9 @@
       const body = text(item.originalText);
       if (!body) continue;
       const member = messageMemberIdentity(item);
-      const isVipGroup = conversationType(item) === 'vip_group' || conversationType(item?.data || {}) === 'vip_group';
+      const isGroup = isGroupConversation(item) || isGroupConversation(item?.data || {});
       const memberLabel = member.senderName || member.senderPhone || member.senderId || '身份未确认成员';
-      const label = item.direction === 'send' ? '我' : isVipGroup ? `群成员[${memberLabel}]` : '客户';
+      const label = item.direction === 'send' ? '我' : isGroup ? `群成员[${memberLabel}]` : '客户';
       const sentAt = messageSentAt(item);
       const timeLabel = sentAt ? `[${sentAt}]` : '[时间未知]';
       const segmentBudget = Math.max(200, maxChars - 80);
@@ -771,8 +756,6 @@
     collectorStatusMessage,
     conversationType,
     isGroupConversation,
-    isVipGroupConversation,
-    isExcludedGroupConversation,
     detectChatImportType,
     normalizeTranslationSettings,
     shouldTranslate,
@@ -793,7 +776,6 @@
     visibleChatFingerprint,
     buildTranscript,
     buildFullHistoryTranscript,
-    buildVipMemberTranscript,
     splitHistoryTranscript,
     mergeAiAnalyses,
     suggestedDate,

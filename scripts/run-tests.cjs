@@ -231,7 +231,7 @@ function runWs() {
   run('WS customer group reading query and evidence boundaries', [path.join(repo, 'tests', 'ws-customer-reading-query.test.cjs')]);
   run('WS isolated group reading routes and UI account lifetime', [path.join(repo, 'tests', 'ws-group-reading-isolated.test.cjs')]);
   run('WS direct-only collection and AI policy', [path.join(repo, 'tests', 'ws-direct-only-policy.test.cjs')]);
-  run('WS VIP member task and alert isolation', [path.join(repo, 'tests', 'ws-vip-member-alerts.test.cjs')]);
+  run('WS group member task and alert isolation', [path.join(repo, 'tests', 'ws-group-member-alerts.test.cjs')]);
   run('WS and GPT Horizon visual reachability', [path.join(repo, 'tests', 'ws-gpt-horizon-visual.test.cjs')]);
   run('V4.1 layered visual contrast regression', [path.join(repo, 'tests', 'ws-visual-alpha-composition.test.cjs')]);
   run('WS AI CRM sync rules', [path.join(repo, 'tests', 'ws-crm-sync-core.test.cjs')]);

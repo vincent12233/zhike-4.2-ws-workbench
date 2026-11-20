@@ -6,7 +6,7 @@ const vm = require('node:vm');
 const repo = path.resolve(__dirname, '..');
 const scope = require(path.join(repo, 'resources/app/modules/ws-scope.js'));
 const source = fs.readFileSync(path.join(repo, 'resources/app/modules/ws-workbench.js'), 'utf8');
-const start = source.indexOf('  function configuredVipGroups(');
+const start = source.indexOf('  function configuredWsGroups(');
 const end = source.indexOf('  async function wsBridge(', start);
 assert.ok(start > 0 && end > start);
 const settings = { wsGroupAllowlist: [
@@ -17,7 +17,7 @@ const settings = { wsGroupAllowlist: [
 const context = vm.createContext({ window: { ZhikeWsScope: scope }, state: { activeAccountId: 'a' },
   text: value => String(value ?? '').trim(), getHost: () => ({ state: { settings } }) });
 vm.runInContext(source.slice(start, end), context);
-const read = () => Array.from(vm.runInContext('configuredVipGroups()', context));
+const read = () => Array.from(vm.runInContext('configuredWsGroups()', context));
 assert.deepEqual(read(), ['120-456@g.us'], 'collector receives only an exact group JID for the selected account');
 settings.wsGroupAllowlist = [];
 assert.deepEqual(read(), [], 'revocation must reach the native collector despite old settings');

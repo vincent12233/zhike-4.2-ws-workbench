@@ -133,9 +133,10 @@ assert.equal(core.matchCustomer([{ ...sharedLoginCustomer, wsConversationIds: ['
       core: coreUnderTest, state: localState, text: value => String(value ?? '').trim(),
       normalizeListItem: value => value, listPreviewText: value => value.preview || '',
       isAutomaticDirectConversation: value => coreUnderTest.conversationType(value) === 'direct',
-      isAutomaticVipGroupConversation: value => coreUnderTest.conversationType(value) === 'vip_group',
-      isAutomaticCollectibleConversation: value => ['direct', 'vip_group'].includes(coreUnderTest.conversationType(value)),
-      personalConversationRows: rows => rows.filter(value => !coreUnderTest.isGroupConversation(value) || coreUnderTest.isVipGroupConversation(value)),
+      // Mirrors the production rule: ordinary WS collects and lists private
+      // chats only; there is no VIP-group exception.
+      isAutomaticCollectibleConversation: value => coreUnderTest.conversationType(value) === 'direct',
+      personalConversationRows: rows => rows.filter(value => !coreUnderTest.isGroupConversation(value)),
       loadAllConversationPages: async () => ({ conversations: [] }),
       loadConversationDeltaPages: async () => ({ conversations: [], incremental: true }),
       applyConversationInventory() {},

@@ -67,13 +67,13 @@ function inspect(fn) {
   });
   await authorizeGroup('vip-two-members@g.us');
   await call('/api/ws/ingest/batch', {
-    checkpoints:[{ conversationKey:'vip-two-members@g.us', conversationType:'vip_group', vipGroup:true, isGroup:true, displayName:'VIP Two Members', unreadCount:0, historyLoaded:true, historyMessageCount:2, coverage:'read-history', directionVersion:4, directionUnresolvedCount:0, historyFingerprint:'vip-list', lastMessageFingerprint:'vip-list' }],
+    checkpoints:[{ conversationKey:'vip-two-members@g.us', conversationType:'group', isGroup:true, displayName:'Two Members', unreadCount:0, historyLoaded:true, historyMessageCount:2, coverage:'read-history', directionVersion:4, directionUnresolvedCount:0, historyFingerprint:'vip-list', lastMessageFingerprint:'vip-list' }],
     messages:[
-      { conversationKey:'vip-two-members@g.us', conversationType:'vip_group', externalMessageId:'member-one', body:'I manage a shop', direction:'incoming', directionSource:'class-message-in', senderId:'919876543210@c.us', senderPhone:'9876543210', senderName:'Member One', senderIdentitySource:'sender-jid', sentAt:'2026-11-13T10:01:00Z' },
-      { conversationKey:'vip-two-members@g.us', conversationType:'vip_group', externalMessageId:'member-two', body:'I work in banking', direction:'incoming', directionSource:'class-message-in', senderId:'911111111111@c.us', senderPhone:'1111111111', senderName:'Member Two', senderIdentitySource:'sender-jid', sentAt:'2026-11-13T10:02:00Z' },
+      { conversationKey:'vip-two-members@g.us', conversationType:'group', externalMessageId:'member-one', body:'I manage a shop', direction:'incoming', directionSource:'class-message-in', senderId:'919876543210@c.us', senderPhone:'9876543210', senderName:'Member One', senderIdentitySource:'sender-jid', sentAt:'2026-11-13T10:01:00Z' },
+      { conversationKey:'vip-two-members@g.us', conversationType:'group', externalMessageId:'member-two', body:'I work in banking', direction:'incoming', directionSource:'class-message-in', senderId:'911111111111@c.us', senderPhone:'1111111111', senderName:'Member Two', senderIdentitySource:'sender-jid', sentAt:'2026-11-13T10:02:00Z' },
     ],
   });
-  const group = (await call('/api/ws/conversations')).conversations.find(item => item.externalId === 'vip-two-members@g.us');
+  const group = (await call('/api/ws/conversations')).groupConversations.find(item => item.externalId === 'vip-two-members@g.us');
   assert.ok(group);
   const one = { senderId:'919876543210@c.us', senderPhone:'9876543210', senderName:'Member One', identitySource:'sender-jid', trusted:true };
   const two = { senderId:'911111111111@c.us', senderPhone:'1111111111', senderName:'Member Two', identitySource:'sender-jid', trusted:true };
@@ -126,7 +126,8 @@ function inspect(fn) {
   alerts = (await call('/api/ws/followup-alerts?allAccounts=1&limit=10')).alerts;
   assert.deepEqual(alerts.map(item => item.customerId), ['C3','C1','C2'], 'overdue direct fallback precedes VIP priority scoring');
   assert.equal(alerts[0].taskId, 'legacy-direct-task', 'ordinary direct chats retain conversation-only task fallback');
-  // Historical vip_group rows remain readable; exclusion is a group-member
+  // Legacy rows ingested with the old vip_group marker are plain groups now and
+  // remain readable; exclusion is a group-member
   // auto-fill gate and never a ban on ordinary direct CRM maintenance.
   await call('/api/ws/contact-exclusions', { identity: one.senderPhone, displayName: 'Synthetic excluded staff' }, 201);
   const beforeBlockedSync = await call('/api/state');
@@ -149,7 +150,7 @@ function inspect(fn) {
         directionSource:'class-message-in', senderId, senderPhone:phone, senderIdentitySource:'sender-jid',
         sentAt:'2026-11-13T10:05:00Z' })),
     });
-    const conversation = (await call('/api/ws/conversations')).conversations.find(row => row.externalId === key);
+    const conversation = (await call('/api/ws/conversations')).groupConversations.find(row => row.externalId === key);
     const identity = phoneOnly ? { senderPhone: phones[0], identitySource:'sender-phone' } : { senderId, identitySource:'sender-jid' }; // intentionally omits a trusted alias
     const analysis = await call('/api/ws/analyses', { conversationId:conversation.id, result:{
       summary:'Synthetic alias evidence', confidence:.9, memberIdentity:identity,

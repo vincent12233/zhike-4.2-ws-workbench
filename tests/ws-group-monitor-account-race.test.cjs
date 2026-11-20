@@ -42,7 +42,7 @@ function fixture(delayB = false) {
     },
     window: { zhikeDesktop: { ws: async payload => { native.push(payload); return {}; } } },
     syncGroupMonitorNative: async (profile, context) => { assert.ok(contextCurrent(context)); native.push({ monitor: profile?.id, accountId: context.accountId }); },
-    syncVipGroupAllowlist: async () => {}, cancelAllAiWork: async () => {}, loadConversations: async () => {},
+    syncWsGroupAllowlist: async () => {}, cancelAllAiWork: async () => {}, loadConversations: async () => {},
     loadGroupMembers: async () => {}, writeStoredAccountId: () => {}, render: () => {}, updateGroupMonitorDom: () => {}, updateDedicatedLiveDirectoryDom: () => {},
     boundsForBrowserView: () => ({ hidden: true }), getHost: () => null,
   };
@@ -80,7 +80,7 @@ function switchHarness({ pauseStage = 'native', pauseAccount = 'b', failB = fals
     return {};
   };
   test.sandbox.window.zhikeDesktop.ws = async payload => { test.native.push(payload); return invoke('native', payload.accountId); };
-  test.sandbox.syncVipGroupAllowlist = context => invoke('vip', context.accountId);
+  test.sandbox.syncWsGroupAllowlist = context => invoke('ws-groups', context.accountId);
   test.sandbox.loadConversations = () => invoke('conversations', test.state.activeAccountId);
   test.sandbox.loadGroupMonitor = () => invoke('monitor', test.state.activeAccountId);
   test.sandbox.loadGroupMembers = context => invoke('members', context.accountId);
@@ -137,7 +137,7 @@ function assertNewSwitchUntouched(test, rendersBefore) {
   assert.equal(pendingBMonitor.loading, false);
   assert.equal(pendingBMonitor.profile.id, 'profile-b');
 
-  for (const pauseStage of ['native', 'vip', 'conversations', 'monitor', 'members']) {
+  for (const pauseStage of ['native', 'ws-groups', 'conversations', 'monitor', 'members']) {
     const test = switchHarness({ pauseStage });
     const oldSwitch = test.sandbox.switchAccount('b'); await test.entered.promise;
     const newSwitch = test.sandbox.switchAccount('c'); test.state.error = 'newest C state';

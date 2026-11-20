@@ -89,7 +89,8 @@ async function stateVersion() { return (await (await request('/api/state/version
     assert.equal(all.crm.activeCustomers, 2);
     assert.equal(all.ws.conversations, 3);
     assert.equal(all.ws.directContacts, 2);
-    assert.equal(all.ws.vipGroups, 1);
+    assert.equal(all.ws.groups, 1, 'a legacy vip-marked row is counted as an ordinary group');
+    assert.equal(all.ws.vipGroups, undefined, 'there is no VIP group count');
     assert.equal(all.ws.messages, 2);
     assert.equal(all.ws.analyses, 1);
     assert.equal(all.ws.aiJobs, 1);

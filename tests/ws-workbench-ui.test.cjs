@@ -57,16 +57,17 @@ assert.match(ui, /当前桌面未提供独立采集会话；前台聊天和手�
 const manualCreate = ui.slice(ui.indexOf('  async function createConversation()'), ui.indexOf('      assertContext(context);', ui.indexOf('  async function createConversation()')));
 assert.match(manualCreate, /@g\\\.us\$[\s\S]*?return;[\s\S]*?api\('/, 'manual group entry ends before an API write');
 assert.doesNotMatch(manualCreate, /vip_group|vipGroup/, 'manual input cannot create group metadata');
-assert.match(ui, /const conversationType = isAutomaticVipGroupConversation\(normalized\) \? 'vip_group' : 'direct'/,
-  'native list discovery must retain configured VIP-group identity');
-assert.match(ui, /customerId: vipGroup \? '' : matchedCustomerId/,
-  'a VIP group may never bind the entire conversation to one customer');
-assert.match(ui, /importType\.type === 'group' && !vipGroup/,
-  'manual transcript import excludes ordinary groups but permits a configured VIP group');
-assert.match(ui, /senderIdentityTrusted:false/,
-  'a pasted VIP-group sender label must never become trusted customer identity evidence');
+// There is no VIP group: ordinary WS lists, enqueues, imports and analyses
+// private chats only. Every group belongs to the dedicated WS workflow.
+assert.doesNotMatch(ui, /vip_group|vipGroup|VipGroup/, 'the ordinary WS UI has no VIP-group concept');
+assert.match(ui, /conversationType: 'direct',\s*isGroup: false,\s*customerId: matchedCustomerId,/,
+  'native list discovery enqueues private chats only');
+assert.match(ui, /if \(importType\.type === 'group'\) \{/,
+  'manual transcript import rejects every group export');
+assert.match(ui, /if \(importType\.reason === 'multiple-senders'\) \{/,
+  'manual transcript import rejects multi-sender text for every conversation');
 assert.doesNotMatch(ui, /'群聊不纳入(?:采集| WS 客户采集| AI 分析)/,
-  'group policy messages must distinguish excluded ordinary groups from configured VIP groups');
+  'group policy messages point to the dedicated WS instead of a generic exclusion');
 assert.match(ui, /class="ws-runtime-strip"/,
   'the workbench must expose the live background collection and AI pipeline state without opening a conversation');
 for (const marker of ['后台采集不可用', '完整历史', '待分析', '跳过未读']) assert.match(ui, new RegExp(marker));

@@ -144,7 +144,7 @@ async function invokeOpen(result) {
       if (result instanceof Error) throw result;
       return result;
     },
-    syncVipGroupAllowlist: async () => {},
+    syncWsGroupAllowlist: async () => {},
     setStatus: (status, detail) => Object.assign(state, { status, detail }),
     toast: (message, tone) => toasts.push([message, tone]),
     wsErrorDetail: (error) => error.message,
@@ -193,7 +193,7 @@ test('an isolated factory failure survives the initial account and conversation 
       if (action === 'open') throw factoryFailure;
       return { status: '未连接', isolatedPreview: false };
     },
-    syncVipGroupAllowlist: async () => {},
+    syncWsGroupAllowlist: async () => {},
     captureContext: () => ({}),
     loadConversations: async () => { state.error = ''; },
     loadGroupMonitor: async () => {},

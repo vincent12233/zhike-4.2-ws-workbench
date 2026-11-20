@@ -132,7 +132,7 @@
   const COLLECTION_CAPABILITY_BLOCKED = 'COLLECTION_CAPABILITY_BLOCKED';
   const BLOCKED_COLLECTION_CAPABILITY = Object.freeze({ state: 'blocked', code: COLLECTION_CAPABILITY_BLOCKED, reason: '当前桌面未提供独立采集会话；前台聊天和手动导入可用。', backgroundCollection: false, automaticHistory: false, groupMonitoring: false, automaticAi: false, foregroundFallback: false, manualVisibleImport: true, collectorState: 'not-started' });
   const COLLECTOR_STATES = new Set(['not-started', 'awaiting-login', 'login-visible', 'running', 'paused', 'error']);
-  const COLLECTOR_ACTION_FEATURES = Object.freeze({ 'discover-conversations': 'backgroundCollection', 'collect-all-read': 'automaticHistory', 'configure-group-monitor': 'groupMonitoring', 'start-group-monitor': 'groupMonitoring', 'configure-ws-groups': 'backgroundCollection', 'configure-vip-groups': 'backgroundCollection' });
+  const COLLECTOR_ACTION_FEATURES = Object.freeze({ 'discover-conversations': 'backgroundCollection', 'collect-all-read': 'automaticHistory', 'configure-group-monitor': 'groupMonitoring', 'start-group-monitor': 'groupMonitoring', 'configure-ws-groups': 'backgroundCollection' });
   const COLLECTOR_SESSION_ACTIONS = new Set(['open-collector', 'hide-collector', 'pause-collector', 'resume-collector']);
   function normalizeCollectionCapability(native) {
     if (native?.state === 'available' && native.code === 'COLLECTION_INDEPENDENT_SESSION'
@@ -168,7 +168,7 @@
         state.groupMonitor.liveObservations?.clear();
       }
       if (previous?.collectorState !== capability.collectorState || capability.collectorState !== 'running') state.readHistoryAutoStarted = false;
-      state.vipGroupConfigSignatures.delete(String(accountId));
+      state.wsGroupConfigSignatures.delete(String(accountId));
       groupMonitorNativeSignature = '';
       restartBackgroundPolling();
       updateStatusDom();
@@ -383,7 +383,7 @@
     aiQueueStats: { queued: 0, running: 0, retryable: 0, completed: 0, failed: 0, deadLetter: 0, retryCount: 0, total: 0 },
     aiBackgroundError: '',
     aiRetryScope: null,
-    vipGroupConfigSignatures: new Map(),
+    wsGroupConfigSignatures: new Map(),
     groupMonitor: createGroupMonitorState(),
   };
   let rendering = false;
@@ -821,7 +821,7 @@
         updateAccountStatus(result);
         if (result.status === '已连接' && !state.liveDirectory?.foregroundChecked) void refreshForegroundDirectory();
       }
-      await syncVipGroupAllowlist(captureContext(''), true).catch(() => null);
+      await syncWsGroupAllowlist(captureContext(''), true).catch(() => null);
       if (!ownsSwitch()) return false;
       await loadConversations();
       if (!ownsSwitch()) return false;
@@ -1326,12 +1326,10 @@
   function explicitConversationType(conversation) { return core.conversationType?.(conversation) || 'unknown'; }
   function isExplicitGroupConversation(conversation) { return core.isGroupConversation?.(conversation) === true; }
   function isAutomaticDirectConversation(conversation) { return explicitConversationType(conversation) === 'direct'; }
-  function isAutomaticVipGroupConversation(conversation) {
-    const data = conversation?.data || {};
-    return explicitConversationType(conversation) === 'vip_group' || data.vipGroup === true;
-  }
+  // There is no VIP group: VIP is only a CRM customer tag. Ordinary WS works on
+  // private chats only; every group belongs to the dedicated WS group workflow.
   function isAutomaticCollectibleConversation(conversation) {
-    return isAutomaticDirectConversation(conversation) || isAutomaticVipGroupConversation(conversation);
+    return isAutomaticDirectConversation(conversation);
   }
   function isNativeManagedConversation(conversation) {
     const data = conversation?.data || {};
@@ -1341,40 +1339,14 @@
       || Boolean(data.historyFingerprint || data.lastMessageFingerprint);
   }
   function canManuallyProcessConversation(conversation) {
-    if (!conversation || (isExplicitGroupConversation(conversation) && !isAutomaticVipGroupConversation(conversation))) return false;
+    if (!conversation || isExplicitGroupConversation(conversation)) return false;
     return isAutomaticCollectibleConversation(conversation) || !isNativeManagedConversation(conversation);
   }
   function ordinaryGroupExclusionMessage(action = '采集、AI 分析或跟进提醒') {
     return `此群聊不适用于${action}。请在专用 WS 的群组管理中选择该群。`;
   }
   function personalConversationRows(rows) {
-    return (Array.isArray(rows) ? rows : []).filter(row => !isExplicitGroupConversation(row) || isAutomaticVipGroupConversation(row));
-  }
-  function vipGroupMemberAnalysisScopes(messages) {
-    const scopes = [];
-    for (const message of Array.isArray(messages) ? messages : []) {
-      if (message?.direction === 'send') continue;
-      const identity = core.messageMemberIdentity?.(message) || {};
-      if (identity.trusted !== true || (!text(identity.senderId) && !text(identity.senderPhone))) continue;
-      const existing = scopes.find(item => core.sameMemberIdentity?.(item, identity));
-      if (existing) {
-        if (!existing.senderId && identity.senderId) existing.senderId = identity.senderId;
-        if (!existing.senderPhone && identity.senderPhone) existing.senderPhone = identity.senderPhone;
-        if (!existing.senderName && identity.senderName) existing.senderName = identity.senderName;
-        if (!existing.identitySource && identity.identitySource) existing.identitySource = identity.identitySource;
-      } else scopes.push({
-        senderId: text(identity.senderId),
-        senderPhone: text(identity.senderPhone),
-        senderName: text(identity.senderName),
-        identitySource: text(identity.identitySource),
-        trusted: true,
-      });
-    }
-    return scopes;
-  }
-  function vipMemberScopeKey(memberIdentity = {}) {
-    const identity = core.messageMemberIdentity?.(memberIdentity) || memberIdentity || {};
-    return text(identity.senderId).toLocaleLowerCase() || text(identity.senderPhone) || '';
+    return (Array.isArray(rows) ? rows : []).filter(row => !isExplicitGroupConversation(row));
   }
   function fullHistorySourceFingerprint(conversation) {
     const data = conversation?.data || {};
@@ -1854,7 +1826,7 @@
     const hidden = !state.active || state.wsWorkspaceView !== 'chat' || style.display === 'none' || style.visibility === 'hidden' || rect.width < 40 || rect.height < 40;
     return { hidden, x: Math.round(rect.left), y: Math.round(rect.top), width: Math.round(rect.width), height: Math.round(rect.height) };
   }
-  function configuredVipGroups(accountId = state.activeAccountId) {
+  function configuredWsGroups(accountId = state.activeAccountId) {
     const settings = getHost()?.state?.settings || {};
     // WS 群组监测使用独立的绑定清单，不能从客户 VIP 编号推导群组。
     // 保留旧字段只为兼容升级过来的工作区；规范化逻辑集中在 ws-scope.js。
@@ -1887,14 +1859,14 @@
     }
     return result;
   }
-  async function syncVipGroupAllowlist(context = captureContext(''), force = false) {
+  async function syncWsGroupAllowlist(context = captureContext(''), force = false) {
     if (!collectionReady('backgroundCollection', context.accountId)) return collectionBlockedResult(context.accountId);
     const accountId = String(context?.accountId || state.activeAccountId || 'default');
-    const vipGroups = configuredVipGroups(accountId);
-    const signature = JSON.stringify(vipGroups);
-    if (!force && state.vipGroupConfigSignatures.get(accountId) === signature) return { accepted:vipGroups.length, unchanged:true };
-    const result = await wsBridge('configure-ws-groups', { ...context, accountId }, { wsGroups: vipGroups, vipGroups });
-    state.vipGroupConfigSignatures.set(accountId, signature);
+    const wsGroups = configuredWsGroups(accountId);
+    const signature = JSON.stringify(wsGroups);
+    if (!force && state.wsGroupConfigSignatures.get(accountId) === signature) return { accepted:wsGroups.length, unchanged:true };
+    const result = await wsBridge('configure-ws-groups', { ...context, accountId }, { wsGroups });
+    state.wsGroupConfigSignatures.set(accountId, signature);
     return result;
   }
   function groupMonitorContext() { return captureContext(''); }
@@ -1997,7 +1969,7 @@
       const channelName = text(data.channelName || data.channel_name || '');
       const groupFanType = text(data.groupFanType || data.group_fan_type || data.groupFanSource || data.group_fan_source || (/(?:单导|群粉|群导|社群|group)/i.test(sourceName) ? sourceName : ''));
       const key = groupJid.toLocaleLowerCase();
-      if (!values.has(key)) values.set(key, { groupJid, groupName, sourceId, channelId, sourceName, channelName, groupFanType, vipOnly: false, enabled: true });
+      if (!values.has(key)) values.set(key, { groupJid, groupName, sourceId, channelId, sourceName, channelName, groupFanType, enabled: true });
     }
     return [...values.values()];
   }
@@ -2101,7 +2073,6 @@
         sourceName: item.sourceName,
         channelName: item.channelName,
         groupFanType: item.groupFanType,
-        vipOnly: item.vipOnly !== false,
         enabled: true,
       })),
     } : { accountId: context.accountId, profileId: '', enabled: false });
@@ -2311,7 +2282,7 @@
   function addDirectoryMonitorTargets() {
     const selected = new Set(groupDirectoryState().selectedGroupIds);
     const targets = groupDirectoryRows().filter(row => selected.has(row.directoryId))
-      .map(row => ({ groupJid: row.groupJid, groupName: row.groupName, channelId: row.channelId, vipOnly: false, enabled: true }));
+      .map(row => ({ groupJid: row.groupJid, groupName: row.groupName, channelId: row.channelId, enabled: true }));
     return saveGroupMonitorTargets(targets);
   }
   async function addGroupMonitorTarget(selectedGroup = null) {
@@ -2324,7 +2295,7 @@
       return;
     }
     const groupName = text(selectedGroup?.groupName || monitor.draftName) || groupJid;
-    return saveGroupMonitorTargets([{ ...selectedGroup, groupJid, groupName, vipOnly: false, enabled: true }]);
+    return saveGroupMonitorTargets([{ ...selectedGroup, groupJid, groupName, enabled: true }]);
   }
   async function addSelectedGroupMonitorTarget() {
     const monitor = state.groupMonitor;
@@ -2527,7 +2498,7 @@
       setStatus(result.status || (action === 'reconnect' ? '正在重连' : stopAfterAction ? '未连接' : '等待登录'), result.detail || '');
       if (result.status === '已连接' && !state.liveDirectory?.foregroundChecked && ['open', 'login', 'reload', 'reconnect', 'probe'].includes(action)) void refreshForegroundDirectory();
       if (['open', 'login', 'reload', 'reconnect', 'probe'].includes(action)) {
-        await syncVipGroupAllowlist(context, action !== 'probe').catch(() => null);
+        await syncWsGroupAllowlist(context, action !== 'probe').catch(() => null);
       }
       assertContext(context);
       if (!ownsRequest()) return;
@@ -2745,7 +2716,7 @@
     const previousQueueSignature = aiQueueSignature();
     state.collectionRefreshing = true;
     try {
-      await syncVipGroupAllowlist(context).catch(() => null);
+      await syncWsGroupAllowlist(context).catch(() => null);
       const [result, run, alerts, aiQueue] = await Promise.all([
         loadConversationDeltaPages(context),
         api('/api/ws/collection-runs', {}, context),
@@ -3055,12 +3026,10 @@
     const enqueueOne = async item => {
       const normalized = normalizeListItem(item);
       if (!isAutomaticCollectibleConversation(normalized)) return 0;
-      const conversationType = isAutomaticVipGroupConversation(normalized) ? 'vip_group' : 'direct';
-      const vipGroup = conversationType === 'vip_group';
       const legacy = legacyByExternalId.get(`list-item-${normalized.index}`) || legacyByExternalId.get(`visible-${normalized.index}`);
       const externalId = text(normalized.externalId || legacy?.externalId || `visible-${normalized.index}`); const title = text(normalized.title || externalId);
       const preview = listPreviewText(normalized);
-      const match = vipGroup ? null : core.matchCustomer(getHost()?.state?.customers || [], {
+      const match = core.matchCustomer(getHost()?.state?.customers || [], {
         wsExternalId: externalId,
         wsAccountId: context.accountId,
         // Conversation identity must come from the contact row itself.  A
@@ -3073,13 +3042,12 @@
       const conversation = await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({
         externalId,
         title,
-        conversationType,
-        isGroup: vipGroup,
-        vipGroup,
-        customerId: vipGroup ? '' : matchedCustomerId,
+        conversationType: 'direct',
+        isGroup: false,
+        customerId: matchedCustomerId,
         lastMessageText: preview,
         unreadCount: Number(item.unreadCount || 0),
-        data: { discovery: 'visible-page', conversationType, isGroup: vipGroup, vipGroup, previewOnly: true, historyLoaded: false, customerMatch: vipGroup ? 'member-scoped' : (matchedCustomerId ? 'automatic' : 'pending') },
+        data: { discovery: 'visible-page', conversationType: 'direct', isGroup: false, previewOnly: true, historyLoaded: false, customerMatch: matchedCustomerId ? 'automatic' : 'pending' },
       }) }, context);
       assertContext(context);
       await api('/api/ws/collection-items', { method: 'POST', body: JSON.stringify({ runId: state.collectionRun.id, conversationId: conversation.id, status: 'queued' }) }, context);
@@ -3204,9 +3172,8 @@
   }
   function aiJobIdempotencyKey(conversation, transcript) {
     const sourceFingerprint = text(transcript?.sourceFingerprint);
-    const memberScope = transcript?.memberScoped === true
-      ? vipMemberScopeKey(transcript.memberIdentity)
-      : '';
+    // Ordinary WS analyses private chats only, so a job is never member-scoped.
+    const memberScope = '';
     // Keep manual imports (which have no authoritative source fingerprint)
     // compatible with their existing key. Native full-history analyses must
     // include the server-authoritative fingerprint so a corrected/recollected
@@ -3321,51 +3288,9 @@
     if (fullHistorySourceFingerprint(currentConversation) !== sourceFingerprint || messageHistory.sourceFingerprint !== sourceFingerprint) return { ok: false, reason: '读取期间聊天已更新，旧记录已保留；等待重新采集完整历史。', pending: true };
     const messages = messageHistory.messages;
     if (!messages.length) return { ok: false, reason: '当前会话暂无可分析消息。' };
-    const vipGroup = isAutomaticVipGroupConversation(currentConversation);
-    const requestedMemberIdentity = options.memberIdentity && vipMemberScopeKey(options.memberIdentity)
-      ? options.memberIdentity
-      : null;
-    if (vipGroup && !requestedMemberIdentity) {
-      const memberScopes = vipGroupMemberAnalysisScopes(messages);
-      if (!memberScopes.length) {
-        return {
-          ok: false,
-          pending: true,
-          identityPending: true,
-          reason: '群历史已保留，但尚未读取到可信的发言人 WS ID 或手机号，暂不写入客户档案。',
-        };
-      }
-      const memberResults = [];
-      for (const memberIdentity of memberScopes) {
-        throwIfAiCancelled(signal);
-        memberResults.push(await analyzeStoredConversation(conversation, context, {
-          ...options,
-          messageHistory,
-          memberIdentity,
-        }));
-      }
-      const failed = memberResults.find(item => !item.ok && !item.pending && !item.disabled);
-      if (failed) return { ...failed, memberResults };
-      const succeeded = memberResults.filter(item => item.ok);
-      return {
-        ok: succeeded.length > 0,
-        pending: succeeded.length === 0 && memberResults.some(item => item.pending),
-        memberScoped: true,
-        analyzedMembers: succeeded.length,
-        totalMembers: memberScopes.length,
-        memberResults,
-        analysis: succeeded.at(-1)?.analysis,
-        analysisMeta: succeeded.at(-1)?.analysisMeta,
-        reason: succeeded.length ? '' : (memberResults.find(item => item.reason)?.reason || '群成员分析等待重试。'),
-      };
-    }
-    let memberTranscript = null;
-    if (vipGroup) {
-      memberTranscript = core.buildVipMemberTranscript?.(messages, requestedMemberIdentity, { maxChars: 48000 });
-      if (!memberTranscript?.memberScoped || Number(memberTranscript.targetStatementCount || 0) < 1) {
-        return { ok: false, pending: true, identityPending: true, reason: '群当前发言人没有可归属的本人原文，已保留聊天但不写入客户档案。' };
-      }
-    }
+    // Ordinary WS analyses private chats only. A group is never analysed or
+    // written to a customer here (there is no VIP group exception).
+    if (isExplicitGroupConversation(currentConversation)) return { ok: false, reason: ordinaryGroupExclusionMessage('AI 分析') };
     const chunks = core.splitHistoryTranscript(messages, { maxChars: 16000 });
     if (!chunks.length) return { ok: false, reason: '聊天没有可分析的文本，媒体消息原记录已保留。' };
     const transcript = { text: chunks.map(item => item.text).join('\n'), included: messages.length, total: messages.length, truncated: false, chunkCount: chunks.length };
@@ -3374,16 +3299,9 @@
     transcript.historyTotal = messageHistory.total;
     transcript.sourceFingerprint = sourceFingerprint;
     transcript.directionVersion = transcriptDirectionVersion(currentConversation, sourceFingerprint);
-    if (vipGroup) {
-      transcript.memberScoped = true;
-      transcript.memberIdentity = memberTranscript.memberIdentity;
-      transcript.targetStatementCount = memberTranscript.targetStatementCount;
-    }
     let aiJob;
     try {
-      aiJob = await beginAiJob(conversation, transcript, context, vipGroup
-        ? 'ws-vip-member-full-history-analysis'
-        : (messageHistory.complete ? 'ws-full-history-analysis' : 'ws-list-preview-analysis'), options.automatic === true ? options.authorizationId : '');
+      aiJob = await beginAiJob(conversation, transcript, context, messageHistory.complete ? 'ws-full-history-analysis' : 'ws-list-preview-analysis', options.automatic === true ? options.authorizationId : '');
       throwIfAiCancelled(signal);
       if (aiJob.completed && aiJob.analysis) {
         const analysis = aiJob.analysis.result || {};
@@ -3412,15 +3330,12 @@
       const analysis = await analyzeHistoryChunks(chunks, conversation, context, aiJob.job, {
         signal,
         automatic: options.automatic === true,
-        memberIdentity: vipGroup ? memberTranscript.memberIdentity : null,
-        memberScoped: vipGroup,
       });
       throwIfAiCancelled(signal);
       const latestConversation = state.conversations.find(item => String(item.id) === String(conversation.id)) || conversation;
       if (fullHistorySourceFingerprint(latestConversation) !== sourceFingerprint) throw new Error('分析期间聊天已更新，旧分析进度已保留；等待重新采集完整历史。');
       analysis.transcriptInfo = { ...transcript, text: undefined, analyzedChunks: chunks.length };
-      if (vipGroup) analysis.memberIdentity = memberTranscript.memberIdentity;
-       const saved = await api('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, jobId: aiJob.job.id, leaseToken: aiJob.job.leaseToken, memberIdentity: vipGroup ? memberTranscript.memberIdentity : null, result: analysis, confidence: analysis.confidence, providerName: analysis.providerName, model: analysis.model }) }, context);
+       const saved = await api('/api/ws/analyses', { method: 'POST', body: JSON.stringify({ conversationId: conversation.id, jobId: aiJob.job.id, leaseToken: aiJob.job.leaseToken, memberIdentity: null, result: analysis, confidence: analysis.confidence, providerName: analysis.providerName, model: analysis.model }) }, context);
        throwIfAiCancelled(signal);
        await completeAiJob(aiJob.job, saved.id, context);
        throwIfAiCancelled(signal);
@@ -3435,7 +3350,7 @@
         lastError: '',
        }) }, context);
       state.analysisRefreshPending.add(String(conversation.id));
-      return { ok: true, analysis, analysisMeta: saved, memberIdentity: vipGroup ? memberTranscript.memberIdentity : null };
+      return { ok: true, analysis, analysisMeta: saved };
     } catch (error) {
       if (isAiCancellation(error, signal)) {
         await failAiJob(aiJob?.job, context, 'AI 分析已取消，任务保留待重试。');
@@ -3457,9 +3372,10 @@
       if (parsed.error) throw new Error(parsed.error);
       return { ...parsed, providerName: result.providerName || '', model: result.model || '', automaticAttemptId: result.attemptId || '' };
     }
-    const memberScoped = options.memberScoped === true;
-    const memberIdentity = memberScoped ? (core.messageMemberIdentity?.(options.memberIdentity) || options.memberIdentity || {}) : null;
-    const memberKey = memberScoped ? vipMemberScopeKey(memberIdentity) : '';
+    // Ordinary WS analyses private chats only; nothing is scoped to a group member.
+    const memberScoped = false;
+    const memberIdentity = null;
+    const memberKey = '';
     const checkpoint = job?.payload?.checkpoint;
     const resumeAt = checkpoint?.chunkCount === chunks.length ? Math.min(chunks.length, Number(checkpoint.completedChunks) || 0) : 0;
     const analyses = resumeAt && checkpoint?.result ? [checkpoint.result] : [];
@@ -3470,7 +3386,7 @@
       state.crmSyncStatus = `正在分析聊天 ${chunk.chunkNumber}/${chunk.chunkCount} 段`;
       const result = await window.zhikeAI.request({ assistantMode: 'operations', analysisDepth: 'standard',
         input: core.buildNaturalChatAnalysisPrompt(chunk.text, { conversationId: conversation.id, memberIdentity }),
-        context: { feature: memberScoped ? 'ws-vip-member-history-segment' : 'ws-history-segment', conversationId: conversation.id, memberScoped, memberKey, chunkNumber: chunk.chunkNumber, chunkCount: chunk.chunkCount, startMessage: chunk.startIndex + 1, endMessage: chunk.endIndex + 1 },
+        context: { feature: 'ws-history-segment', conversationId: conversation.id, memberScoped, memberKey, chunkNumber: chunk.chunkNumber, chunkCount: chunk.chunkCount, startMessage: chunk.startIndex + 1, endMessage: chunk.endIndex + 1 },
       }, { signal });
       throwIfAiCancelled(signal);
       assertContext(context);
@@ -3486,7 +3402,7 @@
       assertContext(context);
       if (!state.aiEnabled) throw new Error('AI 分析已关闭。');
       const synthesis = JSON.stringify({ summary: merged.summary, contact: merged.contact, profileFacts: merged.profileFacts, recentAnalysis: analyses.at(-1), instruction: '合并各段已提取证据；资金实力使用全部证据，聊天粘度和跟进意愿以最近会话为准。不得把历史兴趣当成当前意愿。' });
-      const result = await window.zhikeAI.request({ assistantMode: 'operations', analysisDepth: 'standard', input: core.buildNaturalChatAnalysisPrompt(synthesis, { conversationId: conversation.id, memberIdentity }), context: { feature: memberScoped ? 'ws-vip-member-history-synthesis' : 'ws-history-synthesis', conversationId: conversation.id, memberScoped, memberKey, chunkCount: chunks.length } }, { signal });
+      const result = await window.zhikeAI.request({ assistantMode: 'operations', analysisDepth: 'standard', input: core.buildNaturalChatAnalysisPrompt(synthesis, { conversationId: conversation.id, memberIdentity }), context: { feature: 'ws-history-synthesis', conversationId: conversation.id, memberScoped, memberKey, chunkCount: chunks.length } }, { signal });
       throwIfAiCancelled(signal);
       assertContext(context);
       const final = core.parseAiResult(result?.text || '');
@@ -4788,7 +4704,7 @@
       const coverage = item.liveSource ? '实时会话' : historyLoaded ? `完整聊天 ${historyCount || ''} 条` : (rawHistoryLoaded ? '待重采校验消息方向' : (item.data?.previewOnly ? '列表预览' : '已导入消息'));
       const selected = String(item.id) === String(state.currentConversationId);
       const kind = String(item.accountId) === String(state.activeAccountId) ? explicitConversationType(item) : 'unknown';
-      const group = kind === 'group' || kind === 'vip_group';
+      const group = kind === 'group';
       const name = text(item.title) === text(item.externalId) ? '' : item.title;
       const avatar = kind === 'direct' ? businessPages?.renderPersonAvatar?.({ name, size: 'list', selected }) : '';
       const glyph = avatar || `<span class="ws-session-glyph" ${group ? 'role="img" aria-label="群聊"' : 'aria-hidden="true"'}><svg class="zk-icon" viewBox="0 0 24 24" focusable="false" aria-hidden="true"><use href="#i-${group ? 'users-group' : 'message'}"/></svg></span>`;
@@ -5559,10 +5475,9 @@
     const importType = core.detectChatImportType?.(draft.captureText) || { type: 'unknown', reason: 'insufficient-group-evidence', senderCount: 0 };
     const rows = core.parseVisibleChat(draft.captureText, state.captureDirection);
     if (!current) { toast('请先建立或选择本机会话。', 'x'); return; }
-    const vipGroup = isAutomaticVipGroupConversation(current);
     if (!canManuallyProcessConversation(current)) { toast(isExplicitGroupConversation(current) ? ordinaryGroupExclusionMessage() : '当前聊天类型尚未确认是一对一会话，已停止导入。', 'x'); return; }
-    if (importType.type === 'group' && !vipGroup) { toast(`检测到明确的 WhatsApp 群聊导出；${ordinaryGroupExclusionMessage('客户采集、AI 分析或提醒')}`, 'x'); return; }
-    if (importType.reason === 'multiple-senders' && !vipGroup) { toast(`检测到 ${Number(importType.senderCount || 0)} 位发言人，无法确认为一对一聊天；请导入单个客户的一对一记录。`, 'x'); return; }
+    if (importType.type === 'group') { toast(`检测到明确的 WhatsApp 群聊导出；${ordinaryGroupExclusionMessage('客户采集、AI 分析或提醒')}`, 'x'); return; }
+    if (importType.reason === 'multiple-senders') { toast(`检测到 ${Number(importType.senderCount || 0)} 位发言人，无法确认为一对一聊天；请导入单个客户的一对一记录。`, 'x'); return; }
     if (!rows.length) { toast('请先选择或粘贴当前可见聊天文本。', 'x'); return; }
     // Only contact identity fields may auto-fill the customer phone. Numbers
     // mentioned in chat content can belong to a third party. A phone entered
@@ -5593,7 +5508,7 @@
         originalText: row.text,
         order: baseOrder + index + 1,
         translationStatus: core.shouldTranslate(state.settings, row.direction) ? 'pending' : 'none',
-        data: { source: 'user-visible-selection', batchFingerprint: fingerprint, timestamp: row.timestamp, sender: row.sender, ...(vipGroup ? { conversationType:'vip_group', isGroup:true, vipGroup:true, senderName:row.sender, senderIdentityTrusted:false, senderIdentitySource:'manual-visible-label' } : {}) },
+        data: { source: 'user-visible-selection', batchFingerprint: fingerprint, timestamp: row.timestamp, sender: row.sender },
       }));
       const result = await api('/api/ws/messages/batch', {
         method: 'POST',
@@ -5661,41 +5576,6 @@
     }
     if (!state.aiEnabled) { toast('当前会话的 AI 分析已关闭。', 'x'); return { ok: false, reason: 'AI 分析已关闭。', disabled: true }; }
     if (!window.zhikeAI?.request || !window.zhikeAI?.status) { toast('当前没有可用的 AI 服务，请先配置 GPT 运营助手。', 'x'); return { ok: false, reason: '当前没有可用的 AI 服务。' }; }
-    if (isAutomaticVipGroupConversation(current)) {
-      const memberScopes = vipGroupMemberAnalysisScopes(state.messages);
-      if (!memberScopes.length) {
-        const reason = '群聊天已保留，但尚未读取到可信的发言人 WS ID 或手机号，暂不写入客户档案。';
-        toast(reason, 'x');
-        return { ok: false, pending: true, identityPending: true, reason };
-      }
-      state.aiBusy = true;
-      state.error = '';
-      state.aiBackgroundError = '';
-      const pendingPump = cancelBackgroundAiPump();
-      const controller = new AbortController();
-      manualAiController = controller;
-      render();
-      try {
-        await pendingPump.catch(() => {});
-        const result = await analyzeStoredConversation(current, context, { signal: controller.signal });
-        if (!result.ok) {
-          if (!result.cancelled) toast(result.reason || '群成员分析等待重试。', 'x');
-          return result;
-        }
-        state.analysis = result.analysis || result.memberResults?.filter(item => item.ok).at(-1)?.analysis || {};
-        state.analysisMeta = result.analysisMeta || result.memberResults?.filter(item => item.ok).at(-1)?.analysisMeta || null;
-        seedDraftFromAnalysis();
-        toast(`群分析完成：已按 ${result.analyzedMembers || memberScopes.length} 位可信发言人分开处理，未归属其他成员事实。`, 'check');
-        return result;
-      } finally {
-        if (manualAiController === controller) manualAiController = null;
-        if (contextCurrent(context)) {
-          state.aiBusy = false;
-          render();
-          if (state.backgroundActive && state.aiEnabled) scheduleAiQueuePump({ ...context, conversationId: '' });
-        }
-      }
-    }
     const chunks = core.splitHistoryTranscript(state.messages, { maxChars: 16000 });
     if (!chunks.length) { toast('聊天没有可分析的文本，媒体消息原记录已保留。', 'x'); return { ok: false, reason: '无可分析文本' }; }
     state.aiBusy = true;
@@ -6945,7 +6825,7 @@
         }
       }
       if (!ownsStart()) return;
-      await syncVipGroupAllowlist(captureContext(''), true).catch(() => null);
+      await syncWsGroupAllowlist(captureContext(''), true).catch(() => null);
       if (!ownsStart()) return;
       await loadConversations();
       if (!ownsStart()) return;

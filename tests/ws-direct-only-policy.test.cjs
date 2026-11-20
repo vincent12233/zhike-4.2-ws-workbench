@@ -11,26 +11,23 @@ const { DatabaseSync } = require('node:sqlite');
 const core = require('../resources/app/modules/ws-workbench-core.js');
 
 assert.equal(core.conversationType({externalId:'123@g.us',conversationType:'direct'}),'group');
-assert.equal(core.conversationType({externalId:'123@g.us',conversationType:'vip_group',vipGroup:true}),'vip_group');
-assert.equal(core.isVipGroupConversation({externalId:'123@g.us',vipGroup:true,isGroup:true}),true);
-assert.equal(core.isExcludedGroupConversation({externalId:'123@g.us',isGroup:true}),true);
-const vipTranscript=core.buildVipMemberTranscript([
-  {direction:'receive',originalText:'I am an engineer',data:{conversationType:'vip_group',senderId:'919876543210@c.us',senderName:'Existing',senderIdentityTrusted:true}},
-  {direction:'receive',originalText:'I am a billionaire',data:{conversationType:'vip_group',senderId:'911111111111@c.us',senderName:'Other',senderIdentityTrusted:true}},
-],{senderId:'919876543210@c.us',senderName:'Existing',senderIdentityTrusted:true});
-assert.equal(vipTranscript.memberScoped,true);assert.equal(vipTranscript.targetStatementCount,1);assert.match(vipTranscript.text,/群成员\[Existing\]/);assert.match(vipTranscript.text,/群成员\[Other\]/);
-const vipChunks=core.splitHistoryTranscript([
-  {direction:'receive',originalText:'I am an engineer',data:{conversationType:'vip_group',senderId:'919876543210@c.us',senderName:'Existing',senderIdentityTrusted:true}},
+// There is no VIP group: VIP is a CRM customer tag only. Legacy vip markers
+// are read as an ordinary group, and no VIP-specific API remains.
+assert.equal(core.conversationType({externalId:'123@g.us',conversationType:'vip_group',vipGroup:true}),'group');
+assert.equal(core.conversationType({data_json:JSON.stringify({conversationType:'vip_group'})}),'group');
+assert.equal(core.isGroupConversation({externalId:'123@g.us',vipGroup:true,isGroup:true}),true);
+for(const removed of ['isVipGroupConversation','isExcludedGroupConversation','buildVipMemberTranscript'])assert.equal(core[removed],undefined,removed+' is removed');
+const groupChunks=core.splitHistoryTranscript([
+  {direction:'receive',originalText:'I am an engineer',data:{conversationType:'group',senderId:'919876543210@c.us',senderName:'Existing',senderIdentityTrusted:true}},
   {direction:'receive',originalText:'I am a billionaire',data:{conversationType:'vip_group',senderId:'911111111111@c.us',senderName:'Other',senderIdentityTrusted:true}},
 ],{maxChars:16000});
-assert.match(vipChunks[0].text,/群成员\[Existing\]/);
-assert.match(vipChunks[0].text,/群成员\[Other\]/);
+assert.match(groupChunks[0].text,/群成员\[Existing\]/,'group lines are labelled per member');
+assert.match(groupChunks[0].text,/群成员\[Other\]/,'a legacy vip-marked line is labelled as an ordinary group member');
 const workbenchSource=fs.readFileSync(path.join(__dirname,'../resources/app/modules/ws-workbench.js'),'utf8');
-assert.match(workbenchSource,/function vipGroupMemberAnalysisScopes\(messages\)/);
-assert.match(workbenchSource,/core\.buildVipMemberTranscript\?\.\(messages, requestedMemberIdentity/);
-assert.match(workbenchSource,/memberScoped:\s*transcript\.memberScoped === true/);
-assert.match(workbenchSource,/core\.buildNaturalChatAnalysisPrompt\(chunk\.text, \{ conversationId: conversation\.id, memberIdentity \}\)/);
-assert.match(workbenchSource,/memberResults\.push\(await analyzeStoredConversation\(conversation, context/);
+assert.doesNotMatch(workbenchSource,/vip_group|vipGroup|VipGroup|vipMember|ws-vip-/,'ordinary WS has no VIP-group path');
+assert.match(workbenchSource,/function isAutomaticCollectibleConversation\(conversation\) \{\s*return isAutomaticDirectConversation\(conversation\);/,'ordinary WS auto-collects private chats only');
+assert.match(workbenchSource,/if \(isExplicitGroupConversation\(currentConversation\)\) return \{ ok: false, reason: ordinaryGroupExclusionMessage\('AI 分析'\) \};/,'ordinary WS never analyses a group');
+assert.match(workbenchSource,/filter\(row => !isExplicitGroupConversation\(row\)\)/,'every group stays out of the personal chat list');
 assert.equal(core.conversationType({externalId:'123@c.us',data:{isGroup:true}}),'group');
 assert.equal(core.conversationType({title:'+91 1234567890',externalId:'numeric-name'}),'unknown');
 assert.equal(core.conversationType({data_json:JSON.stringify({conversationType:'direct'})}),'direct');
@@ -85,18 +82,20 @@ function inspect(fn){const db=new DatabaseSync(path.join(data,'workspace.sqlite'
   const profile=(await call('/api/ws/group-monitors/profiles',{slotKey:'policy-group-seat',enabled:true},201)).profile;
   await call('/api/ws/group-monitors/'+profile.id+'/targets/scan',{targets:[{groupJid:'vip-room@g.us',groupName:'Observed group',enabled:true}]});
   const vipIngest=await call('/api/ws/ingest/batch',{
-    checkpoints:[{conversationKey:'vip-room@g.us',conversationType:'vip_group',vipGroup:true,isGroup:true,displayName:'VIP Room',unreadCount:0,historyLoaded:true,historyMessageCount:3,coverage:'read-history',directionVersion:4,directionUnresolvedCount:0,lastMessageFingerprint:'vip-list'}],
+    checkpoints:[{conversationKey:'vip-room@g.us',conversationType:'group',isGroup:true,displayName:'Authorized Room',unreadCount:0,historyLoaded:true,historyMessageCount:3,coverage:'read-history',directionVersion:4,directionUnresolvedCount:0,lastMessageFingerprint:'vip-list'}],
     messages:[
-      {conversationKey:'vip-room@g.us',conversationType:'vip_group',externalMessageId:'vip-a',body:'I am an engineer',direction:'incoming',directionSource:'class-message-in',senderId:'919876543210@c.us',senderPhone:'9876543210',senderName:'Existing',senderIdentitySource:'sender-jid',sentAt:'2026-11-13T10:01:00Z'},
-      {conversationKey:'vip-room@g.us',conversationType:'vip_group',externalMessageId:'vip-b',body:'I am a billionaire',direction:'incoming',directionSource:'class-message-in',senderId:'911111111111@c.us',senderPhone:'1111111111',senderName:'Other',senderIdentitySource:'sender-jid',sentAt:'2026-11-13T10:02:00Z'},
-      {conversationKey:'vip-room@g.us',conversationType:'vip_group',externalMessageId:'vip-c',body:'Thanks for sharing',direction:'outgoing',directionSource:'class-message-out',senderName:'Self',senderIdentitySource:'message-preamble',sentAt:'2026-11-13T10:03:00Z'},
+      {conversationKey:'vip-room@g.us',conversationType:'group',externalMessageId:'vip-a',body:'I am an engineer',direction:'incoming',directionSource:'class-message-in',senderId:'919876543210@c.us',senderPhone:'9876543210',senderName:'Existing',senderIdentitySource:'sender-jid',sentAt:'2026-11-13T10:01:00Z'},
+      {conversationKey:'vip-room@g.us',conversationType:'group',externalMessageId:'vip-b',body:'I am a billionaire',direction:'incoming',directionSource:'class-message-in',senderId:'911111111111@c.us',senderPhone:'1111111111',senderName:'Other',senderIdentitySource:'sender-jid',sentAt:'2026-11-13T10:02:00Z'},
+      {conversationKey:'vip-room@g.us',conversationType:'group',externalMessageId:'vip-c',body:'Thanks for sharing',direction:'outgoing',directionSource:'class-message-out',senderName:'Self',senderIdentitySource:'message-preamble',sentAt:'2026-11-13T10:03:00Z'},
     ],
   });
-  assert.equal(vipIngest.accepted,3,'whitelisted VIP group stores the complete multi-party transcript');
-  const vip=(await call('/api/ws/conversations')).conversations.find(c=>c.externalId==='vip-room@g.us');
-  assert.ok(vip);assert.equal(vip.data.conversationType,'vip_group');assert.equal(vip.customerId,'','group conversation itself must never bind one customer');
-  await call('/api/ws/conversations',{externalId:'vip-room@g.us',customerId:'C1'});
-  assert.equal(inspect(db=>db.prepare('SELECT customer_id FROM ws_conversations WHERE id=?').get(vip.id).customer_id),'','a legacy conversation update cannot bind an entire VIP group to one customer');
+  assert.equal(vipIngest.accepted,3,'an authorized (monitored) group stores the complete multi-party transcript');
+  const groupListing=await call('/api/ws/conversations');
+  assert.equal(groupListing.conversations.some(c=>c.externalId==='vip-room@g.us'),false,'a group is never listed as a personal chat');
+  const vip=groupListing.groupConversations.find(c=>c.externalId==='vip-room@g.us');
+  assert.ok(vip);assert.equal(vip.data.conversationType,'group');assert.equal(vip.data.vipGroup,undefined,'no VIP flag is written');assert.equal(vip.customerId,'','group conversation itself must never bind one customer');
+  assert.equal((await call('/api/ws/conversations',{externalId:'vip-room@g.us',customerId:'C1'},422)).code,'WS_GROUP_EXCLUDED','linking a group to one customer is rejected outright');
+  assert.equal(inspect(db=>db.prepare('SELECT customer_id FROM ws_conversations WHERE id=?').get(vip.id).customer_id),'','a conversation update cannot bind an entire group to one customer');
   assert.equal(inspect(db=>JSON.parse(db.prepare("SELECT data_json FROM ws_messages WHERE external_id='vip-a'").get().data_json).senderId),'919876543210@c.us');
   assert.equal((await call('/api/ws/ai-jobs',{conversationId:vip.id,idempotencyKey:'vip-standard-analysis'},422)).code,'WS_GROUP_MEMBER_SCOPE_REQUIRED');
   const genericVipAnalysis=await call('/api/ws/analyses',{conversationId:vip.id,result:{summary:'Whole room summary',confidence:.9,profileFacts:{occupation:{value:'Billionaire',state:'known',confidence:.9,evidence:'I am a billionaire',sourceRole:'customer'}},followupStrategy:{shouldFollowUp:true,priorityScore:99}},confidence:.9},422);
@@ -106,7 +105,7 @@ function inspect(fn){const db=new DatabaseSync(path.join(data,'workspace.sqlite'
   const scopedVipAnalysis=await call('/api/ws/analyses',{conversationId:vip.id,result:{summary:'Engineer member is engaged',confidence:.9,memberIdentity,transcriptInfo:{memberScoped:true,memberIdentity,directionVersion:4},profileFacts:{occupation:{value:'Engineer',state:'known',confidence:.9,evidence:'I am an engineer',sourceRole:'customer'},future_plans:{value:'Buy an island',state:'known',confidence:.9,evidence:'I am a billionaire',sourceRole:'customer'}},followupStrategy:{shouldFollowUp:true,qualificationScore:70,engagementScore:80,priorityScore:75,scoreConfidence:.8,reason:'Member replied',objective:'Discuss needs'}},confidence:.9});
   const scopedVipSync=await call('/api/ws/crm-sync',{conversationId:vip.id,analysisId:scopedVipAnalysis.id});
   assert.equal(scopedVipSync.matched,true);assert.equal(scopedVipSync.created,false);assert.equal(scopedVipSync.customer.occupation,'Engineer');assert.notEqual(scopedVipSync.customer.future_plans,'Buy an island','another member evidence cannot fill the matched customer');
-  assert.equal(inspect(db=>db.prepare('SELECT customer_id FROM ws_conversations WHERE id=?').get(vip.id).customer_id),'','VIP group remains multi-member after a customer-level sync');
+  assert.equal(inspect(db=>db.prepare('SELECT customer_id FROM ws_conversations WHERE id=?').get(vip.id).customer_id),'','the group remains multi-member after a customer-level sync');
   const unknownMember={senderId:'919222222222@c.us',senderPhone:'2222222222',identitySource:'sender-jid',trusted:true};
   const unknownScoped=await call('/api/ws/analyses',{conversationId:vip.id,result:{summary:'Unknown member',confidence:.9,memberIdentity:unknownMember,transcriptInfo:{memberScoped:true,memberIdentity:unknownMember,directionVersion:4},profileFacts:{occupation:{value:'Doctor',state:'known',confidence:.9,evidence:'Unknown',sourceRole:'customer'}}},confidence:.9},422);
   assert.equal(unknownScoped.code,'WS_GROUP_MEMBER_IDENTITY_UNCONFIRMED');assert.equal((await call('/api/state')).customers.length,1,'unobserved member analysis never auto-creates a customer');

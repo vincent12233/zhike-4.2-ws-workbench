@@ -29,7 +29,7 @@ function fixture(nativeReply) {
   };
   const boot = /  boot\(\);\s*\}\)\(\);\s*$/;
   assert.match(source, boot);
-  const exposed = 'state,updateAccountStatus,wsBridge,startBackgroundRuntime,restartBackgroundPolling,refreshCollectionSummary,requestAccountPipelineRefresh,createCollectionRun,collectAllReadConversations,maybeStartAutomaticReadHistoryCollection,updateCollectionRun,resumeCollectionFromCheckpoint,discoverConversations,syncVipGroupAllowlist,syncGroupMonitorNative,createGroupMonitor,scanGroupMonitorTargets,addGroupMonitorTarget,toggleGroupMonitor,toggleGroupMonitorTarget,wsBackgroundStatus,renderWsCockpit,renderCollectionCard,renderGroupMonitorBody,connectionAction,switchAccount';
+  const exposed = 'state,updateAccountStatus,wsBridge,startBackgroundRuntime,restartBackgroundPolling,refreshCollectionSummary,requestAccountPipelineRefresh,createCollectionRun,collectAllReadConversations,maybeStartAutomaticReadHistoryCollection,updateCollectionRun,resumeCollectionFromCheckpoint,discoverConversations,syncWsGroupAllowlist,syncGroupMonitorNative,createGroupMonitor,scanGroupMonitorTargets,addGroupMonitorTarget,toggleGroupMonitor,toggleGroupMonitorTarget,wsBackgroundStatus,renderWsCockpit,renderCollectionCard,renderGroupMonitorBody,connectionAction,switchAccount';
   vm.runInNewContext(source.replace(boot, `  globalThis.rd02={${exposed}};\n})();`), sandbox, { filename: 'ws-workbench-rd02-real-module.js' });
   const api = sandbox.rd02, state = api.state;
   state.accounts = [{ id: 'a', displayName: '合成账号A', status: '已连接' }, { id: 'b', displayName: '合成账号B', status: '未连接' }];
@@ -58,7 +58,7 @@ test('native capability telemetry is account-scoped and never replaces connectio
 
 test('collector-dependent native bridge actions fail closed before any native call', async () => {
   const f = fixture();
-  for (const action of ['discover-conversations', 'collect-all-read', 'configure-group-monitor', 'start-group-monitor', 'configure-ws-groups', 'configure-vip-groups']) {
+  for (const action of ['discover-conversations', 'collect-all-read', 'configure-group-monitor', 'start-group-monitor', 'configure-ws-groups']) {
     await assert.rejects(f.wsBridge(action, f.context()), error => error.code === CAPABILITY.code);
   }
   assert.equal(f.nativeCalls.length, 0, 'a missing native capability is not permission to use the legacy collector');
@@ -150,7 +150,7 @@ test('blocked group-monitor enable and scan actions never persist enabled config
 });
 
 test('allowlist synchronization is a harmless blocked result, not a login failure', async () => {
-  const f = fixture(); const result = await f.syncVipGroupAllowlist(f.context(), true);
+  const f = fixture(); const result = await f.syncWsGroupAllowlist(f.context(), true);
   assert.equal(result.code, CAPABILITY.code); assert.equal(f.nativeCalls.length, 0);
   assert.equal(f.state.wsStatus, '已连接');
 });

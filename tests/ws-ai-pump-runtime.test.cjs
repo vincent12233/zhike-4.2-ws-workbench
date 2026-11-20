@@ -493,7 +493,7 @@ const waitFor = async (predicate, ms = 500) => {
   await waitFor(() => !runtime.state.collectionRefreshing);
   assert.equal(runtime.state.backgroundActive, true, 'manual Open WS restores the session lifetime after an interrupted startup');
   assert.equal(activeIntervals.size, 0, 'manual Open WS does not start a collector or automatic AI timer');
-  assert.equal(bridgeCalls.some(call => ['discover-conversations', 'collect-all-read', 'start-group-monitor', 'configure-group-monitor', 'configure-ws-groups', 'configure-vip-groups'].includes(call.action)), false,
+  assert.equal(bridgeCalls.some(call => ['discover-conversations', 'collect-all-read', 'start-group-monitor', 'configure-group-monitor', 'configure-ws-groups'].includes(call.action)), false,
     'manual-session and AI regression coverage cannot invoke any blocked native collector action');
   runtime.stopBackgroundRuntime();
 

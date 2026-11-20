@@ -93,13 +93,16 @@ test('production ingest separates purpose, group directory and observed member m
     await request('/api/ws/group-monitors/' + otherProfile.id + '/targets/scan?accountId=' + other, { accountId: other,
       targets: [{ groupJid: 'other-account@g.us', groupName: 'Same observed group name', enabled: true }] });
 
-    await t.test('ordinary mixed packets preserve direct collection and group directory without VIP bypass', async () => {
+    await t.test('ordinary mixed packets preserve direct collection and group directory; legacy vip rows are plain groups', async () => {
       const result = await ingest(ordinary, [checkpoint('917000008099@s.whatsapp.net', 'direct'), checkpoint('legacy-vip@g.us', 'vip_group'), checkpoint('canonical@g.us')],
         [message('917000008099@s.whatsapp.net'), message('legacy-vip@g.us', 'vip', { direction: 'invalid' }), message('canonical@g.us')]);
       assert.equal(result.accepted, 1); assert.equal(result.skipped, 2);
       assert.equal(result.skipReasons.WS_WORKSPACE_MODE_MISMATCH, 2);
       const rows = await request('/api/ws/conversations?accountId=' + ordinary);
-      assert.equal(rows.groupConversations.length, 2); assert.equal(rows.conversations.length, 2, 'existing legacy history remains visible beside direct data');
+      // There is no VIP group. The seeded legacy vip row is an ordinary group:
+      // it is listed with the groups (its history kept), not as a personal chat.
+      assert.equal(rows.groupConversations.length, 3); assert.equal(rows.conversations.length, 1, 'only the direct chat is a personal conversation');
+      assert.ok(rows.groupConversations.some(row => row.externalId === 'historical@g.us'), 'legacy group history remains visible in the group list');
       assert.equal(inspect(db => db.prepare('SELECT COUNT(*) n FROM ws_group_catalog WHERE account_id=?').get(ordinary).n), 2);
       for (const key of ['canonical@g.us', 'legacy-vip@g.us']) {
         const row = conversation(ordinary, key);
@@ -157,8 +160,10 @@ test('production ingest separates purpose, group directory and observed member m
         directionSource: 'class-message-in', senderId: '917000008001@s.whatsapp.net', senderIdentitySource: 'sender-jid', senderIdentityTrusted: true } };
       for (const accountId of [ordinary, dedicated]) {
         const conversationId = accountId === ordinary ? 'ordinary-history' : 'dedicated-history';
-        assert.equal((await request('/api/ws/messages', { accountId, conversationId, ...forged }, 422)).code, 'WS_GROUP_NATIVE_INGEST_REQUIRED');
-        assert.equal((await request('/api/ws/messages/batch', { accountId, conversationId, messages: [forged] }, 422)).code, 'WS_GROUP_NATIVE_INGEST_REQUIRED');
+        // A legacy vip-marked row is a plain group, so manual message writes are
+        // refused as group operations before any native-evidence check.
+        assert.equal((await request('/api/ws/messages', { accountId, conversationId, ...forged }, 422)).code, 'WS_GROUP_EXCLUDED');
+        assert.equal((await request('/api/ws/messages/batch', { accountId, conversationId, messages: [forged] }, 422)).code, 'WS_GROUP_EXCLUDED');
         assert.equal((await request('/api/ws/messages?' + new URLSearchParams({ accountId, conversationId }))).messages[0].originalText, 'SAVED ORIGINAL');
       }
       assert.equal(protectionSnapshot(), before);

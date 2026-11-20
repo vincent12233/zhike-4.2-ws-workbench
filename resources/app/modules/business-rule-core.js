@@ -23,7 +23,9 @@
     customerMaster: Object.freeze({ identity: 'unique-phone-or-explicit-id', aiMayCreate: false, aiFillBlankOnly: true, aiMayOverwriteManual: false }),
     businessRecords: Object.freeze({ tickets: 'one-customer-many-records', deposits: 'one-customer-many-records', registrations: 'one-customer-many-records' }),
     import: Object.freeze({ localRulesFirst: true, aiAdvisoryOnly: true, aiFailureBlocksImport: false, rowLevelRouting: true, phoneRegistryUsesAi: false }),
-    whatsapp: Object.freeze({ directOnly: true, vipGroupMemberException: true, skipUnread: true, collectBothDirections: true, backgroundAfterOpen: true, customerMustAlreadyExist: true }),
+    // Ordinary WS handles private chats only. There is no VIP group: VIP is a
+    // CRM customer tag, and groups belong to the dedicated WS workflow.
+    whatsapp: Object.freeze({ directOnly: true, skipUnread: true, collectBothDirections: true, backgroundAfterOpen: true, customerMustAlreadyExist: true }),
     reminders: Object.freeze({ evidenceRequired: true, oneActivePerCustomer: true, investmentYearsWeight: 0, sources: Object.freeze(['task-center', 'today-workbench']) }),
   });
 

@@ -437,7 +437,7 @@ function wsDataArchiveSummary(options = {}) {
   const activeCustomerIds = new Set(activeCustomers.map(customer => String(customer.id || '')).filter(Boolean));
   const conversations = db.prepare(`SELECT id,account_id,customer_id,title,data_json,unread_count,updated_at FROM ws_conversations WHERE account_id IN (${placeholders})`).all(...accountIds);
   const direct = conversations.filter(row => wsCore.conversationType(row) === 'direct');
-  const vipGroups = conversations.filter(row => wsCore.conversationType(row) === 'vip_group');
+  const groupRows = conversations.filter(row => wsCore.conversationType(row) === 'group');
   const linkedDirect = direct.filter(row => wsText(row.customer_id, 128));
   const linkedCustomerIds = new Set(linkedDirect.map(row => wsText(row.customer_id, 128)).filter(Boolean));
   const accountRows = db.prepare(`SELECT * FROM ws_accounts WHERE id IN (${placeholders}) ORDER BY CASE WHEN id='default' THEN 0 ELSE 1 END,created_at ASC`).all(...accountIds);
@@ -445,7 +445,7 @@ function wsDataArchiveSummary(options = {}) {
   const perAccount = accountIds.map(accountId => {
     const accountConversations = conversations.filter(row => String(row.account_id) === accountId);
     const accountDirect = accountConversations.filter(row => wsCore.conversationType(row) === 'direct');
-    const accountVipGroups = accountConversations.filter(row => wsCore.conversationType(row) === 'vip_group');
+    const accountGroups = accountConversations.filter(row => wsCore.conversationType(row) === 'group');
     const accountLinked = accountDirect.filter(row => wsText(row.customer_id, 128));
     const accountCount = (table, where = '') => Number(db.prepare(`SELECT COUNT(*) AS count FROM ${table} WHERE account_id=?${where ? ` AND ${where}` : ''}`).get(accountId)?.count || 0);
     const row = accountMap.get(accountId);
@@ -456,7 +456,7 @@ function wsDataArchiveSummary(options = {}) {
       enabled: Boolean(row?.enabled),
       conversations: accountConversations.length,
       directContacts: accountDirect.length,
-      vipGroups: accountVipGroups.length,
+      groups: accountGroups.length,
       linkedConversations: accountLinked.length,
       unlinkedDirectConversations: Math.max(0, accountDirect.length - accountLinked.length),
       unreadConversations: accountConversations.filter(item => Number(item.unread_count || 0) > 0).length,
@@ -497,7 +497,7 @@ function wsDataArchiveSummary(options = {}) {
     ws: {
       conversations: conversations.length,
       directContacts: direct.length,
-      vipGroups: vipGroups.length,
+      groups: groupRows.length,
       completeHistoryConversations: sum('completeHistoryConversations'),
       unreadConversations: sum('unreadConversations'),
       messages: sum('messages'),
@@ -1175,7 +1175,6 @@ function wsGroupMonitorTargetPayload(row) {
     groupName: row.group_name,
     sourceId: row.source_id,
     channelId: row.channel_id || row.source_id || '',
-    vipOnly: Boolean(row.vip_only),
     enabled: Boolean(row.enabled),
     lastSnapshotHash: row.last_snapshot_hash || '',
     lastSeenAt: row.last_seen_at || '',
@@ -2060,16 +2059,18 @@ function wsConfirmNativeMessageAuthority(row, incoming, now) {
   const previous = wsJson(row.data_json, {});
   if (incoming.data.isGroup === true && incoming.direction === 'receive') {
     // Recapture must agree on the individual member, not just the group/title.
-    const before = wsVipMemberIdentity(previous), after = wsVipMemberIdentity(incoming.data);
+    const before = wsGroupMemberIdentity(previous), after = wsGroupMemberIdentity(incoming.data);
     if (!after.trusted || (before.senderId && after.senderId && before.senderId.toLowerCase() !== after.senderId.toLowerCase())
         || (before.senderPhone && after.senderPhone && before.senderPhone !== after.senderPhone)
-        || !wsSameVipMemberIdentity(previous, incoming.data)) return row;
+        || !wsSameGroupMemberIdentity(previous, incoming.data)) return row;
   }
   if (previous.nativeAuthorityVerified === true) return row;
   // Direction and timestamp repairs own their original evidence. A recapture
   // upgrades provenance, without replacing the first observation or cursor.
   const verified = { ...previous };
-  for (const key of ['source', 'nativeAuthorityVerified', 'previewOnly', 'conversationType', 'isGroup', 'vipGroup',
+  // The legacy vipGroup flag is never carried forward; groups are 'group'.
+  delete verified.vipGroup;
+  for (const key of ['source', 'nativeAuthorityVerified', 'previewOnly', 'conversationType', 'isGroup',
     'senderId', 'senderPhone', 'senderName', 'senderIdentitySource', 'senderIdentityTrusted',
     'directionSource', 'directionVersion', 'canonicalExternalMessageId', 'legacyExternalMessageId']) {
     if (Object.hasOwn(incoming.data, key)) verified[key] = incoming.data[key];
@@ -2288,7 +2289,7 @@ function wsCheckDirectSendAccount(accountId) {
 function wsSendConversationRow(id, accountId) {
   const row = wsConversationRow(id, accountId);
   if (!row) return { row: null, error: 'WS 会话不存在或不属于当前账号。', status: 404 };
-  if (wsIsExcludedGroup(row)) return { row: null, error: '普通群聊不允许发送群发消息。', status: 422 };
+  if (wsIsGroupConversation(row)) return { row: null, error: '普通群聊不允许发送群发消息。', status: 422 };
   const type = wsCore.conversationType(row);
   if (type !== 'direct') return { row: null, error: '群发当前只支持已确认的一对一会话。', status: 422 };
   return { row };
@@ -2533,9 +2534,10 @@ function supersedeStaleAiJobs(accountId, conversationId, sourceFingerprint, now)
 function aiJobBackoff(attempts) { return Math.min(15 * 60 * 1000, 1000 * (2 ** Math.max(0, Math.min(10, Number(attempts || 1) - 1)))); }
 function wsConversationRow(id, accountId = 'default') { return db.prepare('SELECT * FROM ws_conversations WHERE id=? AND account_id=?').get(String(id || ''), wsAccountId(accountId)); }
 function wsConversationPolicyError(code, message) { const error = new Error(message); error.code = code; error.status = 422; return error; }
-function wsIsVipGroup(value) { return wsCore.isVipGroupConversation(value); }
-function wsIsExcludedGroup(value) { return wsCore.isExcludedGroupConversation(value); }
-function wsIsAiGroupConversation(value) { return ['group', 'vip_group'].includes(wsCore.conversationType(value)); }
+// There is no VIP group (VIP is a CRM customer tag only). Every WhatsApp
+// group is 'group'; ordinary WS never treats a group as personal business, and
+// dedicated-WS group access is authorized only by the group allowlist/targets.
+function wsIsGroupConversation(value) { return wsCore.isGroupConversation(value); }
 function wsObservedGroupMessageData(data) {
   return data.nativeAuthorityVerified === true && data.source === 'ws-webview2' && data.previewOnly !== true && Number(data.directionVersion || 0) >= 4
     && WS_NATIVE_DIRECTION_SOURCE_MAP.get(data.directionSource) === 'receive' && data.senderIdentityTrusted === true;
@@ -2612,13 +2614,12 @@ function wsIngestConversationType(externalId, checkpoints, messages, existing) {
     ...messages.map(wsCore.conversationType), ...(existing ? [wsCore.conversationType(existing)] : [])];
   // Examine the complete packet and stored identity before accepting any body.
   // A later direct marker must never erase group evidence from an earlier row.
-  if (types.includes('vip_group')) return 'vip_group';
   if (types.includes('group')) return 'group';
   if (checkpoints.some(item => item?.conversationType === 'unknown')) return 'unknown';
   return types.includes('direct') ? 'direct' : 'unknown';
 }
 function wsIngestConversationDecision(account, externalId, conversationType) {
-  const group = ['group', 'vip_group'].includes(conversationType);
+  const group = conversationType === 'group';
   const decision = wsWorkspacePolicy.decideWsWorkspaceOperation({ account,
     operation: group ? 'collect-group-messages' : 'collect-direct-messages', conversationType });
   if (!decision.eligible) return decision;
@@ -2705,17 +2706,17 @@ function wsUpsertIngestGroupDiscovery(accountId, externalId, checkpoint, now) {
   }
   db.prepare(`INSERT INTO ws_conversations(id,account_id,external_id,title,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?)`)
     .run(wsCreateId('wsc'), accountId, externalId, title, JSON.stringify({ conversationType: 'group', isGroup: true,
-      vipGroup: false, visibleOnly: true, historyLoaded: false, coverage: 'group-directory', source: 'ws-list-discovery' }), now, now);
+      visibleOnly: true, historyLoaded: false, coverage: 'group-directory', source: 'ws-list-discovery' }), now, now);
 }
 function wsRequireManualMessageConversation(conversationId, accountId) {
   const conversation = wsRequireConversation(conversationId, accountId);
-  if (wsIsAiGroupConversation(conversation)) {
+  if (wsIsGroupConversation(conversation)) {
     throw wsConversationPolicyError('WS_GROUP_NATIVE_INGEST_REQUIRED', '群原文须由已授权的专用账号原生采集，手工消息接口不能提供群成员观察证据。');
   }
   return conversation;
 }
 const WS_TRUSTED_GROUP_SENDER_SOURCES = new Set(['data-jid','data-contact-id','message-author-jid','message-preamble','sender-phone','sender-jid']);
-function wsVipMemberIdentity(value = {}) {
+function wsGroupMemberIdentity(value = {}) {
   const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   const nested = source.memberIdentity && typeof source.memberIdentity === 'object' && !Array.isArray(source.memberIdentity) ? source.memberIdentity : {};
   const senderId = wsText(nested.senderId || nested.wsId || source.senderId || source.wsId, 200);
@@ -2733,14 +2734,14 @@ function wsVipMemberIdentity(value = {}) {
     trusted: source.senderIdentityTrusted !== false && nested.trusted !== false && trustedSource && (idTrusted || phoneTrusted),
   };
 }
-function wsSameVipMemberIdentity(left, right) {
-  const a = wsVipMemberIdentity(left), b = wsVipMemberIdentity(right);
+function wsSameGroupMemberIdentity(left, right) {
+  const a = wsGroupMemberIdentity(left), b = wsGroupMemberIdentity(right);
   if (a.senderId && b.senderId && a.senderId.toLowerCase() === b.senderId.toLowerCase()) return true;
   return Boolean(a.senderPhone && b.senderPhone && a.senderPhone === b.senderPhone);
 }
-function wsVipMemberEvidence(conversation, value = {}) {
-  if (!wsIsAiGroupConversation(conversation)) return { required:false, valid:true, identity:null, messageCount:0 };
-  const identity = wsVipMemberIdentity(value);
+function wsGroupMemberEvidence(conversation, value = {}) {
+  if (!wsIsGroupConversation(conversation)) return { required:false, valid:true, identity:null, messageCount:0 };
+  const identity = wsGroupMemberIdentity(value);
   if (!identity.trusted) return { required:true, valid:false, identity, messageCount:0, reason:'群分析缺少可信发言人 WS 标识或手机号。' };
   const rows = db.prepare("SELECT data_json FROM ws_messages WHERE account_id=? AND conversation_id=? AND direction='receive'").all(conversation.account_id, conversation.id);
   // Resolve the connected observed identities, not just the caller's subset.
@@ -2751,7 +2752,7 @@ function wsVipMemberEvidence(conversation, value = {}) {
   const indexed = new Map();
   for (const row of rows) {
     const data = wsJson(row.data_json, {});
-    const observed = wsVipMemberIdentity(data);
+    const observed = wsGroupMemberIdentity(data);
     if (!wsObservedGroupMessageData(data) || !observed.trusted) continue;
     const entry = { identity: observed, keys: identityKeys(observed) };
     for (const key of entry.keys) {
@@ -2776,10 +2777,10 @@ function wsVipMemberEvidence(conversation, value = {}) {
   if (!messageCount) return { required:true, valid:false, identity, messageCount:0, reason:'群内没有找到该发言人的可信原始消息，已拒绝跨客户写入。' };
   return { required:true, valid:true, identity, messageCount, observedAliases: [...observedAliases] };
 }
-function wsVipScopedAnalysis(conversation, analysis, identity) {
-  if (!wsIsAiGroupConversation(conversation)) return analysis;
+function wsGroupMemberScopedAnalysis(conversation, analysis, identity) {
+  if (!wsIsGroupConversation(conversation)) return analysis;
   const targetTexts = db.prepare("SELECT original_text,data_json FROM ws_messages WHERE account_id=? AND conversation_id=? AND direction='receive'").all(conversation.account_id, conversation.id)
-    .filter(row => { const data = wsJson(row.data_json, {}); return wsObservedGroupMessageData(data) && wsSameVipMemberIdentity(data, identity); })
+    .filter(row => { const data = wsJson(row.data_json, {}); return wsObservedGroupMessageData(data) && wsSameGroupMemberIdentity(data, identity); })
     .map(row => wsMessageText(row.original_text).toLocaleLowerCase()).filter(Boolean);
   const facts = analysis?.profileFacts && typeof analysis.profileFacts === 'object' && !Array.isArray(analysis.profileFacts) ? analysis.profileFacts : {};
   const profileFacts = {};
@@ -2810,7 +2811,7 @@ function wsRequireConversationHistory(id, accountId = 'default') {
 }
 function wsRequireConversation(id, accountId = 'default') {
   const row = wsRequireConversationHistory(id, accountId);
-  if (wsIsExcludedGroup(row)) throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '此群聊不适用于当前客户会话操作。');
+  if (wsIsGroupConversation(row)) throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '此群聊不适用于当前客户会话操作。');
   return row;
 }
 function wsRequireAiConversation(id, accountId = 'default', joinedRow = null, operation = 'analyze') {
@@ -2818,8 +2819,8 @@ function wsRequireAiConversation(id, accountId = 'default', joinedRow = null, op
   const account = wsAccountId(accountId);
   const data = wsJson(row.data_json, {});
   const type = wsCore.conversationType(row);
-  if (!['direct', 'group', 'vip_group'].includes(type)) throw wsConversationPolicyError('WS_CONVERSATION_TYPE_UNCONFIRMED', '当前会话类型尚未确认，不能执行 AI 分析或 CRM 同步。');
-  const group = wsIsAiGroupConversation(row);
+  if (!['direct', 'group'].includes(type)) throw wsConversationPolicyError('WS_CONVERSATION_TYPE_UNCONFIRMED', '当前会话类型尚未确认，不能执行 AI 分析或 CRM 同步。');
+  const group = wsIsGroupConversation(row);
   const purpose = wsWorkspacePolicy.decideWsWorkspaceOperation({ account: wsAccountRow(account), conversationType: type,
     operation: operation === 'sync' ? (group ? 'sync-group-member-crm' : 'sync-direct-crm') : (group ? 'analyze-group-member' : 'analyze-direct') });
   if (!purpose.eligible) throw wsConversationPolicyError(purpose.code, '当前账号用途不允许执行此会话的 AI 分析或 CRM 同步，历史记录仍可查看。');
@@ -2836,11 +2837,11 @@ function wsRequireAiConversation(id, accountId = 'default', joinedRow = null, op
   return row;
 }
 function wsRequireAiMemberScope(conversation, value = {}) {
-  if (!wsIsAiGroupConversation(conversation)) return { required: false, valid: true, identity: null };
+  if (!wsIsGroupConversation(conversation)) return { required: false, valid: true, identity: null };
   if (value.memberScoped !== true && value.transcriptInfo?.memberScoped !== true) {
     throw wsConversationPolicyError('WS_GROUP_MEMBER_SCOPE_REQUIRED', '群分析必须明确限定单一发言人，不能执行整群客户分析。');
   }
-  const evidence = wsVipMemberEvidence(conversation, value.memberIdentity || value.transcriptInfo?.memberIdentity || {});
+  const evidence = wsGroupMemberEvidence(conversation, value.memberIdentity || value.transcriptInfo?.memberIdentity || {});
   if (!evidence.valid) throw wsConversationPolicyError('WS_GROUP_MEMBER_IDENTITY_UNCONFIRMED', evidence.reason || '当前账号没有此成员的可信原始消息。');
   return evidence;
 }
@@ -2906,7 +2907,7 @@ function wsAiAuthorizationStatus(accountId) {
 }
 function wsAiEligibleConversation(id, accountId, joinedRow) { try { return wsRequireAiConversation(id, accountId, joinedRow); } catch { return null; } }
 function wsQuiesceGroup(row, now = new Date().toISOString()) {
-  if (!wsIsExcludedGroup(row)) return;
+  if (!wsIsGroupConversation(row)) return;
   // Dedicated group history keeps its original encoding and task state.
   // Execution is separately fenced by observed identity, authorization and
   // member evidence; preserving history does not start a worker.
@@ -2935,7 +2936,6 @@ function wsUpsertExcludedGroupConversation(accountId, externalKey, checkpoint = 
     source: 'ws-list-discovery',
     conversationType: 'group',
     isGroup: true,
-    vipGroup: false,
     coverage: 'excluded-group',
     collectionStatus: 'skipped-group',
     historyLoaded: false,
@@ -3285,7 +3285,7 @@ function wsAuthoritativeHistoryFingerprint(accountId, conversationId) {
 // remain intact; previously scheduled group work cannot resume on restart.
 db.exec('BEGIN IMMEDIATE');
 try {
-  for (const row of db.prepare('SELECT * FROM ws_conversations').all()) if (wsIsExcludedGroup(row)) wsQuiesceGroup(row);
+  for (const row of db.prepare('SELECT * FROM ws_conversations').all()) if (wsIsGroupConversation(row)) wsQuiesceGroup(row);
   db.exec('COMMIT');
 } catch (error) { db.exec('ROLLBACK'); throw error; }
 
@@ -3438,10 +3438,8 @@ function restoreWsAccount(body) {
   const alertKeys = followupAlerts.map(item => wsText(item.alertKey, 240));
   if (new Set(alertKeys).size !== alertKeys.length) throw restoreError(400, 'WS 备份中存在重复跟进提醒标识。');
   const knownGroups = db.prepare('SELECT id,external_id,data_json FROM ws_conversations WHERE account_id=?').all(accountId).filter(wsCore.isGroupConversation);
-  const vipGroupExternalIds = new Set(knownGroups.filter(wsIsVipGroup).map(row => row.external_id));
-  const vipGroupIds = new Set(knownGroups.filter(wsIsVipGroup).map(row => row.id));
-  const groupExternalIds = new Set(knownGroups.filter(wsIsExcludedGroup).map(row => row.external_id));
-  const groupIds = new Set(knownGroups.filter(wsIsExcludedGroup).map(row => row.id));
+  const groupExternalIds = new Set(knownGroups.map(row => row.external_id));
+  const groupIds = new Set(knownGroups.map(row => row.id));
   db.prepare('DELETE FROM ws_followup_alerts WHERE account_id=?').run(accountId);
   db.prepare('DELETE FROM ws_collection_items WHERE account_id=?').run(accountId);
   db.prepare('DELETE FROM ws_collection_runs WHERE account_id=?').run(accountId);
@@ -3462,14 +3460,13 @@ function restoreWsAccount(body) {
   wsAiAuthorizationAudit(accountId, '', 'workspace-restored', { automaticAuthorizationRevoked: true });
   const addConversation = db.prepare('INSERT INTO ws_conversations(id,account_id,external_id,title,customer_id,last_message_text,intent_level,data_json,created_at,updated_at,last_message_at,unread_count,language) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)');
   for (const item of conversations) {
-    const type = vipGroupExternalIds.has(wsText(item.externalId, 160)) || vipGroupIds.has(wsText(item.id, 160))
-      ? 'vip_group'
-      : groupExternalIds.has(wsText(item.externalId, 160)) || groupIds.has(wsText(item.id, 160))
-        ? 'group'
-        : wsCore.conversationType(item);
-    const data = { ...wsObject(item.data, 32 * 1024), ...(type !== 'unknown' ? {conversationType:type, isGroup:['group','vip_group'].includes(type), vipGroup:type === 'vip_group'} : {}) };
+    const type = groupExternalIds.has(wsText(item.externalId, 160)) || groupIds.has(wsText(item.id, 160))
+      ? 'group'
+      : wsCore.conversationType(item);
+    const data = { ...wsObject(item.data, 32 * 1024), ...(type !== 'unknown' ? {conversationType:type, isGroup:type === 'group'} : {}) };
+    delete data.vipGroup;
     const lastMessage = wsText(item.lastMessageText, 4000);
-    addConversation.run(wsText(item.id, 160), accountId, wsText(item.externalId, 160), wsText(item.title, 200), type === 'vip_group' ? '' : wsText(item.customerId, 128), lastMessage, wsText(item.intentLevel, 40), JSON.stringify(data), wsIso(item.createdAt || now), wsIso(item.updatedAt || now), item.lastMessageAt ? wsIso(item.lastMessageAt) : (lastMessage ? wsIso(item.updatedAt || now) : ''), Math.max(0, Math.floor(Number(item.unreadCount) || 0)), wsText(item.language, 40));
+    addConversation.run(wsText(item.id, 160), accountId, wsText(item.externalId, 160), wsText(item.title, 200), type === 'group' ? '' : wsText(item.customerId, 128), lastMessage, wsText(item.intentLevel, 40), JSON.stringify(data), wsIso(item.createdAt || now), wsIso(item.updatedAt || now), item.lastMessageAt ? wsIso(item.lastMessageAt) : (lastMessage ? wsIso(item.updatedAt || now) : ''), Math.max(0, Math.floor(Number(item.unreadCount) || 0)), wsText(item.language, 40));
   }
   const addSetting = db.prepare('INSERT INTO ws_settings(conversation_id,account_id,enabled,receive_enabled,send_enabled,target_language,send_language,show_original,ai_enabled,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)');
   for (const item of settings) addSetting.run(wsText(item.conversationId, 160), accountId, item.enabled === false ? 0 : 1, item.receive === false ? 0 : 1, item.send === false ? 0 : 1, wsText(item.targetLanguage, 40) || '中文', wsText(item.sendLanguage, 40), item.showOriginal === false ? 0 : 1, item.aiEnabled === false ? 0 : 1, WS_STATUSES.has(wsText(item.status, 32)) ? wsText(item.status, 32) : '未连接', wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
@@ -3498,7 +3495,7 @@ function restoreWsAccount(body) {
    for (const item of collectionItems) addItem.run(wsText(item.id, 160) || wsCreateId('wsi'), accountId, wsText(item.runId, 160), wsText(item.conversationId, 160), wsText(item.status, 30) || 'queued', Math.max(0, Math.floor(Number(item.attempts) || 0)), wsText(item.analysisStatus, 30) || 'pending', wsText(item.followupStatus, 30) || 'none', wsText(item.nextFollowupAt, 80), wsText(item.lastError, 1000), wsText(item.checkpoint, 500), wsIso(item.createdAt || now), wsIso(item.updatedAt || now), wsText(item.coverageStatus, 30) || 'unknown');
    const addAlert = db.prepare('INSERT INTO ws_followup_alerts(id,account_id,conversation_id,analysis_id,alert_key,priority,reason,followup_time,status,snoozed_until,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)');
    for (const item of followupAlerts) addAlert.run(wsText(item.id, 160) || wsCreateId('wfa'), accountId, wsText(item.conversationId, 160), wsText(item.analysisId, 160), wsText(item.alertKey, 240), wsText(item.priority, 20) || 'today', wsText(item.reason, 500), wsText(item.followupTime, 80), wsText(item.status, 20) || 'open', wsText(item.snoozedUntil, 80), JSON.stringify(wsObject(item.data, 32 * 1024)), wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
-  for (const row of db.prepare('SELECT * FROM ws_conversations WHERE account_id=?').all(accountId)) if (wsIsExcludedGroup(row)) wsQuiesceGroup(row, now);
+  for (const row of db.prepare('SELECT * FROM ws_conversations WHERE account_id=?').all(accountId)) if (wsIsGroupConversation(row)) wsQuiesceGroup(row, now);
   const groupDraftRestore = wsGroupDrafts.restoreBackup(db, accountId, groupDrafts);
   restoreSendAuditHistory(accountId, body.sendAudit ?? [], now);
   return { ok: true, schemaVersion: 6, groupDraftRestore, counts: { settings: settings.length, conversations: conversations.length, messages: messages.length, analyses: analyses.length, replies: replies.length, batches: batches.length, collectionRuns: collectionRuns.length, collectionItems: collectionItems.length, followupAlerts: followupAlerts.length, groupDrafts: groupDrafts.length } };
@@ -3804,7 +3801,7 @@ const server = createServer(async (req, res) => {
             }
             db.prepare(`INSERT INTO ws_group_monitor_targets(id,profile_id,account_id,group_jid,group_name,source_id,channel_id,vip_only,enabled,last_snapshot_hash,last_seen_at,data_json,created_at,updated_at)
               VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(profile_id,group_jid) DO UPDATE SET group_name=CASE WHEN excluded.group_name<>'' THEN excluded.group_name ELSE ws_group_monitor_targets.group_name END,source_id=CASE WHEN excluded.source_id<>'' THEN excluded.source_id ELSE ws_group_monitor_targets.source_id END,channel_id=CASE WHEN excluded.channel_id<>'' THEN excluded.channel_id ELSE ws_group_monitor_targets.channel_id END,vip_only=excluded.vip_only,enabled=excluded.enabled,data_json=excluded.data_json,updated_at=excluded.updated_at`)
-              .run(id, profileId, profile.account_id, groupJid, groupName, sourceId, channelId, item.vipOnly === false ? 0 : 1, enabled, '', '', JSON.stringify(metadata), now, now);
+              .run(id, profileId, profile.account_id, groupJid, groupName, sourceId, channelId, 0, enabled, '', '', JSON.stringify(metadata), now, now);
             wsGroupCatalogUpsert(profile.account_id, { ...item, groupJid, groupName, sourceId, channelId, discoverySource: 'monitor-target' }, now);
           }
           if (targets.some(item => item?.enabled === true) && db.prepare('SELECT COUNT(*) AS count FROM ws_group_monitor_targets WHERE profile_id=? AND enabled=1').get(profileId).count > 500) {
@@ -4272,7 +4269,7 @@ const server = createServer(async (req, res) => {
         const existing = db.prepare('SELECT * FROM ws_conversations WHERE account_id=? AND external_id=?').get(accountId, externalId);
         group.type = wsIngestConversationType(externalId, group.checkpoints, group.rawMessages, existing);
         group.decision = wsIngestConversationDecision(account, externalId, group.type);
-        if (group.decision.eligible && body.scope === 'background-collector' && ['group','vip_group'].includes(group.type))
+        if (group.decision.eligible && body.scope === 'background-collector' && group.type === 'group')
           group.authorizedSince = wsEnabledGroupTarget(accountId, externalId)?.authorized_since;
       }
       let skipped = 0;
@@ -4287,7 +4284,7 @@ const server = createServer(async (req, res) => {
         const group = grouped.get(key);
         if (!group) { skipMessage(null, 'WS_CONVERSATION_IDENTITY_UNCONFIRMED'); continue; }
         if (!group.decision.eligible) { skipMessage(group, group.decision.code); continue; }
-        const isGroup = ['group', 'vip_group'].includes(group.type);
+        const isGroup = group.type === 'group';
         if (isGroup && item?.previewOnly === true) { skipMessage(group, 'WS_GROUP_OBSERVATION_REQUIRED'); continue; }
         if (wsMessageTextTooLong(item?.body)) return json(res, 413, { error: `WS 原文超过 ${WS_MESSAGE_MAX_CHARS} 字符，未保存且原值未修改。` });
         const bodyText = wsMessageText(item?.body);
@@ -4297,7 +4294,7 @@ const server = createServer(async (req, res) => {
           ? 'send'
           : ['incoming', 'receive', 'received'].includes(rawDirection) ? 'receive' : '';
         const directionSource = wsText(item?.directionSource, 40);
-        const senderIdentity = wsVipMemberIdentity(item);
+        const senderIdentity = wsGroupMemberIdentity(item);
         if (isGroup && (!direction || WS_NATIVE_DIRECTION_SOURCE_MAP.get(directionSource) !== direction)) {
           skipMessage(group, 'WS_GROUP_DIRECTION_UNCONFIRMED'); continue;
         }
@@ -4326,7 +4323,7 @@ const server = createServer(async (req, res) => {
             nativeAuthorityVerified: item?.previewOnly !== true,
             previewOnly: item?.previewOnly === true,
             cursor: wsText(item?.cursor, 500),
-            ...(isGroup ? { conversationType:group.type, vipGroup:group.type === 'vip_group', isGroup:true } : {}),
+            ...(isGroup ? { conversationType:'group', isGroup:true } : {}),
             ...(senderIdentity.senderId ? { senderId:senderIdentity.senderId } : {}),
             ...(senderIdentity.senderPhone ? { senderPhone:senderIdentity.senderPhone } : {}),
             ...(senderIdentity.senderName ? { senderName:senderIdentity.senderName } : {}),
@@ -4359,12 +4356,12 @@ const server = createServer(async (req, res) => {
           let conversation = db.prepare('SELECT * FROM ws_conversations WHERE account_id=? AND external_id=?').get(accountId, externalKey);
           const checkpoint = { ...(group.checkpoints.at(-1) || {}) };
           const type = group.type;
-          if (['group', 'vip_group'].includes(type) && !group.decision.eligible) {
+          if (type === 'group' && !group.decision.eligible) {
             wsUpsertIngestGroupDiscovery(accountId, externalKey, checkpoint, now);
             continue;
           }
           if (type === 'direct' && !group.decision.eligible) continue;
-          if (body.scope === 'background-collector' && account.workspace_mode === 'dedicated' && group.decision.eligible && ['group', 'vip_group'].includes(type)) {
+          if (body.scope === 'background-collector' && account.workspace_mode === 'dedicated' && group.decision.eligible && type === 'group') {
             if (group.messages.length && !db.prepare('SELECT 1 FROM ws_group_catalog WHERE account_id=? AND group_jid=?').get(accountId, externalKey)) {
               const target = db.prepare('SELECT group_name FROM ws_group_monitor_targets WHERE account_id=? AND group_jid=? AND enabled=1').get(accountId, externalKey);
               wsGroupCatalogUpsert(accountId, { groupJid: externalKey, groupName: target?.group_name, discoverySource: 'ws-native-message' }, capturedAt);
@@ -4374,7 +4371,7 @@ const server = createServer(async (req, res) => {
                 wsCollectMemberObservation(membersFor(externalKey), message.data.senderId, message.data.senderPhone, message.data.senderName, message.data.observedAt, 'message-author');
             }
           }
-          if (body.scope === 'background-collector' && ['group', 'vip_group'].includes(type) && group.messages.length) {
+          if (body.scope === 'background-collector' && type === 'group' && group.messages.length) {
             const groupJid = wsGroupMonitor.normalizeMemberIdentity(externalKey).value;
             let latest = observedGroups.get(groupJid) || '';
             for (const message of group.messages) {
@@ -4383,7 +4380,7 @@ const server = createServer(async (req, res) => {
             }
             if (latest) observedGroups.set(groupJid, latest);
           }
-          if (group.skippedMessages && ['group', 'vip_group'].includes(type)) {
+          if (group.skippedMessages && type === 'group') {
             Object.assign(checkpoint, { historyLoaded: false, coverage: 'read-history-member-unresolved', collectionStatus: 'retryable' });
           }
           const typeUnresolved = type === 'unknown';
@@ -4417,8 +4414,8 @@ const server = createServer(async (req, res) => {
               : previousData.lastMessageSource || '');
           const checkpointData = {
             source: 'ws-list-discovery',
-            ...(type === 'direct' || typeUnresolved ? { conversationType:type, isGroup:false, vipGroup:false } : {}),
-            ...(['group', 'vip_group'].includes(type) ? { conversationType:type, isGroup:true, vipGroup:type === 'vip_group' } : {}),
+            ...(type === 'direct' || typeUnresolved ? { conversationType:type, isGroup:false } : {}),
+            ...(type === 'group' ? { conversationType:'group', isGroup:true } : {}),
             visibleOnly: true,
             displayName: wsText(checkpoint.displayName, 200),
             cursor: wsText(checkpoint.cursor, 500),
@@ -4662,14 +4659,14 @@ const server = createServer(async (req, res) => {
           ? db.prepare(`SELECT * FROM ws_conversations WHERE account_id=? AND (updated_at<? OR (updated_at=? AND id<?)) ORDER BY updated_at DESC,id DESC LIMIT ${limit + 1}`).all(accountId, cursor.updatedAt, cursor.updatedAt, cursor.id)
           : db.prepare(`SELECT * FROM ws_conversations WHERE account_id=? ORDER BY updated_at DESC,id DESC LIMIT ${limit + 1}`).all(accountId);
         const scanned = rows.slice(0, limit);
-        const excludedRows = scanned.filter(wsIsExcludedGroup);
+        const excludedRows = scanned.filter(wsIsGroupConversation);
         const nextCursor = rows.length > limit && scanned.length ? wsConversationCursor(scanned.at(-1)) : '';
         return json(res, 200, {
-          conversations: scanned.filter(row => !wsIsExcludedGroup(row)).map(wsConversationPayload),
+          conversations: scanned.filter(row => !wsIsGroupConversation(row)).map(wsConversationPayload),
           // Ordinary groups stay out of the customer/AI inventory, but the
           // WS monitor still needs their stable identity and display name so
           // a logged-in operator can select a group without pasting a JID.
-          groupConversations: excludedRows.filter(wsIsExcludedGroup).map(wsConversationPayload),
+          groupConversations: excludedRows.filter(wsIsGroupConversation).map(wsConversationPayload),
           excludedConversationIds: excludedRows.map(row => row.id),
           scannedNewest: scanned.length ? { updatedAt: scanned[0].updated_at, id: scanned[0].id } : null,
           scannedThrough: scanned.length ? { updatedAt: scanned.at(-1).updated_at, id: scanned.at(-1).id } : null,
@@ -4685,20 +4682,20 @@ const server = createServer(async (req, res) => {
         if (!externalId) return json(res, 400, { error: 'WS 会话缺少外部会话标识。' });
         const now = new Date().toISOString();
         const existing = db.prepare('SELECT * FROM ws_conversations WHERE account_id=? AND external_id=?').get(accountId, externalId);
-        const hasTypeDirective = ['conversationType','isGroup','vipGroup'].some(key => Object.hasOwn(body, key))
-          || (body.data && typeof body.data === 'object' && ['conversationType','isGroup','vipGroup'].some(key => Object.hasOwn(body.data, key)));
-        const requestedType = existing && wsIsVipGroup(existing) && !hasTypeDirective ? 'vip_group' : wsCore.conversationType(body);
-        // The collector supplies group identity. Manual input cannot create a
-        // group conversation or promote a direct conversation using legacy flags.
-        if (requestedType === 'group' || (requestedType === 'vip_group' && !(existing && wsIsVipGroup(existing)))) {
+        const requestedType = wsCore.conversationType(body);
+        // Groups belong to the dedicated WS group directory. This endpoint never
+        // creates or promotes a group conversation, including legacy vip flags.
+        if (requestedType === 'group') {
           throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '请在专用 WS 的群组管理中选择该群。');
         }
         const effectiveType = requestedType === 'unknown' && existing ? wsCore.conversationType(existing) : requestedType;
         if (existing) {
-          const customerId = effectiveType === 'vip_group' ? '' : (wsText(body.customerId, 128) || existing.customer_id);
+          // A group is never linked to one customer.
+          const customerId = effectiveType === 'group' ? '' : (wsText(body.customerId, 128) || existing.customer_id);
           const lastMessageText = Object.hasOwn(body, 'lastMessageText') ? wsText(body.lastMessageText, 4000) : existing.last_message_text;
           const previousData = wsJson(existing.data_json, {});
-          const data = { ...previousData, ...(Object.hasOwn(body, 'data') ? wsObject(body.data, 32 * 1024) : {}), ...(effectiveType === 'direct' ? {conversationType:'direct',isGroup:false,vipGroup:false} : {}), ...(effectiveType === 'vip_group' ? {conversationType:'vip_group',isGroup:true,vipGroup:true} : {}) };
+          const data = { ...previousData, ...(Object.hasOwn(body, 'data') ? wsObject(body.data, 32 * 1024) : {}), ...(effectiveType === 'direct' ? {conversationType:'direct',isGroup:false} : {}) };
+          delete data.vipGroup;
           const requestedBindingSource = wsText(body.bindingSource || body.customerBindingSource || body.data?.customerBindingSource, 40).toLowerCase();
           // The current desktop customer editor posts the known conversation
           // id when the operator explicitly saves a customer link. Preserve
@@ -4725,12 +4722,13 @@ const server = createServer(async (req, res) => {
           const id = wsText(body.id, 160) || wsCreateId('wsc');
           const lastMessageText = wsText(body.lastMessageText, 4000);
           const lastMessageAt = Object.hasOwn(body, 'lastMessageAt') ? wsIso(body.lastMessageAt) : (lastMessageText ? now : '');
-          const data = { ...wsObject(body.data, 32 * 1024), ...(requestedType === 'direct' ? {conversationType:'direct',isGroup:false,vipGroup:false} : {}), ...(requestedType === 'vip_group' ? {conversationType:'vip_group',isGroup:true,vipGroup:true} : {}) };
+          const data = { ...wsObject(body.data, 32 * 1024), ...(requestedType === 'direct' ? {conversationType:'direct',isGroup:false} : {}) };
+          delete data.vipGroup;
           const requestedBindingSource = wsText(body.bindingSource || body.customerBindingSource || body.data?.customerBindingSource, 40).toLowerCase();
           if (wsText(body.customerId, 128) && requestedBindingSource === 'manual') Object.assign(data, { customerMatch:'manual', customerBindingSource:'manual', customerBindingVerifiedAt:now });
           db.prepare(`INSERT INTO ws_conversations(id,account_id,external_id,title,customer_id,last_message_text,intent_level,data_json,created_at,updated_at,last_message_at,unread_count,language)
             VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-            .run(id, accountId, externalId, wsCanonicalListPreviewTitle(body.title, lastMessageText, data), requestedType === 'vip_group' ? '' : wsText(body.customerId, 128), lastMessageText, wsText(body.intentLevel, 40), JSON.stringify(data), now, now, lastMessageAt, Math.max(0, Math.floor(Number(body.unreadCount) || 0)), wsText(body.language, 40));
+            .run(id, accountId, externalId, wsCanonicalListPreviewTitle(body.title, lastMessageText, data), wsText(body.customerId, 128), lastMessageText, wsText(body.intentLevel, 40), JSON.stringify(data), now, now, lastMessageAt, Math.max(0, Math.floor(Number(body.unreadCount) || 0)), wsText(body.language, 40));
         }
         const row = db.prepare('SELECT * FROM ws_conversations WHERE account_id=? AND external_id=?').get(accountId, externalId);
         return json(res, 200, wsConversationPayload(row));
@@ -5189,9 +5187,9 @@ const server = createServer(async (req, res) => {
         const existing = db.prepare('SELECT * FROM ai_jobs WHERE account_id=? AND idempotency_key=?').get(accountId, idempotencyKey);
         if (existing) {
           if (existing.conversation_id !== conversationId) return json(res, 409, { error: '幂等键已绑定另一会话。', code: 'AI_JOB_SCOPE_CONFLICT' });
-          if (wsIsAiGroupConversation(conversation)) {
+          if (wsIsGroupConversation(conversation)) {
             const prior = wsRequireAiMemberScope(conversation, wsJson(existing.payload_json, {}));
-            if (!wsSameVipMemberIdentity(prior.identity, payload.memberIdentity || payload.transcriptInfo?.memberIdentity || {})) {
+            if (!wsSameGroupMemberIdentity(prior.identity, payload.memberIdentity || payload.transcriptInfo?.memberIdentity || {})) {
               return json(res, 409, { error: '幂等键已绑定另一群成员。', code: 'AI_JOB_MEMBER_CONFLICT' });
             }
           }
@@ -5283,7 +5281,7 @@ const server = createServer(async (req, res) => {
         if (linkedJob) requireAiJobLease(linkedJob, body.leaseToken);
         if (linkedJob && memberScope.required) {
           const claimedMember = wsRequireAiMemberScope(conversation, wsJson(linkedJob.payload_json, {}));
-          if (!wsSameVipMemberIdentity(claimedMember.identity, memberScope.identity)) return json(res, 409, { error: '分析发言人与任务绑定的群成员不一致。', code: 'AI_JOB_MEMBER_CONFLICT' });
+          if (!wsSameGroupMemberIdentity(claimedMember.identity, memberScope.identity)) return json(res, 409, { error: '分析发言人与任务绑定的群成员不一致。', code: 'AI_JOB_MEMBER_CONFLICT' });
         }
         if (linkedJob?.analysis_id) {
           const prior = db.prepare('SELECT * FROM ws_ai_analyses WHERE id=? AND account_id=?').get(linkedJob.analysis_id, accountId);
@@ -5321,18 +5319,18 @@ const server = createServer(async (req, res) => {
       let analysis = wsJson(analysisRow.result_json, {});
       const analyzedFingerprint = wsText(analysis.transcriptInfo?.sourceFingerprint, 500);
       const conversationData = wsJson(conversation.data_json, {});
-      const vipGroup = wsIsAiGroupConversation(conversation);
+      const groupConversation = wsIsGroupConversation(conversation);
       const storedMemberIdentity = analysis.memberIdentity || analysis.transcriptInfo?.memberIdentity || {};
-      if (vipGroup && body.memberIdentity && !wsSameVipMemberIdentity(body.memberIdentity, storedMemberIdentity)) return json(res, 409, { error: '不能把既有分析改为另一群成员。', code: 'AI_ANALYSIS_MEMBER_CONFLICT' });
-      const memberScope = wsVipMemberEvidence(conversation, storedMemberIdentity);
-      if (vipGroup && (analysis.transcriptInfo?.memberScoped !== true || !memberScope.valid)) {
+      if (groupConversation && body.memberIdentity && !wsSameGroupMemberIdentity(body.memberIdentity, storedMemberIdentity)) return json(res, 409, { error: '不能把既有分析改为另一群成员。', code: 'AI_ANALYSIS_MEMBER_CONFLICT' });
+      const memberScope = wsGroupMemberEvidence(conversation, storedMemberIdentity);
+      if (groupConversation && (analysis.transcriptInfo?.memberScoped !== true || !memberScope.valid)) {
         return json(res, 200, {
           ok:true, skipped:true, matched:false, created:false, identityPending:true,
           reason: memberScope.reason || '群分析必须按单一发言人生成；其他成员消息只能作为上下文，不能写入个人客户档案或跟进评分。',
           confidence:Number(analysisRow.confidence || analysis.confidence || 0),
         });
       }
-      if (vipGroup) {
+      if (groupConversation) {
         // Exclusion affects automatic group-member enrichment only. Ordinary
         // direct chats and explicit CRM maintenance retain their own rules.
         const exclusion = wsContactExclusionEngine().checkIdentities([
@@ -5348,7 +5346,7 @@ const server = createServer(async (req, res) => {
           reason: exclusion.excluded ? '该群成员已列入通讯录排除，保留客户原有档案。' : '群成员身份不可靠或存在冲突，未更新客户档案。',
           code: exclusion.excluded ? 'CONTACT_EXCLUDED' : 'CONTACT_IDENTITY_UNRELIABLE',
         });
-        analysis = wsVipScopedAnalysis(conversation, analysis, memberScope.identity);
+        analysis = wsGroupMemberScopedAnalysis(conversation, analysis, memberScope.identity);
       }
       const currentFingerprint = wsText(conversationData.historyFingerprint, 500);
       const latestFingerprint = wsText(conversationData.lastMessageFingerprint, 500);
@@ -5376,19 +5374,19 @@ const server = createServer(async (req, res) => {
       const memberIdentity = memberScope.identity;
       const conversationRef = {
         id: conversation.id,
-        externalId: vipGroup ? (memberIdentity.senderId || memberIdentity.senderPhone) : conversation.external_id,
-        title: vipGroup ? (memberIdentity.senderName || memberIdentity.senderPhone || memberIdentity.senderId) : conversation.title,
+        externalId: groupConversation ? (memberIdentity.senderId || memberIdentity.senderPhone) : conversation.external_id,
+        title: groupConversation ? (memberIdentity.senderName || memberIdentity.senderPhone || memberIdentity.senderId) : conversation.title,
         customerId: '', analysisId: analysisRow.id,
       };
       const derivedProfile = wsCrmSync.deriveCustomerProfile({ ...analysis, confidence }, conversationRef, accountId);
       const normalizedProfile = customerGovernance.normalizeAiProfile({ ...analysis, confidence }, conversationRef, accountId);
       const profile = { ...derivedProfile, ...Object.fromEntries(Object.entries(normalizedProfile).filter(([, value]) => value !== '' && value != null && (!Array.isArray(value) || value.length))) };
-      if (vipGroup) Object.assign(profile, {
+      if (groupConversation) Object.assign(profile, {
         customerId:'', customer_id:'',
         wsExternalId:memberIdentity.senderId,
         phone:memberIdentity.senderPhone,
         phoneVerified:Boolean(memberIdentity.senderPhone),
-        phoneSource:memberIdentity.senderPhone ? 'vip-group-sender' : '',
+        phoneSource:memberIdentity.senderPhone ? 'group-member-sender' : '',
         conversationId:'',
       });
       const followupPlan = wsCrmSync.deriveFollowupPlan({ ...analysis, confidence }, { id: analysisRow.id }, { id: conversation.id, externalId: conversation.external_id }, accountId);
@@ -5400,16 +5398,16 @@ const server = createServer(async (req, res) => {
       // independent identity matcher: otherwise one stale link can cause AI
       // facts and follow-up tasks to be written to the wrong existing person.
       // Shared WS login accounts are scope only, never customer evidence.
-      const associatedCustomerId = vipGroup ? '' : wsText(conversation.customer_id, 128);
+      const associatedCustomerId = groupConversation ? '' : wsText(conversation.customer_id, 128);
       const associatedCustomer = associatedCustomerId
         ? state.customers.find(item => String(item?.id || '') === associatedCustomerId) || null
         : null;
-      const manualBinding = !vipGroup && Boolean(associatedCustomer) && conversationData.customerMatch === 'manual' && conversationData.customerBindingSource === 'manual';
+      const manualBinding = !groupConversation && Boolean(associatedCustomer) && conversationData.customerMatch === 'manual' && conversationData.customerBindingSource === 'manual';
       // AI-extracted phone numbers can describe a relative, payment recipient
       // or quoted message. They remain usable as profile evidence after a
       // customer is independently identified, but never establish identity.
       // Only a phone-shaped visible conversation identity is eligible here.
-      const conversationIdentityPhone = vipGroup ? memberIdentity.senderPhone : [conversation.external_id, conversation.title].map(value => {
+      const conversationIdentityPhone = groupConversation ? memberIdentity.senderPhone : [conversation.external_id, conversation.title].map(value => {
         const raw = wsText(value, 200);
         const digits = raw.replace(/\D/g, '');
         return digits.length >= 8 && digits.length <= 15 && /^\+?[\d\s().-]+$/.test(raw) ? raw : '';
@@ -5417,15 +5415,15 @@ const server = createServer(async (req, res) => {
       const independentProfile = {
         ...profile,
         customerId:'', customer_id:'',
-        wsExternalId:vipGroup ? memberIdentity.senderId : profile.wsExternalId,
+        wsExternalId:groupConversation ? memberIdentity.senderId : profile.wsExternalId,
         wsAccountId:accountId,
         phone:conversationIdentityPhone,
         phoneVerified:Boolean(conversationIdentityPhone),
-        phoneSource:conversationIdentityPhone ? (vipGroup ? 'vip-group-sender' : 'conversation') : '',
-        conversationId:vipGroup ? '' : profile.conversationId,
+        phoneSource:conversationIdentityPhone ? (groupConversation ? 'group-member-sender' : 'conversation') : '',
+        conversationId:groupConversation ? '' : profile.conversationId,
       };
       const independentMatch = wsCrmSync.matchCustomerForAutoSync(state.customers, independentProfile);
-      const independentKinds = new Set(vipGroup ? ['ws-id', 'phone'] : ['ws-id', 'phone', 'conversation']);
+      const independentKinds = new Set(groupConversation ? ['ws-id', 'phone'] : ['ws-id', 'phone', 'conversation']);
       const independentlyVerified = independentKinds.has(independentMatch.kind) && Boolean(independentMatch.customer);
       if (associatedCustomer && !manualBinding && !independentlyVerified) {
         return json(res, 200, {
@@ -5446,7 +5444,7 @@ const server = createServer(async (req, res) => {
       const match = manualBinding
         ? { kind:'explicit-manual', customer:associatedCustomer, candidates:[associatedCustomer] }
         : independentMatch;
-      const associationCorrected = !vipGroup && Boolean(
+      const associationCorrected = !groupConversation && Boolean(
         associatedCustomer && !manualBinding && independentlyVerified
         && String(independentMatch.customer.id) !== associatedCustomerId
       );
@@ -5479,7 +5477,7 @@ const server = createServer(async (req, res) => {
         const existingCustomer = (state.customers || []).find(item => String(item.id) === String(existingHotEvent.customer_id)) || null;
         const existingFollowup = (state.followups || []).find(item => String(item.wsAnalysisId || '') === String(analysisRow.id)) || null;
         const existingTask = state.settings?.operatingTasks?.find(item => item.aiGenerated && String(item.customerId || '') === String(existingCustomer?.id || '') && item.done !== true && !['done','dismissed','cancelled'].includes(String(item.status || '').toLowerCase()))
-          || (!vipGroup ? state.settings?.operatingTasks?.find(item => String(item.wsConversationId || '') === conversationId && String(item.wsAccountId || accountId) === accountId) : null) || null;
+          || (!groupConversation ? state.settings?.operatingTasks?.find(item => String(item.wsConversationId || '') === conversationId && String(item.wsAccountId || accountId) === accountId) : null) || null;
         return json(res, 200, { ok: true, skipped: false, matched: Boolean(existingCustomer), created: false, duplicate: true, softDeleted: Boolean(existingCustomer?.deleted), conflicts: [], customer: existingCustomer, followup: existingFollowup, task: existingTask, updatedFields: [], revision: readStateEnvelope().version });
       }
       // V5.0 §14/§16 provenance: the analysis covers the current transcript
@@ -5541,10 +5539,10 @@ const server = createServer(async (req, res) => {
           || tasks.find(item => item?.aiGenerated && String(item.customerId || '') === String(customer.id))
           // A VIP room can contain many existing customers. Its conversation
           // alone is never enough to reuse another member's reminder task.
-          || (!vipGroup ? tasks.find(item => activeAiTask(item) && String(item.wsConversationId || '') === String(conversation.id) && String(item.wsAccountId || accountId) === accountId) : null)
-          || (!vipGroup ? tasks.find(item => item?.aiGenerated && String(item.wsConversationId || '') === String(conversation.id) && String(item.wsAccountId || accountId) === accountId) : null);
+          || (!groupConversation ? tasks.find(item => activeAiTask(item) && String(item.wsConversationId || '') === String(conversation.id) && String(item.wsAccountId || accountId) === accountId) : null)
+          || (!groupConversation ? tasks.find(item => item?.aiGenerated && String(item.wsConversationId || '') === String(conversation.id) && String(item.wsAccountId || accountId) === accountId) : null);
         const scoreSummary = `AI 综合 ${followupPlan.priorityScore}/100（资金实力 ${followupPlan.qualificationScore}/100，聊天粘度 ${followupPlan.engagementScore}/100）`;
-        const taskInput = { title: `跟进 ${customer.name || customer.rawPhone || customer.phone}`, due: followupPlan.nextDate || '', customerId: customer.id, customerName: customer.name || '', phone: customer.rawPhone || customer.phone || '', wsAccountId: accountId, wsAnalysisId: analysisRow.id, wsMemberIdentity: vipGroup ? memberIdentity : null, owner: customer.assistant || '未分配', priority: followupPlan.priority, priorityBand: followupPlan.priorityBand, priorityScore: followupPlan.priorityScore, qualificationScore: followupPlan.qualificationScore, qualificationReason: followupPlan.qualificationReason, engagementScore: followupPlan.engagementScore, engagementReason: followupPlan.engagementReason, scoreReason: followupPlan.scoreReason, scoreConfidence: followupPlan.scoreConfidence, scoringVersion: followupPlan.scoringVersion, evidenceGate: followupPlan.evidenceGate, scoringWeights: followupPlan.scoringWeights, note: [scoreSummary, followupPlan.scoreReason, followupPlan.note].filter(Boolean).join('；'), objective: followupPlan.objective, suggestedOpener: followupPlan.opener, talkingPoints: followupPlan.talkingPoints, avoidTopics: followupPlan.avoidTopics, wsConversationId: conversation.id, wsFollowupKey: followupPlan.dedupeKey, aiGenerated: true, directionInvalidated: false, invalidationReason: '' };
+        const taskInput = { title: `跟进 ${customer.name || customer.rawPhone || customer.phone}`, due: followupPlan.nextDate || '', customerId: customer.id, customerName: customer.name || '', phone: customer.rawPhone || customer.phone || '', wsAccountId: accountId, wsAnalysisId: analysisRow.id, wsMemberIdentity: groupConversation ? memberIdentity : null, owner: customer.assistant || '未分配', priority: followupPlan.priority, priorityBand: followupPlan.priorityBand, priorityScore: followupPlan.priorityScore, qualificationScore: followupPlan.qualificationScore, qualificationReason: followupPlan.qualificationReason, engagementScore: followupPlan.engagementScore, engagementReason: followupPlan.engagementReason, scoreReason: followupPlan.scoreReason, scoreConfidence: followupPlan.scoreConfidence, scoringVersion: followupPlan.scoringVersion, evidenceGate: followupPlan.evidenceGate, scoringWeights: followupPlan.scoringWeights, note: [scoreSummary, followupPlan.scoreReason, followupPlan.note].filter(Boolean).join('；'), objective: followupPlan.objective, suggestedOpener: followupPlan.opener, talkingPoints: followupPlan.talkingPoints, avoidTopics: followupPlan.avoidTopics, wsConversationId: conversation.id, wsFollowupKey: followupPlan.dedupeKey, aiGenerated: true, directionInvalidated: false, invalidationReason: '' };
         if (existingTask) { duplicate = !existingTask.done; Object.assign(existingTask, taskInput, { done: false, status: 'open', completedAt: '', snoozedUntil: '', updatedAt: now }); task = existingTask; }
         else { task = { id: `TWS-${wsCore.stableHash(followupPlan.dedupeKey)}`, ...taskInput, done: false, createdAt: now, updatedAt: now }; tasks.unshift(task); }
         for (const other of tasks) if (other !== task && activeAiTask(other) && String(other.customerId || '') === String(customer.id)) Object.assign(other, { status:'dismissed', dismissed:true, dismissedReason:'superseded-by-newer-ai-reminder', updatedAt:now });
@@ -5582,8 +5580,8 @@ const server = createServer(async (req, res) => {
         }
         const bindingTime = new Date().toISOString();
         const latestConversationData = wsJson(db.prepare('SELECT data_json FROM ws_conversations WHERE id=? AND account_id=?').get(conversation.id, accountId)?.data_json, {});
-        const memberBindingKey = vipGroup ? (memberIdentity.senderId || memberIdentity.senderPhone) : '';
-        const verifiedBindingData = vipGroup
+        const memberBindingKey = groupConversation ? (memberIdentity.senderId || memberIdentity.senderPhone) : '';
+        const verifiedBindingData = groupConversation
           ? {
               ...latestConversationData,
               vipMemberBindings:{
@@ -5604,7 +5602,7 @@ const server = createServer(async (req, res) => {
                 associationCorrectionAnalysisId:analysisRow.id,
               } : {}),
             };
-        db.prepare('UPDATE ws_conversations SET customer_id=?,data_json=?,updated_at=? WHERE id=? AND account_id=?').run(vipGroup ? '' : customer.id, JSON.stringify(verifiedBindingData), bindingTime, conversation.id, accountId);
+        db.prepare('UPDATE ws_conversations SET customer_id=?,data_json=?,updated_at=? WHERE id=? AND account_id=?').run(groupConversation ? '' : customer.id, JSON.stringify(verifiedBindingData), bindingTime, conversation.id, accountId);
         db.exec('COMMIT');
       } catch (error) { db.exec('ROLLBACK'); throw error; }
       return json(res, 200, { ok: true, skipped: false, matched: true, created: false, duplicate, associationCorrected, softDeleted, conflicts: governanceMerge.conflicts, customer, followup, task, updatedFields: [...new Set([...profileMerge.changedFields, ...governanceMerge.changedFields, ...(beforeCustomer === JSON.stringify(customer) ? [] : ['aiSyncedAt'])])], revision: readStateEnvelope().version });
@@ -6006,7 +6004,7 @@ const server = createServer(async (req, res) => {
           params.push(accountId);
         }
         const rows = db.prepare(`SELECT * FROM ws_collection_items WHERE ${where.join(' AND ')} ORDER BY updated_at ASC,id ASC LIMIT ${limit}`).all(...params);
-        return json(res, 200, { items: rows.filter(row => !wsIsExcludedGroup(wsConversationRow(row.conversation_id, accountId) || {}) && (url.searchParams.get('historyReady') !== '1' || wsAiEligible(row.conversation_id, accountId))).map(wsCollectionItemPayload) });
+        return json(res, 200, { items: rows.filter(row => !wsIsGroupConversation(wsConversationRow(row.conversation_id, accountId) || {}) && (url.searchParams.get('historyReady') !== '1' || wsAiEligible(row.conversation_id, accountId))).map(wsCollectionItemPayload) });
       }
       if (req.method === 'POST' || req.method === 'PATCH') {
         const body = JSON.parse((await readBody(req, 128 * 1024)).toString('utf8'));
@@ -6063,7 +6061,7 @@ const server = createServer(async (req, res) => {
       if (!task?.aiGenerated) return json(res, 404, { error: '关联的 AI 跟进任务不存在，请刷新后重试。' });
       const accountId = wsAccountId(task.wsAccountId || body.accountId);
       const conversationId = wsText(task.wsConversationId, 160);
-      if (task.groupExcluded === true || wsIsExcludedGroup(wsConversationRow(conversationId, accountId) || {})) throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '普通群聊跟进已排除，不能重新开启或记为完成。');
+      if (task.groupExcluded === true || wsIsGroupConversation(wsConversationRow(conversationId, accountId) || {})) throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '普通群聊跟进已排除，不能重新开启或记为完成。');
       const customer = governanceCustomer(state, task.customerId);
       if (!customer || customer.deleted) return json(res, 409, { error: '关联客户已失效，请刷新任务。' });
       const result = wsText(body.result, 2000);
@@ -6100,7 +6098,7 @@ const server = createServer(async (req, res) => {
       }
       db.exec('BEGIN IMMEDIATE');
       try {
-        const taskMember = wsVipMemberIdentity(task.wsMemberIdentity || {});
+        const taskMember = wsGroupMemberIdentity(task.wsMemberIdentity || {});
         const alertKey = `${accountId}:${conversationId}${taskMember.trusted ? `:${taskMember.senderId || taskMember.senderPhone}` : ''}`;
         db.prepare('UPDATE ws_followup_alerts SET status=?,snoozed_until=?,followup_time=CASE WHEN ?<>\'\' THEN ? ELSE followup_time END,updated_at=? WHERE account_id=? AND alert_key=?').run(status, task.snoozedUntil, action === 'snooze' ? due : '', due, now, accountId, alertKey);
         db.prepare('UPDATE ws_collection_items SET followup_status=?,next_followup_at=CASE WHEN ?<>\'\' THEN ? ELSE next_followup_at END,updated_at=? WHERE account_id=? AND conversation_id=?').run(status, action === 'snooze' ? due : '', due, now, accountId, conversationId);
@@ -6250,26 +6248,26 @@ const server = createServer(async (req, res) => {
       const upcomingLimit = localDateKey(upcomingLimitDate);
       const alerts = [];
       const seenConversations = new Set();
-      const conversationChecks = new Map(), vipMemberChecks = new Map(), dueDateCache = new Map();
+      const conversationChecks = new Map(), groupMemberChecks = new Map(), dueDateCache = new Map();
       for (const row of rows) {
         const conversationKey = `${row.account_id}:${row.conversation_id}`;
         if (!conversationChecks.has(conversationKey)) {
           const conversation = wsAiEligibleConversation(row.conversation_id, row.account_id, { id:row.conversation_id, account_id:row.account_id, external_id:row.external_id, title:row.title, customer_id:row.customer_id, data_json:row.conversation_data_json, unread_count:row.conversation_unread_count });
-          conversationChecks.set(conversationKey, conversation ? { row:conversation, vipGroup:wsIsAiGroupConversation(conversation) } : null);
+          conversationChecks.set(conversationKey, conversation ? { row:conversation, groupConversation:wsIsGroupConversation(conversation) } : null);
         }
         const alertContext = conversationChecks.get(conversationKey);
         if (!alertContext) continue;
-        const alertConversation = alertContext.row, alertVipGroup = alertContext.vipGroup;
+        const alertConversation = alertContext.row, alertGroupConversation = alertContext.groupConversation;
         const result = wsJson(row.result_json, {});
-        let alertVipMember = null, alertMemberKey = '';
-        if (alertVipGroup) {
+        let alertGroupMember = null, alertMemberKey = '';
+        if (alertGroupConversation) {
           if (result.transcriptInfo?.memberScoped !== true) continue;
           const rawMemberIdentity = result.memberIdentity || result.transcriptInfo?.memberIdentity || {};
-          const memberCheckKey = `${conversationKey}:${JSON.stringify(wsVipMemberIdentity(rawMemberIdentity))}`;
-          if (!vipMemberChecks.has(memberCheckKey)) vipMemberChecks.set(memberCheckKey, wsVipMemberEvidence(alertConversation, rawMemberIdentity));
-          alertVipMember = vipMemberChecks.get(memberCheckKey);
-          if (!alertVipMember.valid) continue;
-          alertMemberKey = alertVipMember.identity.senderId || alertVipMember.identity.senderPhone;
+          const memberCheckKey = `${conversationKey}:${JSON.stringify(wsGroupMemberIdentity(rawMemberIdentity))}`;
+          if (!groupMemberChecks.has(memberCheckKey)) groupMemberChecks.set(memberCheckKey, wsGroupMemberEvidence(alertConversation, rawMemberIdentity));
+          alertGroupMember = groupMemberChecks.get(memberCheckKey);
+          if (!alertGroupMember.valid) continue;
+          alertMemberKey = alertGroupMember.identity.senderId || alertGroupMember.identity.senderPhone;
         }
         const seenKey = `${row.account_id}:${row.conversation_id}:${alertMemberKey}`;
         if (seenConversations.has(seenKey)) continue;
@@ -6282,7 +6280,7 @@ const server = createServer(async (req, res) => {
         const authoritativeCandidate = confidence >= Number(customerGovernance.AUTO_SYNC_CONFIDENCE_THRESHOLD || 0.6);
         const scopedAccountId = row.account_id;
         const task = taskByAnalysis.get(String(row.id))
-          || (!alertVipGroup ? taskByConversation.get(String(row.conversation_id))?.find(item => String(item.wsAccountId || scopedAccountId) === scopedAccountId) : null);
+          || (!alertGroupConversation ? taskByConversation.get(String(row.conversation_id))?.find(item => String(item.wsAccountId || scopedAccountId) === scopedAccountId) : null);
         if (!task || !activeCustomerIds.has(String(task.customerId)) || (task.wsAnalysisId && task.wsAnalysisId !== row.id)) {
           if (authoritativeCandidate) seenConversations.add(seenKey);
           continue;
@@ -6315,7 +6313,7 @@ const server = createServer(async (req, res) => {
           title: row.title,
           externalId: row.external_id,
           customerId: task.customerId,
-          memberIdentity: alertVipGroup ? alertVipMember.identity : null,
+          memberIdentity: alertGroupConversation ? alertGroupMember.identity : null,
           summary: result.summary || '',
           nextStep: result.nextStep || '',
           followupTime: due || '',

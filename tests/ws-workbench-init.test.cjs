@@ -53,7 +53,7 @@ assert.match(workbenchSource, /function resetAccountPresentation\(accountId\)[\s
       backgroundGeneration: 1, backgroundStartGeneration: 0, backgroundStartPromise: null,
       document: { documentElement: { dataset: {} }, body: { classList: { add() {} } } },
       $: () => ({}), $$: () => [], render() {}, loadAccounts: async () => {},
-      captureContext: () => ({}), syncVipGroupAllowlist: async () => {},
+      captureContext: () => ({}), syncWsGroupAllowlist: async () => {},
       loadConversations: async () => { state.error = ''; }, loadGroupMonitor: async () => {},
       refreshCollectionSummary: async () => {}, updateAccountStatus() {},
       setStatus: (status, detail) => { state.wsStatus = status; state.wsDetail = detail; },

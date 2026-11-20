@@ -18,7 +18,9 @@ function seed(dataDir) {
   try {
     runMigrations({ db, migrationDir: path.join(app, 'migrations'), lockPath: path.join(dataDir, 'seed.lock'), backup: false });
     db.prepare("INSERT INTO ws_accounts(id,display_name,workspace_mode,created_at,updated_at) VALUES(?,?,'ordinary',?,?)").run(accountId, accountId, now, now);
-    for (const [id, type, jid, ready] of [['blocked-group', 'vip_group', 'saved@g.us', true], ['blocked-history', 'direct', '917000008001@s.whatsapp.net', false],
+    // There is no VIP group: a legacy vip-marked group is an ordinary group and
+    // its queued ordinary-WS AI jobs are retired at startup (asserted below).
+    for (const [id, type, jid, ready] of [['blocked-unloaded', 'direct', '917000008009@s.whatsapp.net', false], ['legacy-vip-group', 'vip_group', 'saved@g.us', true], ['blocked-history', 'direct', '917000008001@s.whatsapp.net', false],
       ['ready-one', 'direct', '917000008002@s.whatsapp.net', true], ['ready-two', 'direct', '917000008003@s.whatsapp.net', true]]) {
       const data = { conversationType: type, historyLoaded: ready, directionVersion: 4, historyFingerprint: 'saved', lastMessageFingerprint: 'saved' };
       db.prepare('INSERT INTO ws_conversations(id,account_id,external_id,title,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?)')
@@ -27,8 +29,9 @@ function seed(dataDir) {
     const job = db.prepare(`INSERT INTO ai_jobs(id,account_id,conversation_id,idempotency_key,payload_json,status,next_attempt_at,locked_at,lease_token,last_error,analysis_id,created_at,updated_at)
       VALUES(?,?,?,?,'{"sourceFingerprint":"saved"}','queued','','','','','',?,?)`);
     for (let index = 0; index < 25; index++) {
-      const id = 'blocked-' + String(index).padStart(2, '0'); job.run(id, accountId, 'blocked-group', id, now, now);
+      const id = 'blocked-' + String(index).padStart(2, '0'); job.run(id, accountId, 'blocked-unloaded', id, now, now);
     }
+    job.run('legacy-vip-job', accountId, 'legacy-vip-group', 'legacy-vip-job', now, now);
     job.run('blocked-history', accountId, 'blocked-history', 'blocked-history', now, now);
     job.run('ready-one', accountId, 'ready-one', 'ready-one', now, now);
     job.run('ready-two', accountId, 'ready-two', 'ready-two', now, now);
@@ -63,6 +66,10 @@ test('production execution queue skips more than one page of blocked history bef
   };
   try {
     await requestWithStartupDiagnostics(() => request('/api/health'), observation);
+    {
+      const db = new DatabaseSync(path.join(dataDir, 'workspace.sqlite'), { readOnly: true });
+      try { assert.equal(db.prepare("SELECT status FROM ai_jobs WHERE id='legacy-vip-job'").get().status, 'cancelled', 'a legacy vip-marked group gets no ordinary-WS AI exception'); } finally { db.close(); }
+    }
     const before = snapshot(), route = '/api/ws/ai-jobs?accountId=' + accountId + '&status=queued,retryable';
     const history = await request(route + '&limit=12');
     assert.equal(history.jobs.length, 12); assert.ok(history.jobs.every(job => job.executionEligible === false));
@@ -70,8 +77,8 @@ test('production execution queue skips more than one page of blocked history bef
     assert.deepEqual(execution.jobs.map(job => job.id), ['ready-one', 'ready-two']);
     assert.ok(execution.jobs.every(job => job.executionEligible === true));
     assert.deepEqual((await request(route + '&executionEligible=1&limit=1')).jobs.map(job => job.id), ['ready-one']);
-    assert.equal((await request(route + '&executionEligible=1&conversationId=blocked-group')).jobs.length, 0);
-    assert.deepEqual((await request(route + '&conversationId=blocked-group&limit=2')).jobs.map(job => job.id), ['blocked-00', 'blocked-01']);
+    assert.equal((await request(route + '&executionEligible=1&conversationId=blocked-unloaded')).jobs.length, 0);
+    assert.deepEqual((await request(route + '&conversationId=blocked-unloaded&limit=2')).jobs.map(job => job.id), ['blocked-00', 'blocked-01']);
     assert.equal(execution.stats.total, history.stats.total); assert.equal(snapshot(), before, 'execution and history queries never retire or claim jobs');
   } finally {
     if (child.exitCode === null && child.signalCode === null) child.kill();

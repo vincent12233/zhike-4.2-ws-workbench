@@ -10,7 +10,7 @@ const workbench = fs.readFileSync(path.join(root, 'resources/app/modules/ws-work
 
 // Ordinary groups are intentionally excluded from the customer/AI inventory,
 // but they must still be returned as monitor candidates after WS discovery.
-assert.match(server, /groupConversations:\s*excludedRows\.filter\(wsIsExcludedGroup\)\.map\(wsConversationPayload\)/,
+assert.match(server, /groupConversations:\s*excludedRows\.filter\(wsIsGroupConversation\)\.map\(wsConversationPayload\)/,
   'conversation listing must return group rows separately for the WS monitor picker');
 
 // Every discovery refresh path must merge the separate group payload without

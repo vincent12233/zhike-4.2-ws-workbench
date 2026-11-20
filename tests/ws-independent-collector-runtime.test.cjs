@@ -16,7 +16,7 @@ const CAPABILITY = Object.freeze({
   foregroundFallback: false, manualVisibleImport: true, collectorState: 'running',
 });
 const STATES = ['not-started', 'awaiting-login', 'login-visible', 'running', 'paused', 'error'];
-const COLLECTOR_ACTIONS = ['discover-conversations', 'collect-all-read', 'configure-group-monitor', 'start-group-monitor', 'configure-ws-groups', 'configure-vip-groups'];
+const COLLECTOR_ACTIONS = ['discover-conversations', 'collect-all-read', 'configure-group-monitor', 'start-group-monitor', 'configure-ws-groups'];
 const capability = (collectorState, extra = {}) => ({ ...CAPABILITY, collectorState, ...extra });
 
 function fixture(nativeReply, options = {}) {
