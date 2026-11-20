@@ -11,7 +11,7 @@ const core = require(path.join(repo, 'resources', 'app', 'modules', 'ws-workbenc
 const originalSource = fs.readFileSync(workbenchPath, 'utf8');
 const source = originalSource.replace(
   /\r?\n  boot\(\);\r?\n\}\)\(\);\s*$/,
-  `\n  Object.assign(window.__test, {\n    state, loadConversations, refreshCollectionSummary, scheduleAiQueuePump, cancelAllAiWork, switchAccount, activate, deactivate, connectionAction, startBackgroundRuntime, stopBackgroundRuntime, analyzeConversation, importVisible, currentDraft, collectionRenderSignature, aiJobIdempotencyKey, fullHistorySourceFingerprint, transcriptDirectionVersion, explicitConversationType, isAutomaticDirectConversation, renderMessageRows, render,\n    getAiPumpState: () => ({ running: Boolean(aiPumpPromise), queued: aiPumpQueued, scheduled: aiPumpScheduled, aborted: Boolean(aiPumpController?.signal?.aborted) })\n  });\n})();`,
+  `\n  Object.assign(window.__test, {\n    state, loadConversations, refreshCollectionSummary, scheduleAiQueuePump, handleAction, cancelAllAiWork, switchAccount, activate, deactivate, connectionAction, startBackgroundRuntime, stopBackgroundRuntime, analyzeConversation, importVisible, currentDraft, collectionRenderSignature, aiJobIdempotencyKey, fullHistorySourceFingerprint, transcriptDirectionVersion, explicitConversationType, isAutomaticDirectConversation, renderMessageRows, render,\n    getAiPumpState: () => ({ running: Boolean(aiPumpPromise), queued: aiPumpQueued, scheduled: aiPumpScheduled, aborted: Boolean(aiPumpController?.signal?.aborted) })\n  });\n})();`,
 );
 assert.notEqual(source, originalSource, 'runtime harness must replace boot without changing production source');
 
@@ -21,6 +21,7 @@ let claimCount = 0;
 let staleAnalysisWrites = 0;
 let aiSignalAborted = false;
 let failQueuedJobs = false;
+let grant = { active: false, authorization: { id: 'grant-read', accountId: 'default', conversationId: 'conv-read' } };
 let resolveAiImmediately = false;
 let hostRefreshCount = 0;
 let messageBatchWrites = 0;
@@ -122,6 +123,7 @@ async function fetchMock(input, init = {}) {
   const method = String(init.method || 'GET').toUpperCase();
   let body = {};
   try { body = init.body ? JSON.parse(init.body) : {}; } catch {}
+  if (url.pathname === '/api/ws/ai-automation') return response(accountId === 'default' ? grant : { active: false });
   if (accountId === 'secondary') {
     if (url.pathname === '/api/ws/conversations') return response({ conversations: [] });
     if (url.pathname === '/api/ws/collection-runs') return response({ run: null });
@@ -140,13 +142,14 @@ async function fetchMock(input, init = {}) {
   if (url.pathname === '/api/ws/analyses' && method === 'POST') { staleAnalysisWrites += 1; return response({ id: 'analysis-stale' }); }
   if (url.pathname === '/api/ws/crm-sync') { staleAnalysisWrites += 1; return response({ ok: true }); }
   if (url.pathname === '/api/ws/ai-jobs' && method === 'GET') {
-    if (url.searchParams.has('status') && failQueuedJobs) return response({ error: 'AI queue temporarily unavailable' }, 503);
+    assert.equal(url.searchParams.has('executionEligible'), false, 'the automatic pump must never drain an account-wide queue');
     return response(url.searchParams.has('status') ? { jobs: jobs().filter(item => !completedJobIds.has(item.id)), stats: stats() } : { jobs: [], stats: stats() });
   }
   if (url.pathname === '/api/ws/ai-jobs' && method === 'POST') {
     const action = String(body.action || '');
     const requested = jobs().find(item => item.id === body.jobId || item.conversationId === body.conversationId) || jobs().find(item => item.id === 'job-read');
-    if (!action) return response({ job: requested, stats: stats() });
+    if (!action && failQueuedJobs) return response({ error: 'AI queue temporarily unavailable' }, 503);
+    if (!action) { assert.equal(body.payload.authorizationId, 'grant-read'); return response({ job: requested, stats: stats() }); }
     if (action === 'claim') { claimCount += 1; claimedJobIds.push(requested.id); return response({ claimed: true, job: { ...requested, status: 'running' }, stats: { ...stats(), queued: 0, running: 1 } }); }
     if (action === 'fail') return response({ job: { ...requested, status: 'retryable' }, stats: { ...stats(), queued: 0, running: 0, retryable: 1 } });
     if (action === 'checkpoint') return response({ job: { ...requested, payload: body }, stats: stats() });
@@ -198,9 +201,10 @@ const windowStub = {
   },
   zhikeAI: {
     status: async () => ({ configured: true, providerName: 'test' }),
-    request: async (payload, options = {}) => {
+    request: async () => { throw new Error('background retries cannot use a manual model request'); },
+    wsautomatic: async (payload, options = {}) => {
       aiRequestCount += 1;
-      assert.equal(payload.context.conversationId, 'conv-read', 'unread job must be skipped without AI analysis');
+      assert.equal(payload.conversationId, 'conv-read', 'unread job must be skipped without AI analysis');
       if (resolveAiImmediately) return { text: JSON.stringify({ summary: 'background success', confidence: 0.91, intent: 'follow-up' }), providerName: 'test', model: 'test-model' };
       return new Promise((resolve, reject) => {
         const signal = options.signal;
@@ -319,8 +323,10 @@ const waitFor = async (predicate, ms = 500) => {
   assert.equal(claimCount, 0, 'blocked collector refresh does not claim queued work');
   await runtime.loadConversations();
   assert.equal(aiRequestCount, 0, 'an explicit local-history read does not implicitly request AI');
-  assert.equal(claimCount, 0, 'only the following explicit AI action can claim a stored job');
-  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence }, { explicit: true });
+  assert.equal(claimCount, 0, 'only a granted automatic analysis can claim a stored job');
+  grant.active = true;
+  runtime.state.aiAuthorization = grant;
+  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence });
   await waitFor(() => aiRequestCount === 1);
   assert.equal(runtime.state.collectionRefreshing, false, 'collection refresh lock must clear while AI request remains pending');
   assert.equal(runtime.getAiPumpState().running, true, 'explicitly requested AI work continues on the independent pump');
@@ -389,7 +395,7 @@ const waitFor = async (predicate, ms = 500) => {
 
   aiSignalAborted = false;
   runtime.state.aiEnabled = true;
-  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence }, { explicit: true });
+  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence });
   await waitFor(() => aiRequestCount === 2);
   assert.deepEqual(claimedJobIds, ['job-read', 'job-read'], 're-enabling AI resumes exactly one eligible direct job');
 
@@ -408,7 +414,7 @@ const waitFor = async (predicate, ms = 500) => {
 
   await runtime.switchAccount('default');
   resolveAiImmediately = true;
-  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence }, { explicit: true });
+  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence });
   await waitFor(() => hostRefreshCount === 1, 1000);
   await waitFor(() => !runtime.getAiPumpState().running, 1000);
   assert.equal(aiRequestCount, 3, 'the new account context resumes a single background model request');
@@ -438,7 +444,7 @@ const waitFor = async (predicate, ms = 500) => {
   assert.equal(messageBatchWrites, writesBeforeGroupExport + 1, 'a two-party manual export remains importable as a personal conversation');
 
   failQueuedJobs = true;
-  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence }, { explicit: true });
+  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence });
   await waitFor(() => Boolean(runtime.state.aiBackgroundError));
   assert.match(runtime.state.aiBackgroundError, /AI queue temporarily unavailable/, 'background queue failures remain visible and retryable');
   assert.match(view.innerHTML, /立即重试/, 'visible AI error includes an explicit retry action');
@@ -448,8 +454,16 @@ const waitFor = async (predicate, ms = 500) => {
   completedJobIds.delete('job-read');
   resolveAiImmediately = false;
   aiSignalAborted = false;
-  runtime.state.aiBackgroundError = '';
-  runtime.scheduleAiQueuePump({ accountId: 'default', conversationId: '', sequence: runtime.state.accountLoadSequence }, { explicit: true });
+  const failedScope = runtime.state.aiRetryScope;
+  assert.equal(failedScope.conversationId, 'conv-read');
+  grant = { active: true, authorization: { id: 'replacement-grant', accountId: 'default', conversationId: 'conv-unread' } };
+  await runtime.handleAction('resume-ai-queue');
+  assert.equal(aiRequestCount, 3, 'retry cannot follow a replacement grant into another chat');
+  grant = { active: false, authorization: { id: 'grant-read', accountId: 'default', conversationId: 'conv-read' } };
+  await runtime.handleAction('resume-ai-queue');
+  assert.equal(aiRequestCount, 3, 'retry cannot consume a paused grant');
+  grant.active = true;
+  await runtime.handleAction('resume-ai-queue');
   await waitFor(() => aiRequestCount === 4);
   const writesBeforeClose = staleAnalysisWrites;
   let rejectCloseBridge;

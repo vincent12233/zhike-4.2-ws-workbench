@@ -4410,7 +4410,8 @@ const server = createServer(async (req, res) => {
         // Explicit legacy-consumer maintenance, never a query side effect.
         // Worker/pipeline ownership remains with its fenced authority.
         const expiredAt = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-        const result = db.prepare("UPDATE ai_jobs SET status=CASE WHEN attempts>=max_attempts THEN 'failed' ELSE 'retryable' END,locked_at='',lease_token='',next_attempt_at=?,last_error='上次分析中断，已恢复队列',updated_at=? WHERE account_id=? AND status='running' AND worker_owner_id='' AND fencing_token=0 AND correlation_id='' AND (locked_at='' OR locked_at<?)").run(now, now, accountId, expiredAt);
+        const jobId = Object.hasOwn(body, 'jobId') ? wsText(body.jobId, 160) : null;
+        const result = db.prepare("UPDATE ai_jobs SET status=CASE WHEN attempts>=max_attempts THEN 'failed' ELSE 'retryable' END,locked_at='',lease_token='',next_attempt_at=?,last_error='上次分析中断，已恢复队列',updated_at=? WHERE account_id=? AND status='running' AND worker_owner_id='' AND fencing_token=0 AND correlation_id='' AND (locked_at='' OR locked_at<?) AND (? IS NULL OR id=?)").run(now, now, accountId, expiredAt, jobId, jobId);
         return json(res, 200, { recovered: Number(result.changes || 0), stats: aiJobStats(accountId), recoveryAuthority: 'legacy-consumer' });
       }
       if (action === 'enqueue') {

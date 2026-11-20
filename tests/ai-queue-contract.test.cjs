@@ -15,7 +15,7 @@ assert.match(workbench, /\/api\/ws\/ai-jobs/, 'WS workbench must use the durable
 assert.match(workbench, /idempotencyKey/, 'AI queue requests must include an idempotency key');
 assert.match(workbench, /nextAttemptAt|retryable/, 'WS workbench must expose retryable queue state');
 assert.doesNotMatch(workbench, /previewAnalysisQueue/, 'preview analysis must not rely on an in-memory queue that is lost on restart');
-assert.match(workbench, /collection-items\?[^`]*analysisStatus|analysisStatus=pending/, 'pending list previews must resume from persisted collection items');
+assert.match(workbench, /conversation = state\.conversations\.find\(item => item\.id === grant\.conversationId\)/, 'only the persisted authorization can select the conversation for background analysis');
 assert.match(host, /ws\.status/, 'native host must publish WS status events');
 assert.match(host, /accepted|deduplicated/, 'native host must include ingest result in the status/event flow');
 
@@ -86,7 +86,9 @@ async function stop() {
     start();
     const readOnly = await body(await request('/api/ws/ai-jobs?accountId=default'));
     assert.equal(readOnly.jobs.find(item => item.id === firstBody.job.id).status, 'running', 'GET must not recover or mutate expired jobs');
-    const recovery = await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'recover-expired', accountId: 'default' }) });
+    const otherRecovery = await body(await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'recover-expired', jobId: 'other-job' }) }));
+    assert.equal(otherRecovery.recovered, 0, 'retrying a different job cannot release this expired lease');
+    const recovery = await request('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'recover-expired', jobId: firstBody.job.id }) });
     assert.equal(recovery.status, 200, 'only explicit old-consumer recovery mutates expired jobs');
     const recovered = await body(await request('/api/ws/ai-jobs?accountId=default'));
     const recoveredJob = recovered.jobs.find(item => item.id === firstBody.job.id);

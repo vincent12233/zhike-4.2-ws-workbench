@@ -362,6 +362,7 @@
     listSyncOperation: 0,
     aiQueueStats: { queued: 0, running: 0, retryable: 0, completed: 0, failed: 0, deadLetter: 0, retryCount: 0, total: 0 },
     aiBackgroundError: '',
+    aiRetryScope: null,
     vipGroupConfigSignatures: new Map(),
     groupMonitor: createGroupMonitorState(),
   };
@@ -840,6 +841,7 @@
     state.aiBackgroundError = '';
     clearTimeout(settingsSaveTimer); settingsSaveTimer = undefined; ++settingsSaveSequence;
     state.aiAuthorization = null;
+    state.aiRetryScope = null;
     state.aiAuthorizationOperation += 1;
     state.aiAuthorizationBusy = false;
     state.busy.import = false; state.busy.customer = false; state.busy.followup = false; state.busy.connection = false; state.busy.reply = false; state.busy.capture = false; state.busy.readHistory = false; state.busy.collector = false; state.aiBusy = false; state.translationBusy.clear();
@@ -1996,6 +1998,8 @@
     node.hidden = !message;
     const textNode = node.querySelector('[data-ws-ai-error-text]');
     if (textNode) textNode.textContent = message;
+    const retry = node.querySelector('[data-ws-action="resume-ai-queue"]');
+    if (retry) retry.hidden = !state.aiRetryScope;
   }
   function setStatus(status, detail = '') {
     state.wsStatus = status || '未连接';
@@ -2492,10 +2496,10 @@
     } catch (error) { if (contextCurrent(context) && operation === state.aiAuthorizationOperation) toast(error.message || '自动分析授权失败。', 'x'); }
     finally { if (contextCurrent(context) && operation === state.aiAuthorizationOperation) state.aiAuthorizationBusy = false; }
   }
-  function scheduleAiQueuePump(context = captureContext(''), options = {}) {
+  function scheduleAiQueuePump(context = captureContext(''), retryScope = null) {
     const pumpContext = { ...context, conversationId: '' };
-    const explicit = options.explicit === true;
-    if ((!explicit && !automaticAiGranted(pumpContext)) || !state.backgroundActive || !state.aiEnabled || !contextCurrent(pumpContext)) return aiPumpPromise || Promise.resolve({ skipped: true });
+    const authorizationId = state.aiAuthorization?.authorization?.id;
+    if (!authorizationId || !automaticAiGranted(pumpContext) || (retryScope && retryScope.authorizationId !== authorizationId) || !state.backgroundActive || !state.aiEnabled || !contextCurrent(pumpContext)) return aiPumpPromise || Promise.resolve({ skipped: true });
     aiPumpQueued = true;
     if (aiPumpPromise || aiPumpScheduled || state.aiBusy) return aiPumpPromise || Promise.resolve({ queued: true });
     aiPumpScheduled = true;
@@ -2511,15 +2515,16 @@
           aiPumpQueued = false;
           throwIfAiCancelled(controller.signal);
           if (!contextCurrent(pumpContext) || !state.backgroundActive || !state.aiEnabled || state.aiBusy) throw aiCancellationError();
-          const result = await resumeQueuedAiJobs(pumpContext, { signal: controller.signal, explicit });
+          const result = await resumeQueuedAiJobs(pumpContext, { signal: controller.signal, authorizationId, retryScope });
           succeeded += Number(result?.succeeded || 0);
-        } while (!explicit && aiPumpQueued && !controller.signal.aborted && contextCurrent(pumpContext) && state.backgroundActive && state.aiEnabled && !state.aiBusy);
-        if (contextCurrent(pumpContext)) state.aiBackgroundError = '';
+        } while (!retryScope && state.aiAuthorization?.authorization?.id === authorizationId && aiPumpQueued && !controller.signal.aborted && contextCurrent(pumpContext) && state.backgroundActive && state.aiEnabled && !state.aiBusy);
+        if (contextCurrent(pumpContext)) { state.aiBackgroundError = ''; state.aiRetryScope = null; }
         updateAiBackgroundErrorDom();
         return { succeeded };
       })().catch(error => {
         if (!isAiCancellation(error, controller.signal) && contextCurrent(pumpContext)) {
           aiPumpQueued = false;
+          state.aiRetryScope = error.retryScope || null;
           state.aiBackgroundError = `后台 AI 分析待重试：${String(error?.message || 'AI 服务暂不可用').replace(/[\r\n\t]+/g, ' ').slice(0, 240)}`;
           // Background retries must never rebuild the visible WS shell. A
           // full redraw replaces the right scroll container and restores its
@@ -2531,7 +2536,7 @@
       }).finally(() => {
         if (aiPumpController === controller) aiPumpController = null;
         aiPumpPromise = null;
-        const restart = !explicit && aiPumpQueued && state.backgroundActive && state.aiEnabled && !state.aiBusy && contextCurrent(pumpContext);
+        const restart = aiPumpQueued && state.backgroundActive && state.aiEnabled && !state.aiBusy && contextCurrent(pumpContext);
         if (restart) scheduleAiQueuePump(pumpContext);
         else if (succeeded > 0 && state.backgroundActive && contextCurrent(pumpContext)) {
           // Refresh the shared customer/task state once per completed pump
@@ -2548,81 +2553,21 @@
   async function resumeQueuedAiJobs(context = captureContext(''), options = {}) {
     const signal = options.signal;
     if (!state.aiEnabled || state.loading || state.aiBusy) return { processed: 0, succeeded: 0 };
-    if (options.explicit !== true) {
-      await refreshAiAuthorization(context);
-      throwIfAiCancelled(signal); assertContext(context);
-      if (!automaticAiGranted(context)) return { processed: 0, succeeded: 0 };
-      const conversation = state.conversations.find(item => String(item.id) === String(state.aiAuthorization.authorization.conversationId));
-      if (!conversation) return { processed: 0, succeeded: 0 };
-      const result = await analyzeStoredConversation(conversation, { ...context, conversationId: '' }, { signal, automatic: true });
-      await refreshAiAuthorization(context);
-      if (result.cancelled) throw aiCancellationError();
-      if (!result.ok && !result.pending && !result.disabled) throw new Error(result.reason || '授权自动分析尚未完成。');
-      return { processed: result.ok ? 1 : 0, succeeded: result.ok && !result.resumed ? 1 : 0 };
-    }
-    let processed = 0, succeeded = 0;
-    throwIfAiCancelled(signal);
-    // Only the existing consumer performs recovery. Read-only queue views must
-    // not change leases or recover Worker-owned jobs just by refreshing.
-    await api('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'recover-expired', accountId: context.accountId }) }, context);
-    throwIfAiCancelled(signal);
-    assertContext(context);
-    const queue = await api('/api/ws/ai-jobs?status=queued,retryable&executionEligible=1&limit=12', {}, context);
-    throwIfAiCancelled(signal);
-    assertContext(context);
-    if (queue?.stats) state.aiQueueStats = queue.stats;
-    for (const job of (queue?.jobs || [])) {
-      if (processed >= 3) break;
-      if (job.executionEligible === false) continue;
-      throwIfAiCancelled(signal);
-      if (state.aiBusy) throw aiCancellationError();
-      const conversation = state.conversations.find(item => String(item.id) === String(job.conversationId));
-      if (!conversation) continue;
-      // Only an explicitly identified one-to-one conversation can enter the
-      // automatic model/CRM pipeline. Groups and unresolved chat types remain
-      // untouched until the native collector supplies authoritative metadata.
-      if (!isAutomaticCollectibleConversation(conversation)) continue;
-      // Unread conversations are deliberately never opened or analyzed by the
-      // background collector. They remain queued for a later user-initiated
-      // read, even if a stale AI job survived a restart.
-      if (conversation.unread === true || Number(conversation.unreadCount || 0) > 0 || text(conversation.collectionStatus) === 'skipped_unread') continue;
-      // A sidebar preview is discovery metadata, not a customer transcript.
-      // Do not create summaries, CRM updates or follow-up reminders until the
-      // native collector has explicitly confirmed that it reached the top of
-      // this conversation and persisted its complete readable history.
-      const sourceFingerprint = fullHistorySourceFingerprint(conversation);
-      if (!sourceFingerprint || text(job.payload?.sourceFingerprint) !== sourceFingerprint) continue;
-      const result = await analyzeStoredConversation(conversation, { ...context, conversationId: '' }, { signal });
-      if (result.cancelled) throw aiCancellationError();
-      if (!result.ok && !result.pending && !result.disabled) throw new Error(result.reason || 'AI 分析失败。');
-      if (result.ok || result.pending) processed += 1;
-      if (result.ok) succeeded += 1;
-    }
-    // A list scan persists newly discovered previews as collection items before
-    // attempting AI.  Resume those items after a restart or while AI was
-    // temporarily disabled; no renderer-only queue is needed and no 50k list
-    // is held in memory.  The server-side limit keeps each poll bounded.
-    if (processed < 3 && state.collectionRun?.id) {
-      const pending = await api(`/api/ws/collection-items?runId=${encodeURIComponent(state.collectionRun.id)}&historyReady=1&status=queued,collecting,retryable,completed&analysisStatus=pending,retryable&limit=100`, {}, context);
-      const readyItems = (pending?.items || []).filter(item => state.conversations.some(row => String(row.id) === String(item.conversationId) && fullHistorySourceFingerprint(row)));
-      for (const item of readyItems.slice(0, Math.max(0, 3 - processed))) {
-        throwIfAiCancelled(signal);
-        if (state.aiBusy) throw aiCancellationError();
-        const conversation = state.conversations.find(row => String(row.id) === String(item.conversationId));
-        if (!conversation) continue;
-        if (item.status === 'skipped_unread' || item.coverageStatus === 'unread-skipped' || conversation.unread === true || Number(conversation.unreadCount || 0) > 0) continue;
-        if (!fullHistorySourceFingerprint(conversation)) continue;
-        const result = await analyzeStoredConversation(conversation, { ...context, conversationId: '' }, { signal });
-        if (result.cancelled) throw aiCancellationError();
-        if (!result.ok && !result.pending && !result.disabled) throw new Error(result.reason || 'AI 分析失败。');
-        if (result.ok || result.pending) {
-          processed += 1;
-          if (result.ok) succeeded += 1;
-          if (result.ok && item.checkpoint) state.previewAnalysisSignatures.set(String(conversation.id), String(item.checkpoint));
-        }
-      }
-    }
-    return { processed, succeeded };
+    await refreshAiAuthorization(context);
+    throwIfAiCancelled(signal); assertContext(context);
+    const grant = state.aiAuthorization?.authorization;
+    if (!automaticAiGranted(context) || grant?.id !== options.authorizationId) return { processed: 0, succeeded: 0 };
+    const conversation = state.conversations.find(item => item.id === grant.conversationId);
+    const fingerprint = conversation && fullHistorySourceFingerprint(conversation);
+    if (!fingerprint || !isAutomaticDirectConversation(conversation)) return { processed: 0, succeeded: 0 };
+    if (conversation.unread === true || Number(conversation.unreadCount || 0) > 0 || text(conversation.collectionStatus) === 'skipped_unread') return { processed: 0, succeeded: 0 };
+    const retryScope = { authorizationId: grant.id, conversationId: conversation.id, sourceFingerprint: fingerprint };
+    if (options.retryScope && (options.retryScope.conversationId !== conversation.id || options.retryScope.sourceFingerprint !== fingerprint)) return { processed: 0, succeeded: 0 };
+    const result = await analyzeStoredConversation(conversation, { ...context, conversationId: '' }, { signal, automatic: true, authorizationId: grant.id });
+    await refreshAiAuthorization(context);
+    if (result.cancelled) throw aiCancellationError();
+    if (!result.ok && !result.pending && !result.disabled) throw Object.assign(new Error(result.reason || '授权自动分析尚未完成。'), { retryScope });
+    return { processed: result.ok ? 1 : 0, succeeded: result.ok && !result.resumed ? 1 : 0 };
   }
   async function enqueueDiscoveredConversations(items, announce = true, context = captureContext()) {
     const directItems = (Array.isArray(items) ? items : [])
@@ -2839,6 +2784,10 @@
       const saved = (rows.analyses || []).find(item => String(item.id) === String(existing.analysisId));
       if (saved) return { job: existing, completed: true, analysis: saved };
     }
+    if (existing?.status === 'running') {
+      await api('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'recover-expired', jobId: existing.id }) }, context);
+      assertContext(context);
+    }
     const claimed = await api('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'claim', jobId: existing.id }) }, context);
     assertContext(context);
     state.aiQueueStats = claimed.stats || state.aiQueueStats;
@@ -2857,6 +2806,7 @@
       // the visible WS panel exposes an actionable retry state without a full
       // shell redraw or a swallowed exception.
       if (contextCurrent(context)) {
+        state.aiRetryScope = null;
         state.aiBackgroundError = `后台 AI 队列回写失败：${String(error?.message || '任务状态暂时无法保存').replace(/[\r\n\t]+/g, ' ').slice(0, 240)}`;
         updateAiBackgroundErrorDom();
       }
@@ -2871,6 +2821,7 @@
       return true;
     } catch (error) {
       if (contextCurrent(context)) {
+        state.aiRetryScope = null;
         state.aiBackgroundError = `后台 AI 队列完成状态未保存：${String(error?.message || '任务状态暂时无法保存').replace(/[\r\n\t]+/g, ' ').slice(0, 240)}`;
         updateAiBackgroundErrorDom();
       }
@@ -2883,7 +2834,7 @@
     if (!state.aiEnabled) return { ok: false, reason: 'AI 分析已关闭。', disabled: true };
     if (!window.zhikeAI?.request || !window.zhikeAI?.status) return { ok: false, reason: '当前运行环境不支持 AI 安全桥接。' };
     if (!conversation?.id) return { ok: false, reason: '缺少会话标识。' };
-    if (options.automatic === true && (!automaticAiGranted(context) || state.aiAuthorization.authorization.conversationId !== conversation.id)) return { ok: false, disabled: true, reason: '当前私聊尚未明确授权自动分析。' };
+    if (options.automatic === true && (!automaticAiGranted(context) || state.aiAuthorization.authorization.id !== options.authorizationId || state.aiAuthorization.authorization.conversationId !== conversation.id)) return { ok: false, disabled: true, reason: '当前私聊尚未明确授权自动分析。' };
     const sourceFingerprint = fullHistorySourceFingerprint(conversation);
     if (!sourceFingerprint) return { ok: false, reason: '聊天列表已更新，等待重新采集完整历史后再分析。', pending: true };
     let messageHistory = options.messageHistory;
@@ -2962,7 +2913,7 @@
     try {
       aiJob = await beginAiJob(conversation, transcript, context, vipGroup
         ? 'ws-vip-member-full-history-analysis'
-        : (messageHistory.complete ? 'ws-full-history-analysis' : 'ws-list-preview-analysis'), options.automatic === true ? state.aiAuthorization.authorization.id : '');
+        : (messageHistory.complete ? 'ws-full-history-analysis' : 'ws-list-preview-analysis'), options.automatic === true ? options.authorizationId : '');
       throwIfAiCancelled(signal);
       if (aiJob.completed && aiJob.analysis) {
         const analysis = aiJob.analysis.result || {};
@@ -4543,7 +4494,7 @@
             </section>
              <section class="ws-card ws-ai-card" data-assist-section="ai">
               <div class="ws-card-heading"><div><strong>AI 分析</strong><span>${state.historyCoverage.complete ? `当前客户完整聊天 ${state.historyCoverage.loaded} 条` : '完整历史采集完成后分析全部客户聊天'} · 队列 ${Number(state.aiQueueStats.queued || 0)} 待处理 / ${Number(state.aiQueueStats.retryable || 0)} 待重试 / ${Number(state.aiQueueStats.deadLetter || 0)} 死信</span></div><label class="ws-switch"><input id="wsAiEnabled" type="checkbox" ${state.aiEnabled ? 'checked' : ''}><span>AI 开关</span></label></div>
-              <div id="wsAiBackgroundError" class="ws-error-line" ${state.aiBackgroundError ? '' : 'hidden'}><span data-ws-ai-error-text>${esc(state.aiBackgroundError || '')}</span><button class="btn small" data-ws-action="resume-ai-queue">立即重试</button></div>
+              <div id="wsAiBackgroundError" class="ws-error-line" ${state.aiBackgroundError ? '' : 'hidden'}><span data-ws-ai-error-text>${esc(state.aiBackgroundError || '')}</span><button class="btn small" data-ws-action="resume-ai-queue" ${state.aiRetryScope ? '' : 'hidden'}>立即重试</button></div>
               <button class="btn small primary ws-full-button" data-ws-action="analyze" ${!current || !state.messages.length || !state.aiEnabled || state.aiBusy ? 'disabled' : ''}>${state.aiBusy ? '分析中…' : state.analysis ? '重新分析当前聊天' : '分析当前聊天'}</button>
               ${renderAiAuthorization()}
               <div class="ws-analysis-content">${renderAnalysis()}</div>
@@ -5920,7 +5871,17 @@
     if (action === 'import-visible') return importVisible();
     if (action === 'translate-message') return translateMessage(element.dataset.id);
     if (action === 'retry-failed') return retryFailedTranslations();
-    if (action === 'resume-ai-queue') { state.aiBackgroundError = ''; render(); return scheduleAiQueuePump(captureContext(''), { explicit: true }); }
+    if (action === 'resume-ai-queue') {
+      const retryScope = state.aiRetryScope, context = captureContext('');
+      if (!retryScope) return;
+      const status = await refreshAiAuthorization(context);
+      if (!contextCurrent(context) || state.aiRetryScope !== retryScope) return;
+      if (!status?.active) { toast(status?.reason || '无法确认原自动分析授权，请刷新后重试。', 'x'); return; }
+      if (status.authorization?.id !== retryScope.authorizationId) { toast('原自动分析授权已更换，请核对当前授权。', 'x'); return; }
+      const conversation = state.conversations.find(item => item.id === retryScope.conversationId);
+      if (!conversation || fullHistorySourceFingerprint(conversation) !== retryScope.sourceFingerprint) { toast('该次分析的聊天历史已变更。', 'x'); return; }
+      return scheduleAiQueuePump(context, retryScope);
+    }
     if (action === 'open-home' || action === 'open-tasks') {
       const route = action === 'open-home' ? 'home' : 'operations';
       document.querySelector(`.nav-item[data-view="${route}"]`)?.click();

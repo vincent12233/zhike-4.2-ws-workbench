@@ -80,25 +80,30 @@ test('production execution queue skips more than one page of blocked history bef
   }
 });
 
-test('actual renderer worker requests execution view and never runs an explicitly blocked job', async () => {
+test('renderer retries only the original authorized direct history through the automatic bridge', async () => {
   const source = fs.readFileSync(path.join(app, 'modules/ws-workbench.js'), 'utf8');
   const start = source.indexOf('  async function resumeQueuedAiJobs(');
   const end = source.indexOf('  async function enqueueDiscoveredConversations(', start);
-  assert.ok(start >= 0 && end > start);
-  const requested = [], analyzed = [];
   const context = { accountId: 'ordinary' };
+  const ready = { id: 'ready', fingerprint: 'saved', direct: true };
+  const grant = { id: 'grant', conversationId: ready.id };
+  const calls = [];
   const sandbox = {
-    state: { aiEnabled: true, loading: false, aiBusy: false, collectionRun: null, conversations: [{ id: 'blocked' }, { id: 'ready' }] },
-    captureContext: () => context, collectionCapability: () => ({ automaticAi: true }), throwIfAiCancelled() {}, assertContext() {},
-    isAutomaticCollectibleConversation: () => true, fullHistorySourceFingerprint: () => 'saved', text: value => String(value || ''),
-    api: async route => { requested.push(route); return route.includes('?') ? { jobs: [
-      { conversationId: 'blocked', executionEligible: false, payload: { sourceFingerprint: 'saved' } },
-      { conversationId: 'ready', executionEligible: true, payload: { sourceFingerprint: 'saved' } },
-    ] } : {}; },
-    analyzeStoredConversation: async row => { analyzed.push(row.id); return { ok: true }; },
+    state: { aiEnabled: true, conversations: [{ id: 'other', fingerprint: 'other', direct: true }, ready], aiAuthorization: { authorization: grant } },
+    refreshAiAuthorization: async () => {}, automaticAiGranted: () => true, throwIfAiCancelled() {}, assertContext() {},
+    fullHistorySourceFingerprint: row => row.fingerprint, isAutomaticDirectConversation: row => row.direct, text: value => String(value || ''),
+    analyzeStoredConversation: async (row, _context, options) => { calls.push([row.id, options.automatic, options.authorizationId]); return { ok: true }; },
   };
   vm.runInNewContext(source.slice(start, end) + '\nthis.resume = resumeQueuedAiJobs;', sandbox);
-  const result = await sandbox.resume(context, { explicit: true });
-  assert.ok(requested.includes('/api/ws/ai-jobs?status=queued,retryable&executionEligible=1&limit=12'));
-  assert.deepEqual(analyzed, ['ready']); assert.equal(result.processed, 1); assert.equal(result.succeeded, 1);
+  const options = { authorizationId: grant.id, retryScope: { authorizationId: grant.id, conversationId: ready.id, sourceFingerprint: 'saved' } };
+  assert.equal((await sandbox.resume(context, options)).succeeded, 1);
+  ready.fingerprint = 'new';
+  assert.equal((await sandbox.resume(context, options)).processed, 0);
+  ready.fingerprint = 'saved'; ready.unread = true;
+  assert.equal((await sandbox.resume(context, options)).processed, 0);
+  ready.unread = false; ready.direct = false;
+  assert.equal((await sandbox.resume(context, options)).processed, 0);
+  grant.id = 'replaced'; ready.direct = true;
+  assert.equal((await sandbox.resume(context, options)).processed, 0);
+  assert.deepEqual(calls, [['ready', true, 'grant']]);
 });

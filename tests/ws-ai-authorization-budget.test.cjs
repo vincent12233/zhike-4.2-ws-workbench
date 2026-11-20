@@ -252,10 +252,11 @@ test('renderer ignores stale authorization reads and delayed resume after pause'
 test('a cached completed automatic job does not continually reschedule state refresh', async () => {
   const source = fs.readFileSync(path.join(app, 'modules/ws-workbench.js'), 'utf8');
   const start = source.indexOf('  async function resumeQueuedAiJobs('), end = source.indexOf('  async function enqueueDiscoveredConversations(', start);
-  const sandbox = { state: { aiEnabled: true, conversations: [{ id: 'chat' }], aiAuthorization: { authorization: { conversationId: 'chat' } } },
+  const sandbox = { state: { aiEnabled: true, conversations: [{ id: 'chat' }], aiAuthorization: { authorization: { id: 'grant', conversationId: 'chat' } } },
+    fullHistorySourceFingerprint: () => 'saved', isAutomaticDirectConversation: () => true, text: value => String(value || ''),
     refreshAiAuthorization: async () => {}, throwIfAiCancelled() {}, assertContext() {}, automaticAiGranted: () => true,
     analyzeStoredConversation: async () => ({ ok: true, resumed: true }) };
   vm.runInNewContext(source.slice(start, end) + '\nthis.resume=resumeQueuedAiJobs;', sandbox);
-  const result = await sandbox.resume({ accountId: 'account' });
+  const result = await sandbox.resume({ accountId: 'account' }, { authorizationId: 'grant' });
   assert.equal(result.succeeded, 0); assert.equal(result.processed, 1);
 });
