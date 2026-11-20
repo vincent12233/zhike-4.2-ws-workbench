@@ -80,6 +80,7 @@ function runStage3(options = {}) {
   run('WS ingest purpose and group evidence', [path.join(repo, 'tests', 'ws-ingest-workspace-mode.test.cjs')]);
   run('WS AI execution queue eligibility', [path.join(repo, 'tests', 'ws-ai-queue-workspace-mode.test.cjs')]);
   run('WS AI account purpose and member evidence', [path.join(repo, 'tests', 'ws-ai-workspace-mode.test.cjs')]);
+  run('WS automated AI authorization and cost reservation', [path.join(repo, 'tests', 'ws-ai-authorization-budget.test.cjs')], { timeout: 180000 });
   run('Native WS capture authority and server evidence', [path.join(repo, 'tests', 'ws-native-write-authority-core.test.cjs')]);
   run('Native WS capture authority over loopback', [path.join(repo, 'tests', 'ws-native-write-authority.test.cjs')]);
   run('Native WS collector purpose and group evidence', [path.join(repo, 'tests', 'ws-native-purpose-policy.test.cjs')]);

@@ -44,6 +44,12 @@ public sealed partial class LegacyUiHostPage : Page
     private DispatcherQueueTimer? _wsResizeTimer;
     private DispatcherQueueTimer? _desktopBackupTimer;
     private string _activeWsAccountId = "default";
+    private long _wsAiAccountEpoch;
+    private void SetActiveWsAccountId(string accountId)
+    {
+        if (!string.Equals(_activeWsAccountId, accountId, StringComparison.Ordinal)) Interlocked.Increment(ref _wsAiAccountEpoch);
+        _activeWsAccountId = accountId;
+    }
     private string _wsViewAccountId = "";
     private long _wsGeneration;
     private bool _initialized;
@@ -1391,6 +1397,14 @@ public sealed partial class LegacyUiHostPage : Page
         {
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(Math.Clamp(timeoutMs, 250, 120000));
+            if (string.Equals(action, "wsautomatic", StringComparison.OrdinalIgnoreCase))
+            {
+                _api ??= App.LocalService?.CreateApiClient();
+                if (_api is null) throw new InvalidOperationException("本机授权服务不可用。");
+                var automatic = await WsAutomaticAiCoordinator.ExecuteAsync(_ai, _api.WsAiAutomationAsync,
+                    () => _activeWsAccountId, payload, timeout.Token, () => Volatile.Read(ref _wsAiAccountEpoch));
+                return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, automatic);
+            }
             var result = await _ai.InvokeAsync(action, payload, timeout.Token);
             return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, result);
         }
@@ -1521,7 +1535,7 @@ public sealed partial class LegacyUiHostPage : Page
             HideWsOverlay();
         }
         if (string.Equals(_activeWsAccountId, normalized, StringComparison.OrdinalIgnoreCase))
-            _activeWsAccountId = "default";
+            SetActiveWsAccountId("default");
         SyncPooledWsPresentation();
     }
 
@@ -1550,7 +1564,7 @@ public sealed partial class LegacyUiHostPage : Page
         if (string.IsNullOrWhiteSpace(id)) id = requestAccountId ?? _activeWsAccountId;
         if (string.IsNullOrWhiteSpace(id)) id = "default";
         if (action is "open" or "hide" or "close" or "clear-session" or "reload" or "reconnect") _wsSendGuard.Invalidate();
-        _activeWsAccountId = id;
+        SetActiveWsAccountId(id);
         switch (action)
         {
             case "open-collector":
@@ -2088,7 +2102,7 @@ public sealed partial class LegacyUiHostPage : Page
 #if STAGE51_ISOLATED_UI
             Stage51Isolation.Record("ws-account-selected", new { accountId, generation = acquired.Session.Generation, created = acquired.Created, reload });
 #endif
-            _activeWsAccountId = accountId;
+            SetActiveWsAccountId(accountId);
             _wsCollectorVisibleAccountId = string.Empty;
             SyncPooledWsPresentation();
             if (reload)

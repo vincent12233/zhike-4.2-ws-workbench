@@ -138,6 +138,18 @@ public sealed class ApiClient(HttpClient http) : IDisposable
 
     public string? SessionToken => _sessionToken;
 
+    public async Task<JsonElement> WsAiAutomationAsync(object payload, CancellationToken cancellationToken = default)
+    {
+        using var response = await PostNativeJsonAsync("api/ws/ai-automation/attempts", payload, cancellationToken);
+        var data = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            var reason = data.TryGetProperty("error", out var error) ? error.GetString() : null;
+            throw new InvalidOperationException(reason ?? "自动 AI 授权服务不可用，未发送请求。");
+        }
+        return data;
+    }
+
     internal void ConfigureNativeWriteAuthority(string token)
     {
         if (string.IsNullOrWhiteSpace(token)) throw new ArgumentException("Native write authority is required.", nameof(token));

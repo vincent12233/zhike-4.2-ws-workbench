@@ -12,6 +12,8 @@ const wsCore = require('./modules/ws-workbench-core.js');
 const wsCrmSync = require('./modules/ws-crm-sync-core.js');
 const wsGroupMonitor = require('./modules/ws-group-monitor-core.js');
 const wsWorkspacePolicy = require('./modules/ws-workspace-policy.cjs');
+const wsAiBudget = require('./modules/ws-ai-budget.cjs');
+const wsAiRuntimeId = randomBytes(24).toString('hex');
 const wsGroupManager = require('./modules/ws-group-manager-core.js');
 const wsGroupDrafts = require('./modules/ws-group-drafts.cjs');
 const wsContactExclusion = require('./modules/ws-contact-exclusion-core.cjs');
@@ -2406,6 +2408,49 @@ function requireAiJobLease(row, suppliedToken) {
   return token;
 }
 function wsAiEligible(id, accountId) { try { wsRequireAiConversation(id, accountId); return true; } catch { return false; } }
+function wsAiAuthorization(accountId) {
+  return db.prepare("SELECT * FROM ws_ai_authorizations WHERE account_id=? AND status<>'revoked' ORDER BY created_at DESC,id DESC LIMIT 1").get(accountId);
+}
+function wsAiAuthorizationAudit(accountId, id, action, detail = {}) {
+  db.prepare('INSERT INTO ws_ai_authorization_audit(id,account_id,authorization_id,action,detail_json,created_at) VALUES(?,?,?,?,?,?)')
+    .run(wsCreateId('aiaudit'), accountId, id, action, JSON.stringify(detail), new Date().toISOString());
+}
+function wsAutomaticAiInput(accountId, conversationId) {
+  const row = wsRequireAiConversation(conversationId, accountId);
+  if (wsCore.conversationType(row) !== 'direct') throw wsConversationPolicyError('AI_AUTOMATIC_SCOPE_UNSUPPORTED', '当前自动分析仅支持普通账号的单个私聊；群成员可使用手动分析。');
+  const rows = db.prepare('SELECT * FROM ws_messages WHERE account_id=? AND conversation_id=? ORDER BY order_no,created_at,id LIMIT 1001').all(accountId, conversationId);
+  if (rows.some(message => wsJson(message.data_json, {}).nativeAuthorityVerified !== true)) throw wsConversationPolicyError('WS_AI_NATIVE_SOURCE_REQUIRED', '自动分析需要由原生采集重新确认的聊天；旧历史和导入记录仍可查看。');
+  if (!rows.length || rows.length > 1000 || rows.some(message => {
+    const data = wsJson(message.data_json, {});
+    return data.source !== 'ws-webview2' || data.previewOnly === true || Number(data.directionVersion) < 4
+      || WS_NATIVE_DIRECTION_SOURCE_MAP.get(data.directionSource) !== message.direction;
+  })) throw wsConversationPolicyError('AI_AUTOMATIC_NATIVE_HISTORY_REQUIRED', '自动分析需要当前账号已完整采集并验证方向的原生私聊历史。');
+  const chunks = wsCore.splitHistoryTranscript(rows.map(wsMessagePayload), { maxChars: 16000 });
+  if (chunks.length !== 1) throw wsConversationPolicyError('AI_AUTOMATIC_SIZE_LIMIT', '当前自动分析每次仅处理不超过 16000 字符的完整聊天；多段历史请使用手动分析。');
+  return { conversation: row, sourceFingerprint: wsJson(row.data_json, {}).historyFingerprint,
+    input: wsCore.buildNaturalChatAnalysisPrompt(chunks[0].text, { conversationId: row.id }) };
+}
+function wsAutomaticAiPricing() {
+  return wsAiBudget.availability(wsJson(db.prepare("SELECT quote_json FROM ws_ai_price_verifications WHERE id='current'").get()?.quote_json, null));
+}
+function wsAiAuthorizationStatus(accountId) {
+  const pricing = wsAutomaticAiPricing();
+  const row = wsAiAuthorization(accountId);
+  let code = pricing.code, reason = pricing.reason || '自动分析默认关闭，需明确授权当前私聊及总费用上限。';
+  let active = Boolean(row && row.status === 'active' && row.runtime_id === wsAiRuntimeId && row.expires_at > new Date().toISOString()
+    && pricing.available && row.quote_id === pricing.quote.id && row.budget_micros - row.reserved_micros >= pricing.perAttemptMicros);
+  if (!row) code = 'AI_AUTHORIZATION_REQUIRED';
+  else if (row.runtime_id !== wsAiRuntimeId) { code = 'AI_AUTHORIZATION_RESTARTED'; reason = '应用已重启或恢复过工作区，请明确恢复授权；已保留费用不会重置。'; }
+  else if (row.status !== 'active') { code = 'AI_AUTHORIZATION_PAUSED'; reason = '自动分析已暂停。'; }
+  else if (row.expires_at <= new Date().toISOString()) { code = 'AI_AUTHORIZATION_EXPIRED'; reason = '本次授权已到期，请重新确认。'; }
+  else if (pricing.available && row.quote_id !== pricing.quote.id) { code = 'AI_PRICING_CHANGED'; reason = '核验后的计费依据已改变，请按新费用重新授权。'; }
+  else if (pricing.available && row.budget_micros - row.reserved_micros < pricing.perAttemptMicros) { code = 'AI_BUDGET_EXHAUSTED'; reason = '剩余预算不足以保留一次最坏费用，自动分析已停止。'; }
+  else if (active) { code = 'AI_AUTHORIZATION_ACTIVE'; reason = '仅对明确授权的当前账号私聊执行自动分析。'; }
+  const authorization = row ? { id: row.id, accountId: row.account_id, conversationId: row.conversation_id, status: row.status,
+    revision: row.revision,
+    budgetMicros: row.budget_micros, reservedMicros: row.reserved_micros, expiresAt: row.expires_at, consentAt: row.consent_at } : null;
+  return { active, code, reason, pricing, authorization };
+}
 function wsAiEligibleConversation(id, accountId, joinedRow) { try { return wsRequireAiConversation(id, accountId, joinedRow); } catch { return null; } }
 function wsQuiesceGroup(row, now = new Date().toISOString()) {
   if (!wsIsExcludedGroup(row)) return;
@@ -2954,7 +2999,11 @@ const server = createServer(async (req, res) => {
       if (req.method === 'DELETE') {
         if (accountId === 'default') return json(res, 400, { error: '默认 WS 账号不能删除。' });
         db.exec('BEGIN IMMEDIATE');
-        try { db.prepare('DELETE FROM ws_accounts WHERE id=?').run(accountId); db.exec('COMMIT'); } catch (error) { db.exec('ROLLBACK'); throw error; }
+        try {
+          db.prepare("UPDATE ws_ai_authorizations SET status='revoked',revision=revision+1,updated_at=? WHERE account_id=? AND status<>'revoked'").run(new Date().toISOString(), accountId);
+          db.prepare('DELETE FROM ws_accounts WHERE id=?').run(accountId);
+          db.exec('COMMIT');
+        } catch (error) { db.exec('ROLLBACK'); throw error; }
         return json(res, 200, { ok: true, accountId });
       }
       return json(res, 405, { error: 'WS 账号只支持 GET/PATCH/DELETE。' });
@@ -4194,6 +4243,137 @@ const server = createServer(async (req, res) => {
         if (error?.code === 'AI_JOB_LEASE_STALE') return json(res, 409, { error: error.message, code: error.code });
         throw error;
       }
+    }
+    if (url.pathname === '/api/ws/ai-automation' || url.pathname === '/api/ws/ai-automation/attempts') {
+      const nativeAttemptRoute = url.pathname.endsWith('/attempts');
+      if (nativeAttemptRoute && !wsNativeWriteAuthorized(req)) return json(res, 403, { code: 'WS_NATIVE_AUTHORITY_REQUIRED', error: '自动 AI 预算尝试必须通过原生授权入口。' });
+      const body = req.method === 'POST' ? JSON.parse((await readBody(req, 64 * 1024)).toString('utf8') || '{}') : {};
+      const accountId = wsText(body.accountId || url.searchParams.get('accountId'), 160);
+      if (!accountId) return json(res, 400, { code: 'AI_ACCOUNT_REQUIRED', error: '自动分析必须明确选择 WS 账号。' });
+      wsRequireAccount(accountId);
+      if (req.method === 'GET') {
+        const status = wsAiAuthorizationStatus(accountId);
+        const audit = db.prepare('SELECT id,authorization_id,action,detail_json,created_at FROM ws_ai_authorization_audit WHERE account_id=? ORDER BY created_at DESC,id DESC LIMIT 30').all(accountId)
+          .map(row => ({ id: row.id, authorizationId: row.authorization_id, action: row.action, detail: wsJson(row.detail_json, {}), createdAt: row.created_at }));
+        return json(res, 200, { ...status, audit });
+      }
+      if (req.method !== 'POST') return json(res, 405, { error: '自动分析授权仅支持 GET/POST。' });
+      const action = wsText(body.action, 32), now = new Date().toISOString();
+      if (nativeAttemptRoute !== ['reserve', 'dispatch', 'finish'].includes(action)) return json(res, 403, { code: 'WS_NATIVE_AUTHORITY_REQUIRED', error: '自动 AI 预算尝试与用户授权入口不可互换。' });
+      if (action === 'verify-pricing') {
+        // Fixed public documentation URLs only. This is not a model call and
+        // accepts no body-provided prices, URLs or provider credentials.
+        let quote;
+        try { quote = await wsAiBudget.verifyOfficialPricing(); }
+        catch {
+          db.prepare("DELETE FROM ws_ai_price_verifications WHERE id='current'").run();
+          wsAiAuthorizationAudit(accountId, '', 'pricing-verification-failed', {});
+          throw wsConversationPolicyError('AI_PRICE_VERIFICATION_UNAVAILABLE', '官方计费文档暂无法核验或能力已改变，自动分析保持关闭；请稍后重试或更新应用。');
+        }
+        db.prepare("INSERT INTO ws_ai_price_verifications(id,quote_json,updated_at) VALUES('current',?,?) ON CONFLICT(id) DO UPDATE SET quote_json=excluded.quote_json,updated_at=excluded.updated_at")
+          .run(JSON.stringify(quote), new Date().toISOString());
+        wsAiAuthorizationAudit(accountId, '', 'pricing-verified', { quoteId: quote.id, source: quote.source, verifiedAt: quote.verifiedAt, evidenceHash: quote.evidenceHash });
+        return json(res, 200, wsAiAuthorizationStatus(accountId));
+      }
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        let output;
+        if (action === 'grant') {
+          const pricing = wsAutomaticAiPricing();
+          if (!pricing.available) throw wsConversationPolicyError(pricing.code, pricing.reason);
+          if (body.consent !== true || body.quoteId !== pricing.quote.id) throw wsConversationPolicyError('AI_EXPLICIT_CONSENT_REQUIRED', '请明确确认当前账号、私聊范围、模型计费依据和本次总额度。');
+          const budget = body.budgetMicros;
+          if (!Number.isSafeInteger(budget) || budget < pricing.perAttemptMicros || budget > 100000000) throw wsConversationPolicyError('AI_BUDGET_INVALID', '请输入足以保留一次请求且不超过 100 美元的本次总预算。');
+          const conversationId = wsText(body.conversationId, 160);
+          wsAutomaticAiInput(accountId, conversationId);
+          const prior = wsAiAuthorization(accountId);
+          const commandId = wsText(body.commandId, 160);
+          if (!commandId) throw wsConversationPolicyError('AI_CONSENT_ID_REQUIRED', '授权缺少唯一确认编号。');
+          const duplicate = db.prepare('SELECT * FROM ws_ai_authorizations WHERE account_id=? AND consent_key=?').get(accountId, commandId);
+          if (duplicate) {
+            if (duplicate.conversation_id !== conversationId || duplicate.budget_micros !== budget || duplicate.quote_id !== pricing.quote.id) throw wsConversationPolicyError('AI_CONSENT_CONFLICT', '同一确认编号不能用于不同的授权。');
+            if (prior?.id !== duplicate.id) throw wsConversationPolicyError('AI_AUTHORIZATION_STALE', '旧授权已被替换或撤销，不能重放确认。');
+            output = wsAiAuthorizationStatus(accountId);
+            db.exec('COMMIT');
+            return json(res, 201, output);
+          }
+          if (wsText(body.expectedAuthorizationId, 160) !== (prior?.id || '') || body.expectedRevision !== Number(prior?.revision || 0)) throw wsConversationPolicyError('AI_AUTHORIZATION_STALE', '授权已改变，请刷新并重新确认。');
+          if (prior) {
+            db.prepare("UPDATE ws_ai_authorizations SET status='revoked',revision=revision+1,updated_at=? WHERE id=?").run(now, prior.id);
+            wsAiAuthorizationAudit(accountId, prior.id, 'replaced', { reservedMicros: prior.reserved_micros });
+          }
+          const id = wsCreateId('aigrant'), expiresAt = new Date(Math.min(Date.now() + 24 * 3600 * 1000, Date.parse(pricing.quote.expiresAt))).toISOString();
+          db.prepare(`INSERT INTO ws_ai_authorizations(id,account_id,conversation_id,provider,model,quote_id,consent_key,status,budget_micros,runtime_id,expires_at,consent_at,created_at,updated_at)
+            VALUES(?,?,?,?,?,?,?,'active',?,?,?,?,?,?)`).run(id, accountId, conversationId, pricing.quote.provider, pricing.quote.model, pricing.quote.id, commandId, budget, wsAiRuntimeId, expiresAt, now, now, now);
+          wsAiAuthorizationAudit(accountId, id, 'granted', { conversationId, budgetMicros: budget, quoteId: pricing.quote.id,
+            provider: pricing.quote.provider, model: pricing.quote.model, perAttemptMicros: pricing.perAttemptMicros, source: pricing.quote.source, expiresAt });
+          output = wsAiAuthorizationStatus(accountId);
+        } else if (['pause', 'resume', 'revoke'].includes(action)) {
+          const row = wsAiAuthorization(accountId);
+          if (!row || row.id !== wsText(body.authorizationId, 160)) throw wsConversationPolicyError('AI_AUTHORIZATION_STALE', '授权已改变，请刷新后操作。');
+          if (action === 'resume') {
+            if (body.expectedRevision !== row.revision) throw wsConversationPolicyError('AI_AUTHORIZATION_STALE', '恢复确认已过期，请刷新后重新确认。');
+            const pricing = wsAutomaticAiPricing();
+            if (body.consent !== true) throw wsConversationPolicyError('AI_EXPLICIT_CONSENT_REQUIRED', '恢复自动分析需再次明确确认，已保留费用不会清零。');
+            if (!pricing.available || pricing.quote.id !== row.quote_id || row.expires_at <= now) throw wsConversationPolicyError('AI_AUTHORIZATION_EXPIRED', '授权或计费依据已过期，请重新确认。');
+            wsAutomaticAiInput(accountId, row.conversation_id);
+          }
+          db.prepare('UPDATE ws_ai_authorizations SET status=?,runtime_id=?,updated_at=?,revision=revision+1 WHERE id=?')
+            .run(action === 'pause' ? 'paused' : action === 'revoke' ? 'revoked' : 'active', wsAiRuntimeId, now, row.id);
+          wsAiAuthorizationAudit(accountId, row.id, action, { reservedMicros: row.reserved_micros });
+          output = wsAiAuthorizationStatus(accountId);
+        } else if (action === 'reserve') {
+          const status = wsAiAuthorizationStatus(accountId), grant = wsAiAuthorization(accountId);
+          if (!status.active) throw wsConversationPolicyError(status.code, status.reason);
+          const conversationId = wsText(body.conversationId, 160);
+          if (conversationId !== grant.conversation_id) throw wsConversationPolicyError('AI_SCOPE_MISMATCH', '当前私聊不在明确授权范围内。');
+          const job = db.prepare('SELECT * FROM ai_jobs WHERE id=? AND account_id=? AND conversation_id=?').get(wsText(body.jobId, 160), accountId, conversationId);
+          const lease = requireAiJobLease(job, body.leaseToken), leaseHash = createHash('sha256').update(lease).digest('hex');
+          if (db.prepare('SELECT 1 FROM ws_ai_budget_attempts WHERE job_id=? AND lease_hash=?').get(job.id, leaseHash)) throw wsConversationPolicyError('AI_ATTEMPT_ALREADY_RESERVED', '本次租约已有付费尝试，状态不明时不能自动重复发送。');
+          const prepared = wsAutomaticAiInput(accountId, conversationId);
+          if (wsJson(job.payload_json, {}).sourceFingerprint !== prepared.sourceFingerprint) throw wsConversationPolicyError('WS_HISTORY_STALE', '任务与当前聊天历史指纹不一致。');
+          if (wsJson(job.payload_json, {}).authorizationId !== grant.id) throw wsConversationPolicyError('AI_AUTHORIZATION_STALE', '自动任务必须绑定当前明确授权。');
+          if (db.prepare('SELECT 1 FROM ws_ai_budget_attempts WHERE authorization_id=? AND conversation_id=? AND source_fingerprint=?').get(grant.id, conversationId, prepared.sourceFingerprint)) throw wsConversationPolicyError('AI_SOURCE_ALREADY_ATTEMPTED', '当前授权已尝试这份聊天，结果不明时不自动重发；需人工核对并重新授权。');
+          const cost = status.pricing.perAttemptMicros, id = wsCreateId('aiattempt');
+          const changed = db.prepare('UPDATE ws_ai_authorizations SET reserved_micros=reserved_micros+?,updated_at=? WHERE id=? AND reserved_micros+?<=budget_micros').run(cost, now, grant.id, cost);
+          if (Number(changed.changes) !== 1) throw wsConversationPolicyError('AI_BUDGET_EXHAUSTED', '剩余预算不足，自动分析已停止。');
+          db.prepare(`INSERT INTO ws_ai_budget_attempts(id,authorization_id,account_id,conversation_id,job_id,lease_hash,source_fingerprint,prompt_hash,reserved_micros,status,created_at,updated_at)
+            VALUES(?,?,?,?,?,?,?,?,?,'reserved',?,?)`).run(id, grant.id, accountId, conversationId, job.id, leaseHash, prepared.sourceFingerprint,
+              createHash('sha256').update(prepared.input).digest('hex'), cost, now, now);
+          wsAiAuthorizationAudit(accountId, grant.id, 'reserved', { attemptId: id, jobId: job.id, conversationId, reservedMicros: cost });
+          output = { attemptId: id, accountId, conversationId, jobId: job.id, sourceFingerprint: prepared.sourceFingerprint,
+            input: prepared.input, quote: status.pricing.quote, reservedMicros: cost };
+        } else if (action === 'dispatch') {
+          const attempt = db.prepare('SELECT * FROM ws_ai_budget_attempts WHERE id=? AND account_id=?').get(wsText(body.attemptId, 160), accountId);
+          const hash = createHash('sha256').update(wsText(body.leaseToken, 200)).digest('hex');
+          const grant = attempt && db.prepare('SELECT * FROM ws_ai_authorizations WHERE id=?').get(attempt.authorization_id);
+          const pricing = wsAutomaticAiPricing();
+          if (!attempt || attempt.lease_hash !== hash || attempt.status !== 'reserved') throw wsConversationPolicyError('AI_ATTEMPT_SCOPE_MISMATCH', '付费尝试已使用或不属于当前租约。');
+          if (!grant || grant.status !== 'active' || grant.runtime_id !== wsAiRuntimeId || grant.expires_at <= now
+            || !pricing.available || grant.quote_id !== pricing.quote.id) throw wsConversationPolicyError('AI_AUTHORIZATION_PAUSED', '自动分析授权已暂停、撤销或过期，未发送请求。');
+          const job = db.prepare('SELECT * FROM ai_jobs WHERE id=? AND account_id=?').get(attempt.job_id, accountId);
+          requireAiJobLease(job, body.leaseToken);
+          const prepared = wsAutomaticAiInput(accountId, attempt.conversation_id);
+          if (prepared.sourceFingerprint !== attempt.source_fingerprint || createHash('sha256').update(prepared.input).digest('hex') !== attempt.prompt_hash) throw wsConversationPolicyError('WS_HISTORY_STALE', '保留预算后聊天已改变，未发送请求。');
+          db.prepare("UPDATE ws_ai_budget_attempts SET status='dispatched',updated_at=? WHERE id=? AND status='reserved'").run(now, attempt.id);
+          wsAiAuthorizationAudit(accountId, grant.id, 'dispatched', { attemptId: attempt.id });
+          output = { dispatched: true };
+        } else if (action === 'finish') {
+          const attempt = db.prepare('SELECT * FROM ws_ai_budget_attempts WHERE id=? AND account_id=?').get(wsText(body.attemptId, 160), accountId);
+          const hash = createHash('sha256').update(wsText(body.leaseToken, 200)).digest('hex');
+          if (!attempt || attempt.lease_hash !== hash) throw wsConversationPolicyError('AI_ATTEMPT_SCOPE_MISMATCH', '付费尝试不存在或不属于当前租约。');
+          const resultCode = ['completed', 'failed', 'unknown'].includes(body.resultCode) ? body.resultCode : 'unknown';
+          const usage = {};
+          for (const key of ['inputTokens', 'outputTokens']) if (Number.isSafeInteger(body.usage?.[key]) && body.usage[key] >= 0) usage[key] = body.usage[key];
+          const changed = db.prepare("UPDATE ws_ai_budget_attempts SET status=?,usage_json=?,result_code=?,updated_at=? WHERE id=? AND status IN ('reserved','dispatched')").run(resultCode, JSON.stringify(usage), resultCode, now, attempt.id);
+          if (Number(changed.changes)) wsAiAuthorizationAudit(accountId, attempt.authorization_id, resultCode, { attemptId: attempt.id, usage, reservedMicros: attempt.reserved_micros });
+          // Unknown provider usage and cancellations retain the full ceiling.
+          // Even successful usage is informational: no client can refund quota.
+          output = { recorded: true, reservedMicros: attempt.reserved_micros };
+        } else throw wsConversationPolicyError('AI_AUTHORIZATION_ACTION_INVALID', '不支持的自动分析授权操作。');
+        db.exec('COMMIT');
+        return json(res, action === 'grant' ? 201 : 200, output);
+      } catch (error) { try { db.exec('ROLLBACK'); } catch {} throw error; }
     }
     if (url.pathname === '/api/ws/ai-jobs') {
       const body = req.method === 'POST' ? JSON.parse((await readBody(req, 256 * 1024)).toString('utf8') || '{}') : {};
@@ -5628,6 +5808,8 @@ const server = createServer(async (req, res) => {
         db.prepare('DELETE FROM ws_settings WHERE account_id=?').run(accountId);
         db.prepare('DELETE FROM ws_conversations WHERE account_id=?').run(accountId);
         const now = new Date().toISOString();
+        db.prepare("UPDATE ws_ai_authorizations SET status='revoked',revision=revision+1,updated_at=? WHERE account_id=? AND status<>'revoked'").run(now, accountId);
+        wsAiAuthorizationAudit(accountId, '', 'workspace-restored', { automaticAuthorizationRevoked: true });
         const addConversation = db.prepare('INSERT INTO ws_conversations(id,account_id,external_id,title,customer_id,last_message_text,intent_level,data_json,created_at,updated_at,last_message_at,unread_count,language) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)');
         for (const item of conversations) {
           const type = vipGroupExternalIds.has(wsText(item.externalId, 160)) || vipGroupIds.has(wsText(item.id, 160))
@@ -5891,6 +6073,7 @@ const server = createServer(async (req, res) => {
           // rows removes messages, analyses, replies, translations, ingest
           // batches, collection items, alerts, send audits and settings.
           db.prepare(`DELETE FROM ai_jobs WHERE conversation_id IN (${placeholders})`).run(...conversationIds);
+          db.prepare(`UPDATE ws_ai_authorizations SET status='revoked',revision=revision+1,updated_at=? WHERE conversation_id IN (${placeholders}) AND status<>'revoked'`).run(new Date().toISOString(), ...conversationIds);
           db.prepare(`DELETE FROM ws_conversations WHERE id IN (${placeholders})`).run(...conversationIds);
         }
         if (runIds.length) {

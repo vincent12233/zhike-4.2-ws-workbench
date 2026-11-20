@@ -267,6 +267,9 @@
     replies: [],
     settings: core.normalizeTranslationSettings({}),
     aiEnabled: true,
+    aiAuthorization: null,
+    aiAuthorizationOperation: 0,
+    aiAuthorizationBusy: false,
     wsStatus: '未连接',
     wsDetail: '',
     wsErrorCategory: '',
@@ -828,6 +831,9 @@
     state.visibleConversationFingerprint = '';
     state.aiBackgroundError = '';
     clearTimeout(settingsSaveTimer); settingsSaveTimer = undefined; ++settingsSaveSequence;
+    state.aiAuthorization = null;
+    state.aiAuthorizationOperation += 1;
+    state.aiAuthorizationBusy = false;
     state.busy.import = false; state.busy.customer = false; state.busy.followup = false; state.busy.connection = false; state.busy.reply = false; state.busy.capture = false; state.busy.readHistory = false; state.busy.collector = false; state.aiBusy = false; state.translationBusy.clear();
     state.activeAccountId = id;
     state.wsStatus = '未连接'; state.wsDetail = '';
@@ -2109,6 +2115,7 @@
       else if (previousConversationId) await loadConversationData('', false, { ...context, conversationId: '' });
       assertContext(context);
       state.lastLoadedAt = nowIso();
+      await refreshAiAuthorization(context);
     } catch (error) {
       if (sequence === loadSequence && contextCurrent(context)) state.error = error.message;
     } finally {
@@ -2237,6 +2244,7 @@
       state.collectionRun = run.run || null;
       state.followupAlerts = alerts.alerts || [];
       if (aiQueue?.stats) state.aiQueueStats = aiQueue.stats;
+      await refreshAiAuthorization(context);
       let listSyncResult = { synced: 0, analyzed: 0 };
       if (collectionReady() && (!state.collectionRun || !['paused', 'stopped', 'completed'].includes(state.collectionRun.status))) {
          const visible = await wsBridge('discover-conversations', context).catch(error => {
@@ -2380,10 +2388,83 @@
     const analysis = [state.analysisMeta?.id, state.analysisMeta?.updatedAt || state.analysisMeta?.updated_at || state.analysisMeta?.createdAt, state.analysisRefreshPending.has(String(state.currentConversationId || '')) ? 1 : 0].join('\u0001');
     return `${list}|${run}|${alerts}|${queue}|${messages}|${analysis}|${state.error || ''}|${state.aiBackgroundError || ''}`;
   }
+  function automaticAiGranted(context = captureContext('')) {
+    const authorization = state.aiAuthorization;
+    return !state.aiAuthorizationBusy && authorization?.active === true && authorization.authorization?.accountId === context.accountId;
+  }
+  async function refreshAiAuthorization(context = captureContext('')) {
+    const operation = state.aiAuthorizationOperation;
+    if (state.aiAuthorizationBusy) return null;
+    try {
+      const result = await api('/api/ws/ai-automation', {}, context);
+      assertContext(context);
+      if (operation !== state.aiAuthorizationOperation || state.aiAuthorizationBusy) return null;
+      state.aiAuthorization = result;
+      return result;
+    } catch (error) {
+      if (contextCurrent(context) && operation === state.aiAuthorizationOperation && !state.aiAuthorizationBusy) state.aiAuthorization = null;
+      return null;
+    }
+  }
+  function renderAiAuthorization() {
+    const value = state.aiAuthorization, grant = value?.authorization, quote = value?.pricing?.quote;
+    const current = activeConversation();
+    const dollars = amount => '$' + (Number(amount || 0) / 1000000).toFixed(6);
+    const auditLabel = { granted: '已明确授权', replaced: '授权已替换', pause: '已暂停', resume: '已明确恢复', revoke: '已撤销',
+      reserved: '已保留本次费用上限', dispatched: '已通过发送检查', completed: '分析返回完成', failed: '请求失败，额度保留', unknown: '结果未确认，额度保留',
+      'pricing-verified': '已核验官方计费文档', 'pricing-verification-failed': '计费核验失败，自动分析关闭', 'workspace-restored': '恢复数据后已撤销授权' };
+    return `<section class="ws-analysis-section" data-ws-ai-authorization><strong>授权自动分析</strong>
+      <p class="ws-muted">默认关闭。仅限当前普通账号中明确选定的一个已读私聊，完整原生历史不超过 16000 字符及 1000 条消息；授权最长 24 小时。手动分析保持原入口。</p>
+      <p>${esc(value?.reason || '尚未读取授权状态。')}</p>
+      ${quote ? `<p class="ws-muted">模型：${esc(quote.model)}；<a href="${esc(quote.source)}" target="_blank" rel="noopener">官方计费依据</a>，核验有效至 ${esc(quote.expiresAt || '尚未核验')}。${value.pricing.available ? `每次保守保留 ${dollars(value.pricing.perAttemptMicros)} USD。` : '无有效费率时不能授权。'}成功、取消或结果不明均不退还本地额度；不含税费或汇率。需已配置 OpenAI 官方密钥，账号的模型可用性由服务方决定。</p>` : ''}
+      <button class="btn small" data-ws-action="ai-authorization-verify-pricing">核验官方计费依据（读取公开文档）</button>
+      <p class="ws-muted">费率核验有效期为 30 天，可重新核验；价格或模型能力改变后需重新授权。额度按模型最多 272000 输入 token 与每次最多 4096 输出 token 的费用，再上浮 10% 保留，不按字符估算实际账单。</p>
+      ${grant ? `<p>授权私聊：${esc(state.conversations.find(item => item.id === grant.conversationId)?.title || grant.conversationId)} · 总额 ${dollars(grant.budgetMicros)} · 已保留 ${dollars(grant.reservedMicros)}</p><div class="ws-row-actions"><button class="btn small" data-ws-action="ai-authorization-pause">暂停</button><button class="btn small" data-ws-action="ai-authorization-resume">明确恢复</button><button class="btn small" data-ws-action="ai-authorization-revoke">撤销</button></div>` : ''}
+      <label>新授权总额度（USD）<input data-ws-ai-budget type="number" min="0.25" max="100" step="0.01" value="1"></label>
+      <label><input data-ws-ai-consent type="checkbox">我同意将当前账号的“${esc(current?.title || '尚未选择私聊')}”聊天发送给上述服务，并按显示的费用上限自动分析；重新授权会建立新的额度。</label>
+      <button class="btn small" data-ws-action="ai-authorization-grant" ${!current || state.workspaceMode !== 'ordinary' || !value?.pricing?.available ? 'disabled' : ''}>授权并开始</button>
+      <button class="btn small" data-ws-action="ai-authorization-refresh">刷新授权</button>
+      <details><summary>最近 30 条授权与费用审计</summary>${(value?.audit || []).map(item => `<p>${esc(item.createdAt)} · ${esc(auditLabel[item.action] || item.action)}${Number.isSafeInteger(item.detail?.reservedMicros) ? ` · 保留 ${dollars(item.detail.reservedMicros)} USD` : ''}${Number.isSafeInteger(item.detail?.budgetMicros) ? ` · 总额度 ${dollars(item.detail.budgetMicros)} USD` : ''}</p>`).join('') || '<p>尚无记录。</p>'}</details></section>`;
+  }
+  async function aiAuthorizationAction(action, element) {
+    if (state.aiAuthorizationBusy && !['pause', 'revoke'].includes(action)) return;
+    const operation = ++state.aiAuthorizationOperation;
+    const context = captureContext(''), current = activeConversation();
+    if (!modeAccount(context.accountId)) return;
+    if (action === 'refresh') { await refreshAiAuthorization(context); if (contextCurrent(context)) render(); return; }
+    const block = element?.closest?.('[data-ws-ai-authorization]');
+    const grant = state.aiAuthorization?.authorization;
+    const body = { action, authorizationId: grant?.id, expectedAuthorizationId: grant?.id || '', expectedRevision: Number(grant?.revision || 0) };
+    if (action === 'grant') {
+      if (!block?.querySelector('[data-ws-ai-consent]')?.checked) { toast('请先勾选具体私聊、服务和费用授权。', 'x'); return; }
+      body.consent = true; body.conversationId = current?.id; body.quoteId = state.aiAuthorization?.pricing?.quote?.id;
+      body.commandId = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+      body.budgetMicros = Math.round(Number(block.querySelector('[data-ws-ai-budget]')?.value) * 1000000);
+    }
+    if (action === 'resume') body.consent = true;
+    state.aiAuthorizationBusy = true;
+    try {
+      let stopped = null;
+      if (action === 'pause' || action === 'revoke') {
+        state.aiAuthorization = { ...state.aiAuthorization, active: false };
+        stopped = cancelBackgroundAiPump();
+      }
+      assertContext(context);
+      const result = await api('/api/ws/ai-automation', { method: 'POST', body: JSON.stringify(body) }, context);
+      if (stopped) await stopped.catch(() => {});
+      assertContext(context);
+      if (operation !== state.aiAuthorizationOperation) return;
+      state.aiAuthorization = result;
+      state.aiAuthorizationBusy = false;
+      render();
+      if (result.active && (action === 'grant' || action === 'resume')) scheduleAiQueuePump(context);
+    } catch (error) { if (contextCurrent(context) && operation === state.aiAuthorizationOperation) toast(error.message || '自动分析授权失败。', 'x'); }
+    finally { if (contextCurrent(context) && operation === state.aiAuthorizationOperation) state.aiAuthorizationBusy = false; }
+  }
   function scheduleAiQueuePump(context = captureContext(''), options = {}) {
     const pumpContext = { ...context, conversationId: '' };
     const explicit = options.explicit === true;
-    if ((!explicit && !collectionCapability(pumpContext.accountId).automaticAi) || !state.backgroundActive || !state.aiEnabled || !contextCurrent(pumpContext)) return aiPumpPromise || Promise.resolve({ skipped: true });
+    if ((!explicit && !automaticAiGranted(pumpContext)) || !state.backgroundActive || !state.aiEnabled || !contextCurrent(pumpContext)) return aiPumpPromise || Promise.resolve({ skipped: true });
     aiPumpQueued = true;
     if (aiPumpPromise || aiPumpScheduled || state.aiBusy) return aiPumpPromise || Promise.resolve({ queued: true });
     aiPumpScheduled = true;
@@ -2435,7 +2516,19 @@
   }
   async function resumeQueuedAiJobs(context = captureContext(''), options = {}) {
     const signal = options.signal;
-    if ((options.explicit !== true && !collectionCapability(context.accountId).automaticAi) || !state.aiEnabled || state.loading || state.aiBusy) return { processed: 0, succeeded: 0 };
+    if (!state.aiEnabled || state.loading || state.aiBusy) return { processed: 0, succeeded: 0 };
+    if (options.explicit !== true) {
+      await refreshAiAuthorization(context);
+      throwIfAiCancelled(signal); assertContext(context);
+      if (!automaticAiGranted(context)) return { processed: 0, succeeded: 0 };
+      const conversation = state.conversations.find(item => String(item.id) === String(state.aiAuthorization.authorization.conversationId));
+      if (!conversation) return { processed: 0, succeeded: 0 };
+      const result = await analyzeStoredConversation(conversation, { ...context, conversationId: '' }, { signal, automatic: true });
+      await refreshAiAuthorization(context);
+      if (result.cancelled) throw aiCancellationError();
+      if (!result.ok && !result.pending && !result.disabled) throw new Error(result.reason || '授权自动分析尚未完成。');
+      return { processed: result.ok ? 1 : 0, succeeded: result.ok && !result.resumed ? 1 : 0 };
+    }
     let processed = 0, succeeded = 0;
     throwIfAiCancelled(signal);
     // Only the existing consumer performs recovery. Read-only queue views must
@@ -2685,8 +2778,8 @@
     const version = Number(conversation?.data?.directionVersion || 0);
     return text(sourceFingerprint) && Number.isFinite(version) && version >= 4 ? version : 0;
   }
-  async function beginAiJob(conversation, transcript, context, feature = 'ws-analysis') {
-    const idempotencyKey = aiJobIdempotencyKey(conversation, transcript);
+  async function beginAiJob(conversation, transcript, context, feature = 'ws-analysis', authorizationId = '') {
+    const idempotencyKey = aiJobIdempotencyKey(conversation, transcript) + (authorizationId ? ':authorization:' + authorizationId : '');
     const queued = await api('/api/ws/ai-jobs', {
       method: 'POST',
       body: JSON.stringify({
@@ -2695,6 +2788,7 @@
         maxAttempts: 5,
         payload: {
           feature,
+          ...(authorizationId ? { authorizationId } : {}),
           includedMessages: transcript.included,
           totalMessages: transcript.total,
           historyComplete: transcript.historyComplete === true,
@@ -2758,6 +2852,7 @@
     if (!state.aiEnabled) return { ok: false, reason: 'AI 分析已关闭。', disabled: true };
     if (!window.zhikeAI?.request || !window.zhikeAI?.status) return { ok: false, reason: '当前运行环境不支持 AI 安全桥接。' };
     if (!conversation?.id) return { ok: false, reason: '缺少会话标识。' };
+    if (options.automatic === true && (!automaticAiGranted(context) || state.aiAuthorization.authorization.conversationId !== conversation.id)) return { ok: false, disabled: true, reason: '当前私聊尚未明确授权自动分析。' };
     const sourceFingerprint = fullHistorySourceFingerprint(conversation);
     if (!sourceFingerprint) return { ok: false, reason: '聊天列表已更新，等待重新采集完整历史后再分析。', pending: true };
     let messageHistory = options.messageHistory;
@@ -2836,7 +2931,7 @@
     try {
       aiJob = await beginAiJob(conversation, transcript, context, vipGroup
         ? 'ws-vip-member-full-history-analysis'
-        : (messageHistory.complete ? 'ws-full-history-analysis' : 'ws-list-preview-analysis'));
+        : (messageHistory.complete ? 'ws-full-history-analysis' : 'ws-list-preview-analysis'), options.automatic === true ? state.aiAuthorization.authorization.id : '');
       throwIfAiCancelled(signal);
       if (aiJob.completed && aiJob.analysis) {
         const analysis = aiJob.analysis.result || {};
@@ -2849,7 +2944,7 @@
       if (isAiCancellation(error, signal)) return { ok: false, reason: 'AI 分析已取消。', cancelled: true };
       return { ok: false, reason: `AI 任务入队失败：${error.message || '本机接口异常'}` };
     }
-    const service = await window.zhikeAI.status().catch(() => ({ configured: false }));
+    const service = await window.zhikeAI.status(options.automatic === true ? { provider: 'openai' } : {}).catch(() => ({ configured: false }));
     if (signal?.aborted) {
       await failAiJob(aiJob?.job, context, 'AI 分析已取消，任务保留待重试。');
       return { ok: false, reason: 'AI 分析已取消。', cancelled: true };
@@ -2858,6 +2953,7 @@
     try {
       const analysis = await analyzeHistoryChunks(chunks, conversation, context, aiJob.job, {
         signal,
+        automatic: options.automatic === true,
         memberIdentity: vipGroup ? memberTranscript.memberIdentity : null,
         memberScoped: vipGroup,
       });
@@ -2894,6 +2990,15 @@
   }
   async function analyzeHistoryChunks(chunks, conversation, context, job, options = {}) {
     const signal = options.signal;
+    if (options.automatic === true) {
+      throwIfAiCancelled(signal); assertContext(context);
+      if (chunks.length !== 1 || options.memberScoped === true || !automaticAiGranted(context)) throw new Error('当前自动分析仅支持已授权的单段普通私聊。');
+      const result = await window.zhikeAI.wsautomatic({ accountId: context.accountId, conversationId: conversation.id, jobId: job.id, leaseToken: job.leaseToken }, { signal, accountId: context.accountId });
+      throwIfAiCancelled(signal); assertContext(context);
+      const parsed = core.parseAiResult(result?.text || '');
+      if (parsed.error) throw new Error(parsed.error);
+      return { ...parsed, providerName: result.providerName || '', model: result.model || '', automaticAttemptId: result.attemptId || '' };
+    }
     const memberScoped = options.memberScoped === true;
     const memberIdentity = memberScoped ? (core.messageMemberIdentity?.(options.memberIdentity) || options.memberIdentity || {}) : null;
     const memberKey = memberScoped ? vipMemberScopeKey(memberIdentity) : '';
@@ -3647,7 +3752,7 @@
     const run = state.collectionRun || {};
     const stats = state.aiQueueStats || {};
     let body = '';
-    if (activeView === 'overview') body = `<section class="ws-workspace-card ws-workspace-welcome zk-surface zk-surface--accent"><span class="ws-workspace-eyebrow">WORKSPACE / OVERVIEW</span><h3>开始今天的客户运营</h3><p>在独立工作区管理账号、查看真实采集记录，并随时回到前台聊天。</p><button type="button" class="btn primary" data-ws-workspace-view="chat">进入前台聊天 <span aria-hidden="true">↗</span></button></section><section class="ws-workspace-metrics" aria-label="已加载工作区概况"><div><span>已加载账号</span><strong>${state.accounts.length || '—'}</strong><small>本机隔离会话</small></div><div><span>已加载会话</span><strong>${state.lastLoadedAt ? (state.conversations || []).length : '—'}</strong><small>${state.lastLoadedAt ? '当前账号本地记录' : '等待读取本地记录'}</small></div><div><span>已加载群组</span><strong>${state.groupMonitor?.lastLoadedAt ? groupDirectoryRows().length : '—'}</strong><small>${state.groupMonitor?.lastLoadedAt ? '当前账号同步目录' : '等待同步群组目录'}</small></div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>工作区入口</strong><span>每项功能拥有独立页面，页面切换保留账号会话。</span></div><span class="ws-status-badge">${esc(state.wsStatus)}</span></div><div class="ws-workspace-entry-grid">${workspaceViews().filter(item => !['overview', 'chat'].includes(item.id)).map(item => `<button type="button" class="ws-workspace-entry zk-surface zk-surface--interactive" data-ws-workspace-view="${item.id}"><span class="ws-workspace-nav-icon" aria-hidden="true"><svg class="zk-icon" viewBox="0 0 24 24" focusable="false"><use href="#i-${esc(item.icon)}"/></svg></span><span><strong>${esc(item.label)}</strong><small>${esc(item.hint)}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>运行说明</strong><span>任务按当前账号的配置执行。</span></div><span class="ws-status-badge">按配置运行</span></div><p class="ws-muted">自动 AI 尚未启用。群组自动建档仅处理已启用监控中确认的成员事件；请在对应账号内核对任务配置。</p></section>`;
+    if (activeView === 'overview') body = `<section class="ws-workspace-card ws-workspace-welcome zk-surface zk-surface--accent"><span class="ws-workspace-eyebrow">WORKSPACE / OVERVIEW</span><h3>开始今天的客户运营</h3><p>在独立工作区管理账号、查看真实采集记录，并随时回到前台聊天。</p><button type="button" class="btn primary" data-ws-workspace-view="chat">进入前台聊天 <span aria-hidden="true">↗</span></button></section><section class="ws-workspace-metrics" aria-label="已加载工作区概况"><div><span>已加载账号</span><strong>${state.accounts.length || '—'}</strong><small>本机隔离会话</small></div><div><span>已加载会话</span><strong>${state.lastLoadedAt ? (state.conversations || []).length : '—'}</strong><small>${state.lastLoadedAt ? '当前账号本地记录' : '等待读取本地记录'}</small></div><div><span>已加载群组</span><strong>${state.groupMonitor?.lastLoadedAt ? groupDirectoryRows().length : '—'}</strong><small>${state.groupMonitor?.lastLoadedAt ? '当前账号同步目录' : '等待同步群组目录'}</small></div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>工作区入口</strong><span>每项功能拥有独立页面，页面切换保留账号会话。</span></div><span class="ws-status-badge">${esc(state.wsStatus)}</span></div><div class="ws-workspace-entry-grid">${workspaceViews().filter(item => !['overview', 'chat'].includes(item.id)).map(item => `<button type="button" class="ws-workspace-entry zk-surface zk-surface--interactive" data-ws-workspace-view="${item.id}"><span class="ws-workspace-nav-icon" aria-hidden="true"><svg class="zk-icon" viewBox="0 0 24 24" focusable="false"><use href="#i-${esc(item.icon)}"/></svg></span><span><strong>${esc(item.label)}</strong><small>${esc(item.hint)}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>运行说明</strong><span>任务按当前账号的配置执行。</span></div><span class="ws-status-badge">按配置运行</span></div><p class="ws-muted">自动 AI 默认关闭，可在 AI 页面明确授权一个私聊及费用上限。群组自动建档仅处理已启用监控中确认的成员事件；请在对应账号内核对任务配置。</p></section>`;
     else if (activeView === 'accounts') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>账号与连接</strong><span>账号作用域独立，切换保留各账号隔离会话。</span></div><button class="btn small" data-ws-action="create-account">＋ 添加账号</button></div>${renderAccountForm()}<div class="ws-workspace-metrics"><div><span>已加载 WS 账号</span><strong>${state.accounts.length}</strong><small>本机隔离会话</small></div><div><span>当前账号</span><strong>${esc(account)}</strong><small>${esc(state.wsStatus)}</small></div><div><span>后台状态</span><strong>${esc(collectorStatusLabel())}</strong><small>独立采集会话，需单独扫码登录</small></div></div>${renderCollectorControls()}${renderWorkspaceList('accounts', state.accounts, rows => renderAccountList(rows))}</section>`;
     else if (activeView === 'groups') body = renderGroupDirectory() + (groupReading?.render() || '');
     else if (activeView === 'group-reading') body = renderWorkspaceGroupReading();
@@ -3656,11 +3761,11 @@
     else if (activeView === 'collection') { const page = wsWorkspacePageState('collection'); body = `${renderCollectionCard()}${businessPages ? businessPages.renderRunDetails(state.collectionRun, page.collectionItems, collectionCapability()) : ''}<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>当前任务采集项</strong><span>当前账号、当前任务已读取的最多 1000 条采集项，保留失败原因与 checkpoint。</span></div><button type="button" class="btn small" data-ws-action="collection-history">查看任务历史</button></div>${renderWorkspaceList('collection', page.collectionItems || [], rows => businessPages ? businessPages.renderCollectionItems(rows) : renderWorkspaceSummaryRows(rows, 'collection'))}</section>${renderWsFlowStrip()}`; }
     else if (activeView === 'contacts') body = renderWorkspaceReadDirectory('contacts');
     else if (activeView === 'exclusions') body = businessPages ? businessPages.renderExclusions(wsWorkspacePageState('exclusions')) : '<p class="ws-error-line" role="alert">业务页面模块未加载，请重新打开应用。</p>';
-    else if (activeView === 'ai') body = `<section class="ws-workspace-card ws-workspace-disabled-card zk-surface"><div class="ws-card-heading"><div><strong>AI 智能分析队列</strong><span>阶段 4 切换前仅展示真实队列与来源证据。</span></div><span class="ws-status-badge" data-status="disabled">未启用</span></div><div class="ws-workspace-metrics"><div><span>待分析</span><strong>${state.summaryLoaded?.ai ? Number(stats.queued || 0) : '—'}</strong><small>只读队列状态</small></div><div><span>处理中</span><strong>${state.summaryLoaded?.ai ? Number(stats.running || 0) : '—'}</strong><small>正式消费者未启动</small></div><div><span>失败/死信</span><strong>${state.summaryLoaded?.ai ? Number(stats.failed || 0) : '—'}/${state.summaryLoaded?.ai ? Number(stats.deadLetter || 0) : '—'}</strong><small>保留错误证据</small></div></div><p class="ws-muted">正式 AI 自动处理未启用，不使用固定内容冒充分析结果。</p>${renderAnalysis()}</section>`;
+    else if (activeView === 'ai') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>AI 智能分析队列</strong><span>保留手动分析；自动分析按当前账号的明确授权和总预算执行。</span></div></div><div class="ws-workspace-metrics"><div><span>待分析</span><strong>${state.summaryLoaded?.ai ? Number(stats.queued || 0) : '—'}</strong><small>真实队列状态</small></div><div><span>处理中</span><strong>${state.summaryLoaded?.ai ? Number(stats.running || 0) : '—'}</strong><small>当前已领取任务</small></div><div><span>失败/死信</span><strong>${state.summaryLoaded?.ai ? Number(stats.failed || 0) : '—'}/${state.summaryLoaded?.ai ? Number(stats.deadLetter || 0) : '—'}</strong><small>保留错误证据</small></div></div>${renderAiAuthorization()}${renderAnalysis()}</section>`;
     else if (activeView === 'crm') body = `${renderWorkspaceCustomers()}<details class="ws-workspace-card zk-surface"><summary>当前会话关联档案与资料补全</summary>${renderDataArchiveSummary()}${renderHotProfile()}</details><section class="ws-workspace-card zk-surface"><p class="ws-muted">CRM 主档是唯一权威来源。普通聊天只匹配已有客户；多匹配进入冲突处理；人工字段不覆盖。AI 候选、来源证据、批准/拒绝及审计继续使用原审核中心。</p></section>`;
     else if (activeView === 'tasks') body = `${renderWorkspaceTaskPage()}<section class="ws-workspace-card zk-surface"><div class="ws-workspace-metrics"><div><span>历史采集任务</span><strong>${esc(run.status || '未提供')}</strong><small>${run.id ? esc(run.id) : '尚无任务或未读取'}</small></div><div><span>已加载待跟进</span><strong>${state.summaryLoaded?.followups ? state.followupAlerts.length : '—'}</strong><small>当前服务返回范围</small></div><div><span>待重试</span><strong>${run.id ? Number(run.retryable || 0) : '—'}</strong><small>未读取不当作成功</small></div></div><button class="btn small" data-ws-action="open-tasks">打开知客任务中心</button></section>`;
     else if (activeView === 'logs') body = renderWorkspaceReadDirectory('logs');
-    else if (activeView === 'settings') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>WS 工作区设置</strong><span>只管理当前账号与工作区偏好。</span></div></div><div class="ws-workspace-settings-grid"><div><strong>翻译</strong><p>${esc(state.translationStatus)}</p><button class="btn small" data-ws-action="focus-assist" data-assist-target="diagnostics">打开翻译设置</button></div><div><strong>群组监测</strong><p>${state.groupMonitor?.profile?.enabled ? '已启用固定席位' : '未启用固定席位'}</p><button class="btn small" data-ws-action="focus-assist" data-assist-target="diagnostics">打开群组设置</button></div><div><strong>自动处理</strong><p>自动 AI 尚未启用。群监控按当前账号保存的配置运行。</p><span class="ws-status-badge">按配置运行</span></div></div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>会话工具</strong><span>打开现有功能；发送与采集继续遵循原有确认和账号边界。</span></div></div><div class="ws-workspace-settings-grid"><div><strong>手动导入与本地消息</strong><p>使用现有导入、译文与本地消息记录。</p><button type="button" class="btn small" data-ws-action="open-local-tools">打开本地工具</button></div><div><strong>数据导出</strong><p>导出已有客户、群组、消息和媒体索引。</p><button type="button" class="btn small" data-ws-action="focus-assist" data-assist-target="export">打开导出工具</button></div>${state.workspaceMode === 'ordinary' ? '<div><strong>会话批量发送</strong><p>仅限已有一对一会话，逐个会话人工确认。</p><button type="button" class="btn small" data-ws-action="focus-assist" data-assist-target="broadcast">打开会话发送</button></div>' : ''}<div><strong>登录会话</strong><p>清除后需要重新扫码；本地业务记录保留。</p><button type="button" class="btn small" data-ws-action="clear-session">清除登录会话</button></div></div></section>`;
+    else if (activeView === 'settings') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>WS 工作区设置</strong><span>只管理当前账号与工作区偏好。</span></div></div><div class="ws-workspace-settings-grid"><div><strong>翻译</strong><p>${esc(state.translationStatus)}</p><button class="btn small" data-ws-action="focus-assist" data-assist-target="diagnostics">打开翻译设置</button></div><div><strong>群组监测</strong><p>${state.groupMonitor?.profile?.enabled ? '已启用固定席位' : '未启用固定席位'}</p><button class="btn small" data-ws-action="focus-assist" data-assist-target="diagnostics">打开群组设置</button></div><div><strong>自动处理</strong><p>自动 AI 默认关闭，可在 AI 页面明确授权一个私聊及费用上限。群监控按当前账号保存的配置运行。</p><span class="ws-status-badge">按配置运行</span></div></div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>会话工具</strong><span>打开现有功能；发送与采集继续遵循原有确认和账号边界。</span></div></div><div class="ws-workspace-settings-grid"><div><strong>手动导入与本地消息</strong><p>使用现有导入、译文与本地消息记录。</p><button type="button" class="btn small" data-ws-action="open-local-tools">打开本地工具</button></div><div><strong>数据导出</strong><p>导出已有客户、群组、消息和媒体索引。</p><button type="button" class="btn small" data-ws-action="focus-assist" data-assist-target="export">打开导出工具</button></div>${state.workspaceMode === 'ordinary' ? '<div><strong>会话批量发送</strong><p>仅限已有一对一会话，逐个会话人工确认。</p><button type="button" class="btn small" data-ws-action="focus-assist" data-assist-target="broadcast">打开会话发送</button></div>' : ''}<div><strong>登录会话</strong><p>清除后需要重新扫码；本地业务记录保留。</p><button type="button" class="btn small" data-ws-action="clear-session">清除登录会话</button></div></div></section>`;
     if (activeView === 'overview') body = body.replace('<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>工作区入口</strong>', renderWorkspaceOperationalOverview() + '<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>工作区入口</strong>');
     if (activeView === 'settings') body += `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>AI 配置与本机诊断</strong><span>复用现有设置与加密密钥服务，不创建第二套凭据存储。</span></div></div><div class="ws-workspace-settings-grid"><div><strong>GPT / API Key 配置</strong><p>打开原 GPT 本机设置，只显示配置状态与尾号；本页不读取或展示明文密钥。</p><button type="button" class="btn small" data-gpt-action="settings">打开 GPT 本机设置</button></div><div><strong>采集与连接诊断</strong><p>使用原 WS 诊断面板查看实际服务状态；没有可用性能采样时不伪造 CPU 或内存数据。</p><button type="button" class="btn small" data-ws-action="focus-assist" data-assist-target="diagnostics">打开现有运行诊断</button></div></div></section>`;
     const page = wsWorkspacePageState(activeView);
@@ -4366,6 +4471,7 @@
               <div class="ws-card-heading"><div><strong>AI 分析</strong><span>${state.historyCoverage.complete ? `当前客户完整聊天 ${state.historyCoverage.loaded} 条` : '完整历史采集完成后分析全部客户聊天'} · 队列 ${Number(state.aiQueueStats.queued || 0)} 待处理 / ${Number(state.aiQueueStats.retryable || 0)} 待重试 / ${Number(state.aiQueueStats.deadLetter || 0)} 死信</span></div><label class="ws-switch"><input id="wsAiEnabled" type="checkbox" ${state.aiEnabled ? 'checked' : ''}><span>AI 开关</span></label></div>
               <div id="wsAiBackgroundError" class="ws-error-line" ${state.aiBackgroundError ? '' : 'hidden'}><span data-ws-ai-error-text>${esc(state.aiBackgroundError || '')}</span><button class="btn small" data-ws-action="resume-ai-queue">立即重试</button></div>
               <button class="btn small primary ws-full-button" data-ws-action="analyze" ${!current || !state.messages.length || !state.aiEnabled || state.aiBusy ? 'disabled' : ''}>${state.aiBusy ? '分析中…' : state.analysis ? '重新分析当前聊天' : '分析当前聊天'}</button>
+              ${renderAiAuthorization()}
               <div class="ws-analysis-content">${renderAnalysis()}</div>
             </section>
             ${renderCollectionCard()}
@@ -5745,6 +5851,7 @@
       document.querySelector(`.nav-item[data-view="${route}"]`)?.click();
       return;
     }
+    if (action.startsWith('ai-authorization-')) return aiAuthorizationAction(action.slice('ai-authorization-'.length), element);
     if (action === 'analyze') return analyzeConversation();
     if (action === 'use-ai-reply') return useAiReply();
     if (action === 'save-customer') return saveCustomerTo();

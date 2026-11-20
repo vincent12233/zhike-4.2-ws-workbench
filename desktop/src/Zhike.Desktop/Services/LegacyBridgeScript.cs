@@ -33,7 +33,7 @@ public static class LegacyBridgeScript
           invoke(method, payload = {}, options = {}) {
             const requestId = createRequestId();
             const normalizedOptions = options && typeof options === 'object' ? options : {};
-            const isAiRequest = method === 'ai.request' || method === 'ai';
+            const isAiRequest = method === 'ai.request' || method === 'ai' || method === 'ai.wsautomatic';
             const isAiNetworkControl = /^ai\.(?:testconnection|test|listmodels|models)$/i.test(method);
             const aiPayload = isAiRequest && payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : {};
             const aiOperationId = isAiRequest ? String(aiPayload.requestId || requestId).slice(0, 128) : '';

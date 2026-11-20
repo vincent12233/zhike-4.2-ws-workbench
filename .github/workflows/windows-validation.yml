@@ -55,6 +55,7 @@ jobs:
             'tests/ws-contact-exclusion-ui.test.cjs',
             'tests/ws-native-account-registration.test.cjs',
             'tests/ws-native-purpose-policy.test.cjs',
+            'tests/ws-ai-authorization-budget.test.cjs',
             'tests/ws-native-write-authority.test.cjs',
             'tests/ws-native-write-authority-core.test.cjs',
             'tests/ws-group-drafts-backup.test.cjs',

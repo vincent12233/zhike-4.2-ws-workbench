@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "supportedSchemaVersion": 29,
+  "supportedSchemaVersion": 30,
   "migrations": [
     {
       "version": 4,
@@ -157,6 +157,12 @@
       "file": "029-ws-group-drafts.sql",
       "description": "Dedicated WS local group message drafts and target snapshots",
       "checksum": "e81586a81047e07e811dd5d1786ef699cb890eebaf6195feee8cc6ae3b776d66"
+    },
+    {
+      "version": 30,
+      "file": "030-ws-ai-authorization-budget.sql",
+      "description": "Explicit scoped WS automatic AI authorization and conservative reservation ledger",
+      "checksum": "eb3dacf2b6c559c0f4c396b91b8e8005c9aea1df0544b3308f4d335ee2d62b00"
     }
   ]
 }

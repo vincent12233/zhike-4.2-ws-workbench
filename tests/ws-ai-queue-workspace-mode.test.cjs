@@ -98,7 +98,7 @@ test('actual renderer worker requests execution view and never runs an explicitl
     analyzeStoredConversation: async row => { analyzed.push(row.id); return { ok: true }; },
   };
   vm.runInNewContext(source.slice(start, end) + '\nthis.resume = resumeQueuedAiJobs;', sandbox);
-  const result = await sandbox.resume(context);
+  const result = await sandbox.resume(context, { explicit: true });
   assert.ok(requested.includes('/api/ws/ai-jobs?status=queued,retryable&executionEligible=1&limit=12'));
   assert.deepEqual(analyzed, ['ready']); assert.equal(result.processed, 1); assert.equal(result.succeeded, 1);
 });
