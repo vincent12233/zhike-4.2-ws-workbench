@@ -21,6 +21,7 @@
     { id: 'members', label: '群成员管理', icon: 'users-group', hint: '成员事件与 CRM 关系' },
     { id: 'collection', label: '数据采集', icon: 'database', hint: '采集任务、断点与跳过规则' },
     { id: 'contacts', label: '通讯录管理', icon: 'user', hint: '已同步联系人与号码核验' },
+    { id: 'exclusions', label: '通讯录排除', icon: 'shield', hint: '排除名单不进入自动建档' },
     { id: 'ai', label: 'AI助手', icon: 'spark', hint: '队列、证据与分析结果' },
     { id: 'crm', label: 'CRM客户', icon: 'user', hint: '客户主档匹配与冲突' },
     { id: 'tasks', label: '任务中心', icon: 'clipboard-check', hint: '跟进任务与提醒' },
@@ -3374,6 +3375,13 @@
         const accepted = await loading;
         assertContext(context);
         if (!accepted) throw new Error(businessPages.directoryState(page).error || '数据已过期，请重新查询。');
+      } else if (view === 'exclusions') {
+        if (!businessPages) throw new Error('业务页面模块未加载，请重新打开应用。');
+        const loading = businessPages.loadExclusions(page, { request: pathname => api(pathname, {}, context), isCurrent: () => contextCurrent(context) });
+        render();
+        const accepted = await loading;
+        assertContext(context);
+        if (!accepted) throw new Error(businessPages.exclusionState(page).error || '数据已过期，请重新查询。');
       } else if (view === 'accounts') {
         await loadAccounts();
         if (state.error) throw new Error(state.error);
@@ -3473,6 +3481,7 @@
     else if (activeView === 'members') body = renderWorkspaceMembers();
     else if (activeView === 'collection') { const page = wsWorkspacePageState('collection'); body = `${renderCollectionCard()}${businessPages ? businessPages.renderRunDetails(state.collectionRun, page.collectionItems, collectionCapability()) : ''}<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>当前任务采集项</strong><span>当前账号、当前任务已读取的最多 1000 条采集项，保留失败原因与 checkpoint。</span></div><button type="button" class="btn small" data-ws-action="collection-history">查看任务历史</button></div>${renderWorkspaceList('collection', page.collectionItems || [], rows => businessPages ? businessPages.renderCollectionItems(rows) : renderWorkspaceSummaryRows(rows, 'collection'))}</section>${renderWsFlowStrip()}`; }
     else if (activeView === 'contacts') body = renderWorkspaceReadDirectory('contacts');
+    else if (activeView === 'exclusions') body = businessPages ? businessPages.renderExclusions(wsWorkspacePageState('exclusions')) : '<p class="ws-error-line" role="alert">业务页面模块未加载，请重新打开应用。</p>';
     else if (activeView === 'ai') body = `<section class="ws-workspace-card ws-workspace-disabled-card zk-surface"><div class="ws-card-heading"><div><strong>AI 智能分析队列</strong><span>阶段 4 切换前仅展示真实队列与来源证据。</span></div><span class="ws-status-badge" data-status="disabled">未启用</span></div><div class="ws-workspace-metrics"><div><span>待分析</span><strong>${state.summaryLoaded?.ai ? Number(stats.queued || 0) : '—'}</strong><small>只读队列状态</small></div><div><span>处理中</span><strong>${state.summaryLoaded?.ai ? Number(stats.running || 0) : '—'}</strong><small>正式消费者未启动</small></div><div><span>失败/死信</span><strong>${state.summaryLoaded?.ai ? Number(stats.failed || 0) : '—'}/${state.summaryLoaded?.ai ? Number(stats.deadLetter || 0) : '—'}</strong><small>保留错误证据</small></div></div><p class="ws-muted">正式 AI 自动处理未启用，不使用固定内容冒充分析结果。</p>${renderAnalysis()}</section>`;
     else if (activeView === 'crm') body = `${renderWorkspaceCustomers()}<details class="ws-workspace-card zk-surface"><summary>当前会话关联档案与资料补全</summary>${renderDataArchiveSummary()}${renderHotProfile()}</details><section class="ws-workspace-card zk-surface"><p class="ws-muted">CRM 主档是唯一权威来源。普通聊天只匹配已有客户；多匹配进入冲突处理；人工字段不覆盖。AI 候选、来源证据、批准/拒绝及审计继续使用原审核中心。</p></section>`;
     else if (activeView === 'tasks') body = `${renderWorkspaceTaskPage()}<section class="ws-workspace-card zk-surface"><div class="ws-workspace-metrics"><div><span>历史采集任务</span><strong>${esc(run.status || '未提供')}</strong><small>${run.id ? esc(run.id) : '尚无任务或未读取'}</small></div><div><span>已加载待跟进</span><strong>${state.summaryLoaded?.followups ? state.followupAlerts.length : '—'}</strong><small>当前服务返回范围</small></div><div><span>待重试</span><strong>${run.id ? Number(run.retryable || 0) : '—'}</strong><small>未读取不当作成功</small></div></div><button class="btn small" data-ws-action="open-tasks">打开知客任务中心</button></section>`;
@@ -5302,6 +5311,42 @@
       }
       return;
     }
+    if (action?.startsWith('exclusion-')) {
+      if (!businessPages) { toast('业务页面模块未加载。', 'x'); return; }
+      const page = wsWorkspacePageState('exclusions');
+      const view = businessPages.exclusionState(page);
+      const refresh = async () => {
+        await businessPages.loadExclusions(page, { request: pathname => api(pathname, {}, captureContext('')), isCurrent: () => state.wsWorkspaceView === 'exclusions' });
+        render({ skipNativeResize: true });
+      };
+      const selected = () => new Set(Array.isArray(page.exclusionSelected) ? page.exclusionSelected : []);
+      const setSelected = next => { page.exclusionSelected = [...next]; render({ skipNativeResize: true }); };
+      if (action === 'exclusion-toggle' || action === 'exclusion-delete') {
+        const id = String(element?.dataset?.recordId || '');
+        if (!id) return;
+        try {
+          if (action === 'exclusion-delete') await api(`/api/ws/contact-exclusions/${encodeURIComponent(id)}`, { method: 'DELETE' }, captureContext(''));
+          else await api(`/api/ws/contact-exclusions/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ enabled: element?.dataset?.recordEnabled !== '1' }) }, captureContext(''));
+          toast(action === 'exclusion-delete' ? '已移除排除规则。' : '已更新排除状态。');
+        } catch (error) { toast(error.message || '操作失败。', 'x'); }
+        return refresh();
+      }
+      if (['exclusion-bulk-enable', 'exclusion-bulk-disable', 'exclusion-bulk-delete'].includes(action)) {
+        const ids = [...selected()];
+        if (!ids.length) return;
+        try {
+          for (const id of ids) {
+            if (action === 'exclusion-bulk-delete') await api(`/api/ws/contact-exclusions/${encodeURIComponent(id)}`, { method: 'DELETE' }, captureContext(''));
+            else await api(`/api/ws/contact-exclusions/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ enabled: action === 'exclusion-bulk-enable' }) }, captureContext(''));
+          }
+          toast(`已处理 ${ids.length} 条排除规则。`);
+          page.exclusionSelected = [];
+        } catch (error) { toast(error.message || '批量操作失败。', 'x'); }
+        return refresh();
+      }
+      if (action === 'exclusion-refresh') return refresh();
+      return;
+    }
     if (action === 'collection-history') {
       wsWorkspacePageState().scrollTop = Number(document.querySelector('[data-ws-workspace-page]')?.scrollTop || 0);
       state.wsWorkspaceView = 'logs';
@@ -5771,6 +5816,68 @@
       if (!form) return;
       event.preventDefault(); event.stopImmediatePropagation();
       void handleAction('business-search', { dataset: { businessView: form.dataset.wsBusinessForm } });
+    }, true);
+    // WS directory exclusion forms: search, single add and batch import.
+    view?.addEventListener('submit', event => {
+      const form = event.target?.closest?.('[data-ws-exclusion-form]');
+      if (!form) return;
+      event.preventDefault(); event.stopImmediatePropagation();
+      const mode = form.dataset.wsExclusionForm;
+      if (mode === 'search') {
+        const page = wsWorkspacePageState('exclusions');
+        const query = String(form.querySelector('[data-ws-exclusion-query]')?.value || '').trim();
+        void businessPages?.loadExclusions(page, { request: pathname => api(pathname, {}, captureContext('')), isCurrent: () => state.wsWorkspaceView === 'exclusions', query }).then(() => render({ skipNativeResize: true }));
+        return;
+      }
+      if (mode === 'add') {
+        const data = Object.fromEntries(new FormData(form).entries());
+        void (async () => {
+          try {
+            await api('/api/ws/contact-exclusions', { method: 'POST', body: JSON.stringify({ identity: data.identity, displayName: data.displayName, note: data.note }) }, captureContext(''));
+            form.reset();
+            toast('已加入排除名单。');
+            const page = wsWorkspacePageState('exclusions');
+            await businessPages?.loadExclusions(page, { request: pathname => api(pathname, {}, captureContext('')), isCurrent: () => state.wsWorkspaceView === 'exclusions' });
+            render({ skipNativeResize: true });
+          } catch (error) { toast(error.message || '加入排除名单失败。', 'x'); }
+        })();
+        return;
+      }
+      if (mode === 'import') {
+        const lines = String(new FormData(form).get('items') || '').split(/\r?\n/).map(line => line.trim()).filter(Boolean).slice(0, 2000);
+        if (!lines.length) { toast('请先粘贴要导入的身份。', 'x'); return; }
+        void (async () => {
+          try {
+            const response = await api('/api/ws/contact-exclusions', { method: 'POST', body: JSON.stringify({ items: lines.map(identity => ({ identity })), source: 'import' }) }, captureContext(''));
+            const created = Number(response?.rules?.length || 0);
+            const rejected = Number(response?.rejected?.length || 0);
+            form.reset();
+            toast(`导入完成：${created} 条成功${rejected ? `，${rejected} 条无效被拒` : ''}${rejected ? '（昵称或无法识别的标识不会被接受）' : ''}`);
+            const page = wsWorkspacePageState('exclusions');
+            await businessPages?.loadExclusions(page, { request: pathname => api(pathname, {}, captureContext('')), isCurrent: () => state.wsWorkspaceView === 'exclusions' });
+            render({ skipNativeResize: true });
+          } catch (error) { toast(error.message || '批量导入失败。', 'x'); }
+        })();
+        return;
+      }
+    }, true);
+    view?.addEventListener('change', event => {
+      const box = event.target?.closest?.('[data-ws-exclusion-select]');
+      if (box) {
+        const page = wsWorkspacePageState('exclusions');
+        const set = new Set(Array.isArray(page.exclusionSelected) ? page.exclusionSelected : []);
+        if (box.checked) set.add(String(box.dataset.wsExclusionSelect)); else set.delete(String(box.dataset.wsExclusionSelect));
+        page.exclusionSelected = [...set];
+        render({ skipNativeResize: true });
+        return;
+      }
+      if (event.target?.closest?.('[data-ws-exclusion-select-all]')) {
+        const page = wsWorkspacePageState('exclusions');
+        const selectAll = event.target.checked;
+        const rules = businessPages?.exclusionState(page)?.rules || [];
+        page.exclusionSelected = selectAll ? rules.map(rule => rule.id) : [];
+        render({ skipNativeResize: true });
+      }
     }, true);
     // keydown Escape closes the assistant drawer without touching the native chat surface.
     view?.addEventListener('keydown', event => {

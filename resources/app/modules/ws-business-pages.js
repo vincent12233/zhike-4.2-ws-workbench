@@ -171,5 +171,60 @@
   function renderCollectionItems(rows) {
     return `<div class="ws-workspace-table-wrap"><table class="ws-group-table ws-business-table"><thead><tr>${['来源会话', '采集状态', '分析状态', '覆盖范围', '尝试次数', '断点', '失败原因', '更新时间'].map(title => `<th>${title}</th>`).join('')}</tr></thead><tbody>${rows.map(row => `<tr><td>${esc(missing(row.conversationId))}<small>${esc(row.id)}</small></td><td>${status(row.status)}</td><td>${status(row.analysisStatus)}</td><td>${esc(missing(row.coverageStatus))}</td><td>${esc(missing(row.attempts))}</td><td>${esc(missing(row.checkpoint))}</td><td>${esc(missing(row.lastError))}</td><td>${esc(missing(row.updatedAt))}</td></tr>`).join('')}</tbody></table></div>`;
   }
-  return { esc, redact, safeDetails, label, renderPersonAvatar, renderAvatarAvailability, directoryState, buildDirectoryQuery, acceptDirectoryResult, loadDirectory, renderDirectory, localWindow, renderMembers, customerRows, renderCustomers, renderLocalFilters, renderTasks, renderRunDetails, renderCollectionItems };
+  // --- WS 通讯录排除 -------------------------------------------------------
+  // 这个目录只决定“自动建档时跳过哪些身份”，不是第二套客户库。
+  function exclusionState(page) {
+    if (!page.exclusion) page.exclusion = { loaded: false, loading: false, rules: [], hits: [], summary: { total: 0, enabled: 0, hits: 0 }, error: '', query: '', requestSerial: 0 };
+    return page.exclusion;
+  }
+  async function loadExclusions(page, { request, isCurrent, query = '' } = {}) {
+    const view = exclusionState(page);
+    const serial = ++view.requestSerial;
+    view.loading = true;
+    view.error = '';
+    view.query = query;
+    try {
+      const search = query ? `&query=${encodeURIComponent(query)}` : '';
+      const [rules, hits] = await Promise.all([
+        request(`/api/ws/contact-exclusions?includeDisabled=1${search}`),
+        request('/api/ws/contact-exclusions/hits?limit=50'),
+      ]);
+      if (serial !== view.requestSerial || (isCurrent && !isCurrent())) return false;
+      view.rules = Array.isArray(rules?.rules) ? rules.rules : [];
+      view.summary = rules?.summary || view.summary;
+      view.hits = Array.isArray(hits?.hits) ? hits.hits : [];
+      view.loaded = true;
+      return true;
+    } catch (error) {
+      if (serial === view.requestSerial) view.error = string(error?.message || error);
+      return false;
+    } finally {
+      if (serial === view.requestSerial) view.loading = false;
+    }
+  }
+  function renderExclusions(page) {
+    const view = exclusionState(page);
+    const rules = view.rules || [];
+    const selectedIds = new Set(Array.isArray(page.exclusionSelected) ? page.exclusionSelected : []);
+    const summary = view.summary || { total: 0, enabled: 0, hits: 0 };
+    const rows = rules.map(rule => {
+      const checked = selectedIds.has(rule.id);
+      return `<tr${checked ? ' class="is-selected"' : ''}><td><input type="checkbox" data-ws-exclusion-select="${esc(rule.id)}"${checked ? ' checked' : ''} aria-label="选择排除规则 ${esc(rule.displayName || rule.value)}"></td><td>${renderPersonIdentity({ name: rule.displayName, fallbackName: rule.value, secondary: rule.value })}</td><td>${esc(missing(rule.phone || (rule.kind === 'phone' ? rule.value : '')))}<small>${esc(rule.kind)}</small></td><td>${esc(missing(rule.note))}</td><td>${esc(missing(rule.source))}</td><td>${rule.enabled ? '<span class="ws-status-badge" data-status="active">排除中</span>' : '<span class="ws-status-badge" data-status="disabled">已停用</span>'}</td><td>${esc(missing(rule.updatedAt))}</td><td><button type="button" class="btn small" data-ws-action="exclusion-toggle" data-record-id="${esc(rule.id)}" data-record-enabled="${rule.enabled ? '1' : '0'}">${rule.enabled ? '取消排除' : '启用排除'}</button> <button type="button" class="btn small danger" data-ws-action="exclusion-delete" data-record-id="${esc(rule.id)}">移除</button></td></tr>`;
+    }).join('');
+    const hitRows = (view.hits || []).map(hit => `<tr><td>${esc(missing(hit.ruleName || hit.ruleValue))}</td><td>${esc(missing(hit.accountId))}</td><td>${esc(missing(hit.groupJid))}</td><td>${esc(missing(hit.memberPhone || hit.memberJid))}</td><td>${esc(missing(hit.action))}</td><td>${esc(missing(hit.createdAt))}</td></tr>`).join('');
+    return `<section class="ws-workspace-card zk-surface" data-ws-exclusion-page aria-busy="${view.loading ? 'true' : 'false'}">
+      <div class="ws-card-heading"><div><strong>通讯录排除</strong><span>此通讯录用于排除专用 WS 群成员自动建档；它不是 CRM 客户通讯录，不会创建、修改或删除客户。</span></div><span class="ws-status-badge">排除中 ${Number(summary.enabled || 0)} / 共 ${Number(summary.total || 0)}</span></div>
+      <div class="ws-workspace-metrics" aria-label="排除统计"><div><span>排除规则</span><strong>${Number(summary.total || 0)}</strong><small>含已停用</small></div><div><span>正在生效</span><strong>${Number(summary.enabled || 0)}</strong><small>阻止自动建档</small></div><div><span>命中次数</span><strong>${Number(summary.hits || 0)}</strong><small>累计跳过</small></div></div>
+      <form class="ws-business-filter-grid" data-ws-exclusion-form="search"><label>搜索<input type="search" data-ws-exclusion-query maxlength="160" value="${esc(view.query)}" placeholder="姓名、号码、备注或标识" aria-label="搜索排除名单"></label><div class="ws-business-filter-actions"><button type="submit" class="btn small">查询</button><button type="button" class="btn small" data-ws-action="exclusion-refresh">刷新</button></div></form>
+      <details class="ws-exclusion-add"><summary>新增或批量导入排除规则</summary>
+        <form data-ws-exclusion-form="add"><label>身份（号码、JID 或业务作用域 ID）<input name="identity" maxlength="200" required placeholder="例如 +919876543210"></label><label>名称（可选）<input name="displayName" maxlength="120"></label><label>备注（可选）<input name="note" maxlength="300"></label><button type="submit" class="btn small primary">加入排除名单</button></form>
+        <form data-ws-exclusion-form="import"><label>批量导入<textarea name="items" rows="4" placeholder="每行一个号码或一个身份标识；昵称不会被接受"></textarea></label><button type="submit" class="btn small">批量导入</button></form>
+      </details>
+      <div class="ws-business-bulk"><span>已选 ${selectedIds.size} 条</span><button type="button" class="btn small" data-ws-action="exclusion-bulk-enable"${selectedIds.size ? '' : ' disabled'}>启用所选</button><button type="button" class="btn small" data-ws-action="exclusion-bulk-disable"${selectedIds.size ? '' : ' disabled'}>取消排除所选</button><button type="button" class="btn small danger" data-ws-action="exclusion-bulk-delete"${selectedIds.size ? '' : ' disabled'}>移除所选</button></div>
+      ${view.error ? `<p class="ws-error-line" role="alert">${esc(view.error)}</p>` : ''}
+      <div class="ws-workspace-table-wrap"><table class="ws-group-table ws-business-table"><thead><tr><th scope="col"><input type="checkbox" data-ws-exclusion-select-all aria-label="全选当前名单"></th>${['身份', '号码', '备注', '来源', '状态', '最近更新', '操作'].map(title => `<th scope="col">${title}</th>`).join('')}</tr></thead><tbody>${rows || `<tr><td colspan="8"><p class="ws-business-empty" role="status">${view.loading ? '正在读取排除名单…' : view.loaded ? '当前没有排除规则。' : '尚未读取；请点击刷新。'}</p></td></tr>`}</tbody></table></div>
+    </section>
+    <section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>排除命中记录</strong><span>每次因排除名单而跳过自动建档都会留下证据，用于核对为什么某位群成员没有成为客户。</span></div></div>${view.hits?.length ? `<div class="ws-workspace-table-wrap"><table class="ws-group-table ws-business-table"><thead><tr>${['规则', '账号', '群组', '成员', '动作', '时间'].map(title => `<th>${title}</th>`).join('')}</tr></thead><tbody>${hitRows}</tbody></table></div>` : '<p class="ws-muted">尚无命中记录。</p>'}</section>`;
+  }
+  return { esc, redact, safeDetails, label, renderPersonAvatar, renderAvatarAvailability, directoryState, buildDirectoryQuery, acceptDirectoryResult, loadDirectory, renderDirectory, localWindow, renderMembers, customerRows, renderCustomers, renderLocalFilters, renderTasks, renderRunDetails, renderCollectionItems, exclusionState, loadExclusions, renderExclusions };
 });

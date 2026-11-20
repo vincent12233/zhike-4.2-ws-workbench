@@ -774,6 +774,15 @@ body.ws-workspace-active .ws-workbench-shell .ws-business-directory-body.has-det
 body.ws-workspace-active .ws-workbench-shell .ws-business-table{min-width:1060px;width:100%;table-layout:auto}
 body.ws-workspace-active .ws-workbench-shell .ws-business-table :is(td,th){height:var(--ws-row-height);padding:var(--ws-table-pad-block) 16px;vertical-align:top;overflow-wrap:anywhere;font-size:var(--ds-font-body,14px)}
 body.ws-workspace-active .ws-workbench-shell .ws-business-table td{max-width:340px}
+/* WS 通讯录排除：批量工具条与新增/导入分区，复用 Horizon Atelier 表面与状态色。 */
+body.ws-workspace-active .ws-workbench-shell .ws-business-bulk{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:16px 0;padding:12px 16px;border-radius:14px;border:1px solid var(--ws-line);background:var(--ws-surface-muted,rgba(15,32,70,.04))}
+body.ws-workspace-active .ws-workbench-shell .ws-business-bulk>span{margin-inline-end:auto;color:var(--ws-muted);font-size:var(--ds-font-body,14px)}
+body.ws-workspace-active .ws-workbench-shell .ws-exclusion-add{margin:16px 0;padding:0 16px 16px;border-radius:14px;border:1px solid var(--ws-line);background:var(--ws-surface,rgba(255,255,255,.6))}
+body.ws-workspace-active .ws-workbench-shell .ws-exclusion-add>summary{cursor:pointer;padding:14px 0;font-weight:600;color:var(--ws-ink)}
+body.ws-workspace-active .ws-workbench-shell .ws-exclusion-add form{display:grid;gap:12px;margin-top:12px}
+body.ws-workspace-active .ws-workbench-shell .ws-exclusion-add form[data-ws-exclusion-form]:first-of-type{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));align-items:end}
+body.ws-workspace-active .ws-workbench-shell .ws-exclusion-add textarea{width:100%;min-height:96px;padding:10px 12px;border-radius:10px;border:1px solid var(--ws-line);background:var(--ws-surface-strong,#fff);color:var(--ws-ink);font:inherit;resize:vertical}
+body.ws-workspace-active .ws-workbench-shell .ws-business-bulk .btn[disabled]{opacity:.5;cursor:not-allowed}
 body.ws-workspace-active .ws-workbench-shell .ws-business-table small{display:block;margin-top:6px;color:var(--ws-faint);font-size:var(--ds-font-body,14px);line-height:1.5;overflow-wrap:anywhere}
 body.ws-workspace-active .ws-workbench-shell .ws-business-table .ws-person-copy small{margin-top:2px}
 body.ws-workspace-active .ws-workbench-shell :is(.ws-business-detail,.ws-business-inline-detail){min-width:0;max-width:100%;padding:var(--ds-section-inset,20px);overflow-wrap:anywhere}
