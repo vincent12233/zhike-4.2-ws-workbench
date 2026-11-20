@@ -23,6 +23,7 @@ function createHarness({ failExport = '', failMetadataWrite = false, accountList
     schemaVersion: 6, settings: [], conversations: [{ id: `${id}-conversation` }],
     messages: [{ id: `${id}-message` }], analyses: [], replies: [], batches: [],
     collectionRuns: [], collectionItems: [], followupAlerts: [],
+    groupDrafts: id === 'second' ? [{ id: 'manual-draft', accountId: id, message: '  Exact draft\n正文  ', status: 'CANCELLED', createdAt: '2026-11-20T00:00:00.000Z', cancelledAt: '2026-11-20T00:01:00.000Z', targets: [{ groupJid: 'synthetic@g.us', name: 'Same <title>', status: 'CANCELLED' }] }] : [],
   });
   const context = {
     state, today: '2026-11-14', TextEncoder,
@@ -59,6 +60,9 @@ function createHarness({ failExport = '', failMetadataWrite = false, accountList
   const backup = JSON.parse(success.downloads[0].value);
   assert.deepEqual(Object.keys(backup.wsAccounts), ['default', 'second']);
   assert.equal(backup.wsAccounts.second.messages[0].id, 'second-message');
+  assert.equal(backup.wsAccounts.second.groupDrafts[0].message, '  Exact draft\n正文  ');
+  assert.equal(backup.wsAccounts.second.groupDrafts[0].targets[0].status, 'CANCELLED');
+  assert.deepEqual(backup.wsAccounts.default.groupDrafts, []);
   assert.equal(backup.ws.messages[0].id, 'default-message', 'legacy active-account field remains compatible');
   assert.equal(backup.wsAccountMetadata.length, 2);
   const unsigned = { ...backup }; delete unsigned.integrity;

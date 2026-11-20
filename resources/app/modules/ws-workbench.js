@@ -1341,8 +1341,9 @@
     const timer = setTimeout(() => controller.abort(), Number(init.timeout) || 20000);
     try {
       const url = new URL(pathname, window.location.origin);
-      const accountId = String(context?.accountId || url.searchParams.get('accountId') || state.activeAccountId || '');
-      const globalAccountRoute = /^\/api\/ws\/accounts(?:\/|$)/.test(url.pathname) || url.searchParams.get('allAccounts') === '1';
+      const groupDraftRestoreRoute = url.pathname === '/api/ws/group-drafts/restore';
+      const accountId = groupDraftRestoreRoute ? '' : String(context?.accountId || url.searchParams.get('accountId') || state.activeAccountId || '');
+      const globalAccountRoute = groupDraftRestoreRoute || /^\/api\/ws\/accounts(?:\/|$)/.test(url.pathname) || url.searchParams.get('allAccounts') === '1';
       if (url.pathname.startsWith('/api/ws/') && !accountId && !globalAccountRoute) throw new Error('请先添加并选择当前用途的 WS 账号。');
       if (url.pathname.startsWith('/api/ws/') && accountId && !url.searchParams.has('accountId')) url.searchParams.set('accountId', accountId);
       const nextInit = { ...init };
@@ -6034,7 +6035,10 @@
     if (!value || typeof value !== 'object') return { skipped: true };
     return api('/api/ws/import', { method: 'POST', timeout: 60000, body: JSON.stringify({...value,accountId:accountId||value.accountId||''}) }, { accountId: accountId || value.accountId || '' });
   }
-  window.__zhikeWsBackup = Object.freeze({ exportData: exportWsData, importData: importWsData, listAccounts: listWsBackupAccounts, ensureAccount: ensureWsBackupAccount, deleteAccount: deleteWsBackupAccount });
+  async function importWsGroupDrafts(payload) {
+    return api('/api/ws/group-drafts/restore', { method: 'POST', timeout: 60000, body: JSON.stringify(payload) });
+  }
+  window.__zhikeWsBackup = Object.freeze({ exportData: exportWsData, importData: importWsData, importGroupDrafts: importWsGroupDrafts, listAccounts: listWsBackupAccounts, ensureAccount: ensureWsBackupAccount, deleteAccount: deleteWsBackupAccount });
   window.__zhikeWsFollowups = Object.freeze({
     // Native WebView2 ingestion publishes ws.message/sync.updated as soon as
     // a batch is committed to the local SQLite sidecar.  Keep the renderer

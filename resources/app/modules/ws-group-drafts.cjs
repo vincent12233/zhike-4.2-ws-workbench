@@ -68,4 +68,54 @@ function change(db, accountId, body) {
   }
 }
 
-module.exports = { list, change };
+// Drafts are inert historical snapshots. Restoring one never authorizes its
+// targets, recreates a catalog entry, or queues a transport operation.
+function validateBackup(items, accountId, workspaceMode) {
+  if (!Array.isArray(items)) fail(400, 'DRAFT_BACKUP_INVALID', 'WS 备份中的 groupDrafts 不是有效数组。');
+  if (items.length && workspaceMode !== 'dedicated') fail(409, 'DRAFT_BACKUP_SCOPE', '群组草稿只能恢复到原专用账号。');
+  const seen = new Set();
+  const validTime = value => typeof value === 'string' && value.length === 24 && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
+  return items.map(item => {
+    if (!item || typeof item !== 'object' || Array.isArray(item) || typeof item.id !== 'string' || !draftId.test(item.id) || seen.has(item.id) ||
+        item.accountId !== accountId || typeof item.message !== 'string' || !item.message.trim() || item.message.length > 4000 ||
+        !['DRAFT', 'CANCELLED'].includes(item.status) || !validTime(item.createdAt) ||
+        (item.status === 'DRAFT' ? item.cancelledAt != null : !validTime(item.cancelledAt)) ||
+        !Array.isArray(item.targets) || item.targets.length < 1 || item.targets.length > 100 ||
+        item.targets.some(target => !target || typeof target.groupJid !== 'string' || !groupJid.test(target.groupJid) ||
+          typeof target.name !== 'string' || target.name.length > 240 || target.status !== item.status) ||
+        new Set(item.targets.map(target => target.groupJid)).size !== item.targets.length) {
+      fail(400, 'DRAFT_BACKUP_INVALID', '群组草稿备份的账号、内容、状态、时间或确切群标识无效，未执行恢复。');
+    }
+    seen.add(item.id);
+    return { ...item, cancelledAt: item.cancelledAt ?? null,
+      targets: item.targets.map(({ groupJid, name }) => ({ groupJid, name })).sort((a, b) => a.groupJid < b.groupJid ? -1 : a.groupJid > b.groupJid ? 1 : 0) };
+  });
+}
+
+function restoreBackup(db, accountId, items) {
+  if (!db.isTransaction) throw new Error('Group draft restore requires the account import transaction.');
+  const result = { mode: 'merge', received: items.length, inserted: 0, cancelled: 0, unchanged: 0, sendAvailable: false };
+  const select = db.prepare('SELECT * FROM ws_group_drafts WHERE account_id=? AND id=?');
+  const insert = db.prepare('INSERT INTO ws_group_drafts(account_id,id,message_text,targets_json,status,created_at,cancelled_at) VALUES(?,?,?,?,?,?,?)');
+  const cancel = db.prepare("UPDATE ws_group_drafts SET status='CANCELLED',cancelled_at=? WHERE account_id=? AND id=? AND status='DRAFT'");
+  for (const item of items) {
+    const previous = select.get(accountId, item.id);
+    if (!previous) {
+      insert.run(accountId, item.id, item.message, JSON.stringify(item.targets), item.status, item.createdAt, item.cancelledAt);
+      result.inserted += 1;
+      continue;
+    }
+    const ids = targets => JSON.stringify(targets.map(target => target.groupJid).sort());
+    if (previous.message_text !== item.message || ids(JSON.parse(previous.targets_json)) !== ids(item.targets)) {
+      fail(409, 'DRAFT_BACKUP_CONFLICT', '现有草稿编号已绑定不同正文或群标识，该账号恢复已全部回滚。');
+    }
+    // A stale backup cannot revive a cancellation or erase newer local drafts.
+    if (previous.status === 'DRAFT' && item.status === 'CANCELLED') {
+      cancel.run(item.cancelledAt, accountId, item.id);
+      result.cancelled += 1;
+    } else result.unchanged += 1;
+  }
+  return result;
+}
+
+module.exports = { list, change, readDraft, validateBackup, restoreBackup };

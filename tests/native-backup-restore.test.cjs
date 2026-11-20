@@ -92,8 +92,18 @@ async function restoreIntoIsolatedServer(backup) {
         response = await request('/api/ws/accounts', { method: 'POST', body: JSON.stringify({ id: accountId, displayName: accountId, workspaceMode: payload.accounts?.[0]?.workspaceMode || 'ordinary' }) });
         assert.equal(response.status, 201, `isolated account create rejected: ${await response.text()}`);
       }
-      response = await request('/api/ws/import', { method: 'POST', body: JSON.stringify({ ...payload, accountId }) });
+      const accountData = { ...payload, accountId }; delete accountData.groupDrafts;
+      response = await request('/api/ws/import', { method: 'POST', body: JSON.stringify(accountData) });
       assert.equal(response.status, 200, `isolated WS restore rejected: ${await response.text()}`);
+      response = await request('/api/ws/import', { method: 'POST', body: JSON.stringify(accountData) });
+      assert.equal(response.status, 200, 'repeating a workspace restore remains idempotent');
+    }
+
+    const draftAccounts = Object.entries(backup.wsAccounts).filter(([, value]) => value.groupDrafts?.length).map(([accountId, value]) => ({ accountId, groupDrafts: value.groupDrafts }));
+    const draftPayload = { accounts: draftAccounts, operationId: crypto.createHash('sha256').update(JSON.stringify(draftAccounts)).digest('hex') };
+    for (let attempt = 0; attempt < 2; attempt++) {
+      response = await request('/api/ws/group-drafts/restore', { method: 'POST', body: JSON.stringify(draftPayload) });
+      assert.equal(response.status, 200, `native workspace final draft merge rejected: ${await response.text()}`);
     }
 
     const saved = await (await request('/api/state')).json();
@@ -108,7 +118,11 @@ async function restoreIntoIsolatedServer(backup) {
       assert.equal(exported.conversations.length, 1, `${accountId} conversation must survive restore`);
       assert.equal(exported.messages.length, 1, `${accountId} message must survive restore`);
       assert.equal(exported.messages[0].originalText, expectedText);
+      const sortDrafts = rows => JSON.parse(JSON.stringify(rows)).sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+      assert.deepEqual(sortDrafts(exported.groupDrafts), sortDrafts(backup.wsAccounts[accountId].groupDrafts || []), 'native envelope preserves every draft field without relying on input order');
     }
+    const groups = await (await request('/api/ws/group-drafts?accountId=test-account')).json();
+    assert.equal(groups.sendAvailable, false); assert.deepEqual(groups.groups, []);
   } finally {
     try { await request('/api/shutdown', { method: 'POST', headers: { 'X-Zhike-Shutdown-Token': token } }); } catch {}
     await Promise.race([new Promise(resolve => child.once('exit', resolve)), wait(2500)]);
@@ -123,7 +137,7 @@ async function restoreIntoIsolatedServer(backup) {
 }
 
 async function main() {
-  const dotnet = path.join(repo, '.tools', 'dotnet10', 'dotnet.exe');
+  const dotnet = process.env.ZHIKE_TEST_DOTNET || path.join(repo, '.tools', 'dotnet10', 'dotnet.exe');
   const project = path.join(repo, 'desktop', 'tests', 'BackupRetentionRuntime', 'BackupRetentionRuntime.csproj');
   const result = spawnSync(dotnet, ['run', '--project', project, '-c', 'Release', '--', '--emit-envelope'], {
     cwd: repo,
@@ -147,7 +161,7 @@ async function main() {
   assert.equal(restored.wsAccounts['test-account'].accounts[0].workspaceMode, 'dedicated');
   assert.deepEqual(Object.keys(restored.wsAccounts['test-account']).sort(), [
     'accounts', 'analyses', 'batches', 'collectionItems', 'collectionRuns', 'conversations',
-    'followupAlerts', 'messages', 'replies', 'schemaVersion', 'settings',
+    'followupAlerts', 'groupDrafts', 'messages', 'replies', 'schemaVersion', 'settings',
   ].sort());
 
   const tampered = { ...native, payloadJson: native.payloadJson.replace('C123', 'C999') };

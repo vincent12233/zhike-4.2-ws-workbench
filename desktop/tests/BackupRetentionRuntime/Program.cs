@@ -99,6 +99,15 @@ try
         ["id"] = "MSG-SECOND-1", ["conversationId"] = "WS-SECOND-C1", ["externalId"] = "wa-second-message-1",
         ["direction"] = "send", ["originalText"] = "Reply from isolated second account", ["order"] = 1,
     });
+    secondWs["groupDrafts"] = new JsonArray();
+    foreach (var draftStatus in new[] { "DRAFT", "CANCELLED" })
+        secondWs["groupDrafts"]!.AsArray().Add(new JsonObject
+        {
+            ["id"] = "native-draft-" + draftStatus, ["accountId"] = "test-account",
+            ["message"] = "  Original group draft\n正文  ", ["status"] = draftStatus,
+            ["createdAt"] = "2026-11-20T00:00:00.000Z", ["cancelledAt"] = draftStatus == "CANCELLED" ? "2026-11-20T00:01:00.000Z" : null,
+            ["targets"] = new JsonArray(new JsonObject { ["groupJid"] = "synthetic@g.us", ["name"] = "Same <title>", ["status"] = draftStatus }),
+        });
     NativeBackupEnvelope.ValidateWsAccount(defaultWs);
     NativeBackupEnvelope.ValidateWsAccount(secondWs);
 

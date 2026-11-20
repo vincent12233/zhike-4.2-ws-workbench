@@ -533,6 +533,7 @@ function wsExportManifest(accountIds, createdAt, scope = accountIds.length > 1 ?
       sendAudit: count('ws_send_audit'),
       mediaAssets: count('ws_media_assets'),
       groups: count('ws_group_catalog'),
+      groupDrafts: count('ws_group_drafts'),
       groupMembershipEvents: count('ws_group_membership_events'),
     },
   };
@@ -557,6 +558,7 @@ async function writeWsExport(write, options = {}) {
     ['sendAudit', statement('SELECT * FROM ws_send_audit WHERE account_id IN (:accounts) ORDER BY account_id,created_at LIMIT ? OFFSET ?'), wsSendAuditPayload],
     ['mediaAssets', statement('SELECT * FROM ws_media_assets WHERE account_id IN (:accounts) ORDER BY account_id,created_at LIMIT ? OFFSET ?'), wsMediaPayload],
     ['groups', statement('SELECT * FROM ws_group_catalog WHERE account_id IN (:accounts) ORDER BY account_id,last_seen_at DESC,group_name LIMIT ? OFFSET ?'), wsGroupCatalogPayload],
+    ['groupDrafts', statement('SELECT * FROM ws_group_drafts WHERE account_id IN (:accounts) ORDER BY account_id,created_at,id LIMIT ? OFFSET ?'), wsGroupDrafts.readDraft],
     ['groupMembershipEvents', statement(`SELECT e.*,t.group_name AS target_group_name,t.source_id AS target_source_id,t.channel_id AS target_channel_id,t.data_json AS target_data_json
       FROM ws_group_membership_events e LEFT JOIN ws_group_monitor_targets t ON t.id=e.target_id
       WHERE e.account_id IN (:accounts) ORDER BY e.account_id,e.observed_at,e.id LIMIT ? OFFSET ?`), wsGroupMonitorEventPayload],
@@ -4739,6 +4741,28 @@ const server = createServer(async (req, res) => {
     // credentials or a remote socket: it creates a durable plan which the
     // native WebView bridge must acknowledge after the operator confirms the
     // visible composer/send action.
+    if (req.method === 'POST' && url.pathname === '/api/ws/group-drafts/restore') {
+      const body = JSON.parse((await readBody(req, 250 * 1024 * 1024)).toString('utf8'));
+      if (!Array.isArray(body?.accounts) || !body.accounts.length || typeof body.operationId !== 'string' ||
+          body.operationId !== createHash('sha256').update(JSON.stringify(body.accounts)).digest('hex')) {
+        return json(res, 400, { code: 'DRAFT_RESTORE_INVALID', error: '群组草稿恢复内容或操作指纹无效。' });
+      }
+      const seen = new Set();
+      const accounts = body.accounts.map(item => {
+        const id = item?.accountId;
+        if (typeof id !== 'string' || !id || wsAccountId(id) !== id || /[\p{Cc}\p{Cf}]/u.test(id) || seen.has(id)) throw Object.assign(new Error('群组草稿恢复账号缺失或重复。'), { status: 400, code: 'DRAFT_SCOPE_INVALID' });
+        seen.add(id);
+        const account = wsRequireAccount(id);
+        return { accountId: id, groupDrafts: wsGroupDrafts.validateBackup(item.groupDrafts, id, account.workspace_mode) };
+      });
+      db.exec('BEGIN IMMEDIATE');
+      let restored;
+      try {
+        restored = accounts.map(item => ({ accountId: item.accountId, ...wsGroupDrafts.restoreBackup(db, item.accountId, item.groupDrafts) }));
+        db.exec('COMMIT');
+      } catch (error) { db.exec('ROLLBACK'); throw error; }
+      return json(res, 200, { ok: true, operationId: body.operationId, accounts: restored, sendAvailable: false });
+    }
     if (url.pathname === '/api/ws/group-drafts') {
       const accounts = url.searchParams.getAll('accountId');
       const accountId = accounts[0];
@@ -5499,6 +5523,7 @@ const server = createServer(async (req, res) => {
       const collectionRuns = body.collectionRuns || [];
       const collectionItems = body.collectionItems || [];
       const followupAlerts = body.followupAlerts || [];
+      const groupDrafts = wsGroupDrafts.validateBackup(Object.hasOwn(body, 'groupDrafts') ? body.groupDrafts : [], accountId, account.workspace_mode);
       const limits = { settings: 5000, conversations: 5000, messages: 100000, analyses: 20000, replies: 20000, batches: 20000, collectionRuns: 5000, collectionItems: 100000, followupAlerts: 20000 };
       for (const [key, limit] of Object.entries(limits)) if ({ settings, conversations, messages, analyses, replies, batches, collectionRuns, collectionItems, followupAlerts }[key].length > limit) return json(res, 413, { error: `WS 备份中的 ${key} 超过 ${limit} 条上限，未执行恢复。` });
       const conversationIds = new Set(conversations.map(item => wsText(item.id, 160)).filter(Boolean));
@@ -5543,6 +5568,7 @@ const server = createServer(async (req, res) => {
       const vipGroupIds = new Set(knownGroups.filter(wsIsVipGroup).map(row => row.id));
       const groupExternalIds = new Set(knownGroups.filter(wsIsExcludedGroup).map(row => row.external_id));
       const groupIds = new Set(knownGroups.filter(wsIsExcludedGroup).map(row => row.id));
+      let groupDraftRestore;
       db.exec('BEGIN IMMEDIATE');
       try {
         db.prepare('DELETE FROM ws_followup_alerts WHERE account_id=?').run(accountId);
@@ -5594,9 +5620,10 @@ const server = createServer(async (req, res) => {
          const addAlert = db.prepare('INSERT INTO ws_followup_alerts(id,account_id,conversation_id,analysis_id,alert_key,priority,reason,followup_time,status,snoozed_until,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)');
          for (const item of followupAlerts) addAlert.run(wsText(item.id, 160) || wsCreateId('wfa'), accountId, wsText(item.conversationId, 160), wsText(item.analysisId, 160), wsText(item.alertKey, 240), wsText(item.priority, 20) || 'today', wsText(item.reason, 500), wsText(item.followupTime, 80), wsText(item.status, 20) || 'open', wsText(item.snoozedUntil, 80), JSON.stringify(wsObject(item.data, 32 * 1024)), wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
         for (const row of db.prepare('SELECT * FROM ws_conversations WHERE account_id=?').all(accountId)) if (wsIsExcludedGroup(row)) wsQuiesceGroup(row, now);
+        groupDraftRestore = wsGroupDrafts.restoreBackup(db, accountId, groupDrafts);
         db.exec('COMMIT');
       } catch (error) { db.exec('ROLLBACK'); throw error; }
-      return json(res, 200, { ok: true, schemaVersion: 6, counts: { settings: settings.length, conversations: conversations.length, messages: messages.length, analyses: analyses.length, replies: replies.length, batches: batches.length, collectionRuns: collectionRuns.length, collectionItems: collectionItems.length, followupAlerts: followupAlerts.length } });
+      return json(res, 200, { ok: true, schemaVersion: 6, groupDraftRestore, counts: { settings: settings.length, conversations: conversations.length, messages: messages.length, analyses: analyses.length, replies: replies.length, batches: batches.length, collectionRuns: collectionRuns.length, collectionItems: collectionItems.length, followupAlerts: followupAlerts.length, groupDrafts: groupDrafts.length } });
     }
     const hotProfileMatch = url.pathname.match(/^\/api\/(?:ws\/)?hot-chat\/profile(?:\/(facts|confirm|events|diagnostics|sync-retry))?$/);
     if (hotProfileMatch) {

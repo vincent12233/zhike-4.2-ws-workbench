@@ -86,6 +86,8 @@ function runStage3(options = {}) {
   run('Dedicated group permissions and mention capabilities', [path.join(repo, 'tests', 'ws-group-permission-pages.test.cjs')]);
   run('Dedicated WS local group reading history', [path.join(repo, 'tests', 'ws-group-reading-workspace.test.cjs')]);
   run('Dedicated WS group drafts and cancellation', [path.join(repo, 'tests', 'ws-group-drafts-api.test.cjs')]);
+  run('Dedicated WS group draft backup account transaction', [path.join(repo, 'tests', 'ws-group-drafts-backup.test.cjs')]);
+  run('Dedicated WS draft merge and workspace restore failure', [path.join(repo, 'tests', 'ws-group-drafts-restore-core.test.cjs')]);
   run('WS account purpose operations', [path.join(repo, 'tests', 'ws-workspace-policy.test.cjs')]);
   run('WS account purpose in group monitor writes', [path.join(repo, 'tests', 'ws-group-monitor-workspace-mode.test.cjs')]);
   run('WS group monitor identity and paused-profile safety', [path.join(repo, 'tests', 'ws-group-monitor-identity-safety.test.cjs')], { timeout: 180000 });
