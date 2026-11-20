@@ -1,11 +1,24 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const legacy = fs.readFileSync(path.join(__dirname, '..', 'src', 'Zhike.Desktop', 'Views', 'LegacyUiHostPage.xaml.cs'), 'utf8').replaceAll('\r\n', '\n');
 const capability = fs.readFileSync(path.join(__dirname, '..', 'src', 'Zhike.Desktop', 'Services', 'WsCollectionCapability.cs'), 'utf8');
 
-assert.match(legacy, /querySelector\(['"]#pane-side['"]\)/, '工作台必须用当前 WhatsApp 会话栏识别已登录状态');
+const loginProbe = legacy.match(/private const string WsLoginProbeScript = """\s*([\s\S]*?)\s*""";/)?.[1];
+assert.ok(loginProbe, '必须存在 WebView2 登录状态检测脚本');
+function probeChatSidebar(present) {
+  const document = {
+    body: { innerText: '' },
+    querySelector(selectors) {
+      return present && selectors.split(',').some(selector => selector.trim() === '#pane-side') ? {} : null;
+    },
+  };
+  return JSON.parse(vm.runInNewContext(loginProbe, { document })).chat === true;
+}
+assert.equal(probeChatSidebar(true), true, '工作台必须用当前 WhatsApp 会话栏识别已登录状态');
+assert.equal(probeChatSidebar(false), false, '空白登录页不能被识别为已登录');
 assert.doesNotMatch(legacy, /documentElement\.style\.zoom\s*=/, '生产工作台不得缩放 WhatsApp 根节点，否则 WebView 底部留下空白并裁切二维码');
 
 assert.match(legacy, /SetWsStatusAsync\(accountId,\s*"已连接"\)[\s\S]{0,500}_wsQueue\.EnqueueAsync/, '收到授权页面采集后应先更新连接状态并持久化队列');
