@@ -1303,9 +1303,12 @@ function wsGroupMonitorAccountScoped(profile, requestedAccountId = '') {
 }
 
 function wsGroupMonitorTargetRow(profileId, targetId = '', groupJid = '') {
-  if (targetId) return db.prepare('SELECT * FROM ws_group_monitor_targets WHERE id=? AND profile_id=?').get(targetId, profileId);
-  const normalized = wsGroupMonitor.normalizeMemberIdentity(groupJid).value;
-  return normalized ? db.prepare('SELECT * FROM ws_group_monitor_targets WHERE profile_id=? AND group_jid=?').get(profileId, normalized) : null;
+  const observed = wsGroupMonitor.normalizeMemberIdentity(groupJid);
+  // A configured target ID cannot replace the observed WhatsApp group identity.
+  // Otherwise delayed or misattributed packets can write another group's CRM.
+  if (observed.kind !== 'group') return null;
+  if (targetId) return db.prepare('SELECT * FROM ws_group_monitor_targets WHERE id=? AND profile_id=? AND group_jid=?').get(targetId, profileId, observed.value);
+  return db.prepare('SELECT * FROM ws_group_monitor_targets WHERE profile_id=? AND group_jid=?').get(profileId, observed.value);
 }
 
 function wsGroupMonitorAutoCustomerId(accountId, memberKey, phone = '') {
@@ -1534,7 +1537,7 @@ function wsGroupMonitorApplyEventsInTransaction(accountId, inputEvents = [], opt
     const groupJid = wsGroupMonitor.normalizeMemberIdentity(event.groupJid || event.group_id || event.groupId).value;
     const profile = profileId ? db.prepare('SELECT * FROM ws_group_monitor_profiles WHERE id=? AND account_id=?').get(profileId, accountId) : db.prepare('SELECT * FROM ws_group_monitor_profiles WHERE account_id=? AND enabled=1 ORDER BY updated_at DESC LIMIT 1').get(accountId);
     const target = profile ? wsGroupMonitorTargetRow(profile.id, targetId, groupJid) : null;
-    if (!profile || !target || !target.enabled || target.account_id !== accountId) {
+    if (!profile || !profile.enabled || !target || !target.enabled || target.account_id !== accountId) {
       result.ignored += 1;
       result.events.push({ status: 'ignored', reason: 'target-disabled-or-missing' });
       continue;

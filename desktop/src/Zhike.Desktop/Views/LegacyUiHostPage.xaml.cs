@@ -2998,8 +2998,11 @@ public sealed partial class LegacyUiHostPage : Page
   const groupMonitorState = { profileId:'', intervalSec:45, targets:[], status:'stopped', enabled:false, timer:0, seen:new Set() };
   const normalizeGroupMonitorKey = value => String(value ?? '').replace(/[\u200e\u200f\u202a-\u202e]/g, '').replace(/\s+/g, ' ').trim().toLocaleLowerCase();
   const groupMonitorTarget = (groupJid, groupName) => {
-    const jid = normalizeGroupMonitorKey(groupJid), name = normalizeGroupMonitorKey(groupName);
-    return groupMonitorState.targets.find(item => item.enabled !== false && ((jid && normalizeGroupMonitorKey(item.groupJid) === jid) || (name && normalizeGroupMonitorKey(item.groupName) === name))) || null;
+    const jid = normalizeGroupMonitorKey(groupJid);
+    // Names are display labels, never group identity. A same-name chat or an
+    // unresolved row must not inherit another target's membership authority.
+    if (!/^[a-z0-9._-]+@g\.us$/.test(jid)) return null;
+    return groupMonitorState.targets.find(item => item.enabled !== false && normalizeGroupMonitorKey(item.groupJid) === jid) || null;
   };
   const groupMonitorCurrentIdentity = () => {
     const header = document.querySelector('#main header, #main [data-testid*="conversation-header" i], #main [data-testid*="chat-header" i]');
@@ -3077,14 +3080,14 @@ public sealed partial class LegacyUiHostPage : Page
       // A fixed monitor target is an explicit group binding in its own right;
       // ordinary groups must not depend on the customer VIP allowlist.
       if (!row || !['group', 'vip_group'].includes(row.conversationType)) continue;
-      const target = groupMonitorTarget(row.conversationKey, row.displayName) || groupMonitorState.targets.find(item => item.enabled !== false && normalizeGroupMonitorKey(item.groupName) === normalizeGroupMonitorKey(row.displayName));
+      const target = groupMonitorTarget(row.conversationKey, row.displayName);
       if (!target) continue;
       const preview = clean(row.lastMessagePreview || row.previewText || row.preview || '');
       const type = groupMonitorEventType(preview);
       if (!type) continue;
       const member = groupMonitorPreviewMemberIdentity(row.__node, preview);
       if (!member.value) continue;
-      const groupKey = clean(target.groupJid || row.conversationKey || target.groupName);
+      const groupKey = normalizeGroupMonitorKey(row.conversationKey);
       const sourceCursor = clean(row.cursor || row.lastMessageFingerprint || row.lastMessageAt || preview);
       const sourceEventId = `wsg-preview-${groupMonitorHash(`${groupKey}|${sourceCursor}|${member.value}|${type}`)}`;
       const key = `${target.targetId || ''}|${groupKey}|${member.value}|${type}|${sourceEventId}`;
