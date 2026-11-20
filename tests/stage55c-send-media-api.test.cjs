@@ -40,6 +40,30 @@ const readAudit = async id => (await api('/api/ws/send-audit?accountId=default&i
   await api('/api/ws/accounts', { id: 'other', displayName: 'synthetic other' });
   for (let index = 0; index < 30; index++) await api('/api/ws/conversations', { id: 'c-' + (index === 0 ? 'a' : index), accountId: 'default', externalId: String(919900000000 + index) + '@c.us', title: 'Synthetic ' + index, data: { conversationType: 'direct' } });
 
+  await check('direct plans and durable attempts require an explicit ordinary account', async () => {
+    const id = 'old-send-purpose', conversationIds = ['old-send-conversation'];
+    await api('/api/ws/accounts', { id, displayName: 'Synthetic restored account' });
+    await api('/api/ws/conversations', { id:conversationIds[0], accountId:id, externalId:'919911111111@c.us', conversationType:'direct' });
+    const options = { accountId:id, conversationIds };
+    const oldPlan = await plan('existing-purpose-plan', null, options);
+    assert.equal(oldPlan.status, 201);
+    const auditId = oldPlan.value.dispatch.items[0].id;
+    // Simulate a restored legacy queue. The public API cannot change purpose.
+    db(c => c.prepare("UPDATE ws_accounts SET workspace_mode='dedicated' WHERE id=?").run(id));
+    for (const key of ['existing-purpose-plan', 'new-purpose-plan']) {
+      const refused = await plan(key, null, { ...options, workspaceMode:'ordinary' });
+      assert.equal(refused.status, 403);
+      assert.equal(refused.value.code, 'WS_WORKSPACE_MODE_MISMATCH');
+    }
+    const noAccount = await plan('missing-purpose-account', null, { accountId:undefined });
+    assert.equal(noAccount.status, 400);
+    const begin = await api('/api/ws/send', { accountId:id, auditId, action:'begin-attempt', workspaceMode:'ordinary' });
+    assert.equal(begin.status, 403);
+    const rows = db(c => c.prepare('SELECT status,native_result_json FROM ws_send_audit WHERE account_id=?').all(id));
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].status, 'queued');
+    assert.equal(JSON.parse(rows[0].native_result_json).sendAttempt, undefined);
+  });
   await check('R04 all attachment states retain bytes and references', async () => {
     for (const status of ['queued', 'sending', 'sent', 'failed', 'cancelled']) {
       const media = await upload('reference-' + status), planned = await plan('reference-' + status, media); assert.equal(planned.status, 201);

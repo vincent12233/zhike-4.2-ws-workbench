@@ -1885,6 +1885,16 @@ function wsSendRateCheck(accountId, amount = 1, now = Date.now(), consume = true
   if (consume) current.count += amount;
   return { allowed: true, retryAfterMs: 0, remaining: WS_SEND_RATE_LIMIT - current.count - (consume ? 0 : amount) };
 }
+function wsCheckDirectSendAccount(accountId) {
+  if (typeof accountId !== 'string' || !accountId || accountId !== accountId.trim()) {
+    return { status: 400, code: 'SEND_ACCOUNT_REQUIRED', error: '发送操作需要明确的账号编号。' };
+  }
+  const account = wsAccountRow(accountId);
+  if (!account) return { status: 404, code: 'SEND_ACCOUNT_UNKNOWN', error: 'WS 账号不存在。' };
+  const decision = wsWorkspacePolicy.decideWsWorkspaceOperation({ account, operation: 'send-direct', conversationType: 'direct' });
+  if (!decision.eligible) return { status: 403, code: decision.code, error: '一对一会话发送需要普通 WS 账号。' };
+  return null;
+}
 function wsSendConversationRow(id, accountId) {
   const row = wsConversationRow(id, accountId);
   if (!row) return { row: null, error: 'WS 会话不存在或不属于当前账号。', status: 404 };
@@ -4591,8 +4601,9 @@ const server = createServer(async (req, res) => {
     // visible composer/send action.
     if (url.pathname === '/api/ws/broadcast' && req.method === 'POST') {
       const body = JSON.parse((await readBody(req, WS_MEDIA_REQUEST_MAX_BYTES)).toString('utf8') || '{}');
-      const accountId = wsAccountId(body.accountId);
-      if (!wsAccountRow(accountId)) return json(res, 404, { error: 'WS 账号不存在。' });
+      const denial = wsCheckDirectSendAccount(body.accountId);
+      if (denial) return json(res, denial.status, { error: denial.error, code: denial.code });
+      const accountId = body.accountId;
       if (body.confirm !== true) return json(res, 400, { error: '群发必须由用户明确确认后才能创建发送计划。' });
       const idempotencyKey = wsText(body.idempotencyKey, 160);
       if (!idempotencyKey) return json(res, 400, { error: '群发缺少幂等键，请勿重复点击发送。' });
@@ -4689,6 +4700,8 @@ const server = createServer(async (req, res) => {
         let attempt = metadata.sendAttempt || {};
         const attachments = db.prepare('SELECT * FROM ws_send_attachments WHERE account_id=? AND send_audit_id=? ORDER BY order_no,id').all(accountId, auditId);
         if (body.action === 'begin-attempt') {
+          const denial = wsCheckDirectSendAccount(body.accountId);
+          if (denial) reject(denial.status, denial.code, denial.error);
           const allowed = existing.status === 'queued' && !attempt.id || existing.status === 'failed' && attempt.deliveryState === 'failed' && attempt.safeToRetry === true;
           if (!allowed) reject(409, 'SEND_RETRY_BLOCKED', '已有发送尝试或结果待核实；禁止重复授权或盲目重试。');
           const checked = wsSendConversationRow(existing.conversation_id, accountId);
