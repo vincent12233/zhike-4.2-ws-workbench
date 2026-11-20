@@ -99,6 +99,28 @@ try
         Assert(flushed == 4, "Local flush lifecycle changed");
         await runtime.ShutdownAsync();
     });
+    await Check("independent login hands off once after a live collector probe and keeps inspection visible", async () =>
+    {
+        var coordinator = new WsRuntimeCoordinator(); var pool = new WsWebViewSessionPool(coordinator);
+        var runtime = new WsRuntimeService(coordinator, pool);
+        runtime.BindHost(new DispatcherQueue(), (id, generation, token) => Task.FromResult(new WsWebViewSessionRegistration(new WebView2(), null, new WebView2())), (session, drive, token) => Task.CompletedTask, token => Task.CompletedTask);
+        var pairing = (await runtime.ShowAccountAsync("pairing")).Session;
+        var other = (await runtime.ShowAccountAsync("inspection")).Session;
+        runtime.SetCollectorState("pairing", "login-visible");
+        runtime.SetCollectorState("inspection", "login-visible");
+        pairing.StartAfterPairing = true;
+        Assert(!other.TakeCompletedPairing(true), "A different account consumed the pairing intent");
+        Assert(!pairing.TakeCompletedPairing(false), "Unpaired collector left the login surface");
+        Assert(pairing.TakeCompletedPairing(true) && !pairing.TakeCompletedPairing(true), "A verified pairing must hand off exactly once");
+        pairing.StartAfterPairing = true;
+        runtime.SetCollectorState("pairing", "paused");
+        Assert(!pairing.TakeCompletedPairing(true), "A paused collector resumed from a late login probe");
+        await runtime.CloseAccountAsync("pairing");
+        var reopened = (await runtime.ShowAccountAsync("pairing")).Session;
+        runtime.SetCollectorState("pairing", "login-visible");
+        Assert(!reopened.TakeCompletedPairing(true), "A retired collector transferred its intent to the next generation");
+        await runtime.ShutdownAsync();
+    });
     await Check("running independent collector is driven while the same account chats in foreground", async () =>
     {
         var coordinator = new WsRuntimeCoordinator(); var pool = new WsWebViewSessionPool(coordinator);

@@ -39,7 +39,7 @@ assert.match(script, /data-group-id.*data-jid.*data-chat-id/, 'group discovery m
 assert.match(script, /const identity = conversationIdentityFromRow\(row\)/, 'row discovery must use the robust group identity extractor');
 assert.match(script, /lastMessagePreview|previewText/, 'group monitor preview observer must use existing list metadata');
 assert.match(script, /申请加入|等待审核|join request|approval pending/, 'join-request system rows must be excluded before emitting joined events');
-assert.match(script, /mergeRows\(run\.seen, readRows\(\)[\s\S]*collectGroupMonitorPreviewEvents/, 'full hidden list sweep must feed each rendered window to group monitoring');
+assert.match(script, /const rows = readRows\(\);\s*mergeRows\(run\.seen, rows,[\s\S]*collectGroupMonitorPreviewEvents\(rows\)/, 'the full hidden list sweep feeds the same rendered window to directory and monitor');
 assert.match(script, /const groupMonitor = backgroundCollectorRole \? groupMonitorTick\(\)/, 'background heartbeat must drive the passive group monitor');
 assert.match(script, /advanced, queuedTasks:collectorTasks\.size, groupMonitor/, 'background heartbeat must expose monitor health counters');
 const begin = host.indexOf('private Task<BridgeResponse> ConfigureVipGroupsAsync(');

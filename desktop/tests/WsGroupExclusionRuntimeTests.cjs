@@ -61,9 +61,10 @@ const rows = [
   makeRow({ title:'+91 98765 43210' }),
   makeRow({ id:'unknown-contact', title:'Unresolved Alias' }),
 ];
+let visibleRows = () => rows;
 const container = {
   scrollTop:0, scrollHeight:500, clientHeight:500,
-  querySelectorAll(selector) { return /listitem|role="row"|cell-frame-container/.test(selector) ? rows : []; },
+  querySelectorAll(selector) { return /listitem|role="row"|cell-frame-container/.test(selector) ? visibleRows() : []; },
   dispatchEvent() {},
 };
 const header = {
@@ -81,7 +82,7 @@ const document = {
   querySelectorAll(selector) {
     if (selector.includes('msg-container') || selector.includes('data-pre-plain-text')) return messageNodes;
     if (selector.includes('#pane-side') || selector.includes('chat-list') || selector === '[role="grid"]') return [container];
-    if (/listitem|role="row"|cell-frame-container/.test(selector)) return rows;
+    if (/listitem|role="row"|cell-frame-container/.test(selector)) return visibleRows();
     return [];
   },
 };
@@ -167,6 +168,38 @@ sandbox.window.__zhikeWsGroupMonitorPause();
 assert.equal(sandbox.window.__zhikeWsCapture().blocked, true, 'pause stops passive member evidence');
 messageNodes = [];
 sandbox.window.__zhikeWsGroupMonitorStop();
+sandbox.window.__zhikeStopCapture();
+timers.length = 0; frames.length = 0; posted.length = 0;
+activeId = ''; activeTitle = ''; clicks.length = 0;
+const otherGroup = makeRow({ id:'other@g.us', title:'Recurring name', preview:'unchanged' });
+const quietGroup = makeRow({ id:'authorized@g.us', title:'Recurring name', preview:'unchanged' });
+container.scrollHeight = 1000;
+container.scrollTop = 12;
+visibleRows = () => container.scrollTop >= 500 ? [quietGroup] : [otherGroup];
+vm.runInNewContext('(function(__zhikeWsTrustedPurpose){'+script+'})("dedicated");', sandbox);
+posted.length = 0;
+sandbox.window.__zhikeWsConfigureGroupMonitor({ profileId:'seat', targets:[
+  {targetId:'target', groupJid:'authorized@g.us', groupName:'Recurring name'},
+  {targetId:'missing', groupJid:'absent@g.us', groupName:'Recurring name'},
+] });
+sandbox.window.__zhikeWsGroupMonitorStart();
+assert.equal(posted.some(packet => packet.conversations?.some(row => row.coverage === 'group-monitor-visible')), false, 'unobserved targets get no synthetic heartbeat');
+let renderSteps = 0;
+while (frames.length && renderSteps++ < 200) frames.shift()();
+assert.ok(renderSteps < 200, 'bounded directory sweep reached the bottom');
+const observed = posted.flatMap(packet => packet.conversations || []);
+assert.deepEqual(observed.map(row => [row.conversationKey,row.coverage]), [['authorized@g.us','group-monitor-visible']], 'a quiet target below the fold reports one observation; its same-name neighbour and an absent target report none');
+assert.ok(posted.every(packet => packet.groupEvents?.length === 0 && packet.capturedAt), 'quiet observations have capture times and zero membership events');
+assert.equal(container.scrollTop, 12, 'monitor-only sweep restores the original position');
+assert.equal(clicks.length, 0, 'monitoring only scrolls the independent directory');
+sandbox.window.__zhikeWsGroupMonitorPause();
+visibleRows = () => [quietGroup];
+sandbox.window.__zhikeWsBackgroundTick();
+assert.equal(posted.flatMap(packet => packet.conversations || []).filter(row => row.coverage === 'group-monitor-visible').length, 1, 'paused seat produces no new observations');
+sandbox.window.__zhikeStopCapture();
+visibleRows = () => rows;
+container.scrollTop = 0; container.scrollHeight = 500;
+timers.length = 0; frames.length = 0; posted.length = 0;
 vm.runInNewContext(script, sandbox);
 
 const candidates = sandbox.window.__zhikeWsReadHistoryCandidates([...discovery.conversations, ...discovery.excludedConversations]);

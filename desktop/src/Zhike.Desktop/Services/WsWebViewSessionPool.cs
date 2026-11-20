@@ -34,6 +34,13 @@ public sealed class WsWebViewSession
     /// </summary>
     public WebView2? CollectorView { get; }
     public string CollectorState { get; internal set; } = "not-started";
+    internal bool StartAfterPairing { get; set; }
+    internal bool TakeCompletedPairing(bool collectorSignedIn)
+    {
+        if (!collectorSignedIn || !StartAfterPairing || CollectorState != "login-visible") return false;
+        StartAfterPairing = false;
+        return true;
+    }
     public bool IsCollectorReady => CollectorView?.CoreWebView2 is not null;
     public DateTimeOffset CreatedAt { get; }
     public DateTimeOffset LastUsedAt { get; internal set; }

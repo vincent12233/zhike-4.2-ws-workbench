@@ -629,7 +629,20 @@ public sealed partial class LegacyUiHostPage : Page
                 if (session.CollectorState is "paused" or "not-started" or "error") return;
                 var status = await ProbeWsLoginStateAsync(session.AccountId, collector, session.Generation, cancellationToken, publishStatus: false);
                 if (!App.WsSessions.IsCurrent(session.AccountId, session.Generation, collector)) return;
-                if (session.CollectorState is "login-visible" or "paused" or "error") return;
+                if (session.CollectorState is "paused" or "error" or "not-started") return;
+                if (session.CollectorState == "login-visible")
+                {
+                    // A fresh pairing starts only after this collector's own login probe.
+                    // An operator inspecting an already running collector keeps the surface.
+                    if (!session.TakeCompletedPairing(status.status == "已连接")) return;
+                    if (string.Equals(_wsCollectorVisibleAccountId, session.AccountId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _wsCollectorVisibleAccountId = string.Empty;
+                        SyncPooledWsPresentation();
+                        RequestWsOverlayResize();
+                    }
+                    PublishCollectorState(session, "awaiting-login");
+                }
                 if (status.status != "已连接")
                 {
                     await StopWsCollectorAsync(session, status.status == "连接失败" ? "error" : "awaiting-login");
@@ -675,6 +688,7 @@ public sealed partial class LegacyUiHostPage : Page
         PublishWsStatus(JsonSerializer.SerializeToElement(new
         {
             accountId = session.AccountId, collectorState = state, collectorOnly = true,
+            loginVisible = string.Equals(_wsCollectorVisibleAccountId, session.AccountId, StringComparison.OrdinalIgnoreCase),
             detail = detail ?? (state == "running" ? "独立采集会话正在后台运行。" : "独立采集会话状态已更新。"),
         }));
     }
@@ -708,7 +722,7 @@ public sealed partial class LegacyUiHostPage : Page
             if (args.Cancel || !App.WsSessions.IsCurrent(session.AccountId, session.Generation, view)) return;
             _wsAccountMetrics.Invalidate(session.AccountId, collector: true);
             _wsCollectorStarted.Remove(view);
-        _wsCollectorPurposes.Remove(view);
+            _wsCollectorPurposes.Remove(view);
             _wsCollectorEpoch[view] = _wsCollectorEpoch.GetValueOrDefault(view) + 1;
             if (session.CollectorState is not ("paused" or "login-visible")) PublishCollectorState(session, "awaiting-login");
         }
@@ -804,15 +818,15 @@ public sealed partial class LegacyUiHostPage : Page
                 if (!OwnsStart()) return;
             }
             _wsCollectorPurposes[view] = new(session.Generation, epoch, purpose);
-            PublishCollectorState(session, "running");
             var installed = ParseWebViewJsonResult(await ExecuteCollectorScriptAsync(session,
                 "window.__zhikeWsCollectorRole='background';\n" + BuildWsCollectorScript(session.AccountId, purpose)
-                + "\nJSON.stringify({supported:typeof window.__zhikeWsCollectAllRead==='function' && typeof window.__zhikeWsBackgroundTick==='function'});", cancellationToken));
+                + "\nJSON.stringify({supported:typeof window.__zhikeWsDiscoverAll==='function' && typeof window.__zhikeWsCollectAllRead==='function' && typeof window.__zhikeWsBackgroundTick==='function'});", cancellationToken));
             if (installed.ValueKind != JsonValueKind.Object || !GetBool(installed, "supported"))
                 throw new InvalidOperationException("独立采集脚本未就绪。");
             cancellationToken.ThrowIfCancellationRequested();
-            if (!App.WsSessions.IsCurrent(session.AccountId, session.Generation, view)
-                || _wsCollectorEpoch.GetValueOrDefault(view) != epoch || session.CollectorState != "running") return;
+            if (!OwnsStart()) return;
+            _wsCollectorStarted.Add(view);
+            PublishCollectorState(session, "running");
             if (monitorPolicy is not null)
             {
                 _wsCollectorMonitorPolicies[session.AccountId] = monitorPolicy;
@@ -821,8 +835,6 @@ public sealed partial class LegacyUiHostPage : Page
                 if (monitorPolicy.Enabled && _wsCollectorMonitorRunning.Contains(session.AccountId))
                     await ExecuteCollectorScriptAsync(session, "window.__zhikeWsGroupMonitorStart?.(); void 0;");
             }
-            if (App.WsSessions.IsCurrent(session.AccountId, session.Generation, view)
-                && _wsCollectorEpoch.GetValueOrDefault(view) == epoch && session.CollectorState == "running") _wsCollectorStarted.Add(view);
         }
         catch
         {
@@ -840,7 +852,8 @@ public sealed partial class LegacyUiHostPage : Page
         return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_ISOLATED_PREVIEW", "隔离验收环境不会连接 WhatsApp 采集会话。");
 #else
         _wsSendGuard.Invalidate();
-        if (action == "open-collector") await OpenWsOverlayAsync(accountId, payload, cancellationToken: cancellationToken);
+        if (action == "open-collector" || action == "resume-collector" && !App.WsService.TryGetSession(accountId, out _))
+            await OpenWsOverlayAsync(accountId, payload, cancellationToken: cancellationToken);
         if (!App.WsService.TryGetSession(accountId, out var session) || session?.CollectorView is not { } collector
             || !_wsCollectorGates.TryGetValue(collector, out var gate))
             return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_NOT_STARTED", "请先打开独立采集登录并扫码。");
@@ -858,7 +871,9 @@ public sealed partial class LegacyUiHostPage : Page
             if (action == "open-collector")
             {
                 var wasError = session.CollectorState == "error";
+                var inspection = session.CollectorState == "running";
                 await StopWsCollectorAsync(session, "login-visible");
+                session.StartAfterPairing = !inspection;
                 await EnsureWsCollectorInitializedAsync(session, cancellationToken);
                 if (wasError && collector.CoreWebView2 is not null)
                 {
@@ -872,11 +887,22 @@ public sealed partial class LegacyUiHostPage : Page
                 return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new
                 {
                     accountId, collectorState = session.CollectorState, loginVisible = true,
-                    detail = "请在独立采集会话中扫码；它与前台聊天使用不同登录。完成后返回聊天并开始后台采集。",
+                    detail = inspection ? "正在查看独立采集会话，返回聊天后继续采集。" : "请在独立采集会话中扫码。确认此会话已登录后会自动开始后台采集。",
                 }));
+            }
+            if (action == "resume-collector" && collector.CoreWebView2 is null)
+            {
+                // Navigate is asynchronous. Only the completed document can confirm
+                // that this account's independent, persisted pairing is still valid.
+                PublishCollectorState(session, "awaiting-login");
+                await EnsureWsCollectorInitializedAsync(session, cancellationToken);
+                return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion,
+                    JsonSerializer.SerializeToElement(new { accountId, collectorState = session.CollectorState, loginVisible = false,
+                        detail = "正在检查此账号的独立采集会话。若会话已过期，请打开采集登录重新扫码。" }));
             }
             if (collector.CoreWebView2 is null)
                 return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_NOT_STARTED", "请先打开独立采集登录并扫码。");
+            session.StartAfterPairing = false;
             if (string.Equals(_wsCollectorVisibleAccountId, accountId, StringComparison.OrdinalIgnoreCase)) _wsCollectorVisibleAccountId = string.Empty;
             if (action == "pause-collector" || action == "hide-collector" && session.CollectorState == "paused")
                 await StopWsCollectorAsync(session, "paused");
@@ -2983,11 +3009,12 @@ public sealed partial class LegacyUiHostPage : Page
             }
             if (purpose is not null)
             {
-                checkpoints.RemoveAll(item => !purpose.AllowsCheckpoint(item));
-                checkpoints = checkpoints.Select(item => WsCollectorPurposePolicy.IsGroupJid(item.ConversationKey)
-                    ? item with { ConversationType = "group", IsGroup = true, VipGroup = false } : item).ToList();
                 var monitors = _wsCollectorMonitorPolicies.TryGetValue(accountId, out var confirmedMonitor)
                     ? new[] { confirmedMonitor } : [];
+                checkpoints.RemoveAll(item => !purpose.AllowsCheckpoint(item)
+                    || item.Coverage == "group-monitor-visible" && (!purpose.AllowsGroupMonitoring || confirmedMonitor?.AllowsGroup(item.ConversationKey) != true));
+                checkpoints = checkpoints.Select(item => WsCollectorPurposePolicy.IsGroupJid(item.ConversationKey)
+                    ? item with { ConversationType = "group", IsGroup = true, VipGroup = false } : item).ToList();
                 messages.RemoveAll(item => !purpose.AllowsMessage(item, monitors));
                 if (purpose.AllowsGroupMonitoring)
                     messages = messages.Select(item => item with { ConversationType = "group", VipGroup = false }).ToList();
@@ -3241,7 +3268,7 @@ public sealed partial class LegacyUiHostPage : Page
   // currently rendered, JID-bound group pane: no row click, scroll, navigation or
   // focus operation is performed here. The native host starts/pauses/stops
   // this worker only on the hidden collector WebView.
-  const groupMonitorState = { profileId:'', intervalSec:45, targets:[], status:'stopped', enabled:false, timer:0, seen:new Set() };
+  const groupMonitorState = { profileId:'', intervalSec:45, targets:[], status:'stopped', enabled:false, timer:0, seen:new Set(), lastObserved:new Map() };
   const normalizeGroupMonitorKey = value => String(value ?? '').replace(/[\u200e\u200f\u202a-\u202e]/g, '').replace(/\s+/g, ' ').trim().toLocaleLowerCase();
   const groupMonitorTarget = (groupJid, groupName) => {
     const jid = normalizeGroupMonitorKey(groupJid);
@@ -3320,11 +3347,9 @@ public sealed partial class LegacyUiHostPage : Page
   // without scrolling, clicking, focusing, or changing the read state. This
   // is a best-effort supplement to rendered system rows; it cannot recover
   // history that WhatsApp has not exposed in the current DOM window.
-  const collectGroupMonitorPreviewEvents = () => {
+  const collectGroupMonitorPreviewEvents = (rows = readRows()) => {
     if (!backgroundCollectorRole || !groupMonitorState.enabled || groupMonitorState.status !== 'running' || typeof readRows !== 'function') return [];
     const events = [];
-    let rows = [];
-    try { rows = readRows(); } catch { return events; }
     for (const row of rows) {
       // A fixed monitor target is an explicit group binding in its own right;
       // ordinary groups must not depend on the customer VIP allowlist.
@@ -3347,13 +3372,12 @@ public sealed partial class LegacyUiHostPage : Page
     }
     return events;
   };
-  const collectGroupMonitorEvents = () => {
+  const collectGroupMonitorEvents = (rows, identity = groupMonitorCurrentIdentity()) => {
     if (!backgroundCollectorRole || !groupMonitorState.enabled || groupMonitorState.status !== 'running') return [];
     // List previews are independent of the currently open conversation. Run
     // this first so a blank/ordinary foreground pane cannot short-circuit the
     // fixed-seat observer for other rendered VIP groups.
-    const events = collectGroupMonitorPreviewEvents();
-    const identity = groupMonitorCurrentIdentity();
+    const events = collectGroupMonitorPreviewEvents(rows);
     const typeEvidence = typeof conversationTypeFromNode === 'function' ? conversationTypeFromNode(identity.header, identity.jid, identity.groupName) : { conversationType:'unknown' };
     if (!['group', 'vip_group'].includes(typeEvidence.conversationType)) return events.slice(0, 200);
     const target = groupMonitorTarget(identity.jid, identity.groupName);
@@ -3380,15 +3404,31 @@ public sealed partial class LegacyUiHostPage : Page
     }
     return events.slice(0, 200);
   };
-  const postGroupMonitorEvents = events => {
-    if (!events.length || !window.chrome?.webview) return;
-    window.chrome.webview.postMessage(JSON.stringify({ type:'zhike.ws.capture', accountId, capturedAt:new Date().toISOString(), collectorRole:'background', groupEvents:events }));
+  const postGroupMonitorEvents = (events, rows, headerJid = '') => {
+    if (!groupMonitoringAllowed || !backgroundCollectorRole || !groupMonitorState.enabled || groupMonitorState.status !== 'running' || !window.chrome?.webview) return;
+    const now = Date.now(), conversations = [];
+    // A quiet, observed target still supplies evidence. A scheduled heartbeat,
+    // an unmatched display name and an unloaded row supply none.
+    const visible = new Set(rows.filter(row => row.isGroup === true).map(row => row.conversationKey));
+    if (headerJid) visible.add(headerJid);
+    for (const jid of visible) {
+      const target = groupMonitorTarget(jid);
+      if (!target || now - (groupMonitorState.lastObserved.get(jid) ?? -Infinity) < groupMonitorState.intervalSec * 1000) continue;
+      groupMonitorState.lastObserved.set(jid, now);
+      conversations.push({conversationKey:jid, displayName:target.groupName, conversationType:'group', isGroup:true, coverage:'group-monitor-visible'});
+    }
+    if (events.length || conversations.length)
+      window.chrome.webview.postMessage(JSON.stringify({ type:'zhike.ws.capture', accountId, capturedAt:new Date(now).toISOString(), collectorRole:'background', groupEvents:events, conversations }));
   };
   const groupMonitorTick = () => {
     if (!groupMonitoringAllowed) return { supported:false, reason:'workspace-purpose' };
     if (!backgroundCollectorRole) return { supported:false, reason:'collector-only' };
-    const events = collectGroupMonitorEvents();
-    postGroupMonitorEvents(events);
+    if (!groupMonitorState.enabled || groupMonitorState.status !== 'running') return { supported:true, status:groupMonitorState.status, eventCount:0 };
+    const rows = readRows(), identity = groupMonitorCurrentIdentity();
+    const events = collectGroupMonitorEvents(rows, identity);
+    postGroupMonitorEvents(events, rows, identity.jid);
+    if (groupMonitorState.targets.some(target => target.enabled) && !allScan && Date.now() - lastAllScanAt >= groupMonitorState.intervalSec * 1000)
+      discoverAll(true);
     return { supported:true, status:groupMonitorState.status, targetCount:groupMonitorState.targets.length, eventCount:events.length };
   };
   const scheduleGroupMonitorTick = () => {
@@ -3399,6 +3439,7 @@ public sealed partial class LegacyUiHostPage : Page
   window.__zhikeWsConfigureGroupMonitor = config => {
     if (!groupMonitoringAllowed) return { supported:false, reason:'workspace-purpose' };
     const source = config && typeof config === 'object' ? config : {};
+    groupMonitorState.lastObserved.clear();
     groupMonitorState.profileId = clean(source.profileId).slice(0, 160);
     groupMonitorState.intervalSec = Math.max(15, Math.min(3600, Number(source.intervalSec) || 45));
     groupMonitorState.targets = (Array.isArray(source.targets) ? source.targets : []).slice(0, 500).map(item => ({ targetId:clean(item?.targetId).slice(0, 160), groupJid:clean(item?.groupJid).slice(0, 240), groupName:clean(item?.groupName).slice(0, 200), sourceId:clean(item?.sourceId).slice(0, 160), vipOnly:item?.vipOnly !== false, enabled:item?.enabled !== false })).filter(item => /^[a-z0-9._-]+@g\.us$/.test(item.groupJid));
@@ -4145,7 +4186,7 @@ public sealed partial class LegacyUiHostPage : Page
     postAllScan([...run.seen.values()], 'page-list-interrupted');
     return true;
   };
-  const discoverAll = () => {
+  const discoverAll = (monitorOnly = false) => {
     if (!backgroundCollectorRole) {
       // Foreground callers receive a read-only snapshot. They must never
       // scroll the user's chat list just to discover a virtualized window.
@@ -4158,6 +4199,7 @@ public sealed partial class LegacyUiHostPage : Page
     const maxConversations = maxConversationCount();
     const current = new Map();
     if (allScan) {
+      if (!monitorOnly) allScan.monitorOnly = false;
       // A second status/manual read must observe the scan owner's accumulated
       // window, not a new empty map. It remains read-only and never replaces,
       // cancels or advances the active scan.
@@ -4166,7 +4208,7 @@ public sealed partial class LegacyUiHostPage : Page
     }
     const generation = ++allScanGeneration;
     const initial = Number(container.scrollTop || 0);
-    const run = { generation, container, initial, seen: current, rounds: 0, stable: 0, previous: current.size, maxConversations, maxRounds: 0, startedAt: Date.now(), lastProgressAt:Date.now(), lastProgressSignature:'', lastScrollTop:initial, lastMax:0, bottomStable:0, lastBottomSignature:'' };
+    const run = { generation, container, initial, monitorOnly, seen: current, rounds: 0, stable: 0, previous: current.size, maxConversations, maxRounds: 0, startedAt: Date.now(), lastProgressAt:Date.now(), lastProgressSignature:'', lastScrollTop:initial, lastMax:0, bottomStable:0, lastBottomSignature:'' };
     allScan = run;
     // Always discover from the physical top. Starting from the user's current
     // scroll position permanently omitted every conversation above it.
@@ -4178,17 +4220,19 @@ public sealed partial class LegacyUiHostPage : Page
       scheduleCollectorPaint(() => {
         if (allScan !== run || run.generation !== allScanGeneration) return;
         allScan = null; lastAllScanAt = Date.now();
-        postAllScan([...run.seen.values()], coverageOverride || (run.seen.size ? 'page-list-scanned' : 'none'));
+        if (!run.monitorOnly) postAllScan([...run.seen.values()], coverageOverride || (run.seen.size ? 'page-list-scanned' : 'none'));
       });
     };
     const step = () => {
       if (allScan !== run || run.generation !== allScanGeneration) return;
-      mergeRows(run.seen, readRows(), run.maxConversations);
+      if (run.monitorOnly && (!groupMonitorState.enabled || groupMonitorState.status !== 'running')) { finish(); return; }
+      const rows = readRows();
+      mergeRows(run.seen, rows, run.maxConversations);
       // The normal hidden full-list sweep already advances the virtualized
       // chat list. Reuse each rendered window for group monitoring so every
       // enabled VIP group can be observed without opening a conversation or
       // adding a second competing scroll loop.
-      if (groupMonitorState.enabled && groupMonitorState.status === 'running') postGroupMonitorEvents(collectGroupMonitorPreviewEvents());
+      if (groupMonitorState.enabled && groupMonitorState.status === 'running') postGroupMonitorEvents(collectGroupMonitorPreviewEvents(rows), rows);
       const before = Number(container.scrollTop || 0);
       const max = Math.max(0, Number(container.scrollHeight || 0) - Number(container.clientHeight || 0));
       const stepSize = Math.max(420, Number(container.clientHeight || 420) * 0.85);
@@ -4868,6 +4912,7 @@ public sealed partial class LegacyUiHostPage : Page
   window.__zhikeWsCapture = capture;
   let lastFingerprint = '';
   let lastListFingerprint = '';
+  let firstBackgroundTick = true;
   let emitTimer = null;
   let observer = null;
   const fingerprint = payload => JSON.stringify({ c: payload.conversations.map(item => [item.conversationKey, item.displayName, item.lastMessagePreview, item.unreadCount, item.conversationType]), m: payload.messages.map(item => [item.conversationKey, item.externalMessageId, item.body, item.direction]), g: (payload.groupEvents || []).map(item => [item.groupJid, item.memberId, item.type, item.sourceEventId]) });
@@ -4877,9 +4922,10 @@ public sealed partial class LegacyUiHostPage : Page
     // scrolls both virtualized panes. finishRun performs one authoritative
     // comparison after restoring the list, avoiding feedback-loop scans.
     if (readHistoryScan && !force) return;
-    const list = discover(); const messages = capture();
+    const list = allScan?.monitorOnly ? { conversations:[] } : discover();
+    const messages = capture();
     const checkpointRows = [...list.conversations, ...(list.excludedConversations || [])];
-    if (messages.conversationKey && !checkpointRows.some(item => item.conversationKey === messages.conversationKey)) {
+    if (messages.conversationKey && (!allScan?.monitorOnly || messages.messages.length) && !checkpointRows.some(item => item.conversationKey === messages.conversationKey)) {
       const isGroup = messages.conversationType === 'group';
       const isVipGroup = messages.conversationType === 'vip_group';
       const isCollectible = collectibleConversationType(messages.conversationType);
@@ -4938,7 +4984,8 @@ public sealed partial class LegacyUiHostPage : Page
     // WebView. Keep the counters in the native heartbeat result so the host
     // can surface a stable diagnostic without forcing a UI refresh.
     const groupMonitor = backgroundCollectorRole ? groupMonitorTick() : { supported:false, reason:'collector-only' };
-    emit(false);
+    emit(firstBackgroundTick);
+    firstBackgroundTick = false;
     if (backgroundCollectorRole) scheduleIncrementalReadHistory(80);
     let listReady = false;
     try { listReady = Boolean(listContainer()); } catch {}
@@ -4964,6 +5011,7 @@ public sealed partial class LegacyUiHostPage : Page
     highPriorityHistoryRetryPending = false;
     cancelAllCollectorTasks();
     allScanGeneration += 1;
+    if (allScan) { try { allScan.container.scrollTop = allScan.initial; } catch {} }
     allScan = null;
     if (readHistoryScan) {
       try { readHistoryScan.container.scrollTop = readHistoryScan.initial; } catch {}
