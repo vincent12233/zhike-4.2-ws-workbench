@@ -4836,6 +4836,79 @@ const server = createServer(async (req, res) => {
       } catch(error) { db.exec('ROLLBACK'); throw error; }
       return json(res, 200, { alert: wsFollowupAlertPayload(db.prepare('SELECT * FROM ws_followup_alerts WHERE id=? AND account_id=?').get(existing.id,accountId)) });
     }
+    // WS 通讯录排除名单：只管理“自动建档时跳过哪些身份”，不创建第二套客户库。
+    // 所有写操作都在 SQLite 事务内完成，命中记录作为审计证据保留。
+    if (url.pathname === '/api/ws/contact-exclusions' || url.pathname.startsWith('/api/ws/contact-exclusions/')) {
+      const engine = wsContactExclusionEngine();
+      if (!engine) return json(res, 503, { error: '通讯录排除引擎不可用。', code: 'CONTACT_EXCLUSION_UNAVAILABLE' });
+      const suffix = url.pathname.slice('/api/ws/contact-exclusions'.length).replace(/^\//, '');
+      const auditAction = (action, detail = {}) => {
+        try {
+          // account_id carries a foreign key; fall back to the seeded default
+          // account so an audit failure can never roll back a user action.
+          const requested = wsText(detail.accountId, 120);
+          const accountId = requested && wsAccountRow(requested) ? requested : (wsAccountRow('default') ? 'default' : '');
+          if (!accountId) return;
+          db.prepare(`INSERT INTO ws_group_audit(id,account_id,group_jid,actor,action,entity_type,entity_id,outcome,reason,data_json,created_at)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?)`).run(wsCreateId('wsg-audit'), accountId, '',
+            'contact-exclusion', action, 'contact-exclusion', wsText(detail.exclusionId, 128) || '', 'accepted', wsText(detail.reason, 500),
+            JSON.stringify(detail.data || {}), new Date().toISOString());
+        } catch { /* auditing must not fail the user action */ }
+      };
+
+      if (suffix === '' && req.method === 'GET') {
+        const query = wsText(url.searchParams.get('query'), 160).toLowerCase();
+        const includeDisabled = url.searchParams.get('includeDisabled') === '1';
+        let rules = engine.listRules({ includeDisabled });
+        if (query) rules = rules.filter(rule => [rule.displayName, rule.note, rule.value, rule.phone].some(value => String(value || '').toLowerCase().includes(query)));
+        return json(res, 200, { rules, summary: engine.summary(), coverage: 'exclusion-only-not-customer-directory' });
+      }
+      if (suffix === '' && req.method === 'POST') {
+        const body = JSON.parse((await readBody(req, 256 * 1024)).toString('utf8'));
+        const items = Array.isArray(body.items) ? body.items.slice(0, 2000) : [body];
+        const created = [], rejected = [];
+        db.exec('BEGIN IMMEDIATE');
+        try {
+          for (const item of items) {
+            try {
+              const rule = engine.upsertRule({ ...item, source: body.source || item.source });
+              created.push(rule);
+            } catch (error) { rejected.push({ identity: wsText(item.identity || item.phone, 160), reason: error.message }); }
+          }
+          if (!created.length && rejected.length) { db.exec('ROLLBACK'); return json(res, 400, { error: rejected[0].reason, rejected }); }
+          auditAction(body.items ? 'contact-exclusion.import' : 'contact-exclusion.create', { accountId: body.accountId, exclusionId: created[0]?.id, data: { count: created.length, rejected: rejected.length } });
+          db.exec('COMMIT');
+        } catch (error) { db.exec('ROLLBACK'); throw error; }
+        return json(res, 201, { rules: created, rejected, summary: engine.summary() });
+      }
+      if (suffix === 'hits' && req.method === 'GET') {
+        const limit = Math.min(500, Math.max(1, Number(url.searchParams.get('limit')) || 50));
+        return json(res, 200, { hits: engine.listHits({ limit }), summary: engine.summary() });
+      }
+      const ruleMatch = suffix.match(/^([A-Za-z0-9._:-]{1,128})$/);
+      if (ruleMatch && req.method === 'PATCH') {
+        const body = JSON.parse((await readBody(req, 64 * 1024)).toString('utf8'));
+        if (typeof body.enabled !== 'boolean') return json(res, 400, { error: '请明确提供 enabled 状态。' });
+        db.exec('BEGIN IMMEDIATE');
+        try {
+          const rule = engine.setEnabled(ruleMatch[1], body.enabled);
+          auditAction(body.enabled ? 'contact-exclusion.enable' : 'contact-exclusion.disable', { accountId: body.accountId, exclusionId: rule.id });
+          db.exec('COMMIT');
+          return json(res, 200, { rule, summary: engine.summary() });
+        } catch (error) { db.exec('ROLLBACK'); if (/不存在/.test(error.message)) return json(res, 404, { error: error.message }); throw error; }
+      }
+      if (ruleMatch && req.method === 'DELETE') {
+        db.exec('BEGIN IMMEDIATE');
+        try {
+          const removed = engine.removeRule(ruleMatch[1]);
+          if (!removed) { db.exec('ROLLBACK'); return json(res, 404, { error: '排除规则不存在。' }); }
+          auditAction('contact-exclusion.delete', { exclusionId: ruleMatch[1] });
+          db.exec('COMMIT');
+          return json(res, 200, { ok: true, summary: engine.summary() });
+        } catch (error) { db.exec('ROLLBACK'); throw error; }
+      }
+      return json(res, 405, { error: '通讯录排除接口不支持该操作。', code: 'CONTACT_EXCLUSION_METHOD_NOT_ALLOWED' });
+    }
     if (req.method === 'GET' && url.pathname === '/api/ws/followup-alerts') {
       const allAccounts = url.searchParams.get('allAccounts') === '1';
       const accountId = wsAccountId(url.searchParams.get('accountId'));

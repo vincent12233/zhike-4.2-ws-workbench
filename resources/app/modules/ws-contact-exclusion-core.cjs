@@ -96,7 +96,7 @@ function createExclusionEngine({ db, clock } = {}) {
   function listRules({ includeDisabled = false } = {}) {
     const rows = includeDisabled
       ? db.prepare('SELECT * FROM ws_contact_exclusions ORDER BY updated_at DESC, id').all()
-      : selectEnabled().sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+      : db.prepare('SELECT * FROM ws_contact_exclusions WHERE enabled = 1 ORDER BY updated_at DESC, id').all();
     return rows.map(rowToRule).filter(Boolean);
   }
 

@@ -91,6 +91,15 @@ ok('lid-form jid normalizes with its own identity and no phone', () => {
     assert.equal(engine.summary().total, 1);
   });
 
+  ok('listRules returns the stored rule with its display name and note', () => {
+    const rules = engine.listRules();
+    assert.equal(rules.length, 1, 'listRules must surface enabled rows, not an empty projection');
+    assert.equal(rules[0].displayName, '同事 A');
+    assert.equal(rules[0].note, '内部员工');
+    assert.equal(rules[0].enabled, true);
+    assert.equal(engine.listRules({ includeDisabled: true }).length, 1);
+  });
+
   ok('a different textual form of the same number is excluded', () => {
     for (const form of ['919876543210', '9876543210', '9876543210@s.whatsapp.net']) {
       const r = engine.checkIdentity(form, { accountId: 'a1', groupJid: 'g1@g.us' });
