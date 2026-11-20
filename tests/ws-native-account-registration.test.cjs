@@ -173,6 +173,7 @@ sealed class Probe(WsAccountStore store, ApiClient api) {
     readonly WsAccountMetrics _wsAccountMetrics = new();
     readonly EmptyProfiles _wsProfiles = new();
     readonly HashSet<object> _wsCollectorStarted = [];
+    Task<T> RunWsProbeOnUiAsync<T>(Func<Task<T>> operation, CancellationToken token) => operation();
     readonly SemaphoreSlim _wsAccountMutationGate = new(1, 1);
     readonly ApiClient? _api = api;
     public List<string> Released { get; } = [];

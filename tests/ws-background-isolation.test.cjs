@@ -12,6 +12,20 @@ assert.doesNotMatch(host, /DateTimeOffset _lastForegroundWsHeartbeatAt\s*=/,
   'foreground heartbeat must not use a single global timestamp');
 assert.match(host, /ExecuteScriptAsync\([\s\S]*?ConfigureAwait\(false\)/,
   'WebView script results must leave the UI context before parsing');
+const probeStart = host.indexOf('    private async Task<(string status, string detail)> ProbeWsLoginStateAsync(');
+const probeEnd = host.indexOf('    private async Task SaveWsLoginObservationAsync(', probeStart);
+assert.ok(probeStart >= 0 && probeEnd > probeStart);
+const probe = host.slice(probeStart, probeEnd);
+assert.match(probe, /RunWsProbeOnUiAsync\([\s\S]*?core\.ExecuteScriptAsync\(/,
+  'WebView script invocation and Core/Source access must start on the dispatcher');
+assert.match(probe, /await work\.Script(?:\.WaitAsync\(cancellationToken\))?\.ConfigureAwait\(false\)/,
+  'the raw DOM result await must not restore the UI synchronization context');
+assert.match(probe, /Task\.Run\(\(\) => ParseWsLoginProbe\(json\), cancellationToken\)\.ConfigureAwait\(false\)/,
+  'even an inline-completed DOM request must parse JSON off the UI dispatcher');
+assert.match(probe, /return await RunWsProbeOnUiAsync\(async \(\) =>[\s\S]*?CurrentDocument\(\)[\s\S]*?PublishWsStatus/,
+  'current-document validation and bridge publication must return to the dispatcher');
+assert.match(probe, /DispatcherQueue\.HasThreadAccess[\s\S]*DispatcherQueue\.TryEnqueue/,
+  'the dispatcher helper must handle both UI callers and background callers');
 const tick = runtime.slice(runtime.indexOf('    public async Task TickAsync('), runtime.indexOf('    public async Task ShutdownAsync('));
 assert.ok(tick.includes('RunHeartbeatAsync(foreground, false'), 'existing foreground sessions retain their read-only heartbeat');
 assert.doesNotMatch(tick, /LeaseNextBackgroundAccount\(|GetOrCreateAsync\(/,

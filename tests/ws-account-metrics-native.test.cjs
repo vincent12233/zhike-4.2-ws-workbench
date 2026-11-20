@@ -18,6 +18,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 static void Check(bool condition, string message) { if (!condition) throw new Exception(message); }
 static string ProbeResult(bool chat, bool login = false) => JsonSerializer.Serialize(JsonSerializer.Serialize(new { chat, login, problem = false, text = "" }));
+using var ui = new FixtureDispatcher();
+await ui.RunAsync(async () => {
 var root = Path.Combine(AppContext.BaseDirectory, "synthetic");
 var profileRoot = Path.Combine(root, "profiles");
 var store = new WsAccountStore(Path.Combine(root, "index"));
@@ -60,29 +62,49 @@ var older = new TaskCompletionSource<string>(); newView.CoreWebView2.Result = ol
 var olderCall = probe.Call("a0", newView, 2); newView.CoreWebView2.Result = Task.FromResult(ProbeResult(false, true)); await probe.Call("a0", newView, 2);
 older.SetResult(ProbeResult(true)); await olderCall;
 Check((await probe.Snapshot()).Accounts.First(row => row.AccountId == "a0").OnlineState == "not-online", "out-of-order positive probe cannot overwrite newer QR");
+await probe.LockStatus(); probe.StatusEntered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+newView.CoreWebView2.Result = Task.FromResult(ProbeResult(true));
+var blockedStatus = probe.Call("a0", newView, 2); await probe.StatusEntered.Task;
+var priorPublish = probe.Published;
+probe.Invalidate("a0"); probe.UnlockStatus(); await blockedStatus;
+Check(probe.Published == priorPublish && (await store.LoadAsync()).First(row => row.Id == "a0").Status == "等待登录", "a probe invalidated while waiting for the status gate cannot persist or publish a late status");
+await Task.Run(() => probe.Call("a0", newView, 2));
+Check((await probe.Snapshot()).Accounts.First(row => row.AccountId == "a0").OnlineState == "recent", "a background caller is dispatched before reading Core or Source");
 App.WsSessions.Rows.Clear();
 Check((await probe.Snapshot()).Accounts.All(row => row.OnlineState != "recent" && !row.ForegroundInitialized && !row.CollectorInitialized && !row.CollectorRunning), "destroyed sessions never remain online or initialized");
 Check(CoreWebView2Environment.Calls == 0, "metrics and login evidence must never initialize an environment");
 Console.WriteLine("native account metrics: 50 registrations, profile evidence, QR, TTL, collector, navigation, generation and out-of-order probes pass");
+});
 
 sealed class Probe(WsAccountStore store, WebViewProfileService profiles) {
   readonly WsAccountStore _wsAccountStore = store;
   readonly WebViewProfileService _wsProfiles = profiles;
   readonly WsAccountMetrics _wsAccountMetrics = new();
   readonly HashSet<WebView2> _wsCollectorStarted = [];
+  readonly System.Collections.Concurrent.ConcurrentDictionary<string, long> _wsStatusSequence = new();
+  readonly SemaphoreSlim _wsStatusGate = new(1, 1);
+  readonly FakeApi? _api = null;
+  FixtureDispatcher DispatcherQueue => FixtureDispatcher.Instance;
+  public TaskCompletionSource? StatusEntered;
+  public int Published;
   public Task<(string status,string detail)> Call(string id, WebView2 view, long generation, bool publish = true) => ProbeWsLoginStateAsync(id,view,generation,publishStatus:publish);
-  public async Task<WsAccountMetricsSnapshot> Snapshot() => BuildWsAccountMetrics(await store.LoadAsync());
+  public Task<WsAccountMetricsSnapshot> Snapshot() => RunWsProbeOnUiAsync(async () => BuildWsAccountMetrics(await store.LoadAsync()), CancellationToken.None);
   public WsAccountMetricsSnapshot RawSnapshot(IReadOnlyList<StoredWsAccount> rows, DateTimeOffset now) => _wsAccountMetrics.Snapshot(rows, App.WsSessions.Rows.Select(s => new WsAccountMetricRuntime(s.AccountId,s.Generation,s.IsReady,s.IsCollectorReady,s.CollectorState)).ToArray(),profiles.GetProfileDirectoryStamp,now);
   public void Invalidate(string id) => _wsAccountMetrics.Invalidate(id);
   public void Started(WebView2 view) => _wsCollectorStarted.Add(view);
   public Task Clear(string id) => ClearWsLoginObservationsAsync(id, CancellationToken.None);
-  Task SetWsStatusAsync(string id, string status, CancellationToken token) => Task.CompletedTask;
-  void PublishWsStatus(JsonElement payload) { }
+  public Task LockStatus() => _wsStatusGate.WaitAsync();
+  public void UnlockStatus() => _wsStatusGate.Release();
+  void PublishWsStatus(JsonElement payload) { FixtureDispatcher.AssertUi(); Published++; }
   ${take('    private WsAccountMetricsSnapshot BuildWsAccountMetrics(', '    private async Task OpenWsOverlayAsync(')}
   ${take('    private static bool IsAllowedWsPopupNavigation(', '    private async Task HeartbeatPooledWsSessionAsync(')}
-  ${take('    private async Task<(string status, string detail)> ProbeWsLoginStateAsync(', '    private async Task SetWsStatusAsync(')}
+  ${take('    private async Task<(string status, string detail)> ProbeWsLoginStateAsync(', '    private async Task SetWsStatusAsync(').replace('var probeText = JsonSerializer.Deserialize<string>(json)', 'FixtureDispatcher.AssertBackground(); var probeText = JsonSerializer.Deserialize<string>(json)')}
+  ${take('    private async Task SetWsStatusAsync(', '    private async Task<BridgeResponse> ExecuteWsCaptureAsync(').replace('await _wsStatusGate.WaitAsync(cancellationToken);', 'StatusEntered?.TrySetResult(); await _wsStatusGate.WaitAsync(cancellationToken);')}
 }
-static class App { public static FakePool WsSessions = new(); }
+static class App { public static FakePool WsSessions = new(); public static FakeRuntime WsRuntime = new(); }
+sealed class FakeRuntime { public void RegisterAccount(string id, string name, string status) { FixtureDispatcher.AssertUi(); } public void UpdateConnectionState(string id, string status) { FixtureDispatcher.AssertUi(); } }
+static class WsRuntimeCoordinator { public static string FromDisplayStatus(string value) => value; }
+sealed class FakeApi { public Task UpdateWsAccountStatusAsync(string id, string status, CancellationToken token) => Task.CompletedTask; }
 sealed class FakePool {
   public List<FakeSession> Rows = [];
   public IReadOnlyList<FakeSession> Sessions() => Rows;
@@ -90,13 +112,26 @@ sealed class FakePool {
 }
 sealed record FakeSession(string AccountId,long Generation,WebView2 View,WebView2? CollectorView) { public bool IsReady => View.CoreWebView2 is not null; public bool IsCollectorReady => CollectorView?.CoreWebView2 is not null; public string CollectorState => "running"; }
 static class RuntimeExtensions { public static Task<T> AsTask<T>(this Task<T> value) => value; }
-namespace Microsoft.UI.Xaml.Controls { public sealed class WebView2 { public CoreWebView2? CoreWebView2 { get; set; } } }
+namespace Microsoft.UI.Xaml.Controls { public sealed class WebView2 { private CoreWebView2? _core; public CoreWebView2? CoreWebView2 { get { FixtureDispatcher.AssertUi(); return _core; } set { FixtureDispatcher.AssertUi(); _core = value; } } } }
 namespace Microsoft.Web.WebView2.Core {
-  public sealed class CoreWebView2 { public string Source = "https://web.whatsapp.com/"; public Task<string> Result = Task.FromResult("{}"); public Task<string> ExecuteScriptAsync(string script) => Result; }
+  public sealed class CoreWebView2 { public string Source { get { FixtureDispatcher.AssertUi(); return "https://web.whatsapp.com/"; } } public Task<string> Result = Task.FromResult("{}"); public Task<string> ExecuteScriptAsync(string script) { FixtureDispatcher.AssertUi(); return Result; } }
   public sealed class CoreWebView2EnvironmentOptions { }
   public sealed class CoreWebView2Environment { public static int Calls; public static Task<CoreWebView2Environment> CreateWithOptionsAsync(string? browser,string path,CoreWebView2EnvironmentOptions options) { Calls++; return Task.FromResult(new CoreWebView2Environment()); } }
 }
 namespace Zhike.Desktop.Services { public static class WsCollectionCapability { public static Exception Denied() => new InvalidOperationException("No copied profile"); } }
+sealed class FixtureDispatcher : IDisposable {
+  public static FixtureDispatcher Instance = null!;
+  readonly System.Collections.Concurrent.BlockingCollection<Action> _queue = new();
+  readonly Thread _thread;
+  public FixtureDispatcher() { Instance = this; _thread = new Thread(() => { SynchronizationContext.SetSynchronizationContext(new FixtureContext(this)); foreach (var action in _queue.GetConsumingEnumerable()) action(); }) { IsBackground = true }; _thread.Start(); }
+  public bool HasThreadAccess => Environment.CurrentManagedThreadId == _thread.ManagedThreadId;
+  public bool TryEnqueue(Action action) { try { return _queue.TryAdd(action); } catch (InvalidOperationException) { return false; } }
+  public Task RunAsync(Func<Task> operation) { var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously); TryEnqueue(async () => { try { await operation(); done.TrySetResult(); } catch (Exception error) { done.TrySetException(error); } }); return done.Task; }
+  public static void AssertUi() { if (!Instance.HasThreadAccess) throw new InvalidOperationException("WinUI property accessed off dispatcher"); }
+  public static void AssertBackground() { if (Instance.HasThreadAccess) throw new InvalidOperationException("JSON parsed on UI dispatcher"); }
+  public void Dispose() { _queue.CompleteAdding(); _thread.Join(5000); _queue.Dispose(); }
+  sealed class FixtureContext(FixtureDispatcher owner) : SynchronizationContext { public override void Post(SendOrPostCallback callback, object? state) { if (!owner.TryEnqueue(() => callback(state))) throw new InvalidOperationException("dispatcher closed"); } }
+}
 `);
 const dotnet = process.env.ZHIKE_TEST_DOTNET || path.join(repo, '.tools/dotnet10/dotnet.exe');
 const result = spawnSync(dotnet, ['run', '--project', path.join(root, 'Probe.csproj'), '-c', 'Release'], { cwd: root, stdio: 'inherit', windowsHide: true, timeout: 60000 });

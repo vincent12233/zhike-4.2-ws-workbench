@@ -47,7 +47,18 @@ assert.doesNotMatch(workbench, /autoCaptureTimer|setInterval\(\(\) => \{ if \(st
 assert.match(heartbeat, /_lastForegroundWsHeartbeatAtByAccount[\s\S]*now - lastHeartbeat < TimeSpan\.FromSeconds\(15\)/, 'visible WS heartbeat probes retain their actual per-account throttle while the operator chats');
 assert.doesNotMatch(host, /var foregroundScript = "\(\(\) => window\.__zhikeWsBackgroundTick/, 'foreground heartbeat must not execute the collector DOM tick');
 assert.doesNotMatch(runtime, /LeaseNextBackgroundAccount|GetOrCreateAsync\(backgroundId|RunHeartbeatAsync\(acquired\.Session, true/, 'RD02 scheduler must not keep attempting background account creation');
-assert.match(host, /var isCurrent = App\.WsSessions\.IsCurrent\(accountId, generation, view\);[\s\S]{0,100}if \(publishStatus && isCurrent\)/, 'status persistence retains its actual generation/current-view gate');
+const loginProbe = between(host, 'private async Task<(string status, string detail)> ProbeWsLoginStateAsync(', 'private sealed record WsLoginProbeWork(');
+assert.match(loginProbe, /bool OwnsProbe\(\) => App\.WsSessions\.IsCurrent\(accountId, generation, view\) && _wsAccountMetrics\.IsCurrent\(lease\)/,
+  'status ownership binds the actual account, generation, view and navigation/probe lease');
+assert.match(loginProbe, /bool CurrentDocument\(\) => OwnsProbe\(\)[\s\S]*?IsAllowedWsPopupNavigation\(core\.Source\)/,
+  'published status also validates the current trusted document on the dispatcher');
+assert.match(loginProbe, /await SaveWsLoginObservationAsync\([\s\S]*?var isCurrent = CurrentDocument\(\);[\s\S]*?if \(publishStatus && isCurrent\)[\s\S]*?await SetWsStatusAsync\(accountId, status, cancellationToken, OwnsProbe\);[\s\S]*?if \(CurrentDocument\(\)\) PublishWsStatus/,
+  'saving metrics and status cannot bypass the ownership rechecks after each await');
+const statusWrite = between(host, 'private async Task SetWsStatusAsync(', 'private async Task<BridgeResponse> ExecuteWsCaptureAsync(');
+assert.match(statusWrite, /await _wsStatusGate\.WaitAsync[\s\S]*?ownsObservation\?\.Invoke\(\) == false[\s\S]*?await _wsAccountStore\.LoadAsync[\s\S]*?ownsObservation\?\.Invoke\(\) == false/,
+  'a superseded probe waiting for either status lock or account I/O cannot persist an obsolete status');
+assert.match(statusWrite, /UpdateAsync\(current => ownsObservation\?\.Invoke\(\) == false[\s\S]*?savedSequence != sequence \? current : current\.Select/,
+  'account index mutation rechecks both the probe lease and status sequence');
 assert.match(capability, /State => "available"[\s\S]*BackgroundCollection => true[\s\S]*AutomaticAi => false[\s\S]*ForegroundFallback => false/, 'independent collection support never enables foreground fallback or automatic AI');
 assert.match(host, /fields\["collectionCapability"\] = CollectionCapabilityFor\(accountId\)/, 'status events carry account-scoped collector state separately from foreground login');
 assert.doesNotMatch(host, /Publish\("ws\.background-tick"/, 'internal ticks do not cause unsolicited shell redraws');

@@ -1459,7 +1459,7 @@ public sealed partial class LegacyUiHostPage : Page
         if (action == "list" || string.IsNullOrWhiteSpace(action))
         {
             var accounts = await LoadWsAccountsAsync(cancellationToken);
-            return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { accounts = accounts.Select(ToWsAccountDto).ToArray(), accountMetrics = BuildWsAccountMetrics(accounts) }, new JsonSerializerOptions(JsonSerializerDefaults.Web)));
+            return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { accounts = accounts.Select(ToWsAccountDto).ToArray(), accountMetrics = await RunWsProbeOnUiAsync(() => Task.FromResult(BuildWsAccountMetrics(accounts)), cancellationToken) }, new JsonSerializerOptions(JsonSerializerDefaults.Web)));
         }
         if (action == "forget")
         {
@@ -2530,52 +2530,86 @@ public sealed partial class LegacyUiHostPage : Page
         CancellationToken cancellationToken = default,
         bool publishStatus = true)
     {
-        if (view?.CoreWebView2 is null) return ("未连接", "WS 页面尚未打开。");
-        var sourceSession = App.WsSessions.Sessions().FirstOrDefault(item => item.AccountId.Equals(accountId, StringComparison.OrdinalIgnoreCase) && item.Generation == generation);
-        var collector = ReferenceEquals(sourceSession?.CollectorView, view);
-        if (sourceSession is null || !App.WsSessions.IsCurrent(accountId, generation, view)) return ("未连接", "WS 会话代数已改变。");
-        if (!IsAllowedWsPopupNavigation(view.CoreWebView2.Source))
+        var work = await RunWsProbeOnUiAsync(() =>
         {
-            _wsAccountMetrics.Invalidate(accountId, collector);
-            return ("未连接", "WS 页面尚未完成有效导航。");
-        }
-        var lease = _wsAccountMetrics.BeginProbe(accountId, generation, collector);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (view?.CoreWebView2 is not { } core) return Task.FromResult(new WsLoginProbeWork(null, null, "WS 页面尚未打开。"));
+            var session = App.WsSessions.Sessions().FirstOrDefault(item => item.AccountId.Equals(accountId, StringComparison.OrdinalIgnoreCase) && item.Generation == generation);
+            var collector = ReferenceEquals(session?.CollectorView, view);
+            if (session is null || !App.WsSessions.IsCurrent(accountId, generation, view)) return Task.FromResult(new WsLoginProbeWork(null, null, "WS 会话代数已改变。"));
+            if (!IsAllowedWsPopupNavigation(core.Source))
+            {
+                _wsAccountMetrics.Invalidate(accountId, collector);
+                return Task.FromResult(new WsLoginProbeWork(null, null, "WS 页面尚未完成有效导航。"));
+            }
+            var lease = _wsAccountMetrics.BeginProbe(accountId, generation, collector);
+            var script = core.ExecuteScriptAsync("(() => { const body=document.body; const text=(body?.innerText||'').slice(0,6000); const login=!!document.querySelector('[data-testid=\\\"qrcode\\\"], canvas[aria-label*=\\\"QR\\\" i], [data-ref]'); const chat=!!document.querySelector('#pane-side') || (!!document.querySelector('[data-testid=\\\"chat-list\\\"], [aria-label=\\\"Chat list\\\"], [aria-label=\\\"聊天列表\\\"], [role=\\\"grid\\\"]') && !!document.querySelector('[data-testid=\\\"search-input\\\"], [contenteditable=\\\"true\\\"], [role=\\\"textbox\\\"]')); const problem=/此页面存在问题|page has a problem|update your browser|更新浏览器/i.test(text); return JSON.stringify({login,chat,problem,text:text.slice(0,2000)}); })()").AsTask();
+            return Task.FromResult(new WsLoginProbeWork(lease, script, ""));
+        }, cancellationToken).ConfigureAwait(false);
+        if (work.Lease is not { } lease || work.Script is null) return ("未连接", work.NotReadyDetail);
         try
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var json = await view.CoreWebView2.ExecuteScriptAsync("(() => { const body=document.body; const text=(body?.innerText||'').slice(0,6000); const login=!!document.querySelector('[data-testid=\\\"qrcode\\\"], canvas[aria-label*=\\\"QR\\\" i], [data-ref]'); const chat=!!document.querySelector('#pane-side') || (!!document.querySelector('[data-testid=\\\"chat-list\\\"], [aria-label=\\\"Chat list\\\"], [aria-label=\\\"聊天列表\\\"], [role=\\\"grid\\\"]') && !!document.querySelector('[data-testid=\\\"search-input\\\"], [contenteditable=\\\"true\\\"], [role=\\\"textbox\\\"]')); const problem=/此页面存在问题|page has a problem|update your browser|更新浏览器/i.test(text); return JSON.stringify({login,chat,problem,text:text.slice(0,2000)}); })()").AsTask();
-            cancellationToken.ThrowIfCancellationRequested();
-            var probeText = JsonSerializer.Deserialize<string>(json) ?? "{}";
-            using var probe = JsonDocument.Parse(probeText);
-            var root = probe.RootElement;
-            var login = root.TryGetProperty("login", out var loginValue) && loginValue.ValueKind == JsonValueKind.True;
-            var chat = root.TryGetProperty("chat", out var chatValue) && chatValue.ValueKind == JsonValueKind.True;
-            var problem = root.TryGetProperty("problem", out var problemValue) && problemValue.ValueKind == JsonValueKind.True;
-            var text = root.TryGetProperty("text", out var textValue) ? textValue.ToString() : string.Empty;
-            var status = problem ? "连接失败" : login ? "等待登录" : chat ? "已连接" : text.Contains("Scan to log in", StringComparison.OrdinalIgnoreCase) || text.Contains("扫码", StringComparison.OrdinalIgnoreCase) ? "等待登录" : "连接中";
-            var detail = status == "已连接" ? "已检测到 WS 主界面。" : status == "连接失败" ? "WS 页面提示浏览器或页面异常，请刷新后重试。" : "请在 WS 页面自行扫码或登录。";
-            var isCurrent = App.WsSessions.IsCurrent(accountId, generation, view) && _wsAccountMetrics.IsCurrent(lease)
-                && IsAllowedWsPopupNavigation(view.CoreWebView2.Source);
-            if (!isCurrent) return ("连接中", "本次登录检测已过期，请刷新。");
-            _wsAccountMetrics.CompleteProbe(lease, status == "已连接", DateTimeOffset.UtcNow);
-            if (status is "已连接" or "等待登录") await SaveWsLoginObservationAsync(lease, view, status == "已连接", cancellationToken);
-            isCurrent = App.WsSessions.IsCurrent(accountId, generation, view) && _wsAccountMetrics.IsCurrent(lease);
-            if (publishStatus && isCurrent)
+            var json = await work.Script.ConfigureAwait(false);
+            // ConfigureAwait(false) alone can continue synchronously when a
+            // script completed inline. Task.Run guarantees background parsing.
+            var parsed = await Task.Run(() => ParseWsLoginProbe(json), cancellationToken).ConfigureAwait(false);
+            return await RunWsProbeOnUiAsync(async () =>
             {
-                await SetWsStatusAsync(accountId, status, cancellationToken);
-                if (App.WsSessions.IsCurrent(accountId, generation, view) && _wsAccountMetrics.IsCurrent(lease)) PublishWsStatus(JsonSerializer.SerializeToElement(new { accountId, status, detail }));
-            }
-            return (status, detail);
+                bool OwnsProbe() => App.WsSessions.IsCurrent(accountId, generation, view) && _wsAccountMetrics.IsCurrent(lease);
+                bool CurrentDocument() => OwnsProbe() && view?.CoreWebView2 is { } core && IsAllowedWsPopupNavigation(core.Source);
+                if (!CurrentDocument()) return ("连接中", "本次登录检测已过期，请刷新。");
+                var (status, detail) = parsed;
+                _wsAccountMetrics.CompleteProbe(lease, status == "已连接", DateTimeOffset.UtcNow);
+                if (status is "已连接" or "等待登录") await SaveWsLoginObservationAsync(lease, view!, status == "已连接", cancellationToken);
+                var isCurrent = CurrentDocument();
+                if (publishStatus && isCurrent)
+                {
+                    await SetWsStatusAsync(accountId, status, cancellationToken, OwnsProbe);
+                    if (CurrentDocument()) PublishWsStatus(JsonSerializer.SerializeToElement(new { accountId, status, detail }));
+                }
+                return CurrentDocument() ? (status, detail) : ("连接中", "本次登录检测已过期，请刷新。");
+            }, cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch
         {
+            // Pool ownership and metric leases are lock-protected managed
+            // data; this failure path never touches a WebView/COM property.
             if (App.WsSessions.IsCurrent(accountId, generation, view)) _wsAccountMetrics.CompleteProbe(lease, false, DateTimeOffset.UtcNow);
             return ("连接失败", "WS 页面状态检测失败，请重试。");
         }
+    }
+
+    private sealed record WsLoginProbeWork(WsAccountProbeLease? Lease, Task<string>? Script, string NotReadyDetail);
+
+    private async Task<T> RunWsProbeOnUiAsync<T>(Func<Task<T>> operation, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (DispatcherQueue.HasThreadAccess) return await operation();
+        var completion = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var registration = cancellationToken.Register(() => completion.TrySetCanceled(cancellationToken));
+        if (!DispatcherQueue.TryEnqueue(async () =>
+        {
+            if (completion.Task.IsCompleted) return;
+            try { cancellationToken.ThrowIfCancellationRequested(); completion.TrySetResult(await operation()); }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { completion.TrySetCanceled(cancellationToken); }
+            catch (Exception error) { completion.TrySetException(error); }
+        })) throw new InvalidOperationException("WS UI dispatcher is unavailable.");
+        return await completion.Task.ConfigureAwait(false);
+    }
+
+    private static (string status, string detail) ParseWsLoginProbe(string json)
+    {
+        var probeText = JsonSerializer.Deserialize<string>(json) ?? "{}";
+        using var probe = JsonDocument.Parse(probeText);
+        var root = probe.RootElement;
+        var login = root.TryGetProperty("login", out var loginValue) && loginValue.ValueKind == JsonValueKind.True;
+        var chat = root.TryGetProperty("chat", out var chatValue) && chatValue.ValueKind == JsonValueKind.True;
+        var problem = root.TryGetProperty("problem", out var problemValue) && problemValue.ValueKind == JsonValueKind.True;
+        var text = root.TryGetProperty("text", out var textValue) ? textValue.ToString() : string.Empty;
+        var status = problem ? "连接失败" : login ? "等待登录" : chat ? "已连接" : text.Contains("Scan to log in", StringComparison.OrdinalIgnoreCase) || text.Contains("扫码", StringComparison.OrdinalIgnoreCase) ? "等待登录" : "连接中";
+        var detail = status == "已连接" ? "已检测到 WS 主界面。" : status == "连接失败" ? "WS 页面提示浏览器或页面异常，请刷新后重试。" : "请在 WS 页面自行扫码或登录。";
+        return (status, detail);
     }
 
     private async Task SaveWsLoginObservationAsync(WsAccountProbeLease lease, WebView2 view, bool signedIn, CancellationToken cancellationToken)
@@ -2604,7 +2638,7 @@ public sealed partial class LegacyUiHostPage : Page
             ? item with { ForegroundLoginObservation = null, CollectorLoginObservation = null } : item), cancellationToken);
     }
 
-    private async Task SetWsStatusAsync(string accountId, string status, CancellationToken cancellationToken = default)
+    private async Task SetWsStatusAsync(string accountId, string status, CancellationToken cancellationToken = default, Func<bool>? ownsObservation = null)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var sequence = _wsStatusSequence.AddOrUpdate(accountId, 1, static (_, current) => current + 1);
@@ -2612,8 +2646,9 @@ public sealed partial class LegacyUiHostPage : Page
         try
         {
             // Older async probes must not overwrite a newer connection state.
-            if (!_wsStatusSequence.TryGetValue(accountId, out var currentSequence) || currentSequence != sequence) return;
+            if (ownsObservation?.Invoke() == false || !_wsStatusSequence.TryGetValue(accountId, out var currentSequence) || currentSequence != sequence) return;
             var rows = await _wsAccountStore.LoadAsync(cancellationToken);
+            if (ownsObservation?.Invoke() == false || !_wsStatusSequence.TryGetValue(accountId, out currentSequence) || currentSequence != sequence) return;
             var existing = rows.FirstOrDefault(item => string.Equals(item.Id, accountId, StringComparison.OrdinalIgnoreCase));
             if (existing is null) return;
             var statusChanged = !string.Equals(existing.Status, status, StringComparison.OrdinalIgnoreCase)
@@ -2626,8 +2661,8 @@ public sealed partial class LegacyUiHostPage : Page
             App.WsRuntime.RegisterAccount(accountId, existing.DisplayName, WsRuntimeCoordinator.FromDisplayStatus(status));
             App.WsRuntime.UpdateConnectionState(accountId, WsRuntimeCoordinator.FromDisplayStatus(status));
             if (!statusChanged) return;
-            await _wsAccountStore.UpdateAsync(current => current.Select(item => item.Id.Equals(accountId, StringComparison.OrdinalIgnoreCase) ? item with { Status = status, LastKnownStatus = status == "未连接" ? item.LastKnownStatus : status, LastSeen = status == "已连接" ? DateTimeOffset.UtcNow : item.LastSeen } : item), cancellationToken);
-            if (_api is not null && _wsStatusSequence.TryGetValue(accountId, out currentSequence) && currentSequence == sequence)
+            await _wsAccountStore.UpdateAsync(current => ownsObservation?.Invoke() == false || !_wsStatusSequence.TryGetValue(accountId, out var savedSequence) || savedSequence != sequence ? current : current.Select(item => item.Id.Equals(accountId, StringComparison.OrdinalIgnoreCase) ? item with { Status = status, LastKnownStatus = status == "未连接" ? item.LastKnownStatus : status, LastSeen = status == "已连接" ? DateTimeOffset.UtcNow : item.LastSeen } : item), cancellationToken);
+            if (ownsObservation?.Invoke() != false && _api is not null && _wsStatusSequence.TryGetValue(accountId, out currentSequence) && currentSequence == sequence)
             {
                 try { await _api.UpdateWsAccountStatusAsync(accountId, status, cancellationToken); } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; } catch { }
             }
