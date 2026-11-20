@@ -5,6 +5,7 @@ const vm = require('node:vm');
 
 const legacy = fs.readFileSync(path.join(__dirname, '..', 'src', 'Zhike.Desktop', 'Views', 'LegacyUiHostPage.xaml.cs'), 'utf8').replaceAll('\r\n', '\n');
 const capability = fs.readFileSync(path.join(__dirname, '..', 'src', 'Zhike.Desktop', 'Services', 'WsCollectionCapability.cs'), 'utf8');
+const ingestQueue = fs.readFileSync(path.join(__dirname, '..', 'src', 'Zhike.Desktop', 'Services', 'WsIngestQueue.cs'), 'utf8');
 
 const loginProbe = legacy.match(/private const string WsLoginProbeScript = """\s*([\s\S]*?)\s*""";/)?.[1];
 assert.ok(loginProbe, '必须存在 WebView2 登录状态检测脚本');
@@ -32,7 +33,8 @@ assert.match(wsMessageHandler, /App\.WsSessions\.IsCurrent\(sessionAccountId, se
 assert.match(wsMessageHandler, /WsCollectorIngress\.TryAuthorize\(sourceSession, sessionGeneration, sourceView, claimedAccountId, collectorRole/,
   '页面声明账号和角色必须经过宿主实际来源视图鉴权');
 assert.match(legacy, /_wsFlushGate/, 'WS 入库必须串行化，避免大批量扫描压死 SQLite sidecar');
-assert.match(legacy, /CancelAfter\(TimeSpan\.FromSeconds\((?:10|15|20)\)\)/, 'WS 入库必须有短超时并可回退本机队列');
+assert.match(legacy, /await WsIngestQueue\.FlushAsync\(_wsQueue, _api,/, 'WS 入库必须使用受超时保护的持久化队列');
+assert.match(ingestQueue, /CancelAfter\(TimeSpan\.FromSeconds\((?:10|15|20)\)\)/, 'WS 入库必须有短超时并可回退本机队列');
 assert.match(legacy, /current\.length\s*>=\s*250/, '单个 WS 入库包必须限制记录数，避免同步 SQLite 长时间阻塞健康接口');
 assert.match(legacy, /BuildWsCollectorScript\(session\.AccountId, purpose\)/, '独立扫码后的采集会话安装绑定可信用途的实际采集器');
 assert.match(legacy, /session\.CollectorState != "running"/, '未运行或暂停的采集端不能接受采集命令');
