@@ -67,7 +67,8 @@ function fixture(nativeReply, options = {}) {
   assert.match(source, boot);
   const replyToFetch = options.fetchReply;
   const exposed = 'state,collectionCapability,collectionReady,rememberCollectionCapability,collectorAction,renderCollectorControls,updateAccountStatus,wsBridge,restartBackgroundPolling,scheduleAiQueuePump,wsBackgroundStatus,renderCollectionCard,resetAccountPresentation,loadAccounts,updateCollectionRun,scanGroupMonitorTargets,groupMonitorStatusLabel,requestAccountPipelineRefresh';
-  vm.runInNewContext(source.replace(boot, `  globalThis.independentCollector={${exposed}};\n})();`), sandbox, { filename: 'ws-independent-collector-real-module.js' });
+  const live = 'refreshForegroundDirectory,workspaceLiveDirectoryRows,renderConversationList,receiveWorkspaceLiveEvent,refreshCollectionSummary,collectAllReadConversations,captureVisibleMessages,renderVisibleForegroundChat,setStatus,recordLiveIngestion,recordLiveHistory,liveCollectionRuntimeRows';
+  vm.runInNewContext(source.replace(boot, `  globalThis.independentCollector={${exposed},${live}};\n})();`), sandbox, { filename: 'ws-independent-collector-real-module.js' });
   const api = sandbox.independentCollector;
   api.state.accounts = [{ id: 'a', displayName: '合成账号 A', status: '已连接' }, { id: 'b', displayName: '合成账号 B', status: '未连接' }];
   api.state.activeAccountId = 'a';
@@ -81,6 +82,155 @@ function fixture(nativeReply, options = {}) {
 
 const cases = [];
 const test = (name, run) => cases.push({ name, run });
+
+test('signed-in ordinary foreground lists visible chats with no database and no paired collector', async () => {
+  let respond;
+  const f = fixture(request => new Promise(resolve => { respond = () => resolve({
+    supported: true, accountId: request.accountId, workspaceMode: 'ordinary', sessionGeneration: 8, source: 'foreground-visible',
+    conversations: [{ externalId: 'alice@c.us', title: '现场私聊', conversationType: 'direct', previewText: '现场原文' },
+      { externalId: 'grp@g.us', conversationType: 'group', title: '其他用途' }],
+  }); }), { fetchReply: () => { throw Error('本地服务离线'); } });
+  f.state.active = true;
+  f.state.wsStatus = '等待登录';
+  f.setStatus('已连接');
+  const first = f.refreshForegroundDirectory();
+  respond(); await first;
+  assert.deepEqual(f.nativeCalls.map(row => row.action), ['discover-visible-conversations']);
+  assert.match(f.renderConversationList(), /现场私聊/);
+  assert.match(f.renderConversationList(), /现场原文/);
+  assert.doesNotMatch(f.renderConversationList(), /其他用途/);
+  assert.equal(f.requests.length, 0);
+  f.setStatus('连接失败');
+  assert.doesNotMatch(f.renderConversationList(), /现场私聊/);
+  f.setStatus('已连接');
+  const pending = f.refreshForegroundDirectory();
+  f.resetAccountPresentation('b');
+  respond(); await pending;
+  assert.equal(f.workspaceLiveDirectoryRows('ordinary').length, 0);
+});
+
+test('collector directory respects account, workspace, lease, scan order and complete coverage', () => {
+  const f = fixture();
+  const lease = { accountId: 'a', workspaceMode: 'ordinary', sessionGeneration: 2, collectorEpoch: 1 };
+  f.updateAccountStatus({ ...lease, collectionCapability: capability('running') });
+  const chunk = (id, idx, title, flags = {}) => ({ ...lease, eventName: 'live-directory', collectorOnly: true, scanId: id, chunkIndex: idx,
+    conversations: title ? [{ externalId: title + '@c.us', title, conversationType: 'direct' }] : [], ...flags });
+  f.receiveWorkspaceLiveEvent(chunk(1, 0, 'A', { finished: true, complete: true }));
+  f.receiveWorkspaceLiveEvent(chunk(2, 0, 'B'));
+  f.receiveWorkspaceLiveEvent(chunk(1, 1, '旧扫描'));
+  f.receiveWorkspaceLiveEvent(chunk(2, 1, '其他账号', { accountId: 'b' }));
+  f.receiveWorkspaceLiveEvent(chunk(2, 1, '其他用途', { workspaceMode: 'dedicated' }));
+  f.receiveWorkspaceLiveEvent(chunk(2, 1, '旧会话', { sessionGeneration: 1 }));
+  assert.deepEqual(Array.from(f.workspaceLiveDirectoryRows('ordinary'), row => row.title), ['A', 'B']);
+  f.receiveWorkspaceLiveEvent(chunk(2, 2, 'C', { finished: true, complete: true }));
+  f.receiveWorkspaceLiveEvent(chunk(2, 1, 'D'));
+  assert.deepEqual(Array.from(f.workspaceLiveDirectoryRows('ordinary'), row => row.title).sort(), ['B','C','D']);
+  f.receiveWorkspaceLiveEvent(chunk(3, 0, '', { finished: true, complete: false }));
+  assert.equal(f.workspaceLiveDirectoryRows('ordinary').length, 3, 'partial discovery cannot delete rows it did not visit');
+  f.updateAccountStatus({ ...lease, collectionCapability: capability('paused') });
+  assert.equal(f.workspaceLiveDirectoryRows('ordinary').length, 0);
+  f.receiveWorkspaceLiveEvent(chunk(5, 0, '迟到'));
+  assert.equal(f.workspaceLiveDirectoryRows('ordinary').length, 0);
+});
+
+test('native discovery and real history command start even when the local inventory and run journal are unavailable', async () => {
+  const f = fixture(request => ({ accountId: request.accountId, workspaceMode: 'ordinary', supported: true, started: true,
+    conversations: [{ externalId: 'remote@c.us', title: '现场联系人', conversationType: 'direct' }] }),
+  { fetchReply: () => { throw Error('本机服务离线'); } });
+  f.publish('running');
+  f.state.backgroundActive = true;
+  await f.refreshCollectionSummary({ background: true });
+  assert.match(f.renderConversationList(), /现场联系人/);
+  await f.collectAllReadConversations();
+  assert.ok(f.events.indexOf('native:collect-all-read') > -1);
+  assert.equal(f.state.readHistoryAutoStarted, true, 'a local journal failure cannot restart a running history pass');
+  assert.match(f.state.error, /本机任务进度/);
+});
+
+test('manual visible chat can be read without a saved row and never writes it to a different selected chat', async () => {
+  const f = fixture(request => ({ supported: true, accountId: request.accountId, conversationKey: 'visible@c.us',
+    displayName: '正在看的聊天', conversationType: 'direct', messages: [
+      { conversationKey: 'visible@c.us', text: '本次手动读取的原文' }, { conversationKey: 'other@c.us', text: '其他聊天原文' },
+    ] }));
+  f.state.active = true;
+  await f.captureVisibleMessages();
+  assert.match(f.renderVisibleForegroundChat(), /本次手动读取的原文/);
+  assert.doesNotMatch(f.renderVisibleForegroundChat(), /其他聊天原文/);
+  f.state.conversations = [{ accountId: 'a', id: 'saved', externalId: 'other@c.us', conversationType: 'direct' }];
+  f.state.currentConversationId = 'saved';
+  await f.captureVisibleMessages();
+  assert.equal(f.requests.length, 0);
+  assert.equal(f.aiCalls.length, 0);
+  f.setStatus('未连接');
+  assert.equal(f.renderVisibleForegroundChat(), '');
+});
+
+test('both workspaces distinguish live membership in the directory, history gaps and committed message receipts', () => {
+  for (const mode of ['ordinary', 'dedicated']) {
+    const f = fixture();
+    f.state.workspaceMode = mode;
+    f.state.accounts[0].workspaceMode = mode;
+    const lease = { accountId: 'a', workspaceMode: mode, sessionGeneration: 1, collectorEpoch: 2, collectorOnly: true };
+    f.updateAccountStatus({ accountId: 'a', collectionCapability: capability('running', { sessionGeneration: 1, collectorEpoch: 2 }) });
+    const current = () => f.liveCollectionRuntimeRows();
+    assert.match(current(), /尚无现场观测/);
+    assert.match(current(), /尚无入库回执/);
+    const saveFailure = { ...lease, eventName: 'directory-save-error', detail: '合成目录暂存错误' };
+    f.receiveWorkspaceLiveEvent({ ...saveFailure, sessionGeneration: 7 });
+    assert.doesNotMatch(current(), /合成目录暂存错误/);
+    f.receiveWorkspaceLiveEvent(saveFailure);
+    assert.match(current(), /合成目录暂存错误/);
+    f.recordLiveIngestion({ accountId: 'a', directoryOnly: true, sessionGeneration: 7 });
+    assert.match(current(), /合成目录暂存错误/);
+    f.recordLiveIngestion({ accountId: 'a', directoryOnly: true, sessionGeneration: 1, accepted: 0, background: true });
+    assert.doesNotMatch(current(), /合成目录暂存错误/);
+    assert.match(current(), /最近目录保存回执/);
+    assert.match(current(), /尚无入库回执/);
+    f.receiveWorkspaceLiveEvent({ ...lease, eventName: 'live-directory', scanId: 1, chunkIndex: 0, finished: true, complete: false,
+      conversations: [{ externalId: 'a@c.us', conversationType: 'direct' }], groupConversations: [{ externalId: 'g@g.us', conversationType: 'group' }] });
+    assert.match(current(), /存在缺口/);
+    assert.match(current(), mode === 'ordinary' ? /1 个私聊/ : /1 个群组/);
+    const receipt = { accountId: 'a', accepted: 2, background: true };
+    f.recordLiveIngestion({ ...receipt, background: false });
+    f.recordLiveIngestion({ ...receipt, accountId: 'b' });
+    f.recordLiveIngestion({ ...receipt, accepted: null });
+    assert.match(current(), /尚无入库回执/);
+    f.recordLiveIngestion({ ...receipt, accepted: 0 });
+    assert.match(current(), /0 条 · 最近回执/);
+    f.recordLiveIngestion({ ...receipt, observedMembersAdded: 1 });
+    assert.match(current(), /2 条 · 最近回执/);
+    if (mode === 'dedicated') assert.match(current(), /1 位/);
+    f.recordLiveHistory({ ...lease, eventName: 'collection-retry-scheduled', retryable: 3, detail: '历史读取将重试' });
+    if (mode === 'ordinary') {
+      assert.match(current(), /3 项待重试/);
+      f.recordLiveHistory({ ...lease, collectorEpoch: 1, eventName: 'collection-complete', retryable: 0 });
+      assert.match(current(), /3 项待重试/);
+    } else assert.doesNotMatch(current(), /历史采集缺口/);
+    f.resetAccountPresentation('b');
+    assert.match(current(), /尚无入库回执/);
+  }
+});
+
+test('retryable history failure leaves ordinary live discovery running without hammering the history action', async () => {
+  let name = '第一次观察';
+  const f = fixture(request => {
+    if (request.action === 'collect-all-read') throw Error('合成历史读取失败');
+    return { accountId: request.accountId, workspaceMode: 'ordinary', supported: true, conversations: [{ externalId: name + '@c.us', title: name, conversationType: 'direct' }] };
+  }, { fetchReply: () => { throw Error('离线索引'); } });
+  f.publish('running');
+  f.state.backgroundActive = true;
+  await f.collectAllReadConversations();
+  assert.ok(f.state.liveDirectory.historyRetryAt > Date.now());
+  assert.match(f.liveCollectionRuntimeRows(), /合成历史读取失败/);
+  name = '尚无本地记录的新私聊';
+  await f.refreshCollectionSummary({ background: true });
+  assert.match(f.renderConversationList(), /尚无本地记录的新私聊/);
+  await f.refreshCollectionSummary({ background: true });
+  assert.equal(f.nativeCalls.filter(call => call.action === 'discover-conversations').length, 1, 'automatic status ticks reuse the native directory stream');
+  for (const callback of f.microtasks.splice(0)) await callback();
+  assert.equal(f.nativeCalls.filter(call => call.action === 'collect-all-read').length, 1);
+  assert.equal(f.collectionReady(), true);
+});
 
 test('exact native protocol exposes support separately from ready collector state', () => {
   for (const collectorState of STATES) {

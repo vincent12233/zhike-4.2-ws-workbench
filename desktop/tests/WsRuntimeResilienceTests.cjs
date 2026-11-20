@@ -36,7 +36,7 @@ assert.match(legacy, /_wsFlushGate/, 'WS 入库必须串行化，避免大批量
 assert.match(legacy, /await WsIngestQueue\.FlushAsync\(_wsQueue, _api,/, 'WS 入库必须使用受超时保护的持久化队列');
 assert.match(ingestQueue, /CancelAfter\(TimeSpan\.FromSeconds\((?:10|15|20)\)\)/, 'WS 入库必须有短超时并可回退本机队列');
 assert.match(legacy, /current\.length\s*>=\s*250/, '单个 WS 入库包必须限制记录数，避免同步 SQLite 长时间阻塞健康接口');
-assert.match(legacy, /BuildWsCollectorScript\(session\.AccountId, purpose\)/, '独立扫码后的采集会话安装绑定可信用途的实际采集器');
+assert.match(legacy, /BuildWsCollectorScript\(session\.AccountId, purpose, epoch\)/, '独立扫码后的采集会话安装绑定可信用途和页面代次的实际采集器');
 assert.match(legacy, /session\.CollectorState != "running"/, '未运行或暂停的采集端不能接受采集命令');
 assert.match(capability, /BackgroundCollection => true/);
 assert.match(capability, /AutomaticHistory => true/);

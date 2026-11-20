@@ -30,11 +30,12 @@ async function request(pathname, init = {}) {
 }
 async function body(response) { const value = await response.json(); assert.ok(response.ok, JSON.stringify(value)); return value; }
 
-async function checkDirectoryActions() {
-  const accountId = 'directory-action-test';
+async function checkDirectoryActions(liveOnly = false) {
+  const accountId = liveOnly ? 'live-directory-action-test' : 'directory-action-test';
   const jids = ['first@g.us', 'second@g.us', 'third@g.us'];
   await body(await request('/api/ws/accounts', { method: 'POST', body: JSON.stringify({ id: accountId, workspaceMode: 'dedicated' }) }));
   const notices = [];
+  const native = [];
   const capability = { state: 'available', code: 'COLLECTION_INDEPENDENT_SESSION', provider: 'native-independent-session',
     protocolVersion: 1, backgroundCollection: true, automaticHistory: true, groupMonitoring: true, automaticAi: false,
     foregroundFallback: false, manualVisibleImport: true, collectorState: 'running' };
@@ -43,6 +44,12 @@ async function checkDirectoryActions() {
       __zhikeRegistryHost: { state: { settings: {}, customers: [] }, toast: (message, kind) => notices.push({ message, kind }) },
       zhikeDesktop: { ws: async payload => {
         assert.equal(payload.accountId, accountId);
+        native.push(payload);
+        if (payload.action === 'discover-visible-conversations') return { accountId, workspaceMode: 'dedicated', supported: true,
+          source: 'foreground-visible', sessionGeneration: 1, groupConversations: [
+            { accountId, externalId: jids[0], displayName: '当前会话中的群', conversationType: 'group', isGroup: true },
+            { accountId: 'another-account', externalId: 'wrong@g.us', displayName: '其他账号', conversationType: 'group', isGroup: true },
+          ] };
         if (payload.action === 'discover-conversations') {
           const checkpoints = jids.map(groupJid => ({ conversationKey: groupJid, displayName: groupJid, isGroup: true, conversationType: 'group' }));
           await body(await request('/api/ws/ingest/batch', { method: 'POST', body: JSON.stringify({ protocol: 'zhike.ws.ingest.batch.v1',
@@ -53,19 +60,50 @@ async function checkDirectoryActions() {
         return { accountId };
       } } },
     document: { addEventListener() {}, querySelector: () => null, querySelectorAll: () => [] },
-    localStorage: { getItem: () => null, setItem() {} }, fetch: request, URL, URLSearchParams, AbortController, setTimeout, clearTimeout,
+    localStorage: { getItem: () => null, setItem() {} }, fetch: (route, init) =>
+      liveOnly && route.includes('/groups?') ? Promise.resolve(Response.json({ groups: [] })) : request(route, init),
+    URL, URLSearchParams, AbortController, setTimeout, clearTimeout,
   };
   const source = require('node:fs').readFileSync(path.join(app, 'modules/ws-workbench.js'), 'utf8');
   const boot = /  boot\(\);\s*\}\)\(\);\s*$/;
   assert.match(source, boot);
-  require('node:vm').runInNewContext(source.replace(boot, '  globalThis.test = {state, handleAction, createGroupMonitorState, groupDirectoryState, renderWsWorkspacePage};\n})();'), sandbox);
-  const { state, handleAction, groupDirectoryState, createGroupMonitorState, renderWsWorkspacePage } = sandbox.test;
+  require('node:vm').runInNewContext(source.replace(boot, '  globalThis.test = {state, handleAction, createGroupMonitorState, groupDirectoryState, groupDirectoryRows, groupMonitorStatusLabel, receiveDedicatedGroupObservation, renderWsWorkspacePage};\n})();'), sandbox);
+  const { state, handleAction, groupDirectoryState, groupDirectoryRows, groupMonitorStatusLabel, receiveDedicatedGroupObservation, createGroupMonitorState, renderWsWorkspacePage } = sandbox.test;
   Object.assign(state, { workspaceMode: 'dedicated', activeAccountId: accountId, wsWorkspaceView: 'groups',
     accounts: [{ id: accountId, workspaceMode: 'dedicated', collectionCapability: capability }], groupMonitor: createGroupMonitorState(accountId) });
   const act = async (name, dataset = {}) => {
     await handleAction(name, { dataset });
     assert.equal(state.groupMonitor.error, '', notices.at(-1)?.message);
   };
+  if (liveOnly) {
+    capability.collectorState = 'not-started';
+    Object.assign(state, { wsStatus: '已连接', active: true });
+    assert.equal((await body(await request(`/api/ws/accounts/${accountId}/groups`))).groups.length, 0);
+    await act('group-monitor-scan');
+    const rows = groupDirectoryRows();
+    assert.deepEqual(Array.from(rows, row => row.directoryId), [jids[0]]);
+    assert.equal(rows[0].groupName, '当前会话中的群');
+    assert.equal(rows[0].directorySource, '前台现场');
+    assert.equal(groupDirectoryState().selectedGroupIds.length, 0);
+    assert.equal(state.groupCatalog.length, 0);
+    assert.equal((await body(await request(`/api/ws/accounts/${accountId}/groups`))).groups.length, 0, 'viewing the live group requires no archive write');
+    groupDirectoryState().selectedGroupIds = [jids[0]];
+    await act('group-monitor-add-directory');
+    assert.deepEqual(Array.from(state.groupMonitor.profile.targets, target => target.groupJid), [jids[0]]);
+    assert.match(groupMonitorStatusLabel(state.groupMonitor.profile), /等待采集会话/);
+    assert.ok(native.every(call => call.action === 'discover-visible-conversations'));
+    capability.collectorState = 'running';
+    await act('group-monitor-refresh');
+    assert.ok(native.some(call => call.action === 'start-group-monitor'));
+    const observation = { accountId, workspaceMode: 'dedicated', collectorOnly: true, groupJids: [jids[1]], observedAt: new Date().toISOString() };
+    receiveDedicatedGroupObservation(observation);
+    assert.equal(state.groupMonitor.liveObservations.size, 0, 'a live group outside the enabled target set cannot count as monitored');
+    receiveDedicatedGroupObservation({ ...observation, groupJids: [jids[0]] });
+    assert.match(groupMonitorStatusLabel(state.groupMonitor.profile), /现场观测到 1 \/ 1/);
+    assert.equal(state.groupMonitor.profile.lastObservedAt, '', 'a live observation displays before any ingest or saved heartbeat');
+    assert.equal(state.groupCatalog.length, 0);
+    return;
+  }
   await act('group-monitor-scan');
   assert.equal(state.groupCatalog.length, 3);
   assert.equal(state.groupMonitor.profile, null, 'discovery alone must not create a monitoring seat');
@@ -197,6 +235,7 @@ async function checkDirectoryActions() {
     const afterLeft = await body(await request('/api/state'));
     assert.equal(afterLeft.customers.filter(item => item.phone === '9876543213').length, 0);
     await checkDirectoryActions();
+    await checkDirectoryActions(true);
     console.log('ws-group-monitor-api: pass');
   } finally {
     try { await fetch(`http://127.0.0.1:${port}/api/shutdown`, { method: 'POST', headers: { ...headers, 'x-zhike-shutdown-token': token } }); } catch {}

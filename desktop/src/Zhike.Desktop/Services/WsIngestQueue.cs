@@ -6,7 +6,8 @@ namespace Zhike.Desktop.Services;
 public static class WsIngestQueue
 {
     public static async Task FlushAsync(LocalQueue queue, ApiClient api,
-        Action<WsIngestBatchRequestDto, WsIngestBatchResponseDto> onSynced, CancellationToken cancellationToken = default)
+        Action<WsIngestBatchRequestDto, WsIngestBatchResponseDto> onSynced, CancellationToken cancellationToken = default,
+        Action<WsIngestBatchRequestDto, Exception>? onFailure = null)
     {
         var deferredAccounts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var item in await queue.PeekAsync(cancellationToken))
@@ -31,6 +32,7 @@ public static class WsIngestQueue
             catch (Exception error)
             {
                 await queue.MarkFailureAsync(item.Id, error, cancellationToken);
+                if (request is not null) onFailure?.Invoke(request, error);
                 // Retry an unavailable service on the next tick. A rejected packet
                 // only blocks later checkpoints belonging to that same account.
                 if (error is not (InvalidDataException or JsonException or HttpRequestException

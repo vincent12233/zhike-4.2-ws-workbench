@@ -39,8 +39,11 @@ assert.match(ui, /function loadAllConversationPages\(context/);
 assert.match(ui, /conversations\?limit=1000/);
 assert.match(ui, /nextCursor/);
 assert.match(ui, /\/api\/ws\/crm-sync/);
-assert.match(ui, /独立采集会话需单独扫码/,
-  'background collection must disclose its independent login requirement');
+const { collectorStatusMessage } = require('../resources/app/modules/ws-workbench-core.js');
+assert.match(collectorStatusMessage({ collectorState: 'awaiting-login', collectorLoginStatus: '等待登录' }), /扫码/);
+for (const collectorState of ['running', 'not-started', 'paused', 'login-visible', 'awaiting-login'])
+  assert.doesNotMatch(collectorStatusMessage({ collectorState }), /扫码/);
+assert.match(collectorStatusMessage({ collectorState: 'error', collectorDetail: 'WhatsApp 页面加载失败' }), /WhatsApp 页面加载失败/);
 assert.match(ui, /COLLECTION_CAPABILITY_BLOCKED/);
 assert.match(ui, /class="ws-login-summary"/);
 assert.match(ui, /id="wsStatusDetail" class="ws-login-status" title=/);
@@ -52,7 +55,7 @@ assert.match(ui, /conversation\.unread === true \|\| Number\(conversation\.unrea
 assert.match(ui, /当前桌面未提供独立采集会话；前台聊天和手动导入可用/,
   'missing native capability must preserve the explicit unavailable state');
 const manualCreate = ui.slice(ui.indexOf('  async function createConversation()'), ui.indexOf('      assertContext(context);', ui.indexOf('  async function createConversation()')));
-assert.match(manualCreate, /群组目录[\s\S]*?return;[\s\S]*?api\('/, 'manual group entry ends before an API write');
+assert.match(manualCreate, /@g\\\.us\$[\s\S]*?return;[\s\S]*?api\('/, 'manual group entry ends before an API write');
 assert.doesNotMatch(manualCreate, /vip_group|vipGroup/, 'manual input cannot create group metadata');
 assert.match(ui, /const conversationType = isAutomaticVipGroupConversation\(normalized\) \? 'vip_group' : 'direct'/,
   'native list discovery must retain configured VIP-group identity');
@@ -106,7 +109,7 @@ assert.match(css, /body\.ws-mode \.ws-runtime-strip\{[^}]*display:grid/,
   'the 6.0 WS cockpit must give its runtime overview a stable responsive layout');
 assert.match(ui, /class="ws-cockpit-bar"/, 'WS reference layout needs a dedicated account and collector cockpit');
 assert.match(ui, /内嵌 WhatsApp Web/, 'WS heading preserves the official foreground chat surface');
-assert.match(ui, /独立采集会话需单独扫码/, 'WS controls disclose separate collector authentication');
+assert.match(ui, /core\.collectorStatusMessage\(capability\)/, 'WS controls use verified collector state for login guidance');
 assert.match(ui, /title="登录资料由各自的 WebView2 会话保存，不复制账号认证数据"/, 'WS privacy disclosure describes actual profile persistence');
 assert.match(ui, /class="ws-assist-tabs"/, 'WS reference layout needs the right-side assistant tab strip');
 for (const label of ['AI 分析', '客户档案', '回复建议', '采集诊断']) assert.match(ui, new RegExp(`title="${label}"`), `WS assistant tab ${label} needs an accessible title`);

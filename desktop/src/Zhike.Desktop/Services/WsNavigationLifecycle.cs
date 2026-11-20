@@ -21,6 +21,7 @@ public sealed class WsNavigationLifecycle
     public long Generation { get; }
     public string Surface { get; }
     public long Cycle => _cycle;
+    public ulong NavigationId => _activeNavigation;
     public long RequestSequence => _request;
     public string RequestSource { get; private set; } = "initial";
     public int RecoveryCount { get; private set; }

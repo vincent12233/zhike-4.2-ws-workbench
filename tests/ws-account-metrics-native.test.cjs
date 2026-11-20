@@ -141,7 +141,7 @@ sealed class Probe(WsAccountStore store, WebViewProfileService profiles) {
   ${take('    private WsAccountMetricsSnapshot BuildWsAccountMetrics(', '    private async Task OpenWsOverlayAsync(')}
   ${take('    private static bool IsAllowedWsPopupNavigation(', '    private async Task HeartbeatPooledWsSessionAsync(')}
   ${take('    private async Task<(string status, string detail)> ProbeWsLoginStateAsync(', '    private async Task SetWsStatusAsync(').replace('var probeText = JsonSerializer.Deserialize<string>(json)', 'FixtureDispatcher.AssertBackground(); var probeText = JsonSerializer.Deserialize<string>(json)')}
-  ${take('    private async Task SetWsStatusAsync(', '    private async Task<BridgeResponse> ExecuteWsCaptureAsync(').replace('await _wsStatusGate.WaitAsync(cancellationToken);', 'StatusEntered?.TrySetResult(); await _wsStatusGate.WaitAsync(cancellationToken);')}
+  ${take('    private async Task SetWsStatusAsync(', '    private async Task<BridgeResponse> ReadWsVisibleDirectoryAsync(').replace('await _wsStatusGate.WaitAsync(cancellationToken);', 'StatusEntered?.TrySetResult(); await _wsStatusGate.WaitAsync(cancellationToken);')}
 }
 static class App { public static FakePool WsSessions = new(); public static FakeRuntime WsRuntime = new(); }
 sealed class FakeRuntime { public void RegisterAccount(string id, string name, string status) { FixtureDispatcher.AssertUi(); } public void UpdateConnectionState(string id, string status) { FixtureDispatcher.AssertUi(); } }

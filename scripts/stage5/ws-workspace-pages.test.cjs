@@ -28,6 +28,7 @@ const state = { workspaceMode: 'ordinary', activeAccountId: 'a', accounts: [{ id
 const pages = new Map();
 const sandbox = { state, esc, text: value => String(value ?? '').trim(), getHost: () => null, displayTime: value => value ? String(value) : '', activeAccount: () => state.accounts[0], accountDisplayName: account => account.id, wsWorkspacePageState: (view = state.wsWorkspaceView) => { const key = state.activeAccountId + ':' + view; if (!pages.has(key)) pages.set(key, { busy: false, error: '', status: '尚未刷新', filter: '', statusFilter: 'all', page: 1 }); return pages.get(key); }, workspacePageHeader: meta => `<h2>${esc(meta.label)}</h2>` };
 sandbox.businessPages = require('../../resources/app/modules/ws-business-pages.js');
+vm.runInNewContext(source.slice(source.indexOf('  function workspaceLiveDirectoryRows('), source.indexOf('  function updateLiveDirectoryDom(')), sandbox);
 sandbox.window = { ZhikeWsGroupReading: require('../../resources/app/modules/ws-group-reading-ui.js') };
 for (const name of ['renderAccountList', 'renderAccountForm', 'renderGroupMonitorCard', 'renderCollectionCard', 'renderWsFlowStrip', 'renderAnalysis', 'renderDataArchiveSummary', 'renderHotProfile', 'renderFollowupAlerts']) sandbox[name] = () => `<div data-service-projection="${name}"></div>`;
 sandbox.activeConversation = () => null;

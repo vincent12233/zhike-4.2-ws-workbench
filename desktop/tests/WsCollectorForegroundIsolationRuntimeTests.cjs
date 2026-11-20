@@ -60,6 +60,19 @@ const sandbox = {
 };
 
 const result = JSON.parse(vm.runInNewContext(script, sandbox));
+const directoryScript = host.match(/private const string WsVisibleDirectoryScript = """([\s\S]*?)""";/)[1];
+assert.doesNotMatch(directoryScript, /MutationObserver|setInterval|setTimeout|scrollTop\s*=|\.click\s*\(|\.focus\s*\(|localStorage|document\.cookie|fetch\(/);
+row.getClientRects = () => [{}];
+const groupRow = { ...row, getAttribute: name => name === 'data-group-id' ? '1203630001' : '' };
+const hiddenRow = { ...row, getClientRects: () => [] };
+const unknownRow = { ...row, getAttribute: () => '' };
+const list = { querySelectorAll: () => [row, groupRow, hiddenRow, unknownRow] };
+const live = JSON.parse(vm.runInNewContext(directoryScript + '("ordinary")', { document: { querySelector: () => list } }));
+const groups = JSON.parse(vm.runInNewContext(directoryScript + '("dedicated")', { document: { querySelector: () => list } }));
+assert.deepEqual(live.rows.map(item => [item.conversationKey, item.conversationType]), [['chat-foreground','direct']]);
+assert.deepEqual(groups.rows.map(item => [item.conversationKey, item.conversationType]), [['1203630001@g.us','group']]);
+assert.equal(live.coverage, 'foreground-visible-only');
+assert.equal(JSON.parse(vm.runInNewContext(directoryScript + '("ordinary")', { document:{querySelector:()=>null} })).supported, false);
 assert.equal(result.collectorRole, 'foreground-on-demand', 'manual foreground capture must identify itself as on-demand');
 assert.equal(result.supported, true, 'manual foreground capture must remain available');
 assert.equal(scrollWrites, 0, 'foreground collector never writes the visible list scroll position');

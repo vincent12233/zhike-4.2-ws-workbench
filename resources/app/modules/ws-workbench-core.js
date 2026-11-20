@@ -5,6 +5,19 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const text = value => String(value == null ? '' : value).trim();
 
+  function collectorStatusMessage(capability = {}) {
+    const state = capability.collectorState;
+    if (state === 'running') return '独立采集会话已就绪，可以开始采集。';
+    if (state === 'error' || capability.collectorLoginStatus === '连接失败')
+      return text(capability.collectorDetail) || '独立采集页面连接失败，请打开采集窗口查看原因。';
+    if (state === 'paused') return '独立采集已暂停，可以继续采集。';
+    if (capability.collectorLoginStatus === '等待登录' || capability.collectorLoginStatus === '会话过期')
+      return '独立采集会话等待登录，请使用当前账号的手机扫码。';
+    if (capability.collectorLoginStatus === '已连接') return '独立采集会话已连接，正在准备采集。';
+    if (state === 'not-started') return '独立采集尚未启动，可打开或恢复当前账号的采集会话。';
+    return '正在检查独立采集会话的登录状态。';
+  }
+
   // Identity evidence only: titles, phone-shaped group names and message text
   // cannot prove that a WhatsApp conversation is one-to-one.
   function conversationType(value = {}) {
@@ -754,6 +767,7 @@
   }
 
   return {
+    collectorStatusMessage,
     conversationType,
     isGroupConversation,
     isVipGroupConversation,

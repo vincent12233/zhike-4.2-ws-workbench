@@ -34,6 +34,8 @@ public sealed class WsWebViewSession
     /// </summary>
     public WebView2? CollectorView { get; }
     public string CollectorState { get; internal set; } = "not-started";
+    public string CollectorLoginStatus { get; internal set; } = "";
+    public string CollectorDetail { get; internal set; } = "";
     internal bool StartAfterPairing { get; set; }
     internal bool ShouldResumeAfterLogin(bool collectorSignedIn, bool showingLogin)
     {
@@ -42,6 +44,7 @@ public sealed class WsWebViewSession
         return true;
     }
     public bool IsCollectorReady => CollectorView?.CoreWebView2 is not null;
+    internal string? VisibleDirectoryWorkspaceMode { get; set; }
     public DateTimeOffset CreatedAt { get; }
     public DateTimeOffset LastUsedAt { get; internal set; }
     public bool IsReady => View.CoreWebView2 is not null;

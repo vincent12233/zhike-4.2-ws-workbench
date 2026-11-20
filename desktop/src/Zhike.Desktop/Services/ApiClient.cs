@@ -45,6 +45,7 @@ public sealed record WsMessageEnvelopeDto(
 // Checkpoints are list-level observations. Optional preview/time/unread fields
 // let a virtualized WS list update the conversation summary without creating a
 // fake message row; old callers that only send identity/cursor remain valid.
+public sealed record WsObservedMemberDto(string MemberId, string DisplayName);
 public sealed record WsCheckpointDto(
     string AccountId,
     string ConversationKey,
@@ -63,7 +64,8 @@ public sealed record WsCheckpointDto(
     int DirectionUnresolvedCount = 0,
     string ConversationType = "",
     bool? IsGroup = null,
-    bool VipGroup = false);
+    bool VipGroup = false,
+    IReadOnlyList<WsObservedMemberDto>? ObservedMembers = null);
 public sealed record WsGroupMembershipEventDto(
     string AccountId,
     string ProfileId,
@@ -85,8 +87,9 @@ public sealed record WsIngestBatchRequestDto(
     string Scope,
     IReadOnlyList<WsMessageEnvelopeDto> Messages,
     IReadOnlyList<WsCheckpointDto> Checkpoints,
-    IReadOnlyList<WsGroupMembershipEventDto>? GroupEvents = null);
-public sealed record WsIngestBatchResponseDto(int Accepted, int Deduplicated, IReadOnlyList<string> MessageIds, DateTimeOffset ProcessedAt);
+    IReadOnlyList<WsGroupMembershipEventDto>? GroupEvents = null,
+    long? SessionGeneration = null);
+public sealed record WsIngestBatchResponseDto(int Accepted, int Deduplicated, IReadOnlyList<string> MessageIds, DateTimeOffset ProcessedAt, int ObservedMembersAdded = 0);
 
 public sealed class ApiClient(HttpClient http) : IDisposable
 {
@@ -903,8 +906,11 @@ public sealed class ApiClient(HttpClient http) : IDisposable
     {
         if (request.Scope != "background-collector") return;
         var purpose = await GetWsCollectorPurposeAsync(request.AccountId, cancellationToken);
-        var monitors = purpose.AllowsGroupMonitoring && request.Messages.Count > 0
+        var memberCheckpoints = request.Checkpoints.Where(row => row.ObservedMembers is { Count: > 0 }).ToArray();
+        var monitors = purpose.AllowsGroupMonitoring && (request.Messages.Count > 0 || memberCheckpoints.Length > 0)
             ? await GetWsCollectorMonitorsAsync(request.AccountId, cancellationToken) : [];
+        if (memberCheckpoints.Any(row => row.Coverage != "group-monitor-visible" || !monitors.Any(monitor => monitor.AllowsGroup(row.ConversationKey))))
+            throw new InvalidDataException("WS_COLLECTOR_TARGET_BLOCKED: 群成员观察仅限已选的监测群。");
         if (request.Messages.Any(row => !purpose.AllowsMessage(row, monitors)) || request.Checkpoints.Any(row => !purpose.AllowsCheckpoint(row)))
             throw new InvalidDataException("WS_COLLECTOR_PURPOSE_BLOCKED: 旧采集包与当前账号用途不符，保留待恢复。");
         // Legacy ordinary packets may contain direct history plus passive

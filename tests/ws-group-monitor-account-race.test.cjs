@@ -32,7 +32,10 @@ function fixture(delayB = false) {
         startedB.resolve();
         return delayB ? gateB.promise : { groups: [{ accountId: 'b', groupJid: 'b@g.us' }] };
       }
-      if (route === '/api/ws/group-monitors/profiles') return { profiles: [{ id: 'profile-b', accountId: 'b', slotKey: 'fixed-group-seat' }] };
+      if (route === '/api/ws/group-monitors/profiles') {
+        if (context.accountId === 'b' && delayB) await gateB.promise;
+        return { profiles: [{ id: 'profile-b', accountId: 'b', slotKey: 'fixed-group-seat' }] };
+      }
       if (route.includes('/events?')) return { events: [{ id: 'event-b', accountId: 'b' }] };
       if (route === '/api/ws/group-monitors/profile-b') return { profile: { id: 'profile-b', accountId: 'b' }, health: { targetCount: 1 } };
       throw new Error('Unexpected service request: ' + route);
@@ -40,7 +43,7 @@ function fixture(delayB = false) {
     window: { zhikeDesktop: { ws: async payload => { native.push(payload); return {}; } } },
     syncGroupMonitorNative: async (profile, context) => { assert.ok(contextCurrent(context)); native.push({ monitor: profile?.id, accountId: context.accountId }); },
     syncVipGroupAllowlist: async () => {}, cancelAllAiWork: async () => {}, loadConversations: async () => {},
-    loadGroupMembers: async () => {}, writeStoredAccountId: () => {}, render: () => {}, updateGroupMonitorDom: () => {},
+    loadGroupMembers: async () => {}, writeStoredAccountId: () => {}, render: () => {}, updateGroupMonitorDom: () => {}, updateDedicatedLiveDirectoryDom: () => {},
     boundsForBrowserView: () => ({ hidden: true }), getHost: () => null,
   };
   vm.runInNewContext(

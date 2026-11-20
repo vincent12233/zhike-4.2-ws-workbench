@@ -4,7 +4,8 @@ namespace Zhike.Desktop.Services;
 
 public sealed record StoredWsLoginObservation(DateTimeOffset ObservedAt, long ProfileCreatedUtcTicks, bool SignedIn);
 public sealed record StoredWsAccount(string Id, string DisplayName, string Status, DateTimeOffset? LastSeen = null, string? LastKnownStatus = null, string WorkspaceMode = "ordinary",
-    StoredWsLoginObservation? ForegroundLoginObservation = null, StoredWsLoginObservation? CollectorLoginObservation = null);
+    StoredWsLoginObservation? ForegroundLoginObservation = null, StoredWsLoginObservation? CollectorLoginObservation = null,
+    bool DirectoryPurposeConfirmed = false);
 
 /// <summary>
 /// Small local account index used before/without the API.  It stores only

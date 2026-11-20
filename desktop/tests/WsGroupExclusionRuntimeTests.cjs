@@ -62,6 +62,7 @@ const rows = [
   makeRow({ id:'unknown-contact', title:'Unresolved Alias' }),
 ];
 let visibleRows = () => rows;
+let participantPanels = [];
 const container = {
   scrollTop:0, scrollHeight:500, clientHeight:500,
   querySelectorAll(selector) { return /listitem|role="row"|cell-frame-container/.test(selector) ? visibleRows() : []; },
@@ -80,6 +81,7 @@ const document = {
     return null;
   },
   querySelectorAll(selector) {
+    if (selector.includes('group-info-drawer')) return participantPanels;
     if (selector.includes('msg-container') || selector.includes('data-pre-plain-text')) return messageNodes;
     if (selector.includes('#pane-side') || selector.includes('chat-list') || selector === '[role="grid"]') return [container];
     if (/listitem|role="row"|cell-frame-container/.test(selector)) return visibleRows();
@@ -135,8 +137,20 @@ const monitorConfig = sandbox.window.__zhikeWsConfigureGroupMonitor({
   targets:[{ targetId:'monitor-target', groupJid:'group-456@g.us', groupName:'+91 99999 99999', enabled:true }],
 });
 assert.equal(monitorConfig.configured, 1);
+const participant = (id, visible = true) => ({
+  getClientRects: () => visible ? [{}] : [], closest: () => null,
+  getAttribute: attr => attr === 'data-participant-jid' ? id : null, querySelector: () => null,
+});
+const panel = (jid, members) => ({ getClientRects: () => [{}], closest: () => null,
+  getAttribute: attr => attr === 'data-jid' ? jid : null, querySelectorAll: () => members });
+participantPanels = [panel('other@g.us', [participant('999@lid')]),
+  panel('group-456@g.us', [participant('123@lid'), participant('same name'), participant('456@lid', false)])];
+activeId = 'group-456@g.us';
 const monitorStart = sandbox.window.__zhikeWsGroupMonitorStart();
 assert.equal(monitorStart.status, 'running');
+assert.deepEqual(posted.flatMap(p => p.conversations || []).flatMap(row => row.observedMembers || []).map(row => row.memberId),
+  ['123@lid'], 'only the displayed monitored group and a visible structured member row can supply an identity');
+participantPanels = [];
 const previewEvents = posted.flatMap(packet => packet.groupEvents || []);
 assert.ok(previewEvents.some(event => event.type === 'joined' && event.memberPhone === '919999999999'), 'dedicated exact group target emits a normalized member event without VIP promotion');
 assert.equal(clicks.length, 0, 'group preview monitoring never opens a chat');

@@ -13,7 +13,11 @@ const script = match[1].replace(/\{\{encodedAccount\}\}/g, JSON.stringify('disco
 
 let scrollTop = 0;
 const makeRow = id => ({
-  getAttribute(name) { return name === 'data-id' ? id : name === 'data-chat-type' ? 'direct' : name === 'role' ? 'row' : ''; },
+  getAttribute(name) {
+    if (name === 'data-id' || (name === 'data-jid' && id.includes('@'))) return id;
+    if (name === 'data-chat-type') return id.endsWith('@g.us') ? 'group' : 'direct';
+    return name === 'role' ? 'row' : '';
+  },
   querySelectorAll() { return []; },
   querySelector(selector) {
     if (selector.includes('[title]') || selector.includes('span[dir="auto"]')) return { getAttribute:() => id, textContent:id, closest:() => null };
@@ -22,8 +26,8 @@ const makeRow = id => ({
   closest() { return null; }, dispatchEvent() {}, scrollIntoView() {}, focus() {}, click() {},
   innerText:`${id} preview`, textContent:`${id} preview`,
 });
-const topRow = makeRow('discover-top');
-const bottomRow = makeRow('discover-bottom');
+let topRow = makeRow('discover-top');
+let bottomRow = makeRow('discover-bottom');
 const visibleRows = () => scrollTop < 250 ? [topRow] : [bottomRow];
 const list = {
   get scrollTop() { return scrollTop; }, set scrollTop(value) { scrollTop = Number(value); },
@@ -75,6 +79,7 @@ posted.length = 0;
 
 const started = sandbox.window.__zhikeWsDiscoverAll();
 assert.equal(started.scanning, true);
+assert.deepEqual(Array.from(started.conversations, row => row.conversationKey), ['discover-top']);
 // The paint scheduler uses two frames. Run exactly one scanner step so the
 // top window is owned by the still-active allScan.
 assert.ok(frames.length > 0);
@@ -103,5 +108,39 @@ const completedRows = posted
   .map(item => item.conversationKey);
 assert.deepEqual(completedRows, ['discover-top', 'discover-bottom'], 'completed scan publishes the full top-to-bottom result');
 assert.ok(guard < 100, 'scan completes with a bounded fake clock');
+const live = posted.filter(packet => packet.type === 'zhike.ws.directory');
+assert.deepEqual(live.flatMap(packet => packet.rows.map(row => row.conversationKey)), ['discover-top', 'discover-bottom']);
+assert.ok(live.every((packet, i) => packet.scanId === started.scanId && packet.chunkIndex === i));
+assert.equal(live.at(-1).complete, true);
+assert.equal(live.at(-1).finished, true);
+assert.ok(posted.indexOf(live.find(packet => packet.rows.some(row => row.conversationKey === 'discover-bottom')))
+  < posted.findIndex(packet => packet.type === 'zhike.ws.capture' && packet.coverage === 'page-list-scanned'),
+  'last virtualized window is delivered before the scan is submitted for storage');
 
-console.log('WS discover-all progress runtime: in-flight reads expose partial rows and completion publishes all rows');
+for (const mode of ['ordinary', 'dedicated']) {
+  sandbox.window.__zhikeStopCapture();
+  scrollTop = 0;
+  topRow = makeRow(mode === 'ordinary' ? '12345@g.us' : 'ordinary-top');
+  bottomRow = makeRow(mode === 'ordinary' ? 'old-contact' : '12345@g.us');
+  vm.runInNewContext(`(function(__zhikeWsTrustedPurpose,__zhikeWsDocumentEpoch){${script}})('${mode}',12);`, sandbox);
+  sandbox.window.__zhikeStopCapture();
+  frames.length = 0;
+  timers.clear();
+  posted.length = 0;
+  const expected = mode === 'ordinary' ? 'new-live-contact' : '67890@g.us';
+  bottomRow = makeRow(expected);
+  // No foreground interaction, monitor targets, or manual scan request.
+  now += 91000;
+  sandbox.window.__zhikeWsBackgroundTick();
+  let frameCount = 0;
+  while (frames.length && frameCount++ < 100 && !posted.some(packet => packet.type === 'zhike.ws.directory' && packet.finished)) {
+    now += 16;
+    frames.shift()();
+  }
+  const packets = posted.filter(packet => packet.type === 'zhike.ws.directory');
+  assert.deepEqual(packets.flatMap(packet => packet.rows.map(row => row.conversationKey)), [expected],
+    mode + ' periodically discovers a new second-screen row without any manually selected target');
+  assert.ok(packets.every(packet => packet.collectorEpoch === 12));
+  assert.equal(packets.at(-1).complete, true);
+}
+console.log('WS discover-all progress runtime: initial and subsequent low-frequency scans stream purpose-scoped virtualized rows');

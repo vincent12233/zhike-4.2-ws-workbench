@@ -6,16 +6,30 @@ const take=(a,b)=>{const i=source.indexOf(a),j=source.indexOf(b,i);assert.ok(i>=
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'zhike-native-purpose-'));
 fs.writeFileSync(path.join(root,'NuGet.Config'),'<configuration><packageSources><clear /></packageSources></configuration>');
 const xml=s=>s.replaceAll('&','&amp;').replaceAll('"','&quot;');
-fs.writeFileSync(path.join(root,'Probe.csproj'),`<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup><ItemGroup>${['ApiClient.cs','WorkspaceRestoreTransfer.cs','BridgeContracts.cs','WsCollectorPurposePolicy.cs'].map(file=>`<Compile Include="${xml(path.join(services,file))}" Link="${file}" />`).join('')}</ItemGroup></Project>`);
+fs.writeFileSync(path.join(root,'Probe.csproj'),`<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup><ItemGroup>${['ApiClient.cs','WorkspaceRestoreTransfer.cs','BridgeContracts.cs','WsCollectorPurposePolicy.cs','WsLiveDirectory.cs'].map(file=>`<Compile Include="${xml(path.join(services,file))}" Link="${file}" />`).join('')}</ItemGroup></Project>`);
 fs.writeFileSync(path.join(root,'Program.cs'),`
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Zhike.Desktop.Services;
+using WsWebViewSession=Session;
 static void Check(bool value,string message){if(!value)throw new Exception(message);}
 static async Task Denied(Func<Task> run){try{await run();}catch(InvalidDataException){return;}throw new Exception("Expected policy denial");}
 var handler=new Sidecar();using var http=new HttpClient(handler){BaseAddress=new Uri("http://localhost/")};var api=new ApiClient(http);
 var ordinary=await api.GetWsCollectorPurposeAsync("ordinary");var dedicated=await api.GetWsCollectorPurposeAsync("dedicated");
+var directoryInput=JsonSerializer.SerializeToElement(new{scanId=9,chunkIndex=2,finished=true,complete=true,rows=new[]{
+ new{conversationKey="1@c.us",conversationType="direct",displayName="Person",previewText="private preview",isGroup=false},
+ new{conversationKey="2@g.us",conversationType="group",displayName="Group",previewText="group body",isGroup=true},
+ new{conversationKey="3@g.us",conversationType="direct",displayName="Misclassified",previewText="foreign group",isGroup=false},
+ new{conversationKey="opaque",conversationType="unknown",displayName="Unknown",previewText="uncertain",isGroup=false}}});
+var directoryA=WsLiveDirectory.Project(directoryInput,ordinary,5,8,"collector");
+var directoryB=WsLiveDirectory.Project(directoryInput,dedicated,5,8,"collector");
+Check(directoryA.GetProperty("conversations").GetArrayLength()==1 && directoryA.GetProperty("groupConversations").GetArrayLength()==0
+ && !directoryA.ToString().Contains("2@g.us") && directoryA.GetProperty("accountId").GetString()=="ordinary","live rows are purpose-filtered by the native host");
+Check(directoryB.GetProperty("conversations").GetArrayLength()==0 && directoryB.GetProperty("groupConversations").GetArrayLength()==1
+ && !directoryB.ToString().Contains("group body") && !directoryB.ToString().Contains("private preview")
+ && directoryB.GetProperty("sessionGeneration").GetInt32()==5 && directoryB.GetProperty("collectorEpoch").GetInt32()==8
+ && directoryB.GetProperty("scanId").GetInt32()==9 && directoryB.GetProperty("complete").GetBoolean(),"dedicated directory shares group identities with provenance");
 Check(ordinary.AllowsHistory("919876543210@c.us","direct"),"ordinary direct preserved");
 Check(!ordinary.AllowsHistory("123@g.us","direct")&&!ordinary.AllowsHistory("123@g.us","vip_group",true,true),"forged direct and VIP group rejected");
 Check(!dedicated.AllowsHistory("919876543210@c.us","direct"),"dedicated direct history rejected");
@@ -64,11 +78,24 @@ Check(configured.Ok&&probe.LastScript.Contains("123@g.us")&&!probe.LastScript.Co
 probe=new Probe(api,"dedicated");var monitorGate=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);handler.MonitorGate=monitorGate;handler.Entered=new(TaskCreationOptions.RunContinuationsAsynchronously);
 var pendingConfig=probe.Configure(new{profileId="profile"});await handler.Entered.Task;probe.AdvanceEpoch();monitorGate.SetResult();
 Check(!(await pendingConfig).Ok&&probe.Executed==0,"late sidecar monitor config cannot execute after pause/epoch change");
-Console.WriteLine("native purpose policy: sidecar account, exact group target, queue replay and awaited epoch checks PASS");
+handler.Offline=true;
+probe=new Probe(api,"dedicated");
+Check((await probe.ReadDirectory()).Ok && (await probe.ReadPurpose()).WorkspaceMode=="dedicated","read-only directory reuses the same generation and epoch lease while sidecar is offline");
+probe.AdvanceEpoch();
+await probe.Register("ordinary",true);
+try{await probe.ReadPurpose();throw new Exception("foreign account registration leaked its purpose");}catch(HttpRequestException){}
+await probe.Register("dedicated",false);
+try{await probe.ReadPurpose();throw new Exception("implicit or unverified registration granted access");}catch(HttpRequestException){}
+await probe.Register("dedicated",true);
+Check((await probe.ReadPurpose()).WorkspaceMode=="dedicated","explicit confirmed account registration supplies only the foreground read scope");
+Check(!(await probe.ReadDirectory()).Ok,"expired collector lease cannot use a saved foreground registration");
+Console.WriteLine("native purpose policy: sidecar account, exact group target, queue replay, offline reads and awaited epoch checks PASS");
 
 sealed class Sidecar:HttpMessageHandler{
+ public bool Offline;
  public bool Disabled,ForeignProfile;public TaskCompletionSource? AccountGate,MonitorGate;public TaskCompletionSource Entered=new(TaskCreationOptions.RunContinuationsAsynchronously);
  protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage req,CancellationToken ct){
+  if(Offline)throw new HttpRequestException("test sidecar offline");
   object data;
   if(req.RequestUri!.AbsolutePath=="/api/ws/accounts"){
    if(AccountGate is {} gate){Entered.TrySetResult();await gate.Task.WaitAsync(ct);}
@@ -78,11 +105,17 @@ sealed class Sidecar:HttpMessageHandler{
  }
 }
 sealed class WebView2{public object? CoreWebView2{get;}=new();}
-sealed class Session(string id){public string AccountId=id;public long Generation=1;public string CollectorState="running";public WebView2 CollectorView=new();}
+sealed class Session(string id){public string AccountId=id;public long Generation=1;public string CollectorState="running";public WebView2 CollectorView=new();public string? VisibleDirectoryWorkspaceMode{get;set;}}
 static class App{public static Service WsService=new();public static Service WsSessions=>WsService;}
 sealed class Service{public Session Current=new("ordinary");public bool TryGetSession(string id,out Session? session){session=Current;return Current.AccountId==id;}public bool IsCurrent(string id,long generation,WebView2 view)=>Current.AccountId==id&&Current.Generation==generation&&ReferenceEquals(Current.CollectorView,view);}
 static class DesktopBridgeService{public const string CurrentVersion="1";}
 sealed class Probe{
+ readonly FixtureRegistry _wsAccountStore=new();
+ sealed record Registration(string Id,string WorkspaceMode,bool DirectoryPurposeConfirmed);
+ sealed class FixtureRegistry{public List<Registration> Rows=[];public Task<List<Registration>> LoadAsync(CancellationToken ct)=>Task.FromResult(Rows);}
+ public Task Register(string id,bool confirmed){_wsAccountStore.Rows=[new(id,id,confirmed)];return Task.CompletedTask;}
+ public Task<BridgeResponse> ReadDirectory()=>ExecuteCollectorCommandAsync("test",App.WsService.Current.AccountId,"fixture",CancellationToken.None,directory:true);
+ public Task<WsCollectorPurposePolicy> ReadPurpose()=>ResolveVisibleDirectoryPurposeAsync(App.WsService.Current,CancellationToken.None);
  readonly ApiClient? _api;readonly Dictionary<WebView2,SemaphoreSlim> _wsCollectorGates=new();readonly Dictionary<WebView2,long> _wsCollectorEpoch=new();
  sealed record CollectorPurposeLease(long Generation,long Epoch,WsCollectorPurposePolicy Policy);
  readonly Dictionary<WebView2,CollectorPurposeLease> _wsCollectorPurposes=new();readonly Dictionary<string,JsonElement> _wsCollectorMonitor=new();readonly Dictionary<string,WsCollectorMonitorPolicy> _wsCollectorMonitorPolicies=new();
@@ -100,6 +133,7 @@ ${take('            if (purpose is not null)', '            if (messages.Count =
  static JsonElement ParseWebViewJsonResult(string raw)=>JsonSerializer.Deserialize<JsonElement>(raw);
  static string StringValue(JsonElement row,string name)=>row.TryGetProperty(name,out var value)?value.ToString():"";
 ${take('    private async Task<BridgeResponse> ExecuteCollectorCommandAsync(', '    private void SyncPooledWsPresentation')}
+${take('    private async Task<WsCollectorPurposePolicy> ResolveVisibleDirectoryPurposeAsync(', '    private const string WsVisibleDirectoryScript')}
 ${take('    private static JsonElement MonitorScriptConfig(', '    private async Task<BridgeResponse> SetGroupMonitorStateAsync(')}
 }
 namespace Zhike.Desktop {

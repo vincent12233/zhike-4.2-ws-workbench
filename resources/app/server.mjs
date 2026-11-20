@@ -157,6 +157,7 @@ testStartupDiagnostic('migrations-completed', {
   compatibilityCount: migrationResult.compatibility?.length || 0,
 });
 if (migrationResult.compatibility?.length) console.warn('迁移兼容复核：024 精确末尾换行历史变体已验证，原校验记录已保留，迁移前备份与独立审计已记录。');
+if (migrationResult.repairedIndexes?.length) console.info('已从 SQLite 表重建 WS 查询索引', migrationResult.repairedIndexes.join(', '), '修复前快照', migrationResult.backupPath);
 const fencedWriter = new SqliteFencedWriter(db);
 // WS directory exclusion is the production pre-gate for automatic customer
 // creation. The engine binds to the live database lazily, after migrations have
@@ -2267,26 +2268,72 @@ function wsObservedGroupMessageData(data) {
   return data.nativeAuthorityVerified === true && data.source === 'ws-webview2' && data.previewOnly !== true && Number(data.directionVersion || 0) >= 4
     && WS_NATIVE_DIRECTION_SOURCE_MAP.get(data.directionSource) === 'receive' && data.senderIdentityTrusted === true;
 }
+function wsEnabledGroupTarget(accountId, groupJid) {
+  return db.prepare(`SELECT t.group_name, MAX(t.created_at,p.created_at,COALESCE(json_extract(t.data_json,'$.observationStartAt'),''),
+    COALESCE(json_extract(p.data_json,'$.observationStartAt'),'')) AS authorized_since
+    FROM ws_group_monitor_targets t JOIN ws_group_monitor_profiles p ON p.id=t.profile_id AND p.account_id=t.account_id
+    WHERE t.account_id=? AND t.group_jid=? AND t.enabled=1 AND p.enabled=1 ORDER BY authorized_since ASC LIMIT 1`).get(accountId, groupJid);
+}
 function wsRequireConfiguredGroup(accountId, externalId) {
   const observed = wsGroupMonitor.normalizeMemberIdentity(externalId);
   // The existing group-manager JID syntax is independent of CRM labels.
   if (observed.kind !== 'group' || !/^[a-z0-9._-]{1,235}@g\.us$/.test(observed.value)) {
     throw wsConversationPolicyError('WS_GROUP_IDENTITY_UNCONFIRMED', '群分析缺少可核验的 WhatsApp 群组 JID。');
   }
-  const authorized = db.prepare(`SELECT 1 FROM ws_group_monitor_targets t
-    JOIN ws_group_monitor_profiles p ON p.id=t.profile_id AND p.account_id=t.account_id
-    JOIN ws_group_catalog c ON c.account_id=t.account_id AND c.group_jid=t.group_jid
-    WHERE t.account_id=? AND t.group_jid=? AND t.enabled=1 AND p.enabled=1 AND c.status='active' LIMIT 1`).get(accountId, observed.value);
+  const authorized = wsEnabledGroupTarget(accountId, observed.value);
   if (!authorized) throw wsConversationPolicyError('WS_GROUP_AUTHORIZATION_REQUIRED', '当前专用账号尚未启用此确切群组的监测授权，历史记录仍可查看。');
 }
 function wsRequireAiGroupAuthorization(row) {
   wsRequireConfiguredGroup(row.account_id, row.external_id);
+  const catalog = db.prepare('SELECT status FROM ws_group_catalog WHERE account_id=? AND group_jid=?').get(row.account_id, row.external_id);
+  if (catalog && catalog.status !== 'active') throw wsConversationPolicyError('WS_GROUP_AUTHORIZATION_REQUIRED', '此群最近的目录记录未确认可用。');
   // targets/scan also creates catalog rows. A configured directory alone is
   // insufficient: require independently captured member-message evidence.
   const messages = db.prepare("SELECT data_json FROM ws_messages WHERE account_id=? AND conversation_id=? AND direction='receive'").all(row.account_id, row.id);
   if (!messages.some(message => wsObservedGroupMessageData(wsJson(message.data_json, {})))) {
     throw wsConversationPolicyError('WS_GROUP_OBSERVATION_REQUIRED', '群分析需要当前账号实际采集并确认方向和发言人身份的原始消息。');
   }
+}
+function wsPersistObservedMembers(accountId, groupJid, observations, crm, now) {
+  const existing = db.prepare('SELECT source,last_seen_at,manual_locked,status,role FROM ws_group_members WHERE account_id=? AND group_jid=? AND member_jid=?');
+  const save = db.prepare(`INSERT INTO ws_group_members(id,account_id,group_jid,member_jid,member_phone,display_name,role,status,first_seen_at,last_seen_at,source,evidence_json,data_json,created_at,updated_at)
+    VALUES(?,?,?,?,?,?,'unknown','unknown',?,?,'ws-native-observation',?,?,?,?)
+    ON CONFLICT(account_id,group_jid,member_jid) DO UPDATE SET
+      last_seen_at=MAX(ws_group_members.last_seen_at,excluded.last_seen_at),
+      first_seen_at=CASE WHEN ws_group_members.first_seen_at='' THEN excluded.first_seen_at ELSE MIN(ws_group_members.first_seen_at,excluded.first_seen_at) END,
+      display_name=COALESCE(NULLIF(excluded.display_name,''),ws_group_members.display_name),
+      member_phone=COALESCE(NULLIF(excluded.member_phone,''),ws_group_members.member_phone),
+      source=excluded.source,evidence_json=excluded.evidence_json,data_json=json_patch(ws_group_members.data_json,excluded.data_json),updated_at=excluded.updated_at`);
+  let added = 0;
+  for (const person of observations.values()) {
+    const prior = existing.get(accountId, groupJid, person.memberKey);
+    if (prior?.manual_locked || (prior?.source === 'ws-native-observation' && prior.last_seen_at >= person.at)) continue;
+    if (prior && (prior.source !== 'ws-native-observation' || prior.status !== 'unknown' || prior.role !== 'unknown')) {
+      // Retain the original evidence and any verified membership state.
+      db.prepare('UPDATE ws_group_members SET last_seen_at=MAX(last_seen_at,?) WHERE account_id=? AND group_jid=? AND member_jid=?')
+        .run(person.at, accountId, groupJid, person.memberKey);
+      continue;
+    }
+    const match = wsGroupMonitorMemberMatch(accountId, { group_jid: groupJid }, {
+      type: 'observed', memberId: person.memberId, memberPhone: person.phone,
+    }, crm.customers, crm.mappings);
+    const linked = match.status === 'matched' && match.customer?.deleted !== true ? match.customer?.id : '';
+    save.run(wsCreateId('wsgm'), accountId, groupJid, person.memberKey, person.phone, person.name, person.at, person.at,
+      JSON.stringify({ kind: person.kind, completeness: 'partial' }),
+      JSON.stringify({ observedCustomerId: linked || '', observationMatch: match.status, observationReviewReason: match.reason || '' }), now, now);
+    if (!prior) added++;
+  }
+  return added;
+}
+
+function wsCollectMemberObservation(observations, memberId, phone, displayName, at, kind) {
+  const id = wsText(memberId, 160);
+  const validId = /^(?:\d{7,15}(?::\d{1,5})?@(?:s\.whatsapp\.net|c\.us)|[a-z0-9._-]{1,128}@lid)$/i.test(id);
+  if (id && !validId || !validId && !/^\d{8,15}$/.test(phone)) return;
+  const member = wsGroupMonitor.normalizeMemberIdentity(id || phone);
+  if (!member.value || !at || observations.get(member.value)?.at >= at) return;
+  observations.set(member.value, { memberKey: member.value, memberId: id || phone, phone: phone || member.phone,
+    name: wsText(displayName, 200), at, kind });
 }
 function wsIngestConversationType(externalId, checkpoints, messages, existing) {
   const types = [wsCore.conversationType({ externalId }), ...checkpoints.map(wsCore.conversationType),
@@ -2308,6 +2355,38 @@ function wsIngestConversationDecision(account, externalId, conversationType) {
     catch (error) { return { eligible: false, code: error.code || 'WS_GROUP_AUTHORIZATION_REQUIRED' }; }
   }
   return decision;
+}
+// A foreground directory packet contains only identities actually shown in the current session.
+// Keep its writes independent of historical message, cursor, monitor and AI state.
+function wsStoreForegroundDirectory(account, checkpoints, observedAt, now) {
+  if (!observedAt || observedAt > now) return;
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    for (const row of checkpoints) {
+      if (row?.accountId !== account.id || row.coverage !== 'foreground-visible-directory') continue;
+      const key = wsText(row.conversationKey, 200), title = wsText(row.displayName, 150);
+      if (account.workspace_mode === 'dedicated' && row.conversationType === 'group' && row.isGroup === true && /^[a-z0-9._-]+@g\.us$/.test(key)) {
+        const old = db.prepare('SELECT * FROM ws_group_catalog WHERE account_id=? AND group_jid=?').get(account.id, key);
+        if (!old || observedAt >= old.last_seen_at)
+          wsGroupCatalogUpsert(account.id, { groupJid: key, groupName: title, discoverySource: 'foreground-visible-directory', data: wsJson(old?.data_json, {}) }, observedAt);
+      } else if (account.workspace_mode === 'ordinary' && row.conversationType === 'direct' && row.isGroup === false && /^[a-z0-9._:-]+@(?:c\.us|s\.whatsapp\.net|lid)$/i.test(key)) {
+        const old = db.prepare('SELECT id,data_json FROM ws_conversations WHERE account_id=? AND external_id=?').get(account.id, key);
+        if (old) {
+          const data = wsJson(old.data_json, {});
+          if (!data.directoryObservedAt || observedAt > data.directoryObservedAt)
+            db.prepare("UPDATE ws_conversations SET data_json=json_set(data_json,'$.directoryObservedAt',?,'$.directorySource','foreground-visible-directory') WHERE account_id=? AND id=?").run(observedAt, account.id, old.id);
+        } else {
+          db.prepare('INSERT INTO ws_conversations(id,account_id,external_id,title,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?)')
+            .run(wsCreateId('wsc'), account.id, key, title || key, JSON.stringify({conversationType:'direct',isGroup:false,visibleOnly:true,historyLoaded:false,
+              coverage:'foreground-visible-directory',directorySource:'foreground-visible-directory',directoryObservedAt:observedAt}), observedAt, now);
+        }
+      }
+    }
+    db.exec('COMMIT');
+  } catch (error) {
+    db.exec('ROLLBACK');
+    throw error;
+  }
 }
 function wsUpsertIngestGroupDiscovery(accountId, externalId, checkpoint, now) {
   const existing = db.prepare('SELECT * FROM ws_conversations WHERE account_id=? AND external_id=?').get(accountId, externalId);
@@ -3540,7 +3619,13 @@ const server = createServer(async (req, res) => {
           return json(res, 400, { error: '群组资料分页参数无效。', code: 'GROUP_MANAGER_PAGE_INVALID' });
         }
         if (!stage3MockMode && requestedGroup && !db.prepare('SELECT 1 FROM ws_group_catalog WHERE account_id=? AND group_jid=?').get(accountId, requestedGroup)) {
-          return json(res, 404, { error: '当前账号没有所选群组记录。', code: 'GROUP_MANAGER_GROUP_UNAVAILABLE' });
+          const knownMemberScope = suffix === 'members' && db.prepare(`SELECT 1 FROM ws_group_monitor_targets t
+              JOIN ws_group_monitor_profiles p ON p.id=t.profile_id AND p.account_id=t.account_id
+              WHERE t.account_id=$accountId AND t.group_jid=$groupJid AND t.enabled=1 AND p.enabled=1
+            UNION ALL SELECT 1 FROM ws_group_members WHERE account_id=$accountId AND group_jid=$groupJid
+            UNION ALL SELECT 1 FROM customer_group_memberships WHERE account_id=$accountId AND group_jid=$groupJid LIMIT 1`)
+            .get({ $accountId: accountId, $groupJid: requestedGroup });
+          if (!knownMemberScope) return json(res, 404, { error: '当前账号没有所选群组记录。', code: 'GROUP_MANAGER_GROUP_UNAVAILABLE' });
         }
       }
       if (!wsAccountRow(accountId)) return json(res, 404, { error: 'WS 账号不存在。' });
@@ -3825,31 +3910,37 @@ const server = createServer(async (req, res) => {
       const accountId = wsAccountId(body.accountId);
       const account = wsRequireAccount(accountId);
       const capturedAt = wsStrictIso(body.capturedAt) || new Date().toISOString();
-      const inputMessages = Array.isArray(body.messages) ? body.messages.slice(0, 1000) : [];
+      const inputMessages = Array.isArray(body.messages) ? body.messages.slice(0, 1000).filter(item => !item?.accountId || item.accountId === accountId) : [];
       const checkpoints = Array.isArray(body.checkpoints) ? body.checkpoints.slice(0, 5000) : [];
-      // A visibility sample must not create conversations or change directory,
-      // history or CRM state, even if its target was removed during delivery.
-      const inputCheckpoints = checkpoints.filter(item => item?.coverage !== 'group-monitor-visible');
+      if (body.scope === 'foreground-visible-directory') {
+        const now = new Date().toISOString();
+        wsStoreForegroundDirectory(account, checkpoints, wsStrictIso(body.capturedAt), now);
+        return json(res, 200, { accepted: 0, deduplicated: 0, messageIds: [], processedAt: now });
+      }
+      // Partial roster observations are independent of chat history.
+      const inputCheckpoints = checkpoints.filter(item => item?.coverage !== 'group-monitor-visible' && (!item?.accountId || item.accountId === accountId));
       const observedGroups = new Map();
+      const memberObservations = new Map();
+      const membersFor = groupJid => {
+        if (!memberObservations.has(groupJid)) memberObservations.set(groupJid, new Map());
+        return memberObservations.get(groupJid);
+      };
       if (account.workspace_mode === 'dedicated' && body.scope === 'background-collector' && wsStrictIso(body.capturedAt)) {
         for (const item of checkpoints) {
-          if (item?.coverage !== 'group-monitor-visible' || item.conversationType !== 'group') continue;
+          if (item?.coverage !== 'group-monitor-visible' || item.conversationType !== 'group' || item.accountId && item.accountId !== accountId) continue;
           const group = wsGroupMonitor.normalizeMemberIdentity(item.conversationKey);
-          if (group.kind === 'group') observedGroups.set(group.value, capturedAt);
+          if (group.kind !== 'group') continue;
+          observedGroups.set(group.value, capturedAt);
+          if (Array.isArray(item.observedMembers)) {
+            const people = membersFor(group.value);
+            for (const person of item.observedMembers.slice(0, 100)) {
+              if (person) wsCollectMemberObservation(people, person.memberId, '', person.displayName, capturedAt, 'visible-member-row');
+            }
+          }
         }
       }
       const inputGroupEvents = Array.isArray(body.groupEvents) ? body.groupEvents.slice(0, 1000) : [];
       const catalogNow = wsStrictIso(body.capturedAt) || new Date().toISOString();
-      // Checkpoints are emitted by the isolated collector while it walks the
-      // complete WhatsApp conversation index. Persist group rows separately
-      // from ws_conversations so the monitor picker is not limited to the
-      // currently rendered/virtualized list.
-      for (const checkpoint of inputCheckpoints) {
-        const groupJid = wsGroupMonitor.normalizeMemberIdentity(checkpoint?.groupJid || checkpoint?.group_id || checkpoint?.groupId || checkpoint?.conversationKey || checkpoint?.externalId).value;
-        const isGroup = checkpoint?.isGroup === true || checkpoint?.conversationType === 'group' || checkpoint?.conversationType === 'vip_group' || /@g\.us$/i.test(groupJid);
-        if (!isGroup || !/@g\.us$/i.test(groupJid)) continue;
-        wsGroupCatalogUpsert(accountId, { ...checkpoint, groupJid, discoverySource: checkpoint?.discoverySource || checkpoint?.source || 'ws-collector', status: checkpoint?.collectionStatus === 'inactive' ? 'inactive' : 'active' }, catalogNow);
-      }
       const grouped = new Map();
       const addConversation = key => {
         const normalized = wsText(key, 200);
@@ -3870,6 +3961,8 @@ const server = createServer(async (req, res) => {
         const existing = db.prepare('SELECT * FROM ws_conversations WHERE account_id=? AND external_id=?').get(accountId, externalId);
         group.type = wsIngestConversationType(externalId, group.checkpoints, group.rawMessages, existing);
         group.decision = wsIngestConversationDecision(account, externalId, group.type);
+        if (group.decision.eligible && body.scope === 'background-collector' && ['group','vip_group'].includes(group.type))
+          group.authorizedSince = wsEnabledGroupTarget(accountId, externalId)?.authorized_since;
       }
       let skipped = 0;
       const skipReasons = {};
@@ -3905,6 +3998,10 @@ const server = createServer(async (req, res) => {
         if (directionSource && WS_NATIVE_DIRECTION_SOURCE_MAP.get(directionSource) !== direction) return json(res, 422, { error: 'WS 消息方向与页面证据不一致，批次已拒绝并保留等待重试。' });
         const legacyExternalMessageId = directionSource ? wsText(item?.legacyExternalMessageId, 200) : '';
         const time = wsMessageTimeMetadata(item, capturedAt);
+        if (group.authorizedSince && (time.observedAt < group.authorizedSince || time.observedAt > new Date().toISOString())) {
+          skipMessage(group, 'WS_OUTSIDE_AUTHORIZED_OBSERVATION');
+          continue;
+        }
         group.messages.push({
           externalId: wsText(item?.externalMessageId || item?.externalId, 200),
           legacyExternalMessageId,
@@ -3933,9 +4030,21 @@ const server = createServer(async (req, res) => {
       const messageIds = [];
       let groupEventResult = { accepted: 0, applied: 0, pending: 0, review: 0, ignored: 0, deduplicated: 0, autoRegistered: 0, events: [] };
       const now = new Date().toISOString();
+      let observedMembersAdded = 0;
       db.exec('BEGIN IMMEDIATE');
       try {
+        // Checkpoints are emitted by the isolated collector while it walks the
+        // complete WhatsApp conversation index. Persist group rows separately
+        // from ws_conversations so the monitor picker is not limited to the
+        // currently rendered/virtualized list.
+        for (const checkpoint of inputCheckpoints) {
+          const groupJid = wsGroupMonitor.normalizeMemberIdentity(checkpoint?.groupJid || checkpoint?.group_id || checkpoint?.groupId || checkpoint?.conversationKey || checkpoint?.externalId).value;
+          const isGroup = checkpoint?.isGroup === true || checkpoint?.conversationType === 'group' || checkpoint?.conversationType === 'vip_group' || /@g\.us$/i.test(groupJid);
+          if (!isGroup || !/@g\.us$/i.test(groupJid)) continue;
+          wsGroupCatalogUpsert(accountId, { ...checkpoint, groupJid, discoverySource: checkpoint?.discoverySource || checkpoint?.source || 'ws-collector', status: checkpoint?.collectionStatus === 'inactive' ? 'inactive' : 'active' }, catalogNow);
+        }
         for (const [externalKey, group] of grouped) {
+          if (group.authorizedSince && !group.messages.length && !group.checkpoints.length) continue;
           let conversation = db.prepare('SELECT * FROM ws_conversations WHERE account_id=? AND external_id=?').get(accountId, externalKey);
           const checkpoint = { ...(group.checkpoints.at(-1) || {}) };
           const type = group.type;
@@ -3944,6 +4053,16 @@ const server = createServer(async (req, res) => {
             continue;
           }
           if (type === 'direct' && !group.decision.eligible) continue;
+          if (body.scope === 'background-collector' && account.workspace_mode === 'dedicated' && group.decision.eligible && ['group', 'vip_group'].includes(type)) {
+            if (group.messages.length && !db.prepare('SELECT 1 FROM ws_group_catalog WHERE account_id=? AND group_jid=?').get(accountId, externalKey)) {
+              const target = db.prepare('SELECT group_name FROM ws_group_monitor_targets WHERE account_id=? AND group_jid=? AND enabled=1').get(accountId, externalKey);
+              wsGroupCatalogUpsert(accountId, { groupJid: externalKey, groupName: target?.group_name, discoverySource: 'ws-native-message' }, capturedAt);
+            }
+            for (const message of group.messages) {
+              if (message.direction === 'receive' && wsObservedGroupMessageData(message.data))
+                wsCollectMemberObservation(membersFor(externalKey), message.data.senderId, message.data.senderPhone, message.data.senderName, message.data.observedAt, 'message-author');
+            }
+          }
           if (body.scope === 'background-collector' && ['group', 'vip_group'].includes(type) && group.messages.length) {
             const groupJid = wsGroupMonitor.normalizeMemberIdentity(externalKey).value;
             let latest = observedGroups.get(groupJid) || '';
@@ -4167,6 +4286,22 @@ const server = createServer(async (req, res) => {
             }
           }
         }
+        let observationCrm;
+        for (const [groupJid, people] of memberObservations) {
+          const target = wsEnabledGroupTarget(accountId, groupJid);
+          if (!target) continue;
+          for (const [memberId, person] of people) {
+            if (person.at < target.authorized_since || person.at > now) people.delete(memberId);
+          }
+          if (!people.size) continue;
+          if (!db.prepare("SELECT 1 FROM ws_group_catalog WHERE account_id=? AND group_jid=? AND status='active'").get(accountId, groupJid))
+            wsGroupCatalogUpsert(accountId, { groupJid, groupName: target.group_name, discoverySource: 'ws-native-observation' }, capturedAt);
+          if (!observationCrm) {
+            const crm = readState() || {};
+            observationCrm = { customers: crm.customers || [], mappings: [...(crm.settings?.wsGroupMemberMappings || []), ...(crm.settings?.groupMembershipMappings || [])] };
+          }
+          observedMembersAdded += wsPersistObservedMembers(accountId, groupJid, people, observationCrm, now);
+        }
         if (inputGroupEvents.length) groupEventResult = wsGroupMonitorApplyEventsInTransaction(accountId, inputGroupEvents, { now, capturedAt });
         for (const [groupJid, at] of observedGroups) wsRecordGroupMonitorObservation(accountId, groupJid, at, now);
         db.exec('COMMIT');
@@ -4174,7 +4309,7 @@ const server = createServer(async (req, res) => {
         try { db.exec('ROLLBACK'); } catch {}
         throw error;
       }
-      return json(res, 200, { accepted, skipped, skipReasons, deduplicated, repairedTimestamps, repairedDirections, messageIds, groupEvents: groupEventResult, processedAt: new Date().toISOString() });
+      return json(res, 200, { accepted, skipped, skipReasons, deduplicated, repairedTimestamps, repairedDirections, messageIds, observedMembersAdded, groupEvents: groupEventResult, processedAt: new Date().toISOString() });
     }
     if (url.pathname === '/api/ws/settings') {
       const conversationId = wsText(url.searchParams.get('conversationId'), 160);
@@ -4245,7 +4380,7 @@ const server = createServer(async (req, res) => {
         // The collector supplies group identity. Manual input cannot create a
         // group conversation or promote a direct conversation using legacy flags.
         if (requestedType === 'group' || (requestedType === 'vip_group' && !(existing && wsIsVipGroup(existing)))) {
-          throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '请在专用 WS 群组目录中选择已同步的群组。');
+          throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '请在专用 WS 的群组管理中选择该群。');
         }
         const effectiveType = requestedType === 'unknown' && existing ? wsCore.conversationType(existing) : requestedType;
         if (existing) {

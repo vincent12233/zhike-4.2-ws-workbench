@@ -21,6 +21,7 @@ public sealed partial class LegacyUiHostPage : Page
     private readonly WebViewProfileService _wsProfiles = new();
     private readonly WsAccountStore _wsAccountStore = new();
     private readonly LocalQueue _wsQueue = new();
+    private readonly Dictionary<string, (long Generation, string Rows, DateTimeOffset At)> _lastVisibleDirectory = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim _wsGate = new(1, 1);
     private readonly SemaphoreSlim _wsAccountMutationGate = new(1, 1);
     private readonly SemaphoreSlim _wsFlushGate = new(1, 1);
@@ -627,8 +628,10 @@ public sealed partial class LegacyUiHostPage : Page
             {
                 if (!App.WsSessions.IsCurrent(session.AccountId, session.Generation, collector)) return;
                 if (session.CollectorState is "paused" or "not-started" or "error") return;
+                var probeEpoch = _wsCollectorEpoch.GetValueOrDefault(collector);
                 var status = await ProbeWsLoginStateAsync(session.AccountId, collector, session.Generation, cancellationToken, publishStatus: false);
-                if (!App.WsSessions.IsCurrent(session.AccountId, session.Generation, collector)) return;
+                if (!App.WsSessions.IsCurrent(session.AccountId, session.Generation, collector) || probeEpoch != _wsCollectorEpoch.GetValueOrDefault(collector)) return;
+                ReportCollectorLogin(session, status.status, status.detail);
                 if (session.CollectorState is "paused" or "error" or "not-started") return;
                 if (session.CollectorState == "login-visible")
                 {
@@ -678,7 +681,20 @@ public sealed partial class LegacyUiHostPage : Page
         var fields = JsonSerializer.SerializeToElement(WsCollectionCapability.Current).EnumerateObject()
             .ToDictionary(property => property.Name, property => property.Value.Clone());
         fields["collectorState"] = JsonSerializer.SerializeToElement(session?.CollectorState ?? "not-started");
+        fields["collectorLoginStatus"] = JsonSerializer.SerializeToElement(session?.CollectorLoginStatus ?? "");
+        fields["collectorDetail"] = JsonSerializer.SerializeToElement(session?.CollectorDetail ?? "");
+        fields["sessionGeneration"] = JsonSerializer.SerializeToElement(session?.Generation ?? 0);
+        fields["collectorEpoch"] = JsonSerializer.SerializeToElement(session?.CollectorView is { } view ? _wsCollectorEpoch.GetValueOrDefault(view) : 0);
         return JsonSerializer.SerializeToElement(fields);
+    }
+
+    private void ReportCollectorLogin(WsWebViewSession session, string status, string detail)
+    {
+        if (session.CollectorLoginStatus == status && session.CollectorDetail == detail) return;
+        session.CollectorLoginStatus = status;
+        session.CollectorDetail = detail;
+        PublishWsStatus(JsonSerializer.SerializeToElement(new { accountId = session.AccountId, collectorOnly = true, collectorState = session.CollectorState,
+            sessionGeneration = session.Generation, collectorEpoch = session.CollectorView is { } view ? _wsCollectorEpoch.GetValueOrDefault(view) : 0 }));
     }
 
     private void PublishCollectorState(WsWebViewSession session, string state, string? detail = null)
@@ -690,6 +706,7 @@ public sealed partial class LegacyUiHostPage : Page
         PublishWsStatus(JsonSerializer.SerializeToElement(new
         {
             accountId = session.AccountId, collectorState = state, collectorOnly = true,
+            sessionGeneration = session.Generation, collectorEpoch = session.CollectorView is { } view ? _wsCollectorEpoch.GetValueOrDefault(view) : 0,
             loginVisible = string.Equals(_wsCollectorVisibleAccountId, session.AccountId, StringComparison.OrdinalIgnoreCase),
             detail = detail ?? (state == "running" ? "独立采集会话正在后台运行。" : "独立采集会话状态已更新。"),
         }));
@@ -726,6 +743,7 @@ public sealed partial class LegacyUiHostPage : Page
             _wsCollectorStarted.Remove(view);
             _wsCollectorPurposes.Remove(view);
             _wsCollectorEpoch[view] = _wsCollectorEpoch.GetValueOrDefault(view) + 1;
+            ReportCollectorLogin(session, "连接中", "");
             if (session.CollectorState is not ("paused" or "login-visible")) PublishCollectorState(session, "awaiting-login");
         }
         async void NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs args)
@@ -739,7 +757,9 @@ public sealed partial class LegacyUiHostPage : Page
                 if (completion.Outcome is "policy-cancelled" or "operation-cancelled" or "stale-navigation" or "ignored-duplicate-or-disposed" or "isolated-document") return;
                 if (!args.IsSuccess)
                 {
-                    PublishCollectorState(session, "error", "独立采集页面加载失败，请重新打开采集登录。");
+                    var detail = $"独立采集页面加载失败（{args.WebErrorStatus}），请重新打开采集页面。";
+                    ReportCollectorLogin(session, "连接失败", detail);
+                    PublishCollectorState(session, "error", detail);
                     return;
                 }
                 await HeartbeatPooledWsSessionAsync(session, true, CancellationToken.None);
@@ -749,8 +769,14 @@ public sealed partial class LegacyUiHostPage : Page
         void NewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs args) => OnWsNewWindowRequested(sender, args);
         void ProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs args)
         {
+            if (!App.WsSessions.IsCurrent(session.AccountId, session.Generation, view)) return;
             _wsAccountMetrics.Invalidate(session.AccountId, collector: true);
             _wsCollectorStarted.Remove(view);
+            _wsCollectorPurposes.Remove(view);
+            _wsCollectorEpoch[view] = _wsCollectorEpoch.GetValueOrDefault(view) + 1;
+            var detail = $"独立采集页面进程异常（{args.ProcessFailedKind}），请重新打开采集页面。";
+            ReportCollectorLogin(session, "连接失败", detail);
+            PublishCollectorState(session, "error", detail);
         }
         core.WebMessageReceived += MessageReceived;
         core.NavigationStarting += NavigationStarting;
@@ -821,7 +847,7 @@ public sealed partial class LegacyUiHostPage : Page
             }
             _wsCollectorPurposes[view] = new(session.Generation, epoch, purpose);
             var installed = ParseWebViewJsonResult(await ExecuteCollectorScriptAsync(session,
-                "window.__zhikeWsCollectorRole='background';\n" + BuildWsCollectorScript(session.AccountId, purpose)
+                "window.__zhikeWsCollectorRole='background';\n" + BuildWsCollectorScript(session.AccountId, purpose, epoch)
                 + "\nJSON.stringify({supported:typeof window.__zhikeWsDiscoverAll==='function' && typeof window.__zhikeWsCollectAllRead==='function' && typeof window.__zhikeWsBackgroundTick==='function'});", cancellationToken));
             if (installed.ValueKind != JsonValueKind.Object || !GetBool(installed, "supported"))
                 throw new InvalidOperationException("独立采集脚本未就绪。");
@@ -910,9 +936,11 @@ public sealed partial class LegacyUiHostPage : Page
                 await StopWsCollectorAsync(session, "paused");
             else
             {
+                var probeEpoch = _wsCollectorEpoch.GetValueOrDefault(collector);
                 var status = await ProbeWsLoginStateAsync(accountId, collector, session.Generation, cancellationToken, publishStatus: false);
-                if (!App.WsSessions.IsCurrent(accountId, session.Generation, collector))
+                if (!App.WsSessions.IsCurrent(accountId, session.Generation, collector) || probeEpoch != _wsCollectorEpoch.GetValueOrDefault(collector))
                     return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_NOT_STARTED", "采集会话已关闭。");
+                ReportCollectorLogin(session, status.status, status.detail);
                 PublishCollectorState(session, status.status == "连接失败" ? "error" : "awaiting-login");
                 if (status.status == "已连接") await StartWsCollectorAsync(session, cancellationToken);
             }
@@ -936,7 +964,7 @@ public sealed partial class LegacyUiHostPage : Page
 #endif
     }
 
-    private async Task<BridgeResponse> ExecuteCollectorCommandAsync(string requestId, string accountId, string script, CancellationToken cancellationToken, string requiredMode = "")
+    private async Task<BridgeResponse> ExecuteCollectorCommandAsync(string requestId, string accountId, string script, CancellationToken cancellationToken, string requiredMode = "", bool directory = false)
     {
         if (!App.WsService.TryGetSession(accountId, out var session) || session?.CollectorView is not { } collector
             || collector.CoreWebView2 is null || !_wsCollectorGates.TryGetValue(collector, out var gate))
@@ -948,13 +976,14 @@ public sealed partial class LegacyUiHostPage : Page
             if (!App.WsSessions.IsCurrent(accountId, session.Generation, collector) || session.CollectorState != "running")
                 return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_NOT_READY", "独立采集会话尚未运行，请完成登录并恢复采集。");
             var epoch = _wsCollectorEpoch.GetValueOrDefault(collector);
-            var purpose = await (_api ?? throw new InvalidOperationException("本机服务不可用，采集用途未确认。"))
+            if (!_wsCollectorPurposes.TryGetValue(collector, out var lease) || lease.Generation != session.Generation || lease.Epoch != epoch)
+                return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "WS_COLLECTOR_PURPOSE_BLOCKED", "当前采集会话用途尚未确认。");
+            var purpose = directory ? lease.Policy : await (_api ?? throw new InvalidOperationException("本机服务不可用，采集用途未确认。"))
                 .GetWsCollectorPurposeAsync(accountId, cancellationToken);
             if (!App.WsSessions.IsCurrent(accountId, session.Generation, collector) || session.CollectorState != "running"
                 || epoch != _wsCollectorEpoch.GetValueOrDefault(collector))
                 return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_CONTEXT_CHANGED", "采集页面已改变，请重试。");
-            if (!_wsCollectorPurposes.TryGetValue(collector, out var lease) || lease.Generation != session.Generation || lease.Epoch != epoch
-                || lease.Policy != purpose || requiredMode.Length > 0 && purpose.WorkspaceMode != requiredMode)
+            if (lease.Policy != purpose || requiredMode.Length > 0 && purpose.WorkspaceMode != requiredMode)
                 return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "WS_COLLECTOR_PURPOSE_BLOCKED", "当前账号用途不支持此采集操作。");
             var raw = await ExecuteCollectorScriptAsync(session, script, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
@@ -964,6 +993,7 @@ public sealed partial class LegacyUiHostPage : Page
             var result = ParseWebViewJsonResult(raw);
             if (result.ValueKind != JsonValueKind.Object || result.TryGetProperty("supported", out var supported) && supported.ValueKind == JsonValueKind.False)
                 return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_NOT_READY", "独立采集页面尚未就绪，请稍后重试。");
+            if (directory) result = WsLiveDirectory.Project(result, purpose, session.Generation, epoch, "collector");
             return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, result);
         }
         finally { gate.Release(); }
@@ -1566,7 +1596,7 @@ public sealed partial class LegacyUiHostPage : Page
         try
         {
             updated = await _wsAccountStore.UpdateAsync(rows => rows.Any(item => string.Equals(item.Id, request.Id, StringComparison.Ordinal))
-                ? rows.Select(item => item.Id == request.Id ? item with { WorkspaceMode = confirmed.WorkspaceMode } : item).ToArray()
+                ? rows.Select(item => item.Id == request.Id ? item with { WorkspaceMode = confirmed.WorkspaceMode, DirectoryPurposeConfirmed = true } : item).ToArray()
                 : MergeWsAccounts(rows, [confirmed]), cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
@@ -1682,6 +1712,8 @@ public sealed partial class LegacyUiHostPage : Page
                 return await SetGroupMonitorStateAsync(requestId, id, "stop", cancellationToken);
             case "discover-conversations":
                 return await ExecuteWsCaptureAsync(requestId, id, "discover", cancellationToken);
+            case "discover-visible-conversations":
+                return await ReadWsVisibleDirectoryAsync(requestId, id, cancellationToken);
             case "collect-all-read":
                 return await ExecuteWsCaptureAsync(requestId, id, "collect-all-read", cancellationToken);
             case "capture-visible-messages":
@@ -2120,7 +2152,8 @@ public sealed partial class LegacyUiHostPage : Page
             var status = string.IsNullOrWhiteSpace(item.RuntimeStatus) ? item.Status : item.RuntimeStatus;
             if (index < 0)
             {
-                accounts.Add(new StoredWsAccount(item.Id, item.DisplayName, status, item.LastSeen, item.LastKnownStatus, item.WorkspaceMode));
+                accounts.Add(new StoredWsAccount(item.Id, item.DisplayName, status, item.LastSeen, item.LastKnownStatus, item.WorkspaceMode,
+                    DirectoryPurposeConfirmed: item.WorkspaceMode is "ordinary" or "dedicated"));
                 continue;
             }
             var existing = accounts[index];
@@ -2131,6 +2164,7 @@ public sealed partial class LegacyUiHostPage : Page
                 LastSeen = item.LastSeen ?? existing.LastSeen,
                 LastKnownStatus = string.IsNullOrWhiteSpace(item.LastKnownStatus) ? existing.LastKnownStatus : item.LastKnownStatus,
                 WorkspaceMode = item.WorkspaceMode,
+                DirectoryPurposeConfirmed = item.WorkspaceMode is "ordinary" or "dedicated",
             };
         }
         return accounts;
@@ -2735,13 +2769,123 @@ public sealed partial class LegacyUiHostPage : Page
         finally { _wsStatusGate.Release(); }
     }
 
+    private async Task<BridgeResponse> ReadWsVisibleDirectoryAsync(string requestId, string accountId, CancellationToken cancellationToken)
+    {
+        BridgeResponse NotReady() => BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "WS_VISIBLE_DIRECTORY_NOT_READY", "请先在当前账号的前台打开 WhatsApp 并完成登录。");
+        if (!App.WsService.TryGetSession(accountId, out var session) || session?.View.CoreWebView2 is not { } core
+            || !_wsNavigation.TryGetValue(session.View, out var navigation)) return NotReady();
+        var navId = navigation.NavigationId;
+        bool Current() => App.WsService.ActiveAccountId == accountId && App.WsSessions.IsCurrent(accountId, session.Generation, session.View)
+            && navigation.NavigationId == navId && navigation.FailureDetail is null && IsAllowedWsPopupNavigation(core.Source);
+        if (!Current()) return NotReady();
+        var purpose = await ResolveVisibleDirectoryPurposeAsync(session, cancellationToken);
+        if (!Current()) return NotReady();
+        session.VisibleDirectoryWorkspaceMode = purpose.WorkspaceMode;
+        var login = await core.ExecuteScriptAsync(WsLoginProbeScript).AsTask().WaitAsync(cancellationToken);
+        if (!Current() || ParseWsLoginProbe(login).status != "已连接") return NotReady();
+        var script = WsVisibleDirectoryScript + "(" + JsonSerializer.Serialize(purpose.WorkspaceMode) + ")";
+        var raw = await core.ExecuteScriptAsync(script).AsTask().WaitAsync(cancellationToken);
+        if (!Current()) return NotReady();
+        var snapshot = ParseWebViewJsonResult(raw);
+        if (snapshot.ValueKind != JsonValueKind.Object || !GetBool(snapshot, "supported")) return NotReady();
+        var projected = WsLiveDirectory.Project(snapshot, purpose, session.Generation, 0, "foreground-visible");
+        _ = QueueVisibleDirectoryAsync(projected, purpose, session.Generation);
+        return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, projected);
+    }
+
+    private async Task QueueVisibleDirectoryAsync(JsonElement directory, WsCollectorPurposePolicy purpose, long generation)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var rows = directory.GetProperty(purpose.AllowsGroupMonitoring ? "groupConversations" : "conversations");
+        if (rows.GetArrayLength() == 0) return;
+        var checkpoints = rows.EnumerateArray().Select(row =>
+            new WsCheckpointDto(purpose.AccountId, row.GetProperty("conversationKey").GetString()!, "", "", now,
+                DisplayName: row.GetProperty("displayName").GetString() ?? "", Coverage: "foreground-visible-directory",
+                ConversationType: purpose.AllowsGroupMonitoring ? "group" : "direct", IsGroup: purpose.AllowsGroupMonitoring)).ToArray();
+        var signature = JsonSerializer.Serialize(checkpoints.Select(row => new { row.ConversationKey, row.DisplayName }));
+        var stamp = (generation, signature, now);
+        if (_lastVisibleDirectory.TryGetValue(purpose.AccountId, out var prior) && prior.Generation == generation
+            && prior.Rows == signature && now - prior.At < TimeSpan.FromMinutes(2)) return;
+        _lastVisibleDirectory[purpose.AccountId] = stamp;
+        try
+        {
+            var request = new WsIngestBatchRequestDto("zhike.ws.ingest.batch.v1", "desktop-webview2", purpose.AccountId, now,
+                "foreground-visible-directory", [], checkpoints, SessionGeneration: generation);
+            await _wsQueue.EnqueueAsync("api/ws/ingest/batch", request);
+            _ = FlushWsQueueAsync();
+        }
+        catch (Exception error)
+        {
+            if (_lastVisibleDirectory.TryGetValue(purpose.AccountId, out var current) && current == stamp)
+                _lastVisibleDirectory.Remove(purpose.AccountId);
+            PublishWsStatus(JsonSerializer.SerializeToElement(new { accountId = purpose.AccountId, workspaceMode = purpose.WorkspaceMode,
+                sessionGeneration = generation, eventName = "directory-save-error", detail = error.Message, observedAt = now }));
+        }
+    }
+
+    private async Task<WsCollectorPurposePolicy> ResolveVisibleDirectoryPurposeAsync(WsWebViewSession session, CancellationToken cancellationToken)
+    {
+        var accountId = session.AccountId;
+        if (session.VisibleDirectoryWorkspaceMode is "ordinary" or "dedicated") return new(accountId, session.VisibleDirectoryWorkspaceMode);
+        if (session.CollectorView is { } view && session.CollectorState == "running"
+            && _wsCollectorPurposes.TryGetValue(view, out var lease) && lease.Generation == session.Generation
+            && lease.Epoch == _wsCollectorEpoch.GetValueOrDefault(view) && lease.Policy.AccountId == accountId)
+            return lease.Policy;
+        // The registration stores a sidecar-confirmed immutable purpose. A legacy
+        // row or the synthesized default account cannot grant even a read scope.
+        try
+        {
+            var registrations = await _wsAccountStore.LoadAsync(cancellationToken);
+            var registered = registrations.FirstOrDefault(row => row.Id == accountId && row.DirectoryPurposeConfirmed);
+            if (registered?.WorkspaceMode is "ordinary" or "dedicated") return new(accountId, registered.WorkspaceMode);
+        }
+        catch (IOException) { /* The live sidecar can still confirm the account. */ }
+        return await (_api ?? throw new InvalidOperationException("当前账号用途未确认。")).GetWsCollectorPurposeAsync(accountId, cancellationToken);
+    }
+
+    private const string WsVisibleDirectoryScript = """
+(workspaceMode => {
+  const list = document.querySelector('#pane-side, [data-testid="chat-list"], [data-testid="chatlist"], [aria-label="Chat list"], [aria-label="聊天列表"]');
+  const rows = [];
+  if (!list) return JSON.stringify({supported:false});
+  for (const row of list.querySelectorAll('[role="row"], [role="listitem"], [data-testid="cell-frame-container"]')) {
+    if (!row.getClientRects().length) continue;
+    const nodes = [row, ...row.querySelectorAll('[data-group-id],[data-jid],[data-chat-id],[data-contact-id]')];
+    let groupKey = '', contactKey = '';
+    for (const node of nodes) {
+      const group = node.getAttribute('data-group-id') || '';
+      if (/^\d{5,}$/.test(group)) { groupKey = group + '@g.us'; break; }
+      for (const id of [group, node.getAttribute('data-jid'), node.getAttribute('data-chat-id'), node.getAttribute('data-contact-id'), node === row && row.getAttribute('data-id')]) {
+        if (typeof id !== 'string') continue;
+        if (/^[a-z0-9._-]+@g\.us$/i.test(id)) groupKey = id.toLowerCase();
+        else if (!contactKey && /^[a-z0-9._:-]+@(?:c\.us|s\.whatsapp\.net|lid)$/i.test(id)) contactKey = id;
+      }
+      if (groupKey) break;
+    }
+    const declared = row.getAttribute('data-conversation-type') || row.getAttribute('data-chat-type');
+    if (!contactKey && ['direct','private','individual'].includes(declared)) contactKey = row.getAttribute('data-chat-id') || row.getAttribute('data-id') || '';
+    const isGroup = Boolean(groupKey);
+    if (isGroup !== (workspaceMode === 'dedicated')) continue;
+    if (!isGroup && (declared === 'group' || row.getAttribute('data-is-group') === 'true' || row.querySelector('[data-icon="default-group"],[data-testid*="group-avatar"]'))) continue;
+    const key = groupKey || contactKey;
+    if (!key) continue;
+    const name = row.querySelector('[data-testid*="cell-frame-title"] [title], span[dir="auto"][title], [data-testid*="cell-frame-title"], span[dir="auto"]');
+    const preview = isGroup ? null : row.querySelector('[data-testid*="last-msg"],[data-testid*="preview"]');
+    rows.push({ conversationKey:key, displayName:(name?.getAttribute('title') || name?.textContent || key).trim().slice(0,150),
+      conversationType:isGroup ? 'group' : 'direct', isGroup, previewText:(preview?.textContent || '').trim().slice(0,240) });
+    if (rows.length >= 1000) break;
+  }
+  return JSON.stringify({supported:true, rows, coverage:'foreground-visible-only'});
+})
+""";
+
     private async Task<BridgeResponse> ExecuteWsCaptureAsync(string requestId, string accountId, string kind, CancellationToken cancellationToken = default)
     {
         if (kind is "discover" or "collect-all-read")
         {
-            var method = kind == "discover" ? "__zhikeWsDiscoverAll" : "__zhikeWsCollectAllRead";
+            var method = kind == "discover" ? "__zhikeWsDiscoverDirectory" : "__zhikeWsCollectAllRead";
             return await ExecuteCollectorCommandAsync(requestId, accountId,
-                $"JSON.stringify(window.{method}?.() ?? {{supported:false}})", cancellationToken, kind == "collect-all-read" ? "ordinary" : "");
+                $"JSON.stringify(window.{method}?.() ?? {{supported:false}})", cancellationToken, kind == "collect-all-read" ? "ordinary" : "", directory: kind == "discover");
         }
         cancellationToken.ThrowIfCancellationRequested();
         if (!App.WsService.TryGetSession(accountId, out var session) || session is null || session.View.CoreWebView2 is null)
@@ -2823,6 +2967,24 @@ public sealed partial class LegacyUiHostPage : Page
             if (!IsAllowedWsPopupNavigation(args.Source)) return;
             rawMessage = deferredRawMessage ?? args.TryGetWebMessageAsString();
             if (rawMessage.Length > 1_200_000) return;
+            using var document = JsonDocument.Parse(rawMessage);
+            var root = document.RootElement;
+            if (root.ValueKind != JsonValueKind.Object) return;
+            if (StringValue(root, "type") == "zhike.ws.directory")
+            {
+                // Deliver the real list before and independently of the durable capture queue.
+                if (App.WsSessions.IsCurrent(sessionAccountId, sessionGeneration, sourceView)
+                    && _wsCollectorEpoch.GetValueOrDefault(sourceView) == sourceEpoch
+                    && App.WsService.TryGetSession(sessionAccountId, out var owner) && owner is { CollectorState: "running" }
+                    && ReferenceEquals(owner.CollectorView, sourceView) && StringValue(root, "accountId") == sessionAccountId
+                    && root.TryGetProperty("collectorEpoch", out var packetEpoch) && packetEpoch.ValueKind == JsonValueKind.Number
+                    && packetEpoch.TryGetInt64(out var emittedEpoch) && emittedEpoch == sourceEpoch
+                    && sourceView.CoreWebView2 is { } core && IsAllowedWsPopupNavigation(core.Source)
+                    && _wsCollectorPurposes.TryGetValue(sourceView, out var directoryLease)
+                    && directoryLease.Generation == sessionGeneration && directoryLease.Epoch == sourceEpoch)
+                    PublishWsStatus(WsLiveDirectory.Project(root, directoryLease.Policy, sessionGeneration, sourceEpoch, "collector"));
+                return;
+            }
             if (!gateAlreadyHeld)
                 gateEntered = await _wsMessageGate.WaitAsync(TimeSpan.FromSeconds(8));
             if (!gateEntered)
@@ -2840,8 +3002,6 @@ public sealed partial class LegacyUiHostPage : Page
             if (!App.WsSessions.IsCurrent(sessionAccountId, sessionGeneration, sourceView)
                 || _wsCollectorEpoch.GetValueOrDefault(sourceView) != sourceEpoch
                 || !App.WsService.TryGetSession(sessionAccountId, out var sourceSession) || sourceSession is null) return;
-            using var document = JsonDocument.Parse(rawMessage);
-            var root = document.RootElement;
             if (!string.Equals(StringValue(root, "type"), "zhike.ws.capture", StringComparison.Ordinal)) return;
             var claimedAccountId = StringValue(root, "accountId");
             var accountId = sessionAccountId;
@@ -2897,7 +3057,15 @@ public sealed partial class LegacyUiHostPage : Page
                     _ => "WS 自动采集状态已更新。",
                 };
                 if (fromBackgroundCollector)
-                    PublishWsStatus(JsonSerializer.SerializeToElement(new { accountId, collectorOnly = true, collectorState = sourceSession.CollectorState, detail, eventName, background = true, observedAt = capturedAt }));
+                {
+                    if (GetLong(root, "collectorEpoch") != sourceEpoch) return;
+                    int? Count(string field) => root.TryGetProperty(field, out var value) && value.ValueKind == JsonValueKind.Number
+                        && value.TryGetInt32(out var number) && number >= 0 ? number : null;
+                    PublishWsStatus(JsonSerializer.SerializeToElement(new { accountId, collectorOnly = true, collectorState = sourceSession.CollectorState,
+                        workspaceMode = purpose?.WorkspaceMode, sessionGeneration, collectorEpoch = sourceEpoch, coverage = StringValue(root, "coverage"),
+                        discovered = Count("discovered"), processed = Count("processed"), retryable = Count("retryable"), skippedUnread = Count("skippedUnreadCount"),
+                        detail, eventName, background = true, observedAt = capturedAt }));
+                }
                 else
                     PublishWsStatus(JsonSerializer.SerializeToElement(new { accountId, status = "已连接", detail, eventName, background = false, observedAt = capturedAt }));
                 if (isComplete)
@@ -2947,6 +3115,16 @@ public sealed partial class LegacyUiHostPage : Page
                         bool? isGroup = item.TryGetProperty("isGroup", out var groupValue) && groupValue.ValueKind is JsonValueKind.True or JsonValueKind.False
                             ? groupValue.GetBoolean()
                             : null;
+                        List<WsObservedMemberDto>? members = null;
+                        if (fromBackgroundCollector && purpose?.AllowsGroupMonitoring == true && StringValue(item, "coverage") == "group-monitor-visible"
+                            && _wsCollectorMonitorPolicies.TryGetValue(accountId, out var activeMonitor) && activeMonitor.AllowsGroup(key)
+                            && item.TryGetProperty("observedMembers", out var roster) && roster.ValueKind == JsonValueKind.Array)
+                        {
+                            members = roster.EnumerateArray().Take(100).Where(row => row.ValueKind == JsonValueKind.Object)
+                                .Select(row => new WsObservedMemberDto(StringValue(row, "memberId"), StringValue(row, "displayName")))
+                                .Where(row => row.MemberId.Length is > 0 and <= 160 && row.DisplayName.Length <= 200)
+                                .DistinctBy(row => row.MemberId, StringComparer.OrdinalIgnoreCase).ToList();
+                        }
                         checkpoints.Add(new WsCheckpointDto(
                             accountId,
                             key,
@@ -2965,7 +3143,8 @@ public sealed partial class LegacyUiHostPage : Page
                             directionUnresolvedCount,
                             conversationType,
                             isGroup,
-                            vipGroup));
+                            vipGroup,
+                            members));
                         if (historyLoaded && directionVersion >= 4 && directionUnresolvedCount == 0
                             && (!fromBackgroundCollector || purpose?.AllowsHistory(key, conversationType, isGroup, vipGroup) == true)
                             && conversationType is "direct" or "vip_group")
@@ -3033,6 +3212,13 @@ public sealed partial class LegacyUiHostPage : Page
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
             messages.RemoveAll(item => !allowedConversationKeys.Contains(item.ConversationKey));
             if (messages.Count == 0 && checkpoints.Count == 0 && groupEvents.Count == 0) return;
+            if (purpose?.AllowsGroupMonitoring == true && GetLong(root, "collectorEpoch") == sourceEpoch)
+            {
+                var observedGroups = checkpoints.Where(item => item.Coverage == "group-monitor-visible").Select(item => item.ConversationKey).Distinct().ToArray();
+                if (observedGroups.Length > 0)
+                    PublishWsStatus(JsonSerializer.SerializeToElement(new { eventName = "live-group-observation", accountId, workspaceMode = purpose.WorkspaceMode,
+                        collectorOnly = true, sessionGeneration, collectorEpoch = sourceEpoch, observedAt = capturedAt, groupJids = observedGroups }));
+            }
             // Foreground realtime messages still carry their minimal direct/VIP
             // checkpoint so the ingest service can resolve the conversation
             // type. It contains no historyLoaded/read-history fields, so it
@@ -3149,11 +3335,18 @@ public sealed partial class LegacyUiHostPage : Page
                 GetBridge().Publish("sync.updated", JsonSerializer.SerializeToElement(new
                 {
                     accountId = request.AccountId,
+                    directoryOnly = request.Scope == "foreground-visible-directory", sessionGeneration = request.SessionGeneration,
                     accepted = result.Accepted,
                     deduplicated = result.Deduplicated,
+                    observedMembersAdded = result.ObservedMembersAdded,
                     background = string.Equals(request.Scope, "background-collector", StringComparison.Ordinal),
-                    sharedState = request.GroupEvents is { Count: > 0 },
-                })), cancellationToken);
+                    sharedState = request.GroupEvents is { Count: > 0 } || result.ObservedMembersAdded > 0,
+                })), cancellationToken, (request, error) =>
+                {
+                    if (request.Scope == "foreground-visible-directory")
+                        PublishWsStatus(JsonSerializer.SerializeToElement(new { accountId = request.AccountId, sessionGeneration = request.SessionGeneration,
+                            eventName = "directory-save-error", detail = error.Message, observedAt = DateTimeOffset.UtcNow }));
+                });
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch { }
@@ -3224,11 +3417,12 @@ public sealed partial class LegacyUiHostPage : Page
 """;
     }
 
-    internal static string BuildWsCollectorScript(string accountId, WsCollectorPurposePolicy purpose)
+    internal static string BuildWsCollectorScript(string accountId, WsCollectorPurposePolicy purpose, long epoch)
     {
         if (purpose.AccountId != accountId || purpose.WorkspaceMode is not ("ordinary" or "dedicated"))
             throw new InvalidDataException("采集用途未确认。");
-        return "(function(__zhikeWsTrustedPurpose){" + BuildWsCollectorScript(accountId) + "})(" + JsonSerializer.Serialize(purpose.WorkspaceMode) + ");";
+        return "(function(__zhikeWsTrustedPurpose,__zhikeWsDocumentEpoch){" + BuildWsCollectorScript(accountId) + "})("
+            + JsonSerializer.Serialize(purpose.WorkspaceMode) + "," + JsonSerializer.Serialize(epoch) + ");";
     }
 
     internal static string BuildWsCollectorScript(string accountId)
@@ -3241,6 +3435,7 @@ public sealed partial class LegacyUiHostPage : Page
   try { window.__zhikeStopCapture?.(); } catch {}
   const accountId = {{encodedAccount}};
   const workspaceMode = typeof __zhikeWsTrustedPurpose === 'string' ? __zhikeWsTrustedPurpose : 'ordinary';
+  const documentEpoch = typeof __zhikeWsDocumentEpoch === 'number' ? __zhikeWsDocumentEpoch : 0;
   const directHistoryAllowed = workspaceMode === 'ordinary';
   const groupMonitoringAllowed = workspaceMode === 'dedicated';
   // The visible WebView is a passive realtime surface. Only the offscreen
@@ -3406,6 +3601,24 @@ public sealed partial class LegacyUiHostPage : Page
     }
     return events.slice(0, 200);
   };
+  const visibleGroupPanelMembers = jid => {
+    const members = new Map();
+    const panels = document.querySelectorAll('[data-testid="group-info-drawer"],[data-testid="group-participants"]');
+    for (const panel of panels) {
+      if (!panel.getClientRects?.().length || panel.closest?.('[hidden],[aria-hidden="true"]')) continue;
+      const panelGroup = clean(panel.getAttribute('data-group-id') || panel.getAttribute('data-jid')).toLowerCase();
+      if (panelGroup !== jid) continue;
+      for (const row of panel.querySelectorAll('[data-testid="group-participant"],[data-testid="participant-row"],[data-participant-jid]')) {
+        if (!row.getClientRects?.().length || row.closest?.('[hidden],[aria-hidden="true"]')) continue;
+        const id = clean(row.getAttribute('data-participant-jid') || row.getAttribute('data-jid')).toLowerCase();
+        if (!/^\d{1,20}@(c\.us|s\.whatsapp\.net|lid)$/.test(id)) continue;
+        const name = row.querySelector('[data-testid="participant-name"],span[dir="auto"][title]');
+        members.set(id, { memberId:id, displayName:clean(name?.getAttribute('title') || name?.textContent).slice(0,120) });
+        if (members.size >= 100) return [...members.values()];
+      }
+    }
+    return [...members.values()];
+  };
   const postGroupMonitorEvents = (events, rows, headerJid = '') => {
     if (!groupMonitoringAllowed || !backgroundCollectorRole || !groupMonitorState.enabled || groupMonitorState.status !== 'running' || !window.chrome?.webview) return;
     const now = Date.now(), conversations = [];
@@ -3417,10 +3630,12 @@ public sealed partial class LegacyUiHostPage : Page
       const target = groupMonitorTarget(jid);
       if (!target || now - (groupMonitorState.lastObserved.get(jid) ?? -Infinity) < groupMonitorState.intervalSec * 1000) continue;
       groupMonitorState.lastObserved.set(jid, now);
-      conversations.push({conversationKey:jid, displayName:target.groupName, conversationType:'group', isGroup:true, coverage:'group-monitor-visible'});
+      const members = headerJid === jid ? visibleGroupPanelMembers(jid) : [];
+      conversations.push({conversationKey:jid, displayName:target.groupName, conversationType:'group', isGroup:true, coverage:'group-monitor-visible',
+        ...(members.length ? {observedMembers:members} : {})});
     }
     if (events.length || conversations.length)
-      window.chrome.webview.postMessage(JSON.stringify({ type:'zhike.ws.capture', accountId, capturedAt:new Date(now).toISOString(), collectorRole:'background', groupEvents:events, conversations }));
+      window.chrome.webview.postMessage(JSON.stringify({ type:'zhike.ws.capture', accountId, collectorEpoch:documentEpoch, capturedAt:new Date(now).toISOString(), collectorRole:'background', groupEvents:events, conversations }));
   };
   const groupMonitorTick = () => {
     if (!groupMonitoringAllowed) return { supported:false, reason:'workspace-purpose' };
@@ -3817,7 +4032,7 @@ public sealed partial class LegacyUiHostPage : Page
   };
   const postCollectorEvent = (event, detail = {}) => {
     if (!window.chrome?.webview) return;
-    window.chrome.webview.postMessage(JSON.stringify({ type:'zhike.ws.capture', accountId, capturedAt:new Date().toISOString(), collectorRole:backgroundCollectorRole ? 'background' : 'foreground', eventName:event, ...detail }));
+    window.chrome.webview.postMessage(JSON.stringify({ type:'zhike.ws.capture', accountId, collectorEpoch:documentEpoch, capturedAt:new Date().toISOString(), collectorRole:backgroundCollectorRole ? 'background' : 'foreground', eventName:event, ...detail }));
   };
   const stripSystem = value => clean(value).replace(/\s*此聊天中的新消息将在发送(?:7|90)天后自动消失(?:（除非消息已保留）)?。?\s*$/g, '').replace(/\s*\d+\s*条未读消息\s*/g, ' ').trim();
   const rowNodes = () => {
@@ -4054,6 +4269,29 @@ public sealed partial class LegacyUiHostPage : Page
   let allScan = null;
   let allScanTimer = null;
   let allScanGeneration = 0;
+  let lastDirectorySweepAt = Date.now();
+  let directorySequence = 0;
+  const newDirectory = () => ({ id:++directorySequence, chunk:0, seen:new Map() });
+  const publishDirectory = (run, rows, coverage = 'page-list-progress', finished = false) => {
+    const stream = run.directory;
+    if (!stream || !backgroundCollectorRole || !window.chrome?.webview) return;
+    const updates = [];
+    for (const row of rows) {
+      const key = row.conversationKey;
+      if (!key || (directHistoryAllowed ? !collectibleConversationType(row.conversationType) : !row.isGroup || !/@g\.us$/i.test(key))) continue;
+      const fingerprint = JSON.stringify([row.displayName, row.lastMessageFingerprint, row.unread, row.unreadCount, row.uncertainUnread]);
+      if (stream.seen.get(key) === fingerprint || (!stream.seen.has(key) && stream.seen.size >= maxConversationCount())) continue;
+      stream.seen.set(key, fingerprint);
+      updates.push({ conversationKey:key, displayName:row.displayName, conversationType:row.conversationType, isGroup:row.isGroup,
+        previewText:directHistoryAllowed ? row.previewText : '', unread:row.unread, unreadCount:row.unreadCount, uncertainUnread:row.uncertainUnread,
+        lastMessageAt:row.lastMessageAt, lastMessageFingerprint:row.lastMessageFingerprint });
+    }
+    for (let i=0; i < updates.length || (finished && i === 0); i+=100) {
+      const last = finished && i + 100 >= updates.length;
+      window.chrome.webview.postMessage(JSON.stringify({ type:'zhike.ws.directory', accountId, collectorEpoch:documentEpoch, scanId:stream.id, chunkIndex:stream.chunk++,
+        rows:updates.slice(i, i+100), scanning:!last, finished:last, complete:last && coverage === 'page-list-scanned', coverage }));
+    }
+  };
   let lastAllScanAt = 0;
   let lastListInteractionAt = 0;
   const maxConversationCount = () => {
@@ -4076,12 +4314,14 @@ public sealed partial class LegacyUiHostPage : Page
     lastListInteractionAt = Date.now();
     if (allScan) {
       const run = allScan;
+      publishDirectory(run, [], 'page-list-interrupted', true);
       allScanGeneration += 1;
       allScan = null;
       try { run.container.scrollTop = run.initial; } catch {}
     }
     if (readHistoryScan) {
       const run = readHistoryScan;
+      publishDirectory(run, [], 'page-list-interrupted', true);
       readHistoryScan = null;
       try { run.container.scrollTop = run.initial; } catch {}
       postCollectorEvent('collection-paused', { event:'collection-paused', scanId:run.id, coverage:'read-history-paused', reason:'user-interaction', processed:run.processed.size, discovered:run.seen.size, attempted:run.attempted.size, retryable:run.retryable.length, skippedUnreadCount:run.skipped.length });
@@ -4092,9 +4332,8 @@ public sealed partial class LegacyUiHostPage : Page
   };
   const mergeRows = (target, rows, limit = Number.MAX_SAFE_INTEGER) => {
     for (const row of rows) {
-      if (target.size >= limit) break;
       const key = row.conversationKey || `${row.displayName}|${row.lastMessagePreview}`;
-      if (key && !target.has(key)) target.set(key, { ...row, index: target.size });
+      if (key && (target.has(key) || target.size < limit)) target.set(key, { ...row, index: target.get(key)?.index ?? target.size });
     }
   };
    const postAllScan = (conversations, coverage = 'page-list-scanned', messageOverride = null) => {
@@ -4176,6 +4415,7 @@ public sealed partial class LegacyUiHostPage : Page
   const interruptAllScanForHistoryRetry = () => {
     const run = allScan;
     if (!run) return false;
+    publishDirectory(run, [], 'page-list-interrupted', true);
     allScanGeneration += 1;
     allScan = null;
     lastAllScanAt = Date.now();
@@ -4197,21 +4437,29 @@ public sealed partial class LegacyUiHostPage : Page
     }
     const container = listContainer();
     if (!container) return discover();
-    if (readHistoryScan) return { ...discover(), scanned:true, scanning:true, coverage:'read-history-in-progress' };
+    if (!monitorOnly) lastDirectorySweepAt = Date.now();
+    if (readHistoryScan) return { ...discover(), supported:true, scanId:readHistoryScan.directory.id, scanned:true, scanning:true, coverage:'read-history-in-progress' };
     const maxConversations = maxConversationCount();
     const current = new Map();
     if (allScan) {
-      if (!monitorOnly) allScan.monitorOnly = false;
+      if (!monitorOnly && allScan.monitorOnly) {
+        allScan.monitorOnly = false;
+        allScan.directory = newDirectory();
+        publishDirectory(allScan, [...allScan.seen.values()]);
+      }
       // A second status/manual read must observe the scan owner's accumulated
       // window, not a new empty map. It remains read-only and never replaces,
       // cancels or advances the active scan.
       const values = [...allScan.seen.values()];
-      return { supported:true, conversations:values.filter(row => collectibleConversationType(row.conversationType)), excludedConversations:values.filter(row => !collectibleConversationType(row.conversationType)), groupConversations:values.filter(row => row?.isGroup === true || row?.conversationType === 'group' || row?.conversationType === 'vip_group'), scanned:true, scanning:true, coverage:'scan-in-progress' };
+      return { supported:true, scanId:allScan.directory?.id || 0, conversations:values.filter(row => collectibleConversationType(row.conversationType)), excludedConversations:values.filter(row => !collectibleConversationType(row.conversationType)), groupConversations:values.filter(row => row?.isGroup === true || row?.conversationType === 'group' || row?.conversationType === 'vip_group'), scanned:true, scanning:true, coverage:'scan-in-progress' };
     }
     const generation = ++allScanGeneration;
     const initial = Number(container.scrollTop || 0);
     const run = { generation, container, initial, monitorOnly, seen: current, rounds: 0, stable: 0, previous: current.size, maxConversations, maxRounds: 0, startedAt: Date.now(), lastProgressAt:Date.now(), lastProgressSignature:'', lastScrollTop:initial, lastMax:0, bottomStable:0, lastBottomSignature:'' };
     allScan = run;
+    run.directory = monitorOnly ? null : newDirectory();
+    mergeRows(current, readRows(), maxConversations);
+    publishDirectory(run, [...current.values()]);
     // Always discover from the physical top. Starting from the user's current
     // scroll position permanently omitted every conversation above it.
     container.scrollTop = 0;
@@ -4222,6 +4470,7 @@ public sealed partial class LegacyUiHostPage : Page
       scheduleCollectorPaint(() => {
         if (allScan !== run || run.generation !== allScanGeneration) return;
         allScan = null; lastAllScanAt = Date.now();
+        publishDirectory(run, [], coverageOverride || 'page-list-scanned', true);
         if (!run.monitorOnly) postAllScan([...run.seen.values()], coverageOverride || (run.seen.size ? 'page-list-scanned' : 'none'));
       });
     };
@@ -4230,6 +4479,7 @@ public sealed partial class LegacyUiHostPage : Page
       if (run.monitorOnly && (!groupMonitorState.enabled || groupMonitorState.status !== 'running')) { finish(); return; }
       const rows = readRows();
       mergeRows(run.seen, rows, run.maxConversations);
+      publishDirectory(run, rows);
       // The normal hidden full-list sweep already advances the virtualized
       // chat list. Reuse each rendered window for group monitoring so every
       // enabled VIP group can be observed without opening a conversation or
@@ -4292,7 +4542,7 @@ public sealed partial class LegacyUiHostPage : Page
       scheduleCollectorPaint(step);
     };
     scheduleCollectorPaint(step);
-    return { supported:true, conversations:[...current.values()].filter(row => collectibleConversationType(row.conversationType)), excludedConversations:[...current.values()].filter(row => !collectibleConversationType(row.conversationType)), groupConversations:[...current.values()].filter(row => row?.isGroup === true || row?.conversationType === 'group' || row?.conversationType === 'vip_group'), scanned:true, scanning:true, coverage:'scan-started' };
+    return { supported:true, scanId:run.directory?.id || 0, conversations:[...current.values()].filter(row => collectibleConversationType(row.conversationType)), excludedConversations:[...current.values()].filter(row => !collectibleConversationType(row.conversationType)), groupConversations:[...current.values()].filter(row => row?.isGroup === true || row?.conversationType === 'group' || row?.conversationType === 'vip_group'), scanned:true, scanning:true, coverage:'scan-started' };
   };
    const waitForMessagePane = () => {
      const selectors = [
@@ -4569,6 +4819,7 @@ public sealed partial class LegacyUiHostPage : Page
      const container = listContainer();
      if (!container) return { supported:false, error:'当前 WS 页面未找到会话列表。' };
      if (allScan) {
+       publishDirectory(allScan, [], 'page-list-interrupted', true);
        allScanGeneration += 1;
        allScan = null;
      }
@@ -4576,10 +4827,12 @@ public sealed partial class LegacyUiHostPage : Page
      const initialIdentity = currentConversationIdentity();
      const run = { id:`ws-read-${Date.now()}-${compactId(`${accountId}|${Date.now()}`)}`, container, initial:Number(container.scrollTop || 0), initialIdentity, seen:new Map(), pending:[], attempted:new Set(), processed:new Set(), skipped:[], retryable:[], excludedGroups:new Set(), unresolvedTypes:new Set(), current:null, currentMessages:new Map(), currentDirectionUnresolved:new Set(), captureRound:0, rounds:0, bottomStable:0, lastBottomSignature:'', startedAt:Date.now() };
      readHistoryScan = run;
+     run.directory = newDirectory();
      postCollectorEvent('collection-run-start', { event:'collection-run-start', coverage:'read-history-start', reason:'', discovered:0, processed:0, attempted:0, retryable:0, skippedUnreadCount:0 });
      const skippedByKey = new Set();
      const addWindowRows = () => {
        const windowRows = readRows();
+       publishDirectory(run, windowRows);
        let readCount = 0, skipCount = 0, domNodeKnownCount = 0;
        for (const row of windowRows) {
          if (row.__node) domNodeKnownCount += 1;
@@ -4627,6 +4880,7 @@ public sealed partial class LegacyUiHostPage : Page
          try { restore?.__node?.click?.(); } catch {}
        });
        postAllScan([...run.seen.values()], complete ? 'read-history-list' : 'read-history-interrupted', []);
+       publishDirectory(run, [], complete ? 'page-list-scanned' : 'page-list-interrupted', true);
        const needsRetry = !complete || run.retryable.length > 0;
         highPriorityHistoryRetryPending = needsRetry;
        const finishReason = reason || (needsRetry ? 'retryable-pending' : 'completed');
@@ -4911,6 +5165,21 @@ public sealed partial class LegacyUiHostPage : Page
   };
   window.__zhikeWsDiscover = discover;
   window.__zhikeWsDiscoverAll = discoverAll;
+  window.__zhikeWsDiscoverDirectory = () => {
+    const previous = allScan || readHistoryScan;
+    const result = discoverAll();
+    const run = allScan || readHistoryScan;
+    if (previous && previous === run) {
+      // A newly opened account/workspace may have missed earlier windows of
+      // this sweep. Replay its observed rows under a fresh delivery id.
+      run.directory = newDirectory();
+      publishDirectory(run, [...run.seen.values()]);
+    }
+    const listed = directHistoryAllowed ? result.conversations : result.groupConversations;
+    const rows = (listed || []).slice(0,1000).map(row => directHistoryAllowed ? row : ({
+      conversationKey:row.conversationKey, displayName:row.displayName, conversationType:row.conversationType, isGroup:row.isGroup }));
+    return { supported:result.supported, scanId:run?.directory?.id || 0, scanned:result.scanned, scanning:result.scanning, coverage:result.coverage, rows };
+  };
   window.__zhikeWsCapture = capture;
   let lastFingerprint = '';
   let lastListFingerprint = '';
@@ -4981,6 +5250,16 @@ public sealed partial class LegacyUiHostPage : Page
     // The role is fixed at document creation; a visible view cannot be
     // elevated into a mutating collector by a page call.
     const advanced = drainDueCollectorTasks();
+    if (backgroundCollectorRole && readHistoryScan) {
+      // The history reader owns the scroll position. Changes in its current
+      // list window reach the workbench without waiting for a history batch.
+      publishDirectory(readHistoryScan, readRows());
+    } else if (backgroundCollectorRole && (!allScan || allScan.monitorOnly)
+        && Date.now() - lastDirectorySweepAt >= 90000 && Date.now() - lastListInteractionAt >= 1500
+        && !highPriorityHistoryRetryPending) {
+      lastDirectorySweepAt = Date.now();
+      discoverAll();
+    }
     // Group monitoring is a passive collector-only heartbeat. It inspects
     // already-rendered VIP-group system rows and never drives the foreground
     // WebView. Keep the counters in the native heartbeat result so the host

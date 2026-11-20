@@ -153,8 +153,9 @@ function assertSmokeResult(result, stylesheetCount) {
   assert.equal(result.interactions.shortcuts.length, 4);
   assert.equal(result.interactions.accountScoped, true, 'Every open must target the new dedicated account');
   assert.equal(result.interactions.visibleOpens, true, 'Every open must receive visible chat bounds');
-  assert.deepEqual(result.interactions.collector, { scoped: true, loginVisible: true, discoveredBeforePairing: false, directoryVisible: true },
-    'Pairing the dedicated collector must discover and display groups for that account');
+  assert.deepEqual(result.interactions.collector, { scoped: true, loginVisible: true, discoveredBeforePairing: false,
+    directoryVisible: true, bothForegroundDirectories: true, isolated: true, localIndexReads: true },
+    'Both authenticated foreground directories and paired background updates must render against an empty local index, within their own accounts');
   assert.equal(result.stylesheetCount, stylesheetCount);
   assert.equal(result.scenes.length, scenes.length);
   for (const [index, row] of result.scenes.entries()) {
@@ -181,7 +182,8 @@ async function main() {
   const bundle = loadBundle(path.resolve(stage));
   fs.mkdirSync(output, { recursive: true });
   const report = { scope: 'packaged-workspace-html-css-in-isolated-webview2', status: 'failed', sourceCommit: bundle.manifest.sourceCommit,
-    bundleManifestSha256: bundle.manifestSha256, productStarted: false, realAccountsUsed: false,
+    bundleManifestSha256: bundle.manifestSha256, stageKind: bundle.manifest.fixtureOnly ? 'test-resource-snapshot' : 'release-gated-bundle',
+    productStarted: false, realAccountsUsed: false,
     limitations: ['Does not start the installed WinUI product.', 'Does not log in to WhatsApp, contact APIs, or verify platform capabilities.'], runs: [] };
   try {
     for (const viewport of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }]) {
@@ -206,7 +208,7 @@ async function main() {
       }
     }
     report.status = 'passed';
-    console.log('Packaged WS WebView2 smoke passed at both sizes: 9 scenes, dedicated account creation, 15 pages and 4 WhatsApp shortcuts');
+    console.log('Packaged WS WebView2 smoke passed at both sizes: 9 scenes, 15 pages, 4 WhatsApp shortcuts and account-isolated live directories over an empty local index');
   } catch (error) { report.error = { code: error.code || error.name, message: error.message }; throw error; }
   finally { report.resources = [...bundle.consumed.values()]; fs.writeFileSync(path.join(output, 'packaged-workspace-result.json'), JSON.stringify(report, null, 2)); }
 }

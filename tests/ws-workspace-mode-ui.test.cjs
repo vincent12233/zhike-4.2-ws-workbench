@@ -208,7 +208,7 @@ test('selecting a second dedicated account opens its own visible foreground and 
   assert.equal(f.state.wsWorkspaceView, 'chat'); assert.equal(f.state.activeAccountId, 'second');
   const open = f.calls.find(([kind, p]) => kind === 'ws' && p.action === 'open')[1];
   assert.equal(open.accountId, 'second'); assert.equal(open.bounds.hidden, false);
-  await f.handleAction('open-collector', {}); assert.match(f.target.innerHTML, /second · 独立采集会话/);
+  await f.handleAction('open-collector', {}); assert.match(f.target.innerHTML, /id="wsDedicatedLoginDetail"[^>]*>second · [^<]*独立采集会话/);
   await f.handleAction('hide-collector', {}); assert.match(f.target.innerHTML, /second · 前台登录/);
   await f.connectionAction('open'); assert.equal(f.state.wsStatus, '已连接'); assert.equal(f.state.error, '');
 });

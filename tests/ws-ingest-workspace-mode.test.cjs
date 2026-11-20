@@ -171,6 +171,7 @@ test('production ingest separates purpose, group directory and observed member m
       const sample = extra => request('/api/ws/ingest/batch', { ...packet, ...extra });
       assert.equal(seat.observationState, 'no-targets');
       const targets = (await request(route + '/targets/scan' + query, { accountId: dedicated, targets: [key, second].map(groupJid => ({ groupJid, enabled: true })) })).targets;
+      packet.capturedAt = new Date().toISOString();
       assert.equal((await read()).health.observationState, 'waiting');
       await sample({ accountId: other }); await sample({ accountId: ordinary }); await sample({ scope: 'visible-authorized-content' });
       await sample({ checkpoints: [{ ...packet.checkpoints[0], conversationKey: 'never-bound@g.us' }] });
@@ -213,6 +214,165 @@ test('production ingest separates purpose, group directory and observed member m
       assert.equal((await read()).health.observationState, 'paused');
       await saveSeat(true);
       assert.equal((await read()).health.observationState, 'waiting', 'resumed seat must wait for a new observation');
+    });
+
+    const visibleKey = 'live-panel-members@g.us', authorKey = 'live-author-members@g.us';
+    const unselected = 'unselected-live-members@g.us', knownPhone = '7000000801', excludedPhone = '7000000802';
+    const crmCustomer = (id, phone) => ({ id, name: id, phone, rawPhone: '+91' + phone, source: '群粉', status: '待跟进', deleted: false });
+    const initial = await request('/api/state');
+    await request('/api/state', { ...initial, customers: [...(initial.customers || []), crmCustomer('live-known', knownPhone), crmCustomer('live-excluded', excludedPhone)] });
+    await request('/api/ws/contact-exclusions', { identity: '+91' + excludedPhone }, 201);
+    const liveSeat = (await request('/api/ws/group-monitors/profiles', { accountId: dedicated, slotKey: 'live-member-seat', enabled: true }, 201)).profile;
+    const boundLiveTargets = (await request('/api/ws/group-monitors/' + liveSeat.id + '/targets/scan?accountId=' + dedicated, {
+      accountId: dedicated, targets: [visibleKey, authorKey].map(groupJid => ({ groupJid, groupName: 'Authorized group', enabled: true })),
+    })).targets;
+    const fixture = new DatabaseSync(path.join(dataDir, 'workspace.sqlite'));
+    try {
+      fixture.prepare('DELETE FROM ws_group_catalog WHERE account_id=? AND group_jid IN (?,?)').run(dedicated, visibleKey, authorKey);
+    } finally { fixture.close(); }
+    const group = (accountId, key) => inspect(db => db.prepare('SELECT * FROM ws_group_catalog WHERE account_id=? AND group_jid=?').get(accountId, key));
+    const members = async (accountId, key) => (await request('/api/ws/group-manager/members?accountId=' + accountId + '&groupJid=' + key)).members;
+    const countMembers = (accountId, key) => inspect(db => db.prepare('SELECT count(*) AS n FROM ws_group_members WHERE account_id=? AND group_jid=?').get(accountId, key).n);
+    const sideEffects = () => inspect(db => Object.fromEntries(['ws_group_membership_events', 'customer_group_memberships', 'ws_ai_analyses', 'ai_jobs', 'customers', 'app_state']
+      .map(table => [table, db.prepare('SELECT * FROM ' + table + ' ORDER BY id').all()])));
+    const baseline = sideEffects();
+    const packet = extra => ({ accountId: dedicated, scope: 'background-collector', capturedAt: new Date().toISOString(), ...extra });
+    const submit = body => request('/api/ws/ingest/batch', body);
+    const person = (phone, displayName) => ({ memberId: '91' + phone + '@s.whatsapp.net', displayName });
+    const panel = (key, observedMembers) => ({ conversationKey: key, displayName: 'Authorized group', conversationType: 'group', isGroup: true, coverage: 'group-monitor-visible', observedMembers });
+
+    await t.test('an authorized target exposes an empty roster before it has any cached directory or member rows', async () => {
+      assert.equal(group(dedicated, visibleKey), undefined);
+      assert.equal(countMembers(dedicated, visibleKey), 0);
+      assert.deepEqual(await members(dedicated, visibleKey), []);
+      assert.equal(group(dedicated, visibleKey), undefined, 'reading must not manufacture a directory observation');
+      for (const [accountId, groupJid] of [[other, visibleKey], [dedicated, unselected]]) {
+        const invalid = await request('/api/ws/group-manager/members?accountId=' + accountId + '&groupJid=' + groupJid, undefined, 404);
+        assert.equal(invalid.code, 'GROUP_MANAGER_GROUP_UNAVAILABLE');
+      }
+    });
+
+    await t.test('only an authorized native collector writes observed roster identities', async () => {
+      const people = [person(knownPhone, 'Real identity')];
+      const body = packet({ checkpoints: [panel(visibleKey, people)] });
+      const unauthenticated = await fetch(origin + '/api/ws/ingest/batch', { method: 'POST',
+        headers: { origin, 'x-zhike-api-token': token, 'content-type': 'application/json' }, body: JSON.stringify(body) });
+      assert.equal(unauthenticated.status, 403);
+      for (const override of [{ scope: 'visible-authorized-content' }, { accountId: ordinary }, { accountId: other }, { checkpoints: [panel(unselected, people)] },
+        { checkpoints: [{ ...panel(visibleKey, people), accountId: other }], messages: [message(visibleKey, 'nested-other', { accountId: other })] },
+        { capturedAt: new Date(Date.now() - 86400000).toISOString() }, { capturedAt: new Date(Date.now() + 86400000).toISOString() }]) {
+        await submit({ ...body, ...override });
+      }
+      for (const [id, key] of [[dedicated, visibleKey], [dedicated, unselected], [ordinary, visibleKey], [other, visibleKey]]) {
+        assert.equal(countMembers(id, key), 0);
+        assert.equal(group(id, key), undefined);
+      }
+      assert.deepEqual(sideEffects(), baseline);
+    });
+
+    await t.test('paused targets and replay from before reauthorization cannot contribute member evidence', async () => {
+      const id = boundLiveTargets.find(target => target.groupJid === authorKey).id;
+      const toggle = action => request('/api/ws/group-monitors/' + liveSeat.id + '/targets/' + id + '/' + action + '?accountId=' + dedicated, { accountId: dedicated });
+      const body = packet({ checkpoints: [panel(authorKey, [person(knownPhone, 'Previous authorization')])] });
+      await toggle('disable');
+      await submit(body);
+      assert.equal(countMembers(dedicated, authorKey), 0);
+      await toggle('enable');
+      await submit(body);
+      assert.equal(countMembers(dedicated, authorKey), 0);
+      const stale = message(authorKey, 'stale-observation', { observedAt: body.capturedAt });
+      await submit(packet({ messages: [stale] }));
+      assert.equal(countMembers(dedicated, authorKey), 0);
+    });
+
+    await t.test('an incoming message alone discovers its author, rebuilds the missing directory and survives replay', async () => {
+      const body = packet({ messages: [message(authorKey, 'verified-author', { senderId: person(knownPhone).memberId, senderName: 'Verified author' })] });
+      assert.equal(group(dedicated, authorKey), undefined);
+      assert.equal((await submit(body)).accepted, 1);
+      const rows = await members(dedicated, authorKey);
+      assert.equal(rows.length, 1);
+      assert.equal(rows[0].observedOnly, true);
+      assert.equal(rows[0].customerId, 'live-known');
+      assert.equal(rows[0].status, 'unknown');
+      assert.equal(rows[0].evidence.kind, 'message-author');
+      assert.equal(rows[0].evidence.completeness, 'partial');
+      assert.equal((await submit(body)).deduplicated, 1);
+      assert.deepEqual(await members(dedicated, authorKey), rows);
+      assert.deepEqual(sideEffects(), baseline, 'observing an author cannot change CRM, enqueue AI or create a membership transition');
+    });
+
+    await t.test('a partial visible roster restores the group without messages, links verified CRM only and never infers departures', async () => {
+      const known = person(knownPhone, 'Verified person'), excluded = person(excludedPhone, 'Excluded person');
+      const opaque = { memberId: '7755588221@lid', displayName: 'live-known' };
+      const body = packet({ checkpoints: [panel(visibleKey, [known, excluded, opaque, known, { memberId: '', displayName: 'live-known' }, { memberId: 'invalid', displayName: knownPhone }])] });
+      await submit(body);
+      assert.ok(group(dedicated, visibleKey));
+      assert.equal(conversation(dedicated, visibleKey), undefined);
+      const rows = await members(dedicated, visibleKey);
+      assert.equal(rows.length, 3);
+      for (const row of rows) {
+        assert.equal(row.observedOnly, true); assert.equal(row.status, 'unknown');
+        assert.equal(row.evidence.kind, 'visible-member-row'); assert.equal(row.evidence.completeness, 'partial');
+      }
+      assert.equal(rows.find(row => row.memberPhone === knownPhone).customerId, 'live-known');
+      const blocked = rows.find(row => row.memberPhone === excludedPhone);
+      assert.equal(blocked.customerId, ''); assert.equal(blocked.reviewReason, 'contact-excluded');
+      const unknown = rows.find(row => row.memberJid === opaque.memberId);
+      assert.equal(unknown.customerId, '');
+      await submit(body);
+      assert.deepEqual(await members(dedicated, visibleKey), rows);
+      await submit(packet({ checkpoints: [panel(visibleKey, [known])] }));
+      const reduced = await members(dedicated, visibleKey);
+      assert.equal(reduced.length, 3);
+      assert.deepEqual(reduced.find(row => row.id === blocked.id), blocked);
+      assert.deepEqual(reduced.find(row => row.id === unknown.id), unknown);
+      assert.deepEqual(sideEffects(), baseline);
+    });
+
+    await t.test('a later exclusion immediately hides an existing observed customer link', async () => {
+      assert.equal((await members(dedicated, authorKey))[0].customerId, 'live-known');
+      await request('/api/ws/contact-exclusions', { identity: '+91' + knownPhone }, 201);
+      const auditCount = () => inspect(db => db.prepare('SELECT count(*) AS n FROM ws_contact_exclusion_hits').get().n);
+      const before = auditCount();
+      const [blocked] = await members(dedicated, authorKey);
+      assert.equal(blocked.customerId, ''); assert.equal(blocked.data.customerId, '');
+      assert.equal(blocked.data.observedCustomerId, ''); assert.equal(blocked.customerName, '');
+      assert.equal(blocked.reviewReason, 'contact-excluded');
+      assert.equal(blocked.observedOnly, true); assert.equal(blocked.status, 'unknown');
+      const state = await request('/api/ws/group-manager/state?accountId=' + dedicated + '&groupJid=' + authorKey);
+      assert.deepEqual(state.members, [blocked]);
+      assert.equal(auditCount(), before, 'displaying a roster is a read-only operation');
+    });
+    await t.test('a native foreground snapshot builds an empty account directory without advancing history or starting AI', async () => {
+      const project = (accountId, conversationKey, conversationType, extra = {}) => ({
+        accountId, conversationKey, conversationType, displayName:'Same visible title', isGroup:conversationType === 'group',
+        coverage:'foreground-visible-directory', ...extra,
+      });
+      const save = (accountId, checkpoints) => request('/api/ws/ingest/batch', {
+        scope:'foreground-visible-directory', accountId, capturedAt:new Date().toISOString(), checkpoints,
+      });
+      const direct = project(ordinary, '910000000001@c.us', 'direct'), group = project(dedicated, 'live-same-1@g.us', 'group');
+      const group2 = {...group, conversationKey:'live-same-2@g.us'};
+      const baseline = protectionSnapshot();
+      await save(ordinary, [direct, {...group, accountId:ordinary}]);
+      await save(dedicated, [group, group2, {...direct, accountId:dedicated}, {...group, accountId:ordinary, conversationKey:'foreign@g.us'}]);
+      const original = conversation(ordinary, direct.conversationKey);
+      assert.ok(original); assert.equal(JSON.parse(original.data_json).historyLoaded, false);
+      assert.equal(conversation(dedicated, direct.conversationKey), undefined);
+      const readGroups = () => inspect(db => db.prepare("SELECT group_jid FROM ws_group_catalog WHERE account_id=? AND discovery_source='foreground-visible-directory' ORDER BY group_jid").all(dedicated).map(row => row.group_jid));
+      assert.deepEqual(readGroups(), [group.conversationKey,group2.conversationKey]);
+      await save(ordinary,[direct]); await save(dedicated,[group]);
+      assert.equal(conversation(ordinary, direct.conversationKey).id, original.id);
+      assert.equal(protectionSnapshot(), baseline);
+      const temp = new DatabaseSync(path.join(dataDir,'workspace.sqlite'));
+      try {
+        temp.prepare('DELETE FROM ws_conversations WHERE account_id=? AND id=?').run(ordinary, original.id);
+        temp.prepare('DELETE FROM ws_group_catalog WHERE account_id=? AND group_jid=?').run(dedicated, group.conversationKey);
+      } finally { temp.close(); }
+      await save(ordinary,[direct]); await save(dedicated,[group]);
+      assert.ok(conversation(ordinary, direct.conversationKey));
+      assert.deepEqual(readGroups(), [group.conversationKey,group2.conversationKey]);
+      assert.equal(protectionSnapshot(), baseline);
     });
   } finally {
     if (child.exitCode === null && child.signalCode === null) child.kill();

@@ -62,6 +62,7 @@ public sealed class NativeSendHost {
   private Task<BridgeResponse> ConfigureVipGroupsAsync(string requestId,string id,JsonElement payload,CancellationToken token) => WsStatusResponseAsync(requestId,id,token);
   private Task<BridgeResponse> ConfigureGroupMonitorAsync(string requestId,string id,JsonElement payload,CancellationToken token) => WsStatusResponseAsync(requestId,id,token);
   private Task<BridgeResponse> SetGroupMonitorStateAsync(string requestId,string id,string action,CancellationToken token) => WsStatusResponseAsync(requestId,id,token);
+  private Task<BridgeResponse> ReadWsVisibleDirectoryAsync(string requestId,string id,CancellationToken token) => WsStatusResponseAsync(requestId,id,token);
   private Task<BridgeResponse> ExecuteWsCaptureAsync(string requestId,string id,string action,CancellationToken token) => WsStatusResponseAsync(requestId,id,token);
 ${extracted}
 }
