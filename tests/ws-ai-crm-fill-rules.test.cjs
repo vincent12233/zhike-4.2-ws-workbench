@@ -70,6 +70,38 @@ check('re-running the same analysis changes nothing the second time', () => {
   assert.equal(second.evidenceRows.length, 0, 'evidence is not duplicated');
 });
 
+const dynamicAnalysis = (id, intent, summary) => ({ confidence: 0.9, analysisId: id, summary, intent, contact: { intent }, profile: { summary } });
+const withTime = (profile, sourceMessageAt) => ({ ...profile, sourceMessageAt, model: 'test-model' });
+check('a newer analysis updates AI-managed fields and records message time and model', () => {
+  const first = merge(inGroup, withTime(profileFor(dynamicAnalysis('T1', '观望', '客户在观望')), '2026-11-20T10:00:00.000Z'));
+  assert.equal(first.customer.intent, '观望');
+  const second = merge(first.customer, withTime(profileFor(dynamicAnalysis('T2', '有意向', '客户表示有意向')), '2026-11-21T10:00:00.000Z'));
+  assert.equal(second.customer.intent, '有意向');
+  assert.equal(second.customer.aiProfile.sourceMessageAt, '2026-11-21T10:00:00.000Z');
+});
+check('an analysis of older messages never overwrites values from newer messages', () => {
+  const newer = merge(inGroup, withTime(profileFor(dynamicAnalysis('N1', '有意向', '客户表示有意向')), '2026-11-21T10:00:00.000Z'));
+  const older = merge(newer.customer, withTime(profileFor(dynamicAnalysis('O1', '观望', '客户在观望')), '2026-11-19T10:00:00.000Z'));
+  assert.equal(older.customer.intent, '有意向', 'older messages analysed later do not win');
+  assert.ok(older.staleFields.includes('intent'));
+  assert.deepEqual(older.conflicts, [], 'stale is not a conflict');
+  assert.equal(older.customer.aiProfile.intent, '有意向', 'the AI snapshot is not rolled back either');
+  assert.equal(older.customer.aiProfile.sourceMessageAt, '2026-11-21T10:00:00.000Z', 'the recorded message time never moves backwards');
+});
+check('an unknown message time does not block an update', () => {
+  const newer = merge(inGroup, withTime(profileFor(dynamicAnalysis('K1', '有意向', 'a')), '2026-11-21T10:00:00.000Z'));
+  const unknown = merge(newer.customer, withTime(profileFor(dynamicAnalysis('K2', '强烈意向', 'b')), ''));
+  assert.equal(unknown.customer.intent, '强烈意向');
+});
+check('field sources record message time, model and account', () => {
+  const { customer } = merge(inGroup, withTime(profileFor(analysis), '2026-11-21T09:00:00.000Z'));
+  const source = customer.aiFieldSources.occupation;
+  assert.equal(source.messageAt, '2026-11-21T09:00:00.000Z');
+  assert.equal(source.model, 'test-model');
+  assert.equal(source.accountId, 'acc');
+  assert.ok(source.updatedAt, 'analysis time is kept separately');
+});
+
 const failed = results.filter(ok => !ok).length;
 console.log(`WS AI CRM fill rules: ${results.length - failed}/${results.length}`);
 if (failed) process.exit(1);

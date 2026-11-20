@@ -273,6 +273,15 @@
     };
   }
 
+  // V5.0 §16: compare the send time of the newest analysed message with the
+  // time recorded for the current AI value. Only when both are known and the
+  // incoming messages are older is the update refused, so a missing timestamp
+  // never blocks a legitimate update.
+  function olderThanStoredSource(customer, field, profile) {
+    const incoming = Date.parse(profile?.sourceMessageAt || '');
+    const stored = Date.parse(customer?.aiFieldSources?.[field]?.messageAt || customer?.aiProfile?.sourceMessageAt || '');
+    return Number.isFinite(incoming) && Number.isFinite(stored) && incoming < stored;
+  }
   function mergeCustomerProfileSafely(customer, profile = {}) {
     if (!customer || typeof customer !== 'object') return { customer, changedFields: [] };
     const changedFields = [];
@@ -307,6 +316,7 @@
     const aiFields = { intent: profile.intent, intentScore: profile.intentScore, emotion: profile.emotion, aiSummary: profile.aiSummary };
     for (const [key, value] of Object.entries(aiFields)) {
       if (isLocked(key) || value === '' || value == null || JSON.stringify(customer[key]) === JSON.stringify(value)) continue;
+      if (olderThanStoredSource(customer, key, profile)) continue;
       const priorAiValue = customer.aiProfile && typeof customer.aiProfile === 'object' ? customer.aiProfile[key] : undefined;
       const aiManaged = Boolean(customer.aiFieldSources?.[key])
         || (priorAiValue !== undefined && JSON.stringify(priorAiValue) === JSON.stringify(customer[key]));

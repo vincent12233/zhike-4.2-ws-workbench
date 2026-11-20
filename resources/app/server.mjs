@@ -5482,6 +5482,11 @@ const server = createServer(async (req, res) => {
           || (!vipGroup ? state.settings?.operatingTasks?.find(item => String(item.wsConversationId || '') === conversationId && String(item.wsAccountId || accountId) === accountId) : null) || null;
         return json(res, 200, { ok: true, skipped: false, matched: Boolean(existingCustomer), created: false, duplicate: true, softDeleted: Boolean(existingCustomer?.deleted), conflicts: [], customer: existingCustomer, followup: existingFollowup, task: existingTask, updatedFields: [], revision: readStateEnvelope().version });
       }
+      // V5.0 §14/§16 provenance: the analysis covers the current transcript
+      // (fingerprint-checked above), so its newest known send time is the
+      // message time of every value it proposes.
+      profile.sourceMessageAt = wsText(db.prepare("SELECT MAX(json_extract(data_json,'$.sentAt')) AS at FROM ws_messages WHERE conversation_id=? AND json_extract(data_json,'$.sentAtKnown')=1").get(conversation.id)?.at, 40);
+      profile.model = wsText(analysisRow.model || analysisRow.provider_name, 120);
       const customerBefore = JSON.parse(JSON.stringify(customer));
       const beforeCustomer = JSON.stringify(customer);
       const profileMerge = wsCrmSync.mergeCustomerProfileSafely(customer, profile);

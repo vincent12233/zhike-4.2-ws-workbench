@@ -159,9 +159,18 @@
     return text(left).toLocaleLowerCase() === text(right).toLocaleLowerCase();
   }
 
+  // V5.0 §16: compare the send time of the newest analysed message with the
+  // time recorded for the current AI value. Only when both are known and the
+  // incoming messages are older is the update refused, so a missing timestamp
+  // never blocks a legitimate update.
+  function olderThanStoredSource(customer, field, profile) {
+    const incoming = Date.parse(profile?.sourceMessageAt || '');
+    const stored = Date.parse(customer?.aiFieldSources?.[field]?.messageAt || customer?.aiProfile?.sourceMessageAt || '');
+    return Number.isFinite(incoming) && Number.isFinite(stored) && incoming < stored;
+  }
   function mergeAiProfileSafely(customer, profile = {}) {
-    if (!customer || typeof customer !== 'object') return { customer, changedFields: [], conflicts: [], evidenceRows: [] };
-    const changedFields = [], conflicts = [], evidenceRows = [];
+    if (!customer || typeof customer !== 'object') return { customer, changedFields: [], conflicts: [], evidenceRows: [], staleFields: [] };
+    const changedFields = [], conflicts = [], evidenceRows = [], staleFields = [];
     const lockedFields = new Set([
       ...(Array.isArray(customer.manualLockedFields) ? customer.manualLockedFields : []),
       ...(Array.isArray(customer.aiLockedFields) ? customer.aiLockedFields : []),
@@ -207,6 +216,7 @@
       const priorAiValue = customer.aiProfile && typeof customer.aiProfile === 'object' ? customer.aiProfile[field] : undefined;
       const aiManaged = Boolean(customer.aiFieldSources?.[field])
         || (priorAiValue !== undefined && JSON.stringify(priorAiValue) === JSON.stringify(customer[field]));
+      if (aiManaged && olderThanStoredSource(customer, field, profile)) { staleFields.push(field); continue; }
       if (missing(field, customer[field]) || aiManaged) { customer[field] = value; changedFields.push(field); }
       else conflicts.push({ field, existing: customer[field], incoming: value, analysisId: profile.analysisId || '', manual: true });
     }
@@ -232,9 +242,10 @@
     customer.aiFieldEvidenceKeys = [...evidenceKeys].slice(-500);
     const fieldSources = customer.aiFieldSources && typeof customer.aiFieldSources === 'object' ? customer.aiFieldSources : {};
     const conflictFields = new Set(conflicts.map(item => text(item.field)));
+    const staleSet = new Set(staleFields);
     const sourceAccepted = row => {
       const field = text(row.field);
-      if (!field || conflictFields.has(field) || isLocked(field)) return false;
+      if (!field || conflictFields.has(field) || staleSet.has(field) || isLocked(field)) return false;
       if (![...protectedFields, ...Object.keys(dynamic)].includes(field)) return false;
       let incoming = profile[field];
       if (field === 'age') incoming = normalizeAge(incoming);
@@ -245,21 +256,25 @@
     };
     for (const row of evidenceRows) {
       if (!sourceAccepted(row)) continue;
-      fieldSources[row.field] = { value: row.value, sourceText: row.sourceText, confidence: row.confidence, analysisId: row.analysisId, conversationId: row.conversationId, updatedAt: new Date().toISOString() };
+      // messageAt = send time of the newest analysed message; updatedAt = when
+      // the analysis was applied. Both are kept so ordering uses message time.
+      fieldSources[row.field] = { value: row.value, sourceText: row.sourceText, confidence: row.confidence, analysisId: row.analysisId, conversationId: row.conversationId, messageAt: text(profile.sourceMessageAt), model: text(profile.model), accountId: text(profile.wsAccountId), updatedAt: new Date().toISOString() };
     }
     customer.aiFieldSources = fieldSources;
     const acceptedProfileFields = Object.fromEntries(Object.entries(profile).filter(([key, value]) =>
       ['name', 'phone', 'country', 'language', 'origin', 'age', 'occupation', 'productInterest', 'budget', 'intent', 'intentScore', 'emotion', 'customerStage', 'aiSummary'].includes(key)
-      && value !== '' && value != null && !conflictFields.has(key) && !isLocked(key)));
+      && value !== '' && value != null && !conflictFields.has(key) && !staleSet.has(key) && !isLocked(key)));
     customer.aiProfile = {
       ...(customer.aiProfile && typeof customer.aiProfile === 'object' ? customer.aiProfile : {}),
       ...acceptedProfileFields,
       confidence: Number(profile.confidence) || 0,
       lastAnalysisId: profile.analysisId || '',
+      // Keep the newest message time seen, never move it backwards.
+      sourceMessageAt: [customer.aiProfile?.sourceMessageAt, profile.sourceMessageAt].map(text).filter(value => Number.isFinite(Date.parse(value))).sort().at(-1) || '',
       updatedAt: new Date().toISOString(),
     };
     customer.touched = true;
-    return { customer, changedFields: [...new Set(changedFields)], conflicts, evidenceRows };
+    return { customer, changedFields: [...new Set(changedFields)], conflicts, evidenceRows, staleFields };
   }
 
   function shouldAutoSoftDelete(input = {}) {
