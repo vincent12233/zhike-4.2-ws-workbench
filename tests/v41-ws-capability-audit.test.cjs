@@ -260,6 +260,12 @@ test('manual event resolution commits the authoritative relation and CRM project
     assert.deepEqual({ ...after }, {
       customer_id: customerId, status: '已退群', manual_locked: 1, updated_at: resolved.event.updatedAt,
     });
+    const uncertain = await json('/api/ws/ingest/batch', {
+      accountId, groupEvents: [{ profileId: profile.id, targetId: target.id, groupJid, memberId: unlinkedJid,
+        memberPhone: 'unconfirmed-alias', type: 'left', sourceEventId: 'later-uncertain', eventAt: now, confidence: 1 }],
+    });
+    assert.equal(uncertain.groupEvents.events[0].event.status, 'pending');
+    assert.deepEqual(relationship.get(accountId, groupJid, unlinkedJid), after, 'an unresolved observation preserves the manually confirmed relationship');
   } finally {
     db?.close();
     if (child.pid && child.exitCode === null && child.signalCode === null) {

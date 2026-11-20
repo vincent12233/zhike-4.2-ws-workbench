@@ -1550,7 +1550,8 @@ function wsPersistCustomerGroupMembershipLedger(accountId, target, relation, eve
       manual_locked=excluded.manual_locked,
       review_reason=excluded.review_reason,
       data_json=excluded.data_json,
-      updated_at=excluded.updated_at`).run(
+      updated_at=excluded.updated_at
+    WHERE excluded.customer_id<>'' OR (customer_group_memberships.customer_id='' AND customer_group_memberships.manual_locked=0)`).run(
     relationId,
     accountId,
     groupJid,
@@ -1684,14 +1685,14 @@ function wsGroupMonitorApplyEventsInTransaction(accountId, inputEvents = [], opt
       ? customer.groupMemberships.find(item => String(item.accountId || '') === accountId && String(item.groupJid || '') === target.group_jid)
       : null;
     const sourceInfo = wsGroupMonitorSource(target, state);
-    const projection = match.reason ? { status: match.status === 'excluded' ? 'ignored' : 'pending', reason: match.reason }
+    const projection = match.status === 'excluded' ? { status: 'ignored', reason: match.reason }
       : wsGroupMonitor.applyMembershipProjection(profile, target, { ...normalizedEvent, idempotencyKey }, customer, { existingRelation, sourceLabel: sourceInfo.label, now });
     const member = wsGroupMonitor.normalizeMemberIdentity(normalizedEvent.memberId);
     const eventId = wsText(event.id, 160) || `wsg-event-${randomUUID()}`;
     const evidenceHash = createHash('sha256').update(JSON.stringify({ accountId, groupJid: target.group_jid, memberJid: member.value, type: normalizedEvent.type, sourceEventId: normalizedEvent.sourceEventId, eventAt: normalizedEvent.eventAt })).digest('hex');
     const status = projection.status === 'applied' ? 'applied' : projection.status === 'review' ? 'review' : projection.status === 'pending' ? 'pending' : 'ignored';
     const customerId = projection.relation?.customerId || (customer ? String(customer.id) : '');
-    const reviewReason = projection.reviewReason || projection.reason || (match.status === 'ambiguous' ? 'ambiguous-customer' : '');
+    const reviewReason = match.reason || projection.reviewReason || projection.reason || (match.status === 'ambiguous' ? 'ambiguous-customer' : '');
     if (projection.relation) wsPersistCustomerGroupMembershipLedger(accountId, target, projection.relation, { ...normalizedEvent, idempotencyKey }, sourceInfo, now);
     db.prepare(`INSERT INTO ws_group_membership_events(id,account_id,profile_id,target_id,group_jid,member_jid,member_phone,customer_id,event_type,event_at,observed_at,source,source_event_id,correlation_id,idempotency_key,confidence,evidence_hash,status,review_reason,data_json,created_at,updated_at)
       VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(eventId, accountId, profile.id, target.id, target.group_jid, member.value, member.phone || wsGroupMonitor.normalizeMemberIdentity(normalizedEvent.memberPhone || normalizedEvent.member_phone).phone, customerId, normalizedEvent.type, normalizedEvent.eventAt, normalizedEvent.observedAt, normalizedEvent.source, normalizedEvent.sourceEventId, normalizedEvent.correlationId, idempotencyKey, normalizedEvent.confidence, evidenceHash, status, String(reviewReason || ''), JSON.stringify({ identityKind: match.kind || '', identityStatus: match.status || '', groupName: target.group_name, autoRegistered }), now, now);
