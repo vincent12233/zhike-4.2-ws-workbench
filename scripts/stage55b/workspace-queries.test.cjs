@@ -12,6 +12,8 @@ const { runMigrations } = require('../../resources/app/migration-runner.cjs');
 const queries = require('../../resources/app/modules/ws-workspace-query.cjs');
 const repo = path.resolve(__dirname, '../..');
 const app = path.join(repo, 'resources/app');
+// Schema version follows the manifest; a new migration legitimately raises it.
+const expectedSchemaVersion = require(path.join(app, 'migrations/manifest.json')).supportedSchemaVersion;
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'zhike-stage55b-queries-'));
 const dbPath = path.join(root, 'workspace.sqlite');
 const now = '2026-11-16T08:00:00.000Z';
@@ -118,7 +120,7 @@ let child;
     for (const value of ['PRIVATE-LEASE', 'PRIVATE-TRANSCRIPT', 'PRIVATE-CHECKPOINT', 'COLLECTION-SECRET']) assert.equal(JSON.stringify(snapshot).includes(value), false);
     const diagnostic = queries.audit(db, 'default', params({ category: 'diagnostic' }));
     assert.equal(diagnostic.available, false); assert.equal(diagnostic.total, 0); assert.match(diagnostic.unavailableReason, /未接入/);
-    assert.equal(db.prepare('PRAGMA user_version').get().user_version, 25);
+    assert.equal(db.prepare('PRAGMA user_version').get().user_version, expectedSchemaVersion);
   } finally { db.close(); }
   assert.equal(businessDigest(), before, 'all projections run on a read-only connection and preserve all source records');
 

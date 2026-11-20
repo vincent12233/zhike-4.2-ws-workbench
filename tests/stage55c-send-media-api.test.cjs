@@ -9,6 +9,8 @@ const { spawn } = require('node:child_process');
 const { createServer } = require('node:net');
 const { DatabaseSync } = require('node:sqlite');
 const app = path.resolve(__dirname, '../resources/app');
+// Schema version follows the manifest; a new migration legitimately raises it.
+const expectedSchemaVersion = require(path.join(app, 'migrations/manifest.json')).supportedSchemaVersion;
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'zhike-stage55c-api-'));
 fs.writeFileSync(path.join(root, '.stage55c-api-test'), 'owned-synthetic-only');
 const dbPath = path.join(root, 'workspace.sqlite');
@@ -183,7 +185,7 @@ const readAudit = async id => (await api('/api/ws/send-audit?accountId=default&i
     const recovered = await api('/api/ws/ai-jobs', { accountId: 'default', action: 'recover-expired' }); assert.equal(recovered.status, 200); assert.equal(recovered.value.recovered, 1);
     assert.equal(db(connection => connection.prepare('SELECT status FROM ai_jobs WHERE id=?').get('legacy-expired').status), 'retryable'); assert.equal(db(connection => connection.prepare('SELECT status FROM ai_jobs WHERE id=?').get('worker-expired').status), 'running');
     assert.equal(db(connection => connection.prepare('SELECT status FROM ai_jobs WHERE id=?').get('pipeline-tagged').status), 'running', 'new pipeline authority is not inferred from an empty owner');
-    assert.equal(db(connection => connection.prepare('PRAGMA user_version').get().user_version), 25);
+    assert.equal(db(connection => connection.prepare('PRAGMA user_version').get().user_version), expectedSchemaVersion);
   });
   console.log(JSON.stringify({ stage: '5.5C-1A', checks: results.length, passed: results.filter(row => row.result === 'PASS').length, failed: results.filter(row => row.result === 'FAIL').length, results, productionOpened: false, realWs: false, paidAi: false, workerStarted: false }));
   if (results.some(row => row.result === 'FAIL')) process.exitCode = 1;

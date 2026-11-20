@@ -84,7 +84,11 @@ function withWorkspaceLock(data, callback) {
 }
 
 function seed(db, root, closedPid) {
-  requireCheck(db.prepare('PRAGMA user_version').get().user_version === 25, 'Expected migrated schema 025.');
+  // Seed scripts always target the current manifest schema; the historical 025
+  // label only described the schema level of the round that introduced them.
+  const manifest = require(path.join(__dirname, '..', '..', 'resources', 'app', 'migrations', 'manifest.json'));
+  requireCheck(db.prepare('PRAGMA user_version').get().user_version === Number(manifest.supportedSchemaVersion),
+    `Expected migrated schema ${manifest.supportedSchemaVersion}.`);
   const accountRows = db.prepare('SELECT id FROM ws_accounts').all();
   requireCheck(accountRows.length === accounts.length && accounts.every(([id]) => accountRows.some(row => row.id === id)),
     'Workspace account set does not match the two known fixture accounts.');

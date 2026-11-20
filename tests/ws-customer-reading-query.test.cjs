@@ -8,6 +8,8 @@ const { after, before, test } = require('node:test');
 const { DatabaseSync } = require('node:sqlite');
 const { runMigrations } = require('../resources/app/migration-runner.cjs');
 const { queryCustomerGroupReading, exportCustomerGroupReadingCsv } = require('../resources/app/modules/ws-customer-reading-query.cjs');
+// The migrated schema tracks the manifest; a new migration legitimately raises it.
+const expectedSchemaVersion = require('../resources/app/migrations/manifest.json').supportedSchemaVersion;
 
 const now = '2026-11-17T10:00:00.000Z';
 const readAt = '2026-11-17T10:03:00.000Z';
@@ -118,7 +120,7 @@ before(() => {
     const migrationDir = path.join(__dirname, '..', 'resources', 'app', 'migrations');
     runMigrations({ db: write, migrationDir, manifestPath: path.join(migrationDir, 'manifest.json'),
       lockPath: path.join(temp, 'migration.lock'), backup: false });
-    assert.equal(write.prepare('PRAGMA user_version').get().user_version, 25);
+    assert.equal(write.prepare('PRAGMA user_version').get().user_version, expectedSchemaVersion);
     populate(write);
   } finally {
     write.close();
