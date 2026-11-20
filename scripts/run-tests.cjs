@@ -372,6 +372,7 @@ function runAll() {
   run('Horizon Atelier 6.0 dynamic UI contract', [path.join(repo, 'tests', 'horizon-atelier-contract.test.cjs')]);
   run('Horizon Atelier AI alert ordering', [path.join(repo, 'tests', 'home-horizon-alert-order.test.cjs')]);
   run('GPT Horizon 6.0 workspace contract', [path.join(repo, 'tests', 'gpt-horizon-workspace.test.cjs')]);
+  run('GPT plan confirmations, session cancellation and scoped analytics', [path.join(repo, 'tests', 'gpt-assistant-session.test.cjs')]);
   run('Horizon Atelier governance/settings UI contract', [path.join(repo, 'tests', 'governance-horizon-contract.test.cjs')]);
   run('6.0 linked business workspace shell', [path.join(repo, 'tests', 'business-6-shell-contract.test.cjs')]);
   run('6.0 global Horizon visual finish', [path.join(repo, 'tests', 'global-6-visual-contract.test.cjs')]);
