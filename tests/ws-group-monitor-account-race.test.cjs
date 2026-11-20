@@ -16,6 +16,7 @@ function fixture(delayB = false) {
   const native = [], calls = [];
   const contextCurrent = context => context.accountId === state.activeAccountId && context.sequence === state.accountLoadSequence;
   const sandbox = {
+    groupDrafts: null, flushDraftPersist: () => {},
     state, String, Map, Set, Promise, clearTimeout, text: value => String(value ?? '').trim(), nowIso: () => '2026-11-16T12:00:00Z',
     modeAccount: id => state.accounts.find(account => String(account.id) === String(id)),
     invalidateExclusionPage: () => {},

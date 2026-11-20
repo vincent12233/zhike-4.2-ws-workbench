@@ -42,6 +42,7 @@ jobs:
             'tests/ws-ingest-workspace-mode.test.cjs',
             'tests/ws-group-drafts-api.test.cjs',
             'tests/ws-group-drafts-ui.test.cjs',
+            'tests/ws-reply-draft-recovery-runtime.test.cjs',
             'tests/ws-group-monitor-workspace-mode.test.cjs',
             'tests/ws-group-monitor-identity-safety.test.cjs',
             'tests/ws-group-scope-authorization.test.cjs',

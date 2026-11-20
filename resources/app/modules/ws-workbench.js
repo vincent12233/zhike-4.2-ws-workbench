@@ -809,6 +809,7 @@
   }
 
   function resetAccountPresentation(accountId) {
+    flushDraftPersist();
     invalidateExclusionPage();
     groupDrafts?.reset();
     ++state.accountPresentationGeneration;
@@ -1150,6 +1151,8 @@
       replyPreviewLanguage: '',
       replyError: '',
       replyOperationId: '',
+      replyOperationSource: '',
+      replyRevision: 0,
     };
   }
   function currentDraft() {
@@ -1169,6 +1172,8 @@
   const DRAFT_MAX_ENTRIES = 60;
   const DRAFT_MAX_CHARS = 4000;
   let draftPersistTimer = null;
+  let draftPersistGeneration = 0;
+  const pendingDraftPersists = new Map();
   function readDraftStore() {
     try {
       const parsed = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || '{}');
@@ -1180,10 +1185,17 @@
     return typeof value === 'string' ? value.slice(0, DRAFT_MAX_CHARS) : '';
   }
   function persistDraftReply(key, value) {
+    // An immediate clear/write supersedes the delayed snapshot for this key.
+    // Other accounts' pending replies still need to be persisted.
+    pendingDraftPersists.delete(key);
+    if (!pendingDraftPersists.size && draftPersistTimer !== null) {
+      clearTimeout(draftPersistTimer); draftPersistTimer = null; ++draftPersistGeneration;
+    }
     try {
       const store = readDraftStore();
       const text = String(value || '').slice(0, DRAFT_MAX_CHARS);
-      if (text.trim()) store[key] = text; else delete store[key];
+      delete store[key];
+      if (text.trim()) store[key] = text;
       const keys = Object.keys(store);
       if (keys.length > DRAFT_MAX_ENTRIES) {
         // Evict the oldest entries; object key order is insertion order.
@@ -1193,19 +1205,20 @@
     } catch { /* a full or disabled localStorage must never break typing */ }
   }
   function scheduleDraftPersist(key, value) {
-    if (draftPersistTimer) clearTimeout(draftPersistTimer);
+    pendingDraftPersists.set(key, String(value ?? '').slice(0, DRAFT_MAX_CHARS));
+    if (draftPersistTimer !== null) clearTimeout(draftPersistTimer);
+    const generation = ++draftPersistGeneration;
     draftPersistTimer = setTimeout(() => {
-      draftPersistTimer = null;
-      persistDraftReply(key, value);
+      if (generation === draftPersistGeneration) flushDraftPersist();
     }, 250);
   }
   function flushDraftPersist() {
-    if (!draftPersistTimer) return;
-    clearTimeout(draftPersistTimer);
+    ++draftPersistGeneration;
+    if (draftPersistTimer !== null) clearTimeout(draftPersistTimer);
     draftPersistTimer = null;
-    const key = `${state.activeAccountId || 'default'}:${String(state.currentConversationId || '__new__')}`;
-    const draft = state.drafts.get(key);
-    if (draft) persistDraftReply(key, draft.replyInput);
+    const snapshots = [...pendingDraftPersists];
+    pendingDraftPersists.clear();
+    for (const [key, value] of snapshots) persistDraftReply(key, value);
   }
   const HOT_PROFILE_LABELS = Object.freeze({
     preferred_name: '客户姓名或称呼',
@@ -5020,6 +5033,9 @@
     if (state.busy.reply) return;
     if (!current || !input) { toast('请先输入回复内容。', 'x'); return; }
     const context = captureContext(current.id);
+    const draftKey = `${context.accountId}:${String(current.id)}`;
+    const revision = Number(draft.replyRevision || 0);
+    const sameInput = () => Number(draft.replyRevision || 0) === revision && text(draft.replyInput) === input;
     state.busy.reply = true;
     draft.replyError = '';
     render();
@@ -5036,9 +5052,11 @@
           assertContext(context);
           output = result.translated;
           language = result.destination;
-          draft.replyPreview = output;
-          draft.replyPreviewSource = input;
-          draft.replyPreviewLanguage = language;
+          if (sameInput()) {
+            draft.replyPreview = output;
+            draft.replyPreviewSource = input;
+            draft.replyPreviewLanguage = language;
+          }
         }
       } else {
         draft.replyPreview = input;
@@ -5053,21 +5071,29 @@
       const copyConfirmed = copied?.copied === true || (copied?.ok === true && Number(copied.length) === output.length);
       if (!copyConfirmed || copied.truncated || (copied.length != null && Number(copied.length) !== output.length)) throw new Error('回复复制不完整，已停止并保留原文。');
       assertContext(context);
-      draft.replyOperationId ||= 'ws-reply-' + Date.now().toString(36) + '-' + stableHash(current.id + input + output);
+      const operationSource = JSON.stringify([context.accountId, current.id, input, output]);
+      const operationId = draft.replyOperationSource === operationSource && draft.replyOperationId
+        ? draft.replyOperationId : 'ws-reply-' + Date.now().toString(36) + '-' + stableHash(operationSource + ':' + revision);
+      if (sameInput()) { draft.replyOperationId = operationId; draft.replyOperationSource = operationSource; }
       const saved = await api('/api/ws/replies', {
         method: 'POST',
-        body: JSON.stringify({ conversationId: current.id, originalText: input, translatedText: output, status: 'copied', idempotencyKey: draft.replyOperationId }),
+        body: JSON.stringify({ conversationId: current.id, originalText: input, translatedText: output, status: 'copied', idempotencyKey: operationId }),
       }, context);
       assertContext(context);
       state.replies = [saved, ...state.replies.filter(item => String(item.id) !== String(saved.id))].slice(0, 10);
-      draft.replyOperationId = '';
+      if (draft.replyOperationId === operationId) { draft.replyOperationId = ''; draft.replyOperationSource = ''; }
       // A copied reply is no longer an unsent draft; drop it from durable
       // storage so a reopen does not resurrect already-handled text.
-      draft.replyInput = '';
-      persistDraftReply(`${state.activeAccountId || 'default'}:${String(state.currentConversationId || '__new__')}`, '');
+      // The user can keep typing while clipboard or audit I/O is pending.
+      // Clear only the exact input revision that was copied and recorded.
+      if (sameInput()) {
+        draft.replyInput = '';
+        persistDraftReply(draftKey, '');
+        draft.replyRevision = revision + 1;
+      }
       toast(`回复已完整复制（${output.length} 字），请回到 WS 页面人工发送。`);
     } catch (error) {
-      if (contextCurrent(context)) { draft.replyError = error.message; toast(error.message, 'x'); }
+      if (contextCurrent(context)) { if (sameInput()) draft.replyError = error.message; toast(error.message, 'x'); }
     } finally {
       if (contextCurrent(context)) { state.busy.reply = false; render(); }
     }
@@ -5803,8 +5829,13 @@
     };
     const key = fields[target.id];
     if (!key) return;
+    const inputChanged = draft[key] !== target.value;
     draft[key] = target.value;
     if (target.id === 'wsReplyInput') {
+      if (inputChanged) {
+        draft.replyRevision = Number(draft.replyRevision || 0) + 1;
+        draft.replyOperationId = ''; draft.replyOperationSource = '';
+      }
       if (draft.replyPreviewSource !== target.value) {
         draft.replyPreview = '';
         draft.replyPreviewSource = '';
@@ -5903,6 +5934,7 @@
     });
   }
   function deactivate() {
+    flushDraftPersist();
     if (!state.active) return;
     invalidateExclusionPage();
     groupDrafts?.reset();
