@@ -30,22 +30,23 @@ const body = value => JSON.stringify(value);
 
 (async () => {
   try {
+    assert.equal((await request('/api/ws/accounts', { method: 'POST', body: JSON.stringify({ id: 'ingest-dedicated', workspaceMode: 'dedicated' }) })).status, 201);
     const initial = {
       schemaVersion: 4,
       customers: [{ id: 'C-1', name: '已有客户', phone: '9876543210', rawPhone: '+91 98765 43210', source: '群粉', status: '待跟进', deleted: false }],
       savedViews: [], activities: [], tickets: [], deposits: [], followups: [], registrations: [], phoneRegistry: [], batchOperations: [],
-      settings: { operatingTasks: [], groupMembershipMappings: [{ accountId: 'default', groupJid: '1203-456@g.us', memberId: 'manual-member', customerId: 'C-1' }] }, channelAliases: {}, importIssues: [], qualityDecisions: {},
+      settings: { operatingTasks: [], groupMembershipMappings: [{ accountId: 'ingest-dedicated', groupJid: '1203-456@g.us', memberId: 'manual-member', customerId: 'C-1' }] }, channelAliases: {}, importIssues: [], qualityDecisions: {},
     };
     assert.equal((await request('/api/state', { method: 'POST', headers: { ...headers, 'x-state-version': '' }, body: body(initial) })).status, 200);
-    const profile = (await json(await request('/api/ws/group-monitors/profiles', { method: 'POST', body: body({ accountId: 'default', slotKey: 'fixed-seat', enabled: true }) }))).profile;
-    const target = (await json(await request(`/api/ws/group-monitors/${profile.id}/targets/scan?accountId=default`, { method: 'POST', body: body({ accountId: 'default', targets: [{ groupJid: '1203-456@g.us', groupName: 'VIP 群', sourceId: 'source-group', vipOnly: true }] }) }))).targets[0];
-    await request(`/api/ws/group-monitors/${profile.id}/targets/${target.id}/enable?accountId=default`, { method: 'POST', body: body({ accountId: 'default' }) });
+    const profile = (await json(await request('/api/ws/group-monitors/profiles', { method: 'POST', body: body({ accountId: 'ingest-dedicated', slotKey: 'fixed-seat', enabled: true }) }))).profile;
+    const target = (await json(await request(`/api/ws/group-monitors/${profile.id}/targets/scan?accountId=ingest-dedicated`, { method: 'POST', body: body({ accountId: 'ingest-dedicated', targets: [{ groupJid: '1203-456@g.us', groupName: 'VIP 群', sourceId: 'source-group', vipOnly: true }] }) }))).targets[0];
+    await request(`/api/ws/group-monitors/${profile.id}/targets/${target.id}/enable?accountId=ingest-dedicated`, { method: 'POST', body: body({ accountId: 'ingest-dedicated' }) });
 
     const event = { targetId: target.id, groupJid: target.groupJid, memberId: '919876543210@s.whatsapp.net', type: 'joined', sourceEventId: 'system-1', eventAt: '2026-11-14T05:00:00.000Z', confidence: 0.99 };
-    const first = await json(await request('/api/ws/ingest/batch', { method: 'POST', body: body({ accountId: 'default', groupEvents: [event], checkpoints: [{ targetId: target.id, cursor: 'cursor-1', eventAt: event.eventAt }] }) }));
+    const first = await json(await request('/api/ws/ingest/batch', { method: 'POST', body: body({ accountId: 'ingest-dedicated', groupEvents: [event], checkpoints: [{ targetId: target.id, cursor: 'cursor-1', eventAt: event.eventAt }] }) }));
     assert.equal(first.groupEvents.accepted, 1);
     assert.equal(first.groupEvents.applied, 1);
-    const events = await json(await request(`/api/ws/group-monitors/${profile.id}/events?status=applied&accountId=default`));
+    const events = await json(await request(`/api/ws/group-monitors/${profile.id}/events?status=applied&accountId=ingest-dedicated`));
     assert.equal(events.events.length, 1);
     assert.equal(events.events[0].customerId, 'C-1');
     const state = await json(await request('/api/state'));
@@ -53,24 +54,24 @@ const body = value => JSON.stringify(value);
     assert.equal(state.customers[0].groupMemberships[0].status, '在群');
     assert.equal(state.customers[0].statusHistory.length, 1);
 
-    const replay = await json(await request('/api/ws/ingest/batch', { method: 'POST', body: body({ accountId: 'default', groupEvents: [event] }) }));
+    const replay = await json(await request('/api/ws/ingest/batch', { method: 'POST', body: body({ accountId: 'ingest-dedicated', groupEvents: [event] }) }));
     assert.equal(replay.groupEvents.deduplicated, 1);
     const afterReplay = await json(await request('/api/state'));
     assert.equal(afterReplay.customers[0].statusHistory.length, 1, 'replay must not append a second status event');
 
-    const manual = await json(await request('/api/ws/ingest/batch', { method: 'POST', body: body({ accountId: 'default', groupEvents: [{ ...event, memberId: 'manual-member', sourceEventId: 'system-manual', type: 'joined' }] }) }));
+    const manual = await json(await request('/api/ws/ingest/batch', { method: 'POST', body: body({ accountId: 'ingest-dedicated', groupEvents: [{ ...event, memberId: 'manual-member', sourceEventId: 'system-manual', type: 'joined' }] }) }));
     assert.ok(manual.groupEvents, `manual group event request failed: ${JSON.stringify(manual)}`);
     assert.equal(manual.groupEvents.applied, 1, 'legacy groupMembershipMappings must resolve an existing customer');
 
-    const unknown = await json(await request('/api/ws/ingest/batch', { method: 'POST', body: body({ accountId: 'default', groupEvents: [{ ...event, memberId: 'unknown@lid', sourceEventId: 'system-unknown', type: 'left' }] }) }));
+    const unknown = await json(await request('/api/ws/ingest/batch', { method: 'POST', body: body({ accountId: 'ingest-dedicated', groupEvents: [{ ...event, memberId: 'unknown@lid', sourceEventId: 'system-unknown', type: 'left' }] }) }));
     assert.equal(unknown.groupEvents.pending, 1);
-    const pending = await json(await request(`/api/ws/group-monitors/${profile.id}/events?status=pending&accountId=default`));
+    const pending = await json(await request(`/api/ws/group-monitors/${profile.id}/events?status=pending&accountId=ingest-dedicated`));
     assert.equal(pending.events.length, 1);
     const noNewCustomer = await json(await request('/api/state'));
     assert.equal(noNewCustomer.customers.length, 1);
-    const unsupported = await json(await request('/api/ws/ingest/batch', { method: 'POST', body: body({ accountId: 'default', groupEvents: [{ ...event, sourceEventId: 'system-unsupported', type: 'message' }] }) }));
+    const unsupported = await json(await request('/api/ws/ingest/batch', { method: 'POST', body: body({ accountId: 'ingest-dedicated', groupEvents: [{ ...event, sourceEventId: 'system-unsupported', type: 'message' }] }) }));
     assert.equal(unsupported.groupEvents.ignored, 1);
-    const allEvents = await json(await request(`/api/ws/group-monitors/${profile.id}/events?status=all&accountId=default`));
+    const allEvents = await json(await request(`/api/ws/group-monitors/${profile.id}/events?status=all&accountId=ingest-dedicated`));
     assert.equal(allEvents.events.length, 3, 'unsupported event must not be persisted as a membership transition');
     console.log('ws-group-monitor-ingest: pass');
   } finally {

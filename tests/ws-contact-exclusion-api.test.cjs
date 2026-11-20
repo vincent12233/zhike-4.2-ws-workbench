@@ -162,11 +162,13 @@ async function check(name, fn) {
     // push real join events through the production ingest batch endpoint.
     let profileId;
     await check('prepare a real enabled monitor seat and target', async () => {
-      const seat = await api('/api/ws/group-monitors/profiles', 'POST', { accountId: 'default', slotKey: 'exclusion-gate-seat', enabled: true });
+      const account = await api('/api/ws/accounts', 'POST', { id: 'exclusion-dedicated', workspaceMode: 'dedicated' });
+      assert.equal(account.status, 201, 'dedicated monitor account created');
+      const seat = await api('/api/ws/group-monitors/profiles', 'POST', { accountId: 'exclusion-dedicated', slotKey: 'exclusion-gate-seat', enabled: true });
       assert.ok([200, 201].includes(seat.status), 'seat created, got ' + seat.status);
       profileId = seat.value.profile.id;
-      const scan = await api(`/api/ws/group-monitors/${profileId}/targets/scan?accountId=default`, 'POST', {
-        accountId: 'default',
+      const scan = await api(`/api/ws/group-monitors/${profileId}/targets/scan?accountId=exclusion-dedicated`, 'POST', {
+        accountId: 'exclusion-dedicated',
         targets: [{ groupJid: 'exclusiongate1@g.us', groupName: '排除验收群', enabled: true }],
       });
       assert.ok([200, 201].includes(scan.status), 'target created, got ' + scan.status);
@@ -176,7 +178,7 @@ async function check(name, fn) {
       await api('/api/ws/contact-exclusions', 'POST', { identity: '917000000001', displayName: '群管理员' });
       const before = await customerCount();
       const ingest = await api('/api/ws/ingest/batch', 'POST', {
-        accountId: 'default',
+        accountId: 'exclusion-dedicated',
         groupEvents: [{ groupJid: 'exclusiongate1@g.us', memberId: '917000000001@s.whatsapp.net', type: 'joined', eventAt: new Date().toISOString(), sourceEventId: 'evt-listed-1', confidence: 0.95, memberName: 'Group Admin' }],
       });
       assert.equal(ingest.status, 200, 'ingest accepted');
@@ -188,7 +190,7 @@ async function check(name, fn) {
     await check('production ingest: unlisted identity still auto-creates', async () => {
       const before = await customerCount();
       const ingest = await api('/api/ws/ingest/batch', 'POST', {
-        accountId: 'default',
+        accountId: 'exclusion-dedicated',
         groupEvents: [{ groupJid: 'exclusiongate1@g.us', memberId: '917000000999@s.whatsapp.net', type: 'joined', eventAt: new Date().toISOString(), sourceEventId: 'evt-unlisted-1', confidence: 0.95, memberName: 'New Lead' }],
       });
       assert.equal(ingest.status, 200);
@@ -216,7 +218,7 @@ async function check(name, fn) {
 
     await check('LID and phone aliases cannot bypass the production exclusion gate', async () => {
       const before = await customerCount();
-      const ingested = await api('/api/ws/ingest/batch', 'POST', { accountId: 'default', groupEvents: [{
+      const ingested = await api('/api/ws/ingest/batch', 'POST', { accountId: 'exclusion-dedicated', groupEvents: [{
         groupJid: 'exclusiongate1@g.us', memberId: '123456789012345@lid', memberPhone: '+917000000001',
         type: 'joined', eventAt: new Date().toISOString(), sourceEventId: 'evt-alias-excluded', confidence: 0.95,
       }] });
@@ -233,7 +235,7 @@ async function check(name, fn) {
         { memberId: 'employee8000000012', memberPhone: '918000000012' },
         { memberId: '8000000013@untrusted.example' },
       ].entries()) {
-        const ingested = await api('/api/ws/ingest/batch', 'POST', { accountId: 'default', groupEvents: [{
+        const ingested = await api('/api/ws/ingest/batch', 'POST', { accountId: 'exclusion-dedicated', groupEvents: [{
           ...identity, groupJid: 'exclusiongate1@g.us', type: 'joined', eventAt: new Date().toISOString(),
           sourceEventId: 'evt-unreliable-' + index, confidence: 0.95,
         }] });

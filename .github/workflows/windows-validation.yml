@@ -36,6 +36,8 @@ jobs:
             'tests/ws-independent-collector-runtime.test.cjs',
             'tests/delivery-rd02-ws-capability.test.cjs',
             'tests/ws-group-manager-production.test.cjs',
+            'tests/ws-workspace-policy.test.cjs',
+            'tests/ws-group-monitor-workspace-mode.test.cjs',
             'tests/ws-group-monitor-identity-safety.test.cjs',
             'tests/ws-group-scope-authorization.test.cjs',
             'tests/ws-group-scope-bridge.test.cjs',

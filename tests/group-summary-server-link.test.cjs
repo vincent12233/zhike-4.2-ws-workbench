@@ -33,18 +33,19 @@ async function body(response) {
 
 (async () => {
   try {
-    const profile = (await body(await request('/api/ws/group-monitors/profiles', { method: 'POST', body: JSON.stringify({ accountId: 'default', slotKey: 'summary-seat', enabled: true }) }))).profile;
-    const firstTargets = await body(await request(`/api/ws/group-monitors/${profile.id}/targets/scan?accountId=default`, {
+    await body(await request('/api/ws/accounts', { method: 'POST', body: JSON.stringify({ id: 'summary-dedicated', workspaceMode: 'dedicated' }) }));
+    const profile = (await body(await request('/api/ws/group-monitors/profiles', { method: 'POST', body: JSON.stringify({ accountId: 'summary-dedicated', slotKey: 'summary-seat', enabled: true }) }))).profile;
+    const firstTargets = await body(await request(`/api/ws/group-monitors/${profile.id}/targets/scan?accountId=summary-dedicated`, {
       method: 'POST',
-      body: JSON.stringify({ accountId: 'default', targets: [{ groupJid: '1203-summary@g.us', groupName: '统计群', sourceId: 'channel-fb', channelId: 'channel-fb', channelName: 'FB 群粉', enabled: true }] }),
+      body: JSON.stringify({ accountId: 'summary-dedicated', targets: [{ groupJid: '1203-summary@g.us', groupName: '统计群', sourceId: 'channel-fb', channelId: 'channel-fb', channelName: 'FB 群粉', enabled: true }] }),
     }));
     const target = firstTargets.targets[0];
     assert.equal(target.channelId, 'channel-fb');
 
-    const event = { accountId: 'default', profileId: profile.id, targetId: target.id, groupJid: target.groupJid, memberId: '919876543210@s.whatsapp.net', type: 'joined', source: 'system-event', sourceEventId: 'summary-1', eventAt: '2026-11-15T05:00:00.000Z', observedAt: '2026-11-15T05:00:01.000Z', confidence: 0.99 };
-    await body(await request('/api/ws/ingest/batch', { method: 'POST', body: JSON.stringify({ protocol: 'zhike.ws.ingest.batch.v1', accountId: 'default', capturedAt: event.observedAt, scope: 'background-group-monitor', messages: [], checkpoints: [], groupEvents: [event] }) }));
+    const event = { accountId: 'summary-dedicated', profileId: profile.id, targetId: target.id, groupJid: target.groupJid, memberId: '919876543210@s.whatsapp.net', type: 'joined', source: 'system-event', sourceEventId: 'summary-1', eventAt: '2026-11-15T05:00:00.000Z', observedAt: '2026-11-15T05:00:01.000Z', confidence: 0.99 };
+    await body(await request('/api/ws/ingest/batch', { method: 'POST', body: JSON.stringify({ protocol: 'zhike.ws.ingest.batch.v1', accountId: 'summary-dedicated', capturedAt: event.observedAt, scope: 'background-group-monitor', messages: [], checkpoints: [], groupEvents: [event] }) }));
 
-    const linked = await body(await request('/api/ws/group-membership-events?accountId=default&limit=20'));
+    const linked = await body(await request('/api/ws/group-membership-events?accountId=summary-dedicated&limit=20'));
     assert.equal(linked.events.length, 1, 'server-backed group event must be visible to group summary');
     assert.equal(linked.events[0].type, 'joined');
     assert.equal(linked.events[0].subgroup, '统计群');
@@ -52,12 +53,12 @@ async function body(response) {
     assert.equal(linked.events[0].channelId, 'channel-fb');
 
     // A list refresh that omits channelId must not erase the configured channel.
-    const refreshed = await body(await request(`/api/ws/group-monitors/${profile.id}/targets/scan?accountId=default`, {
+    const refreshed = await body(await request(`/api/ws/group-monitors/${profile.id}/targets/scan?accountId=summary-dedicated`, {
       method: 'POST',
-      body: JSON.stringify({ accountId: 'default', targets: [{ groupJid: '1203-summary@g.us', groupName: '统计群', sourceId: 'manual-ws-monitor', enabled: true }] }),
+      body: JSON.stringify({ accountId: 'summary-dedicated', targets: [{ groupJid: '1203-summary@g.us', groupName: '统计群', sourceId: 'manual-ws-monitor', enabled: true }] }),
     }));
     assert.equal(refreshed.targets[0].channelId, 'channel-fb', 'target channel id must remain stable when a refresh omits it');
-    const afterRefresh = await body(await request('/api/ws/group-membership-events?accountId=default&limit=20'));
+    const afterRefresh = await body(await request('/api/ws/group-membership-events?accountId=summary-dedicated&limit=20'));
     assert.equal(afterRefresh.events[0].source, 'FB 群粉', 'target channel label must remain stable when a refresh omits metadata');
 
     console.log('group-summary-server-link: pass');

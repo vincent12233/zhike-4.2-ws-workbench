@@ -34,19 +34,20 @@ const payload = value => JSON.stringify(value);
 
 (async () => {
   try {
+    await body(await request('/api/ws/accounts', { method: 'POST', body: JSON.stringify({ id: 'status-dedicated', workspaceMode: 'dedicated' }) }));
     await body(await request('/api/state', { method: 'POST', headers: { ...headers, 'x-state-version': '' }, body: payload({
       schemaVersion: 4,
       customers: [{ id: 'C-1', name: '多群客户', phone: '9876543210', rawPhone: '+91 98765 43210', source: '群粉', status: '未进群', deleted: false, groupMemberships: [] }],
       savedViews: [], activities: [], tickets: [], deposits: [], followups: [], registrations: [], phoneRegistry: [], batchOperations: [],
       settings: { operatingTasks: [] }, channelAliases: {}, importIssues: [], qualityDecisions: {},
     }) }));
-    const profile = (await body(await request('/api/ws/group-monitors/profiles', { method: 'POST', body: payload({ accountId: 'default', slotKey: 'status-seat', enabled: true }) }))).profile;
-    const targets = (await body(await request(`/api/ws/group-monitors/${profile.id}/targets/scan?accountId=default`, { method: 'POST', body: payload({ accountId: 'default', targets: [
+    const profile = (await body(await request('/api/ws/group-monitors/profiles', { method: 'POST', body: payload({ accountId: 'status-dedicated', slotKey: 'status-seat', enabled: true }) }))).profile;
+    const targets = (await body(await request(`/api/ws/group-monitors/${profile.id}/targets/scan?accountId=status-dedicated`, { method: 'POST', body: payload({ accountId: 'status-dedicated', targets: [
       { groupJid: '1203-status-a@g.us', groupName: '渠道甲群', sourceId: 'channel-a', channelId: 'channel-a', channelName: '渠道甲群粉', enabled: true },
       { groupJid: '1203-status-b@g.us', groupName: '渠道乙群', sourceId: 'channel-b', channelId: 'channel-b', channelName: '渠道乙群粉', enabled: true },
     ] }) }))).targets;
-    const event = (target, type, id) => ({ accountId: 'default', profileId: profile.id, targetId: target.id, groupJid: target.groupJid, memberId: '919876543210@s.whatsapp.net', memberPhone: '9876543210', type, sourceEventId: id, eventAt: `2026-11-15T05:00:${id.endsWith('a') ? '00' : id.endsWith('b') ? '10' : id.endsWith('c') ? '20' : '30'}.000Z`, observedAt: `2026-11-15T05:00:${id.endsWith('a') ? '01' : id.endsWith('b') ? '11' : id.endsWith('c') ? '21' : '31'}.000Z`, confidence: 0.99 });
-    const ingest = async item => body(await request('/api/ws/ingest/batch', { method: 'POST', body: payload({ accountId: 'default', groupEvents: [item] }) }));
+    const event = (target, type, id) => ({ accountId: 'status-dedicated', profileId: profile.id, targetId: target.id, groupJid: target.groupJid, memberId: '919876543210@s.whatsapp.net', memberPhone: '9876543210', type, sourceEventId: id, eventAt: `2026-11-15T05:00:${id.endsWith('a') ? '00' : id.endsWith('b') ? '10' : id.endsWith('c') ? '20' : '30'}.000Z`, observedAt: `2026-11-15T05:00:${id.endsWith('a') ? '01' : id.endsWith('b') ? '11' : id.endsWith('c') ? '21' : '31'}.000Z`, confidence: 0.99 });
+    const ingest = async item => body(await request('/api/ws/ingest/batch', { method: 'POST', body: payload({ accountId: 'status-dedicated', groupEvents: [item] }) }));
     await ingest(event(targets[0], 'joined', 'join-a'));
     await ingest(event(targets[1], 'joined', 'join-b'));
     let state = await body(await request('/api/state'));

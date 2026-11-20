@@ -59,10 +59,11 @@ const body = value => JSON.stringify(value);
     assert.equal(catalog.groups.find(item => item.groupJid === '1203-hidden@g.us').groupName, '未渲染群');
     assert.equal(catalog.groups.find(item => item.groupJid === '1203-hidden@g.us').channelId, 'channel-fb');
 
-    const profile = (await json(await request('/api/ws/group-monitors/profiles', { method: 'POST', body: body({ accountId: 'default', slotKey: 'catalog-seat', enabled: true }) }))).profile;
-    const targets = await json(await request(`/api/ws/group-monitors/${profile.id}/targets/scan?accountId=default`, {
+    assert.equal((await request('/api/ws/accounts', { method: 'POST', body: body({ id: 'catalog-dedicated', workspaceMode: 'dedicated' }) })).status, 201);
+    const profile = (await json(await request('/api/ws/group-monitors/profiles', { method: 'POST', body: body({ accountId: 'catalog-dedicated', slotKey: 'catalog-seat', enabled: true }) }))).profile;
+    const targets = await json(await request(`/api/ws/group-monitors/${profile.id}/targets/scan?accountId=catalog-dedicated`, {
       method: 'POST',
-      body: body({ accountId: 'default', targets: [{ groupJid: '1203-hidden@g.us', groupName: '未渲染群', channelId: 'channel-fb', sourceId: 'channel-fb', enabled: true }] }),
+      body: body({ accountId: 'catalog-dedicated', targets: [{ groupJid: '1203-hidden@g.us', groupName: '未渲染群', channelId: 'channel-fb', sourceId: 'channel-fb', enabled: true }] }),
     }));
     assert.equal(targets.targets[0].channelId, 'channel-fb');
 

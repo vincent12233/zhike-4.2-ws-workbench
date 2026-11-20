@@ -193,7 +193,8 @@ test('manual event resolution commits the authoritative relation and CRM project
   try {
     const health = await requestWithStartupDiagnostics(() => request('/api/health'), observation);
     assert.equal(health.status, 200);
-    const accountId = 'default';
+    const accountId = 'resolution-dedicated';
+    await json('/api/ws/accounts', { id: accountId, workspaceMode: 'dedicated' });
     const groupJid = 'test-resolution@g.us';
     const unlinkedJid = 'unlinked-fixture@lid';
     const customerId = 'C-V41-AUDIT';
@@ -202,7 +203,7 @@ test('manual event resolution commits the authoritative relation and CRM project
     await json('/api/state', { ...current, customers: [{ id: customerId, name: 'Fixture', rawPhone: '+12025550123', phone: '12025550123', source: 'Fixture', status: '未进群', deleted: false }] }, { 'x-state-version': version.version });
     const { profile } = await json('/api/ws/group-monitors/profiles', { accountId, slotKey: 'v41-audit-seat', enabled: true });
     const monitors = '/api/ws/group-monitors/' + profile.id;
-    const { targets: [target] } = await json(monitors + '/targets/scan?accountId=default', {
+    const { targets: [target] } = await json(monitors + '/targets/scan?accountId=resolution-dedicated', {
       accountId,
       targets: [{ groupJid, groupName: 'Fixture', sourceId: 'v41-fixture', enabled: true }],
     });
@@ -225,7 +226,7 @@ test('manual event resolution commits the authoritative relation and CRM project
     assert.equal(before.status, '未关联客户');
     assert.equal(before.customer_id, '');
 
-    const resolveUrl = monitors + '/events/' + event.id + '/resolve?accountId=default';
+    const resolveUrl = monitors + '/events/' + event.id + '/resolve?accountId=resolution-dedicated';
     const resolveBody = { accountId, customerId, lock: true };
     const faultDb = new DatabaseSync(databaseFile);
     try {

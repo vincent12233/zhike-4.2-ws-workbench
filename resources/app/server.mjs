@@ -11,6 +11,7 @@ const { applyDelta } = require('./state-delta.cjs');
 const wsCore = require('./modules/ws-workbench-core.js');
 const wsCrmSync = require('./modules/ws-crm-sync-core.js');
 const wsGroupMonitor = require('./modules/ws-group-monitor-core.js');
+const wsWorkspacePolicy = require('./modules/ws-workspace-policy.cjs');
 const wsGroupManager = require('./modules/ws-group-manager-core.js');
 const wsContactExclusion = require('./modules/ws-contact-exclusion-core.cjs');
 const wsGroupMemberQuery = require('./modules/ws-group-member-query.cjs');
@@ -1302,6 +1303,17 @@ function wsGroupMonitorAccountScoped(profile, requestedAccountId = '') {
   return !requested || requested === String(profile?.account_id || 'default');
 }
 
+function wsRequireGroupMonitorOperation(accountId, operation = 'configure-group-monitor') {
+  const decision = wsWorkspacePolicy.decideWsWorkspaceOperation({ account: wsAccountRow(accountId), operation, conversationType: 'group' });
+  if (!decision.eligible) {
+    const error = new Error('当前 WS 账号用途不允许群组监测；普通账号仅可查看历史、停用或忽略事件。');
+    error.status = 403;
+    error.code = decision.code;
+    throw error;
+  }
+  return decision;
+}
+
 function wsGroupMonitorTargetRow(profileId, targetId = '', groupJid = '') {
   const observed = wsGroupMonitor.normalizeMemberIdentity(groupJid);
   // A configured target ID cannot replace the observed WhatsApp group identity.
@@ -1516,6 +1528,14 @@ function wsPersistCustomerGroupMembershipLedger(accountId, target, relation, eve
 }
 
 function wsGroupMonitorApplyEventsInTransaction(accountId, inputEvents = [], options = {}) {
+  const inputs = (Array.isArray(inputEvents) ? inputEvents : []).slice(0, 1000);
+  const result = { accepted: 0, applied: 0, pending: 0, review: 0, ignored: 0, deduplicated: 0, autoRegistered: 0, events: [] };
+  const purpose = wsWorkspacePolicy.decideWsWorkspaceOperation({ account: wsAccountRow(accountId), operation: 'monitor-group', conversationType: 'group' });
+  // A mixed native packet may still contain ordinary-account direct messages
+  // and observed group directory rows. Acknowledge only its member events as
+  // ignored before any CRM, exclusion audit, monitor cursor or heartbeat work.
+  if (!purpose.eligible) return { ...result, ignored: inputs.length,
+    events: inputs.map(() => ({ status: 'ignored', reason: 'workspace-purpose-blocked', code: purpose.code })) };
   const state = readState() || emptyCrmState();
   if (!Array.isArray(state.customers)) state.customers = [];
   if (!Array.isArray(state.activities)) state.activities = [];
@@ -1527,10 +1547,9 @@ function wsGroupMonitorApplyEventsInTransaction(accountId, inputEvents = [], opt
     ...(Array.isArray(state.settings?.wsGroupMemberMappings) ? state.settings.wsGroupMemberMappings : []),
     ...(Array.isArray(state.settings?.groupMembershipMappings) ? state.settings.groupMembershipMappings : []),
   ];
-  const result = { accepted: 0, applied: 0, pending: 0, review: 0, ignored: 0, deduplicated: 0, autoRegistered: 0, events: [] };
   let stateChanged = false;
   let autoRegistrationSnapshotCreated = false;
-  for (const input of (Array.isArray(inputEvents) ? inputEvents : []).slice(0, 1000)) {
+  for (const input of inputs) {
     const event = input && typeof input === 'object' ? input : {};
     const profileId = wsText(event.profileId || event.profile_id, 160);
     const targetId = wsText(event.targetId || event.target_id, 160);
@@ -2827,6 +2846,11 @@ const server = createServer(async (req, res) => {
         const slotKey = wsGroupMonitorResolvedSlotKey(accountId, body.slotKey || `group-seat-${accountId}`);
         const existing = db.prepare('SELECT * FROM ws_group_monitor_profiles WHERE account_id=? AND slot_key=?').get(accountId, slotKey);
         const now = new Date().toISOString();
+        const purpose = wsRequireGroupMonitorOperation(accountId, existing && body.enabled === false ? 'disable-group-monitor' : 'configure-group-monitor');
+        if (purpose.workspaceMode === 'ordinary') {
+          db.prepare("UPDATE ws_group_monitor_profiles SET enabled=0,status='paused',updated_at=? WHERE id=?").run(now, existing.id);
+          return json(res, 200, { profile: wsGroupMonitorProfilePayload(db.prepare('SELECT * FROM ws_group_monitor_profiles WHERE id=?').get(existing.id)) });
+        }
         const id = existing?.id || `wsg-profile-${randomUUID()}`;
         db.exec('BEGIN IMMEDIATE');
         try {
@@ -2854,6 +2878,11 @@ const server = createServer(async (req, res) => {
         if (!wsText(body.accountId, 120)) return json(res, 400, { error: '群组监控请求必须提供 accountId。' });
         if (!wsGroupMonitorAccountScoped(profile, body.accountId)) return json(res, 404, { error: '固定群组监控席位不存在。' });
         const now = new Date().toISOString();
+        const purpose = wsRequireGroupMonitorOperation(profile.account_id, body.enabled === false ? 'disable-group-monitor' : 'configure-group-monitor');
+        if (purpose.workspaceMode === 'ordinary') {
+          db.prepare("UPDATE ws_group_monitor_profiles SET enabled=0,status='paused',updated_at=? WHERE id=?").run(now, profileId);
+          return json(res, 200, { profile: wsGroupMonitorProfilePayload(db.prepare('SELECT * FROM ws_group_monitor_profiles WHERE id=?').get(profileId)) });
+        }
         const enabled = body.enabled === false ? 0 : body.enabled === true ? 1 : profile.enabled;
         const status = enabled ? (body.status ? wsText(body.status, 32) : 'starting') : 'paused';
         db.prepare('UPDATE ws_group_monitor_profiles SET enabled=?,status=?,poll_interval_sec=?,last_error=?,updated_at=? WHERE id=?').run(enabled, status, Math.max(15, Math.min(3600, Number(body.pollIntervalSec) || Number(profile.poll_interval_sec) || 45)), wsText(body.lastError, 500), now, profileId);
@@ -2863,6 +2892,7 @@ const server = createServer(async (req, res) => {
         const body = JSON.parse((await readBody(req, 512 * 1024)).toString('utf8') || '{}');
         if (!wsText(body.accountId, 120)) return json(res, 400, { error: '群组监控请求必须提供 accountId。' });
         if (!wsGroupMonitorAccountScoped(profile, body.accountId)) return json(res, 404, { error: '固定群组监控席位不存在。' });
+        wsRequireGroupMonitorOperation(profile.account_id);
         const targets = Array.isArray(body.targets) ? body.targets.slice(0, 1000) : [];
         const now = new Date().toISOString();
         db.exec('BEGIN IMMEDIATE');
@@ -2911,6 +2941,7 @@ const server = createServer(async (req, res) => {
         if (!wsGroupMonitorAccountScoped(profile, body.accountId)) return json(res, 404, { error: '固定群组监控席位不存在。' });
         const targetId = decodeURIComponent(targetAction[1]);
         const enabled = targetAction[2] === 'enable' ? 1 : 0;
+        wsRequireGroupMonitorOperation(profile.account_id, enabled ? 'configure-group-monitor' : 'disable-group-monitor');
         const now = new Date().toISOString();
         if (enabled) {
           const currentTarget = db.prepare('SELECT account_id,group_jid FROM ws_group_monitor_targets WHERE id=? AND profile_id=?').get(targetId, profileId);
@@ -2944,6 +2975,9 @@ const server = createServer(async (req, res) => {
         if (!wsGroupMonitorAccountScoped(profile, body.accountId)) return json(res, 404, { error: '固定群组监控席位不存在。' });
         const event = db.prepare('SELECT * FROM ws_group_membership_events WHERE id=? AND profile_id=?').get(eventId, profileId);
         if (!event) return json(res, 404, { error: '群组事件不存在。' });
+        // Ignoring a historical event stops processing; resolving it consumes
+        // group evidence and must retain the account-purpose gate.
+        wsRequireGroupMonitorOperation(profile.account_id, body.action === 'ignore' ? 'disable-group-monitor' : 'monitor-group');
         const state = readState() || emptyCrmState();
         const customerId = wsText(body.customerId, 128);
         const customer = customerId ? state.customers.find(item => String(item.id) === customerId && item.deleted !== true) : null;
