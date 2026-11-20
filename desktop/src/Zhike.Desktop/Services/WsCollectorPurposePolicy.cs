@@ -16,18 +16,21 @@ public sealed record WsCollectorPurposePolicy(string AccountId, string Workspace
     }
     public static bool IsGroupJid(string? value)
         => value is not null && Regex.IsMatch(value, "^[a-z0-9._-]+@g\\.us$", RegexOptions.CultureInvariant);
-    public bool AllowsHistory(string? key, string? type, bool? isGroup = false, bool vipGroup = false)
-        => AllowsDirectHistory && type == "direct" && isGroup != true && !vipGroup
+    // There is no VIP group. "vip_group" is only a legacy spelling of an
+    // ordinary group and is read as one; it grants nothing extra.
+    public static bool IsGroupType(string? type) => type is "group" or "vip_group";
+    public bool AllowsHistory(string? key, string? type, bool? isGroup = false)
+        => AllowsDirectHistory && type == "direct" && isGroup != true
             && !string.IsNullOrWhiteSpace(key) && !key.Contains("@g.us", StringComparison.OrdinalIgnoreCase);
     public bool AllowsCheckpoint(WsCheckpointDto row)
-        => row.AccountId == AccountId && (AllowsHistory(row.ConversationKey, row.ConversationType, row.IsGroup, row.VipGroup)
+        => row.AccountId == AccountId && (AllowsHistory(row.ConversationKey, row.ConversationType, row.IsGroup)
             // Directory observations are harmless in either workspace; they
             // must never claim group full-history progress.
-            || IsGroupJid(row.ConversationKey) && row.IsGroup != false && row.ConversationType is "group" or "vip_group"
+            || IsGroupJid(row.ConversationKey) && row.IsGroup != false && IsGroupType(row.ConversationType)
                 && !row.HistoryLoaded && row.HistoryMessageCount == 0 && !row.Coverage.StartsWith("read-history", StringComparison.OrdinalIgnoreCase));
     public bool AllowsMessage(WsMessageEnvelopeDto row, IEnumerable<WsCollectorMonitorPolicy>? monitors = null)
-        => row.AccountId == AccountId && (AllowsHistory(row.ConversationKey, row.ConversationType, false, row.VipGroup)
-            || AllowsGroupMonitoring && IsGroupJid(row.ConversationKey) && row.ConversationType is "group" or "vip_group"
+        => row.AccountId == AccountId && (AllowsHistory(row.ConversationKey, row.ConversationType, false)
+            || AllowsGroupMonitoring && IsGroupJid(row.ConversationKey) && IsGroupType(row.ConversationType)
                 && !row.PreviewOnly && row.Direction is "incoming" or "receive" && row.SenderIdentityTrusted
                 && row.SenderIdentitySource is "sender-jid" or "sender-phone"
                 && (Regex.IsMatch(row.SenderId, "^[a-zA-Z0-9._:-]+@(s\\.whatsapp\\.net|c\\.us|lid)$", RegexOptions.CultureInvariant)

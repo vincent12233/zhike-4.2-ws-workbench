@@ -31,8 +31,8 @@ public static class WsLiveDirectory
                 var key = Text(row, "conversationKey", 200);
                 var type = Text(row, "conversationType", 20);
                 if (key.Length == 0 || (dedicated
-                    ? !WsCollectorPurposePolicy.IsGroupJid(key) || type is not ("group" or "vip_group")
-                    : !purpose.AllowsHistory(key, type, Flag(row, "isGroup"), Flag(row, "vipGroup"))) || !seen.Add(key)) continue;
+                    ? !WsCollectorPurposePolicy.IsGroupJid(key) || !WsCollectorPurposePolicy.IsGroupType(type)
+                    : !purpose.AllowsHistory(key, type, Flag(row, "isGroup"))) || !seen.Add(key)) continue;
                 var title = Text(row, "displayName", 150);
                 if (title.Length == 0) title = Text(row, "title", 150);
                 if (dedicated)

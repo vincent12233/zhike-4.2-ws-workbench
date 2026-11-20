@@ -105,8 +105,8 @@ const sandbox = {
 };
 
 vm.runInNewContext(script, sandbox);
-const configured = sandbox.window.__zhikeWsConfigureVipGroups(['group-456@g.us']);
-assert.equal(configured.configured, 0, 'legacy VIP allowlists never upgrade collection authority');
+assert.equal(sandbox.window.__zhikeWsConfigureVipGroups, undefined, 'there is no VIP-group allowlist in the page script');
+assert.equal(sandbox.window.__zhikeWsConfigureWsGroups, undefined, 'group access comes only from monitor targets');
 sandbox.window.__zhikeStopCapture();
 timers.length = 0; frames.length = 0; posted.length = 0;
 
@@ -120,8 +120,7 @@ assert.equal(discovery.excludedGroupCount, 4, 'all groups remain excluded from o
 assert.equal(discovery.unresolvedRowCount, 2, 'a phone-looking title without an ID and an unclassified row cannot confirm direct chats');
 assert.equal(discovery.conversationTypeUnresolvedCount, 1, 'an alias without stable type evidence remains fail-closed');
 const phoneNamedGroup = discovery.excludedConversations.find(item => item.title === '+91 99999 99999');
-const vipGroup = discovery.conversations.find(item => item.title === '+91 99999 99999');
-assert.equal(vipGroup, undefined, 'VIP labels do not promote a group into personal history');
+assert.equal(discovery.conversations.find(item => item.title === '+91 99999 99999'), undefined, 'a phone-looking group title never becomes personal history');
 assert.equal(phoneNamedGroup?.conversationType, 'group');
 assert.equal(discovery.excludedConversations.find(item => item.title === '+91 96666 66666')?.conversationType, 'group', 'default-group icon evidence wins over a phone-looking title');
 
@@ -164,7 +163,7 @@ messageNodes = [message('123456789@lid', 'Alice'), message('', 'Nickname Only'),
 const memberCapture = sandbox.window.__zhikeWsCapture();
 assert.equal(memberCapture.messages.length, 1, 'only observed incoming member identity qualifies as group evidence');
 assert.equal(memberCapture.messages[0].conversationType, 'group');
-assert.equal(memberCapture.messages[0].vipGroup, false, 'new member evidence has no VIP permission flag');
+assert.equal(Object.hasOwn(memberCapture.messages[0], 'vipGroup'), false, 'member evidence carries no VIP flag at all');
 assert.equal(memberCapture.messages[0].senderId, '123456789@lid');
 assert.equal(memberCapture.messages[0].senderPhone, '', 'opaque LID digits are not a phone number');
 assert.equal(memberCapture.messages[0].senderIdentityTrusted, true);

@@ -39,7 +39,7 @@ Check(secondRetry == start.AddSeconds(20), "second consecutive failure must use 
 
 var policy = runtime.Policy;
 Check(policy.SkipUnread && policy.SkipUncertainUnread, "unread and uncertain unread conversations must be protected");
-Check(policy.CaptureVipGroups && policy.ExcludeUnlistedGroups && policy.RequireTrustedGroupSenderIdentity,
+Check(policy.ExcludeUnlistedGroups && policy.RequireTrustedGroupSenderIdentity,
     "only explicitly bound VIP groups may be collected and member attribution must require trusted identity");
 Check(policy.ExcludeUnknownConversationTypes, "unknown conversation types must be excluded");
 Check(policy.CaptureIncoming && policy.CaptureOutgoing, "both sides of direct and eligible VIP-group chats must be collected");

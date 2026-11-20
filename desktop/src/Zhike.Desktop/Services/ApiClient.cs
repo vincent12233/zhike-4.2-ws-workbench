@@ -41,7 +41,6 @@ public sealed record WsMessageEnvelopeDto(
     string LegacyExternalMessageId = "",
     string DirectionSource = "",
     string ConversationType = "",
-    bool VipGroup = false,
     string SenderId = "",
     string SenderName = "",
     string SenderPhone = "",
@@ -69,7 +68,6 @@ public sealed record WsCheckpointDto(
     int DirectionUnresolvedCount = 0,
     string ConversationType = "",
     bool? IsGroup = null,
-    bool VipGroup = false,
     IReadOnlyList<WsObservedMemberDto>? ObservedMembers = null);
 public sealed record WsGroupMembershipEventDto(
     string AccountId,

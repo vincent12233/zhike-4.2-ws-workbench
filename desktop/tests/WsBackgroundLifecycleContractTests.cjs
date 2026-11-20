@@ -116,8 +116,10 @@ assert.match(host, /routeGeneration[\s\S]*wsGeneration[\s\S]*Volatile\.Read/, 's
 assert.match(host, /RasterizationScale[\s\S]*SnapToRaster/, 'overlay edges must remain aligned after DPI changes');
 assert.doesNotMatch(boundsObserver, /innerText|textContent|cookie|localStorage/, 'bounds telemetry must never read chat text, cookies or storage');
 
-assert.match(api, /string\s+ConversationType\s*=\s*""[\s\S]*bool\?\s+IsGroup\s*=\s*null[\s\S]*bool\s+VipGroup\s*=\s*false/, 'checkpoint DTO preserves direct/group/VIP metadata compatibly');
-assert.match(host, /allowedConversationKeys[\s\S]*item\.ConversationType, "direct"[\s\S]*item\.VipGroup[\s\S]*"vip_group"[\s\S]*messages\.RemoveAll/, 'native ingress accepts direct and explicit VIP-group bodies while discarding ordinary groups');
+assert.doesNotMatch(api, /VipGroup/, 'there is no VIP group: DTOs carry no VIP flag');
+assert.match(api, /string\s+ConversationType\s*=\s*""[\s\S]*bool\?\s+IsGroup\s*=\s*null/, 'checkpoint DTO preserves direct/group/VIP metadata compatibly');
+assert.doesNotMatch(host, /VipGroup|vip_group|vipGroup/, 'the native host has no VIP-group path');
+assert.match(host, /allowedConversationKeys[\s\S]*item\.ConversationType, "direct"[\s\S]*messages\.RemoveAll/, 'native ingress accepts direct and explicit VIP-group bodies while discarding ordinary groups');
 assert.doesNotMatch(main, /WsWorkbenchPage/, 'the retired native fallback must not be production-routable');
 
 console.log('WS lifecycle contract: retained foreground Core/route/DPI/queue boundaries; explicit independent collection without foreground fallback');

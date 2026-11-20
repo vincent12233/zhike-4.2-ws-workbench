@@ -13,7 +13,7 @@ const extracted = take('    private void SetActiveWsAccountId(', '    private st
   + take('    private async Task<BridgeResponse> SendWsTextAsync(', '    /// <summary>\n    /// Sends one already selected media item'.replace(/\n/g, source.includes('\r\n') ? '\r\n' : '\n'))
   + take('    private async Task<BridgeResponse> SendWsMediaAsync(', '    private async Task<BridgeResponse> BroadcastWsTextAsync(')
   + take('    private async Task<BridgeResponse> BroadcastWsTextAsync(', '    private static string BuildWsSendTextScript(')
-  + take('    private static string BuildWsSendTextScript(', '    private Task<BridgeResponse> ConfigureVipGroupsAsync(')
+  + take('    private static string BuildWsSendTextScript(', '    private Task<BridgeResponse> ConfigureWsGroupsAsync(')
   + take('    private static JsonElement ParseWebViewJsonResult(', '    private async void OnWsWebMessageReceived(')
   + take('    private static BridgeResponse WsCollectionBlocked(', '    private void PublishWsStatus(');
 const out = path.join(repo, '.tools/stage55c-native-send'); fs.mkdirSync(out, { recursive: true });
@@ -59,7 +59,7 @@ public sealed class NativeSendHost {
   private Task<bool> CloseWsOverlayAsync(bool clear,string id,CancellationToken token) { App.WsService.ActiveAccountId=""; App.WsRuntime.ForegroundAccountId=""; return Task.FromResult(true); }
   private Task SetWsStatusAsync(string id,string status,CancellationToken token) => Task.CompletedTask;
   private Task<BridgeResponse> WsStatusResponseAsync(string requestId,string id,CancellationToken token) => Task.FromResult(BridgeResponse.Success(requestId,"test"));
-  private Task<BridgeResponse> ConfigureVipGroupsAsync(string requestId,string id,JsonElement payload,CancellationToken token) => WsStatusResponseAsync(requestId,id,token);
+  private Task<BridgeResponse> ConfigureWsGroupsAsync(string requestId,string id,JsonElement payload,CancellationToken token) => WsStatusResponseAsync(requestId,id,token);
   private Task<BridgeResponse> ConfigureGroupMonitorAsync(string requestId,string id,JsonElement payload,CancellationToken token) => WsStatusResponseAsync(requestId,id,token);
   private Task<BridgeResponse> SetGroupMonitorStateAsync(string requestId,string id,string action,CancellationToken token) => WsStatusResponseAsync(requestId,id,token);
   private Task<BridgeResponse> ReadWsVisibleDirectoryAsync(string requestId,string id,CancellationToken token) => WsStatusResponseAsync(requestId,id,token);

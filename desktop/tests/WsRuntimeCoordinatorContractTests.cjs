@@ -13,7 +13,7 @@ assert.match(runtime, /sealed class WsRuntimeCoordinator/);
 assert.match(runtime, /WsCollectionPolicy\.PersonalWhatsAppDefault/);
 assert.match(runtime, /SkipUnread:\s*true/);
 assert.match(runtime, /SkipUncertainUnread:\s*true/);
-assert.match(runtime, /CaptureVipGroups:\s*true/);
+assert.doesNotMatch(runtime, /CaptureVipGroups/, 'there is no VIP-group capture switch');
 assert.match(runtime, /ExcludeUnlistedGroups:\s*true/);
 assert.match(runtime, /RequireTrustedGroupSenderIdentity:\s*true/);
 assert.match(runtime, /ExcludeUnknownConversationTypes:\s*true/);

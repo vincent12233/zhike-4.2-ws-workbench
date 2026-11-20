@@ -3,12 +3,11 @@ namespace Zhike.Desktop.Services;
 /// <summary>
 /// Stable collection rules for personal WhatsApp Web.  The policy belongs to
 /// the process runtime rather than a page, so changing routes cannot weaken
-/// unread protection, VIP-group isolation or direction verification.
+/// unread protection, group isolation or direction verification.
 /// </summary>
 public sealed record WsCollectionPolicy(
     bool SkipUnread,
     bool SkipUncertainUnread,
-    bool CaptureVipGroups,
     bool ExcludeUnlistedGroups,
     bool RequireTrustedGroupSenderIdentity,
     bool ExcludeUnknownConversationTypes,
@@ -20,7 +19,6 @@ public sealed record WsCollectionPolicy(
     public static WsCollectionPolicy PersonalWhatsAppDefault { get; } = new(
         SkipUnread: true,
         SkipUncertainUnread: true,
-        CaptureVipGroups: true,
         ExcludeUnlistedGroups: true,
         RequireTrustedGroupSenderIdentity: true,
         ExcludeUnknownConversationTypes: true,

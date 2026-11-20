@@ -92,7 +92,6 @@ public sealed partial class LegacyUiHostPage : Page
     private readonly Dictionary<WebView2, CollectorPurposeLease> _wsCollectorPurposes = new();
     private readonly Dictionary<string, WsCollectorMonitorPolicy> _wsCollectorMonitorPolicies = new(StringComparer.Ordinal);
     private readonly Dictionary<WebView2, long> _wsCollectorEpoch = new();
-    private readonly Dictionary<string, JsonElement> _wsCollectorGroups = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, JsonElement> _wsCollectorMonitor = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _wsCollectorMonitorRunning = new(StringComparer.OrdinalIgnoreCase);
     private string _wsCollectorVisibleAccountId = string.Empty;
@@ -595,7 +594,6 @@ public sealed partial class LegacyUiHostPage : Page
                 _wsCollectorGates.Remove(collector);
                 if (collector.Parent is Panel collectorParent) collectorParent.Children.Remove(collector);
                 try { collector.Close(); } catch { }
-                _wsCollectorGroups.Remove(accountId);
                 _wsCollectorMonitor.Remove(accountId);
                 _wsCollectorMonitorRunning.Remove(accountId);
                 if (string.Equals(_wsCollectorVisibleAccountId, accountId, StringComparison.OrdinalIgnoreCase)) _wsCollectorVisibleAccountId = string.Empty;
@@ -1720,9 +1718,8 @@ public sealed partial class LegacyUiHostPage : Page
             case "status":
             case "probe":
                 return await WsStatusResponseAsync(requestId, id, cancellationToken);
-            case "configure-vip-groups":
             case "configure-ws-groups":
-                return await ConfigureVipGroupsAsync(requestId, id, payload, cancellationToken);
+                return await ConfigureWsGroupsAsync(requestId, id, payload, cancellationToken);
             case "configure-group-monitor":
                 return await ConfigureGroupMonitorAsync(requestId, id, payload, cancellationToken);
             case "start-group-monitor":
@@ -2077,12 +2074,12 @@ public sealed partial class LegacyUiHostPage : Page
 """;
     }
 
-    private Task<BridgeResponse> ConfigureVipGroupsAsync(string requestId, string accountId, JsonElement payload, CancellationToken cancellationToken)
+    private Task<BridgeResponse> ConfigureWsGroupsAsync(string requestId, string accountId, JsonElement payload, CancellationToken cancellationToken)
     {
-        // Kept for old renderers. Neither VIP flags nor this former allowlist
-        // may upgrade a group into a personal-history collection target.
+        // Group collection is authorized only by the server's monitor targets.
+        // This renderer allowlist sync is acknowledged but grants nothing.
+        // There is no VIP group: VIP is a CRM customer tag only.
         cancellationToken.ThrowIfCancellationRequested();
-        _wsCollectorGroups.Remove(accountId);
         return Task.FromResult(BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion,
             JsonSerializer.SerializeToElement(new { accountId, configured = 0, legacyIgnored = true })));
     }
@@ -3349,7 +3346,7 @@ public sealed partial class LegacyUiHostPage : Page
                         DateTimeOffset.TryParse(StringValue(item, "sentAt"), out var sent) ? sent : null,
                         StringValue(item, "direction"), body, false, capturedAt, StringValue(item, "cursor"), GetLong(item, "order"),
                         RawStringValue(item, "timestampText"), StringValue(item, "timestampSource"), StringValue(item, "legacyExternalMessageId"),
-                        StringValue(item, "directionSource"), StringValue(item, "conversationType"), GetBool(item, "vipGroup"),
+                        StringValue(item, "directionSource"), StringValue(item, "conversationType"),
                         StringValue(item, "senderId"), StringValue(item, "senderName"), StringValue(item, "senderPhone"),
                         StringValue(item, "senderIdentitySource"), GetBool(item, "senderIdentityTrusted")));
                 }
@@ -3373,9 +3370,7 @@ public sealed partial class LegacyUiHostPage : Page
                         var historyMessageCount = GetInt(item, "historyMessageCount");
                         var directionVersion = GetInt(item, "directionVersion");
                         var directionUnresolvedCount = GetInt(item, "directionUnresolvedCount");
-                        var vipGroup = GetBool(item, "vipGroup");
                         var conversationType = StringValue(item, "conversationType").ToLowerInvariant();
-                        if (vipGroup && conversationType == "group") conversationType = "vip_group";
                         bool? isGroup = item.TryGetProperty("isGroup", out var groupValue) && groupValue.ValueKind is JsonValueKind.True or JsonValueKind.False
                             ? groupValue.GetBoolean()
                             : null;
@@ -3407,12 +3402,11 @@ public sealed partial class LegacyUiHostPage : Page
                             directionUnresolvedCount,
                             conversationType,
                             isGroup,
-                            vipGroup,
                             members));
                         if (historyLoaded && directionVersion >= 4 && directionUnresolvedCount == 0
-                            && (!fromBackgroundCollector || purpose?.AllowsHistory(key, conversationType, isGroup, vipGroup) == true)
-                            && conversationType is "direct" or "vip_group")
-                            historyAcks.Add(new { conversationKey = key, fingerprint = StringValue(item, "lastMessageFingerprint"), historyMessageCount, conversationType, vipGroup });
+                            && (!fromBackgroundCollector || purpose?.AllowsHistory(key, conversationType, isGroup) == true)
+                            && conversationType == "direct")
+                            historyAcks.Add(new { conversationKey = key, fingerprint = StringValue(item, "lastMessageFingerprint"), historyMessageCount, conversationType });
                     }
                 }
             }
@@ -3459,10 +3453,10 @@ public sealed partial class LegacyUiHostPage : Page
                 checkpoints.RemoveAll(item => !purpose.AllowsCheckpoint(item)
                     || item.Coverage == "group-monitor-visible" && (!purpose.AllowsGroupMonitoring || confirmedMonitor?.AllowsGroup(item.ConversationKey) != true));
                 checkpoints = checkpoints.Select(item => WsCollectorPurposePolicy.IsGroupJid(item.ConversationKey)
-                    ? item with { ConversationType = "group", IsGroup = true, VipGroup = false } : item).ToList();
+                    ? item with { ConversationType = "group", IsGroup = true } : item).ToList();
                 messages.RemoveAll(item => !purpose.AllowsMessage(item, monitors));
                 if (purpose.AllowsGroupMonitoring)
-                    messages = messages.Select(item => item with { ConversationType = "group", VipGroup = false }).ToList();
+                    messages = messages.Select(item => item with { ConversationType = "group" }).ToList();
                 groupEvents.RemoveAll(item => !purpose.AllowsGroupMonitoring
                     || !_wsCollectorMonitorPolicies.TryGetValue(accountId, out var monitor) || !monitor.AllowsEvent(item));
                 // Legacy group history acknowledgements never survive purpose filtering.
@@ -3470,8 +3464,7 @@ public sealed partial class LegacyUiHostPage : Page
             }
             var allowedConversationKeys = checkpoints
                 .Where(item => string.Equals(item.ConversationType, "direct", StringComparison.OrdinalIgnoreCase)
-                    || purpose?.AllowsGroupMonitoring == true && WsCollectorPurposePolicy.IsGroupJid(item.ConversationKey)
-                    || item.VipGroup && string.Equals(item.ConversationType, "vip_group", StringComparison.OrdinalIgnoreCase))
+                    || purpose?.AllowsGroupMonitoring == true && WsCollectorPurposePolicy.IsGroupJid(item.ConversationKey))
                 .Select(item => item.ConversationKey)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
             messages.RemoveAll(item => !allowedConversationKeys.Contains(item.ConversationKey));
@@ -3483,7 +3476,7 @@ public sealed partial class LegacyUiHostPage : Page
                     PublishWsStatus(JsonSerializer.SerializeToElement(new { eventName = "live-group-observation", accountId, workspaceMode = purpose.WorkspaceMode,
                         collectorOnly = true, sessionGeneration, collectorEpoch = sourceEpoch, observedAt = capturedAt, groupJids = observedGroups }));
             }
-            // Foreground realtime messages still carry their minimal direct/VIP
+            // Foreground realtime messages still carry their minimal direct/group
             // checkpoint so the ingest service can resolve the conversation
             // type. It contains no historyLoaded/read-history fields, so it
             // cannot downgrade a background full-history checkpoint.
@@ -3684,9 +3677,9 @@ public sealed partial class LegacyUiHostPage : Page
     if (seen.has(unique)) continue;
     seen.add(unique);
     const senderName = parseSender(preamble);
-    messages.push({ conversationKey, externalMessageId, legacyExternalMessageId:externalMessageId, body, text:body, direction, directionSource:'foreground-one-shot', conversationType, isGroup, vipGroup:false, senderName, senderId:'', senderPhone:'', senderIdentitySource:senderName ? 'whatsapp-preamble' : 'none', senderIdentityTrusted:false, sentAt:'', timestampText:preamble, timestampSource:'unparsed', cursor:externalMessageId, order:index + 1 });
+    messages.push({ conversationKey, externalMessageId, legacyExternalMessageId:externalMessageId, body, text:body, direction, directionSource:'foreground-one-shot', conversationType, isGroup, senderName, senderId:'', senderPhone:'', senderIdentitySource:senderName ? 'whatsapp-preamble' : 'none', senderIdentityTrusted:false, sentAt:'', timestampText:preamble, timestampSource:'unparsed', cursor:externalMessageId, order:index + 1 });
   }
-  return JSON.stringify({ supported:true, collectorRole:'foreground-on-demand', accountId, conversationKey, displayName:headerTitle.slice(0, 200), conversationType, isGroup, vipGroup:false, messages });
+  return JSON.stringify({ supported:true, collectorRole:'foreground-on-demand', accountId, conversationKey, displayName:headerTitle.slice(0, 200), conversationType, isGroup, messages });
 })()
 """;
     }
@@ -3730,26 +3723,11 @@ public sealed partial class LegacyUiHostPage : Page
   // The visible WebView is a passive realtime surface. Only the offscreen
   // collector role may mutate WhatsApp's virtualized list or open chats.
   const backgroundCollectorRole = String(window.__zhikeWsCollectorRole || 'background').toLocaleLowerCase() === 'background';
-  let vipGroupAllowlist = new Set();
-  const normalizeVipGroupKey = value => String(value ?? '')
-    .replace(/[\u200e\u200f\u202a-\u202e]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLocaleLowerCase();
-  const isVipGroupIdentity = (...values) => values.some(value => {
-    const key = normalizeVipGroupKey(value);
-    return Boolean(key && vipGroupAllowlist.has(key));
-  });
   const collectibleConversationType = value => {
     const type = String(value ?? '').trim().toLocaleLowerCase();
     return directHistoryAllowed && type === 'direct';
   };
-  window.__zhikeWsConfigureVipGroups = values => {
-    vipGroupAllowlist.clear();
-    return { configured:0, legacyIgnored:true };
-  };
-  // Canonical name: this is a WS monitoring allowlist, not customer VIP data.
-  window.__zhikeWsConfigureWsGroups = values => window.__zhikeWsConfigureVipGroups?.(values);
+  // There is no VIP group. Group access is authorized only by monitor targets.
   // Fixed-seat group monitor. It is deliberately a passive observer of the
   // currently rendered, JID-bound group pane: no row click, scroll, navigation or
   // focus operation is performed here. The native host starts/pauses/stops
@@ -3841,8 +3819,8 @@ public sealed partial class LegacyUiHostPage : Page
     const events = [];
     for (const row of rows) {
       // A fixed monitor target is an explicit group binding in its own right;
-      // ordinary groups must not depend on the customer VIP allowlist.
-      if (!row || !['group', 'vip_group'].includes(row.conversationType)) continue;
+      // ordinary groups are authorized only by monitor targets, never by customer tags.
+      if (!row || row.conversationType !== 'group') continue;
       const target = groupMonitorTarget(row.conversationKey, row.displayName);
       if (!target) continue;
       const preview = clean(row.lastMessagePreview || row.previewText || row.preview || '');
@@ -3865,10 +3843,10 @@ public sealed partial class LegacyUiHostPage : Page
     if (!backgroundCollectorRole || !groupMonitorState.enabled || groupMonitorState.status !== 'running') return [];
     // List previews are independent of the currently open conversation. Run
     // this first so a blank/ordinary foreground pane cannot short-circuit the
-    // fixed-seat observer for other rendered VIP groups.
+    // fixed-seat observer for other rendered monitored groups.
     const events = collectGroupMonitorPreviewEvents(rows);
     const typeEvidence = typeof conversationTypeFromNode === 'function' ? conversationTypeFromNode(identity.header, identity.jid, identity.groupName) : { conversationType:'unknown' };
-    if (!['group', 'vip_group'].includes(typeEvidence.conversationType)) return events.slice(0, 200);
+    if (typeEvidence.conversationType !== 'group') return events.slice(0, 200);
     const target = groupMonitorTarget(identity.jid, identity.groupName);
     if (!target) return events.slice(0, 200);
     const nodes = [];
@@ -3951,7 +3929,7 @@ public sealed partial class LegacyUiHostPage : Page
     groupMonitorState.lastObserved.clear();
     groupMonitorState.profileId = clean(source.profileId).slice(0, 160);
     groupMonitorState.intervalSec = Math.max(15, Math.min(3600, Number(source.intervalSec) || 45));
-    groupMonitorState.targets = (Array.isArray(source.targets) ? source.targets : []).slice(0, 500).map(item => ({ targetId:clean(item?.targetId).slice(0, 160), groupJid:clean(item?.groupJid).slice(0, 240), groupName:clean(item?.groupName).slice(0, 200), sourceId:clean(item?.sourceId).slice(0, 160), vipOnly:item?.vipOnly !== false, enabled:item?.enabled !== false })).filter(item => /^[a-z0-9._-]+@g\.us$/.test(item.groupJid));
+    groupMonitorState.targets = (Array.isArray(source.targets) ? source.targets : []).slice(0, 500).map(item => ({ targetId:clean(item?.targetId).slice(0, 160), groupJid:clean(item?.groupJid).slice(0, 240), groupName:clean(item?.groupName).slice(0, 200), sourceId:clean(item?.sourceId).slice(0, 160), enabled:item?.enabled !== false })).filter(item => /^[a-z0-9._-]+@g\.us$/.test(item.groupJid));
     if (source.enabled === false && groupMonitorState.status === 'running') { groupMonitorState.status = 'paused'; groupMonitorState.enabled = false; }
     return { supported:backgroundCollectorRole, configured:groupMonitorState.targets.length, status:groupMonitorState.status };
   };
@@ -4280,7 +4258,7 @@ public sealed partial class LegacyUiHostPage : Page
     const legacyId = `wa-${compactId(`${conversationKey}|${clean(rawPreamble)}|${legacyDirection}|${legacyBody}`)}`;
     return legacyId === canonicalExternalMessageId ? '' : legacyId;
   };
-  // v7 preserves the direct/VIP-group boundary in every durable checkpoint.
+  // v7 preserves the direct/group boundary in every durable checkpoint.
   // Ordinary groups and unresolved rows can never become acknowledged work.
   const checkpointStorageKey = `zhike.ws.history.v7.${compactId(accountId)}`;
   const readCheckpointState = () => {
@@ -4558,16 +4536,14 @@ public sealed partial class LegacyUiHostPage : Page
         for (const node of root.querySelectorAll?.('[data-id], [data-chat-id], [data-jid], [data-group-id], [data-contact-id], [data-chat-type], [data-conversation-type], [data-thread-type], [data-is-group], [data-testid*="group-chat" i], [data-testid*="group-info" i], [data-testid*="group-avatar" i], [data-testid*="community" i], [data-icon="default-group" i], [data-icon="default-community" i]') || []) inspect(node);
       } catch {}
       if (identifiers.some(value => /@g\.us(?:\b|$)/i.test(value))) {
-        const vipGroup = isVipGroupIdentity(identity, displayName, ...identifiers);
-        return { conversationType:vipGroup ? 'vip_group' : 'group', isGroup:true, vipGroup, source:'jid-g.us' };
+        return { conversationType:'group', isGroup:true, source:'jid-g.us' };
       }
       // Only accept an explicitly labelled avatar or chat-type badge. Chat titles,
       // message previews and arbitrary aria-label text can be user supplied.
       const groupBadges = root.querySelectorAll?.('[data-testid="chat-type"],[data-testid="chat-type-icon"],[data-testid="cell-frame-avatar"],[data-testid="avatar"] [role="img"],[data-testid="cell-frame-avatar"] [role="img"]') || [];
       const labelledGroup = [...groupBadges].some(node => /^(?:group chat|group avatar|group profile picture|群聊头像|群组头像|群組頭像|群組聊天室)$/i.test(clean(node.getAttribute?.('aria-label'))));
       if (labelledGroup || semanticValues.some(value => /^(?:true|group|group-chat|groupchat|community|default-group|default-community|multi-user|multiuser)$/.test(value) || /(?:^|[-_:])(?:group-chat|group-info|group-avatar|community)(?:[-_:]|$)/.test(value))) {
-        const vipGroup = isVipGroupIdentity(identity, displayName, ...identifiers);
-        return { conversationType:vipGroup ? 'vip_group' : 'group', isGroup:true, vipGroup, source:'dom-group' };
+        return { conversationType:'group', isGroup:true, source:'dom-group' };
       }
       if (identifiers.some(value => /@(?:s\.whatsapp\.net|c\.us|lid)(?:\b|$)/i.test(value))) return { conversationType:'direct', isGroup:false, source:'jid-direct' };
       if (semanticValues.some(value => /^(?:false|direct|private|individual|contact|user|one-to-one|1:1)$/.test(value))) return { conversationType:'direct', isGroup:false, source:'dom-direct' };
@@ -4989,7 +4965,7 @@ public sealed partial class LegacyUiHostPage : Page
       const rowFingerprint = compactId(`timestamp-v4-direction-v4-type-v1|${externalId}|${preview}|${lastMessageAt}|${unreadCount}|${typeEvidence.conversationType}`);
       const directoryGroup = groupMonitoringAllowed && typeEvidence.isGroup && /@g\.us$/i.test(externalId);
       const typeStatus = typeEvidence.conversationType === 'group' ? 'skipped-group' : typeEvidence.conversationType === 'unknown' ? 'retryable' : '';
-      const result = { index, conversationKey: externalId, externalId, displayName, title:displayName, lastMessagePreview:preview, previewText:preview, preview, lastMessageAt, unreadCount, unread:unread.unread, uncertainUnread:unread.uncertainUnread, unreadStateKnown, unreadMarker:unread.unreadMarker, conversationType:typeEvidence.conversationType, isGroup:typeEvidence.isGroup, vipGroup:typeEvidence.vipGroup === true, conversationTypeSource:typeEvidence.source, status:typeStatus || (unread.unread || unread.uncertainUnread ? 'skipped_unread' : 'queued'), coverage:typeEvidence.conversationType === 'group' ? 'excluded-group' : typeEvidence.conversationType === 'unknown' ? 'conversation-type-unresolved' : '', ...(directoryGroup ? groupDirectoryObservation : {}), cursor:rowFingerprint, lastMessageFingerprint:rowFingerprint, listText:pageText, previewOnly:true, visibleOnly:true };
+      const result = { index, conversationKey: externalId, externalId, displayName, title:displayName, lastMessagePreview:preview, previewText:preview, preview, lastMessageAt, unreadCount, unread:unread.unread, uncertainUnread:unread.uncertainUnread, unreadStateKnown, unreadMarker:unread.unreadMarker, conversationType:typeEvidence.conversationType, isGroup:typeEvidence.isGroup, conversationTypeSource:typeEvidence.source, status:typeStatus || (unread.unread || unread.uncertainUnread ? 'skipped_unread' : 'queued'), coverage:typeEvidence.conversationType === 'group' ? 'excluded-group' : typeEvidence.conversationType === 'unknown' ? 'conversation-type-unresolved' : '', ...(directoryGroup ? groupDirectoryObservation : {}), cursor:rowFingerprint, lastMessageFingerprint:rowFingerprint, listText:pageText, previewOnly:true, visibleOnly:true };
      try {
        Object.defineProperty(result, '__node', { value:row, enumerable:false });
        Object.defineProperty(result, '__identityTitles', { value:primaryTitles, enumerable:false });
@@ -5003,7 +4979,7 @@ public sealed partial class LegacyUiHostPage : Page
      for (const row of rows) {
        if (!row.conversationKey || seen.has(row.conversationKey)) continue;
        seen.add(row.conversationKey);
-       const group = row.isGroup || row.conversationType === 'group' || row.conversationType === 'vip_group';
+       const group = row.isGroup || row.conversationType === 'group';
        const directoryGroup = groupMonitoringAllowed && group && /@g\.us$/i.test(row.conversationKey);
        if (group && (!groupMonitoringAllowed || directoryGroup)) groupConversations.push(row);
        if (collectibleConversationType(row.conversationType)) conversations.push(row);
@@ -5363,7 +5339,7 @@ public sealed partial class LegacyUiHostPage : Page
       body:String(item.body ?? ''),
       direction:clean(item.direction).slice(0, 20),
       directionSource:clean(item.directionSource).slice(0, 40),
-       conversationType:clean(item.conversationType || 'direct').slice(0, 20), isGroup:item.isGroup === true, vipGroup:item.vipGroup === true,
+       conversationType:clean(item.conversationType || 'direct').slice(0, 20), isGroup:item.isGroup === true,
       senderId:clean(item.senderId).slice(0, 200), senderName:clean(item.senderName).slice(0, 200),
       senderPhone:clean(item.senderPhone).slice(0, 40), senderIdentitySource:clean(item.senderIdentitySource).slice(0, 40),
       senderIdentityTrusted:item.senderIdentityTrusted === true,
@@ -5395,8 +5371,7 @@ public sealed partial class LegacyUiHostPage : Page
       cursor:clean(item.cursor).slice(0, 240),
       lastMessageFingerprint:clean(item.lastMessageFingerprint).slice(0, 240),
        conversationType:clean(item.conversationType || 'unknown').slice(0, 20),
-       isGroup:item.conversationType === 'group' || item.conversationType === 'vip_group' || item.isGroup === true,
-       vipGroup:item.conversationType === 'vip_group' || item.vipGroup === true,
+       isGroup:item.conversationType === 'group' || item.isGroup === true,
        previewOnly:item.previewOnly !== false, visibleOnly:item.visibleOnly !== false,
        historyLoaded:item.historyLoaded === true, historyMessageCount:Number(item.historyMessageCount || messageCounts.get(clean(item.conversationKey)) || 0), coverage:clean(item.coverage || coverage).slice(0, 40), collectionStatus:clean(item.status || '').slice(0, 30),
     }));
@@ -5501,7 +5476,7 @@ public sealed partial class LegacyUiHostPage : Page
       publishDirectory(run, rows);
       // The normal hidden full-list sweep already advances the virtualized
       // chat list. Reuse each rendered window for group monitoring so every
-      // enabled VIP group can be observed without opening a conversation or
+      // enabled monitored group can be observed without opening a conversation or
       // adding a second competing scroll loop.
       if (groupMonitorState.enabled && groupMonitorState.status === 'running') postGroupMonitorEvents(collectGroupMonitorPreviewEvents(rows), rows);
       if (verifyDirectoryGroup(run,step)) return;
@@ -5633,9 +5608,8 @@ public sealed partial class LegacyUiHostPage : Page
       const header = document.querySelector('[data-testid="conversation-header"], [data-testid*="conversation-header" i], [data-testid*="conversation-info-header" i], [data-testid*="chat-header" i], #main header, #main [role="heading"]');
       const identity = currentConversationIdentity();
       const headerEvidence = header ? conversationTypeFromNode(header, identity.key, identity.title) : { conversationType:'unknown', isGroup:false, source:'none' };
-      if (rowType === 'vip_group' || headerEvidence.conversationType === 'vip_group') return { conversationType:'vip_group', isGroup:true, vipGroup:true, source:rowType === 'vip_group' ? clean(row?.conversationTypeSource || 'row-vip-group') : headerEvidence.source };
-      if (rowType === 'group' || headerEvidence.conversationType === 'group') return { conversationType:'group', isGroup:true, vipGroup:false, source:rowType === 'group' ? clean(row?.conversationTypeSource || 'row') : headerEvidence.source };
-      if (rowType === 'direct' && !['group','vip_group'].includes(headerEvidence.conversationType)) return { conversationType:'direct', isGroup:false, source:clean(row?.conversationTypeSource || 'row-direct') };
+      if (rowType === 'group' || headerEvidence.conversationType === 'group') return { conversationType:'group', isGroup:true, source:rowType === 'group' ? clean(row?.conversationTypeSource || 'row') : headerEvidence.source };
+      if (rowType === 'direct' && headerEvidence.conversationType !== 'group') return { conversationType:'direct', isGroup:false, source:clean(row?.conversationTypeSource || 'row-direct') };
       if (rowType === 'unknown' && headerEvidence.conversationType === 'direct') return headerEvidence;
       return { conversationType:'unknown', isGroup:false, source:'unresolved' };
     };
@@ -5693,7 +5667,7 @@ public sealed partial class LegacyUiHostPage : Page
        senderId:`self:${accountId}`, senderName:'我', senderPhone:'',
        senderIdentitySource:'account-self', senderIdentityTrusted:true,
      };
-     if (!['group', 'vip_group'].includes(conversationType)) return {
+     if (conversationType !== 'group') return {
        senderId:'', senderName:'', senderPhone:'', senderIdentitySource:'direct-peer', senderIdentityTrusted:false,
      };
      const candidates = [];
@@ -5757,7 +5731,7 @@ public sealed partial class LegacyUiHostPage : Page
        const externalMessageId = explicitExternalMessageId || syntheticId;
        const legacyExternalMessageId = legacyMessageExternalId(node, conversationKey, rawPreamble, externalMessageId);
        const sentAt = parseMessageTimestamp(rawPreamble);
-       messages.push({ conversationKey, externalMessageId, legacyExternalMessageId, directionSource:evidence.source, conversationType, isGroup:conversationType === 'vip_group', vipGroup:conversationType === 'vip_group', ...sender, body, direction, sentAt, timestampText:timestampTextFromPreamble(rawPreamble), timestampSource:sentAt ? 'whatsapp-preamble' : 'unparsed', cursor:externalMessageId, preamble, captureRound, domIndex });
+       messages.push({ conversationKey, externalMessageId, legacyExternalMessageId, directionSource:evidence.source, conversationType, isGroup:false, ...sender, body, direction, sentAt, timestampText:timestampTextFromPreamble(rawPreamble), timestampSource:sentAt ? 'whatsapp-preamble' : 'unparsed', cursor:externalMessageId, preamble, captureRound, domIndex });
      });
       if (unresolvedDiagnosticNode) postDirectionDiagnostic(unresolvedDiagnosticNode);
      return { root, messages, unresolvedDirectionKeys };
@@ -5774,7 +5748,7 @@ public sealed partial class LegacyUiHostPage : Page
        legacyExternalMessageId:clean(item.legacyExternalMessageId).slice(0, 200), directionSource:clean(item.directionSource).slice(0, 40),
        body:String(item.body ?? ''), direction:clean(item.direction).slice(0, 20), sentAt:clean(item.sentAt).slice(0, 80),
         conversationType:clean(item.conversationType || row.conversationType || 'unknown').slice(0, 20),
-        isGroup:item.isGroup === true || row.conversationType === 'vip_group', vipGroup:item.vipGroup === true || row.conversationType === 'vip_group',
+        isGroup:item.isGroup === true,
        senderId:clean(item.senderId).slice(0, 200), senderName:clean(item.senderName).slice(0, 200),
        senderPhone:clean(item.senderPhone).slice(0, 40), senderIdentitySource:clean(item.senderIdentitySource).slice(0, 40),
        senderIdentityTrusted:item.senderIdentityTrusted === true,
@@ -5799,8 +5773,7 @@ public sealed partial class LegacyUiHostPage : Page
          displayName:clean(row.displayName).slice(0, 120), title:clean(row.title || row.displayName).slice(0, 120),
          previewText:clean(row.previewText || row.lastMessagePreview || row.preview).slice(0, 180), lastMessageAt:clean(row.lastMessageAt).slice(0, 80),
          unreadCount:Number(row.unreadCount || 0), cursor:clean(row.cursor).slice(0, 240), lastMessageFingerprint:checkpointFingerprint(row),
-          conversationType:clean(row.conversationType || 'unknown').slice(0, 20), isGroup:row.conversationType === 'group' || row.conversationType === 'vip_group' || row.isGroup === true,
-         vipGroup:row.conversationType === 'vip_group' || row.vipGroup === true,
+          conversationType:clean(row.conversationType || 'unknown').slice(0, 20), isGroup:row.conversationType === 'group' || row.isGroup === true,
          directionVersion:4,
          previewOnly:!isFinal, visibleOnly:!isFinal, historyLoaded: isFinal, historyMessageCount:Math.max(items.length, Number(metadata.historyMessageCount || 0)),
          oversizedMessageCount:Math.max(0, Number(metadata.oversizedMessageCount || 0)), maxCapturedBodyLength:Math.max(0, Number(metadata.maxCapturedBodyLength || 0)),
@@ -6060,10 +6033,10 @@ public sealed partial class LegacyUiHostPage : Page
             () => {
               const typeEvidence = currentConversationType(currentRow);
               if (!collectibleConversationType(typeEvidence.conversationType)) {
-                finishCurrent({ ...currentRow, conversationType:typeEvidence.conversationType, isGroup:typeEvidence.isGroup, vipGroup:typeEvidence.vipGroup === true, conversationTypeSource:typeEvidence.source }, false, typeEvidence.conversationType === 'group' ? 'excluded-group' : 'conversation-type-unresolved');
+                finishCurrent({ ...currentRow, conversationType:typeEvidence.conversationType, isGroup:typeEvidence.isGroup, conversationTypeSource:typeEvidence.source }, false, typeEvidence.conversationType === 'group' ? 'excluded-group' : 'conversation-type-unresolved');
                 return;
               }
-              collectMessageFrames({ ...currentRow, conversationType:typeEvidence.conversationType, isGroup:typeEvidence.isGroup, vipGroup:typeEvidence.vipGroup === true }, waitForMessagePane());
+              collectMessageFrames({ ...currentRow, conversationType:typeEvidence.conversationType, isGroup:typeEvidence.isGroup }, waitForMessagePane());
             },
            () => finishCurrent(currentRow, false, 'read-history-identity-unconfirmed'));
          return;
@@ -6157,7 +6130,7 @@ public sealed partial class LegacyUiHostPage : Page
     const passiveGroupCapture = backgroundCollectorRole && groupMonitoringAllowed
       && groupMonitorState.enabled && groupMonitorState.status === 'running'
       && observedGroupJid === conversationKey
-      && ['group', 'vip_group'].includes(typeEvidence.conversationType) && Boolean(groupMonitorTarget(conversationKey));
+      && typeEvidence.conversationType === 'group' && Boolean(groupMonitorTarget(conversationKey));
     if (!collectibleConversationType(typeEvidence.conversationType) && !passiveGroupCapture) {
       const identity = currentConversationIdentity();
       return {
@@ -6184,12 +6157,12 @@ public sealed partial class LegacyUiHostPage : Page
       if (seen.has(key)) return;
       seen.add(key);
       const sentAt = parseMessageTimestamp(rawPreamble);
-      messages.push({ conversationKey, externalMessageId, legacyExternalMessageId, directionSource:evidence.source, conversationType:passiveGroupCapture ? 'group' : typeEvidence.conversationType, isGroup:passiveGroupCapture, vipGroup:false, ...sender, body, direction:evidence.direction, sentAt, timestampText:timestampTextFromPreamble(rawPreamble), timestampSource:sentAt ? 'whatsapp-preamble' : 'unparsed', cursor:externalMessageId, preamble, order:order + 1 });
+      messages.push({ conversationKey, externalMessageId, legacyExternalMessageId, directionSource:evidence.source, conversationType:passiveGroupCapture ? 'group' : typeEvidence.conversationType, isGroup:passiveGroupCapture, ...sender, body, direction:evidence.direction, sentAt, timestampText:timestampTextFromPreamble(rawPreamble), timestampSource:sentAt ? 'whatsapp-preamble' : 'unparsed', cursor:externalMessageId, preamble, order:order + 1 });
     });
     return {
       supported:true, messages, conversationKey,
       displayName:clean(currentRow?.displayName || currentConversationIdentity().title).slice(0, 200),
-      conversationType:passiveGroupCapture ? 'group' : typeEvidence.conversationType, isGroup:passiveGroupCapture, vipGroup:false,
+      conversationType:passiveGroupCapture ? 'group' : typeEvidence.conversationType, isGroup:passiveGroupCapture,
     };
   };
   window.__zhikeWsDiscover = discover;
@@ -6232,11 +6205,10 @@ public sealed partial class LegacyUiHostPage : Page
     const dedicatedOpenGroup = groupMonitoringAllowed && messages.isGroup && /@g\.us$/i.test(messages.conversationKey);
     if (messages.conversationKey && (directHistoryAllowed || dedicatedOpenGroup) && (!allScan?.monitorOnly || messages.messages.length) && !checkpointRows.some(item => item.conversationKey === messages.conversationKey)) {
       const isGroup = messages.conversationType === 'group';
-      const isVipGroup = messages.conversationType === 'vip_group';
       const isCollectible = collectibleConversationType(messages.conversationType);
       checkpointRows.push({
         conversationKey:messages.conversationKey, externalId:messages.conversationKey,
-        displayName:messages.displayName || '', conversationType:messages.conversationType || 'unknown', isGroup:isGroup || isVipGroup, vipGroup:isVipGroup,
+        displayName:messages.displayName || '', conversationType:messages.conversationType || 'unknown', isGroup,
         status:isGroup ? 'skipped-group' : isCollectible ? 'captured' : 'retryable',
         coverage:isGroup ? 'excluded-group' : isCollectible ? 'visible-chat' : 'conversation-type-unresolved',
         historyLoaded:false, historyMessageCount:0, directionVersion:4, directionUnresolvedCount:0,
@@ -6253,7 +6225,6 @@ public sealed partial class LegacyUiHostPage : Page
       displayName:messages.displayName || '',
       conversationType:messages.conversationType || 'unknown',
       isGroup:messages.isGroup === true,
-      vipGroup:messages.vipGroup === true,
       coverage:'visible-chat',
       collectionStatus:'captured',
       unreadCount:0,
@@ -6296,7 +6267,7 @@ public sealed partial class LegacyUiHostPage : Page
       discoverAll();
     }
     // Group monitoring is a passive collector-only heartbeat. It inspects
-    // already-rendered VIP-group system rows and never drives the foreground
+    // already-rendered monitored-group system rows and never drives the foreground
     // WebView. Keep the counters in the native heartbeat result so the host
     // can surface a stable diagnostic without forcing a UI refresh.
     const groupMonitor = backgroundCollectorRole ? groupMonitorTick() : { supported:false, reason:'collector-only' };

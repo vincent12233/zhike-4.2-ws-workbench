@@ -42,7 +42,7 @@ assert.match(script, /申请加入|等待审核|join request|approval pending/, 
 assert.match(script, /const rows = readRows\(\);\s*mergeRows\(run\.seen, rows,[\s\S]*collectGroupMonitorPreviewEvents\(rows\)/, 'the full hidden list sweep feeds the same rendered window to directory and monitor');
 assert.match(script, /const groupMonitor = backgroundCollectorRole \? groupMonitorTick\(\)/, 'background heartbeat must drive the passive group monitor');
 assert.match(script, /advanced, queuedTasks:collectorTasks\.size, groupMonitor/, 'background heartbeat must expose monitor health counters');
-const begin = host.indexOf('private Task<BridgeResponse> ConfigureVipGroupsAsync(');
+const begin = host.indexOf('private Task<BridgeResponse> ConfigureWsGroupsAsync(');
 const end = host.indexOf('private async Task<List<StoredWsAccount>> LoadWsAccountsAsync(', begin);
 assert.ok(begin > 0 && end > begin, 'independent group configuration boundaries must exist');
 const groupMonitorMethod = host.slice(begin, end);

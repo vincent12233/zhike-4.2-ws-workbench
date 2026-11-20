@@ -55,7 +55,7 @@ Check(directoryB.GetProperty("conversations").GetArrayLength()==0 && directoryB.
  && directoryB.GetProperty("sessionGeneration").GetInt32()==5 && directoryB.GetProperty("collectorEpoch").GetInt32()==8
  && directoryB.GetProperty("scanId").GetInt32()==9 && directoryB.GetProperty("complete").GetBoolean(),"dedicated directory shares group identities with provenance");
 Check(ordinary.AllowsHistory("919876543210@c.us","direct"),"ordinary direct preserved");
-Check(!ordinary.AllowsHistory("123@g.us","direct")&&!ordinary.AllowsHistory("123@g.us","vip_group",true,true),"forged direct and VIP group rejected");
+Check(!ordinary.AllowsHistory("123@g.us","direct")&&!ordinary.AllowsHistory("123@g.us","vip_group",true),"forged direct and legacy group types rejected");
 Check(!dedicated.AllowsHistory("919876543210@c.us","direct"),"dedicated direct history rejected");
 await Denied(()=>api.GetWsCollectorPurposeAsync("DEDICATED"));await Denied(()=>api.GetWsCollectorPurposeAsync("unknown"));
 var monitor=await api.GetWsCollectorMonitorAsync("dedicated","profile");
@@ -85,8 +85,8 @@ handler.Disabled=true;await Denied(()=>api.AuthorizeWsCollectorBatchAsync(eviden
 handler.ForeignProfile=true;await Denied(()=>api.AuthorizeWsCollectorBatchAsync(evidenceBatch));handler.ForeignProfile=false;
 var ingress=Probe.Filter(ordinary,monitor,[direct],[checkpoint,groupCheckpoint with{AccountId="ordinary"}],[membership with{AccountId="ordinary"}]);
 Check(ingress.Messages.Count==1&&ingress.Checkpoints.Count==2&&ingress.GroupEvents!.Count==0&&ingress.Checkpoints[0].ConversationType=="direct", "actual ordinary ingress preserves direct and directory, filters member events");
-ingress=Probe.Filter(dedicated,monitor,[evidence with{ConversationType="vip_group",VipGroup=true}], [groupCheckpoint with{ConversationType="vip_group",VipGroup=true}], [membership]);
-Check(ingress.Messages.Count==1&&ingress.Messages[0].ConversationType=="group"&&!ingress.Messages[0].VipGroup&&ingress.GroupEvents!.Count==1,"actual dedicated ingress retains observed member body and canonicalizes legacy group encoding");
+ingress=Probe.Filter(dedicated,monitor,[evidence with{ConversationType="vip_group"}], [groupCheckpoint with{ConversationType="vip_group"}], [membership]);
+Check(ingress.Messages.Count==1&&ingress.Messages[0].ConversationType=="group"&&ingress.GroupEvents!.Count==1,"actual dedicated ingress retains observed member body and canonicalizes legacy group encoding");
 
 var probe=new Probe(api,"ordinary");
 Check((await probe.Call("ordinary")).Ok&&probe.Executed==1,"ordinary command keeps working");
