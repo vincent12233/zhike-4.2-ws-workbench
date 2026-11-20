@@ -2150,8 +2150,8 @@ function wsObservedGroupMessageData(data) {
   return data.source === 'ws-webview2' && data.previewOnly !== true && Number(data.directionVersion || 0) >= 4
     && WS_NATIVE_DIRECTION_SOURCE_MAP.get(data.directionSource) === 'receive' && data.senderIdentityTrusted === true;
 }
-function wsRequireAiGroupAuthorization(row) {
-  const observed = wsGroupMonitor.normalizeMemberIdentity(row.external_id);
+function wsRequireConfiguredGroup(accountId, externalId) {
+  const observed = wsGroupMonitor.normalizeMemberIdentity(externalId);
   // The existing group-manager JID syntax is independent of CRM labels.
   if (observed.kind !== 'group' || !/^[a-z0-9._-]{1,235}@g\.us$/.test(observed.value)) {
     throw wsConversationPolicyError('WS_GROUP_IDENTITY_UNCONFIRMED', '群分析缺少可核验的 WhatsApp 群组 JID。');
@@ -2159,14 +2159,58 @@ function wsRequireAiGroupAuthorization(row) {
   const authorized = db.prepare(`SELECT 1 FROM ws_group_monitor_targets t
     JOIN ws_group_monitor_profiles p ON p.id=t.profile_id AND p.account_id=t.account_id
     JOIN ws_group_catalog c ON c.account_id=t.account_id AND c.group_jid=t.group_jid
-    WHERE t.account_id=? AND t.group_jid=? AND t.enabled=1 AND p.enabled=1 AND c.status='active' LIMIT 1`).get(row.account_id, observed.value);
+    WHERE t.account_id=? AND t.group_jid=? AND t.enabled=1 AND p.enabled=1 AND c.status='active' LIMIT 1`).get(accountId, observed.value);
   if (!authorized) throw wsConversationPolicyError('WS_GROUP_AUTHORIZATION_REQUIRED', '当前专用账号尚未启用此确切群组的监测授权，历史记录仍可查看。');
+}
+function wsRequireAiGroupAuthorization(row) {
+  wsRequireConfiguredGroup(row.account_id, row.external_id);
   // targets/scan also creates catalog rows. A configured directory alone is
   // insufficient: require independently captured member-message evidence.
   const messages = db.prepare("SELECT data_json FROM ws_messages WHERE account_id=? AND conversation_id=? AND direction='receive'").all(row.account_id, row.id);
   if (!messages.some(message => wsObservedGroupMessageData(wsJson(message.data_json, {})))) {
     throw wsConversationPolicyError('WS_GROUP_OBSERVATION_REQUIRED', '群分析需要当前账号实际采集并确认方向和发言人身份的原始消息。');
   }
+}
+function wsIngestConversationType(externalId, checkpoints, messages, existing) {
+  const types = [wsCore.conversationType({ externalId }), ...checkpoints.map(wsCore.conversationType),
+    ...messages.map(wsCore.conversationType), ...(existing ? [wsCore.conversationType(existing)] : [])];
+  // Examine the complete packet and stored identity before accepting any body.
+  // A later direct marker must never erase group evidence from an earlier row.
+  if (types.includes('vip_group')) return 'vip_group';
+  if (types.includes('group')) return 'group';
+  if (checkpoints.some(item => item?.conversationType === 'unknown')) return 'unknown';
+  return types.includes('direct') ? 'direct' : 'unknown';
+}
+function wsIngestConversationDecision(account, externalId, conversationType) {
+  const group = ['group', 'vip_group'].includes(conversationType);
+  const decision = wsWorkspacePolicy.decideWsWorkspaceOperation({ account,
+    operation: group ? 'collect-group-messages' : 'collect-direct-messages', conversationType });
+  if (!decision.eligible) return decision;
+  if (group) {
+    try { wsRequireConfiguredGroup(account.id, externalId); }
+    catch (error) { return { eligible: false, code: error.code || 'WS_GROUP_AUTHORIZATION_REQUIRED' }; }
+  }
+  return decision;
+}
+function wsUpsertIngestGroupDiscovery(accountId, externalId, checkpoint, now) {
+  const existing = db.prepare('SELECT * FROM ws_conversations WHERE account_id=? AND external_id=?').get(accountId, externalId);
+  const title = wsText(checkpoint.displayName, 200) || existing?.title || externalId;
+  // A denied body is not history completion, a new preview or a reason to
+  // rewrite old messages, leases and analysis fingerprints.
+  if (existing) {
+    db.prepare('UPDATE ws_conversations SET title=?,updated_at=? WHERE id=? AND account_id=?').run(title, now, existing.id, accountId);
+    return;
+  }
+  db.prepare(`INSERT INTO ws_conversations(id,account_id,external_id,title,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?)`)
+    .run(wsCreateId('wsc'), accountId, externalId, title, JSON.stringify({ conversationType: 'group', isGroup: true,
+      vipGroup: false, visibleOnly: true, historyLoaded: false, coverage: 'group-directory', source: 'ws-list-discovery' }), now, now);
+}
+function wsRequireManualMessageConversation(conversationId, accountId) {
+  const conversation = wsRequireConversation(conversationId, accountId);
+  if (wsIsAiGroupConversation(conversation)) {
+    throw wsConversationPolicyError('WS_GROUP_NATIVE_INGEST_REQUIRED', '群原文须由已授权的专用账号原生采集，手工消息接口不能提供群成员观察证据。');
+  }
+  return conversation;
 }
 const WS_TRUSTED_GROUP_SENDER_SOURCES = new Set(['data-jid','data-contact-id','message-author-jid','message-preamble','sender-phone','sender-jid']);
 function wsVipMemberIdentity(value = {}) {
@@ -3386,7 +3430,7 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/ws/ingest/batch' && req.method === 'POST') {
       const body = JSON.parse((await readBody(req, WS_MESSAGE_BATCH_MAX_BYTES)).toString('utf8'));
       const accountId = wsAccountId(body.accountId);
-      wsRequireAccount(accountId);
+      const account = wsRequireAccount(accountId);
       const capturedAt = wsStrictIso(body.capturedAt) || new Date().toISOString();
       const inputMessages = Array.isArray(body.messages) ? body.messages.slice(0, 1000) : [];
       const inputCheckpoints = Array.isArray(body.checkpoints) ? body.checkpoints.slice(0, 5000) : [];
@@ -3406,7 +3450,7 @@ const server = createServer(async (req, res) => {
       const addConversation = key => {
         const normalized = wsText(key, 200);
         if (!normalized) return null;
-        if (!grouped.has(normalized)) grouped.set(normalized, { messages: [], checkpoints: [] });
+        if (!grouped.has(normalized)) grouped.set(normalized, { messages: [], rawMessages: [], checkpoints: [], skippedMessages: 0 });
         return grouped.get(normalized);
       };
       for (const item of inputCheckpoints) {
@@ -3415,28 +3459,48 @@ const server = createServer(async (req, res) => {
         if (group) group.checkpoints.push(item);
       }
       for (const item of inputMessages) {
+        const group = addConversation(item?.conversationKey);
+        if (group) group.rawMessages.push(item);
+      }
+      for (const [externalId, group] of grouped) {
+        const existing = db.prepare('SELECT * FROM ws_conversations WHERE account_id=? AND external_id=?').get(accountId, externalId);
+        group.type = wsIngestConversationType(externalId, group.checkpoints, group.rawMessages, existing);
+        group.decision = wsIngestConversationDecision(account, externalId, group.type);
+      }
+      let skipped = 0;
+      const skipReasons = {};
+      const skipMessage = (group, code) => {
+        skipped += 1;
+        skipReasons[code] = (skipReasons[code] || 0) + 1;
+        if (group) group.skippedMessages += 1;
+      };
+      for (const item of inputMessages) {
         const key = wsText(item?.conversationKey, 200);
-        const checkpoints = grouped.get(key)?.checkpoints || [];
-        const checkpointIsVip = checkpoints.some(cp => wsIsVipGroup(cp));
-        const checkpointIsOrdinaryGroup = !checkpointIsVip && checkpoints.some(cp => wsIsExcludedGroup(cp));
-        const itemType = wsCore.conversationType(item);
-        if (checkpointIsOrdinaryGroup || (itemType === 'group' && !checkpointIsVip)
-          || (!checkpointIsVip && checkpoints.some(cp => cp?.conversationType === 'unknown'))) continue;
+        const group = grouped.get(key);
+        if (!group) { skipMessage(null, 'WS_CONVERSATION_IDENTITY_UNCONFIRMED'); continue; }
+        if (!group.decision.eligible) { skipMessage(group, group.decision.code); continue; }
+        const isGroup = ['group', 'vip_group'].includes(group.type);
+        if (isGroup && item?.previewOnly === true) { skipMessage(group, 'WS_GROUP_OBSERVATION_REQUIRED'); continue; }
         if (wsMessageTextTooLong(item?.body)) return json(res, 413, { error: `WS 原文超过 ${WS_MESSAGE_MAX_CHARS} 字符，未保存且原值未修改。` });
         const bodyText = wsMessageText(item?.body);
         if (!key || !bodyText.trim()) continue;
-        const group = addConversation(key);
         const rawDirection = String(item?.direction || '').toLowerCase();
         const direction = ['outgoing', 'send', 'sent'].includes(rawDirection)
           ? 'send'
           : ['incoming', 'receive', 'received'].includes(rawDirection) ? 'receive' : '';
-        if (!direction) return json(res, 422, { error: 'WS 消息方向无法确认，批次已拒绝并保留等待重试。' });
         const directionSource = wsText(item?.directionSource, 40);
+        const senderIdentity = wsVipMemberIdentity(item);
+        if (isGroup && (!direction || WS_NATIVE_DIRECTION_SOURCE_MAP.get(directionSource) !== direction)) {
+          skipMessage(group, 'WS_GROUP_DIRECTION_UNCONFIRMED'); continue;
+        }
+        if (isGroup && direction === 'receive' && !senderIdentity.trusted) {
+          skipMessage(group, 'WS_GROUP_MEMBER_IDENTITY_UNCONFIRMED'); continue;
+        }
+        if (!direction) return json(res, 422, { error: 'WS 消息方向无法确认，批次已拒绝并保留等待重试。' });
         if (directionSource && !WS_NATIVE_DIRECTION_SOURCES.has(directionSource)) return json(res, 422, { error: 'WS 消息方向证据无效，批次已拒绝并保留等待重试。' });
         if (directionSource && WS_NATIVE_DIRECTION_SOURCE_MAP.get(directionSource) !== direction) return json(res, 422, { error: 'WS 消息方向与页面证据不一致，批次已拒绝并保留等待重试。' });
         const legacyExternalMessageId = directionSource ? wsText(item?.legacyExternalMessageId, 200) : '';
         const time = wsMessageTimeMetadata(item, capturedAt);
-        const senderIdentity = wsVipMemberIdentity(item);
         group.messages.push({
           externalId: wsText(item?.externalMessageId || item?.externalId, 200),
           legacyExternalMessageId,
@@ -3449,7 +3513,7 @@ const server = createServer(async (req, res) => {
             source: item?.previewOnly === true ? 'ws-list-preview' : 'ws-webview2',
             previewOnly: item?.previewOnly === true,
             cursor: wsText(item?.cursor, 500),
-            ...(checkpointIsVip || itemType === 'vip_group' ? { conversationType:'vip_group', vipGroup:true, isGroup:true } : {}),
+            ...(isGroup ? { conversationType:group.type, vipGroup:group.type === 'vip_group', isGroup:true } : {}),
             ...(senderIdentity.senderId ? { senderId:senderIdentity.senderId } : {}),
             ...(senderIdentity.senderPhone ? { senderPhone:senderIdentity.senderPhone } : {}),
             ...(senderIdentity.senderName ? { senderName:senderIdentity.senderName } : {}),
@@ -3459,7 +3523,7 @@ const server = createServer(async (req, res) => {
           }, time),
         });
       }
-      if (!grouped.size && !inputGroupEvents.length) return json(res, 200, { accepted: 0, deduplicated: 0, repairedTimestamps: 0, repairedDirections: 0, messageIds: [], groupEvents: { accepted: 0, applied: 0, pending: 0, review: 0, ignored: 0, deduplicated: 0, autoRegistered: 0, events: [] }, processedAt: new Date().toISOString() });
+      if (!grouped.size && !inputGroupEvents.length) return json(res, 200, { accepted: 0, skipped, skipReasons, deduplicated: 0, repairedTimestamps: 0, repairedDirections: 0, messageIds: [], groupEvents: { accepted: 0, applied: 0, pending: 0, review: 0, ignored: 0, deduplicated: 0, autoRegistered: 0, events: [] }, processedAt: new Date().toISOString() });
       let accepted = 0, deduplicated = 0, repairedTimestamps = 0, repairedDirections = 0;
       const messageIds = [];
       let groupEventResult = { accepted: 0, applied: 0, pending: 0, review: 0, ignored: 0, deduplicated: 0, autoRegistered: 0, events: [] };
@@ -3468,20 +3532,15 @@ const server = createServer(async (req, res) => {
       try {
         for (const [externalKey, group] of grouped) {
           let conversation = db.prepare('SELECT * FROM ws_conversations WHERE account_id=? AND external_id=?').get(accountId, externalKey);
-          const checkpoint = group.checkpoints.at(-1) || {};
-          const checkpointTypes = group.checkpoints.map(item => wsCore.conversationType(item));
-          const type = checkpointTypes.includes('vip_group')
-            ? 'vip_group'
-            : checkpointTypes.includes('group')
-              ? 'group'
-              : (checkpointTypes.includes('direct') ? 'direct' : wsCore.conversationType({ ...checkpoint, externalId:externalKey }) === 'unknown' && conversation ? wsCore.conversationType(conversation) : wsCore.conversationType({ ...checkpoint, externalId:externalKey }));
-          if (type === 'group') {
-            // Keep ordinary group identity metadata so the fixed monitor can
-            // offer a name-based picker. The row is still excluded from the
-            // personal customer/AI inventory and never receives messages.
-            conversation = wsUpsertExcludedGroupConversation(accountId, externalKey, checkpoint, now);
-            wsQuiesceGroup(conversation, now);
+          const checkpoint = { ...(group.checkpoints.at(-1) || {}) };
+          const type = group.type;
+          if (['group', 'vip_group'].includes(type) && !group.decision.eligible) {
+            wsUpsertIngestGroupDiscovery(accountId, externalKey, checkpoint, now);
             continue;
+          }
+          if (type === 'direct' && !group.decision.eligible) continue;
+          if (group.skippedMessages && ['group', 'vip_group'].includes(type)) {
+            Object.assign(checkpoint, { historyLoaded: false, coverage: 'read-history-member-unresolved', collectionStatus: 'retryable' });
           }
           const typeUnresolved = type === 'unknown';
           if (typeUnresolved) { group.messages = []; Object.assign(checkpoint, {historyLoaded:false, coverage:'conversation-type-unresolved', collectionStatus:'retryable'}); }
@@ -3515,7 +3574,7 @@ const server = createServer(async (req, res) => {
           const checkpointData = {
             source: 'ws-list-discovery',
             ...(type === 'direct' || typeUnresolved ? { conversationType:type, isGroup:false, vipGroup:false } : {}),
-            ...(type === 'vip_group' ? { conversationType:'vip_group', isGroup:true, vipGroup:true } : {}),
+            ...(['group', 'vip_group'].includes(type) ? { conversationType:type, isGroup:true, vipGroup:type === 'vip_group' } : {}),
             visibleOnly: true,
             displayName: wsText(checkpoint.displayName, 200),
             cursor: wsText(checkpoint.cursor, 500),
@@ -3697,7 +3756,7 @@ const server = createServer(async (req, res) => {
         try { db.exec('ROLLBACK'); } catch {}
         throw error;
       }
-      return json(res, 200, { accepted, deduplicated, repairedTimestamps, repairedDirections, messageIds, groupEvents: groupEventResult, processedAt: new Date().toISOString() });
+      return json(res, 200, { accepted, skipped, skipReasons, deduplicated, repairedTimestamps, repairedDirections, messageIds, groupEvents: groupEventResult, processedAt: new Date().toISOString() });
     }
     if (url.pathname === '/api/ws/settings') {
       const conversationId = wsText(url.searchParams.get('conversationId'), 160);
@@ -3818,7 +3877,7 @@ const server = createServer(async (req, res) => {
       const body = JSON.parse((await readBody(req, WS_MESSAGE_BATCH_MAX_BYTES)).toString('utf8'));
       const conversationId = wsText(body.conversationId, 160);
       const accountId = wsAccountId(body.accountId);
-      wsRequireConversation(conversationId, accountId);
+      wsRequireManualMessageConversation(conversationId, accountId);
       if (!Array.isArray(body.messages) || !body.messages.length) return json(res, 400, { error: 'WS 批次没有可保存的消息。' });
       if (body.messages.length > 500) return json(res, 413, { error: '单次最多保存 500 条 WS 消息，请拆分批次。' });
       const messages = body.messages;
@@ -3954,7 +4013,7 @@ const server = createServer(async (req, res) => {
         const body = JSON.parse((await readBody(req, 2 * 1024 * 1024)).toString('utf8'));
         const conversationId = wsText(body.conversationId, 160);
         const accountId = wsAccountId(body.accountId);
-        wsRequireConversation(conversationId, accountId);
+        wsRequireManualMessageConversation(conversationId, accountId);
         const externalId = wsText(body.externalId, 200);
         const id = wsText(body.id, 160) || wsCreateId('wsm');
         if (!WS_DIRECTIONS.has(wsText(body.direction, 16))) return json(res, 400, { error: 'WS 消息方向无效。' });

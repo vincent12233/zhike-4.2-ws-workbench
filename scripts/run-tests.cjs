@@ -77,6 +77,7 @@ function runStage3(options = {}) {
   run('Stage 3 group manager core', [path.join(repo, 'scripts', 'stage3', 'ws-group-manager.test.cjs')]);
   run('Stage 3 group manager isolated API and Mock Transport', [path.join(repo, 'scripts', 'stage3', 'ws-group-manager-api.test.cjs')], { timeout: 180000 });
   run('Production group manager local data and account isolation', [path.join(repo, 'tests', 'ws-group-manager-production.test.cjs')], { timeout: 180000 });
+  run('WS ingest purpose and group evidence', [path.join(repo, 'tests', 'ws-ingest-workspace-mode.test.cjs')]);
   run('WS AI account purpose and member evidence', [path.join(repo, 'tests', 'ws-ai-workspace-mode.test.cjs')]);
   run('WS account purpose operations', [path.join(repo, 'tests', 'ws-workspace-policy.test.cjs')]);
   run('WS account purpose in group monitor writes', [path.join(repo, 'tests', 'ws-group-monitor-workspace-mode.test.cjs')]);
