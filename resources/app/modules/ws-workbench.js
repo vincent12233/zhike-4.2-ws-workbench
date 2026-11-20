@@ -246,6 +246,7 @@
     // displayed or the desktop window is minimised.
     backgroundActive: false,
     accounts: [],
+    accountMetrics: null,
     workspaceMode: 'ordinary',
     workspaceGeneration: 0,
     activeAccountId: '',
@@ -559,6 +560,7 @@
       if (sequence !== state.accountLoadSequence || workspaceMode !== state.workspaceMode) return;
       const loadedAccounts = result.accounts.filter(account => accountWorkspaceMode(account) === workspaceMode);
       state.accounts = loadedAccounts;
+      state.accountMetrics = result.accountMetrics || null;
       const preferred = state.pendingRestoreAccountId || readStoredAccountId();
       const selected = loadedAccounts.find(item => String(item.id) === preferred)
         || loadedAccounts.find(item => String(item.id) === state.activeAccountId)
@@ -572,6 +574,12 @@
         try {
           const status = await window.zhikeDesktop.ws({ action: 'status', accountId: active.id });
           if (sequence === state.accountLoadSequence && workspaceMode === state.workspaceMode) updateAccountStatus(status);
+          if (result.accountMetrics && sequence === state.accountLoadSequence && workspaceMode === state.workspaceMode) {
+            // Read the completed probe observation without creating or probing
+            // any additional account WebView.
+            const refreshed = await window.zhikeDesktop.wsAccounts({ action: 'list' });
+            if (sequence === state.accountLoadSequence && workspaceMode === state.workspaceMode) state.accountMetrics = refreshed?.accountMetrics || null;
+          }
          } catch (error) {
            if (sequence === state.accountLoadSequence) state.error = `WS 账号状态检测失败：${String(error?.message || '桌面视图暂不可用').slice(0, 200)}`;
          }
@@ -3775,8 +3783,8 @@
     const run = state.collectionRun || {};
     const stats = state.aiQueueStats || {};
     let body = '';
-    if (activeView === 'overview') body = `<section class="ws-workspace-card ws-workspace-welcome zk-surface zk-surface--accent"><span class="ws-workspace-eyebrow">WORKSPACE / OVERVIEW</span><h3>开始今天的客户运营</h3><p>在独立工作区管理账号、查看真实采集记录，并随时回到前台聊天。</p><button type="button" class="btn primary" data-ws-workspace-view="chat">进入前台聊天 <span aria-hidden="true">↗</span></button></section><section class="ws-workspace-metrics" aria-label="已加载工作区概况"><div><span>已加载账号</span><strong>${state.accounts.length || '—'}</strong><small>本机隔离会话</small></div><div><span>已加载会话</span><strong>${state.lastLoadedAt ? (state.conversations || []).length : '—'}</strong><small>${state.lastLoadedAt ? '当前账号本地记录' : '等待读取本地记录'}</small></div><div><span>已加载群组</span><strong>${state.groupMonitor?.lastLoadedAt ? groupDirectoryRows().length : '—'}</strong><small>${state.groupMonitor?.lastLoadedAt ? '当前账号同步目录' : '等待同步群组目录'}</small></div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>工作区入口</strong><span>每项功能拥有独立页面，页面切换保留账号会话。</span></div><span class="ws-status-badge">${esc(state.wsStatus)}</span></div><div class="ws-workspace-entry-grid">${workspaceViews().filter(item => !['overview', 'chat'].includes(item.id)).map(item => `<button type="button" class="ws-workspace-entry zk-surface zk-surface--interactive" data-ws-workspace-view="${item.id}"><span class="ws-workspace-nav-icon" aria-hidden="true"><svg class="zk-icon" viewBox="0 0 24 24" focusable="false"><use href="#i-${esc(item.icon)}"/></svg></span><span><strong>${esc(item.label)}</strong><small>${esc(item.hint)}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>运行说明</strong><span>任务按当前账号的配置执行。</span></div><span class="ws-status-badge">按配置运行</span></div><p class="ws-muted">自动 AI 默认关闭，可在 AI 页面明确授权一个私聊及费用上限。群组自动建档仅处理已启用监控中确认的成员事件；请在对应账号内核对任务配置。</p></section>`;
-    else if (activeView === 'accounts') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>账号与连接</strong><span>账号作用域独立，切换保留各账号隔离会话。</span></div><button class="btn small" data-ws-action="create-account">＋ 添加账号</button></div>${renderAccountForm()}<div class="ws-workspace-metrics"><div><span>已加载 WS 账号</span><strong>${state.accounts.length}</strong><small>本机隔离会话</small></div><div><span>当前账号</span><strong>${esc(account)}</strong><small>${esc(state.wsStatus)}</small></div><div><span>后台状态</span><strong>${esc(collectorStatusLabel())}</strong><small>独立采集会话，需单独扫码登录</small></div></div>${renderCollectorControls()}${renderWorkspaceList('accounts', state.accounts, rows => renderAccountList(rows))}</section>`;
+    if (activeView === 'overview') body = `<section class="ws-workspace-card ws-workspace-welcome zk-surface zk-surface--accent"><span class="ws-workspace-eyebrow">WORKSPACE / OVERVIEW</span><h3>开始今天的客户运营</h3><p>在独立工作区管理账号、查看真实采集记录，并随时回到前台聊天。</p><button type="button" class="btn primary" data-ws-workspace-view="chat">进入前台聊天 <span aria-hidden="true">↗</span></button></section><section class="ws-workspace-metrics" aria-label="已加载工作区概况"><div><span>已登记账号</span><strong>${state.accounts.length}</strong><small>当前用途登记记录</small></div><div><span>已加载会话</span><strong>${state.lastLoadedAt ? (state.conversations || []).length : '—'}</strong><small>${state.lastLoadedAt ? '当前账号本地记录' : '等待读取本地记录'}</small></div><div><span>已加载群组</span><strong>${state.groupMonitor?.lastLoadedAt ? groupDirectoryRows().length : '—'}</strong><small>${state.groupMonitor?.lastLoadedAt ? '当前账号同步目录' : '等待同步群组目录'}</small></div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>工作区入口</strong><span>每项功能拥有独立页面，页面切换保留账号会话。</span></div><span class="ws-status-badge">${esc(state.wsStatus)}</span></div><div class="ws-workspace-entry-grid">${workspaceViews().filter(item => !['overview', 'chat'].includes(item.id)).map(item => `<button type="button" class="ws-workspace-entry zk-surface zk-surface--interactive" data-ws-workspace-view="${item.id}"><span class="ws-workspace-nav-icon" aria-hidden="true"><svg class="zk-icon" viewBox="0 0 24 24" focusable="false"><use href="#i-${esc(item.icon)}"/></svg></span><span><strong>${esc(item.label)}</strong><small>${esc(item.hint)}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>运行说明</strong><span>任务按当前账号的配置执行。</span></div><span class="ws-status-badge">按配置运行</span></div><p class="ws-muted">自动 AI 默认关闭，可在 AI 页面明确授权一个私聊及费用上限。群组自动建档仅处理已启用监控中确认的成员事件；请在对应账号内核对任务配置。</p></section>`;
+    else if (activeView === 'accounts') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>账号与连接</strong><span>账号作用域独立，切换保留各账号隔离会话。</span></div><button class="btn small" data-ws-action="create-account">＋ 添加账号</button></div>${renderAccountForm()}${renderAccountMetrics()}${renderCollectorControls()}${renderWorkspaceList('accounts', state.accounts, rows => renderAccountList(rows))}</section>`;
     else if (activeView === 'groups') body = renderGroupDirectory() + (groupReading?.render() || '');
     else if (activeView === 'group-reading') body = renderWorkspaceGroupReading();
     else if (activeView === 'group-permissions') body = groupPermissions?.render() || '<section class="ws-workspace-card"><p>权限模块未加载；管理员资格与发言权限 UNKNOWN，实际开关群 BLOCKED。</p></section>';
@@ -4033,6 +4041,43 @@
       return `${rows}<div class="ws-session-pagination">${previous}<span>${windowStart + 1}–${windowEnd} / ${matches.length}</span>${next}</div>`;
     }
     return `<div class="ws-empty">${state.conversations.length ? '没有匹配的会话。' : '还没有本机会话。输入会话标识后建立记录，不会预置演示数据。'}</div>`;
+  }
+  function summarizeAccountMetrics(accounts, snapshot, mode, now = Date.now()) {
+    const scoped = accounts.filter(account => accountWorkspaceMode(account) === mode);
+    const rows = new Map((Array.isArray(snapshot?.accounts) ? snapshot.accounts : []).filter(row => row?.workspaceMode === mode).map(row => [String(row.accountId), row]));
+    const result = { registered: scoped.length, saved: 0, savedUnknown: 0, savedForeground: 0, savedCollector: 0, savedSessionUnknown: 0, online: 0, onlineUnknown: 0, foreground: 0, collector: 0, webViewUnknown: 0, running: 0, runningUnknown: 0, generatedAt: snapshot?.generatedAt || '' };
+    for (const account of scoped) {
+      const row = rows.get(String(account.id));
+      if (row?.savedSession === 'confirmed') result.saved += 1;
+      else if (row?.savedSession !== 'none') result.savedUnknown += 1;
+      for (const [field, counter] of [['foregroundSavedSession', 'savedForeground'], ['collectorSavedSession', 'savedCollector']]) {
+        if (row?.[field] === 'confirmed') result[counter] += 1;
+        else if (row?.[field] !== 'none') result.savedSessionUnknown += 1;
+      }
+      const at = Date.parse(row?.lastOnlineProbeAt || ''), age = now - at;
+      const fresh = Number.isFinite(at) && age >= 0 && age <= 30000;
+      if (row?.onlineState === 'recent' && fresh) result.online += 1;
+      else if (row?.onlineState !== 'not-online' || !fresh) result.onlineUnknown += 1;
+      if (typeof row?.foregroundInitialized === 'boolean' && typeof row?.collectorInitialized === 'boolean') {
+        result.foreground += Number(row.foregroundInitialized); result.collector += Number(row.collectorInitialized);
+      } else result.webViewUnknown += 1;
+      if (typeof row?.collectorRunning === 'boolean') result.running += Number(row.collectorRunning);
+      else result.runningUnknown += 1;
+    }
+    return result;
+  }
+  function renderAccountMetrics() {
+    const metrics = summarizeAccountMetrics(state.accounts, state.accountMetrics, state.workspaceMode);
+    const value = (count, unknown) => unknown === metrics.registered && unknown > 0 ? '未知' : String(count);
+    const unknown = count => count ? ` · ${count} 个未知` : '';
+    const generated = Date.parse(metrics.generatedAt);
+    return `<section class="ws-account-metrics" aria-label="当前用途账号指标"><div class="ws-workspace-metrics">
+      <div><span>已登记账号</span><strong>${metrics.registered}</strong><small>${esc(workspaceLabel())}登记记录</small></div>
+      <div><span>已保存登录会话</span><strong>${metrics.savedSessionUnknown === metrics.registered * 2 && metrics.savedSessionUnknown > 0 ? '未知' : metrics.savedForeground + metrics.savedCollector}</strong><small>前台 ${metrics.savedForeground} · 采集 ${metrics.savedCollector} · 对应 ${metrics.saved} 个账号${unknown(metrics.savedSessionUnknown)}</small></div>
+      <div><span>近期检测在线账号</span><strong>${value(metrics.online, metrics.onlineUnknown)}</strong><small>30 秒内前台登录检测${unknown(metrics.onlineUnknown)}</small></div>
+      <div><span>已初始化 WebView2</span><strong>${value(metrics.foreground + metrics.collector, metrics.webViewUnknown)}</strong><small>前台 ${metrics.foreground} · 后台 ${metrics.collector}${unknown(metrics.webViewUnknown)}</small></div>
+      <div><span>运行采集会话</span><strong>${value(metrics.running, metrics.runningUnknown)}</strong><small>独立采集已启动${unknown(metrics.runningUnknown)}</small></div>
+    </div><p class="ws-muted">${Number.isFinite(generated) ? `本机快照：${esc(new Date(generated).toLocaleString())}。` : '尚未读取本机运行快照。'}登记和保存登录不代表当前在线；历史状态不推定登录。点击页面刷新更新指标，不会新开登录窗口。</p></section>`;
   }
   function renderAccountList(accounts = state.accounts) {
     if (state.accountsLoading) return '<div class="ws-empty ws-loading">正在加载 WS 账号…</div>';
@@ -4309,7 +4354,7 @@
     captureWorkspaceNavScroll();
     if (!modeAccount(state.activeAccountId)) {
       const blocked = WS_BLOCKED_VIEWS.has(state.wsWorkspaceView) || state.wsWorkspaceView === 'group-broadcast' ? renderWsWorkspacePage(state.wsWorkspaceView) : '';
-      target.innerHTML = `<div class="ws-workbench-shell ${state.wsWorkspaceNavCollapsed ? 'ws-nav-collapsed' : ''}" data-ws-workspace-mode="${state.workspaceMode}">${renderWsWorkspaceNav()}<div class="ws-workbench-page ws-workspace-empty"><section class="ws-workspace-page-content"><h2>${workspaceLabel()}</h2><p role="status">${state.accountsLoading ? '正在读取此用途的账号…' : '当前用途暂无可用账号。添加账号后需独立扫码登录。'}</p>${state.error ? '<p class="ws-error-line" role="alert">' + esc(state.error) + '</p>' : ''}<button class="btn primary" data-ws-action="create-account">添加${workspaceLabel()}账号</button><button class="btn" data-ws-action="refresh-accounts">刷新账号列表</button>${renderAccountForm()}</section>${blocked}</div></div>`;
+      target.innerHTML = `<div class="ws-workbench-shell ${state.wsWorkspaceNavCollapsed ? 'ws-nav-collapsed' : ''}" data-ws-workspace-mode="${state.workspaceMode}">${renderWsWorkspaceNav()}<div class="ws-workbench-page ws-workspace-empty"><section class="ws-workspace-page-content"><h2>${workspaceLabel()}</h2><p role="status">${state.accountsLoading ? '正在读取此用途的账号…' : '当前用途暂无可用账号。添加账号后需独立扫码登录。'}</p>${state.error ? '<p class="ws-error-line" role="alert">' + esc(state.error) + '</p>' : ''}<button class="btn primary" data-ws-action="create-account">添加${workspaceLabel()}账号</button><button class="btn" data-ws-action="refresh-accounts">刷新账号列表</button>${renderAccountForm()}${renderAccountMetrics()}</section>${blocked}</div></div>`;
       restoreWorkspaceNavScroll();
       return;
     }
@@ -4396,7 +4441,7 @@
         <div class="ws-layout ${state.leftCollapsed ? 'left-collapsed' : ''} ${assistPanelClosed ? 'right-collapsed assist-closed' : 'assist-open'} mobile-${state.mobilePanel}" style="--ws-assist-column-width:${assistDrawerColumnWidth()}px;--ws-assist-drawer-width:${state.assistDrawerWidth}px;--ws-assist-drawer-offset-x:${state.assistDrawerOffset.x}px;--ws-assist-drawer-offset-y:${state.assistDrawerOffset.y}px">
           <aside id="wsSessionsPanel" class="ws-sessions-panel" aria-label="WS 账号与会话">
             <button class="ws-sidebar-collapse ws-sidebar-collapse-left" data-ws-action="toggle-left" aria-expanded="${state.leftCollapsed ? 'false' : 'true'}" aria-controls="wsSessionsPanel" title="${state.leftCollapsed ? '展开会话栏' : '收起会话栏'}"><span aria-hidden="true">${state.leftCollapsed ? '›' : '‹'}</span><b>${state.leftCollapsed ? '会话' : '收起'}</b></button>
-            <div class="ws-panel-heading"><div><strong>WS 账号</strong><span>${state.accounts.length} 个本机隔离会话</span></div><button class="btn small" data-ws-action="create-account" ${state.accountBusy ? 'disabled' : ''}>＋ 添加账号</button></div>
+            <div class="ws-panel-heading"><div><strong>WS 账号</strong><span>${state.accounts.length} 个已登记账号</span></div><button class="btn small" data-ws-action="create-account" ${state.accountBusy ? 'disabled' : ''}>＋ 添加账号</button></div>
             ${renderAccountForm()}<div class="ws-account-list">${renderAccountList()}</div>
             <div class="ws-panel-heading ws-conversation-heading"><div><strong>会话</strong><span>${state.conversations.length} 个本地记录 · ${esc(accountDisplayName(activeAccount()))}</span></div><button class="icon-button" data-ws-action="new-conversation" title="建立会话">＋</button></div>
             <input id="wsConversationSearch" class="ws-search-input" placeholder="搜索客户、标识或消息" value="${esc(state.conversationQuery)}">

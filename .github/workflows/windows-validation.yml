@@ -61,6 +61,8 @@ jobs:
             'tests/ws-group-drafts-backup.test.cjs',
             'tests/ws-group-drafts-restore-core.test.cjs',
             'tests/ws-account-workspace-mode.test.cjs',
+            'tests/ws-account-metrics-native.test.cjs',
+            'tests/ws-account-metrics-ui.test.cjs',
             'tests/ws-workspace-mode-ui.test.cjs',
             'tests/ws-background-isolation.test.cjs',
             'tests/ws-workbench-security.test.cjs',

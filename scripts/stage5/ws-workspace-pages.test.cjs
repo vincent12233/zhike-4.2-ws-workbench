@@ -28,7 +28,10 @@ const sandbox = { state, esc, text: value => String(value ?? '').trim(), getHost
 sandbox.businessPages = require('../../resources/app/modules/ws-business-pages.js');
 sandbox.window = { ZhikeWsGroupReading: require('../../resources/app/modules/ws-group-reading-ui.js') };
 for (const name of ['renderAccountList', 'renderAccountForm', 'renderGroupMonitorCard', 'renderCollectionCard', 'renderWsFlowStrip', 'renderAnalysis', 'renderDataArchiveSummary', 'renderHotProfile', 'renderFollowupAlerts']) sandbox[name] = () => `<div data-service-projection="${name}"></div>`;
-vm.runInNewContext(source.slice(capabilityStart, capabilityEnd) + source.slice(metadataStart, metadataEnd) + source.slice(navStart, navEnd) + source.slice(listStart, listEnd) + source.slice(pageStart, pageEnd) + '\nglobalThis.nav=renderWsWorkspaceNav;globalThis.page=renderWsWorkspacePage;globalThis.listWindow=workspaceListWindow;globalThis.setFilter=applyWorkspaceListFilter;globalThis.groupWindow=groupDirectoryWindow;globalThis.groupControl=applyGroupDirectoryControl;globalThis.capability=collectionCapability;globalThis.blocked=collectionBlockedResult;', sandbox);
+sandbox.activeConversation = () => null;
+const aiPanel = source.slice(source.indexOf('  function renderAiAuthorization('), source.indexOf('  async function aiAuthorizationAction('));
+const metricPanel = source.slice(source.indexOf('  function summarizeAccountMetrics('), source.indexOf('  function renderAccountList('));
+vm.runInNewContext(aiPanel + metricPanel + source.slice(capabilityStart, capabilityEnd) + source.slice(metadataStart, metadataEnd) + source.slice(navStart, navEnd) + source.slice(listStart, listEnd) + source.slice(pageStart, pageEnd) + '\nglobalThis.nav=renderWsWorkspaceNav;globalThis.page=renderWsWorkspacePage;globalThis.listWindow=workspaceListWindow;globalThis.setFilter=applyWorkspaceListFilter;globalThis.groupWindow=groupDirectoryWindow;globalThis.groupControl=applyGroupDirectoryControl;globalThis.capability=collectionCapability;globalThis.blocked=collectionBlockedResult;', sandbox);
 const beforeCapability = JSON.stringify(state);
 assert.equal(sandbox.capability().backgroundCollection, false);
 assert.equal(sandbox.capability().foregroundFallback, false);

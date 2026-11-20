@@ -49,6 +49,25 @@ public sealed class WebViewProfileService(string? root = null)
     private string CollectorPath(string safeId)
         => Path.Combine(_root, ".independent-collectors-v2", $"{safeId}-collector-v2");
 
+    // Directory metadata only. Do not initialize an environment or inspect
+    // cookies, databases or any other authentication contents for metrics.
+    public long? GetProfileDirectoryStamp(string accountId, bool collector)
+    {
+        var safeId = SafeId(accountId);
+        if (string.IsNullOrEmpty(safeId)) return null;
+        try
+        {
+            var path = collector ? CollectorPath(safeId) : Path.Combine(_root, safeId);
+            var attributes = File.GetAttributes(path);
+            if ((attributes & FileAttributes.Directory) == 0 || (attributes & FileAttributes.ReparsePoint) != 0) return null;
+            return Directory.GetCreationTimeUtc(path).Ticks;
+        }
+        catch (DirectoryNotFoundException) { return 0; }
+        catch (FileNotFoundException) { return 0; }
+        catch (IOException) { return null; }
+        catch (UnauthorizedAccessException) { return null; }
+    }
+
     private static async Task<CoreWebView2Environment> CreateEnvironmentAsync(string profilePath)
     {
         Directory.CreateDirectory(profilePath);

@@ -2,7 +2,9 @@ using System.Text.Json;
 
 namespace Zhike.Desktop.Services;
 
-public sealed record StoredWsAccount(string Id, string DisplayName, string Status, DateTimeOffset? LastSeen = null, string? LastKnownStatus = null, string WorkspaceMode = "ordinary");
+public sealed record StoredWsLoginObservation(DateTimeOffset ObservedAt, long ProfileCreatedUtcTicks, bool SignedIn);
+public sealed record StoredWsAccount(string Id, string DisplayName, string Status, DateTimeOffset? LastSeen = null, string? LastKnownStatus = null, string WorkspaceMode = "ordinary",
+    StoredWsLoginObservation? ForegroundLoginObservation = null, StoredWsLoginObservation? CollectorLoginObservation = null);
 
 /// <summary>
 /// Small local account index used before/without the API.  It stores only

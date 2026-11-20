@@ -1019,3 +1019,5 @@ html[data-motion="off"] body.ws-workspace-active .ws-workbench-shell *::after{sc
 .ws-group-draft-history th:first-child{width:70%}
 .ws-group-drafts [hidden]{display:none!important}
 @media(max-width:900px){.ws-group-draft-columns{grid-template-columns:minmax(0,1fr)}}
+.ws-account-metrics .ws-workspace-metrics { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.ws-account-metrics .ws-workspace-metrics small { white-space: normal; }

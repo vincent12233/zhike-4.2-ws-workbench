@@ -80,6 +80,7 @@ public sealed partial class LegacyUiHostPage : Page
     private bool _wsRuntimeBound;
     private EventHandler? _wsSessionsChangedHandler;
     private readonly ConcurrentDictionary<string, long> _wsStatusSequence = new(StringComparer.OrdinalIgnoreCase);
+    private readonly WsAccountMetrics _wsAccountMetrics = new();
     private readonly Dictionary<WebView2, WsNavigationLifecycle> _wsNavigation = new();
     private readonly Dictionary<WebView2, Action> _wsCollectorCleanup = new();
     private readonly Dictionary<WebView2, SemaphoreSlim> _wsCollectorGates = new();
@@ -501,6 +502,7 @@ public sealed partial class LegacyUiHostPage : Page
                 if (string.Equals(App.WsService.ActiveAccountId, accountId, StringComparison.OrdinalIgnoreCase)) _wsSendGuard.Invalidate();
                 OnWsNavigationStarting(null, args);
                 visibleNavigation.Starting(args.NavigationId, args.Cancel, args.IsUserInitiated && !args.IsRedirected);
+                if (!args.Cancel) _wsAccountMetrics.Invalidate(accountId);
 #if STAGE51_ISOLATED_UI
                 Stage51Isolation.Record("navigation-starting", new { accountId, generation, surface = visibleNavigation.Surface, navigationId = args.NavigationId, cancelled = args.Cancel, source = visibleNavigation.RequestSource, cycle = visibleNavigation.Cycle, request = visibleNavigation.RequestSequence });
 #endif
@@ -536,15 +538,19 @@ public sealed partial class LegacyUiHostPage : Page
             }
             void NewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs args)
                 => OnWsNewWindowRequested(sender, args);
+            void ProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs args) => _wsAccountMetrics.Invalidate(accountId);
             core.WebMessageReceived += MessageReceived;
             core.NavigationStarting += NavigationStarting;
             core.NavigationCompleted += NavigationCompleted;
             core.NewWindowRequested += NewWindowRequested;
+            core.ProcessFailed += ProcessFailed;
             // Foreground and collector are separate controls. Initialization
             // of the collector is an explicit user action with its own login.
             return new WsWebViewSessionRegistration(view, released =>
             {
                 visibleNavigation.Dispose();
+                _wsAccountMetrics.Invalidate(accountId);
+                _wsAccountMetrics.Invalidate(accountId, collector: true);
                 _wsNavigation.Remove(released);
                 if (released.CoreWebView2 is not null)
                 {
@@ -552,6 +558,7 @@ public sealed partial class LegacyUiHostPage : Page
                     released.CoreWebView2.NavigationStarting -= NavigationStarting;
                     released.CoreWebView2.NavigationCompleted -= NavigationCompleted;
                     released.CoreWebView2.NewWindowRequested -= NewWindowRequested;
+                    released.CoreWebView2.ProcessFailed -= ProcessFailed;
                     try { released.CoreWebView2.Navigate("about:blank"); } catch { }
                 }
                 if (_wsCollectorCleanup.Remove(collector, out var cleanup)) cleanup();
@@ -683,6 +690,7 @@ public sealed partial class LegacyUiHostPage : Page
             OnWsNavigationStarting(sender, args);
             navigation.Starting(args.NavigationId, args.Cancel, args.IsUserInitiated && !args.IsRedirected);
             if (args.Cancel || !App.WsSessions.IsCurrent(session.AccountId, session.Generation, view)) return;
+            _wsAccountMetrics.Invalidate(session.AccountId, collector: true);
             _wsCollectorStarted.Remove(view);
         _wsCollectorPurposes.Remove(view);
             _wsCollectorEpoch[view] = _wsCollectorEpoch.GetValueOrDefault(view) + 1;
@@ -707,13 +715,20 @@ public sealed partial class LegacyUiHostPage : Page
             catch { PublishCollectorState(session, "error", "独立采集页面初始化失败，请重新打开采集登录。"); }
         }
         void NewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs args) => OnWsNewWindowRequested(sender, args);
+        void ProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs args)
+        {
+            _wsAccountMetrics.Invalidate(session.AccountId, collector: true);
+            _wsCollectorStarted.Remove(view);
+        }
         core.WebMessageReceived += MessageReceived;
         core.NavigationStarting += NavigationStarting;
         core.NavigationCompleted += NavigationCompleted;
         core.NewWindowRequested += NewWindowRequested;
+        core.ProcessFailed += ProcessFailed;
         _wsCollectorCleanup[view] = () =>
         {
             navigation.Dispose();
+            _wsAccountMetrics.Invalidate(session.AccountId, collector: true);
             _wsNavigation.Remove(view);
             _wsCollectorEpoch.Remove(view);
             _wsCollectorPurposes.Remove(view);
@@ -721,6 +736,7 @@ public sealed partial class LegacyUiHostPage : Page
             core.NavigationStarting -= NavigationStarting;
             core.NavigationCompleted -= NavigationCompleted;
             core.NewWindowRequested -= NewWindowRequested;
+            core.ProcessFailed -= ProcessFailed;
         };
         navigation.Request("explicit-collector-login", explicitBoundary: true);
         core.Navigate("https://web.whatsapp.com/");
@@ -1443,7 +1459,7 @@ public sealed partial class LegacyUiHostPage : Page
         if (action == "list" || string.IsNullOrWhiteSpace(action))
         {
             var accounts = await LoadWsAccountsAsync(cancellationToken);
-            return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { accounts = accounts.Select(ToWsAccountDto).ToArray() }));
+            return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { accounts = accounts.Select(ToWsAccountDto).ToArray(), accountMetrics = BuildWsAccountMetrics(accounts) }, new JsonSerializerOptions(JsonSerializerDefaults.Web)));
         }
         if (action == "forget")
         {
@@ -2091,6 +2107,12 @@ public sealed partial class LegacyUiHostPage : Page
     private static object ToWsAccountDto(StoredWsAccount account)
         => new { id = account.Id, displayName = account.DisplayName, status = account.Status, runtimeStatus = account.Status, lastSeen = account.LastSeen, lastKnownStatus = account.LastKnownStatus, workspaceMode = account.WorkspaceMode };
 
+    private WsAccountMetricsSnapshot BuildWsAccountMetrics(IReadOnlyList<StoredWsAccount> accounts)
+        => _wsAccountMetrics.Snapshot(accounts, App.WsSessions.Sessions().Select(session => new WsAccountMetricRuntime(
+            session.AccountId, session.Generation, session.IsReady, session.IsCollectorReady,
+            session.CollectorView is { } collector && _wsCollectorStarted.Contains(collector) ? session.CollectorState : "not-started")).ToArray(),
+            _wsProfiles.GetProfileDirectoryStamp, DateTimeOffset.UtcNow);
+
     private async Task OpenWsOverlayAsync(string accountId, JsonElement payload, bool reload = false, CancellationToken cancellationToken = default)
     {
         await _wsGate.WaitAsync(cancellationToken);
@@ -2144,6 +2166,7 @@ public sealed partial class LegacyUiHostPage : Page
         HideWsOverlay();
         if (clearProfile)
         {
+            await ClearWsLoginObservationsAsync(accountId, cancellationToken);
             await Task.Delay(100, cancellationToken);
             return await _wsProfiles.ClearProfileAsync(accountId);
         }
@@ -2508,10 +2531,19 @@ public sealed partial class LegacyUiHostPage : Page
         bool publishStatus = true)
     {
         if (view?.CoreWebView2 is null) return ("未连接", "WS 页面尚未打开。");
+        var sourceSession = App.WsSessions.Sessions().FirstOrDefault(item => item.AccountId.Equals(accountId, StringComparison.OrdinalIgnoreCase) && item.Generation == generation);
+        var collector = ReferenceEquals(sourceSession?.CollectorView, view);
+        if (sourceSession is null || !App.WsSessions.IsCurrent(accountId, generation, view)) return ("未连接", "WS 会话代数已改变。");
+        if (!IsAllowedWsPopupNavigation(view.CoreWebView2.Source))
+        {
+            _wsAccountMetrics.Invalidate(accountId, collector);
+            return ("未连接", "WS 页面尚未完成有效导航。");
+        }
+        var lease = _wsAccountMetrics.BeginProbe(accountId, generation, collector);
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var json = await view.CoreWebView2.ExecuteScriptAsync("(() => { const body=document.body; const text=(body?.innerText||'').slice(0,6000); const login=!!document.querySelector('[data-testid=\\\"qrcode\\\"], canvas[aria-label*=\\\"QR\\\" i], [data-ref]'); const chat=!!document.querySelector('#pane-side') || (!!document.querySelector('[data-testid=\\\"chat-list\\\"], [aria-label=\\\"Chat list\\\"], [aria-label=\\\"聊天列表\\\"], [role=\\\"grid\\\"]') && !!document.querySelector('[data-testid=\\\"search-input\\\"], [contenteditable=\\\"true\\\"], [role=\\\"textbox\\\"]')); const problem=/此页面存在问题|page has a problem|update your browser|更新浏览器/i.test(text); return JSON.stringify({login,chat,problem,text:text.slice(0,2000)}); })()").AsTask().ConfigureAwait(false);
+            var json = await view.CoreWebView2.ExecuteScriptAsync("(() => { const body=document.body; const text=(body?.innerText||'').slice(0,6000); const login=!!document.querySelector('[data-testid=\\\"qrcode\\\"], canvas[aria-label*=\\\"QR\\\" i], [data-ref]'); const chat=!!document.querySelector('#pane-side') || (!!document.querySelector('[data-testid=\\\"chat-list\\\"], [aria-label=\\\"Chat list\\\"], [aria-label=\\\"聊天列表\\\"], [role=\\\"grid\\\"]') && !!document.querySelector('[data-testid=\\\"search-input\\\"], [contenteditable=\\\"true\\\"], [role=\\\"textbox\\\"]')); const problem=/此页面存在问题|page has a problem|update your browser|更新浏览器/i.test(text); return JSON.stringify({login,chat,problem,text:text.slice(0,2000)}); })()").AsTask();
             cancellationToken.ThrowIfCancellationRequested();
             var probeText = JsonSerializer.Deserialize<string>(json) ?? "{}";
             using var probe = JsonDocument.Parse(probeText);
@@ -2520,13 +2552,18 @@ public sealed partial class LegacyUiHostPage : Page
             var chat = root.TryGetProperty("chat", out var chatValue) && chatValue.ValueKind == JsonValueKind.True;
             var problem = root.TryGetProperty("problem", out var problemValue) && problemValue.ValueKind == JsonValueKind.True;
             var text = root.TryGetProperty("text", out var textValue) ? textValue.ToString() : string.Empty;
-            var status = problem ? "连接失败" : chat ? "已连接" : login || text.Contains("Scan to log in", StringComparison.OrdinalIgnoreCase) || text.Contains("扫码", StringComparison.OrdinalIgnoreCase) ? "等待登录" : "连接中";
+            var status = problem ? "连接失败" : login ? "等待登录" : chat ? "已连接" : text.Contains("Scan to log in", StringComparison.OrdinalIgnoreCase) || text.Contains("扫码", StringComparison.OrdinalIgnoreCase) ? "等待登录" : "连接中";
             var detail = status == "已连接" ? "已检测到 WS 主界面。" : status == "连接失败" ? "WS 页面提示浏览器或页面异常，请刷新后重试。" : "请在 WS 页面自行扫码或登录。";
-            var isCurrent = App.WsSessions.IsCurrent(accountId, generation, view);
+            var isCurrent = App.WsSessions.IsCurrent(accountId, generation, view) && _wsAccountMetrics.IsCurrent(lease)
+                && IsAllowedWsPopupNavigation(view.CoreWebView2.Source);
+            if (!isCurrent) return ("连接中", "本次登录检测已过期，请刷新。");
+            _wsAccountMetrics.CompleteProbe(lease, status == "已连接", DateTimeOffset.UtcNow);
+            if (status is "已连接" or "等待登录") await SaveWsLoginObservationAsync(lease, view, status == "已连接", cancellationToken);
+            isCurrent = App.WsSessions.IsCurrent(accountId, generation, view) && _wsAccountMetrics.IsCurrent(lease);
             if (publishStatus && isCurrent)
             {
                 await SetWsStatusAsync(accountId, status, cancellationToken);
-                PublishWsStatus(JsonSerializer.SerializeToElement(new { accountId, status, detail }));
+                if (App.WsSessions.IsCurrent(accountId, generation, view) && _wsAccountMetrics.IsCurrent(lease)) PublishWsStatus(JsonSerializer.SerializeToElement(new { accountId, status, detail }));
             }
             return (status, detail);
         }
@@ -2536,8 +2573,35 @@ public sealed partial class LegacyUiHostPage : Page
         }
         catch
         {
+            if (App.WsSessions.IsCurrent(accountId, generation, view)) _wsAccountMetrics.CompleteProbe(lease, false, DateTimeOffset.UtcNow);
             return ("连接失败", "WS 页面状态检测失败，请重试。");
         }
+    }
+
+    private async Task SaveWsLoginObservationAsync(WsAccountProbeLease lease, WebView2 view, bool signedIn, CancellationToken cancellationToken)
+    {
+        var stamp = _wsProfiles.GetProfileDirectoryStamp(lease.AccountId, lease.Collector);
+        if (stamp is null or <= 0) return;
+        var observation = new StoredWsLoginObservation(DateTimeOffset.UtcNow, stamp.Value, signedIn);
+        await _wsAccountStore.UpdateAsync(rows =>
+        {
+            if (!_wsAccountMetrics.IsCurrent(lease) || !App.WsSessions.IsCurrent(lease.AccountId, lease.Generation, view)) return rows;
+            return rows.Select(item =>
+            {
+                if (!item.Id.Equals(lease.AccountId, StringComparison.OrdinalIgnoreCase)) return item;
+                var previous = lease.Collector ? item.CollectorLoginObservation : item.ForegroundLoginObservation;
+                if (previous?.SignedIn == signedIn && previous.ProfileCreatedUtcTicks == stamp) return item;
+                return lease.Collector ? item with { CollectorLoginObservation = observation } : item with { ForegroundLoginObservation = observation };
+            }).ToArray();
+        }, cancellationToken);
+    }
+
+    private async Task ClearWsLoginObservationsAsync(string accountId, CancellationToken cancellationToken)
+    {
+        _wsAccountMetrics.Invalidate(accountId);
+        _wsAccountMetrics.Invalidate(accountId, collector: true);
+        await _wsAccountStore.UpdateAsync(rows => rows.Select(item => item.Id.Equals(accountId, StringComparison.OrdinalIgnoreCase)
+            ? item with { ForegroundLoginObservation = null, CollectorLoginObservation = null } : item), cancellationToken);
     }
 
     private async Task SetWsStatusAsync(string accountId, string status, CancellationToken cancellationToken = default)

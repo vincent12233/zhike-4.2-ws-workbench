@@ -17,7 +17,7 @@ function take(from, to) {
   return source.slice(begin, end);
 }
 
-const services = ['WsAccountStore.cs', 'ApiClient.cs', 'BridgeContracts.cs', 'WsCollectorPurposePolicy.cs']
+const services = ['WsAccountStore.cs', 'WsAccountMetrics.cs', 'ApiClient.cs', 'BridgeContracts.cs', 'WsCollectorPurposePolicy.cs']
   .map(name => `<Compile Include="${escapeXml(path.join(desktop, 'Services', name))}" Link="${name}" />`).join('');
 const project = path.join(root, 'Probe.csproj');
 fs.writeFileSync(project, `<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType>
@@ -139,7 +139,10 @@ Check(listedModes.Ok && listedModes.Data?.GetProperty("accounts").EnumerateArray
 Console.WriteLine("Native WS account registration: retry, recovery, forget, ordinary/dedicated role persistence and purpose checks passed");
 
 static class DesktopBridgeService { public const string CurrentVersion = "fixture"; }
-static class App { public static Runtime WsRuntime { get; } = new(); }
+static class App { public static Runtime WsRuntime { get; } = new(); public static EmptySessions WsSessions { get; } = new(); }
+sealed class EmptySessions { public IReadOnlyList<FixtureSession> Sessions() => []; }
+sealed record FixtureSession(string AccountId, long Generation, bool IsReady, bool IsCollectorReady, object? CollectorView, string CollectorState);
+sealed class EmptyProfiles { public long? GetProfileDirectoryStamp(string id, bool collector) => 0; }
 sealed class Runtime {
     public List<string> Removed { get; } = [];
     public void RegisterAccounts(IEnumerable<StoredWsAccount> rows) {}
@@ -167,6 +170,9 @@ sealed class Sidecar : HttpMessageHandler {
 }
 sealed class Probe(WsAccountStore store, ApiClient api) {
     readonly WsAccountStore _wsAccountStore = store;
+    readonly WsAccountMetrics _wsAccountMetrics = new();
+    readonly EmptyProfiles _wsProfiles = new();
+    readonly HashSet<object> _wsCollectorStarted = [];
     readonly SemaphoreSlim _wsAccountMutationGate = new(1, 1);
     readonly ApiClient? _api = api;
     public List<string> Released { get; } = [];
