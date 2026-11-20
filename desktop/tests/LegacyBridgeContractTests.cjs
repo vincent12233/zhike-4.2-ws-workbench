@@ -78,6 +78,9 @@ async function verifyRoundTrip() {
     .replace('__ZHikeLocalDbFlag__', 'true')
     .replace('__ZhikeStorageMode__', "'local'"), {
     window,
+    crypto: require('node:crypto').webcrypto,
+    Headers,
+    Response,
     AbortController,
     setTimeout,
     clearTimeout,
@@ -127,6 +130,34 @@ async function verifyRoundTrip() {
   assert.equal(cancelRequest.method, 'ai.cancel');
   assert.equal(cancelRequest.payload.requestId, 'analysis-cancel-1',
     'page cancellation must cancel the exact active native request');
+
+  const url = '/api/workspace/restore';
+  const body = '{"chat":"' + 'A'.repeat(1024 * 1024 - 10) + '🙌中文群聊"}';
+  const init = { method: 'POST', headers: { 'X-State-Version': '27' }, body };
+  const restored = window.fetch(url, init);
+  const first = posted;
+  assert.equal(first.method, 'workspace.restore.part');
+  assert.equal(first.payload.offset, 0);
+  assert.equal(first.payload.last, false);
+  assert.equal(first.payload.chunk.endsWith('\ud83d'), false, 'UTF-16 surrogate pairs stay in one native chunk');
+  receive({ data: { type: 'zhike.bridge.response', requestId: first.requestId, ok: true, data: { nextOffset: first.payload.chunk.length } } });
+  await new Promise(resolve => setImmediate(resolve));
+  const last = posted;
+  assert.equal(last.payload.last, true);
+  assert.equal(last.payload.version, '27');
+  assert.equal(first.payload.chunk + last.payload.chunk, body);
+  assert.equal(last.timeoutMs, 300000);
+  receive({ data: { type: 'zhike.bridge.response', requestId: last.requestId, ok: false, errorCode: 'WORKSPACE_RESTORE_REJECTED', message: '版本冲突' } });
+  const failed = await restored;
+  assert.equal(failed.ok, false);
+  assert.equal((await failed.json()).code, 'WORKSPACE_RESTORE_REJECTED');
+
+  assert.equal((await window.fetch(url, { method: 'POST', body: '{}' })).status, 428);
+  const replay = window.fetch(url, { ...init, headers: { 'X-State-Version': '' }, body: '{}' });
+  assert.equal(posted.payload.last, true);
+  assert.equal(posted.payload.version, '', 'a fresh database explicitly has the empty version');
+  receive({ data: { type: 'zhike.bridge.response', requestId: posted.requestId, ok: true, data: { ok: true, operationId: 'receipt', version: '28' } } });
+  assert.deepEqual(await (await replay).json(), { ok: true, operationId: 'receipt', version: '28' });
 }
 
 verifyRoundTrip().then(() => console.log('legacy bridge contract: runtime request/response matching and import/state timeout pass'));

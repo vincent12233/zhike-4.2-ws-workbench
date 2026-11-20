@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="..\..\src\Zhike.Desktop\Services\BackupRetention.cs" Link="BackupRetention.cs" />
     <Compile Include="..\..\src\Zhike.Desktop\Services\NativeBackupEnvelope.cs" Link="NativeBackupEnvelope.cs" />
+    <Compile Include="..\..\src\Zhike.Desktop\Services\WorkspaceRestoreTransfer.cs" Link="WorkspaceRestoreTransfer.cs" />
     <Compile Include="..\..\src\Zhike.Desktop\Services\WsAccountStore.cs" Link="WsAccountStore.cs" />
   </ItemGroup>
 </Project>

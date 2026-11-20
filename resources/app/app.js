@@ -1717,95 +1717,99 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
     const unsignedBackup={...backup};delete unsignedBackup.integrity;const actualHash=await sha256Text(JSON.stringify(unsignedBackup));if(actualHash!==String(integrity.payloadSha256).toLowerCase())throw new Error('备份完整性校验失败，文件可能已损坏或被修改。');
     return backup;
   }
-  async function importBackupWsAccounts(backup, existingNativeIds, createdNativeIds, createdServerIds){
-    const service=window.__zhikeWsBackup;
+  function prepareBackupWsAccounts(backup){
     const entries=backup.wsAccounts&&typeof backup.wsAccounts==='object'&&!Array.isArray(backup.wsAccounts)?Object.entries(backup.wsAccounts):backup.ws?[['default',backup.ws]]:[];
-    if(!entries.length)return;
-    if(!service?.importData||!service?.ensureAccount)throw new Error('WS 本机数据服务不可用，未执行恢复。');
+    const accounts=[];
+    if(!entries.length)return accounts;
     const accountMeta=new Map((Array.isArray(backup.wsAccountMetadata)?backup.wsAccountMetadata:[]).map(item=>[String(item?.id||''),item]));
     for(const [accountId,value] of entries){
       if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('备份中的 WS 账号数据格式异常，未执行恢复。');
-      const id=String(accountId),meta=accountMeta.get(id)||{},displayName=String(meta.displayName||id);
+      const id=String(accountId),meta=accountMeta.get(id)||{};
       const embedded=Array.isArray(value.accounts)&&value.accounts.length===1?value.accounts[0]:null;
       if(Object.hasOwn(value,'accounts')&&(!embedded||String(embedded.id)!==id))throw new Error('WS 备份账号元数据与账号编号不一致，恢复已取消。');
       if(Object.hasOwn(meta,'workspaceMode')&&embedded&&Object.hasOwn(embedded,'workspaceMode')&&meta.workspaceMode!==embedded.workspaceMode)throw new Error('WS 备份的两处账号用途不一致，恢复已取消。');
       const backupMode=Object.hasOwn(meta,'workspaceMode')?meta.workspaceMode:embedded&&Object.hasOwn(embedded,'workspaceMode')?embedded.workspaceMode:undefined;
-      const ensured=await service.ensureAccount(id,displayName,backupMode);
-      if(ensured?.created)createdServerIds.push(id);
-      if(window.zhikeDesktop?.wsAccounts&&!existingNativeIds.has(id.toLowerCase())){
-        createdNativeIds.push(id);
-        const native=await window.zhikeDesktop.wsAccounts({action:'create',account:{id,displayName,workspaceMode:ensured.workspaceMode}});
-        if(String(native?.account?.id||'').toLowerCase()!==id.toLowerCase()||(native.account.workspaceMode===undefined?'ordinary':native.account.workspaceMode)!==ensured.workspaceMode)throw new Error('无法登记 WS 本机账号，恢复已取消。');
-      }
-      const accountData={...value};delete accountData.groupDrafts;
-      await service.importData(accountData,id);
+      const metadata={...embedded,id,displayName:meta.displayName||embedded?.displayName||id};
+      if(backupMode!==undefined)metadata.workspaceMode=backupMode;
+      accounts.push({...value,accountId:id,accounts:[metadata]});
     }
+    return accounts;
   }
-  async function rollbackCreatedWsAccounts(createdNativeIds,createdServerIds){
-    const failed=[];
-    for(const id of [...createdNativeIds].reverse())try{const result=await window.zhikeDesktop.wsAccounts({action:'forget',accountId:id});if(result?.forgotten!==true||String(result?.accountId||'').toLowerCase()!==id.toLowerCase())throw new Error('本机账号回滚未确认');}catch{failed.push(id);}
-    for(const id of [...createdServerIds].reverse())try{await window.__zhikeWsBackup.deleteAccount(id);}catch{failed.push(id);}
-    if(failed.length)throw new Error('新 WS 账号清理失败，请检查账号列表后重试。');
+  function prepareBackupCrm(backup){
+    const incoming={customers:normalizeCustomerRows(backup.customers,backup.settings?.sourceDefinitions),tickets:normalizeObjectRows(backup.tickets),deposits:normalizeObjectRows(backup.deposits),followups:normalizeObjectRows(backup.followups),registrations:normalizeObjectRows(backup.registrations),phoneRegistry:normalizeObjectRows(backup.phoneRegistry),batchOperations:normalizeObjectRows(backup.batchOperations),savedViews:normalizeSavedViews(backup.savedViews),activities:normalizeObjectRows(backup.activities),channelAliases:backup.channelAliases&&typeof backup.channelAliases==='object'?backup.channelAliases:{},settings:backup.settings&&typeof backup.settings==='object'?backup.settings:{},importIssues:normalizeObjectRows(backup.importIssues),qualityDecisions:backup.qualityDecisions&&typeof backup.qualityDecisions==='object'?backup.qualityDecisions:{}};
+    const previous=Object.fromEntries(Object.keys(incoming).map(key=>[key,state[key]]));
+    const lists=Object.fromEntries(Object.entries(optionCatalog).map(([key,item])=>[key,[...item.values]]));
+    const previousLedgerDirty=groupLedgerDirty;
+    // Existing normalization reads the active option catalog. Stage it only
+    // within this synchronous turn, then put the live workspace back before I/O.
+    try{
+      Object.assign(state,incoming);groupLedgerDirty=true;applyOptionLists();exposeImportSourceCatalog();
+      const restoredAt=new Date();
+      state.activities=[{id:`A${Date.now()}-${Math.random().toString(36).slice(2,6)}`,text:`从备份恢复 ${state.customers.length} 位客户`,time:restoredAt.toLocaleString('zh-CN'),createdAt:restoredAt.toISOString(),color:'green'},...state.activities].slice(0,5000);
+      return statePayload();
+    }finally{
+      Object.assign(state,previous);groupLedgerDirty=previousLedgerDirty;
+      for(const [key,values] of Object.entries(lists))optionCatalog[key].values.splice(0,optionCatalog[key].values.length,...values);
+    }
   }
   async function restoreBackupFile(file){
     if(!file)return;
     if(file.size>250*1024*1024){toast('备份文件超过 250 MB 上限','x');return;}
-    let rollback=null,wsRollback=null;
-    const createdNativeIds=[],createdServerIds=[];
-    let existingNativeIds=new Set(),wsTouched=false,crmRestored=false;
+    if(destructiveWriteBusy){toast('已有工作区更改正在执行，请稍候。','x');return;}
+    destructiveWriteBusy=true;localDataRevision++;
+    let refreshAfter=false,accounts=[];
+    const surface=typeof document==='undefined'?null:document.body;
+    const wasInert=surface?.inert;
     try{
       const backup=await decodeWorkspaceBackupFile(await file.text());
-      const draftAccounts=[];
-      for(const [accountId,value] of backup.wsAccounts&&typeof backup.wsAccounts==='object'?Object.entries(backup.wsAccounts):backup.ws?[['default',backup.ws]]:[]){
-        if(value&&Object.hasOwn(value,'groupDrafts')){
-          if(!Array.isArray(value.groupDrafts))throw new Error('备份中的群组草稿不是有效数组，未执行恢复。');
-          if(value.groupDrafts.length)draftAccounts.push({accountId,groupDrafts:value.groupDrafts});
-        }
-      }
-      if(window.__LOCAL_DB__&&draftAccounts.length&&!window.__zhikeWsBackup?.importGroupDrafts)throw new Error('群组草稿恢复服务不可用，未执行恢复。');
+      if(Object.hasOwn(backup,'wsAccounts')&&(!backup.wsAccounts||typeof backup.wsAccounts!=='object'||Array.isArray(backup.wsAccounts)))throw new Error('备份中的 WS 账号清单格式无效。');
       validateBackupData(backup);validateStatusHistoryData(backup);for(const key of ['registrations','batchOperations'])if(Object.hasOwn(backup,key)&&(!Array.isArray(backup[key])||backup[key].some(item=>!item||typeof item!=='object'||Array.isArray(item))))throw new Error(`备份中的${key==='registrations'?'报名记录':'批量操作记录'}格式异常，未执行恢复。`);
       const currentSummary={customers:state.customers.length,tickets:state.tickets.length,deposits:state.deposits.length,followups:state.followups.length},backupSummary={customers:backup.customers.length,tickets:Array.isArray(backup.tickets)?backup.tickets.length:0,deposits:Array.isArray(backup.deposits)?backup.deposits.length:0,followups:Array.isArray(backup.followups)?backup.followups.length:0};const created=backup.createdAt&&Number.isFinite(Date.parse(backup.createdAt))?new Date(backup.createdAt).toLocaleString():'未记录';const differences=[['客户',currentSummary.customers,backupSummary.customers],['跟票',currentSummary.tickets,backupSummary.tickets],['入金',currentSummary.deposits,backupSummary.deposits],['跟进',currentSummary.followups,backupSummary.followups]].map(([label,current,next])=>`${label}：当前 ${current} → 备份 ${next}（${next-current>=0?'+':''}${next-current}）`).join('\n');if(!confirm(`恢复差异预览\n备份时间：${created}\n\n${differences}\n\n确认后将替换当前工作区，并先自动建立当前数据快照。`))return;
+      if(surface)surface.inert=true;
       if(window.__LOCAL_DB__){
         await flushStateWrites();
         const snapshot=await fetch('/api/snapshot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:'恢复 JSON 备份前自动快照'})});
         const snapshotResult=await snapshot.json().catch(()=>({}));if(!snapshot.ok||snapshotResult.snapshotCreated!==true)throw new Error('无法建立恢复前快照，未执行恢复。');
-        const wsService=window.__zhikeWsBackup;
-        if(!wsService?.listAccounts||!wsService?.exportData)throw new Error('WS 本机数据服务不可用，未执行恢复。');
-        const listed=await wsService.listAccounts(),accountRows=listed?.accounts;
-        if(!Array.isArray(accountRows)||!accountRows.length)throw new Error('无法读取完整 WS 账号清单，未执行恢复。');
-        const nativeList=window.zhikeDesktop?.wsAccounts?await window.zhikeDesktop.wsAccounts({action:'list'}):listed;
-        if(!Array.isArray(nativeList?.accounts))throw new Error('无法读取本机 WS 账号清单，未执行恢复。');
-        existingNativeIds=new Set(nativeList.accounts.map(item=>String(item?.id||'').toLowerCase()).filter(Boolean));
-        wsRollback={};for(const account of accountRows)wsRollback[account.id]=await wsService.exportData(account.id);
+        accounts=prepareBackupWsAccounts(backup);
       }
-      rollback={crmPayload:window.__LOCAL_DB__?cloneStateData(statePayload()):null,state:{customers:state.customers,tickets:state.tickets,deposits:state.deposits,followups:state.followups,registrations:state.registrations,phoneRegistry:state.phoneRegistry,batchOperations:state.batchOperations,savedViews:state.savedViews,activities:state.activities,channelAliases:state.channelAliases,settings:state.settings,importIssues:state.importIssues,qualityDecisions:state.qualityDecisions},options:Object.fromEntries(Object.entries(optionCatalog).map(([key,item])=>[key,[...item.values]]))};
-      Object.assign(state,{customers:normalizeCustomerRows(backup.customers),tickets:normalizeObjectRows(backup.tickets),deposits:normalizeObjectRows(backup.deposits),followups:normalizeObjectRows(backup.followups),registrations:normalizeObjectRows(backup.registrations),phoneRegistry:normalizeObjectRows(backup.phoneRegistry),batchOperations:normalizeObjectRows(backup.batchOperations),savedViews:normalizeSavedViews(backup.savedViews),activities:normalizeObjectRows(backup.activities),channelAliases:backup.channelAliases&&typeof backup.channelAliases==='object'?backup.channelAliases:{},settings:backup.settings&&typeof backup.settings==='object'?backup.settings:{},importIssues:normalizeObjectRows(backup.importIssues),qualityDecisions:backup.qualityDecisions&&typeof backup.qualityDecisions==='object'?backup.qualityDecisions:{}});applyOptionLists();exposeImportSourceCatalog();
-       if(window.__LOCAL_DB__){wsTouched=true;await importBackupWsAccounts(backup,existingNativeIds,createdNativeIds,createdServerIds);}
-       state.selected.clear();state.extraFilters={};state.customerSearch='';
-       const restoredAt=new Date();state.activities.unshift({id:`A${Date.now()}-${Math.random().toString(36).slice(2,6)}`,text:`从备份恢复 ${state.customers.length} 位客户`,time:restoredAt.toLocaleString('zh-CN'),createdAt:restoredAt.toISOString(),color:'green'});state.activities=state.activities.slice(0,5000);
-       if(window.__LOCAL_DB__){const payload=statePayload();const response=await fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json','X-State-Version':stateVersion},body:JSON.stringify(payload)});if(!response.ok){const failure=await response.json().catch(()=>({}));throw new Error(failure.error||'恢复写入失败，当前数据已保留。');}crmRestored=true;const saved=await response.json().catch(()=>({}));stateVersion=String(saved.version||stateVersion);lastCommittedState=cloneStateData(payload);}else persist();
-       if(window.__LOCAL_DB__&&draftAccounts.length){
-         const payload={operationId:await sha256Text(JSON.stringify(draftAccounts)),accounts:draftAccounts};
-         let uncertain=false;
-         for(let attempt=0;attempt<2;attempt++)try{
-           const result=await window.__zhikeWsBackup.importGroupDrafts(payload);
-           if(result?.ok!==true||result.operationId!==payload.operationId||result.sendAvailable!==false)throw new Error('群组草稿恢复确认无效。');
-           uncertain=false;break;
-         }catch(error){
-           if(!uncertain&&[400,403,404,409,413,422].includes(error?.status))throw error;
-           uncertain=true;
-           if(attempt===1)throw Object.assign(error,{groupDraftOutcomeUnknown:true});
+      const crm=prepareBackupCrm(backup);
+      if(window.__LOCAL_DB__){
+         const operationId=crypto.randomUUID();
+         const body=JSON.stringify({operationId,crm,accounts});
+         const headers={'Content-Type':'application/json','X-State-Version':stateVersion};
+         for(let attempt=0;attempt<2;attempt++){
+           try{
+             const response=await fetch('/api/workspace/restore',{method:'POST',headers,body});
+             const result=await response.json();
+             if(!response.ok)throw Object.assign(new Error(result.error||result.message||'工作区恢复失败。'),{restoreRejected:(result.code||result.errorCode)==='WORKSPACE_RESTORE_REJECTED'});
+             if(result.ok!==true||result.operationId!==operationId||!result.version)throw new Error('恢复结果未能确认。');
+             stateVersion=String(result.version);lastCommittedState=cloneStateData(crm);break;
+           }catch(error){
+             if(error.restoreRejected)throw error;
+             if(attempt===1)throw Object.assign(error,{restoreOutcomeUnknown:true});
+           }
          }
+       }
+       applySharedData(crm);
+       if(!window.__LOCAL_DB__)persist();
+       state.selected.clear();state.extraFilters={};state.customerSearch='';
+       if(accounts.length&&window.zhikeDesktop?.wsAccounts){
+         try{
+           const listed=await window.zhikeDesktop.wsAccounts({action:'list'});
+           if(!accounts.every(item=>listed?.accounts?.some(row=>row.id===item.accountId)))throw new Error();
+         }catch{try{render();}catch{}toast('工作区已恢复，桌面账号列表尚未刷新，请重新打开工作台。','x');return;}
        }
        try{render();toast(`备份恢复完成：${state.customers.length} 位客户`);}catch{toast('备份数据已恢复，但页面刷新失败；请重新打开知客工作台。','x');}
      }catch(error){
-        if(error?.groupDraftOutcomeUnknown){try{render();}catch{}toast('CRM 和 WS 会话已恢复；群组草稿提交结果未确认，未执行回滚。请重新导入同一备份幂等复核，不会发送消息或复活已取消草稿。','x');return;}
-        let rollbackError=null;
-        if(crmRestored&&rollback?.crmPayload)try{const response=await fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json','X-State-Version':stateVersion},body:JSON.stringify(rollback.crmPayload)});if(!response.ok)throw new Error('CRM 恢复补偿失败');const saved=await response.json();stateVersion=String(saved.version||stateVersion);lastCommittedState=cloneStateData(rollback.crmPayload);}catch(crmError){rollbackError=crmError;}
-        if(wsTouched&&wsRollback&&window.__zhikeWsBackup?.importData)for(const [accountId,value] of Object.entries(wsRollback))try{await window.__zhikeWsBackup.importData(value,accountId);}catch(wsError){rollbackError=wsError;}
-        if(createdNativeIds.length||createdServerIds.length)try{await rollbackCreatedWsAccounts(createdNativeIds,createdServerIds);}catch(wsError){rollbackError=wsError;}
-       if(rollback){Object.assign(state,rollback.state);for(const [key,values] of Object.entries(rollback.options))optionCatalog[key].values.splice(0,optionCatalog[key].values.length,...values);businessIndexCache=null;businessRecordsCache={revision:-1,tickets:null,deposits:null};countsCache=null;qualityScanCache={revision:-1,value:null};crmFollowCache.signature='';crmProfileCache=new WeakMap();intakePhoneIndex=null;render();}
-       toast((error.message||'无法读取备份文件')+(rollbackError?'；工作区数据回滚失败，请立即保留当前备份文件并重试':''),'x');
+       refreshAfter=Boolean(window.__LOCAL_DB__);
+       if(error?.restoreOutcomeUnknown){
+         toast('工作区恢复结果未确认，请重新打开工作台核对数据库状态。','x');return;
+       }
+       toast(error.message||'无法读取备份文件','x');
+     }finally{
+       destructiveWriteBusy=false;
+       if(surface)surface.inert=wasInert;
+       if(refreshAfter)try{await refreshSharedState();}catch{}
      }
   }
   function saveIntake(){if(!state.parsed.length){toast('请先粘贴客户资料');return;}let added=0;const keep=[],newCustomers=[],knownPhones=knownIntakePhones(),knownVipNumbers=new Set(knownIntakeVipNumbers().keys()),batchTime=Date.now(),manualDate=$('#manualRegistered')?.checked,defaultDate=manualDate?($('#defaultRegistered')?.value||today):today,defaults=currentIntakeDefaults();for(const row of state.parsed){if(row.phone.length!==10||row.issues.length){keep.push(row.raw);continue;}if(knownPhones.has(row.phone)){keep.push(row.raw);continue;}const vipNumber=String(row.vipNumber||defaults.vipNumber||'').trim().slice(0,64),vipKeyValue=vipKey(vipNumber);if(vipKeyValue&&knownVipNumbers.has(vipKeyValue)){keep.push(row.raw);continue;}const page=row.pageExplicit?row.page:($('#defaultPage')?.value||''),source=normalizeBusinessSource(row.sourceExplicit?row.source:'',page,defaults.source);const item={id:`C${batchTime}-${added}-${Math.random().toString(36).slice(2,6)}`,name:row.name||'未命名客户',rawPhone:row.rawPhone,phone:row.phone,source,page,channel:source,assistant:row.assistant==='未分配'?($('#defaultAssistant')?.value||'未分配'):row.assistant,status:row.statusExplicit?row.status:($('#defaultStatus')?.value||(isGroupFanSource(source)?'在群':'未进群')),phase:row.phase||$('#defaultPhase')?.value||'新客户',hot:row.hotExplicit?row.hot:Boolean(defaults.hot),investor:row.investorExplicit?row.investor:Boolean(defaults.investor),group:row.group||$('#defaultGroup')?.value||'—',vipNumber,ticket:false,deposit:false,amount:0,registered:row.registered||defaultDate,lastFollow:'',due:row.due||(state.settings.autoInitialFollow===false?'—':localDateOffset(1)),note:row.note||$('#defaultNote')?.value||'',deleted:false,touched:false};item.status=recordCustomerStatus(item,item.status,{initial:true});newCustomers.push(item);knownPhones.set(row.phone,item);if(vipKeyValue)knownVipNumbers.add(vipKeyValue);added++;}if(state.customers.length+newCustomers.length>250000){toast('客户库已达到 250,000 条上限，本次录入未写入。','x');return;}if(added){state.settings.intakeBatches=[{id:'IB'+batchTime,createdAt:new Date().toISOString(),added,remaining:keep.length,customerIds:newCustomers.map(c=>c.id)},...(state.settings.intakeBatches||[])].slice(0,200);}state.customers=newCustomers.concat(state.customers);state.intakeText=keep.join('\n');state.settings.intakeDefaults=defaults;state.settings.intakeDraft={text:state.intakeText,defaults};persist();activity(`快速录入新增 ${added} 位客户`);parseIntake();return {added,remaining:keep.length};

@@ -31,6 +31,7 @@ public sealed partial class LegacyUiHostPage : Page
     private readonly WsSendOperationGuard _wsSendGuard = new();
     private readonly AiBridgeService _ai = new();
     private readonly DesktopToolsService _desktopTools = new();
+    private readonly WorkspaceRestoreTransfer _workspaceRestore = new();
     private ApiClient? _api;
     private DesktopBridgeService? _bridge;
     private ApiClient? _bridgeApi;
@@ -299,6 +300,7 @@ public sealed partial class LegacyUiHostPage : Page
 
     private async void OnUnloaded(object sender, RoutedEventArgs args)
     {
+        _workspaceRestore.Reset();
         _wsSendGuard.Invalidate();
 #if STAGE51_ISOLATED_UI
         Stage51Isolation.Record("host-unloaded", new { route = _currentRoute });
@@ -1285,6 +1287,8 @@ public sealed partial class LegacyUiHostPage : Page
             {
                 "ws.accounts" => await HandleWsAccountsAsync(requestId, payload, cancellationToken),
                 "legacy.api" => await HandleLegacyApiAsync(requestId, payload, cancellationToken),
+                "workspace.restore.part" when _api is not null => BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion,
+                    await _workspaceRestore.ReceiveAsync(payload, _api.RestoreWorkspaceAsync, cancellationToken)),
                 "ws" => await HandleWsActionAsync(requestId, payload, accountId, cancellationToken),
                 "tools" => await HandleToolsAsync(requestId, payload, cancellationToken),
                 "ai" => await HandleAiBridgeAsync(requestId, "request", payload, timeout, cancellationToken),
@@ -1294,6 +1298,7 @@ public sealed partial class LegacyUiHostPage : Page
                 _ => null,
             };
         }
+        catch (WorkspaceRestoreRejectedException error) { return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "WORKSPACE_RESTORE_REJECTED", error.Message); }
         catch (OperationCanceledException)
         {
             return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "TIMEOUT", "desktop bridge request timed out");

@@ -13,6 +13,28 @@ const { observeSidecarStartup, requestWithStartupDiagnostics } = require('./help
 const app = path.resolve(__dirname, '../resources/app');
 const now = '2026-11-20T00:00:00.000Z';
 const copy = value => JSON.parse(JSON.stringify(value));
+test('v31 migration preserves local send attempts, media attachments and account deletion', () => {
+  const db = new DatabaseSync(':memory:');
+  try {
+    db.exec('PRAGMA foreign_keys=ON; CREATE TABLE ws_accounts(id TEXT PRIMARY KEY); CREATE TABLE ws_conversations(id TEXT PRIMARY KEY);');
+    for(const name of ['016-ws-send-audit.sql','018-ws-export-media.sql'])db.exec(fs.readFileSync(path.join(app,'migrations',name),'utf8'));
+    db.exec("INSERT INTO ws_accounts VALUES('seat'); INSERT INTO ws_conversations VALUES('chat')");
+    db.prepare("INSERT INTO ws_send_audit(id,account_id,conversation_id,idempotency_key,status,native_result_json,created_at,updated_at) VALUES('audit','seat','chat','old-key','sending',?,?,?)").run('{"sendAttempt":{"id":"old-attempt"}}',now,now);
+    db.prepare("INSERT INTO ws_media_assets(id,account_id,created_at,updated_at) VALUES('media','seat',?,?)").run(now,now);
+    db.prepare("INSERT INTO ws_send_attachments(id,account_id,send_audit_id,media_id,created_at,updated_at) VALUES('attachment','seat','audit','media',?,?)").run(now,now);
+    db.exec('BEGIN IMMEDIATE');
+    db.exec(fs.readFileSync(path.join(app,'migrations','031-workspace-restore-audit.sql'),'utf8'));
+    db.exec('COMMIT');
+    db.exec("DELETE FROM ws_conversations WHERE id='chat'");
+    const audit=db.prepare('SELECT * FROM ws_send_audit').get();
+    assert.equal(audit.idempotency_key,'old-key');assert.equal(JSON.parse(audit.native_result_json).sendAttempt.id,'old-attempt');
+    assert.equal(db.prepare('SELECT send_audit_id FROM ws_send_attachments').get().send_audit_id,'audit');
+    assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
+    db.exec("DELETE FROM ws_accounts WHERE id='seat'");
+    assert.equal(db.prepare('SELECT count(*) n FROM ws_send_audit').get().n,0);
+    assert.equal(db.prepare('SELECT count(*) n FROM ws_send_attachments').get().n,0);
+  } finally { db.close(); }
+});
 function seed(root) {
   const db = new DatabaseSync(path.join(root, 'workspace.sqlite'));
   try {
@@ -42,9 +64,9 @@ test('account backup restores group draft history atomically and never revives o
   });
   const closed = new Promise(resolve => child.once('close', resolve));
   const observation = observeSidecarStartup(child, { secrets: [token] });
-  const request = async (route, body, expected = 200) => {
+  const request = async (route, body, expected = 200, version) => {
     const headers = { origin, 'x-zhike-api-token': token, 'content-type': 'application/json' };
-    if (body !== undefined) headers['x-state-version'] = (await fetch(origin + '/api/state/version', { headers }).then(response => response.json())).version;
+    if (body !== undefined) headers['x-state-version'] = version ?? (await fetch(origin + '/api/state/version', { headers }).then(response => response.json())).version;
     const response = await fetch(origin + route, { method: body === undefined ? 'GET' : 'POST', signal: AbortSignal.timeout(5000), headers,
       ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
     const result = await response.json(); assert.equal(response.status, expected, `${route}: ${JSON.stringify(result)}`); return result;
@@ -151,6 +173,65 @@ test('account backup restores group draft history atomically and never revives o
       const db = new DatabaseSync(path.join(dataDir, 'workspace.sqlite'), { readOnly: true });
       try { assert.equal(db.prepare('SELECT COUNT(*) AS n FROM ws_send_audit').get().n, 0); }
       finally { db.close(); }
+    });
+    await t.test('a failing account, CRM conflict or stale version leaves trusted data and unrelated accounts untouched', async () => {
+      const fixture = new DatabaseSync(path.join(dataDir, 'workspace.sqlite'));
+      try {
+        for (const id of ['atomic-a','atomic-b']) {
+          fixture.prepare('INSERT INTO ws_accounts(id,display_name,created_at,updated_at) VALUES(?,?,?,?)').run(id,id,now,now);
+          fixture.prepare('INSERT INTO ws_conversations(id,account_id,external_id,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?)').run(id,id,id,'{"conversationType":"direct"}',now,now);
+          fixture.prepare("INSERT INTO ws_messages(id,account_id,conversation_id,original_text,direction,data_json,created_at,updated_at) VALUES(?,?,?,'synthetic','receive',?,?,?)").run(id,id,id,'{"source":"ws-webview2","nativeAuthorityVerified":true}',now,now);
+          fixture.prepare("INSERT INTO ws_ai_authorizations VALUES(?,?,?,'openai','model','quote','consent',1,'active',100,0,'test-runtime',?,?,?,?)").run(id,id,id,now,now,now,now);
+        }
+        const before = () => ['ws_ai_authorizations','ws_messages'].map(table => fixture.prepare('SELECT * FROM '+table+" WHERE account_id LIKE 'atomic-%' ORDER BY id").all());
+        const trusted = before(), a = {...await exportAccount('atomic-a'),accountId:'atomic-a'};
+        const newAccount = {accountId:'created-by-restore',schemaVersion:6};
+        const restoreWorkspace = (accounts,crm,expected,version) => request('/api/workspace/restore',{operationId:require('node:crypto').randomUUID(),accounts,crm},expected,version);
+        await restoreWorkspace([newAccount,a,{accountId:'atomic-b',schemaVersion:999}], {customers:[]},400);
+        await restoreWorkspace([a],{customers:null},400);
+        await restoreWorkspace([],{customers:null},400);
+        await restoreWorkspace([a],{customers:[]},409,'stale');
+        assert.deepEqual(before(),trusted);
+        assert.equal(fixture.prepare("SELECT COUNT(*) n FROM ws_accounts WHERE id='created-by-restore'").get().n,0);
+        const expected = (await request('/api/state/version')).version;
+        const body = {operationId:require('node:crypto').randomUUID(),accounts:[a],crm:{customers:[{id:'committed'}]}};
+        const first = await request('/api/workspace/restore',body,200,expected);
+        const replay = await request('/api/workspace/restore',body,200,expected);
+        assert.deepEqual(replay,first);
+        assert.equal((await request('/api/state/version')).version,first.version);
+        await request('/api/workspace/restore',{...body,accounts:[]},409,expected);
+        assert.equal(fixture.prepare("SELECT status FROM ws_ai_authorizations WHERE id='atomic-b'").get().status,'active');
+        assert.equal(fixture.prepare("SELECT status FROM ws_ai_authorizations WHERE id='atomic-a'").get().status,'revoked');
+        assert.equal(JSON.parse(fixture.prepare("SELECT data_json FROM ws_messages WHERE id='atomic-a'").get().data_json).nativeAuthorityVerified,false);
+      } finally { fixture.close(); }
+    });
+    await t.test('same-account and portable restores retain inert delivery evidence and idempotency keys', async () => {
+      const fixture = new DatabaseSync(path.join(dataDir,'workspace.sqlite'));
+      try {
+        fixture.prepare("INSERT INTO ws_send_audit(id,account_id,conversation_id,idempotency_key,status,native_result_json,created_at,updated_at) VALUES('sent-record','atomic-a','atomic-a','original-key','sent',?,?,?)")
+          .run('{"sendAttempt":{"id":"native-attempt","deliveryState":"local_attempted"}}',now,now);
+        const original = await exportAccount('atomic-a');
+        await request('/api/ws/import',{...original, accountId:'atomic-a'});
+        const after = (await exportAccount('atomic-a')).sendAudit[0];
+        assert.equal(after.idempotencyKey,'original-key');
+        assert.equal(after.status,'sent');assert.equal(after.attemptId,'native-attempt');assert.equal(after.retryAllowed,false);
+        assert.equal((await request('/api/ws/send',{accountId:'atomic-a',auditId:after.id,action:'begin-attempt'},409)).code,'SEND_RETRY_BLOCKED');
+        // An older backup can omit both the conversation and the audit array.
+        await request('/api/ws/import',{schemaVersion:6,accountId:'atomic-a'});
+        assert.equal((await exportAccount('atomic-a')).sendAudit[0].id,'sent-record');
+        const imported = { ...after,accountId:'atomic-b',id:'foreign-audit',status:'queued',idempotencyKey:'portable-key',conversationId:'removed-conversation',
+          originalText:'  '+ 'x'.repeat(15000)+'\n',attachments:[{id:'attachment',mediaId:'missing-file',fileName:'archived.txt',caption:'  kept  '}],attachmentIds:['missing-file'] };
+        const file={schemaVersion:6,accountId:'atomic-b',sendAudit:[imported]};
+        await request('/api/ws/import',file);await request('/api/ws/import',file);
+        const portable=(await exportAccount('atomic-b')).sendAudit;
+        assert.equal(portable.length,1);assert.equal(portable[0].retryAllowed,false);assert.equal(portable[0].deliveryState,'unknown');
+        assert.equal(portable[0].originalText,imported.originalText);
+        assert.equal(portable[0].attachments[0].fileName,'archived.txt');assert.equal(portable[0].attachments[0].caption,'  kept  ');
+        assert.equal(portable[0].attachments[0].mediaStatus,'unavailable');
+        assert.equal((await request('/api/ws/send',{accountId:'atomic-b',action:'begin-attempt',auditId:imported.id},409)).code,'SEND_RETRY_BLOCKED');
+        await request('/api/ws/import',{...file,sendAudit:[{...imported,id:'conflicting-id'}]},409);
+        assert.equal((await exportAccount('atomic-b')).sendAudit[0].id,imported.id);
+      } finally { fixture.close(); }
     });
   } finally {
     if (child.exitCode === null && child.signalCode === null) child.kill();

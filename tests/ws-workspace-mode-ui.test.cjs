@@ -154,19 +154,16 @@ test('backup restore rejects a case-only account ID conflict before writing', as
 });
 test('app restore uses embedded account mode from native backups and rejects conflicting metadata', async () => {
   const app = fs.readFileSync(path.join(repo, 'resources/app/app.js'), 'utf8');
-  const start = app.indexOf('  async function importBackupWsAccounts('), end = app.indexOf('  async function rollbackCreatedWsAccounts(', start);
-  const seen = [], imports = [];
-  const window = { __zhikeWsBackup: { ensureAccount: async (id, name, mode) => { seen.push(mode); return { created: false, workspaceMode: mode || 'ordinary' }; }, importData: async (value, id) => imports.push(id) } };
-  const restore = vm.runInNewContext(app.slice(start, end) + '\nimportBackupWsAccounts;', { window });
+  const start = app.indexOf('  function prepareBackupWsAccounts('), end = app.indexOf('  async function restoreBackupFile(', start);
+  const prepare = vm.runInNewContext(app.slice(start, end) + '\nprepareBackupWsAccounts;');
   const data = { accounts: [{ id: 'dedicated', workspaceMode: 'dedicated' }] };
   const backup = { wsAccounts: { dedicated: data }, wsAccountMetadata: [{ id: 'dedicated', displayName: 'Old native metadata' }] };
-  await restore(backup, new Set(), [], []);
-  assert.deepEqual(seen, ['dedicated']); assert.deepEqual(imports, ['dedicated']);
+  const rows = prepare(backup);
+  assert.deepEqual(Array.from(rows, row=>[row.accountId,row.accounts[0].workspaceMode,row.accounts[0].displayName]), [['dedicated','dedicated','Old native metadata']]);
   backup.wsAccountMetadata[0].workspaceMode = 'ordinary';
-  await assert.rejects(restore(backup, new Set(), [], []), /两处账号用途不一致/);
-  assert.equal(imports.length, 1); assert.equal(seen.length, 1);
+  assert.throws(() => prepare(backup), /两处账号用途不一致/);
   delete backup.wsAccountMetadata[0].workspaceMode; data.accounts[0].id = 'DEDICATED';
-  await assert.rejects(restore(backup, new Set(), [], []), /元数据与账号编号不一致/);
+  assert.throws(() => prepare(backup), /元数据与账号编号不一致/);
 });
 test('all-account restore and export keep explicit account scope even in an empty dedicated workspace', async () => {
   const f = fixture(); f.state.workspaceMode = 'dedicated'; f.state.activeAccountId = '';

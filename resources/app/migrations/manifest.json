@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "supportedSchemaVersion": 30,
+  "supportedSchemaVersion": 31,
   "migrations": [
     {
       "version": 4,
@@ -163,6 +163,12 @@
       "file": "030-ws-ai-authorization-budget.sql",
       "description": "Explicit scoped WS automatic AI authorization and conservative reservation ledger",
       "checksum": "eb3dacf2b6c559c0f4c396b91b8e8005c9aea1df0544b3308f4d335ee2d62b00"
+    },
+    {
+      "version": 31,
+      "file": "031-workspace-restore-audit.sql",
+      "description": "Atomic workspace restore receipts and durable WS delivery history",
+      "checksum": "85d453aafa711f2495b62c5d99ce18bc478863c6b3c0013489263b611ada793c"
     }
   ]
 }

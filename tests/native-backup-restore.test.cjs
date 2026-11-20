@@ -17,37 +17,10 @@ assert.ok(start >= 0 && end > start, 'production backup decoder must be availabl
 const decode = vm.runInNewContext(source.slice(start, end) + '\n;decodeWorkspaceBackupFile', {
   sha256Text: async text => crypto.createHash('sha256').update(String(text), 'utf8').digest('hex'),
 });
-const helpersStart = source.indexOf('  async function importBackupWsAccounts(backup, existingNativeIds, createdNativeIds, createdServerIds){');
+const helpersStart = source.indexOf('  function prepareBackupWsAccounts(backup){');
 const helpersEnd = source.indexOf('  async function restoreBackupFile(file){', helpersStart);
-assert.ok(helpersStart >= 0 && helpersEnd > helpersStart, 'production WS restore helpers must be available');
-
-async function verifyFailedRestoreAccountRollback(backup) {
-  const serverIds = new Set(['default', 'existing-account']);
-  const nativeIds = new Set(['default', 'existing-account']);
-  const forgotten = [], deleted = [];
-  const window = {
-    __zhikeWsBackup: {
-      ensureAccount: async id => { const created = !serverIds.has(id); serverIds.add(id); return { created, workspaceMode: 'ordinary' }; },
-      importData: async (_, id) => { if (id === 'test-account') throw new Error('isolated WS import failure'); },
-      deleteAccount: async id => { deleted.push(id); serverIds.delete(id); },
-    },
-    zhikeDesktop: {
-      wsAccounts: async payload => {
-        if (payload.action === 'create') { nativeIds.add(payload.account.id); return { account: { id: payload.account.id } }; }
-        if (payload.action === 'forget') { forgotten.push(payload.accountId); nativeIds.delete(payload.accountId); return { forgotten: true, accountId: payload.accountId }; }
-        throw new Error('unexpected bridge action');
-      },
-    },
-  };
-  const helpers = vm.runInNewContext(source.slice(helpersStart, helpersEnd) + '\n;({importBackupWsAccounts,rollbackCreatedWsAccounts})', { window });
-  const createdNative = [], createdServer = [];
-  await assert.rejects(() => helpers.importBackupWsAccounts(backup, new Set(nativeIds), createdNative, createdServer), /isolated WS import failure/);
-  await helpers.rollbackCreatedWsAccounts(createdNative, createdServer);
-  assert.deepEqual([...serverIds].sort(), ['default', 'existing-account']);
-  assert.deepEqual([...nativeIds].sort(), ['default', 'existing-account']);
-  assert.deepEqual(forgotten.sort(), ['test-account']);
-  assert.deepEqual(deleted.sort(), ['test-account']);
-}
+assert.ok(helpersStart >= 0 && helpersEnd > helpersStart);
+const prepareAccounts = vm.runInNewContext(source.slice(helpersStart,helpersEnd)+'\n;prepareBackupWsAccounts');
 
 async function freePort() {
   const server = net.createServer();
@@ -84,27 +57,19 @@ async function restoreIntoIsolatedServer(backup) {
       'phoneRegistry', 'batchOperations', 'activities', 'settings', 'channelAliases', 'importIssues',
       'qualityDecisions', 'savedViews'];
     const state = Object.fromEntries(stateKeys.filter(key => Object.hasOwn(backup, key)).map(key => [key, backup[key]]));
-    let response = await request('/api/state', { method: 'PUT', headers: { 'X-State-Version': '' }, body: JSON.stringify(state) });
-    assert.equal(response.status, 200, `isolated CRM restore rejected: ${await response.text()}`);
-
-    for (const [accountId, payload] of Object.entries(backup.wsAccounts)) {
-      if (accountId !== 'default') {
-        response = await request('/api/ws/accounts', { method: 'POST', body: JSON.stringify({ id: accountId, displayName: accountId, workspaceMode: payload.accounts?.[0]?.workspaceMode || 'ordinary' }) });
-        assert.equal(response.status, 201, `isolated account create rejected: ${await response.text()}`);
-      }
-      const accountData = { ...payload, accountId }; delete accountData.groupDrafts;
-      response = await request('/api/ws/import', { method: 'POST', body: JSON.stringify(accountData) });
-      assert.equal(response.status, 200, `isolated WS restore rejected: ${await response.text()}`);
-      response = await request('/api/ws/import', { method: 'POST', body: JSON.stringify(accountData) });
-      assert.equal(response.status, 200, 'repeating a workspace restore remains idempotent');
-    }
-
-    const draftAccounts = Object.entries(backup.wsAccounts).filter(([, value]) => value.groupDrafts?.length).map(([accountId, value]) => ({ accountId, groupDrafts: value.groupDrafts }));
-    const draftPayload = { accounts: draftAccounts, operationId: crypto.createHash('sha256').update(JSON.stringify(draftAccounts)).digest('hex') };
-    for (let attempt = 0; attempt < 2; attempt++) {
-      response = await request('/api/ws/group-drafts/restore', { method: 'POST', body: JSON.stringify(draftPayload) });
-      assert.equal(response.status, 200, `native workspace final draft merge rejected: ${await response.text()}`);
-    }
+    const accounts=prepareAccounts(backup);
+    const postRestore=body=>request('/api/workspace/restore',{method:'POST',headers:{'X-State-Version':''},body:JSON.stringify(body)});
+    const failed=await postRestore({operationId:crypto.randomUUID(),accounts,crm:{customers:null}});
+    assert.equal(failed.status,400);
+    assert.deepEqual((await request('/api/ws/accounts').then(res=>res.json())).accounts.map(row=>row.id),['default']);
+    const payload={operationId:crypto.randomUUID(),crm:state,accounts};
+    const dotnet = process.env.ZHIKE_TEST_DOTNET || path.join(repo, '.tools', 'dotnet10', 'dotnet.exe');
+    const runtime = path.join(repo,'desktop/tests/BackupRetentionRuntime/bin/Release/net10.0/BackupRetentionRuntime.dll');
+    const restored = spawnSync(dotnet, [runtime, '--restore-wire', origin, token], { input: JSON.stringify(payload), encoding: 'utf8', windowsHide: true, timeout: 30000 });
+    assert.equal(restored.status, 0, restored.stderr || 'native restore must send an explicitly empty X-State-Version to a new database');
+    assert.equal(JSON.parse(restored.stdout).operationId, payload.operationId);
+    const response=await postRestore(payload);
+    assert.equal(response.status,200,'a replay after commit returns its durable receipt');
 
     const saved = await (await request('/api/state')).json();
     assert.equal(saved.customers.length, 1);
@@ -175,7 +140,6 @@ async function main() {
   manual.integrity = { algorithm: 'SHA-256', payloadSha256: manualHash };
   const manualRestored = await decode(JSON.stringify(manual));
   assert.equal(manualRestored.customers[0].id, 'C123');
-  await verifyFailedRestoreAccountRollback(restored);
   await restoreIntoIsolatedServer(restored);
   console.log('native .NET backup -> production JS decoder -> isolated CRM/2-account WS restore: roundtrip, rollback, tamper rejection and manual format pass');
 }

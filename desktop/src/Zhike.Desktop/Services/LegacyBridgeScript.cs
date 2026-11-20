@@ -42,8 +42,9 @@ public static class LegacyBridgeScript
             const verb = method === 'legacy.api' ? String(payload?.method || 'GET').toUpperCase() : 'GET';
             const isSnapshotWrite = verb !== 'GET' && verb !== 'HEAD' && /^\/api\/snapshots?(?:\/.*\/restore)?$/i.test(path);
             const isLargeWrite = verb !== 'GET' && verb !== 'HEAD' && (/^\/api\/state(?:\/|$)/i.test(path) || /^\/api\/import\//i.test(path));
-            const timeoutLimit = isSnapshotWrite ? SNAPSHOT_TIMEOUT_MS : WRITE_TIMEOUT_MS;
-            const defaultTimeout = isSnapshotWrite ? SNAPSHOT_TIMEOUT_MS : isLargeWrite ? WRITE_TIMEOUT_MS : isAiRequest ? AI_REQUEST_TIMEOUT_MS : isAiNetworkControl ? AI_CONTROL_TIMEOUT_MS : DEFAULT_TIMEOUT_MS;
+            const isRestoreCommit = method === 'workspace.restore.part' && payload?.last === true;
+            const timeoutLimit = isSnapshotWrite || isRestoreCommit ? SNAPSHOT_TIMEOUT_MS : WRITE_TIMEOUT_MS;
+            const defaultTimeout = isSnapshotWrite || isRestoreCommit ? SNAPSHOT_TIMEOUT_MS : isLargeWrite ? WRITE_TIMEOUT_MS : isAiRequest ? AI_REQUEST_TIMEOUT_MS : isAiNetworkControl ? AI_CONTROL_TIMEOUT_MS : DEFAULT_TIMEOUT_MS;
             const timeoutMs = Math.min(timeoutLimit, Math.max(1000, Number(normalizedOptions.timeoutMs) || defaultTimeout));
             const envelope = JSON.stringify({
               type: 'zhike.bridge.request', requestId, bridgeVersion: '6.0',
@@ -110,6 +111,26 @@ public static class LegacyBridgeScript
           return { tables, sheets: tables.map(item => ({ name: item.name, rows: item.rows.length })), text: tables.map(item => `--- ${item.name} ---\n${item.rows.map(row => row.join('\t')).join('\n')}`).join('\n\n') };
         };
         const nativeFetch = window.fetch.bind(window);
+        const restoreWorkspace = async (body, version) => {
+          const transferId = crypto.randomUUID();
+          let offset = 0, last = false;
+          try {
+            while (offset < body.length) {
+              let end = Math.min(body.length, offset + 1024 * 1024);
+              if (end < body.length && /[\uD800-\uDBFF]/.test(body[end - 1])) end--;
+              last = end === body.length;
+              const result = await host.invoke('workspace.restore.part', { transferId, offset, chunk: body.slice(offset, end), last, version });
+              if (last) return Response.json(result.data);
+              if (result.data?.nextOffset !== end) throw new Error('恢复分段未确认。');
+              offset = end;
+            }
+            throw new Error('恢复请求为空。');
+          } catch (error) {
+            if (!last) await host.invoke('workspace.restore.part', { transferId, discard: true }).catch(() => {});
+            const code = error?.code || 'SERVICE_UNAVAILABLE', message = error?.message || '工作区恢复结果未确认。';
+            return Response.json({ code, error: message, errorCode: code, message }, { status: code === 'WORKSPACE_RESTORE_REJECTED' ? 409 : 503 });
+          }
+        };
         window.fetch = async (input, init = {}) => {
           const url = typeof input === 'string' ? input : input?.url || '';
           if (!url.startsWith('/api/') || !window.__LOCAL_DB__) return nativeFetch(input, init);
@@ -119,6 +140,11 @@ public static class LegacyBridgeScript
           if (sourceHeaders) {
             if (sourceHeaders instanceof Headers) sourceHeaders.forEach((value, key) => { headers[key] = value; });
             else Object.entries(sourceHeaders).forEach(([key, value]) => { headers[key] = String(value); });
+          }
+          if (method === 'POST' && url === '/api/workspace/restore' && typeof init.body === 'string') {
+            const version = Object.keys(headers).find(name => name.toLowerCase() === 'x-state-version');
+            if (!version) return Response.json({ code: 'WORKSPACE_RESTORE_REJECTED', error: '恢复必须提供数据版本。' }, { status: 428 });
+            return restoreWorkspace(init.body, headers[version]);
           }
           if (method !== 'GET' && method !== 'HEAD' && !Object.keys(headers).some(key => key.toLowerCase() === 'x-idempotency-key')) headers['X-Idempotency-Key'] = `desktop-${globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : Date.now()}`;
           let body = {};

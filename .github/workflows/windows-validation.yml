@@ -39,6 +39,7 @@ jobs:
             'tests/ws-workspace-policy.test.cjs',
             'tests/ws-ai-workspace-mode.test.cjs',
             'tests/ws-ai-queue-workspace-mode.test.cjs',
+            'tests/ws-ai-pump-runtime.test.cjs',
             'tests/ws-ingest-workspace-mode.test.cjs',
             'tests/ws-group-drafts-api.test.cjs',
             'tests/ws-group-drafts-ui.test.cjs',
@@ -47,6 +48,7 @@ jobs:
             'tests/ws-reply-draft-recovery-runtime.test.cjs',
             'tests/ws-group-monitor-workspace-mode.test.cjs',
             'tests/ws-group-monitor-identity-safety.test.cjs',
+            'tests/ws-group-monitor-ingest.test.cjs',
             'tests/ws-group-scope-authorization.test.cjs',
             'tests/ws-group-scope-bridge.test.cjs',
             'tests/ws-contact-exclusion.test.cjs',
@@ -60,7 +62,10 @@ jobs:
             'tests/ws-native-write-authority-core.test.cjs',
             'tests/ws-group-drafts-backup.test.cjs',
             'tests/ws-group-drafts-restore-core.test.cjs',
+            'tests/native-backup-restore.test.cjs',
+            'desktop/tests/LegacyBridgeContractTests.cjs',
             'tests/ws-account-workspace-mode.test.cjs',
+            'tests/ws-account-runtime-recovery.test.cjs',
             'tests/ws-account-metrics-native.test.cjs',
             'tests/ws-account-metrics-ui.test.cjs',
             'tests/ws-workspace-mode-ui.test.cjs',
@@ -81,6 +86,8 @@ jobs:
       - name: Verify AI provider selection and outbound requests with local fixtures
         shell: pwsh
         run: |
+          node tests/gpt-assistant-session.test.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node scripts/stage55c/gpt-provider-race-runtime.test.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet run --project desktop/tests/AiBridgeProviderRuntime/AiBridgeProviderRuntime.csproj -c Release

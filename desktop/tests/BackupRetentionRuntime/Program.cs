@@ -2,6 +2,18 @@ using Zhike.Desktop.Services;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
+if (args is ["--restore-wire", var origin, var token])
+{
+    using var http = new HttpClient { BaseAddress = new Uri(origin) };
+    http.DefaultRequestHeaders.Add("X-Zhike-Api-Token", token);
+    Console.InputEncoding = System.Text.Encoding.UTF8;
+    var body = await Console.In.ReadToEndAsync();
+    var part = JsonSerializer.SerializeToElement(new { transferId = Guid.NewGuid(), offset = 0, chunk = body, last = true, version = "" });
+    var result = await new WorkspaceRestoreTransfer().ReceiveAsync(part, (stream, version, ct) => WorkspaceRestoreTransfer.PostAsync(http, stream, version, ct), default);
+    Console.WriteLine(result.GetRawText());
+    return;
+}
+
 static void Check(bool condition, string message)
 {
     if (!condition) throw new InvalidOperationException(message);
@@ -124,6 +136,7 @@ try
     var envelopeBytes = NativeBackupEnvelope.Create(state, new JsonSerializerOptions { WriteIndented = true });
     Check(envelopeBytes.Length > 0, "native envelope was empty");
     Console.WriteLine("native backup envelope: workspace, WS shape and row limits pass");
+    await RestoreTransferChecks.RunAsync(root);
     if (args.Contains("--emit-envelope", StringComparer.Ordinal))
         Console.WriteLine("ENVELOPE:" + Convert.ToBase64String(envelopeBytes));
 }

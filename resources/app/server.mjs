@@ -1922,8 +1922,9 @@ function wsSendAuditPayload(row) {
   if (!row) return null;
   let attachmentIds = wsJson(row.attachment_ids_json, []);
   if (!Array.isArray(attachmentIds)) attachmentIds = [];
-  const attachments = wsSendAttachmentRows(row);
   const metadata = wsJson(row.native_result_json, {}), attempt = metadata.sendAttempt || {};
+  const attachments = metadata.importedHistory && Array.isArray(metadata.attachmentHistory)
+    ? metadata.attachmentHistory : wsSendAttachmentRows(row);
   return {
     id: row.id,
     accountId: row.account_id,
@@ -1942,7 +1943,8 @@ function wsSendAuditPayload(row) {
     deliveryState: attempt.deliveryState || (row.status === 'queued' ? 'queued' : 'unknown'),
     attemptPhase: attempt.phase || '',
     attemptId: attempt.id || '',
-    retryAllowed: row.status === 'queued' && !attempt.id || row.status === 'failed' && attempt.deliveryState === 'failed' && attempt.safeToRetry === true,
+    historyOnly: Boolean(row.history_only),
+    retryAllowed: !row.history_only && (row.status === 'queued' && !attempt.id || row.status === 'failed' && attempt.deliveryState === 'failed' && attempt.safeToRetry === true),
     errorMessage: row.error_message || '',
     nativeResult: wsJson(row.native_result_json, {}),
     createdAt: row.created_at,
@@ -2871,6 +2873,189 @@ try {
   db.exec('COMMIT');
 } catch (error) { db.exec('ROLLBACK'); throw error; }
 
+function insertWsAccount(id, workspaceMode, body, now) {
+  const status = WS_STATUSES.has(wsText(body.status, 32)) ? wsText(body.status, 32) : '未连接';
+  db.prepare('INSERT INTO ws_accounts(id,display_name,workspace_mode,provider,origin,partition_key,status,last_status,last_seen_at,enabled,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)')
+    .run(id, wsText(body.displayName, 200) || id, workspaceMode, wsText(body.provider, 120), wsText(body.origin, 500), wsText(body.partitionKey, 200) || `persist:${id}`, status, status === '未连接' ? '' : status, status === '已连接' ? now : '', body.enabled === false ? 0 : 1, now, now);
+  wsSaveAccountSettings(id, body.settings || body, now);
+}
+
+function ensureWorkspaceRestoreAccount(account) {
+  const id = account.accountId, meta = account.accounts?.[0];
+  if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,119}$/.test(id)) throw restoreError(400, 'WS 账号编号无效。');
+  const existing = db.prepare('SELECT id,workspace_mode FROM ws_accounts WHERE id=? COLLATE NOCASE ORDER BY (id=?) DESC,id LIMIT 1').get(id,id);
+  if (existing && existing.id !== id) throw restoreError(409, 'WS 账号编号大小写与现有账号不符。');
+  const mode = meta?.workspaceMode ?? existing?.workspace_mode ?? 'ordinary';
+  if (!['ordinary','dedicated'].includes(mode) || (existing && existing.workspace_mode !== mode)) throw restoreError(409, '备份账号用途与当前账号不符。');
+  if (!existing) insertWsAccount(id, mode, { displayName: meta?.displayName || id }, new Date().toISOString());
+}
+
+function restoreError(status, message, code) {
+  return Object.assign(new Error(message), { status, code });
+}
+
+function restoreSendAuditHistory(accountId, rows, now) {
+  // Freeze plans targeting the old conversation set. An in-flight native
+  // completion may still record its outcome, but restore never authorizes a send.
+  db.prepare('UPDATE ws_send_audit SET history_only=1 WHERE account_id=? AND history_only=0').run(accountId);
+  const findId = db.prepare('SELECT id,account_id,idempotency_key,conversation_id FROM ws_send_audit WHERE id=?');
+  const findKey = db.prepare('SELECT id FROM ws_send_audit WHERE account_id=? AND idempotency_key=?');
+  const insert = db.prepare(`INSERT INTO ws_send_audit
+    (id,account_id,conversation_id,batch_id,operation,idempotency_key,original_text,translated_text,target_language,status,error_message,native_result_json,created_at,updated_at,payload_kind,caption,attachment_ids_json,history_only)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)`);
+  for (const item of rows) {
+    const id = wsText(item?.id,160), conversation = wsText(item?.conversationId,160), key = wsText(item?.idempotencyKey,300);
+    if (!id || !conversation || (item.accountId !== undefined && item.accountId !== accountId) || !['queued','sending','sent','failed','rate_limited','cancelled'].includes(item.status)) throw restoreError(400, '备份中的发送审计身份或状态无效。');
+    const existing = findId.get(id), byKey = key && findKey.get(accountId,key);
+    if ((existing && (existing.account_id !== accountId || existing.conversation_id !== conversation || existing.idempotency_key !== key)) || (byKey && byKey.id !== id)) throw restoreError(409, '备份中的发送审计与本机幂等记录冲突。');
+    if (existing) continue;
+    // An external file supplies historical observations, never a native attempt
+    // token, platform receipt or permission to replay an unfinished dispatch.
+    const metadata = { importedHistory: true, sendAttempt: { deliveryState: 'unknown', safeToRetry: false } };
+    if (Array.isArray(item.attachments)) metadata.attachmentHistory = item.attachments.map((attachment,index) => ({
+      id: wsText(attachment?.id,160), mediaId: wsText(attachment?.mediaId,160), orderNo: Number(attachment?.orderNo ?? index),
+      fileName: wsText(attachment?.fileName,250), mediaType: wsText(attachment?.mediaType,40), mimeType: wsText(attachment?.mimeType,120),
+      caption: wsMessageText(attachment?.caption), status: wsText(attachment?.status,32), errorMessage: wsText(attachment?.errorMessage,1000),
+      mediaStatus: 'unavailable', unavailableReason: '备份中仅含历史附件信息。', deliveryState: 'unknown', attemptId: '',
+    }));
+    const attachments = Array.isArray(item.attachmentIds) ? item.attachmentIds.map(x => wsText(x,160)).filter(Boolean) : [];
+    insert.run(id,accountId,conversation,wsText(item.batchId,160),item.operation === 'broadcast' ? 'broadcast' : 'single',key,
+      wsMessageText(item.originalText),wsMessageText(item.translatedText),wsText(item.targetLanguage,40),item.status,
+      wsText(item.errorMessage,1000),JSON.stringify(metadata),wsIso(item.createdAt || now),wsIso(item.updatedAt || now),
+      wsText(item.payloadKind,40) || 'text',wsMessageText(item.caption),JSON.stringify(attachments));
+  }
+}
+
+// The caller owns one SQLite transaction for either a standalone account or
+// the complete workspace. All imported evidence follows the same trust rules.
+function restoreWsAccount(body) {
+  const accountId = wsAccountId(body.accountId);
+  const account = wsRequireAccount(accountId);
+  if (Object.hasOwn(body, 'sendAudit') && !Array.isArray(body.sendAudit)) throw restoreError(400, '备份中的发送审计清单无效。');
+  // Full workspace backups preserve each per-account export verbatim.
+  // Validate its purpose before deleting any existing conversation data;
+  // restore callers must create missing accounts with that same purpose.
+  if (Object.hasOwn(body, 'accounts')) {
+    if (!Array.isArray(body.accounts) || body.accounts.length !== 1 || body.accounts[0]?.id !== accountId) throw restoreError(400, 'WS 备份账号清单与当前恢复账号不符，请逐账号恢复。', 'WORKSPACE_MODE_ACCOUNT_MISMATCH');
+    const metadata = body.accounts[0];
+    if (Object.hasOwn(metadata, 'workspaceMode')) {
+      if (!['ordinary', 'dedicated'].includes(metadata.workspaceMode)) throw restoreError(400, 'WS 备份中的账号用途无效。', 'INVALID_WORKSPACE_MODE');
+      if (metadata.workspaceMode !== account.workspace_mode) throw restoreError(409, 'WS 备份账号用途与当前账号不符，未执行恢复。', 'WORKSPACE_MODE_CONFLICT');
+    }
+  }
+  const schemaVersion = Number(body.schemaVersion || 5);
+  if (!Number.isInteger(schemaVersion) || schemaVersion < 5 || schemaVersion > 6) throw restoreError(400, 'WS 备份版本不受支持，只能恢复 v5 或 v6 数据。');
+  for (const key of ['settings','conversations','messages','analyses','replies','batches','collectionRuns','collectionItems','followupAlerts']) if (Object.hasOwn(body, key) && !Array.isArray(body[key])) throw restoreError(400, `WS 备份中的 ${key} 不是有效数组。`);
+  const settings = body.settings || [];
+  const conversations = body.conversations || [];
+  const messages = body.messages || [];
+  const analyses = body.analyses || [];
+  const replies = body.replies || [];
+  const batches = body.batches || [];
+  const collectionRuns = body.collectionRuns || [];
+  const collectionItems = body.collectionItems || [];
+  const followupAlerts = body.followupAlerts || [];
+  const groupDrafts = wsGroupDrafts.validateBackup(Object.hasOwn(body, 'groupDrafts') ? body.groupDrafts : [], accountId, account.workspace_mode);
+  const limits = { settings: 5000, conversations: 5000, messages: 100000, analyses: 20000, replies: 20000, batches: 20000, collectionRuns: 5000, collectionItems: 100000, followupAlerts: 20000 };
+  for (const [key, limit] of Object.entries(limits)) if ({ settings, conversations, messages, analyses, replies, batches, collectionRuns, collectionItems, followupAlerts }[key].length > limit) throw restoreError(413, `WS 备份中的 ${key} 超过 ${limit} 条上限，未执行恢复。`);
+  const conversationIds = new Set(conversations.map(item => wsText(item.id, 160)).filter(Boolean));
+  const externalIds = new Set(conversations.map(item => wsText(item.externalId, 160)).filter(Boolean));
+  if (conversations.some(item => !wsText(item.id, 160) || !wsText(item.externalId, 160)) || conversationIds.size !== conversations.length || externalIds.size !== conversations.length) throw restoreError(400, 'WS 备份中的会话编号或外部标识缺失或重复。');
+  if (settings.some(item => !conversationIds.has(wsText(item.conversationId, 160)))) throw restoreError(400, 'WS 备份中的设置关联了不存在的会话。');
+  if (new Set(settings.map(item => wsText(item.conversationId, 160))).size !== settings.length) throw restoreError(400, 'WS 备份中同一会话存在重复设置。');
+  if (messages.some(item => wsMessageTextTooLong(item.originalText))) throw restoreError(413, `WS 备份中的消息原文超过 ${WS_MESSAGE_MAX_CHARS} 字符，未恢复且现有数据未修改。`);
+  if (messages.some(item => !conversationIds.has(wsText(item.conversationId, 160)) || !WS_DIRECTIONS.has(wsText(item.direction, 16)) || !wsMessageText(item.originalText).trim())) throw restoreError(400, 'WS 备份中的消息格式无效。');
+  if (analyses.some(item => !conversationIds.has(wsText(item.conversationId, 160)))) throw restoreError(400, 'WS 备份中的 AI 分析关联无效。');
+  if (replies.some(item => !conversationIds.has(wsText(item.conversationId, 160)))) throw restoreError(400, 'WS 备份中的回复关联无效。');
+  if (batches.some(item => !conversationIds.has(wsText(item.conversationId, 160)) || !wsText(item.fingerprint, 160))) throw restoreError(400, 'WS 备份中的消息批次关联或指纹无效。');
+  const messageIds = new Set(messages.map(item => wsText(item.id, 160)).filter(Boolean));
+  if (messageIds.size !== messages.filter(item => wsText(item.id, 160)).length) throw restoreError(400, 'WS 备份中存在重复消息编号。');
+  const messageExternalKeys = messages.map(item => { const externalId = wsText(item.externalId, 200); return externalId ? `${wsText(item.conversationId, 160)}\u0000${externalId}` : ''; }).filter(Boolean);
+  if (new Set(messageExternalKeys).size !== messageExternalKeys.length) throw restoreError(400, 'WS 备份中同一会话存在重复外部消息标识。');
+  const replyIds = new Set(replies.map(item => wsText(item.id, 160)).filter(Boolean));
+  if (replyIds.size !== replies.filter(item => wsText(item.id, 160)).length) throw restoreError(400, 'WS 备份中存在重复回复编号。');
+  const replyIdempotencyKeys = replies.map(item => { const key = wsText(item.idempotencyKey, 160); return key ? `${wsText(item.conversationId, 160)}\u0000${key}` : ''; }).filter(Boolean);
+  if (new Set(replyIdempotencyKeys).size !== replyIdempotencyKeys.length) throw restoreError(400, 'WS 备份中同一会话存在重复回复幂等键。');
+  const batchIds = new Set(batches.map(item => wsText(item.id, 160)).filter(Boolean));
+  if (batchIds.size !== batches.filter(item => wsText(item.id, 160)).length) throw restoreError(400, 'WS 备份中存在重复批次编号。');
+  const batchKeys = batches.map(item => `${wsText(item.conversationId, 160)}\u0000${wsText(item.fingerprint, 160)}`);
+  if (new Set(batchKeys).size !== batchKeys.length) throw restoreError(400, 'WS 备份中同一会话存在重复批次指纹。');
+  if (batches.some(item => Object.hasOwn(item, 'messageIds') && (!Array.isArray(item.messageIds) || item.messageIds.some(id => !messageIds.has(wsText(id, 160)))))) throw restoreError(400, 'WS 备份中的消息批次引用了不存在的消息。');
+  const collectionRunIds = new Set(collectionRuns.map(item => wsText(item.id, 160)).filter(Boolean));
+  if (collectionRuns.some(item => !wsText(item.id, 160)) || collectionRunIds.size !== collectionRuns.length) throw restoreError(400, 'WS 备份中的采集任务编号缺失或重复。');
+  const analysisIds = new Set(analyses.map(item => wsText(item.id, 160)).filter(Boolean));
+  if (analysisIds.size !== analyses.filter(item => wsText(item.id, 160)).length) throw restoreError(400, 'WS 备份中的 AI 分析编号重复。');
+  const collectionItemIds = new Set(collectionItems.map(item => wsText(item.id, 160)).filter(Boolean));
+  if (collectionItemIds.size !== collectionItems.filter(item => wsText(item.id, 160)).length) throw restoreError(400, 'WS 备份中的采集项目编号重复。');
+  const alertIds = new Set(followupAlerts.map(item => wsText(item.id, 160)).filter(Boolean));
+  if (alertIds.size !== followupAlerts.filter(item => wsText(item.id, 160)).length) throw restoreError(400, 'WS 备份中的跟进提醒编号重复。');
+  const collectionItemKeys = collectionItems.map(item => `${wsText(item.runId, 160)}\u0000${wsText(item.conversationId, 160)}`);
+  if (new Set(collectionItemKeys).size !== collectionItemKeys.length) throw restoreError(400, 'WS 备份中同一采集任务存在重复会话项目。');
+  if (collectionItems.some(item => !collectionRunIds.has(wsText(item.runId, 160)) || !conversationIds.has(wsText(item.conversationId, 160)))) throw restoreError(400, 'WS 备份中的采集项目关联无效。');
+  if (followupAlerts.some(item => !conversationIds.has(wsText(item.conversationId, 160)) || !wsText(item.alertKey, 240) || (wsText(item.analysisId, 160) && !analysisIds.has(wsText(item.analysisId, 160))))) throw restoreError(400, 'WS 备份中的跟进提醒关联无效。');
+  const alertKeys = followupAlerts.map(item => wsText(item.alertKey, 240));
+  if (new Set(alertKeys).size !== alertKeys.length) throw restoreError(400, 'WS 备份中存在重复跟进提醒标识。');
+  const knownGroups = db.prepare('SELECT id,external_id,data_json FROM ws_conversations WHERE account_id=?').all(accountId).filter(wsCore.isGroupConversation);
+  const vipGroupExternalIds = new Set(knownGroups.filter(wsIsVipGroup).map(row => row.external_id));
+  const vipGroupIds = new Set(knownGroups.filter(wsIsVipGroup).map(row => row.id));
+  const groupExternalIds = new Set(knownGroups.filter(wsIsExcludedGroup).map(row => row.external_id));
+  const groupIds = new Set(knownGroups.filter(wsIsExcludedGroup).map(row => row.id));
+  db.prepare('DELETE FROM ws_followup_alerts WHERE account_id=?').run(accountId);
+  db.prepare('DELETE FROM ws_collection_items WHERE account_id=?').run(accountId);
+  db.prepare('DELETE FROM ws_collection_runs WHERE account_id=?').run(accountId);
+  db.prepare('DELETE FROM ws_ingest_batches WHERE account_id=?').run(accountId);
+  db.prepare('DELETE FROM ws_messages WHERE account_id=?').run(accountId);
+  db.prepare('DELETE FROM ws_ai_analyses WHERE account_id=?').run(accountId);
+  db.prepare('DELETE FROM ws_replies WHERE account_id=?').run(accountId);
+  db.prepare('DELETE FROM ws_settings WHERE account_id=?').run(accountId);
+  db.prepare('DELETE FROM ws_conversations WHERE account_id=?').run(accountId);
+  const now = new Date().toISOString();
+  db.prepare("UPDATE ws_ai_authorizations SET status='revoked',revision=revision+1,updated_at=? WHERE account_id=? AND status<>'revoked'").run(now, accountId);
+  wsAiAuthorizationAudit(accountId, '', 'workspace-restored', { automaticAuthorizationRevoked: true });
+  const addConversation = db.prepare('INSERT INTO ws_conversations(id,account_id,external_id,title,customer_id,last_message_text,intent_level,data_json,created_at,updated_at,last_message_at,unread_count,language) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)');
+  for (const item of conversations) {
+    const type = vipGroupExternalIds.has(wsText(item.externalId, 160)) || vipGroupIds.has(wsText(item.id, 160))
+      ? 'vip_group'
+      : groupExternalIds.has(wsText(item.externalId, 160)) || groupIds.has(wsText(item.id, 160))
+        ? 'group'
+        : wsCore.conversationType(item);
+    const data = { ...wsObject(item.data, 32 * 1024), ...(type !== 'unknown' ? {conversationType:type, isGroup:['group','vip_group'].includes(type), vipGroup:type === 'vip_group'} : {}) };
+    const lastMessage = wsText(item.lastMessageText, 4000);
+    addConversation.run(wsText(item.id, 160), accountId, wsText(item.externalId, 160), wsText(item.title, 200), type === 'vip_group' ? '' : wsText(item.customerId, 128), lastMessage, wsText(item.intentLevel, 40), JSON.stringify(data), wsIso(item.createdAt || now), wsIso(item.updatedAt || now), item.lastMessageAt ? wsIso(item.lastMessageAt) : (lastMessage ? wsIso(item.updatedAt || now) : ''), Math.max(0, Math.floor(Number(item.unreadCount) || 0)), wsText(item.language, 40));
+  }
+  const addSetting = db.prepare('INSERT INTO ws_settings(conversation_id,account_id,enabled,receive_enabled,send_enabled,target_language,send_language,show_original,ai_enabled,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)');
+  for (const item of settings) addSetting.run(wsText(item.conversationId, 160), accountId, item.enabled === false ? 0 : 1, item.receive === false ? 0 : 1, item.send === false ? 0 : 1, wsText(item.targetLanguage, 40) || '中文', wsText(item.sendLanguage, 40), item.showOriginal === false ? 0 : 1, item.aiEnabled === false ? 0 : 1, WS_STATUSES.has(wsText(item.status, 32)) ? wsText(item.status, 32) : '未连接', wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
+  const addMessage = db.prepare('INSERT INTO ws_messages(id,account_id,conversation_id,external_id,direction,original_text,translated_text,source_language,target_language,order_no,data_json,created_at,updated_at,translation_status,translation_error,translation_attempts,last_attempt_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+  for (const item of messages) {
+    const translation = wsTranslationFields(item);
+    const rawData = wsObject(item.data, 32 * 1024);
+    const hasTimestampMetadata = rawData.source === 'ws-webview2'
+      || ['sentAt','observedAt','timestampText','timestampSource','sentAtKnown'].some(key => Object.hasOwn(rawData, key))
+      || Boolean(item.sentAt || item.observedAt || item.timestampText || item.timestampSource)
+      || item.sentAtKnown === true;
+    const time = wsMessageTimeMetadata({ ...item, data: rawData }, item.observedAt || rawData.observedAt || item.createdAt || now);
+    const data = wsUnverifiedMessageData(hasTimestampMetadata ? wsMessageDataWithTime(rawData, time) : rawData, 'ws-restored-history');
+    const createdAt = rawData.source === 'ws-webview2' && time.sentAtKnown ? time.sentAt : wsIso(item.createdAt || now);
+    addMessage.run(wsText(item.id, 160) || wsCreateId('wsm'), accountId, wsText(item.conversationId, 160), wsText(item.externalId, 200), wsText(item.direction, 16), wsMessageText(item.originalText), translation.translatedText, wsText(item.sourceLanguage, 40), wsText(item.targetLanguage, 40), Number.isFinite(Number(item.order)) ? Number(item.order) : 0, JSON.stringify(data), createdAt, wsIso(item.updatedAt || now), translation.translationStatus, translation.translationError, translation.translationAttempts, translation.lastAttemptAt);
+  }
+  const addAnalysis = db.prepare('INSERT INTO ws_ai_analyses(id,account_id,conversation_id,result_json,confidence,provider_name,model,error_message,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)');
+  for (const item of analyses) addAnalysis.run(wsText(item.id, 160) || wsCreateId('wsa'), accountId, wsText(item.conversationId, 160), JSON.stringify(wsObject(item.result, 128 * 1024)), Math.min(1, Math.max(0, Number(item.confidence) || 0)), wsText(item.providerName, 120), wsText(item.model, 120), wsText(item.errorMessage, 1000), wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
+  const addReply = db.prepare('INSERT INTO ws_replies(id,account_id,conversation_id,original_text,translated_text,status,created_at,updated_at,idempotency_key) VALUES(?,?,?,?,?,?,?,?,?)');
+  for (const item of replies) addReply.run(wsText(item.id, 160) || wsCreateId('wsr'), accountId, wsText(item.conversationId, 160), wsText(item.originalText, 12000), wsText(item.translatedText, 12000), WS_REPLY_STATUSES.has(wsText(item.status, 16)) ? wsText(item.status, 16) : 'draft', wsIso(item.createdAt || now), wsIso(item.updatedAt || now), wsText(item.idempotencyKey, 160));
+  const addBatch = db.prepare('INSERT INTO ws_ingest_batches(id,account_id,conversation_id,fingerprint,message_count,inserted_count,message_ids_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)');
+  for (const item of batches) { const ids = Array.isArray(item.messageIds) ? item.messageIds.map(id => wsText(id, 160)).filter(id => messageIds.has(id)) : []; addBatch.run(wsText(item.id, 160) || wsCreateId('wsb'), accountId, wsText(item.conversationId, 160), wsText(item.fingerprint, 160), Math.max(0, Math.floor(Number(item.messageCount) || ids.length)), Math.max(0, Math.floor(Number(item.insertedCount) || 0)), JSON.stringify(ids), wsIso(item.createdAt || now), wsIso(item.updatedAt || now)); }
+   const addRun = db.prepare('INSERT INTO ws_collection_runs(id,account_id,status,total,discovered,completed,analyzing,analyzed,failed,skipped,retryable,last_error,checkpoint,cursor,resume_count,last_success_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+   for (const item of collectionRuns) addRun.run(wsText(item.id, 160), accountId, wsText(item.status, 30) || 'created', Math.max(0, Math.floor(Number(item.total) || 0)), Math.max(0, Math.floor(Number(item.discovered) || 0)), Math.max(0, Math.floor(Number(item.completed) || 0)), Math.max(0, Math.floor(Number(item.analyzing) || 0)), Math.max(0, Math.floor(Number(item.analyzed) || 0)), Math.max(0, Math.floor(Number(item.failed) || 0)), Math.max(0, Math.floor(Number(item.skipped) || 0)), Math.max(0, Math.floor(Number(item.retryable) || 0)), wsText(item.lastError, 1000), wsText(item.checkpoint, 500), wsText(item.cursor, 500), Math.max(0, Math.floor(Number(item.resumeCount) || 0)), wsText(item.lastSuccessAt, 80), wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
+   const addItem = db.prepare('INSERT INTO ws_collection_items(id,account_id,run_id,conversation_id,status,attempts,analysis_status,followup_status,next_followup_at,last_error,checkpoint,created_at,updated_at,coverage_status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+   for (const item of collectionItems) addItem.run(wsText(item.id, 160) || wsCreateId('wsi'), accountId, wsText(item.runId, 160), wsText(item.conversationId, 160), wsText(item.status, 30) || 'queued', Math.max(0, Math.floor(Number(item.attempts) || 0)), wsText(item.analysisStatus, 30) || 'pending', wsText(item.followupStatus, 30) || 'none', wsText(item.nextFollowupAt, 80), wsText(item.lastError, 1000), wsText(item.checkpoint, 500), wsIso(item.createdAt || now), wsIso(item.updatedAt || now), wsText(item.coverageStatus, 30) || 'unknown');
+   const addAlert = db.prepare('INSERT INTO ws_followup_alerts(id,account_id,conversation_id,analysis_id,alert_key,priority,reason,followup_time,status,snoozed_until,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)');
+   for (const item of followupAlerts) addAlert.run(wsText(item.id, 160) || wsCreateId('wfa'), accountId, wsText(item.conversationId, 160), wsText(item.analysisId, 160), wsText(item.alertKey, 240), wsText(item.priority, 20) || 'today', wsText(item.reason, 500), wsText(item.followupTime, 80), wsText(item.status, 20) || 'open', wsText(item.snoozedUntil, 80), JSON.stringify(wsObject(item.data, 32 * 1024)), wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
+  for (const row of db.prepare('SELECT * FROM ws_conversations WHERE account_id=?').all(accountId)) if (wsIsExcludedGroup(row)) wsQuiesceGroup(row, now);
+  const groupDraftRestore = wsGroupDrafts.restoreBackup(db, accountId, groupDrafts);
+  restoreSendAuditHistory(accountId, body.sendAudit ?? [], now);
+  return { ok: true, schemaVersion: 6, groupDraftRestore, counts: { settings: settings.length, conversations: conversations.length, messages: messages.length, analyses: analyses.length, replies: replies.length, batches: batches.length, collectionRuns: collectionRuns.length, collectionItems: collectionItems.length, followupAlerts: followupAlerts.length, groupDrafts: groupDrafts.length } };
+}
+
 const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://127.0.0.1:${port}`);
@@ -2993,10 +3178,7 @@ const server = createServer(async (req, res) => {
         const now = new Date().toISOString();
         db.exec('BEGIN IMMEDIATE');
         try {
-          const status = WS_STATUSES.has(wsText(body.status, 32)) ? wsText(body.status, 32) : '未连接';
-          db.prepare('INSERT INTO ws_accounts(id,display_name,workspace_mode,provider,origin,partition_key,status,last_status,last_seen_at,enabled,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)')
-            .run(id, wsText(body.displayName, 200) || id, workspaceMode, wsText(body.provider, 120), wsText(body.origin, 500), wsText(body.partitionKey, 200) || `persist:${id}`, status, status === '未连接' ? '' : status, status === '已连接' ? now : '', body.enabled === false ? 0 : 1, now, now);
-          wsSaveAccountSettings(id, body.settings || body, now);
+          insertWsAccount(id, workspaceMode, body, now);
           db.exec('COMMIT');
         } catch (error) { db.exec('ROLLBACK'); throw error; }
         return json(res, 201, { account: wsAccountPayload(wsAccountRow(id)) });
@@ -3236,7 +3418,8 @@ const server = createServer(async (req, res) => {
         };
         const relations = Array.isArray(customer.groupMemberships) ? customer.groupMemberships.slice() : [];
         const index = relations.findIndex(item => item.accountId === event.account_id && item.groupJid === event.group_jid);
-        const projection = wsGroupMonitor.applyMembershipProjection(profileRow, target, memberEvent, customer, { now, existingRelation: relations[index] });
+        const sourceInfo = wsGroupMonitorSource(target, state);
+        const projection = wsGroupMonitor.applyMembershipProjection(profileRow, target, memberEvent, customer, { now, existingRelation: relations[index], sourceLabel: sourceInfo.label });
         if (projection.status !== 'applied') return json(res, 409, { error: '事件仍无法安全应用。' });
         const relation = { ...projection.relation, locked: body.lock === true || Boolean(relations[index]?.locked) };
         db.exec('BEGIN IMMEDIATE');
@@ -3247,7 +3430,7 @@ const server = createServer(async (req, res) => {
           customer.status = deriveWsCustomerGroupStatus(customer, event.event_type);
           customer.updatedAt = now;
           writeState(state, false);
-          wsPersistCustomerGroupMembershipLedger(event.account_id, target, relation, memberEvent, wsGroupMonitorSource(target, state), now);
+          wsPersistCustomerGroupMembershipLedger(event.account_id, target, relation, memberEvent, sourceInfo, now);
           db.prepare("UPDATE ws_group_membership_events SET customer_id=?,status='applied',confidence=1,review_reason='',updated_at=? WHERE id=?").run(customer.id, now, eventId);
           db.exec('COMMIT');
         } catch (error) { db.exec('ROLLBACK'); throw error; }
@@ -5143,6 +5326,7 @@ const server = createServer(async (req, res) => {
         const existing = db.prepare('SELECT * FROM ws_send_audit WHERE id=? AND account_id=?').get(auditId, accountId);
         if (!existing) reject(404, 'SEND_PLAN_NOT_FOUND', '发送计划不存在或不属于当前账号。');
         const metadata = wsJson(existing.native_result_json, {});
+        if (existing.history_only && (body.action === 'begin-attempt' || metadata.importedHistory || !metadata.sendAttempt?.id)) reject(409, 'SEND_RETRY_BLOCKED', '恢复保留的发送历史不可重新执行。');
         let attempt = metadata.sendAttempt || {};
         const attachments = db.prepare('SELECT * FROM ws_send_attachments WHERE account_id=? AND send_audit_id=? ORDER BY order_no,id').all(accountId, auditId);
         if (body.action === 'begin-attempt') {
@@ -5761,134 +5945,44 @@ const server = createServer(async (req, res) => {
     }
     if (req.method === 'POST' && url.pathname === '/api/ws/import') {
       const body = JSON.parse((await readBody(req, 50 * 1024 * 1024)).toString('utf8'));
-      const accountId = wsAccountId(body.accountId);
-      const account = wsRequireAccount(accountId);
-      // Full workspace backups preserve each per-account export verbatim.
-      // Validate its purpose before deleting any existing conversation data;
-      // restore callers must create missing accounts with that same purpose.
-      if (Object.hasOwn(body, 'accounts')) {
-        if (!Array.isArray(body.accounts) || body.accounts.length !== 1 || body.accounts[0]?.id !== accountId) return json(res, 400, { error: 'WS 备份账号清单与当前恢复账号不符，请逐账号恢复。', code: 'WORKSPACE_MODE_ACCOUNT_MISMATCH' });
-        const metadata = body.accounts[0];
-        if (Object.hasOwn(metadata, 'workspaceMode')) {
-          if (!['ordinary', 'dedicated'].includes(metadata.workspaceMode)) return json(res, 400, { error: 'WS 备份中的账号用途无效。', code: 'INVALID_WORKSPACE_MODE' });
-          if (metadata.workspaceMode !== account.workspace_mode) return json(res, 409, { error: 'WS 备份账号用途与当前账号不符，未执行恢复。', code: 'WORKSPACE_MODE_CONFLICT' });
-        }
-      }
-      const schemaVersion = Number(body.schemaVersion || 5);
-      if (!Number.isInteger(schemaVersion) || schemaVersion < 5 || schemaVersion > 6) return json(res, 400, { error: 'WS 备份版本不受支持，只能恢复 v5 或 v6 数据。' });
-      for (const key of ['settings','conversations','messages','analyses','replies','batches','collectionRuns','collectionItems','followupAlerts']) if (Object.hasOwn(body, key) && !Array.isArray(body[key])) return json(res, 400, { error: `WS 备份中的 ${key} 不是有效数组。` });
-      const settings = body.settings || [];
-      const conversations = body.conversations || [];
-      const messages = body.messages || [];
-      const analyses = body.analyses || [];
-      const replies = body.replies || [];
-      const batches = body.batches || [];
-      const collectionRuns = body.collectionRuns || [];
-      const collectionItems = body.collectionItems || [];
-      const followupAlerts = body.followupAlerts || [];
-      const groupDrafts = wsGroupDrafts.validateBackup(Object.hasOwn(body, 'groupDrafts') ? body.groupDrafts : [], accountId, account.workspace_mode);
-      const limits = { settings: 5000, conversations: 5000, messages: 100000, analyses: 20000, replies: 20000, batches: 20000, collectionRuns: 5000, collectionItems: 100000, followupAlerts: 20000 };
-      for (const [key, limit] of Object.entries(limits)) if ({ settings, conversations, messages, analyses, replies, batches, collectionRuns, collectionItems, followupAlerts }[key].length > limit) return json(res, 413, { error: `WS 备份中的 ${key} 超过 ${limit} 条上限，未执行恢复。` });
-      const conversationIds = new Set(conversations.map(item => wsText(item.id, 160)).filter(Boolean));
-      const externalIds = new Set(conversations.map(item => wsText(item.externalId, 160)).filter(Boolean));
-      if (conversations.some(item => !wsText(item.id, 160) || !wsText(item.externalId, 160)) || conversationIds.size !== conversations.length || externalIds.size !== conversations.length) return json(res, 400, { error: 'WS 备份中的会话编号或外部标识缺失或重复。' });
-      if (settings.some(item => !conversationIds.has(wsText(item.conversationId, 160)))) return json(res, 400, { error: 'WS 备份中的设置关联了不存在的会话。' });
-      if (new Set(settings.map(item => wsText(item.conversationId, 160))).size !== settings.length) return json(res, 400, { error: 'WS 备份中同一会话存在重复设置。' });
-      if (messages.some(item => wsMessageTextTooLong(item.originalText))) return json(res, 413, { error: `WS 备份中的消息原文超过 ${WS_MESSAGE_MAX_CHARS} 字符，未恢复且现有数据未修改。` });
-      if (messages.some(item => !conversationIds.has(wsText(item.conversationId, 160)) || !WS_DIRECTIONS.has(wsText(item.direction, 16)) || !wsMessageText(item.originalText).trim())) return json(res, 400, { error: 'WS 备份中的消息格式无效。' });
-      if (analyses.some(item => !conversationIds.has(wsText(item.conversationId, 160)))) return json(res, 400, { error: 'WS 备份中的 AI 分析关联无效。' });
-      if (replies.some(item => !conversationIds.has(wsText(item.conversationId, 160)))) return json(res, 400, { error: 'WS 备份中的回复关联无效。' });
-      if (batches.some(item => !conversationIds.has(wsText(item.conversationId, 160)) || !wsText(item.fingerprint, 160))) return json(res, 400, { error: 'WS 备份中的消息批次关联或指纹无效。' });
-      const messageIds = new Set(messages.map(item => wsText(item.id, 160)).filter(Boolean));
-      if (messageIds.size !== messages.filter(item => wsText(item.id, 160)).length) return json(res, 400, { error: 'WS 备份中存在重复消息编号。' });
-      const messageExternalKeys = messages.map(item => { const externalId = wsText(item.externalId, 200); return externalId ? `${wsText(item.conversationId, 160)}\u0000${externalId}` : ''; }).filter(Boolean);
-      if (new Set(messageExternalKeys).size !== messageExternalKeys.length) return json(res, 400, { error: 'WS 备份中同一会话存在重复外部消息标识。' });
-      const replyIds = new Set(replies.map(item => wsText(item.id, 160)).filter(Boolean));
-      if (replyIds.size !== replies.filter(item => wsText(item.id, 160)).length) return json(res, 400, { error: 'WS 备份中存在重复回复编号。' });
-      const replyIdempotencyKeys = replies.map(item => { const key = wsText(item.idempotencyKey, 160); return key ? `${wsText(item.conversationId, 160)}\u0000${key}` : ''; }).filter(Boolean);
-      if (new Set(replyIdempotencyKeys).size !== replyIdempotencyKeys.length) return json(res, 400, { error: 'WS 备份中同一会话存在重复回复幂等键。' });
-      const batchIds = new Set(batches.map(item => wsText(item.id, 160)).filter(Boolean));
-      if (batchIds.size !== batches.filter(item => wsText(item.id, 160)).length) return json(res, 400, { error: 'WS 备份中存在重复批次编号。' });
-      const batchKeys = batches.map(item => `${wsText(item.conversationId, 160)}\u0000${wsText(item.fingerprint, 160)}`);
-      if (new Set(batchKeys).size !== batchKeys.length) return json(res, 400, { error: 'WS 备份中同一会话存在重复批次指纹。' });
-      if (batches.some(item => Object.hasOwn(item, 'messageIds') && (!Array.isArray(item.messageIds) || item.messageIds.some(id => !messageIds.has(wsText(id, 160)))))) return json(res, 400, { error: 'WS 备份中的消息批次引用了不存在的消息。' });
-      const collectionRunIds = new Set(collectionRuns.map(item => wsText(item.id, 160)).filter(Boolean));
-      if (collectionRuns.some(item => !wsText(item.id, 160)) || collectionRunIds.size !== collectionRuns.length) return json(res, 400, { error: 'WS 备份中的采集任务编号缺失或重复。' });
-      const analysisIds = new Set(analyses.map(item => wsText(item.id, 160)).filter(Boolean));
-      if (analysisIds.size !== analyses.filter(item => wsText(item.id, 160)).length) return json(res, 400, { error: 'WS 备份中的 AI 分析编号重复。' });
-      const collectionItemIds = new Set(collectionItems.map(item => wsText(item.id, 160)).filter(Boolean));
-      if (collectionItemIds.size !== collectionItems.filter(item => wsText(item.id, 160)).length) return json(res, 400, { error: 'WS 备份中的采集项目编号重复。' });
-      const alertIds = new Set(followupAlerts.map(item => wsText(item.id, 160)).filter(Boolean));
-      if (alertIds.size !== followupAlerts.filter(item => wsText(item.id, 160)).length) return json(res, 400, { error: 'WS 备份中的跟进提醒编号重复。' });
-      const collectionItemKeys = collectionItems.map(item => `${wsText(item.runId, 160)}\u0000${wsText(item.conversationId, 160)}`);
-      if (new Set(collectionItemKeys).size !== collectionItemKeys.length) return json(res, 400, { error: 'WS 备份中同一采集任务存在重复会话项目。' });
-      if (collectionItems.some(item => !collectionRunIds.has(wsText(item.runId, 160)) || !conversationIds.has(wsText(item.conversationId, 160)))) return json(res, 400, { error: 'WS 备份中的采集项目关联无效。' });
-      if (followupAlerts.some(item => !conversationIds.has(wsText(item.conversationId, 160)) || !wsText(item.alertKey, 240) || (wsText(item.analysisId, 160) && !analysisIds.has(wsText(item.analysisId, 160))))) return json(res, 400, { error: 'WS 备份中的跟进提醒关联无效。' });
-      const alertKeys = followupAlerts.map(item => wsText(item.alertKey, 240));
-      if (new Set(alertKeys).size !== alertKeys.length) return json(res, 400, { error: 'WS 备份中存在重复跟进提醒标识。' });
-      const knownGroups = db.prepare('SELECT id,external_id,data_json FROM ws_conversations WHERE account_id=?').all(accountId).filter(wsCore.isGroupConversation);
-      const vipGroupExternalIds = new Set(knownGroups.filter(wsIsVipGroup).map(row => row.external_id));
-      const vipGroupIds = new Set(knownGroups.filter(wsIsVipGroup).map(row => row.id));
-      const groupExternalIds = new Set(knownGroups.filter(wsIsExcludedGroup).map(row => row.external_id));
-      const groupIds = new Set(knownGroups.filter(wsIsExcludedGroup).map(row => row.id));
-      let groupDraftRestore;
       db.exec('BEGIN IMMEDIATE');
+      let restored;
+      try { restored = restoreWsAccount(body); db.exec('COMMIT'); }
+      catch (error) { db.exec('ROLLBACK'); throw error; }
+      return json(res, 200, restored);
+    }
+    if (req.method === 'POST' && url.pathname === '/api/workspace/restore') {
+      const bytes = await readBody(req, 250 * 1024 * 1024);
+      const fingerprint = createHash('sha256').update(bytes).digest('hex');
+      const { operationId, crm, accounts } = JSON.parse(bytes.toString('utf8'));
+      const expectedVersion = req.headers['x-state-version'];
+      if (expectedVersion === undefined) throw restoreError(428, '恢复必须提供数据版本。','WORKSPACE_RESTORE_REJECTED');
+      if (typeof operationId !== 'string' || !/^[a-f0-9-]{36}$/i.test(operationId) || !Array.isArray(accounts)) throw restoreError(400, '工作区恢复操作编号或账号清单无效。','WORKSPACE_RESTORE_REJECTED');
+      const seen = new Set();
+      db.exec('BEGIN IMMEDIATE');
+      let version;
       try {
-        db.prepare('DELETE FROM ws_followup_alerts WHERE account_id=?').run(accountId);
-        db.prepare('DELETE FROM ws_collection_items WHERE account_id=?').run(accountId);
-        db.prepare('DELETE FROM ws_collection_runs WHERE account_id=?').run(accountId);
-        db.prepare('DELETE FROM ws_ingest_batches WHERE account_id=?').run(accountId);
-        db.prepare('DELETE FROM ws_messages WHERE account_id=?').run(accountId);
-        db.prepare('DELETE FROM ws_ai_analyses WHERE account_id=?').run(accountId);
-        db.prepare('DELETE FROM ws_replies WHERE account_id=?').run(accountId);
-        db.prepare('DELETE FROM ws_settings WHERE account_id=?').run(accountId);
-        db.prepare('DELETE FROM ws_conversations WHERE account_id=?').run(accountId);
-        const now = new Date().toISOString();
-        db.prepare("UPDATE ws_ai_authorizations SET status='revoked',revision=revision+1,updated_at=? WHERE account_id=? AND status<>'revoked'").run(now, accountId);
-        wsAiAuthorizationAudit(accountId, '', 'workspace-restored', { automaticAuthorizationRevoked: true });
-        const addConversation = db.prepare('INSERT INTO ws_conversations(id,account_id,external_id,title,customer_id,last_message_text,intent_level,data_json,created_at,updated_at,last_message_at,unread_count,language) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)');
-        for (const item of conversations) {
-          const type = vipGroupExternalIds.has(wsText(item.externalId, 160)) || vipGroupIds.has(wsText(item.id, 160))
-            ? 'vip_group'
-            : groupExternalIds.has(wsText(item.externalId, 160)) || groupIds.has(wsText(item.id, 160))
-              ? 'group'
-              : wsCore.conversationType(item);
-          const data = { ...wsObject(item.data, 32 * 1024), ...(type !== 'unknown' ? {conversationType:type, isGroup:['group','vip_group'].includes(type), vipGroup:type === 'vip_group'} : {}) };
-          const lastMessage = wsText(item.lastMessageText, 4000);
-          addConversation.run(wsText(item.id, 160), accountId, wsText(item.externalId, 160), wsText(item.title, 200), type === 'vip_group' ? '' : wsText(item.customerId, 128), lastMessage, wsText(item.intentLevel, 40), JSON.stringify(data), wsIso(item.createdAt || now), wsIso(item.updatedAt || now), item.lastMessageAt ? wsIso(item.lastMessageAt) : (lastMessage ? wsIso(item.updatedAt || now) : ''), Math.max(0, Math.floor(Number(item.unreadCount) || 0)), wsText(item.language, 40));
+        const receipt = db.prepare('SELECT body_hash,state_version FROM workspace_restore_receipts WHERE operation_id=?').get(operationId);
+        if (receipt) {
+          if (receipt.body_hash !== fingerprint) throw restoreError(409, '恢复操作编号已用于另一份备份。');
+          version = receipt.state_version;
+        } else {
+          if (String(expectedVersion) !== readStateEnvelope().version) throw restoreError(409, '共享数据已在其他窗口更新，请先同步后再恢复。');
+          if (Buffer.byteLength(JSON.stringify(crm ?? null)) > 100 * 1024 * 1024) throw restoreError(413, 'CRM 备份超过 100 MB 上限。');
+          for (const account of accounts) {
+            if (!account?.accountId || wsAccountId(account.accountId) !== account.accountId || seen.has(account.accountId)) throw restoreError(400, '备份账号编号缺失或重复。');
+            if (Buffer.byteLength(JSON.stringify({ ...account, groupDrafts: undefined })) > 50 * 1024 * 1024) throw restoreError(413, '单个 WS 账号备份超过 50 MB 上限。');
+            seen.add(account.accountId);
+            ensureWorkspaceRestoreAccount(account);
+            restoreWsAccount(account);
+          }
+          writeState(crm, false);
+          version = readStateEnvelope().version;
+          db.prepare('INSERT INTO workspace_restore_receipts VALUES(?,?,?,?)').run(operationId, fingerprint, version, new Date().toISOString());
         }
-        const addSetting = db.prepare('INSERT INTO ws_settings(conversation_id,account_id,enabled,receive_enabled,send_enabled,target_language,send_language,show_original,ai_enabled,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)');
-        for (const item of settings) addSetting.run(wsText(item.conversationId, 160), accountId, item.enabled === false ? 0 : 1, item.receive === false ? 0 : 1, item.send === false ? 0 : 1, wsText(item.targetLanguage, 40) || '中文', wsText(item.sendLanguage, 40), item.showOriginal === false ? 0 : 1, item.aiEnabled === false ? 0 : 1, WS_STATUSES.has(wsText(item.status, 32)) ? wsText(item.status, 32) : '未连接', wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
-        const addMessage = db.prepare('INSERT INTO ws_messages(id,account_id,conversation_id,external_id,direction,original_text,translated_text,source_language,target_language,order_no,data_json,created_at,updated_at,translation_status,translation_error,translation_attempts,last_attempt_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
-        for (const item of messages) {
-          const translation = wsTranslationFields(item);
-          const rawData = wsObject(item.data, 32 * 1024);
-          const hasTimestampMetadata = rawData.source === 'ws-webview2'
-            || ['sentAt','observedAt','timestampText','timestampSource','sentAtKnown'].some(key => Object.hasOwn(rawData, key))
-            || Boolean(item.sentAt || item.observedAt || item.timestampText || item.timestampSource)
-            || item.sentAtKnown === true;
-          const time = wsMessageTimeMetadata({ ...item, data: rawData }, item.observedAt || rawData.observedAt || item.createdAt || now);
-          const data = wsUnverifiedMessageData(hasTimestampMetadata ? wsMessageDataWithTime(rawData, time) : rawData, 'ws-restored-history');
-          const createdAt = rawData.source === 'ws-webview2' && time.sentAtKnown ? time.sentAt : wsIso(item.createdAt || now);
-          addMessage.run(wsText(item.id, 160) || wsCreateId('wsm'), accountId, wsText(item.conversationId, 160), wsText(item.externalId, 200), wsText(item.direction, 16), wsMessageText(item.originalText), translation.translatedText, wsText(item.sourceLanguage, 40), wsText(item.targetLanguage, 40), Number.isFinite(Number(item.order)) ? Number(item.order) : 0, JSON.stringify(data), createdAt, wsIso(item.updatedAt || now), translation.translationStatus, translation.translationError, translation.translationAttempts, translation.lastAttemptAt);
-        }
-        const addAnalysis = db.prepare('INSERT INTO ws_ai_analyses(id,account_id,conversation_id,result_json,confidence,provider_name,model,error_message,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)');
-        for (const item of analyses) addAnalysis.run(wsText(item.id, 160) || wsCreateId('wsa'), accountId, wsText(item.conversationId, 160), JSON.stringify(wsObject(item.result, 128 * 1024)), Math.min(1, Math.max(0, Number(item.confidence) || 0)), wsText(item.providerName, 120), wsText(item.model, 120), wsText(item.errorMessage, 1000), wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
-        const addReply = db.prepare('INSERT INTO ws_replies(id,account_id,conversation_id,original_text,translated_text,status,created_at,updated_at,idempotency_key) VALUES(?,?,?,?,?,?,?,?,?)');
-        for (const item of replies) addReply.run(wsText(item.id, 160) || wsCreateId('wsr'), accountId, wsText(item.conversationId, 160), wsText(item.originalText, 12000), wsText(item.translatedText, 12000), WS_REPLY_STATUSES.has(wsText(item.status, 16)) ? wsText(item.status, 16) : 'draft', wsIso(item.createdAt || now), wsIso(item.updatedAt || now), wsText(item.idempotencyKey, 160));
-        const addBatch = db.prepare('INSERT INTO ws_ingest_batches(id,account_id,conversation_id,fingerprint,message_count,inserted_count,message_ids_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)');
-        for (const item of batches) { const ids = Array.isArray(item.messageIds) ? item.messageIds.map(id => wsText(id, 160)).filter(id => messageIds.has(id)) : []; addBatch.run(wsText(item.id, 160) || wsCreateId('wsb'), accountId, wsText(item.conversationId, 160), wsText(item.fingerprint, 160), Math.max(0, Math.floor(Number(item.messageCount) || ids.length)), Math.max(0, Math.floor(Number(item.insertedCount) || 0)), JSON.stringify(ids), wsIso(item.createdAt || now), wsIso(item.updatedAt || now)); }
-         const addRun = db.prepare('INSERT INTO ws_collection_runs(id,account_id,status,total,discovered,completed,analyzing,analyzed,failed,skipped,retryable,last_error,checkpoint,cursor,resume_count,last_success_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
-         for (const item of collectionRuns) addRun.run(wsText(item.id, 160), accountId, wsText(item.status, 30) || 'created', Math.max(0, Math.floor(Number(item.total) || 0)), Math.max(0, Math.floor(Number(item.discovered) || 0)), Math.max(0, Math.floor(Number(item.completed) || 0)), Math.max(0, Math.floor(Number(item.analyzing) || 0)), Math.max(0, Math.floor(Number(item.analyzed) || 0)), Math.max(0, Math.floor(Number(item.failed) || 0)), Math.max(0, Math.floor(Number(item.skipped) || 0)), Math.max(0, Math.floor(Number(item.retryable) || 0)), wsText(item.lastError, 1000), wsText(item.checkpoint, 500), wsText(item.cursor, 500), Math.max(0, Math.floor(Number(item.resumeCount) || 0)), wsText(item.lastSuccessAt, 80), wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
-         const addItem = db.prepare('INSERT INTO ws_collection_items(id,account_id,run_id,conversation_id,status,attempts,analysis_status,followup_status,next_followup_at,last_error,checkpoint,created_at,updated_at,coverage_status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
-         for (const item of collectionItems) addItem.run(wsText(item.id, 160) || wsCreateId('wsi'), accountId, wsText(item.runId, 160), wsText(item.conversationId, 160), wsText(item.status, 30) || 'queued', Math.max(0, Math.floor(Number(item.attempts) || 0)), wsText(item.analysisStatus, 30) || 'pending', wsText(item.followupStatus, 30) || 'none', wsText(item.nextFollowupAt, 80), wsText(item.lastError, 1000), wsText(item.checkpoint, 500), wsIso(item.createdAt || now), wsIso(item.updatedAt || now), wsText(item.coverageStatus, 30) || 'unknown');
-         const addAlert = db.prepare('INSERT INTO ws_followup_alerts(id,account_id,conversation_id,analysis_id,alert_key,priority,reason,followup_time,status,snoozed_until,data_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)');
-         for (const item of followupAlerts) addAlert.run(wsText(item.id, 160) || wsCreateId('wfa'), accountId, wsText(item.conversationId, 160), wsText(item.analysisId, 160), wsText(item.alertKey, 240), wsText(item.priority, 20) || 'today', wsText(item.reason, 500), wsText(item.followupTime, 80), wsText(item.status, 20) || 'open', wsText(item.snoozedUntil, 80), JSON.stringify(wsObject(item.data, 32 * 1024)), wsIso(item.createdAt || now), wsIso(item.updatedAt || now));
-        for (const row of db.prepare('SELECT * FROM ws_conversations WHERE account_id=?').all(accountId)) if (wsIsExcludedGroup(row)) wsQuiesceGroup(row, now);
-        groupDraftRestore = wsGroupDrafts.restoreBackup(db, accountId, groupDrafts);
         db.exec('COMMIT');
-      } catch (error) { db.exec('ROLLBACK'); throw error; }
-      return json(res, 200, { ok: true, schemaVersion: 6, groupDraftRestore, counts: { settings: settings.length, conversations: conversations.length, messages: messages.length, analyses: analyses.length, replies: replies.length, batches: batches.length, collectionRuns: collectionRuns.length, collectionItems: collectionItems.length, followupAlerts: followupAlerts.length, groupDrafts: groupDrafts.length } });
+      } catch (error) { db.exec('ROLLBACK'); throw restoreError(error.status || 400, error.message, 'WORKSPACE_RESTORE_REJECTED'); }
+      return json(res, 200, { ok: true, operationId, version });
     }
     const hotProfileMatch = url.pathname.match(/^\/api\/(?:ws\/)?hot-chat\/profile(?:\/(facts|confirm|events|diagnostics|sync-retry))?$/);
     if (hotProfileMatch) {

@@ -55,72 +55,59 @@ test('real SQLite transaction rolls back preexisting account writes and earlier 
   } finally { db.close(); }
 });
 
-for (const scenario of ['later account fails', 'CRM fails', 'draft transaction rejects', 'lost reply recovered', 'lost replies remain unknown', 'lost reply then conflict']) {
-  test('workspace draft final phase: ' + scenario, async () => {
-    const db = database();
-    try {
-      merge(db, [makeDraft('existing')]);
-      const row = id => ({ schemaVersion: 6, accounts: [{ id, workspaceMode: 'dedicated' }], groupDrafts: read(db, id) });
-      const backup = { customers: [{ id: 'replacement' }], wsAccounts: {
-        desk: { ...row('desk'), groupDrafts: [makeDraft('existing', 'CANCELLED'), makeDraft('new')] },
-        other: { ...row('other'), injectedFailure: scenario === 'later account fails' },
-      } };
-      const accountList = { accounts: [{ id: 'desk' }, { id: 'other' }] };
-      const imported = [], draftCalls = [], notices = [], crmWrites = [];
-      let diskCustomers = [{ id: 'original' }];
-      const service = {
-        listAccounts: async () => accountList, exportData: async id => row(id), ensureAccount: async () => ({ created: false, workspaceMode: 'dedicated' }),
-        importData: async (value, id) => { imported.push({ id, hasDrafts: Object.hasOwn(value, 'groupDrafts') }); if (value.injectedFailure) throw new Error('injected later account failure'); return merge(db, value.groupDrafts || [], id); },
-        importGroupDrafts: async payload => {
-          draftCalls.push(JSON.parse(JSON.stringify(payload)));
-          assert.equal(diskCustomers[0].id, 'replacement', 'draft merge must follow successful CRM commit');
-          if (scenario === 'draft transaction rejects' || (scenario === 'lost reply then conflict' && draftCalls.length > 1)) throw Object.assign(new Error('draft conflict'), { status: 409 });
-          db.exec('BEGIN IMMEDIATE');
-          try { for (const account of payload.accounts) drafts.restoreBackup(db, account.accountId, drafts.validateBackup(account.groupDrafts, account.accountId, 'dedicated')); db.exec('COMMIT'); }
-          catch (error) { db.exec('ROLLBACK'); throw error; }
-          if (scenario.includes('lost') && (draftCalls.length === 1 || scenario === 'lost replies remain unknown')) throw new Error('reply lost after commit');
-          return { ok: true, operationId: payload.operationId, sendAvailable: false };
-        },
-      };
-      const state = { customers: [{ id: 'original' }], tickets: [], deposits: [], followups: [], activities: [], settings: {}, selected: new Set() };
-      const context = {
-        window: { __LOCAL_DB__: true, __zhikeWsBackup: service }, state, optionCatalog: {}, crmFollowCache: {}, WeakMap, Set, stateVersion: '1',
-        decodeWorkspaceBackupFile: async text => JSON.parse(text), validateBackupData: () => {}, validateStatusHistoryData: () => {}, confirm: () => true,
-        flushStateWrites: async () => {}, cloneStateData: value => JSON.parse(JSON.stringify(value)), statePayload: () => ({ customers: state.customers }),
-        sha256Text: async text => require('node:crypto').createHash('sha256').update(text).digest('hex'),
-        fetch: async (url, init) => {
-          if (url === '/api/snapshot') return { ok: true, json: async () => ({ snapshotCreated: true }) };
-          assert.equal(url, '/api/state');
-          crmWrites.push(JSON.parse(init.body));
-          if (scenario === 'CRM fails' && crmWrites.length === 1) return { ok: false, json: async () => ({ error: 'injected CRM failure' }) };
-          diskCustomers = JSON.parse(init.body).customers;
-          return { ok: true, json: async () => ({ version: String(crmWrites.length + 1) }) };
-        },
-        normalizeCustomerRows: value => value, normalizeObjectRows: value => value || [], normalizeSavedViews: value => value || [],
-        applyOptionLists: () => {}, exposeImportSourceCatalog: () => {}, render: () => {}, toast: (message, kind) => notices.push({ message, kind }),
-      };
-      const source = fs.readFileSync(path.join(__dirname, '../resources/app/app.js'), 'utf8');
-      const start = source.indexOf('  async function importBackupWsAccounts('), end = source.indexOf('  function saveIntake()', start);
-      assert.ok(start >= 0 && end > start);
-      const restore = vm.runInNewContext(source.slice(start, end) + '\n;restoreBackupFile', context);
-      await restore({ size: 100, text: async () => JSON.stringify(backup) });
-      assert.deepEqual(imported.slice(0, 2), [{ id: 'desk', hasDrafts: false }, { id: 'other', hasDrafts: false }], 'initial per-account imports never write staged drafts');
-      assert.equal(notices.length, 1);
-      if (!scenario.includes('lost')) {
-        assert.deepEqual(read(db), [makeDraft('existing')]);
-        assert.equal(imported.length, 4, 'known failure preserves existing WS compensation');
-        assert.equal(state.customers[0].id, 'original'); assert.equal(diskCustomers[0].id, 'original');
-        assert.equal(draftCalls.length, scenario === 'draft transaction rejects' ? 1 : 0);
-        assert.equal(crmWrites.length, scenario === 'later account fails' ? 0 : scenario === 'CRM fails' ? 1 : 2);
-        assert.equal(notices[0].kind, 'x'); assert.doesNotMatch(notices[0].message, /备份恢复完成|结果未确认/);
-      } else {
-        assert.equal(read(db).length, 2); assert.equal(read(db).find(row => row.id === 'existing').status, 'CANCELLED');
-        assert.equal(imported.length, 2, 'committed or uncertain drafts never cause destructive compensation');
-        assert.equal(diskCustomers[0].id, 'replacement'); assert.equal(crmWrites.length, 1);
-        assert.equal(draftCalls.length, 2); assert.deepEqual(draftCalls[0], draftCalls[1], 'lost-response retry uses exactly the same operation and content');
-        if (scenario === 'lost reply recovered') assert.match(notices[0].message, /备份恢复完成/);
-        else { assert.equal(notices[0].kind, 'x'); assert.match(notices[0].message, /结果未确认，未执行回滚/); assert.doesNotMatch(notices[0].message, /备份恢复完成/); }
+for (const scenario of ['commit', 'commit concurrent', 'commit response lost', 'unknown', 'rejected', 'CRM-only rejected']) {
+  test('workspace restore UI ' + scenario, async () => {
+    const backup = { customers: [{ id: 'replacement' }] };
+    const requests = [], notices = [], nativeActions = [], refreshes = [];
+    const entered = Promise.withResolvers(), ready = Promise.withResolvers();
+    if (!scenario.includes('CRM-only')) backup.wsAccounts = {
+      desk: { accounts: [{ id: 'desk', workspaceMode: 'dedicated' }], groupDrafts: [makeDraft('new')] },
+      other: { accounts: [{ id: 'other', workspaceMode: 'dedicated' }] }
+    };
+    const state = { customers: [{ id: 'original' }], tickets: [], deposits: [], followups: [], activities: [], settings: {}, selected: new Set() };
+    const ctx = {
+      window: { __LOCAL_DB__: true, zhikeDesktop:{ wsAccounts:async payload=>{nativeActions.push(payload.action);return {accounts:[{id:'desk'},{id:'other'}]};} } }, state, optionCatalog: {}, crmFollowCache: {}, stateVersion: '1', crypto: require('node:crypto').webcrypto,
+      destructiveWriteBusy:false,localDataRevision:0,groupLedgerDirty:false,document:{body:{inert:false}},applySharedData:crm=>Object.assign(state,crm),
+      decodeWorkspaceBackupFile: JSON.parse, validateBackupData() {}, validateStatusHistoryData() {}, confirm: () => true,
+      flushStateWrites: async () => {}, cloneStateData: x => JSON.parse(JSON.stringify(x)), refreshSharedState: async () => {refreshes.push(ctx.destructiveWriteBusy);},
+      statePayload: () => ({ customers: state.customers }), normalizeCustomerRows: x => x, normalizeObjectRows: x => x || [], normalizeSavedViews: x => x || [],
+      applyOptionLists() {}, exposeImportSourceCatalog() {}, render() {}, toast: (message, kind) => notices.push({message, kind}),
+      fetch: async (url, init) => {
+        if (url === '/api/snapshot') return { ok: true, json: async () => ({snapshotCreated: true}) };
+        assert.equal(url, '/api/workspace/restore');
+        assert.equal(state.customers[0].id,'original','pending data must not be visible before the transaction commits');
+        if(scenario==='commit concurrent'){entered.resolve();await ready.promise;}
+        requests.push(init.body);
+        assert.equal(init.headers['X-State-Version'], '1');
+        const sent=JSON.parse(init.body);
+        assert.equal(sent.crm.customers[0].id,'replacement');
+        if (scenario.includes('CRM-only')) assert.deepEqual(sent.accounts, []);
+        else { assert.deepEqual(sent.accounts.map(x=>x.accountId), ['desk','other']); assert.deepEqual(sent.accounts[0].groupDrafts,[makeDraft('new')]); }
+        if (scenario==='unknown'||(scenario==='commit response lost'&&requests.length===1)) throw new Error('lost response');
+        if (scenario.includes('rejected')) return { ok:false,json:async()=>({code:'WORKSPACE_RESTORE_REJECTED',error:'transaction rolled back'}) };
+        return { ok:true,json:async()=>({ok:true,version:'2',operationId:sent.operationId}) };
       }
-    } finally { db.close(); }
+    };
+    const source=fs.readFileSync(path.join(__dirname,'../resources/app/app.js'),'utf8');
+    const start=source.indexOf('  function prepareBackupWsAccounts('),end=source.indexOf('  function saveIntake()',start);
+    const restore=vm.runInNewContext(source.slice(start,end)+'\n;restoreBackupFile',ctx);
+    const file={size:100,text:async()=>JSON.stringify(backup)};
+    const operation=restore(file);
+    if(scenario==='commit concurrent'){
+      await entered.promise;
+      assert.equal(ctx.document.body.inert,true);assert.equal(ctx.destructiveWriteBusy,true);
+      await restore(file);
+      assert.match(notices.shift().message,/已有工作区更改/);
+      ready.resolve();
+    }
+    await operation;
+    assert.equal(notices.length,1);
+    assert.equal(ctx.document.body.inert,false);assert.equal(ctx.destructiveWriteBusy,false);
+    assert.deepEqual(refreshes,scenario.startsWith('commit')?[]:[false]);
+    assert.deepEqual(nativeActions,scenario.startsWith('commit')?['list']:[]);
+    assert.equal(requests.length,scenario==='commit response lost'||scenario==='unknown'?2:1);
+    if(requests.length===2)assert.equal(requests[1],requests[0]);
+    assert.equal(state.customers[0].id,scenario.startsWith('commit')?'replacement':'original');
+    assert.match(notices[0].message,scenario==='unknown'?/结果未确认/:scenario.startsWith('commit')?/备份恢复完成/:/rolled back/);
   });
 }

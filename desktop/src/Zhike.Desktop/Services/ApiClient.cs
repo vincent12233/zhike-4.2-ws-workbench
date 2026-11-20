@@ -138,6 +138,9 @@ public sealed class ApiClient(HttpClient http) : IDisposable
 
     public string? SessionToken => _sessionToken;
 
+    internal Task<JsonElement> RestoreWorkspaceAsync(Stream body, string version, CancellationToken token) =>
+        WorkspaceRestoreTransfer.PostAsync(http, body, version, token);
+
     public async Task<JsonElement> WsAiAutomationAsync(object payload, CancellationToken cancellationToken = default)
     {
         using var response = await PostNativeJsonAsync("api/ws/ai-automation/attempts", payload, cancellationToken);
