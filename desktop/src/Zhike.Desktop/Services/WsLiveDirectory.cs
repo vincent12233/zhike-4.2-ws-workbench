@@ -59,7 +59,8 @@ public static class WsLiveDirectory
         }
         object? activeGroup = null, directoryDiagnostics = null;
         var openIdentityStatus = Text(packet, "openIdentityStatus", 40);
-        if (openIdentityStatus is not ("verified" or "no-open-chat" or "insufficient-message-identities" or "conflicting-identities" or "workspace-type-mismatch"))
+        if (openIdentityStatus is not ("verified" or "no-open-chat" or "insufficient-message-identities" or "no-message-envelopes" or "unsupported-message-envelope"
+            or "unconfirmed-message-position" or "single-message-owner" or "awaiting-owner-confirmation" or "conflicting-identities" or "workspace-type-mismatch"))
             openIdentityStatus = "source-unavailable";
         if (source == "foreground-visible" && dedicated && openIdentityStatus == "verified" && packet.TryGetProperty("activeGroup", out var active) && active.ValueKind == JsonValueKind.Object)
         {
@@ -70,9 +71,23 @@ public static class WsLiveDirectory
             directoryDiagnostics = new { listPresent = Flag(diag, "listPresent"), renderedRows = Number(diag, "renderedRows"),
                 stableRows = Number(diag, "stableRows"), unresolvedRows = Number(diag, "unresolvedRows"), confirmedOpen = Flag(diag, "confirmedOpen"),
                 skippedUnread = Number(diag, "skippedUnread"), skippedReadUnknown = Number(diag, "skippedReadUnknown"), skippedTypeUnknown = Number(diag, "skippedTypeUnknown"),
+                noticeAdjacentSvgRows = Number(diag, "noticeAdjacentSvgRows"), noticeUnlabelledSvgRows = Number(diag, "noticeUnlabelledSvgRows"),
                 groupNoticeRows = Number(diag, "groupNoticeRows"), verifiedNoticeRows = Number(diag, "verifiedNoticeRows"),
                 groupFilterStatus = Text(diag, "groupFilterStatus", 24), menuProbeStatus = Text(diag, "menuProbeStatus", 24) };
-        return JsonSerializer.SerializeToElement(new { supported = true, accountId = purpose.AccountId, workspaceMode = purpose.WorkspaceMode, activeGroup, openIdentityStatus, directoryDiagnostics,
+        List<string>? pendingGroupNames = null;
+        if (dedicated && source == "collector" && epoch > 0 && Number(packet, "scanId") > 0
+            && packet.TryGetProperty("pendingGroupWindow", out var window) && window.ValueKind == JsonValueKind.Object
+            && Text(window, "source", 32) == "whatsapp-groups-filter" && window.TryGetProperty("names", out var names) && names.ValueKind == JsonValueKind.Array)
+        {
+            pendingGroupNames = [];
+            foreach (var item in names.EnumerateArray())
+            {
+                if (pendingGroupNames.Count == 50) break;
+                if (item.ValueKind != JsonValueKind.String || item.GetString()?.Trim() is not { Length: > 0 } title) continue;
+                pendingGroupNames.Add(title[..Math.Min(title.Length, 150)]);
+            }
+        }
+        return JsonSerializer.SerializeToElement(new { supported = true, accountId = purpose.AccountId, workspaceMode = purpose.WorkspaceMode, activeGroup, openIdentityStatus, directoryDiagnostics, pendingGroupNames,
             sessionGeneration = generation, collectorEpoch = epoch, source, collectorOnly = source == "collector",
             eventName = "live-directory", scanId = Number(packet, "scanId"), chunkIndex = Number(packet, "chunkIndex"),
             scanned = Flag(packet, "scanned"), scanning = Flag(packet, "scanning"), finished = Flag(packet, "finished"), complete = Flag(packet, "complete"),

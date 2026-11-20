@@ -2,6 +2,18 @@
 
 // Expected status, number of group clicks, All restorations, and prior-row eligibility.
 const filterCases = {
+  waBusiness: ['selected',1,1,true],
+  waAccessibleSearch: ['selected',1,1,true],
+  waPaintedPlaceholder: ['selected',1,1,true],
+  waRolelessMenu: ['selected',1,1,true],
+  waAlreadySelected: ['selected',0,0,true],
+  waSpoofed: ['ambiguous',0,0,false],
+  waConcurrent: ['ambiguous',0,0,false],
+  waFar: ['ambiguous',0,0,false],
+  waForeignOwner: ['ambiguous',0,0,false],
+  waUnchangedSearch: ['selection-unconfirmed',1,0,false],
+  waOptimisticTab: ['selection-unconfirmed',1,1,false],
+  waInactiveSearch: ['not-offered',0,0,false],
   visible: ['selected', 1, 1, false],
   recycled: ['selected', 1, 1, true],
   labelledPanel: ['selected', 1, 1, true],
@@ -24,6 +36,68 @@ const filterCases = {
 
 function runFilterScenes(sample, cases, source) {
   return Object.keys(cases).map(scene => {
+    if (scene.startsWith('wa')) {
+      const side = document.createElement('div');
+      side.id = 'side';
+      side.style.cssText='position:fixed;left:8px;top:8px;width:360px;background:white';
+      sample.replaceChildren(side);
+      const search = scene === 'waPaintedPlaceholder' ? '<div><div role="textbox" contenteditable="true"></div><span class="hint" aria-hidden="true"></span></div>' : '<input>';
+      side.innerHTML = search + '<div class="filters"></div><div id="pane-side"><div role="row"><button>Groups</button></div></div>';
+      const toolbar=side.querySelector('.filters'), list=side.querySelector('#pane-side'), before=list.firstElementChild;
+      const setSearch = value => {
+        const hint=side.querySelector('.hint');
+        if (hint) hint.textContent=value;
+        else side.querySelector('input').setAttribute(scene === 'waAccessibleSearch' ? 'aria-label' : 'placeholder',value);
+      };
+      const dot = '<i class="label-swatch">●</i>';
+      const down = '<svg width="16" height="16" aria-hidden="true"><path d="m2 5 6 6 6-6"/></svg>';
+      const heart = '<svg width="16" height="16" aria-hidden="true"><path d="M2 7C2 2 7 2 8 5C9 2 14 2 14 7L8 14Z"/></svg>';
+      const groupGlyph = '<svg width="16" height="16" aria-hidden="true"><path d="M1 14Q1 9 6 9Q11 9 11 14ZM7 4A2 2 0 1 0 3 4"/></svg>';
+      let clicks=0,restores=0;
+      const draw = selected => {
+        setSearch(scene === 'waInactiveSearch' ? 'Search message history' : selected && !['waUnchangedSearch','waOptimisticTab'].includes(scene) ? 'Search group chats' : 'Search or start a new chat');
+        toolbar.innerHTML = '<button>All</button>' + (selected ? '<button>Groups</button>' : '<button>Unread 2</button><button>'+dot+'10.27</button><button>'+dot+'商业</button><button>'+dot+'进群</button>')
+          + '<button aria-label="More chat filters">'+down+'</button>';
+        if (selected && scene === 'waOptimisticTab') {
+          toolbar.setAttribute('data-testid','chat-list-filters');
+          toolbar.firstElementChild.id='all-filter';
+          toolbar.children[1].id='group-filter';
+          toolbar.children[1].setAttribute('aria-pressed','true');
+        }
+        toolbar.firstElementChild.onclick=() => { restores++; draw(false); };
+        const arrow=toolbar.lastElementChild;
+        arrow.onclick=() => {
+          const menu=document.createElement('div');
+          if (scene !== 'waRolelessMenu') menu.setAttribute('role','menu');
+          const rect=arrow.getBoundingClientRect();
+          menu.id='fixture-group-menu';
+          menu.style.cssText='position:fixed;z-index:20;width:164px;background:white;top:'+(rect.bottom+4)+'px;left:'+(scene === 'waFar' ? rect.right+100 : rect.left-75)+'px';
+          const choices=['Groups','1','2','3','4','5','6','7','8'].map(n=>'<button>'+dot+n+'</button>').join('');
+          menu.innerHTML = choices+'<button>'+heart+'Favourites</button><button>'+(scene === 'waSpoofed' ? dot : groupGlyph)+'Groups</button>';
+          if (scene === 'waForeignOwner') before.setAttribute('aria-controls',menu.id);
+          if (scene === 'waConcurrent') sample.insertAdjacentHTML('beforeend','<div role="menu">Unrelated</div>');
+          for (const choice of menu.querySelectorAll('button')) choice.onclick=() => { throw Error('Selected non-platform filter entry'); };
+          menu.lastElementChild.onclick=() => { clicks++; menu.remove(); draw(true); };
+          sample.append(menu);
+        };
+      };
+      draw(scene === 'waAlreadySelected');
+      const exercise = new Function('list','row',`
+        let cancelRowMenu=null;
+        const backgroundCollectorRole=true,groupMonitoringAllowed=true,groupMonitorState={enabled:false};
+        const allScanGeneration=1, allScan={generation:1,monitorOnly:false};
+        const readHistoryScan=null, highPriorityHistoryRetryPending=false,lastListInteractionAt=0;
+        const rowNodes=()=>Array.from(list.children),tasks=[],scheduleCollectorTask=cb=>tasks.push(cb);
+        ${source}
+        let prior=false;
+        prepareDirectoryFilter(allScan,()=>{prior=groupFilterSelected(row);restoreDirectoryFilter(allScan);});
+        while(tasks.length)tasks.shift()();
+        return [groupFilterStatus,prior];`);
+      const [status,prior]=exercise(list,before);
+      if (restores && toolbar.querySelectorAll('button').length!==6) throw Error('All chat filter was not restored');
+      sample.replaceChildren();
+      return [status,clicks,restores,prior];
+    }
     const allButton = '<button id="all-filter" aria-selected="true">All</button>';
     const groupButton = '<button id="group-filter" aria-selected="false">Groups</button>';
     const customButton = '<button aria-selected="false">Groups</button>';

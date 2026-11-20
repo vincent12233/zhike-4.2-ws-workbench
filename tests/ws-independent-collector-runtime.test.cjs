@@ -68,7 +68,7 @@ function fixture(nativeReply, options = {}) {
   const replyToFetch = options.fetchReply;
   const exposed = 'state,collectionCapability,collectionReady,rememberCollectionCapability,collectorAction,renderCollectorControls,updateAccountStatus,wsBridge,restartBackgroundPolling,scheduleAiQueuePump,wsBackgroundStatus,renderCollectionCard,resetAccountPresentation,loadAccounts,updateCollectionRun,scanGroupMonitorTargets,groupMonitorStatusLabel,requestAccountPipelineRefresh';
   const live = 'refreshForegroundDirectory,workspaceLiveDirectoryRows,renderConversationList,receiveWorkspaceLiveEvent,refreshCollectionSummary,collectAllReadConversations,captureVisibleMessages,renderVisibleForegroundChat,setStatus,recordLiveIngestion,recordLiveHistory,liveCollectionRuntimeRows,renderVisibleContactDirectory,liveDirectoryGapMessage,renderGroupVerification,groupDiscoveryNote,unreadGroupControl,changeUnreadGroupPolicy,verifyOpenedGroup';
-  vm.runInNewContext(source.replace(boot, `  globalThis.independentCollector={${exposed},${live}};\n})();`), sandbox, { filename: 'ws-independent-collector-real-module.js' });
+  vm.runInNewContext(source.replace(boot, `  globalThis.independentCollector={${exposed},${live},renderPendingGroupWindow};\n})();`), sandbox, { filename: 'ws-independent-collector-real-module.js' });
   const api = sandbox.independentCollector;
   api.state.accounts = [{ id: 'a', displayName: '合成账号 A', status: '已连接' }, { id: 'b', displayName: '合成账号 B', status: '未连接' }];
   api.state.activeAccountId = 'a';
@@ -131,6 +131,30 @@ test('collector directory respects account, workspace, lease, scan order and com
   assert.equal(f.workspaceLiveDirectoryRows('ordinary').length, 0);
   f.receiveWorkspaceLiveEvent(chunk(5, 0, '迟到'));
   assert.equal(f.workspaceLiveDirectoryRows('ordinary').length, 0);
+});
+
+test('pending group names replace the previous window and cannot enter the actionable directory', () => {
+  const f = fixture();
+  f.state.workspaceMode = f.state.accounts[0].workspaceMode = 'dedicated';
+  const lease = { accountId:'a', workspaceMode:'dedicated', sessionGeneration:7, collectorEpoch:3 };
+  f.updateAccountStatus({ ...lease, collectionCapability:capability('running') });
+  const send = (scanId, chunkIndex, names, overrides = {}) => f.receiveWorkspaceLiveEvent({ ...lease, collectorOnly:true,
+    eventName:'live-directory', scanId,chunkIndex,pendingGroupNames:names,groupConversations:[],...overrides });
+  send(1,2,['<Twin>','<Twin>']);
+  const html = f.renderPendingGroupWindow('');
+  assert.equal(html.split('&lt;Twin&gt;').length - 1,2);
+  assert.doesNotMatch(html,/data-ws-action|data-group-id|checkbox/);
+  assert.equal(f.workspaceLiveDirectoryRows('dedicated').length,0);
+  send(1,1,['late']); send(1,3,['foreign'],{accountId:'b'}); send(1,4,['old epoch'],{collectorEpoch:1});
+  assert.equal(f.renderPendingGroupWindow(''),html);
+  send(1,5,['other']);
+  assert.doesNotMatch(f.renderPendingGroupWindow(''),/Twin/);
+  assert.match(f.renderPendingGroupWindow(''),/other/);
+  send(2,0,[]);
+  assert.equal(f.renderPendingGroupWindow(''),'');
+  send(2,1,['latest']);
+  f.updateAccountStatus({ ...lease, collectorEpoch:4, collectionCapability:capability('running') });
+  assert.equal(f.renderPendingGroupWindow(''),'');
 });
 
 test('dedicated verification distinguishes no receipt, missing structure, conflicts and a scoped open-group identity', async () => {

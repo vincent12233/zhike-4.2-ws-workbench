@@ -13,6 +13,7 @@ const { runIsolatedWebView, recordNativeVisualAssertions, assertNativeLifecycle 
 const { scenes:rowMenuScenes, runScenes:runRowMenuScenes, collectorCases, runCollectorScene } = require('./helpers/ws-row-menu-scenes.cjs');
 const { filterCases, runFilterScenes } = require('./helpers/ws-group-filter-scenes.cjs');
 const { noticeCases, runNoticeScenes } = require('./helpers/ws-group-notice-scenes.cjs');
+const { openEvidenceCases, runOpenEvidenceScenes } = require('./helpers/ws-open-chat-evidence-scenes.cjs');
 const repo = path.resolve(__dirname, '..');
 const evidenceDirectory = path.join(repo, '.tools/native-renderer/controlled-fixture');
 const viewport = { width: 640, height: 480 };
@@ -30,7 +31,7 @@ const menuScript = hostSource.match(/(  const inspectChatRowMenu = [\s\S]+?)  co
 assert.ok(menuScript, 'Exercise the isolated collector row inspector in a real WebView');
 const filterReader = hostSource.match(/(const directoryFilterUi = doc => \{[\s\S]*?)(?=\s*const explicitRead =)/)?.[1];
 assert.ok(filterReader, 'Exercise the packaged filter scanner in a real WebView');
-const noticeReader = hostSource.match(/(const groupSettingsNotice = row => \{[\s\S]*?)(?=\s*const conversationTypeFromNode =)/)?.[1];
+const noticeReader = hostSource.match(/(const groupSettingsNotice = [\s\S]*?)(?=\s*const conversationTypeFromNode =)/)?.[1];
 assert.ok(noticeReader, 'Exercise packaged group settings notice classification');
 const weakList = '<div id="pane-side">' + '<div role="row"><span dir="auto" title="Same title">Same title</span></div>'.repeat(20) + '</div>';
 const qaGroup = '120300000012345678@g.us', qaMember = '910000000099@lid';
@@ -75,6 +76,46 @@ function readOptions() {
   return { repeat: Number(count), network: false };
 }
 
+function readPendingWindowScene(collectorSource, evidenceSource, selected) {
+  const frame = document.createElement('iframe');
+  frame.style.cssText = 'width:400px;height:350px';
+  document.body.append(frame);
+  try {
+    const win = frame.contentWindow, doc = frame.contentDocument;
+    doc.body.innerHTML = '<div id="side"><div data-testid="chat-list-filters"><button id="all-filter">All</button><button id="group-filter">Groups</button></div><div id="pane-side" style="height:215px; overflow:auto"></div></div>';
+    doc.querySelector('#all-filter').setAttribute('aria-selected', String(!selected));
+    doc.querySelector('#group-filter').setAttribute('aria-selected', String(selected));
+    const list = doc.querySelector('#pane-side');
+    const row = (content, attrs='') => '<div role="row" ' + attrs + '>' + content + '</div>';
+    const title = value => '<div data-testid="cell-frame-title"><span dir="auto" title="' + value + '">' + value + '</span></div>';
+    const secondary = '<div data-testid="last-msg"><span dir="auto" title="Private preview">Private preview</span></div>';
+    list.innerHTML = row(title('Twin')+secondary) + row(title('Twin')) + row(secondary)
+      + row('<span dir="auto" title="Plain title">Plain title</span>'+secondary)
+      + row(title('Private contact'),'data-jid="12345678@c.us"') + row(title('Known'),'data-jid="12023456789@g.us"')
+      + row(title('Invisible'),'hidden') + row(title('Outside'),'style="margin-top:500px"');
+    const windows = [];
+    const receive = raw => {
+      const packet = JSON.parse(raw);
+      if (packet.type === 'zhike.ws.directory' && packet.pendingGroupWindow) windows.push(packet.pendingGroupWindow.names);
+    };
+    if (!win.chrome) win.chrome = {};
+    if (win.chrome.webview) win.chrome.webview.postMessage = receive;
+    else Object.defineProperty(win.chrome,'webview',{value:{postMessage:receive}});
+    const anchor = 'window.__zhikeWsDiscoverAll = discoverAll;';
+    if (!collectorSource.includes(anchor)) throw Error('Collector discovery entry unavailable');
+    const instrumented = collectorSource.replace(anchor,anchor + 'window.fixtureSample = () => publishDirectory(allScan, readRows());');
+    const readOpen = win.Function('return ('+evidenceSource+')')();
+    win.Function('__zhikeWsTrustedPurpose','__zhikeWsDocumentEpoch','__zhikeReadOpenChat',instrumented)('dedicated',12,readOpen);
+    win.__zhikeWsDiscoverAll();
+    const first = windows.at(-1) || [];
+    const firstName = list.firstElementChild.querySelector('span');
+    firstName.textContent = firstName.title = 'Replacement';
+    const before = windows.length;
+    win.fixtureSample();
+    return { first, next:windows.length > before ? windows.at(-1) : [] };
+  } finally { frame.remove(); }
+}
+
 function fixtureHtml(id, networkUrl) {
   const probe = networkUrl ? `
       const external = document.createElement('script');
@@ -105,6 +146,8 @@ function fixtureHtml(id, networkUrl) {
     const scheduleCollectorTask = (callback,delay) => setTimeout(callback,Math.min(35,delay));
     ${menuScript}
     const filterResults = (${runFilterScenes.toString()})(sample,${JSON.stringify(filterCases)},${JSON.stringify(filterReader)});
+    const pendingWindowResults = [true,false].map(selected => (${readPendingWindowScene.toString()})(${JSON.stringify(collectorScript)},${JSON.stringify(chatEvidenceScript)},selected));
+    const openEvidenceResults = (${runOpenEvidenceScenes.toString()})(sample,${JSON.stringify(openEvidenceCases)},${JSON.stringify(chatEvidenceScript)},${JSON.stringify(directoryScript)},${JSON.stringify(qaGroup)});
     const noticeResults = (${runNoticeScenes.toString()})(sample,${JSON.stringify(noticeCases)},${JSON.stringify(noticeReader)});
     const rowMenuResults = await (${runRowMenuScenes.toString()})(sample,${JSON.stringify(rowMenuScenes)},inspectChatRowMenu);
     const collectorResults = await Promise.all(${JSON.stringify(collectorCases)}.map(async ([name,options]) => ({
@@ -116,7 +159,7 @@ function fixtureHtml(id, networkUrl) {
       queryId: new URLSearchParams(location.search).get('case'),
       box: { width: bounds.width, height: bounds.height, background: getComputedStyle(sample).backgroundColor },
       network,
-      loginResults, directoryResults, rowMenuResults, collectorResults, filterResults, noticeResults,
+      loginResults, directoryResults, rowMenuResults, collectorResults, filterResults, pendingWindowResults, noticeResults, openEvidenceResults,
       remoteScriptExecuted: window.__syntheticWireScript === true
     }]);
   }
@@ -170,6 +213,7 @@ async function runFixture(host, kind, network) {
       box: { width: 137, height: 29, background: 'rgb(12, 34, 56)' },
       loginResults: loginScenes.map(([, expected]) => expected),
       directoryResults: directoryScenes.map(([, keys]) => ({ keys, unresolved:20 })),
+      openEvidenceResults: openEvidenceCases.map(scene => scene.slice(1)),
       noticeResults: noticeCases.map(scene => scene[2]),
       collectorResults: collectorCases.map(([name,options,chatOpens,menuOpens,published]) => ({
         name, actions:0, chatOpens, menuOpens, keys:published ? [qaGroup] : [], verified:chatOpens === 1,
@@ -180,6 +224,7 @@ async function runFixture(host, kind, network) {
         status, escaped, itemClicks:0, rowClicks:0, openings:mode === 'preexisting' ? 0 : 1, canOpen:status === 'verified-read-group',
       })),
       filterResults: Object.values(filterCases),
+      pendingWindowResults: [{ first:['Twin','Twin','Plain title'], next:['Replacement','Twin','Plain title'] }, { first:[],next:[] }],
       network: network ? 'blocked' : null, remoteScriptExecuted: false,
     }]);
     if (network) assert.deepEqual(network.observed, { connections: 0, requests: 0 });

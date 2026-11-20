@@ -34,7 +34,7 @@ assert.equal(initial.directoryDiagnostics.listPresent,false);
 assert.equal(initial.directoryDiagnostics.renderedRows,0);
 assert.ok(!JSON.stringify(initial.directoryDiagnostics).includes(group));
 assert.equal(evidence('ordinary').status,'workspace-type-mismatch');
-rows = [first,first]; assert.equal(snapshot().openIdentityStatus,'insufficient-message-identities','two DOM copies of one message are insufficient');
+rows = [first,first]; assert.equal(snapshot().openIdentityStatus,'single-message-owner','two DOM copies of one message are insufficient');
 rows.push(message('true_'+otherGroup+'_D4')); assert.equal(snapshot().openIdentityStatus,'conflicting-identities');
 rows = [first,message('true_'+group+'_B2')]; headerId=otherGroup; assert.equal(snapshot().activeGroup,null);
 rows=[];headerId=group;assert.equal(snapshot().activeGroup.groupJid,group,'a verified header can identify an empty chat');

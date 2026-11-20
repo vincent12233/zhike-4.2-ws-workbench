@@ -5,6 +5,8 @@
 const scenes = [
   ['owned', ['Group info','Mark as unread'], 'verified-read-group', true],
   ['dropdown', ['Exit group','Mark as unread'], 'verified-read-group', true],
+  ['business', ['Archive chat','Mute notifications','Unpin chat','Mark as unread','Add to favourites','Add to list','Clear chat','Exit group'], 'verified-read-group', true],
+  ['business', ['Archive chat','Mark as unread','Clear chat','Delete chat'], 'type-unconfirmed', true],
   ['context', ['退出群组','标记为未读'], 'verified-read-group', true],
   ['owned', ['Group info','Mark as read'], 'unread', true],
   ['owned', ['Exit group','Mark as unread','Mark as read'], 'unread', true],
@@ -29,14 +31,14 @@ async function runScenes(sample, definitions, inspectChatRowMenu) {
     const trigger = document.createElement('button');
     trigger.setAttribute('aria-haspopup','menu');
     trigger.textContent = '⋁';
-    if (!['context','late'].includes(mode)) row.append(trigger);
+    if (!['context','late','business'].includes(mode)) row.append(trigger);
     let escaped = false, itemClicks = 0, rowClicks = 0, openings = 0;
     row.addEventListener('click', () => rowClicks++);
     const buildMenu = event => {
       const menu = document.createElement('div');
       menu.id = 'example-menu';
       if (mode === 'dropdown') menu.setAttribute('data-animate-dropdown-menu','true');
-      else menu.setAttribute('role','menu');
+      else if (mode !== 'business') menu.setAttribute('role','menu');
       const rect = trigger.getBoundingClientRect();
       const x = event.type === 'contextmenu' ? event.clientX : rect.left + rect.width / 2;
       const y = event.type === 'contextmenu' ? event.clientY : rect.top + rect.height / 2;
@@ -44,6 +46,7 @@ async function runScenes(sample, definitions, inspectChatRowMenu) {
       for (const label of labels) {
         const item = document.createElement('div');
         if (mode === 'dropdown') item.setAttribute('data-animate-dropdown-item','true');
+        else if (mode === 'business') item.tabIndex = 0;
         else item.setAttribute('role','menuitem');
         item.textContent = label;
         item.addEventListener('click', () => itemClicks++);
@@ -62,7 +65,7 @@ async function runScenes(sample, definitions, inspectChatRowMenu) {
       const menu = buildMenu(event);
       if (mode === 'late') { setTimeout(() => sample.append(menu), 20); return; }
       if (mode === 'foreign') other.setAttribute('aria-controls', menu.id);
-      else if (mode !== 'context') trigger.setAttribute('aria-controls', menu.id);
+      else if (mode !== 'context' && mode !== 'business') trigger.setAttribute('aria-controls', menu.id);
       if (mode === 'multiple' || mode === 'nested') {
         const extra = buildMenu(event);
         extra.id = 'other-menu';
@@ -98,6 +101,7 @@ const collectorCases = [
   ['native-group-settings-preview', {notification:true, unread:true, allow:true}, 1,0,1],
   ['unread-known-group', {type:'group', unread:true, allow:true}, 1,0,1],
   ['unknown-read-known-group', {type:'group', allow:true}, 1,0,1],
+  ['unread-business-filter', {businessFilter:true, unread:true, allow:true}, 1,0,1],
   ['unread-filtered', {filter:true, unread:true, allow:true}, 1,0,1],
   ['unread-menu-group', {menu:'unread', unread:true, allow:true}, 1,1,1],
   ['group-only-menu', {menu:'group-only', allow:true}, 1,1,1],
@@ -119,6 +123,28 @@ async function runCollectorScene(collectorSource, evidenceSource, jid, options) 
     const row = doc.querySelector('[role="row"]'), button = row.querySelector('button');
     if (options.notification) {
       row.insertAdjacentHTML('beforeend',"<div data-testid='cell-frame-secondary'><span data-icon='megaphone'></span><span>~Fixture Actor changed this group's settings to…</span></div>");
+    }
+    if (options.businessFilter) {
+      const side = doc.createElement('div');
+      side.id = 'side';
+      doc.body.append(side);
+      side.innerHTML='<input placeholder="Search or start a new chat"><div class="filter-chips"><button>All</button><button>Unread 2</button><button>My label</button><button aria-label="More lists"><span data-icon="chevron-down"></span></button></div>';
+      side.append(row.parentElement);
+      const search=side.querySelector('input'), bar=side.querySelector('.filter-chips'), arrow=bar.lastElementChild;
+      arrow.onclick=() => {
+        const menu=doc.createElement('div');
+        menu.setAttribute('role','menu');
+        const rect=arrow.getBoundingClientRect();
+        menu.style.cssText='position:fixed;left:'+rect.left+'px;top:'+rect.bottom+'px;background:white';
+        menu.innerHTML='<button>My label</button><button><i data-icon="heart"></i>Favourites</button><button><i data-icon="group"></i>Groups</button>';
+        menu.lastElementChild.onclick=() => {
+          menu.remove();
+          search.placeholder='Search group chats';
+          bar.innerHTML='<button>All</button><button>Groups</button>';
+          bar.append(arrow);
+        };
+        side.append(menu);
+      };
     }
     if (options.filter) {
       const side = doc.createElement('div');

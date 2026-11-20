@@ -66,10 +66,10 @@ Check(latest.CollectorDirectoryDiagnostics is { RenderedRows:25, StableRows:0, S
 Check(latest.CollectorDirectoryDiagnostics is { SkippedUnread:null, SkippedReadUnknown:null, SkippedTypeUnknown:null, OpenIdentityStatus:null }, "unreported ledgers remain unavailable");
 var details = JsonSerializer.SerializeToElement(new { openIdentityStatus = "insufficient-message-identities", directoryDiagnostics = new
     { listPresent = true, renderedRows = 25, stableRows = 0, unresolvedRows = 25, confirmedOpen = false,
-      skippedUnread = 0, skippedReadUnknown = 2, skippedTypeUnknown = 12, groupFilterStatus="selected", menuProbeStatus="verified-group", groupNoticeRows=9, verifiedNoticeRows=5 } });
+      skippedUnread = 0, skippedReadUnknown = 2, skippedTypeUnknown = 12, groupFilterStatus="selected", menuProbeStatus="verified-group", groupNoticeRows=9, verifiedNoticeRows=5, noticeAdjacentSvgRows=7, noticeUnlabelledSvgRows=2 } });
 await SaveDiagnostic("a","ordinary","collector",details,stamp.AddSeconds(60));
 Check((await diagnosticStore.LoadAsync()).Single(row=>row.Id=="a").CollectorDirectoryDiagnostics is {
-    SkippedUnread:0, SkippedReadUnknown:2, SkippedTypeUnknown:12, OpenIdentityStatus:"insufficient-message-identities", GroupFilterStatus:"selected", MenuProbeStatus:"verified-group", GroupNoticeRows:9, VerifiedNoticeRows:5 },
+    SkippedUnread:0, SkippedReadUnknown:2, SkippedTypeUnknown:12, OpenIdentityStatus:"insufficient-message-identities", GroupFilterStatus:"selected", MenuProbeStatus:"verified-group", GroupNoticeRows:9, VerifiedNoticeRows:5, NoticeAdjacentSvgRows:7, NoticeUnlabelledSvgRows:2 },
     "registered skip counts distinguish verified zero from unavailable and only allow a known open-identity result");
 var invalidExtras = JsonSerializer.SerializeToElement(new { openIdentityStatus = "private-fixture-marker", directoryDiagnostics = new
     { listPresent = true, renderedRows = 1, stableRows = 0, unresolvedRows = 1, confirmedOpen = false,

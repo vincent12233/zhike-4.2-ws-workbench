@@ -6,7 +6,8 @@ public sealed record StoredWsLoginObservation(DateTimeOffset ObservedAt, long Pr
 public sealed record StoredWsDirectoryDiagnostics(DateTimeOffset ObservedAt, string Source, string WorkspaceMode,
     bool ListPresent, int RenderedRows, int StableRows, int UnresolvedRows, bool ConfirmedOpen,
     int? SkippedUnread = null, int? SkippedReadUnknown = null, int? SkippedTypeUnknown = null, string? OpenIdentityStatus = null,
-    string? GroupFilterStatus = null, string? MenuProbeStatus = null, int? GroupNoticeRows = null, int? VerifiedNoticeRows = null);
+    string? GroupFilterStatus = null, string? MenuProbeStatus = null, int? GroupNoticeRows = null, int? VerifiedNoticeRows = null,
+    int? NoticeAdjacentSvgRows = null, int? NoticeUnlabelledSvgRows = null);
 public sealed record StoredWsAccount(string Id, string DisplayName, string Status, DateTimeOffset? LastSeen = null, string? LastKnownStatus = null, string WorkspaceMode = "ordinary",
     StoredWsLoginObservation? ForegroundLoginObservation = null, StoredWsLoginObservation? CollectorLoginObservation = null,
     bool DirectoryPurposeConfirmed = false, StoredWsDirectoryDiagnostics? ForegroundDirectoryDiagnostics = null,
@@ -68,7 +69,8 @@ public sealed class WsAccountStore
         int? OptionalCount(string key) => Count(key, out var count) ? count : null;
         var openStatus = packet.TryGetProperty("openIdentityStatus", out var status) && status.ValueKind == JsonValueKind.String
             ? status.GetString() : null;
-        if (openStatus is not ("verified" or "no-open-chat" or "insufficient-message-identities" or "conflicting-identities"
+        if (openStatus is not ("verified" or "no-open-chat" or "insufficient-message-identities" or "no-message-envelopes" or "unsupported-message-envelope"
+            or "unconfirmed-message-position" or "single-message-owner" or "awaiting-owner-confirmation" or "conflicting-identities"
             or "workspace-type-mismatch" or "source-unavailable")) openStatus = null;
         string? ProbeStatus(string key) => source == "collector" && data.TryGetProperty(key, out var value)
             && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
@@ -78,7 +80,8 @@ public sealed class WsAccountStore
         if (menu is not ("verified-group" or "verified-read-group" or "unread" or "read-state-unknown" or "type-unconfirmed" or "menu-unavailable" or "menu-unowned" or "row-changed" or "navigation-busy")) menu = null;
         // No raw WebView payload, title, identifiers or message text cross this boundary.
         var sample = new StoredWsDirectoryDiagnostics(observedAt, source, workspaceMode, present, rendered, stable, unresolved, open,
-            OptionalCount("skippedUnread"), OptionalCount("skippedReadUnknown"), OptionalCount("skippedTypeUnknown"), openStatus, filter, menu, OptionalCount("groupNoticeRows"), OptionalCount("verifiedNoticeRows"));
+            OptionalCount("skippedUnread"), OptionalCount("skippedReadUnknown"), OptionalCount("skippedTypeUnknown"), openStatus, filter, menu, OptionalCount("groupNoticeRows"), OptionalCount("verifiedNoticeRows"),
+            OptionalCount("noticeAdjacentSvgRows"), OptionalCount("noticeUnlabelledSvgRows"));
         lock (_probes)
         {
             var key = (accountId, source);

@@ -2972,9 +2972,9 @@ public sealed partial class LegacyUiHostPage : Page
     if (rows.length >= 1000) break;
   }
   const stableRows = new Set(rows.map(row => row.conversationKey)).size;
-  const open = typeof readOpenChat === 'function' ? readOpenChat(workspaceMode) : {status:'source-unavailable'};
-  const openConfirmation = open.row && !open.row.displayName && open.title ? {key:open.row.conversationKey,title:open.title} : null;
-  if (openConfirmation && previousOpen?.key === openConfirmation.key && previousOpen.title === openConfirmation.title) open.row.displayName = open.title;
+  const open = typeof readOpenChat === 'function' ? readOpenChat(workspaceMode,null,previousOpen) : {status:'source-unavailable'};
+  const openConfirmation = open.confirmation || (open.row && !open.row.displayName && open.title ? {key:open.row.conversationKey,title:open.title} : null);
+  if (open.row && openConfirmation && previousOpen?.key === openConfirmation.key && previousOpen.title === openConfirmation.title) open.row.displayName = open.title;
   if (open.row && !rows.some(row => row.conversationKey === open.row.conversationKey)) rows.unshift(open.row);
   return JSON.stringify({supported:true, conversationListVisible, rows, unresolvedRowCount, contactsVisible, contacts, unresolvedContactCount, coverage:'foreground-visible-only',
     openIdentityStatus:open.status, openConfirmation, activeGroup:open.row?.isGroup ? { groupJid:open.row.conversationKey, displayName:open.row.displayName } : null,
@@ -2983,16 +2983,16 @@ public sealed partial class LegacyUiHostPage : Page
 """;
 
     private const string WsOpenChatEvidenceScript = """
-((workspaceMode, previewRow) => {
+((workspaceMode, previewRow, previous) => {
   const parse = raw => {
     const parts = (raw || '').split('_');
     // A WA message envelope owns exactly one chat. The optional last JID is the sender.
     if ((parts.length !== 3 && parts.length !== 4) || !/^(true|false)$/.test(parts[0]) || !/^[A-Z0-9.-]{1,180}$/i.test(parts[2])) return null;
     if (!/^(?:\d{1,20}(?:-\d{1,20})?@g\.us|\d{1,20}@(c\.us|s\.whatsapp\.net|lid))$/i.test(parts[1])
-        || (parts.length === 4 && !/^\d{1,20}(?::\d{1,3})?@(c\.us|s\.whatsapp\.net|lid)$/i.test(parts[3]))) return null;
+        || (parts.length === 4 && !/^[A-Z0-9][A-Z0-9.-]{0,127}(?::\d{1,3})?(?:@(c\.us|s\.whatsapp\.net|lid))?$/i.test(parts[3]))) return null;
     return {key:parts[1].toLowerCase(),id:parts[2]};
   };
-  const excluded = '[data-testid*="quoted" i],[data-testid*="reply-context" i],[role="dialog"],[aria-hidden="true"],[hidden]';
+  const excluded = '[data-testid*="quoted" i],[data-testid*="reply-context" i],[data-testid*="quoted-message" i],blockquote,[role="dialog"],[aria-hidden="true"],[hidden]';
   if (previewRow) {
     const keys = new Set();
     const preview = '[data-testid="last-msg"],[data-testid="cell-frame-secondary"],[data-testid="last-msg-container"],[data-testid="message-preview"]';
@@ -3022,35 +3022,119 @@ public sealed partial class LegacyUiHostPage : Page
       return normalize(field === 'data-group-id' && /^\d{5,20}(?:-\d{1,20})?$/.test(value) ? value+'@g.us' : value);
     }).filter(Boolean);
   };
-  const selected = document.querySelectorAll('#pane-side [aria-selected="true"],#pane-side [aria-current="true"],[data-testid="chat-list"] [aria-selected="true"]');
-  const declared = new Set([...explicit(header), ...[...selected].flatMap(explicit)]);
-  if (declared.size > 1) return {status:'conflicting-identities'};
-  const owners = new Map();
-  const bubble = '[data-testid="msg-container"],.message-in,.message-out,[data-testid="system-message"],[data-testid="msg-system"]';
-  const transcript = '[data-testid="conversation-panel-messages"],[data-testid="conversation-panel-body"],[role="log"]';
-  let inspected = 0;
-  for (const node of pane.querySelectorAll('[data-id^="true_"],[data-id^="false_"]')) {
-    if (++inspected > 256) break;
-    if (!node.getClientRects().length || node.closest(excluded) || node.closest('header,footer,[data-testid*="message-preview" i]')) continue;
-    const timelineRow = node.closest('[role="row"],[role="listitem"]');
-    if (!(node.matches(bubble) || node.closest(bubble) || node.querySelector(bubble) || timelineRow?.closest?.(transcript))) continue;
-    const record = parse(node.getAttribute('data-id'));
-    if (!record) continue;
-    const chat = record.key;
-    if (!owners.has(chat)) owners.set(chat,new Set());
-    owners.get(chat).add(record.id);
-    if (owners.size > 1 || (declared.size && !declared.has(chat))) return {status:'conflicting-identities'};
-  }
-  // A selected sidebar row alone can momentarily lead the header and message pane.
+  const selected = [...document.querySelectorAll('#pane-side [aria-selected="true"],#pane-side [aria-current="true"],[data-testid="chat-list"] [aria-selected="true"]')];
   const headerIds = explicit(header);
+  const declared = new Set([...headerIds,...selected.flatMap(explicit)]);
+  const headerLinks = new Set();
+  const headerTitle = header.querySelector('[data-testid="conversation-info-header-chat-title"],[data-testid="conversation-header-title"],span[dir="auto"][title]') ||
+    header.querySelector('span[dir="auto"],span[dir="ltr"]');
+  const titleOf = n => (n?.getAttribute?.('title') || n?.textContent || '').trim().slice(0,150);
+  const title = titleOf(headerTitle);
+  const context = '[data-chat-type="group"],[data-is-group="true"],[data-testid="group-info"],[data-testid="group-avatar"],[data-testid="conversation-info-header-group-subtitle"],[data-testid="group-info-link"],[data-icon="default-group"],:is(button,[role="button"]):is([title="Group info" i],[title="Click here for group info" i],[aria-label="Group info" i],[title="群组信息"],[aria-label="群组信息"])';
+  const inContext = n => n?.matches?.(context) || [...(n?.querySelectorAll?.(context) || [])].some(mark => visiblePane(mark) && !mark.closest(excluded));
+  // Only an explicit group-info link in the current header can corroborate the
+  // message owner. Invite codes, query text and links in message content are ignored.
+  for (const a of header.querySelectorAll?.('a[href][data-testid="group-info-link"],[data-testid="group-info"] a[href]') || []) {
+    if (!visiblePane(a) || a.closest(excluded)) continue;
+    try {
+      const href = new URL(a.getAttribute('href'),'https://web.whatsapp.com/');
+      if (href.origin !== 'https://web.whatsapp.com' || !['/send','/chat','/chat/'].includes(href.pathname)) continue;
+      for (const k of ['jid','chatId']) {
+        const group = normalize(href.searchParams.get(k));
+        if (group.endsWith('@g.us')) { headerLinks.add(group); declared.add(group); }
+      }
+    } catch {}
+  }
+  if (declared.size > 1) return {status:'conflicting-identities'};
+  const owners = new Map(), roots = new Map();
+  const bubble = '[data-testid="msg-container"],.message-in,.message-out,[data-testid="system-message"],[data-testid="msg-system"]';
+  const transcript = '[data-testid="conversation-panel-messages"],[data-testid="conversation-panel-body"],[role="log"],[aria-label="Message list" i]';
+  const rowSelector = '[role="row"],[role="listitem"]';
+  const body = 'header,footer,a,button,[contenteditable="true"],.selectable-text,[data-testid="msg-text"],[data-testid*="message-preview" i],[data-testid*="forwarded-message" i]';
+  const messageFields = ['data-id','data-message-id','data-message-key','data-msg-id'];
+  let scanned = 0, rawEnvelope = false, envelopeOutsideTimeline = false, firstMessage = null;
+  for (const node of pane.querySelectorAll(messageFields.map(k=>'['+k+']').join(','))) {
+    if (++scanned > 512) break;
+    if (node.closest(excluded) || node.closest(body)) continue;
+    if (!envelopeOutsideTimeline && messageFields.some(field => /^(?:true|false)_/.test(node.getAttribute(field) || ''))) envelopeOutsideTimeline = true;
+    const timelineRow = node.closest(rowSelector);
+    const innerBubble = node.querySelector(bubble);
+    const rowInTranscript = timelineRow?.closest?.(transcript);
+    const outerRow = node.querySelector(rowSelector);
+    const topLevel = node.matches(bubble) || innerBubble || rowInTranscript && (node === timelineRow || node.parentElement === timelineRow)
+      || outerRow && node.closest(transcript) || node.parentElement?.matches?.(bubble);
+    if (!topLevel || !timelineRow && outerRow && node.querySelectorAll?.(rowSelector).length > 1) continue;
+    let root = timelineRow || outerRow || innerBubble || node.closest(bubble) || node;
+    if (!timelineRow && !outerRow) {
+      for (let ancestor=root.parentElement?.closest(bubble);ancestor;ancestor=ancestor.parentElement?.closest(bubble)) root=ancestor;
+    }
+    // Display-contents wrappers can carry the envelope without a visible box.
+    if (!visiblePane(node) && !visiblePane(innerBubble) && !visiblePane(outerRow)) continue;
+    for (const field of messageFields) {
+      const raw = node.getAttribute(field);
+      if (!raw) continue;
+      rawEnvelope = true;
+      if (!firstMessage) firstMessage = node;
+      const record = parse(raw);
+      if (!record) continue;
+      const prior=roots.get(root);
+      if (prior && (prior.key !== record.key || prior.id !== record.id)) return {status:'conflicting-identities'};
+      roots.set(root,record);
+      if (!owners.has(record.key)) owners.set(record.key,new Set());
+      owners.get(record.key).add(record.id);
+      if (owners.size > 1 || declared.size && !declared.has(record.key)) return {status:'conflicting-identities'};
+    }
+  }
   const [observed] = owners.keys();
-  const key = headerIds[0] || (observed && owners.get(observed).size >= 2 ? observed : '');
-  if (!key) return {status:'insufficient-message-identities'};
+  let key = headerIds[0] || (observed && owners.get(observed).size >= 2 ? observed : '');
+  let confirmation;
+  if (!key && !observed) return {status:rawEnvelope ? 'unsupported-message-envelope' : envelopeOutsideTimeline ? 'unconfirmed-message-position' : 'no-message-envelopes'};
+  if (!key) {
+    if (workspaceMode !== 'dedicated' || !observed.endsWith('@g.us') || !title) return {status:'single-message-owner'};
+    const row = selected.length === 1 ? selected[0] : null;
+    const selectedTitle = titleOf(row?.querySelector?.('[data-testid="cell-frame-title"] [title],[data-testid="cell-frame-title"],span[dir="auto"][title]'));
+    if (selectedTitle && selectedTitle !== title) return {status:'conflicting-identities'};
+    const groupTab = document.querySelector(':is(#side,[data-testid="chat-list-filters"]) :is(#group-filter[aria-selected="true"],#groups-filter[aria-selected="true"],[data-testid="chat-filter-groups"][aria-pressed="true"])');
+    const descriptionBanner = () => {
+      if (!firstMessage || !pane.querySelectorAll || !header.compareDocumentPosition) return false;
+      const banner = '[data-testid="group-description-banner"],[data-testid="group-description-notice"],[data-testid="conversation-group-description"],[role="banner"],[role="region"]';
+      const between = n => visiblePane(n) && !n.closest(excluded+',header,footer,[role="log"],[role="row"],[role="listitem"],'+bubble)
+        && !n.contains(firstMessage) && (header.compareDocumentPosition(n) & 4) && (n.compareDocumentPosition(firstMessage) & 4);
+      const heading = /^(?:group description|群组描述|群組描述|群組說明|群组说明)$/i;
+      const control = (n, pattern) => [...n.querySelectorAll('button,[role="button"],a')].some(b =>
+        visiblePane(b) && [b.getAttribute('aria-label'),b.getAttribute('title'),b.textContent,b.querySelector('[data-icon]')?.getAttribute('data-icon')].some(value => pattern.test((value || '').trim())));
+      const isBanner = n => between(n) && !n.querySelector(bubble+',[role="row"],[role="listitem"],[contenteditable="true"]')
+        && control(n,/^(?:close|dismiss|close banner|x|x-alt|关闭|關閉)$/i)
+        && control(n,/^(?:read more|see more|查看全文|阅读更多|閱讀更多|查看更多)$/i);
+      for (const n of pane.querySelectorAll(banner)) {
+        if (!isBanner(n)) continue;
+        if (heading.test(n.getAttribute('aria-label') || '') || [...n.querySelectorAll('strong,b,h1,h2,h3,[role="heading"],span[dir]')].some(h => heading.test(h.textContent.trim()))) return true;
+      }
+      // A semantic heading with its own close and expand actions can bind an
+      // unlabelled banner, with agreement from the active sidebar selection.
+      if (selectedTitle !== title) return false;
+      for (const h of pane.querySelectorAll('strong,h2,h3,[role="heading"],span[dir]')) {
+        if (!between(h) || !heading.test(h.textContent.trim())) continue;
+        for (let n=h.parentElement,i=0;n && n !== pane && i<3;n=n.parentElement,i++)
+          if (isBanner(n)) return true;
+      }
+      return false;
+    };
+    const groupHeader = inContext(header);
+    const selectedGroup = row && selectedTitle === title && (explicit(row).includes(observed) || inContext(row) || Boolean(groupTab && visiblePane(groupTab)));
+    const bound = groupHeader ? 'header' : selectedGroup ? 'selected' : headerLinks.has(observed) ? 'group-link' : descriptionBanner() ? 'group-description' : '';
+    if (!bound) return {status:'single-message-owner'};
+    const msg = [...owners.get(observed)][0];
+    const now = Date.now();
+    const stable = previous?.key === observed && previous.title === title && previous.msg === msg && previous.bound === bound
+      && Number.isFinite(previous.at) && now >= previous.at && now-previous.at <= 180000;
+    confirmation = {key:observed,title,msg,bound,at:stable ? previous.at : now};
+    if (!stable || now-previous.at < 150) return {status:'awaiting-owner-confirmation',confirmation};
+    key=observed;
+  }
   const isGroup = key.endsWith('@g.us');
   if (isGroup !== (workspaceMode === 'dedicated')) return {status:'workspace-type-mismatch'};
-  const titleNode = header.querySelector('[data-testid="conversation-info-header-chat-title"],[data-testid="conversation-header-title"],span[dir="auto"][title]');
-  const title = titleNode ? (titleNode.getAttribute('title') || titleNode.textContent || '').trim().slice(0,150) : '';
-  return {status:'verified',title,row:{conversationKey:key,externalId:key,displayName:declared.has(key)?title:'',conversationType:isGroup?'group':'direct',isGroup}};
+  return {status:'verified',title,confirmation,row:{conversationKey:key,externalId:key,displayName:declared.has(key) || confirmation ? title : '',conversationType:isGroup?'group':'direct',isGroup}};
 })
 """;
 
@@ -3627,14 +3711,15 @@ public sealed partial class LegacyUiHostPage : Page
   const accountId = {{encodedAccount}};
   const workspaceMode = typeof __zhikeWsTrustedPurpose === 'string' ? __zhikeWsTrustedPurpose : 'ordinary';
   const documentEpoch = typeof __zhikeWsDocumentEpoch === 'number' ? __zhikeWsDocumentEpoch : 0;
-  const readDirectoryEvidence = row => typeof __zhikeReadOpenChat === 'function' ? __zhikeReadOpenChat(workspaceMode,row) : {status:'source-unavailable'};
+  const readDirectoryEvidence = (row, prior) => typeof __zhikeReadOpenChat === 'function' ? __zhikeReadOpenChat(workspaceMode,row,prior) : {status:'source-unavailable'};
   const groupDirectoryObservation = {status:'observed',collectionStatus:'observed',coverage:'group-directory'};
   let previousOpen = null;
   const openDirectoryEvidence = () => {
-    const open = readDirectoryEvidence();
+    const open = readDirectoryEvidence(null,previousOpen);
     const key = open.row?.conversationKey, now = Date.now();
     if (open.row?.isGroup && workspaceMode === 'dedicated') Object.assign(open.row, groupDirectoryObservation);
-    if (key && open.title && previousOpen?.key === key && previousOpen.title === open.title) {
+    if (open.confirmation) previousOpen = open.confirmation;
+    else if (key && open.title && previousOpen?.key === key && previousOpen.title === open.title) {
       if (now - previousOpen.at >= 150) open.row.displayName = open.title;
     } else previousOpen = key && open.title ? {key,title:open.title,at:now} : null;
     return open;
@@ -4354,7 +4439,7 @@ public sealed partial class LegacyUiHostPage : Page
      }
      return values;
    };
-    const groupSettingsNotice = row => {
+    const groupSettingsNotice = (row, structure = null) => {
       if (!row?.matches?.('[role="row"],[role="listitem"],[data-testid="cell-frame-container"],[data-testid="chat-list-item"],[data-testid="chat-row"]')) return 0;
       const list = row.closest('#pane-side,[data-testid="chat-list"],[aria-label="Chat list" i]');
       if (!list) return 0;
@@ -4364,17 +4449,74 @@ public sealed partial class LegacyUiHostPage : Page
         .flatMap(key => ['[data-icon="'+key+'"]','[data-icon="'+key+'-refreshed"]']).join(',');
       const excluded = '[data-testid="cell-frame-title"],[data-testid*="forward" i],[data-icon*="forward" i],[data-testid*="quoted" i],[data-testid="msg-container"],[contenteditable="true"],.message-in,.message-out';
       const visible = node => Boolean(node?.getClientRects?.().length && !node.closest('[hidden],[inert],[aria-hidden="true"]') && node.ownerDocument.defaultView.getComputedStyle(node).visibility !== 'hidden');
-      const isTemplate = node => {
-        const normalize = value => clean(value).replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g,'').trim();
-        const title = normalize(node.getAttribute('title') || '');
-        const value = normalize(node.textContent || '');
-        const matches = text => text.length <= 800 && (/^[^:\n]{1,100} changed (?:this|the) group['’]s settings(?:\s+to\b|[.…]|$)/i.test(text)
-          || /^[^：:\n]{1,100}(?:更改|变更|變更)了(?:此|本|该|該)?(?:群组|群組|群聊)(?:的)?(?:设置|設定)(?:为|為|，|。|…|$)/.test(text));
-        return matches(value) || matches(title);
+      const interactive = 'a,button,input,[role="button"],[role="link"],[contenteditable="true"]';
+      const graphicVisible = graphic => Boolean(graphic && graphic.getClientRects().length && !graphic.closest('[hidden],[inert]') &&
+        graphic.ownerDocument.defaultView.getComputedStyle(graphic).visibility !== 'hidden');
+      const passive = element => {
+        const action = element.closest(interactive);
+        return !action || action === row || !row.contains(action);
+      };
+      const normalize = value => clean(value).replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g,'').replace(/[’‘]/g,"'").trim();
+      const matches = text => text.length <= 800 && (/^[^:\n]{1,100} changed (?:this|the) group's settings(?:\s+to\b|[.…]|$)/i.test(text)
+        || /^[^：:\n]{1,100}(?:更改|变更|變更)了(?:此|本|该|該)?(?:群组|群組|群聊)(?:的)?(?:设置|設定)(?:为|為|，|。|…|$)/.test(text));
+      const isTemplate = node => matches(normalize(node.getAttribute('title') || '')) || matches(normalize(node.innerText || node.textContent || ''));
+      const mirrorsTooltip = (node, slot, primary) => {
+        const label = node.closest('[title]');
+        if (!label || label === row || primary && label.contains(primary)) return false;
+        if (!slot.contains(label) && label !== slot.parentElement) return false;
+        const title = normalize(label.getAttribute('title')), value = normalize(node.innerText || node.textContent || '');
+        if (!matches(title) || !matches(value)) return false;
+        const clipped = (short,long) => /(?:\.\.\.|…)$/.test(short) && long.startsWith(short.replace(/(?:\.\.\.|…)+$/,'').trimEnd());
+        return value === title || clipped(value,title) || clipped(title,value);
+      };
+      const svgKind = (branch, svg) => {
+        if (!graphicVisible(svg) || !passive(svg) || branch.querySelector('image,foreignObject,text,button,a')) return 'unusable';
+        if (branch.matches(icon) || svg.closest(icon) || svg.querySelector(icon)) return 'notice';
+        const use = svg.querySelector('use');
+        const href = use?.getAttribute('href') || use?.getAttribute('xlink:href') || '';
+        const title = normalize(svg.querySelector('title')?.textContent || '');
+        const names = [svg.getAttribute('data-icon'),branch.getAttribute('data-icon'),svg.getAttribute('aria-label'),branch.getAttribute('aria-label'),title,href.startsWith('#') ? href.slice(1) : href]
+          .filter(Boolean).map(value => value.toLowerCase().replace(/^icon[-_]/,'').replace(/[-_]/g,' '));
+        const noticeName = /^(?:(?:bullhorn|megaphone|announcement|system notification|system message|group (?:announcement|notification|settings notification))(?:(?: refreshed)| icon)?|群组通知|群組通知|群设置通知|群組設定通知)$/i;
+        if (names.some(value => noticeName.test(value))) return 'notice';
+        if (names.length || branch.querySelector('[data-icon],[data-testid]') || !svg.querySelector('path,polygon,polyline,line,circle,ellipse,rect')) return 'unusable';
+        return 'unlabelled';
+      };
+      const nearIcon = (node, primary, declaredSlot) => {
+        if (!declaredSlot && (!primary || primary.contains(node) || !(primary.compareDocumentPosition(node) & 4))) return false;
+        let textBranch = node;
+        for (let depth=0;depth<=2;depth++,textBranch=textBranch.parentElement) {
+          const slot = textBranch.parentElement;
+          if (!slot || slot === row || primary && slot.contains(primary) || declaredSlot && !declaredSlot.contains(slot)) break;
+          const previous = textBranch.previousElementSibling;
+          if (!previous || previous.matches(excluded) || previous.querySelector(excluded) || !passive(previous) || !passive(textBranch)) continue;
+          const native = previous.matches(icon) ? previous : previous.querySelector(icon);
+          const graphics = previous.matches('svg') ? [previous] : Array.from(previous.querySelectorAll('svg'));
+          const svg = graphics.length === 1 ? graphics[0] : null;
+          if (svg && structure && graphicVisible(svg) && passive(svg)) structure.adjacentSvg = true;
+          if (native && graphicVisible(native) && passive(native)) return true;
+          if (!svg) continue;
+          const kind = svgKind(previous,svg);
+          if (kind === 'unusable') continue;
+          if (kind === 'notice') return true;
+          if (structure) structure.unlabelledSvg = true;
+          // An unnamed decorative vector can only nominate a chat when its
+          // rendered tooltip repeats the same group-specific system preview.
+          // Unknown typed icons (read receipts, audio, media) stay ineligible.
+          const svgRect = svg.getBoundingClientRect(), textRect = node.getBoundingClientRect();
+          const gap = Math.min(Math.abs(textRect.left-svgRect.right),Math.abs(svgRect.left-textRect.right));
+          const overlap = Math.min(svgRect.bottom,textRect.bottom) - Math.max(svgRect.top,textRect.top);
+          const view = svg.ownerDocument.defaultView;
+          const line = Number.parseFloat(view.getComputedStyle(node).lineHeight) || 20;
+          if (svg.getAttribute('aria-hidden') !== 'true' && !svg.closest('[aria-hidden="true"]') && svg.getAttribute('role') !== 'presentation') continue;
+          if (svgRect.width >= 8 && svgRect.height >= 8 && svgRect.width <= 32 && svgRect.height <= 32 &&
+              overlap >= Math.min(svgRect.height,textRect.height)/2 && gap <= Math.max(6,line/2) && mirrorsTooltip(node,slot,primary)) return true;
+        }
+        return false;
       };
       const forwarded = Boolean(row.querySelector('[data-testid*="forward" i],[data-icon*="forward" i],[data-testid*="quoted" i]'));
       const strong = !forwarded && Array.from(row.querySelectorAll(system)).some(n => visible(n) && !n.closest(excluded) && !n.parentElement?.closest('[title]'));
-      const nodes = Array.from(row.querySelectorAll(preview+',span[dir]'));
+      const nodes = Array.from(row.querySelectorAll(preview+',span[dir],[title]'));
       const primary = row.querySelector('[data-testid="cell-frame-title"]') || nodes.find(n =>
         n.matches('span[dir]') && !n.closest(preview+','+excluded) && visible(n) && clean(n.textContent));
       let template = false;
@@ -4382,19 +4524,13 @@ public sealed partial class LegacyUiHostPage : Page
         if (!visible(node) || node.closest(excluded) || !isTemplate(node)) continue;
         if (!node.closest(preview) && primary && (node === primary || primary.contains(node))) continue;
         template = true;
-        // The system emblem and preview must share the secondary slot. A
-        // forwarded card, sender prefix or primary title must never qualify.
-        let slot = node.closest(preview);
-        if (!slot && primary && primary !== node && !primary.contains(node) && (primary.compareDocumentPosition(node) & 4)
-            && node.parentElement && node.parentElement !== row && !node.parentElement.querySelector('[data-testid="cell-frame-title"],button,[role="button"]')) {
-          // Newer lists omit preview test IDs; the system icon precedes the
-          // text block inside a dedicated wrapper, separate from the title.
-          const prev = node.previousElementSibling;
-          if (prev && (prev.matches(icon) || prev.querySelector(icon)) && Array.from(node.parentElement.children).length === 2) slot = node.parentElement;
+        if (forwarded || !passive(node)) continue;
+        const slot = node.closest(preview);
+        if (slot && row.contains(slot) && !slot.querySelector(excluded)) {
+          const mark = slot.querySelector(icon) || slot.querySelector(system);
+          if (strong || graphicVisible(mark) && passive(mark)) return 2;
         }
-        if (forwarded || !slot || !row.contains(slot) || slot.querySelector(excluded)) continue;
-        const mark = slot.querySelector(icon) || slot.querySelector(system);
-        if (strong || mark && mark.getClientRects().length && !mark.closest('[hidden],[inert]') && mark.ownerDocument.defaultView.getComputedStyle(mark).visibility !== 'hidden') return 2;
+        if (nearIcon(node,primary,slot)) return 2;
       }
       return strong ? (template ? 2 : 3) : template ? 1 : 0;
     };
@@ -4485,8 +4621,11 @@ public sealed partial class LegacyUiHostPage : Page
      const all = (root, selector) => Array.from(root?.querySelectorAll?.(selector) || []);
      const visible = n => Boolean(n?.isConnected && n.getClientRects?.().length && !n.closest?.('[hidden],[inert],[aria-hidden="true"]') && doc.defaultView?.getComputedStyle(n).visibility !== 'hidden');
      const active = n => ['aria-selected','aria-pressed','aria-checked','data-selected'].some(k => n?.getAttribute(k) === 'true') || n?.getAttribute('data-state') === 'active';
-     const controls = root => all(root,'button,[role="button"],[role="tab"],[role="menuitem"],[role="menuitemradio"],[role="menuitemcheckbox"],[role="option"]').filter(n => visible(n) && !n.matches('[disabled],[aria-disabled="true"]'));
-     const popups = () => all(doc,'[role="menu"],[role="listbox"],[role="dialog"],[aria-modal="true"]').filter(visible);
+     const controls = root => all(root,'button,[role="button"],[role="tab"],[role="menuitem"],[role="menuitemradio"],[role="menuitemcheckbox"],[role="option"],li[tabindex],[data-animate-dropdown-item="true"]').filter(n => visible(n) && !n.matches('[disabled],[aria-disabled="true"]'));
+     const menuSelector = '[role="menu"],[role="listbox"],[data-animate-dropdown-menu="true"],[data-testid="dropdown-menu"]';
+     const popupSelector = menuSelector + ',[role="dialog"],[aria-modal="true"]';
+     const popups = () => all(doc,popupSelector).filter(n => visible(n) && (n.matches('[role="menu"],[role="listbox"],[role="dialog"],[aria-modal="true"]')
+       || !n.closest('[role="menu"],[role="listbox"]') && !all(n,popupSelector).some(visible)));
      const labelMark='[data-testid="label-icon"],[data-icon="label"],[data-icon="label-filled"],[data-color],svg circle[fill],span[style*="background-color"],[style*="background-color"][style*="border-radius"]';
      const builtin = (n,group) => {
        const names=group ? ['groups-filter','group-filter','chat-filter-groups','filter-groups'] : ['all-filter','chat-filter-all','filter-all'];
@@ -4495,16 +4634,73 @@ public sealed partial class LegacyUiHostPage : Page
          && /^(?:groups|群组|群聊|群組)$/i.test((n.getAttribute('aria-label') || n.textContent || '').trim());
      };
      const groupButtons = scope => controls(scope).filter(n => builtin(n,true));
-     const name = n => (n?.getAttribute('aria-label') || n?.textContent || '').replace(/[\u200e\u200f]/g,'').trim();
+     const caption = n => (n?.innerText ?? n?.textContent ?? '').replace(/[\u200e\u200f]/g,'').trim();
+     const name = n => caption(n) || n?.getAttribute('aria-label')?.trim() || '';
      const plainAll = n => n && !n.querySelector(labelMark) && /^(?:all|全部|所有)$/i.test(name(n));
      const plainUnread = n => n && !n.querySelector(labelMark) && /^(?:unread|未读|未讀)(?:\s*\(?\d+\+?\)?)?$/i.test(name(n));
-     const overflowChip = n => {
+     const groupsName = n => /^(?:groups|群组|群聊|群組)$/i.test(name(n));
+     const favouriteName = n => /^(?:favo[u]?rites|收藏|收藏夹|我的收藏|最愛|我的最愛)$/i.test(name(n));
+     const chatList = '#pane-side,[data-testid="chat-list"]';
+     const editor = 'input,[role="textbox"],[role="searchbox"],[contenteditable="true"]';
+     const searchMode = text => {
+       const value = String(text || '').trim();
+       if (/^(?:search group chats|搜索群聊|搜索群组聊天|搜尋群組聊天|搜尋群組對話)$/i.test(value)) return 'groups';
+       if (/^(?:search or start a new chat|搜索或开始新聊天|搜索或开始新对话|搜尋或開始新對話)$/i.test(value)) return 'all';
+       return '';
+     };
+     const searchAnchor = () => {
+       const lists = all(doc,chatList).filter(n => visible(n) && !n.parentElement?.closest(chatList));
+       if (lists.length !== 1) return null;
+       const list = lists[0];
+       let side = list.closest('#side,[data-testid="chat-list-sidebar"]');
+       if (!side) {
+         for (let p=list.parentElement;p && p !== doc.body;p=p.parentElement) {
+           if (p.querySelector('#main,[data-testid="conversation-panel-wrapper"]')) break;
+           if (p.querySelector(editor)) { side=p; break; }
+         }
+       }
+       if (!side) return null;
+       const anchors = [];
+       for (const control of all(side,editor)) {
+         if (!visible(control) || control.closest(chatList+',#main,'+popupSelector) || !(control.compareDocumentPosition(list) & 4)) continue;
+         const modes = new Set();
+         for (const attr of ['placeholder','aria-label','aria-placeholder','data-placeholder','title']) {
+           const found = searchMode(control.getAttribute(attr));
+           if (found) modes.add(found);
+         }
+         // The empty contenteditable sometimes has a separate painted placeholder.
+         // Limit the text to the same search field and exclude chat rows and chips.
+         for (let wrapper=control.parentElement, depth=0;wrapper && wrapper !== side && depth++ < 3;wrapper=wrapper.parentElement) {
+           if (wrapper.querySelector(chatList+',[role="row"]') || all(wrapper,editor).length > 1) break;
+           for (const n of all(wrapper,'span,div,label')) {
+             if (n === control || n.contains(control) || !n.getClientRects().length || n.closest('[hidden],[inert],button,[role="button"],[role="tab"]')
+                 || doc.defaultView.getComputedStyle(n).visibility === 'hidden' || n.children.length) continue;
+             const found = searchMode(n.textContent);
+             if (found) modes.add(found);
+           }
+         }
+         if (modes.size === 1 && !String(control.value || (control.isContentEditable ? control.textContent : '') || '').replace(/[\u200b-\u200f\ufeff]/g,'').trim())
+           anchors.push({control,mode:[...modes][0],side,list});
+       }
+       return anchors.length === 1 ? anchors[0] : null;
+     };
+     const overflowChip = (n,anchored=false) => {
        if (n.matches('[data-testid="chat-filter-overflow"],[data-testid="filter-overflow"],[data-testid="chat-list-filters-menu"]')) return true;
        const label=(n.getAttribute('aria-label') || n.getAttribute('title') || '').trim();
-       if (n.getAttribute('role') === 'tab' || (n.textContent || '').trim() || n.matches('[aria-selected],[aria-pressed]') || n.querySelector(labelMark)) return false;
+       if (n.getAttribute('role') === 'tab' || caption(n) || n.matches('[aria-selected],[aria-pressed]') || n.querySelector(labelMark)) return false;
        const arrow=n.querySelector('[data-icon="chevron-down"],[data-icon="down"],[data-icon="filter"],[data-icon="chevron-down-refreshed"]');
-       return (arrow || n.matches('[aria-expanded][aria-haspopup="menu"],[aria-expanded][aria-haspopup="listbox"]'))
-         && (!label || /^(?:more|more filters|chat filters|filter chats|more lists|lists|更多|更多筛选|聊天筛选|更多列表)$/i.test(label));
+       const svgArrow = anchored && all(n,'svg').length === 1 && n.querySelector('svg path,svg polyline,svg polygon') && !n.querySelector('img');
+       return Boolean(arrow || svgArrow || n.matches('[aria-expanded][aria-haspopup="menu"],[aria-expanded][aria-haspopup="listbox"]'))
+         && (!label || anchored && /(?:filters?|lists?|更多|筛选|篩選)/i.test(label) || /^(?:more(?: chat)?(?: filters| lists| options)?|chat filters|filter chats|all filters|lists|更多(?:筛选(?:条件|器)?|列表|选项)?|聊天筛选|更多篩選)$/i.test(label));
+     };
+     const anchoredBar = (items,bar,anchor) => {
+       if (!anchor || !anchor.side.contains(bar) || !(anchor.control.compareDocumentPosition(bar) & 4) || !(bar.compareDocumentPosition(anchor.list) & 4)
+           || items.length < 3 || items.length > 40 || !plainAll(items[0]) || items.filter(plainAll).length !== 1
+           || !overflowChip(items.at(-1),true) || items.filter(n => overflowChip(n,true)).length !== 1) return '';
+       if (anchor.mode === 'groups' && items.length === 3 && groupsName(items[1])
+           && !active(items[0]) && !items[1].matches('[aria-selected="false"],[aria-pressed="false"]')) return 'groups';
+       if (anchor.mode === 'all' && plainUnread(items[1]) && items.filter(plainUnread).length === 1 && !items.slice(1).some(active)) return 'all';
+       return '';
      };
      const defaultPair = items => {
        if (!plainAll(items[0]) || !plainUnread(items[1]) || items.length > 40 || items.filter(plainAll).length !== 1 || items.filter(plainUnread).length !== 1) return false;
@@ -4513,9 +4709,10 @@ public sealed partial class LegacyUiHostPage : Page
        // labels and a single overflow control. Never infer the Groups chip by position.
        const customAndOverflow = items.slice(2).filter(n => !builtin(n,true));
        return customAndOverflow.length >= 3 && customAndOverflow.slice(0,-1).filter(n => n.querySelector(labelMark)).length >= 2
-         && overflowChip(customAndOverflow.at(-1)) && customAndOverflow.filter(overflowChip).length === 1;
+         && overflowChip(customAndOverflow.at(-1)) && customAndOverflow.filter(n => overflowChip(n)).length === 1;
      };
      const inspect = () => {
+       const anchor=searchAnchor();
        const bars=all(doc,'[data-testid="chat-list-filters"],[data-testid="chat-filters"],#side [role="tablist"],[aria-controls="pane-side"][role="tablist"]').filter(visible);
        if (!bars.length) {
          for (const chip of all(doc,'#side #all-filter,#side [data-testid="chat-filter-all"],#side [data-testid="filter-all"]')) {
@@ -4526,45 +4723,112 @@ public sealed partial class LegacyUiHostPage : Page
          }
        }
        if (!bars.length) {
-         const side = doc.querySelector?.('#side,[data-testid="chat-list-sidebar"]');
+         const side = anchor?.side || doc.querySelector?.('#side,[data-testid="chat-list-sidebar"]');
          for (const first of all(side,'button,[role="button"],[role="tab"]')) {
            if (first.closest('#pane-side,[role="row"],[role="listitem"],[role="menu"],[role="dialog"]') || !plainAll(first) || !visible(first)) continue;
            for (let p=first.parentElement;p && p !== side;p=p.parentElement) {
              if (p.querySelector('#pane-side,[role="grid"],[role="row"],[role="listitem"],input,[contenteditable="true"]')) break;
-             if (defaultPair(controls(p))) { bars.push(p); break; }
+             const candidates=controls(p);
+             if (defaultPair(candidates) || anchoredBar(candidates,p,anchor)) { bars.push(p); break; }
            }
          }
        }
        const scopes=bars.filter(n => !bars.some(other => other !== n && n.contains(other)));
        if (scopes.length !== 1) return {status:scopes.length ? 'ambiguous' : 'not-offered'};
        const items=controls(scopes[0]), groups=groupButtons(scopes[0]), defaults=items.filter(n => builtin(n,false));
-       if (!defaults.length && defaultPair(items)) defaults.push(items[0]);
-       const overflow=items.filter(overflowChip);
+       const view = anchoredBar(items,scopes[0],anchor);
+       if (!defaults.length && (view || defaultPair(items))) defaults.push(items[0]);
+       if (!groups.length && view === 'groups') groups.push(items[1]);
+       const overflow=items.filter(n => overflowChip(n,Boolean(view)));
        if (groups.length > 1 || defaults.length > 1 || !groups.length && overflow.length > 1) return {status:'ambiguous'};
-       return {status:active(groups[0]) ? 'selected' : 'not-offered', original:defaults[0], group:groups[0], overflow:overflow[0]};
+       return {status:active(groups[0]) || view === 'groups' ? 'selected' : 'not-offered', original:defaults[0], group:groups[0], overflow:overflow[0],
+         searchMode:view, list:anchor?.list, originalActive:active(defaults[0]) || view === 'all'};
      };
-     const ownedPopup = button => {
+     const menuItems = root => controls(root).filter(n => !controls(n).length);
+     const glyph = (item,kind) => {
+       const ids = all(item,'[data-icon],[data-testid],svg title').map(n => n.getAttribute('data-icon') || n.getAttribute('data-testid') || n.textContent || '');
+       const named = kind === 'favourite' ? /(?:^|[-_])(?:hearts?|favou?rites?)(?:$|[-_])/i : /(?:^|[-_])(?:groups?|people|users)(?:$|[-_])/i;
+       if (ids.some(id => named.test(id))) return kind;
+       const svgs=all(item,'svg');
+       if (svgs.length !== 1 || !svgs[0].getClientRects().length || svgs[0].closest('[hidden],[inert]') || item.querySelector('img')) return '';
+       // A drawn symbol is distinguishable from a user's circular label swatch.
+       const paths=all(svgs[0],'path').map(n => n.getAttribute('d') || '').filter(Boolean);
+       if (!paths.some(d => /[acqs]/i.test(d)) || !paths.some(d => d.length >= 24)) return '';
+       if (paths.length === 1 && /a/i.test(paths[0]) && !/[lqcsvh]/i.test(paths[0]) && (paths[0].match(/m/ig) || []).length < 2) return '';
+       const drawing=paths.join(' ').replace(/[\s,]+/g,' ').trim();
+       return drawing;
+     };
+     const finalPair = root => {
+       const rows = menuItems(root), fav=rows.at(-2), group=rows.at(-1);
+       if (!fav || !group || !favouriteName(fav) || !groupsName(group)) return null;
+       const heart=glyph(fav,'favourite'), people=glyph(group,'group');
+       if (!heart || !people || heart === people || rows.slice(0,-2).some((row,i,a) => favouriteName(row) && groupsName(a[i+1]) && glyph(row,'favourite') && glyph(a[i+1],'group'))) return null;
+       return group;
+     };
+     const plainMenus = () => {
+       const menus = new Set();
+       for (const n of controls(doc)) {
+         if (!groupsName(n) || n.closest(chatList+',#main,'+popupSelector)) continue;
+         for (let p=n.parentElement, depth=0;p && p !== doc.body && depth++ < 5;p=p.parentElement) {
+           if (p.querySelector(chatList+','+editor)) break;
+           if (finalPair(p)) { menus.add(p); break; }
+         }
+       }
+       return [...menus];
+     };
+     const popupCandidates = () => [...new Set([...popups(),...plainMenus()])];
+     const openOverflow = (button,anchored) => {
+       const operation = {button,anchored,openedAt:Date.now(),before:new Set(popupCandidates()),fresh:new Set()};
+       if (operation.before.size) return null;
+       button.click();
+       const record = () => {
+         if (Date.now() - operation.openedAt > 500) return;
+         for (const popup of popupCandidates()) if (!operation.before.has(popup)) operation.fresh.add(popup);
+       };
+       record();
+       if (typeof queueMicrotask === 'function') queueMicrotask(record);
+       if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => { record(); requestAnimationFrame(record); });
+       return operation;
+     };
+     const ownedPopup = operation => {
+       const button = operation?.button;
        if (!button?.isConnected || button.getAttribute('aria-expanded') === 'false') return null;
-       const ids=[button.getAttribute('aria-controls'),button.getAttribute('aria-owns')].filter(Boolean).join(' ').trim();
-       const open=popups();
-       if (open.length !== 1 || !open[0].matches('[role="menu"],[role="listbox"]')) return null;
-       const labelled=Boolean(button.id && open[0].getAttribute('aria-labelledby')?.split(/\s+/).includes(button.id));
-       const owned=ids ? ids.split(/\s+/).includes(open[0].id) : labelled || button.getAttribute('aria-expanded') === 'true' || button.contains(open[0]);
-       return owned ? open[0] : null;
+       const open=popupCandidates();
+       if (open.length !== 1 || operation.before.has(open[0]) || open[0].matches('[role="dialog"],[aria-modal="true"]')) return null;
+       const popup=open[0], ids=(button.getAttribute('aria-controls') || '')+' '+(button.getAttribute('aria-owns') || '');
+       if (ids.trim()) return ids.trim().split(/\s+/).includes(popup.id) ? popup : null;
+       if (popup.id && all(doc,'[aria-controls],[aria-owns]').some(n => n !== button && [n.getAttribute('aria-controls'),n.getAttribute('aria-owns')].join(' ').split(/\s+/).includes(popup.id))) return null;
+       const labelled=(popup.getAttribute('aria-labelledby') || '').trim();
+       if (labelled) return button.id && labelled.split(/\s+/).includes(button.id) ? popup : null;
+       if (button.contains(popup)) return popup;
+       if (!operation.anchored || !operation.fresh.has(popup) || !finalPair(popup)) return null;
+       const arrow=button.getBoundingClientRect(), rect=popup.getBoundingClientRect();
+       const x=(arrow.left+arrow.right)/2;
+       const adjacent=Math.min(Math.abs(rect.top-arrow.bottom), Math.abs(rect.bottom-arrow.top)) <= 28;
+       return adjacent && x >= rect.left-20 && x <= rect.right+20 ? popup : null;
      };
-     return {active,inspect,groupButtons,popups,ownedPopup};
+     const popupGroups = (popup,anchored) => {
+       const explicit=groupButtons(popup);
+       if (!anchored) return explicit;
+       const group=finalPair(popup);
+       if (group && explicit.some(n => n !== group)) return [];
+       return group ? [group] : explicit;
+     };
+     return {active,inspect,popupGroups,popups,openOverflow,ownedPopup};
    };
    const filterUi = directoryFilterUi(document);
    let groupFilterStatus = 'not-checked';
    let lastFilterAttempt = 0;
    let previousFilterRows = null;
+   let confirmedSearchList = null;
    const filterRowStamp = row => JSON.stringify([
      row.getAttribute?.('data-id'),row.getAttribute?.('data-jid'),row.getAttribute?.('data-chat-id'),row.getAttribute?.('data-group-id'),
      row.querySelector?.('[data-testid="cell-frame-title"] [title],span[dir="auto"][title]')?.getAttribute?.('title')
    ]);
    const filteredRow = (state,row) => {
-     if (state.status !== 'selected') return false;
+     if (state.status !== 'selected' || state.searchMode === 'groups' && !state.list?.contains(row)) return false;
      if (!previousFilterRows?.has(row)) return true;
+     if (state.searchMode === 'groups' && state.list === confirmedSearchList && state.list.contains(row)) return true;
      // React can recycle one mounted row for a different conversation on scroll.
      // A preview text update alone does not establish that the binding changed.
      if (previousFilterRows.get(row) !== filterRowStamp(row)) return true;
@@ -4578,12 +4842,13 @@ public sealed partial class LegacyUiHostPage : Page
    const restoreDirectoryFilter = run => {
      if (!run) return;
      if (cancelRowMenu) cancelRowMenu();
-     if (run.overflow && filterUi.ownedPopup(run.overflow)) run.overflow.click();
+     if (run.overflow && filterUi.ownedPopup(run.overflow)) run.overflow.button.click();
      run.overflow = null;
      if (run.changedFilter) {
        const state=filterUi.inspect();
        if (state.status === 'selected' && state.original && !filterUi.popups().length) state.original.click();
        run.changedFilter=false;
+       confirmedSearchList=null;
      }
    };
    const prepareDirectoryFilter = (run,resume) => {
@@ -4597,7 +4862,7 @@ public sealed partial class LegacyUiHostPage : Page
      lastFilterAttempt=Date.now();
      groupFilterStatus=state.status;
      if (!state.group && !state.overflow) { resume(); return; }
-     if (!filterUi.active(state.original) || filterUi.popups().length) { groupFilterStatus='ambiguous'; resume(); return; }
+     if (!state.originalActive || filterUi.popups().length) { groupFilterStatus='ambiguous'; resume(); return; }
      const later = callback => scheduleCollectorTask(() => {
        if (allScan !== run || run.generation !== allScanGeneration) return;
        if (!allowed()) { groupFilterStatus='selection-unconfirmed'; restoreDirectoryFilter(run); resume(); return; }
@@ -4608,21 +4873,27 @@ public sealed partial class LegacyUiHostPage : Page
        run.changedFilter=true;
        groupFilterStatus='selecting';
        button.click();
-       let checks=0;
+       let checks=0, priorList=null;
        const confirm = () => {
-         if (filterUi.inspect().status === 'selected' && !filterUi.popups().length) { groupFilterStatus='selected'; run.overflow=null; resume(); }
-         else if (++checks < 4) later(confirm);
+         const selected = filterUi.inspect();
+         const ready = selected.status === 'selected' && (state.searchMode !== 'all' || selected.searchMode === 'groups') && !filterUi.popups().length;
+         if (ready && (selected.searchMode !== 'groups' || priorList === selected.list)) {
+           confirmedSearchList = selected.searchMode === 'groups' ? selected.list : null;
+           groupFilterStatus='selected'; run.overflow=null; resume(); return;
+         }
+         priorList = ready && selected.searchMode === 'groups' ? selected.list : null;
+         if (++checks < 6) later(confirm);
          else { groupFilterStatus='selection-unconfirmed'; restoreDirectoryFilter(run); resume(); }
        };
        later(confirm);
      };
      if (state.group) { select(state.group); return; }
-     run.overflow=state.overflow;
+     run.overflow=filterUi.openOverflow(state.overflow,state.searchMode === 'all');
+     if (!run.overflow) { groupFilterStatus='ambiguous'; resume(); return; }
      groupFilterStatus='selecting';
-     state.overflow.click();
      later(() => {
        const popup=filterUi.ownedPopup(run.overflow);
-       const candidates=popup ? filterUi.groupButtons(popup) : [];
+       const candidates=popup ? filterUi.popupGroups(popup,run.overflow.anchored) : [];
        if (candidates.length === 1) { select(candidates[0]); return; }
        groupFilterStatus=!popup || candidates.length > 1 ? 'ambiguous' : 'not-offered';
        restoreDirectoryFilter(run);
@@ -4633,11 +4904,35 @@ public sealed partial class LegacyUiHostPage : Page
      || node?.getAttribute?.('data-unread') === 'false' || node?.getAttribute?.('data-is-unread') === 'false';
    const explicitUnread = node => Number(node?.getAttribute?.('data-unread-count')) > 0
      || node?.getAttribute?.('data-unread') === 'true' || node?.getAttribute?.('data-is-unread') === 'true';
+   const visiblePendingGroupTitle = (row, list) => {
+     if (!list?.contains(row) || row.closest('[hidden],[inert],[aria-hidden="true"]')) return '';
+     const secondarySelector = '[data-testid*="secondary" i],[data-testid*="last-msg" i],[data-testid*="preview" i],[data-testid*="message" i],[data-pre-plain-text],.message-in,.message-out';
+     const marked = row.querySelector('[data-testid="cell-frame-title"],[data-testid="chat-title"],[data-testid="conversation-title"]');
+     const title = marked?.querySelector('span[title]') || marked || row.querySelector('span[dir="auto"][title]');
+     if (!title || title.closest(secondarySelector + ',button,[role="button"],time,[hidden],[inert],[aria-hidden="true"]')) return '';
+     const rect = title.getBoundingClientRect(), pane = list.getBoundingClientRect();
+     if (!rect.width || !rect.height || rect.bottom <= Math.max(0,pane.top) || rect.top >= Math.min(innerHeight,pane.bottom)
+         || rect.right <= Math.max(0,pane.left) || rect.left >= Math.min(innerWidth,pane.right)
+         || getComputedStyle(title).visibility !== 'visible') return '';
+     if (!marked) {
+       // Without a named title slot, require a separate message line visibly below
+       // the title. A lone titled preview is not a chat name.
+       const secondary = row.querySelector(secondarySelector);
+       if (!secondary?.getClientRects().length || secondary.getBoundingClientRect().top < rect.bottom - 1) return '';
+     }
+     const name = clean(title.textContent), tooltip = clean(title.getAttribute('title'));
+     return name && (!tooltip || name === tooltip) ? name.slice(0,150) : '';
+   };
    const readRows = () => {
     unresolvedWindowRows = 0;
-    latestWindow = {groupFilterStatus,listPresent:Boolean(listContainer()),groupNoticeRows:0,verifiedNoticeRows:0,renderedRows:0,stableRows:0,unresolvedRows:0,skippedUnread:0,skippedReadUnknown:0,skippedTypeUnknown:0};
+    latestWindow = {groupFilterStatus,listPresent:Boolean(listContainer()),groupNoticeRows:0,verifiedNoticeRows:0,noticeAdjacentSvgRows:0,noticeUnlabelledSvgRows:0,renderedRows:0,stableRows:0,unresolvedRows:0,skippedUnread:0,skippedReadUnknown:0,skippedTypeUnknown:0};
     probeCandidates = [];
     const filterState = groupMonitoringAllowed ? filterUi.inspect() : null;
+    const groupList = backgroundCollectorRole && filterState?.status === 'selected' ? listContainer() : null;
+    if (groupList && allScan?.directory) {
+      latestWindow.pendingScanId = allScan.directory.id;
+      latestWindow.pendingGroupNames = [];
+    }
     return rowNodes().map((row, index) => {
     const groupsOnly = Boolean(filterState && filteredRow(filterState,row));
     const labels = [row, ...row.querySelectorAll('[aria-label], [aria-description], [title], [data-pre-plain-text]')].map(node => clean(node.getAttribute?.('aria-label') || node.getAttribute?.('aria-description') || node.getAttribute?.('title') || node.getAttribute?.('data-pre-plain-text') || '')).filter(Boolean);
@@ -4661,7 +4956,10 @@ public sealed partial class LegacyUiHostPage : Page
      const unreadStateKnown = Boolean(identity || /^(?:cell-frame-container|chat-list-item|chat-row)$/.test(rowTestId) || (/^(?:row|listitem)$/.test(rowRole) && displayName));
      const unreadCount = badge.unreadCount;
      const unread = unreadState({ unreadCount, unreadMarker:badge.unreadMarker, unread:badge.unread, unreadStateKnown, displayName:unreadStateKnown ? displayName : '', title:unreadStateKnown ? displayName : '', conversationKey:unreadStateKnown ? externalId : '', externalId:unreadStateKnown ? externalId : '' });
-      const notice = groupMonitoringAllowed && backgroundCollectorRole ? groupSettingsNotice(row) : 0;
+      const noticeStructure = {};
+      const notice = groupMonitoringAllowed && backgroundCollectorRole ? groupSettingsNotice(row,noticeStructure) : 0;
+      if (noticeStructure.adjacentSvg) latestWindow.noticeAdjacentSvgRows++;
+      if (noticeStructure.unlabelledSvg) latestWindow.noticeUnlabelledSvgRows++;
       if (notice === 1 || notice === 2) latestWindow.groupNoticeRows++;
       if (notice === 2) latestWindow.verifiedNoticeRows++;
       const typeEvidence = conversationTypeFromNode(row, identity, displayName, notice);
@@ -4671,6 +4969,10 @@ public sealed partial class LegacyUiHostPage : Page
       if (groupMonitoringAllowed && !/@g\.us$/i.test(externalId)) {
         const direct = typeEvidence.conversationType === 'direct' || /@(?:c\.us|s\.whatsapp\.net|lid)$/i.test(identity);
         const groupKnown = !direct && (typeEvidence.isGroup || typeEvidence.groupCandidate === true || groupsOnly);
+        if (groupsOnly && !conflict && !direct && latestWindow.pendingGroupNames?.length < 50) {
+          const title = visiblePendingGroupTitle(row,groupList);
+          if (title) latestWindow.pendingGroupNames.push(title);
+        }
         const rowUnread = unread.unread || unreadCount > 0 || explicitUnread(row);
         if (conflict || !direct && !groupKnown) latestWindow.skippedTypeUnknown++;
         if (groupKnown && !allowOpenUnreadGroups) {
@@ -4743,8 +5045,38 @@ public sealed partial class LegacyUiHostPage : Page
       !node.closest?.('[hidden],[aria-hidden="true"],[inert]') && getComputedStyle(node).visibility === 'visible');
     const menuWrapper = '[data-testid="chat-context-menu"],[data-testid="context-menu"],[data-testid="context-menu-wrapper"],[data-animate-dropdown-menu="true"]';
     const menuSelector = '[role="menu"],' + menuWrapper;
-    const menus = () => [...document.querySelectorAll(menuSelector)].filter(node => visible(node) && (node.getAttribute('role') === 'menu'
-      || !node.closest('[role="menu"]') && ![...node.querySelectorAll(menuSelector)].some(visible)));
+    const menuItems = '[role="menuitem"],li,[data-animate-dropdown-item="true"],button,[role="button"],[tabindex]';
+    // Some Business builds render the row menu as a positioned plain list.
+    // Identify that popup from its own controls, never from text in a chat.
+    const positionedMenus = () => {
+      const found = new Set();
+      const entries = document.querySelectorAll(menuItems);
+      for (const entry of entries) {
+        if (!visible(entry) || entry.closest('#main,#pane-side,[data-testid="chat-list"],[role="grid"],[role="dialog"],[contenteditable="true"]')
+            || !/^(?:archive chat|unarchive chat|归档聊天|取消归档)$/i.test(entry.textContent.trim())) continue;
+        for (let parent = entry.parentElement, depth = 0; parent && parent !== document.body && depth < 7; parent=parent.parentElement,depth++) {
+          if (parent.closest(menuSelector)) break;
+          const bounds = parent.getBoundingClientRect();
+          if (bounds.width > 520 || bounds.height > 720) break;
+          const labels = Array.from(parent.querySelectorAll(menuItems)).filter(visible).map(n => n.textContent.trim().toLowerCase());
+          if (!labels.some(t => /^(?:mark as (?:unread|read)|标为未读|标为已读|标记为未读|标记为已读)$/.test(t))
+              || !labels.some(t => /^(?:clear chat|清空聊天|清除聊天)$/.test(t))) continue;
+          // Only accept a popup on an overlay layer, not navigation or a list of messages.
+          let layer = parent;
+          for (let i=0;layer && i < 4;i++,layer=layer.parentElement) {
+            if (!['fixed','absolute'].includes(getComputedStyle(layer).position)) continue;
+            found.add(parent); break;
+          }
+          break;
+        }
+      }
+      return [...found];
+    };
+    const menus = () => {
+      const marked = [...document.querySelectorAll(menuSelector)].filter(node => visible(node) && (node.getAttribute('role') === 'menu'
+        || !node.closest('[role="menu"]') && ![...node.querySelectorAll(menuSelector)].some(visible)));
+      return [...new Set([...marked,...positionedMenus().filter(node => !marked.some(m => m.contains(node) || node.contains(m)))])];
+    };
     const initialMenus = menus();
     if (initialMenus.length || !visible(row) || !owns()) return false;
     const title = row.querySelector('[data-testid="cell-frame-title"],[data-testid="conversation-title"],span[dir="auto"][title],[role="gridcell"] [title]');
@@ -4817,7 +5149,7 @@ public sealed partial class LegacyUiHostPage : Page
     const labels = nodes => {
       const result = new Set();
       for (const item of nodes) {
-        if (!visible(item) || item.getAttribute('aria-disabled') === 'true' || item.closest(menuSelector) !== ownedMenu) continue;
+        if (!visible(item) || item.getAttribute('aria-disabled') === 'true' || (item.closest(menuSelector) || ownedMenu) !== ownedMenu) continue;
         for (const raw of [item.getAttribute('aria-label'),item.getAttribute('data-testid'),(item.innerText || '').trim().split('\n')[0]]) {
           const label = (raw || '').trim().toLowerCase();
           if (label) result.add(label);
@@ -4833,7 +5165,7 @@ public sealed partial class LegacyUiHostPage : Page
       if (!opened.length && attempts > 0) { scheduleCollectorTask(() => inspect(attempts-1),120); return; }
       if (!opened.length) { finish('menu-unavailable'); return; }
       if (!ownedMenu || opened.length !== 1 || opened[0] !== ownedMenu) { finish('menu-unowned'); return; }
-      const actions = labels(ownedMenu.querySelectorAll('[role="menuitem"],li[tabindex],[data-animate-dropdown-item="true"],button,[role="button"]'));
+      const actions = labels(ownedMenu.querySelectorAll(menuItems));
       const has = (...values) => values.some(value => actions.has(value));
       const group = has('group info','group information','exit group','leave group','群组信息','群聊信息','群组资料','退出群组','退出群聊','mi-group-info','mi-exit-group');
       const direct = has('contact info','contact information','联系人信息','联系人资料','mi-contact-info');
@@ -4845,17 +5177,17 @@ public sealed partial class LegacyUiHostPage : Page
       if (complete) return;
       if (!rowCurrent()) { finish('row-changed'); return; }
       if (menus().length) { finish('menu-unowned'); return; }
-      const hits = [...row.querySelectorAll('[data-testid="cell-frame-chevron"],[data-testid="down-context"],[data-icon="down-context"],[aria-haspopup="menu"]')]
+      const hits = [...row.querySelectorAll('[data-testid="cell-frame-chevron"],[data-testid="down-context"],[data-icon="down-context"],[data-icon="down-context-refreshed"],[data-icon="chevron-down"],[data-icon="chevron-down-refreshed"],[aria-haspopup="menu"]')]
         .map(node => node.closest('button,[role="button"],[aria-haspopup="menu"]')).filter(node => node && row.contains(node) && visible(node));
       const buttons = [...new Set(hits)];
       if (buttons.length > 1) { finish('menu-unowned'); return; }
       trigger = buttons[0];
       const rect = (trigger || row).getBoundingClientRect();
       anchor = {x:Math.floor(trigger ? rect.left+rect.width/2 : rect.left + Math.min(rect.width/2,50)),y:Math.floor(rect.top+rect.height/2)};
-      const prior = new Set(document.querySelectorAll(menuSelector));
+      const prior = new Set(menus());
       const recordOpenedMenus = () => {
         if (complete || !rowCurrent()) return;
-        for (const popup of document.querySelectorAll(menuSelector)) if (!prior.has(popup)) openedByEvent.add(popup);
+        for (const popup of menus()) if (!prior.has(popup)) openedByEvent.add(popup);
       };
       if (trigger) trigger.click();
       else row.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2,clientX:anchor.x,clientY:anchor.y,view:window}));
@@ -4946,7 +5278,7 @@ public sealed partial class LegacyUiHostPage : Page
     if (finished && stream.unresolved && coverage === 'page-list-scanned') coverage = 'identity-unresolved';
     const updates = [];
     const open = openDirectoryEvidence();
-    for (const field of ['renderedRows','stableRows','unresolvedRows','groupNoticeRows','verifiedNoticeRows','skippedUnread','skippedReadUnknown','skippedTypeUnknown'])
+    for (const field of ['renderedRows','stableRows','unresolvedRows','groupNoticeRows','verifiedNoticeRows','noticeAdjacentSvgRows','noticeUnlabelledSvgRows','skippedUnread','skippedReadUnknown','skippedTypeUnknown'])
       stream.diagnostics[field] = Math.max(stream.diagnostics[field] || 0, latestWindow[field] || 0);
     stream.diagnostics.listPresent = Boolean(stream.diagnostics.listPresent || latestWindow.listPresent);
     stream.diagnostics.confirmedOpen = Boolean(open.row);
@@ -4962,10 +5294,16 @@ public sealed partial class LegacyUiHostPage : Page
         previewText:directHistoryAllowed ? row.previewText : '', unread:row.unread, unreadCount:row.unreadCount, uncertainUnread:row.uncertainUnread,
         lastMessageAt:row.lastMessageAt, lastMessageFingerprint:row.lastMessageFingerprint });
     }
-    for (let i=0; i < updates.length || ((finished || stream.unresolved > previousUnresolved) && i === 0); i+=100) {
+    const pendingWindow = latestWindow.pendingScanId === stream.id && Array.isArray(latestWindow.pendingGroupNames)
+      ? { source:'whatsapp-groups-filter', names:latestWindow.pendingGroupNames } : null;
+    const windowKey = pendingWindow && JSON.stringify(pendingWindow.names);
+    const windowChanged = pendingWindow && windowKey !== stream.pendingWindowKey;
+    if (windowChanged) stream.pendingWindowKey = windowKey;
+    for (let i=0; i < updates.length || ((finished || windowChanged || stream.unresolved > previousUnresolved) && i === 0); i+=100) {
       const last = finished && i + 100 >= updates.length;
       window.chrome.webview.postMessage(JSON.stringify({ type:'zhike.ws.directory', accountId, collectorEpoch:documentEpoch, scanId:stream.id, chunkIndex:stream.chunk++,
         rows:updates.slice(i, i+100), unresolvedRowCount:stream.unresolved, scanning:!last, finished:last, complete:last && coverage === 'page-list-scanned', coverage,
+        ...(pendingWindow && i === 0 ? {pendingGroupWindow:pendingWindow} : {}),
         openIdentityStatus:open.status,directoryDiagnostics:stream.diagnostics }));
     }
   };

@@ -40,6 +40,14 @@ Check(WsLiveDirectory.Project(picker,ordinary,5,8,"collector").GetProperty("cont
  && WsLiveDirectory.Project(picker,dedicated,5,0,"foreground-visible").GetProperty("contacts").GetArrayLength()==0,
  "contacts are only exposed by the authenticated ordinary foreground read");
 var directoryB=WsLiveDirectory.Project(directoryInput,dedicated,5,8,"collector");
+var windowNames=JsonSerializer.SerializeToElement(new{scanId=11,pendingGroupWindow=new{source="whatsapp-groups-filter",names=new object[]{"Twin","Twin",new{previewText="private"},new string('Z',155)}.Concat(Enumerable.Repeat((object)"Other",60)).ToArray()}});
+var pendingWindow=WsLiveDirectory.Project(windowNames,dedicated,5,8,"collector");
+var pendingNames=pendingWindow.GetProperty("pendingGroupNames").EnumerateArray().Select(item=>item.GetString()).ToArray();
+Check(pendingNames.Length==50 && pendingNames[0]=="Twin" && pendingNames[1]=="Twin" && pendingNames[2]!.Length==150
+ && pendingWindow.GetProperty("groupConversations").GetArrayLength()==0 && !pendingWindow.ToString().Contains("private"),"pending group titles are bounded, retain same-name rows and cannot produce target IDs");
+Check(WsLiveDirectory.Project(windowNames,ordinary,5,8,"collector").GetProperty("pendingGroupNames").ValueKind==JsonValueKind.Null
+ && WsLiveDirectory.Project(windowNames,dedicated,5,0,"foreground-visible").GetProperty("pendingGroupNames").ValueKind==JsonValueKind.Null
+ && WsLiveDirectory.Project(JsonSerializer.SerializeToElement(new{scanId=11,pendingGroupWindow=new{source="all-chats",names=new[]{"private"}}}),dedicated,5,8,"collector").GetProperty("pendingGroupNames").ValueKind==JsonValueKind.Null,"only the dedicated collector Groups window can publish unverified names");
 Check(directoryA.GetProperty("conversations").GetArrayLength()==1 && directoryA.GetProperty("groupConversations").GetArrayLength()==0
  && !directoryA.ToString().Contains("2@g.us") && directoryA.GetProperty("accountId").GetString()=="ordinary","live rows are purpose-filtered by the native host");
 Check(directoryB.GetProperty("conversations").GetArrayLength()==0 && directoryB.GetProperty("groupConversations").GetArrayLength()==1
