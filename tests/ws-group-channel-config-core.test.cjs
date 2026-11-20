@@ -55,8 +55,9 @@ check('partial patches never clear fields that were not supplied', () => {
 });
 check('switches accept Chinese yes/no and reject nonsense', () => {
   assert.equal(core.validateConfigPatch({ autoCreateCustomers: '是' }).patch.autoCreateCustomers, true);
-  assert.equal(core.validateConfigPatch({ monitorMembership: '关闭' }).patch.monitorMembership, false);
-  assert.equal(core.validateConfigPatch({ monitorMembership: '也许' }).errors.length, 1);
+  assert.equal(core.validateConfigPatch({ autoCreateCustomers: '关闭' }).patch.autoCreateCustomers, false);
+  assert.equal(core.validateConfigPatch({ autoCreateCustomers: '也许' }).errors.length, 1);
+  assert.deepEqual(core.validateConfigPatch({ monitorMembership: true }).patch, {}, 'monitoring is not a config field; seats control it');
 });
 check('tags are split, trimmed and de-duplicated', () => {
   assert.deepEqual(core.normalizeTags('高意向，新粉、高意向; 待跟进'), ['高意向', '新粉', '待跟进']);
@@ -104,7 +105,7 @@ check('export neutralises formula injection and round-trips through import', () 
   assert.equal(entries[0].input.assistant, '+小王', 'guard quote is removed on import');
   assert.equal(entries[0].input.defaultTags, '新粉、高意向');
   assert.equal(entries[0].input.autoCreateCustomers, '是');
-  assert.equal(entries[0].input.monitorMembership, '否');
+  assert.equal(Object.hasOwn(entries[0].input, 'monitorMembership'), false, 'monitoring is not exported or imported');
 });
 
 const failed = results.filter(ok => !ok).length;

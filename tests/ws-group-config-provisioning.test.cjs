@@ -87,6 +87,8 @@ async function observe(groupJid, memberIds, capturedAt) {
         { accountId: ACCOUNT, groupJid: G3, groupCode: 'A-599', channel: 'API群粉', autoCreateCustomers: false },
       ] });
       assert.equal(config.value.applied, 3, JSON.stringify(config.value.rows?.map(row => [row.status, row.errors])));
+      const list = (await api(`/api/ws/group-channel-configs?accountId=${ACCOUNT}`)).value;
+      assert.equal(list.rows.find(row => row.groupJid === G1).monitorActive, true, 'an enabled monitor target shows as 监测中');
     });
 
     const M1 = '917100000001@s.whatsapp.net';

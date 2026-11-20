@@ -97,6 +97,8 @@ const rowOf = (list, jid) => list.rows.find(row => row.groupJid === jid);
       assert.equal(row.channelOrigin, 'manual');
       assert.deepEqual(row.defaultTags, ['新粉', '单导']);
       assert.equal(row.autoCreateCustomers, true);
+      assert.equal(row.monitorActive, false, 'monitoring reflects real seats, not a config flag');
+      assert.equal(Object.hasOwn(row, 'monitorMembership'), false);
       const history = (await api(`/api/ws/group-channel-configs/history?accountId=${ACCOUNT}&groupJid=1203-a501@g.us`)).value.history;
       assert.equal(history.length, 1);
       assert.equal(history[0].revision, 1);

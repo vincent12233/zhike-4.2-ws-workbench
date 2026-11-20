@@ -11,7 +11,9 @@
  */
 
 const BUILTIN_CHANNELS = Object.freeze(['单导K', '单导B', 'FB群粉', 'API群粉', '短信群粉']);
-const CONFIG_FIELDS = Object.freeze(['groupCode', 'channel', 'pageCategory', 'assistant', 'defaultTags', 'autoCreateCustomers', 'monitorMembership']);
+// Membership monitoring is controlled by monitor seats/targets (群组管理), not
+// by this config, so it is deliberately not an accepted field here.
+const CONFIG_FIELDS = Object.freeze(['groupCode', 'channel', 'pageCategory', 'assistant', 'defaultTags', 'autoCreateCustomers']);
 const FIELD_COLUMNS = Object.freeze({
   groupCode: 'group_code', channel: 'channel', pageCategory: 'page_category', assistant: 'assistant',
   defaultTags: 'default_tags_json', autoCreateCustomers: 'auto_create_customers', monitorMembership: 'monitor_membership',
@@ -23,7 +25,7 @@ const FIELD_LABELS = Object.freeze({
 const CSV_COLUMNS = Object.freeze([
   ['accountId', '所属账号'], ['groupJid', '群组ID'], ['groupName', '群组名称'], ['groupCode', '群组编号'],
   ['channel', '渠道'], ['pageCategory', '页面分类'], ['assistant', '跟进助理'], ['defaultTags', '默认标签'],
-  ['autoCreateCustomers', '自动建档'], ['monitorMembership', '进退群监测'],
+  ['autoCreateCustomers', '自动建档'],
 ]);
 const HEADER_ALIASES = Object.freeze({
   accountId: ['所属账号', '账号', 'account', 'accountid'],
@@ -35,7 +37,6 @@ const HEADER_ALIASES = Object.freeze({
   assistant: ['跟进助理', '助理', '负责助理', 'assistant'],
   defaultTags: ['默认标签', '默认客户标签', '标签', 'defaulttags', 'tags'],
   autoCreateCustomers: ['自动建档', '自动建档开关', 'autocreatecustomers', 'autocreate'],
-  monitorMembership: ['进退群监测', '进退群监测开关', '监测', 'monitormembership', 'monitor'],
 });
 
 const text = (value, max = 120) => String(value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
@@ -100,7 +101,7 @@ function validateConfigPatch(input = {}) {
     else patch[key] = value;
   }
   if (Object.hasOwn(input, 'defaultTags')) patch.defaultTags = normalizeTags(input.defaultTags);
-  for (const key of ['autoCreateCustomers', 'monitorMembership']) {
+  for (const key of ['autoCreateCustomers']) {
     if (!Object.hasOwn(input, key)) continue;
     const parsed = parseSwitch(input[key]);
     if (parsed === null) errors.push(`${FIELD_LABELS[key]}只能填写 是/否。`);

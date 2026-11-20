@@ -101,7 +101,6 @@
         channel: channelSelect === '__custom__' ? value('channelCustom') : channelSelect,
         pageCategory: value('pageCategory'), assistant: value('assistant'), defaultTags: value('defaultTags'),
         autoCreateCustomers: Boolean(field(root, 'autoCreateCustomers')?.checked),
-        monitorMembership: Boolean(field(root, 'monitorMembership')?.checked),
       };
     }
     async function loadHistory(page, jid) {
@@ -175,9 +174,9 @@
         if (!groups.length) return false;
         const value = page.batch.value.trim();
         const key = page.batch.field;
-        if (!['channel', 'assistant', 'pageCategory', 'defaultTags', 'autoCreateCustomers', 'monitorMembership'].includes(key)) return false;
+        if (!['channel', 'assistant', 'pageCategory', 'defaultTags', 'autoCreateCustomers'].includes(key)) return false;
         if (['channel', 'assistant'].includes(key) && !value) { page.error = '请先填写要批量设置的值。'; redraw(); return false; }
-        const patch = { [key]: ['autoCreateCustomers', 'monitorMembership'].includes(key) ? value === '是' : value };
+        const patch = { [key]: key === 'autoCreateCustomers' ? value === '是' : value };
         const result = await save(page, { patch, groups }, '批量设置');
         if (result?.applied) await loadAfterSave(page);
         return Boolean(result?.applied);
@@ -265,7 +264,7 @@
         <label><span>跟进助理</span><input data-ws-channel-field="assistant" value="${escape(row.assistant)}" maxlength="60"></label>
         <label class="wide"><span>默认客户标签（逗号分隔）</span><input data-ws-channel-field="defaultTags" value="${escape(row.defaultTags.join('，'))}" maxlength="400"></label>
         <label class="switch"><input type="checkbox" data-ws-channel-field="autoCreateCustomers" ${row.autoCreateCustomers ? 'checked' : ''}><span>自动建档</span></label>
-        <label class="switch"><input type="checkbox" data-ws-channel-field="monitorMembership" ${row.monitorMembership ? 'checked' : ''}><span>进退群监测</span></label>
+        <span class="ws-channel-monitor-state">进退群监测：<b>${row.monitorActive ? '监测中' : '未监测'}</b><small>在“群组管理”中选择监测席位后启用或停用</small></span>
         <div class="ws-channel-editor-actions"><button class="btn small" data-ws-action="group-channel-cancel">取消</button><button class="btn small primary" data-ws-action="group-channel-save" data-group-jid="${escape(row.groupJid)}" ${page.saving ? 'disabled' : ''}>${page.saving ? '保存中…' : '保存'}</button></div>
         <p class="ws-muted">留空渠道表示不手动指定；如果该编号有已确认的规则，会按规则得出渠道。渠道不会根据编号前缀自动推断。</p>
       </div></td></tr>`;
@@ -284,11 +283,11 @@
       const fieldName = page.batch.field;
       const input = fieldName === 'channel'
         ? `<select data-ws-channel-batch="value"><option value="">选择渠道</option>${page.channels.map(channel => `<option ${channel === page.batch.value ? 'selected' : ''}>${escape(channel)}</option>`).join('')}</select>`
-        : ['autoCreateCustomers', 'monitorMembership'].includes(fieldName)
+        : fieldName === 'autoCreateCustomers'
           ? `<select data-ws-channel-batch="value"><option value="">请选择</option><option ${page.batch.value === '是' ? 'selected' : ''}>是</option><option ${page.batch.value === '否' ? 'selected' : ''}>否</option></select>`
           : `<input data-ws-channel-batch="value" value="${escape(page.batch.value)}" placeholder="填写新值" maxlength="200">`;
       return `<div class="ws-channel-batch" role="region" aria-label="批量操作"><strong>已选 ${page.selected.size} 个群组</strong>
-        <select data-ws-channel-batch="field">${[['channel', '设置渠道'], ['assistant', '设置助理'], ['pageCategory', '设置页面分类'], ['defaultTags', '设置默认标签'], ['autoCreateCustomers', '自动建档开关'], ['monitorMembership', '进退群监测开关']].map(([value, label]) => `<option value="${value}" ${value === fieldName ? 'selected' : ''}>${label}</option>`).join('')}</select>
+        <select data-ws-channel-batch="field">${[['channel', '设置渠道'], ['assistant', '设置助理'], ['pageCategory', '设置页面分类'], ['defaultTags', '设置默认标签'], ['autoCreateCustomers', '自动建档开关']].map(([value, label]) => `<option value="${value}" ${value === fieldName ? 'selected' : ''}>${label}</option>`).join('')}</select>
         ${input}<button class="btn small primary" data-ws-action="group-channel-batch-apply" ${page.saving ? 'disabled' : ''}>应用</button>
         <button class="btn small" data-ws-action="group-channel-accept-codes" ${page.saving ? 'disabled' : ''}>确认识别编号</button>
         <button class="btn small" data-ws-action="group-channel-clear-selection">取消选择</button></div>`;
@@ -317,7 +316,7 @@
           <td>${channelCell(row)}</td>
           <td>${escape(row.pageCategory || '—')}</td>
           <td>${escape(row.assistant || '—')}</td>
-          <td><span class="ws-channel-toggle" data-on="${row.autoCreateCustomers}">${row.autoCreateCustomers ? '建档' : '不建档'}</span><span class="ws-channel-toggle" data-on="${row.monitorMembership}">${row.monitorMembership ? '监测' : '未监测'}</span></td>
+          <td><span class="ws-channel-toggle" data-on="${row.autoCreateCustomers}">${row.autoCreateCustomers ? '建档' : '不建档'}</span><span class="ws-channel-toggle" data-on="${row.monitorActive}" title="监测席位的真实状态">${row.monitorActive ? '监测中' : '未监测'}</span></td>
           <td>${row.pending ? `<span class="ws-channel-status" data-status="pending">${escape(PENDING_LABEL[row.pendingReason] || '待配置')}</span>` : '<span class="ws-channel-status" data-status="ok">已配置</span>'}</td>
           <td class="ws-channel-actions"><button class="btn small" data-ws-action="group-channel-edit" data-group-jid="${escape(row.groupJid)}">${page.editing === row.groupJid ? '收起' : '编辑'}</button><button class="btn small" data-ws-action="group-channel-history" data-group-jid="${escape(row.groupJid)}">历史</button></td>
         </tr>${page.editing === row.groupJid ? editorRow(page, row) : ''}${historyRow(page, row)}`).join('');

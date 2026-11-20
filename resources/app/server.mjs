@@ -1246,7 +1246,7 @@ function wsGroupChannelConfigMap(accountId) {
 function wsGroupCodeRuleMap() {
   return new Map(db.prepare('SELECT * FROM ws_group_code_channel_rules').all().map(row => [row.group_code, { id: row.id, groupCode: row.group_code, channel: row.channel, enabled: Boolean(row.enabled), note: row.note || '', createdAt: row.created_at, updatedAt: row.updated_at }]));
 }
-function wsGroupChannelView(catalogRow, config, rules) {
+function wsGroupChannelView(catalogRow, config, rules, monitored = new Set()) {
   const detected = wsGroupChannel.detectGroupCode(catalogRow.group_name);
   const groupCode = config?.groupCode || '';
   const resolved = wsGroupChannel.resolveChannel(config, rules, catalogRow.channel_id || '');
@@ -1257,7 +1257,9 @@ function wsGroupChannelView(catalogRow, config, rules) {
     detectedCode: detected.code, detectedCodeStatus: detected.status, detectedCandidates: detected.candidates,
     channel: resolved.channel, channelOrigin: resolved.origin, channelHint: resolved.hint,
     pageCategory: config?.pageCategory || '', assistant: config?.assistant || '', defaultTags: config?.defaultTags || [],
-    autoCreateCustomers: config ? Boolean(config.autoCreateCustomers) : wsGroupChannel.UNCONFIGURED.autoCreateCustomers, monitorMembership: Boolean(config?.monitorMembership),
+    autoCreateCustomers: config ? Boolean(config.autoCreateCustomers) : wsGroupChannel.UNCONFIGURED.autoCreateCustomers,
+    // Real state of an enabled monitor target; seats are managed in 群组管理.
+    monitorActive: monitored.has(`${catalogRow.account_id}\u0000${catalogRow.group_jid}`),
     configured: Boolean(config), revision: config?.revision || 0, updatedAt: config?.updatedAt || '',
     // Pending = needs the user: no confirmed code, or no effective channel.
     pending: !groupCode || resolved.pending,
@@ -1266,8 +1268,11 @@ function wsGroupChannelView(catalogRow, config, rules) {
 }
 function wsGroupChannelList(filters = {}) {
   const catalog = wsGroupChannelCatalogMap(filters.accountId), configs = wsGroupChannelConfigMap(filters.accountId), rules = wsGroupCodeRuleMap();
+  const monitored = new Set((filters.accountId
+    ? db.prepare('SELECT account_id,group_jid FROM ws_group_monitor_targets WHERE enabled=1 AND account_id=?').all(filters.accountId)
+    : db.prepare('SELECT account_id,group_jid FROM ws_group_monitor_targets WHERE enabled=1').all()).map(row => `${row.account_id}\u0000${row.group_jid}`));
   const query = String(filters.query || '').trim().toLowerCase();
-  let rows = [...catalog.values()].map(row => wsGroupChannelView(row, configs.get(`${row.account_id}\u0000${row.group_jid}`), rules));
+  let rows = [...catalog.values()].map(row => wsGroupChannelView(row, configs.get(`${row.account_id}\u0000${row.group_jid}`), rules, monitored));
   if (query) rows = rows.filter(row => [row.groupName, row.groupJid, row.groupCode, row.detectedCode, row.channel, row.assistant, row.pageCategory].some(value => String(value || '').toLowerCase().includes(query)));
   if (filters.channel) rows = rows.filter(row => row.channel === filters.channel);
   if (filters.assistant) rows = rows.filter(row => row.assistant === filters.assistant);
