@@ -1,0 +1,71 @@
+'use strict';
+
+const groupJid = /^[a-z0-9._-]{1,235}@g\.us$/;
+const draftId = /^[a-zA-Z0-9_-]{1,80}$/;
+const pageSize = 50;
+
+function fail(status, code, message) {
+  throw Object.assign(new Error(message), { status, code });
+}
+
+function readDraft(row) {
+  return {
+    id: row.id, accountId: row.account_id, message: row.message_text,
+    status: row.status, createdAt: row.created_at, cancelledAt: row.cancelled_at,
+    targets: JSON.parse(row.targets_json).map(group => ({ ...group, status: row.status })),
+  };
+}
+
+function list(db, accountId, query, offset) {
+  if (query.length > 240 || !Number.isSafeInteger(offset) || offset < 0) fail(400, 'DRAFT_SEARCH_INVALID', '群组搜索条件无效。');
+  const groups = db.prepare(`SELECT group_jid AS groupJid,group_name AS name FROM ws_group_catalog
+    WHERE account_id=? AND status='active' AND substr(group_jid,-5)='@g.us'
+      AND length(group_jid) BETWEEN 6 AND 240 AND substr(group_jid,1,length(group_jid)-5) NOT GLOB '*[^a-z0-9._-]*'
+      AND discovery_source <> 'stage3-mock'
+      AND (instr(lower(group_name),lower(?))>0 OR instr(group_jid,lower(?))>0)
+    ORDER BY group_name COLLATE NOCASE,group_jid LIMIT ? OFFSET ?`).all(accountId, query, query, pageSize + 1, offset);
+  const drafts = db.prepare(`SELECT * FROM ws_group_drafts WHERE account_id=?
+    ORDER BY created_at DESC,id LIMIT 30`).all(accountId).map(readDraft);
+  return { accountId, groups: groups.slice(0, pageSize), nextOffset: groups.length > pageSize ? offset + pageSize : null, drafts, sendAvailable: false };
+}
+
+function change(db, accountId, body) {
+  if (!draftId.test(body?.id || '') || typeof body.id !== 'string') fail(400, 'DRAFT_ID_INVALID', '草稿编号无效。');
+  if (!['create', 'cancel'].includes(body.action)) fail(422, 'GROUP_SEND_UNAVAILABLE', '真实群组发送尚未验证，只能保存或取消本地草稿。');
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    const existing = db.prepare('SELECT * FROM ws_group_drafts WHERE account_id=? AND id=?').get(accountId, body.id);
+    if (body.action === 'cancel') {
+      if (!existing) fail(404, 'DRAFT_NOT_FOUND', '当前账号没有此草稿。');
+      if (existing.status === 'DRAFT') db.prepare("UPDATE ws_group_drafts SET status='CANCELLED',cancelled_at=? WHERE account_id=? AND id=? AND status='DRAFT'").run(new Date().toISOString(), accountId, body.id);
+    } else {
+      const { message, targets } = body;
+      if (typeof message !== 'string' || !message.trim() || message.length > 4000 || !Array.isArray(targets) || targets.length < 1 || targets.length > 100 ||
+          targets.some(id => typeof id !== 'string' || !groupJid.test(id)) || new Set(targets).size !== targets.length) {
+        fail(400, 'DRAFT_CONTENT_INVALID', '请填写 1 至 4000 个字符，并选择 1 至 100 个不同的有效群组。');
+      }
+      const ids = [...targets].sort();
+      if (existing) {
+        const previous = JSON.parse(existing.targets_json).map(target => target.groupJid);
+        if (message !== existing.message_text || JSON.stringify(ids) !== JSON.stringify(previous)) fail(409, 'DRAFT_CONFLICT', '该草稿编号已绑定其他内容。');
+      } else {
+        const getGroup = db.prepare("SELECT group_jid AS groupJid,group_name AS name FROM ws_group_catalog WHERE account_id=? AND group_jid=? AND status='active' AND discovery_source <> 'stage3-mock'");
+        const selected = ids.map(id => {
+          const group = getGroup.get(accountId, id);
+          if (!group) fail(409, 'DRAFT_GROUP_UNAVAILABLE', '所选群组已失效或不属于当前账号，请刷新群组目录。');
+          return group;
+        });
+        db.prepare("INSERT INTO ws_group_drafts(account_id,id,message_text,targets_json,status,created_at) VALUES(?,?,?,?,'DRAFT',?)")
+          .run(accountId, body.id, message, JSON.stringify(selected), new Date().toISOString());
+      }
+    }
+    const row = db.prepare('SELECT * FROM ws_group_drafts WHERE account_id=? AND id=?').get(accountId, body.id);
+    db.exec('COMMIT');
+    return { draft: readDraft(row), sendAvailable: false };
+  } catch (error) {
+    if (db.isTransaction) db.exec('ROLLBACK');
+    throw error;
+  }
+}
+
+module.exports = { list, change };

@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "supportedSchemaVersion": 28,
+  "supportedSchemaVersion": 29,
   "migrations": [
     {
       "version": 4,
@@ -151,6 +151,12 @@
       "file": "028-ws-account-workspace-mode.sql",
       "description": "6.1 persist ordinary and dedicated WS account purposes",
       "checksum": "de11272a832363dcc34a739d29fb772f2de1bc758a518a1a1ecf9de41f70d934"
+    },
+    {
+      "version": 29,
+      "file": "029-ws-group-drafts.sql",
+      "description": "Dedicated WS local group message drafts and target snapshots",
+      "checksum": "e81586a81047e07e811dd5d1786ef699cb890eebaf6195feee8cc6ae3b776d66"
     }
   ]
 }

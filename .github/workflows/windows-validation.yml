@@ -40,6 +40,7 @@ jobs:
             'tests/ws-ai-workspace-mode.test.cjs',
             'tests/ws-ai-queue-workspace-mode.test.cjs',
             'tests/ws-ingest-workspace-mode.test.cjs',
+            'tests/ws-group-drafts-api.test.cjs',
             'tests/ws-group-monitor-workspace-mode.test.cjs',
             'tests/ws-group-monitor-identity-safety.test.cjs',
             'tests/ws-group-scope-authorization.test.cjs',

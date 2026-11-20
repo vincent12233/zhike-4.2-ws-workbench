@@ -60,11 +60,11 @@ async function start(directory) {
   try {
     fs.mkdirSync(sourceRoot);
     const legacyMigrations = path.join(root, 'schema-27');
-    fs.cpSync(migrations, legacyMigrations, { recursive: true });
+    fs.mkdirSync(legacyMigrations);
     const manifest = JSON.parse(fs.readFileSync(path.join(migrations, 'manifest.json'), 'utf8'));
     const oldManifest = { ...manifest, supportedSchemaVersion: 27, migrations: manifest.migrations.filter(entry => entry.version <= 27) };
     fs.writeFileSync(path.join(legacyMigrations, 'manifest.json'), JSON.stringify(oldManifest));
-    fs.unlinkSync(path.join(legacyMigrations, '028-ws-account-workspace-mode.sql'));
+    for (const entry of oldManifest.migrations) fs.copyFileSync(path.join(migrations, entry.file), path.join(legacyMigrations, entry.file));
 
     await check('027 upgrade defaults old accounts to ordinary and preserves prior checksums and CRM', () => {
       const db = openData(sourceRoot);
@@ -76,7 +76,7 @@ async function start(directory) {
         const before = db.prepare('SELECT version,checksum FROM schema_migrations ORDER BY version').all();
         const customers = db.prepare('SELECT * FROM customers').all();
         const upgraded = runMigrations({ db, dbPath: path.join(sourceRoot, 'workspace.sqlite'), migrationDir: migrations, backup: false });
-        assert.equal(upgraded.version, 28);
+        assert.equal(upgraded.version, manifest.supportedSchemaVersion);
         assert.deepEqual(db.prepare('SELECT version,checksum FROM schema_migrations WHERE version<=27 ORDER BY version').all(), before);
         assert.deepEqual(db.prepare('SELECT * FROM customers').all(), customers);
         assert.ok(db.prepare('SELECT workspace_mode FROM ws_accounts').all().every(row => row.workspace_mode === 'ordinary'));

@@ -13,6 +13,7 @@ const wsCrmSync = require('./modules/ws-crm-sync-core.js');
 const wsGroupMonitor = require('./modules/ws-group-monitor-core.js');
 const wsWorkspacePolicy = require('./modules/ws-workspace-policy.cjs');
 const wsGroupManager = require('./modules/ws-group-manager-core.js');
+const wsGroupDrafts = require('./modules/ws-group-drafts.cjs');
 const wsContactExclusion = require('./modules/ws-contact-exclusion-core.cjs');
 const wsGroupMemberQuery = require('./modules/ws-group-member-query.cjs');
 const customerGovernance = require('./modules/customer-governance-core.js');
@@ -4738,6 +4739,25 @@ const server = createServer(async (req, res) => {
     // credentials or a remote socket: it creates a durable plan which the
     // native WebView bridge must acknowledge after the operator confirms the
     // visible composer/send action.
+    if (url.pathname === '/api/ws/group-drafts') {
+      const accounts = url.searchParams.getAll('accountId');
+      const accountId = accounts[0];
+      if (accounts.length !== 1 || !accountId || wsAccountId(accountId) !== accountId || /[\p{Cc}\p{Cf}]/u.test(accountId)) {
+        return json(res, 400, { code: 'DRAFT_SCOPE_INVALID', error: '请明确选择专用 WS 账号。' });
+      }
+      const account = wsAccountRow(accountId);
+      if (!account) return json(res, 404, { code: 'DRAFT_ACCOUNT_NOT_FOUND', error: 'WS 账号不存在。' });
+      if (account.workspace_mode !== 'dedicated') return json(res, 403, { code: 'DRAFT_PURPOSE_REQUIRED', error: '群组发送草稿仅供专用 WS 账号使用。' });
+      if (req.method === 'GET') {
+        const offset = url.searchParams.get('offset') ?? '0';
+        if (!/^\d{1,8}$/.test(offset)) return json(res, 400, { code: 'DRAFT_SEARCH_INVALID', error: '群目录分页无效。' });
+        return json(res, 200, wsGroupDrafts.list(db, accountId, url.searchParams.get('q') || '', Number(offset)));
+      }
+      if (req.method !== 'POST') return json(res, 405, { error: '群组草稿仅支持 GET 和 POST。' });
+      const body = JSON.parse((await readBody(req, 128 * 1024)).toString('utf8') || '{}');
+      if (body?.accountId !== accountId) return json(res, 400, { code: 'DRAFT_SCOPE_INVALID', error: '草稿的账号与所选账号不一致。' });
+      return json(res, 200, wsGroupDrafts.change(db, accountId, body));
+    }
     if (url.pathname === '/api/ws/broadcast' && req.method === 'POST') {
       const body = JSON.parse((await readBody(req, WS_MEDIA_REQUEST_MAX_BYTES)).toString('utf8') || '{}');
       const denial = wsCheckDirectSendAccount(body.accountId);
