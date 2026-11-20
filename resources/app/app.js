@@ -12,7 +12,7 @@
   const assistants = ['未分配'];
   const phases = ['新客户','潜在客户','意向客户','高意向','成交客户','暂停跟进'];
   const qualifications = ['S级｜核心优质','A级｜优质','B级｜中等','C级｜一般','D级｜较差','E级｜极差'];
-  const statuses = ['已进群','未进群','在群','已退群','临时退群','重粉'];
+  const statuses = ['已进群','未进群','在群','已退群','待确认','临时退群','重粉'];
   const groupIds = [];
   const pages = [];
   // Zhike 6.0 business state is owned exclusively by the isolated SQLite

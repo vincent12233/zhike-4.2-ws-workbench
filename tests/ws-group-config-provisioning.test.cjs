@@ -31,6 +31,8 @@ async function api(pathname, method = 'GET', body) {
   const response = await request(pathname, { method, body: body === undefined ? undefined : JSON.stringify(body) });
   return { status: response.status, value: await response.json().catch(() => ({})) };
 }
+// Observations are only accepted between target authorization and server now.
+const now = () => new Date().toISOString();
 const results = [];
 async function check(name, fn) {
   try { await fn(); results.push(true); console.log('PASS ' + name); }
@@ -54,6 +56,13 @@ async function event(groupJid, memberId, type, eventAt, memberName = '') {
   });
   assert.equal(status, 200, JSON.stringify(value).slice(0, 200));
   return value.groupEvents;
+}
+// A visible member-list sighting from the dedicated background collector.
+async function observe(groupJid, memberIds, capturedAt) {
+  return api('/api/ws/ingest/batch', 'POST', {
+    accountId: ACCOUNT, scope: 'background-collector', capturedAt,
+    checkpoints: [{ accountId: ACCOUNT, coverage: 'group-monitor-visible', conversationType: 'group', isGroup: true, conversationKey: groupJid, observedMembers: memberIds.map(memberId => ({ memberId, displayName: 'seen' })) }],
+  });
 }
 
 (async () => {
@@ -157,6 +166,36 @@ async function event(groupJid, memberId, type, eventAt, memberName = '') {
       assert.equal(customer.firstSourceChannel, '', 'no channel is guessed for an unconfigured group');
       assert.deepEqual(customer.currentChannels, []);
       assert.equal(customer.assistant, '未分配');
+    });
+    await check('a member-list sighting never fabricates a join event, relation or customer', async () => {
+      const before = (await customers()).length;
+      const result = await observe(G2, ['917100000009@s.whatsapp.net'], now());
+      assert.equal(result.status, 200, JSON.stringify(result.value).slice(0, 200));
+      assert.equal(result.value.observedMembersAdded, 1, 'the sighting itself is stored');
+      assert.equal(result.value.groupEvents?.accepted || 0, 0, 'observation is not an event');
+      assert.equal((await customers()).length, before, 'observation alone never creates a customer');
+    });
+
+    const M5 = '917100000005@s.whatsapp.net';
+    await check('confirmed leave from one group while still observed in another is 待确认, not 已退群', async () => {
+      await event(G1, M5, 'joined', now(), 'Observed');
+      await wait(15);
+      const observed = await observe(G2, [M5], now());
+      assert.equal(observed.value.observedMembersAdded, 1, 'sighting stored');
+      await wait(15);
+      await event(G1, M5, 'left', now());
+      const customer = await byMember(M5);
+      assert.equal(customer.groupStatus, '待确认');
+      assert.equal(customer.groupMemberships.some(item => item.groupJid === G2), false, 'no relation is invented for the observed group');
+      assert.equal(customer.groupMemberships.find(item => item.groupJid === G1).status, '已退群', 'the confirmed departure is still recorded');
+    });
+
+    await check('a later confirmed departure from the observed group resolves to 已退群', async () => {
+      await wait(15);
+      await event(G2, M5, 'left', now());
+      const customer = await byMember(M5);
+      assert.equal(customer.groupStatus, '已退群');
+      assert.ok(customer, 'the CRM record is kept');
     });
   } finally {
     child.kill();

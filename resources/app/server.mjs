@@ -1430,7 +1430,7 @@ function wsApplyCustomerChannelAttribution(customer, accountId, groupJid, eventT
   const relations = Array.isArray(customer.groupMemberships) ? customer.groupMemberships : [];
   for (const relation of relations) {
     if (!relation || relation.status !== '在群') continue;
-    const key = `${relation.accountId} ${relation.groupJid}`;
+    const key = `${relation.accountId}\u0000${relation.groupJid}`;
     if (!channelOf.has(key)) channelOf.set(key, relation.groupJid === groupJid && relation.accountId === accountId ? channel : (wsGroupChannelEffective(relation.accountId, relation.groupJid)?.channel || ''));
   }
   customer.currentChannels = [...new Set([...channelOf.values()].filter(Boolean))];
@@ -1753,9 +1753,40 @@ function deriveWsCustomerGroupStatus(customer, eventType = '') {
       && active.length === 1) return '已进群';
     return '在群';
   }
-  if (['left', 'removed'].includes(String(eventType).toLocaleLowerCase())) return '已退群';
+  if (['left', 'removed'].includes(String(eventType).toLocaleLowerCase())) {
+    // V5.0 §11: 已退群 only when every related group has reliable departure
+    // evidence. A relation without a confirmed state, or a current member-list
+    // observation in a group with no later confirmed departure, leaves the
+    // overall status at 待确认 instead of inferring departure.
+    const relations = Array.isArray(customer?.groupMemberships) ? customer.groupMemberships.filter(Boolean) : [];
+    const unresolvedRelation = relations.some(item => !['已退群', '被移除'].includes(item.status));
+    return unresolvedRelation || wsCustomerHasUnresolvedObservation(customer) ? '待确认' : '已退群';
+  }
   if (String(eventType).toLocaleLowerCase() === 'joined') return '已进群';
   return String(customer?.status || '');
+}
+
+/**
+ * True when the customer was seen in a group's current member list and no
+ * confirmed departure from that group happened at or after the sighting.
+ * Observation is presence evidence only; it never creates a join event.
+ */
+function wsCustomerHasUnresolvedObservation(customer) {
+  const id = String(customer?.id || '');
+  const phone = wsGroupMonitor.normalizeMemberIdentity(customer?.phone || customer?.rawPhone).phone;
+  if (!id && !phone) return false;
+  let rows = [];
+  try {
+    rows = db.prepare(`SELECT account_id,group_jid,last_seen_at FROM ws_group_members
+      WHERE status IN ('active','unknown') AND (json_extract(data_json,'$.observedCustomerId')=? OR (?<>'' AND member_phone=?))`).all(id, phone, phone);
+  } catch { return false; }
+  const relations = Array.isArray(customer?.groupMemberships) ? customer.groupMemberships.filter(Boolean) : [];
+  return rows.some(row => {
+    const relation = relations.find(item => String(item.accountId || '') === row.account_id && String(item.groupJid || '') === row.group_jid);
+    if (!relation) return true;
+    if (relation.status === '在群') return true;
+    return !(['已退群', '被移除'].includes(relation.status) && String(relation.lastEventAt || '') >= String(row.last_seen_at || ''));
+  });
 }
 
 function applyWsCustomerGroupStatus(customer, eventType = '') {
@@ -1767,7 +1798,7 @@ function applyWsCustomerGroupStatus(customer, eventType = '') {
   // the compatibility `status` projection.
   customer.groupStatus = nextGroupStatus;
   const current = String(customer.status || '');
-  const groupOnlyStatuses = new Set(['', '未进群', '已进群', '在群', '已退群', '被移除', '状态未知']);
+  const groupOnlyStatuses = new Set(['', '未进群', '已进群', '在群', '已退群', '被移除', '状态未知', '待确认']);
   if (customer.autoRegistered === true || groupOnlyStatuses.has(current)) customer.status = nextGroupStatus;
   return nextGroupStatus;
 }
