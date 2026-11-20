@@ -12,6 +12,7 @@ const wsCore = require('./modules/ws-workbench-core.js');
 const wsCrmSync = require('./modules/ws-crm-sync-core.js');
 const wsGroupMonitor = require('./modules/ws-group-monitor-core.js');
 const wsGroupManager = require('./modules/ws-group-manager-core.js');
+const wsContactExclusion = require('./modules/ws-contact-exclusion-core.cjs');
 const wsGroupMemberQuery = require('./modules/ws-group-member-query.cjs');
 const customerGovernance = require('./modules/customer-governance-core.js');
 const hotChatProfile = require('./modules/hot-chat-profile-core.js');
@@ -145,6 +146,21 @@ testStartupDiagnostic('migrations-completed', {
 });
 if (migrationResult.compatibility?.length) console.warn('迁移兼容复核：024 精确末尾换行历史变体已验证，原校验记录已保留，迁移前备份与独立审计已记录。');
 const fencedWriter = new SqliteFencedWriter(db);
+// WS directory exclusion is the production pre-gate for automatic customer
+// creation. The engine binds to the live database lazily, after migrations have
+// created its tables, and is shared by every auto-create/auto-fill path.
+let contactExclusionEngine = null;
+function wsContactExclusionEngine() {
+  if (contactExclusionEngine) return contactExclusionEngine;
+  try {
+    contactExclusionEngine = wsContactExclusion.createExclusionEngine({ db });
+  } catch (error) {
+    contactExclusionEngine = null;
+    console.warn('WS 通讯录排除引擎不可用：' + (error?.message || error));
+  }
+  return contactExclusionEngine;
+}
+
 if (fencingIsolationMode) fencedWriter.ensureSchema();
 // Versioned migrations own every SQLite schema change.  In particular, ai_jobs
 // is created by migration 020 and startup performs no ad-hoc queue DDL or
@@ -1332,6 +1348,15 @@ function wsGroupMonitorDeletedIdentityConflict(state, candidate) {
 
 function wsGroupMonitorAutoCustomer(accountId, target, event, now, state = null) {
   if (!wsGroupMonitor.isConfirmedJoinEvent(event)) return null;
+  // WS directory exclusion is the unified pre-gate for automatic customer
+  // creation: listed identities (staff, assistants, manual picks) never become
+  // customers, whatever the join evidence says. The hit ledger keeps an audit
+  // trail without touching the customer master.
+  const exclusionIdentity = event.memberId || event.memberJid || event.participantId || event.member || event.phone;
+  const exclusion = wsContactExclusionEngine()?.checkIdentity(exclusionIdentity, {
+    accountId, groupJid: wsText(target.group_jid || target.groupJid, 180), action: 'auto-create-blocked', source: 'group-monitor-ingest',
+  });
+  if (exclusion?.excluded) return null;
   const member = wsGroupMonitor.normalizeMemberIdentity(event.memberId || event.memberJid || event.participantId || event.member || event.phone);
   const phone = member.phone || wsGroupMonitor.normalizeMemberIdentity(event.memberPhone || event.member_phone).phone;
   const memberKey = member.value || phone;

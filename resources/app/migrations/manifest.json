@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "supportedSchemaVersion": 25,
+  "supportedSchemaVersion": 26,
   "migrations": [
     {
       "version": 4,
@@ -133,6 +133,12 @@
       "file": "025-stage5-correlation-id.sql",
       "description": "6.1 Stage 5 cross-workspace business correlation id",
       "checksum": "26e56523887b9f2e983f472b137e52da496ca54c30847d78f3fa852c8298d203"
+    },
+    {
+      "version": 26,
+      "file": "026-ws-contact-exclusion.sql",
+      "description": "6.1 P3 WS contact exclusion platform and hit ledger",
+      "checksum": "c2b2d788f1ef3e2dbd91cab882c00c1f822769eccb1512efb5af6cba5458d20b"
     }
   ]
 }
