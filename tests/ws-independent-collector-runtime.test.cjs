@@ -66,7 +66,7 @@ function fixture(nativeReply, options = {}) {
   const boot = /  boot\(\);\s*\}\)\(\);\s*$/;
   assert.match(source, boot);
   const replyToFetch = options.fetchReply;
-  const exposed = 'state,collectionCapability,collectionReady,rememberCollectionCapability,collectorAction,renderCollectorControls,updateAccountStatus,wsBridge,restartBackgroundPolling,scheduleAiQueuePump,wsBackgroundStatus,renderCollectionCard,resetAccountPresentation,loadAccounts,updateCollectionRun';
+  const exposed = 'state,collectionCapability,collectionReady,rememberCollectionCapability,collectorAction,renderCollectorControls,updateAccountStatus,wsBridge,restartBackgroundPolling,scheduleAiQueuePump,wsBackgroundStatus,renderCollectionCard,resetAccountPresentation,loadAccounts,updateCollectionRun,scanGroupMonitorTargets,groupMonitorStatusLabel,requestAccountPipelineRefresh';
   vm.runInNewContext(source.replace(boot, `  globalThis.independentCollector={${exposed}};\n})();`), sandbox, { filename: 'ws-independent-collector-real-module.js' });
   const api = sandbox.independentCollector;
   api.state.accounts = [{ id: 'a', displayName: '合成账号 A', status: '已连接' }, { id: 'b', displayName: '合成账号 B', status: '未连接' }];
@@ -161,6 +161,87 @@ test('discovery, history and monitor commands require the independently authenti
   for (const action of COLLECTOR_ACTIONS) await running.wsBridge(action, running.context());
   assert.deepEqual(running.nativeCalls.map(request => request.action), COLLECTOR_ACTIONS);
   assert.ok(running.nativeCalls.every(request => request.accountId === 'a'));
+});
+
+function useDedicatedAccount(f) {
+  f.state.workspaceMode = 'dedicated';
+  f.state.accounts = f.state.accounts.map(account => ({ ...account, workspaceMode: 'dedicated' }));
+  f.resetAccountPresentation('a');
+  f.state.wsStatus = '已连接';
+  f.state.backgroundActive = true;
+}
+
+test('the paired dedicated collector discovers once, reloads the saved catalog and never enables a target', async () => {
+  const waits = [];
+  const group = { groupJid: '120123@g.us', accountId: 'a', groupName: '目录测试' };
+  const f = fixture(request => request.action === 'discover-conversations'
+    ? new Promise(resolve => waits.push(() => resolve({ accountId: 'a', supported: true, scanning: true, groupConversations: [], collectionCapability: capability('running') })))
+    : { accountId: request.accountId }, { fetchReply: route => route.includes('/groups?') ? { groups: [group] } : { profiles: [] } });
+  useDedicatedAccount(f);
+  f.publish('awaiting-login');
+  f.publish('running');
+  const first = f.state.groupMonitor.discovery.promise;
+  f.publish('running');
+  const manual = f.scanGroupMonitorTargets();
+  assert.equal(waits.length, 1, 'overlapping manual scans and heartbeats must share the initial scan');
+  waits.shift()();
+  await Promise.all([first, manual]);
+  await f.requestAccountPipelineRefresh('a');
+  assert.equal(f.state.groupCatalog[0].groupJid, group.groupJid);
+  assert.equal(f.nativeCalls.filter(call => call.action === 'discover-conversations').length, 1);
+  assert.ok(f.requests.every(request => request.method === 'GET' && /groups\?|group-monitors\/profiles/.test(request.route)), 'dedicated background acknowledgements refresh group data only');
+  assert.ok(f.nativeCalls.every(call => call.accountId === 'a' && ['discover-conversations', 'stop-group-monitor'].includes(call.action)));
+  assert.equal(f.state.groupMonitor.profile, null);
+  f.publish('paused');
+  f.publish('running');
+  assert.equal(waits.length, 1, 'resuming a collector must perform a new scoped directory scan');
+  const resumed = f.state.groupMonitor.discovery.promise;
+  waits.shift()();
+  await resumed;
+});
+
+test('a paused dedicated session discards late directory output and capability', async () => {
+  let resolve;
+  const f = fixture(() => new Promise(done => { resolve = done; }));
+  useDedicatedAccount(f);
+  f.publish('running');
+  const first = f.state.groupMonitor.discovery.promise;
+  f.publish('paused');
+  resolve({ accountId: 'a', supported: true, groupConversations: [{ externalId: 'old@g.us', isGroup: true }], collectionCapability: capability('running') });
+  await first;
+  assert.equal(f.collectionCapability('a').collectorState, 'paused');
+  assert.equal(f.state.groupMonitor.discovery, null);
+  assert.equal(f.state.discoveredGroupConversations.length, 0);
+  assert.equal(f.requests.length, 0);
+});
+
+test('a late scan from a previous dedicated account cannot seed the current catalog', async () => {
+  let resolveA;
+  const f = fixture(() => new Promise(done => { resolveA = done; }));
+  useDedicatedAccount(f);
+  f.publish('running');
+  const first = f.state.groupMonitor.discovery.promise;
+  ++f.state.accountLoadSequence;
+  f.resetAccountPresentation('b');
+  resolveA({ accountId: 'a', supported: true, groupConversations: [{ groupJid: 'old@g.us', isGroup: true }], collectionCapability: capability('running') });
+  await first;
+  assert.equal(f.state.groupMonitor.accountId, 'b');
+  assert.equal(f.state.groupCatalog.length, 0);
+  assert.equal(f.state.discoveredGroupConversations.length, 0);
+  assert.equal(f.requests.length, 0);
+  assert.equal(f.collectionReady('groupMonitoring', 'b'), false);
+});
+
+test('monitor status distinguishes saved configuration, stale evidence and recent observations', () => {
+  const f = fixture();
+  f.publish('running');
+  const profile = { enabled: true, status: 'running', lastHeartbeatAt: new Date().toISOString(), targetCount: 2 };
+  assert.match(f.groupMonitorStatusLabel(profile), /等待首次/);
+  assert.match(f.groupMonitorStatusLabel({ ...profile, observationState: 'no-targets' }), /等待选择/);
+  assert.match(f.groupMonitorStatusLabel({ ...profile, observationState: 'stale' }), /近期未采到/);
+  assert.match(f.groupMonitorStatusLabel({ ...profile, observationState: 'recent', lastObservedAt: profile.lastHeartbeatAt, recentTargetCount: 1 }), /1 \/ 2/);
+  f.publish('awaiting-login');
+  assert.match(f.groupMonitorStatusLabel(profile), /等待采集会话/);
 });
 
 test('independent collector controls preserve the foreground connection and account scope', async () => {

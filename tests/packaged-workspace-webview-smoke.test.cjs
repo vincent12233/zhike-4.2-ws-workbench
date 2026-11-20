@@ -153,6 +153,8 @@ function assertSmokeResult(result, stylesheetCount) {
   assert.equal(result.interactions.shortcuts.length, 4);
   assert.equal(result.interactions.accountScoped, true, 'Every open must target the new dedicated account');
   assert.equal(result.interactions.visibleOpens, true, 'Every open must receive visible chat bounds');
+  assert.deepEqual(result.interactions.collector, { scoped: true, loginVisible: true, discoveredBeforePairing: false, directoryVisible: true },
+    'Pairing the dedicated collector must discover and display groups for that account');
   assert.equal(result.stylesheetCount, stylesheetCount);
   assert.equal(result.scenes.length, scenes.length);
   for (const [index, row] of result.scenes.entries()) {

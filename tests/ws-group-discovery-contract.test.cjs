@@ -26,7 +26,7 @@ assert.match(workbench, /state\.wsStatus === '已连接' \|\| result\.status ===
 assert.match(workbench, /const wasConnected = state\.wsStatus === '已连接'[\s\S]*?if \(!wasConnected && payloadAccountId === String\(state\.activeAccountId \|\| 'default'\)\) void loadConversations\(\)/,
   'the asynchronous QR-login connected event must trigger one account-scoped discovery refresh');
 
-const scan = workbench.match(/async function scanGroupMonitorTargets\(\) \{([\s\S]*?)\n  \}/)?.[1] || '';
+const scan = workbench.slice(workbench.indexOf('  async function scanGroupMonitorTargets('), workbench.indexOf('  async function saveGroupMonitorTargets('));
 assert.match(scan, /wsBridge\('discover-conversations', context\)/);
 assert.doesNotMatch(scan, /targets\/scan|saveGroupMonitorTargets|ensureGroupMonitorProfile/,
   'discovering available groups must never enable monitoring or reactivate a paused seat');
