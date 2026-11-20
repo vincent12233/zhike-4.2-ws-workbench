@@ -17,6 +17,7 @@ const wsAiRuntimeId = randomBytes(24).toString('hex');
 const wsGroupManager = require('./modules/ws-group-manager-core.js');
 const wsGroupDrafts = require('./modules/ws-group-drafts.cjs');
 const wsContactExclusion = require('./modules/ws-contact-exclusion-core.cjs');
+const wsGroupChannel = require('./modules/ws-group-channel-config-core.cjs');
 const wsGroupMemberQuery = require('./modules/ws-group-member-query.cjs');
 const customerGovernance = require('./modules/customer-governance-core.js');
 const hotChatProfile = require('./modules/hot-chat-profile-core.js');
@@ -1206,7 +1207,8 @@ function wsGroupCatalogUpsert(accountId, item = {}, now = new Date().toISOString
   const groupJid = wsGroupMonitor.normalizeMemberIdentity(item.groupJid || item.group_id || item.groupId || item.conversationKey || item.externalId || item.jid).value;
   if (!groupJid || !/@g\.us$/i.test(groupJid)) return null;
   const groupName = wsText(item.groupName || item.group_name || item.displayName || item.title || item.name, 240);
-  const channelId = wsText(item.channelId || item.channel_id || item.sourceId || item.source_id || item.channel || item.source, 160);
+  // Hint only. A discovery label in `source` is never treated as a channel.
+  const channelId = wsText(item.channelId || item.channel_id || item.sourceId || item.source_id, 160);
   const participantCount = Math.max(0, Math.floor(Number(item.participantCount ?? item.memberCount ?? item.members ?? 0) || 0));
   const lastMessageAt = wsStrictIso(item.lastMessageAt || item.last_message_at || item.updatedAt || item.updated_at) || '';
   const discoverySource = wsText(item.discoverySource || item.discovery_source || item.source || 'ws-collector', 80) || 'ws-collector';
@@ -1224,6 +1226,174 @@ function wsGroupCatalogUpsert(accountId, item = {}, now = new Date().toISOString
       discovery_source=excluded.discovery_source,status=excluded.status,data_json=excluded.data_json,last_seen_at=excluded.last_seen_at,updated_at=excluded.updated_at`)
     .run(id, accountId, groupJid, groupName, channelId, participantCount, lastMessageAt, discoverySource, status, JSON.stringify(data), existing?.first_seen_at || now, now, existing?.created_at || now, now);
   return db.prepare('SELECT * FROM ws_group_catalog WHERE account_id=? AND group_jid=?').get(accountId, groupJid);
+}
+// ---------- Dedicated WS group channel configuration centre (schema 34) ----------
+// Group JID is the key, so renaming a group never loses its business config.
+// The effective channel comes only from an explicit user value or a confirmed
+// exact-code rule; ws_group_catalog.channel_id is reported as a hint only.
+function wsGroupChannelCatalogMap(accountId) {
+  const rows = accountId
+    ? db.prepare('SELECT * FROM ws_group_catalog WHERE account_id=?').all(accountId)
+    : db.prepare('SELECT * FROM ws_group_catalog').all();
+  return new Map(rows.map(row => [`${row.account_id}\u0000${row.group_jid}`, row]));
+}
+function wsGroupChannelConfigMap(accountId) {
+  const rows = accountId
+    ? db.prepare('SELECT * FROM ws_group_channel_configs WHERE account_id=?').all(accountId)
+    : db.prepare('SELECT * FROM ws_group_channel_configs').all();
+  return new Map(rows.map(row => { const config = wsGroupChannel.configFromRow(row); return [`${config.accountId}\u0000${config.groupJid}`, config]; }));
+}
+function wsGroupCodeRuleMap() {
+  return new Map(db.prepare('SELECT * FROM ws_group_code_channel_rules').all().map(row => [row.group_code, { id: row.id, groupCode: row.group_code, channel: row.channel, enabled: Boolean(row.enabled), note: row.note || '', createdAt: row.created_at, updatedAt: row.updated_at }]));
+}
+function wsGroupChannelView(catalogRow, config, rules) {
+  const detected = wsGroupChannel.detectGroupCode(catalogRow.group_name);
+  const groupCode = config?.groupCode || '';
+  const resolved = wsGroupChannel.resolveChannel(config, rules, catalogRow.channel_id || '');
+  return {
+    accountId: catalogRow.account_id, groupJid: catalogRow.group_jid, groupName: catalogRow.group_name || catalogRow.group_jid,
+    participantCount: Number(catalogRow.participant_count || 0), catalogStatus: catalogRow.status, lastSeenAt: catalogRow.last_seen_at || '',
+    groupCode, groupCodeOrigin: config?.groupCodeOrigin || '',
+    detectedCode: detected.code, detectedCodeStatus: detected.status, detectedCandidates: detected.candidates,
+    channel: resolved.channel, channelOrigin: resolved.origin, channelHint: resolved.hint,
+    pageCategory: config?.pageCategory || '', assistant: config?.assistant || '', defaultTags: config?.defaultTags || [],
+    autoCreateCustomers: Boolean(config?.autoCreateCustomers), monitorMembership: Boolean(config?.monitorMembership),
+    configured: Boolean(config), revision: config?.revision || 0, updatedAt: config?.updatedAt || '',
+    // Pending = needs the user: no confirmed code, or no effective channel.
+    pending: !groupCode || resolved.pending,
+    pendingReason: !groupCode ? (detected.status === 'ambiguous' ? 'code-ambiguous' : detected.status === 'detected' ? 'code-unconfirmed' : 'code-missing') : resolved.pending ? 'channel-missing' : '',
+  };
+}
+function wsGroupChannelList(filters = {}) {
+  const catalog = wsGroupChannelCatalogMap(filters.accountId), configs = wsGroupChannelConfigMap(filters.accountId), rules = wsGroupCodeRuleMap();
+  const query = String(filters.query || '').trim().toLowerCase();
+  let rows = [...catalog.values()].map(row => wsGroupChannelView(row, configs.get(`${row.account_id}\u0000${row.group_jid}`), rules));
+  if (query) rows = rows.filter(row => [row.groupName, row.groupJid, row.groupCode, row.detectedCode, row.channel, row.assistant, row.pageCategory].some(value => String(value || '').toLowerCase().includes(query)));
+  if (filters.channel) rows = rows.filter(row => row.channel === filters.channel);
+  if (filters.assistant) rows = rows.filter(row => row.assistant === filters.assistant);
+  if (filters.pending === '1') rows = rows.filter(row => row.pending);
+  if (filters.pending === '0') rows = rows.filter(row => !row.pending);
+  rows.sort((a, b) => Number(b.pending) - Number(a.pending) || String(a.groupCode || a.detectedCode || '~').localeCompare(String(b.groupCode || b.detectedCode || '~')) || a.groupName.localeCompare(b.groupName));
+  const summary = { total: rows.length, pending: rows.filter(row => row.pending).length, configured: rows.filter(row => row.configured).length };
+  return { rows, summary };
+}
+/**
+ * Apply validated entries atomically. Rows with conflicts or errors are never
+ * written; `force` only overrides code/rule conflicts, never validation errors.
+ */
+function wsGroupChannelApply(entries, { origin = 'manual', actor = 'user', dryRun = false, force = false } = {}) {
+  const catalog = wsGroupChannelCatalogMap(), configs = wsGroupChannelConfigMap(), rules = wsGroupCodeRuleMap();
+  const preview = wsGroupChannel.previewBatch(entries, { catalog, configs, rules });
+  const writable = preview.rows.filter(row => row.status === 'ok' || (force && row.status === 'conflict' && !row.errors.length));
+  if (dryRun) return { ...preview, applied: 0, dryRun: true };
+  const now = new Date().toISOString();
+  const valueOrigin = origin === 'import' ? 'import' : 'manual';
+  const historyOrigin = ['manual', 'batch', 'import', 'rule'].includes(origin) ? origin : 'manual';
+  let applied = 0;
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    for (const row of writable) {
+      if (!Object.keys(row.changes).length) continue;
+      const key = `${row.accountId}\u0000${row.groupJid}`;
+      const current = configs.get(key);
+      const next = { groupCode: '', channel: '', pageCategory: '', assistant: '', defaultTags: [], autoCreateCustomers: false, monitorMembership: false, ...(current || {}), ...row.patch };
+      const codeOrigin = Object.hasOwn(row.changes, 'groupCode') ? (next.groupCode ? valueOrigin : '') : (current?.groupCodeOrigin || '');
+      const channelOrigin = Object.hasOwn(row.changes, 'channel') ? (next.channel ? valueOrigin : '') : (current?.channelOrigin || '');
+      const revision = (current?.revision || 0) + 1;
+      const id = current?.id || `wsg-chcfg-${randomUUID()}`;
+      db.prepare(`INSERT INTO ws_group_channel_configs(id,account_id,group_jid,group_code,group_code_origin,channel,channel_origin,page_category,assistant,default_tags_json,auto_create_customers,monitor_membership,revision,created_at,updated_at)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(account_id,group_jid) DO UPDATE SET group_code=excluded.group_code,group_code_origin=excluded.group_code_origin,channel=excluded.channel,channel_origin=excluded.channel_origin,
+        page_category=excluded.page_category,assistant=excluded.assistant,default_tags_json=excluded.default_tags_json,auto_create_customers=excluded.auto_create_customers,monitor_membership=excluded.monitor_membership,revision=excluded.revision,updated_at=excluded.updated_at`)
+        .run(id, row.accountId, row.groupJid, next.groupCode, codeOrigin, next.channel, channelOrigin, next.pageCategory, next.assistant, JSON.stringify(next.defaultTags), next.autoCreateCustomers ? 1 : 0, next.monitorMembership ? 1 : 0, revision, current?.createdAt || now, now);
+      db.prepare('INSERT INTO ws_group_channel_config_history(id,config_id,account_id,group_jid,revision,actor,origin,changes_json,created_at) VALUES(?,?,?,?,?,?,?,?,?)')
+        .run(`wsg-chhist-${randomUUID()}`, id, row.accountId, row.groupJid, revision, wsText(actor, 60) || 'user', historyOrigin, JSON.stringify(row.changes), now);
+      row.applied = true;
+      applied++;
+    }
+    db.exec('COMMIT');
+  } catch (error) {
+    try { db.exec('ROLLBACK'); } catch {}
+    throw error;
+  }
+  return { ...preview, applied, dryRun: false };
+}
+async function handleWsGroupChannelRequest(req, res, url) {
+  if (url.pathname === '/api/ws/group-channel-configs') {
+    if (req.method === 'GET') {
+      const accountId = wsText(url.searchParams.get('accountId'), 120);
+      if (accountId && !wsAccountRow(accountId)) return json(res, 404, { error: 'WS 账号不存在。' });
+      const result = wsGroupChannelList({ accountId, query: url.searchParams.get('query'), channel: wsText(url.searchParams.get('channel'), 60), assistant: wsText(url.searchParams.get('assistant'), 60), pending: url.searchParams.get('pending') });
+      return json(res, 200, { ...result, builtinChannels: wsGroupChannel.BUILTIN_CHANNELS, rules: [...wsGroupCodeRuleMap().values()] });
+    }
+    if (req.method === 'POST') {
+      const body = JSON.parse((await readBody(req, 4 * 1024 * 1024)).toString('utf8'));
+      const items = Array.isArray(body.items) ? body.items : [body];
+      if (!items.length || items.length > 5000) return json(res, 400, { error: '一次可配置 1–5000 个群组。' });
+      // Batch form: one patch applied to many groups.
+      const entries = body.patch && Array.isArray(body.groups)
+        ? body.groups.map(group => ({ accountId: group?.accountId, groupJid: group?.groupJid, input: body.patch }))
+        : items.map(item => ({ accountId: item?.accountId, groupJid: item?.groupJid, input: Object.fromEntries(wsGroupChannel.CONFIG_FIELDS.filter(key => Object.hasOwn(item || {}, key)).map(key => [key, item[key]])) }));
+      const result = wsGroupChannelApply(entries, { origin: body.patch ? 'batch' : 'manual', dryRun: body.dryRun === true, force: body.force === true });
+      // 409 only when nothing could be written because every row was blocked.
+      const blocked = result.rows.some(row => row.status === 'rejected' || (row.status === 'conflict' && !row.applied));
+      return json(res, !result.dryRun && !result.applied && blocked ? 409 : 200, result);
+    }
+    return json(res, 405, { error: '群组渠道配置只支持 GET/POST。' });
+  }
+  if (url.pathname === '/api/ws/group-channel-configs/import') {
+    if (req.method !== 'POST') return json(res, 405, { error: '导入只支持 POST。' });
+    const body = JSON.parse((await readBody(req, 8 * 1024 * 1024)).toString('utf8'));
+    const accountId = wsText(body.accountId, 120);
+    if (accountId && !wsAccountRow(accountId)) return json(res, 404, { error: 'WS 账号不存在。' });
+    const parsed = wsGroupChannel.importRows(String(body.csv || ''), { accountId });
+    if (parsed.errors.length) return json(res, 400, { error: parsed.errors[0], errors: parsed.errors });
+    if (!parsed.entries.length) return json(res, 400, { error: '文件没有数据行。' });
+    if (parsed.entries.length > 5000) return json(res, 400, { error: '一次最多导入 5000 行。' });
+    const result = wsGroupChannelApply(parsed.entries, { origin: 'import', dryRun: body.dryRun !== false, force: body.force === true });
+    result.rows.forEach(row => { row.line = parsed.entries[row.index]?.line; });
+    return json(res, 200, result);
+  }
+  if (url.pathname === '/api/ws/group-channel-configs/export') {
+    if (req.method !== 'GET') return json(res, 405, { error: '导出只支持 GET。' });
+    const accountId = wsText(url.searchParams.get('accountId'), 120);
+    if (accountId && !wsAccountRow(accountId)) return json(res, 404, { error: 'WS 账号不存在。' });
+    const { rows } = wsGroupChannelList({ accountId });
+    // Export only stored values; a rule-derived channel is not re-exported as
+    // if it had been typed, so a round trip cannot silently pin a rule.
+    const configs = wsGroupChannelConfigMap(accountId);
+    const csv = wsGroupChannel.exportCsv(rows.map(row => { const config = configs.get(`${row.accountId}\u0000${row.groupJid}`); return { ...row, groupCode: config?.groupCode || '', channel: config?.channel || '' }; }));
+    res.writeHead(200, { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': "attachment; filename*=UTF-8''" + encodeURIComponent('群组渠道配置.csv'), 'cache-control': 'no-store' });
+    return res.end(csv);
+  }
+  if (url.pathname === '/api/ws/group-channel-configs/history') {
+    if (req.method !== 'GET') return json(res, 405, { error: '修改历史只支持 GET。' });
+    const accountId = wsText(url.searchParams.get('accountId'), 120), groupJid = wsText(url.searchParams.get('groupJid'), 200).toLowerCase();
+    const limit = Math.min(500, Math.max(1, Number(url.searchParams.get('limit')) || 100));
+    const rows = accountId && groupJid
+      ? db.prepare('SELECT * FROM ws_group_channel_config_history WHERE account_id=? AND group_jid=? ORDER BY created_at DESC, revision DESC LIMIT ?').all(accountId, groupJid, limit)
+      : db.prepare('SELECT * FROM ws_group_channel_config_history ORDER BY created_at DESC, revision DESC LIMIT ?').all(limit);
+    return json(res, 200, { history: rows.map(row => ({ id: row.id, accountId: row.account_id, groupJid: row.group_jid, revision: row.revision, actor: row.actor, origin: row.origin, changes: wsJson(row.changes_json, {}), createdAt: row.created_at })) });
+  }
+  if (url.pathname === '/api/ws/group-code-rules') {
+    if (req.method === 'GET') return json(res, 200, { rules: [...wsGroupCodeRuleMap().values()] });
+    if (req.method !== 'POST') return json(res, 405, { error: '编号规则只支持 GET/POST。' });
+    const body = JSON.parse((await readBody(req, 256 * 1024)).toString('utf8'));
+    const groupCode = wsGroupChannel.normalizeGroupCode(body.groupCode);
+    if (!groupCode) return json(res, 400, { error: '群组编号格式无效，应为字母-数字，如 A-501。' });
+    const now = new Date().toISOString();
+    if (body.remove === true) {
+      db.prepare('DELETE FROM ws_group_code_channel_rules WHERE group_code=?').run(groupCode);
+      return json(res, 200, { rules: [...wsGroupCodeRuleMap().values()] });
+    }
+    const channel = wsText(body.channel, 60);
+    if (!channel) return json(res, 400, { error: '规则必须指定渠道。' });
+    // A rule is a user confirmation of one exact code; there is no prefix rule.
+    db.prepare(`INSERT INTO ws_group_code_channel_rules(id,group_code,channel,enabled,note,created_at,updated_at) VALUES(?,?,?,?,?,?,?)
+      ON CONFLICT(group_code) DO UPDATE SET channel=excluded.channel,enabled=excluded.enabled,note=excluded.note,updated_at=excluded.updated_at`)
+      .run(`wsg-coderule-${randomUUID()}`, groupCode, channel, body.enabled === false ? 0 : 1, wsText(body.note, 200), now, now);
+    return json(res, 201, { rules: [...wsGroupCodeRuleMap().values()] });
+  }
+  return json(res, 404, { error: '群组渠道配置接口不存在。' });
 }
 function wsGroupMonitorEventPayload(row) {
   if (!row) return null;
@@ -3422,6 +3592,7 @@ const server = createServer(async (req, res) => {
       const targets = new Map(db.prepare('SELECT group_jid,enabled,id FROM ws_group_monitor_targets WHERE account_id=? ORDER BY enabled,updated_at,id').all(accountId).map(row => [row.group_jid, row]));
       return json(res, 200, { accountId, groups: rows.map(row => ({ ...wsGroupCatalogPayload(row), monitorTarget: targets.get(row.group_jid) ? { id: targets.get(row.group_jid).id, enabled: Boolean(targets.get(row.group_jid).enabled) } : null })) });
     }
+    if (url.pathname.startsWith('/api/ws/group-channel-configs') || url.pathname === '/api/ws/group-code-rules') return handleWsGroupChannelRequest(req, res, url);
     if (url.pathname === '/api/ws/group-membership-events') {
       if (req.method !== 'GET') return json(res, 405, { error: '群组进退事件只支持 GET。' });
       const accountId = wsText(url.searchParams.get('accountId'), 120);

@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "supportedSchemaVersion": 33,
+  "supportedSchemaVersion": 34,
   "migrations": [
     {
       "version": 4,
@@ -181,6 +181,12 @@
       "file": "033-ws-open-unread-groups.sql",
       "description": "Account preference for opening unread dedicated WS groups to verify identity",
       "checksum": "dcf6ab7a3eaecb049392fb53598543e0ba19f1c1719af2a2c809e89899dc4c69"
+    },
+    {
+      "version": 34,
+      "file": "034-ws-group-channel-config.sql",
+      "description": "Dedicated WS group channel configuration, change history and confirmed group-code rules",
+      "checksum": "e9a4f49ae4ab2b7b5ec625200e52c5c005a69660e0b39bc6ac8a438c2e16507e"
     }
   ]
 }
