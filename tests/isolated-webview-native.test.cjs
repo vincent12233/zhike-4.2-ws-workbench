@@ -10,8 +10,9 @@ const { createHash, randomUUID } = require('node:crypto');
 const { pathToFileURL } = require('node:url');
 const { runIsolatedWebView, recordNativeVisualAssertions, assertNativeLifecycle } = require('./helpers/isolated-webview-runner.cjs');
 
-const { scenes:rowMenuScenes, runScenes:runRowMenuScenes, runCollectorScene } = require('./helpers/ws-row-menu-scenes.cjs');
+const { scenes:rowMenuScenes, runScenes:runRowMenuScenes, collectorCases, runCollectorScene } = require('./helpers/ws-row-menu-scenes.cjs');
 const { filterCases, runFilterScenes } = require('./helpers/ws-group-filter-scenes.cjs');
+const { noticeCases, runNoticeScenes } = require('./helpers/ws-group-notice-scenes.cjs');
 const repo = path.resolve(__dirname, '..');
 const evidenceDirectory = path.join(repo, '.tools/native-renderer/controlled-fixture');
 const viewport = { width: 640, height: 480 };
@@ -25,10 +26,12 @@ const chatEvidenceScript = hostSource.match(/private const string WsOpenChatEvid
 assert.ok(directoryScript && chatEvidenceScript, 'Exercise the packaged native session readers in a real WebView');
 const collectorScript = hostSource.match(/internal static string BuildWsCollectorScript\(string accountId\)\s*\{[\s\S]*?return \$\$"""([\s\S]*?)""";/)?.[1].replaceAll('{{encodedAccount}}', '"qa-menu-slot"');
 assert.ok(collectorScript);
-const menuScript = hostSource.match(/(  const inspectChatRowMenu = [\s\S]+?)  const verifyReadGroup = /)?.[1];
+const menuScript = hostSource.match(/(  const inspectChatRowMenu = [\s\S]+?)  const verifyDirectoryGroup = /)?.[1];
 assert.ok(menuScript, 'Exercise the isolated collector row inspector in a real WebView');
 const filterReader = hostSource.match(/(const directoryFilterUi = doc => \{[\s\S]*?)(?=\s*const explicitRead =)/)?.[1];
 assert.ok(filterReader, 'Exercise the packaged filter scanner in a real WebView');
+const noticeReader = hostSource.match(/(const groupSettingsNotice = row => \{[\s\S]*?)(?=\s*const conversationTypeFromNode =)/)?.[1];
+assert.ok(noticeReader, 'Exercise packaged group settings notice classification');
 const weakList = '<div id="pane-side">' + '<div role="row"><span dir="auto" title="Same title">Same title</span></div>'.repeat(20) + '</div>';
 const qaGroup = '120300000012345678@g.us', qaMember = '910000000099@lid';
 const bubble = (key, id) => '<div class="message-in" data-id="false_' + key + '_' + id + '_' + qaMember + '">fixture</div>';
@@ -102,15 +105,18 @@ function fixtureHtml(id, networkUrl) {
     const scheduleCollectorTask = (callback,delay) => setTimeout(callback,Math.min(35,delay));
     ${menuScript}
     const filterResults = (${runFilterScenes.toString()})(sample,${JSON.stringify(filterCases)},${JSON.stringify(filterReader)});
+    const noticeResults = (${runNoticeScenes.toString()})(sample,${JSON.stringify(noticeCases)},${JSON.stringify(noticeReader)});
     const rowMenuResults = await (${runRowMenuScenes.toString()})(sample,${JSON.stringify(rowMenuScenes)},inspectChatRowMenu);
-    const collectorResult = await (${runCollectorScene.toString()})(${JSON.stringify(collectorScript)},${JSON.stringify(chatEvidenceScript)},${JSON.stringify(qaGroup)});
+    const collectorResults = await Promise.all(${JSON.stringify(collectorCases)}.map(async ([name,options]) => ({
+      name, ...await (${runCollectorScene.toString()})(${JSON.stringify(collectorScript)},${JSON.stringify(chatEvidenceScript)},${JSON.stringify(qaGroup)},options)
+    })));
     document.getElementById('result').textContent = JSON.stringify([{
       viewport: { width: innerWidth, height: innerHeight },
       fixtureId: ${JSON.stringify(id)},
       queryId: new URLSearchParams(location.search).get('case'),
       box: { width: bounds.width, height: bounds.height, background: getComputedStyle(sample).backgroundColor },
       network,
-      loginResults, directoryResults, rowMenuResults, collectorResult, filterResults,
+      loginResults, directoryResults, rowMenuResults, collectorResults, filterResults, noticeResults,
       remoteScriptExecuted: window.__syntheticWireScript === true
     }]);
   }
@@ -164,7 +170,12 @@ async function runFixture(host, kind, network) {
       box: { width: 137, height: 29, background: 'rgb(12, 34, 56)' },
       loginResults: loginScenes.map(([, expected]) => expected),
       directoryResults: directoryScenes.map(([, keys]) => ({ keys, unresolved:20 })),
-      collectorResult: { actions:0, chatOpens:1, keys:[qaGroup], verified:true },
+      noticeResults: noticeCases.map(scene => scene[2]),
+      collectorResults: collectorCases.map(([name,options,chatOpens,menuOpens,published]) => ({
+        name, actions:0, chatOpens, menuOpens, keys:published ? [qaGroup] : [], verified:chatOpens === 1,
+        groupMetadata:options.mode === 'ordinary' ? ['skipped-group','excluded-group'] : published ? ['observed','group-directory'] : [],
+        bridgeDirectory:Boolean(published), excluded:options.mode === 'ordinary', observedTargets:options.monitor === 'matched' ? [qaGroup] : [], memberEvents:0
+      })),
       rowMenuResults: rowMenuScenes.map(([mode,,status,escaped]) => ({
         status, escaped, itemClicks:0, rowClicks:0, openings:mode === 'preexisting' ? 0 : 1, canOpen:status === 'verified-read-group',
       })),

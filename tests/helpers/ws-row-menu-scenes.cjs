@@ -92,7 +92,24 @@ async function runScenes(sample, definitions, inspectChatRowMenu) {
 
 // Exercise the complete production dispatcher as installed in a blank collector
 // document. Only the native message transport and WhatsApp's UI are fixtures.
-async function runCollectorScene(collectorSource, evidenceSource, jid) {
+const collectorCases = [
+  // id, options, chats opened, menus opened, canonical entries published
+  ['read-menu', {menu:'read'}, 1,1,1],
+  ['native-group-settings-preview', {notification:true, unread:true, allow:true}, 1,0,1],
+  ['unread-known-group', {type:'group', unread:true, allow:true}, 1,0,1],
+  ['unknown-read-known-group', {type:'group', allow:true}, 1,0,1],
+  ['unread-filtered', {filter:true, unread:true, allow:true}, 1,0,1],
+  ['unread-menu-group', {menu:'unread', unread:true, allow:true}, 1,1,1],
+  ['group-only-menu', {menu:'group-only', allow:true}, 1,1,1],
+  ['direct', {type:'direct', unread:true, allow:true}, 0,0,0],
+  ['contact-menu', {menu:'contact', unread:true, allow:true}, 0,1,0],
+  ['passive-policy', {type:'group', unread:true, passive:true}, 0,0,1],
+  ['unread-monitor-target', {type:'group', unread:true, passive:true, allow:true, monitor:'matched'}, 0,0,1],
+  ['unread-other-monitor', {type:'group', unread:true, passive:true, allow:true, monitor:'other'}, 0,0,1],
+  ['unread-ordinary-exclusion', {type:'group', unread:true, passive:true, mode:'ordinary'}, 0,0,0],
+  ['unread-foreground', {type:'group', role:'foreground', unread:true, allow:true}, 0,0,0],
+];
+async function runCollectorScene(collectorSource, evidenceSource, jid, options) {
   const frame = document.createElement('iframe');
   frame.style.cssText = 'width:440px;height:280px';
   document.body.append(frame);
@@ -100,14 +117,44 @@ async function runCollectorScene(collectorSource, evidenceSource, jid) {
   try {
     doc.body.innerHTML = '<div id="pane-side" style="height:200px"><div role="row"><span dir="auto" title="Fixture">Fixture</span><button aria-haspopup="menu">⋁</button></div></div>';
     const row = doc.querySelector('[role="row"]'), button = row.querySelector('button');
-    let actions = 0, chatOpens = 0;
+    if (options.notification) {
+      row.insertAdjacentHTML('beforeend',"<div data-testid='cell-frame-secondary'><span data-icon='megaphone'></span><span>~Fixture Actor changed this group's settings to…</span></div>");
+    }
+    if (options.filter) {
+      const side = doc.createElement('div');
+      side.id = 'side';
+      side.innerHTML = '<div data-testid="chat-list-filters"><button id="all-filter" aria-selected="false">All</button><button id="group-filter" aria-selected="true">Groups</button></div>';
+      doc.body.append(side);
+      side.append(row.parentElement);
+    }
+    if (options.type) row.setAttribute('data-chat-type',options.type);
+    if (options.unread) row.setAttribute('data-unread','true');
+    if (options.passive) {
+      // An identified unread row can be indexed without touching the unresolved
+      // unread group in the same window, even with active verification disabled.
+      const sibling = row.cloneNode(true);
+      sibling.setAttribute('data-jid',jid);
+      row.after(sibling);
+    }
+    let actions = 0, chatOpens = 0, menuOpens = 0;
+    doc.addEventListener('click',event => {
+      if (event.target.closest('[role="row"]') && !row.contains(event.target)) chatOpens++;
+    });
     button.onclick = event => {
       event.stopPropagation();
+      menuOpens++;
       const menu = doc.createElement('div');
       menu.id = 'actions';
       button.setAttribute('aria-controls',menu.id);
       menu.setAttribute('role','menu');
-      menu.innerHTML = '<button role="menuitem">Exit group</button><button role="menuitem">Mark as unread</button>';
+      const actionLabels = [options.menu === 'contact' ? 'Contact info' : 'Exit group'];
+      if (options.menu !== 'group-only') actionLabels.push(options.unread ? 'Mark as read' : 'Mark as unread');
+      for (const label of actionLabels) {
+        const action = doc.createElement('button');
+        action.setAttribute('role','menuitem');
+        action.textContent = label;
+        menu.append(action);
+      }
       menu.onclick = () => actions++;
       menu.onkeydown = key => { if (key.key === 'Escape') menu.remove(); };
       doc.body.append(menu);
@@ -125,18 +172,32 @@ async function runCollectorScene(collectorSource, evidenceSource, jid) {
     if (!win.chrome) win.chrome = {};
     if (win.chrome.webview) win.chrome.webview.postMessage = send;
     else Object.defineProperty(win.chrome,'webview',{value:{postMessage:send}});
-    win.__zhikeWsCollectorRole = 'background';
+    win.__zhikeWsCollectorRole = options.role || 'background';
     const readOpen = win.Function('return ('+evidenceSource+')')();
-    win.Function('__zhikeWsTrustedPurpose','__zhikeWsDocumentEpoch','__zhikeReadOpenChat',collectorSource)('dedicated',17,readOpen);
-    win.__zhikeWsDiscoverDirectory();
+    win.Function('__zhikeWsTrustedPurpose','__zhikeWsDocumentEpoch','__zhikeReadOpenChat','__zhikeWsAllowOpenUnreadGroups',collectorSource)(options.mode || 'dedicated',17,readOpen,options.allow === true);
+    if (options.monitor) {
+      const target = options.monitor === 'matched' ? jid : '120300000099999999@g.us';
+      win.__zhikeWsConfigureGroupMonitor({profileId:'qa-monitor',targets:[{targetId:'qa-target',groupJid:target,groupName:'Fixture',enabled:true}]});
+      win.__zhikeWsGroupMonitorStart();
+    }
+    const started = win.__zhikeWsDiscoverDirectory();
     const deadline = performance.now() + 8000;
-    while (!packets.some(packet => packet.coverage === 'group-open-verified') && performance.now() < deadline)
+    while (started.scanning && !packets.some(packet => packet.coverage === 'group-open-verified' || packet.type === 'zhike.ws.directory' && packet.finished) && performance.now() < deadline)
       await new Promise(done => setTimeout(done,50));
-    return {actions,chatOpens,keys:[...new Set(packets.filter(packet => packet.type === 'zhike.ws.directory')
+    const discovery = win.__zhikeWsDiscover();
+    const group = discovery.groupConversations.find(row => row.conversationKey === jid);
+    const monitoring = packets.filter(packet => packet.type === 'zhike.ws.capture');
+    return {actions,chatOpens,menuOpens,groupMetadata:group ? [group.status,group.coverage] : [],
+      bridgeDirectory:monitoring.some(packet => (packet.conversations || []).some(row => row.conversationKey === jid
+        && row.coverage === 'group-directory' && row.collectionStatus === 'observed' && !row.historyLoaded)),
+      excluded:discovery.excludedConversations.some(row => row.conversationKey === jid),
+      observedTargets:[...new Set(monitoring.flatMap(packet => (packet.conversations || []).filter(row => row.coverage === 'group-monitor-visible').map(row => row.conversationKey)))],
+      memberEvents:monitoring.reduce((count,packet) => count + (packet.groupEvents?.length || 0),0),
+      keys:[...new Set(packets.filter(packet => packet.type === 'zhike.ws.directory')
       .flatMap(packet => packet.rows.map(row => row.conversationKey)))],
       verified:packets.some(packet => packet.coverage === 'group-open-verified' && packet.accountId === 'qa-menu-slot')
         && packets.some(packet => packet.type === 'zhike.ws.directory' && packet.accountId === 'qa-menu-slot' && packet.collectorEpoch === 17 && packet.rows.some(row => row.conversationKey === jid))};
   } finally { win.__zhikeStopCapture?.(); frame.remove(); }
 }
 
-module.exports = { scenes, runScenes, runCollectorScene };
+module.exports = { scenes, runScenes, collectorCases, runCollectorScene };

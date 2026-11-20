@@ -136,6 +136,15 @@ Check(!conflictingRestore.Ok && (await store.LoadAsync()).Single(row => row.Id =
 sidecar.ConflictWorkspaceMode = null;
 var listedModes = await bridge.Call(new { action = "list" });
 Check(listedModes.Ok && listedModes.Data?.GetProperty("accounts").EnumerateArray().Any(row => row.GetProperty("id").GetString() == "dedicated-fixture" && row.GetProperty("workspaceMode").GetString() == "dedicated") == true, "List preserves role metadata for workspace filtering");
+sidecar.Rows["dedicated-fixture"] = sidecar.Rows["dedicated-fixture"] with { Settings = new(true) };
+sidecar.Rows["fixture-retry"] = sidecar.Rows["fixture-retry"] with { Settings = new(true) };
+var withPreference = (await bridge.Call(new { action = "list" })).Data!.Value.GetProperty("accounts").EnumerateArray().ToArray();
+Check(withPreference.Single(row => row.GetProperty("id").GetString() == "dedicated-fixture").GetProperty("openUnreadGroups").GetBoolean(), "Dedicated list exposes the sidecar preference");
+Check(!withPreference.Single(row => row.GetProperty("id").GetString() == "fixture-retry").GetProperty("openUnreadGroups").GetBoolean(), "Ordinary ignores an incompatible sidecar preference");
+Check((await store.LoadAsync()).Single(row => row.Id == "dedicated-fixture").OpenUnreadGroups, "Cached index retains the confirmed preference");
+sidecar.Rows["dedicated-fixture"] = sidecar.Rows["dedicated-fixture"] with { Settings = new(false) };
+var afterClosure = (await bridge.Call(new { action = "list" })).Data!.Value.GetProperty("accounts").EnumerateArray().Single(row => row.GetProperty("id").GetString() == "dedicated-fixture");
+Check(!afterClosure.GetProperty("openUnreadGroups").GetBoolean() && !(await store.LoadAsync()).Single(row => row.Id == "dedicated-fixture").OpenUnreadGroups, "Server opt-out replaces the last native preference");
 Console.WriteLine("Native WS account registration: retry, recovery, forget, ordinary/dedicated role persistence and purpose checks passed");
 
 static class DesktopBridgeService { public const string CurrentVersion = "fixture"; }

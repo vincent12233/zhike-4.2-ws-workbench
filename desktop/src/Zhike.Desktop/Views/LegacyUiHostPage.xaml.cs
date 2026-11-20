@@ -1614,6 +1614,7 @@ public sealed partial class LegacyUiHostPage : Page
             updated = await _wsAccountStore.UpdateAsync(rows => rows.Any(item => string.Equals(item.Id, request.Id, StringComparison.Ordinal))
                 ? rows.Select(item => item.Id == request.Id ? item with {
                     WorkspaceMode = confirmed.WorkspaceMode, DirectoryPurposeConfirmed = true,
+                    OpenUnreadGroups = confirmed.OpenUnreadGroups,
                     ForegroundDirectoryDiagnostics = item.WorkspaceMode == confirmed.WorkspaceMode ? item.ForegroundDirectoryDiagnostics : null,
                     CollectorDirectoryDiagnostics = item.WorkspaceMode == confirmed.WorkspaceMode ? item.CollectorDirectoryDiagnostics : null,
                 } : item).ToArray()
@@ -2173,7 +2174,7 @@ public sealed partial class LegacyUiHostPage : Page
             if (index < 0)
             {
                 accounts.Add(new StoredWsAccount(item.Id, item.DisplayName, status, item.LastSeen, item.LastKnownStatus, item.WorkspaceMode,
-                    DirectoryPurposeConfirmed: item.WorkspaceMode is "ordinary" or "dedicated"));
+                    DirectoryPurposeConfirmed: item.WorkspaceMode is "ordinary" or "dedicated", OpenUnreadGroups: item.OpenUnreadGroups));
                 continue;
             }
             var existing = accounts[index];
@@ -2184,6 +2185,7 @@ public sealed partial class LegacyUiHostPage : Page
                 LastSeen = item.LastSeen ?? existing.LastSeen,
                 LastKnownStatus = string.IsNullOrWhiteSpace(item.LastKnownStatus) ? existing.LastKnownStatus : item.LastKnownStatus,
                 WorkspaceMode = item.WorkspaceMode,
+                OpenUnreadGroups = existing.Id == item.Id && item.OpenUnreadGroups,
                 ForegroundDirectoryDiagnostics = existing.WorkspaceMode == item.WorkspaceMode ? existing.ForegroundDirectoryDiagnostics : null,
                 CollectorDirectoryDiagnostics = existing.WorkspaceMode == item.WorkspaceMode ? existing.CollectorDirectoryDiagnostics : null,
                 DirectoryPurposeConfirmed = item.WorkspaceMode is "ordinary" or "dedicated",
@@ -2193,7 +2195,8 @@ public sealed partial class LegacyUiHostPage : Page
     }
 
     private static object ToWsAccountDto(StoredWsAccount account)
-        => new { id = account.Id, displayName = account.DisplayName, status = account.Status, runtimeStatus = account.Status, lastSeen = account.LastSeen, lastKnownStatus = account.LastKnownStatus, workspaceMode = account.WorkspaceMode };
+        => new { id = account.Id, displayName = account.DisplayName, status = account.Status, runtimeStatus = account.Status, lastSeen = account.LastSeen, lastKnownStatus = account.LastKnownStatus, workspaceMode = account.WorkspaceMode,
+            openUnreadGroups = account.DirectoryPurposeConfirmed && account.WorkspaceMode == "dedicated" && account.OpenUnreadGroups };
 
     private WsAccountMetricsSnapshot BuildWsAccountMetrics(IReadOnlyList<StoredWsAccount> accounts)
         => _wsAccountMetrics.Snapshot(accounts, App.WsSessions.Sessions().Select(session => new WsAccountMetricRuntime(
@@ -3608,8 +3611,9 @@ public sealed partial class LegacyUiHostPage : Page
     {
         if (purpose.AccountId != accountId || purpose.WorkspaceMode is not ("ordinary" or "dedicated"))
             throw new InvalidDataException("采集用途未确认。");
-        return "(function(__zhikeWsTrustedPurpose,__zhikeWsDocumentEpoch,__zhikeReadOpenChat){" + BuildWsCollectorScript(accountId) + "})("
-            + JsonSerializer.Serialize(purpose.WorkspaceMode) + "," + JsonSerializer.Serialize(epoch) + "," + WsOpenChatEvidenceScript + ");";
+        return "(function(__zhikeWsTrustedPurpose,__zhikeWsDocumentEpoch,__zhikeReadOpenChat,__zhikeWsAllowOpenUnreadGroups){" + BuildWsCollectorScript(accountId) + "})("
+            + JsonSerializer.Serialize(purpose.WorkspaceMode) + "," + JsonSerializer.Serialize(epoch) + "," + WsOpenChatEvidenceScript
+            + "," + JsonSerializer.Serialize(purpose.AllowsGroupMonitoring && purpose.OpenUnreadGroups) + ");";
     }
 
     internal static string BuildWsCollectorScript(string accountId)
@@ -3624,10 +3628,12 @@ public sealed partial class LegacyUiHostPage : Page
   const workspaceMode = typeof __zhikeWsTrustedPurpose === 'string' ? __zhikeWsTrustedPurpose : 'ordinary';
   const documentEpoch = typeof __zhikeWsDocumentEpoch === 'number' ? __zhikeWsDocumentEpoch : 0;
   const readDirectoryEvidence = row => typeof __zhikeReadOpenChat === 'function' ? __zhikeReadOpenChat(workspaceMode,row) : {status:'source-unavailable'};
+  const groupDirectoryObservation = {status:'observed',collectionStatus:'observed',coverage:'group-directory'};
   let previousOpen = null;
   const openDirectoryEvidence = () => {
     const open = readDirectoryEvidence();
     const key = open.row?.conversationKey, now = Date.now();
+    if (open.row?.isGroup && workspaceMode === 'dedicated') Object.assign(open.row, groupDirectoryObservation);
     if (key && open.title && previousOpen?.key === key && previousOpen.title === open.title) {
       if (now - previousOpen.at >= 150) open.row.displayName = open.title;
     } else previousOpen = key && open.title ? {key,title:open.title,at:now} : null;
@@ -3635,6 +3641,7 @@ public sealed partial class LegacyUiHostPage : Page
   };
   const directHistoryAllowed = workspaceMode === 'ordinary';
   const groupMonitoringAllowed = workspaceMode === 'dedicated';
+  const allowOpenUnreadGroups = groupMonitoringAllowed && typeof __zhikeWsAllowOpenUnreadGroups === 'boolean' && __zhikeWsAllowOpenUnreadGroups;
   // The visible WebView is a passive realtime surface. Only the offscreen
   // collector role may mutate WhatsApp's virtualized list or open chats.
   const backgroundCollectorRole = String(window.__zhikeWsCollectorRole || 'background').toLocaleLowerCase() === 'background';
@@ -4347,7 +4354,51 @@ public sealed partial class LegacyUiHostPage : Page
      }
      return values;
    };
-    const conversationTypeFromNode = (root, identity = '', displayName = '') => {
+    const groupSettingsNotice = row => {
+      if (!row?.matches?.('[role="row"],[role="listitem"],[data-testid="cell-frame-container"],[data-testid="chat-list-item"],[data-testid="chat-row"]')) return 0;
+      const list = row.closest('#pane-side,[data-testid="chat-list"],[aria-label="Chat list" i]');
+      if (!list) return 0;
+      const preview = '[data-testid="cell-frame-secondary"],[data-testid="last-msg"],[data-testid="chat-last-message"],[data-testid="last-message"],[data-testid="cell-frame-last-msg"],[data-testid="chat-list-item-subtitle"],[data-testid="chat-preview"]';
+      const system = '[data-testid="group-settings-notification"],[data-testid="notification-group-settings"],[data-testid="group-settings-changed"]';
+      const icon = ['bullhorn','megaphone','announcement','status-announcement','status-psa','system-notification','group-notification','system-message']
+        .flatMap(key => ['[data-icon="'+key+'"]','[data-icon="'+key+'-refreshed"]']).join(',');
+      const excluded = '[data-testid="cell-frame-title"],[data-testid*="forward" i],[data-icon*="forward" i],[data-testid*="quoted" i],[data-testid="msg-container"],[contenteditable="true"],.message-in,.message-out';
+      const visible = node => Boolean(node?.getClientRects?.().length && !node.closest('[hidden],[inert],[aria-hidden="true"]') && node.ownerDocument.defaultView.getComputedStyle(node).visibility !== 'hidden');
+      const isTemplate = node => {
+        const normalize = value => clean(value).replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g,'').trim();
+        const title = normalize(node.getAttribute('title') || '');
+        const value = normalize(node.textContent || '');
+        const matches = text => text.length <= 800 && (/^[^:\n]{1,100} changed (?:this|the) group['’]s settings(?:\s+to\b|[.…]|$)/i.test(text)
+          || /^[^：:\n]{1,100}(?:更改|变更|變更)了(?:此|本|该|該)?(?:群组|群組|群聊)(?:的)?(?:设置|設定)(?:为|為|，|。|…|$)/.test(text));
+        return matches(value) || matches(title);
+      };
+      const forwarded = Boolean(row.querySelector('[data-testid*="forward" i],[data-icon*="forward" i],[data-testid*="quoted" i]'));
+      const strong = !forwarded && Array.from(row.querySelectorAll(system)).some(n => visible(n) && !n.closest(excluded) && !n.parentElement?.closest('[title]'));
+      const nodes = Array.from(row.querySelectorAll(preview+',span[dir]'));
+      const primary = row.querySelector('[data-testid="cell-frame-title"]') || nodes.find(n =>
+        n.matches('span[dir]') && !n.closest(preview+','+excluded) && visible(n) && clean(n.textContent));
+      let template = false;
+      for (const node of nodes) {
+        if (!visible(node) || node.closest(excluded) || !isTemplate(node)) continue;
+        if (!node.closest(preview) && primary && (node === primary || primary.contains(node))) continue;
+        template = true;
+        // The system emblem and preview must share the secondary slot. A
+        // forwarded card, sender prefix or primary title must never qualify.
+        let slot = node.closest(preview);
+        if (!slot && primary && primary !== node && !primary.contains(node) && (primary.compareDocumentPosition(node) & 4)
+            && node.parentElement && node.parentElement !== row && !node.parentElement.querySelector('[data-testid="cell-frame-title"],button,[role="button"]')) {
+          // Newer lists omit preview test IDs; the system icon precedes the
+          // text block inside a dedicated wrapper, separate from the title.
+          const prev = node.previousElementSibling;
+          if (prev && (prev.matches(icon) || prev.querySelector(icon)) && Array.from(node.parentElement.children).length === 2) slot = node.parentElement;
+        }
+        if (forwarded || !slot || !row.contains(slot) || slot.querySelector(excluded)) continue;
+        const mark = slot.querySelector(icon) || slot.querySelector(system);
+        if (strong || mark && mark.getClientRects().length && !mark.closest('[hidden],[inert]') && mark.ownerDocument.defaultView.getComputedStyle(mark).visibility !== 'hidden') return 2;
+      }
+      return strong ? (template ? 2 : 3) : template ? 1 : 0;
+    };
+    const conversationTypeFromNode = (root, identity = '', displayName = '', notice = null) => {
       if (!root) return { conversationType:'unknown', isGroup:false, source:'none' };
       const identifiers = [identity];
       const semanticValues = [];
@@ -4384,6 +4435,8 @@ public sealed partial class LegacyUiHostPage : Page
       }
       if (identifiers.some(value => /@(?:s\.whatsapp\.net|c\.us|lid)(?:\b|$)/i.test(value))) return { conversationType:'direct', isGroup:false, source:'jid-direct' };
       if (semanticValues.some(value => /^(?:false|direct|private|individual|contact|user|one-to-one|1:1)$/.test(value))) return { conversationType:'direct', isGroup:false, source:'dom-direct' };
+      if (groupMonitoringAllowed && backgroundCollectorRole && (notice ?? groupSettingsNotice(root)) >= 2)
+        return {conversationType:'unknown',isGroup:false,groupCandidate:true,source:'group-settings-notice'};
       const visibleIdentity = clean(displayName);
       const digits = visibleIdentity.replace(/\D/g, '');
       if (digits.length >= 8 && digits.length <= 15 && /^\+?[\d\s().-]+$/.test(visibleIdentity))
@@ -4431,16 +4484,37 @@ public sealed partial class LegacyUiHostPage : Page
    const directoryFilterUi = doc => {
      const all = (root, selector) => Array.from(root?.querySelectorAll?.(selector) || []);
      const visible = n => Boolean(n?.isConnected && n.getClientRects?.().length && !n.closest?.('[hidden],[inert],[aria-hidden="true"]') && doc.defaultView?.getComputedStyle(n).visibility !== 'hidden');
-     const active = n => ['aria-selected','aria-pressed','aria-checked'].some(k => n?.getAttribute(k) === 'true');
+     const active = n => ['aria-selected','aria-pressed','aria-checked','data-selected'].some(k => n?.getAttribute(k) === 'true') || n?.getAttribute('data-state') === 'active';
      const controls = root => all(root,'button,[role="button"],[role="tab"],[role="menuitem"],[role="menuitemradio"],[role="menuitemcheckbox"],[role="option"]').filter(n => visible(n) && !n.matches('[disabled],[aria-disabled="true"]'));
      const popups = () => all(doc,'[role="menu"],[role="listbox"],[role="dialog"],[aria-modal="true"]').filter(visible);
+     const labelMark='[data-testid="label-icon"],[data-icon="label"],[data-icon="label-filled"],[data-color],svg circle[fill],span[style*="background-color"],[style*="background-color"][style*="border-radius"]';
      const builtin = (n,group) => {
        const names=group ? ['groups-filter','group-filter','chat-filter-groups','filter-groups'] : ['all-filter','chat-filter-all','filter-all'];
        if (names.includes(n.id) || names.includes(n.getAttribute('data-testid')) || n.getAttribute('data-filter') === (group ? 'groups' : 'all')) return true;
-       return group && Boolean(n.querySelector('[data-icon="group"],[data-icon="groups"],[data-icon="group-filled"]'))
+       return group && !n.querySelector(labelMark) && Boolean(n.querySelector('[data-icon="group"],[data-icon="groups"],[data-icon="group-filled"]'))
          && /^(?:groups|群组|群聊|群組)$/i.test((n.getAttribute('aria-label') || n.textContent || '').trim());
      };
      const groupButtons = scope => controls(scope).filter(n => builtin(n,true));
+     const name = n => (n?.getAttribute('aria-label') || n?.textContent || '').replace(/[\u200e\u200f]/g,'').trim();
+     const plainAll = n => n && !n.querySelector(labelMark) && /^(?:all|全部|所有)$/i.test(name(n));
+     const plainUnread = n => n && !n.querySelector(labelMark) && /^(?:unread|未读|未讀)(?:\s*\(?\d+\+?\)?)?$/i.test(name(n));
+     const overflowChip = n => {
+       if (n.matches('[data-testid="chat-filter-overflow"],[data-testid="filter-overflow"],[data-testid="chat-list-filters-menu"]')) return true;
+       const label=(n.getAttribute('aria-label') || n.getAttribute('title') || '').trim();
+       if (n.getAttribute('role') === 'tab' || (n.textContent || '').trim() || n.matches('[aria-selected],[aria-pressed]') || n.querySelector(labelMark)) return false;
+       const arrow=n.querySelector('[data-icon="chevron-down"],[data-icon="down"],[data-icon="filter"],[data-icon="chevron-down-refreshed"]');
+       return (arrow || n.matches('[aria-expanded][aria-haspopup="menu"],[aria-expanded][aria-haspopup="listbox"]'))
+         && (!label || /^(?:more|more filters|chat filters|filter chats|more lists|lists|更多|更多筛选|聊天筛选|更多列表)$/i.test(label));
+     };
+     const defaultPair = items => {
+       if (!plainAll(items[0]) || !plainUnread(items[1]) || items.length > 40 || items.filter(plainAll).length !== 1 || items.filter(plainUnread).length !== 1) return false;
+       if (items.slice(0,2).every(n => n.getAttribute('aria-controls')?.split(/\s+/).includes('pane-side'))) return true;
+       // WhatsApp Business renders built-in filters ahead of colored custom
+       // labels and a single overflow control. Never infer the Groups chip by position.
+       const customAndOverflow = items.slice(2).filter(n => !builtin(n,true));
+       return customAndOverflow.length >= 3 && customAndOverflow.slice(0,-1).filter(n => n.querySelector(labelMark)).length >= 2
+         && overflowChip(customAndOverflow.at(-1)) && customAndOverflow.filter(overflowChip).length === 1;
+     };
      const inspect = () => {
        const bars=all(doc,'[data-testid="chat-list-filters"],[data-testid="chat-filters"],#side [role="tablist"],[aria-controls="pane-side"][role="tablist"]').filter(visible);
        if (!bars.length) {
@@ -4451,16 +4525,21 @@ public sealed partial class LegacyUiHostPage : Page
            }
          }
        }
+       if (!bars.length) {
+         const side = doc.querySelector?.('#side,[data-testid="chat-list-sidebar"]');
+         for (const first of all(side,'button,[role="button"],[role="tab"]')) {
+           if (first.closest('#pane-side,[role="row"],[role="listitem"],[role="menu"],[role="dialog"]') || !plainAll(first) || !visible(first)) continue;
+           for (let p=first.parentElement;p && p !== side;p=p.parentElement) {
+             if (p.querySelector('#pane-side,[role="grid"],[role="row"],[role="listitem"],input,[contenteditable="true"]')) break;
+             if (defaultPair(controls(p))) { bars.push(p); break; }
+           }
+         }
+       }
        const scopes=bars.filter(n => !bars.some(other => other !== n && n.contains(other)));
        if (scopes.length !== 1) return {status:scopes.length ? 'ambiguous' : 'not-offered'};
        const items=controls(scopes[0]), groups=groupButtons(scopes[0]), defaults=items.filter(n => builtin(n,false));
-       const overflow=items.filter(n => {
-         if (n.matches('[data-testid="chat-filter-overflow"],[data-testid="filter-overflow"],[data-testid="chat-list-filters-menu"]')) return true;
-         const label=(n.getAttribute('aria-label') || n.getAttribute('title') || '').trim();
-         if (n.getAttribute('role') === 'tab' || (n.textContent || '').trim() || n.matches('[aria-selected],[aria-pressed]')) return false;
-         const arrow=n.querySelector('[data-icon="chevron-down"],[data-icon="down"],[data-icon="filter"]');
-         return Boolean(arrow) && (!label || /^(?:more filters|chat filters|filter chats|more lists|lists|更多筛选|聊天筛选|更多列表)$/i.test(label));
-       });
+       if (!defaults.length && defaultPair(items)) defaults.push(items[0]);
+       const overflow=items.filter(overflowChip);
        if (groups.length > 1 || defaults.length > 1 || !groups.length && overflow.length > 1) return {status:'ambiguous'};
        return {status:active(groups[0]) ? 'selected' : 'not-offered', original:defaults[0], group:groups[0], overflow:overflow[0]};
      };
@@ -4469,7 +4548,8 @@ public sealed partial class LegacyUiHostPage : Page
        const ids=[button.getAttribute('aria-controls'),button.getAttribute('aria-owns')].filter(Boolean).join(' ').trim();
        const open=popups();
        if (open.length !== 1 || !open[0].matches('[role="menu"],[role="listbox"]')) return null;
-       const owned=ids ? ids.split(/\s+/).includes(open[0].id) : button.getAttribute('aria-expanded') === 'true' || button.contains(open[0]);
+       const labelled=Boolean(button.id && open[0].getAttribute('aria-labelledby')?.split(/\s+/).includes(button.id));
+       const owned=ids ? ids.split(/\s+/).includes(open[0].id) : labelled || button.getAttribute('aria-expanded') === 'true' || button.contains(open[0]);
        return owned ? open[0] : null;
      };
      return {active,inspect,groupButtons,popups,ownedPopup};
@@ -4555,7 +4635,7 @@ public sealed partial class LegacyUiHostPage : Page
      || node?.getAttribute?.('data-unread') === 'true' || node?.getAttribute?.('data-is-unread') === 'true';
    const readRows = () => {
     unresolvedWindowRows = 0;
-    latestWindow = {groupFilterStatus,listPresent:Boolean(listContainer()),renderedRows:0,stableRows:0,unresolvedRows:0,skippedUnread:0,skippedReadUnknown:0,skippedTypeUnknown:0};
+    latestWindow = {groupFilterStatus,listPresent:Boolean(listContainer()),groupNoticeRows:0,verifiedNoticeRows:0,renderedRows:0,stableRows:0,unresolvedRows:0,skippedUnread:0,skippedReadUnknown:0,skippedTypeUnknown:0};
     probeCandidates = [];
     const filterState = groupMonitoringAllowed ? filterUi.inspect() : null;
     return rowNodes().map((row, index) => {
@@ -4581,24 +4661,33 @@ public sealed partial class LegacyUiHostPage : Page
      const unreadStateKnown = Boolean(identity || /^(?:cell-frame-container|chat-list-item|chat-row)$/.test(rowTestId) || (/^(?:row|listitem)$/.test(rowRole) && displayName));
      const unreadCount = badge.unreadCount;
      const unread = unreadState({ unreadCount, unreadMarker:badge.unreadMarker, unread:badge.unread, unreadStateKnown, displayName:unreadStateKnown ? displayName : '', title:unreadStateKnown ? displayName : '', conversationKey:unreadStateKnown ? externalId : '', externalId:unreadStateKnown ? externalId : '' });
-      const typeEvidence = conversationTypeFromNode(row, identity, displayName);
+      const notice = groupMonitoringAllowed && backgroundCollectorRole ? groupSettingsNotice(row) : 0;
+      if (notice === 1 || notice === 2) latestWindow.groupNoticeRows++;
+      if (notice === 2) latestWindow.verifiedNoticeRows++;
+      const typeEvidence = conversationTypeFromNode(row, identity, displayName, notice);
       if (typeEvidence.conversationType === 'unknown' || (!externalId && (directHistoryAllowed ? !typeEvidence.isGroup : typeEvidence.isGroup))
           || (groupMonitoringAllowed && typeEvidence.isGroup && !/@g\.us$/i.test(externalId))) unresolvedWindowRows++;
       latestWindow.unresolvedRows = unresolvedWindowRows;
       if (groupMonitoringAllowed && !/@g\.us$/i.test(externalId)) {
-        if ((!typeEvidence.isGroup && !(groupsOnly && typeEvidence.conversationType === 'unknown')) || conflict) { if (typeEvidence.conversationType === 'unknown' || conflict) latestWindow.skippedTypeUnknown++; }
-        else if (unread.unread || unreadCount > 0 || explicitUnread(row)) latestWindow.skippedUnread++;
-        else if (unread.uncertainUnread || !explicitRead(row)) latestWindow.skippedReadUnknown++;
-        else probeCandidates.push({node:row,index,needsMenu:false});
-        if (!conflict && !unread.unread && !(unreadCount > 0) && !explicitUnread(row) && typeEvidence.conversationType !== 'direct'
-            && (!explicitRead(row) || !typeEvidence.isGroup && !groupsOnly))
-          probeCandidates.push({node:row,index,needsMenu:true});
+        const direct = typeEvidence.conversationType === 'direct' || /@(?:c\.us|s\.whatsapp\.net|lid)$/i.test(identity);
+        const groupKnown = !direct && (typeEvidence.isGroup || typeEvidence.groupCandidate === true || groupsOnly);
+        const rowUnread = unread.unread || unreadCount > 0 || explicitUnread(row);
+        if (conflict || !direct && !groupKnown) latestWindow.skippedTypeUnknown++;
+        if (groupKnown && !allowOpenUnreadGroups) {
+          if (rowUnread) latestWindow.skippedUnread++;
+          else if (!explicitRead(row)) latestWindow.skippedReadUnknown++;
+        }
+        if (!conflict && !direct && (allowOpenUnreadGroups || !rowUnread)) {
+          const needsMenu = !groupKnown || !allowOpenUnreadGroups && !explicitRead(row);
+          probeCandidates.push({node:row,index,needsMenu,groupKnown});
+        }
       }
       if (externalId && (directHistoryAllowed ? collectibleConversationType(typeEvidence.conversationType) : typeEvidence.isGroup && /@g\.us$/i.test(externalId))) latestWindow.stableRows++;
       if (!externalId) return null;
       const rowFingerprint = compactId(`timestamp-v4-direction-v4-type-v1|${externalId}|${preview}|${lastMessageAt}|${unreadCount}|${typeEvidence.conversationType}`);
+      const directoryGroup = groupMonitoringAllowed && typeEvidence.isGroup && /@g\.us$/i.test(externalId);
       const typeStatus = typeEvidence.conversationType === 'group' ? 'skipped-group' : typeEvidence.conversationType === 'unknown' ? 'retryable' : '';
-      const result = { index, conversationKey: externalId, externalId, displayName, title:displayName, lastMessagePreview:preview, previewText:preview, preview, lastMessageAt, unreadCount, unread:unread.unread, uncertainUnread:unread.uncertainUnread, unreadStateKnown, unreadMarker:unread.unreadMarker, conversationType:typeEvidence.conversationType, isGroup:typeEvidence.isGroup, vipGroup:typeEvidence.vipGroup === true, conversationTypeSource:typeEvidence.source, status:typeStatus || (unread.unread || unread.uncertainUnread ? 'skipped_unread' : 'queued'), coverage:typeEvidence.conversationType === 'group' ? 'excluded-group' : typeEvidence.conversationType === 'unknown' ? 'conversation-type-unresolved' : '', cursor:rowFingerprint, lastMessageFingerprint:rowFingerprint, listText:pageText, previewOnly:true, visibleOnly:true };
+      const result = { index, conversationKey: externalId, externalId, displayName, title:displayName, lastMessagePreview:preview, previewText:preview, preview, lastMessageAt, unreadCount, unread:unread.unread, uncertainUnread:unread.uncertainUnread, unreadStateKnown, unreadMarker:unread.unreadMarker, conversationType:typeEvidence.conversationType, isGroup:typeEvidence.isGroup, vipGroup:typeEvidence.vipGroup === true, conversationTypeSource:typeEvidence.source, status:typeStatus || (unread.unread || unread.uncertainUnread ? 'skipped_unread' : 'queued'), coverage:typeEvidence.conversationType === 'group' ? 'excluded-group' : typeEvidence.conversationType === 'unknown' ? 'conversation-type-unresolved' : '', ...(directoryGroup ? groupDirectoryObservation : {}), cursor:rowFingerprint, lastMessageFingerprint:rowFingerprint, listText:pageText, previewOnly:true, visibleOnly:true };
      try {
        Object.defineProperty(result, '__node', { value:row, enumerable:false });
        Object.defineProperty(result, '__identityTitles', { value:primaryTitles, enumerable:false });
@@ -4607,17 +4696,22 @@ public sealed partial class LegacyUiHostPage : Page
   }).filter(Boolean);
   };
    window.__zhikeWsReadHistoryCandidates = readHistoryCandidates;
-  const discover = () => {
-     const conversations = [], excludedConversations = [], seen = new Set();
-     const rows = readRows(), open = openDirectoryEvidence();
-     for (const row of open.row ? [...rows,open.row] : rows) {
+  const partitionConversations = rows => {
+     const conversations = [], excludedConversations = [], groupConversations = [], seen = new Set();
+     for (const row of rows) {
        if (!row.conversationKey || seen.has(row.conversationKey)) continue;
        seen.add(row.conversationKey);
+       const group = row.isGroup || row.conversationType === 'group' || row.conversationType === 'vip_group';
+       const directoryGroup = groupMonitoringAllowed && group && /@g\.us$/i.test(row.conversationKey);
+       if (group && (!groupMonitoringAllowed || directoryGroup)) groupConversations.push(row);
        if (collectibleConversationType(row.conversationType)) conversations.push(row);
-       else excludedConversations.push(row);
+       else if (!directoryGroup) excludedConversations.push(row);
      }
-     const groupConversations = [...conversations, ...excludedConversations]
-       .filter(row => row?.isGroup === true || row?.conversationType === 'group' || row?.conversationType === 'vip_group');
+     return {conversations,excludedConversations,groupConversations};
+  };
+  const discover = () => {
+     const rows = readRows(), open = openDirectoryEvidence();
+     const {conversations,excludedConversations,groupConversations} = partitionConversations(open.row ? [...rows,open.row] : rows);
      return {
        supported: true, openIdentityStatus:open.status, directoryDiagnostics:{...latestWindow,confirmedOpen:Boolean(open.row)},
        unresolvedRowCount:unresolvedWindowRows,
@@ -4773,7 +4867,7 @@ public sealed partial class LegacyUiHostPage : Page
     scheduleCollectorTask(openMenu,100);
     return true;
   };
-  const verifyReadGroup = (run, resume) => {
+  const verifyDirectoryGroup = (run, resume) => {
     const now = Date.now();
     const allowed = () => groupMonitoringAllowed && backgroundCollectorRole && allScan === run && !run.monitorOnly && !readHistoryScan
       && !highPriorityHistoryRetryPending && Date.now() - lastListInteractionAt >= 1500
@@ -4782,18 +4876,25 @@ public sealed partial class LegacyUiHostPage : Page
     for (const [position, time] of probePositions) if (now - time >= 1800000) probePositions.delete(position);
     const slot = candidate => Math.round(run.container.scrollTop || 0) + '/' + candidate.index;
     const available = probeCandidates.filter(item => !probePositions.has(slot(item)));
-    const candidate = available.find(item => !item.needsMenu) || available[0];
+    const candidate = available.find(item => !item.needsMenu) || available.find(item => item.groupKnown) || available[0];
     if (!candidate) return false;
     const node = candidate.node;
     const current = () => allowed() && node.isConnected && run.container.contains?.(node)
       && (!node.getClientRects || node.getClientRects().length) && rowNodes()[candidate.index] === node;
     if (!current()) return false;
-    const openReadGroup = evidence => {
-      const flags = unreadBadgeState(node);
-      const category = conversationTypeFromNode(node, conversationIdentityFromRow(node), '');
-      if (!current() || flags.unread || flags.unreadCount > 0 || explicitUnread(node) || evidence?.unread || evidence?.direct
-        || category.conversationType === 'direct' || (!explicitRead(node) && !evidence?.read)
-        || (!category.isGroup && !groupFilterSelected(node) && !evidence?.group)) return false;
+    const openGroup = evidence => {
+      if (!current() || evidence?.direct) return false;
+      const nativeKey = conversationIdentityFromRow(node);
+      const preview = readDirectoryEvidence(node);
+      const identity = preview.key || nativeKey;
+      if (preview.status === 'conflicting-identities' || nativeKey.includes('@') && preview.key && nativeKey.toLowerCase() !== preview.key
+          || /@(?:c\.us|s\.whatsapp\.net|lid)$/i.test(identity)) return false;
+      const category = conversationTypeFromNode(node, identity, primaryConversationTitles(node)[0] || '');
+      if (category.conversationType === 'direct' || !category.isGroup && category.groupCandidate !== true && !groupFilterSelected(node) && !evidence?.group) return false;
+      if (!allowOpenUnreadGroups) {
+        const flags = unreadBadgeState(node);
+        if (flags.unread || flags.unreadCount > 0 || explicitUnread(node) || evidence?.unread || !explicitRead(node) && !evidence?.read) return false;
+      }
       const previous = openDirectoryEvidence();
       const titleAtClick = primaryConversationTitles(node)[0];
       const interactionAtClick = lastListInteractionAt;
@@ -4821,12 +4922,15 @@ public sealed partial class LegacyUiHostPage : Page
     };
     probePositions.set(slot(candidate),now);
     lastDirectoryProbeAt = now;
-    if (!candidate.needsMenu) return openReadGroup(null);
+    if (!candidate.needsMenu) return openGroup(null);
     if (!node.getBoundingClientRect || !document.addEventListener) return false;
     const started = inspectChatRowMenu(node,current,(status,evidence) => {
       if (allScan !== run) return;
       lastMenuProbeStatus = status;
-      if (evidence?.read && openReadGroup(evidence)) { lastMenuProbeStatus = 'verified-read-group'; return; }
+      if (evidence && openGroup(evidence)) {
+        lastMenuProbeStatus = evidence.read && !evidence.unread ? 'verified-read-group' : 'verified-group';
+        return;
+      }
       scheduleCollectorPaint(resume);
     });
     if (!started) lastMenuProbeStatus = 'navigation-busy';
@@ -4842,7 +4946,7 @@ public sealed partial class LegacyUiHostPage : Page
     if (finished && stream.unresolved && coverage === 'page-list-scanned') coverage = 'identity-unresolved';
     const updates = [];
     const open = openDirectoryEvidence();
-    for (const field of ['renderedRows','stableRows','unresolvedRows','skippedUnread','skippedReadUnknown','skippedTypeUnknown'])
+    for (const field of ['renderedRows','stableRows','unresolvedRows','groupNoticeRows','verifiedNoticeRows','skippedUnread','skippedReadUnknown','skippedTypeUnknown'])
       stream.diagnostics[field] = Math.max(stream.diagnostics[field] || 0, latestWindow[field] || 0);
     stream.diagnostics.listPresent = Boolean(stream.diagnostics.listPresent || latestWindow.listPresent);
     stream.diagnostics.confirmedOpen = Boolean(open.row);
@@ -5028,7 +5132,7 @@ public sealed partial class LegacyUiHostPage : Page
       // window, not a new empty map. It remains read-only and never replaces,
       // cancels or advances the active scan.
       const values = [...allScan.seen.values()];
-      return { supported:true, scanId:allScan.directory?.id || 0, conversations:values.filter(row => collectibleConversationType(row.conversationType)), excludedConversations:values.filter(row => !collectibleConversationType(row.conversationType)), groupConversations:values.filter(row => row?.isGroup === true || row?.conversationType === 'group' || row?.conversationType === 'vip_group'), scanned:true, scanning:true, coverage:'scan-in-progress' };
+      return { supported:true, scanId:allScan.directory?.id || 0, ...partitionConversations(values), scanned:true, scanning:true, coverage:'scan-in-progress' };
     }
     const generation = ++allScanGeneration;
     const initial = Number(container.scrollTop || 0);
@@ -5062,7 +5166,7 @@ public sealed partial class LegacyUiHostPage : Page
       // enabled VIP group can be observed without opening a conversation or
       // adding a second competing scroll loop.
       if (groupMonitorState.enabled && groupMonitorState.status === 'running') postGroupMonitorEvents(collectGroupMonitorPreviewEvents(rows), rows);
-      if (verifyReadGroup(run,step)) return;
+      if (verifyDirectoryGroup(run,step)) return;
       const before = Number(container.scrollTop || 0);
       const max = Math.max(0, Number(container.scrollHeight || 0) - Number(container.clientHeight || 0));
       const stepSize = Math.max(420, Number(container.clientHeight || 420) * 0.85);
@@ -5128,7 +5232,7 @@ public sealed partial class LegacyUiHostPage : Page
       try { container.dispatchEvent(new Event('scroll',{bubbles:true})); } catch {}
       scheduleCollectorPaint(step);
     });
-    return { supported:true, scanId:run.directory?.id || 0, conversations:[...current.values()].filter(row => collectibleConversationType(row.conversationType)), excludedConversations:[...current.values()].filter(row => !collectibleConversationType(row.conversationType)), groupConversations:[...current.values()].filter(row => row?.isGroup === true || row?.conversationType === 'group' || row?.conversationType === 'vip_group'), scanned:true, scanning:true, coverage:'scan-started' };
+    return { supported:true, scanId:run.directory?.id || 0, ...partitionConversations(current.values()), scanned:true, scanning:true, coverage:'scan-started' };
   };
    const waitForMessagePane = () => {
      const selectors = [
@@ -5786,8 +5890,9 @@ public sealed partial class LegacyUiHostPage : Page
     if (readHistoryScan && !force) return;
     const list = allScan?.monitorOnly ? { conversations:[] } : discover();
     const messages = capture();
-    const checkpointRows = [...list.conversations, ...(list.excludedConversations || [])];
-    if (messages.conversationKey && (!allScan?.monitorOnly || messages.messages.length) && !checkpointRows.some(item => item.conversationKey === messages.conversationKey)) {
+    const checkpointRows = groupMonitoringAllowed ? [...(list.groupConversations || [])] : [...list.conversations, ...(list.excludedConversations || [])];
+    const dedicatedOpenGroup = groupMonitoringAllowed && messages.isGroup && /@g\.us$/i.test(messages.conversationKey);
+    if (messages.conversationKey && (directHistoryAllowed || dedicatedOpenGroup) && (!allScan?.monitorOnly || messages.messages.length) && !checkpointRows.some(item => item.conversationKey === messages.conversationKey)) {
       const isGroup = messages.conversationType === 'group';
       const isVipGroup = messages.conversationType === 'vip_group';
       const isCollectible = collectibleConversationType(messages.conversationType);
@@ -5797,7 +5902,8 @@ public sealed partial class LegacyUiHostPage : Page
         status:isGroup ? 'skipped-group' : isCollectible ? 'captured' : 'retryable',
         coverage:isGroup ? 'excluded-group' : isCollectible ? 'visible-chat' : 'conversation-type-unresolved',
         historyLoaded:false, historyMessageCount:0, directionVersion:4, directionUnresolvedCount:0,
-        previewOnly:true, visibleOnly:true, unreadCount:0, unread:false, uncertainUnread:false,
+        previewOnly:true, visibleOnly:true,
+        ...(dedicatedOpenGroup ? groupDirectoryObservation : {unreadCount:0,unread:false,uncertainUnread:false}),
       });
     }
     // The foreground view is a realtime-only producer. It never publishes

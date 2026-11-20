@@ -17,6 +17,13 @@ static void Check(bool value,string message){if(!value)throw new Exception(messa
 static async Task Denied(Func<Task> run){try{await run();}catch(InvalidDataException){return;}throw new Exception("Expected policy denial");}
 var handler=new Sidecar();using var http=new HttpClient(handler){BaseAddress=new Uri("http://localhost/")};var api=new ApiClient(http);
 var ordinary=await api.GetWsCollectorPurposeAsync("ordinary");var dedicated=await api.GetWsCollectorPurposeAsync("dedicated");
+Check(!ordinary.OpenUnreadGroups && !dedicated.OpenUnreadGroups,"ordinary cannot opt in and a closed dedicated account remains closed");
+handler.OpenUnreadGroups=true;
+var optedIn=await api.GetWsCollectorPurposeAsync("dedicated");
+Check(optedIn.OpenUnreadGroups && Probe.BuildWsCollectorScript("dedicated",optedIn,7).EndsWith(",true);"),"a fresh collector start confirms and injects the account's saved choice");
+Check(Probe.BuildWsCollectorScript("ordinary",ordinary with { OpenUnreadGroups=true },7).EndsWith(",false);"),"ordinary wrapper cannot inject an unread-opening permit");
+handler.OpenUnreadGroups=false;
+Check(Probe.BuildWsCollectorScript("dedicated",await api.GetWsCollectorPurposeAsync("dedicated"),8).EndsWith(",false);"),"a fresh epoch receives a subsequent opt-out");
 var directoryInput=JsonSerializer.SerializeToElement(new{scanId=9,chunkIndex=2,finished=true,complete=true,rows=new[]{
  new{conversationKey="1@c.us",conversationType="direct",displayName="Person",previewText="private preview",isGroup=false},
  new{conversationKey="2@g.us",conversationType="group",displayName="Group",previewText="group body",isGroup=true},
@@ -102,13 +109,13 @@ Console.WriteLine("native purpose policy: sidecar account, exact group target, q
 
 sealed class Sidecar:HttpMessageHandler{
  public bool Offline;
- public bool Disabled,ForeignProfile;public TaskCompletionSource? AccountGate,MonitorGate;public TaskCompletionSource Entered=new(TaskCreationOptions.RunContinuationsAsynchronously);
+ public bool Disabled,ForeignProfile,OpenUnreadGroups;public TaskCompletionSource? AccountGate,MonitorGate;public TaskCompletionSource Entered=new(TaskCreationOptions.RunContinuationsAsynchronously);
  protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage req,CancellationToken ct){
   if(Offline)throw new HttpRequestException("test sidecar offline");
   object data;
   if(req.RequestUri!.AbsolutePath=="/api/ws/accounts"){
    if(AccountGate is {} gate){Entered.TrySetResult();await gate.Task.WaitAsync(ct);}
-   data=new{accounts=new object[]{new{id="ordinary",displayName="ordinary",status="未连接",workspaceMode="ordinary"},new{id="dedicated",displayName="dedicated",status="未连接",workspaceMode="dedicated"},new{id="unknown",displayName="unknown",status="未连接",workspaceMode="VIP"}}};
+   data=new{accounts=new object[]{new{id="ordinary",displayName="ordinary",status="未连接",workspaceMode="ordinary",settings=new{openUnreadGroups=true}},new{id="dedicated",displayName="dedicated",status="未连接",workspaceMode="dedicated",settings=new{openUnreadGroups=OpenUnreadGroups}},new{id="unknown",displayName="unknown",status="未连接",workspaceMode="VIP"}}};
   }else {if(MonitorGate is {} gate){Entered.TrySetResult();await gate.Task.WaitAsync(ct);}var profile=new{id="profile",accountId=ForeignProfile?"ordinary":"dedicated",enabled=!Disabled,pollIntervalSec=45,targets=new[]{new{id="target",profileId="profile",accountId="dedicated",groupJid="123@g.us",groupName="Same name",sourceId="s",enabled=true},new{id="name",profileId="profile",accountId="dedicated",groupJid="Same name",groupName="Same name",sourceId="s",enabled=true}}};data=req.RequestUri.AbsolutePath.EndsWith("/profiles")?(object)new{profiles=new[]{profile}}:new{profile};}
   return new(HttpStatusCode.OK){Content=JsonContent.Create(data)};
  }
@@ -119,6 +126,9 @@ static class App{public static Service WsService=new();public static Service WsS
 sealed class Service{public Session Current=new("ordinary");public bool TryGetSession(string id,out Session? session){session=Current;return Current.AccountId==id;}public bool IsCurrent(string id,long generation,WebView2 view)=>Current.AccountId==id&&Current.Generation==generation&&ReferenceEquals(Current.CollectorView,view);}
 static class DesktopBridgeService{public const string CurrentVersion="1";}
 sealed class Probe{
+ const string WsOpenChatEvidenceScript="function(){}";
+ static string BuildWsCollectorScript(string accountId)=>"void 0;";
+${take('    internal static string BuildWsCollectorScript(string accountId, WsCollectorPurposePolicy purpose, long epoch)', '    internal static string BuildWsCollectorScript(string accountId)')}
  readonly FixtureRegistry _wsAccountStore=new();
  sealed record Registration(string Id,string WorkspaceMode,bool DirectoryPurposeConfirmed);
  sealed class FixtureRegistry{

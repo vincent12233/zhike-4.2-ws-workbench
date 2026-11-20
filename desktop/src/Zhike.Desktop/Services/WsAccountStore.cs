@@ -6,11 +6,11 @@ public sealed record StoredWsLoginObservation(DateTimeOffset ObservedAt, long Pr
 public sealed record StoredWsDirectoryDiagnostics(DateTimeOffset ObservedAt, string Source, string WorkspaceMode,
     bool ListPresent, int RenderedRows, int StableRows, int UnresolvedRows, bool ConfirmedOpen,
     int? SkippedUnread = null, int? SkippedReadUnknown = null, int? SkippedTypeUnknown = null, string? OpenIdentityStatus = null,
-    string? GroupFilterStatus = null, string? MenuProbeStatus = null);
+    string? GroupFilterStatus = null, string? MenuProbeStatus = null, int? GroupNoticeRows = null, int? VerifiedNoticeRows = null);
 public sealed record StoredWsAccount(string Id, string DisplayName, string Status, DateTimeOffset? LastSeen = null, string? LastKnownStatus = null, string WorkspaceMode = "ordinary",
     StoredWsLoginObservation? ForegroundLoginObservation = null, StoredWsLoginObservation? CollectorLoginObservation = null,
     bool DirectoryPurposeConfirmed = false, StoredWsDirectoryDiagnostics? ForegroundDirectoryDiagnostics = null,
-    StoredWsDirectoryDiagnostics? CollectorDirectoryDiagnostics = null);
+    StoredWsDirectoryDiagnostics? CollectorDirectoryDiagnostics = null, bool OpenUnreadGroups = false);
 
 /// <summary>
 /// Small local account index used before/without the API.  It stores only
@@ -75,10 +75,10 @@ public sealed class WsAccountStore
         var filter = ProbeStatus("groupFilterStatus");
         var menu = ProbeStatus("menuProbeStatus");
         if (filter is not ("not-checked" or "not-offered" or "ambiguous" or "selecting" or "selected" or "selection-unconfirmed")) filter = null;
-        if (menu is not ("verified-read-group" or "unread" or "read-state-unknown" or "type-unconfirmed" or "menu-unavailable" or "menu-unowned" or "row-changed" or "navigation-busy")) menu = null;
+        if (menu is not ("verified-group" or "verified-read-group" or "unread" or "read-state-unknown" or "type-unconfirmed" or "menu-unavailable" or "menu-unowned" or "row-changed" or "navigation-busy")) menu = null;
         // No raw WebView payload, title, identifiers or message text cross this boundary.
         var sample = new StoredWsDirectoryDiagnostics(observedAt, source, workspaceMode, present, rendered, stable, unresolved, open,
-            OptionalCount("skippedUnread"), OptionalCount("skippedReadUnknown"), OptionalCount("skippedTypeUnknown"), openStatus, filter, menu);
+            OptionalCount("skippedUnread"), OptionalCount("skippedReadUnknown"), OptionalCount("skippedTypeUnknown"), openStatus, filter, menu, OptionalCount("groupNoticeRows"), OptionalCount("verifiedNoticeRows"));
         lock (_probes)
         {
             var key = (accountId, source);

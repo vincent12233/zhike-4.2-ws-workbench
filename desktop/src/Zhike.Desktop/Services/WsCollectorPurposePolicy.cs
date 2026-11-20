@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 namespace Zhike.Desktop.Services;
 
 /// <summary>Only a sidecar-confirmed account can authorize automatic collection.</summary>
-public sealed record WsCollectorPurposePolicy(string AccountId, string WorkspaceMode)
+public sealed record WsCollectorPurposePolicy(string AccountId, string WorkspaceMode, bool OpenUnreadGroups = false)
 {
     public bool AllowsDirectHistory => WorkspaceMode == "ordinary";
     public bool AllowsGroupMonitoring => WorkspaceMode == "dedicated";
@@ -12,7 +12,7 @@ public sealed record WsCollectorPurposePolicy(string AccountId, string Workspace
         if (!string.Equals(account.Id, accountId, StringComparison.Ordinal)
             || account.WorkspaceMode is not ("ordinary" or "dedicated"))
             throw new InvalidDataException("WS_COLLECTOR_PURPOSE_UNCONFIRMED: 本机服务未确认当前账号用途。");
-        return new(accountId, account.WorkspaceMode);
+        return new(accountId, account.WorkspaceMode, account.OpenUnreadGroups);
     }
     public static bool IsGroupJid(string? value)
         => value is not null && Regex.IsMatch(value, "^[a-z0-9._-]+@g\\.us$", RegexOptions.CultureInvariant);

@@ -8,6 +8,9 @@ const filterCases = {
   customSelected: ['ambiguous', 0, 0, false],
   rowMenu: ['not-checked', 0, 0, false],
   overflow: ['selected', 1, 1, false],
+  business: ['selected', 1, 1, false],
+  duplicateAll: ['not-offered', 0, 0, false],
+  fakeLabels: ['not-offered', 0, 0, false],
   custom: ['not-offered', 0, 0, false],
   hidden: ['not-offered', 0, 0, false],
   ambiguous: ['ambiguous', 0, 0, false],
@@ -26,7 +29,8 @@ function runFilterScenes(sample, cases, source) {
     const customButton = '<button aria-selected="false">Groups</button>';
     const overflowButton = '<button aria-label="More filters" aria-controls="more-filters" aria-expanded="false"><span data-icon="chevron-down"></span></button>';
     let chips = groupButton;
-    if (scene === 'overflow') chips = overflowButton;
+    const business = ['business','duplicateAll','fakeLabels'].includes(scene);
+    if (scene === 'overflow' || business) chips = overflowButton;
     if (scene === 'custom') chips = customButton;
     if (scene === 'hidden') chips = '<section hidden>' + groupButton + '</section>';
     if (scene === 'ambiguous') chips += '<button data-testid="filter-groups">群组</button>';
@@ -34,6 +38,13 @@ function runFilterScenes(sample, cases, source) {
     const toolbar = sample.querySelector('[data-testid="chat-list-filters"]');
     const list = sample.querySelector('#pane-side'), before = list.firstElementChild;
     const original = toolbar.firstElementChild;
+    if (business) {
+      toolbar.removeAttribute('data-testid');
+      original.removeAttribute('id');
+      const mark=scene === 'fakeLabels' ? '' : '<i data-icon="label"></i>';
+      original.insertAdjacentHTML('afterend','<button>Unread 2</button><button>'+mark+'Groups</button><button>'+mark+'Sales</button>');
+      if (scene === 'duplicateAll') toolbar.lastElementChild.insertAdjacentHTML('beforebegin','<button>All</button>');
+    }
     let clicks = 0, restores = 0;
     const onGroup = () => {
       clicks++;
@@ -50,7 +61,7 @@ function runFilterScenes(sample, cases, source) {
       original.setAttribute('aria-selected', 'true');
       toolbar.querySelector('#group-filter').setAttribute('aria-selected', 'false');
     };
-    for (const b of toolbar.querySelectorAll('button:not(#all-filter)')) b.onclick = onGroup;
+    for (const b of toolbar.querySelectorAll('button')) if (b !== original) b.onclick = onGroup;
     if (scene === 'customSelected') {
       original.setAttribute('aria-selected', 'false');
       toolbar.insertAdjacentHTML('beforeend', '<button aria-selected="true">My lists</button>');
@@ -60,7 +71,7 @@ function runFilterScenes(sample, cases, source) {
       toolbar.querySelector('#group-filter').setAttribute('aria-selected', 'true');
     }
     if (scene === 'busy') sample.insertAdjacentHTML('beforeend', '<div role="menu"><button>Unrelated</button></div>');
-    if (scene === 'overflow') {
+    if (scene === 'overflow' || business) {
       const arrow = toolbar.lastElementChild;
       arrow.onclick = () => {
         arrow.setAttribute('aria-expanded', 'true');
@@ -82,7 +93,7 @@ function runFilterScenes(sample, cases, source) {
       let prior;
       prepareDirectoryFilter(run,() => {
         prior=groupFilterSelected(before);
-        if (['visible','overflow','recycled','labelledPanel'].includes(scene) && !groupFilterSelected(list.lastElementChild))
+        if (['visible','overflow','business','recycled','labelledPanel'].includes(scene) && !groupFilterSelected(list.lastElementChild))
           throw Error('Missing official filter evidence on newly mounted row');
         restoreDirectoryFilter(run);
       });

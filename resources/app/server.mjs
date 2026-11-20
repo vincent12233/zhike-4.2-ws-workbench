@@ -1142,7 +1142,8 @@ function wsAccountPayload(row) {
       translationEnabled: Boolean(settings.translation_enabled),
       aiEnabled: Boolean(settings.ai_enabled),
       autoCollectionEnabled: Boolean(settings.auto_collection_enabled),
-    } : { translationEnabled: true, aiEnabled: true, autoCollectionEnabled: false },
+      openUnreadGroups: row.workspace_mode === 'dedicated' && settings.open_unread_groups !== 0,
+    } : { translationEnabled: true, aiEnabled: true, autoCollectionEnabled: false, openUnreadGroups: row.workspace_mode === 'dedicated' },
   };
 }
 
@@ -1758,16 +1759,20 @@ function wsGroupMonitorApplyEventsInTransaction(accountId, inputEvents = [], opt
   if (stateChanged) writeState(state, false);
   return result;
 }
-function wsSaveAccountSettings(accountId, input, now) {
+function wsSaveAccountSettings(accountId, workspaceMode, input, now) {
   const current = db.prepare('SELECT * FROM ws_account_settings WHERE account_id=?').get(accountId);
   const source = input && typeof input === 'object' && !Array.isArray(input) ? input : {};
   const settingsJson = Object.hasOwn(source, 'settings') ? wsObject(source.settings, 32 * 1024) : wsJson(current?.settings_json);
   const translationEnabled = source.translationEnabled ?? source.translation ?? Boolean(current?.translation_enabled ?? 1);
   const aiEnabled = source.aiEnabled ?? source.ai ?? Boolean(current?.ai_enabled ?? 1);
   const autoCollectionEnabled = source.autoCollectionEnabled ?? source.autoCollection ?? Boolean(current?.auto_collection_enabled);
-  db.prepare(`INSERT INTO ws_account_settings(account_id,translation_enabled,ai_enabled,auto_collection_enabled,settings_json,created_at,updated_at)
-    VALUES(?,?,?,?,?,?,?) ON CONFLICT(account_id) DO UPDATE SET translation_enabled=excluded.translation_enabled,ai_enabled=excluded.ai_enabled,auto_collection_enabled=excluded.auto_collection_enabled,settings_json=excluded.settings_json,updated_at=excluded.updated_at`)
-    .run(accountId, translationEnabled === false ? 0 : 1, aiEnabled === false ? 0 : 1, autoCollectionEnabled === true ? 1 : 0, JSON.stringify(settingsJson), current?.created_at || now, now);
+  if (Object.hasOwn(source, 'openUnreadGroups') && typeof source.openUnreadGroups !== 'boolean')
+    throw restoreError(400, '未读群核验开关必须是布尔值。', 'INVALID_OPEN_UNREAD_GROUPS');
+  const openUnreadGroups = workspaceMode !== 'dedicated' ? 0 : Object.hasOwn(source, 'openUnreadGroups')
+    ? Number(source.openUnreadGroups) : current?.open_unread_groups ?? null;
+  db.prepare(`INSERT INTO ws_account_settings(account_id,translation_enabled,ai_enabled,auto_collection_enabled,open_unread_groups,settings_json,created_at,updated_at)
+    VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(account_id) DO UPDATE SET translation_enabled=excluded.translation_enabled,ai_enabled=excluded.ai_enabled,auto_collection_enabled=excluded.auto_collection_enabled,open_unread_groups=excluded.open_unread_groups,settings_json=excluded.settings_json,updated_at=excluded.updated_at`)
+    .run(accountId, translationEnabled === false ? 0 : 1, aiEnabled === false ? 0 : 1, autoCollectionEnabled === true ? 1 : 0, openUnreadGroups, JSON.stringify(settingsJson), current?.created_at || now, now);
 }
 function wsSettingsPayload(row) {
   if (!row) return { accountId: 'default', conversationId: '', enabled: true, receive: true, send: true, targetLanguage: '中文', sendLanguage: '', showOriginal: true, aiEnabled: true, status: '未连接', createdAt: '', updatedAt: '' };
@@ -3022,7 +3027,7 @@ function insertWsAccount(id, workspaceMode, body, now) {
   const status = WS_STATUSES.has(wsText(body.status, 32)) ? wsText(body.status, 32) : '未连接';
   db.prepare('INSERT INTO ws_accounts(id,display_name,workspace_mode,provider,origin,partition_key,status,last_status,last_seen_at,enabled,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)')
     .run(id, wsText(body.displayName, 200) || id, workspaceMode, wsText(body.provider, 120), wsText(body.origin, 500), wsText(body.partitionKey, 200) || `persist:${id}`, status, status === '未连接' ? '' : status, status === '已连接' ? now : '', body.enabled === false ? 0 : 1, now, now);
-  wsSaveAccountSettings(id, body.settings || body, now);
+  wsSaveAccountSettings(id, workspaceMode, body.settings || body, now);
 }
 
 function ensureWorkspaceRestoreAccount(account) {
@@ -3032,7 +3037,11 @@ function ensureWorkspaceRestoreAccount(account) {
   if (existing && existing.id !== id) throw restoreError(409, 'WS 账号编号大小写与现有账号不符。');
   const mode = meta?.workspaceMode ?? existing?.workspace_mode ?? 'ordinary';
   if (!['ordinary','dedicated'].includes(mode) || (existing && existing.workspace_mode !== mode)) throw restoreError(409, '备份账号用途与当前账号不符。');
-  if (!existing) insertWsAccount(id, mode, { displayName: meta?.displayName || id }, new Date().toISOString());
+  if (!existing) {
+    const settings = {};
+    if (meta?.settings && Object.hasOwn(meta.settings, 'openUnreadGroups')) settings.openUnreadGroups = meta.settings.openUnreadGroups;
+    insertWsAccount(id, mode, { displayName: meta?.displayName || id, settings }, new Date().toISOString());
+  }
 }
 
 function restoreError(status, message, code) {
@@ -3381,7 +3390,7 @@ const server = createServer(async (req, res) => {
           const lastSeenAt = status === '已连接' ? now : (account.last_seen_at || '');
           db.prepare('UPDATE ws_accounts SET display_name=?,provider=?,origin=?,partition_key=?,status=?,last_status=?,last_seen_at=?,enabled=?,updated_at=? WHERE id=?')
             .run(Object.hasOwn(body, 'displayName') ? wsText(body.displayName, 200) : account.display_name, Object.hasOwn(body, 'provider') ? wsText(body.provider, 120) : account.provider, Object.hasOwn(body, 'origin') ? wsText(body.origin, 500) : account.origin, Object.hasOwn(body, 'partitionKey') ? wsText(body.partitionKey, 200) : account.partition_key, status, lastStatus, lastSeenAt, body.enabled === false ? 0 : (body.enabled === true ? 1 : account.enabled), now, accountId);
-          if (body.settings || Object.hasOwn(body, 'translationEnabled') || Object.hasOwn(body, 'aiEnabled') || Object.hasOwn(body, 'autoCollectionEnabled')) wsSaveAccountSettings(accountId, body.settings || body, now);
+          if (body.settings || Object.hasOwn(body, 'translationEnabled') || Object.hasOwn(body, 'aiEnabled') || Object.hasOwn(body, 'autoCollectionEnabled')) wsSaveAccountSettings(accountId, account.workspace_mode, body.settings || body, now);
           db.exec('COMMIT');
         } catch (error) { db.exec('ROLLBACK'); throw error; }
         return json(res, 200, { account: wsAccountPayload(wsAccountRow(accountId)) });

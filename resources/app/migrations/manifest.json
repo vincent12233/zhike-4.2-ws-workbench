@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "supportedSchemaVersion": 32,
+  "supportedSchemaVersion": 33,
   "migrations": [
     {
       "version": 4,
@@ -175,6 +175,12 @@
       "file": "032-ws-contact-directory.sql",
       "description": "Account-scoped contacts observed in the authenticated WhatsApp contact picker",
       "checksum": "72c97586b7d3e8b869001c433f8b4029fe66117afa78de201240ecf04a3c8fca"
+    },
+    {
+      "version": 33,
+      "file": "033-ws-open-unread-groups.sql",
+      "description": "Account preference for opening unread dedicated WS groups to verify identity",
+      "checksum": "dcf6ab7a3eaecb049392fb53598543e0ba19f1c1719af2a2c809e89899dc4c69"
     }
   ]
 }

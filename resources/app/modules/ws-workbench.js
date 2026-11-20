@@ -919,7 +919,7 @@
       accountId: state.activeAccountId, mode: state.workspaceMode, foreground: new Map(), collector: new Map(),
       foregroundGeneration: 0, foregroundTicket: 0, foregroundRead: null, foregroundChecked: false,
       verifiedOpenGroups: new Map(),
-      collectorGeneration: 0, epoch: 0, scanId: 0, chunks: new Set(), scannedKeys: new Set(), lastChunk: null, finalized: false,
+      collectorGeneration: 0, epoch: 0, scanId: 0, chunks: new Set(), scannedKeys: new Set(), lastChunk: null, endChunk: null, finalized: false,
     };
     return state.liveDirectory;
   }
@@ -983,7 +983,7 @@
     const scanId = Number(payload.scanId) || 0;
     if (scanId < directory.scanId || (directory.finalized && scanId === directory.scanId)) return;
     if (scanId > directory.scanId) {
-      directory.scanId = scanId; directory.chunks.clear(); directory.scannedKeys.clear(); directory.lastChunk = null; directory.finalized = false;
+      directory.scanId = scanId; directory.chunks.clear(); directory.scannedKeys.clear(); directory.lastChunk = null; directory.finalized = false; directory.endChunk = null;
       directory.incomplete = false;
       directory.collectorGaps = null;
       directory.collectorSkipped = null; directory.probeControls = null;
@@ -1003,7 +1003,7 @@
         directory.probeControls = { chunk, filter: payload.directoryDiagnostics.groupFilterStatus, menu: payload.directoryDiagnostics.menuProbeStatus };
       }
       directory.collectorSkipped ||= {};
-      for (const key of ['skippedUnread', 'skippedReadUnknown', 'skippedTypeUnknown']) {
+      for (const key of ['skippedUnread', 'skippedReadUnknown', 'skippedTypeUnknown', 'groupNoticeRows', 'verifiedNoticeRows']) {
         const count = payload.directoryDiagnostics[key];
         if (Number.isSafeInteger(count) && count > 0) directory.collectorSkipped[key] = Math.max(directory.collectorSkipped[key] || 0, count);
       }
@@ -1011,6 +1011,7 @@
     directory.lastCollectorReadAt = nowIso();
     directory.collectorObserved = true;
     directory.collectorError = '';
+    if (pushed && payload.finished) directory.endChunk = payload.chunkIndex;
     if (payload.finished && !payload.complete) directory.incomplete = true;
     if (directory.lastChunk !== null && directory.chunks.size === directory.lastChunk + 1) {
       if (!directory.collectorGaps) for (const key of directory.collector.keys()) if (!directory.scannedKeys.has(key)) directory.collector.delete(key);
@@ -1097,7 +1098,7 @@
     directory.collectorReady = ready;
     directory.collectorGeneration = generation || directory.collectorGeneration;
     directory.epoch = epoch || directory.epoch;
-    directory.scanId = 0; directory.scannedKeys.clear(); directory.chunks.clear(); directory.lastChunk = null; directory.finalized = false;
+    directory.scanId = 0; directory.scannedKeys.clear(); directory.chunks.clear(); directory.lastChunk = null; directory.finalized = false; directory.endChunk = null;
     directory.collectorObserved = false; directory.incomplete = false; directory.nextCollectorReadAt = 0;
     directory.collectorGaps = null;
     directory.collectorSkipped = null; directory.probeControls = null;
@@ -4045,14 +4046,69 @@
     });
     return { ...workspaceListWindow(rows, 'groups'), allRows, selected };
   }
+  function unreadGroupControl() {
+    const account = modeAccount(state.activeAccountId, 'dedicated');
+    if (state.workspaceMode !== 'dedicated' || !account) return '';
+    const enabled = account.openUnreadGroups === true;
+    return `<label class="ws-inline-checkbox"><input type="checkbox" data-ws-action="toggle-open-unread-groups" ${enabled ? 'checked' : ''} ${state.busy.collector || state.busy.connection ? 'disabled' : ''}> 允许后台打开未读群以核验群号（WhatsApp 可能同步为已读）</label>`;
+  }
+  async function changeUnreadGroupPolicy() {
+    const account = modeAccount(state.activeAccountId, 'dedicated');
+    if (state.workspaceMode !== 'dedicated' || !account || state.busy.collector || state.busy.connection) return;
+    const context = captureContext('');
+    const next = account.openUnreadGroups !== true;
+    const running = collectionCapability(context.accountId).collectorState === 'running';
+    const operation = state.collectorActionSequence = Number(state.collectorActionSequence || 0) + 1;
+    state.busy.collector = true;
+    let paused = false, saved = false;
+    try {
+      if (running) {
+        await wsBridge('pause-collector', context);
+        paused = true;
+        assertContext(context);
+      }
+      const result = await api('/api/ws/accounts/' + encodeURIComponent(context.accountId), { method:'PATCH', body:JSON.stringify({ settings:{ openUnreadGroups:next } }) }, context);
+      assertContext(context);
+      if (result?.account?.id !== context.accountId || result.account.workspaceMode !== 'dedicated' || result.account.settings?.openUnreadGroups !== next)
+        throw new Error('账号设置回执尚未确认。');
+      modeAccount(context.accountId, 'dedicated').openUnreadGroups = next;
+      saved = true;
+      if (paused) {
+        await wsBridge('resume-collector', context);
+        assertContext(context);
+        paused = false;
+        if (state.groupMonitor?.accountId === context.accountId) state.groupMonitor.discovery = null;
+        if (collectionReady('backgroundCollection', context.accountId)) void scanGroupMonitorTargets({ automatic:true });
+      }
+      toast(next ? '已允许为核验群号打开未读群。' : '已切换为保留未读状态。');
+    } catch (error) {
+      if (contextCurrent(context)) toast((saved ? '设置已保存。' : '') + (error.message || '修改未读群核验设置失败。') + (paused ? ' 后台采集待恢复。' : ''), 'x');
+    } finally {
+      if (operation === state.collectorActionSequence) { state.busy.collector = false; render({ skipNativeResize:true }); }
+    }
+  }
+  function groupDiscoveryNote() {
+    const directory = state.liveDirectory;
+    const discovery = state.groupMonitor?.discovery;
+    if (discovery?.retryAt) return discovery.note || '';
+    if (directory?.endChunk == null || directory.chunks.size !== directory.endChunk + 1
+        || directory.accountId !== state.activeAccountId || directory.mode !== 'dedicated')
+      return discovery?.note || '';
+    const groups = directory.scannedKeys.size;
+    if (groups) return `本轮已核验 ${groups} 个群组。` + (directory.incomplete ? ' 部分列表行仍待核验。' : ' 正在等待新增群组。');
+    if (directory.collectorGaps) return '本轮读取已结束。WhatsApp 列表中有待核验的行，尚未取得可靠的群号。';
+    if (directory.incomplete) return '本轮目录读取未完成，正在等待下一次采集。';
+    return '本轮读取已结束，暂未发现群组，正在等待新数据。';
+  }
   function renderGroupDirectory() {
+    const progressNote = groupDiscoveryNote();
     const page = groupDirectoryState(), windowed = groupDirectoryWindow(), filters = page.groupFilters;
     const options = (values, selected) => values.map(([value, label]) => `<option value="${esc(value)}" ${selected === value ? 'selected' : ''}>${esc(label)}</option>`).join('');
     const actualOptions = key => [['all', '全部'], ...[...new Set(windowed.allRows.map(row => row[key]))].sort().map(value => [value, value])];
     const selectedCount = windowed.allRows.filter(row => windowed.selected.has(row.directoryId)).length;
     const allVisibleSelected = windowed.rows.length > 0 && windowed.rows.every(row => windowed.selected.has(row.directoryId));
     const detail = windowed.allRows.find(row => row.directoryId === page.detailGroupId);
-    return `<section class="ws-workspace-card ws-group-directory zk-surface"><div class="ws-card-heading"><div><strong>群组目录</strong><span>${esc(groupDirectorySummary(windowed.allRows))}</span></div>${state.groupMonitor?.archiveError ? `<small>${esc(state.groupMonitor.archiveError)}</small>` : ''}</div><div class="ws-group-filters ws-workspace-list-controls"><label>搜索群组<input id="wsWorkspaceSearch-groups" data-ws-workspace-search="groups" type="search" maxlength="160" value="${esc(page.filter)}" placeholder="群名称或群组标识"></label><label>所属账号<select data-ws-group-filter="accountId">${(state.accounts || []).map(account => `<option value="${esc(account.id)}" ${String(account.id) === String(state.activeAccountId) ? 'selected' : ''}>${esc(accountDisplayName(account))}</option>`).join('')}</select></label><label>成员数量<select data-ws-group-filter="memberCount">${options([['all', '全部'], ['known', '已提供'], ['unknown', '未提供'], ['under50', '50 人以下'], ['50to199', '50–199 人'], ['200plus', '200 人及以上']], filters.memberCount)}</select></label><label>发言权限<select data-ws-group-filter="permission">${options(actualOptions('directoryPermission'), filters.permission)}</select></label><label>采集状态<select data-ws-group-filter="collection">${options(actualOptions('directoryCollection'), filters.collection)}</select></label></div>${renderCollectorControls()}${state.groupMonitor?.discovery?.note ? `<p class="ws-muted" role="status">${esc(state.groupMonitor.discovery.note)}</p>` : ''}<div class="ws-group-batch-bar"><span role="status">已选择 <strong>${selectedCount}</strong> 个群组 · 匹配 ${windowed.matched} 条</span><div><button type="button" class="btn small" data-ws-action="group-monitor-scan" ${state.wsStatus === '已连接' || collectionReady('groupMonitoring') ? '' : 'disabled'}>读取现场群组</button><button type="button" class="btn small primary" data-ws-action="group-monitor-add-directory" ${!selectedCount || state.groupMonitor?.busy ? 'disabled' : ''}>监测所选群组</button><button type="button" class="btn small" data-ws-action="group-directory-selected" ${selectedCount || page.showSelectedOnly ? '' : 'disabled'}>${page.showSelectedOnly ? '显示全部群组' : '仅查看已选'}</button><button type="button" class="btn small" data-ws-action="group-directory-copy" ${selectedCount ? '' : 'disabled'}>复制所选标识</button><button type="button" class="btn small" data-ws-action="group-directory-clear" ${selectedCount ? '' : 'disabled'}>清除选择</button></div></div><div class="ws-group-directory-body ${detail ? 'has-detail' : ''}"><div class="ws-group-directory-main"><div class="ws-group-table-wrap"><table class="ws-group-table"><thead><tr><th scope="col"><input type="checkbox" class="ws-group-selection" data-ws-group-select-all aria-label="选择当前页全部群组" ${allVisibleSelected ? 'checked' : ''} ${windowed.rows.length ? '' : 'disabled'}></th><th scope="col">群组名称</th><th scope="col">所属账号</th><th scope="col">成员数量</th><th scope="col">发言权限</th><th scope="col">采集状态</th><th scope="col">最近记录</th><th scope="col">详情</th></tr></thead><tbody>${windowed.rows.length ? windowed.rows.map(item => `<tr class="${windowed.selected.has(item.directoryId) ? 'is-selected' : ''}"><td><input type="checkbox" class="ws-group-selection" data-ws-group-select="${esc(item.directoryId)}" aria-label="选择 ${esc(item.groupName || item.name || item.groupJid)}" ${windowed.selected.has(item.directoryId) ? 'checked' : ''}></td><td><strong>${esc(item.groupName || item.name || '未命名群组')}</strong><small>${esc(item.directorySource)} · ${esc(item.groupJid || item.id)}</small></td><td>${esc(accountDisplayName(activeAccount()) || state.activeAccountId)}</td><td>${item.directoryCount == null ? '未提供' : item.directoryCount.toLocaleString()}</td><td>${esc(item.directoryPermission)}</td><td><span class="ws-group-state">${esc(item.directoryCollection)}</span><small>${item.monitorTarget?.enabled ? '监测已配置' : item.monitorTarget ? '监测已停用' : '未加入监测'}</small></td><td>${esc(displayTime(item.liveObservedAt || item.lastSyncAt || item.lastSeenAt || item.updatedAt) || '未提供')}</td><td><button type="button" class="btn small" data-ws-action="group-directory-detail" data-group-id="${esc(item.directoryId)}" aria-expanded="${page.detailGroupId === item.directoryId ? 'true' : 'false'}">${page.detailGroupId === item.directoryId ? '收起' : '查看'}</button></td></tr>`).join('') : `<tr><td colspan="8"><div class="ws-empty">${windowed.allRows.length ? '当前筛选条件下没有群组。' : '当前尚未读取到群组。登录 WhatsApp 后可读取前台可见群；独立采集就绪后可读取更多群组。'}</div></td></tr>`}</tbody></table></div><div class="ws-workspace-list-pagination"><span>每页 40 条 · 共 ${windowed.matched} 条</span><button type="button" class="btn small" data-ws-action="workspace-list-page" data-list-view="groups" data-page-delta="-1" ${windowed.page <= 1 ? 'disabled' : ''}>上一页</button><span>${windowed.page} / ${windowed.pageCount}</span><button type="button" class="btn small" data-ws-action="workspace-list-page" data-list-view="groups" data-page-delta="1" ${windowed.page >= windowed.pageCount ? 'disabled' : ''}>下一页</button></div></div>${detail ? `<aside class="ws-group-detail-panel" aria-label="群组详情"><div class="ws-card-heading"><strong>${esc(detail.groupName || detail.name || detail.groupJid)}</strong><button type="button" class="btn small" data-ws-action="group-directory-detail" data-group-id="${esc(detail.directoryId)}">收起详情</button></div><dl><dt>群组标识</dt><dd>${esc(detail.groupJid || detail.id)}</dd><dt>群组说明</dt><dd>${esc(detail.description || detail.data?.description || '未提供')}</dd><dt>成员数量</dt><dd>${detail.directoryCount ?? '未提供'}</dd><dt>发言权限</dt><dd>${esc(detail.directoryPermission)}</dd><dt>采集状态</dt><dd>${esc(detail.directoryCollection)}</dd><dt>目录状态</dt><dd>${esc(detail.status || '未提供')}</dd></dl></aside>` : ''}</div></section><details class="ws-group-details" data-ws-group-monitor-details ${page.monitorDetailsOpen ? 'open' : ''}><summary>群组监测设置与历史事件</summary>${page.monitorDetailsOpen ? renderGroupMonitorCard() : '<p class="ws-muted">展开后查看现有监测席位、绑定群组和真实事件。</p>'}</details>`;
+    return `<section class="ws-workspace-card ws-group-directory zk-surface"><div class="ws-card-heading"><div><strong>群组目录</strong><span>${esc(groupDirectorySummary(windowed.allRows))}</span></div>${state.groupMonitor?.archiveError ? `<small>${esc(state.groupMonitor.archiveError)}</small>` : ''}</div><div class="ws-group-filters ws-workspace-list-controls"><label>搜索群组<input id="wsWorkspaceSearch-groups" data-ws-workspace-search="groups" type="search" maxlength="160" value="${esc(page.filter)}" placeholder="群名称或群组标识"></label><label>所属账号<select data-ws-group-filter="accountId">${(state.accounts || []).map(account => `<option value="${esc(account.id)}" ${String(account.id) === String(state.activeAccountId) ? 'selected' : ''}>${esc(accountDisplayName(account))}</option>`).join('')}</select></label><label>成员数量<select data-ws-group-filter="memberCount">${options([['all', '全部'], ['known', '已提供'], ['unknown', '未提供'], ['under50', '50 人以下'], ['50to199', '50–199 人'], ['200plus', '200 人及以上']], filters.memberCount)}</select></label><label>发言权限<select data-ws-group-filter="permission">${options(actualOptions('directoryPermission'), filters.permission)}</select></label><label>采集状态<select data-ws-group-filter="collection">${options(actualOptions('directoryCollection'), filters.collection)}</select></label></div>${renderCollectorControls()}${unreadGroupControl()}${progressNote ? `<p class="ws-muted" role="status">${esc(progressNote)}</p>` : ''}<div class="ws-group-batch-bar"><span role="status">已选择 <strong>${selectedCount}</strong> 个群组 · 匹配 ${windowed.matched} 条</span><div><button type="button" class="btn small" data-ws-action="group-monitor-scan" ${state.wsStatus === '已连接' || collectionReady('groupMonitoring') ? '' : 'disabled'}>读取现场群组</button><button type="button" class="btn small primary" data-ws-action="group-monitor-add-directory" ${!selectedCount || state.groupMonitor?.busy ? 'disabled' : ''}>监测所选群组</button><button type="button" class="btn small" data-ws-action="group-directory-selected" ${selectedCount || page.showSelectedOnly ? '' : 'disabled'}>${page.showSelectedOnly ? '显示全部群组' : '仅查看已选'}</button><button type="button" class="btn small" data-ws-action="group-directory-copy" ${selectedCount ? '' : 'disabled'}>复制所选标识</button><button type="button" class="btn small" data-ws-action="group-directory-clear" ${selectedCount ? '' : 'disabled'}>清除选择</button></div></div><div class="ws-group-directory-body ${detail ? 'has-detail' : ''}"><div class="ws-group-directory-main"><div class="ws-group-table-wrap"><table class="ws-group-table"><thead><tr><th scope="col"><input type="checkbox" class="ws-group-selection" data-ws-group-select-all aria-label="选择当前页全部群组" ${allVisibleSelected ? 'checked' : ''} ${windowed.rows.length ? '' : 'disabled'}></th><th scope="col">群组名称</th><th scope="col">所属账号</th><th scope="col">成员数量</th><th scope="col">发言权限</th><th scope="col">采集状态</th><th scope="col">最近记录</th><th scope="col">详情</th></tr></thead><tbody>${windowed.rows.length ? windowed.rows.map(item => `<tr class="${windowed.selected.has(item.directoryId) ? 'is-selected' : ''}"><td><input type="checkbox" class="ws-group-selection" data-ws-group-select="${esc(item.directoryId)}" aria-label="选择 ${esc(item.groupName || item.name || item.groupJid)}" ${windowed.selected.has(item.directoryId) ? 'checked' : ''}></td><td><strong>${esc(item.groupName || item.name || '未命名群组')}</strong><small>${esc(item.directorySource)} · ${esc(item.groupJid || item.id)}</small></td><td>${esc(accountDisplayName(activeAccount()) || state.activeAccountId)}</td><td>${item.directoryCount == null ? '未提供' : item.directoryCount.toLocaleString()}</td><td>${esc(item.directoryPermission)}</td><td><span class="ws-group-state">${esc(item.directoryCollection)}</span><small>${item.monitorTarget?.enabled ? '监测已配置' : item.monitorTarget ? '监测已停用' : '未加入监测'}</small></td><td>${esc(displayTime(item.liveObservedAt || item.lastSyncAt || item.lastSeenAt || item.updatedAt) || '未提供')}</td><td><button type="button" class="btn small" data-ws-action="group-directory-detail" data-group-id="${esc(item.directoryId)}" aria-expanded="${page.detailGroupId === item.directoryId ? 'true' : 'false'}">${page.detailGroupId === item.directoryId ? '收起' : '查看'}</button></td></tr>`).join('') : `<tr><td colspan="8"><div class="ws-empty">${windowed.allRows.length ? '当前筛选条件下没有群组。' : '当前尚未读取到群组。登录 WhatsApp 后可读取前台可见群；独立采集就绪后可读取更多群组。'}</div></td></tr>`}</tbody></table></div><div class="ws-workspace-list-pagination"><span>每页 40 条 · 共 ${windowed.matched} 条</span><button type="button" class="btn small" data-ws-action="workspace-list-page" data-list-view="groups" data-page-delta="-1" ${windowed.page <= 1 ? 'disabled' : ''}>上一页</button><span>${windowed.page} / ${windowed.pageCount}</span><button type="button" class="btn small" data-ws-action="workspace-list-page" data-list-view="groups" data-page-delta="1" ${windowed.page >= windowed.pageCount ? 'disabled' : ''}>下一页</button></div></div>${detail ? `<aside class="ws-group-detail-panel" aria-label="群组详情"><div class="ws-card-heading"><strong>${esc(detail.groupName || detail.name || detail.groupJid)}</strong><button type="button" class="btn small" data-ws-action="group-directory-detail" data-group-id="${esc(detail.directoryId)}">收起详情</button></div><dl><dt>群组标识</dt><dd>${esc(detail.groupJid || detail.id)}</dd><dt>群组说明</dt><dd>${esc(detail.description || detail.data?.description || '未提供')}</dd><dt>成员数量</dt><dd>${detail.directoryCount ?? '未提供'}</dd><dt>发言权限</dt><dd>${esc(detail.directoryPermission)}</dd><dt>采集状态</dt><dd>${esc(detail.directoryCollection)}</dd><dt>目录状态</dt><dd>${esc(detail.status || '未提供')}</dd></dl></aside>` : ''}</div></section><details class="ws-group-details" data-ws-group-monitor-details ${page.monitorDetailsOpen ? 'open' : ''}><summary>群组监测设置与历史事件</summary>${page.monitorDetailsOpen ? renderGroupMonitorCard() : '<p class="ws-muted">展开后查看现有监测席位、绑定群组和真实事件。</p>'}</details>`;
   }
   function applyGroupDirectoryControl(target) {
     if (state.wsWorkspaceView !== 'groups') return false;
@@ -4314,13 +4370,14 @@
         selecting:'正在切换', selected:'已确认 WhatsApp 群组列表', 'selection-unconfirmed':'WhatsApp 尚未确认已选群组筛选'
       };
       const menuReasons = {
-        'verified-read-group':'已确认一条已读群聊，等待核验群号', unread:'会话未读，已跳过', 'read-state-unknown':'菜单未确认已读状态',
+        'verified-group':'已确认群聊类型，等待核验群号', 'verified-read-group':'已确认一条已读群聊，等待核验群号', unread:'菜单显示该会话未读', 'read-state-unknown':'菜单未确认已读状态',
         'type-unconfirmed':'菜单未确认群组类型', 'menu-unavailable':'未找到可读的行菜单', 'menu-unowned':'无法确定菜单对应哪一行',
         'row-changed':'列表行已变化', 'navigation-busy':'采集窗口正处理其他操作'
       };
       const modes = directory.probeControls;
       if (modes && Object.hasOwn(filterReasons, modes.filter)) diagnosticLines.push('后台群组筛选 · ' + filterReasons[modes.filter]);
       if (modes && Object.hasOwn(menuReasons, modes.menu)) diagnosticLines.push('后台行菜单 · ' + menuReasons[modes.menu]);
+      if (directory.collectorSkipped?.groupNoticeRows > 0) diagnosticLines.push(`后台群通知预览 · ${directory.collectorSkipped.groupNoticeRows} 行，其中 ${directory.collectorSkipped.verifiedNoticeRows || 0} 行含群通知标记`);
       if (directory.collectorError) diagnosticLines.push('后台读取失败 · ' + directory.collectorError);
       for (const [key, label] of [['skippedUnread','未读'], ['skippedReadUnknown','已读状态无法确认'], ['skippedTypeUnknown','会话类型无法确认']]) {
         const skipped = directory.collectorSkipped?.[key];
@@ -6557,6 +6614,7 @@
       updateDedicatedLiveDirectoryDom();
       return;
     }
+    if (action === 'toggle-open-unread-groups') return changeUnreadGroupPolicy();
     if (action === 'verify-open-group') return verifyOpenedGroup();
     if (action === 'group-monitor-scan') return scanGroupMonitorTargets();
     if (action === 'group-monitor-add-target') return addGroupMonitorTarget();

@@ -70,6 +70,7 @@ public static class WsLiveDirectory
             directoryDiagnostics = new { listPresent = Flag(diag, "listPresent"), renderedRows = Number(diag, "renderedRows"),
                 stableRows = Number(diag, "stableRows"), unresolvedRows = Number(diag, "unresolvedRows"), confirmedOpen = Flag(diag, "confirmedOpen"),
                 skippedUnread = Number(diag, "skippedUnread"), skippedReadUnknown = Number(diag, "skippedReadUnknown"), skippedTypeUnknown = Number(diag, "skippedTypeUnknown"),
+                groupNoticeRows = Number(diag, "groupNoticeRows"), verifiedNoticeRows = Number(diag, "verifiedNoticeRows"),
                 groupFilterStatus = Text(diag, "groupFilterStatus", 24), menuProbeStatus = Text(diag, "menuProbeStatus", 24) };
         return JsonSerializer.SerializeToElement(new { supported = true, accountId = purpose.AccountId, workspaceMode = purpose.WorkspaceMode, activeGroup, openIdentityStatus, directoryDiagnostics,
             sessionGeneration = generation, collectorEpoch = epoch, source, collectorOnly = source == "collector",

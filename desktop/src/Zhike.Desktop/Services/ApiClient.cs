@@ -12,7 +12,12 @@ public sealed record BusinessRecordDto(string Id, string CustomerId, string Reco
 public sealed record ImportPreviewRequest(IReadOnlyList<string> Headers, IReadOnlyList<IReadOnlyList<string>> Rows, string Context = "", string SourceName = "", string Target = "");
 public sealed record ImportPreviewRowDto(int RowNumber, JsonElement Raw, JsonElement Classified, double Confidence, IReadOnlyList<string> Conflicts);
 public sealed record ImportPreviewResponse(string Id, string SourceHash, IReadOnlyList<ImportPreviewRowDto> Rows, string DuplicateOf = "");
-public sealed record WsAccountDto(string Id, string DisplayName, string Status, DateTimeOffset? LastSeen, string? RuntimeStatus = null, DateTimeOffset? UpdatedAt = null, string? LastKnownStatus = null, string WorkspaceMode = "ordinary");
+public sealed record WsAccountSettingsDto(bool OpenUnreadGroups = false);
+public sealed record WsAccountDto(string Id, string DisplayName, string Status, DateTimeOffset? LastSeen, string? RuntimeStatus = null, DateTimeOffset? UpdatedAt = null, string? LastKnownStatus = null, string WorkspaceMode = "ordinary", WsAccountSettingsDto? Settings = null)
+{
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool OpenUnreadGroups => WorkspaceMode == "dedicated" && Settings?.OpenUnreadGroups == true;
+}
 public sealed record FollowupDto(string Id, string CustomerId, string ReasonKey, string Title, string Detail, DateTimeOffset? DueAt, string Priority, string State);
 public sealed record AiJobDto(string Id, string JobType, string State, int Attempts, DateTimeOffset AvailableAt, string LastError, DateTimeOffset UpdatedAt);
 public sealed record AiPipelineLeaseDto(string ScopeKey, string LeaseId, string OwnerId, long FencingToken);

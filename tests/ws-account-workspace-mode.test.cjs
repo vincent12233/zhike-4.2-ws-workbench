@@ -8,7 +8,7 @@ const os = require('node:os');
 const path = require('node:path');
 const net = require('node:net');
 const { spawn } = require('node:child_process');
-const { randomBytes } = require('node:crypto');
+const { randomBytes, randomUUID } = require('node:crypto');
 const { DatabaseSync } = require('node:sqlite');
 const { runMigrations, hashMigration } = require('../resources/app/migration-runner.cjs');
 const { observeSidecarStartup, requestWithStartupDiagnostics } = require('./helpers/sidecar-startup-observer.cjs');
@@ -45,9 +45,9 @@ async function start(directory) {
   children.add(child);
   const closed = new Promise(resolve => child.once('close', () => { children.delete(child); resolve(); }));
   const observation = observeSidecarStartup(child, { secrets: [token] });
-  const request = async (route, method = 'GET', body) => {
+  const request = async (route, method = 'GET', body, headers = {}) => {
     const response = await fetch(origin + route, { method, signal: AbortSignal.timeout(5000),
-      headers: { origin, 'x-zhike-api-token': token, 'content-type': 'application/json' },
+      headers: { origin, 'x-zhike-api-token': token, 'content-type': 'application/json', ...headers },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
     return { status: response.status, value: await response.json() };
   };
@@ -59,12 +59,16 @@ async function start(directory) {
   let source, restored;
   try {
     fs.mkdirSync(sourceRoot);
-    const legacyMigrations = path.join(root, 'schema-27');
-    fs.mkdirSync(legacyMigrations);
     const manifest = JSON.parse(fs.readFileSync(path.join(migrations, 'manifest.json'), 'utf8'));
-    const oldManifest = { ...manifest, supportedSchemaVersion: 27, migrations: manifest.migrations.filter(entry => entry.version <= 27) };
-    fs.writeFileSync(path.join(legacyMigrations, 'manifest.json'), JSON.stringify(oldManifest));
-    for (const entry of oldManifest.migrations) fs.copyFileSync(path.join(migrations, entry.file), path.join(legacyMigrations, entry.file));
+    function migrationDirectoryThrough(version) {
+      const dir = path.join(root, 'schema-' + version);
+      fs.mkdirSync(dir);
+      const partial = { ...manifest, supportedSchemaVersion: version, migrations: manifest.migrations.filter(entry => entry.version <= version) };
+      fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify(partial));
+      for (const entry of partial.migrations) fs.copyFileSync(path.join(migrations, entry.file), path.join(dir, entry.file));
+      return dir;
+    }
+    const legacyMigrations = migrationDirectoryThrough(27);
 
     await check('027 upgrade defaults old accounts to ordinary and preserves prior checksums and CRM', () => {
       const db = openData(sourceRoot);
@@ -87,6 +91,25 @@ async function start(directory) {
       } finally { db.close(); }
     });
 
+    await check('032 upgrade preserves explicit unread-group choices and legacy metadata', () => {
+      const dbPath = path.join(root, 'upgrade32.sqlite');
+      const db = new DatabaseSync(dbPath);
+      try {
+        runMigrations({ db, dbPath, migrationDir: migrationDirectoryThrough(32), backup: false });
+        for (const [id, metadata] of [['off', '{"openUnreadGroups":false,"other":42}'], ['on', '{"openUnreadGroups":true}'], ['unset', '{}'], ['invalid', 'invalid-json']]) {
+          db.prepare("INSERT INTO ws_accounts(id,workspace_mode,created_at,updated_at) VALUES(?,'dedicated','','')").run(id);
+          db.prepare("INSERT INTO ws_account_settings(account_id,settings_json,created_at,updated_at) VALUES(?,?,'','')").run(id, metadata);
+        }
+        runMigrations({ db, dbPath, migrationDir: migrations, backup: false });
+        const read = db.prepare('SELECT open_unread_groups, settings_json FROM ws_account_settings WHERE account_id=?');
+        assert.equal(read.get('off').open_unread_groups, 0);
+        assert.equal(read.get('off').settings_json, '{"openUnreadGroups":false,"other":42}');
+        assert.equal(read.get('on').open_unread_groups, 1);
+        assert.equal(read.get('unset').open_unread_groups, null);
+        assert.equal(read.get('invalid').settings_json, 'invalid-json');
+        assert.equal(read.get('invalid').open_unread_groups, null);
+      } finally { db.close(); }
+    });
     source = await start(sourceRoot);
     const crmBefore = snapshotCustomers(sourceRoot);
     const expected = new Map([['default', 'ordinary'], ['legacy', 'ordinary']]);
@@ -103,8 +126,26 @@ async function start(directory) {
       assert.equal(listed.value.accounts.length, 50);
       for (const account of listed.value.accounts) {
         assert.equal(account.workspaceMode, expected.get(account.id));
+        assert.equal(account.settings.openUnreadGroups, account.workspaceMode === 'dedicated');
         assert.equal(account.status, '未连接', 'registration is not an online session');
       }
+    });
+
+    await check('dedicated unread identity check is account-scoped, reversible and independent of AI', async () => {
+      const set = async (id, settings) => source.request('/api/ws/accounts/' + id, 'PATCH', { settings });
+      assert.equal((await set('role-1', { openUnreadGroups: false, aiEnabled: false })).value.account.settings.openUnreadGroups, false);
+      assert.equal((await set('role-1', { autoCollectionEnabled: true })).value.account.settings.openUnreadGroups, false);
+      const enabled = await set('role-1', { openUnreadGroups: true });
+      assert.equal(enabled.value.account.settings.openUnreadGroups, true);
+      assert.equal(enabled.value.account.settings.aiEnabled, false);
+      for (const value of ['false', 1, null]) {
+        const invalid = await set('role-1', { openUnreadGroups: value });
+        assert.equal(invalid.status, 400);
+        assert.equal(invalid.value.code, 'INVALID_OPEN_UNREAD_GROUPS');
+      }
+      assert.equal((await set('role-2', { openUnreadGroups: true })).value.account.settings.openUnreadGroups, false);
+      assert.equal((await set('role-1', { openUnreadGroups: false })).value.account.settings.openUnreadGroups, false);
+      assert.equal((await source.request('/api/ws/accounts/role-3')).value.account.settings.openUnreadGroups, true);
     });
 
     await check('mode validation rejects VIP, coercions and conflicting same-ID registration', async () => {
@@ -161,7 +202,11 @@ async function start(directory) {
     await check('process restart preserves all 50 roles while resetting stale runtime status', async () => {
       const listed = (await source.request('/api/ws/accounts')).value.accounts;
       assert.equal(listed.length, 50);
-      for (const account of listed) { assert.equal(account.workspaceMode, expected.get(account.id)); assert.equal(account.status, '未连接'); }
+      for (const account of listed) {
+        assert.equal(account.workspaceMode, expected.get(account.id));
+        assert.equal(account.status, '未连接');
+        assert.equal(account.settings.openUnreadGroups, account.workspaceMode === 'dedicated' && account.id !== 'role-1');
+      }
       assert.equal(snapshotCustomers(sourceRoot), crmBefore);
     });
 
@@ -183,9 +228,24 @@ async function start(directory) {
 
     restored = await start(restoredRoot);
     const restoredCrm = snapshotCustomers(restoredRoot);
+    await check('atomic restore carries opt-out to a new account and respects the choice of an existing account', async () => {
+      assert.equal((await restored.request('/api/ws/accounts', 'POST', {
+        id: 'role-3', workspaceMode: 'dedicated', settings: { openUnreadGroups: false },
+      })).status, 201);
+      const { version } = (await restored.request('/api/state/version')).value;
+      const accounts = ['role-1','role-3'].map(accountId => ({ ...exports.get(accountId), accountId }));
+      assert.equal(accounts[0].accounts[0].settings.openUnreadGroups, false);
+      assert.equal(accounts[1].accounts[0].settings.openUnreadGroups, true);
+      const result = await restored.request('/api/workspace/restore', 'POST', {
+        operationId: randomUUID(), accounts, crm: { customers: [] },
+      }, { 'x-state-version': version });
+      assert.equal(result.status, 200, JSON.stringify(result.value));
+      for (const account of accounts)
+        assert.equal((await restored.request('/api/ws/accounts/' + account.accountId)).value.account.settings.openUnreadGroups, false);
+    });
     await check('clean workspace restore recreates all 50 roles using the exported per-account metadata', async () => {
       for (const [id, data] of exports) {
-        if (id !== 'default') assert.equal((await restored.request('/api/ws/accounts', 'POST', { id, displayName: id, workspaceMode: data.accounts[0].workspaceMode })).status, 201);
+        if (!['default', 'role-1', 'role-3'].includes(id)) assert.equal((await restored.request('/api/ws/accounts', 'POST', { id, displayName: id, workspaceMode: data.accounts[0].workspaceMode })).status, 201);
         const imported = await restored.request('/api/ws/import', 'POST', { ...data, accountId: id });
         assert.equal(imported.status, 200, JSON.stringify(imported.value));
       }
@@ -216,7 +276,7 @@ async function start(directory) {
       assert.equal(snapshotCustomers(restoredRoot), restoredCrm);
     });
 
-    console.log(JSON.stringify({ suite: 'ws-account-workspace-mode', passed, registeredAccounts: 50, realOnlineSessions: 0, syntheticRootsOnly: true, priorSchema: 27, schema: 28 }));
+    console.log(JSON.stringify({ suite: 'ws-account-workspace-mode', passed, registeredAccounts: 50, realOnlineSessions: 0, syntheticRootsOnly: true, priorSchemas: [27, 32], schema: manifest.supportedSchemaVersion }));
   } finally {
     if (source) await source.stop();
     if (restored) await restored.stop();

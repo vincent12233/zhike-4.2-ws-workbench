@@ -67,7 +67,7 @@ function fixture(nativeReply, options = {}) {
   assert.match(source, boot);
   const replyToFetch = options.fetchReply;
   const exposed = 'state,collectionCapability,collectionReady,rememberCollectionCapability,collectorAction,renderCollectorControls,updateAccountStatus,wsBridge,restartBackgroundPolling,scheduleAiQueuePump,wsBackgroundStatus,renderCollectionCard,resetAccountPresentation,loadAccounts,updateCollectionRun,scanGroupMonitorTargets,groupMonitorStatusLabel,requestAccountPipelineRefresh';
-  const live = 'refreshForegroundDirectory,workspaceLiveDirectoryRows,renderConversationList,receiveWorkspaceLiveEvent,refreshCollectionSummary,collectAllReadConversations,captureVisibleMessages,renderVisibleForegroundChat,setStatus,recordLiveIngestion,recordLiveHistory,liveCollectionRuntimeRows,renderVisibleContactDirectory,liveDirectoryGapMessage,renderGroupVerification,verifyOpenedGroup';
+  const live = 'refreshForegroundDirectory,workspaceLiveDirectoryRows,renderConversationList,receiveWorkspaceLiveEvent,refreshCollectionSummary,collectAllReadConversations,captureVisibleMessages,renderVisibleForegroundChat,setStatus,recordLiveIngestion,recordLiveHistory,liveCollectionRuntimeRows,renderVisibleContactDirectory,liveDirectoryGapMessage,renderGroupVerification,groupDiscoveryNote,unreadGroupControl,changeUnreadGroupPolicy,verifyOpenedGroup';
   vm.runInNewContext(source.replace(boot, `  globalThis.independentCollector={${exposed},${live}};\n})();`), sandbox, { filename: 'ws-independent-collector-real-module.js' });
   const api = sandbox.independentCollector;
   api.state.accounts = [{ id: 'a', displayName: '合成账号 A', status: '已连接' }, { id: 'b', displayName: '合成账号 B', status: '未连接' }];
@@ -174,10 +174,44 @@ test('dedicated verification distinguishes no receipt, missing structure, confli
   assert.doesNotMatch(diagnostics, /至少 0 行|至少 6 行/);
   f.receiveWorkspaceLiveEvent({ ...chunk, scanId: 2, directoryDiagnostics: { skippedUnread: 0 } });
   assert.doesNotMatch(f.renderGroupVerification('chat'), /后台跳过/);
+  f.receiveWorkspaceLiveEvent({ ...chunk, scanId: 2, chunkIndex: 1, finished: true, complete: false, unresolvedRowCount: 2,
+    directoryDiagnostics: { menuProbeStatus: 'verified-group' } });
+  assert.match(f.groupDiscoveryNote(), /本轮读取已结束.*尚未取得可靠的群号/);
+  assert.match(f.renderGroupVerification('chat'), /已确认群聊类型/);
+  f.receiveWorkspaceLiveEvent({ ...chunk, scanId: 3, chunkIndex: 1, finished: true, complete: true });
+  assert.doesNotMatch(f.groupDiscoveryNote(), /本轮读取已结束/);
+  f.receiveWorkspaceLiveEvent({ ...chunk, scanId: 3 });
+  assert.match(f.groupDiscoveryNote(), /暂未发现群组，正在等待新数据/);
   f.setStatus('未连接');
   assert.equal(f.workspaceLiveDirectoryRows('dedicated').length, 0);
   assert.doesNotMatch(f.renderGroupVerification('chat'), /已核验群聊/);
   assert.equal(f.requests.length, 0);
+});
+
+test('dedicated unread policy persists to the same account and rebinds only a running collector', async () => {
+  const f = fixture(request => ({ accountId: request.accountId, collectionCapability: capability(request.action === 'pause-collector' ? 'paused' : 'running') }), {
+    fetchReply: (_url, options) => ({ account: { id: 'a', workspaceMode: 'dedicated', settings: JSON.parse(options.body).settings } })
+  });
+  f.state.workspaceMode = 'dedicated';
+  f.state.accounts[0].workspaceMode = 'dedicated';
+  f.state.accounts[0].openUnreadGroups = true;
+  f.publish('running');
+  assert.match(f.unreadGroupControl(), /checked/);
+  await f.changeUnreadGroupPolicy();
+  assert.equal(f.state.busy.collector, false);
+  assert.equal(f.state.accounts[0].openUnreadGroups, false);
+  assert.deepEqual(JSON.parse(f.requests[0].body), { settings:{openUnreadGroups:false}, accountId:'a' });
+  assert.deepEqual(f.events.slice(0, 3), ['native:pause-collector','http:PATCH','native:resume-collector']);
+  f.publish('paused');
+  const before = f.nativeCalls.length;
+  await f.changeUnreadGroupPolicy();
+  assert.equal(f.state.accounts[0].openUnreadGroups, true);
+  assert.equal(f.nativeCalls.length, before);
+  f.state.workspaceMode = 'ordinary';
+  assert.equal(f.unreadGroupControl(), '');
+  const requests = f.requests.length;
+  await f.changeUnreadGroupPolicy();
+  assert.equal(f.requests.length, requests);
 });
 
 test('unidentified rows remain a gap and visible contact picker identities never become chats or recipients', async () => {
