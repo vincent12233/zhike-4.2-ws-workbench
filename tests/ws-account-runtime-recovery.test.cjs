@@ -17,8 +17,9 @@ async function run() {
       assert.equal(result.status, 200);
       return (await result.json()).account.settings;
     }
-    const original = { translationEnabled: false, aiEnabled: false, autoCollectionEnabled: true };
-    assert.deepEqual(await patchSettings({ settings: original }), original);
+    const requested = { translationEnabled: false, aiEnabled: false, autoCollectionEnabled: true };
+    const original = { ...requested, openUnreadGroups: false };
+    assert.deepEqual(await patchSettings({ settings: requested }), original);
     assert.deepEqual(await patchSettings({ translationEnabled: true }), { ...original, translationEnabled: true });
     assert.deepEqual(await patchSettings({ settings: { translationEnabled: false } }), original);
     assert.deepEqual(await patchSettings({ aiEnabled: true }), { ...original, aiEnabled: true });
@@ -41,6 +42,7 @@ async function run() {
     assert.equal(account.status, '未连接', 'runtime status must not falsely claim a stale WebView is online');
     assert.equal(account.lastKnownStatus, '已连接', 'restart must retain the last observed status for reconnect guidance');
     assert.ok(account.lastSeen, 'restart must retain the last successful connection time');
+    assert.equal(account.settings.openUnreadGroups, false, 'an ordinary account keeps unread group opening disabled after restart');
   } finally {
     await restarted.stop();
     rmSync(dataDir, { recursive: true, force: true });
