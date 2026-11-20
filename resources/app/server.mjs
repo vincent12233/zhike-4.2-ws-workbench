@@ -1210,6 +1210,7 @@ function wsGroupCatalogUpsert(accountId, item = {}, now = new Date().toISOString
   const status = ['active', 'inactive', 'unknown'].includes(wsText(item.status, 20)) ? wsText(item.status, 20) : 'active';
   const data = item.data && typeof item.data === 'object' && !Array.isArray(item.data) ? item.data : {};
   const existing = db.prepare('SELECT * FROM ws_group_catalog WHERE account_id=? AND group_jid=?').get(accountId, groupJid);
+  if (existing && discoverySource === 'monitor-target' && existing.discovery_source !== 'monitor-target') return existing;
   const id = existing?.id || `wsg-catalog-${randomUUID()}`;
   db.prepare(`INSERT INTO ws_group_catalog(id,account_id,group_jid,group_name,channel_id,participant_count,last_message_at,discovery_source,status,data_json,first_seen_at,last_seen_at,created_at,updated_at)
     VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(account_id,group_jid) DO UPDATE SET
@@ -3267,7 +3268,7 @@ const server = createServer(async (req, res) => {
       const rows = status && ['active', 'inactive', 'unknown'].includes(status)
         ? db.prepare('SELECT * FROM ws_group_catalog WHERE account_id=? AND status=? ORDER BY last_seen_at DESC, group_name COLLATE NOCASE, group_jid LIMIT ?').all(accountId, status, limit)
         : db.prepare('SELECT * FROM ws_group_catalog WHERE account_id=? ORDER BY last_seen_at DESC, group_name COLLATE NOCASE, group_jid LIMIT ?').all(accountId, limit);
-      const targets = new Map(db.prepare('SELECT group_jid,enabled,id FROM ws_group_monitor_targets WHERE account_id=?').all(accountId).map(row => [row.group_jid, row]));
+      const targets = new Map(db.prepare('SELECT group_jid,enabled,id FROM ws_group_monitor_targets WHERE account_id=? ORDER BY enabled,updated_at,id').all(accountId).map(row => [row.group_jid, row]));
       return json(res, 200, { accountId, groups: rows.map(row => ({ ...wsGroupCatalogPayload(row), monitorTarget: targets.get(row.group_jid) ? { id: targets.get(row.group_jid).id, enabled: Boolean(targets.get(row.group_jid).enabled) } : null })) });
     }
     if (url.pathname === '/api/ws/group-membership-events') {
@@ -3297,6 +3298,7 @@ const server = createServer(async (req, res) => {
           db.prepare("UPDATE ws_group_monitor_profiles SET enabled=0,status='paused',updated_at=? WHERE id=?").run(now, existing.id);
           return json(res, 200, { profile: wsGroupMonitorProfilePayload(db.prepare('SELECT * FROM ws_group_monitor_profiles WHERE id=?').get(existing.id)) });
         }
+        if (existing && body.ifAbsent === true) return json(res, 200, { profile: wsGroupMonitorProfilePayload(existing) });
         const id = existing?.id || `wsg-profile-${randomUUID()}`;
         db.exec('BEGIN IMMEDIATE');
         try {
@@ -3339,7 +3341,8 @@ const server = createServer(async (req, res) => {
         if (!wsText(body.accountId, 120)) return json(res, 400, { error: '群组监控请求必须提供 accountId。' });
         if (!wsGroupMonitorAccountScoped(profile, body.accountId)) return json(res, 404, { error: '固定群组监控席位不存在。' });
         wsRequireGroupMonitorOperation(profile.account_id);
-        const targets = Array.isArray(body.targets) ? body.targets.slice(0, 1000) : [];
+        const targets = Array.isArray(body.targets) ? body.targets : [];
+        if (targets.length > 1000) return json(res, 400, { error: '每次最多保存 1000 个监测目标。' });
         const now = new Date().toISOString();
         db.exec('BEGIN IMMEDIATE');
         try {
@@ -3376,6 +3379,9 @@ const server = createServer(async (req, res) => {
               .run(id, profileId, profile.account_id, groupJid, groupName, sourceId, channelId, item.vipOnly === false ? 0 : 1, enabled, '', '', JSON.stringify(metadata), now, now);
             wsGroupCatalogUpsert(profile.account_id, { ...item, groupJid, groupName, sourceId, channelId, discoverySource: 'monitor-target' }, now);
           }
+          if (targets.some(item => item?.enabled === true) && db.prepare('SELECT COUNT(*) AS count FROM ws_group_monitor_targets WHERE profile_id=? AND enabled=1').get(profileId).count > 500) {
+            throw Object.assign(new Error('每个席位最多可同时监测 500 个群组，请先停用部分目标。'), { code: 'GROUP_MONITOR_TARGET_LIMIT', status: 409 });
+          }
           db.exec('COMMIT');
         } catch (error) { db.exec('ROLLBACK'); throw error; }
         return json(res, 200, { targets: db.prepare('SELECT * FROM ws_group_monitor_targets WHERE profile_id=? ORDER BY enabled DESC, group_name COLLATE NOCASE').all(profileId).map(wsGroupMonitorTargetPayload) });
@@ -3390,7 +3396,7 @@ const server = createServer(async (req, res) => {
         wsRequireGroupMonitorOperation(profile.account_id, enabled ? 'configure-group-monitor' : 'disable-group-monitor');
         const now = new Date().toISOString();
         if (enabled) {
-          const currentTarget = db.prepare('SELECT account_id,group_jid FROM ws_group_monitor_targets WHERE id=? AND profile_id=?').get(targetId, profileId);
+          const currentTarget = db.prepare('SELECT account_id,group_jid,enabled FROM ws_group_monitor_targets WHERE id=? AND profile_id=?').get(targetId, profileId);
           if (!currentTarget) return json(res, 404, { error: '群组监控目标不存在。' });
           const conflict = db.prepare(`SELECT id,profile_id FROM ws_group_monitor_targets
             WHERE account_id=? AND group_jid=? AND enabled=1 AND id<>? LIMIT 1`)
@@ -3400,6 +3406,9 @@ const server = createServer(async (req, res) => {
             code: 'GROUP_TARGET_CONFLICT',
             conflicts: [{ accountId: currentTarget.account_id, groupJid: currentTarget.group_jid, targetIds: [String(conflict.id)], profileIds: [String(conflict.profile_id)] }],
           });
+          if (!currentTarget.enabled && db.prepare('SELECT COUNT(*) AS count FROM ws_group_monitor_targets WHERE profile_id=? AND enabled=1').get(profileId).count >= 500) {
+            return json(res, 409, { code: 'GROUP_MONITOR_TARGET_LIMIT', error: '每个席位最多可同时监测 500 个群组，请先停用部分目标。' });
+          }
         }
         const changed = db.prepare('UPDATE ws_group_monitor_targets SET enabled=?,updated_at=? WHERE id=? AND profile_id=?').run(enabled, now, targetId, profileId);
         if (!changed.changes) return json(res, 404, { error: '群组监控目标不存在。' });

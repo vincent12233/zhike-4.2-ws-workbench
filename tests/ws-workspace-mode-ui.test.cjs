@@ -12,24 +12,29 @@ assert.match(source, boot);
 function deferred() { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; }
 function fixture(options = {}) {
   const calls = [], requests = [], storage = new Map(Object.entries(options.storage || {}));
-  const target = { innerHTML: '' }, crumb = { textContent: '' };
+  const events = {};
+  const target = { innerHTML: '', addEventListener(type, handler) { events[type] = handler; } }, crumb = { textContent: '' };
+  const browserHost = { getBoundingClientRect: () => ({ left: 270, top: 190, width: 780, height: 480 }) };
   const classList = { add() {}, remove() {}, toggle() {} };
   const host = { state: { view: 'home', settings: {}, customers: [], activities: [] }, toast() {} };
   const context = {
-    document: { querySelector: selector => selector === '#viewContainer' ? target : selector === '#crumbCurrent' ? crumb : null,
+    document: { querySelector: selector => selector === '#viewContainer' ? target : selector === '#crumbCurrent' ? crumb
+      : selector === '#wsBrowserHost' && target.innerHTML.includes('id="wsBrowserHost"') ? browserHost : null,
       querySelectorAll: () => [], getElementById: () => null, addEventListener() {}, activeElement: null,
       documentElement: { dataset: {} }, body: { classList } },
-    window: { ZhikeWsCore: core, __zhikeRegistryHost: host, innerWidth: 1440, innerHeight: 900, location: { origin: 'http://localhost' },
+    window: { ZhikeWsCore: core, __zhikeRegistryHost: host, innerWidth: 1440, innerHeight: 900, location: { origin: 'http://localhost' }, addEventListener() {},
       zhikeDesktop: { wsAccounts: async payload => { calls.push(['accounts', payload]); return options.accounts ? options.accounts(payload) : { accounts: options.rows || [] }; },
         ws: async payload => { calls.push(['ws', payload]); return options.ws ? options.ws(payload) : { accountId: payload.accountId, status: '未连接' }; } } },
     localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) },
     requestAnimationFrame: () => 0, setTimeout: () => 0, clearTimeout() {}, setInterval: () => 0, clearInterval() {},
+    getComputedStyle: () => ({ display: 'block', visibility: 'visible' }), MutationObserver: class { observe() {} },
     URL, URLSearchParams, AbortController, DOMException, console, confirm: () => true,
     fetch: async (url, init) => { requests.push([url, init]); const result = await options.request?.(url, init); return { ok: true, json: async () => result || {} }; },
   };
   vm.createContext(context);
-  vm.runInContext(source.replace(boot, `  globalThis.ui = { state, activate, deactivate, loadAccounts, switchAccount, createAccount, createWsAccountRecord, ensureWsBackupAccount, connectionAction, syncConversationListPreviews, rememberCollectionCapability, api, wsBridge, render, renderWsWorkspaceNav, renderWsWorkspacePage, refreshWorkspacePage, handleAction, readStoredAccountId, writeStoredAccountId, writeWsWorkspaceState, readWsWorkspaceView, normalizeWorkspaceMode, workspaceViews, resetAccountPresentation, getStartup: () => backgroundStartPromise };\n})();`), context);
-  return { ...context.ui, context, host, calls, requests, storage, target };
+  vm.runInContext(source.replace(boot, `  globalThis.ui = { boot, state, activate, deactivate, loadAccounts, switchAccount, createAccount, createWsAccountRecord, ensureWsBackupAccount, connectionAction, syncConversationListPreviews, rememberCollectionCapability, api, wsBridge, render, renderWsWorkspaceNav, renderWsWorkspacePage, refreshWorkspacePage, handleAction, readStoredAccountId, writeStoredAccountId, writeWsWorkspaceState, readWsWorkspaceView, normalizeWorkspaceMode, workspaceViews, resetAccountPresentation, getStartup: () => backgroundStartPromise };\n})();`), context);
+  if (options.bindEvents) context.ui.boot();
+  return { ...context.ui, context, host, calls, requests, storage, target, events };
 }
 test('main navigation exposes exactly two WS business entrances and retains CRM VIP', () => {
   const html = fs.readFileSync(path.join(repo, 'resources/app/index.html'), 'utf8');
@@ -131,6 +136,81 @@ test('empty workspace refresh is wired to list accounts and does not call platfo
   const f = fixture({ rows: [{ id: 'default' }] }); f.state.workspaceMode = 'dedicated';
   await f.handleAction('refresh-accounts', {});
   assert.equal(f.calls.length, 1); assert.equal(f.calls[0][0], 'accounts'); assert.equal(f.state.activeAccountId, '');
+});
+test('dedicated first-run controls reach creation and open the new account with a visible QR host', async () => {
+  const rows = [{ id: 'default' }];
+  const f = fixture({ bindEvents: true, accounts: payload => {
+    if (payload.action === 'create') { rows.push(payload.account); return { account: payload.account }; }
+    return { accounts: rows };
+  } });
+  f.activate('dedicated'); await f.getStartup();
+  const click = action => {
+    assert.ok(f.target.innerHTML.includes('data-ws-action="' + action + '"'));
+    const shell = { dataset: { wsWorkspaceMode: 'dedicated' } };
+    const button = { dataset: { wsAction: action }, closest: selector =>
+      selector === '[data-ws-action]' ? button : selector === '[data-ws-workspace-mode]' ? shell : null };
+    f.events.click({ target: button, preventDefault() {}, stopImmediatePropagation() {} });
+  };
+  click('create-account');
+  assert.ok(f.state.accountFormOpen);
+  const input = { value: 'First dedicated', matches: selector => selector === '#wsAccountDisplayName', closest: () => true };
+  f.events.input({ target: input });
+  click('submit-account');
+  await new Promise(resolve => setImmediate(resolve));
+  const opens = f.calls.filter(([kind, payload]) => kind === 'ws' && payload.action === 'open').map(([, payload]) => payload);
+  assert.equal(opens.length, 1); assert.equal(opens[0].accountId, rows[1].id);
+  assert.equal(opens[0].bounds.hidden, false); assert.ok(opens[0].bounds.width > 0);
+  assert.equal(f.state.wsWorkspaceView, 'chat'); assert.equal(f.readWsWorkspaceView('dedicated'), 'chat');
+  assert.match(f.target.innerHTML, /First dedicated · 前台登录/);
+});
+test('dedicated navigation opens the selected foreground profile on entry and after hide', async () => {
+  const f = fixture({ bindEvents: true, rows: [{ id: 'default' }, { id: 'd', workspaceMode: 'dedicated' }] });
+  f.activate('dedicated'); await f.getStartup();
+  const opens = () => f.calls.filter(([kind, p]) => kind === 'ws' && p.action === 'open').map(([, p]) => p);
+  assert.equal(opens().length, 0);
+  const enter = { dataset: { wsWorkspaceView: 'chat' }, closest: selector => selector === '[data-ws-workspace-view]' ? enter : null };
+  f.events.click({ target: enter, preventDefault() {}, stopImmediatePropagation() {} });
+  await new Promise(resolve => setImmediate(resolve));
+  f.deactivate(); f.activate('dedicated'); await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(opens().map(p => [p.accountId, p.bounds.hidden]), [['d', false], ['d', false]]);
+});
+test('opening failure preserves the newly registered dedicated account and its retry opens the same profile', async () => {
+  let failed = true, created = 0;
+  const f = fixture({ accounts: p => {
+    if (p.action === 'create') { created++; return { account: p.account }; }
+    return { accounts: [] };
+  },
+    ws: p => ({ accountId: p.accountId, status: failed ? '连接失败' : '等待登录', detail: failed ? 'WebView2 测试失败' : '请扫码' }) });
+  f.activate('dedicated'); await f.getStartup();
+  f.state.accountFormName = 'Retry';
+  await f.createAccount();
+  const id = f.state.accounts[0].id;
+  assert.equal(f.state.activeAccountId, id); assert.equal(f.readStoredAccountId('dedicated'), id);
+  assert.match(f.target.innerHTML, /WebView2 测试失败/); assert.match(f.target.innerHTML, /重试打开 WS/);
+  await f.connectionAction('open'); assert.equal(f.state.wsStatus, '连接失败');
+  failed = false; await f.connectionAction('open');
+  assert.equal(f.state.wsStatus, '等待登录'); assert.equal(f.state.error, ''); assert.equal(created, 1);
+  const opens = f.calls.filter(([kind, p]) => kind === 'ws' && p.action === 'open');
+  assert.equal(opens.length, 3); assert.ok(opens.every(([, p]) => p.accountId === id && !p.bounds.hidden));
+});
+test('selecting a second dedicated account opens its own visible foreground and identifies the separate collector', async () => {
+  const rows = ['first', 'second'].map(id => ({ id, displayName: id, workspaceMode: 'dedicated' }));
+  const capability = { state: 'available', code: 'COLLECTION_INDEPENDENT_SESSION', provider: 'native-independent-session', protocolVersion: 1,
+    backgroundCollection: true, automaticHistory: true, groupMonitoring: true, automaticAi: false, foregroundFallback: false, manualVisibleImport: true, collectorState: 'awaiting-login' };
+  const f = fixture({ rows, ws: p => {
+    if (p.action === 'configure-ws-groups') throw new Error('Synthetic collector unavailable');
+    const reply = { accountId: p.accountId, status: '已连接', collectionCapability: capability };
+    if (['open-collector', 'hide-collector'].includes(p.action)) reply.loginVisible = p.action === 'open-collector';
+    return reply;
+  } });
+  f.activate('dedicated'); await f.getStartup(); f.state.wsWorkspaceView = 'accounts';
+  await f.handleAction('switch-account', { dataset: { accountId: 'second' } });
+  assert.equal(f.state.wsWorkspaceView, 'chat'); assert.equal(f.state.activeAccountId, 'second');
+  const open = f.calls.find(([kind, p]) => kind === 'ws' && p.action === 'open')[1];
+  assert.equal(open.accountId, 'second'); assert.equal(open.bounds.hidden, false);
+  await f.handleAction('open-collector', {}); assert.match(f.target.innerHTML, /second · 独立采集会话/);
+  await f.handleAction('hide-collector', {}); assert.match(f.target.innerHTML, /second · 前台登录/);
+  await f.connectionAction('open'); assert.equal(f.state.wsStatus, '已连接'); assert.equal(f.state.error, '');
 });
 test('old backup without mode preserves existing dedicated role; explicit conflicts and unknown values fail', async () => {
   const f = fixture({ request: () => ({ accounts: [{ id: 'd', workspaceMode: 'dedicated' }] }) });

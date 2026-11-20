@@ -19,7 +19,7 @@ assert.match(ws, /data-ws-action="group-monitor-toggle"/);
 assert.match(ws, /data-ws-action="group-monitor-scan"/);
 assert.match(ws, /data-ws-action="group-monitor-resolve"/);
 assert.match(ws, /async function addGroupMonitorTarget/);
-assert.match(ws, /当前账号尚未同步可扫描的 WS 群组/);
+assert.match(ws, /data-ws-action="group-monitor-add-directory"/);
 assert.match(ws, /从当前 WS 群组/);
 assert.match(ws, /只监测明确添加的 WS 群组/);
 assert.match(ws, /自动登记/);

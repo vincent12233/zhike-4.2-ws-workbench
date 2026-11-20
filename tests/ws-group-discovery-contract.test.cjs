@@ -26,14 +26,9 @@ assert.match(workbench, /state\.wsStatus === '已连接' \|\| result\.status ===
 assert.match(workbench, /const wasConnected = state\.wsStatus === '已连接'[\s\S]*?if \(!wasConnected && payloadAccountId === String\(state\.activeAccountId \|\| 'default'\)\) void loadConversations\(\)/,
   'the asynchronous QR-login connected event must trigger one account-scoped discovery refresh');
 
-// The bulk "扫描已配置群组" action uses the same discovered rows as the
-// picker.  Ordinary fixed-monitor targets are not VIP customer records, so
-// this candidate path must not require a VIP allowlist or silently drop the
-// separate group discovery state.
-const candidates = workbench.match(/function groupMonitorCandidates\(\) \{([\s\S]*?)\n  \}/)?.[1] || '';
-assert.match(candidates, /discoveredGroupConversations/,
-  'bulk group scan must include separately discovered ordinary groups');
-assert.doesNotMatch(candidates, /isAutomaticVipGroupConversation\(row\)|isConfiguredVipGroupIdentifier\(groupJid, groupName\)/,
-  'bulk group scan must not require VIP customer configuration');
+const scan = workbench.match(/async function scanGroupMonitorTargets\(\) \{([\s\S]*?)\n  \}/)?.[1] || '';
+assert.match(scan, /wsBridge\('discover-conversations', context\)/);
+assert.doesNotMatch(scan, /targets\/scan|saveGroupMonitorTargets|ensureGroupMonitorProfile/,
+  'discovering available groups must never enable monitoring or reactivate a paused seat');
 
 console.log('ws-group-discovery-contract: pass');

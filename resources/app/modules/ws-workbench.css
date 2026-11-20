@@ -803,6 +803,7 @@ body.ws-workspace-active .ws-workbench-shell .workspace-chat{gap:8px;padding:16p
 body.ws-workspace-active .ws-workbench-shell .workspace-chat .ws-page-heading{min-height:44px;padding-bottom:0!important;gap:16px}
 body.ws-workspace-active .ws-workbench-shell .workspace-chat .ws-page-heading>div:first-child{display:block;flex:1 1 auto;min-width:0;overflow:hidden}
 body.ws-workspace-active .ws-workbench-shell .workspace-chat .ws-page-heading .page-subtitle{display:none}
+body.ws-workspace-active .ws-workbench-shell .workspace-chat .ws-page-heading .ws-dedicated-login-detail{display:block;max-width:none;margin-top:4px;white-space:normal;overflow-wrap:anywhere}
 body.ws-workspace-active .ws-workbench-shell .workspace-chat .ws-page-heading .heading-actions{flex-wrap:nowrap;max-width:75%;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
 body.ws-workspace-active .ws-workbench-shell .workspace-chat .ws-page-heading .heading-actions>*{flex:none}
 body.ws-workspace-active .ws-workbench-shell .workspace-chat .ws-chat-background-status{display:inline-flex;align-items:center;gap:7px;min-height:28px;padding:4px 10px;border:1px solid var(--ws-line);border-radius:999px;background:var(--ws-panel-raised);color:var(--ws-muted);font-size:var(--ds-font-body,14px);line-height:1.4;white-space:nowrap}

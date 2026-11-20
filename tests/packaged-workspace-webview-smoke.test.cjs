@@ -1,9 +1,8 @@
 'use strict';
 
 // Real WebView2 over manifest-verified packaged HTML/CSS and WS renderers.
-// Only synthetic render state is supplied. Boot, API, native WS and product
-// startup are not executed. The renderer retains its existing file/network
-// allowlist; packaged image bytes are embedded instead of granting new paths.
+// Dedicated workspace clicks run the packaged handlers against synthetic
+// account and native bridges. The renderer keeps its file/network allowlist.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -13,6 +12,7 @@ const { pathToFileURL } = require('node:url');
 const { renderWsWorkbenchFixture } = require('./helpers/ws-workbench-render-fixture.cjs');
 const { runIsolatedWebView, recordNativeVisualAssertions } = require('./helpers/isolated-webview-runner.cjs');
 const { createContrastInspector } = require('./helpers/visual-contrast.cjs');
+const { exerciseDedicatedWorkspace } = require('./helpers/ws-dedicated-interaction.cjs');
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const scenes = Object.freeze([
   { mode: 'ordinary', view: 'accounts' }, { mode: 'ordinary', view: 'chat' },
@@ -84,8 +84,9 @@ function loadBundle(stage) {
   assert.ok(stylesheetCount > 0);
   assert.doesNotMatch(html, /<link[^>]+rel="stylesheet"/i, 'Every packaged stylesheet must be validated');
   html = html.replace(/(<img\b[^>]*\bsrc=")([^"]+)(")/gi, (_, before, reference, after) => before + dataUrl(reference) + after);
-  for (const file of ['modules/ws-workbench-core.js', 'modules/ws-business-pages.js', 'modules/customer-avatar.js', 'modules/ws-group-reading-ui.js', 'modules/ws-group-permissions-ui.js', 'modules/ws-group-drafts-ui.js', 'modules/ws-workbench.js']) resource(file);
-  return { manifest, manifestSha256: sha256(manifestBytes), consumed, stylesheetCount, html,
+  const scripts = ['ws-workbench-core', 'ws-business-pages', 'customer-avatar', 'ws-group-reading-ui',
+    'ws-group-permissions-ui', 'ws-group-drafts-ui', 'ws-workbench'].map(name => resource('modules/' + name + '.js').toString('utf8'));
+  return { manifest, manifestSha256: sha256(manifestBytes), consumed, stylesheetCount, html, scripts,
     resourceRoot: path.join(stage, 'resources/app') };
 }
 
@@ -100,7 +101,7 @@ function buildFixtures(bundle, viewport) {
   });
 }
 
-async function browserSmoke(fixtures) {
+async function browserSmoke(fixtures, scripts) {
   const errors = [];
   addEventListener('error', event => errors.push(event.message || 'resource-load-error'), true);
   addEventListener('unhandledrejection', event => errors.push(String(event.reason)));
@@ -132,17 +133,26 @@ async function browserSmoke(fixtures) {
       blocked: /BLOCKED/.test(content?.textContent || ''),
     });
   }
-  document.getElementById('result').textContent = JSON.stringify([{ viewport: { width: innerWidth, height: innerHeight }, errors, scenes: results,
+  let interactions;
+  try { interactions = await exerciseDedicatedWorkspace(scripts); }
+  catch (error) { errors.push(error.message || String(error)); }
+  document.getElementById('result').textContent = JSON.stringify([{ viewport: { width: innerWidth, height: innerHeight }, errors, scenes: results, interactions,
     stylesheetCount: document.querySelectorAll('style[data-packaged-stylesheet]').length }]);
 }
 
 function fixtureDocument(bundle, fixtures) {
-  const script = createContrastInspector.toString() + '\n(' + browserSmoke.toString() + ')(' + JSON.stringify(fixtures).replace(/</g, '\\u003c') + ');';
-  return bundle.html.replace('</body>', '<pre id="result" hidden></pre><script>' + script + '</script></body>');
+  const args = [fixtures, bundle.scripts].map(value => JSON.stringify(value).replace(/</g, '\\u003c'));
+  const script = createContrastInspector.toString() + '\n' + exerciseDedicatedWorkspace.toString() + '\n(' + browserSmoke.toString() + ')(' + args.join(',') + ');';
+  return bundle.html.replace('</body>', () => '<pre id="result" hidden></pre><script>' + script + '</script></body>');
 }
 
 function assertSmokeResult(result, stylesheetCount) {
   assert.deepEqual(result.errors, []);
+  assert.deepEqual(result.interactions.pages.slice().sort(), ['overview', 'accounts', 'chat', 'groups', 'members', 'contacts', 'exclusions',
+    'collection', 'crm', 'logs', 'settings', 'group-broadcast', 'group-mentions', 'group-reading', 'group-permissions'].sort());
+  assert.equal(result.interactions.shortcuts.length, 4);
+  assert.equal(result.interactions.accountScoped, true, 'Every open must target the new dedicated account');
+  assert.equal(result.interactions.visibleOpens, true, 'Every open must receive visible chat bounds');
   assert.equal(result.stylesheetCount, stylesheetCount);
   assert.equal(result.scenes.length, scenes.length);
   for (const [index, row] of result.scenes.entries()) {
@@ -185,7 +195,7 @@ async function main() {
         const [result] = results;
         assertSmokeResult(result, bundle.stylesheetCount);
         recordNativeVisualAssertions(metadata);
-        report.runs.push({ viewport, scenes: result.scenes, evidenceFile: path.basename(metadata.evidenceFile), hostBuild: metadata.hostBuild, runtimeVersion: metadata.runtimeVersion });
+        report.runs.push({ viewport, scenes: result.scenes, interactions: result.interactions, evidenceFile: path.basename(metadata.evidenceFile), hostBuild: metadata.hostBuild, runtimeVersion: metadata.runtimeVersion });
       } catch (error) {
         if (error.cleanupSafe === true) cleanupSafe = true;
         throw error;
@@ -194,7 +204,7 @@ async function main() {
       }
     }
     report.status = 'passed';
-    console.log('Packaged WS WebView2 smoke: 2 viewports x 6 ordinary/dedicated scenes passed');
+    console.log('Packaged WS WebView2 smoke passed at both sizes: 9 scenes, dedicated account creation, 15 pages and 4 WhatsApp shortcuts');
   } catch (error) { report.error = { code: error.code || error.name, message: error.message }; throw error; }
   finally { report.resources = [...bundle.consumed.values()]; fs.writeFileSync(path.join(output, 'packaged-workspace-result.json'), JSON.stringify(report, null, 2)); }
 }

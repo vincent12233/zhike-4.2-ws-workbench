@@ -30,6 +30,79 @@ async function request(pathname, init = {}) {
 }
 async function body(response) { const value = await response.json(); assert.ok(response.ok, JSON.stringify(value)); return value; }
 
+async function checkDirectoryActions() {
+  const accountId = 'directory-action-test';
+  const jids = ['first@g.us', 'second@g.us', 'third@g.us'];
+  await body(await request('/api/ws/accounts', { method: 'POST', body: JSON.stringify({ id: accountId, workspaceMode: 'dedicated' }) }));
+  const notices = [];
+  const capability = { state: 'available', code: 'COLLECTION_INDEPENDENT_SESSION', provider: 'native-independent-session',
+    protocolVersion: 1, backgroundCollection: true, automaticHistory: true, groupMonitoring: true, automaticAi: false,
+    foregroundFallback: false, manualVisibleImport: true, collectorState: 'running' };
+  const sandbox = {
+    window: { location: { origin: `http://127.0.0.1:${port}` }, ZhikeWsCore: require('../resources/app/modules/ws-workbench-core.js'),
+      __zhikeRegistryHost: { state: { settings: {}, customers: [] }, toast: (message, kind) => notices.push({ message, kind }) },
+      zhikeDesktop: { ws: async payload => {
+        assert.equal(payload.accountId, accountId);
+        if (payload.action === 'discover-conversations') {
+          const checkpoints = jids.map(groupJid => ({ conversationKey: groupJid, displayName: groupJid, isGroup: true, conversationType: 'group' }));
+          await body(await request('/api/ws/ingest/batch', { method: 'POST', body: JSON.stringify({ protocol: 'zhike.ws.ingest.batch.v1',
+            accountId, capturedAt: '2026-11-19T07:00:00Z', scope: 'background-collector', messages: [], checkpoints, groupEvents: [] }) }));
+          return { accountId, supported: true, groupConversations: [], scanning: true };
+        }
+        assert.ok(['configure-group-monitor', 'start-group-monitor', 'pause-group-monitor', 'stop-group-monitor'].includes(payload.action), payload.action);
+        return { accountId };
+      } } },
+    document: { addEventListener() {}, querySelector: () => null, querySelectorAll: () => [] },
+    localStorage: { getItem: () => null, setItem() {} }, fetch: request, URL, URLSearchParams, AbortController, setTimeout, clearTimeout,
+  };
+  const source = require('node:fs').readFileSync(path.join(app, 'modules/ws-workbench.js'), 'utf8');
+  const boot = /  boot\(\);\s*\}\)\(\);\s*$/;
+  assert.match(source, boot);
+  require('node:vm').runInNewContext(source.replace(boot, '  globalThis.test = {state, handleAction, createGroupMonitorState, groupDirectoryState, renderWsWorkspacePage};\n})();'), sandbox);
+  const { state, handleAction, groupDirectoryState, createGroupMonitorState, renderWsWorkspacePage } = sandbox.test;
+  Object.assign(state, { workspaceMode: 'dedicated', activeAccountId: accountId, wsWorkspaceView: 'groups',
+    accounts: [{ id: accountId, workspaceMode: 'dedicated', collectionCapability: capability }], groupMonitor: createGroupMonitorState(accountId) });
+  const act = async (name, dataset = {}) => {
+    await handleAction(name, { dataset });
+    assert.equal(state.groupMonitor.error, '', notices.at(-1)?.message);
+  };
+  await act('group-monitor-scan');
+  assert.equal(state.groupCatalog.length, 3);
+  assert.equal(state.groupMonitor.profile, null, 'discovery alone must not create a monitoring seat');
+  groupDirectoryState().selectedGroupIds = jids.slice(0, 2);
+  await act('group-monitor-add-directory');
+  const targets = () => state.groupMonitor.profile.targets;
+  assert.deepEqual(Array.from(targets(), row => row.groupJid).sort(), jids.slice(0, 2));
+  const first = targets().find(row => row.groupJid === jids[0]);
+  await act('group-monitor-target-toggle', { targetId: first.id, enabled: 'true' });
+  await act('group-monitor-scan');
+  assert.equal(targets().find(row => row.id === first.id).enabled, false);
+  assert.equal(targets().length, 2, 'discovery must preserve unselected and disabled targets');
+  await act('group-monitor-toggle', { enabled: 'true' });
+  state.groupMonitor = createGroupMonitorState(accountId);
+  groupDirectoryState().selectedGroupIds = jids.slice(2);
+  await act('group-monitor-add-directory');
+  assert.equal(state.groupMonitor.profile.enabled, false, 'registering groups with an empty renderer cache must preserve a paused seat');
+  assert.equal(targets().length, 3);
+  assert.equal(state.groupCatalog.find(row => row.groupJid === jids[0]).monitorTarget.enabled, false);
+  assert.ok(state.groupCatalog.every(row => row.discoverySource === 'ws-collector'), 'binding must preserve native discovery provenance');
+  await act('group-monitor-toggle', { enabled: 'false' });
+  assert.equal(state.groupMonitor.profile.enabled, true);
+  assert.ok(notices.every(item => item.kind !== 'x'));
+  const collection = renderWsWorkspacePage('collection');
+  assert.match(collection, /data-ws-action="group-monitor-toggle"/);
+  assert.doesNotMatch(collection, /data-ws-action="collect-all-read"/);
+  assert.match(renderWsWorkspacePage('settings'), /data-ws-workspace-view="collection">打开群组设置/);
+  const excess = await request(`/api/ws/group-monitors/${state.groupMonitor.profile.id}/targets/scan?accountId=${accountId}`, {
+    method: 'POST', body: JSON.stringify({ accountId, targets: Array.from({ length: 500 }, (_, i) => ({ groupJid: `extra-${i}@g.us`, enabled: true })) }),
+  });
+  assert.equal(excess.status, 409);
+  assert.equal((await excess.json()).code, 'GROUP_MONITOR_TARGET_LIMIT');
+  await act('group-monitor-refresh');
+  assert.equal(targets().length, 3, 'exceeding native monitor capacity must roll back the entire batch');
+  assert.equal(state.groupCatalog.length, 3);
+}
+
 (async () => {
   try {
     await body(await request('/api/ws/accounts'));
@@ -123,6 +196,7 @@ async function body(response) { const value = await response.json(); assert.ok(r
     assert.equal(leftBeforeJoin.groupEvents.autoRegistered, 0);
     const afterLeft = await body(await request('/api/state'));
     assert.equal(afterLeft.customers.filter(item => item.phone === '9876543213').length, 0);
+    await checkDirectoryActions();
     console.log('ws-group-monitor-api: pass');
   } finally {
     try { await fetch(`http://127.0.0.1:${port}/api/shutdown`, { method: 'POST', headers: { ...headers, 'x-zhike-shutdown-token': token } }); } catch {}
