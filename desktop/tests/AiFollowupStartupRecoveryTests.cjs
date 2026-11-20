@@ -17,8 +17,10 @@ assert.match(
 );
 assert.match(
   source,
-  /_api\s*=\s*App\.LocalService\?\.CreateApiClient\(\)/,
+  /await App\.EnsureLocalServiceAsync\(cancellationToken\);\s*ReplaceApiClient\(App\.LocalService\?\.CreateApiClient\(\)/,
   '服务启动后必须重新创建 API 客户端'
 );
 
+assert.match(source, /private void ReplaceApiClient\(ApiClient\? next\)[\s\S]*?var previous = _api;\s*_api = next;\s*previous\?\.Dispose\(\);/,
+  '服务恢复后必须替换旧客户端并释放旧连接');
 console.log('AI 跟进页启动恢复回归测试通过');
