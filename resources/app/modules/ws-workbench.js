@@ -20,7 +20,7 @@
   function workspaceLabel(mode = state.workspaceMode) { return mode === 'dedicated' ? '专用 WS' : '普通 WS'; }
   const WS_MODE_VIEW_IDS = Object.freeze({
     ordinary: new Set(['overview', 'accounts', 'chat', 'collection', 'ai', 'crm', 'tasks', 'logs', 'settings']),
-    dedicated: new Set(['overview', 'accounts', 'chat', 'groups', 'members', 'contacts', 'exclusions', 'collection', 'crm', 'logs', 'settings', 'group-broadcast', 'group-mentions', 'group-reading', 'group-permissions']),
+    dedicated: new Set(['overview', 'accounts', 'chat', 'groups', 'group-channels', 'members', 'contacts', 'exclusions', 'collection', 'crm', 'logs', 'settings', 'group-broadcast', 'group-mentions', 'group-reading', 'group-permissions']),
   });
   const WS_BLOCKED_VIEWS = new Set(['group-mentions']);
   function workspaceViewAllowed(view, mode = state.workspaceMode) { return Boolean(WS_MODE_VIEW_IDS[mode]?.has(view)); }
@@ -31,6 +31,7 @@
     { id: 'accounts', label: '账号管理', icon: 'phone', hint: '多账号与连接状态' },
     { id: 'chat', label: '前台聊天', icon: 'chat-stack', hint: '原生 WS 聊天与客户档案' },
     { id: 'groups', label: '群组管理', icon: 'layers', hint: '群组目录与监测端口' },
+    { id: 'group-channels', label: '群组渠道配置', icon: 'filter', hint: '群组编号、渠道、助理与批量导入' },
     { id: 'members', label: '群成员管理', icon: 'users-group', hint: '成员事件与 CRM 关系' },
     { id: 'collection', label: '数据采集', icon: 'database', hint: '采集任务、断点与跳过规则' },
     { id: 'contacts', label: '通讯录管理', icon: 'user', hint: '已同步联系人与号码核验' },
@@ -1733,7 +1734,7 @@
         // recovering sidecar or an expired local session) instead of hiding
         // every failure behind the same generic WS message.
         const error = new Error(body.error || body.message || body.errorCode || 'WS 本机数据服务暂不可用。');
-        error.status = response.status; error.code = body.code || body.errorCode || ''; throw error;
+        error.status = response.status; error.code = body.code || body.errorCode || ''; error.body = body; throw error;
       }
       return body;
     } catch (error) {
@@ -3960,6 +3961,19 @@
       render({ skipNativeResize: true }); return refreshWorkspacePage();
     },
   });
+  const groupChannels = window.ZhikeWsGroupChannels?.create({
+    getScope: () => state.active && state.workspaceMode === 'dedicated' && modeAccount(state.activeAccountId) &&
+      state.wsWorkspaceView === 'group-channels' && getHost()?.state?.view === 'ws-workbench'
+      ? { ...captureContext(''), workspaceMode: state.workspaceMode, view: state.wsWorkspaceView } : null,
+    request: (pathname, init, scope) => api(pathname, init, scope),
+    redraw: () => render({ skipNativeResize: true }),
+    toast: (message, icon) => toast(message, icon),
+    download: (name, content) => {
+      const url = URL.createObjectURL(new Blob([content], { type: 'text/csv;charset=utf-8' }));
+      const link = document.createElement('a'); link.href = url; link.download = name; document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    },
+  });
   const groupReading = window.ZhikeWsGroupReading?.create({
     getScope: () => {
       if (!state.active || state.workspaceMode !== 'dedicated' || !modeAccount(state.activeAccountId) ||
@@ -4251,6 +4265,8 @@
         if (state.error) throw new Error(state.error);
       } else if (view === 'members') {
         await Promise.all([loadGroupMonitor(), loadGroupMembers(context)]);
+      } else if (view === 'group-channels') {
+        if (!await groupChannels?.load()) throw new Error('群组渠道配置读取失败，请查看页面中的具体原因。');
       } else if (view === 'group-permissions') {
         if (!await groupPermissions?.load()) throw new Error('本地权限清单读取失败，请查看具体原因。');
       } else if (view === 'group-reading') {
@@ -4506,6 +4522,7 @@
     else if (activeView === 'accounts') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>账号与连接</strong><span>账号作用域独立，切换保留各账号隔离会话。</span></div><button class="btn small" data-ws-action="create-account">＋ 添加账号</button></div>${state.workspaceMode === 'dedicated' ? '<button type="button" class="btn primary" data-ws-workspace-view="chat">打开当前专用账号登录</button>' : ''}${renderAccountForm()}${renderAccountMetrics()}${renderCollectorControls()}${renderWorkspaceList('accounts', state.accounts, rows => renderAccountList(rows))}</section>`;
     else if (activeView === 'groups') body = `<section class="ws-workspace-card zk-surface ws-group-verify" id="wsGroupVerification">${renderGroupVerification('groups')}</section>` + renderGroupDirectory() + (groupReading?.render() || '');
     else if (activeView === 'group-reading') body = renderWorkspaceGroupReading() + renderGroupWhatsAppLink('可在对应群聊里打开本人发送的消息，查看平台提供的消息信息。');
+    else if (activeView === 'group-channels') body = groupChannels?.render() || '<section class="ws-workspace-card"><p class="ws-error-line" role="alert">群组渠道配置模块未加载，请重新打开应用。</p></section>';
     else if (activeView === 'group-permissions') body = (groupPermissions?.render() || '<section class="ws-workspace-card"><p>权限模块未加载；管理员资格与发言权限 UNKNOWN，实际开关群 BLOCKED。</p></section>') + renderGroupWhatsAppLink('群管理员可在 WhatsApp 群组设置中核对和调整发言权限。');
     else if (activeView === 'members') body = renderWorkspaceMembers();
     else if (activeView === 'collection' && state.workspaceMode === 'dedicated') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><strong>群组采集会话</strong><span>${esc(collectorStatusLabel())}</span></div>${renderCollectorControls()}<p class="ws-muted" role="status">${esc(state.groupMonitor?.discovery?.note || '前台登录后读取当前可见群组，独立采集会话就绪后继续发现。')} ${esc(groupDirectorySummary())}。</p><div class="ws-runtime-actions"><button type="button" class="btn small" data-ws-action="group-monitor-scan" ${state.wsStatus === '已连接' || collectionReady('groupMonitoring') ? '' : 'disabled'}>读取现场群组</button><button type="button" class="btn small" data-ws-workspace-view="groups">选择监测群组</button><button type="button" class="btn small" data-ws-workspace-view="exclusions">管理建档排除名单</button></div></section>${renderGroupMonitorCard()}`;
@@ -5094,6 +5111,7 @@
   function render(options = {}) {
     groupReading?.discardStale();
     groupPermissions?.discardStale();
+    groupChannels?.discardStale();
     groupDrafts?.discardStale();
     const host = getHost();
     if (!host || !state.active || host.state.view !== 'ws-workbench') return;
@@ -6551,6 +6569,7 @@
     if (action === 'toggle-messages') { state.messageCollapsed = !state.messageCollapsed; writePanelCollapsed('messages', state.messageCollapsed); render(); return; }
     if (action === 'toggle-local-panels') { state.localPanelsCollapsed = !state.localPanelsCollapsed; state.manualToolsVisible = !state.localPanelsCollapsed; writePanelCollapsed('local-panels', state.localPanelsCollapsed); render(); return; }
     if (action === 'toggle-workspace-nav') { state.wsWorkspaceNavCollapsed = !state.wsWorkspaceNavCollapsed; writeWsWorkspaceState(state.wsWorkspaceView, state.wsWorkspaceNavCollapsed); render(); return; }
+    if (action.startsWith('group-channel-')) return groupChannels?.run(action.slice('group-channel-'.length), element);
     if (action.startsWith('group-permission-')) return groupPermissions?.run(action.slice('group-permission-'.length));
     if (action.startsWith('group-reading-')) return groupReading?.run(action.slice('group-reading-'.length));
     if (action.startsWith('group-directory-')) {
@@ -6731,6 +6750,7 @@
   }
   function applyControlChange(target) {
     if (target.matches('[data-ws-group-draft-select]')) { groupDrafts?.select(target.dataset.wsGroupDraftSelect, Boolean(target.checked)); return; }
+    if (target.closest?.('.ws-channel-centre, .ws-channel-import') && groupChannels?.control(target)) return;
     if (target.matches('[data-ws-permission-search]')) { groupPermissions?.search(target.value); return; }
     if (target.matches('[data-ws-permission-select]')) { groupPermissions?.select(target.dataset.wsPermissionSelect, Boolean(target.checked)); return; }
     if (target.matches('[data-ws-reading-group]')) {
@@ -6959,6 +6979,7 @@
     state.active = false;
     groupReading?.reset();
     groupPermissions?.reset();
+    groupChannels?.reset();
     assistDrawerResize = null;
     assistDrawerMove = null;
     unbindAssistPointerListeners();

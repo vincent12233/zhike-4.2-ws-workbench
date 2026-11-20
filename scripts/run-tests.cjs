@@ -101,6 +101,7 @@ function runStage3(options = {}) {
   run('WS group channel config rules', [path.join(repo, 'tests', 'ws-group-channel-config-core.test.cjs')]);
   run('WS group channel config API, rename safety and CSV', [path.join(repo, 'tests', 'ws-group-channel-config-api.test.cjs')], { timeout: 180000 });
   run('WS group config drives auto-provisioning and channel attribution', [path.join(repo, 'tests', 'ws-group-config-provisioning.test.cjs')], { timeout: 180000 });
+  run('WS group channel configuration page', [path.join(repo, 'tests', 'ws-group-channels-ui.test.cjs')]);
   run('WS reply draft persistence', [path.join(repo, 'tests', 'ws-reply-draft-persistence.test.cjs')]);
   run('Stage 3 WS workspace navigation', [path.join(repo, 'scripts', 'stage3', 'ws-workbench-navigation.test.cjs')]);
 }

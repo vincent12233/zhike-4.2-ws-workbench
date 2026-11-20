@@ -1335,8 +1335,9 @@ async function handleWsGroupChannelRequest(req, res, url) {
         : items.map(item => ({ accountId: item?.accountId, groupJid: item?.groupJid, input: Object.fromEntries(wsGroupChannel.CONFIG_FIELDS.filter(key => Object.hasOwn(item || {}, key)).map(key => [key, item[key]])) }));
       const result = wsGroupChannelApply(entries, { origin: body.patch ? 'batch' : 'manual', dryRun: body.dryRun === true, force: body.force === true });
       // 409 only when nothing could be written because every row was blocked.
-      const blocked = result.rows.some(row => row.status === 'rejected' || (row.status === 'conflict' && !row.applied));
-      return json(res, !result.dryRun && !result.applied && blocked ? 409 : 200, result);
+      const blocked = result.rows.find(row => row.status === 'rejected' || (row.status === 'conflict' && !row.applied));
+      if (!result.dryRun && !result.applied && blocked) return json(res, 409, { ...result, error: [...(blocked.errors || []), ...(blocked.conflicts || [])][0] || '配置未写入。' });
+      return json(res, 200, result);
     }
     return json(res, 405, { error: '群组渠道配置只支持 GET/POST。' });
   }
@@ -1362,6 +1363,7 @@ async function handleWsGroupChannelRequest(req, res, url) {
     // if it had been typed, so a round trip cannot silently pin a rule.
     const configs = wsGroupChannelConfigMap(accountId);
     const csv = wsGroupChannel.exportCsv(rows.map(row => { const config = configs.get(`${row.accountId}\u0000${row.groupJid}`); return { ...row, groupCode: config?.groupCode || '', channel: config?.channel || '' }; }));
+    if (url.searchParams.get('format') === 'json') return json(res, 200, { filename: '群组渠道配置.csv', csv, rows: rows.length });
     res.writeHead(200, { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': "attachment; filename*=UTF-8''" + encodeURIComponent('群组渠道配置.csv'), 'cache-control': 'no-store' });
     return res.end(csv);
   }
