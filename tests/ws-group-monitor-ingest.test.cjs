@@ -51,7 +51,7 @@ async function verifyHistoryBackup(customer, day) {
     return { ...previous, type: membershipEventType, date: previous.at.slice(0, 10) };
   });
   for (const history of [customer.statusHistory, legacy]) {
-    const backup = { backupFormat: 'zhike-6-workspace', version: 6, customers: [{ ...customer, statusHistory: history }] };
+    const backup = { backupFormat: 'zhike-6-workspace', version: 6, customers: [{ ...customer, source: '单导', statusHistory: history }] };
     backup.integrity = { algorithm: 'SHA-256', payloadSha256: createHash('sha256').update(JSON.stringify(backup)).digest('hex') };
     const decoded = await ui.decodeWorkspaceBackupFile(JSON.stringify(backup));
     ui.validateBackupData(decoded);
@@ -64,7 +64,10 @@ async function verifyHistoryBackup(customer, day) {
     assert.equal(removal.initial, false);
     const counts = ui.todayStatusCounts(rows);
     assert.equal(counts.groupJoined, 1); assert.equal(counts.groupLeft, 1);
+    assert.equal(counts.singleJoined, 0); assert.equal(counts.singleLeft, 0);
   }
+  const renamed = ui.normalizeCustomerRows([{ ...customer, statusHistory: [{ ...legacy[0], sourceId: 'custom-test-id' }] }], [{ id: 'custom-test-id', name: '测试渠道' }]);
+  assert.equal(renamed[0].statusHistory[0].source, '测试渠道');
   assert.throws(() => ui.validateStatusHistoryData({ customers: [{statusHistory: [{ ...legacy[0], status: '意外值' }]}] }), /历史格式异常/);
 }
 

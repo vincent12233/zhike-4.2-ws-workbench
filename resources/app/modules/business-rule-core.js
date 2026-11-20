@@ -119,16 +119,18 @@
 
   // Earlier monitor versions stored the relationship status without the CRM
   // transition fields. Only upgrade the exact shapes those versions produced.
-  function normalizeMonitorStatusHistoryEvent(event) {
+  function normalizeMonitorStatusHistoryEvent(event, definitions = []) {
     if (event?.origin !== 'ws-group-monitor' || Object.hasOwn(event, 'to')) return event;
     const expected = { joined: '在群', left: '已退群', removed: '被移除' };
     if (!Object.hasOwn(expected, event.type) || event.status !== expected[event.type]) return event;
     let date = event.date;
-    const at = new Date(event.at);
+    const at = new Date(typeof event.at === 'string' ? event.at : NaN);
     if (Number.isFinite(at.getTime()) && date === at.toISOString().slice(0, 10)) {
       date = [at.getFullYear(), String(at.getMonth() + 1).padStart(2, '0'), String(at.getDate()).padStart(2, '0')].join('-');
     }
-    return { from: '', initial: false, group: event.groupJid, ...event, date,
+    const source = event.source || (Array.isArray(definitions) && definitions.find(item => item?.id === event.sourceId)?.name)
+      || (event.sourceId === 'source-group' ? '群粉' : event.sourceId === 'source-direct' ? '单导' : '');
+    return { from: '', initial: false, group: event.groupJid, source, ...event, date,
       type: event.type === 'removed' ? 'left' : event.type, membershipEventType: event.type, to: event.status };
   }
 
@@ -142,7 +144,7 @@
     for (const customer of Array.isArray(customers) ? customers : []) {
       if (!customer || typeof customer !== 'object') continue;
       for (const storedEvent of Array.isArray(customer.statusHistory) ? customer.statusHistory : []) {
-        const event = normalizeMonitorStatusHistoryEvent(storedEvent);
+        const event = normalizeMonitorStatusHistoryEvent(storedEvent, definitions);
         const kind = text(event.type) || statusEventKind(event.to);
         if (!['joined', 'left'].includes(kind)) continue;
         const source = text(event.source || customer.channel || customer.source || '未分类');
