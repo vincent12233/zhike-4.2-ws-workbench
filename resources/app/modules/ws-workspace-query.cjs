@@ -43,10 +43,17 @@ function sourcePhone(externalId, dataJson) {
   return jid ? jid[1] : '';
 }
 
+function contactKey(id) {
+  if (typeof id !== 'string') return '';
+  const match = /^(\d{1,20})@(c\.us|s\.whatsapp\.net|lid)$/i.exec(id);
+  return match ? match[1] + (match[2].toLowerCase() === 'lid' ? '@lid' : '@s.whatsapp.net') : '';
+}
+
 function installFunctions(db) {
   if (installed.has(db)) return;
   db.function('zk_workspace_phone', { deterministic: true }, sourcePhone);
   db.function('zk_workspace_normalize', { deterministic: true }, value => wsCrmSync.normalizePhone(value));
+  db.function('zk_workspace_contact_key', { deterministic: true }, contactKey);
   db.function('zk_workspace_type', { deterministic: true }, (externalId, dataJson) => wsCore.conversationType({ external_id: externalId, data_json: dataJson }));
   db.function('zk_workspace_audit_text', { deterministic: true }, value => redactAudit(value));
   db.function('zk_workspace_fold', { deterministic: true }, value => String(value || '').toLowerCase());
@@ -67,13 +74,34 @@ function pagination(params, total) {
   return { page, pageSize, pageCount, offset: (page - 1) * pageSize };
 }
 
-const CONTACTS_CTE = `WITH raw_contacts AS (
-  SELECT c.id,c.account_id,c.external_id,c.title,c.customer_id,c.language,c.created_at,c.updated_at,
+const contactDirectorySql = placeholders => `WITH included_accounts AS (SELECT id FROM ws_accounts WHERE id IN (${placeholders})), chats AS MATERIALIZED (
+  SELECT c.id,c.account_id,c.external_id,c.title,c.customer_id,c.language,c.created_at,c.updated_at,c.data_json,zk_workspace_contact_key(c.external_id) AS contact_key,
     zk_workspace_phone(c.external_id,c.data_json) AS phone,
     p.id AS linked_customer_id,p.deleted AS customer_deleted,p.phone_normalized AS crm_phone
   FROM ws_conversations c LEFT JOIN customers p ON p.id=c.customer_id
-  WHERE c.account_id=? AND zk_workspace_type(c.external_id,c.data_json)='direct'
-), normalized AS (
+  WHERE c.account_id IN (SELECT id FROM included_accounts) AND zk_workspace_type(c.external_id,c.data_json)='direct'
+), chat_keys AS MATERIALIZED (
+  SELECT DISTINCT account_id,contact_key FROM chats WHERE contact_key<>''
+), raw_contacts AS (
+  SELECT c.id,c.account_id,c.external_id,COALESCE(NULLIF(NULLIF(c.title,''),c.external_id),NULLIF(d.display_name,''),c.title) AS title,
+    c.customer_id,c.language,c.created_at,MAX(c.updated_at,COALESCE(d.last_seen_at,'')) AS updated_at,
+    c.phone,c.linked_customer_id,c.customer_deleted,c.crm_phone,c.id AS conversation_id,d.source AS directory_source,d.last_seen_at AS observed_at,c.data_json
+  FROM chats c LEFT JOIN ws_contact_directory d ON d.account_id=c.account_id AND d.contact_key=c.contact_key
+  UNION ALL
+  SELECT 'ws-contact:'||d.contact_key,d.account_id,d.contact_id,d.display_name,'','',d.first_seen_at,d.last_seen_at,
+    zk_workspace_phone(d.contact_id,'{}'),NULL,NULL,NULL,'',d.source,d.last_seen_at,'{}'
+  FROM ws_contact_directory d LEFT JOIN chat_keys k ON k.account_id=d.account_id AND k.contact_key=d.contact_key
+  WHERE d.account_id IN (SELECT id FROM included_accounts) AND k.contact_key IS NULL
+)`;
+
+function exportContactStatement(db, accountCount, countOnly = false) {
+  installFunctions(db);
+  const scope = Array(accountCount).fill('?').join(',');
+  return db.prepare(contactDirectorySql(scope) + (countOnly ? ' SELECT COUNT(*) AS count FROM raw_contacts'
+    : ' SELECT * FROM raw_contacts ORDER BY account_id,updated_at DESC,id LIMIT ? OFFSET ?'));
+}
+
+const CONTACTS_CTE = contactDirectorySql('?') + `, normalized AS (
   SELECT *,zk_workspace_normalize(phone) AS normalized_phone FROM raw_contacts
 ), counted AS (
   SELECT *,CASE WHEN normalized_phone<>'' THEN COUNT(*) OVER (PARTITION BY normalized_phone) ELSE 0 END AS duplicate_count FROM normalized
@@ -101,17 +129,18 @@ function contacts(db, accountId, params) {
     const hasLink = Boolean(row.customer_id);
     const compatiblePhone = !row.normalized_phone || !row.crm_phone || row.normalized_phone === row.crm_phone;
     return {
-      id: row.id, accountId: row.account_id, conversationId: row.id, name: row.title || '未提供',
+      id: row.id, accountId: row.account_id, conversationId: row.conversation_id, name: row.title || '未提供',
       phone: row.phone, normalizedPhone: row.normalized_phone,
       phoneStatus: !row.phone ? 'unprovided' : valid ? 'valid' : 'invalid',
       externalId: row.external_id, customerId: row.customer_id || '',
       crmLinkStatus: !hasLink ? 'unlinked' : row.linked_customer_id && !row.customer_deleted && compatiblePhone ? 'linked' : 'conflict',
-      duplicateCount: Number(row.duplicate_count), source: 'ws_conversations', sourceLabel: '本机已同步一对一会话',
+      duplicateCount: Number(row.duplicate_count), source: row.directory_source || 'ws_conversations',
+      sourceLabel: row.directory_source ? 'WhatsApp 通讯录已观察' : '历史一对一会话', observedAt: row.observed_at || '',
       language: row.language || '', createdAt: row.created_at, updatedAt: row.updated_at,
     };
   });
   return { accountId, rows, total, page: page.page, pageSize: page.pageSize, pageCount: page.pageCount,
-    source: 'local-synced-conversations', coverage: '仅查询当前账号已同步的本机一对一会话目录，不代表完整 WhatsApp 通讯录；不按姓名或号码自动建立 CRM 关联。',
+    source: 'account-contact-directory', coverage: '显示当前账号在 WhatsApp 通讯录中观察到的联系人及已有的一对一会话。可见范围取决于手机授权和页面加载情况。',
     filters: { duplicate }, readOnly: true };
 }
 
@@ -208,4 +237,4 @@ function audit(db, accountId, params) {
     category, types, outcomes, coverage, available: true, readOnly: true };
 }
 
-module.exports = { contacts, audit, redactAudit };
+module.exports = { contacts, audit, redactAudit, contactKey, exportContactStatement };

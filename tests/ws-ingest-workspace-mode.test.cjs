@@ -122,6 +122,7 @@ test('production ingest separates purpose, group directory and observed member m
         ['catalog-only@g.us', {}, 'WS_GROUP_AUTHORIZATION_REQUIRED'],
         ['other-account@g.us', {}, 'WS_GROUP_AUTHORIZATION_REQUIRED'],
         ['opaque-label', { conversationType: 'vip_group' }, 'WS_GROUP_IDENTITY_UNCONFIRMED'],
+        ['member-invalid@g.us', { senderIdentityTrusted: false }, 'WS_GROUP_MEMBER_IDENTITY_UNCONFIRMED'],
         ['member-invalid@g.us', { senderId: '', senderPhone: '', senderIdentitySource: '', senderIdentityTrusted: true }, 'WS_GROUP_MEMBER_IDENTITY_UNCONFIRMED'],
         ['direction-invalid@g.us', { directionSource: '' }, 'WS_GROUP_DIRECTION_UNCONFIRMED'],
         ['preview@g.us', { previewOnly: true }, 'WS_GROUP_OBSERVATION_REQUIRED'],
@@ -343,6 +344,63 @@ test('production ingest separates purpose, group directory and observed member m
       assert.deepEqual(state.members, [blocked]);
       assert.equal(auditCount(), before, 'displaying a roster is a read-only operation');
     });
+    await t.test('contacts observed in the ordinary account picker remain independent of chat, CRM and AI', async () => {
+      const contact = '917000000801@c.us', opaque = '7000000801@lid', started = new Date(Date.now() - 1000).toISOString();
+      const row = (key, extra = {}) => ({ accountId: ordinary, coverage: 'foreground-visible-contact', conversationType: 'contact', isGroup: false,
+        conversationKey: key, displayName: 'Directory sample', ...extra });
+      const packet = (checkpoints, extra = {}) => ({ scope: 'foreground-visible-directory', accountId: ordinary, capturedAt: started, checkpoints, ...extra });
+      const save = body => request('/api/ws/ingest/batch', body);
+      const read = async account => (await request('/api/ws/workspace/contacts?accountId=' + account + '&q=Directory%20sample')).rows;
+      const stored = () => inspect(db => db.prepare('SELECT * FROM ws_contact_directory ORDER BY account_id,contact_key').all());
+      const before = protectionSnapshot();
+      const base = packet([row(contact), row(opaque), row('not-a-jid'), row('test@g.us'), row(contact, { accountId: other })]);
+      await save(packet([row(contact)], { scope: 'background-collector' }));
+      await save(packet([row(contact, { accountId: dedicated })], { accountId: dedicated }));
+      await save(packet([row(contact)], { capturedAt: 'invalid-time' }));
+      assert.deepEqual(stored(), []);
+      const reply = await fetch(origin + '/api/ws/ingest/batch', { method: 'POST',
+        headers: { origin, 'x-zhike-api-token': token, 'content-type': 'application/json' }, body: JSON.stringify(base) });
+      assert.equal(reply.status, 403);
+      await save(base);
+      const rows = await read(ordinary);
+      assert.equal(rows.length, 2);
+      assert.ok(rows.every(entry => entry.source === 'foreground-visible-contact' && entry.observedAt === started && !entry.conversationId && !entry.customerId));
+      assert.equal(rows.find(entry => entry.externalId === opaque).normalizedPhone, '');
+      assert.deepEqual(await read(other), []);
+      assert.equal(conversation(ordinary, contact), undefined); assert.equal(conversation(ordinary, opaque), undefined);
+      assert.deepEqual(protectionSnapshot(), before);
+      const first = stored();
+      await save(base);
+      await save(packet([row(contact, { displayName: 'Earlier observation' })], { capturedAt: new Date(Date.now() - 86400000).toISOString() }));
+      assert.deepEqual(stored(), first);
+      const fixture = new DatabaseSync(path.join(dataDir, 'workspace.sqlite'));
+      try {
+        fixture.prepare(`INSERT INTO ws_conversations(id,account_id,external_id,title,customer_id,data_json,created_at,updated_at)
+          VALUES('manual-directory-link',?,?,?,'live-known','{"conversationType":"direct"}',?,?)`)
+          .run(ordinary, '917000000801@s.whatsapp.net', 'Directory sample manual title', started, started);
+      } finally { fixture.close(); }
+      await save(packet([row('917000000801@s.whatsapp.net', { displayName: 'Directory sample renamed' })], { capturedAt: new Date().toISOString() }));
+      const merged = await read(ordinary);
+      assert.equal(merged.length, 2, 'phone-JID aliases merge, LIDs remain separate');
+      const linked = merged.find(entry => entry.conversationId === 'manual-directory-link');
+      assert.equal(linked.name, 'Directory sample manual title'); assert.equal(linked.customerId, 'live-known');
+      assert.equal(linked.crmLinkStatus, 'linked'); assert.equal(linked.source, 'foreground-visible-contact');
+      assert.equal(stored().length, 2);
+      const one = await request('/api/ws/export?accountId=' + ordinary);
+      assert.equal(one.manifest.counts.contacts, one.contacts.length);
+      const observed = one.contacts.filter(entry => entry.source === 'foreground-visible-contact');
+      assert.equal(observed.length, 2);
+      assert.equal(observed.find(entry => entry.externalId === opaque).conversationId, '');
+      assert.equal(observed.find(entry => entry.externalId === opaque).phone, '');
+      assert.equal(observed.find(entry => entry.conversationId === 'manual-directory-link').customerId, 'live-known');
+      assert.ok(one.conversations.every(entry => entry.externalId !== opaque));
+      const second = await request('/api/ws/export?accountId=' + dedicated);
+      assert.ok(second.contacts.every(entry => entry.externalId !== opaque));
+      const all = await request('/api/ws/export?allAccounts=1');
+      assert.equal(all.manifest.counts.contacts, all.contacts.length);
+      assert.deepEqual(all.contacts.filter(entry => entry.source === 'foreground-visible-contact'), observed);
+    });
+
     await t.test('a native foreground snapshot builds an empty account directory without advancing history or starting AI', async () => {
       const project = (accountId, conversationKey, conversationType, extra = {}) => ({
         accountId, conversationKey, conversationType, displayName:'Same visible title', isGroup:conversationType === 'group',

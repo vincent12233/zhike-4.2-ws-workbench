@@ -14,6 +14,8 @@ async function exerciseDedicatedWorkspace(scripts) {
   const groupJid = '120300000002@g.us';
   const foregroundGroup = '前台现场测试群';
   const foregroundContact = '前台现场测试客户';
+  const pickerContact = '只在联系人选择器出现';
+  let pickerVisible = false;
   let collectorState = 'not-started';
   let onStatus;
   const capability = id => ({
@@ -59,7 +61,9 @@ async function exerciseDedicatedWorkspace(scripts) {
         const ordinary = accountId === 'default';
         return { ok: true, supported: true, accountId, workspaceMode: ordinary ? 'ordinary' : 'dedicated',
           source: 'foreground-visible', sessionGeneration: ordinary ? 9 : 7, collectorEpoch: 0, coverage: 'foreground-visible-only',
-          conversations: ordinary ? [{ conversationKey: '123456789@c.us', displayName: foregroundContact, conversationType: 'direct' }] : [],
+          unresolvedRowCount: ordinary && !pickerVisible ? 2 : 0, contactsVisible: ordinary && pickerVisible, conversationListVisible: !ordinary || !pickerVisible,
+          contacts: ordinary && pickerVisible ? [{ contactId: '100000003@lid', displayName: pickerContact }] : [],
+          conversations: ordinary && !pickerVisible ? [{ conversationKey: '123456789@c.us', displayName: foregroundContact, conversationType: 'direct' }] : [],
           groupConversations: ordinary ? [] : [{ conversationKey: '120300000001@g.us', groupJid: '120300000001@g.us', displayName: foregroundGroup, isGroup: true, conversationType: 'group' }] };
       }
       if (action === 'open-collector') {
@@ -150,6 +154,13 @@ async function exerciseDedicatedWorkspace(scripts) {
   await until('ordinary chat', () => find(nav + '.active')?.dataset.wsWorkspaceView === 'chat' && find('.ws-session-list'));
   loginForeground('default', 'ordinary');
   await until('ordinary foreground contact with empty SQLite', () => find('.ws-session-list')?.textContent.includes(foregroundContact));
+  await click('#wsVisibleContactDirectory summary');
+  pickerVisible = true;
+  await click('#wsVisibleContactDirectory [data-ws-action="refresh-visible-contacts"]');
+  await until('contact picker result', () => find('#wsVisibleContactDirectory details[open] li')?.textContent.includes(pickerContact));
+  const preservedList = find('.ws-session-list').textContent;
+  const contactsSeparate = preservedList.includes(foregroundContact) && !preservedList.includes(pickerContact) && !find('#wsVisibleContactDirectory li button');
+  const directoryGapVisible = find('#wsDirectoryCount')?.textContent.includes('部分会话未能识别');
   onStatus({ ...groupEvent, scanId: 2 });
   const ordinaryList = find('.ws-session-list').textContent;
   const ordinaryIsolated = !ordinaryList.includes(foregroundGroup) && !ordinaryList.includes('目录回归群');
@@ -165,7 +176,7 @@ async function exerciseDedicatedWorkspace(scripts) {
     scoped: collectorCalls.every(call => call.accountId === dedicated.id),
     loginVisible: !login.bounds.hidden && login.bounds.width > 200 && login.bounds.height > 100,
     discoveredBeforePairing, directoryVisible: true, bothForegroundDirectories: foregroundReads.includes('default') && foregroundReads.includes(dedicated.id),
-    isolated, localIndexReads: directoryReads > 0,
+    isolated, localIndexReads: directoryReads > 0, contactsSeparate, directoryGapVisible,
   } };
 }
 

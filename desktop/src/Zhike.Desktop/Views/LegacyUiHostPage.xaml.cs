@@ -34,6 +34,7 @@ public sealed partial class LegacyUiHostPage : Page
     private readonly DesktopToolsService _desktopTools = new();
     private readonly WorkspaceRestoreTransfer _workspaceRestore = new();
     private ApiClient? _api;
+    private string _storageUnavailableDetail = "本机数据服务尚未就绪。";
     private DesktopBridgeService? _bridge;
     private ApiClient? _bridgeApi;
     private WebView2? _webView;
@@ -391,8 +392,19 @@ public sealed partial class LegacyUiHostPage : Page
 #if STAGE51_ISOLATED_UI
                 Stage51Isolation.Record("shell-service-wait-started");
 #endif
-                await App.EnsureLocalServiceAsync(cancellationToken);
-                _api = App.LocalService?.CreateApiClient() ?? throw new InvalidOperationException("本机数据服务不可用。");
+                try
+                {
+                    await App.EnsureLocalServiceAsync(cancellationToken);
+                    ReplaceApiClient(App.LocalService?.CreateApiClient() ?? throw new InvalidOperationException("本机数据服务不可用。"));
+                }
+                catch (Exception error) when (error is not OperationCanceledException)
+                {
+                    // Existing verified accounts can still display the identities in their live
+                    // WhatsApp view. Database requests must continue to report the real failure.
+                    var accounts = await _wsAccountStore.LoadAsync(cancellationToken);
+                    if (!accounts.Any(row => row.DirectoryPurposeConfirmed)) throw;
+                    _storageUnavailableDetail = $"本机索引服务不可用，发现结果等待保存。{error.GetBaseException().Message}";
+                }
 #if STAGE51_ISOLATED_UI
                 Stage51Isolation.Record("shell-service-client-ready");
 #endif
@@ -1311,7 +1323,6 @@ public sealed partial class LegacyUiHostPage : Page
     private DesktopBridgeService GetBridge()
     {
         _api ??= App.LocalService?.IsRunning == true ? App.LocalService.CreateApiClient() : null;
-        if (_api is null) throw new InvalidOperationException("本机数据服务尚未就绪，请稍后重试。");
         // The local service can restart on a new port/token after a crash or
         // a transient startup race. Reusing the cached adapter in that case
         // sends WS/API calls to the dead HttpClient and surfaces only the
@@ -1321,7 +1332,7 @@ public sealed partial class LegacyUiHostPage : Page
         {
             if (_bridge is not null) _bridge.EventPublished -= OnBridgeEventPublished;
             _bridgeApi = _api;
-            _bridge = new DesktopBridgeService(new LegacyApiAdapter(_api));
+            _bridge = new DesktopBridgeService(_api is null ? null : new LegacyApiAdapter(_api), _storageUnavailableDetail);
         }
         _bridge.EventPublished -= OnBridgeEventPublished;
         _bridge.EventPublished += OnBridgeEventPublished;
@@ -2640,7 +2651,7 @@ public sealed partial class LegacyUiHostPage : Page
                 if (!CurrentDocument()) return ("连接中", "本次登录检测已过期，请刷新。");
                 var (status, detail) = parsed;
                 _wsAccountMetrics.CompleteProbe(lease, status == "已连接", DateTimeOffset.UtcNow);
-                if (status is "已连接" or "等待登录") await SaveWsLoginObservationAsync(lease, view!, status == "已连接", cancellationToken);
+                if (status is "已连接" or "等待登录" or "会话过期") await SaveWsLoginObservationAsync(lease, view!, status == "已连接", cancellationToken);
                 var isCurrent = CurrentDocument();
                 if (publishStatus && isCurrent)
                 {
@@ -2683,6 +2694,7 @@ public sealed partial class LegacyUiHostPage : Page
         var probeText = JsonSerializer.Deserialize<string>(json) ?? "{}";
         using var probe = JsonDocument.Parse(probeText);
         var root = probe.RootElement;
+        if (root.TryGetProperty("expired", out var expired) && expired.ValueKind == JsonValueKind.True) return ("会话过期", "WhatsApp 已提示账号关联失效，请使用当前账号的手机重新扫码。");
         var login = root.TryGetProperty("login", out var loginValue) && loginValue.ValueKind == JsonValueKind.True;
         var chat = root.TryGetProperty("chat", out var chatValue) && chatValue.ValueKind == JsonValueKind.True;
         var problem = root.TryGetProperty("problem", out var problemValue) && problemValue.ValueKind == JsonValueKind.True;
@@ -2695,6 +2707,10 @@ public sealed partial class LegacyUiHostPage : Page
     private const string WsLoginProbeScript = """
 (() => {
   const has = selector => !!document.querySelector(selector);
+  const logout = [...document.querySelectorAll('[role="dialog"],[data-testid="logout-screen"]')].some(panel =>
+    !panel.closest('#main,#pane-side,[data-testid="conversation-panel-wrapper"]') && panel.getClientRects().length &&
+    getComputedStyle(panel).visibility === 'visible' && /you[’']?(?:ve| have) been logged out|your (?:device was unlinked|session (?:has )?expired)|关联已失效|设备已解除关联|登录已过期/i.test(panel.innerText || ''));
+  if (logout) return JSON.stringify({expired:true});
   const codes = document.querySelectorAll('[data-testid="qrcode"], canvas[aria-label*="QR" i], canvas[aria-label*="二维码"], [data-ref] canvas, [data-ref] svg');
   for (const code of codes) {
     if (!code.closest('#pane-side, #main, [data-testid="chat-list"], [data-testid="conversation-panel-wrapper"]')
@@ -2702,7 +2718,9 @@ public sealed partial class LegacyUiHostPage : Page
   }
   const chat = has('#pane-side') || (has('[data-testid="chat-list"], [aria-label="Chat list"], [aria-label="聊天列表"], [role="grid"]')
     && has('[data-testid="search-input"], [contenteditable="true"], [role="textbox"]'));
-  if (chat) return JSON.stringify({ chat: true });
+  const picker = document.querySelector('[data-testid="new-chat-drawer"],[data-testid="drawer-side-new-chat"],[data-testid="contact-picker"],[data-testid="contact-picker-list"]');
+  if (chat || picker?.getClientRects?.().length && !picker.closest('[hidden],[aria-hidden="true"]'))
+    return JSON.stringify({ chat: true });
   const text = (document.body?.innerText || '').slice(0, 6000);
   return JSON.stringify({
     login: /scan to log in|scan the QR code|link with phone number|扫码|扫描二维码|使用电话号码关联/i.test(text),
@@ -2797,12 +2815,17 @@ public sealed partial class LegacyUiHostPage : Page
     {
         var now = DateTimeOffset.UtcNow;
         var rows = directory.GetProperty(purpose.AllowsGroupMonitoring ? "groupConversations" : "conversations");
-        if (rows.GetArrayLength() == 0) return;
         var checkpoints = rows.EnumerateArray().Select(row =>
             new WsCheckpointDto(purpose.AccountId, row.GetProperty("conversationKey").GetString()!, "", "", now,
                 DisplayName: row.GetProperty("displayName").GetString() ?? "", Coverage: "foreground-visible-directory",
-                ConversationType: purpose.AllowsGroupMonitoring ? "group" : "direct", IsGroup: purpose.AllowsGroupMonitoring)).ToArray();
-        var signature = JsonSerializer.Serialize(checkpoints.Select(row => new { row.ConversationKey, row.DisplayName }));
+                ConversationType: purpose.AllowsGroupMonitoring ? "group" : "direct", IsGroup: purpose.AllowsGroupMonitoring)).ToList();
+        if (purpose.AllowsDirectHistory && directory.TryGetProperty("contacts", out var contacts))
+            checkpoints.AddRange(contacts.EnumerateArray().Select(row =>
+                new WsCheckpointDto(purpose.AccountId, row.GetProperty("contactId").GetString()!, "", "", now,
+                    DisplayName: row.GetProperty("displayName").GetString() ?? "", Coverage: "foreground-visible-contact",
+                    ConversationType: "contact", IsGroup: false)));
+        if (checkpoints.Count == 0) return;
+        var signature = JsonSerializer.Serialize(checkpoints.Select(row => new { row.ConversationType, row.ConversationKey, row.DisplayName }));
         var stamp = (generation, signature, now);
         if (_lastVisibleDirectory.TryGetValue(purpose.AccountId, out var prior) && prior.Generation == generation
             && prior.Rows == signature && now - prior.At < TimeSpan.FromMinutes(2)) return;
@@ -2812,7 +2835,10 @@ public sealed partial class LegacyUiHostPage : Page
             var request = new WsIngestBatchRequestDto("zhike.ws.ingest.batch.v1", "desktop-webview2", purpose.AccountId, now,
                 "foreground-visible-directory", [], checkpoints, SessionGeneration: generation);
             await _wsQueue.EnqueueAsync("api/ws/ingest/batch", request);
-            _ = FlushWsQueueAsync();
+            if (_api is null)
+                PublishWsStatus(JsonSerializer.SerializeToElement(new { accountId = purpose.AccountId, workspaceMode = purpose.WorkspaceMode,
+                    sessionGeneration = generation, eventName = "directory-save-error", detail = _storageUnavailableDetail, observedAt = now }));
+            else _ = FlushWsQueueAsync();
         }
         catch (Exception error)
         {
@@ -2847,9 +2873,45 @@ public sealed partial class LegacyUiHostPage : Page
 (workspaceMode => {
   const list = document.querySelector('#pane-side, [data-testid="chat-list"], [data-testid="chatlist"], [aria-label="Chat list"], [aria-label="聊天列表"]');
   const rows = [];
-  if (!list) return JSON.stringify({supported:false});
-  for (const row of list.querySelectorAll('[role="row"], [role="listitem"], [data-testid="cell-frame-container"]')) {
-    if (!row.getClientRects().length) continue;
+  const contacts = [], seenContacts = new Set();
+  let unresolvedRowCount = 0, unresolvedContactCount = 0;
+  const picker = document.querySelector('[data-testid="new-chat-drawer"],[data-testid="drawer-side-new-chat"],[data-testid="contact-picker"],[data-testid="contact-picker-list"]');
+  const visible = node => Boolean(node?.getClientRects?.().length && !node.closest?.('[hidden],[aria-hidden="true"]')
+    && (typeof getComputedStyle !== 'function' || getComputedStyle(node).visibility !== 'hidden'));
+  const pickerVisible = visible(picker);
+  const contactsVisible = workspaceMode === 'ordinary' && pickerVisible;
+  let conversationListVisible = visible(list);
+  if (conversationListVisible && pickerVisible) {
+    const rect = list.getBoundingClientRect?.();
+    const overList = rect && document.elementFromPoint?.(rect.left + rect.width/2,rect.top + rect.height/2);
+    if (picker.contains(list) || (overList && picker.contains(overList))) conversationListVisible = false;
+  }
+  if (contactsVisible) {
+    const contactSelector = '[data-testid="contact-row"],[data-testid="contact-picker-item"],[role="listitem"][data-jid],[role="row"][data-jid],[data-contact-id]';
+    for (const row of picker.querySelectorAll(contactSelector)) {
+      if (!visible(row)) continue;
+      const ancestor = row.parentElement?.closest(contactSelector);
+      if (ancestor && picker.contains(ancestor)) continue;
+      const nodes = [row, ...(row.querySelectorAll?.('[data-contact-id],[data-jid]') || [])];
+      const ids = nodes.flatMap(node => [node.getAttribute('data-contact-id'),node.getAttribute('data-jid'),node === row && node.getAttribute('data-id')]);
+      if (ids.some(value => typeof value === 'string' && /@g\.us$/i.test(value))) continue;
+      const candidates = [...new Set(ids.filter(value => typeof value === 'string' && /^\d{1,20}@(c\.us|s\.whatsapp\.net|lid)$/i.test(value)).map(value => value.toLowerCase()))];
+      const id = candidates.length === 1 ? candidates[0] : '';
+      if (!id) { unresolvedContactCount++; continue; }
+      if (seenContacts.has(id)) continue;
+      seenContacts.add(id);
+      const name = row.querySelector('[data-testid="contact-name"],span[dir="auto"][title],span[dir="auto"]');
+      contacts.push({contactId:id.toLowerCase(),displayName:(name?.getAttribute('title') || name?.textContent || '').trim().slice(0,150)});
+      if (contacts.length >= 1000) break;
+    }
+  }
+  if (!conversationListVisible && !contactsVisible) return JSON.stringify({supported:false});
+  const rowSelector = '[role="row"], [role="listitem"], [data-testid="cell-frame-container"]';
+  for (const row of conversationListVisible ? list.querySelectorAll(rowSelector) : []) {
+    if (!visible(row)) continue;
+    if (pickerVisible && picker.contains(row)) continue;
+    const ancestor = row.parentElement?.closest(rowSelector);
+    if (ancestor && list.contains(ancestor)) continue;
     const nodes = [row, ...row.querySelectorAll('[data-group-id],[data-jid],[data-chat-id],[data-contact-id]')];
     let groupKey = '', contactKey = '';
     for (const node of nodes) {
@@ -2864,18 +2926,18 @@ public sealed partial class LegacyUiHostPage : Page
     }
     const declared = row.getAttribute('data-conversation-type') || row.getAttribute('data-chat-type');
     if (!contactKey && ['direct','private','individual'].includes(declared)) contactKey = row.getAttribute('data-chat-id') || row.getAttribute('data-id') || '';
-    const isGroup = Boolean(groupKey);
-    if (isGroup !== (workspaceMode === 'dedicated')) continue;
-    if (!isGroup && (declared === 'group' || row.getAttribute('data-is-group') === 'true' || row.querySelector('[data-icon="default-group"],[data-testid*="group-avatar"]'))) continue;
+    const isGroup = Boolean(groupKey || declared === 'group' || row.getAttribute('data-is-group') === 'true' || row.querySelector('[data-icon="default-group"],[data-testid*="group-avatar"]'));
+    const isDirect = Boolean(contactKey || ['direct','private','individual'].includes(declared));
+    if (workspaceMode === 'ordinary' ? isGroup : !isGroup && isDirect) continue;
     const key = groupKey || contactKey;
-    if (!key) continue;
+    if (!key || (workspaceMode === 'dedicated' && !groupKey)) { unresolvedRowCount++; continue; }
     const name = row.querySelector('[data-testid*="cell-frame-title"] [title], span[dir="auto"][title], [data-testid*="cell-frame-title"], span[dir="auto"]');
     const preview = isGroup ? null : row.querySelector('[data-testid*="last-msg"],[data-testid*="preview"]');
     rows.push({ conversationKey:key, displayName:(name?.getAttribute('title') || name?.textContent || key).trim().slice(0,150),
       conversationType:isGroup ? 'group' : 'direct', isGroup, previewText:(preview?.textContent || '').trim().slice(0,240) });
     if (rows.length >= 1000) break;
   }
-  return JSON.stringify({supported:true, rows, coverage:'foreground-visible-only'});
+  return JSON.stringify({supported:true, conversationListVisible, rows, unresolvedRowCount, contactsVisible, contacts, unresolvedContactCount, coverage:'foreground-visible-only'});
 })
 """;
 
@@ -3375,13 +3437,23 @@ public sealed partial class LegacyUiHostPage : Page
   ].map(clean).filter(Boolean);
   const headerTitle = headerValues.at(-1) || '';
   const rows = [...document.querySelectorAll('#pane-side [role="listitem"], [data-testid="cell-frame-container"], [data-testid="chat-list"] [role="row"], [role="grid"] [role="row"]')];
-  const row = rows.find(item => {
-    const value = clean(item.getAttribute?.('data-id') || item.getAttribute?.('data-chat-id') || item.getAttribute?.('title') || textOf(item));
-    return Boolean(headerTitle && value && (value === headerTitle || value.includes(headerTitle) || headerTitle.includes(value)));
-  });
-  const conversationKey = clean(row?.getAttribute?.('data-id') || row?.getAttribute?.('data-chat-id') || headerValues[0] || headerTitle || 'visible').slice(0, 240);
-  const identityText = [conversationKey, header?.getAttribute?.('data-testid'), header?.getAttribute?.('aria-label'), headerTitle].join(' ').toLocaleLowerCase();
-  const isGroup = /@g\.us\b|group|community|群聊|群组/.test(identityText);
+  const stableId = node => {
+    for (const field of ['data-jid','data-chat-id','data-group-id','data-contact-id','data-id']) {
+      const id = clean(node?.getAttribute?.(field));
+      if (field === 'data-group-id' && /^\d{5,}$/.test(id)) return id + '@g.us';
+      if (/^[a-z0-9._:-]+(?:@(g\.us|c\.us|s\.whatsapp\.net|lid))?$/i.test(id)) return id;
+    }
+    return '';
+  };
+  const selected = rows.filter(item => item.getAttribute?.('aria-selected') === 'true' || item.getAttribute?.('aria-current') === 'true' || item.getAttribute?.('data-selected') === 'true');
+  const selectedId = selected.length === 1 ? stableId(selected[0]) : '';
+  const headerId = stableId(header);
+  const conversationKey = header && !(headerId && selectedId && headerId !== selectedId) ? headerId || selectedId : '';
+  if (!conversationKey) return JSON.stringify({supported:true, collectorRole:'foreground-on-demand', accountId, conversationKey:'', messages:[], coverage:'identity-unresolved'});
+  const declared = [header, selected[0]].flatMap(node => ['data-chat-type','data-conversation-type','data-is-group'].map(field => clean(node?.getAttribute?.(field)).toLowerCase()));
+  const isGroup = /@g\.us$/i.test(conversationKey) || declared.some(value => ['group','community','true'].includes(value));
+  if (!isGroup && !/@(c\.us|s\.whatsapp\.net|lid)$/i.test(conversationKey) && !declared.some(value => ['direct','private','individual','false'].includes(value)))
+    return JSON.stringify({supported:true,collectorRole:'foreground-on-demand',accountId,conversationKey:'',messages:[],coverage:'conversation-type-unresolved'});
   const conversationType = isGroup ? 'group' : 'direct';
   const parseSender = preamble => {
     const value = String(preamble || '').replace(/^\[[^\]]*\]\s*/, '').trim();
@@ -3485,7 +3557,9 @@ public sealed partial class LegacyUiHostPage : Page
     add(values, text(header));
     // A title that happens to look like a JID is still only a display name.
     const groupJids = ids.filter(value => /^[a-z0-9._-]+@g\.us$/.test(value));
-    const jid = groupJids.length === 1 ? groupJids[0] : '';
+    const headerJid = groupJids.length === 1 ? groupJids[0] : '';
+    const selectedKey = headerJid ? selectedConversationKey() : '';
+    const jid = !selectedKey || selectedKey === headerJid ? headerJid : '';
     const groupName = values.find(value => !/@/.test(value) && value.length <= 200) || '';
     return { jid, groupName, header };
   };
@@ -3753,9 +3827,11 @@ public sealed partial class LegacyUiHostPage : Page
     '[data-jid][tabindex]', '[data-chat-id][tabindex]', '[data-group-id][tabindex]'
   ];
   const listSelector = '#pane-side, [data-testid="chat-list"], [data-testid="chatlist"], [aria-label="Chat list"], [aria-label="聊天列表"], [role="grid"]';
+  const contactPickerSelector = '[data-testid="new-chat-drawer"],[data-testid="drawer-side-new-chat"],[data-testid="contact-picker"],[data-testid="contact-picker-list"]';
   const listContainer = () => {
     const candidates = [], seen = new Set();
-    const add = node => { if (node && !seen.has(node)) { seen.add(node); candidates.push(node); } };
+    const picker = document.querySelector(contactPickerSelector);
+    const add = node => { if (node && !seen.has(node) && !picker?.contains?.(node)) { seen.add(node); candidates.push(node); } };
     try { for (const node of document.querySelectorAll(listSelector)) add(node); } catch {}
     if (!candidates.length) { try { add(document.querySelector(listSelector)); } catch {} }
     // WhatsApp has shipped both a scrollable #pane-side root and a nested
@@ -4045,7 +4121,9 @@ public sealed partial class LegacyUiHostPage : Page
     const roots = container?.querySelectorAll ? [{ root:container, selectors:scopedRowSelectors }] : [{ root:document, selectors:rowSelectors }];
     for (const entry of roots) for (const selector of entry.selectors) for (const node of entry.root.querySelectorAll(selector)) { if (!seen.has(node)) { seen.add(node); rows.push(node); } }
     if (!rows.length && container) for (const selector of rowSelectors) for (const node of document.querySelectorAll(selector)) { if (!seen.has(node)) { seen.add(node); rows.push(node); } }
-    return rows;
+    const picker = document.querySelector(contactPickerSelector);
+    const selector = scopedRowSelectors.join(',');
+    return rows.filter(node => !picker?.contains?.(node) && !seen.has(node.parentElement?.closest?.(selector)));
   };
    const unreadState = row => {
      if (!row || typeof row !== 'object') return { unread:false, uncertainUnread:true, unreadMarker:'' };
@@ -4201,18 +4279,24 @@ public sealed partial class LegacyUiHostPage : Page
        for (const node of row.querySelectorAll?.('[data-group-id], [data-jid], [data-chat-id], [data-contact-id], [data-id]') || []) add(node, false);
      } catch {}
      const directGroup = candidates.find(item => item.direct && item.attribute === 'data-group-id');
-     const directJid = candidates.find(item => item.direct && /@(?:g\.us|s\.whatsapp\.net|c\.us|lid)(?:\b|$)/i.test(item.value));
-     const nestedJid = candidates.find(item => /@(?:g\.us|s\.whatsapp\.net|c\.us|lid)(?:\b|$)/i.test(item.value));
+     const jid = /^[a-z0-9._:-]+@(g\.us|s\.whatsapp\.net|c\.us|lid)$/i;
+     const directJid = candidates.find(item => item.direct && jid.test(item.value));
+     const nestedIds = [...new Set(candidates.filter(item => !item.direct && jid.test(item.value)).map(item => item.value))];
+     const nestedJid = nestedIds.length === 1 ? candidates.find(item => item.value === nestedIds[0]) : null;
      const nestedGroup = candidates.find(item => !item.direct && item.attribute === 'data-group-id');
-     const directIdentity = candidates.find(item => item.direct);
-     const selected = directGroup || directJid || nestedJid || nestedGroup || directIdentity || candidates[0];
+     const explicit = candidates.find(item => (item.direct || item.attribute === 'data-chat-id' || item.attribute === 'data-contact-id')
+       && /^[a-z0-9._:-]{1,200}$/i.test(item.value));
+     const selected = directGroup || directJid || nestedGroup || nestedJid || explicit;
      if (!selected) return '';
      // Native group rows occasionally expose only the numeric group id.  The
      // server and group monitor use WhatsApp's canonical @g.us form.
      if (selected.attribute === 'data-group-id' && /^\d{5,}$/.test(selected.value)) return `${selected.value}@g.us`;
      return selected.value.slice(0, 240);
    };
-   const readRows = () => rowNodes().map((row, index) => {
+   let unresolvedWindowRows = 0;
+   const readRows = () => {
+    unresolvedWindowRows = 0;
+    return rowNodes().map((row, index) => {
     const labels = [row, ...row.querySelectorAll('[aria-label], [aria-description], [title], [data-pre-plain-text]')].map(node => clean(node.getAttribute?.('aria-label') || node.getAttribute?.('aria-description') || node.getAttribute?.('title') || node.getAttribute?.('data-pre-plain-text') || '')).filter(Boolean);
     const pageText = labels.join(' ').slice(0, 2000);
     const identity = conversationIdentityFromRow(row);
@@ -4221,7 +4305,7 @@ public sealed partial class LegacyUiHostPage : Page
     const displayName = stripSystem(clean(primaryTitles[0] || row.querySelector('[title], span[dir="auto"]')?.getAttribute('title') || row.querySelector('span[dir="auto"]')?.textContent || labels[0] || '')).slice(0, 200);
     const previewNode = row.querySelector('[data-testid*="last-msg"], [data-testid*="message"], [data-testid*="preview"], [aria-description], span[title]');
     const preview = stripSystem(previewNode?.getAttribute?.('aria-label') || previewNode?.getAttribute?.('aria-description') || previewNode?.getAttribute?.('title') || previewNode?.textContent || text(row)).slice(-500);
-    const externalId = (identity || compactId(displayName || pageText)).slice(0, 200);
+    const externalId = identity.slice(0, 200);
     const timeNode = row.querySelector('time, [data-testid*="time"], [aria-label*="AM"], [aria-label*="PM"]');
     const lastMessageAt = clean(timeNode?.getAttribute?.('datetime') || timeNode?.getAttribute?.('aria-label') || timeNode?.getAttribute?.('title') || '').slice(0, 100);
      const badge = unreadBadgeState(row);
@@ -4231,6 +4315,9 @@ public sealed partial class LegacyUiHostPage : Page
      const unreadCount = badge.unreadCount;
      const unread = unreadState({ unreadCount, unreadMarker:badge.unreadMarker, unread:badge.unread, unreadStateKnown, displayName:unreadStateKnown ? displayName : '', title:unreadStateKnown ? displayName : '', conversationKey:unreadStateKnown ? externalId : '', externalId:unreadStateKnown ? externalId : '' });
       const typeEvidence = conversationTypeFromNode(row, identity, displayName);
+      if (typeEvidence.conversationType === 'unknown' || (!externalId && (directHistoryAllowed ? !typeEvidence.isGroup : typeEvidence.isGroup))
+          || (groupMonitoringAllowed && typeEvidence.isGroup && !/@g\.us$/i.test(externalId))) unresolvedWindowRows++;
+      if (!externalId) return null;
       const rowFingerprint = compactId(`timestamp-v4-direction-v4-type-v1|${externalId}|${preview}|${lastMessageAt}|${unreadCount}|${typeEvidence.conversationType}`);
       const typeStatus = typeEvidence.conversationType === 'group' ? 'skipped-group' : typeEvidence.conversationType === 'unknown' ? 'retryable' : '';
       const result = { index, conversationKey: externalId, externalId, displayName, title:displayName, lastMessagePreview:preview, previewText:preview, preview, lastMessageAt, unreadCount, unread:unread.unread, uncertainUnread:unread.uncertainUnread, unreadStateKnown, unreadMarker:unread.unreadMarker, conversationType:typeEvidence.conversationType, isGroup:typeEvidence.isGroup, vipGroup:typeEvidence.vipGroup === true, conversationTypeSource:typeEvidence.source, status:typeStatus || (unread.unread || unread.uncertainUnread ? 'skipped_unread' : 'queued'), coverage:typeEvidence.conversationType === 'group' ? 'excluded-group' : typeEvidence.conversationType === 'unknown' ? 'conversation-type-unresolved' : '', cursor:rowFingerprint, lastMessageFingerprint:rowFingerprint, listText:pageText, previewOnly:true, visibleOnly:true };
@@ -4239,7 +4326,8 @@ public sealed partial class LegacyUiHostPage : Page
        Object.defineProperty(result, '__identityTitles', { value:primaryTitles, enumerable:false });
      } catch {}
      return result;
-  }).filter(row => row && (row.displayName || row.externalId || row.lastMessagePreview));
+  }).filter(Boolean);
+  };
    window.__zhikeWsReadHistoryCandidates = readHistoryCandidates;
   const discover = () => {
      const conversations = [], excludedConversations = [], seen = new Set();
@@ -4252,7 +4340,8 @@ public sealed partial class LegacyUiHostPage : Page
      const groupConversations = [...conversations, ...excludedConversations]
        .filter(row => row?.isGroup === true || row?.conversationType === 'group' || row?.conversationType === 'vip_group');
      return {
-       supported: conversations.length > 0 || excludedConversations.length > 0,
+       supported: conversations.length > 0 || excludedConversations.length > 0 || unresolvedWindowRows > 0,
+       unresolvedRowCount:unresolvedWindowRows,
        conversations,
        excludedConversations,
        groupConversations,
@@ -4271,10 +4360,13 @@ public sealed partial class LegacyUiHostPage : Page
   let allScanGeneration = 0;
   let lastDirectorySweepAt = Date.now();
   let directorySequence = 0;
-  const newDirectory = () => ({ id:++directorySequence, chunk:0, seen:new Map() });
+  const newDirectory = () => ({ id:++directorySequence, chunk:0, seen:new Map(), unresolved:0 });
   const publishDirectory = (run, rows, coverage = 'page-list-progress', finished = false) => {
     const stream = run.directory;
     if (!stream || !backgroundCollectorRole || !window.chrome?.webview) return;
+    const previousUnresolved = stream.unresolved;
+    stream.unresolved = Math.max(stream.unresolved, unresolvedWindowRows);
+    if (finished && stream.unresolved && coverage === 'page-list-scanned') coverage = 'identity-unresolved';
     const updates = [];
     for (const row of rows) {
       const key = row.conversationKey;
@@ -4286,10 +4378,10 @@ public sealed partial class LegacyUiHostPage : Page
         previewText:directHistoryAllowed ? row.previewText : '', unread:row.unread, unreadCount:row.unreadCount, uncertainUnread:row.uncertainUnread,
         lastMessageAt:row.lastMessageAt, lastMessageFingerprint:row.lastMessageFingerprint });
     }
-    for (let i=0; i < updates.length || (finished && i === 0); i+=100) {
+    for (let i=0; i < updates.length || ((finished || stream.unresolved > previousUnresolved) && i === 0); i+=100) {
       const last = finished && i + 100 >= updates.length;
       window.chrome.webview.postMessage(JSON.stringify({ type:'zhike.ws.directory', accountId, collectorEpoch:documentEpoch, scanId:stream.id, chunkIndex:stream.chunk++,
-        rows:updates.slice(i, i+100), scanning:!last, finished:last, complete:last && coverage === 'page-list-scanned', coverage }));
+        rows:updates.slice(i, i+100), unresolvedRowCount:stream.unresolved, scanning:!last, finished:last, complete:last && coverage === 'page-list-scanned', coverage }));
     }
   };
   let lastAllScanAt = 0;
@@ -4332,7 +4424,7 @@ public sealed partial class LegacyUiHostPage : Page
   };
   const mergeRows = (target, rows, limit = Number.MAX_SAFE_INTEGER) => {
     for (const row of rows) {
-      const key = row.conversationKey || `${row.displayName}|${row.lastMessagePreview}`;
+      const key = row.conversationKey;
       if (key && (target.has(key) || target.size < limit)) target.set(key, { ...row, index: target.get(key)?.index ?? target.size });
     }
   };
@@ -4574,6 +4666,11 @@ public sealed partial class LegacyUiHostPage : Page
      });
      return scrollable[0] || populated || candidates[0] || null;
    };
+   const selectedConversationKey = () => {
+     const selected = rowNodes().filter(node => node.getAttribute?.('aria-selected') === 'true'
+       || node.getAttribute?.('aria-current') === 'true' || node.getAttribute?.('data-selected') === 'true');
+     return selected.length === 1 ? conversationIdentityFromRow(selected[0]) : '';
+   };
    const currentConversationIdentity = () => {
      // WhatsApp has shipped the conversation title under several non-semantic
      // containers.  The old selector only matched a literal <header>, which
@@ -4588,7 +4685,10 @@ public sealed partial class LegacyUiHostPage : Page
        header.querySelector?.('[data-id]')?.getAttribute?.('data-id'), header.querySelector?.('[data-chat-id]')?.getAttribute?.('data-chat-id'),
        ...primaryTitles, header.querySelector?.('[title]')?.getAttribute?.('title'), text(header),
      ].map(clean).filter(Boolean);
-     return { key:values[0] || '', title:values.at(-1) || '', values };
+     const headerKey = conversationIdentityFromRow(header);
+     const selectedKey = selectedConversationKey();
+     const key = headerKey && selectedKey && headerKey !== selectedKey ? '' : headerKey || selectedKey;
+     return { key, title:primaryTitles[0] || values.at(-1) || '', values };
    };
     const currentConversationType = row => {
       const rowType = clean(row?.conversationType || 'unknown').toLocaleLowerCase();
@@ -4601,20 +4701,10 @@ public sealed partial class LegacyUiHostPage : Page
       if (rowType === 'unknown' && headerEvidence.conversationType === 'direct') return headerEvidence;
       return { conversationType:'unknown', isGroup:false, source:'unresolved' };
     };
-   const currentConversationKey = fallback => currentConversationIdentity().key || clean(fallback || 'visible');
    const comparableIdentity = value => clean(value).toLocaleLowerCase().replace(/^\+/, '').replace(/[^\p{L}\p{N}]+/gu, '');
-   const machineIdentity = value => {
-     const raw = clean(value).toLocaleLowerCase();
-     const digits = raw.replace(/\D+/g, '');
-     return raw.includes('@') || /^(?:true|false)_/i.test(raw) || digits.length >= 7 && /^[+\d\s().-]+$/.test(raw);
-   };
    const matchesCurrentConversation = row => {
-     const expected = [row?.conversationKey, row?.externalId, ...(Array.isArray(row?.__identityTitles) ? row.__identityTitles : []), row?.displayName, row?.title].map(value => ({ raw:clean(value), comparable:comparableIdentity(value) })).filter(item => item.comparable);
-     const observed = currentConversationIdentity().values.map(value => ({ raw:clean(value), comparable:comparableIdentity(value) })).filter(item => item.comparable);
-     return expected.some(left => observed.some(right => left.comparable === right.comparable || (
-       machineIdentity(left.raw) && machineIdentity(right.raw) && left.comparable.length >= 7 && right.comparable.length >= 7
-       && (right.comparable.endsWith(left.comparable) || left.comparable.endsWith(right.comparable))
-     )));
+     const key = clean(row?.conversationKey || row?.externalId);
+     return Boolean(key && key === currentConversationIdentity().key);
    };
    const waitForConversationIdentity = (row, onReady, onFailure, startedAt = Date.now()) => {
      if (!readHistoryScan) return;
@@ -4836,7 +4926,7 @@ public sealed partial class LegacyUiHostPage : Page
        let readCount = 0, skipCount = 0, domNodeKnownCount = 0;
        for (const row of windowRows) {
          if (row.__node) domNodeKnownCount += 1;
-         const key = row.conversationKey || `${row.displayName}|${row.lastMessagePreview}`;
+         const key = row.conversationKey;
          if (!key) continue;
           if (row.conversationType === 'group') {
             run.excludedGroups.add(key);
@@ -4876,7 +4966,7 @@ public sealed partial class LegacyUiHostPage : Page
        readHistoryScan = null;
        try { run.container.scrollTop = run.initial; run.container.dispatchEvent(new Event('scroll', { bubbles:true })); } catch {}
        scheduleCollectorPaint(() => {
-         const restore = readRows().find(row => run.initialIdentity.values.some(value => comparableIdentity(value) === comparableIdentity(row.conversationKey) || comparableIdentity(value) === comparableIdentity(row.displayName)) && !unreadState(row).unread);
+         const restore = readRows().find(row => row.conversationKey === run.initialIdentity.key && !unreadState(row).unread);
          try { restore?.__node?.click?.(); } catch {}
        });
        postAllScan([...run.seen.values()], complete ? 'read-history-list' : 'read-history-interrupted', []);
@@ -4963,7 +5053,8 @@ public sealed partial class LegacyUiHostPage : Page
        addWindowRows();
        const row = run.pending.shift();
        if (row) {
-         const currentRow = readRows().find(item => item.conversationKey === row.conversationKey) || row;
+         const currentRow = readRows().find(item => item.conversationKey === row.conversationKey);
+         if (!currentRow) { finishCurrent(row, false, 'read-history-row-no-longer-visible'); return; }
           if (!collectibleConversationType(currentRow.conversationType)) {
             const key = currentRow.conversationKey;
             if (currentRow.conversationType === 'group') {
@@ -5117,13 +5208,12 @@ public sealed partial class LegacyUiHostPage : Page
     // established, wait for full-history collection instead of creating one
     // fake conversation per bubble.
     const scanRow = readHistoryScan?.current;
-    let currentRow = scanRow && matchesCurrentConversation(scanRow) ? scanRow : null;
-    if (!currentRow) {
-      try { currentRow = readRows().find(row => matchesCurrentConversation(row)) || null; } catch {}
-    }
+    const activeIdentity = currentConversationIdentity();
+    const currentRow = scanRow && scanRow.conversationKey === activeIdentity.key ? scanRow
+      : activeIdentity.key ? readRows().find(row => row.conversationKey === activeIdentity.key) : null;
     const observedGroupJid = groupMonitoringAllowed ? clean(groupMonitorCurrentIdentity().jid) : '';
-    const conversationKey = clean(observedGroupJid || currentRow?.conversationKey || currentConversationIdentity().key);
-    if (!conversationKey) return { supported:true, messages:[] };
+    const conversationKey = clean(observedGroupJid || currentRow?.conversationKey || activeIdentity.key);
+    if (!conversationKey) return { supported:true, blocked:true, coverage:'identity-unresolved', messages:[] };
     const typeEvidence = currentConversationType(currentRow);
     const passiveGroupCapture = backgroundCollectorRole && groupMonitoringAllowed
       && groupMonitorState.enabled && groupMonitorState.status === 'running'
@@ -5178,7 +5268,8 @@ public sealed partial class LegacyUiHostPage : Page
     const listed = directHistoryAllowed ? result.conversations : result.groupConversations;
     const rows = (listed || []).slice(0,1000).map(row => directHistoryAllowed ? row : ({
       conversationKey:row.conversationKey, displayName:row.displayName, conversationType:row.conversationType, isGroup:row.isGroup }));
-    return { supported:result.supported, scanId:run?.directory?.id || 0, scanned:result.scanned, scanning:result.scanning, coverage:result.coverage, rows };
+    return { supported:result.supported, scanId:run?.directory?.id || 0, scanned:result.scanned, scanning:result.scanning, coverage:result.coverage,
+      unresolvedRowCount:run?.directory?.unresolved ?? unresolvedWindowRows, rows };
   };
   window.__zhikeWsCapture = capture;
   let lastFingerprint = '';

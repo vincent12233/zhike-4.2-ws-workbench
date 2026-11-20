@@ -23,6 +23,15 @@ var directoryInput=JsonSerializer.SerializeToElement(new{scanId=9,chunkIndex=2,f
  new{conversationKey="3@g.us",conversationType="direct",displayName="Misclassified",previewText="foreign group",isGroup=false},
  new{conversationKey="opaque",conversationType="unknown",displayName="Unknown",previewText="uncertain",isGroup=false}}});
 var directoryA=WsLiveDirectory.Project(directoryInput,ordinary,5,8,"collector");
+var picker=JsonSerializer.SerializeToElement(new{contactsVisible=true,unresolvedRowCount=2,unresolvedContactCount=1,
+ contacts=new[]{new{contactId="11111@lid",displayName="Same"},new{contactId="22222@lid",displayName="Same"},new{contactId="Beta",displayName="No ID"}}});
+var contactProjection=WsLiveDirectory.Project(picker,ordinary,5,0,"foreground-visible");
+Check(contactProjection.GetProperty("contacts").GetArrayLength()==2 && contactProjection.GetProperty("conversations").GetArrayLength()==0
+ && contactProjection.GetProperty("unresolvedRowCount").GetInt32()==2 && contactProjection.GetProperty("unresolvedContactCount").GetInt32()==1,
+ "foreground picker preserves separate stable identities and reports gaps");
+Check(WsLiveDirectory.Project(picker,ordinary,5,8,"collector").GetProperty("contacts").GetArrayLength()==0
+ && WsLiveDirectory.Project(picker,dedicated,5,0,"foreground-visible").GetProperty("contacts").GetArrayLength()==0,
+ "contacts are only exposed by the authenticated ordinary foreground read");
 var directoryB=WsLiveDirectory.Project(directoryInput,dedicated,5,8,"collector");
 Check(directoryA.GetProperty("conversations").GetArrayLength()==1 && directoryA.GetProperty("groupConversations").GetArrayLength()==0
  && !directoryA.ToString().Contains("2@g.us") && directoryA.GetProperty("accountId").GetString()=="ordinary","live rows are purpose-filtered by the native host");

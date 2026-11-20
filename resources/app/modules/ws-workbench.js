@@ -932,6 +932,13 @@
     }
     return [...rows.values()];
   }
+  function updateVisibleContactsDom() {
+    const contacts = $('#wsVisibleContactDirectory');
+    if (contacts) {
+      const html = renderVisibleContactDirectory();
+      if (contacts.innerHTML !== html) contacts.innerHTML = html;
+    }
+  }
   function updateLiveDirectoryDom() {
     if (!state.active) return;
     const runtime = $('#wsLiveCollectionRuntime');
@@ -974,6 +981,7 @@
     if (scanId > directory.scanId) {
       directory.scanId = scanId; directory.chunks.clear(); directory.scannedKeys.clear(); directory.lastChunk = null; directory.finalized = false;
       directory.incomplete = false;
+      directory.collectorGaps = null;
     }
     if (pushed) {
       if (!Number.isSafeInteger(payload.chunkIndex) || payload.chunkIndex < 0 || directory.chunks.has(payload.chunkIndex)) return;
@@ -981,14 +989,17 @@
       if (payload.finished && payload.complete) directory.lastChunk = payload.chunkIndex;
     }
     addLiveDirectoryRows(directory.collector, payload, 'collector', directory.scannedKeys, !pushed && directory.chunks.size > 0);
+    if (Number.isSafeInteger(payload.unresolvedRowCount) && payload.unresolvedRowCount >= 0) {
+      directory.collectorGaps = Math.max(directory.collectorGaps || 0, payload.unresolvedRowCount);
+    }
     directory.lastCollectorReadAt = nowIso();
     directory.collectorObserved = true;
     directory.collectorError = '';
     if (payload.finished && !payload.complete) directory.incomplete = true;
     if (directory.lastChunk !== null && directory.chunks.size === directory.lastChunk + 1) {
-      for (const key of directory.collector.keys()) if (!directory.scannedKeys.has(key)) directory.collector.delete(key);
+      if (!directory.collectorGaps) for (const key of directory.collector.keys()) if (!directory.scannedKeys.has(key)) directory.collector.delete(key);
       directory.finalized = true;
-      directory.incomplete = false;
+      directory.incomplete = directory.collectorGaps > 0;
     }
     updateLiveDirectoryDom();
     return true;
@@ -1006,7 +1017,7 @@
       if (directory && payload.accountId === state.activeAccountId && payload.workspaceMode === state.workspaceMode &&
           Number.isSafeInteger(payload.sessionGeneration) && payload.sessionGeneration > 0 &&
           payload.sessionGeneration === Math.max(directory.foregroundGeneration, directory.collectorGeneration)) {
-        directory.saveError = text(payload.detail || '目录暂存失败。').slice(0, 240);
+        directory.saveError = text(payload.detail || '目录保存失败。').slice(0, 240);
         directory.saveErrorGeneration = payload.sessionGeneration;
         directory.saveErrorAt = text(payload.observedAt) || nowIso();
         updateLiveDirectoryDom();
@@ -1072,6 +1083,7 @@
     directory.epoch = epoch || directory.epoch;
     directory.scanId = 0; directory.scannedKeys.clear(); directory.chunks.clear(); directory.lastChunk = null; directory.finalized = false;
     directory.collectorObserved = false; directory.incomplete = false; directory.nextCollectorReadAt = 0;
+    directory.collectorGaps = null;
     directory.historyRetryAt = 0; directory.historyFailures = 0;
     if (directory.collector.size) { directory.collector.clear(); updateLiveDirectoryDom(); }
   }
@@ -1087,22 +1099,40 @@
         if (!owns()) return null;
         if (result?.accountId !== context.accountId || result.workspaceMode !== directory.mode || result.source !== 'foreground-visible'
             || !result.supported || !Number.isSafeInteger(result.sessionGeneration) || result.sessionGeneration < Math.max(1, directory.foregroundGeneration)) {
-          directory.foreground.clear(); directory.foregroundChecked = false;
+          directory.foreground.clear(); directory.foregroundChecked = false; directory.contactsVisible = false;
           directory.foregroundError = text(result?.error || result?.detail || '暂未读到当前账号的前台目录。').slice(0, 240);
           return null;
         }
+        const observedAt = nowIso();
+        if (result.sessionGeneration !== directory.foregroundGeneration) {
+          directory.foreground.clear(); directory.foregroundChecked = false; directory.lastForegroundReadAt = ''; directory.foregroundGaps = null;
+        }
         directory.foregroundGeneration = result.sessionGeneration;
-        directory.foreground.clear();
-        addLiveDirectoryRows(directory.foreground, result, 'foreground-visible');
-        directory.foregroundChecked = true;
+        directory.chatListVisible = result.conversationListVisible !== false;
+        if (directory.chatListVisible) {
+          directory.foreground.clear();
+          addLiveDirectoryRows(directory.foreground, result, 'foreground-visible');
+          directory.foregroundGaps = Number.isSafeInteger(result.unresolvedRowCount) && result.unresolvedRowCount >= 0 ? result.unresolvedRowCount : null;
+          directory.foregroundChecked = true; directory.lastForegroundReadAt = observedAt;
+        }
+        directory.contactsVisible = directory.mode === 'ordinary' && result.contactsVisible === true;
+        directory.contactsObservedAt = directory.contactsVisible ? observedAt : '';
+        directory.contacts = new Map();
+        directory.contactGaps = Number.isSafeInteger(result.unresolvedContactCount) && result.unresolvedContactCount >= 0 ? result.unresolvedContactCount : null;
+        if (directory.contactsVisible && Array.isArray(result.contacts)) {
+          for (const contact of result.contacts) {
+            const id = text(contact?.contactId);
+            if (!/^\d{1,20}@(c\.us|s\.whatsapp\.net|lid)$/i.test(id) || (contact.accountId && contact.accountId !== context.accountId)) continue;
+            directory.contacts.set(id, text(contact.displayName).slice(0, 150) || id);
+          }
+        }
         directory.foregroundError = '';
-        directory.lastForegroundReadAt = nowIso();
         return result;
       } catch (error) {
-        if (owns()) { directory.foreground.clear(); directory.foregroundChecked = false; directory.foregroundError = text(error?.message || '前台目录读取失败。').slice(0, 240); }
+        if (owns()) { directory.foreground.clear(); directory.foregroundChecked = false; directory.contactsVisible = false; directory.foregroundError = text(error?.message || '前台目录读取失败。').slice(0, 240); }
         return null;
       }
-      finally { if (owns()) { directory.foregroundRead = null; updateLiveDirectoryDom(); } }
+      finally { if (owns()) { directory.foregroundRead = null; updateLiveDirectoryDom(); updateVisibleContactsDom(); } }
     })();
     return directory.foregroundRead;
   }
@@ -1111,6 +1141,8 @@
     const directory = state.liveDirectory;
     if (!directory) return;
     directory.foregroundTicket++; directory.foregroundRead = null; directory.foregroundChecked = false; directory.foregroundError = '';
+    directory.contacts = null; directory.contactsVisible = false; directory.foregroundGaps = null;
+    updateVisibleContactsDom();
     if (directory.foreground.size) { directory.foreground.clear(); updateLiveDirectoryDom(); }
   }
   function broadcastCandidates() {
@@ -3946,7 +3978,8 @@
   }
   function groupDirectorySummary(rows = groupDirectoryRows()) {
     const live = rows.filter(row => row.directorySource !== '历史记录').length;
-    return `现场 ${live} 个群组 · 仅有历史记录 ${rows.length - live} 个`;
+    const coverage = liveDirectoryGapMessage();
+    return `现场 ${live} 个群组 · 仅有历史记录 ${rows.length - live} 个` + (coverage ? ' · ' + coverage : '');
   }
   function groupDirectoryWindow() {
     const page = groupDirectoryState(), allRows = groupDirectoryRows(), filters = page.groupFilters;
@@ -4197,14 +4230,35 @@
     if (!account || state.workspaceMode !== 'dedicated') return '';
     return `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>${esc(accountDisplayName(account))}</strong><span>${esc(instruction)}</span></div><button type="button" class="btn small" data-ws-workspace-view="chat">打开此账号的 WhatsApp</button></div></section>`;
   }
+  function liveDirectoryGapMessage() {
+    const directory = state.liveDirectory;
+    if (!directory || directory.accountId !== state.activeAccountId || directory.mode !== state.workspaceMode) return '';
+    const counts = [];
+    if (directory.foregroundChecked && directory.foregroundGaps > 0) counts.push('前台至少 ' + directory.foregroundGaps + ' 行');
+    if (directory.collectorObserved && directory.collectorGaps > 0) counts.push('后台本轮至少 ' + directory.collectorGaps + ' 行');
+    return counts.length ? counts.join('、') + '缺少可靠标识或无法确认类型，已识别数量仅覆盖可核实的行。' : '';
+  }
+  function renderVisibleContactDirectory() {
+    if (state.workspaceMode !== 'ordinary') return '';
+    const directory = state.liveDirectory;
+    const observed = directory?.accountId === state.activeAccountId && directory.mode === 'ordinary' && directory.contactsVisible;
+    const contacts = observed ? [...directory.contacts] : [];
+    const summary = observed ? '当前可见联系人（已识别 ' + contacts.length + ' 位）' : '查看前台联系人';
+    const gaps = observed && directory.contactGaps > 0 ? `<p class="ws-muted">另有至少 ${directory.contactGaps} 行缺少可靠的联系人标识。</p>` : '';
+    const details = observed ? (contacts.length
+      ? `<p class="ws-muted">联系人选择器记录于 ${esc(directory.contactsObservedAt)}。与该联系人的聊天状态尚未确认。</p><ul class="ws-visible-contact-list">${contacts.map(([id, name]) => `<li><strong>${esc(name)}</strong> <small>${esc(id)}</small></li>`).join('')}</ul>`
+      : '<p class="ws-muted">已读取联系人选择器，当前窗口没有可识别的联系人。</p>')
+      : '<p class="ws-muted">在此账号的 WhatsApp 中打开“新建聊天”，再读取当前可见联系人。</p>';
+    return `<details${directory?.contactsExpanded ? ' open' : ''}><summary>${esc(summary)}</summary>${details}${gaps}<button type="button" class="btn small" data-ws-action="refresh-visible-contacts" ${state.wsStatus === '已连接' ? '' : 'disabled'}>读取可见联系人</button></details>`;
+  }
   function liveCollectionRuntimeRows() {
     const directory = state.liveDirectory?.accountId === state.activeAccountId && state.liveDirectory?.mode === state.workspaceMode ? state.liveDirectory : null;
     const capability = collectionCapability(), ordinary = state.workspaceMode === 'ordinary';
     const collectorRead = directory?.collectorObserved === true && capability.collectorState === 'running';
     const visible = directory?.foregroundChecked === true;
     const coverage = [];
-    if (visible) coverage.push('前台当前可见列表');
-    if (collectorRead) coverage.push(directory.finalized ? '后台已读完本轮可访问的列表' : directory.incomplete ? '后台列表部分可读，存在缺口' : '后台已读取部分列表');
+    if (visible) coverage.push(directory.chatListVisible === false ? '前台上次可见聊天列表' : '前台当前可见列表');
+    if (collectorRead) coverage.push(directory.incomplete ? '后台列表部分可读，存在缺口' : directory.finalized ? '后台已读完本轮可访问的列表' : '后台已读取部分列表');
     const rows = [
       ['当前账号', activeAccount() ? accountDisplayName(activeAccount()) + ' · ' + state.activeAccountId : '尚未选择'],
       ['前台连接', state.wsStatus || '尚未确认'], ['后台连接', collectorStatusLabel(capability)],
@@ -4219,8 +4273,10 @@
       rows.push(['历史采集缺口', Number.isSafeInteger(directory?.historyMissing) ? directory.historyMissing + ' 项待重试' : '尚未确认']);
     }
     if (!ordinary) rows.push(['本次选中账号后新增可识别成员', Number.isSafeInteger(directory?.insertedMembers) ? directory.insertedMembers + ' 位' : '尚无成员入库回执']);
+    const gaps = liveDirectoryGapMessage();
+    if (gaps) rows.push(['会话识别缺口', gaps]);
     if (directory?.lastDirectorySavedAt) rows.push(['最近目录保存回执', directory.lastDirectorySavedAt]);
-    if (directory?.saveError) rows.push(['目录暂存失败', directory.saveError + ' · ' + directory.saveErrorAt]);
+    if (directory?.saveError) rows.push(['目录保存失败', directory.saveError + ' · ' + directory.saveErrorAt]);
     const auth = state.aiAuthorization;
     rows.push(['自动 AI', ordinary ? auth?.active === true && auth.authorization?.accountId === state.activeAccountId ? '已授权所选私聊' : auth?.active === false ? '关闭' : '授权状态尚未读取' : '关闭']);
     if (directory?.localReadError) rows.push(['本机查询错误', directory.localReadError]);
@@ -4257,6 +4313,7 @@
     if (activeView === 'overview') body = body.replace('<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>工作区入口</strong>', renderWorkspaceOperationalOverview() + '<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>工作区入口</strong>');
     if (activeView === 'settings') body += `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>AI 配置与本机诊断</strong><span>复用现有设置与加密密钥服务，不创建第二套凭据存储。</span></div></div><div class="ws-workspace-settings-grid"><div><strong>GPT / API Key 配置</strong><p>打开原 GPT 本机设置，只显示配置状态与尾号；本页不读取或展示明文密钥。</p><button type="button" class="btn small" data-gpt-action="settings">打开 GPT 本机设置</button></div><div><strong>采集与连接诊断</strong><p>使用原 WS 诊断面板查看实际服务状态；没有可用性能采样时不伪造 CPU 或内存数据。</p><button type="button" class="btn small" data-ws-action="focus-assist" data-assist-target="diagnostics">打开现有运行诊断</button></div></div></section>`;
     if (activeView === 'overview' || activeView === 'collection') body += `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><strong>现场采集状态</strong></div><div class="ws-workspace-settings-grid" id="wsLiveCollectionRuntime">${liveCollectionRuntimeRows()}</div></section>`;
+    if (state.workspaceMode === 'ordinary' && (activeView === 'overview' || activeView === 'collection')) body += `<section class="ws-workspace-card zk-surface" id="wsVisibleContactDirectory">${renderVisibleContactDirectory()}</section>`;
     const page = wsWorkspacePageState(activeView);
     return activeView === 'chat' ? '' : `<section class="ws-workspace-page-content" data-ws-workspace-page="${esc(activeView)}" data-ws-account-id="${esc(state.activeAccountId || 'default')}" aria-busy="${page.busy ? 'true' : 'false'}" aria-labelledby="wsWorkspacePageTitle">${workspacePageHeader(meta, account)}${state.wsStatus === '连接失败' ? renderWsErrorBanner() : ''}${activeView === 'collection' ? '' : collectionCapabilityNotice()}${page.error ? `<p class="ws-error-line" role="alert">${esc(page.error)}</p>` : ''}${body}</section>`;
   }
@@ -4483,6 +4540,8 @@
     const live = workspaceLiveDirectoryRows('ordinary').length;
     const observed = state.workspaceMode === 'ordinary' && (live > 0 || state.liveDirectory?.foregroundChecked || state.liveDirectory?.finalized);
     const count = observed ? `${live} 个实时会话` : state.lastLoadedAt || state.conversations.length ? `${state.conversations.length} 个本地记录` : '等待目录读取';
+    if (liveDirectoryGapMessage()) return `已识别 ${live} 个私聊 · 部分会话未能识别`;
+    if (observed && state.liveDirectory?.chatListVisible === false && !state.liveDirectory.collectorObserved) return `上次前台已识别 ${live} 个私聊`;
     return `${count} · ${accountDisplayName(activeAccount())}`;
   }
   function renderConversationList() {
@@ -4519,7 +4578,7 @@
         : '';
       return `${rows}<div class="ws-session-pagination">${previous}<span>${windowStart + 1}–${windowEnd} / ${matches.length}</span>${next}</div>`;
     }
-    return `<div class="ws-empty">${query ? '没有匹配的会话。' : state.workspaceMode === 'ordinary' ? '暂无会话。登录 WhatsApp 后可刷新当前窗口可见的个人会话。' : '尚无记录。'}</div>`;
+    return `<div class="ws-empty">${query ? '没有匹配的会话。' : liveDirectoryGapMessage() ? esc(liveDirectoryGapMessage()) : state.workspaceMode === 'ordinary' ? '暂无会话。登录 WhatsApp 后可刷新当前窗口可见的个人会话。' : '尚无记录。'}</div>`;
   }
   function summarizeAccountMetrics(accounts, snapshot, mode, now = Date.now()) {
     const scoped = accounts.filter(account => accountWorkspaceMode(account) === mode);
@@ -4929,6 +4988,7 @@
               <input id="wsConversationTitle" placeholder="客户名称（可选）" maxlength="80" value="${esc(state.createTitle)}">
               <button class="btn small primary" data-ws-action="create-conversation" ${state.busy.customer ? 'disabled' : ''}>${state.busy.customer ? '正在建立…' : '建立本机会话'}</button>
             </div>
+            ${state.workspaceMode === 'ordinary' ? `<div id="wsVisibleContactDirectory">${renderVisibleContactDirectory()}</div>` : ''}
             <div class="ws-session-list">${renderConversationList()}</div>
           </aside>
           <section id="wsCenterPanel" class="ws-center-panel ${state.messageCollapsed ? 'messages-collapsed' : ''} ${state.localPanelsCollapsed ? 'local-panels-collapsed' : ''}">
@@ -6389,6 +6449,14 @@
     if (action === 'confirm-hot-profile') return saveHotProfileFact(element, false);
     if (action === 'lock-hot-profile') return saveHotProfileFact(element, element?.dataset?.locked !== 'true');
     if (action === 'save-hot-profile-color') return saveHotProfileColor();
+    if (action === 'refresh-visible-contacts') {
+      if (state.workspaceMode !== 'ordinary') return;
+      liveDirectory().contactsExpanded = true;
+      const context = captureContext('');
+      const result = await refreshForegroundDirectory();
+      if (contextCurrent(context) && result?.contactsVisible !== true) toast(result ? '请在 WhatsApp 中打开“新建聊天”，再读取可见联系人。' : '请检查当前账号的前台连接。', 'x');
+      return;
+    }
     if (action === 'refresh-live-conversations') {
       const result = await refreshForegroundDirectory();
       if (state.workspaceMode !== 'ordinary') return;
@@ -6754,6 +6822,11 @@
       return;
     }
     bootInitialized = true;
+    document.addEventListener('toggle', event => {
+      if (event.target?.isConnected && event.target.matches?.('#wsVisibleContactDirectory details') && state.workspaceMode === 'ordinary') {
+        liveDirectory().contactsExpanded = event.target.open;
+      }
+    }, true);
     const nav = $('#mainNav');
     nav?.addEventListener('click', event => {
       const item = event.target.closest('[data-view]');

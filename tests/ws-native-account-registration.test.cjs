@@ -57,7 +57,7 @@ Check((await store.LoadAsync()).Contains(original), "The existing native account
 
 var orphan = await bridge.Call(new { action = "create", account = new { id = "old-native-only", displayName = "Do not overwrite" } });
 Check(orphan.Ok && sidecar.Rows["old-native-only"].DisplayName == original.DisplayName, "Explicit retry can register a legacy native-only ID");
-Check((await store.LoadAsync()).Contains(original), "Recovery preserves existing native runtime metadata");
+Check((await store.LoadAsync()).Contains(original with { DirectoryPurposeConfirmed = true }), "Recovery verifies the purpose and preserves the account identity and runtime metadata");
 
 sidecar.NextPost = HttpStatusCode.Conflict;
 sidecar.InsertOnConflict = true;
@@ -125,7 +125,7 @@ await store.UpdateAsync(rows => rows.Append(nativeOnlyDedicated));
 var badOrphanRestore = await bridge.Call(new { action = "create", account = new { id = nativeOnlyDedicated.Id, displayName = "Wrong purpose", workspaceMode = "ordinary" } });
 Check(!badOrphanRestore.Ok && !sidecar.Rows.ContainsKey(nativeOnlyDedicated.Id), "Restoring a native-only account cannot change its saved purpose");
 var restoredOrphan = await bridge.Call(new { action = "create", account = new { id = nativeOnlyDedicated.Id, displayName = "Restore without new metadata" } });
-Check(restoredOrphan.Ok && sidecar.Rows[nativeOnlyDedicated.Id].WorkspaceMode == "dedicated" && (await store.LoadAsync()).Contains(nativeOnlyDedicated), "A native-only dedicated account retains its purpose when sidecar registration is rebuilt");
+Check(restoredOrphan.Ok && sidecar.Rows[nativeOnlyDedicated.Id].WorkspaceMode == "dedicated" && (await store.LoadAsync()).Contains(nativeOnlyDedicated with { DirectoryPurposeConfirmed = true }), "A native-only dedicated account retains its purpose when sidecar registration is rebuilt");
 var concurrentDedicated = nativeOnlyDedicated with { Id = "dedicated-race" };
 await store.UpdateAsync(rows => rows.Append(concurrentDedicated));
 sidecar.NextPost = HttpStatusCode.Conflict;

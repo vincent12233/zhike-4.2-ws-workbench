@@ -86,7 +86,7 @@ assert.equal(byKey.get('chat-action').status,'queued','readRows through discover
 assert.equal(byKey.get('chat-preview').unread,false,'message preview containing “unread” is not an unread signal');
 assert.equal(byKey.get('chat-preview').status,'queued','preview text must not turn a recognized read row into skipped_unread');
 const unknown=discovery.excludedConversations.find(item=>item.title==='未知结构');
-assert.ok(unknown?.uncertainUnread,'unrecognized DOM remains fail-closed');
-assert.equal(unknown?.conversationType,'unknown','unresolved rows must never be promoted to direct chats');
+assert.equal(unknown,undefined,'unrecognized rows cannot acquire a synthetic identity');
+assert.ok(discovery.unresolvedRowCount > 0,'unrecognized visible rows remain visible as a coverage gap');
 
 console.log('WS unread detection runtime: strict badges pass, action/preview false positives are rejected, unknown DOM is conservative');

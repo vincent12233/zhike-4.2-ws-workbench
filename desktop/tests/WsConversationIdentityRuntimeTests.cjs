@@ -104,4 +104,16 @@ const direct = discovery.conversations.find(row => row.displayName === 'Direct c
 assert.equal(direct?.conversationKey, '919876543210@s.whatsapp.net', 'data-chat-id direct identity must be preserved');
 assert.equal(direct?.conversationType, 'direct');
 
+rows.splice(0, rows.length,
+  makeRow({ 'data-chat-type':'direct', role:'row' }, '同名客户', 'first'),
+  makeRow({ 'data-chat-type':'direct', role:'row' }, '同名客户', 'second'));
+const ambiguous = sandbox.window.__zhikeWsDiscoverDirectory();
+assert.equal(ambiguous.rows.length, 0, 'two same-name entries cannot be merged into a synthetic customer');
+assert.equal(ambiguous.unresolvedRowCount, 2, 'visible rows without an ID report a verifiable coverage gap');
+assert.equal(sandbox.window.__zhikeWsReadHistoryCandidates(ambiguous.rows).read.length, 0);
+rows.splice(0, rows.length,
+  makeRow({ 'data-jid':'111111111@lid', role:'row' }, '同名客户'),
+  makeRow({ 'data-jid':'222222222@lid', role:'row' }, '同名客户'));
+assert.deepEqual(Array.from(sandbox.window.__zhikeWsDiscover().conversations, row => row.conversationKey), ['111111111@lid','222222222@lid']);
+
 console.log('WS conversation identity runtime: data-jid/data-chat-id/data-group-id are extracted and groups are surfaced separately');

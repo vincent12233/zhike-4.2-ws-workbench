@@ -96,7 +96,7 @@ const pane = {
   dispatchEvent() {},
 };
 const header = {
-  getAttribute() { return ''; },
+  getAttribute(name) { return name === 'data-chat-id' ? activeChat : ''; },
   querySelector(selector) {
     if (selector === '[title]') return { getAttribute: name => name === 'title' ? '查看头像' : '' };
     return null;
@@ -177,7 +177,10 @@ assert.equal(failureCheckpoints.at(-1).collectionStatus, 'retryable', 'the final
 activeTitle = 'CustomerAlpha';
 assert.equal(sandbox.window.__zhikeWsCollectorDiagnostics.matchesCurrentConversation({ displayName:'PrefixCustomerAlpha' }), false, 'human names require an exact normalized match and must never use suffix matching');
 activeTitle = '+91 98765 43210';
-assert.equal(sandbox.window.__zhikeWsCollectorDiagnostics.matchesCurrentConversation({ displayName:'9876543210' }), true, 'normalized phone identities may use a country-code suffix match');
+assert.equal(sandbox.window.__zhikeWsCollectorDiagnostics.matchesCurrentConversation({ displayName:'9876543210' }), false, 'a phone-like title cannot confirm chat identity');
+activeTitle = '同名客户';
+assert.equal(sandbox.window.__zhikeWsCollectorDiagnostics.matchesCurrentConversation({ conversationKey:'different-chat', displayName:activeTitle }), false, 'a matching title cannot override a conflicting header ID');
+assert.equal(sandbox.window.__zhikeWsCollectorDiagnostics.matchesCurrentConversation({ conversationKey:activeChat, displayName:activeTitle }), true, 'an exact active header identity confirms this chat');
 
 // A genuine user pointer event must still yield control immediately. Synthetic
 // MouseEvents above bubble through this exact same window capture handler.

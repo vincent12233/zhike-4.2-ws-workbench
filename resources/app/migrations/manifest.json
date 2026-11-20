@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "supportedSchemaVersion": 31,
+  "supportedSchemaVersion": 32,
   "migrations": [
     {
       "version": 4,
@@ -169,6 +169,12 @@
       "file": "031-workspace-restore-audit.sql",
       "description": "Atomic workspace restore receipts and durable WS delivery history",
       "checksum": "85d453aafa711f2495b62c5d99ce18bc478863c6b3c0013489263b611ada793c"
+    },
+    {
+      "version": 32,
+      "file": "032-ws-contact-directory.sql",
+      "description": "Account-scoped contacts observed in the authenticated WhatsApp contact picker",
+      "checksum": "72c97586b7d3e8b869001c433f8b4029fe66117afa78de201240ecf04a3c8fca"
     }
   ]
 }

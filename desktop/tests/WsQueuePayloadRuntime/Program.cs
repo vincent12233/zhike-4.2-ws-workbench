@@ -7,6 +7,15 @@ var queueRoot = Path.Combine(Path.GetTempPath(), $"zhike-ws-queue-runtime-{Guid.
 Directory.CreateDirectory(queueRoot);
 try
 {
+    const string storageError = "SQLite index integrity check failed in the test workspace";
+    var offlineBridge = new DesktopBridgeService(null, storageError);
+    BridgeEvent? observed = null;
+    offlineBridge.EventPublished += (_, value) => observed = value;
+    offlineBridge.Publish("ws.status", JsonSerializer.SerializeToElement(new { accountId = "verified-local", status = "已连接" }));
+    var denied = await offlineBridge.InvokeAsync("test-offline", "legacy.api", JsonSerializer.SerializeToElement(new { path = "/api/state", method = "PUT" }),
+        bridgeVersion: DesktopBridgeService.CurrentVersion);
+    if (observed?.Name != "ws.status" || denied.Ok || denied.ErrorCode != "LOCAL_STORAGE_UNAVAILABLE" || denied.Message != storageError)
+        throw new InvalidOperationException("Offline discovery events must remain available while persistence reports the actual failure.");
     const string accountId = "account-non-default-runtime";
     const string conversationKey = "conversation-runtime-42";
     const string originalBody = "第一行  保留空格\nsecond line\n第三行";

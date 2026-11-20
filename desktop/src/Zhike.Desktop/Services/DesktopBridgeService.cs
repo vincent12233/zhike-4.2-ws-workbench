@@ -10,9 +10,11 @@ public sealed class DesktopBridgeService
     // useful compatibility.
     public const string CurrentVersion = "6.0";
     private const int MaxPayloadChars = 48 * 1024 * 1024;
-    private readonly LegacyApiAdapter _legacyApi;
+    private readonly LegacyApiAdapter? _legacyApi;
+    private readonly string _storageError;
 
-    public DesktopBridgeService(LegacyApiAdapter legacyApi) => _legacyApi = legacyApi;
+    public DesktopBridgeService(LegacyApiAdapter? legacyApi, string storageError = "")
+        => (_legacyApi, _storageError) = (legacyApi, storageError);
 
     public event EventHandler<BridgeEvent>? EventPublished;
 
@@ -40,6 +42,8 @@ public sealed class DesktopBridgeService
         {
             if (string.Equals(method, "legacy.api", StringComparison.OrdinalIgnoreCase))
             {
+                if (_legacyApi is null)
+                    return BridgeResponse.Failure(id, CurrentVersion, "LOCAL_STORAGE_UNAVAILABLE", _storageError);
                 var path = payload.TryGetProperty("path", out var pathValue) ? pathValue.GetString() : null;
                 var verb = payload.TryGetProperty("method", out var methodValue) ? methodValue.GetString() : "GET";
                 var body = payload.TryGetProperty("body", out var bodyValue) ? bodyValue : (JsonElement?)null;

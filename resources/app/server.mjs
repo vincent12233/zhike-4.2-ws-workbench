@@ -402,17 +402,18 @@ function wsExportCrmState() {
 
 function wsExportContactPayload(row) {
   const data = wsJson(row.data_json, {});
-  const phone = wsText(data.phone || data.phoneNumber || data.contactPhone || data.memberPhone, 80);
+  const phone = wsText(data.phone || data.phoneNumber || data.contactPhone || data.memberPhone || (row.conversation_id ? '' : row.phone), 80);
   return {
     id: row.id,
     accountId: row.account_id || 'default',
-    conversationId: row.id,
+    conversationId: row.conversation_id,
     externalId: row.external_id,
     customerId: row.customer_id || '',
     name: row.title || phone || row.external_id,
     phone,
     language: row.language || '',
     data,
+    ...(row.directory_source ? { source: row.directory_source, observedAt: row.observed_at } : {}),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -523,7 +524,7 @@ function wsDataArchiveSummary(options = {}) {
 function wsExportManifest(accountIds, createdAt, scope = accountIds.length > 1 ? 'all' : 'account') {
   const placeholders = wsExportInClause(accountIds);
   const count = table => Number(db.prepare(`SELECT COUNT(*) AS count FROM ${table} WHERE account_id IN (${placeholders})`).get(...accountIds)?.count || 0);
-  const directContacts = Number(db.prepare(`SELECT COUNT(*) AS count FROM ws_conversations WHERE account_id IN (${placeholders}) AND COALESCE(json_extract(data_json,'$.isGroup'),0)=0 AND COALESCE(json_extract(data_json,'$.conversationType'),'direct')='direct'`).get(...accountIds)?.count || 0);
+  const directContacts = Number(wsWorkspaceQuery.exportContactStatement(db, accountIds.length, true).get(...accountIds).count);
   return {
     format: 'zhike.ws.export.v2',
     scope,
@@ -573,7 +574,7 @@ async function writeWsExport(write, options = {}) {
     ['groupMembershipEvents', statement(`SELECT e.*,t.group_name AS target_group_name,t.source_id AS target_source_id,t.channel_id AS target_channel_id,t.data_json AS target_data_json
       FROM ws_group_membership_events e LEFT JOIN ws_group_monitor_targets t ON t.id=e.target_id
       WHERE e.account_id IN (:accounts) ORDER BY e.account_id,e.observed_at,e.id LIMIT ? OFFSET ?`), wsGroupMonitorEventPayload],
-    ['contacts', statement('SELECT * FROM ws_conversations WHERE account_id IN (:accounts) ORDER BY account_id,updated_at DESC LIMIT ? OFFSET ?'), wsExportContactPayload, row => wsCore.conversationType(row) === 'direct'],
+    ['contacts', wsWorkspaceQuery.exportContactStatement(db, accountIds.length), wsExportContactPayload],
   ];
   const manifest = wsExportManifest(accountIds, createdAt, options.allAccounts ? 'all' : 'account');
   const accounts = accountIds.map(id => wsAccountPayload(wsAccountRow(id))).filter(Boolean);
@@ -2362,8 +2363,21 @@ function wsStoreForegroundDirectory(account, checkpoints, observedAt, now) {
   if (!observedAt || observedAt > now) return;
   db.exec('BEGIN IMMEDIATE');
   try {
+    const observeContact = db.prepare(`INSERT INTO ws_contact_directory(account_id,contact_key,contact_id,display_name,source,first_seen_at,last_seen_at)
+      VALUES(?,?,?,?,'foreground-visible-contact',?,?)
+      ON CONFLICT(account_id,contact_key) DO UPDATE SET contact_id=excluded.contact_id,
+        display_name=COALESCE(NULLIF(excluded.display_name,''),ws_contact_directory.display_name),last_seen_at=excluded.last_seen_at
+      WHERE excluded.last_seen_at>ws_contact_directory.last_seen_at`);
     for (const row of checkpoints) {
-      if (row?.accountId !== account.id || row.coverage !== 'foreground-visible-directory') continue;
+      if (row?.accountId !== account.id) continue;
+      if (row.coverage === 'foreground-visible-contact') {
+        const contactKey = wsWorkspaceQuery.contactKey(row.conversationKey);
+        if (account.workspace_mode === 'ordinary' && row.conversationType === 'contact' && row.isGroup === false && contactKey) {
+          observeContact.run(account.id, contactKey, row.conversationKey.toLowerCase(), wsText(row.displayName, 150), observedAt, observedAt);
+        }
+        continue;
+      }
+      if (row.coverage !== 'foreground-visible-directory') continue;
       const key = wsText(row.conversationKey, 200), title = wsText(row.displayName, 150);
       if (account.workspace_mode === 'dedicated' && row.conversationType === 'group' && row.isGroup === true && /^[a-z0-9._-]+@g\.us$/.test(key)) {
         const old = db.prepare('SELECT * FROM ws_group_catalog WHERE account_id=? AND group_jid=?').get(account.id, key);
@@ -2424,9 +2438,7 @@ function wsVipMemberIdentity(value = {}) {
     senderPhone,
     senderName,
     identitySource,
-    trusted: source.senderIdentityTrusted === true || nested.trusted === true
-      ? trustedSource && (idTrusted || phoneTrusted)
-      : trustedSource && (idTrusted || phoneTrusted),
+    trusted: source.senderIdentityTrusted !== false && nested.trusted !== false && trustedSource && (idTrusted || phoneTrusted),
   };
 }
 function wsSameVipMemberIdentity(left, right) {
@@ -3918,7 +3930,7 @@ const server = createServer(async (req, res) => {
         return json(res, 200, { accepted: 0, deduplicated: 0, messageIds: [], processedAt: now });
       }
       // Partial roster observations are independent of chat history.
-      const inputCheckpoints = checkpoints.filter(item => item?.coverage !== 'group-monitor-visible' && (!item?.accountId || item.accountId === accountId));
+      const inputCheckpoints = checkpoints.filter(item => item?.coverage !== 'group-monitor-visible' && item?.coverage !== 'foreground-visible-contact' && (!item?.accountId || item.accountId === accountId));
       const observedGroups = new Map();
       const memberObservations = new Map();
       const membersFor = groupJid => {

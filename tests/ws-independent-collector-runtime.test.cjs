@@ -67,7 +67,7 @@ function fixture(nativeReply, options = {}) {
   assert.match(source, boot);
   const replyToFetch = options.fetchReply;
   const exposed = 'state,collectionCapability,collectionReady,rememberCollectionCapability,collectorAction,renderCollectorControls,updateAccountStatus,wsBridge,restartBackgroundPolling,scheduleAiQueuePump,wsBackgroundStatus,renderCollectionCard,resetAccountPresentation,loadAccounts,updateCollectionRun,scanGroupMonitorTargets,groupMonitorStatusLabel,requestAccountPipelineRefresh';
-  const live = 'refreshForegroundDirectory,workspaceLiveDirectoryRows,renderConversationList,receiveWorkspaceLiveEvent,refreshCollectionSummary,collectAllReadConversations,captureVisibleMessages,renderVisibleForegroundChat,setStatus,recordLiveIngestion,recordLiveHistory,liveCollectionRuntimeRows';
+  const live = 'refreshForegroundDirectory,workspaceLiveDirectoryRows,renderConversationList,receiveWorkspaceLiveEvent,refreshCollectionSummary,collectAllReadConversations,captureVisibleMessages,renderVisibleForegroundChat,setStatus,recordLiveIngestion,recordLiveHistory,liveCollectionRuntimeRows,renderVisibleContactDirectory,liveDirectoryGapMessage';
   vm.runInNewContext(source.replace(boot, `  globalThis.independentCollector={${exposed},${live}};\n})();`), sandbox, { filename: 'ws-independent-collector-real-module.js' });
   const api = sandbox.independentCollector;
   api.state.accounts = [{ id: 'a', displayName: '合成账号 A', status: '已连接' }, { id: 'b', displayName: '合成账号 B', status: '未连接' }];
@@ -131,6 +131,47 @@ test('collector directory respects account, workspace, lease, scan order and com
   assert.equal(f.workspaceLiveDirectoryRows('ordinary').length, 0);
   f.receiveWorkspaceLiveEvent(chunk(5, 0, '迟到'));
   assert.equal(f.workspaceLiveDirectoryRows('ordinary').length, 0);
+});
+
+test('unidentified rows remain a gap and visible contact picker identities never become chats or recipients', async () => {
+  let open = true;
+  const f = fixture(() => ({ supported: true, accountId: 'a', workspaceMode: 'ordinary', sessionGeneration: 1,
+    source: 'foreground-visible', unresolvedRowCount: 2, unresolvedContactCount: 1, conversations: [], contactsVisible: open,
+    contacts: [{ contactId: '1234@lid', displayName: '<同名>' }, { contactId: '5678@lid', displayName: '<同名>' },
+      { contactId: '1234@lid', displayName: '<同名>' }, { contactId: 'hash-of-title', displayName: '无可靠标识' },
+      { contactId: '9999@lid', displayName: '其他账号', accountId: 'b' }] }));
+  f.state.active = true;
+  await f.refreshForegroundDirectory();
+  const contacts = f.renderVisibleContactDirectory();
+  assert.match(contacts, /已识别 2 位/);
+  assert.match(contacts, /另有至少 1 行/);
+  assert.match(contacts, /1234@lid/);
+  assert.match(contacts, /5678@lid/);
+  assert.match(contacts, /&lt;同名&gt;/);
+  assert.doesNotMatch(contacts, /无可靠标识|其他账号|data-id=/);
+  assert.match(f.renderConversationList(), /前台至少 2 行缺少可靠标识/);
+  assert.doesNotMatch(f.renderConversationList(), /同名/);
+  assert.equal(f.workspaceLiveDirectoryRows('ordinary').length, 0);
+  open = false;
+  await f.refreshForegroundDirectory();
+  assert.doesNotMatch(f.renderVisibleContactDirectory(), /1234@lid/);
+  f.setStatus('未连接');
+  assert.equal(f.liveDirectoryGapMessage(), '');
+  assert.equal(f.requests.length, 0);
+});
+
+test('an otherwise completed collector scan with unresolved identities retains prior rows and exposes the lower bound', () => {
+  const f = fixture();
+  const lease = { accountId: 'a', workspaceMode: 'ordinary', sessionGeneration: 1, collectorEpoch: 1 };
+  f.updateAccountStatus({ ...lease, collectionCapability: capability('running') });
+  const chunk = { ...lease, collectorOnly: true, eventName: 'live-directory', chunkIndex: 0, finished: true, complete: true };
+  f.receiveWorkspaceLiveEvent({ ...chunk, scanId: 1, unresolvedRowCount: 0, conversations: [{ externalId: '1000@c.us', title: '已识别', conversationType: 'direct' }] });
+  f.receiveWorkspaceLiveEvent({ ...chunk, scanId: 2, unresolvedRowCount: 4, conversations: [] });
+  assert.equal(f.workspaceLiveDirectoryRows('ordinary').length, 1);
+  assert.match(f.liveCollectionRuntimeRows(), /后台本轮至少 4 行/);
+  f.receiveWorkspaceLiveEvent({ ...chunk, scanId: 3, unresolvedRowCount: 0, conversations: [] });
+  assert.equal(f.workspaceLiveDirectoryRows('ordinary').length, 0);
+  assert.equal(f.liveDirectoryGapMessage(), '');
 });
 
 test('native discovery and real history command start even when the local inventory and run journal are unavailable', async () => {

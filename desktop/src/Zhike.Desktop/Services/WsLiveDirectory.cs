@@ -18,6 +18,7 @@ public static class WsLiveDirectory
     {
         var direct = new List<object>();
         var groups = new List<object>();
+        var contacts = new List<object>();
         var dedicated = purpose.AllowsGroupMonitoring;
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         if (!packet.TryGetProperty("rows", out var rows))
@@ -43,10 +44,25 @@ public static class WsLiveDirectory
                         lastMessageFingerprint = Text(row, "lastMessageFingerprint", 240), visibleOnly = true, previewOnly = true });
             }
         }
+        var contactsVisible = source == "foreground-visible" && purpose.AllowsDirectHistory && Flag(packet, "contactsVisible");
+        if (contactsVisible && packet.TryGetProperty("contacts", out var contactRows) && contactRows.ValueKind == JsonValueKind.Array)
+        {
+            var seenContacts = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var row in contactRows.EnumerateArray())
+            {
+                if (contacts.Count >= 1000) break;
+                if (row.ValueKind != JsonValueKind.Object) continue;
+                var id = Text(row, "contactId", 100).ToLowerInvariant();
+                if (System.Text.RegularExpressions.Regex.IsMatch(id, @"^\d{1,20}@(c\.us|s\.whatsapp\.net|lid)$") && seenContacts.Add(id))
+                    contacts.Add(new { contactId = id, displayName = Text(row, "displayName", 150) });
+            }
+        }
         return JsonSerializer.SerializeToElement(new { supported = true, accountId = purpose.AccountId, workspaceMode = purpose.WorkspaceMode,
             sessionGeneration = generation, collectorEpoch = epoch, source, collectorOnly = source == "collector",
             eventName = "live-directory", scanId = Number(packet, "scanId"), chunkIndex = Number(packet, "chunkIndex"),
             scanned = Flag(packet, "scanned"), scanning = Flag(packet, "scanning"), finished = Flag(packet, "finished"), complete = Flag(packet, "complete"),
-            coverage = Text(packet, "coverage", 50), conversations = direct, groupConversations = groups });
+            coverage = Text(packet, "coverage", 50), conversations = direct, groupConversations = groups,
+            unresolvedRowCount = Number(packet, "unresolvedRowCount"), conversationListVisible = Flag(packet, "conversationListVisible"), contactsVisible, contacts,
+            unresolvedContactCount = contactsVisible ? Number(packet, "unresolvedContactCount") : 0 });
     }
 }

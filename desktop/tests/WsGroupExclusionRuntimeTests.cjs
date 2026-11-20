@@ -113,10 +113,11 @@ timers.length = 0; frames.length = 0; posted.length = 0;
 const discovery = sandbox.window.__zhikeWsDiscover();
 assert.deepEqual(
   Array.from(discovery.conversations, item => item.title).sort(),
-  ['+91 98765 43210', 'Direct JID', 'Saved Contact'].sort(),
+  ['Direct JID', 'Saved Contact'].sort(),
   'ordinary accounts collect confirmed direct chats only',
 );
 assert.equal(discovery.excludedGroupCount, 4, 'all groups remain excluded from ordinary history');
+assert.equal(discovery.unresolvedRowCount, 2, 'a phone-looking title without an ID and an unclassified row cannot confirm direct chats');
 assert.equal(discovery.conversationTypeUnresolvedCount, 1, 'an alias without stable type evidence remains fail-closed');
 const phoneNamedGroup = discovery.excludedConversations.find(item => item.title === '+91 99999 99999');
 const vipGroup = discovery.conversations.find(item => item.title === '+91 99999 99999');
@@ -217,7 +218,7 @@ timers.length = 0; frames.length = 0; posted.length = 0;
 vm.runInNewContext(script, sandbox);
 
 const candidates = sandbox.window.__zhikeWsReadHistoryCandidates([...discovery.conversations, ...discovery.excludedConversations]);
-assert.equal(candidates.read.length, 3, 'only confirmed direct chats enter ordinary history collection');
+assert.equal(candidates.read.length, 2, 'only confirmed direct chats with stable identities enter ordinary history collection');
 assert.equal(candidates.skipped.filter(item => item.status === 'skipped-group').length, 4);
 assert.equal(candidates.skipped.filter(item => item.status === 'conversation-type-unresolved').length, 1);
 

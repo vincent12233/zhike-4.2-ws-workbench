@@ -22,6 +22,8 @@ const loginScenes = [
   ['<div data-ref="unrelated"></div>', { login: false, problem: false }],
   ['<div data-ref="pairing"><canvas></canvas></div>', { login: true }],
   ['<canvas aria-label="扫描二维码"></canvas>', { login: true }],
+  ['<div role="dialog">Your device was unlinked</div>', { expired: true }],
+  ['<div id="pane-side"></div><div id="main"><div role="dialog">Your device was unlinked</div></div>', { chat: true }],
   ['<p>Link with phone number</p>', { login: true, problem: false }],
   ['<p>Update your browser</p>', { login: false, problem: true }],
   ['<div id="pane-side">扫码 / update your browser / synthetic message</div>', { chat: true }],

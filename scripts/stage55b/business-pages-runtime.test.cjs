@@ -159,7 +159,8 @@ async function accountSummaryReset() {
     loadAllConversationPages: async () => ({ conversations: [], groupConversations: [] }), api: async () => { throw new Error('summary read unavailable'); }, applyConversationInventory: result => { state.conversations = result.conversations; }, mergeDiscoveredGroupRows: () => {}, resolveInitialConversationId: () => '', loadConversationData: async () => {},
     businessPages: ui, esc: ui.esc, wsWorkspacePageState: () => ({ status: '已刷新 · 旧缓存状态' }),
   };
-  vm.runInNewContext(purposeHelpers(source) + extract('  async function loadConversations()', '  function currentConversationRefreshSignature(') + extract('  async function switchAccount(', '  function toast(') + extract('  function renderWorkspaceOperationalOverview()', '  function renderWorkspaceMembers(') + '\nglobalThis.switchAccountForTest=switchAccount;globalThis.overviewForTest=renderWorkspaceOperationalOverview;', sandbox);
+  const directoryState = extract('  function liveDirectory()', '  function workspaceLiveDirectoryRows(');
+  vm.runInNewContext(purposeHelpers(source) + directoryState + extract('  async function loadConversations()', '  function currentConversationRefreshSignature(') + extract('  async function switchAccount(', '  function toast(') + extract('  function renderWorkspaceOperationalOverview()', '  function renderWorkspaceMembers(') + '\nglobalThis.switchAccountForTest=switchAccount;globalThis.overviewForTest=renderWorkspaceOperationalOverview;', sandbox);
   const switching = sandbox.switchAccountForTest('b');
   const assertNoForeignSummaries = () => {
     assert.equal(state.followupAlerts.length, 0, 'account A tasks must disappear synchronously before opening B');
@@ -236,7 +237,8 @@ async function nativeRestoreReset() {
     core: { retryTransient: work => work() }, window: { zhikeDesktop: { onWsStatus: callback => { registered = callback; }, wsAccounts: () => { ++requested; return listing.promise; } } },
   };
   const reset = extract('  function resetAccountPresentation(', '  function toast(');
-  vm.runInNewContext(purposeHelpers(source) + reset + extract('  async function loadAccounts()', '  function updateAccountStatus(') + '\nconst actualLoadAccounts=loadAccounts;loadAccounts=function(){accountLoad=actualLoadAccounts();return accountLoad;};' + extract('    window.zhikeDesktop?.onWsStatus?.(', '    window.addEventListener(\'resize\','), sandbox);
+  const directoryEvents = extract('  function receiveWorkspaceLiveEvent(', '  function trackLiveCollector(');
+  vm.runInNewContext(purposeHelpers(source) + reset + directoryEvents + extract('  async function loadAccounts()', '  function updateAccountStatus(') + '\nconst actualLoadAccounts=loadAccounts;loadAccounts=function(){accountLoad=actualLoadAccounts();return accountLoad;};' + extract('    window.zhikeDesktop?.onWsStatus?.(', '    window.addEventListener(\'resize\','), sandbox);
   assert.equal(typeof registered, 'function', 'exercise the registered native restore callback, not an invented account-switch approximation');
   registered({ restoreAccountId: 'b', accountId: 'b', status: '连接失败' });
   const assertCleared = () => {
