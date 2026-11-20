@@ -8,7 +8,8 @@ const { spawnSync } = require('node:child_process');
 const repo = path.resolve(__dirname, '../..');
 const source = fs.readFileSync(path.join(repo, 'desktop/src/Zhike.Desktop/Views/LegacyUiHostPage.xaml.cs'), 'utf8');
 const take = (begin, end) => { const a = source.indexOf(begin), b = source.indexOf(end, a); assert.ok(a > 0 && b > a, begin); return source.slice(a, b); };
-const extracted = take('    private async Task<BridgeResponse> HandleWsActionAsync(', '    private async Task<BridgeResponse> SendWsTextAsync(')
+const extracted = take('    private void SetActiveWsAccountId(', '    private string _wsViewAccountId')
+  + take('    private async Task<BridgeResponse> HandleWsActionAsync(', '    private async Task<BridgeResponse> SendWsTextAsync(')
   + take('    private async Task<BridgeResponse> SendWsTextAsync(', '    /// <summary>\n    /// Sends one already selected media item'.replace(/\n/g, source.includes('\r\n') ? '\r\n' : '\n'))
   + take('    private async Task<BridgeResponse> SendWsMediaAsync(', '    private async Task<BridgeResponse> BroadcastWsTextAsync(')
   + take('    private async Task<BridgeResponse> BroadcastWsTextAsync(', '    private static string BuildWsSendTextScript(')
@@ -24,6 +25,7 @@ namespace Zhike.Desktop.Services;
 public sealed class NativeSendHost {
   private readonly WsSendOperationGuard _wsSendGuard = new();
   private string _activeWsAccountId = "a";
+  private long _wsAiAccountEpoch;
   private FakeView? _wsView => App.WsService.Sessions.GetValueOrDefault(App.WsService.ActiveAccountId)?.View;
   private ApiClient? _api = new();
   private bool _hostWindowRenderable = true;

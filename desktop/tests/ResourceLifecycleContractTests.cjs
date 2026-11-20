@@ -47,7 +47,7 @@ assert.match(release, /_wsStatusSequence\.TryRemove\(normalized,\s*out\s+_\)/,
   'forgetting an account must remove remaining per-account status state');
 assert.match(release, /_wsView = null;[\s\S]*?_wsViewAccountId = string\.Empty;[\s\S]*?Interlocked\.Increment\(ref _wsGeneration\);[\s\S]*?HideWsOverlay\(\)/,
   'forgetting the visible account must clear its reference, invalidate late callbacks and hide the old overlay');
-assert.match(release, /_activeWsAccountId = "default";[\s\S]*?SyncPooledWsPresentation\(\)/,
+assert.match(release, /SetActiveWsAccountId\("default"\);[\s\S]*?SyncPooledWsPresentation\(\)/,
   'forget must restore a valid active account and synchronize pooled presentation');
 assert.match(server, /const\s+assetStream\s*=\s*createReadStream\(filePath\)[\s\S]{0,240}assetStream\.on\(['"]error['"]/,
   'static file streams must handle asynchronous read errors');

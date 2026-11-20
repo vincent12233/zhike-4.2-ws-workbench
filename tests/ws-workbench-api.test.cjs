@@ -261,7 +261,7 @@ async function json(response) { return response.json(); }
     assert.equal(imported.status, 200);
     const importResult = await json(imported);
     assert.equal(importResult.schemaVersion, 6);
-    assert.deepEqual(importResult.counts, { settings: 1, conversations: 2, messages: 3, analyses: 4, replies: 1, batches: 1, collectionRuns: 1, collectionItems: 1, followupAlerts: 1 });
+    assert.deepEqual(importResult.counts, { settings: 1, conversations: 2, messages: 3, analyses: 4, replies: 1, batches: 1, collectionRuns: 1, collectionItems: 1, followupAlerts: 1, groupDrafts: 0 });
 
     const v5 = JSON.parse(JSON.stringify(exportedBody));
     v5.schemaVersion = 5;

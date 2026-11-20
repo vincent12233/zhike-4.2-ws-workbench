@@ -17,7 +17,7 @@ assert.match(source, /renderWsWorkspacePage/, 'each workspace page must have a d
 assert.match(source, /ws-workspace-nav/, 'WS workspace navigation needs its own layout class');
 assert.match(source, /ws-workspace-nav\.is-collapsed|ws-workspace-shell/, 'WS workspace navigation must support collapse without rebuilding the WebView');
 assert.match(source, /wsBrowserHost/, 'navigation must preserve the existing browser host');
-assert.match(source, /正式 AI 自动处理未启用|AI.*未启用/, 'AI page must disclose the stage 4 gate while disabled');
+assert.match(source, /activeView === 'ai'[^\n]*renderAiAuthorization\(\)/, 'The AI page must expose the scoped authorization controls');
 assert.match(css, /ws-workspace-nav/, 'workspace navigation styles are missing');
 assert.match(css, /ws-workspace-nav.*collapsed|is-collapsed/, 'workspace navigation collapse styles are missing');
 console.log('stage3 WS workspace navigation contract: pass');
