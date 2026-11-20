@@ -52,7 +52,9 @@ function prepareNativeFixture() {
   }
   const resources = path.join(output, 'resources/app');
   copyIsolatedAppFixture(path.join(repo, 'resources/app'), resources);
-  fs.copyFileSync(path.join(repo, 'resources/app/node.exe'), path.join(resources, 'node.exe'));
+  const bundledNode = path.join(repo, 'resources/app/node.exe');
+  const runtime = process.env.ZHIKE_TEST_NODE || (fs.existsSync(bundledNode) ? bundledNode : process.execPath);
+  fs.copyFileSync(runtime, path.join(resources, 'node.exe'));
   const root = reused || path.join(os.tmpdir(), 'zhike-stage51-native-' + randomUUID().replace(/-/g, ''));
   if (!reused) { fs.mkdirSync(root); fs.writeFileSync(path.join(root, '.stage51-isolated'), 'zhike-stage51-isolated-ui-v1'); }
   assert.equal(fs.existsSync(path.join(resources, 'data')), false);

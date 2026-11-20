@@ -129,7 +129,11 @@ async function runIsolatedWebView(options) {
       assert.equal(ready.hostBackend, 'win32-controller', 'Only the freshly built controller host can supply this result');
       context.metadata.hostBackend = ready.hostBackend;
       assert.ok(Number.isSafeInteger(ready.browserPid) && ready.browserPid > 0 && ready.browserPid !== context.child.pid);
-      assert.equal(path.resolve(ready.profile).toLowerCase(), path.resolve(profile).toLowerCase(), 'Only the exclusive temporary profile may be used');
+      // Hosted Windows agents can expose %TEMP% through its DOS 8.3 alias.
+      // Compare the OS-resolved directory identities inside this invocation.
+      const expectedProfile = path.join(fs.realpathSync.native(root), path.basename(profile));
+      assert.ok(!fs.lstatSync(profile).isSymbolicLink(), 'Temporary profile must be a regular directory');
+      assert.equal(fs.realpathSync.native(ready.profile).toLowerCase(), expectedProfile.toLowerCase(), 'Only the exclusive temporary profile may be used');
       assert.ok(typeof ready.runtimeVersion === 'string' && ready.runtimeVersion.length < 160);
       assert.ok(Array.isArray(ready.processIds) && ready.processIds.includes(ready.browserPid), 'The owning Core browser must be observed');
       const identities = await context.observeProcessIds(ready.processIds);
