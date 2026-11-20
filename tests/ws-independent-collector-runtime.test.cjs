@@ -67,7 +67,7 @@ function fixture(nativeReply, options = {}) {
   assert.match(source, boot);
   const replyToFetch = options.fetchReply;
   const exposed = 'state,collectionCapability,collectionReady,rememberCollectionCapability,collectorAction,renderCollectorControls,updateAccountStatus,wsBridge,restartBackgroundPolling,scheduleAiQueuePump,wsBackgroundStatus,renderCollectionCard,resetAccountPresentation,loadAccounts,updateCollectionRun,scanGroupMonitorTargets,groupMonitorStatusLabel,requestAccountPipelineRefresh';
-  const live = 'refreshForegroundDirectory,workspaceLiveDirectoryRows,renderConversationList,receiveWorkspaceLiveEvent,refreshCollectionSummary,collectAllReadConversations,captureVisibleMessages,renderVisibleForegroundChat,setStatus,recordLiveIngestion,recordLiveHistory,liveCollectionRuntimeRows,renderVisibleContactDirectory,liveDirectoryGapMessage';
+  const live = 'refreshForegroundDirectory,workspaceLiveDirectoryRows,renderConversationList,receiveWorkspaceLiveEvent,refreshCollectionSummary,collectAllReadConversations,captureVisibleMessages,renderVisibleForegroundChat,setStatus,recordLiveIngestion,recordLiveHistory,liveCollectionRuntimeRows,renderVisibleContactDirectory,liveDirectoryGapMessage,renderGroupVerification,verifyOpenedGroup';
   vm.runInNewContext(source.replace(boot, `  globalThis.independentCollector={${exposed},${live}};\n})();`), sandbox, { filename: 'ws-independent-collector-real-module.js' });
   const api = sandbox.independentCollector;
   api.state.accounts = [{ id: 'a', displayName: '合成账号 A', status: '已连接' }, { id: 'b', displayName: '合成账号 B', status: '未连接' }];
@@ -131,6 +131,51 @@ test('collector directory respects account, workspace, lease, scan order and com
   assert.equal(f.workspaceLiveDirectoryRows('ordinary').length, 0);
   f.receiveWorkspaceLiveEvent(chunk(5, 0, '迟到'));
   assert.equal(f.workspaceLiveDirectoryRows('ordinary').length, 0);
+});
+
+test('dedicated verification distinguishes no receipt, missing structure, conflicts and a scoped open-group identity', async () => {
+  const reply = { supported: true, accountId: 'a', workspaceMode: 'dedicated', sessionGeneration: 7, source: 'foreground-visible',
+    conversationListVisible: false, directoryDiagnostics: { listPresent: false, renderedRows: 0, stableRows: 0, unresolvedRows: 0, confirmedOpen: false },
+    openIdentityStatus: 'source-unavailable', groupConversations: [] };
+  const f = fixture(() => ({ ...reply }));
+  f.state.workspaceMode = 'dedicated';
+  f.state.accounts[0].workspaceMode = 'dedicated';
+  f.state.wsWorkspaceView = 'chat';
+  f.state.active = true;
+  assert.match(f.renderGroupVerification('groups'), /尚未收到此账号的现场群目录回执/);
+  assert.match(f.renderGroupVerification('groups'), /打开 WhatsApp 核验群聊/);
+  assert.match(f.renderGroupVerification('chat'), /查看诊断/);
+  await f.verifyOpenedGroup();
+  assert.match(f.renderGroupVerification('chat'), /没有可读取的聊天列表/);
+  reply.openIdentityStatus = 'conflicting-identities';
+  reply.activeGroup = { groupJid: '1000@g.us', displayName: '冲突的名称' };
+  await f.verifyOpenedGroup();
+  assert.equal(f.workspaceLiveDirectoryRows('dedicated').length, 0);
+  assert.match(f.renderGroupVerification('chat'), /互相冲突/);
+  reply.openIdentityStatus = 'verified';
+  reply.activeGroup = { groupJid: '1000@g.us', displayName: '' };
+  await f.verifyOpenedGroup();
+  assert.deepEqual(Array.from(f.workspaceLiveDirectoryRows('dedicated'), g => g.displayName), ['1000@g.us']);
+  assert.match(f.renderGroupVerification('chat'), /已核验群聊 · 1000@g\.us/);
+  assert.doesNotMatch(f.renderGroupVerification('chat'), /已保存|已监测/);
+  assert.ok(f.nativeCalls.every(call => call.accountId === 'a' && call.action === 'discover-visible-conversations'));
+  const lease = { accountId: 'a', workspaceMode: 'dedicated', sessionGeneration: 7, collectorEpoch: 3, collectorOnly: true };
+  f.updateAccountStatus({ ...lease, collectionCapability: capability('running') });
+  const chunk = { ...lease, eventName: 'live-directory', scanId: 1, chunkIndex: 0, groupConversations: [] };
+  f.receiveWorkspaceLiveEvent({ ...chunk, directoryDiagnostics: { skippedUnread: 3, skippedReadUnknown: 0, skippedTypeUnknown: 2 } });
+  f.receiveWorkspaceLiveEvent({ ...chunk, chunkIndex: 1, directoryDiagnostics: { skippedUnread: 3, skippedReadUnknown: 1, skippedTypeUnknown: 0 } });
+  f.state.liveDirectory.showGroupDiagnostics = true;
+  const diagnostics = f.renderGroupVerification('chat');
+  assert.match(diagnostics, /后台跳过 · 未读至少 3 行/);
+  assert.match(diagnostics, /已读状态无法确认至少 1 行/);
+  assert.match(diagnostics, /会话类型无法确认至少 2 行/);
+  assert.doesNotMatch(diagnostics, /至少 0 行|至少 6 行/);
+  f.receiveWorkspaceLiveEvent({ ...chunk, scanId: 2, directoryDiagnostics: { skippedUnread: 0 } });
+  assert.doesNotMatch(f.renderGroupVerification('chat'), /后台跳过/);
+  f.setStatus('未连接');
+  assert.equal(f.workspaceLiveDirectoryRows('dedicated').length, 0);
+  assert.doesNotMatch(f.renderGroupVerification('chat'), /已核验群聊/);
+  assert.equal(f.requests.length, 0);
 });
 
 test('unidentified rows remain a gap and visible contact picker identities never become chats or recipients', async () => {

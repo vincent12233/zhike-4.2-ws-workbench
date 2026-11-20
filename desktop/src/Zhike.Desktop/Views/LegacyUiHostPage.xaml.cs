@@ -997,12 +997,17 @@ public sealed partial class LegacyUiHostPage : Page
                 return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_CONTEXT_CHANGED", "采集页面已改变，请重试。");
             if (lease.Policy != purpose || requiredMode.Length > 0 && purpose.WorkspaceMode != requiredMode)
                 return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "WS_COLLECTOR_PURPOSE_BLOCKED", "当前账号用途不支持此采集操作。");
+            var capturedAt = DateTimeOffset.UtcNow;
             var raw = await ExecuteCollectorScriptAsync(session, script, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
             if (!App.WsSessions.IsCurrent(accountId, session.Generation, collector) || session.CollectorState != "running"
                 || epoch != _wsCollectorEpoch.GetValueOrDefault(collector))
                 return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_CONTEXT_CHANGED", "采集页面已改变，请重试。");
             var result = ParseWebViewJsonResult(raw);
+            if (directory)
+                _ = _wsAccountStore.RecordDirectoryDiagnosticsAsync(accountId, purpose.WorkspaceMode, "collector", result, capturedAt,
+                    () => App.WsSessions.IsCurrent(accountId, session.Generation, collector) && session.CollectorState == "running"
+                        && _wsCollectorEpoch.GetValueOrDefault(collector) == epoch && _wsCollectorPurposes.GetValueOrDefault(collector) == lease);
             if (result.ValueKind != JsonValueKind.Object || result.TryGetProperty("supported", out var supported) && supported.ValueKind == JsonValueKind.False)
                 return BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "COLLECTOR_NOT_READY", "独立采集页面尚未就绪，请稍后重试。");
             if (directory) result = WsLiveDirectory.Project(result, purpose, session.Generation, epoch, "collector");
@@ -1607,7 +1612,11 @@ public sealed partial class LegacyUiHostPage : Page
         try
         {
             updated = await _wsAccountStore.UpdateAsync(rows => rows.Any(item => string.Equals(item.Id, request.Id, StringComparison.Ordinal))
-                ? rows.Select(item => item.Id == request.Id ? item with { WorkspaceMode = confirmed.WorkspaceMode, DirectoryPurposeConfirmed = true } : item).ToArray()
+                ? rows.Select(item => item.Id == request.Id ? item with {
+                    WorkspaceMode = confirmed.WorkspaceMode, DirectoryPurposeConfirmed = true,
+                    ForegroundDirectoryDiagnostics = item.WorkspaceMode == confirmed.WorkspaceMode ? item.ForegroundDirectoryDiagnostics : null,
+                    CollectorDirectoryDiagnostics = item.WorkspaceMode == confirmed.WorkspaceMode ? item.CollectorDirectoryDiagnostics : null,
+                } : item).ToArray()
                 : MergeWsAccounts(rows, [confirmed]), cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
@@ -2175,6 +2184,8 @@ public sealed partial class LegacyUiHostPage : Page
                 LastSeen = item.LastSeen ?? existing.LastSeen,
                 LastKnownStatus = string.IsNullOrWhiteSpace(item.LastKnownStatus) ? existing.LastKnownStatus : item.LastKnownStatus,
                 WorkspaceMode = item.WorkspaceMode,
+                ForegroundDirectoryDiagnostics = existing.WorkspaceMode == item.WorkspaceMode ? existing.ForegroundDirectoryDiagnostics : null,
+                CollectorDirectoryDiagnostics = existing.WorkspaceMode == item.WorkspaceMode ? existing.CollectorDirectoryDiagnostics : null,
                 DirectoryPurposeConfirmed = item.WorkspaceMode is "ordinary" or "dedicated",
             };
         }
@@ -2752,7 +2763,7 @@ public sealed partial class LegacyUiHostPage : Page
         _wsAccountMetrics.Invalidate(accountId);
         _wsAccountMetrics.Invalidate(accountId, collector: true);
         await _wsAccountStore.UpdateAsync(rows => rows.Select(item => item.Id.Equals(accountId, StringComparison.OrdinalIgnoreCase)
-            ? item with { ForegroundLoginObservation = null, CollectorLoginObservation = null } : item), cancellationToken);
+            ? item with { ForegroundLoginObservation = null, CollectorLoginObservation = null, ForegroundDirectoryDiagnostics = null, CollectorDirectoryDiagnostics = null } : item), cancellationToken);
     }
 
     private async Task SetWsStatusAsync(string accountId, string status, CancellationToken cancellationToken = default, Func<bool>? ownsObservation = null)
@@ -2801,10 +2812,21 @@ public sealed partial class LegacyUiHostPage : Page
         session.VisibleDirectoryWorkspaceMode = purpose.WorkspaceMode;
         var login = await core.ExecuteScriptAsync(WsLoginProbeScript).AsTask().WaitAsync(cancellationToken);
         if (!Current() || ParseWsLoginProbe(login).status != "已连接") return NotReady();
-        var script = WsVisibleDirectoryScript + "(" + JsonSerializer.Serialize(purpose.WorkspaceMode) + ")";
-        var raw = await core.ExecuteScriptAsync(script).AsTask().WaitAsync(cancellationToken);
+        var capturedAt = DateTimeOffset.UtcNow;
+        var script = WsVisibleDirectoryScript + "(" + JsonSerializer.Serialize(purpose.WorkspaceMode) + "," + WsOpenChatEvidenceScript;
+        var raw = await core.ExecuteScriptAsync(script + ")").AsTask().WaitAsync(cancellationToken);
         if (!Current()) return NotReady();
         var snapshot = ParseWebViewJsonResult(raw);
+        if (snapshot.ValueKind == JsonValueKind.Object && snapshot.TryGetProperty("openConfirmation", out var first) && first.ValueKind == JsonValueKind.Object)
+        {
+            await Task.Delay(150, cancellationToken);
+            if (!Current()) return NotReady();
+            raw = await core.ExecuteScriptAsync(script + "," + JsonSerializer.Serialize(first) + ")").AsTask().WaitAsync(cancellationToken);
+            if (!Current()) return NotReady();
+            snapshot = ParseWebViewJsonResult(raw);
+        }
+        _ = _wsAccountStore.RecordDirectoryDiagnosticsAsync(accountId, purpose.WorkspaceMode, "foreground-visible", snapshot, capturedAt,
+            () => Current() && session.VisibleDirectoryWorkspaceMode == purpose.WorkspaceMode);
         if (snapshot.ValueKind != JsonValueKind.Object || !GetBool(snapshot, "supported")) return NotReady();
         var projected = WsLiveDirectory.Project(snapshot, purpose, session.Generation, 0, "foreground-visible");
         _ = QueueVisibleDirectoryAsync(projected, purpose, session.Generation);
@@ -2870,7 +2892,7 @@ public sealed partial class LegacyUiHostPage : Page
     }
 
     private const string WsVisibleDirectoryScript = """
-(workspaceMode => {
+((workspaceMode, readOpenChat, previousOpen) => {
   const list = document.querySelector('#pane-side, [data-testid="chat-list"], [data-testid="chatlist"], [aria-label="Chat list"], [aria-label="聊天列表"]');
   const rows = [];
   const contacts = [], seenContacts = new Set();
@@ -2905,13 +2927,14 @@ public sealed partial class LegacyUiHostPage : Page
       if (contacts.length >= 1000) break;
     }
   }
-  if (!conversationListVisible && !contactsVisible) return JSON.stringify({supported:false});
+  let renderedRows = 0;
   const rowSelector = '[role="row"], [role="listitem"], [data-testid="cell-frame-container"]';
   for (const row of conversationListVisible ? list.querySelectorAll(rowSelector) : []) {
     if (!visible(row)) continue;
     if (pickerVisible && picker.contains(row)) continue;
     const ancestor = row.parentElement?.closest(rowSelector);
     if (ancestor && list.contains(ancestor)) continue;
+    renderedRows++;
     const nodes = [row, ...row.querySelectorAll('[data-group-id],[data-jid],[data-chat-id],[data-contact-id]')];
     let groupKey = '', contactKey = '';
     for (const node of nodes) {
@@ -2925,7 +2948,15 @@ public sealed partial class LegacyUiHostPage : Page
       if (groupKey) break;
     }
     const declared = row.getAttribute('data-conversation-type') || row.getAttribute('data-chat-type');
-    if (!contactKey && ['direct','private','individual'].includes(declared)) contactKey = row.getAttribute('data-chat-id') || row.getAttribute('data-id') || '';
+    const previewOwner = typeof readOpenChat === 'function' ? readOpenChat(workspaceMode,row) : {};
+    const canonical = groupKey || contactKey;
+    if (previewOwner.status === 'conflicting-identities' || previewOwner.key && canonical && canonical !== previewOwner.key) { unresolvedRowCount++; continue; }
+    if (previewOwner.key?.endsWith('@g.us')) groupKey = previewOwner.key;
+    else if (previewOwner.key) contactKey = previewOwner.key;
+    if (!contactKey && ['direct','private','individual'].includes(declared)) {
+      const opaque = row.getAttribute('data-chat-id') || row.getAttribute('data-id') || '';
+      if (/^[a-z0-9.:-][a-z0-9._:-]{0,199}$/i.test(opaque)) contactKey = opaque;
+    }
     const isGroup = Boolean(groupKey || declared === 'group' || row.getAttribute('data-is-group') === 'true' || row.querySelector('[data-icon="default-group"],[data-testid*="group-avatar"]'));
     const isDirect = Boolean(contactKey || ['direct','private','individual'].includes(declared));
     if (workspaceMode === 'ordinary' ? isGroup : !isGroup && isDirect) continue;
@@ -2937,7 +2968,78 @@ public sealed partial class LegacyUiHostPage : Page
       conversationType:isGroup ? 'group' : 'direct', isGroup, previewText:(preview?.textContent || '').trim().slice(0,240) });
     if (rows.length >= 1000) break;
   }
-  return JSON.stringify({supported:true, conversationListVisible, rows, unresolvedRowCount, contactsVisible, contacts, unresolvedContactCount, coverage:'foreground-visible-only'});
+  const stableRows = new Set(rows.map(row => row.conversationKey)).size;
+  const open = typeof readOpenChat === 'function' ? readOpenChat(workspaceMode) : {status:'source-unavailable'};
+  const openConfirmation = open.row && !open.row.displayName && open.title ? {key:open.row.conversationKey,title:open.title} : null;
+  if (openConfirmation && previousOpen?.key === openConfirmation.key && previousOpen.title === openConfirmation.title) open.row.displayName = open.title;
+  if (open.row && !rows.some(row => row.conversationKey === open.row.conversationKey)) rows.unshift(open.row);
+  return JSON.stringify({supported:true, conversationListVisible, rows, unresolvedRowCount, contactsVisible, contacts, unresolvedContactCount, coverage:'foreground-visible-only',
+    openIdentityStatus:open.status, openConfirmation, activeGroup:open.row?.isGroup ? { groupJid:open.row.conversationKey, displayName:open.row.displayName } : null,
+    directoryDiagnostics:{listPresent:Boolean(list),renderedRows,stableRows,unresolvedRows:unresolvedRowCount,confirmedOpen:Boolean(open.row)}});
+})
+""";
+
+    private const string WsOpenChatEvidenceScript = """
+((workspaceMode, previewRow) => {
+  const parse = raw => {
+    const parts = (raw || '').split('_');
+    // A WA message envelope owns exactly one chat. The optional last JID is the sender.
+    if ((parts.length !== 3 && parts.length !== 4) || !/^(true|false)$/.test(parts[0]) || !/^[A-Z0-9.-]{1,180}$/i.test(parts[2])) return null;
+    if (!/^(?:\d{1,20}(?:-\d{1,20})?@g\.us|\d{1,20}@(c\.us|s\.whatsapp\.net|lid))$/i.test(parts[1])
+        || (parts.length === 4 && !/^\d{1,20}(?::\d{1,3})?@(c\.us|s\.whatsapp\.net|lid)$/i.test(parts[3]))) return null;
+    return {key:parts[1].toLowerCase(),id:parts[2]};
+  };
+  const excluded = '[data-testid*="quoted" i],[data-testid*="reply-context" i],[role="dialog"],[aria-hidden="true"],[hidden]';
+  if (previewRow) {
+    const keys = new Set();
+    const preview = '[data-testid="last-msg"],[data-testid="cell-frame-secondary"],[data-testid="last-msg-container"],[data-testid="message-preview"]';
+    const nodes = [...previewRow.querySelectorAll('[data-id^="true_"],[data-id^="false_"]')];
+    if (/^(true|false)_/.test(previewRow.getAttribute?.('data-id') || '')) nodes.unshift(previewRow);
+    for (const node of nodes) {
+      if (node.closest?.(excluded) || !(node.matches?.(preview) || node.closest?.(preview) || node.querySelector?.(preview))) continue;
+      const record = parse(node.getAttribute('data-id'));
+      if (record) keys.add(record.key);
+    }
+    return keys.size > 1 ? {status:'conflicting-identities'} : {key:[...keys][0] || ''};
+  }
+  const pane = document.querySelector('#main');
+  const header = pane?.querySelector('header,[data-testid="conversation-header"],[data-testid="conversation-info-header"],[data-testid="chat-header"]');
+  if (!pane?.getClientRects?.().length || !header?.getClientRects?.().length || pane.closest?.('[hidden],[aria-hidden="true"]')) return {status:'no-open-chat'};
+  const normalize = value => typeof value === 'string' && /^(?:\d{1,20}(?:-\d{1,20})?@g\.us|\d{1,20}@(c\.us|s\.whatsapp\.net|lid))$/i.test(value) ? value.toLowerCase() : '';
+  const explicit = node => {
+    if (!node) return [];
+    const fields = ['data-jid','data-chat-id','data-contact-id','data-group-id','data-id'];
+    return fields.map(field => {
+      const value = node.getAttribute(field);
+      return normalize(field === 'data-group-id' && /^\d{5,20}(?:-\d{1,20})?$/.test(value) ? value+'@g.us' : value);
+    }).filter(Boolean);
+  };
+  const selected = document.querySelectorAll('#pane-side [aria-selected="true"],#pane-side [aria-current="true"],[data-testid="chat-list"] [aria-selected="true"]');
+  const declared = new Set([...explicit(header), ...[...selected].flatMap(explicit)]);
+  if (declared.size > 1) return {status:'conflicting-identities'};
+  const owners = new Map();
+  const bubble = '[data-testid="msg-container"],.message-in,.message-out';
+  let inspected = 0;
+  for (const node of pane.querySelectorAll('[data-id^="true_"],[data-id^="false_"]')) {
+    if (++inspected > 256) break;
+    if (!node.getClientRects().length || node.closest(excluded) || node.closest('[data-testid*="message-preview" i]') || !(node.matches(bubble) || node.closest(bubble) || node.querySelector(bubble))) continue;
+    const record = parse(node.getAttribute('data-id'));
+    if (!record) continue;
+    const chat = record.key;
+    if (!owners.has(chat)) owners.set(chat,new Set());
+    owners.get(chat).add(record.id);
+    if (owners.size > 1 || (declared.size && !declared.has(chat))) return {status:'conflicting-identities'};
+  }
+  // A selected sidebar row alone can momentarily lead the header and message pane.
+  const headerIds = explicit(header);
+  const [observed] = owners.keys();
+  const key = headerIds[0] || (observed && owners.get(observed).size >= 2 ? observed : '');
+  if (!key) return {status:'insufficient-message-identities'};
+  const isGroup = key.endsWith('@g.us');
+  if (isGroup !== (workspaceMode === 'dedicated')) return {status:'workspace-type-mismatch'};
+  const titleNode = header.querySelector('[data-testid="conversation-info-header-chat-title"],[data-testid="conversation-header-title"],span[dir="auto"][title]');
+  const title = titleNode ? (titleNode.getAttribute('title') || titleNode.textContent || '').trim().slice(0,150) : '';
+  return {status:'verified',title,row:{conversationKey:key,externalId:key,displayName:declared.has(key)?title:'',conversationType:isGroup?'group':'direct',isGroup}};
 })
 """;
 
@@ -3044,7 +3146,12 @@ public sealed partial class LegacyUiHostPage : Page
                     && sourceView.CoreWebView2 is { } core && IsAllowedWsPopupNavigation(core.Source)
                     && _wsCollectorPurposes.TryGetValue(sourceView, out var directoryLease)
                     && directoryLease.Generation == sessionGeneration && directoryLease.Epoch == sourceEpoch)
+                {
+                    _ = _wsAccountStore.RecordDirectoryDiagnosticsAsync(sessionAccountId, directoryLease.Policy.WorkspaceMode, "collector", root, DateTimeOffset.UtcNow,
+                        () => App.WsSessions.IsCurrent(sessionAccountId, sessionGeneration, sourceView) && owner.CollectorState == "running"
+                            && _wsCollectorEpoch.GetValueOrDefault(sourceView) == sourceEpoch && _wsCollectorPurposes.GetValueOrDefault(sourceView) == directoryLease);
                     PublishWsStatus(WsLiveDirectory.Project(root, directoryLease.Policy, sessionGeneration, sourceEpoch, "collector"));
+                }
                 return;
             }
             if (!gateAlreadyHeld)
@@ -3493,8 +3600,8 @@ public sealed partial class LegacyUiHostPage : Page
     {
         if (purpose.AccountId != accountId || purpose.WorkspaceMode is not ("ordinary" or "dedicated"))
             throw new InvalidDataException("采集用途未确认。");
-        return "(function(__zhikeWsTrustedPurpose,__zhikeWsDocumentEpoch){" + BuildWsCollectorScript(accountId) + "})("
-            + JsonSerializer.Serialize(purpose.WorkspaceMode) + "," + JsonSerializer.Serialize(epoch) + ");";
+        return "(function(__zhikeWsTrustedPurpose,__zhikeWsDocumentEpoch,__zhikeReadOpenChat){" + BuildWsCollectorScript(accountId) + "})("
+            + JsonSerializer.Serialize(purpose.WorkspaceMode) + "," + JsonSerializer.Serialize(epoch) + "," + WsOpenChatEvidenceScript + ");";
     }
 
     internal static string BuildWsCollectorScript(string accountId)
@@ -3508,6 +3615,16 @@ public sealed partial class LegacyUiHostPage : Page
   const accountId = {{encodedAccount}};
   const workspaceMode = typeof __zhikeWsTrustedPurpose === 'string' ? __zhikeWsTrustedPurpose : 'ordinary';
   const documentEpoch = typeof __zhikeWsDocumentEpoch === 'number' ? __zhikeWsDocumentEpoch : 0;
+  const readDirectoryEvidence = row => typeof __zhikeReadOpenChat === 'function' ? __zhikeReadOpenChat(workspaceMode,row) : {status:'source-unavailable'};
+  let previousOpen = null;
+  const openDirectoryEvidence = () => {
+    const open = readDirectoryEvidence();
+    const key = open.row?.conversationKey, now = Date.now();
+    if (key && open.title && previousOpen?.key === key && previousOpen.title === open.title) {
+      if (now - previousOpen.at >= 150) open.row.displayName = open.title;
+    } else previousOpen = key && open.title ? {key,title:open.title,at:now} : null;
+    return open;
+  };
   const directHistoryAllowed = workspaceMode === 'ordinary';
   const groupMonitoringAllowed = workspaceMode === 'dedicated';
   // The visible WebView is a passive realtime surface. Only the offscreen
@@ -3557,7 +3674,8 @@ public sealed partial class LegacyUiHostPage : Page
     add(values, text(header));
     // A title that happens to look like a JID is still only a display name.
     const groupJids = ids.filter(value => /^[a-z0-9._-]+@g\.us$/.test(value));
-    const headerJid = groupJids.length === 1 ? groupJids[0] : '';
+    const open = openDirectoryEvidence();
+    const headerJid = open.status === 'conflicting-identities' ? '' : groupJids.length === 1 ? groupJids[0] : open.row?.isGroup ? open.row.conversationKey : '';
     const selectedKey = headerJid ? selectedConversationKey() : '';
     const jid = !selectedKey || selectedKey === headerJid ? headerJid : '';
     const groupName = values.find(value => !/@/.test(value) && value.length <= 200) || '';
@@ -4294,13 +4412,30 @@ public sealed partial class LegacyUiHostPage : Page
      return selected.value.slice(0, 240);
    };
    let unresolvedWindowRows = 0;
+   let latestWindow = {};
+   let probeCandidates = [];
+   const groupFilterSelected = () => {
+     const tab = document.querySelector('[data-testid="chat-filter-groups"][aria-pressed="true"],[data-testid="chat-filter-groups"][aria-selected="true"],[data-testid="filter-groups"][aria-pressed="true"],[data-testid="chat-list-filters"] [role="tab"][aria-selected="true"]:is([aria-label="Groups" i],[aria-label="群组"],[aria-label="群聊"])');
+     return tab?.getAttribute?.('aria-selected') === 'true' || tab?.getAttribute?.('aria-pressed') === 'true';
+   };
+   const explicitRead = node => node?.getAttribute?.('data-unread-count') === '0'
+     || node?.getAttribute?.('data-unread') === 'false' || node?.getAttribute?.('data-is-unread') === 'false';
+   const explicitUnread = node => Number(node?.getAttribute?.('data-unread-count')) > 0
+     || node?.getAttribute?.('data-unread') === 'true' || node?.getAttribute?.('data-is-unread') === 'true';
    const readRows = () => {
     unresolvedWindowRows = 0;
+    latestWindow = {listPresent:Boolean(listContainer()),renderedRows:0,stableRows:0,unresolvedRows:0,skippedUnread:0,skippedReadUnknown:0,skippedTypeUnknown:0};
+    probeCandidates = [];
+    const groupsOnly = groupMonitoringAllowed && groupFilterSelected();
     return rowNodes().map((row, index) => {
     const labels = [row, ...row.querySelectorAll('[aria-label], [aria-description], [title], [data-pre-plain-text]')].map(node => clean(node.getAttribute?.('aria-label') || node.getAttribute?.('aria-description') || node.getAttribute?.('title') || node.getAttribute?.('data-pre-plain-text') || '')).filter(Boolean);
     const pageText = labels.join(' ').slice(0, 2000);
-    const identity = conversationIdentityFromRow(row);
+    const nativeKey = conversationIdentityFromRow(row);
+    const previewOwner = readDirectoryEvidence(row);
+    const conflict = previewOwner.status === 'conflicting-identities' || Boolean(nativeKey.includes('@') && previewOwner.key && nativeKey.toLowerCase() !== previewOwner.key);
+    const identity = conflict ? '' : previewOwner.key || nativeKey;
     if (isNavigationRow(row, identity)) return null;
+    latestWindow.renderedRows++;
     const primaryTitles = primaryConversationTitles(row);
     const displayName = stripSystem(clean(primaryTitles[0] || row.querySelector('[title], span[dir="auto"]')?.getAttribute('title') || row.querySelector('span[dir="auto"]')?.textContent || labels[0] || '')).slice(0, 200);
     const previewNode = row.querySelector('[data-testid*="last-msg"], [data-testid*="message"], [data-testid*="preview"], [aria-description], span[title]');
@@ -4317,6 +4452,14 @@ public sealed partial class LegacyUiHostPage : Page
       const typeEvidence = conversationTypeFromNode(row, identity, displayName);
       if (typeEvidence.conversationType === 'unknown' || (!externalId && (directHistoryAllowed ? !typeEvidence.isGroup : typeEvidence.isGroup))
           || (groupMonitoringAllowed && typeEvidence.isGroup && !/@g\.us$/i.test(externalId))) unresolvedWindowRows++;
+      latestWindow.unresolvedRows = unresolvedWindowRows;
+      if (groupMonitoringAllowed && !/@g\.us$/i.test(externalId)) {
+        if ((!typeEvidence.isGroup && !(groupsOnly && typeEvidence.conversationType === 'unknown')) || conflict) { if (typeEvidence.conversationType === 'unknown' || conflict) latestWindow.skippedTypeUnknown++; }
+        else if (unread.unread || unreadCount > 0 || explicitUnread(row)) latestWindow.skippedUnread++;
+        else if (unread.uncertainUnread || !explicitRead(row)) latestWindow.skippedReadUnknown++;
+        else probeCandidates.push({node:row,index});
+      }
+      if (externalId && (directHistoryAllowed ? collectibleConversationType(typeEvidence.conversationType) : typeEvidence.isGroup && /@g\.us$/i.test(externalId))) latestWindow.stableRows++;
       if (!externalId) return null;
       const rowFingerprint = compactId(`timestamp-v4-direction-v4-type-v1|${externalId}|${preview}|${lastMessageAt}|${unreadCount}|${typeEvidence.conversationType}`);
       const typeStatus = typeEvidence.conversationType === 'group' ? 'skipped-group' : typeEvidence.conversationType === 'unknown' ? 'retryable' : '';
@@ -4331,7 +4474,8 @@ public sealed partial class LegacyUiHostPage : Page
    window.__zhikeWsReadHistoryCandidates = readHistoryCandidates;
   const discover = () => {
      const conversations = [], excludedConversations = [], seen = new Set();
-     for (const row of readRows()) {
+     const rows = readRows(), open = openDirectoryEvidence();
+     for (const row of open.row ? [...rows,open.row] : rows) {
        if (!row.conversationKey || seen.has(row.conversationKey)) continue;
        seen.add(row.conversationKey);
        if (collectibleConversationType(row.conversationType)) conversations.push(row);
@@ -4340,7 +4484,7 @@ public sealed partial class LegacyUiHostPage : Page
      const groupConversations = [...conversations, ...excludedConversations]
        .filter(row => row?.isGroup === true || row?.conversationType === 'group' || row?.conversationType === 'vip_group');
      return {
-       supported: conversations.length > 0 || excludedConversations.length > 0 || unresolvedWindowRows > 0,
+       supported: true, openIdentityStatus:open.status, directoryDiagnostics:{...latestWindow,confirmedOpen:Boolean(open.row)},
        unresolvedRowCount:unresolvedWindowRows,
        conversations,
        excludedConversations,
@@ -4359,8 +4503,52 @@ public sealed partial class LegacyUiHostPage : Page
   let allScanTimer = null;
   let allScanGeneration = 0;
   let lastDirectorySweepAt = Date.now();
+  let lastDirectoryProbeAt = 0;
+  const probePositions = new Map();
+  const verifyReadGroup = (run, resume) => {
+    const now = Date.now();
+    const allowed = () => groupMonitoringAllowed && backgroundCollectorRole && allScan === run && !run.monitorOnly && !readHistoryScan
+      && !highPriorityHistoryRetryPending && Date.now() - lastListInteractionAt >= 1500
+      && !(groupMonitorState.enabled && groupMonitorState.status === 'running' && groupMonitorState.targets.some(target => target.enabled !== false));
+    if (typeof __zhikeReadOpenChat !== 'function' || !allowed() || now - lastDirectoryProbeAt < 90000 || !probeCandidates.length) return false;
+    for (const [position, time] of probePositions) if (now - time >= 1800000) probePositions.delete(position);
+    const slot = candidate => Math.round(run.container.scrollTop || 0) + '/' + candidate.index;
+    const candidate = probeCandidates.find(item => !probePositions.has(slot(item)));
+    if (!candidate) return false;
+    const node = candidate.node;
+    const flags = unreadBadgeState(node);
+    if (!node.isConnected || !run.container.contains?.(node) || (node.getClientRects && !node.getClientRects().length)
+      || !explicitRead(node) || explicitUnread(node) || flags.unread || flags.unreadCount > 0) return false;
+    const category = conversationTypeFromNode(node, conversationIdentityFromRow(node), '');
+    if (!category.isGroup && !(category.conversationType === 'unknown' && groupFilterSelected())) return false;
+    const previous = openDirectoryEvidence();
+    if (previous.status === 'conflicting-identities') return false;
+    probePositions.set(slot(candidate),now);
+    lastDirectoryProbeAt = now;
+    // Reserve this list scan's next step until the selected chat settles. The
+    // hidden view stays on the verified group; no unread chat is reopened to restore it.
+    try { node.click(); } catch { return false; }
+    let confirmed = '';
+    const inspect = () => {
+      if (allScan !== run) return;
+      const open = allowed() ? openDirectoryEvidence() : {};
+      const key = open.row?.isGroup && open.row.conversationKey;
+      if (key && key !== previous.row?.conversationKey && key === confirmed) {
+        mergeRows(run.seen,[open.row],run.maxConversations);
+        publishDirectory(run,[open.row]);
+        postAllScan([open.row],'group-open-verified',[]);
+      } else if (allowed() && Date.now() - now < 2500) {
+        confirmed = key || '';
+        scheduleCollectorTask(inspect,250);
+        return;
+      }
+      scheduleCollectorPaint(resume);
+    };
+    scheduleCollectorTask(inspect,250);
+    return true;
+  };
   let directorySequence = 0;
-  const newDirectory = () => ({ id:++directorySequence, chunk:0, seen:new Map(), unresolved:0 });
+  const newDirectory = () => ({ id:++directorySequence, chunk:0, seen:new Map(), unresolved:0,diagnostics:{} });
   const publishDirectory = (run, rows, coverage = 'page-list-progress', finished = false) => {
     const stream = run.directory;
     if (!stream || !backgroundCollectorRole || !window.chrome?.webview) return;
@@ -4368,7 +4556,12 @@ public sealed partial class LegacyUiHostPage : Page
     stream.unresolved = Math.max(stream.unresolved, unresolvedWindowRows);
     if (finished && stream.unresolved && coverage === 'page-list-scanned') coverage = 'identity-unresolved';
     const updates = [];
-    for (const row of rows) {
+    const open = openDirectoryEvidence();
+    for (const field of ['renderedRows','stableRows','unresolvedRows','skippedUnread','skippedReadUnknown','skippedTypeUnknown'])
+      stream.diagnostics[field] = Math.max(stream.diagnostics[field] || 0, latestWindow[field] || 0);
+    stream.diagnostics.listPresent = Boolean(stream.diagnostics.listPresent || latestWindow.listPresent);
+    stream.diagnostics.confirmedOpen = Boolean(open.row);
+    for (const row of open.row ? [...rows,open.row] : rows) {
       const key = row.conversationKey;
       if (!key || (directHistoryAllowed ? !collectibleConversationType(row.conversationType) : !row.isGroup || !/@g\.us$/i.test(key))) continue;
       const fingerprint = JSON.stringify([row.displayName, row.lastMessageFingerprint, row.unread, row.unreadCount, row.uncertainUnread]);
@@ -4381,7 +4574,8 @@ public sealed partial class LegacyUiHostPage : Page
     for (let i=0; i < updates.length || ((finished || stream.unresolved > previousUnresolved) && i === 0); i+=100) {
       const last = finished && i + 100 >= updates.length;
       window.chrome.webview.postMessage(JSON.stringify({ type:'zhike.ws.directory', accountId, collectorEpoch:documentEpoch, scanId:stream.id, chunkIndex:stream.chunk++,
-        rows:updates.slice(i, i+100), unresolvedRowCount:stream.unresolved, scanning:!last, finished:last, complete:last && coverage === 'page-list-scanned', coverage }));
+        rows:updates.slice(i, i+100), unresolvedRowCount:stream.unresolved, scanning:!last, finished:last, complete:last && coverage === 'page-list-scanned', coverage,
+        openIdentityStatus:open.status,directoryDiagnostics:stream.diagnostics }));
     }
   };
   let lastAllScanAt = 0;
@@ -4430,6 +4624,8 @@ public sealed partial class LegacyUiHostPage : Page
   };
    const postAllScan = (conversations, coverage = 'page-list-scanned', messageOverride = null) => {
     if (!window.chrome?.webview) return;
+    const open = openDirectoryEvidence();
+    if (open.row && !conversations.some(row => row.conversationKey === open.row.conversationKey)) conversations = [...conversations,open.row];
      const capturedMessages = (Array.isArray(messageOverride) ? messageOverride : capture().messages).map(item => ({
       conversationKey:clean(item.conversationKey).slice(0, 200),
       externalMessageId:clean(item.externalMessageId).slice(0, 200),
@@ -4577,6 +4773,7 @@ public sealed partial class LegacyUiHostPage : Page
       // enabled VIP group can be observed without opening a conversation or
       // adding a second competing scroll loop.
       if (groupMonitorState.enabled && groupMonitorState.status === 'running') postGroupMonitorEvents(collectGroupMonitorPreviewEvents(rows), rows);
+      if (verifyReadGroup(run,step)) return;
       const before = Number(container.scrollTop || 0);
       const max = Math.max(0, Number(container.scrollHeight || 0) - Number(container.clientHeight || 0));
       const stepSize = Math.max(420, Number(container.clientHeight || 420) * 0.85);
@@ -4687,7 +4884,9 @@ public sealed partial class LegacyUiHostPage : Page
      ].map(clean).filter(Boolean);
      const headerKey = conversationIdentityFromRow(header);
      const selectedKey = selectedConversationKey();
-     const key = headerKey && selectedKey && headerKey !== selectedKey ? '' : headerKey || selectedKey;
+     const observed = !headerKey || !selectedKey || headerKey !== selectedKey ? openDirectoryEvidence() : null;
+     const key = headerKey && selectedKey && headerKey !== selectedKey || observed?.status === 'conflicting-identities'
+       ? '' : headerKey || selectedKey || observed?.row?.conversationKey || '';
      return { key, title:primaryTitles[0] || values.at(-1) || '', values };
    };
     const currentConversationType = row => {
@@ -5268,8 +5467,11 @@ public sealed partial class LegacyUiHostPage : Page
     const listed = directHistoryAllowed ? result.conversations : result.groupConversations;
     const rows = (listed || []).slice(0,1000).map(row => directHistoryAllowed ? row : ({
       conversationKey:row.conversationKey, displayName:row.displayName, conversationType:row.conversationType, isGroup:row.isGroup }));
+    const open = openDirectoryEvidence();
+    if (open.row && !rows.some(row => row.conversationKey === open.row.conversationKey)) rows.push(open.row);
     return { supported:result.supported, scanId:run?.directory?.id || 0, scanned:result.scanned, scanning:result.scanning, coverage:result.coverage,
-      unresolvedRowCount:run?.directory?.unresolved ?? unresolvedWindowRows, rows };
+      unresolvedRowCount:run?.directory?.unresolved ?? unresolvedWindowRows, openIdentityStatus:open.status,
+      directoryDiagnostics:{...latestWindow,...run?.directory?.diagnostics,confirmedOpen:Boolean(open.row)}, rows };
   };
   window.__zhikeWsCapture = capture;
   let lastFingerprint = '';

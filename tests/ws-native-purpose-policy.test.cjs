@@ -121,7 +121,10 @@ static class DesktopBridgeService{public const string CurrentVersion="1";}
 sealed class Probe{
  readonly FixtureRegistry _wsAccountStore=new();
  sealed record Registration(string Id,string WorkspaceMode,bool DirectoryPurposeConfirmed);
- sealed class FixtureRegistry{public List<Registration> Rows=[];public Task<List<Registration>> LoadAsync(CancellationToken ct)=>Task.FromResult(Rows);}
+ sealed class FixtureRegistry{
+  public List<Registration> Rows=[];public Task<List<Registration>> LoadAsync(CancellationToken ct)=>Task.FromResult(Rows);
+  public Task RecordDirectoryDiagnosticsAsync(string id,string mode,string source,JsonElement packet,DateTimeOffset observedAt,Func<bool> current)=>Task.CompletedTask;
+ }
  public Task Register(string id,bool confirmed){_wsAccountStore.Rows=[new(id,id,confirmed)];return Task.CompletedTask;}
  public Task<BridgeResponse> ReadDirectory()=>ExecuteCollectorCommandAsync("test",App.WsService.Current.AccountId,"fixture",CancellationToken.None,directory:true);
  public Task<WsCollectorPurposePolicy> ReadPurpose()=>ResolveVisibleDirectoryPurposeAsync(App.WsService.Current,CancellationToken.None);

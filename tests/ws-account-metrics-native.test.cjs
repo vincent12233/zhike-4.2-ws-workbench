@@ -7,6 +7,9 @@ const { spawnSync } = require('node:child_process');
 const repo = path.resolve(__dirname, '..'), desktop = path.join(repo, 'desktop/src/Zhike.Desktop');
 const host = fs.readFileSync(path.join(desktop, 'Views/LegacyUiHostPage.xaml.cs'), 'utf8');
 function take(from, to) { const start = host.indexOf(from), end = host.indexOf(to, start); assert.ok(start >= 0 && end > start); return host.slice(start, end); }
+const directoryProbe = take('    private async Task<BridgeResponse> ReadWsVisibleDirectoryAsync', '    private async Task QueueVisibleDirectoryAsync');
+assert.ok(directoryProbe.indexOf('RecordDirectoryDiagnosticsAsync(') > directoryProbe.lastIndexOf('snapshot = ParseWebViewJsonResult(raw)'),
+  'persist the final foreground evidence after any second confirmation');
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'zhike-account-metrics-'));
 const escapeXml = value => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
 const includes = ['WsAccountStore.cs', 'WsAccountMetrics.cs', 'WebViewProfileService.cs', 'WsNavigationLifecycle.cs'].map(file => `<Compile Include="${escapeXml(path.join(desktop, 'Services', file))}" Link="${file}" />`).join('');
@@ -23,6 +26,61 @@ await ui.RunAsync(async () => {
 var root = Path.Combine(AppContext.BaseDirectory, "synthetic");
 var profileRoot = Path.Combine(root, "profiles");
 var store = new WsAccountStore(Path.Combine(root, "index"));
+var diagnosticPath = Path.Combine(root, "diagnostic-index");
+var diagnosticStore = new WsAccountStore(diagnosticPath, TimeSpan.FromMilliseconds(8));
+await diagnosticStore.SaveAsync([new("a", "Synthetic A", "已连接", DirectoryPurposeConfirmed:true),
+    new("b", "Synthetic B", "已连接", WorkspaceMode:"dedicated", DirectoryPurposeConfirmed:true), new("unconfirmed","Synthetic C","已连接")]);
+var stamp = DateTimeOffset.UtcNow.AddMinutes(-3);
+JsonElement DirectoryProbe(int rows, bool present = true, bool open = false) => JsonSerializer.SerializeToElement(new { role = "untrusted-top-level", directoryDiagnostics = new
+    { listPresent = present, renderedRows = rows, stableRows = 0, unresolvedRows = rows, confirmedOpen = open,
+      title = "private-fixture-marker", groupJid = "private-fixture-marker", machineId = "private-fixture-marker" } });
+Task SaveDiagnostic(string id, string mode, string role, JsonElement packet, DateTimeOffset at, Func<bool>? current = null)
+    => diagnosticStore.RecordDirectoryDiagnosticsAsync(id, mode, role, packet, at, current ?? (() => true));
+var probeFile = Path.Combine(diagnosticPath, "accounts.json");
+await SaveDiagnostic("a","ordinary","foreground-visible",DirectoryProbe(11),stamp);
+await SaveDiagnostic("a","ordinary","collector",DirectoryProbe(3),stamp);
+await SaveDiagnostic("b","dedicated","foreground-visible",DirectoryProbe(0, present:false, open:true),stamp);
+var savedProbes = await new WsAccountStore(diagnosticPath).LoadAsync();
+Check(savedProbes.Single(row=>row.Id=="a") is {ForegroundDirectoryDiagnostics.RenderedRows:11,CollectorDirectoryDiagnostics.RenderedRows:3}, "persist independent foreground and collector live counts without API or SQLite");
+Check(savedProbes.Single(row=>row.Id=="b") is {ForegroundDirectoryDiagnostics: { RenderedRows:0, ListPresent:false, ConfirmedOpen:true },CollectorDirectoryDiagnostics:null}, "a confirmed open chat without a list remains separate from observed rows and belongs only to its account");
+var beforeDiagnostics = await File.ReadAllTextAsync(probeFile);
+Check(!beforeDiagnostics.Contains("private-fixture-marker") && !beforeDiagnostics.Contains("untrusted-top-level"), "persist only host source, mode, observation time and anonymous counts");
+await SaveDiagnostic("a","ordinary","foreground-visible",DirectoryProbe(11),stamp.AddSeconds(5));
+await SaveDiagnostic("a","ordinary","foreground-visible",DirectoryProbe(9),stamp.AddSeconds(-1));
+await SaveDiagnostic("b","ordinary","foreground-visible",DirectoryProbe(7),stamp.AddSeconds(2));
+await SaveDiagnostic("unconfirmed","ordinary","collector",DirectoryProbe(4),stamp.AddSeconds(1));
+await SaveDiagnostic("unknown","ordinary","collector",DirectoryProbe(4),stamp.AddSeconds(1));
+await SaveDiagnostic("a","ordinary","collector",JsonSerializer.SerializeToElement(new { directoryDiagnostics = new { listPresent = true } }),stamp.AddSeconds(10));
+var owner = true;
+var staleDiagnostic = SaveDiagnostic("a","ordinary","foreground-visible",DirectoryProbe(17),stamp.AddSeconds(20),()=>owner);
+owner = false;
+await staleDiagnostic;
+var checks = 0;
+await SaveDiagnostic("a","ordinary","foreground-visible",DirectoryProbe(18),stamp.AddSeconds(21),()=>++checks<4);
+Check(beforeDiagnostics == await File.ReadAllTextAsync(probeFile), "coalesce unchanged samples and reject outdated, malformed, unregistered, wrong-mode and retired generation probes even at final atomic replacement");
+var burst = Enumerable.Range(1,25).Select(i=>SaveDiagnostic("a","ordinary","collector",DirectoryProbe(i),stamp.AddSeconds(30+i))).ToArray();
+Check(burst.All(job=>ReferenceEquals(job,burst[0])), "one pending writer serves a burst per account and role");
+await Task.WhenAll(burst);
+var latest = (await diagnosticStore.LoadAsync()).Single(row=>row.Id=="a");
+Check(latest.CollectorDirectoryDiagnostics is { RenderedRows:25, StableRows:0, Source:"collector" } && latest.ForegroundDirectoryDiagnostics?.RenderedRows==11, "last real role sample survives coalescing");
+Check(latest.CollectorDirectoryDiagnostics is { SkippedUnread:null, SkippedReadUnknown:null, SkippedTypeUnknown:null, OpenIdentityStatus:null }, "unreported ledgers remain unavailable");
+var details = JsonSerializer.SerializeToElement(new { openIdentityStatus = "insufficient-message-identities", directoryDiagnostics = new
+    { listPresent = true, renderedRows = 25, stableRows = 0, unresolvedRows = 25, confirmedOpen = false,
+      skippedUnread = 0, skippedReadUnknown = 2, skippedTypeUnknown = 12 } });
+await SaveDiagnostic("a","ordinary","collector",details,stamp.AddSeconds(60));
+Check((await diagnosticStore.LoadAsync()).Single(row=>row.Id=="a").CollectorDirectoryDiagnostics is {
+    SkippedUnread:0, SkippedReadUnknown:2, SkippedTypeUnknown:12, OpenIdentityStatus:"insufficient-message-identities" },
+    "registered skip counts distinguish verified zero from unavailable and only allow a known open-identity result");
+var invalidExtras = JsonSerializer.SerializeToElement(new { openIdentityStatus = "private-fixture-marker", directoryDiagnostics = new
+    { listPresent = true, renderedRows = 1, stableRows = 0, unresolvedRows = 1, confirmedOpen = false,
+      skippedUnread = -8, skippedReadUnknown = "private-fixture-marker", skippedTypeUnknown = 1000001 } });
+await SaveDiagnostic("a","ordinary","collector",invalidExtras,stamp.AddSeconds(61));
+Check((await diagnosticStore.LoadAsync()).Single(row=>row.Id=="a").CollectorDirectoryDiagnostics is {
+    SkippedUnread:null, SkippedReadUnknown:null, SkippedTypeUnknown:null, OpenIdentityStatus:null } && !(await File.ReadAllTextAsync(probeFile)).Contains("private-fixture-marker"),
+    "unknown reasons and invalid counters cannot enter the persisted diagnostic");
+await File.WriteAllTextAsync(probeFile, "invalid-existing-index");
+await SaveDiagnostic("a","ordinary","collector",DirectoryProbe(26),stamp.AddSeconds(90));
+Check(await File.ReadAllTextAsync(probeFile) == "invalid-existing-index", "diagnostics preserve an unreadable index");
 var profiles = new WebViewProfileService(profileRoot);
 await store.SaveAsync(Enumerable.Range(0, 50).Select(i => new StoredWsAccount("a" + i, "Synthetic " + i, "已连接", DateTimeOffset.UtcNow, "已连接", i < 25 ? "ordinary" : "dedicated")));
 var probe = new Probe(store, profiles);

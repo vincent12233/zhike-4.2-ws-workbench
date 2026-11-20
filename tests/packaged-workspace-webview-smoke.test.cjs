@@ -154,7 +154,7 @@ function assertSmokeResult(result, stylesheetCount) {
   assert.equal(result.interactions.accountScoped, true, 'Every open must target the new dedicated account');
   assert.equal(result.interactions.visibleOpens, true, 'Every open must receive visible chat bounds');
   assert.deepEqual(result.interactions.collector, { scoped: true, loginVisible: true, discoveredBeforePairing: false,
-    directoryVisible: true, bothForegroundDirectories: true, isolated: true, localIndexReads: true, contactsSeparate: true, directoryGapVisible: true },
+    directoryVisible: true, bothForegroundDirectories: true, isolated: true, localIndexReads: true, contactsSeparate: true, directoryGapVisible: true, verifiedOpenedGroup: true },
     'Both authenticated foreground directories and paired background updates must render against an empty local index, within their own accounts');
   assert.equal(result.stylesheetCount, stylesheetCount);
   assert.equal(result.scenes.length, scenes.length);

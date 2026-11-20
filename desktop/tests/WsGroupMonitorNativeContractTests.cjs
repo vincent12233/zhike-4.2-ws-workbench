@@ -34,9 +34,9 @@ assert.match(script, /groupEvents/, 'collector packets must include the group ev
 assert.match(script, /collectGroupMonitorPreviewEvents/, 'group monitor must inspect rendered VIP-group list previews without opening chats');
 assert.doesNotMatch(script, /row\.conversationType !== 'vip_group'/, 'fixed group monitor must accept an explicitly monitored ordinary group');
 assert.doesNotMatch(script, /typeEvidence\.conversationType !== 'vip_group'/, 'fixed group monitor must accept an explicitly monitored ordinary group header');
-assert.match(script, /conversationIdentityFromRow/, 'group discovery must derive a stable row identity before falling back to display text');
+assert.match(script, /conversationIdentityFromRow/, 'group discovery must use a stable row identity');
 assert.match(script, /data-group-id.*data-jid.*data-chat-id/, 'group discovery must inspect WhatsApp group/JID attributes');
-assert.match(script, /const identity = conversationIdentityFromRow\(row\)/, 'row discovery must use the robust group identity extractor');
+assert.match(script, /const nativeKey = conversationIdentityFromRow\(row\);[\s\S]*?const identity = conflict \? '' : previewOwner\.key \|\| nativeKey;/, 'row discovery must use the robust group identity extractor');
 assert.match(script, /lastMessagePreview|previewText/, 'group monitor preview observer must use existing list metadata');
 assert.match(script, /申请加入|等待审核|join request|approval pending/, 'join-request system rows must be excluded before emitting joined events');
 assert.match(script, /const rows = readRows\(\);\s*mergeRows\(run\.seen, rows,[\s\S]*collectGroupMonitorPreviewEvents\(rows\)/, 'the full hidden list sweep feeds the same rendered window to directory and monitor');

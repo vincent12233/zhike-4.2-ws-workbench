@@ -280,6 +280,7 @@ function runWs() {
   run('WS parent-route visibility runtime', [path.join(repo, 'desktop', 'tests', 'WsRouteVisibilityRuntimeTests.cjs')]);
   run('WS hidden native scheduler runtime', [path.join(repo, 'desktop', 'tests', 'WsHiddenBackgroundSchedulerRuntimeTests.cjs')]);
   run('WS native group exclusion runtime', [path.join(repo, 'desktop', 'tests', 'WsGroupExclusionRuntimeTests.cjs')]);
+  run('WS native open-chat and preview identity evidence', [path.join(repo, 'desktop', 'tests', 'WsOpenGroupDiscoveryRuntimeTests.cjs')]);
   run('WS native conversation identity runtime', [path.join(repo, 'desktop', 'tests', 'WsConversationIdentityRuntimeTests.cjs')]);
   run('WS durable queue Web JSON and API roundtrip', [
     'run',

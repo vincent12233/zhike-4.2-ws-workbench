@@ -18,6 +18,21 @@ const rootPrefix = 'zhike-native-fixture-';
 const hostSource = fs.readFileSync(path.join(repo, 'desktop/src/Zhike.Desktop/Views/LegacyUiHostPage.xaml.cs'), 'utf8');
 const loginScript = hostSource.match(/private const string WsLoginProbeScript = """\s*([\s\S]*?)\s*""";/)?.[1];
 assert.ok(loginScript, 'Run the native login detector against local real-WebView2 documents');
+const directoryScript = hostSource.match(/private const string WsVisibleDirectoryScript = """\s*([\s\S]*?)\s*""";/)?.[1];
+const chatEvidenceScript = hostSource.match(/private const string WsOpenChatEvidenceScript = """\s*([\s\S]*?)\s*""";/)?.[1];
+assert.ok(directoryScript && chatEvidenceScript, 'Exercise the packaged native session readers in a real WebView');
+const weakList = '<div id="pane-side">' + '<div role="row"><span dir="auto" title="Same title">Same title</span></div>'.repeat(20) + '</div>';
+const qaGroup = '120300000012345678@g.us', qaMember = '910000000099@lid';
+const bubble = (key, id) => '<div class="message-in" data-id="false_' + key + '_' + id + '_' + qaMember + '">fixture</div>';
+const pane = content => '<div id="main"><header>Display title</header>' + content + '</div>';
+const directoryScenes = [
+  [weakList, []],
+  [weakList + pane(bubble(qaGroup,'AAA01')), []],
+  [weakList + pane(bubble(qaGroup,'AAA01') + bubble(qaGroup,'AAA02')), [qaGroup]],
+  [weakList + pane(bubble(qaGroup,'AAA01') + bubble('120300000011111111@g.us','BBB02')), []],
+  [weakList + pane('<aside data-testid="quoted-message">' + bubble(qaGroup,'AAA01') + bubble(qaGroup,'AAA02') + '</aside>'), []],
+  [weakList + pane(bubble('910000000088@c.us','AAA01') + bubble('910000000088@c.us','AAA02')), []],
+];
 const loginScenes = [
   ['<div data-ref="unrelated"></div>', { login: false, problem: false }],
   ['<div data-ref="pairing"><canvas></canvas></div>', { login: true }],
@@ -62,6 +77,11 @@ function fixtureHtml(id, networkUrl) {
       const probe = () => { return ${loginScript} };
       return JSON.parse(probe());
     });
+    const directoryResults = ${JSON.stringify(directoryScenes.map(([markup]) => markup))}.map(markup => {
+      sample.innerHTML = markup;
+      const directory = JSON.parse((${directoryScript})('dedicated', (${chatEvidenceScript})));
+      return { keys:directory.rows.map(row => row.conversationKey), unresolved:directory.unresolvedRowCount };
+    });
     sample.replaceChildren();
     document.getElementById('result').textContent = JSON.stringify([{
       viewport: { width: innerWidth, height: innerHeight },
@@ -69,7 +89,7 @@ function fixtureHtml(id, networkUrl) {
       queryId: new URLSearchParams(location.search).get('case'),
       box: { width: bounds.width, height: bounds.height, background: getComputedStyle(sample).backgroundColor },
       network,
-      loginResults,
+      loginResults, directoryResults,
       remoteScriptExecuted: window.__syntheticWireScript === true
     }]);
   }
@@ -122,6 +142,7 @@ async function runFixture(host, kind, network) {
       viewport, fixtureId, queryId: fixtureId,
       box: { width: 137, height: 29, background: 'rgb(12, 34, 56)' },
       loginResults: loginScenes.map(([, expected]) => expected),
+      directoryResults: directoryScenes.map(([, keys]) => ({ keys, unresolved:20 })),
       network: network ? 'blocked' : null, remoteScriptExecuted: false,
     }]);
     if (network) assert.deepEqual(network.observed, { connections: 0, requests: 0 });

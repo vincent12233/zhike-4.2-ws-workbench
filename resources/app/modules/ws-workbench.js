@@ -918,6 +918,7 @@
     if (!state.liveDirectory) state.liveDirectory = {
       accountId: state.activeAccountId, mode: state.workspaceMode, foreground: new Map(), collector: new Map(),
       foregroundGeneration: 0, foregroundTicket: 0, foregroundRead: null, foregroundChecked: false,
+      verifiedOpenGroups: new Map(),
       collectorGeneration: 0, epoch: 0, scanId: 0, chunks: new Set(), scannedKeys: new Set(), lastChunk: null, finalized: false,
     };
     return state.liveDirectory;
@@ -926,6 +927,9 @@
     const directory = state.liveDirectory;
     if (!directory || mode !== state.workspaceMode || directory.accountId !== state.activeAccountId || directory.mode !== mode) return [];
     const rows = new Map(directory.collector);
+    if (mode === 'dedicated') for (const [key, row] of directory.verifiedOpenGroups || []) {
+      if (!rows.has(key) || rows.get(key).liveObservedAt <= row.liveObservedAt) rows.set(key, row);
+    }
     for (const [key, row] of directory.foreground) {
       const collected = rows.get(key);
       if (!collected || collected.liveObservedAt <= row.liveObservedAt) rows.set(key, row);
@@ -982,6 +986,7 @@
       directory.scanId = scanId; directory.chunks.clear(); directory.scannedKeys.clear(); directory.lastChunk = null; directory.finalized = false;
       directory.incomplete = false;
       directory.collectorGaps = null;
+      directory.collectorSkipped = null;
     }
     if (pushed) {
       if (!Number.isSafeInteger(payload.chunkIndex) || payload.chunkIndex < 0 || directory.chunks.has(payload.chunkIndex)) return;
@@ -991,6 +996,13 @@
     addLiveDirectoryRows(directory.collector, payload, 'collector', directory.scannedKeys, !pushed && directory.chunks.size > 0);
     if (Number.isSafeInteger(payload.unresolvedRowCount) && payload.unresolvedRowCount >= 0) {
       directory.collectorGaps = Math.max(directory.collectorGaps || 0, payload.unresolvedRowCount);
+    }
+    if (state.workspaceMode === 'dedicated' && payload.directoryDiagnostics) {
+      directory.collectorSkipped ||= {};
+      for (const key of ['skippedUnread', 'skippedReadUnknown', 'skippedTypeUnknown']) {
+        const count = payload.directoryDiagnostics[key];
+        if (Number.isSafeInteger(count) && count > 0) directory.collectorSkipped[key] = Math.max(directory.collectorSkipped[key] || 0, count);
+      }
     }
     directory.lastCollectorReadAt = nowIso();
     directory.collectorObserved = true;
@@ -1084,6 +1096,7 @@
     directory.scanId = 0; directory.scannedKeys.clear(); directory.chunks.clear(); directory.lastChunk = null; directory.finalized = false;
     directory.collectorObserved = false; directory.incomplete = false; directory.nextCollectorReadAt = 0;
     directory.collectorGaps = null;
+    directory.collectorSkipped = null;
     directory.historyRetryAt = 0; directory.historyFailures = 0;
     if (directory.collector.size) { directory.collector.clear(); updateLiveDirectoryDom(); }
   }
@@ -1100,14 +1113,25 @@
         if (result?.accountId !== context.accountId || result.workspaceMode !== directory.mode || result.source !== 'foreground-visible'
             || !result.supported || !Number.isSafeInteger(result.sessionGeneration) || result.sessionGeneration < Math.max(1, directory.foregroundGeneration)) {
           directory.foreground.clear(); directory.foregroundChecked = false; directory.contactsVisible = false;
+          directory.openIdentityStatus = ''; directory.currentOpenGroup = null; directory.foregroundDiagnostics = null;
           directory.foregroundError = text(result?.error || result?.detail || '暂未读到当前账号的前台目录。').slice(0, 240);
           return null;
         }
         const observedAt = nowIso();
         if (result.sessionGeneration !== directory.foregroundGeneration) {
           directory.foreground.clear(); directory.foregroundChecked = false; directory.lastForegroundReadAt = ''; directory.foregroundGaps = null;
+          directory.verifiedOpenGroups.clear(); directory.groupVerification = null;
         }
         directory.foregroundGeneration = result.sessionGeneration;
+        if (directory.mode === 'dedicated') {
+          directory.foregroundDiagnostics = result.directoryDiagnostics || null;
+          directory.openIdentityStatus = text(result.openIdentityStatus);
+          const jid = text(result.activeGroup?.groupJid).toLowerCase();
+          directory.currentOpenGroup = directory.openIdentityStatus === 'verified' && /^[a-z0-9._-]+@g\.us$/.test(jid)
+            ? { groupJid: jid, externalId: jid, displayName: text(result.activeGroup.displayName).slice(0,150) || jid,
+              isGroup: true, conversationType: 'group', accountId: context.accountId, liveSource: 'foreground-open-group', liveObservedAt: observedAt } : null;
+          if (directory.currentOpenGroup) directory.verifiedOpenGroups.set(jid, directory.currentOpenGroup);
+        }
         directory.chatListVisible = result.conversationListVisible !== false;
         if (directory.chatListVisible) {
           directory.foreground.clear();
@@ -1129,7 +1153,11 @@
         directory.foregroundError = '';
         return result;
       } catch (error) {
-        if (owns()) { directory.foreground.clear(); directory.foregroundChecked = false; directory.contactsVisible = false; directory.foregroundError = text(error?.message || '前台目录读取失败。').slice(0, 240); }
+        if (owns()) {
+          directory.foreground.clear(); directory.foregroundChecked = false; directory.contactsVisible = false;
+          directory.openIdentityStatus = ''; directory.currentOpenGroup = null; directory.foregroundDiagnostics = null;
+          directory.foregroundError = text(error?.message || '前台目录读取失败。').slice(0, 240);
+        }
         return null;
       }
       finally { if (owns()) { directory.foregroundRead = null; updateLiveDirectoryDom(); updateVisibleContactsDom(); } }
@@ -1142,8 +1170,10 @@
     if (!directory) return;
     directory.foregroundTicket++; directory.foregroundRead = null; directory.foregroundChecked = false; directory.foregroundError = '';
     directory.contacts = null; directory.contactsVisible = false; directory.foregroundGaps = null;
+    directory.verifiedOpenGroups.clear(); directory.currentOpenGroup = null; directory.foregroundDiagnostics = null; directory.openIdentityStatus = ''; directory.groupVerification = null;
     updateVisibleContactsDom();
-    if (directory.foreground.size) { directory.foreground.clear(); updateLiveDirectoryDom(); }
+    directory.foreground.clear();
+    updateLiveDirectoryDom();
   }
   function broadcastCandidates() {
     return (Array.isArray(state.conversations) ? state.conversations : [])
@@ -2384,6 +2414,7 @@
     state.wsDetail = detail;
     if (!['连接失败', '会话过期'].includes(state.wsStatus)) state.wsErrorCategory = '';
     updateStatusDom();
+    if (previous !== state.wsStatus && state.workspaceMode === 'dedicated' && state.wsWorkspaceView === 'chat') updateDedicatedLiveDirectoryDom();
   }
   function classifyWsError(error) {
     const supplied = text(error?.errorCategory || error?.category || '');
@@ -3960,7 +3991,7 @@
       const known = saved.get(jid);
       rows.push({ ...known, accountId: state.activeAccountId, groupJid: jid,
         groupName: text(live.displayName || live.title || live.groupName) || known?.groupName || jid,
-        directorySource: live.liveSource === 'foreground-visible' ? '前台现场' : '采集会话现场', liveObservedAt: live.liveObservedAt });
+        directorySource: live.liveSource === 'foreground-open-group' ? '前台群聊核验' : live.liveSource === 'foreground-visible' ? '前台现场' : '采集会话现场', liveObservedAt: live.liveObservedAt });
       saved.delete(jid);
     }
     rows.push(...[...saved.values()].map(item => ({ ...item, directorySource: '历史记录' })));
@@ -3973,13 +4004,26 @@
       }).filter(item => item.directoryId);
   }
   function updateDedicatedLiveDirectoryDom() {
+    if (state.active && state.workspaceMode === 'dedicated' && state.wsWorkspaceView === 'chat') {
+      const panel = $('#wsGroupVerification');
+      if (panel) {
+        const html = renderGroupVerification('chat');
+        if (panel.innerHTML !== html) {
+          const height = panel.offsetHeight;
+          panel.innerHTML = html;
+          if (panel.offsetHeight !== height) queueResizeWsView();
+        }
+      }
+      return;
+    }
     if (state.active && state.workspaceMode === 'dedicated' && ['groups', 'collection', 'overview', 'settings'].includes(state.wsWorkspaceView))
       render({ skipNativeResize: true });
   }
   function groupDirectorySummary(rows = groupDirectoryRows()) {
     const live = rows.filter(row => row.directorySource !== '历史记录').length;
     const coverage = liveDirectoryGapMessage();
-    return `现场 ${live} 个群组 · 仅有历史记录 ${rows.length - live} 个` + (coverage ? ' · ' + coverage : '');
+    const observed = live || state.liveDirectory?.foregroundChecked || state.liveDirectory?.collectorObserved;
+    return (observed ? `现场已识别 ${live} 个群组` : '现场群目录尚无读取回执') + ` · 仅有历史记录 ${rows.length - live} 个` + (coverage ? ' · ' + coverage : '');
   }
   function groupDirectoryWindow() {
     const page = groupDirectoryState(), allRows = groupDirectoryRows(), filters = page.groupFilters;
@@ -4230,6 +4274,72 @@
     if (!account || state.workspaceMode !== 'dedicated') return '';
     return `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>${esc(accountDisplayName(account))}</strong><span>${esc(instruction)}</span></div><button type="button" class="btn small" data-ws-workspace-view="chat">打开此账号的 WhatsApp</button></div></section>`;
   }
+  function groupVerificationReason(status) {
+    return ({
+      'no-open-chat': '前台尚未打开聊天。',
+      'insufficient-message-identities': '当前群聊中可见的消息身份线索不足，尚不能确认群标识。',
+      'conflicting-identities': '当前页面出现互相冲突的会话标识，无法确认群组。',
+      'source-unavailable': '当前 WhatsApp 页面结构未提供可读取的会话标识。',
+      'workspace-type-mismatch': '已打开的会话无法确认为此专用账号的群聊。',
+    })[status] || '尚未取得可核验的当前群标识。';
+  }
+  function renderGroupVerification(view) {
+    const directory = state.liveDirectory?.accountId === state.activeAccountId && state.liveDirectory.mode === 'dedicated' ? state.liveDirectory : null;
+    const groups = workspaceLiveDirectoryRows('dedicated').length;
+    const diag = directory?.foregroundDiagnostics;
+    const gap = liveDirectoryGapMessage();
+    const confirmedList = directory?.foregroundChecked || directory?.collectorObserved;
+    const status = directory?.foregroundError ? '前台读取失败。' + directory.foregroundError : gap ? ('现场已识别 ' + groups + ' 个群组。' + gap) : (groups
+      ? '本账号现场已识别 ' + groups + ' 个群组。' : diag?.listPresent === false ? 'WhatsApp 当前页面没有可读取的聊天列表。'
+        : confirmedList ? '本轮目录没有返回可核验的群标识。' : '尚未收到此账号的现场群目录回执。');
+    const connected = state.wsStatus === '已连接';
+    const action = view === 'chat'
+      ? `<button type="button" class="btn small" data-ws-action="verify-open-group" ${connected && !directory?.groupVerificationBusy ? '' : 'disabled'}>${directory?.groupVerificationBusy ? '正在核验…' : '核验已打开的群聊'}</button>`
+      : '<button type="button" class="btn small" data-ws-workspace-view="chat">打开 WhatsApp 核验群聊</button>';
+    const diagnosticLines = [];
+    if (directory?.showGroupDiagnostics) {
+      diagnosticLines.push('前台连接 · ' + (state.wsStatus || '未知'), '后台连接 · ' + collectorStatusLabel());
+      for (const [label, value] of [['前台最近读取', directory.lastForegroundReadAt], ['后台最近读取', directory.lastCollectorReadAt]]) diagnosticLines.push(label + ' · ' + (value || '尚无回执'));
+      if (diag) {
+        for (const [label, key] of [['前台列表行','renderedRows'], ['带可靠标识的列表行','stableRows'], ['未核实列表行','unresolvedRows']]) {
+          if (Number.isSafeInteger(diag[key]) && diag[key] >= 0) diagnosticLines.push(label + ' · ' + diag[key]);
+        }
+      }
+      if (directory.collectorError) diagnosticLines.push('后台读取失败 · ' + directory.collectorError);
+      for (const [key, label] of [['skippedUnread','未读'], ['skippedReadUnknown','已读状态无法确认'], ['skippedTypeUnknown','会话类型无法确认']]) {
+        const skipped = directory.collectorSkipped?.[key];
+        if (skipped > 0) diagnosticLines.push('本轮后台跳过 · ' + label + '至少 ' + skipped + ' 行');
+      }
+      if (directory.openIdentityStatus && !directory.currentOpenGroup) diagnosticLines.push(groupVerificationReason(directory.openIdentityStatus));
+    }
+    const instruction = connected ? '在此账号的 WhatsApp 中打开任一群聊，再核验当前会话。' : '请先完成此账号的前台登录，再打开任一群聊核验。';
+    const verification = directory?.groupVerification;
+    return `<div class="ws-group-verify-copy" role="status"><strong>群组核验</strong> <span>${esc(status)}</span>
+      ${verification ? `<span>${esc(verification)}</span>` : ''}</div>
+      <div class="ws-group-verify-actions"><span>${esc(instruction)}</span>${action}<button type="button" class="btn small" data-ws-action="group-verification-diagnostics" aria-expanded="${Boolean(directory?.showGroupDiagnostics)}">${directory?.showGroupDiagnostics ? '收起诊断' : '查看诊断'}</button></div>
+      ${diagnosticLines.length ? `<div class="ws-group-verify-diagnostics">${diagnosticLines.map(line => `<span>${esc(line)}</span>`).join('')}</div>` : ''}`;
+  }
+  async function verifyOpenedGroup() {
+    if (state.workspaceMode !== 'dedicated' || state.wsStatus !== '已连接' || !modeAccount(state.activeAccountId)) return;
+    const directory = liveDirectory(), context = captureContext('');
+    if (directory.groupVerificationBusy) return;
+    directory.groupVerificationBusy = true;
+    const generation = directory.foregroundGeneration;
+    const current = () => contextCurrent(context) && state.liveDirectory === directory && state.wsStatus === '已连接' && (!generation || generation === directory.foregroundGeneration);
+    try {
+      updateDedicatedLiveDirectoryDom();
+      if (directory.foregroundRead) await directory.foregroundRead;
+      if (!current()) return;
+      const result = await refreshForegroundDirectory();
+      if (!current()) return;
+      const group = directory.currentOpenGroup;
+      directory.groupVerification = result && group ? '已核验群聊 · ' + group.displayName + (group.displayName === group.groupJid ? '' : ' · ' + group.groupJid) + ' · ' + group.liveObservedAt
+        : '本次核验 · ' + (directory.foregroundError || groupVerificationReason(directory.openIdentityStatus));
+    } finally {
+      directory.groupVerificationBusy = false;
+      if (current()) updateDedicatedLiveDirectoryDom();
+    }
+  }
   function liveDirectoryGapMessage() {
     const directory = state.liveDirectory;
     if (!directory || directory.accountId !== state.activeAccountId || directory.mode !== state.workspaceMode) return '';
@@ -4258,6 +4368,7 @@
     const visible = directory?.foregroundChecked === true;
     const coverage = [];
     if (visible) coverage.push(directory.chatListVisible === false ? '前台上次可见聊天列表' : '前台当前可见列表');
+    if (!ordinary && directory?.verifiedOpenGroups?.size) coverage.push('前台已打开群聊核验');
     if (collectorRead) coverage.push(directory.incomplete ? '后台列表部分可读，存在缺口' : directory.finalized ? '后台已读完本轮可访问的列表' : '后台已读取部分列表');
     const rows = [
       ['当前账号', activeAccount() ? accountDisplayName(activeAccount()) + ' · ' + state.activeAccountId : '尚未选择'],
@@ -4296,7 +4407,7 @@
     let body = '';
     if (activeView === 'overview') body = `<section class="ws-workspace-card ws-workspace-welcome zk-surface zk-surface--accent"><span class="ws-workspace-eyebrow">WORKSPACE / OVERVIEW</span><h3>开始今天的客户运营</h3><p>在独立工作区管理账号、查看真实采集记录，并随时回到前台聊天。</p><button type="button" class="btn primary" data-ws-workspace-view="chat">${state.workspaceMode === 'dedicated' ? '打开专用账号登录' : '进入前台聊天'} <span aria-hidden="true">↗</span></button></section><section class="ws-workspace-metrics" aria-label="已加载工作区概况"><div><span>已登记账号</span><strong>${state.accounts.length}</strong><small>当前用途登记记录</small></div><div><span>已加载会话</span><strong>${state.lastLoadedAt ? (state.conversations || []).length : '—'}</strong><small>${state.lastLoadedAt ? '当前账号本地记录' : '等待读取本地记录'}</small></div><div><span>已加载群组</span><strong>${state.groupMonitor?.lastLoadedAt ? groupDirectoryRows().length : '—'}</strong><small>${state.groupMonitor?.lastLoadedAt ? '当前账号同步目录' : '等待同步群组目录'}</small></div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>工作区入口</strong><span>每项功能拥有独立页面，页面切换保留账号会话。</span></div><span class="ws-status-badge">${esc(state.wsStatus)}</span></div><div class="ws-workspace-entry-grid">${workspaceViews().filter(item => !['overview', 'chat'].includes(item.id)).map(item => `<button type="button" class="ws-workspace-entry zk-surface zk-surface--interactive" data-ws-workspace-view="${item.id}"><span class="ws-workspace-nav-icon" aria-hidden="true"><svg class="zk-icon" viewBox="0 0 24 24" focusable="false"><use href="#i-${esc(item.icon)}"/></svg></span><span><strong>${esc(item.label)}</strong><small>${esc(item.hint)}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>运行说明</strong><span>任务按当前账号的配置执行。</span></div><span class="ws-status-badge">按配置运行</span></div><p class="ws-muted">自动 AI 默认关闭，可在 AI 页面明确授权一个私聊及费用上限。群组自动建档仅处理已启用监控中确认的成员事件；请在对应账号内核对任务配置。</p></section>`;
     else if (activeView === 'accounts') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>账号与连接</strong><span>账号作用域独立，切换保留各账号隔离会话。</span></div><button class="btn small" data-ws-action="create-account">＋ 添加账号</button></div>${state.workspaceMode === 'dedicated' ? '<button type="button" class="btn primary" data-ws-workspace-view="chat">打开当前专用账号登录</button>' : ''}${renderAccountForm()}${renderAccountMetrics()}${renderCollectorControls()}${renderWorkspaceList('accounts', state.accounts, rows => renderAccountList(rows))}</section>`;
-    else if (activeView === 'groups') body = renderGroupDirectory() + (groupReading?.render() || '');
+    else if (activeView === 'groups') body = `<section class="ws-workspace-card zk-surface ws-group-verify" id="wsGroupVerification">${renderGroupVerification('groups')}</section>` + renderGroupDirectory() + (groupReading?.render() || '');
     else if (activeView === 'group-reading') body = renderWorkspaceGroupReading() + renderGroupWhatsAppLink('可在对应群聊里打开本人发送的消息，查看平台提供的消息信息。');
     else if (activeView === 'group-permissions') body = (groupPermissions?.render() || '<section class="ws-workspace-card"><p>权限模块未加载；管理员资格与发言权限 UNKNOWN，实际开关群 BLOCKED。</p></section>') + renderGroupWhatsAppLink('群管理员可在 WhatsApp 群组设置中核对和调整发言权限。');
     else if (activeView === 'members') body = renderWorkspaceMembers();
@@ -4757,6 +4868,8 @@
     reconcileWorkbenchChildren(current, next, new Set(['wsBrowserHost']));
     if (oldHost && !current.contains(oldHost)) current.appendChild(oldHost);
     if (!oldHost && nextHost) current.querySelector('#wsBrowserHost')?.replaceWith(nextHost.cloneNode(true));
+    const verification = current.querySelector('#wsGroupVerification'), host = current.querySelector('#wsBrowserHost');
+    if (verification && host && verification.nextElementSibling !== host) current.insertBefore(verification, host);
     // The native host is intentionally never replaced or moved. It remains at
     // the same DOM anchor while the toolbar/capture/message siblings update.
     if (preservedBrowserHost && oldHost && preservedBrowserHost !== oldHost) preservedBrowserHost.replaceWith(oldHost);
@@ -5008,6 +5121,7 @@
                 <button class="btn small ws-local-panels-toggle" data-ws-action="toggle-local-panels" aria-expanded="${state.localPanelsCollapsed ? 'false' : 'true'}" aria-controls="wsCenterPanel">${state.localPanelsCollapsed ? '展开本地面板' : '收起本地面板'}</button>
               </div>
             </div>
+            ${state.workspaceMode === 'dedicated' && state.wsWorkspaceView === 'chat' ? `<section class="ws-group-verify" id="wsGroupVerification">${renderGroupVerification('chat')}</section>` : ''}
             <div id="wsBrowserHost" class="ws-browser-host"><div class="ws-browser-placeholder"><strong>官方 WS 页面会显示在这里</strong><span>用户自行登录；知客不会读取密码、Cookie 或二维码。</span></div></div>
             ${state.localPanelsCollapsed ? '' : `
             <div class="ws-local-workspace">
@@ -6421,6 +6535,13 @@
     if (action === 'resume-collection-checkpoint') return resumeCollectionFromCheckpoint();
     if (action === 'group-monitor-create') return createGroupMonitor();
     if (action === 'group-monitor-refresh') return loadGroupMonitor();
+    if (action === 'group-verification-diagnostics' && state.workspaceMode === 'dedicated') {
+      const directory = liveDirectory();
+      directory.showGroupDiagnostics = !directory.showGroupDiagnostics;
+      updateDedicatedLiveDirectoryDom();
+      return;
+    }
+    if (action === 'verify-open-group') return verifyOpenedGroup();
     if (action === 'group-monitor-scan') return scanGroupMonitorTargets();
     if (action === 'group-monitor-add-target') return addGroupMonitorTarget();
     if (action === 'group-monitor-add-directory') return addDirectoryMonitorTargets();

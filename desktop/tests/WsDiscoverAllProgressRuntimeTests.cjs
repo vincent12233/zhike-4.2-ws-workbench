@@ -143,4 +143,32 @@ for (const mode of ['ordinary', 'dedicated']) {
   assert.ok(packets.every(packet => packet.collectorEpoch === 12));
   assert.equal(packets.at(-1).complete, true);
 }
-console.log('WS discover-all progress runtime: initial and subsequent low-frequency scans stream purpose-scoped virtualized rows');
+for (const [mode, kind, read, expected] of [
+  ['dedicated','group','0',1],['dedicated','group','1',0],['dedicated','group','',0],
+  ['dedicated','direct','0',0],['dedicated','','0',0],['ordinary','group','0',0],
+]) {
+  let clicks = 0;
+  const group = '12036305333333@g.us';
+  const candidate = { ...makeRow('虚拟同名行'), isConnected:true,
+    getAttribute: name => ({'role':'row','data-chat-type':kind,'data-unread-count':read})[name] || '',
+    click() { clicks++; } };
+  topRow = candidate; bottomRow = candidate; scrollTop = 0;
+  list.contains = node => node === candidate;
+  sandbox.readEvidence = (_,row) => !row && clicks
+    ? {status:'verified',row:{conversationType:'group',conversationKey:group,displayName:'',isGroup:true}}
+    : {status:'no-open-chat'};
+  vm.runInNewContext(`(function(__zhikeWsTrustedPurpose,__zhikeWsDocumentEpoch,__zhikeReadOpenChat){${script}})('${mode}',15,readEvidence);`,sandbox);
+  sandbox.window.__zhikeStopCapture(); frames.length=0; timers.clear(); posted.length=0;
+  sandbox.window.__zhikeWsDiscoverAll();
+  for (let i=0;i<160 && !posted.some(packet=>packet.type==='zhike.ws.directory' && packet.finished);i++) {
+    if (frames.length) {now+=16; frames.shift()();continue;}
+    const entry=[...timers.entries()].sort((a,b)=>a[1].due-b[1].due)[0];
+    if (!entry) break;
+    timers.delete(entry[0]); now=Math.max(now,entry[1].due);entry[1].callback();
+  }
+  assert.equal(clicks, expected, [mode,kind,read].join('/')+' independent verification eligibility');
+  const verified = posted.filter(packet=>packet.coverage==='group-open-verified');
+  if (expected) assert.ok(verified.some(packet=>packet.conversations?.some(row=>row.conversationKey===group)), 'only the observed opened group identity is indexed');
+  else assert.equal(verified.length,0);
+}
+console.log('WS directory progress, later virtualized windows and bounded independent verification of explicitly read groups pass');

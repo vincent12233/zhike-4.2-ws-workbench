@@ -16,6 +16,7 @@ async function exerciseDedicatedWorkspace(scripts) {
   const foregroundContact = '前台现场测试客户';
   const pickerContact = '只在联系人选择器出现';
   let pickerVisible = false;
+  let selectedGroup = false;
   let collectorState = 'not-started';
   let onStatus;
   const capability = id => ({
@@ -61,10 +62,13 @@ async function exerciseDedicatedWorkspace(scripts) {
         const ordinary = accountId === 'default';
         return { ok: true, supported: true, accountId, workspaceMode: ordinary ? 'ordinary' : 'dedicated',
           source: 'foreground-visible', sessionGeneration: ordinary ? 9 : 7, collectorEpoch: 0, coverage: 'foreground-visible-only',
-          unresolvedRowCount: ordinary && !pickerVisible ? 2 : 0, contactsVisible: ordinary && pickerVisible, conversationListVisible: !ordinary || !pickerVisible,
+          unresolvedRowCount: ordinary ? pickerVisible ? 0 : 2 : 2, contactsVisible: ordinary && pickerVisible, conversationListVisible: !ordinary || !pickerVisible,
+          directoryDiagnostics: ordinary ? null : { listPresent: true, renderedRows: 2, stableRows: 0, unresolvedRows: 2, confirmedOpen: selectedGroup },
+          openIdentityStatus: ordinary ? '' : selectedGroup ? 'verified' : 'no-open-chat',
+          activeGroup: !ordinary && selectedGroup ? { groupJid: '120300000001@g.us', displayName: foregroundGroup } : null,
           contacts: ordinary && pickerVisible ? [{ contactId: '100000003@lid', displayName: pickerContact }] : [],
           conversations: ordinary && !pickerVisible ? [{ conversationKey: '123456789@c.us', displayName: foregroundContact, conversationType: 'direct' }] : [],
-          groupConversations: ordinary ? [] : [{ conversationKey: '120300000001@g.us', groupJid: '120300000001@g.us', displayName: foregroundGroup, isGroup: true, conversationType: 'group' }] };
+          groupConversations: [] };
       }
       if (action === 'open-collector') {
         collectorCalls.push({ action, accountId, bounds });
@@ -94,6 +98,14 @@ async function exerciseDedicatedWorkspace(scripts) {
     document.body.append(script);
   }
   await click('#wsDedicatedNav');
+  // The isolated fixture loads the WS handlers without app.js. Mirror its
+  // sidebar layout for the active WS route before checking native bounds.
+  if (document.documentElement.dataset.view === 'ws-workbench') {
+    document.body.classList.add('ws-workspace-active');
+    const sidebar = find('#sidebar');
+    sidebar.hidden = true;
+    sidebar.inert = true;
+  }
   await click('#viewContainer button[data-ws-action="create-account"]:not(:disabled)');
   await until('open account form', () => {
     const input = find('#wsAccountDisplayName');
@@ -129,8 +141,25 @@ async function exerciseDedicatedWorkspace(scripts) {
   loginForeground(dedicated.id, 'dedicated');
   await until('read paired foreground group list', () => foregroundReads.includes(dedicated.id));
   await click(nav + '[data-ws-workspace-view="groups"]');
+  await until('unknown dedicated identities', () => find('#wsGroupVerification')?.textContent.includes('前台至少 2 行'));
+  await click('#wsGroupVerification [data-ws-action="group-verification-diagnostics"]');
+  await until('visible diagnostic counts', () => find('#wsGroupVerification')?.textContent.includes('前台列表行 · 2'));
+  await click('#wsGroupVerification [data-ws-workspace-view="chat"]');
+  await until('actionable group verification above the chat surface', () => {
+    const button = find('#wsGroupVerification [data-ws-action="verify-open-group"]');
+    const box = button?.getBoundingClientRect();
+    const hostTop = find('#wsBrowserHost')?.getBoundingClientRect().top;
+    return box?.width > 0 && box.height > 0 && box.bottom <= hostTop + 1 && box.bottom <= innerHeight
+      && document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2)?.closest('button') === button;
+  });
+  await click('#wsGroupVerification [data-ws-action="verify-open-group"]');
+  await until('unopened group cannot verify', () => find('#wsGroupVerification')?.textContent.includes('本次核验 · 前台尚未打开聊天'));
+  selectedGroup = true;
+  await click('#wsGroupVerification [data-ws-action="verify-open-group"]');
+  await until('verify currently open group', () => find('#wsGroupVerification')?.textContent.includes('已核验群聊 · ' + foregroundGroup));
+  await click(nav + '[data-ws-workspace-view="groups"]');
   await until('dedicated foreground groups with empty SQLite before collector pairing',
-    () => find('[data-ws-workspace-page="groups"]')?.textContent.includes(foregroundGroup));
+    () => find('[data-ws-workspace-page="groups"] tbody')?.textContent.includes(foregroundGroup));
   await click(nav + '[data-ws-workspace-view="collection"]');
   await click('[data-ws-workspace-page="collection"] button[data-ws-action="open-collector"]');
   await until('open independent collector login', () => collectorState === 'login-visible' && typeof onStatus === 'function');
@@ -142,12 +171,13 @@ async function exerciseDedicatedWorkspace(scripts) {
   await until('discover groups after independent pairing', () => collectorCalls.some(call => call.action === 'discover-conversations'));
   const groupEvent = { accountId: dedicated.id, workspaceMode: 'dedicated', collectorOnly: true, eventName: 'live-directory',
     sessionGeneration: 7, collectorEpoch: 3, source: 'collector', scanId: 1, chunkIndex: 0, finished: true, complete: true,
+    directoryDiagnostics: { skippedUnread: 2, skippedReadUnknown: 1, skippedTypeUnknown: 0 },
     conversations: [], groupConversations: [{ conversationKey: groupJid, groupJid, title: '目录回归群', isGroup: true, conversationType: 'group' }] };
   onStatus(groupEvent);
   await click(nav + '[data-ws-workspace-view="groups"]');
   await until('display both foreground and second-screen background groups', () => {
     const text = find('[data-ws-workspace-page="groups"]')?.textContent || '';
-    return text.includes(foregroundGroup) && text.includes('目录回归群');
+    return text.includes(foregroundGroup) && text.includes('目录回归群') && text.includes('后台跳过 · 未读至少 2 行');
   });
   await click('.ws-workspace-nav [data-ws-workspace-mode="ordinary"]');
   await click(nav + '[data-ws-workspace-view="chat"]');
@@ -176,7 +206,7 @@ async function exerciseDedicatedWorkspace(scripts) {
     scoped: collectorCalls.every(call => call.accountId === dedicated.id),
     loginVisible: !login.bounds.hidden && login.bounds.width > 200 && login.bounds.height > 100,
     discoveredBeforePairing, directoryVisible: true, bothForegroundDirectories: foregroundReads.includes('default') && foregroundReads.includes(dedicated.id),
-    isolated, localIndexReads: directoryReads > 0, contactsSeparate, directoryGapVisible,
+    isolated, localIndexReads: directoryReads > 0, contactsSeparate, directoryGapVisible, verifiedOpenedGroup: true,
   } };
 }
 

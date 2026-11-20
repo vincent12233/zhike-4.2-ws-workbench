@@ -57,7 +57,20 @@ public static class WsLiveDirectory
                     contacts.Add(new { contactId = id, displayName = Text(row, "displayName", 150) });
             }
         }
-        return JsonSerializer.SerializeToElement(new { supported = true, accountId = purpose.AccountId, workspaceMode = purpose.WorkspaceMode,
+        object? activeGroup = null, directoryDiagnostics = null;
+        var openIdentityStatus = Text(packet, "openIdentityStatus", 40);
+        if (openIdentityStatus is not ("verified" or "no-open-chat" or "insufficient-message-identities" or "conflicting-identities" or "workspace-type-mismatch"))
+            openIdentityStatus = "source-unavailable";
+        if (source == "foreground-visible" && dedicated && openIdentityStatus == "verified" && packet.TryGetProperty("activeGroup", out var active) && active.ValueKind == JsonValueKind.Object)
+        {
+            var jid = Text(active, "groupJid", 200);
+            if (WsCollectorPurposePolicy.IsGroupJid(jid) && seen.Contains(jid)) activeGroup = new { groupJid = jid, displayName = Text(active, "displayName", 150) };
+        }
+        if (packet.TryGetProperty("directoryDiagnostics", out var diag) && diag.ValueKind == JsonValueKind.Object)
+            directoryDiagnostics = new { listPresent = Flag(diag, "listPresent"), renderedRows = Number(diag, "renderedRows"),
+                stableRows = Number(diag, "stableRows"), unresolvedRows = Number(diag, "unresolvedRows"), confirmedOpen = Flag(diag, "confirmedOpen"),
+                skippedUnread = Number(diag, "skippedUnread"), skippedReadUnknown = Number(diag, "skippedReadUnknown"), skippedTypeUnknown = Number(diag, "skippedTypeUnknown") };
+        return JsonSerializer.SerializeToElement(new { supported = true, accountId = purpose.AccountId, workspaceMode = purpose.WorkspaceMode, activeGroup, openIdentityStatus, directoryDiagnostics,
             sessionGeneration = generation, collectorEpoch = epoch, source, collectorOnly = source == "collector",
             eventName = "live-directory", scanId = Number(packet, "scanId"), chunkIndex = Number(packet, "chunkIndex"),
             scanned = Flag(packet, "scanned"), scanning = Flag(packet, "scanning"), finished = Flag(packet, "finished"), complete = Flag(packet, "complete"),

@@ -12,7 +12,7 @@ assert.ok(match, 'native WS collector script must remain embedded');
 const script = match[1].replace(/\{\{encodedAccount\}\}/g, JSON.stringify('jid-test'));
 assert.match(script, /const conversationIdentityFromRow\s*=\s*row\s*=>/, 'collector must centralize row identity extraction');
 assert.match(script, /data-group-id.*data-jid.*data-chat-id/s, 'collector identity extraction must inspect native group/chat attributes');
-assert.match(script, /const identity = conversationIdentityFromRow\(row\)/, 'readRows must use the native identity helper');
+assert.match(script, /const nativeKey = conversationIdentityFromRow\(row\)/, 'readRows must use the native identity helper');
 assert.match(script, /\[data-jid\]\[tabindex\].*\[data-chat-id\]\[tabindex\].*\[data-group-id\]\[tabindex\]/s, 'row selectors must include attribute-driven WhatsApp list rows');
 
 const leaf = (attributes = {}, value = '') => ({
