@@ -24,9 +24,10 @@ html[data-palette="atelier-dawn"] {
  --ds-kpi-red-bg:linear-gradient(135deg,#ffe0e5,#fff0f0);--ds-kpi-red-ink:#9b2844;
  --ds-kpi-indigo-bg:linear-gradient(135deg,#dde3ff,#edf0ff);--ds-kpi-indigo-ink:#353c91;
  --ds-flow-art:url("../assets/atelier-dawn.svg");
- --ds-home-banner-muted:#334c73;--ds-home-banner-accent:#204688;
- --ds-home-banner:linear-gradient(108deg,#f7fcff 0%,#eaf3ff 42%,#dce9ff 74%,#e3ddfa 100%);
- --ds-home-art:#3974d9;--ds-home-art-end:#7968de;
+ --ds-home-banner-muted:#bcd4f2;--ds-home-banner-accent:#8fd4ff;--ds-hero-text:#f4f8ff;
+ --ds-home-banner:linear-gradient(112deg,#04101f 0%,#07204a 44%,#0b2a58 72%,#1a1d47 100%);
+ --ds-home-art:#7cc4ff;--ds-home-art-end:#b49bff;
+ --ds-hero-line:rgba(127,201,255,.30);--ds-hero-glow:rgba(64,142,255,.40);--ds-hero-sheen:rgba(150,205,255,.16);
  --ds-light-edge:#fff;--ds-light-reflection:#4164cd;
 }
 html[data-palette="horizon-night"] {
@@ -52,9 +53,10 @@ html[data-palette="horizon-night"] {
  --ds-kpi-red-bg:linear-gradient(135deg,#512d42,#3d2735);--ds-kpi-red-ink:#ffb9c9;
  --ds-kpi-indigo-bg:linear-gradient(135deg,#2c345b,#272e4e);--ds-kpi-indigo-ink:#cbceff;
  --ds-flow-art:url("../assets/horizon-flow-6.png");
- --ds-home-banner-muted:#d1dcf1;--ds-home-banner-accent:#c5dcff;
- --ds-home-banner:linear-gradient(108deg,#172640 0%,#203552 42%,#273a68 74%,#322d54 100%);
- --ds-home-art:#82c7ff;--ds-home-art-end:#b49bff;
+ --ds-home-banner-muted:#c2d6f4;--ds-home-banner-accent:#9adcff;--ds-hero-text:#f2f6ff;
+ --ds-home-banner:linear-gradient(112deg,#030a15 0%,#071a35 44%,#0c2449 72%,#1a1c40 100%);
+ --ds-home-art:#8ccbff;--ds-home-art-end:#b9a2ff;
+ --ds-hero-line:rgba(136,206,255,.30);--ds-hero-glow:rgba(64,142,255,.36);--ds-hero-sheen:rgba(150,205,255,.14);
  --ds-light-edge:#d4deff;--ds-light-reflection:#849eff;
 }
 html[data-palette] {

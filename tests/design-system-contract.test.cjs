@@ -107,7 +107,7 @@ for (const [name, source] of Object.entries(palettes)) {
   }
   for (const [fill, foregrounds] of [
     ['topbar-bg', ['topbar-text', 'topbar-muted']],
-    ['home-banner', ['text', 'home-banner-muted', 'home-banner-accent']],
+    ['home-banner', ['hero-text', 'home-banner-muted', 'home-banner-accent']],
     ...['blue', 'violet', 'teal', 'amber', 'red', 'indigo'].map(tone => [`kpi-${tone}-bg`, [`kpi-${tone}-ink`]]),
   ]) {
     const endpoints = tokens[`--ds-${fill}`].match(/#[\da-f]{3,6}\b/gi) || [];
