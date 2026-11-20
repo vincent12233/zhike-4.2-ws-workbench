@@ -769,6 +769,7 @@
   }
 
   function resetAccountPresentation(accountId) {
+    invalidateExclusionPage();
     ++state.accountPresentationGeneration;
     state.collectorActionSequence = Number(state.collectorActionSequence || 0) + 1;
     // Clear only the account-scoped UI projection. Persisted tasks, leases,
@@ -3418,7 +3419,8 @@
         if (!accepted) throw new Error(businessPages.directoryState(page).error || '数据已过期，请重新查询。');
       } else if (view === 'exclusions') {
         if (!businessPages) throw new Error('业务页面模块未加载，请重新打开应用。');
-        const loading = businessPages.loadExclusions(page, { request: pathname => api(pathname, {}, context), isCurrent: () => contextCurrent(context) });
+        const scope = exclusionPageScope();
+        const loading = businessPages.loadExclusions(page, { request: scope.request, isCurrent: scope.isCurrent });
         render();
         const accepted = await loading;
         assertContext(context);
@@ -5334,6 +5336,75 @@
     const failed = state.messages.filter(item => item.translationStatus === 'failed' || item.translationError);
     for (const message of failed) await translateMessage(message.id);
   }
+  let exclusionPageEpoch = 0;
+  function invalidateExclusionPage() {
+    if (state.wsWorkspaceView !== 'exclusions') return;
+    exclusionPageEpoch += 1;
+    const page = wsWorkspacePageState('exclusions');
+    businessPages?.invalidateExclusions(page);
+    page.refreshGeneration = Number(page.refreshGeneration || 0) + 1;
+    page.busy = false;
+    page.status = '尚未刷新';
+  }
+  function exclusionPageScope() {
+    const context = captureContext('');
+    const page = wsWorkspacePageState('exclusions', context.accountId);
+    const epoch = exclusionPageEpoch;
+    const isCurrent = () => state.active && state.wsWorkspaceView === 'exclusions' && epoch === exclusionPageEpoch && contextCurrent(context);
+    const request = (pathname, init = {}) => {
+      if (!isCurrent()) throw new Error('排除页面已切换，已停止后续操作。');
+      return api(pathname, init, context);
+    };
+    const refresh = async (query) => {
+      if (!isCurrent()) return;
+      const loading = businessPages.loadExclusions(page, { request, isCurrent, ...(query === undefined ? {} : { query }) });
+      render({ skipNativeResize: true });
+      await loading;
+      if (isCurrent()) render({ skipNativeResize: true });
+    };
+    return { page, request, isCurrent, refresh };
+  }
+  async function updateExclusionPage(scope, options) {
+    const updating = businessPages.updateExclusions(scope.page, { ...scope, ...options });
+    if (scope.isCurrent()) render({ skipNativeResize: true });
+    await updating;
+    if (scope.isCurrent()) render({ skipNativeResize: true });
+  }
+  async function submitExclusionForm(form) {
+    if (!businessPages || !state.active || state.wsWorkspaceView !== 'exclusions') return;
+    const scope = exclusionPageScope();
+    const view = businessPages.exclusionState(scope.page);
+    if (view.mutating || view.loading) return;
+    const mode = form.dataset.wsExclusionForm;
+    if (mode === 'search') return scope.refresh(String(form.querySelector('[data-ws-exclusion-query]')?.value || '').trim());
+    const data = Object.fromEntries(new FormData(form).entries());
+    if (mode === 'hits') {
+      view.hitQuery = String(data.hitQuery || '').trim().slice(0, 160);
+      render({ skipNativeResize: true });
+      return;
+    }
+    if (mode === 'import') view.importText = String(data.items || '');
+    if (mode === 'add' || mode === 'import') return updateExclusionPage(scope, { action: mode, body: data });
+  }
+  function selectExclusionRules(target) {
+    const box = target?.closest?.('[data-ws-exclusion-select]');
+    const all = target?.closest?.('[data-ws-exclusion-select-all]');
+    if (!box && !all) return false;
+    if (!businessPages || !state.active || state.wsWorkspaceView !== 'exclusions') return true;
+    const page = wsWorkspacePageState('exclusions');
+    const view = businessPages.exclusionState(page);
+    if (view.mutating || view.loading) return true;
+    const selected = businessPages.exclusionSelection(page);
+    if (all) page.exclusionSelected = all.checked ? view.rules.map(rule => String(rule.id)) : [];
+    else {
+      const id = String(box.dataset.wsExclusionSelect);
+      if (box.checked && view.rules.some(rule => String(rule.id) === id)) selected.add(id);
+      else selected.delete(id);
+      page.exclusionSelected = [...selected];
+    }
+    render({ skipNativeResize: true });
+    return true;
+  }
   async function handleAction(action, element) {
     if (action === 'return-zhike') { (document.querySelector('[data-workspace-target="main"]') || document.querySelector('.nav-item[data-view="home"]'))?.click(); return; }
     if (action.startsWith('business-')) {
@@ -5358,38 +5429,19 @@
     }
     if (action?.startsWith('exclusion-')) {
       if (!businessPages) { toast('业务页面模块未加载。', 'x'); return; }
-      const page = wsWorkspacePageState('exclusions');
-      const view = businessPages.exclusionState(page);
-      const refresh = async () => {
-        await businessPages.loadExclusions(page, { request: pathname => api(pathname, {}, captureContext('')), isCurrent: () => state.wsWorkspaceView === 'exclusions' });
-        render({ skipNativeResize: true });
-      };
-      const selected = () => new Set(Array.isArray(page.exclusionSelected) ? page.exclusionSelected : []);
-      const setSelected = next => { page.exclusionSelected = [...next]; render({ skipNativeResize: true }); };
+      const scope = exclusionPageScope();
+      if (!scope.isCurrent()) return;
+      const view = businessPages.exclusionState(scope.page);
+      if (view.mutating || view.loading) return;
       if (action === 'exclusion-toggle' || action === 'exclusion-delete') {
         const id = String(element?.dataset?.recordId || '');
-        if (!id) return;
-        try {
-          if (action === 'exclusion-delete') await api(`/api/ws/contact-exclusions/${encodeURIComponent(id)}`, { method: 'DELETE' }, captureContext(''));
-          else await api(`/api/ws/contact-exclusions/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ enabled: element?.dataset?.recordEnabled !== '1' }) }, captureContext(''));
-          toast(action === 'exclusion-delete' ? '已移除排除规则。' : '已更新排除状态。');
-        } catch (error) { toast(error.message || '操作失败。', 'x'); }
-        return refresh();
+        if (!view.rules.some(rule => String(rule.id) === id)) return;
+        return updateExclusionPage(scope, { action: action === 'exclusion-delete' ? 'delete' : 'toggle', id, body: { enabled: element?.dataset?.recordEnabled !== '1' } });
       }
       if (['exclusion-bulk-enable', 'exclusion-bulk-disable', 'exclusion-bulk-delete'].includes(action)) {
-        const ids = [...selected()];
-        if (!ids.length) return;
-        try {
-          for (const id of ids) {
-            if (action === 'exclusion-bulk-delete') await api(`/api/ws/contact-exclusions/${encodeURIComponent(id)}`, { method: 'DELETE' }, captureContext(''));
-            else await api(`/api/ws/contact-exclusions/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ enabled: action === 'exclusion-bulk-enable' }) }, captureContext(''));
-          }
-          toast(`已处理 ${ids.length} 条排除规则。`);
-          page.exclusionSelected = [];
-        } catch (error) { toast(error.message || '批量操作失败。', 'x'); }
-        return refresh();
+        return updateExclusionPage(scope, { action: action.slice('exclusion-'.length) });
       }
-      if (action === 'exclusion-refresh') return refresh();
+      if (action === 'exclusion-refresh') return scope.refresh();
       return;
     }
     if (action === 'collection-history') {
@@ -5730,6 +5782,7 @@
   }
   function deactivate() {
     if (!state.active) return;
+    invalidateExclusionPage();
     state.active = false;
     groupReading?.reset();
     assistDrawerResize = null;
@@ -5808,6 +5861,7 @@
         event.preventDefault();
         event.stopImmediatePropagation();
         const nextView = WS_WORKSPACE_VIEW_IDS.has(String(workspaceItem.dataset.wsWorkspaceView || '')) ? String(workspaceItem.dataset.wsWorkspaceView) : 'overview';
+        invalidateExclusionPage();
         wsWorkspacePageState(state.wsWorkspaceView).scrollTop = Number(document.querySelector('[data-ws-workspace-page]')?.scrollTop || 0);
         state.wsWorkspaceView = nextView;
         wsWorkspacePageState(nextView);
@@ -5853,6 +5907,7 @@
     view?.addEventListener('change', event => {
       if (!event.target.closest('.ws-workbench-page')) return;
       event.stopImmediatePropagation();
+      if (selectExclusionRules(event.target)) return;
       applyControlChange(event.target);
     }, true);
     view?.addEventListener('input', event => {
@@ -5870,62 +5925,7 @@
       const form = event.target?.closest?.('[data-ws-exclusion-form]');
       if (!form) return;
       event.preventDefault(); event.stopImmediatePropagation();
-      const mode = form.dataset.wsExclusionForm;
-      if (mode === 'search') {
-        const page = wsWorkspacePageState('exclusions');
-        const query = String(form.querySelector('[data-ws-exclusion-query]')?.value || '').trim();
-        void businessPages?.loadExclusions(page, { request: pathname => api(pathname, {}, captureContext('')), isCurrent: () => state.wsWorkspaceView === 'exclusions', query }).then(() => render({ skipNativeResize: true }));
-        return;
-      }
-      if (mode === 'add') {
-        const data = Object.fromEntries(new FormData(form).entries());
-        void (async () => {
-          try {
-            await api('/api/ws/contact-exclusions', { method: 'POST', body: JSON.stringify({ identity: data.identity, displayName: data.displayName, note: data.note }) }, captureContext(''));
-            form.reset();
-            toast('已加入排除名单。');
-            const page = wsWorkspacePageState('exclusions');
-            await businessPages?.loadExclusions(page, { request: pathname => api(pathname, {}, captureContext('')), isCurrent: () => state.wsWorkspaceView === 'exclusions' });
-            render({ skipNativeResize: true });
-          } catch (error) { toast(error.message || '加入排除名单失败。', 'x'); }
-        })();
-        return;
-      }
-      if (mode === 'import') {
-        const lines = String(new FormData(form).get('items') || '').split(/\r?\n/).map(line => line.trim()).filter(Boolean).slice(0, 2000);
-        if (!lines.length) { toast('请先粘贴要导入的身份。', 'x'); return; }
-        void (async () => {
-          try {
-            const response = await api('/api/ws/contact-exclusions', { method: 'POST', body: JSON.stringify({ items: lines.map(identity => ({ identity })), source: 'import' }) }, captureContext(''));
-            const created = Number(response?.rules?.length || 0);
-            const rejected = Number(response?.rejected?.length || 0);
-            form.reset();
-            toast(`导入完成：${created} 条成功${rejected ? `，${rejected} 条无效被拒` : ''}${rejected ? '（昵称或无法识别的标识不会被接受）' : ''}`);
-            const page = wsWorkspacePageState('exclusions');
-            await businessPages?.loadExclusions(page, { request: pathname => api(pathname, {}, captureContext('')), isCurrent: () => state.wsWorkspaceView === 'exclusions' });
-            render({ skipNativeResize: true });
-          } catch (error) { toast(error.message || '批量导入失败。', 'x'); }
-        })();
-        return;
-      }
-    }, true);
-    view?.addEventListener('change', event => {
-      const box = event.target?.closest?.('[data-ws-exclusion-select]');
-      if (box) {
-        const page = wsWorkspacePageState('exclusions');
-        const set = new Set(Array.isArray(page.exclusionSelected) ? page.exclusionSelected : []);
-        if (box.checked) set.add(String(box.dataset.wsExclusionSelect)); else set.delete(String(box.dataset.wsExclusionSelect));
-        page.exclusionSelected = [...set];
-        render({ skipNativeResize: true });
-        return;
-      }
-      if (event.target?.closest?.('[data-ws-exclusion-select-all]')) {
-        const page = wsWorkspacePageState('exclusions');
-        const selectAll = event.target.checked;
-        const rules = businessPages?.exclusionState(page)?.rules || [];
-        page.exclusionSelected = selectAll ? rules.map(rule => rule.id) : [];
-        render({ skipNativeResize: true });
-      }
+      void submitExclusionForm(form);
     }, true);
     // keydown Escape closes the assistant drawer without touching the native chat surface.
     view?.addEventListener('keydown', event => {

@@ -1064,7 +1064,7 @@ public sealed partial class LegacyUiHostPage : Page
             {
                 var page = StringValue(root, "page");
                 var phase = StringValue(root, "phase");
-                if (page is "overview" or "accounts" or "chat" or "groups" or "members" or "collection" or "contacts" or "ai" or "crm" or "tasks" or "logs" or "settings"
+                if (page is "overview" or "accounts" or "chat" or "groups" or "members" or "collection" or "contacts" or "exclusions" or "ai" or "crm" or "tasks" or "logs" or "settings"
                     && phase is "enter" or "exit") Stage51Isolation.Record("workspace-page", new { page, phase });
                 return;
             }
@@ -2175,7 +2175,7 @@ public sealed partial class LegacyUiHostPage : Page
         var routeActive = activeValue.GetBoolean();
         var workspacePage = StringValue(payload, "workspacePage");
         if (routeActive && workspacePage is not ("overview" or "accounts" or "chat" or "groups" or "members"
-            or "collection" or "contacts" or "ai" or "crm" or "tasks" or "logs" or "settings")) return false;
+            or "collection" or "contacts" or "exclusions" or "ai" or "crm" or "tasks" or "logs" or "settings")) return false;
         var presentationAccountId = StringValue(payload, "accountId");
         if (presentationAccountId.Length > 200) return false;
         var documentId = StringValue(payload, "documentId");

@@ -10,6 +10,15 @@ const host = fs.readFileSync(path.join(repo, 'desktop', 'src', 'Zhike.Desktop', 
 const match = host.match(/internal static string BuildWsBoundsObserverScript\(\) => """([\s\S]*?)""";/);
 assert.ok(match, 'bounds observer script must remain embedded');
 
+// Every shipped subpage must be accepted by the native visibility protocol;
+// otherwise a rejected hide request can leave the chat surface over its UI.
+const ui = fs.readFileSync(path.join(repo, 'resources/app/modules/ws-workbench.js'), 'utf8');
+const meta = ui.match(/const WS_WORKSPACE_VIEW_META = Object.freeze\(\[([\s\S]*?)\]\);/)[1];
+const allowed = host.match(/workspacePage is not \(([\s\S]*?)\)\) return false/)[1];
+for (const [, page] of meta.matchAll(/id: '([^']+)'/g)) {
+  assert.ok(allowed.includes('"' + page + '"'), page + ' must be accepted by the native visibility gate');
+}
+
 let display = 'block';
 let routeActive = true;
 let workspacePage = 'chat';
@@ -66,7 +75,7 @@ assert.equal(posted[1].routeVisible, false, 'home hides the native surface even 
 assert.equal(posted[1].routeActive, true, 'WS subpages retain the maximized native workspace');
 assert.equal(posted[1].sequence, 2);
 
-for (const page of ['accounts','groups','members','collection','contacts','ai','crm','tasks','logs','settings']) {
+for (const page of ['accounts','groups','members','collection','contacts','exclusions','ai','crm','tasks','logs','settings']) {
   workspacePage = page;
   mutationCallback([{ type:'childList', target:viewRoot }]);
   while (frames.length) frames.shift()();
@@ -106,4 +115,4 @@ assert.match(host, /_wsChatPageActive = routeActive && workspacePage == "chat"/,
 assert.match(host, /string.Equals\(_wsPresentationAccountId, _wsViewAccountId/, 'a previous account cannot reveal a pooled native view');
 assert.match(host, /NotifyWorkspaceRouteVisibility\(this, routeActive\)/, 'native window presentation follows the WS route, independently of chat visibility');
 
-console.log('WS route visibility runtime: 12 pages, chat-only native anchor, account fencing and ordered WS enter/exit pass');
+console.log('WS route visibility runtime: all shipped pages, chat-only native anchor, account fencing and ordered WS enter/exit pass');
