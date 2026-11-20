@@ -17,7 +17,10 @@ state.Starting(1001, false);
 Check(state.Completed(1001, true, false, false).Outcome == "success", "Normal navigation blocked.");
 state.Starting(1002, false);
 Check(state.Completed(1002, false, false, false).Recovery is null, "A success silently reset the failure budget.");
+Check(state.SetFailure(1002, "HostNameNotResolved"), "Current login failure was lost.");
+Check(!state.SetFailure(1001, "Timeout") && state.FailureDetail == "HostNameNotResolved", "Stale completion replaced the current error.");
 state.Request("explicit-refresh", true);
+Check(state.FailureDetail is null, "Explicit reopen kept the prior navigation error.");
 state.Starting(1003, false);
 Check(state.Completed(1003, false, false, false).Recovery is not null, "Explicit refresh could not recover.");
 state.Request("automatic-failure-recovery");
@@ -49,6 +52,7 @@ isolated.Starting(1005, false);
 Check(isolated.Completed(1005, false, false, false).Recovery is not null, "Explicit reconnect did not reset bounded recovery.");
 isolated.Dispose();
 Check(!isolated.CanApply(ticket!), "Released generation can still recover.");
+Check(!isolated.SetFailure(1005, "Timeout"), "Released generation can still publish a login failure.");
 
 var accounts = Enumerable.Range(0, 2).Select(i => new WsNavigationLifecycle("account-" + i, 10 + i, "visible")).ToArray();
 for (var page = 0; page < 10; page++)

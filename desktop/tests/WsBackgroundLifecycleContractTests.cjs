@@ -88,10 +88,12 @@ assert.match(statusResponse, /#else[\s\S]*ProbeWsLoginStateAsync\(accountId, ses
 
 for (const [action, next] of [['resize', 'hide'], ['hide', 'close']]) {
   const ack = between(host, 'case "' + action + '":', 'case "' + next + '":');
-  assert.match(ack, /#if STAGE51_ISOLATED_UI\s+status\s*=\s*"未连接",\s+#else/, action + ' must not report an authenticated connection in the isolated build');
+  assert.doesNotMatch(ack, /\bstatus\s*=|WsStatusResponseAsync|ProbeWsLoginStateAsync/, action + ' is a layout acknowledgement and cannot establish a login state');
 }
 
 const openOverlay = between(host, 'private async Task OpenWsOverlayAsync(', 'private async Task<bool> CloseWsOverlayAsync(');
+assert.match(openOverlay, /if \(visibleNavigation\.FailureDetail is not null\)[\s\S]*?explicitBoundary: true\);\s*core\.Navigate\(WsRuntimeService\.ForegroundStartUrl\)/, 'reopening a failed foreground page must navigate to the login URL with a fresh recovery budget');
+assert.match(loginProbe, /navigation\.FailureDetail is \{ \} failureDetail\)[\s\S]*?new WsLoginProbeWork\(null, null, failureDetail, "连接失败"\)/, 'heartbeat and explicit probes retain terminal navigation errors');
 assert.match(openOverlay, /#if !STAGE51_ISOLATED_UI[\s\S]*if \(acquired\.Created\) await SetWsStatusAsync\(accountId, "连接中", cancellationToken\);[\s\S]*#endif/, 'opening an isolated preview must not persist a connection attempt');
 const bridgeEvent = between(host, 'private void OnBridgeEventPublished(', 'private async Task<BridgeResponse?> HandleNativeBridgeAsync(');
 const dispatcher = bridgeEvent.indexOf('DispatcherQueue.TryEnqueue');

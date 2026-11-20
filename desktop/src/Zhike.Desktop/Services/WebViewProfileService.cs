@@ -78,9 +78,11 @@ public sealed class WebViewProfileService(string? root = null)
     {
         var safeId = SafeId(accountId);
         if (string.IsNullOrWhiteSpace(safeId)) return false;
-        var profileIds = new[] { safeId, $"{safeId}-collector", $"collector:{safeId}" };
-        foreach (var profileId in profileIds) _environments.TryRemove(profileId, out _);
-        var profilePaths = new[] { Path.Combine(_root, safeId), Path.Combine(_root, $"{safeId}-collector"), CollectorPath(safeId) };
+        _environments.TryRemove(safeId, out _);
+        _environments.TryRemove($"collector:{safeId}", out _);
+        // A legacy "<id>-collector" directory is indistinguishable from the
+        // foreground profile for a different account with that literal ID.
+        var profilePaths = new[] { Path.Combine(_root, safeId), CollectorPath(safeId) };
         if (profilePaths.All(path => !Directory.Exists(path))) return true;
         // WebView2 may release profile files slightly after Close(). Retry a
         // bounded number of times and report failure to the caller so the UI
@@ -93,12 +95,9 @@ public sealed class WebViewProfileService(string? root = null)
                     if (Directory.Exists(profilePath)) Directory.Delete(profilePath, true);
                 if (profilePaths.All(path => !Directory.Exists(path))) return true;
             }
-            catch (IOException) when (attempt < 4)
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
             {
-                await Task.Delay(100 * (attempt + 1));
-            }
-            catch (UnauthorizedAccessException) when (attempt < 4)
-            {
+                if (attempt == 4) return false;
                 await Task.Delay(100 * (attempt + 1));
             }
         }

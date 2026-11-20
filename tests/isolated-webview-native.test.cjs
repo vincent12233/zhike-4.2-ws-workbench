@@ -15,6 +15,17 @@ const evidenceDirectory = path.join(repo, '.tools/native-renderer/controlled-fix
 const viewport = { width: 640, height: 480 };
 const tempParent = path.resolve(os.tmpdir());
 const rootPrefix = 'zhike-native-fixture-';
+const hostSource = fs.readFileSync(path.join(repo, 'desktop/src/Zhike.Desktop/Views/LegacyUiHostPage.xaml.cs'), 'utf8');
+const loginScript = hostSource.match(/private const string WsLoginProbeScript = """\s*([\s\S]*?)\s*""";/)?.[1];
+assert.ok(loginScript, 'Run the native login detector against local real-WebView2 documents');
+const loginScenes = [
+  ['<div data-ref="unrelated"></div>', { login: false, problem: false }],
+  ['<div data-ref="pairing"><canvas></canvas></div>', { login: true }],
+  ['<canvas aria-label="扫描二维码"></canvas>', { login: true }],
+  ['<p>Link with phone number</p>', { login: true, problem: false }],
+  ['<p>Update your browser</p>', { login: false, problem: true }],
+  ['<div id="pane-side">扫码 / update your browser / synthetic message</div>', { chat: true }],
+];
 
 function readOptions() {
   const [option, count, ...extra] = process.argv.slice(2);
@@ -41,12 +52,19 @@ function fixtureHtml(id, networkUrl) {
   function collect(network) {
     const sample = document.getElementById('sample');
     const bounds = sample.getBoundingClientRect();
+    const loginResults = ${JSON.stringify(loginScenes.map(([markup]) => markup))}.map(markup => {
+      sample.innerHTML = markup;
+      const probe = () => { return ${loginScript} };
+      return JSON.parse(probe());
+    });
+    sample.replaceChildren();
     document.getElementById('result').textContent = JSON.stringify([{
       viewport: { width: innerWidth, height: innerHeight },
       fixtureId: ${JSON.stringify(id)},
       queryId: new URLSearchParams(location.search).get('case'),
       box: { width: bounds.width, height: bounds.height, background: getComputedStyle(sample).backgroundColor },
       network,
+      loginResults,
       remoteScriptExecuted: window.__syntheticWireScript === true
     }]);
   }
@@ -98,6 +116,7 @@ async function runFixture(host, kind, network) {
     assert.deepEqual(results, [{
       viewport, fixtureId, queryId: fixtureId,
       box: { width: 137, height: 29, background: 'rgb(12, 34, 56)' },
+      loginResults: loginScenes.map(([, expected]) => expected),
       network: network ? 'blocked' : null, remoteScriptExecuted: false,
     }]);
     if (network) assert.deepEqual(network.observed, { connections: 0, requests: 0 });

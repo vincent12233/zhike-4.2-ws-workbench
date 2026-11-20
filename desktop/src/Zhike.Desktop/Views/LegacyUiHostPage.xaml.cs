@@ -525,15 +525,29 @@ public sealed partial class LegacyUiHostPage : Page
                         try
                         {
                             await core.Profile.ClearBrowsingDataAsync(CoreWebView2BrowsingDataKinds.DiskCache | CoreWebView2BrowsingDataKinds.CacheStorage);
-                            if (!App.WsSessions.IsCurrent(accountId, generation, view) || !visibleNavigation.CanApply(recovery)) return;
-                            visibleNavigation.Request("automatic-failure-recovery");
-                            core.Navigate("https://web.whatsapp.com/");
+                        }
+                        catch (Exception error) { Debug.WriteLine($"WS cache cleanup failed: {error.GetType().Name}"); }
+                        if (!App.WsSessions.IsCurrent(accountId, generation, view) || !visibleNavigation.CanApply(recovery)) return;
+                        visibleNavigation.Request("automatic-failure-recovery");
+                        try
+                        {
+                            core.Navigate(WsRuntimeService.ForegroundStartUrl);
                             return;
                         }
-                        catch { }
+                        catch (Exception error) { Debug.WriteLine($"WS retry navigation failed: {error.GetType().Name}"); }
                     }
+                    var detail = $"WhatsApp 登录页加载失败（WebView2 {navigation.WebErrorStatus}）。请检查网络后重新打开登录页。";
+                    if (!visibleNavigation.SetFailure(navigation.NavigationId, detail)) return;
+                    var failedProbe = _wsAccountMetrics.BeginProbe(accountId, generation, collector: false);
+                    _wsAccountMetrics.CompleteProbe(failedProbe, false, DateTimeOffset.UtcNow);
                     App.WsRuntime.RecordFailure(accountId, $"navigation:{navigation.WebErrorStatus}");
-                    await SetWsStatusAsync(accountId, "连接失败", CancellationToken.None);
+                    PublishWsStatus(JsonSerializer.SerializeToElement(new { accountId, status = "连接失败", detail }));
+                    try
+                    {
+                        await SetWsStatusAsync(accountId, "连接失败", CancellationToken.None,
+                            () => App.WsSessions.IsCurrent(accountId, generation, view) && _wsAccountMetrics.IsCurrent(failedProbe));
+                    }
+                    catch (Exception error) { Debug.WriteLine($"Could not persist WS navigation failure: {error.GetType().Name}"); }
                     return;
                 }
                 await ProbeWsLoginStateAsync(accountId, view, generation);
@@ -1568,6 +1582,11 @@ public sealed partial class LegacyUiHostPage : Page
         BridgeResponse response;
         try { response = await HandleWsActionCoreAsync(requestId, payload, requestAccountId, cancellationToken); }
         catch (OperationCanceledException) { response = BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "TIMEOUT", "desktop bridge request timed out"); }
+        catch (Exception error) when (StringValue(payload, "action") is "open" or "login" or "reload" or "reconnect")
+        {
+            response = BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "WS_OPEN_FAILED",
+                $"无法打开此账号的 WhatsApp 登录页（0x{error.HResult:X8}）。请检查 WebView2 运行时和账号目录的访问权限后重试。");
+        }
         catch { response = BridgeResponse.Failure(requestId, DesktopBridgeService.CurrentVersion, "BRIDGE_ERROR", "desktop WS operation failed"); }
         var fields = response.Data is { ValueKind: JsonValueKind.Object } data
             ? data.EnumerateObject().ToDictionary(property => property.Name, property => property.Value.Clone())
@@ -1584,8 +1603,9 @@ public sealed partial class LegacyUiHostPage : Page
         var id = StringValue(payload, "accountId");
         if (string.IsNullOrWhiteSpace(id)) id = requestAccountId ?? _activeWsAccountId;
         if (string.IsNullOrWhiteSpace(id)) id = "default";
-        if (action is "open" or "hide" or "close" or "clear-session" or "reload" or "reconnect") _wsSendGuard.Invalidate();
-        SetActiveWsAccountId(id);
+        if ((action is "hide" or "resize") && !string.Equals(id, App.WsService.ActiveAccountId, StringComparison.OrdinalIgnoreCase))
+            return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { accountId = id, skipped = true }));
+        if (action is "open" or "login" or "hide" or "close" or "clear-session" or "reload" or "reconnect") _wsSendGuard.Invalidate();
         switch (action)
         {
             case "open-collector":
@@ -1593,38 +1613,17 @@ public sealed partial class LegacyUiHostPage : Page
             case "pause-collector":
             case "resume-collector":
                 return await HandleCollectorActionAsync(requestId, id, action, payload, cancellationToken);
+            case "login":
             case "open":
                 await OpenWsOverlayAsync(id, payload, cancellationToken: cancellationToken);
                 return await WsStatusResponseAsync(requestId, id, cancellationToken);
             case "resize":
                 ApplyWsBounds(payload);
-                // Resize is called from ResizeObserver while the user is
-                // scrolling or the layout is settling.  Do not probe the
-                // entire WhatsApp DOM here: ExecuteScriptAsync on every
-                // bounds update serializes with WebView2 and causes visible
-                // frame drops.  The explicit status/probe actions remain the
-                // single source of truth for login detection.
-                return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new
-                {
-                    accountId = id,
-#if STAGE51_ISOLATED_UI
-                    status = "未连接",
-#else
-                    status = _wsView?.CoreWebView2 is not null ? "已连接" : "未连接",
-#endif
-                }));
+                return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { accountId = id }));
             case "hide":
                 App.WsService.HideForeground();
                 HideWsOverlay();
-                return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new
-                {
-                    accountId = id,
-#if STAGE51_ISOLATED_UI
-                    status = "未连接",
-#else
-                    status = "已连接",
-#endif
-                }));
+                return BridgeResponse.Success(requestId, DesktopBridgeService.CurrentVersion, JsonSerializer.SerializeToElement(new { accountId = id, hidden = true }));
             case "close":
                 await CloseWsOverlayAsync(false, id, cancellationToken);
                 await SetWsStatusAsync(id, "未连接", cancellationToken);
@@ -2132,10 +2131,19 @@ public sealed partial class LegacyUiHostPage : Page
             SetActiveWsAccountId(accountId);
             _wsCollectorVisibleAccountId = string.Empty;
             SyncPooledWsPresentation();
-            if (reload)
+            if (!acquired.Created && _wsNavigation.TryGetValue(acquired.Session.View, out var visibleNavigation)
+                && acquired.Session.View.CoreWebView2 is { } core)
             {
-                if (_wsNavigation.TryGetValue(acquired.Session.View, out var visibleNavigation)) visibleNavigation.Request("explicit-refresh-or-reconnect", explicitBoundary: true);
-                if (acquired.Session.View.CoreWebView2 is not null) acquired.Session.View.CoreWebView2.Reload();
+                if (visibleNavigation.FailureDetail is not null)
+                {
+                    visibleNavigation.Request("reopen-after-failure", explicitBoundary: true);
+                    core.Navigate(WsRuntimeService.ForegroundStartUrl);
+                }
+                else if (reload)
+                {
+                    visibleNavigation.Request("explicit-refresh-or-reconnect", explicitBoundary: true);
+                    core.Reload();
+                }
             }
             ApplyWsBounds(payload);
             RequestWsOverlayResize();
@@ -2168,7 +2176,6 @@ public sealed partial class LegacyUiHostPage : Page
             Interlocked.Increment(ref _wsGeneration);
         }
         SyncPooledWsPresentation();
-        HideWsOverlay();
         if (clearProfile)
         {
             await ClearWsLoginObservationsAsync(accountId, cancellationToken);
@@ -2337,6 +2344,7 @@ public sealed partial class LegacyUiHostPage : Page
         _wsPresentationAccountId = routeActive ? presentationAccountId : string.Empty;
         if (routeActive)
         {
+            if (!string.IsNullOrWhiteSpace(presentationAccountId)) SetActiveWsAccountId(presentationAccountId);
             if (!string.Equals(_currentRoute, "ws-workbench", StringComparison.OrdinalIgnoreCase))
             {
                 _currentRoute = "ws-workbench";
@@ -2545,18 +2553,20 @@ public sealed partial class LegacyUiHostPage : Page
                 var session = App.WsSessions.Sessions().FirstOrDefault(item => item.AccountId.Equals(accountId, StringComparison.OrdinalIgnoreCase) && item.Generation == generation);
                 var collector = ReferenceEquals(session?.CollectorView, view);
                 if (session is null || !App.WsSessions.IsCurrent(accountId, generation, view)) return Task.FromResult(new WsLoginProbeWork(null, null, "WS 会话代数已改变。"));
+                if (_wsNavigation.TryGetValue(view, out var navigation) && navigation.FailureDetail is { } failureDetail)
+                    return Task.FromResult(new WsLoginProbeWork(null, null, failureDetail, "连接失败"));
                 var lease = _wsAccountMetrics.BeginProbe(accountId, generation, collector);
                 attemptedLease = lease;
                 if (view.CoreWebView2 is not { } core) return Task.FromResult(new WsLoginProbeWork(lease, null, "WS 页面尚未打开。"));
                 if (!IsAllowedWsPopupNavigation(core.Source))
                 {
                     _wsAccountMetrics.Invalidate(accountId, collector);
-                    return Task.FromResult(new WsLoginProbeWork(null, null, "WS 页面尚未完成有效导航。"));
+                    return Task.FromResult(new WsLoginProbeWork(null, null, "正在加载 WhatsApp 登录页。", "连接中"));
                 }
-                var script = core.ExecuteScriptAsync("(() => { const body=document.body; const text=(body?.innerText||'').slice(0,6000); const login=!!document.querySelector('[data-testid=\\\"qrcode\\\"], canvas[aria-label*=\\\"QR\\\" i], [data-ref]'); const chat=!!document.querySelector('#pane-side') || (!!document.querySelector('[data-testid=\\\"chat-list\\\"], [aria-label=\\\"Chat list\\\"], [aria-label=\\\"聊天列表\\\"], [role=\\\"grid\\\"]') && !!document.querySelector('[data-testid=\\\"search-input\\\"], [contenteditable=\\\"true\\\"], [role=\\\"textbox\\\"]')); const problem=/此页面存在问题|page has a problem|update your browser|更新浏览器/i.test(text); return JSON.stringify({login,chat,problem,text:text.slice(0,2000)}); })()").AsTask();
+                var script = core.ExecuteScriptAsync(WsLoginProbeScript).AsTask();
                 return Task.FromResult(new WsLoginProbeWork(lease, script, ""));
             }, cancellationToken).ConfigureAwait(false);
-            if (work.Lease is not { } lease || work.Script is null) return ("未连接", work.NotReadyDetail);
+            if (work.Lease is not { } lease || work.Script is null) return (work.PendingStatus, work.NotReadyDetail);
             var json = await work.Script.WaitAsync(cancellationToken).ConfigureAwait(false);
             // ConfigureAwait(false) alone can continue synchronously when a
             // script completed inline. Task.Run guarantees background parsing.
@@ -2588,7 +2598,7 @@ public sealed partial class LegacyUiHostPage : Page
         }
     }
 
-    private sealed record WsLoginProbeWork(WsAccountProbeLease? Lease, Task<string>? Script, string NotReadyDetail);
+    private sealed record WsLoginProbeWork(WsAccountProbeLease? Lease, Task<string>? Script, string NotReadyDetail, string PendingStatus = "未连接");
 
     private async Task<T> RunWsProbeOnUiAsync<T>(Func<Task<T>> operation, CancellationToken cancellationToken)
     {
@@ -2614,11 +2624,27 @@ public sealed partial class LegacyUiHostPage : Page
         var login = root.TryGetProperty("login", out var loginValue) && loginValue.ValueKind == JsonValueKind.True;
         var chat = root.TryGetProperty("chat", out var chatValue) && chatValue.ValueKind == JsonValueKind.True;
         var problem = root.TryGetProperty("problem", out var problemValue) && problemValue.ValueKind == JsonValueKind.True;
-        var text = root.TryGetProperty("text", out var textValue) ? textValue.ToString() : string.Empty;
-        var status = problem ? "连接失败" : login ? "等待登录" : chat ? "已连接" : text.Contains("Scan to log in", StringComparison.OrdinalIgnoreCase) || text.Contains("扫码", StringComparison.OrdinalIgnoreCase) ? "等待登录" : "连接中";
-        var detail = status == "已连接" ? "已检测到 WS 主界面。" : status == "连接失败" ? "WS 页面提示浏览器或页面异常，请刷新后重试。" : "请在 WS 页面自行扫码或登录。";
-        return (status, detail);
+        if (chat) return ("已连接", "已检测到 WS 主界面。");
+        if (problem) return ("连接失败", "WS 页面提示浏览器或页面异常，请刷新后重试。");
+        if (login) return ("等待登录", "请在 WhatsApp 登录页完成设备关联。");
+        return ("连接中", "正在加载 WhatsApp 登录页。");
     }
+
+    private const string WsLoginProbeScript = """
+(() => {
+  const has = selector => !!document.querySelector(selector);
+  const chat = has('#pane-side') || (has('[data-testid="chat-list"], [aria-label="Chat list"], [aria-label="聊天列表"], [role="grid"]')
+    && has('[data-testid="search-input"], [contenteditable="true"], [role="textbox"]'));
+  if (chat) return JSON.stringify({ chat: true });
+  if (has('[data-testid="qrcode"], canvas[aria-label*="QR" i], canvas[aria-label*="二维码"], [data-ref] canvas, [data-ref] svg'))
+    return JSON.stringify({ login: true });
+  const text = (document.body?.innerText || '').slice(0, 6000);
+  return JSON.stringify({
+    login: /scan to log in|scan the QR code|link with phone number|扫码|扫描二维码|使用电话号码关联/i.test(text),
+    problem: /此页面存在问题|page has a problem|update your browser|更新浏览器/i.test(text)
+  });
+})();
+""";
 
     private async Task SaveWsLoginObservationAsync(WsAccountProbeLease lease, WebView2 view, bool signedIn, CancellationToken cancellationToken)
     {

@@ -51,9 +51,11 @@ public sealed class NativeSendHost {
   public Task<BridgeResponse> Action(string action, string accountId) => HandleWsActionAsync("test", JsonSerializer.SerializeToElement(new {action,accountId}), accountId, CancellationToken.None);
   private static string StringValue(JsonElement element,string name) => element.TryGetProperty(name,out var value) && value.ValueKind==JsonValueKind.String ? value.GetString() ?? "" : "";
   private static bool GetBool(JsonElement element,string name) => element.TryGetProperty(name,out var value) && value.ValueKind==JsonValueKind.True;
-  private Task OpenWsOverlayAsync(string id,JsonElement payload,bool reload=false,CancellationToken cancellationToken=default) { App.WsService.ActiveAccountId=id; App.WsRuntime.ForegroundAccountId=id; return Task.CompletedTask; }
-  private void ApplyWsBounds(JsonElement payload) {}
-  private void HideWsOverlay() {}
+  public int AppliedLayoutCommands { get; private set; }
+  public string SelectedAccountId => _activeWsAccountId;
+  private Task OpenWsOverlayAsync(string id,JsonElement payload,bool reload=false,CancellationToken cancellationToken=default) { SetActiveWsAccountId(id); App.WsService.ActiveAccountId=id; App.WsRuntime.ForegroundAccountId=id; return Task.CompletedTask; }
+  private void ApplyWsBounds(JsonElement payload) => AppliedLayoutCommands++;
+  private void HideWsOverlay() => AppliedLayoutCommands++;
   private Task<bool> CloseWsOverlayAsync(bool clear,string id,CancellationToken token) { App.WsService.ActiveAccountId=""; App.WsRuntime.ForegroundAccountId=""; return Task.FromResult(true); }
   private Task SetWsStatusAsync(string id,string status,CancellationToken token) => Task.CompletedTask;
   private Task<BridgeResponse> WsStatusResponseAsync(string requestId,string id,CancellationToken token) => Task.FromResult(BridgeResponse.Success(requestId,"test"));

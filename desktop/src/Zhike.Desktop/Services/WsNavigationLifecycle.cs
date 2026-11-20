@@ -24,19 +24,21 @@ public sealed class WsNavigationLifecycle
     public long RequestSequence => _request;
     public string RequestSource { get; private set; } = "initial";
     public int RecoveryCount { get; private set; }
+    public string? FailureDetail { get; private set; }
 
     public void Request(string source, bool explicitBoundary = false)
     {
         if (_disposed) return;
         RequestSource = source;
         _request++;
-        if (explicitBoundary) { _cycle++; _recoveryUsed = false; }
+        if (explicitBoundary) { _cycle++; _recoveryUsed = false; FailureDetail = null; }
     }
 
     public void Starting(ulong navigationId, bool policyCancelled, bool userInitiated = false)
     {
         if (_disposed) return;
-        if (userInitiated) Request("user-navigation", explicitBoundary: true);
+        if (userInitiated && !policyCancelled) Request("user-navigation", explicitBoundary: true);
+        if (!policyCancelled) FailureDetail = null;
         _activeNavigation = navigationId;
         if (policyCancelled) Remember(_policyCancelled, _cancelOrder, navigationId);
     }
@@ -57,6 +59,12 @@ public sealed class WsNavigationLifecycle
 
     public bool CanApply(WsNavigationRecoveryTicket ticket)
         => !_disposed && ticket.NavigationId == _activeNavigation && ticket.Cycle == _cycle && ticket.RequestSequence == _request;
+    public bool SetFailure(ulong navigationId, string detail)
+    {
+        if (_disposed || navigationId != _activeNavigation) return false;
+        FailureDetail = detail;
+        return true;
+    }
     public void Dispose() => _disposed = true;
 
     private static void Remember(HashSet<ulong> values, Queue<ulong> order, ulong value)

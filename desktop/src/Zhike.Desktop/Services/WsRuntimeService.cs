@@ -9,6 +9,11 @@ namespace Zhike.Desktop.Services;
 /// </summary>
 public sealed class WsRuntimeService
 {
+#if STAGE51_ISOLATED_UI
+    internal const string ForegroundStartUrl = "about:blank";
+#else
+    internal const string ForegroundStartUrl = "https://web.whatsapp.com/";
+#endif
     private readonly WsRuntimeCoordinator _coordinator;
     private readonly WsWebViewSessionPool _pool;
     private readonly SemaphoreSlim _tickGate = new(1, 1);
@@ -84,13 +89,7 @@ public sealed class WsRuntimeService
             var result = await _pool.GetOrCreateAsync(accountId, factory, cancellationToken);
             if (result.Created)
             {
-#if STAGE51_ISOLATED_UI
-                // This build has no WS authorization. A local blank entry is
-                // not a failed network login and must not enter recovery.
-                result.Session.View.Source = new Uri("about:blank");
-#else
-                result.Session.View.Source = new Uri("https://web.whatsapp.com/");
-#endif
+                result.Session.View.Source = new Uri(ForegroundStartUrl);
             }
             _activeAccountId = accountId;
             SessionsChanged?.Invoke(this, EventArgs.Empty);

@@ -74,11 +74,15 @@ try
     {
         var selected = await profiles.GetOrCreateCollectorProfileAsync("clear-me");
         var neighbor = await profiles.GetOrCreateProfileAsync("clear-me-collector-v2");
+        var oldSuffixNeighbor = await profiles.GetOrCreateProfileAsync("clear-me-collector");
         File.WriteAllText(Path.Combine(selected.ProfilePath, "synthetic.txt"), "selected");
         File.WriteAllText(Path.Combine(neighbor.ProfilePath, "synthetic.txt"), "neighbor");
+        File.WriteAllText(Path.Combine(oldSuffixNeighbor.ProfilePath, "synthetic.txt"), "independent");
         Assert(await profiles.ClearProfileAsync("clear-me"), "Selected profile did not clear");
         Assert(!Directory.Exists(selected.ProfilePath), "Selected independent profile remains");
         Assert(File.ReadAllText(Path.Combine(neighbor.ProfilePath, "synthetic.txt")) == "neighbor", "Unrelated suffix account was cleared");
+        Assert(File.ReadAllText(Path.Combine(oldSuffixNeighbor.ProfilePath, "synthetic.txt")) == "independent", "Foreground profile sharing the legacy collector suffix was cleared");
+        Assert(ReferenceEquals(oldSuffixNeighbor, await profiles.GetOrCreateProfileAsync("clear-me-collector")), "Other account lost its cached foreground environment");
         Assert(!ReferenceEquals(selected, await profiles.GetOrCreateCollectorProfileAsync("clear-me")), "Cleared environment remained cached");
     });
     await Check("ordinary ticks never create, navigate or authenticate unopened collectors", async () =>

@@ -38,6 +38,24 @@ internal static class Program
     {
         var results = new List<object>();
         async Task Case(string name, Func<Task> action) { try { await action(); results.Add(new { name, passed=true }); } catch(Exception e) { results.Add(new { name, passed=false, reason=e.Message }); Environment.ExitCode=1; } }
+        await Case("dedicated-login-ignores-previous-account-layout", async () =>
+        {
+            var (host, _) = Setup();
+            Check((await host.Action("login", "b")).Ok, "login alias must open the requested account");
+            foreach (var action in new[] { "hide", "resize" })
+            {
+                var response = await host.Action(action, "a");
+                Check(response.Ok && response.Data!.Value.GetProperty("skipped").GetBoolean(), "stale layout command must be ignored");
+            }
+            await host.Action("status", "a");
+            Check(host.AppliedLayoutCommands == 0 && host.SelectedAccountId == "b" && App.WsRuntime.ForegroundAccountId == "b", "old account callbacks changed the dedicated login surface");
+            foreach (var action in new[] { "resize", "hide" })
+            {
+                var response = await host.Action(action, "b");
+                Check(response.Ok && !response.Data!.Value.TryGetProperty("status", out _), "layout must not assert authenticated login");
+            }
+            Check(host.AppliedLayoutCommands == 2, "selected account layout did not reach its surface");
+        });
         await Case("media-await-cancel", () => CheckDelayed((host, cts) => { cts.Cancel(); return Task.CompletedTask; }));
         await Case("media-await-account-switch", () => CheckDelayed((host, cts) => host.Action("open", "b")));
         await Case("media-await-A-B-A", () => CheckDelayed(async (host, cts) => { await host.Action("open", "b"); await host.Action("open", "a"); }));
