@@ -4158,8 +4158,20 @@ const server = createServer(async (req, res) => {
         if (conversationId) { where.push('conversation_id=?'); params.push(conversationId); }
         if (statuses.length) { where.push(`status IN (${statuses.map(() => '?').join(',')})`); params.push(...statuses); }
         if (statuses.length && statuses.every(status => ['queued', 'retryable'].includes(status))) { where.push("(next_attempt_at='' OR next_attempt_at<=?)"); params.push(new Date().toISOString()); }
-        const rows = db.prepare(`SELECT * FROM ai_jobs WHERE ${where.join(' AND ')} ORDER BY created_at ASC,id ASC LIMIT ${limit}`).all(...params);
-        return json(res, 200, { jobs: rows.map(row => ({ ...aiJobPayload(row), ...wsAiJobExecutionState(row) })), stats: aiJobStats(accountId), generatedAt: new Date().toISOString() });
+        const executionOnly = url.searchParams.get('executionEligible') === '1';
+        const jobs = [];
+        // History keeps its original bounded view. Consumers skip ineligible
+        // rows before applying the response limit, so old blocked work cannot
+        // permanently occupy the first page. Iterate rather than loading the
+        // account's entire historical queue into memory; this query never writes.
+        const rows = db.prepare(`SELECT * FROM ai_jobs WHERE ${where.join(' AND ')} ORDER BY created_at ASC,id ASC${executionOnly ? '' : ` LIMIT ${limit}`}`).iterate(...params);
+        for (const row of rows) {
+          const execution = wsAiJobExecutionState(row);
+          if (executionOnly && !execution.executionEligible) continue;
+          jobs.push({ ...aiJobPayload(row), ...execution });
+          if (jobs.length >= limit) break;
+        }
+        return json(res, 200, { jobs, stats: aiJobStats(accountId), generatedAt: new Date().toISOString() });
       }
       if (req.method !== 'POST') return json(res, 405, { error: 'AI 队列只支持 GET/POST。' });
       const action = wsText(body.action || 'enqueue', 24) || 'enqueue';

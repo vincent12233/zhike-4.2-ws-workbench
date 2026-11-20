@@ -2428,12 +2428,13 @@
     await api('/api/ws/ai-jobs', { method: 'POST', body: JSON.stringify({ action: 'recover-expired', accountId: context.accountId }) }, context);
     throwIfAiCancelled(signal);
     assertContext(context);
-    const queue = await api('/api/ws/ai-jobs?status=queued,retryable&limit=12', {}, context);
+    const queue = await api('/api/ws/ai-jobs?status=queued,retryable&executionEligible=1&limit=12', {}, context);
     throwIfAiCancelled(signal);
     assertContext(context);
     if (queue?.stats) state.aiQueueStats = queue.stats;
     for (const job of (queue?.jobs || [])) {
       if (processed >= 3) break;
+      if (job.executionEligible === false) continue;
       throwIfAiCancelled(signal);
       if (state.aiBusy) throw aiCancellationError();
       const conversation = state.conversations.find(item => String(item.id) === String(job.conversationId));
