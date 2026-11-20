@@ -1,4 +1,7 @@
 'use strict';
+// Synthetic host authority for native-ingest positive fixtures; never a renderer fallback.
+const nativeAuthorityToken = require('node:crypto').randomBytes(32).toString('hex');
+
 // WS contact exclusion API and production auto-create gate.
 //
 // Runs the real sidecar against a temporary data root with synthetic data:
@@ -26,7 +29,7 @@ const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'zhike-exclusion-api-'));
 const port = 4791;
 const token = crypto.randomBytes(24).toString('hex');
 const base = `http://127.0.0.1:${port}`;
-const headers = { 'x-zhike-api-token': token, origin: base, 'content-type': 'application/json' };
+const headers = { 'x-zhike-native-token': nativeAuthorityToken, 'x-zhike-api-token': token, origin: base, 'content-type': 'application/json' };
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 let child;
@@ -52,7 +55,7 @@ async function check(name, fn) {
 (async () => {
   child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], {
     cwd: app, windowsHide: true,
-    env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token },
+    env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_NATIVE_WRITE_TOKEN: nativeAuthorityToken, ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token },
     stdio: 'ignore',
   });
   try {

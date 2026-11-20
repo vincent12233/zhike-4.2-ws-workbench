@@ -26,6 +26,8 @@ public sealed class LocalServiceManager : IAsyncDisposable
     private readonly SemaphoreSlim _gate = new(1, 1);
     private Process? _process;
     private LocalServiceInfo? _info;
+    // Host-memory capability. Never include it in LocalServiceInfo, connection files or logs.
+    private readonly string _nativeWriteToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLowerInvariant();
     private volatile bool _ready;
     private string? _healthVersionMismatch;
 
@@ -144,6 +146,7 @@ public sealed class LocalServiceManager : IAsyncDisposable
             Timeout = TimeSpan.FromMinutes(5.5),
         });
         client.SetSessionToken(info.ApiToken);
+        client.ConfigureNativeWriteAuthority(_nativeWriteToken);
         client.ConfigureLocalSidecar();
         return client;
     }
@@ -234,6 +237,7 @@ public sealed class LocalServiceManager : IAsyncDisposable
         startInfo.Environment["ZHIKE_DATA_DIR"] = _dataRoot;
         startInfo.Environment["ZHIKE_PORT"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
         startInfo.Environment["ZHIKE_API_TOKEN"] = token;
+        startInfo.Environment["ZHIKE_NATIVE_WRITE_TOKEN"] = _nativeWriteToken;
         startInfo.Environment["ZHIKE_SHUTDOWN_TOKEN"] = token;
         startInfo.Environment["ZHIKE_PARENT_PID"] = Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture);
         startInfo.Environment["ZHIKE_STORAGE_MODE"] = "local";

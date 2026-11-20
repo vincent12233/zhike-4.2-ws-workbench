@@ -37,6 +37,13 @@ public sealed class LegacyApiAdapter
         if (key.Equals("/api/shutdown", StringComparison.OrdinalIgnoreCase))
             return new(false, "UNSUPPORTED", "关闭本机服务必须由桌面宿主执行。", null, requestId);
 
+        // These writes require host-owned evidence. The shell may configure
+        // automation, but cannot impersonate capture or paid native execution.
+        var authorityPath = key.TrimEnd('/');
+        if (authorityPath.Equals("/api/ws/ingest/batch", StringComparison.OrdinalIgnoreCase)
+            || authorityPath.Equals("/api/ws/ai-automation/attempts", StringComparison.OrdinalIgnoreCase))
+            return new(false, "WS_NATIVE_AUTHORITY_REQUIRED", "此操作只能由原生宿主执行。", null, requestId);
+
         byte[]? rawBody = null;
         if (string.Equals(bodyKind, "binary", StringComparison.OrdinalIgnoreCase)
             && body is { ValueKind: JsonValueKind.Object } binary

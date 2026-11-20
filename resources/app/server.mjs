@@ -42,6 +42,14 @@ let parentMonitor = null;
 let ownsWorkspaceLock = false;
 let port = Number(process.env.ZHIKE_PORT || 4173);
 const apiToken = String(process.env.ZHIKE_API_TOKEN || randomBytes(32).toString('hex'));
+// Separate host-memory authority; UI session authentication is not capture proof.
+// Standalone synthetic harnesses explicitly provide their own random capability.
+const nativeWriteToken = String(process.env.ZHIKE_NATIVE_WRITE_TOKEN || '');
+function wsNativeWriteAuthorized(req) {
+  const supplied = Buffer.from(String(req.headers['x-zhike-native-token'] || ''), 'utf8');
+  const expected = Buffer.from(nativeWriteToken, 'utf8');
+  return expected.length >= 32 && supplied.length === expected.length && timingSafeEqual(supplied, expected);
+}
 const testStartupDiagnostics = createTestDiagnostic({
   envName: 'ZHIKE_TEST_STARTUP_DIAGNOSTICS',
   prefix: 'ZHIKE_TEST_SIDECAR_STARTUP',
@@ -1695,6 +1703,40 @@ function wsSettingsPayload(row) {
   return { accountId: row.account_id || 'default', conversationId: row.conversation_id, enabled: Boolean(row.enabled), receive: Boolean(row.receive_enabled), send: Boolean(row.send_enabled), targetLanguage: row.target_language || '中文', sendLanguage: row.send_language || '', showOriginal: Boolean(row.show_original), aiEnabled: Boolean(row.ai_enabled), status: row.status, createdAt: row.created_at, updatedAt: row.updated_at };
 }
 function wsJson(value, fallback = {}) { try { return JSON.parse(value || '{}'); } catch { return fallback; } }
+function wsUnverifiedMessageData(value, source = 'ws-manual') {
+  const data = { ...wsObject(value, 32 * 1024) };
+  data.source = data.source === 'ws-list-preview' && data.previewOnly === true ? 'ws-list-preview' : source;
+  data.nativeAuthorityVerified = false;
+  data.senderIdentityTrusted = false;
+  for (const key of ['senderIdentitySource','identitySource','directionSource','directionVersion','canonicalExternalMessageId','legacyExternalMessageId']) delete data[key];
+  return data;
+}
+function wsConfirmNativeMessageAuthority(row, incoming, now) {
+  if (!row || incoming?.data?.nativeAuthorityVerified !== true || !incoming.externalId
+      || row.external_id !== incoming.externalId || row.direction !== incoming.direction
+      || wsMessageText(row.original_text) !== incoming.originalText) return row;
+  const previous = wsJson(row.data_json, {});
+  if (incoming.data.isGroup === true && incoming.direction === 'receive') {
+    // Recapture must agree on the individual member, not just the group/title.
+    const before = wsVipMemberIdentity(previous), after = wsVipMemberIdentity(incoming.data);
+    if (!after.trusted || (before.senderId && after.senderId && before.senderId.toLowerCase() !== after.senderId.toLowerCase())
+        || (before.senderPhone && after.senderPhone && before.senderPhone !== after.senderPhone)
+        || !wsSameVipMemberIdentity(previous, incoming.data)) return row;
+  }
+  if (previous.nativeAuthorityVerified === true) return row;
+  // Direction and timestamp repairs own their original evidence. A recapture
+  // upgrades provenance, without replacing the first observation or cursor.
+  const verified = { ...previous };
+  for (const key of ['source', 'nativeAuthorityVerified', 'previewOnly', 'conversationType', 'isGroup', 'vipGroup',
+    'senderId', 'senderPhone', 'senderName', 'senderIdentitySource', 'senderIdentityTrusted',
+    'directionSource', 'directionVersion', 'canonicalExternalMessageId', 'legacyExternalMessageId']) {
+    if (Object.hasOwn(incoming.data, key)) verified[key] = incoming.data[key];
+    else delete verified[key];
+  }
+  db.prepare('UPDATE ws_messages SET data_json=?,updated_at=? WHERE id=? AND account_id=?')
+    .run(JSON.stringify(verified), now, row.id, row.account_id);
+  return db.prepare('SELECT * FROM ws_messages WHERE id=? AND account_id=?').get(row.id, row.account_id);
+}
 function wsConversationPayload(row) { return { id: row.id, accountId: row.account_id || 'default', externalId: row.external_id, title: row.title, customerId: row.customer_id, lastMessageText: row.last_message_text, lastMessageAt: row.last_message_at, unreadCount: Number(row.unread_count || 0), language: row.language, intentLevel: row.intent_level, data: wsJson(row.data_json), createdAt: row.created_at, updatedAt: row.updated_at }; }
 function wsStoredMessageTime(row, data = wsJson(row?.data_json)) {
   const sentAt = wsStrictIso(data.sentAt);
@@ -2150,7 +2192,7 @@ function wsIsVipGroup(value) { return wsCore.isVipGroupConversation(value); }
 function wsIsExcludedGroup(value) { return wsCore.isExcludedGroupConversation(value); }
 function wsIsAiGroupConversation(value) { return ['group', 'vip_group'].includes(wsCore.conversationType(value)); }
 function wsObservedGroupMessageData(data) {
-  return data.source === 'ws-webview2' && data.previewOnly !== true && Number(data.directionVersion || 0) >= 4
+  return data.nativeAuthorityVerified === true && data.source === 'ws-webview2' && data.previewOnly !== true && Number(data.directionVersion || 0) >= 4
     && WS_NATIVE_DIRECTION_SOURCE_MAP.get(data.directionSource) === 'receive' && data.senderIdentityTrusted === true;
 }
 function wsRequireConfiguredGroup(accountId, externalId) {
@@ -3431,6 +3473,7 @@ const server = createServer(async (req, res) => {
     // background collection can register every visible contact without
     // opening each chat.
     if (url.pathname === '/api/ws/ingest/batch' && req.method === 'POST') {
+      if (!wsNativeWriteAuthorized(req)) return json(res, 403, { error: '原生采集来源未获验证，未写入任何采集数据。', code: 'WS_NATIVE_AUTHORITY_REQUIRED' });
       const body = JSON.parse((await readBody(req, WS_MESSAGE_BATCH_MAX_BYTES)).toString('utf8'));
       const accountId = wsAccountId(body.accountId);
       const account = wsRequireAccount(accountId);
@@ -3514,6 +3557,7 @@ const server = createServer(async (req, res) => {
           order: Number.isFinite(Number(item?.order)) ? Number(item.order) : group.messages.length + 1,
           data: wsMessageDataWithTime({
             source: item?.previewOnly === true ? 'ws-list-preview' : 'ws-webview2',
+            nativeAuthorityVerified: item?.previewOnly !== true,
             previewOnly: item?.previewOnly === true,
             cursor: wsText(item?.cursor, 500),
             ...(isGroup ? { conversationType:group.type, vipGroup:group.type === 'vip_group', isGroup:true } : {}),
@@ -3654,7 +3698,9 @@ const server = createServer(async (req, res) => {
               let existing = found.row;
               const directionRepaired = wsRepairCollectedMessageDirection(existing, item, now, found.allowLegacyAlias);
               if (directionRepaired) { existing = directionRepaired; repairedDirections += 1; }
-              if (wsRepairCollectedMessageTime(existing, item, now)) repairedTimestamps += 1;
+              const repaired = wsRepairCollectedMessageTime(existing, item, now);
+              if (repaired) { existing = repaired; repairedTimestamps += 1; }
+              wsConfirmNativeMessageAuthority(existing, item, now);
             }
             const previousIds = wsJson(previous.message_ids_json, []);
             for (const id of previousIds) messageIds.push(String(id));
@@ -3673,6 +3719,7 @@ const server = createServer(async (req, res) => {
               if (directionRepaired) { row = directionRepaired; repairedDirections += 1; }
               const repaired = wsRepairCollectedMessageTime(row, item, now);
               if (repaired) { row = repaired; repairedTimestamps += 1; }
+              row = wsConfirmNativeMessageAuthority(row, item, now);
               deduplicated += 1;
               ids.push(row.id);
               messageIds.push(row.id);
@@ -3927,7 +3974,7 @@ const server = createServer(async (req, res) => {
           .run(batchId, accountId, conversationId, fingerprint, messages.length, 0, '[]', now, now);
         for (let index = 0; index < messages.length; index++) {
           const item = messages[index], externalId = wsText(item.externalId, 200);
-          const rawData = wsObject(item.data, 32 * 1024);
+          const rawData = wsUnverifiedMessageData(item.data);
           const previewOnly = rawData?.source === 'ws-list-preview' && rawData?.previewOnly === true;
           let row = externalId ? db.prepare('SELECT * FROM ws_messages WHERE account_id=? AND conversation_id=? AND external_id=?').get(accountId, conversationId, externalId) : null;
           let wasUpdated = false;
@@ -4038,7 +4085,7 @@ const server = createServer(async (req, res) => {
           }
         }
         const now = new Date().toISOString();
-        const data = wsObject(body.data, 32 * 1024);
+        const data = wsUnverifiedMessageData(body.data);
         const translation = wsTranslationFields(body);
         db.exec('BEGIN IMMEDIATE');
         try {
@@ -5603,7 +5650,7 @@ const server = createServer(async (req, res) => {
             || Boolean(item.sentAt || item.observedAt || item.timestampText || item.timestampSource)
             || item.sentAtKnown === true;
           const time = wsMessageTimeMetadata({ ...item, data: rawData }, item.observedAt || rawData.observedAt || item.createdAt || now);
-          const data = hasTimestampMetadata ? wsMessageDataWithTime(rawData, time) : rawData;
+          const data = wsUnverifiedMessageData(hasTimestampMetadata ? wsMessageDataWithTime(rawData, time) : rawData, 'ws-restored-history');
           const createdAt = rawData.source === 'ws-webview2' && time.sentAtKnown ? time.sentAt : wsIso(item.createdAt || now);
           addMessage.run(wsText(item.id, 160) || wsCreateId('wsm'), accountId, wsText(item.conversationId, 160), wsText(item.externalId, 200), wsText(item.direction, 16), wsMessageText(item.originalText), translation.translatedText, wsText(item.sourceLanguage, 40), wsText(item.targetLanguage, 40), Number.isFinite(Number(item.order)) ? Number(item.order) : 0, JSON.stringify(data), createdAt, wsIso(item.updatedAt || now), translation.translationStatus, translation.translationError, translation.translationAttempts, translation.lastAttemptAt);
         }

@@ -1,4 +1,7 @@
 'use strict';
+// Synthetic host authority for native-ingest positive fixtures; never a renderer fallback.
+const nativeAuthorityToken = require('node:crypto').randomBytes(32).toString('hex');
+
 
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -172,11 +175,11 @@ test('manual event resolution commits the authoritative relation and CRM project
     cwd: app,
     windowsHide: true,
     stdio: ['ignore', 'ignore', 'pipe'],
-    env: { ...environment, ZHIKE_DATA_DIR: work, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token },
+    env: { ...environment, ZHIKE_DATA_DIR: work, ZHIKE_PORT: String(port), ZHIKE_NATIVE_WRITE_TOKEN: nativeAuthorityToken, ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token },
   });
-  const observation = observeSidecarStartup(child, { secrets: [token] });
+  const observation = observeSidecarStartup(child, { secrets: [token, nativeAuthorityToken] });
   const closed = new Promise(resolve => child.once('close', resolve));
-  const headers = { origin: endpoint, 'x-zhike-api-token': token, 'content-type': 'application/json' };
+  const headers = { origin: endpoint, 'x-zhike-native-token': nativeAuthorityToken, 'x-zhike-api-token': token, 'content-type': 'application/json' };
   const request = (pathname, init = {}) => fetch(endpoint + pathname, {
     ...init,
     headers: { ...headers, ...init.headers },

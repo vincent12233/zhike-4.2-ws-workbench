@@ -1,4 +1,7 @@
 'use strict';
+// Synthetic host authority for native-ingest positive fixtures; never a renderer fallback.
+const nativeAuthorityToken = require('node:crypto').randomBytes(32).toString('hex');
+
 
 /*
  * P0-03/P0-06 implementation gate. This test exercises the real sidecar
@@ -22,10 +25,10 @@ const token = 'stage1-p0-crm-group-token';
 const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], {
   cwd: app,
   windowsHide: true,
-  env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token },
+  env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_NATIVE_WRITE_TOKEN: nativeAuthorityToken, ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token },
   stdio: 'ignore',
 });
-const headers = { 'x-zhike-api-token': token, origin: `http://127.0.0.1:${port}`, 'content-type': 'application/json' };
+const headers = { 'x-zhike-native-token': nativeAuthorityToken, 'x-zhike-api-token': token, origin: `http://127.0.0.1:${port}`, 'content-type': 'application/json' };
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function request(pathname, init = {}) {
   for (let attempt = 0; attempt < 300; attempt += 1) {

@@ -92,6 +92,7 @@ public sealed class ApiClient(HttpClient http) : IDisposable
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private string? _sessionToken;
+    private string? _nativeWriteToken;
     private readonly Dictionary<string, ImportPreviewRequest> _localImportBatches = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _localImportHashes = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>
@@ -137,6 +138,24 @@ public sealed class ApiClient(HttpClient http) : IDisposable
 
     public string? SessionToken => _sessionToken;
 
+    internal void ConfigureNativeWriteAuthority(string token)
+    {
+        if (string.IsNullOrWhiteSpace(token)) throw new ArgumentException("Native write authority is required.", nameof(token));
+        _nativeWriteToken = token;
+    }
+
+    // Only typed host-owned operations call this method. Generic legacy.api
+    // never receives this capability and it is never a default HTTP header.
+    internal async Task<HttpResponseMessage> PostNativeJsonAsync<T>(string path, T payload, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(_nativeWriteToken))
+            throw new InvalidOperationException("WS_NATIVE_AUTHORITY_REQUIRED: 原生写入凭证未就绪。");
+        using var request = new HttpRequestMessage(HttpMethod.Post, path);
+        request.Headers.Add("X-Zhike-Native-Token", _nativeWriteToken);
+        request.Content = JsonContent.Create(payload, options: JsonOptions);
+        return await http.SendAsync(request, cancellationToken);
+    }
+
     public async Task<RawApiResponse> SendJsonAsync(
         string path,
         HttpMethod method,
@@ -154,7 +173,8 @@ public sealed class ApiClient(HttpClient http) : IDisposable
                 request.Content = JsonContent.Create(payload.Value, options: JsonOptions);
             if (headers is not null)
                 foreach (var header in headers)
-                    if (!request.Headers.TryAddWithoutValidation(header.Key, header.Value))
+                    if (!header.Key.Equals("X-Zhike-Native-Token", StringComparison.OrdinalIgnoreCase)
+                        && !request.Headers.TryAddWithoutValidation(header.Key, header.Value))
                         request.Content?.Headers.TryAddWithoutValidation(header.Key, header.Value);
             using var response = await http.SendAsync(request, cancellationToken);
             var text = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -944,7 +964,7 @@ public sealed class ApiClient(HttpClient http) : IDisposable
     public async Task<WsIngestBatchResponseDto?> IngestWsBatchAsync(WsIngestBatchRequestDto request, CancellationToken cancellationToken = default)
     {
         ValidateWsIngestBatch(request);
-        using var response = await http.PostAsJsonAsync("api/ws/ingest/batch", request, JsonOptions, cancellationToken);
+        using var response = await PostNativeJsonAsync("api/ws/ingest/batch", request, cancellationToken);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<WsIngestBatchResponseDto>(JsonOptions, cancellationToken);
     }

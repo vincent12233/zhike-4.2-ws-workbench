@@ -1,4 +1,7 @@
 'use strict';
+// Synthetic host authority for native-ingest positive fixtures; never a renderer fallback.
+const nativeAuthorityToken = require('node:crypto').randomBytes(32).toString('hex');
+
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
 const { mkdtempSync, rmSync } = require('node:fs');
@@ -10,7 +13,7 @@ const app = path.join(__dirname, '../resources/app');
 const data = mkdtempSync(path.join(os.tmpdir(), 'zhike-vip-member-alerts-'));
 const port = 30000 + (process.pid % 18000);
 const token = 'isolated-vip-member-alerts';
-const headers = { 'content-type':'application/json', 'x-zhike-api-token':token };
+const headers = { 'content-type':'application/json', 'x-zhike-native-token': nativeAuthorityToken, 'x-zhike-api-token':token };
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 let child, logs = '';
 const groupAccountId = 'dedicated-member-alerts';
@@ -31,7 +34,7 @@ async function call(route, body, expected = 200) {
 async function start() {
   child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], {
     cwd:app,
-    env:{ ...process.env, ZHIKE_DATA_DIR:data, ZHIKE_PORT:String(port), ZHIKE_API_TOKEN:token, ZHIKE_SHUTDOWN_TOKEN:token },
+    env:{ ...process.env, ZHIKE_DATA_DIR:data, ZHIKE_PORT:String(port), ZHIKE_NATIVE_WRITE_TOKEN: nativeAuthorityToken, ZHIKE_API_TOKEN:token, ZHIKE_SHUTDOWN_TOKEN:token },
     windowsHide:true, stdio:['ignore','pipe','pipe'],
   });
   child.stdout.on('data', value => logs += value);

@@ -1,12 +1,15 @@
 'use strict';
+// Synthetic host authority for native-ingest positive fixtures; never a renderer fallback.
+const nativeAuthorityToken = require('node:crypto').randomBytes(32).toString('hex');
+
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
 const { mkdtempSync, rmSync } = require('node:fs');
 const path = require('node:path');
 const data = mkdtempSync(path.join(require('node:os').tmpdir(), 'zhike-task-life-'));
 const port = 30000 + (process.pid % 20000), token = 'isolated-task-lifecycle';
-const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], { cwd:path.join(__dirname,'../resources/app'), env:{...process.env,ZHIKE_DATA_DIR:data,ZHIKE_PORT:String(port),ZHIKE_API_TOKEN:token,ZHIKE_SHUTDOWN_TOKEN:token}, windowsHide:true, stdio:'ignore' });
-const headers = {'content-type':'application/json','x-zhike-api-token':token};
+const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], { cwd:path.join(__dirname,'../resources/app'), env:{...process.env,ZHIKE_DATA_DIR:data,ZHIKE_PORT:String(port),ZHIKE_NATIVE_WRITE_TOKEN: nativeAuthorityToken, ZHIKE_API_TOKEN:token,ZHIKE_SHUTDOWN_TOKEN:token}, windowsHide:true, stdio:'ignore' });
+const headers = {'content-type':'application/json','x-zhike-native-token': nativeAuthorityToken, 'x-zhike-api-token':token};
 const wait = ms => new Promise(r=>setTimeout(r,ms));
 async function api(route, body, method='POST') {
   const version = await fetch(`http://127.0.0.1:${port}/api/state/version`,{headers}).then(r=>r.json());

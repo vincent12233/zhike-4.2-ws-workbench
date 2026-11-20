@@ -1,4 +1,7 @@
 'use strict';
+// Synthetic host authority for native-ingest positive fixtures; never a renderer fallback.
+const nativeAuthorityToken = require('node:crypto').randomBytes(32).toString('hex');
+
 // Real production routes, disposable SQLite and synthetic native packets only.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -53,13 +56,13 @@ test('production ingest separates purpose, group directory and observed member m
   const port = await freePort(), origin = 'http://127.0.0.1:' + port, token = randomBytes(24).toString('hex');
   const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], {
     cwd: app, windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'],
-    env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token,
+    env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_NATIVE_WRITE_TOKEN: nativeAuthorityToken, ZHIKE_API_TOKEN: token,
       ZHIKE_PARENT_PID: '', ZHIKE_GROUP_MANAGER_MODE: '', ZHIKE_STAGE3_MOCK: '', ZHIKE_AI_PIPELINE_MODE: '', ZHIKE_STAGE4_MOCK: '', ZHIKE_FENCING_MODE: '' },
   });
   const closed = new Promise(resolve => child.once('close', resolve));
-  const observation = observeSidecarStartup(child, { secrets: [token] });
+  const observation = observeSidecarStartup(child, { secrets: [token, nativeAuthorityToken] });
   const request = async (route, body, expected = 200) => {
-    const headers = { origin, 'x-zhike-api-token': token, 'content-type': 'application/json' };
+    const headers = { origin, 'x-zhike-native-token': nativeAuthorityToken, 'x-zhike-api-token': token, 'content-type': 'application/json' };
     if (body !== undefined) headers['x-state-version'] = (await fetch(origin + '/api/state/version', { headers }).then(response => response.json())).version;
     const response = await fetch(origin + route, { method: body === undefined ? 'GET' : 'POST', signal: AbortSignal.timeout(5000), headers,
       ...(body === undefined ? {} : { body: JSON.stringify(body) }) });

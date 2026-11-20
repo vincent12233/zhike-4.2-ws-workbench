@@ -80,6 +80,8 @@ function runStage3(options = {}) {
   run('WS ingest purpose and group evidence', [path.join(repo, 'tests', 'ws-ingest-workspace-mode.test.cjs')]);
   run('WS AI execution queue eligibility', [path.join(repo, 'tests', 'ws-ai-queue-workspace-mode.test.cjs')]);
   run('WS AI account purpose and member evidence', [path.join(repo, 'tests', 'ws-ai-workspace-mode.test.cjs')]);
+  run('Native WS capture authority and server evidence', [path.join(repo, 'tests', 'ws-native-write-authority-core.test.cjs')]);
+  run('Native WS capture authority over loopback', [path.join(repo, 'tests', 'ws-native-write-authority.test.cjs')]);
   run('Native WS collector purpose and group evidence', [path.join(repo, 'tests', 'ws-native-purpose-policy.test.cjs')]);
   run('Dedicated WS group message draft editor', [path.join(repo, 'tests', 'ws-group-drafts-ui.test.cjs')]);
   run('WS unsent reply recovery across account changes', [path.join(repo, 'tests', 'ws-reply-draft-recovery-runtime.test.cjs')]);

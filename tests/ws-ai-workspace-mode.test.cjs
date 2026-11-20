@@ -54,7 +54,7 @@ function seed(dataDir) {
       if (authorized) db.prepare(`INSERT INTO ws_group_monitor_targets(id,profile_id,account_id,group_jid,enabled,created_at,updated_at)
         VALUES(?,'ai-seat',?,?,1,?,?)`).run('target-' + id, accountId, jid, now, now);
       if (evidence !== 'none') for (const [index, identity] of [member, otherMember].entries()) {
-        const messageData = { source: evidence === 'native' ? 'ws-webview2' : 'manual-import', directionVersion: 4,
+        const messageData = { source: evidence === 'native' ? 'ws-webview2' : 'manual-import', nativeAuthorityVerified: evidence === 'native', directionVersion: 4,
           directionSource: 'class-message-in', senderIdentityTrusted: true, ...identity, senderIdentitySource: identity.identitySource };
         db.prepare(`INSERT INTO ws_messages(id,account_id,conversation_id,external_id,direction,original_text,data_json,created_at,updated_at)
           VALUES(?,?,?,?,'receive','I manage a shop',?,?,?)`).run('message-' + id + '-' + index, accountId, id, 'native-' + index, JSON.stringify(messageData), now, now);

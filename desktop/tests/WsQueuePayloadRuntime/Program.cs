@@ -43,8 +43,23 @@ try
     var handler = new CaptureHandler();
     using var http = new HttpClient(handler) { BaseAddress = new Uri("http://127.0.0.1:48080/") };
     var api = new ApiClient(http);
+    try
+    {
+        await api.IngestWsBatchAsync(restored);
+        throw new Exception("missing native authority reached HTTP");
+    }
+    catch (InvalidOperationException)
+    {
+        if (handler.RequestCount != 0) throw new Exception("unauthorized packet reached HTTP");
+    }
+    // Test-only setup of the internal host capability; no public bridge setter.
+    var nativeToken = Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+    typeof(ApiClient).GetMethod("ConfigureNativeWriteAuthority", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+        .Invoke(api, [nativeToken]);
     var response = await api.IngestWsBatchAsync(restored);
     if (response?.Accepted != 1 || handler.RequestCount != 1) throw new Exception("API ingest roundtrip did not complete once");
+    if (handler.NativeToken != nativeToken) throw new Exception("typed native request did not receive host authority");
+    if (http.DefaultRequestHeaders.Contains("X-Zhike-Native-Token")) throw new Exception("native authority leaked into default headers");
     using var apiDocument = JsonDocument.Parse(handler.Body ?? throw new Exception("API request body missing"));
     var apiRoot = apiDocument.RootElement;
     if (apiRoot.GetProperty("accountId").GetString() != accountId) throw new Exception("API request lost the account");
@@ -68,7 +83,16 @@ try
         if (preserved is null || preserved.Attempts != 1) throw new Exception("failed batch was removed instead of retained for retry");
     }
 
-    Console.WriteLine("WS queue Web JSON/API roundtrip passed: account, bidirectional evidence, checkpoint coverage and original body preserved");
+    var adapter = new LegacyApiAdapter(api);
+    foreach (var route in new[] { "/api/ws/ingest/batch", "/api/ws/ingest/batch/?accountId=fake", "/API/WS/INGEST/BATCH", "/api/ws/ai-automation/attempts" })
+    {
+        var blocked = await adapter.SendAsync("synthetic-renderer", route, HttpMethod.Post, JsonSerializer.SerializeToElement(new { source = "desktop-webview2" }));
+        if (blocked.Ok || blocked.ErrorCode != "WS_NATIVE_AUTHORITY_REQUIRED" || handler.RequestCount != 1)
+            throw new Exception("generic legacy bridge reached a native-only route");
+    }
+    await api.SendJsonAsync("api/ws/accounts", HttpMethod.Get, headers: new Dictionary<string, string> { ["X-Zhike-Native-Token"] = nativeToken });
+    if (handler.NativeToken is not null) throw new Exception("generic API request forwarded native authority");
+    Console.WriteLine("WS queue Web JSON/API roundtrip passed: native authority, bridge exclusion, account, bidirectional evidence, checkpoint coverage and original body preserved");
 }
 finally
 {
@@ -79,10 +103,12 @@ sealed class CaptureHandler : HttpMessageHandler
 {
     public int RequestCount { get; private set; }
     public string? Body { get; private set; }
+    public string? NativeToken { get; private set; }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         RequestCount += 1;
+        NativeToken = request.Headers.TryGetValues("X-Zhike-Native-Token", out var values) ? values.Single() : null;
         Body = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
         return new HttpResponseMessage(HttpStatusCode.OK)
         {

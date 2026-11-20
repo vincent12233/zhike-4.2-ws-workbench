@@ -1,4 +1,7 @@
 'use strict';
+// Synthetic host authority for native-ingest positive fixtures; never a renderer fallback.
+const nativeAuthorityToken = require('node:crypto').randomBytes(32).toString('hex');
+
 
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
@@ -15,12 +18,12 @@ const token = 'ws-local-ingest-test-token';
 const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], {
   cwd: app,
   windowsHide: true,
-  env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token, ZHIKE_PARENT_PID: String(process.pid), ZHIKE_STORAGE_MODE: 'local' },
+  env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_NATIVE_WRITE_TOKEN: nativeAuthorityToken, ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token, ZHIKE_PARENT_PID: String(process.pid), ZHIKE_STORAGE_MODE: 'local' },
   stdio: ['ignore', 'ignore', 'pipe'],
 });
-const startup = observeSidecarStartup(child, { secrets: [token], maxStderrBytes: 8192 });
+const startup = observeSidecarStartup(child, { secrets: [token, nativeAuthorityToken], maxStderrBytes: 8192 });
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-const headers = { 'content-type': 'application/json', 'x-zhike-api-token': token, origin: `http://127.0.0.1:${port}` };
+const headers = { 'content-type': 'application/json', 'x-zhike-native-token': nativeAuthorityToken, 'x-zhike-api-token': token, origin: `http://127.0.0.1:${port}` };
 async function stopSidecar() {
   try { await request('/api/shutdown', { method: 'POST', headers: { 'x-zhike-shutdown-token': token } }); } catch {}
   // Wait for server.close() and db.close() before removing SQLite WAL/SHM files.

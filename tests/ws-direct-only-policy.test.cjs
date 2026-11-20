@@ -1,4 +1,7 @@
 'use strict';
+// Synthetic host authority for native-ingest positive fixtures; never a renderer fallback.
+const nativeAuthorityToken = require('node:crypto').randomBytes(32).toString('hex');
+
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
 const { mkdtempSync, rmSync } = require('node:fs');
@@ -39,7 +42,7 @@ assert.equal(core.detectChatImportType('[11/13/26, 10:30] Alice: I created this 
 const app=path.join(__dirname,'../resources/app');
 const data=mkdtempSync(path.join(require('node:os').tmpdir(),'zhike-direct-policy-'));
 const port=29000+(process.pid%18000),token='isolated-direct-policy';
-const headers={'content-type':'application/json','x-zhike-api-token':token};
+const headers={'content-type':'application/json','x-zhike-native-token': nativeAuthorityToken, 'x-zhike-api-token':token};
 let child, logs='';
 let activeAccountId='default';
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -51,7 +54,7 @@ async function call(route,body,expected=200){
   const result=await response.json();assert.equal(response.status,expected,JSON.stringify(result));return result;
 }
 async function start(){
-  logs='';child=spawn(process.env.ZHIKE_TEST_NODE||process.execPath,['server.mjs'],{cwd:app,env:{...process.env,ZHIKE_DATA_DIR:data,ZHIKE_PORT:String(port),ZHIKE_API_TOKEN:token,ZHIKE_SHUTDOWN_TOKEN:token},windowsHide:true,stdio:['ignore','pipe','pipe']});
+  logs='';child=spawn(process.env.ZHIKE_TEST_NODE||process.execPath,['server.mjs'],{cwd:app,env:{...process.env,ZHIKE_DATA_DIR:data,ZHIKE_PORT:String(port),ZHIKE_NATIVE_WRITE_TOKEN: nativeAuthorityToken, ZHIKE_API_TOKEN:token,ZHIKE_SHUTDOWN_TOKEN:token},windowsHide:true,stdio:['ignore','pipe','pipe']});
   child.stdout.on('data',b=>logs+=b);child.stderr.on('data',b=>logs+=b);
   for(let i=0;i<1000;i++){try{await call('/api/health');return;}catch{if(child.exitCode!==null)break;await wait(30);}}
   throw Error(`isolated server did not start: ${logs}`);

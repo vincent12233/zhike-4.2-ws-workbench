@@ -1,4 +1,7 @@
 'use strict';
+// Synthetic host authority for native-ingest positive fixtures; never a renderer fallback.
+const nativeAuthorityToken = require('node:crypto').randomBytes(32).toString('hex');
+
 
 // Execute the production collector functions and production HTTP ingest against
 // disposable synthetic state. No WhatsApp session, external service or profile.
@@ -84,14 +87,14 @@ async function freePort() {
   const port = await freePort(), origin = 'http://127.0.0.1:' + port, token = randomBytes(24).toString('hex');
   const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], {
     cwd: path.join(root, 'resources/app'), windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'],
-    env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token,
+    env: { ...process.env, ZHIKE_DATA_DIR: dataDir, ZHIKE_PORT: String(port), ZHIKE_NATIVE_WRITE_TOKEN: nativeAuthorityToken, ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token,
       ZHIKE_PARENT_PID: '', ZHIKE_GROUP_MANAGER_MODE: '', ZHIKE_STAGE3_MOCK: '', ZHIKE_AI_PIPELINE_MODE: '', ZHIKE_STAGE4_MOCK: '', ZHIKE_FENCING_MODE: '' },
   });
   const closed = new Promise(resolve => child.once('close', resolve));
-  const observation = observeSidecarStartup(child, { secrets: [token] });
+  const observation = observeSidecarStartup(child, { secrets: [token, nativeAuthorityToken] });
   const request = async (route, method = 'GET', body) => {
     const response = await fetch(origin + route, { method, signal: AbortSignal.timeout(5000),
-      headers: { origin, 'x-zhike-api-token': token, 'content-type': 'application/json' },
+      headers: { origin, 'x-zhike-native-token': nativeAuthorityToken, 'x-zhike-api-token': token, 'content-type': 'application/json' },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
     const result = await response.json();
     assert.ok(response.ok, `${method} ${route}: ${response.status} ${JSON.stringify(result)}`);
