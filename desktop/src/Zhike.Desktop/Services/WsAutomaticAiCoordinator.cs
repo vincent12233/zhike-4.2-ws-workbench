@@ -37,10 +37,16 @@ public static class WsAutomaticAiCoordinator
             // Use only the sidecar's reconstructed input, never renderer input.
             var prepared = JsonNode.Parse(permit.GetRawText())!.AsObject();
             prepared["requestId"] = Text(payload, "requestId");
-            CheckAccount();
-            await ledger(new { action = "dispatch", accountId, attemptId, leaseToken }, cancellationToken);
-            CheckAccount();
-            var result = await provider.RequestWsAutomaticAsync(JsonSerializer.SerializeToElement(prepared), cancellationToken, CheckAccount);
+            var result = await provider.RequestWsAutomaticAsync(JsonSerializer.SerializeToElement(prepared), async sendToken =>
+            {
+                // Credential resolution may wait on another operation. Check
+                // the one reserved attempt only after that wait, next to send.
+                sendToken.ThrowIfCancellationRequested();
+                CheckAccount();
+                await ledger(new { action = "dispatch", accountId, attemptId, leaseToken }, sendToken);
+                sendToken.ThrowIfCancellationRequested();
+                CheckAccount();
+            }, cancellationToken);
             resultCode = "completed";
             if (result.TryGetProperty("usage", out var counters)) usage = counters.Clone();
             return result;

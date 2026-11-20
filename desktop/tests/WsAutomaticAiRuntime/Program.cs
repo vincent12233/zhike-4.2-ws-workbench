@@ -24,6 +24,12 @@ try
     var fake = new ProviderHandler();
     var service = new AiBridgeService(root, new HttpClient(fake));
     await service.InvokeAsync("saveKey", JsonSerializer.SerializeToElement(new { provider = "openai", apiKey = "sk-isolated-not-a-real-key-000000", model = "gpt-5.4-mini-2026-03-17" }));
+    static JsonElement HeldPermit(string attemptId) => JsonSerializer.SerializeToElement(new { attemptId, input = "SYNTHETIC_AUTHORIZED_CHAT",
+        quote = new { id = "openai-gpt54mini-synthetic", provider = "openai", model = "gpt-5.4-mini-2026-03-17", endpoint = "https://api.openai.com/v1/responses",
+            expiresAt = DateTimeOffset.UtcNow.AddHours(1), maxOutputTokens = 4096 } });
+    try { await service.RequestWsAutomaticAsync(HeldPermit("missing-guard"), null!); throw new Exception("Native send accepted an absent dispatch callback."); }
+    catch (ArgumentNullException) { }
+    if (fake.Calls != 0) throw new Exception("Missing dispatch callback reached provider.");
     // Hold the real coordinator at either ledger await. Cancellation must be
     // registered before reserve, and account A -> B -> A must invalidate it.
     foreach (var stage in new[] { "reserve", "dispatch" })
@@ -38,7 +44,7 @@ try
             var action = JsonSerializer.SerializeToElement(body).GetProperty("action").GetString();
             if (action == "dispatch") dispatches++;
             if (action == stage) { reached.TrySetResult(true); await release.Task; }
-            return JsonSerializer.SerializeToElement(new { attemptId = "synthetic-held" });
+            return HeldPermit("synthetic-held");
         }
         var pending = WsAutomaticAiCoordinator.ExecuteAsync(service, HeldLedger, () => active,
             JsonSerializer.SerializeToElement(new { accountId = args[2], conversationId = "authorized-chat", jobId = "held-job", leaseToken = "held-lease", requestId }),
@@ -56,32 +62,63 @@ try
         catch (InvalidOperationException error) when (accountSwitch && error.Message.Contains("账号已切换")) { }
         if (fake.Calls != 0 || dispatches != (stage == "dispatch" ? 1 : 0)) throw new Exception("Stale operation reached a later stage.");
     }
-    // Account changes/cancel can also occur after dispatch while waiting on
-    // actual production credential storage. Hold that real semaphore here.
+    // Credential locking must happen before dispatch. Account/cancellation or
+    // ledger state can change while the real storage semaphore is held.
     var credentialGate = (SemaphoreSlim)typeof(AiBridgeService).GetField("_gate", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(service)!;
     foreach (var accountSwitch in new[] { false, true })
     {
         await credentialGate.WaitAsync();
         var requestId = $"credential-race-{accountSwitch}"; long epoch = 1;
-        var dispatchReached = false;
+        var reserves = 0; var dispatches = 0; var finishes = 0;
         Task<JsonElement> CredentialLedger(object body, CancellationToken token)
         {
-            if (JsonSerializer.SerializeToElement(body).GetProperty("action").GetString() == "dispatch") dispatchReached = true;
-            return Task.FromResult(JsonSerializer.SerializeToElement(new { attemptId = "credential-held", input = "SYNTHETIC_AUTHORIZED_CHAT",
-                quote = new { id = "openai-gpt54mini-synthetic", provider = "openai", model = "gpt-5.4-mini-2026-03-17", endpoint = "https://api.openai.com/v1/responses",
-                    expiresAt = DateTimeOffset.UtcNow.AddHours(1), maxOutputTokens = 4096 } }));
+            var action = JsonSerializer.SerializeToElement(body).GetProperty("action").GetString();
+            if (action == "reserve") reserves++;
+            if (action == "dispatch") dispatches++;
+            if (action == "finish") finishes++;
+            return Task.FromResult(HeldPermit("credential-held"));
         }
         var pending = WsAutomaticAiCoordinator.ExecuteAsync(service, CredentialLedger, () => args[2],
             JsonSerializer.SerializeToElement(new { accountId = args[2], conversationId = "authorized-chat", jobId = "held-job", leaseToken = "held-lease", requestId }),
             accountEpoch: () => epoch);
-        if (!dispatchReached || pending.IsCompleted) throw new Exception("Fixture did not reach the blocked credential read.");
+        if (reserves != 1 || dispatches != 0 || pending.IsCompleted) throw new Exception("Dispatch ran before the blocked credential read completed.");
         if (accountSwitch) epoch += 2; // A -> B -> A retains the name but not ownership.
         else await service.InvokeAsync("cancel", JsonSerializer.SerializeToElement(new { requestId }));
         credentialGate.Release();
         try { await pending; throw new Exception("Stale credential operation sent."); }
         catch (OperationCanceledException) when (!accountSwitch) { }
         catch (InvalidOperationException error) when (accountSwitch && error.Message.Contains("账号已切换")) { }
-        if (fake.Calls != 0) throw new Exception("Credential wait bypassed the final send guard.");
+        if (fake.Calls != 0 || reserves != 1 || dispatches != 0 || finishes != 1) throw new Exception("Credential wait bypassed the final send guard or reserved twice.");
+    }
+    foreach (var change in new[] { "pause", "revoke", "history-change" })
+    {
+        await credentialGate.WaitAsync();
+        var reserves = 0; var dispatches = 0; var finishes = 0;
+        string? changedCode = null;
+        Task<JsonElement> ChangedLedger(object body, CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            var action = JsonSerializer.SerializeToElement(body).GetProperty("action").GetString();
+            if (action == "reserve") reserves++;
+            if (action == "finish") finishes++;
+            if (action == "dispatch")
+            {
+                dispatches++;
+                if (changedCode is not null) throw new InvalidOperationException(changedCode);
+            }
+            return Task.FromResult(HeldPermit("credential-" + change));
+        }
+        var pending = WsAutomaticAiCoordinator.ExecuteAsync(service, ChangedLedger, () => args[2],
+            JsonSerializer.SerializeToElement(new { accountId = args[2], conversationId = "authorized-chat", jobId = "held-job", leaseToken = "held-lease", requestId = "credential-" + change }));
+        if (reserves != 1 || dispatches != 0 || pending.IsCompleted) throw new Exception("Fixture did not hold dispatch behind the credential lock.");
+        // These are the real sidecar dispatch rejection codes. State changes
+        // happen after reservation, while native credential access is blocked.
+        changedCode = change == "history-change" ? "WS_HISTORY_STALE" : "AI_AUTHORIZATION_PAUSED";
+        credentialGate.Release();
+        try { await pending; throw new Exception("Changed ledger authorization sent a model request."); }
+        catch (InvalidOperationException error) when (error.Message == changedCode) { }
+        if (fake.Calls != 0 || reserves != 1 || dispatches != 1 || finishes != 1)
+            throw new Exception("Late ledger rejection reached provider or reused the lease.");
     }
     var payload = JsonSerializer.SerializeToElement(new { accountId = args[2], conversationId = "authorized-chat", jobId = args[3], leaseToken = args[4],
         requestId = "automatic-isolated", input = "FORGED_OTHER_ACCOUNT_TEXT", provider = "teamorouter", model = "unapproved-model" });
