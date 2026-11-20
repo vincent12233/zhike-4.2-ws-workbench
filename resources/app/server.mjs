@@ -1693,9 +1693,9 @@ function wsSaveAccountSettings(accountId, input, now) {
   const current = db.prepare('SELECT * FROM ws_account_settings WHERE account_id=?').get(accountId);
   const source = input && typeof input === 'object' && !Array.isArray(input) ? input : {};
   const settingsJson = Object.hasOwn(source, 'settings') ? wsObject(source.settings, 32 * 1024) : wsJson(current?.settings_json);
-  const translationEnabled = source.translationEnabled ?? source.translation ?? current?.translation_enabled ?? 1;
-  const aiEnabled = source.aiEnabled ?? source.ai ?? current?.ai_enabled ?? 1;
-  const autoCollectionEnabled = source.autoCollectionEnabled ?? source.autoCollection ?? current?.auto_collection_enabled ?? 0;
+  const translationEnabled = source.translationEnabled ?? source.translation ?? Boolean(current?.translation_enabled ?? 1);
+  const aiEnabled = source.aiEnabled ?? source.ai ?? Boolean(current?.ai_enabled ?? 1);
+  const autoCollectionEnabled = source.autoCollectionEnabled ?? source.autoCollection ?? Boolean(current?.auto_collection_enabled);
   db.prepare(`INSERT INTO ws_account_settings(account_id,translation_enabled,ai_enabled,auto_collection_enabled,settings_json,created_at,updated_at)
     VALUES(?,?,?,?,?,?,?) ON CONFLICT(account_id) DO UPDATE SET translation_enabled=excluded.translation_enabled,ai_enabled=excluded.ai_enabled,auto_collection_enabled=excluded.auto_collection_enabled,settings_json=excluded.settings_json,updated_at=excluded.updated_at`)
     .run(accountId, translationEnabled === false ? 0 : 1, aiEnabled === false ? 0 : 1, autoCollectionEnabled === true ? 1 : 0, JSON.stringify(settingsJson), current?.created_at || now, now);

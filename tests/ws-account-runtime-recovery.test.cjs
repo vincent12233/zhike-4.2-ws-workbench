@@ -42,6 +42,17 @@ async function run() {
     const initialDefault = initial.accounts.find(account => account.id === 'default');
     assert.ok(initialDefault, 'first account list must contain the default account');
     assert.equal(initialDefault.lastSeen, null, 'never-connected accounts must use JSON null for lastSeen');
+    async function patchSettings(body) {
+      const result = await server.request('/api/ws/accounts/default', { method: 'PATCH', body: JSON.stringify(body) });
+      assert.equal(result.status, 200);
+      return (await result.json()).account.settings;
+    }
+    const original = { translationEnabled: false, aiEnabled: false, autoCollectionEnabled: true };
+    assert.deepEqual(await patchSettings({ settings: original }), original);
+    assert.deepEqual(await patchSettings({ translationEnabled: true }), { ...original, translationEnabled: true });
+    assert.deepEqual(await patchSettings({ settings: { translationEnabled: false } }), original);
+    assert.deepEqual(await patchSettings({ aiEnabled: true }), { ...original, aiEnabled: true });
+    assert.deepEqual(await patchSettings({ autoCollectionEnabled: false }), { ...original, aiEnabled: true, autoCollectionEnabled: false });
     const connected = await server.request('/api/ws/accounts/default', { method: 'PATCH', body: JSON.stringify({ status: '已连接' }) });
     assert.equal(connected.status, 200);
     const connectedAccount = (await connected.json()).account;
