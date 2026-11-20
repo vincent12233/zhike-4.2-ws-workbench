@@ -4353,7 +4353,7 @@
   }
   function groupVerificationReason(status) {
     return ({
-      'no-open-chat': '当前窗口尚未打开聊天。',
+      'no-open-chat': '前台尚未打开聊天。',
       'no-message-envelopes': '聊天页没有提供可核验的消息标识。',
       'unsupported-message-envelope': 'WhatsApp 提供的消息标识格式尚未识别。',
       'unconfirmed-message-position': '聊天页中有消息标识，但尚不能确认它属于当前聊天的消息。',
@@ -4399,7 +4399,7 @@
       const modes = directory.probeControls;
       if (modes && Object.hasOwn(filterReasons, modes.filter)) diagnosticLines.push('后台群组筛选 · ' + filterReasons[modes.filter]);
       if (modes && Object.hasOwn(menuReasons, modes.menu)) diagnosticLines.push('后台行菜单 · ' + menuReasons[modes.menu]);
-      if (modes?.open && modes.open !== 'verified') diagnosticLines.push('后台聊天核验 · ' + groupVerificationReason(modes.open));
+      if (modes?.open && modes.open !== 'verified') diagnosticLines.push('后台聊天核验 · ' + (modes.open === 'no-open-chat' ? '后台尚未打开聊天。' : groupVerificationReason(modes.open)));
       if (directory.collectorSkipped?.groupNoticeRows > 0) diagnosticLines.push(`后台群通知预览 · ${directory.collectorSkipped.groupNoticeRows} 行，其中 ${directory.collectorSkipped.verifiedNoticeRows || 0} 行含群通知标记`);
       if (directory.collectorError) diagnosticLines.push('后台读取失败 · ' + directory.collectorError);
       for (const [key, label] of [['skippedUnread','未读'], ['skippedReadUnknown','已读状态无法确认'], ['skippedTypeUnknown','会话类型无法确认']]) {
