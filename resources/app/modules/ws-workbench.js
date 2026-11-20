@@ -1439,20 +1439,11 @@
     // WS 群组监测使用独立的绑定清单，不能从客户 VIP 编号推导群组。
     // 保留旧字段只为兼容升级过来的工作区；规范化逻辑集中在 ws-scope.js。
     const scoped = window.ZhikeWsScope?.normalizeWsGroupBindings?.(settings, accountId);
-    if (Array.isArray(scoped)) {
-      return [...new Set(scoped.flatMap(item => [item?.groupJid, item?.groupName].filter(value => text(value))))].slice(0, 500);
-    }
-    const sources = [settings.wsVipGroupAllowlist, settings.wsVipGroups, settings.vipGroupBindings];
-    const values = [];
-    for (const source of sources) for (const item of Array.isArray(source) ? source : []) {
-      if (typeof item === 'string') { if (text(item)) values.push(text(item)); continue; }
-      if (!item || typeof item !== 'object' || item.enabled === false) continue;
-      const scopedAccount = text(item.accountId || item.wsAccountId);
-      if (scopedAccount && scopedAccount !== String(accountId || 'default')) continue;
-      for (const value of [item.conversationKey, item.externalId, item.jid, item.groupId, item.title, item.name])
-        if (text(value)) values.push(text(value));
-    }
-    return [...new Set(values)].slice(0, 500);
+    // Labels and legacy VIP markers never authorize collection. The canonical
+    // account/JID scope also makes an explicit empty list revoke old bindings.
+    if (!Array.isArray(scoped)) return [];
+    return [...new Set(scoped.filter(item => item.authorized === true)
+      .map(item => item.groupJid))].slice(0, 500);
   }
   function isConfiguredVipGroupIdentifier(...values) {
     const normalize = value => text(value).normalize('NFKC').toLocaleLowerCase();

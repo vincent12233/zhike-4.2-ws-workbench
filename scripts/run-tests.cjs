@@ -220,6 +220,8 @@ function runWs() {
   run('WS media send runtime contract', [path.join(repo, 'tests', 'ws-media-send-runtime.test.cjs')]);
   run('WS broadcast, translation and send audit', [path.join(repo, 'tests', 'ws-broadcast-translation.test.cjs')]);
   run('WS VIP customer and group-monitor scope separation', [path.join(repo, 'tests', 'vip-scope-separation.test.cjs')]);
+  run('WS ordinary group authorization scope', [path.join(repo, 'tests', 'ws-group-scope-authorization.test.cjs')]);
+  run('WS collector exact group authorization bridge', [path.join(repo, 'tests', 'ws-group-scope-bridge.test.cjs')]);
   run('WS conversation cursor pagination', [path.join(repo, 'tests', 'ws-conversation-pagination.test.cjs')]);
   run('WS conversation incremental watermark runtime', [path.join(repo, 'tests', 'ws-conversation-delta-runtime.test.cjs')]);
   run('WS list preview update', [path.join(repo, 'tests', 'ws-list-preview-update.test.cjs')]);
