@@ -382,7 +382,6 @@ function runAll() {
     path.join(repo, 'desktop', 'tests', 'AiBridgeCredentialRuntime', 'AiBridgeCredentialRuntime.csproj'),
     '-c',
     'Release',
-    '--no-restore',
   ], { command: path.join(repo, '.tools', 'dotnet10', 'dotnet.exe') });
   run('AI provider 503 recovery and model fallback', [
     'run',
@@ -390,7 +389,6 @@ function runAll() {
     path.join(repo, 'desktop', 'tests', 'AiBridgeProviderRuntime', 'AiBridgeProviderRuntime.csproj'),
     '-c',
     'Release',
-    '--no-restore',
   ], { command: path.join(repo, '.tools', 'dotnet10', 'dotnet.exe') });
   run('AI provider health and retry contract', [path.join(repo, 'tests', 'ai-provider-health-contract.test.cjs')]);
   run('WS runtime login detection and ingest resilience', [path.join(repo, 'desktop', 'tests', 'WsRuntimeResilienceTests.cjs')]);
@@ -406,7 +404,7 @@ function runAll() {
   run('cross-workspace business chain', [path.join(repo, 'tests', 'cross-workspace-chain-contract.test.cjs')]);
   run('stage 1.5 queue compatibility review', [path.join(repo, 'scripts', 'stage1', 'stage1-5-queue-compatibility.test.cjs')]);
   run('stage 1.5 IPC real WinUI supervisor integration', [
-    'run', '--project', path.join(repo, 'scripts', 'stage1', 'WorkerSupervisorRuntime', 'WorkerSupervisorRuntime.csproj'), '-c', 'Release', '--no-restore',
+    'run', '--project', path.join(repo, 'scripts', 'stage1', 'WorkerSupervisorRuntime', 'WorkerSupervisorRuntime.csproj'), '-c', 'Release',
   ], { command: path.join(repo, '.tools', 'dotnet10', 'dotnet.exe') });
   run('stage 1.5 sidecar fencing real writer integration', [path.join(repo, 'scripts', 'stage1', 'sqlite-fencing-sidecar-integration.test.cjs')]);
   run('stage 1.5 fencing failure and BUSY recovery', [path.join(repo, 'scripts', 'stage1', 'sqlite-fencing-coordinator-failure.test.cjs')]);

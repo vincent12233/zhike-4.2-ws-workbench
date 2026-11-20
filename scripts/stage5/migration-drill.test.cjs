@@ -10,6 +10,8 @@ const { DatabaseSync } = require('node:sqlite');
 const { runMigrations, readIntegrity, hashMigration } = require('../../resources/app/migration-runner.cjs');
 const source = path.resolve(__dirname, '../../resources/app/migrations');
 const manifest = JSON.parse(fs.readFileSync(path.join(source, 'manifest.json'), 'utf8'));
+const latest = manifest.supportedSchemaVersion;
+const next = latest + 1;
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'zhike-stage5-migration-'));
 const now = '2026-11-16T00:00:00.000Z';
 const results = [];
@@ -70,14 +72,14 @@ try {
   }
 
   const fx = fixture('interrupted'); let db = new DatabaseSync(fx.dbPath); run(fx, db); seed(db, 24); db.close();
-  const child = spawnSync(process.execPath, ['-e', "const {DatabaseSync}=require('node:sqlite');const db=new DatabaseSync(process.argv[1]);db.exec('BEGIN IMMEDIATE; CREATE TABLE interrupted_marker(id INTEGER); PRAGMA user_version=26;');process.exit(7)", fx.dbPath], { windowsHide: true, encoding: 'utf8', timeout: 10000 });
+  const child = spawnSync(process.execPath, ['-e', "const {DatabaseSync}=require('node:sqlite');const db=new DatabaseSync(process.argv[1]);db.exec('BEGIN IMMEDIATE; CREATE TABLE interrupted_marker(id INTEGER); PRAGMA user_version='+process.argv[2]+';');process.exit(7)", fx.dbPath, String(next)], { windowsHide: true, encoding: 'utf8', timeout: 10000 });
   assert.equal(child.status, 7, child.stderr); db = new DatabaseSync(fx.dbPath);
   try {
-    assert.equal(db.prepare('PRAGMA user_version').get().user_version, 25); assert.equal(db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE name='interrupted_marker'").get().n, 0); assert.equal(run(fx, db).applied.length, 0); verifyHistory(db, 24);
-    const sql = 'CREATE TABLE failed_marker(id INTEGER); INSERT INTO missing_stage5_table VALUES(1);'; const file = '026-stage5-failure-fixture.sql';
-    fs.writeFileSync(path.join(fx.migrationDir, file), sql); const entries = [...manifest.migrations, { version: 26, file, description: 'isolated transaction failure', checksum: hashMigration(sql) }];
-    fs.writeFileSync(path.join(fx.migrationDir, 'manifest.json'), JSON.stringify({ ...manifest, supportedSchemaVersion: 26, migrations: entries }));
-    assert.throws(() => run(fx, db), error => error.code === 'MIGRATION_FAILED'); assert.equal(db.prepare('PRAGMA user_version').get().user_version, 25); assert.equal(db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE name='failed_marker'").get().n, 0); verifyHistory(db, 24);
+    assert.equal(db.prepare('PRAGMA user_version').get().user_version, latest); assert.equal(db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE name='interrupted_marker'").get().n, 0); assert.equal(run(fx, db).applied.length, 0); verifyHistory(db, 24);
+    const sql = 'CREATE TABLE failed_marker(id INTEGER); INSERT INTO missing_stage5_table VALUES(1);'; const file = String(next).padStart(3, "0") + "-stage5-failure-fixture.sql";
+    fs.writeFileSync(path.join(fx.migrationDir, file), sql); const entries = [...manifest.migrations, { version: next, file, description: 'isolated transaction failure', checksum: hashMigration(sql) }];
+    fs.writeFileSync(path.join(fx.migrationDir, 'manifest.json'), JSON.stringify({ ...manifest, supportedSchemaVersion: next, migrations: entries }));
+    assert.throws(() => run(fx, db), error => error.code === 'MIGRATION_FAILED'); assert.equal(db.prepare('PRAGMA user_version').get().user_version, latest); assert.equal(db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE name='failed_marker'").get().n, 0); verifyHistory(db, 24);
     fs.appendFileSync(path.join(fx.migrationDir, file), '\n-- checksum tamper'); assert.throws(() => run(fx, db), error => error.code === 'MIGRATION_CHECKSUM_MISMATCH'); assert.equal(readIntegrity(db).ok, true);
     results.push('process interruption rollback, failed DDL rollback, tamper rejection');
   } finally { db.close(); }

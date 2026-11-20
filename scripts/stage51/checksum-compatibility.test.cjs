@@ -9,6 +9,8 @@ const { createServer } = require('node:net');
 const { runMigrations, hashMigration, readIntegrity } = require('../../resources/app/migration-runner.cjs');
 const source = path.resolve(__dirname, '../../resources/app/migrations');
 const manifest = JSON.parse(fs.readFileSync(path.join(source, 'manifest.json'), 'utf8'));
+const latest = manifest.supportedSchemaVersion;
+const next = latest + 1;
 const current = manifest.migrations.find(row => row.version === 24);
 const legacyHash = 'eeff6bc11ed4de1573199d1cb71897b7853b5f750c0b7cd353dfff4a1cbda4b6';
 const canonicalHash = '9dc642557b9007b9de83c73aab035e017caa7d41a2ed58b1cb275e9fb9dd640f';
@@ -42,7 +44,7 @@ async function sidecarRestart(fx) {
   const child = spawn(process.env.ZHIKE_TEST_NODE || process.execPath, ['server.mjs'], { cwd: path.resolve(__dirname, '../../resources/app'), windowsHide: true, env: { ...process.env, ZHIKE_DATA_DIR: fx.dir, ZHIKE_PORT: String(port), ZHIKE_API_TOKEN: token, ZHIKE_SHUTDOWN_TOKEN: token }, stdio: ['ignore', 'ignore', 'pipe'] }); child.stderr.on('data', chunk => { stderr += chunk; });
   try {
     let response; for (let attempt = 0; attempt < 600; attempt++) { if (child.exitCode !== null) throw new Error('isolated legacy startup failed: ' + stderr); try { response = await fetch(`http://127.0.0.1:${port}/api/health`); if (response.ok) break; } catch {} await wait(25); }
-    assert.ok(response?.ok, 'actual sidecar startup'); assert.equal((await response.json()).schemaVersion, 25);
+    assert.ok(response?.ok, 'actual sidecar startup'); assert.equal((await response.json()).schemaVersion, latest);
     const state = await (await fetch(`http://127.0.0.1:${port}/api/state`, { headers: { 'x-zhike-api-token': token } })).json(); assert.equal(state.customers[0].occupation, 'Manual field');
     const shutdown = await fetch(`http://127.0.0.1:${port}/api/shutdown`, { method: 'POST', headers: { 'x-zhike-api-token': token, 'x-zhike-shutdown-token': token } }); assert.equal(shutdown.status, 200);
   } finally { for (let attempt = 0; attempt < 100 && child.exitCode === null; attempt++) await wait(25); if (child.exitCode === null) { child.kill('SIGTERM'); await new Promise(resolve => child.once('exit', resolve)); } }
@@ -51,12 +53,12 @@ async function sidecarRestart(fx) {
   assert.equal(current.checksum, canonicalHash); assert.equal(hashMigration(fs.readFileSync(path.join(source, current.file), 'utf8') + '\n'), legacyHash);
   const fx = fixture('legacy'); let db = old(fx);
   try {
-    const upgraded = run(fx, db); assert.equal(upgraded.version, 25); assert.ok(upgraded.backupPath);
+    const upgraded = run(fx, db); assert.equal(upgraded.version, latest); assert.ok(upgraded.backupPath);
     assert.equal(upgraded.compatibility.length, 1); assert.equal(upgraded.compatibility[0].status, 'accepted-with-audit');
     assert.ok(fs.existsSync(upgraded.compatibilityAuditPath)); const audit = JSON.parse(fs.readFileSync(upgraded.compatibilityAuditPath, 'utf8')); assert.equal(audit.legacyChecksum, legacyHash); assert.equal(audit.canonicalChecksum, canonicalHash); assert.equal(audit.backupPath, upgraded.backupPath);
     verify(db); const before = fs.readFileSync(upgraded.compatibilityAuditPath, 'utf8'); const again = run(fx, db); assert.equal(again.applied.length, 0); assert.equal(again.backupPath, null); assert.equal(fs.readFileSync(again.compatibilityAuditPath, 'utf8'), before); verify(db);
     const restore = new DatabaseSync(upgraded.backupPath, { readOnly: true }); try { assert.equal(restore.prepare('PRAGMA user_version').get().user_version, 24); verify(restore); } finally { restore.close(); }
-    evidence.push('exact legacy SQL applied, upgrade to25, historical records, original checksum preserved, immutable audit, repeat and backup restore');
+    evidence.push('exact legacy SQL applied, upgrade to current schema, historical records, original checksum preserved, immutable audit, repeat and backup restore');
   } finally { db.close(); }
   for (const kind of ['unknown-hash','schema-drift','backup-disabled']) {
     const caseFx = fixture(kind); db = old(caseFx);
@@ -69,12 +71,12 @@ async function sidecarRestart(fx) {
     } finally { db.close(); }
   }
   const freshFx = fixture('fresh'); db = new DatabaseSync(freshFx.dbPath);
-  try { const fresh = run(freshFx, db); assert.equal(fresh.version, 25); assert.deepEqual(fresh.compatibility, []); assert.equal(db.prepare('SELECT checksum FROM schema_migrations WHERE version=24').get().checksum, canonicalHash); evidence.push('fresh canonical database remains canonical'); } finally { db.close(); }
+  try { const fresh = run(freshFx, db); assert.equal(fresh.version, latest); assert.deepEqual(fresh.compatibility, []); assert.equal(db.prepare('SELECT checksum FROM schema_migrations WHERE version=24').get().checksum, canonicalHash); evidence.push('fresh canonical database remains canonical'); } finally { db.close(); }
   const failedFx = fixture('failure-restore'); db = old(failedFx);
   try {
     const brokenDir = path.join(failedFx.dir, 'broken-migrations'); fs.mkdirSync(brokenDir); for (const entry of manifest.migrations) fs.copyFileSync(path.join(source, entry.file), path.join(brokenDir, entry.file));
-    const sql = 'CREATE TABLE stage51_fail_marker(id INTEGER); INSERT INTO stage51_missing VALUES(1);', file = '026-stage51-fail-fixture.sql'; fs.writeFileSync(path.join(brokenDir, file), sql); fs.writeFileSync(path.join(brokenDir, 'manifest.json'), JSON.stringify({ ...manifest, supportedSchemaVersion: 26, migrations: [...manifest.migrations, { version: 26, file, description: 'isolated failure test', checksum: hashMigration(sql) }] }));
-    assert.throws(() => run(failedFx, db, brokenDir), error => error.code === 'MIGRATION_FAILED'); assert.equal(db.prepare('PRAGMA user_version').get().user_version, 25); assert.equal(db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE name='stage51_fail_marker'").get().n, 0); verify(db);
+    const sql = 'CREATE TABLE stage51_fail_marker(id INTEGER); INSERT INTO stage51_missing VALUES(1);', file = String(next).padStart(3, "0") + "-stage51-fail-fixture.sql"; fs.writeFileSync(path.join(brokenDir, file), sql); fs.writeFileSync(path.join(brokenDir, 'manifest.json'), JSON.stringify({ ...manifest, supportedSchemaVersion: next, migrations: [...manifest.migrations, { version: next, file, description: 'isolated failure test', checksum: hashMigration(sql) }] }));
+    assert.throws(() => run(failedFx, db, brokenDir), error => error.code === 'MIGRATION_FAILED'); assert.equal(db.prepare('PRAGMA user_version').get().user_version, latest); assert.equal(db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE name='stage51_fail_marker'").get().n, 0); verify(db);
     const audit = JSON.parse(fs.readFileSync(path.join(failedFx.backupDir, 'compatibility/migration-024-extra-terminal-lf.json'), 'utf8')); const backup = new DatabaseSync(audit.backupPath, { readOnly: true }); try { assert.equal(backup.prepare('PRAGMA user_version').get().user_version, 24); verify(backup); } finally { backup.close(); }
     evidence.push('failed subsequent DDL rolls back its transaction and pre-upgrade backup retains original24 registry/data');
   } finally { db.close(); }
@@ -88,6 +90,6 @@ async function sidecarRestart(fx) {
     const damagedFx = fixture(damage); db = old(damagedFx);
     try { const accepted = run(damagedFx, db), audit = JSON.parse(fs.readFileSync(accepted.compatibilityAuditPath, 'utf8')); if (damage === 'backup-missing') fs.unlinkSync(audit.backupPath); else fs.appendFileSync(audit.backupPath, 'tamper'); assert.throws(() => run(damagedFx, db), error => error.code === 'MIGRATION_COMPATIBILITY_BACKUP_INVALID'); verify(db); evidence.push(damage + ' rejected with history preserved'); } finally { db.close(); }
   }
-  const bootFx = fixture('actual-sidecar'); db = old(bootFx); db.close(); await sidecarRestart(bootFx); await sidecarRestart(bootFx); db = new DatabaseSync(bootFx.dbPath, { readOnly: true }); try { verify(db); assert.equal(db.prepare('PRAGMA user_version').get().user_version, 25); } finally { db.close(); } evidence.push('actual current sidecar boots genuine legacy024 database twice with CRM and AI history retained');
+  const bootFx = fixture('actual-sidecar'); db = old(bootFx); db.close(); await sidecarRestart(bootFx); await sidecarRestart(bootFx); db = new DatabaseSync(bootFx.dbPath, { readOnly: true }); try { verify(db); assert.equal(db.prepare('PRAGMA user_version').get().user_version, latest); } finally { db.close(); } evidence.push('actual current sidecar boots genuine legacy024 database twice with CRM and AI history retained');
   console.log(JSON.stringify({ stage: '5.1', checksum: 'Passed', evidence, productionDatabaseOpened: false }));
 } finally { fs.rmSync(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); } })().catch(error => { console.error(error); process.exitCode = 1; });
