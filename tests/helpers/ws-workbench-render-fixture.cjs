@@ -13,8 +13,6 @@ function renderWsWorkbenchFixture(options = {}) {
   // fall back to checkout sources. Existing source-layout callers keep default.
   const resourceRoot = path.resolve(options.resourceRoot || path.join(repo, 'resources/app'));
   const core = require(path.join(resourceRoot, 'modules/ws-workbench-core.js'));
-  const businessSource = fs.readFileSync(path.join(resourceRoot, 'modules/ws-business-pages.js'), 'utf8');
-  const avatarSource = fs.readFileSync(path.join(resourceRoot, 'modules/customer-avatar.js'), 'utf8');
   const source = fs.readFileSync(path.join(resourceRoot, 'modules/ws-workbench.js'), 'utf8');
   const width = Number(options.width) || 1440;
   const target = { innerHTML: '' };
@@ -34,12 +32,10 @@ function renderWsWorkbenchFixture(options = {}) {
     URL, URLSearchParams, AbortController,
   };
   vm.createContext(sandbox);
-  const draftsSource = fs.readFileSync(path.join(resourceRoot, 'modules/ws-group-drafts-ui.js'), 'utf8');
-  const readingSource = fs.readFileSync(path.join(resourceRoot, 'modules/ws-group-reading-ui.js'), 'utf8');
-  vm.runInContext(readingSource, sandbox, { filename: 'ws-group-reading-ui.js' });
-  vm.runInContext(draftsSource, sandbox, { filename: 'ws-group-drafts-ui.js' });
-  vm.runInContext(avatarSource, sandbox, { filename: 'customer-avatar.js' });
-  vm.runInContext(businessSource, sandbox, { filename: 'ws-business-pages.js' });
+  for (const file of ['customer-avatar.js', 'ws-business-pages.js', 'ws-group-drafts-ui.js', 'ws-group-reading-ui.js', 'ws-group-permissions-ui.js']) {
+    const script = fs.readFileSync(path.join(resourceRoot, 'modules', file), 'utf8');
+    vm.runInContext(script, sandbox, { filename: file });
+  }
   const businessPages = sandbox.window.ZhikeWsBusinessPages;
   const bootCall = /  boot\(\);\s*\}\)\(\);\s*$/;
   assert.match(source, bootCall, 'test fixture must suppress only the production boot entry point');

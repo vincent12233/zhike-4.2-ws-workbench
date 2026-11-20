@@ -18,6 +18,8 @@ const scenes = Object.freeze([
   { mode: 'ordinary', view: 'accounts' }, { mode: 'ordinary', view: 'chat' },
   { mode: 'dedicated', view: 'accounts' }, { mode: 'dedicated', view: 'groups' },
   { mode: 'dedicated', view: 'exclusions' }, { mode: 'dedicated', view: 'group-broadcast' },
+  { mode: 'dedicated', view: 'group-reading' }, { mode: 'dedicated', view: 'group-permissions' },
+  { mode: 'dedicated', view: 'group-mentions' },
 ]);
 
 function loadBundle(stage) {
@@ -82,7 +84,7 @@ function loadBundle(stage) {
   assert.ok(stylesheetCount > 0);
   assert.doesNotMatch(html, /<link[^>]+rel="stylesheet"/i, 'Every packaged stylesheet must be validated');
   html = html.replace(/(<img\b[^>]*\bsrc=")([^"]+)(")/gi, (_, before, reference, after) => before + dataUrl(reference) + after);
-  for (const file of ['modules/ws-workbench-core.js', 'modules/ws-business-pages.js', 'modules/customer-avatar.js', 'modules/ws-group-reading-ui.js', 'modules/ws-group-drafts-ui.js', 'modules/ws-workbench.js']) resource(file);
+  for (const file of ['modules/ws-workbench-core.js', 'modules/ws-business-pages.js', 'modules/customer-avatar.js', 'modules/ws-group-reading-ui.js', 'modules/ws-group-permissions-ui.js', 'modules/ws-group-drafts-ui.js', 'modules/ws-workbench.js']) resource(file);
   return { manifest, manifestSha256: sha256(manifestBytes), consumed, stylesheetCount, html,
     resourceRoot: path.join(stage, 'resources/app') };
 }
@@ -127,7 +129,7 @@ async function browserSmoke(fixtures) {
       mainSidebarHidden: !visible(document.getElementById('sidebar')),
       documentOverflow: document.documentElement.scrollWidth > innerWidth + 1,
       hostVisible: visible(shell?.querySelector('#wsBrowserHost')),
-      blocked: fixture.view === 'group-broadcast' && /BLOCKED/.test(content?.textContent || ''),
+      blocked: /BLOCKED/.test(content?.textContent || ''),
     });
   }
   document.getElementById('result').textContent = JSON.stringify([{ viewport: { width: innerWidth, height: innerHeight }, errors, scenes: results,
@@ -156,7 +158,7 @@ function assertSmokeResult(result, stylesheetCount) {
     assert.equal(row.modeButtons.length, 2);
     for (const button of row.modeButtons) assert.ok(button.contrast >= 4.5, 'Workspace purpose button contrast: ' + button.mode + ' = ' + button.contrast);
     if (expected.view === 'chat') assert.equal(row.hostVisible, true);
-    if (expected.view === 'group-broadcast') assert.equal(row.blocked, true);
+    if (expected.view.startsWith('group-')) assert.equal(row.blocked, true);
   }
 }
 

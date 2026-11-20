@@ -43,6 +43,7 @@ jobs:
             'tests/ws-group-drafts-api.test.cjs',
             'tests/ws-group-drafts-ui.test.cjs',
             'tests/ws-group-reading-workspace.test.cjs',
+            'tests/ws-group-permission-pages.test.cjs',
             'tests/ws-reply-draft-recovery-runtime.test.cjs',
             'tests/ws-group-monitor-workspace-mode.test.cjs',
             'tests/ws-group-monitor-identity-safety.test.cjs',

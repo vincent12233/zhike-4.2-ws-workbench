@@ -33,12 +33,15 @@ function fixture(run) {
 test('isolated document uses manifest-verified packaged markup, styles, images and both workspace renderers', () => fixture(root => {
   const bundle = loadBundle(root);
   const fixtures = buildFixtures(bundle, { width: 1366, height: 768 });
-  assert.equal(fixtures.length, 6);
+  assert.equal(fixtures.length, 9);
   assert.deepEqual(fixtures.map(row => ({ mode: row.mode, view: row.view })), scenes);
   assert.match(fixtures[0].html, /包内普通 WS/);
   assert.match(fixtures[2].html, /包内专用 WS/);
   assert.match(fixtures[5].html, /BLOCKED/);
   assert.match(fixtures[5].html, /data-ws-group-draft-input=/);
+  assert.match(fixtures[6].html, /真实回执|平台回执/);
+  assert.match(fixtures[7].html, /UNKNOWN/);
+  assert.match(fixtures[8].html, /B_MODE_BLOCKED_UNSUPPORTED/);
   const html = fixtureDocument(bundle, fixtures);
   assert.doesNotMatch(html, /<script[^>]+src=/i, 'Product boot/API scripts never run in the fixture');
   assert.match(html, /data-packaged-stylesheet="modules\/ws-workbench.css"/);

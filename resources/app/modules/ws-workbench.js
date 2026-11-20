@@ -22,7 +22,7 @@
     ordinary: new Set(['overview', 'accounts', 'chat', 'collection', 'ai', 'crm', 'tasks', 'logs', 'settings']),
     dedicated: new Set(['overview', 'accounts', 'chat', 'groups', 'members', 'contacts', 'exclusions', 'collection', 'crm', 'logs', 'settings', 'group-broadcast', 'group-mentions', 'group-reading', 'group-permissions']),
   });
-  const WS_BLOCKED_VIEWS = new Set(['group-mentions', 'group-permissions']);
+  const WS_BLOCKED_VIEWS = new Set(['group-mentions']);
   function workspaceViewAllowed(view, mode = state.workspaceMode) { return Boolean(WS_MODE_VIEW_IDS[mode]?.has(view)); }
   function workspaceViews(mode = state.workspaceMode) { return WS_WORKSPACE_VIEW_META.filter(item => workspaceViewAllowed(item.id, mode)).map(item => item.id === 'chat' && mode === 'dedicated' ? { ...item, label: '专用登录', hint: '独立专用账号扫码与原生会话' } : item); }
   function modeAccount(accountId, mode = state.workspaceMode) { return state.accounts.find(item => String(item.id) === String(accountId) && accountWorkspaceMode(item) === mode); }
@@ -40,9 +40,9 @@
     { id: 'tasks', label: '任务中心', icon: 'clipboard-check', hint: '跟进任务与提醒' },
     { id: 'logs', label: '操作日志', icon: 'history', hint: '审计记录、运行快照与关联查询' },
     { id: 'group-broadcast', label: '群组发送', icon: 'message', hint: '草稿与目标预览 · 实际发送 BLOCKED' },
-    { id: 'group-mentions', label: '群组 @ 提及', icon: 'users-group', hint: 'BLOCKED · 原生提及能力未验收' },
+    { id: 'group-mentions', label: '群组 @ 提及', icon: 'users-group', hint: '能力说明 · 原生及隐藏提及 BLOCKED' },
     { id: 'group-reading', label: '群组已读', icon: 'clipboard-check', hint: '本地历史查询 · 真实回执采集 BLOCKED' },
-    { id: 'group-permissions', label: '群组开关', icon: 'shield', hint: 'BLOCKED · 权限变更能力未验收' },
+    { id: 'group-permissions', label: '群组开关', icon: 'shield', hint: '本地权限清单 · 实际权限变更 BLOCKED' },
     { id: 'settings', label: '工具与设置', icon: 'settings', hint: '翻译、导入、导出与安全开关' },
   ]);
   const WS_WORKSPACE_VIEW_IDS = new Set(WS_WORKSPACE_VIEW_META.map(item => item.id));
@@ -3344,6 +3344,18 @@
     request: (pathname, init, context) => api(pathname, init, context),
     redraw: () => render({ skipNativeResize: true }),
   });
+  const groupPermissions = window.ZhikeWsGroupPermissions?.create({
+    getScope: () => state.active && state.workspaceMode === 'dedicated' && modeAccount(state.activeAccountId) &&
+      state.wsWorkspaceView === 'group-permissions' && getHost()?.state?.view === 'ws-workbench'
+      ? { ...captureContext(''), workspaceMode: state.workspaceMode, view: state.wsWorkspaceView } : null,
+    request: (pathname, scope) => api(pathname, {}, scope),
+    redraw: () => render({ skipNativeResize: true }),
+    openLogs: scope => {
+      if (!contextCurrent(scope) || state.workspaceMode !== 'dedicated' || state.wsWorkspaceView !== 'group-permissions') return;
+      state.wsWorkspaceView = 'logs'; writeWsWorkspaceState('logs', state.wsWorkspaceNavCollapsed);
+      render({ skipNativeResize: true }); return refreshWorkspacePage();
+    },
+  });
   const groupReading = window.ZhikeWsGroupReading?.create({
     getScope: () => {
       if (!state.active || state.workspaceMode !== 'dedicated' || !modeAccount(state.activeAccountId) ||
@@ -3534,6 +3546,8 @@
         if (state.error) throw new Error(state.error);
       } else if (view === 'members') {
         await Promise.all([loadGroupMonitor(), loadGroupMembers(context)]);
+      } else if (view === 'group-permissions') {
+        if (!await groupPermissions?.load()) throw new Error('本地权限清单读取失败，请查看具体原因。');
       } else if (view === 'group-reading') {
         const catalog = await api('/api/ws/group-manager/groups?limit=1000', {}, context);
         assertContext(context);
@@ -3625,6 +3639,7 @@
   function renderWsWorkspacePage(view) {
     const activeView = workspaceViewAllowed(view) ? view : 'overview';
     const meta = workspaceViews().find(item => item.id === activeView) || WS_WORKSPACE_VIEW_META[0];
+    if (activeView === 'group-mentions') return `<section class="ws-workspace-page-content" data-ws-workspace-page="group-mentions"><div class="ws-workspace-page-heading"><h2>群组 @ 提及</h2><span class="ws-status-badge" data-status="disabled">BLOCKED</span></div>${window.ZhikeWsGroupPermissions?.renderMentions() || '<section class="ws-workspace-card"><p>能力说明模块未加载；隐藏提及 B_MODE_BLOCKED_UNSUPPORTED，原生提及 BLOCKED。</p></section>'}</section>`;
     if (activeView === 'group-broadcast') return `<section class="ws-workspace-page-content" data-ws-workspace-page="group-broadcast" data-ws-account-id="${esc(state.activeAccountId || '')}"><div class="ws-workspace-page-heading"><h2>群组发送草稿</h2><span class="ws-status-badge" data-status="disabled">实际发送 BLOCKED</span></div>${groupDrafts?.render() || '<section class="ws-workspace-card"><p>草稿模块未加载，请重新打开应用。实际发送：BLOCKED。</p></section>'}</section>`;
     if (WS_BLOCKED_VIEWS.has(activeView)) return `<section class="ws-workspace-page-content" data-ws-workspace-page="${esc(activeView)}"><div class="ws-workspace-page-heading"><h2>${esc(meta.label)}</h2><span class="ws-status-badge" data-status="disabled">BLOCKED</span></div><section class="ws-workspace-card zk-surface"><p>${esc(meta.hint)}</p><p>此功能尚未通过真实平台验证，暂不能执行此操作。</p></section></section>`;
     const account = accountDisplayName(activeAccount()) || state.activeAccountId || 'default';
@@ -3635,6 +3650,7 @@
     else if (activeView === 'accounts') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>账号与连接</strong><span>账号作用域独立，切换保留各账号隔离会话。</span></div><button class="btn small" data-ws-action="create-account">＋ 添加账号</button></div>${renderAccountForm()}<div class="ws-workspace-metrics"><div><span>已加载 WS 账号</span><strong>${state.accounts.length}</strong><small>本机隔离会话</small></div><div><span>当前账号</span><strong>${esc(account)}</strong><small>${esc(state.wsStatus)}</small></div><div><span>后台状态</span><strong>${esc(collectorStatusLabel())}</strong><small>独立采集会话，需单独扫码登录</small></div></div>${renderCollectorControls()}${renderWorkspaceList('accounts', state.accounts, rows => renderAccountList(rows))}</section>`;
     else if (activeView === 'groups') body = renderGroupDirectory() + (groupReading?.render() || '');
     else if (activeView === 'group-reading') body = renderWorkspaceGroupReading();
+    else if (activeView === 'group-permissions') body = groupPermissions?.render() || '<section class="ws-workspace-card"><p>权限模块未加载；管理员资格与发言权限 UNKNOWN，实际开关群 BLOCKED。</p></section>';
     else if (activeView === 'members') body = renderWorkspaceMembers();
     else if (activeView === 'collection') { const page = wsWorkspacePageState('collection'); body = `${renderCollectionCard()}${businessPages ? businessPages.renderRunDetails(state.collectionRun, page.collectionItems, collectionCapability()) : ''}<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>当前任务采集项</strong><span>当前账号、当前任务已读取的最多 1000 条采集项，保留失败原因与 checkpoint。</span></div><button type="button" class="btn small" data-ws-action="collection-history">查看任务历史</button></div>${renderWorkspaceList('collection', page.collectionItems || [], rows => businessPages ? businessPages.renderCollectionItems(rows) : renderWorkspaceSummaryRows(rows, 'collection'))}</section>${renderWsFlowStrip()}`; }
     else if (activeView === 'contacts') body = renderWorkspaceReadDirectory('contacts');
@@ -4155,6 +4171,7 @@
   }
   function render(options = {}) {
     groupReading?.discardStale();
+    groupPermissions?.discardStale();
     groupDrafts?.discardStale();
     const host = getHost();
     if (!host || !state.active || host.state.view !== 'ws-workbench') return;
@@ -5608,6 +5625,7 @@
     if (action === 'toggle-messages') { state.messageCollapsed = !state.messageCollapsed; writePanelCollapsed('messages', state.messageCollapsed); render(); return; }
     if (action === 'toggle-local-panels') { state.localPanelsCollapsed = !state.localPanelsCollapsed; state.manualToolsVisible = !state.localPanelsCollapsed; writePanelCollapsed('local-panels', state.localPanelsCollapsed); render(); return; }
     if (action === 'toggle-workspace-nav') { state.wsWorkspaceNavCollapsed = !state.wsWorkspaceNavCollapsed; writeWsWorkspaceState(state.wsWorkspaceView, state.wsWorkspaceNavCollapsed); render(); return; }
+    if (action.startsWith('group-permission-')) return groupPermissions?.run(action.slice('group-permission-'.length));
     if (action.startsWith('group-reading-')) return groupReading?.run(action.slice('group-reading-'.length));
     if (action.startsWith('group-directory-')) {
       if (state.wsWorkspaceView !== 'groups') return;
@@ -5745,6 +5763,8 @@
   }
   function applyControlChange(target) {
     if (target.matches('[data-ws-group-draft-select]')) { groupDrafts?.select(target.dataset.wsGroupDraftSelect, Boolean(target.checked)); return; }
+    if (target.matches('[data-ws-permission-search]')) { groupPermissions?.search(target.value); return; }
+    if (target.matches('[data-ws-permission-select]')) { groupPermissions?.select(target.dataset.wsPermissionSelect, Boolean(target.checked)); return; }
     if (target.matches('[data-ws-reading-group]')) {
       if (state.workspaceMode !== 'dedicated' || state.wsWorkspaceView !== 'group-reading' || !modeAccount(state.activeAccountId)) return;
       const page = wsWorkspacePageState('group-reading');
@@ -5964,6 +5984,7 @@
     groupDrafts?.reset();
     state.active = false;
     groupReading?.reset();
+    groupPermissions?.reset();
     assistDrawerResize = null;
     assistDrawerMove = null;
     unbindAssistPointerListeners();
