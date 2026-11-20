@@ -98,6 +98,12 @@ const result = () => ({ navigation: { id: 1, succeeded: true, url: url.href }, v
 test('completed native matrix preserves the actual data and exact viewports', () => {
   assert.equal(validateResult(result(), [viewport], url, viewport)[0].actualValue, 7);
 });
+test('identical Windows short file paths may use URL-equivalent tilde spellings', () => {
+  const target = new URL('file:///C:/Users/RUNNER%7E1/fixture.html?case=1');
+  const navigation = { id: 1, succeeded: true, url: 'file:///C:/Users/RUNNER~1/fixture.html?case=1' };
+  assert.equal(validateResult({ ...result(), navigation }, [viewport], target, viewport)[0].actualValue, 7);
+  assert.throws(() => validateResult({ ...result(), navigation: { ...navigation, url: navigation.url + '0' } }, [viewport], target, viewport), /exact successful native navigation/);
+});
 test('missing, failed or foreign native navigation is rejected', () => {
   for (const navigation of [null, { id: 1, succeeded: false, url: url.href },
     { id: 1, succeeded: true, url: 'file:///C:/synthetic/previous.html' }]) {

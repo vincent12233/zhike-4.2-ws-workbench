@@ -57,6 +57,13 @@ test('dedicated group drafts persist selected catalog identities without submitt
   const data = { accountId: 'desk', id: 'draft-1', action: 'create', message: 'Original\n正文', targets: ['g2@g.us', 'g1@g.us'] };
   try {
     await requestWithStartupDiagnostics(() => request('/api/health'), observation);
+    await t.test('the production shell serves its draft editor from the sidecar', async () => {
+      const html = await (await fetch(origin + '/index.html')).text();
+      assert.ok(html.includes('src="./modules/ws-group-drafts-ui.js"'));
+      const response = await fetch(origin + '/modules/ws-group-drafts-ui.js');
+      assert.equal(response.status, 200);
+      assert.equal(await response.text(), fs.readFileSync(path.join(app, 'modules/ws-group-drafts-ui.js'), 'utf8'));
+    });
     await t.test('scope, catalog filtering, same-name identities and pagination', async () => {
       await request(route, undefined, 400);
       await request(route + '?accountId=default', undefined, 403);

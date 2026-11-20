@@ -5,6 +5,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const { fileURLToPath } = require('node:url');
 const { randomUUID, createHash } = require('node:crypto');
 const { performance } = require('node:perf_hooks');
 const { runProcessLifecycle, validateEdgeOptions, writeScreenshotPng } = require('./isolated-edge-runner.cjs');
@@ -58,7 +59,11 @@ function hostMessages() {
 }
 
 function validateResult(value, expectedViewports, targetUrl, viewport) {
-  assert.ok(value.navigation?.succeeded === true && value.navigation.id && new URL(value.navigation.url).href === targetUrl.href,
+  const navigation = value.navigation;
+  const actual = navigation?.succeeded === true && navigation.id ? new URL(navigation.url) : null;
+  // .NET leaves an unreserved tilde literal, while Node encodes it in DOS short paths.
+  assert.ok(actual?.protocol === 'file:' && actual.host === targetUrl.host &&
+    fileURLToPath(actual) === fileURLToPath(targetUrl) && actual.search === targetUrl.search && actual.hash === targetUrl.hash,
     'Result requires this exact successful native navigation');
   assert.ok(typeof value.value === 'string' && Buffer.byteLength(value.value) <= 32 * 1024 * 1024, 'Native matrix JSON must be bounded');
   const results = JSON.parse(value.value);
