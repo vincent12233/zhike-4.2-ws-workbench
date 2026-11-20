@@ -34,6 +34,8 @@ function renderWsWorkbenchFixture(options = {}) {
     URL, URLSearchParams, AbortController,
   };
   vm.createContext(sandbox);
+  const draftsSource = fs.readFileSync(path.join(resourceRoot, 'modules/ws-group-drafts-ui.js'), 'utf8');
+  vm.runInContext(draftsSource, sandbox, { filename: 'ws-group-drafts-ui.js' });
   vm.runInContext(avatarSource, sandbox, { filename: 'customer-avatar.js' });
   vm.runInContext(businessSource, sandbox, { filename: 'ws-business-pages.js' });
   const businessPages = sandbox.window.ZhikeWsBusinessPages;

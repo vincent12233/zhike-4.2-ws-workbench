@@ -38,6 +38,7 @@ test('isolated document uses manifest-verified packaged markup, styles, images a
   assert.match(fixtures[0].html, /包内普通 WS/);
   assert.match(fixtures[2].html, /包内专用 WS/);
   assert.match(fixtures[5].html, /BLOCKED/);
+  assert.match(fixtures[5].html, /data-ws-group-draft-input=/);
   const html = fixtureDocument(bundle, fixtures);
   assert.doesNotMatch(html, /<script[^>]+src=/i, 'Product boot/API scripts never run in the fixture');
   assert.match(html, /data-packaged-stylesheet="modules\/ws-workbench.css"/);

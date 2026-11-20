@@ -81,6 +81,7 @@ function runStage3(options = {}) {
   run('WS AI execution queue eligibility', [path.join(repo, 'tests', 'ws-ai-queue-workspace-mode.test.cjs')]);
   run('WS AI account purpose and member evidence', [path.join(repo, 'tests', 'ws-ai-workspace-mode.test.cjs')]);
   run('Native WS collector purpose and group evidence', [path.join(repo, 'tests', 'ws-native-purpose-policy.test.cjs')]);
+  run('Dedicated WS group message draft editor', [path.join(repo, 'tests', 'ws-group-drafts-ui.test.cjs')]);
   run('Dedicated WS group drafts and cancellation', [path.join(repo, 'tests', 'ws-group-drafts-api.test.cjs')]);
   run('WS account purpose operations', [path.join(repo, 'tests', 'ws-workspace-policy.test.cjs')]);
   run('WS account purpose in group monitor writes', [path.join(repo, 'tests', 'ws-group-monitor-workspace-mode.test.cjs')]);

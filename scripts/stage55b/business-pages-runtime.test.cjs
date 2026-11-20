@@ -154,7 +154,7 @@ async function accountSummaryReset() {
   const state = { workspaceMode: 'ordinary', accountPresentationGeneration: 0, activeAccountId: 'a', accountLoadSequence: 1, accounts: [{ id: 'a' }, { id: 'b' }], wsWorkspaceView: 'tasks', busy: {}, previewAnalysisSignatures: new Map(), analysisRefreshPending: new Set(), translationBusy: new Set(), conversations: [], backgroundActive: false, followupAlerts: [{ id: 'private-account-a-task', accountId: 'a' }], collectionRun: { id: 'private-account-a-run', accountId: 'a' }, aiQueueStats: { queued: 73, running: 4, total: 80 } };
   const contextCurrent = context => context.accountId === state.activeAccountId && context.sequence === state.accountLoadSequence;
   const sandbox = { state, String, Number, Map, Set, Promise, clearTimeout, text: value => String(value ?? '').trim(), nowIso: () => '2026-11-16T12:00:00Z', groupMonitorNativeSignature: '', settingsSaveTimer: undefined, settingsSaveSequence: 0, loadSequence: 0,
-    invalidateExclusionPage: () => {}, createGroupMonitorState: accountId => ({ accountId }), cancelAllAiWork: async () => {}, writeStoredAccountId: () => {}, render: () => {}, boundsForBrowserView: () => ({ hidden: true }), window: { zhikeDesktop: { ws: () => native.promise } },
+    groupDrafts: null, invalidateExclusionPage: () => {}, createGroupMonitorState: accountId => ({ accountId }), cancelAllAiWork: async () => {}, writeStoredAccountId: () => {}, render: () => {}, boundsForBrowserView: () => ({ hidden: true }), window: { zhikeDesktop: { ws: () => native.promise } },
     captureContext: () => ({ accountId: state.activeAccountId, sequence: state.accountLoadSequence }), contextCurrent, assertContext: context => assert.ok(contextCurrent(context)), syncVipGroupAllowlist: async () => {}, loadGroupMonitor: async () => {}, loadGroupMembers: async () => {},
     loadAllConversationPages: async () => ({ conversations: [], groupConversations: [] }), api: async () => { throw new Error('summary read unavailable'); }, applyConversationInventory: result => { state.conversations = result.conversations; }, mergeDiscoveredGroupRows: () => {}, resolveInitialConversationId: () => '', loadConversationData: async () => {},
     businessPages: ui, esc: ui.esc, wsWorkspacePageState: () => ({ status: '已刷新 · 旧缓存状态' }),
@@ -232,7 +232,7 @@ async function nativeRestoreReset() {
   };
   let registered, requested = 0;
   const sandbox = { state, String, Number, Map, Set, Promise, clearTimeout, settingsSaveTimer: undefined, settingsSaveSequence: 0, groupMonitorNativeSignature: '',
-    text: value => String(value ?? '').trim(), invalidateExclusionPage: () => {}, createGroupMonitorState: accountId => ({ accountId, rows: [] }), cancelAllAiWork: async () => {}, writeStoredAccountId: () => {}, render: () => {}, updateAccountStatus: () => {},
+    text: value => String(value ?? '').trim(), groupDrafts: null, invalidateExclusionPage: () => {}, createGroupMonitorState: accountId => ({ accountId, rows: [] }), cancelAllAiWork: async () => {}, writeStoredAccountId: () => {}, render: () => {}, updateAccountStatus: () => {},
     core: { retryTransient: work => work() }, window: { zhikeDesktop: { onWsStatus: callback => { registered = callback; }, wsAccounts: () => { ++requested; return listing.promise; } } },
   };
   const reset = extract('  function resetAccountPresentation(', '  function toast(');

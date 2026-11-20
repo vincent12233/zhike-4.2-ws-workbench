@@ -998,3 +998,24 @@ html[data-motion="off"] body.ws-workspace-active .ws-workbench-shell *::after{sc
 .ws-workspace-nav.is-collapsed .ws-workspace-mode-switch{flex-direction:column;padding:5px}
 .ws-workspace-nav.is-collapsed .ws-workspace-mode-switch button{font-size:10px;padding:5px 1px}
 .ws-workspace-empty{overflow:auto!important}.ws-workspace-empty>.ws-workspace-page-content{display:block!important;position:static;min-height:0}
+.ws-group-drafts{display:grid;gap:18px}
+.ws-group-draft-columns{display:grid;grid-template-columns:minmax(260px,1fr) minmax(320px,1.3fr);gap:18px;align-items:start}
+.ws-group-drafts .ws-workspace-card{min-width:0;display:grid;gap:12px}
+.ws-group-draft-toolbar{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
+.ws-group-draft-toolbar label{display:grid;gap:6px;flex:1;min-width:140px}
+.ws-group-drafts textarea{display:block;box-sizing:border-box;width:100%;min-height:150px;resize:vertical;margin-top:8px}
+.ws-group-draft-choices{display:grid;gap:8px;max-height:360px;overflow:auto;overscroll-behavior:contain}
+.ws-group-draft-choice{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--ws-border,#c8d3d6);border-radius:8px;cursor:pointer}
+.ws-group-draft-choice span,.ws-group-draft-targets li>span,.ws-group-drafts td:first-child{min-width:0}
+.ws-group-drafts strong,.ws-group-drafts code{display:block;overflow-wrap:anywhere;white-space:normal}
+.ws-group-drafts code{font-size:.85em;color:var(--ws-muted,#607780)}
+.ws-group-draft-targets{padding:0;list-style:none;display:grid;gap:8px;max-height:240px;overflow:auto}
+.ws-group-draft-targets li{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ws-group-draft-body{white-space:pre-wrap;overflow-wrap:anywhere}
+.ws-group-draft-preview,.ws-group-draft-history{border:1px solid var(--ws-border,#c8d3d6);border-radius:10px;padding:14px}
+.ws-group-draft-history summary{cursor:pointer;overflow-wrap:anywhere}
+.ws-group-draft-history table{width:100%;table-layout:fixed;margin:12px 0;border-collapse:collapse}
+.ws-group-draft-history th,.ws-group-draft-history td{text-align:left;padding:8px;border-bottom:1px solid var(--ws-border,#c8d3d6);vertical-align:top;overflow-wrap:anywhere}
+.ws-group-draft-history th:first-child{width:70%}
+.ws-group-drafts [hidden]{display:none!important}
+@media(max-width:900px){.ws-group-draft-columns{grid-template-columns:minmax(0,1fr)}}

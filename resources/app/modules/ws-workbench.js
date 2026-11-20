@@ -22,7 +22,7 @@
     ordinary: new Set(['overview', 'accounts', 'chat', 'collection', 'ai', 'crm', 'tasks', 'logs', 'settings']),
     dedicated: new Set(['overview', 'accounts', 'chat', 'groups', 'members', 'contacts', 'exclusions', 'collection', 'crm', 'logs', 'settings', 'group-broadcast', 'group-mentions', 'group-reading', 'group-permissions']),
   });
-  const WS_BLOCKED_VIEWS = new Set(['group-broadcast', 'group-mentions', 'group-reading', 'group-permissions']);
+  const WS_BLOCKED_VIEWS = new Set(['group-mentions', 'group-reading', 'group-permissions']);
   function workspaceViewAllowed(view, mode = state.workspaceMode) { return Boolean(WS_MODE_VIEW_IDS[mode]?.has(view)); }
   function workspaceViews(mode = state.workspaceMode) { return WS_WORKSPACE_VIEW_META.filter(item => workspaceViewAllowed(item.id, mode)).map(item => item.id === 'chat' && mode === 'dedicated' ? { ...item, label: '专用登录', hint: '独立专用账号扫码与原生会话' } : item); }
   function modeAccount(accountId, mode = state.workspaceMode) { return state.accounts.find(item => String(item.id) === String(accountId) && accountWorkspaceMode(item) === mode); }
@@ -39,7 +39,7 @@
     { id: 'crm', label: 'CRM客户', icon: 'user', hint: '客户主档匹配与冲突' },
     { id: 'tasks', label: '任务中心', icon: 'clipboard-check', hint: '跟进任务与提醒' },
     { id: 'logs', label: '操作日志', icon: 'history', hint: '审计记录、运行快照与关联查询' },
-    { id: 'group-broadcast', label: '群组发送', icon: 'message', hint: 'BLOCKED · 群组发送尚未验证' },
+    { id: 'group-broadcast', label: '群组发送', icon: 'message', hint: '草稿与目标预览 · 实际发送 BLOCKED' },
     { id: 'group-mentions', label: '群组 @ 提及', icon: 'users-group', hint: 'BLOCKED · 原生提及能力未验收' },
     { id: 'group-reading', label: '群组已读', icon: 'clipboard-check', hint: 'BLOCKED · 真实回执能力未验收' },
     { id: 'group-permissions', label: '群组开关', icon: 'shield', hint: 'BLOCKED · 权限变更能力未验收' },
@@ -810,6 +810,7 @@
 
   function resetAccountPresentation(accountId) {
     invalidateExclusionPage();
+    groupDrafts?.reset();
     ++state.accountPresentationGeneration;
     state.collectorActionSequence = Number(state.collectorActionSequence || 0) + 1;
     // Clear only the account-scoped UI projection. Persisted tasks, leases,
@@ -3323,6 +3324,13 @@
     page.selectedGroupIds ||= [];
     return page;
   }
+  const groupDrafts = window.ZhikeWsGroupDrafts?.create({
+    getScope: () => state.active && state.workspaceMode === 'dedicated' && state.wsWorkspaceView === 'group-broadcast'
+      && getHost()?.state?.view === 'ws-workbench' && modeAccount(state.activeAccountId)
+      ? captureContext('') : null,
+    request: (pathname, init, context) => api(pathname, init, context),
+    redraw: () => render({ skipNativeResize: true }),
+  });
   const groupReading = window.ZhikeWsGroupReading?.create({
     getScope: () => {
       if (!state.active || state.wsWorkspaceView !== 'groups' || getHost()?.state?.view !== 'ws-workbench') return null;
@@ -3467,6 +3475,7 @@
   }
   async function refreshWorkspacePage() {
     const view = state.wsWorkspaceView;
+    if (view === 'group-broadcast') return groupDrafts?.load();
     if (!workspaceViewAllowed(view) || WS_BLOCKED_VIEWS.has(view) || view === 'chat') return;
     if (!modeAccount(state.activeAccountId)) { if (view === 'accounts' || view === 'overview') await loadAccounts(); return; }
     const accountId = String(state.activeAccountId || 'default');
@@ -3588,6 +3597,7 @@
   function renderWsWorkspacePage(view) {
     const activeView = workspaceViewAllowed(view) ? view : 'overview';
     const meta = workspaceViews().find(item => item.id === activeView) || WS_WORKSPACE_VIEW_META[0];
+    if (activeView === 'group-broadcast') return `<section class="ws-workspace-page-content" data-ws-workspace-page="group-broadcast" data-ws-account-id="${esc(state.activeAccountId || '')}"><div class="ws-workspace-page-heading"><h2>群组发送草稿</h2><span class="ws-status-badge" data-status="disabled">实际发送 BLOCKED</span></div>${groupDrafts?.render() || '<section class="ws-workspace-card"><p>草稿模块未加载，请重新打开应用。实际发送：BLOCKED。</p></section>'}</section>`;
     if (WS_BLOCKED_VIEWS.has(activeView)) return `<section class="ws-workspace-page-content" data-ws-workspace-page="${esc(activeView)}"><div class="ws-workspace-page-heading"><h2>${esc(meta.label)}</h2><span class="ws-status-badge" data-status="disabled">BLOCKED</span></div><section class="ws-workspace-card zk-surface"><p>${esc(meta.hint)}</p><p>此功能尚未通过真实平台验证，暂不能执行此操作。</p></section></section>`;
     const account = accountDisplayName(activeAccount()) || state.activeAccountId || 'default';
     const run = state.collectionRun || {};
@@ -4116,13 +4126,14 @@
   }
   function render(options = {}) {
     groupReading?.discardStale();
+    groupDrafts?.discardStale();
     const host = getHost();
     if (!host || !state.active || host.state.view !== 'ws-workbench') return;
     const target = $('#viewContainer');
     if (!target) return;
     captureWorkspaceNavScroll();
     if (!modeAccount(state.activeAccountId)) {
-      const blocked = WS_BLOCKED_VIEWS.has(state.wsWorkspaceView) ? renderWsWorkspacePage(state.wsWorkspaceView) : '';
+      const blocked = WS_BLOCKED_VIEWS.has(state.wsWorkspaceView) || state.wsWorkspaceView === 'group-broadcast' ? renderWsWorkspacePage(state.wsWorkspaceView) : '';
       target.innerHTML = `<div class="ws-workbench-shell ${state.wsWorkspaceNavCollapsed ? 'ws-nav-collapsed' : ''}" data-ws-workspace-mode="${state.workspaceMode}">${renderWsWorkspaceNav()}<div class="ws-workbench-page ws-workspace-empty"><section class="ws-workspace-page-content"><h2>${workspaceLabel()}</h2><p role="status">${state.accountsLoading ? '正在读取此用途的账号…' : '当前用途暂无可用账号。添加账号后需独立扫码登录。'}</p>${state.error ? '<p class="ws-error-line" role="alert">' + esc(state.error) + '</p>' : ''}<button class="btn primary" data-ws-action="create-account">添加${workspaceLabel()}账号</button><button class="btn" data-ws-action="refresh-accounts">刷新账号列表</button>${renderAccountForm()}</section>${blocked}</div></div>`;
       restoreWorkspaceNavScroll();
       return;
@@ -4137,6 +4148,9 @@
     // immediately after the markup is replaced, so the business state still
     // renders normally while the native session keeps its anchor node.
     const preservedBrowserHost = $('#wsBrowserHost');
+    const draftInput = state.wsWorkspaceView === 'group-broadcast' ? document.activeElement : null;
+    const draftInputKey = draftInput?.dataset?.wsGroupDraftInput;
+    const draftSelection = [draftInput?.selectionStart, draftInput?.selectionEnd];
     // Keep the right assistant drawer alive across shell redraws. Its body is
     // the only assistant scroll owner; replacing that node makes the browser
     // briefly create a new scroll box at top before the old position can be
@@ -4345,6 +4359,11 @@
     }
     updateStatusDom();
     rendering = false;
+    if (['query', 'message'].includes(draftInputKey)) {
+      const replacement = document.querySelector(`[data-ws-group-draft-input="${draftInputKey}"]`);
+      replacement?.focus?.({ preventScroll: true });
+      if (Number.isInteger(draftSelection[0])) replacement?.setSelectionRange?.(...draftSelection);
+    }
     const browserHost = $('#wsBrowserHost');
     if (browserHost && typeof ResizeObserver === 'function' && browserResizeObservedHost !== browserHost) {
       browserResizeObserver?.disconnect?.();
@@ -5488,6 +5507,7 @@
     return true;
   }
   async function handleAction(action, element) {
+    if (action.startsWith('group-draft-')) return groupDrafts?.run(action.slice('group-draft-'.length), String(element?.dataset?.draftId || ''));
     if (state.workspaceMode === 'dedicated' && (action.includes('broadcast') || (action === 'focus-assist' && element?.dataset?.assistTarget === 'broadcast'))) throw new Error('专用群组发送能力尚未验收：BLOCKED。');
     if (action === 'return-zhike') { (document.querySelector('[data-workspace-target="main"]') || document.querySelector('.nav-item[data-view="home"]'))?.click(); return; }
     if (action.startsWith('business-')) {
@@ -5682,6 +5702,7 @@
     }
   }
   function applyControlChange(target) {
+    if (target.matches('[data-ws-group-draft-select]')) { groupDrafts?.select(target.dataset.wsGroupDraftSelect, Boolean(target.checked)); return; }
     if (target.matches('[data-ws-group-reading-message]')) { groupReading?.select(target.value); return; }
     if (target.matches('[data-ws-business-account]')) {
       const view = state.wsWorkspaceView;
@@ -5745,6 +5766,7 @@
     }
   }
   function applyInput(target) {
+    if (target.matches('[data-ws-group-draft-input]')) { groupDrafts?.input(target.dataset.wsGroupDraftInput, target.value); groupDrafts?.syncInputs(document); return; }
     if (target.matches('[data-ws-business-query]')) { wsWorkspacePageState().filter = String(target.value || '').slice(0, 160); return; }
     if (target.matches('[data-ws-business-filter]')) { applyControlChange(target); return; }
     if (target.matches('[data-ws-workspace-search]')) { applyWorkspaceListFilter(target); return; }
@@ -5883,6 +5905,7 @@
   function deactivate() {
     if (!state.active) return;
     invalidateExclusionPage();
+    groupDrafts?.reset();
     state.active = false;
     groupReading?.reset();
     assistDrawerResize = null;
@@ -5986,6 +6009,7 @@
         const nextView = String(workspaceItem.dataset.wsWorkspaceView || '');
         if (!workspaceViewAllowed(nextView)) return;
         invalidateExclusionPage();
+        groupDrafts?.reset();
         wsWorkspacePageState(state.wsWorkspaceView).scrollTop = Number(document.querySelector('[data-ws-workspace-page]')?.scrollTop || 0);
         state.wsWorkspaceView = nextView;
         wsWorkspacePageState(nextView);
@@ -6037,6 +6061,12 @@
     view?.addEventListener('input', event => {
       if (!event.target.closest('.ws-workbench-page')) return;
       applyInput(event.target);
+    }, true);
+    view?.addEventListener('submit', event => {
+      const form = event.target?.closest?.('[data-ws-group-draft-search]');
+      if (!form) return;
+      event.preventDefault(); event.stopImmediatePropagation();
+      void groupDrafts?.run('search');
     }, true);
     view?.addEventListener('submit', event => {
       const form = event.target?.closest?.('[data-ws-business-form]');
