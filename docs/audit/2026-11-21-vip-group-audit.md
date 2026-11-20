@@ -1,24 +1,31 @@
-# 2026-11-21 · VIP 群逻辑审计（V5.0 §3.1）
+# 2026-11-21 · VIP 群逻辑审计与移除（V5.0 §3.1）
 
-结论：**不需要改代码。** “VIP 群”作为业务概念已经从产品中移除，VIP 只是 CRM 客户分类。旧代码中保留的 `vip_group` 只是内部类型标记，不构成业务限制。
+结论：**已移除。** 产品中不存在 VIP 群，VIP 只是 CRM 客户标签（`vipNumber`）。
 
-## 核查结果
+> 本文最初的版本给出的结论是“不需要改代码”，理由是旧的 `vip_group` 只是内部类型标记。用户随后明确重申“没有 VIP 群组，VIP 是客户的标签分类而已”，因此这一概念已在各层彻底移除。见提交 `6703617`（界面与 sidecar）和 `a307a3a`（原生 WinUI 宿主）。
 
-| 检查项 | 结果 | 依据 |
-| --- | --- | --- |
-| 界面上是否还有“VIP 群 / VIP 群组”文字 | 没有 | `app.js`、`index.html`、`modules/*.js`、`server.mjs` 全文检索无结果 |
-| VIP 统计是否受群组影响 | 不受影响 | `ws-scope.js` `countVipCustomers` 只看客户主档 VIP 编号 |
-| 群组监测是否读取客户 VIP 字段 | 不读取 | `ws-scope.js` `normalizeWsGroupBindings` 注释与实现；`tests/vip-scope-separation.test.cjs` |
-| 旧配置键 `wsVipGroupAllowlist / wsVipGroups / vipGroupBindings` | 只在新键 `wsGroupAllowlist` 缺失时作为迁移回退读取；新键为空即撤销旧授权 | `ws-scope.js` |
-| `ws_group_monitor_targets.vip_only` | 只写入、只回显，不参与任何判断 | `server.mjs` 中仅在 payload 与 INSERT 处出现 |
-| `conversationType === 'vip_group'` | 含义是“被可信采集端或显式绑定授权的群组”，用于按成员范围分析；与客户 VIP 无关 | `ws-workbench-core.js` `conversationType` |
-| 普通 WS `whatsapp.directOnly` | 与 V5.0 一致：群组由专用 WS 负责 | `business-rule-core.js` |
+## 审计发现（移除前）
 
-## 为什么不改名
+| 层 | 事实 |
+| --- | --- |
+| 原生 C# 采集端 | 从不产生 `vip_group`：把所有群统一为 `group`；VIP 白名单脚本从未被填充，配置处理函数是空操作 |
+| 客户 VIP 编号 | 从未影响任何群组行为（统计、群组授权、采集都不读取） |
+| 实际可触发的差异 | 只来自历史存量数据中的 `vip_group` / `vipGroup:true`：普通 WS 里这种“VIP 群”会留在个人聊天列表、被自动采集、可以导入、并按成员做 AI 分析；普通群则全部不会 |
 
-`vip_group` 已经保存在现有用户的 `ws_conversations.data_json` 中。改名需要一次数据迁移，而用户看不到任何变化；V5.0 也要求“不得盲目删除历史代码或绕过安全校验”。因此保留这个内部标记，靠现有测试锁定“VIP 与群组无关”。
+## 移除后的规则
 
-## 后续注意
+- 所有 WhatsApp 群统一为 `group`。历史数据中的 `vip_group` / `vipGroup:true` 按普通群读取，不再有任何额外权限。
+- 普通 WS 只处理一对一私聊：不列出、不采集、不导入、不分析任何群聊。
+- 群组只属于专用 WS；能否采集只由群组授权清单 / 监测目标决定。
+- 群会话不能绑定到单个客户，这类请求直接被拒绝（`WS_GROUP_EXCLUDED`）。
+- 专用 WS 中已授权群组的“按成员分析、按成员隔离任务和提醒”功能保留，因为它与 VIP 无关；相关函数已从 `Vip*` 改名为 `GroupMember*`。
+- 为了让升级上来的工作区保留已授权群组，`ws-scope.js` 仍会读取旧设置键 `wsVipGroupAllowlist` / `wsVipGroups` / `vipGroupBindings` 作为迁移回退。
+- 数据库列 `ws_group_monitor_targets.vip_only` 保留（避免迁移），但始终写 0，任何地方都不读取。
 
-- 新代码不要引入以 VIP 命名的群组概念。群组业务配置统一使用 schema 34 的 `ws_group_channel_configs`。
-- 如果以后清理 `vip_group` 这个标记，需要同时迁移 `ws_conversations.data_json`，并保留对旧值的读取兼容。
+## 验证
+
+- ws 测试套件 225/225；审计中列出的、不在 ws 套件里的测试也逐个通过。
+- 13 个测试从断言“VIP 例外”改为断言新规则；`ws-vip-member-alerts` 改名为 `ws-group-member-alerts`。
+- 历史 `vip_group` 输入仍有测试覆盖，用来证明它按普通群读取；普通 WS 中历史群聊的 AI 任务会被取消，也有测试断言。
+- WinUI 桌面项目可用仓库自带 SDK（`.tools/dotnet10`）完整编译，0 错误。
+- 尚未在打包后的应用中用真机 WhatsApp 验证。
