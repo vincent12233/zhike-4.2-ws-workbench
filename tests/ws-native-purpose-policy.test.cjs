@@ -6,7 +6,7 @@ const take=(a,b)=>{const i=source.indexOf(a),j=source.indexOf(b,i);assert.ok(i>=
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'zhike-native-purpose-'));
 fs.writeFileSync(path.join(root,'NuGet.Config'),'<configuration><packageSources><clear /></packageSources></configuration>');
 const xml=s=>s.replaceAll('&','&amp;').replaceAll('"','&quot;');
-fs.writeFileSync(path.join(root,'Probe.csproj'),`<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup><ItemGroup>${['ApiClient.cs','BridgeContracts.cs','WsCollectorPurposePolicy.cs'].map(file=>`<Compile Include="${xml(path.join(services,file))}" Link="${file}" />`).join('')}</ItemGroup></Project>`);
+fs.writeFileSync(path.join(root,'Probe.csproj'),`<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup><ItemGroup>${['ApiClient.cs','WorkspaceRestoreTransfer.cs','BridgeContracts.cs','WsCollectorPurposePolicy.cs'].map(file=>`<Compile Include="${xml(path.join(services,file))}" Link="${file}" />`).join('')}</ItemGroup></Project>`);
 fs.writeFileSync(path.join(root,'Program.cs'),`
 using System.Net;
 using System.Net.Http.Json;

@@ -9,6 +9,7 @@
   <ItemGroup>
     <Compile Include="../../../desktop/src/Zhike.Desktop/Services/LocalServiceManager.cs" Link="LocalServiceManager.cs" />
     <Compile Include="../../../desktop/src/Zhike.Desktop/Services/ApiClient.cs" Link="ApiClient.cs" />
+    <Compile Include="../../../desktop/src/Zhike.Desktop/Services/WorkspaceRestoreTransfer.cs" Link="WorkspaceRestoreTransfer.cs" />
     <Compile Include="../../../desktop/src/Zhike.Desktop/Services/WsCollectorPurposePolicy.cs" Link="WsCollectorPurposePolicy.cs" />
     <Compile Include="../../../desktop/src/Zhike.Desktop/Services/BridgeContracts.cs" Link="BridgeContracts.cs" />
   </ItemGroup>

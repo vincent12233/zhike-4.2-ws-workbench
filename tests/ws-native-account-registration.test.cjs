@@ -17,7 +17,7 @@ function take(from, to) {
   return source.slice(begin, end);
 }
 
-const services = ['WsAccountStore.cs', 'WsAccountMetrics.cs', 'ApiClient.cs', 'BridgeContracts.cs', 'WsCollectorPurposePolicy.cs']
+const services = ['WsAccountStore.cs', 'WsAccountMetrics.cs', 'ApiClient.cs', 'WorkspaceRestoreTransfer.cs', 'BridgeContracts.cs', 'WsCollectorPurposePolicy.cs']
   .map(name => `<Compile Include="${escapeXml(path.join(desktop, 'Services', name))}" Link="${name}" />`).join('');
 const project = path.join(root, 'Probe.csproj');
 fs.writeFileSync(project, `<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType>
