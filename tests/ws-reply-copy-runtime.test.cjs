@@ -13,6 +13,7 @@ function fixture(copyResult, sensitive = false) {
   const draft = { replyInput: input, replyError: '', replyOperationId: '' };
   const copies = [], saves = [], notices = [];
   const sandbox = {
+    $: () => null,
     localStorage: { getItem: key => store.get(key), setItem: (key, value) => store.set(key, value) },
     state, text: value => String(value ?? '').trim(), activeConversation: () => ({ id: 'chat-a' }), currentDraft: () => draft,
     captureContext: () => ({ accountId: state.activeAccountId, sequence: state.accountLoadSequence }),

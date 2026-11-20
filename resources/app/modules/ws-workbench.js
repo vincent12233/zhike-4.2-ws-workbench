@@ -1175,20 +1175,32 @@
   // text is stored (never AI previews, errors or captured messages), scoped by
   // account + conversation so switching accounts cannot leak a draft across.
   const DRAFT_STORAGE_KEY = 'zhike.ws.reply-drafts';
-  const DRAFT_MAX_ENTRIES = 60;
-  const DRAFT_MAX_CHARS = 4000;
   let draftPersistTimer = null;
   let draftPersistGeneration = 0;
   const pendingDraftPersists = new Map();
+  const draftPersistErrors = new Map();
+  function replyDraftKey() { return `${state.activeAccountId || 'default'}:${String(state.currentConversationId || '__new__')}`; }
+  function draftPersistenceMessage() {
+    if (draftPersistErrors.has(replyDraftKey())) return '本机草稿保存失败，当前文字仍保留在此窗口。请保持窗口打开并重试保存。';
+    return draftPersistErrors.size ? `另有 ${draftPersistErrors.size} 份草稿尚未保存，文字仍保留在此窗口。请保持窗口打开并重试保存。` : '';
+  }
+  function updateDraftPersistenceStatus() {
+    const message = draftPersistenceMessage(), label = $('#wsDraftPersistenceStatus'), retry = $('#wsDraftPersistRetry');
+    if (label) label.textContent = message;
+    if (retry) retry.hidden = !message;
+  }
   function readDraftStore() {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || '{}');
-      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
-    } catch { return {}; }
+    const parsed = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || '{}');
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('草稿存储内容不可读取。');
+    return parsed;
   }
   function restoreDraftReply(key) {
-    const value = readDraftStore()[key];
-    return typeof value === 'string' ? value.slice(0, DRAFT_MAX_CHARS) : '';
+    // A failed write stays available in memory even if its view is rebuilt.
+    if (pendingDraftPersists.has(key)) return pendingDraftPersists.get(key);
+    try {
+      const value = readDraftStore()[key];
+      return typeof value === 'string' ? value : '';
+    } catch { draftPersistErrors.set(key, true); return ''; }
   }
   function persistDraftReply(key, value) {
     // An immediate clear/write supersedes the delayed snapshot for this key.
@@ -1199,19 +1211,22 @@
     }
     try {
       const store = readDraftStore();
-      const text = String(value || '').slice(0, DRAFT_MAX_CHARS);
+      const text = String(value ?? '');
       delete store[key];
-      if (text.trim()) store[key] = text;
-      const keys = Object.keys(store);
-      if (keys.length > DRAFT_MAX_ENTRIES) {
-        // Evict the oldest entries; object key order is insertion order.
-        for (const stale of keys.slice(0, keys.length - DRAFT_MAX_ENTRIES)) delete store[stale];
-      }
+      // Never truncate this recovery copy or evict another unsent reply.
+      // The existing send/copy limits are enforced at their own entry points.
+      if (text.length) store[key] = text;
       localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(store));
-    } catch { /* a full or disabled localStorage must never break typing */ }
+      draftPersistErrors.delete(key);
+      return true;
+    } catch {
+      pendingDraftPersists.set(key, String(value ?? ''));
+      draftPersistErrors.set(key, true);
+      return false;
+    } finally { updateDraftPersistenceStatus(); }
   }
   function scheduleDraftPersist(key, value) {
-    pendingDraftPersists.set(key, String(value ?? '').slice(0, DRAFT_MAX_CHARS));
+    pendingDraftPersists.set(key, String(value ?? ''));
     if (draftPersistTimer !== null) clearTimeout(draftPersistTimer);
     const generation = ++draftPersistGeneration;
     draftPersistTimer = setTimeout(() => {
@@ -1225,6 +1240,14 @@
     const snapshots = [...pendingDraftPersists];
     pendingDraftPersists.clear();
     for (const [key, value] of snapshots) persistDraftReply(key, value);
+  }
+  function updateReplyDraftInput(draft, value, newRevision = false) {
+    if (newRevision || draft.replyInput !== value) {
+      draft.replyRevision = Number(draft.replyRevision || 0) + 1;
+      draft.replyOperationId = ''; draft.replyOperationSource = '';
+    }
+    draft.replyInput = value;
+    scheduleDraftPersist(replyDraftKey(), value);
   }
   const HOT_PROFILE_LABELS = Object.freeze({
     preferred_name: '客户姓名或称呼',
@@ -4487,6 +4510,7 @@
             <section class="ws-card" data-assist-section="reply">
               <div class="ws-card-heading"><div><strong>回复建议</strong><span>默认只预览或复制，绝不自动发送</span></div></div>
               <textarea id="wsReplyInput" rows="3" placeholder="输入或采用 AI 回复建议">${esc(draft.replyInput)}</textarea>
+              <p id="wsDraftPersistenceStatus" class="ws-error-line" role="status">${esc(draftPersistenceMessage())}</p><button id="wsDraftPersistRetry" class="btn small" data-ws-action="retry-draft-persist" ${draftPersistenceMessage() ? '' : 'hidden'}>重试保存草稿</button>
               <div class="ws-reply-actions"><button class="btn small" data-ws-action="translate-reply" ${!current || state.busy.reply ? 'disabled' : ''}>手动翻译预览</button><button class="btn small primary" data-ws-action="copy-reply" ${!current || state.busy.reply ? 'disabled' : ''}>${state.busy.reply ? '处理中…' : '确认并复制'}</button></div>
               <div id="wsReplyPreview" class="ws-reply-preview">${draft.replyError ? `<p class="ws-error-line">${esc(draft.replyError)}</p>` : draft.replyPreview ? `<div class="ws-reply-warning">发送前请人工确认译文。</div><strong>预览 · ${esc(draft.replyPreviewLanguage || '原文')}</strong><p>${esc(draft.replyPreview)}</p>` : '<span class="ws-muted">尚未生成预览。</span>'}</div>
               ${replyHistory ? `<div class="ws-reply-history"><strong>最近复制记录</strong><ul>${replyHistory}</ul></div>` : ''}
@@ -5136,7 +5160,7 @@
     const suggestion = text(state.analysis?.replySuggestion);
     if (!suggestion) { toast('当前分析没有回复建议。', 'x'); return; }
     const draft = currentDraft();
-    draft.replyInput = suggestion;
+    updateReplyDraftInput(draft, suggestion, true);
     draft.replyPreview = '';
     draft.replyPreviewSource = '';
     draft.replyError = '';
@@ -5854,6 +5878,7 @@
     if (action.startsWith('ai-authorization-')) return aiAuthorizationAction(action.slice('ai-authorization-'.length), element);
     if (action === 'analyze') return analyzeConversation();
     if (action === 'use-ai-reply') return useAiReply();
+    if (action === 'retry-draft-persist') { flushDraftPersist(); updateDraftPersistenceStatus(); return; }
     if (action === 'save-customer') return saveCustomerTo();
     if (action === 'save-customer-to') return saveCustomerTo(element.dataset.id);
     if (action === 'save-followup') return saveFollowup();
@@ -5981,19 +6006,14 @@
     };
     const key = fields[target.id];
     if (!key) return;
-    const inputChanged = draft[key] !== target.value;
-    draft[key] = target.value;
+    if (target.id !== 'wsReplyInput') draft[key] = target.value;
     if (target.id === 'wsReplyInput') {
-      if (inputChanged) {
-        draft.replyRevision = Number(draft.replyRevision || 0) + 1;
-        draft.replyOperationId = ''; draft.replyOperationSource = '';
-      }
+      updateReplyDraftInput(draft, target.value);
       if (draft.replyPreviewSource !== target.value) {
         draft.replyPreview = '';
         draft.replyPreviewSource = '';
         draft.replyError = '';
       }
-      scheduleDraftPersist(`${state.activeAccountId || 'default'}:${String(state.currentConversationId || '__new__')}`, target.value);
     }
     if (target.id === 'wsVisibleChat') {
       const rows = core.parseVisibleChat(target.value, state.captureDirection);

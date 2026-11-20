@@ -9,12 +9,12 @@ const deferred = () => { let resolve, reject; const promise = new Promise((a, b)
 function fixture(options = {}) {
   const storage = new Map(Object.entries(options.storage || {})), timers = new Map(), allTimers = new Map(), requests = [], copies = [];
   let timerId = 0;
-  const target = { innerHTML:'' }, host = { state:{ view:'ws-workbench', settings:{}, customers:[], activities:[] }, toast() {} };
+  const target = { innerHTML:'' }, persistLabel = { textContent:'' }, retryButton = { hidden:true }, host = { state:{ view:'ws-workbench', settings:{}, customers:[], activities:[] }, toast() {} };
   const sandbox = { window:{ ZhikeWsCore:core, __zhikeRegistryHost:host, innerWidth:1440, innerHeight:900, location:{ origin:'http://localhost' },
     zhikeDesktop:{ ws:async () => ({}), wsAccounts:async () => ({ accounts:[{ id:'D', workspaceMode:'dedicated' }] }), tools:async payload => { copies.push(payload); return options.copy ? options.copy(payload) : { copied:true }; } } },
-    document:{ querySelector:selector => selector === '#viewContainer' ? target : selector === '#crumbCurrent' ? { textContent:'' } : null,
+    document:{ querySelector:selector => selector === '#viewContainer' ? target : selector === '#wsDraftPersistenceStatus' ? persistLabel : selector === '#wsDraftPersistRetry' ? retryButton : selector === '#crumbCurrent' ? { textContent:'' } : null,
       querySelectorAll:() => [], getElementById:() => null, addEventListener(){}, activeElement:null, documentElement:{ dataset:{} }, body:{ classList:{ add(){}, remove(){}, toggle(){} } } },
-    localStorage:{ getItem:name => storage.get(name) ?? null, setItem:(name, value) => storage.set(name, value) },
+    localStorage:{ getItem:name => storage.get(name) ?? null, setItem:(name, value) => { options.beforeStorageWrite?.(name, value); storage.set(name, value); } },
     setTimeout:(fn, delay) => { const id = ++timerId; timers.set(id, { fn, delay }); allTimers.set(id, { fn, delay }); return id; }, clearTimeout:id => timers.delete(id),
     setInterval:() => 0, clearInterval(){}, requestAnimationFrame:() => 0, URL, URLSearchParams, AbortController, DOMException, confirm:() => true, console,
     fetch:async (url, init) => { const body = init.body ? JSON.parse(init.body) : null; const row = { url, body }; requests.push(row);
@@ -22,12 +22,12 @@ function fixture(options = {}) {
       return { ok:true, json:async () => data }; } };
   vm.createContext(sandbox);
   const boot = /  boot\(\);\s*\}\)\(\);\s*$/; assert.match(source, boot);
-  vm.runInContext(source.replace(boot, '  globalThis.ui={state,currentDraft,applyInput,scheduleDraftPersist,flushDraftPersist,persistDraftReply,copyReply,resetAccountPresentation,switchAccount,activate,deactivate,getStartup:()=>backgroundStartPromise};\n})();'), sandbox);
+  vm.runInContext(source.replace(boot, '  globalThis.ui={state,currentDraft,applyInput,scheduleDraftPersist,flushDraftPersist,persistDraftReply,copyReply,useAiReply,handleAction,draftPersistenceMessage,resetAccountPresentation,switchAccount,activate,deactivate,getStartup:()=>backgroundStartPromise};\n})();'), sandbox);
   const ui = sandbox.ui; ui.state.workspaceMode = 'ordinary'; ui.state.accounts = [{ id:'A', workspaceMode:'ordinary' }, { id:'B', workspaceMode:'ordinary' }]; ui.state.activeAccountId='A'; ui.state.currentConversationId='cA'; ui.state.conversations=[{ id:'cA', title:'Synthetic A' }]; ui.state.settings = core.normalizeTranslationSettings({ enabled:false });
   const type = value => ui.applyInput({ id:'wsReplyInput', value, matches:() => false });
   const fire = () => { for (const [id, timer] of [...timers]) if (timer.delay === 250) { timers.delete(id); timer.fn(); } };
   const stored = () => JSON.parse(storage.get(key) || '{}');
-  return { ...ui, type, fire, stored, storage, timers, allTimers, requests, copies, sandbox };
+  return { ...ui, type, fire, stored, storage, timers, allTimers, requests, copies, sandbox, persistLabel, retryButton };
 }
 
 test('250ms edits in A and B both survive reset and shutdown without cross-account writes', () => {
@@ -100,4 +100,50 @@ test('deactivate and workspace-mode activate flush before any 250ms timer fires'
 test('incomplete clipboard copy preserves the draft and does not write a copied audit', async () => {
   const f = fixture({ copy:async () => ({ copied:true, truncated:true }) }); f.type('Unsent original'); await f.copyReply(); f.fire();
   assert.equal(f.currentDraft().replyInput, 'Unsent original'); assert.equal(f.stored()['A:cA'], 'Unsent original'); assert.equal(f.requests.length, 0);
+});
+
+test('long Unicode drafts and trailing whitespace survive debounce, close and reopen in full', () => {
+  const full = '完整草稿🙂'.repeat(2000) + '  \n\n';
+  const f = fixture(); f.type(full); f.fire(); f.flushDraftPersist();
+  assert.equal(f.stored()['A:cA'], full);
+  const reopened = fixture({ storage:Object.fromEntries(f.storage) }); assert.equal(reopened.currentDraft().replyInput, full);
+});
+
+test('saving another reply never silently evicts older unsent drafts', () => {
+  const previous = Object.fromEntries(Array.from({ length:65 }, (_, index) => ['A:old-' + index, 'Unsent ' + index]));
+  const f = fixture({ storage:{ [key]:JSON.stringify(previous) } }); f.type('Newest unsent'); f.fire();
+  assert.deepEqual(f.stored(), { ...previous, 'A:cA':'Newest unsent' });
+});
+
+test('quota failure retains complete memory and queued recovery text, shows failure and can retry', async () => {
+  let unavailable = true;
+  const full = 'Unsaved complete draft '.repeat(1000);
+  const f = fixture({ storage:{ [key]:JSON.stringify({ 'A:cA':'Previously saved' }) },
+    beforeStorageWrite:() => { if (unavailable) throw new Error('Synthetic storage quota exceeded'); } });
+  f.type(full); f.fire();
+  assert.equal(f.currentDraft().replyInput, full); assert.equal(f.stored()['A:cA'], 'Previously saved');
+  assert.match(f.persistLabel.textContent, /保存失败/); assert.equal(f.retryButton.hidden, false);
+  // Even rebuilding the in-memory draft view must not revert to the old disk copy.
+  f.state.drafts.clear(); assert.equal(f.currentDraft().replyInput, full);
+  f.state.activeAccountId='B'; f.state.currentConversationId='cB'; assert.match(f.draftPersistenceMessage(), /另有 1 份草稿尚未保存/);
+  unavailable = false; await f.handleAction('retry-draft-persist');
+  assert.equal(f.stored()['A:cA'], full); assert.equal(f.draftPersistenceMessage(), ''); assert.equal(f.retryButton.hidden, true);
+});
+
+test('adopting an AI suggestion persists immediately through shutdown without an input event', () => {
+  const suggestion = 'Synthetic adopted suggestion '.repeat(300);
+  const f = fixture(); f.state.analysis = { replySuggestion:suggestion.trim() }; const before = f.currentDraft().replyRevision;
+  f.useAiReply(); assert.equal(f.currentDraft().replyRevision, before + 1); f.flushDraftPersist();
+  const reopened = fixture({ storage:Object.fromEntries(f.storage) }); assert.equal(reopened.currentDraft().replyInput, suggestion.trim());
+});
+
+test('adopting even the same suggestion during an old copy creates a new durable revision', async () => {
+  for (const suggestion of ['Original reply', 'New suggestion '.repeat(400).trim()]) {
+    const gate = deferred(), f = fixture({ copy:() => gate.promise });
+    f.type('Original reply'); const before = f.currentDraft().replyRevision, pending = f.copyReply();
+    f.state.analysis = { replySuggestion:suggestion }; f.useAiReply();
+    assert.equal(f.currentDraft().replyRevision, before + 1);
+    gate.resolve({ copied:true }); await pending; f.fire();
+    assert.equal(f.currentDraft().replyInput, suggestion); assert.equal(f.stored()['A:cA'], suggestion);
+  }
 });
