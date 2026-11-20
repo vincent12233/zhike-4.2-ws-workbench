@@ -149,7 +149,9 @@ test('actual loopback sidecar serves local observations with isolated writes kep
 test('WS04 actual workbench DOM fixture handles selection, pages, download and stale account', async () => {
   const source = fs.readFileSync(path.join(app, 'modules/ws-workbench.js'), 'utf8');
   const html = fs.readFileSync(path.join(app, 'index.html'), 'utf8');
-  assert.match(html, /ws-group-reading-ui\.js"><\/script>\s*<script src="\.\/modules\/ws-workbench\.js/);
+  const scripts = [...html.matchAll(/<script\s+src="([^"]+)"/g)].map(match => match[1]);
+  const reading = scripts.indexOf('./modules/ws-group-reading-ui.js');
+  assert.ok(reading >= 0 && reading < scripts.indexOf('./modules/ws-workbench.js'), 'Load the local reading module before the workbench');
   const target = { innerHTML: '', querySelector: () => null };
   const host = { state: { view: 'ws-workbench', settings: {}, customers: [], activities: [] } };
   const scope = { accountId: 'dedicated-account', groupJid, messageId };

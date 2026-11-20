@@ -82,7 +82,7 @@ function loadBundle(stage) {
   assert.ok(stylesheetCount > 0);
   assert.doesNotMatch(html, /<link[^>]+rel="stylesheet"/i, 'Every packaged stylesheet must be validated');
   html = html.replace(/(<img\b[^>]*\bsrc=")([^"]+)(")/gi, (_, before, reference, after) => before + dataUrl(reference) + after);
-  for (const file of ['modules/ws-workbench-core.js', 'modules/ws-business-pages.js', 'modules/customer-avatar.js', 'modules/ws-group-drafts-ui.js', 'modules/ws-workbench.js']) resource(file);
+  for (const file of ['modules/ws-workbench-core.js', 'modules/ws-business-pages.js', 'modules/customer-avatar.js', 'modules/ws-group-reading-ui.js', 'modules/ws-group-drafts-ui.js', 'modules/ws-workbench.js']) resource(file);
   return { manifest, manifestSha256: sha256(manifestBytes), consumed, stylesheetCount, html,
     resourceRoot: path.join(stage, 'resources/app') };
 }

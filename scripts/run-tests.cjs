@@ -83,6 +83,7 @@ function runStage3(options = {}) {
   run('Native WS collector purpose and group evidence', [path.join(repo, 'tests', 'ws-native-purpose-policy.test.cjs')]);
   run('Dedicated WS group message draft editor', [path.join(repo, 'tests', 'ws-group-drafts-ui.test.cjs')]);
   run('WS unsent reply recovery across account changes', [path.join(repo, 'tests', 'ws-reply-draft-recovery-runtime.test.cjs')]);
+  run('Dedicated WS local group reading history', [path.join(repo, 'tests', 'ws-group-reading-workspace.test.cjs')]);
   run('Dedicated WS group drafts and cancellation', [path.join(repo, 'tests', 'ws-group-drafts-api.test.cjs')]);
   run('WS account purpose operations', [path.join(repo, 'tests', 'ws-workspace-policy.test.cjs')]);
   run('WS account purpose in group monitor writes', [path.join(repo, 'tests', 'ws-group-monitor-workspace-mode.test.cjs')]);

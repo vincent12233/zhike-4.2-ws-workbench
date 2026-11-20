@@ -35,6 +35,8 @@ function renderWsWorkbenchFixture(options = {}) {
   };
   vm.createContext(sandbox);
   const draftsSource = fs.readFileSync(path.join(resourceRoot, 'modules/ws-group-drafts-ui.js'), 'utf8');
+  const readingSource = fs.readFileSync(path.join(resourceRoot, 'modules/ws-group-reading-ui.js'), 'utf8');
+  vm.runInContext(readingSource, sandbox, { filename: 'ws-group-reading-ui.js' });
   vm.runInContext(draftsSource, sandbox, { filename: 'ws-group-drafts-ui.js' });
   vm.runInContext(avatarSource, sandbox, { filename: 'customer-avatar.js' });
   vm.runInContext(businessSource, sandbox, { filename: 'ws-business-pages.js' });

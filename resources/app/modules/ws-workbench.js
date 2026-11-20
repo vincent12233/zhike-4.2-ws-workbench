@@ -22,7 +22,7 @@
     ordinary: new Set(['overview', 'accounts', 'chat', 'collection', 'ai', 'crm', 'tasks', 'logs', 'settings']),
     dedicated: new Set(['overview', 'accounts', 'chat', 'groups', 'members', 'contacts', 'exclusions', 'collection', 'crm', 'logs', 'settings', 'group-broadcast', 'group-mentions', 'group-reading', 'group-permissions']),
   });
-  const WS_BLOCKED_VIEWS = new Set(['group-mentions', 'group-reading', 'group-permissions']);
+  const WS_BLOCKED_VIEWS = new Set(['group-mentions', 'group-permissions']);
   function workspaceViewAllowed(view, mode = state.workspaceMode) { return Boolean(WS_MODE_VIEW_IDS[mode]?.has(view)); }
   function workspaceViews(mode = state.workspaceMode) { return WS_WORKSPACE_VIEW_META.filter(item => workspaceViewAllowed(item.id, mode)).map(item => item.id === 'chat' && mode === 'dedicated' ? { ...item, label: '专用登录', hint: '独立专用账号扫码与原生会话' } : item); }
   function modeAccount(accountId, mode = state.workspaceMode) { return state.accounts.find(item => String(item.id) === String(accountId) && accountWorkspaceMode(item) === mode); }
@@ -41,7 +41,7 @@
     { id: 'logs', label: '操作日志', icon: 'history', hint: '审计记录、运行快照与关联查询' },
     { id: 'group-broadcast', label: '群组发送', icon: 'message', hint: '草稿与目标预览 · 实际发送 BLOCKED' },
     { id: 'group-mentions', label: '群组 @ 提及', icon: 'users-group', hint: 'BLOCKED · 原生提及能力未验收' },
-    { id: 'group-reading', label: '群组已读', icon: 'clipboard-check', hint: 'BLOCKED · 真实回执能力未验收' },
+    { id: 'group-reading', label: '群组已读', icon: 'clipboard-check', hint: '本地历史查询 · 真实回执采集 BLOCKED' },
     { id: 'group-permissions', label: '群组开关', icon: 'shield', hint: 'BLOCKED · 权限变更能力未验收' },
     { id: 'settings', label: '工具与设置', icon: 'settings', hint: '翻译、导入、导出与安全开关' },
   ]);
@@ -3346,12 +3346,14 @@
   });
   const groupReading = window.ZhikeWsGroupReading?.create({
     getScope: () => {
-      if (!state.active || state.wsWorkspaceView !== 'groups' || getHost()?.state?.view !== 'ws-workbench') return null;
-      const selected = groupDirectoryState().detailGroupId;
+      if (!state.active || state.workspaceMode !== 'dedicated' || !modeAccount(state.activeAccountId) ||
+          !['groups', 'group-reading'].includes(state.wsWorkspaceView) || getHost()?.state?.view !== 'ws-workbench') return null;
+      const readingPage = state.wsWorkspaceView === 'group-reading' ? wsWorkspacePageState('group-reading') : null;
+      const selected = readingPage ? readingPage.groupJid : groupDirectoryState().detailGroupId;
       if (!selected) return null;
       const context = captureContext('');
-      const group = state.groupCatalog?.find(row => text(row.groupJid) === selected && String(row.accountId) === context.accountId);
-      return group ? { ...context, groupJid: selected } : null;
+      const group = (readingPage ? readingPage.groups : state.groupCatalog)?.find(row => text(row.groupJid) === selected && String(row.accountId) === context.accountId);
+      return group ? { ...context, groupJid: selected, view: state.wsWorkspaceView } : null;
     },
     request: (pathname, scope) => api(pathname, {}, scope),
     redraw: () => render({ skipNativeResize: true }),
@@ -3364,6 +3366,12 @@
       try { anchor.click(); } finally { setTimeout(() => URL.revokeObjectURL(url), 1000); }
     },
   });
+  function renderWorkspaceGroupReading() {
+    const page = wsWorkspacePageState('group-reading');
+    const groups = (page.groups || []).filter(row => String(row.accountId) === String(state.activeAccountId));
+    const accounts = (state.accounts || []).filter(account => accountWorkspaceMode(account) === 'dedicated');
+    return `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>群组消息历史查询</strong><span>真实回执采集 BLOCKED</span></div><button type="button" class="btn small" disabled aria-label="真实回执采集不可用">采集真实回执 · BLOCKED</button></div><p class="ws-muted">尚无生产回执采集来源，也没有可核验的本账号出站消息来源。当前只查询已保存的本地历史；记录可能来自隔离测试，发送归属与阅读状态均待核实。</p><div class="ws-workspace-list-controls"><label>专用账号<select data-ws-business-account>${accounts.map(row => `<option value="${esc(row.id)}"${String(row.id) === String(state.activeAccountId) ? ' selected' : ''}>${esc(accountDisplayName(row) || row.id)}</option>`).join('')}</select></label><label>已保存群组<select data-ws-reading-group ${page.busy ? 'disabled' : ''}><option value="">请选择群组</option>${groups.map(row => `<option value="${esc(row.groupJid)}"${row.groupJid === page.groupJid ? ' selected' : ''}>${esc(row.name || row.groupName || '未命名群组')} · ${esc(row.groupJid)}</option>`).join('')}</select></label></div>${!groups.length ? '<p class="ws-muted">暂无已加载群组。刷新只读取当前账号的本地目录，不连接平台。</p>' : '<p class="ws-muted">目录最多载入 1000 条；选择具体群组后查询消息。</p>'}</section>${groupReading?.render() || ''}`;
+  }
   function groupDirectoryRows() {
     // The catalog is the existing account-scoped service snapshot. Do not
     // derive permissions or collection progress from group membership/status.
@@ -3526,6 +3534,13 @@
         if (state.error) throw new Error(state.error);
       } else if (view === 'members') {
         await Promise.all([loadGroupMonitor(), loadGroupMembers(context)]);
+      } else if (view === 'group-reading') {
+        const catalog = await api('/api/ws/group-manager/groups?limit=1000', {}, context);
+        assertContext(context);
+        if (catalog.accountId !== accountId || !Array.isArray(catalog.groups)) throw new Error('群组目录不属于当前账号。');
+        page.groups = catalog.groups.filter(row => String(row.accountId) === accountId && /^[a-z0-9._-]{1,235}@g\.us$/.test(String(row.groupJid)));
+        if (!page.groups.some(row => row.groupJid === page.groupJid)) page.groupJid = '';
+        if (currentPageRequest() && state.wsWorkspaceView === view) await groupReading?.open();
       } else if (view === 'groups') {
         await loadGroupMonitor();
         if (state.groupMonitor.error) throw new Error(state.groupMonitor.error);
@@ -3619,6 +3634,7 @@
     if (activeView === 'overview') body = `<section class="ws-workspace-card ws-workspace-welcome zk-surface zk-surface--accent"><span class="ws-workspace-eyebrow">WORKSPACE / OVERVIEW</span><h3>开始今天的客户运营</h3><p>在独立工作区管理账号、查看真实采集记录，并随时回到前台聊天。</p><button type="button" class="btn primary" data-ws-workspace-view="chat">进入前台聊天 <span aria-hidden="true">↗</span></button></section><section class="ws-workspace-metrics" aria-label="已加载工作区概况"><div><span>已加载账号</span><strong>${state.accounts.length || '—'}</strong><small>本机隔离会话</small></div><div><span>已加载会话</span><strong>${state.lastLoadedAt ? (state.conversations || []).length : '—'}</strong><small>${state.lastLoadedAt ? '当前账号本地记录' : '等待读取本地记录'}</small></div><div><span>已加载群组</span><strong>${state.groupMonitor?.lastLoadedAt ? groupDirectoryRows().length : '—'}</strong><small>${state.groupMonitor?.lastLoadedAt ? '当前账号同步目录' : '等待同步群组目录'}</small></div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>工作区入口</strong><span>每项功能拥有独立页面，页面切换保留账号会话。</span></div><span class="ws-status-badge">${esc(state.wsStatus)}</span></div><div class="ws-workspace-entry-grid">${workspaceViews().filter(item => !['overview', 'chat'].includes(item.id)).map(item => `<button type="button" class="ws-workspace-entry zk-surface zk-surface--interactive" data-ws-workspace-view="${item.id}"><span class="ws-workspace-nav-icon" aria-hidden="true"><svg class="zk-icon" viewBox="0 0 24 24" focusable="false"><use href="#i-${esc(item.icon)}"/></svg></span><span><strong>${esc(item.label)}</strong><small>${esc(item.hint)}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div></section><section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>运行说明</strong><span>任务按当前账号的配置执行。</span></div><span class="ws-status-badge">按配置运行</span></div><p class="ws-muted">自动 AI 尚未启用。群组自动建档仅处理已启用监控中确认的成员事件；请在对应账号内核对任务配置。</p></section>`;
     else if (activeView === 'accounts') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>账号与连接</strong><span>账号作用域独立，切换保留各账号隔离会话。</span></div><button class="btn small" data-ws-action="create-account">＋ 添加账号</button></div>${renderAccountForm()}<div class="ws-workspace-metrics"><div><span>已加载 WS 账号</span><strong>${state.accounts.length}</strong><small>本机隔离会话</small></div><div><span>当前账号</span><strong>${esc(account)}</strong><small>${esc(state.wsStatus)}</small></div><div><span>后台状态</span><strong>${esc(collectorStatusLabel())}</strong><small>独立采集会话，需单独扫码登录</small></div></div>${renderCollectorControls()}${renderWorkspaceList('accounts', state.accounts, rows => renderAccountList(rows))}</section>`;
     else if (activeView === 'groups') body = renderGroupDirectory() + (groupReading?.render() || '');
+    else if (activeView === 'group-reading') body = renderWorkspaceGroupReading();
     else if (activeView === 'members') body = renderWorkspaceMembers();
     else if (activeView === 'collection') { const page = wsWorkspacePageState('collection'); body = `${renderCollectionCard()}${businessPages ? businessPages.renderRunDetails(state.collectionRun, page.collectionItems, collectionCapability()) : ''}<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>当前任务采集项</strong><span>当前账号、当前任务已读取的最多 1000 条采集项，保留失败原因与 checkpoint。</span></div><button type="button" class="btn small" data-ws-action="collection-history">查看任务历史</button></div>${renderWorkspaceList('collection', page.collectionItems || [], rows => businessPages ? businessPages.renderCollectionItems(rows) : renderWorkspaceSummaryRows(rows, 'collection'))}</section>${renderWsFlowStrip()}`; }
     else if (activeView === 'contacts') body = renderWorkspaceReadDirectory('contacts');
@@ -5729,6 +5745,14 @@
   }
   function applyControlChange(target) {
     if (target.matches('[data-ws-group-draft-select]')) { groupDrafts?.select(target.dataset.wsGroupDraftSelect, Boolean(target.checked)); return; }
+    if (target.matches('[data-ws-reading-group]')) {
+      if (state.workspaceMode !== 'dedicated' || state.wsWorkspaceView !== 'group-reading' || !modeAccount(state.activeAccountId)) return;
+      const page = wsWorkspacePageState('group-reading');
+      page.groupJid = (page.groups || []).some(row => row.accountId === state.activeAccountId && row.groupJid === target.value) ? target.value : '';
+      groupReading?.reset(); render({ skipNativeResize: true });
+      return groupReading?.open();
+    }
+    if (target.matches('[data-ws-group-reading-filter]')) { groupReading?.filter(target.dataset.wsGroupReadingFilter, target.value); return; }
     if (target.matches('[data-ws-group-reading-message]')) { groupReading?.select(target.value); return; }
     if (target.matches('[data-ws-business-account]')) {
       const view = state.wsWorkspaceView;
