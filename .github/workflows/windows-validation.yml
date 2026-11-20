@@ -69,6 +69,7 @@ jobs:
             'tests/desktop-packaging-contract.test.cjs',
             'tests/packaged-workspace-webview-contract.test.cjs',
             'tests/release-gate-contract.test.cjs',
+            'tests/previous-installer-upgrade.test.cjs',
             'tests/legacy-install-retirement.test.cjs',
             'tests/current-docs-consistency.test.cjs',
             'scripts/stage1/migration-runner-fresh-atomic.test.cjs'
@@ -106,7 +107,7 @@ jobs:
         run: |
           dotnet run --project scripts/stage51/NativeReadinessProbe/NativeReadinessProbe.csproj -c Release -- (Join-Path $PWD 'work/winui-bundle/zhike-winui-6.1.0-win-x64/resources/app') | Tee-Object -FilePath work/candidate-installer/sidecar-readiness.txt
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Verify clean install, repeated install and uninstall on the CI machine
+      - name: Verify clean install, rc.3 upgrade and uninstall on the CI machine
         shell: pwsh
         run: |
           $runtimeKeys = @('HKCU:\Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}', 'HKLM:\Software\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}')
@@ -120,7 +121,7 @@ jobs:
             if ($process.ExitCode -ne 0) { throw "WebView2 installation failed: $($process.ExitCode)" }
           }
           $manifest = Get-Content work/candidate-installer/release-output-manifest.json -Raw | ConvertFrom-Json
-          ./scripts/verify-winui-installer.ps1 -InstallerPath (Join-Path $PWD "work/candidate-installer/$($manifest.installer)") -StageDir (Join-Path $PWD 'work/winui-bundle/zhike-winui-6.1.0-win-x64') -OutputDir (Join-Path $PWD 'work/installer-smoke')
+          ./scripts/verify-winui-installer.ps1 -InstallerPath (Join-Path $PWD "work/candidate-installer/$($manifest.installer)") -StageDir (Join-Path $PWD 'work/winui-bundle/zhike-winui-6.1.0-win-x64') -OutputDir (Join-Path $PWD 'work/installer-smoke') -VerifyPreviousReleaseUpgrade
       - name: Render packaged ordinary and dedicated workspaces in isolated WebView2
         shell: pwsh
         run: |
@@ -145,10 +146,16 @@ jobs:
           if ($manifest.sourceCommit -cne $head -or $manifest.releaseGate -ne 'passed') { throw 'Installer source provenance mismatch.' }
           $installer = Join-Path $PWD "work/candidate-installer/$($manifest.installer)"
           if ((Get-FileHash $installer -Algorithm SHA256).Hash -ne $manifest.sha256 -or (Get-Item $installer).Length -ne $manifest.bytes) { throw 'Installer digest mismatch.' }
+          $installSmoke = Get-Content work/installer-smoke/installer-smoke-result.json -Raw | ConvertFrom-Json
+          if ($installSmoke.status -ne 'passed' -or $installSmoke.previousReleaseUpgradeRequested -ne $true -or $installSmoke.checks.previousReleaseUpgrade.status -ne 'passed' -or
+              $installSmoke.checks.previousReleaseUpgrade.to.sourceCommit -cne $head -or $installSmoke.checks.previousReleaseUpgrade.to.installerSha256 -ne $manifest.sha256) {
+            throw 'Verified rc.3-to-candidate installation evidence is missing or belongs to a different installer.'
+          }
           $signature = (Get-AuthenticodeSignature $installer).Status.ToString()
           if (@{ Valid = 'signed-and-verified'; NotSigned = 'unsigned' }[$signature] -ne $manifest.signingStatus) { throw 'Installer signature status mismatch.' }
           Copy-Item $installer (Join-Path $PWD "work/candidate-artifact/$($manifest.releaseAsset)")
           Copy-Item work/candidate-installer/release-output-manifest.json,work/candidate-installer/sidecar-readiness.txt,work/winui-bundle/zhike-winui-6.1.0-win-x64/bundle-manifest.json,work/installer-smoke/installer-smoke-result.json,work/packaged-webview-smoke/packaged-workspace-result.json work/candidate-artifact
+          Copy-Item work/installer-smoke/previous-release-provenance.json,work/installer-smoke/previous-release-output-manifest.json work/candidate-artifact
           @(
             '## Windows x64 candidate',
             "Product $($manifest.version) · CI $env:GITHUB_RUN_ID / attempt $env:GITHUB_RUN_ATTEMPT",

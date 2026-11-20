@@ -1,0 +1,19 @@
+{
+  "repository": "vincent12233/zhike-4.2-ws-workbench",
+  "tag": "v6.1.0-rc.3",
+  "releaseId": 451230083,
+  "version": "6.1.0",
+  "sourceCommit": "bddb8ae33604110cdd191d7b7589fc8fe9d692bf",
+  "installer": {
+    "id": 767374580,
+    "name": "zhike-6.1.0-win-x64-setup.exe",
+    "bytes": 114177547,
+    "sha256": "f8d7ca52106ba9a7ce824df4ae79a217c36d5860f499b9b6775138919498988b"
+  },
+  "manifest": {
+    "id": 767374963,
+    "name": "release-output-manifest.json",
+    "bytes": 442,
+    "sha256": "b3932186cde2c8b42a1e924c382b40c51a5bcad80a431d6a4a3082a6f1343b83"
+  }
+}
