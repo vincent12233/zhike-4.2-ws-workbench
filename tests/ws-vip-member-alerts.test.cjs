@@ -109,12 +109,58 @@ function inspect(fn) {
   assert.equal(alerts.find(item => item.customerId === 'C1').id, initialAlertIds.get('C1'), 'new analysis updates the member alert');
   assert.equal(alerts.find(item => item.customerId === 'C2').id, initialAlertIds.get('C2'), 'other member alert remains intact');
   const direct = await call('/api/ws/conversations', { externalId:'9876000000', title:'Direct Customer', conversationType:'direct', unreadCount:0, data:{ conversationType:'direct', historyLoaded:true, historyFingerprint:'direct-history', lastMessageFingerprint:'direct-history', directionVersion:4 } });
-  await call('/api/ws/analyses', { conversationId:direct.id, result:{ summary:'Direct customer asks for a call', confidence:.9, followupStrategy:{ shouldFollowUp:true, priorityScore:55, reason:'Customer requested a call', objective:'Return call' } }, confidence:.9 });
+  const directAnalysis = await call('/api/ws/analyses', { conversationId:direct.id, result:{ summary:'Direct customer asks for a call', confidence:.9, profileFacts:{ occupation:{ value:'Synthetic shopkeeper', state:'known', confidence:.9, evidence:'I run a synthetic shop', sourceRole:'customer' } }, followupStrategy:{ shouldFollowUp:true, priorityScore:55, reason:'Customer requested a call', objective:'Return call' } }, confidence:.9 });
   const directState = await call('/api/state');
   directState.settings.operatingTasks.unshift({ id:'legacy-direct-task', aiGenerated:true, wsAccountId:'default', wsConversationId:direct.id, customerId:'C3', due:'2020-01-01', done:false, status:'open' });
   await call('/api/state', directState);
   alerts = (await call('/api/ws/followup-alerts?allAccounts=1&limit=10')).alerts;
   assert.deepEqual(alerts.map(item => item.customerId), ['C3','C1','C2'], 'overdue direct fallback precedes VIP priority scoring');
   assert.equal(alerts[0].taskId, 'legacy-direct-task', 'ordinary direct chats retain conversation-only task fallback');
-  console.log('VIP member reminders: two customers, distinct tasks and alerts, idempotent polling and reanalysis pass');
+  // Historical vip_group rows remain readable; exclusion is a group-member
+  // auto-fill gate and never a ban on ordinary direct CRM maintenance.
+  await call('/api/ws/contact-exclusions', { identity: one.senderPhone, displayName: 'Synthetic excluded staff' }, 201);
+  const beforeBlockedSync = await call('/api/state');
+  const blockedSync = await call('/api/ws/crm-sync', { conversationId: group.id, analysisId: newerFirst.analysis.id });
+  assert.equal(blockedSync.excluded, true);
+  assert.equal(blockedSync.code, 'CONTACT_EXCLUDED');
+  assert.equal(blockedSync.skipped, true);
+  assert.deepEqual(await call('/api/state'), beforeBlockedSync, 'excluded member sync does not mutate CRM or tasks');
+  const hits = await call('/api/ws/contact-exclusions/hits');
+  assert.ok(hits.hits.some(hit => hit.action === 'auto-fill-blocked' && hit.memberPhone === one.senderPhone));
+  async function analyzeObservedAliases(key, phones, phoneOnly = false) {
+    const senderId = '123456789012345@lid';
+    await call('/api/ws/ingest/batch', {
+      checkpoints: [{ conversationKey:key, conversationType:'vip_group', vipGroup:true, isGroup:true, unreadCount:0,
+        historyLoaded:true, historyMessageCount:phones.length, coverage:'read-history', directionVersion:4,
+        directionUnresolvedCount:0, historyFingerprint:key, lastMessageFingerprint:key }],
+      messages: phones.map((phone, index) => ({ conversationKey:key, conversationType:'vip_group',
+        externalMessageId:key + '-' + index, body:'I manage a synthetic shop', direction:'incoming',
+        directionSource:'class-message-in', senderId, senderPhone:phone, senderIdentitySource:'sender-jid',
+        sentAt:'2026-11-13T10:05:00Z' })),
+    });
+    const conversation = (await call('/api/ws/conversations')).conversations.find(row => row.externalId === key);
+    const identity = phoneOnly ? { senderPhone: phones[0], identitySource:'sender-phone' } : { senderId, identitySource:'sender-jid' }; // intentionally omits a trusted alias
+    const analysis = await call('/api/ws/analyses', { conversationId:conversation.id, result:{
+      summary:'Synthetic alias evidence', confidence:.9, memberIdentity:identity,
+      transcriptInfo:{ memberScoped:true, memberIdentity:identity, directionVersion:4 },
+      profileFacts:{ occupation:{ value:'Synthetic shopkeeper', evidence:'I manage a synthetic shop', state:'known', confidence:.9, sourceRole:'customer' } },
+    }, confidence:.9 });
+    const before = await call('/api/state');
+    const result = await call('/api/ws/crm-sync', { conversationId:conversation.id, analysisId:analysis.id });
+    assert.deepEqual(await call('/api/state'), before, 'failed observed-alias gates never mutate CRM');
+    return result;
+  }
+  const omittedPhone = await analyzeObservedAliases('legacy-excluded-alias@g.us', ['9876543210']);
+  assert.equal(omittedPhone.code, 'CONTACT_EXCLUDED', 'omitting an observed phone cannot bypass exclusion');
+  const conflictingPhones = await analyzeObservedAliases('legacy-conflicting-alias@g.us', ['8000000001', '8000000002']);
+  assert.equal(conflictingPhones.code, 'CONTACT_IDENTITY_UNRELIABLE', 'conflicting observed phone aliases stay unconfirmed');
+  const phoneOnly = await analyzeObservedAliases('legacy-phone-only-alias@g.us', ['8000000003', '9876543210'], true);
+  assert.equal(phoneOnly.code, 'CONTACT_EXCLUDED', 'phone-only requests must traverse observed LID aliases before deciding');
+  const phoneOnlyConflict = await analyzeObservedAliases('legacy-phone-only-conflict@g.us', ['8000000004', '8000000005'], true);
+  assert.equal(phoneOnlyConflict.code, 'CONTACT_IDENTITY_UNRELIABLE', 'phone-only requests cannot hide a conflicting observed phone');
+  await call('/api/ws/contact-exclusions', { identity: '9876000000', displayName: 'Synthetic direct staff' }, 201);
+  const directSync = await call('/api/ws/crm-sync', { conversationId: direct.id, analysisId: directAnalysis.id });
+  assert.equal(directSync.matched, true, JSON.stringify(directSync));
+  assert.notEqual(directSync.excluded, true, 'ordinary direct maintenance is outside group exclusion scope');
+  console.log('Legacy group member reminders and exclusion: per-member tasks, immutable blocked CRM, direct maintenance PASS');
 } finally { await stop(); rmSync(data, { recursive:true, force:true }); } })().catch(error => { console.error(error); process.exitCode = 1; });

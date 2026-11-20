@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "supportedSchemaVersion": 26,
+  "supportedSchemaVersion": 27,
   "migrations": [
     {
       "version": 4,
@@ -139,6 +139,12 @@
       "file": "026-ws-contact-exclusion.sql",
       "description": "6.1 P3 WS contact exclusion platform and hit ledger",
       "checksum": "c2b2d788f1ef3e2dbd91cab882c00c1f822769eccb1512efb5af6cba5458d20b"
+    },
+    {
+      "version": 27,
+      "file": "027-ws-exclusion-hit-retention.sql",
+      "description": "6.1 preserve exclusion-hit evidence after rule removal",
+      "checksum": "3532abd29127d9c0423bd732e8528f3ddc75dddc47c7f817888f29dc6daa04da"
     }
   ]
 }

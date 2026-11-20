@@ -156,7 +156,10 @@ function wsContactExclusionEngine() {
     contactExclusionEngine = wsContactExclusion.createExclusionEngine({ db });
   } catch (error) {
     contactExclusionEngine = null;
-    console.warn('WS 通讯录排除引擎不可用：' + (error?.message || error));
+    const unavailable = new Error('WS 通讯录排除引擎不可用，自动建档与群成员补齐已暂停。', { cause: error });
+    unavailable.code = 'CONTACT_EXCLUSION_UNAVAILABLE';
+    unavailable.status = 503;
+    throw unavailable;
   }
   return contactExclusionEngine;
 }
@@ -1352,11 +1355,13 @@ function wsGroupMonitorAutoCustomer(accountId, target, event, now, state = null)
   // creation: listed identities (staff, assistants, manual picks) never become
   // customers, whatever the join evidence says. The hit ledger keeps an audit
   // trail without touching the customer master.
-  const exclusionIdentity = event.memberId || event.memberJid || event.participantId || event.member || event.phone;
-  const exclusion = wsContactExclusionEngine()?.checkIdentity(exclusionIdentity, {
+  const exclusion = wsContactExclusionEngine().checkIdentities([
+    event.memberId, event.memberJid, event.participantId, event.member,
+    event.memberPhone, event.member_phone, event.phone,
+  ].filter(value => value != null && String(value).trim()), {
     accountId, groupJid: wsText(target.group_jid || target.groupJid, 180), action: 'auto-create-blocked', source: 'group-monitor-ingest',
   });
-  if (exclusion?.excluded) return null;
+  if (!exclusion.allowed) return null;
   const member = wsGroupMonitor.normalizeMemberIdentity(event.memberId || event.memberJid || event.participantId || event.member || event.phone);
   const phone = member.phone || wsGroupMonitor.normalizeMemberIdentity(event.memberPhone || event.member_phone).phone;
   const memberKey = member.value || phone;
@@ -2138,12 +2143,38 @@ function wsVipMemberEvidence(conversation, value = {}) {
   const identity = wsVipMemberIdentity(value);
   if (!identity.trusted) return { required:true, valid:false, identity, messageCount:0, reason:'VIP 群分析缺少可信发言人 WS 标识或手机号。' };
   const rows = db.prepare("SELECT data_json FROM ws_messages WHERE account_id=? AND conversation_id=? AND direction='receive'").all(conversation.account_id, conversation.id);
-  const messageCount = rows.reduce((count, row) => {
+  // Resolve the connected observed identities, not just the caller's subset.
+  // A phone-only request may identify a LID whose other messages contain a
+  // conflicting/excluded phone. Each trusted row is visited at most once.
+  const identityKeys = member => [member.senderId ? 'id:' + member.senderId.toLowerCase() : '',
+    member.senderPhone ? 'phone:' + member.senderPhone : ''].filter(Boolean);
+  const indexed = new Map();
+  for (const row of rows) {
     const data = wsJson(row.data_json, {});
-    return count + (data.senderIdentityTrusted === true && wsSameVipMemberIdentity(data, identity) ? 1 : 0);
-  }, 0);
+    const observed = wsVipMemberIdentity(data);
+    if (data.senderIdentityTrusted !== true || !observed.trusted) continue;
+    const entry = { identity: observed, keys: identityKeys(observed) };
+    for (const key of entry.keys) {
+      if (!indexed.has(key)) indexed.set(key, []);
+      indexed.get(key).push(entry);
+    }
+  }
+  const observedAliases = new Set();
+  const queue = identityKeys(identity);
+  const seenKeys = new Set(queue), seenRows = new Set();
+  for (let index = 0; index < queue.length; index++) {
+    for (const entry of indexed.get(queue[index]) || []) {
+      if (seenRows.has(entry)) continue;
+      seenRows.add(entry);
+      for (const value of [entry.identity.senderId, entry.identity.senderPhone]) if (value) observedAliases.add(value);
+      for (const key of entry.keys) if (!seenKeys.has(key)) { seenKeys.add(key); queue.push(key); }
+      if (observedAliases.size > 32) return { required:true, valid:false, identity, messageCount:seenRows.size,
+        reason:'群成员观察身份存在过多关联，需核实后再补齐客户档案。' };
+    }
+  }
+  const messageCount = seenRows.size;
   if (!messageCount) return { required:true, valid:false, identity, messageCount:0, reason:'VIP 群内没有找到该发言人的可信原始消息，已拒绝跨客户写入。' };
-  return { required:true, valid:true, identity, messageCount };
+  return { required:true, valid:true, identity, messageCount, observedAliases: [...observedAliases] };
 }
 function wsVipScopedAnalysis(conversation, analysis, identity) {
   if (!wsIsVipGroup(conversation)) return analysis;
@@ -4096,7 +4127,24 @@ const server = createServer(async (req, res) => {
           confidence:Number(analysisRow.confidence || analysis.confidence || 0),
         });
       }
-      if (vipGroup) analysis = wsVipScopedAnalysis(conversation, analysis, memberScope.identity);
+      if (vipGroup) {
+        // Exclusion affects automatic group-member enrichment only. Ordinary
+        // direct chats and explicit CRM maintenance retain their own rules.
+        const exclusion = wsContactExclusionEngine().checkIdentities([
+          memberScope.identity.senderId, memberScope.identity.senderPhone,
+          ...memberScope.observedAliases,
+        ].filter(Boolean), {
+          accountId, groupJid: conversation.external_id,
+          action: 'auto-fill-blocked', source: 'group-crm-sync',
+        });
+        if (!exclusion.allowed) return json(res, 200, {
+          ok: true, skipped: true, matched: false, created: false,
+          excluded: exclusion.excluded, identityPending: !exclusion.excluded,
+          reason: exclusion.excluded ? '该群成员已列入通讯录排除，保留客户原有档案。' : '群成员身份不可靠或存在冲突，未更新客户档案。',
+          code: exclusion.excluded ? 'CONTACT_EXCLUDED' : 'CONTACT_IDENTITY_UNRELIABLE',
+        });
+        analysis = wsVipScopedAnalysis(conversation, analysis, memberScope.identity);
+      }
       const currentFingerprint = wsText(conversationData.historyFingerprint, 500);
       const latestFingerprint = wsText(conversationData.lastMessageFingerprint, 500);
       const nativeHistoryCount = Number(db.prepare("SELECT COUNT(*) count FROM ws_messages WHERE account_id=? AND conversation_id=? AND json_extract(data_json,'$.source')='ws-webview2' AND COALESCE(json_extract(data_json,'$.previewOnly'),0)<>1").get(accountId, conversationId).count || 0);
@@ -4844,16 +4892,16 @@ const server = createServer(async (req, res) => {
       const suffix = url.pathname.slice('/api/ws/contact-exclusions'.length).replace(/^\//, '');
       const auditAction = (action, detail = {}) => {
         try {
-          // account_id carries a foreign key; fall back to the seeded default
-          // account so an audit failure can never roll back a user action.
+          // Rules are global to dedicated group automation. Bind their audit
+          // to a real account; a failed audit must roll back the mutation.
           const requested = wsText(detail.accountId, 120);
           const accountId = requested && wsAccountRow(requested) ? requested : (wsAccountRow('default') ? 'default' : '');
-          if (!accountId) return;
+          if (!accountId) throw new Error('没有可用账号记录通讯录排除审计，操作未保存。');
           db.prepare(`INSERT INTO ws_group_audit(id,account_id,group_jid,actor,action,entity_type,entity_id,outcome,reason,data_json,created_at)
             VALUES(?,?,?,?,?,?,?,?,?,?,?)`).run(wsCreateId('wsg-audit'), accountId, '',
             'contact-exclusion', action, 'contact-exclusion', wsText(detail.exclusionId, 128) || '', 'accepted', wsText(detail.reason, 500),
             JSON.stringify(detail.data || {}), new Date().toISOString());
-        } catch { /* auditing must not fail the user action */ }
+        } catch (error) { throw error; }
       };
 
       if (suffix === '' && req.method === 'GET') {
@@ -4865,15 +4913,24 @@ const server = createServer(async (req, res) => {
       }
       if (suffix === '' && req.method === 'POST') {
         const body = JSON.parse((await readBody(req, 256 * 1024)).toString('utf8'));
-        const items = Array.isArray(body.items) ? body.items.slice(0, 2000) : [body];
+        if (!body || typeof body !== 'object' || Array.isArray(body)) return json(res, 400, { error: '请提供排除规则对象。' });
+        if (Object.hasOwn(body, 'items') && (!Array.isArray(body.items) || !body.items.length)) return json(res, 400, { error: '批量导入 items 必须为非空数组。' });
+        if (Array.isArray(body.items) && body.items.length > 2000) return json(res, 400, { error: '单次最多导入 2000 条，请分批导入；本次未写入任何规则。', code: 'CONTACT_EXCLUSION_BATCH_TOO_LARGE' });
+        const items = Array.isArray(body.items) ? body.items : [body];
         const created = [], rejected = [];
         db.exec('BEGIN IMMEDIATE');
         try {
           for (const item of items) {
             try {
+              if (!item || typeof item !== 'object' || Array.isArray(item)) throw new TypeError('每条规则必须为对象。');
               const rule = engine.upsertRule({ ...item, source: body.source || item.source });
               created.push(rule);
-            } catch (error) { rejected.push({ identity: wsText(item.identity || item.phone, 160), reason: error.message }); }
+            } catch (error) {
+              // Input errors may be reported per row. Storage failures must
+              // abort the transaction instead of committing a partial import.
+              if (!(error instanceof TypeError) && error.code !== 'CONTACT_EXCLUSION_INVALID_IDENTITY') throw error;
+              rejected.push({ identity: wsText(item?.identity || item?.phone, 160), reason: error.message });
+            }
           }
           if (!created.length && rejected.length) { db.exec('ROLLBACK'); return json(res, 400, { error: rejected[0].reason, rejected }); }
           auditAction(body.items ? 'contact-exclusion.import' : 'contact-exclusion.create', { accountId: body.accountId, exclusionId: created[0]?.id, data: { count: created.length, rejected: rejected.length } });

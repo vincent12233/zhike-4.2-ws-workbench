@@ -204,6 +204,68 @@ async function check(name, fn) {
       assert.equal(after, listed, 'customer master must be untouched by exclusion');
     });
 
+    await check('oversized imports are rejected without silent truncation', async () => {
+      const before = (await getJson('/api/ws/contact-exclusions')).summary.total;
+      const imported = await api('/api/ws/contact-exclusions', 'POST', { items: Array.from({ length: 2001 }, () => ({ identity: '918000000007' })) });
+      assert.equal(imported.status, 400);
+      assert.equal(imported.value.code, 'CONTACT_EXCLUSION_BATCH_TOO_LARGE');
+      assert.equal((await getJson('/api/ws/contact-exclusions')).summary.total, before);
+      assert.equal((await api('/api/ws/contact-exclusions', 'POST', { items: [] })).status, 400);
+      assert.equal((await api('/api/ws/contact-exclusions', 'POST', null)).status, 400);
+    });
+
+    await check('LID and phone aliases cannot bypass the production exclusion gate', async () => {
+      const before = await customerCount();
+      const ingested = await api('/api/ws/ingest/batch', 'POST', { accountId: 'default', groupEvents: [{
+        groupJid: 'exclusiongate1@g.us', memberId: '123456789012345@lid', memberPhone: '+917000000001',
+        type: 'joined', eventAt: new Date().toISOString(), sourceEventId: 'evt-alias-excluded', confidence: 0.95,
+      }] });
+      assert.equal(ingested.status, 200);
+      assert.equal(ingested.value.groupEvents.accepted, 1);
+      assert.equal(ingested.value.groupEvents.autoRegistered, 0);
+      assert.equal(await customerCount(), before);
+    });
+
+    await check('conflicting or unreliable aliases remain unconfirmed without creating customers', async () => {
+      const before = await customerCount();
+      for (const [index, identity] of [
+        { memberId: '918000000010@s.whatsapp.net', memberPhone: '918000000011' },
+        { memberId: 'employee8000000012', memberPhone: '918000000012' },
+        { memberId: '8000000013@untrusted.example' },
+      ].entries()) {
+        const ingested = await api('/api/ws/ingest/batch', 'POST', { accountId: 'default', groupEvents: [{
+          ...identity, groupJid: 'exclusiongate1@g.us', type: 'joined', eventAt: new Date().toISOString(),
+          sourceEventId: 'evt-unreliable-' + index, confidence: 0.95,
+        }] });
+        assert.equal(ingested.status, 200);
+        assert.equal(ingested.value.groupEvents.autoRegistered, 0);
+      }
+      assert.equal(await customerCount(), before);
+    });
+
+    await check('audit storage failure rolls back the rule mutation', async () => {
+      const db = new DatabaseSync(path.join(dataDir, 'workspace.sqlite'));
+      const before = (await getJson('/api/ws/contact-exclusions')).summary.total;
+      try {
+        db.exec("CREATE TRIGGER reject_exclusion_audit BEFORE INSERT ON ws_group_audit WHEN NEW.actor='contact-exclusion' BEGIN SELECT RAISE(ABORT,'synthetic audit failure'); END");
+        const result = await api('/api/ws/contact-exclusions', 'POST', { identity: '918000000014' });
+        assert.ok(result.status >= 400, JSON.stringify(result));
+        assert.equal((await getJson('/api/ws/contact-exclusions')).summary.total, before);
+      } finally { db.exec('DROP TRIGGER IF EXISTS reject_exclusion_audit'); db.close(); }
+    });
+
+    await check('rule deletion retains historical hit identity and name', async () => {
+      const rules = (await getJson('/api/ws/contact-exclusions')).rules;
+      const rule = rules.find(row => row.value === '7000000001');
+      assert.ok(rule);
+      const before = (await getJson('/api/ws/contact-exclusions/hits?limit=500')).hits.filter(hit => hit.exclusionId === rule.id);
+      assert.ok(before.length >= 2);
+      assert.equal((await api('/api/ws/contact-exclusions/' + rule.id, 'DELETE')).status, 200);
+      const after = (await getJson('/api/ws/contact-exclusions/hits?limit=500')).hits.filter(hit => hit.exclusionId === rule.id);
+      assert.deepEqual(after, before);
+      assert.equal(after[0].ruleName, '群管理员');
+    });
+
     await check('blocked attempts appear in the hit ledger', async () => {
       const value = await getJson('/api/ws/contact-exclusions/hits?limit=20');
       assert.ok(value.hits.length >= 1, 'expected a recorded hit for the blocked member');

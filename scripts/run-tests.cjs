@@ -78,6 +78,7 @@ function runStage3(options = {}) {
   run('Stage 3 group manager isolated API and Mock Transport', [path.join(repo, 'scripts', 'stage3', 'ws-group-manager-api.test.cjs')], { timeout: 180000 });
   run('Production group manager local data and account isolation', [path.join(repo, 'tests', 'ws-group-manager-production.test.cjs')], { timeout: 180000 });
   run('WS contact exclusion platform', [path.join(repo, 'tests', 'ws-contact-exclusion.test.cjs')]);
+  run('WS contact exclusion identity and migration safety', [path.join(repo, 'tests', 'ws-contact-exclusion-safety.test.cjs')]);
   run('WS contact exclusion API and production gate', [path.join(repo, 'tests', 'ws-contact-exclusion-api.test.cjs')], { timeout: 180000 });
   run('WS contact exclusion page contract', [path.join(repo, 'tests', 'ws-contact-exclusion-ui.test.cjs')]);
   run('WS reply draft persistence', [path.join(repo, 'tests', 'ws-reply-draft-persistence.test.cjs')]);

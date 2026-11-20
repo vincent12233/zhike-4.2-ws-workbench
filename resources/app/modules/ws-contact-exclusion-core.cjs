@@ -15,7 +15,6 @@
 // so that a number written to the directory as +91…/91…/bare matches the member
 // identity produced by real group collection.
 
-const path = require('node:path');
 const crypto = require('node:crypto');
 const monitor = require('./ws-group-monitor-core.js');
 
@@ -25,7 +24,6 @@ const ACTION_LOOKUP = 'lookup';
 const ACTIONS = new Set([ACTION_AUTO_CREATE_BLOCKED, ACTION_AUTO_FILL_BLOCKED, ACTION_LOOKUP]);
 
 const SOURCES = new Set(['manual', 'import', 'hit-log']);
-const KINDS = new Set(['phone', 'jid', 'opaque']);
 
 function text(value, max = 240) {
   return String(value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, max);
@@ -45,13 +43,21 @@ function newId(prefix) {
 // produces. Returns null when the value carries no reliable identity, so callers
 // cannot accidentally exclude somebody on a display name alone.
 function normalizeExclusionIdentity(value) {
-  const identity = monitor.normalizeMemberIdentity(value);
+  // Validate the whole identifier before using the legacy normalizer, which
+  // extracts digits from free-form collector text. A nickname such as
+  // employee12345678 must never become a phone exclusion rule.
+  if (typeof value !== 'string' && typeof value !== 'number') return null;
+  if (typeof value === 'number' && (!Number.isSafeInteger(value) || value <= 0)) return null;
+  const raw = String(value).normalize('NFKC').trim().replace(/^whatsapp:/i, '').trim();
+  if (!raw || raw.length > 240 || /[\u0000-\u001f\u007f]/.test(raw)) return null;
+  const phoneText = /^\+?[\d\s().-]+$/.test(raw);
+  const phoneJid = /^\d+(?::\d+)?@(?:s\.whatsapp\.net|c\.us)$/i.test(raw);
+  const lidJid = /^\d+(?::\d+)?@lid$/i.test(raw);
+  const opaque = /^[a-z]{2}\.ENT\.[a-z0-9]{1,128}$/i.test(raw);
+  if (!phoneText && !phoneJid && !lidJid && !opaque) return null;
+  const identity = monitor.normalizeMemberIdentity(lidJid ? raw.replace(/:\d+(?=@)/, '') : raw);
   if (!identity.value) return null;
-  if (identity.kind === 'group') return null; // a group JID is not an excludable person
-  // A bare display name normalizes to a fake jid (no @, no digits). Excluding on
-  // it would list whoever happens to share the nickname, so it is refused.
-  if (identity.kind === 'jid' && !identity.value.includes('@')) return null;
-  if (identity.kind === 'unknown') return null;
+  if ((phoneText || phoneJid) && identity.kind !== 'phone') return null;
   return {
     kind: identity.kind === 'phone' ? 'phone' : identity.kind === 'opaque' ? 'opaque' : 'jid',
     value: identity.value,
@@ -91,8 +97,6 @@ function rowToRule(row) {
 function createExclusionEngine({ db, clock } = {}) {
   if (!db) throw new TypeError('db is required');
 
-  const selectEnabled = () => db.prepare('SELECT * FROM ws_contact_exclusions WHERE enabled = 1').all().map(rowToRule);
-
   function listRules({ includeDisabled = false } = {}) {
     const rows = includeDisabled
       ? db.prepare('SELECT * FROM ws_contact_exclusions ORDER BY updated_at DESC, id').all()
@@ -114,35 +118,54 @@ function createExclusionEngine({ db, clock } = {}) {
     return null;
   }
 
-  // The single gate every auto-create/auto-fill path must call first.
-  // Returns { excluded:false } when the identity may proceed, or
-  // { excluded:true, rule, identity } when it must be skipped. Records a hit row
-  // so the directory page can show why a member was skipped.
+  // Callers must test allowed, not merely !excluded: an unreliable or conflicting
+  // identity is not an exclusion match, but still cannot authorize CRM writes.
+  // Values must be observed aliases of one member, never names or AI guesses.
   function checkIdentity(rawIdentity, context = {}) {
-    const identity = normalizeExclusionIdentity(rawIdentity);
-    if (!identity) return { excluded: false, identity: null, reason: 'identity-unreliable' };
-    const rule = findRule(identity);
-    if (!rule) return { excluded: false, identity, reason: 'not-listed' };
-    const action = ACTIONS.has(context.action) && context.action !== ACTION_LOOKUP ? context.action : ACTION_AUTO_CREATE_BLOCKED;
-    try {
-      recordHit(rule, identity, { ...context, action });
-    } catch { /* hit logging must never block the exclusion decision itself */ }
-    return { excluded: true, identity, rule, reason: 'listed', action };
+    return checkIdentities([rawIdentity], context);
+  }
+
+  function checkIdentities(rawIdentities, context = {}) {
+    if (!Array.isArray(rawIdentities) || rawIdentities.length > 32) {
+      return { allowed: false, excluded: false, identity: null, identities: [], conflict: false, reason: 'identity-unreliable' };
+    }
+    const supplied = rawIdentities.filter(value => value != null && value !== '');
+    const normalized = supplied.map(normalizeExclusionIdentity);
+    const identities = normalized.filter((identity, index) => identity && normalized.findIndex(other => other?.kind === identity.kind && other?.value === identity.value) === index);
+    const conflict = ['phone', 'jid', 'opaque'].some(kind => identities.filter(identity => identity.kind === kind).length > 1);
+    const matches = identities.map(identity => ({ identity, rule: findRule(identity) })).filter(match => match.rule);
+    const uniqueMatches = matches.filter((match, index) => matches.findIndex(other => other.rule.id === match.rule.id) === index);
+    const common = { identity: identities[0] || null, identities, conflict };
+    if (uniqueMatches.length) {
+      const action = ACTIONS.has(context.action) ? context.action : ACTION_AUTO_CREATE_BLOCKED;
+      // SQL errors propagate. An unavailable decision or audit store must never
+      // be interpreted as permission to create/fill a customer.
+      for (const match of uniqueMatches) recordHit(match.rule, match.identity, { ...context, action });
+      return { ...common, allowed: false, excluded: true, reason: 'listed', action, rule: uniqueMatches[0].rule };
+    }
+    if (!identities.length || normalized.some(identity => !identity)) return { ...common, allowed: false, excluded: false, reason: 'identity-unreliable' };
+    if (conflict) return { ...common, allowed: false, excluded: false, reason: 'identity-conflict' };
+    return { ...common, allowed: true, excluded: false, reason: 'not-listed' };
   }
 
   function recordHit(rule, identity, context = {}) {
     const action = ACTIONS.has(context.action) ? context.action : ACTION_LOOKUP;
-    db.prepare(`INSERT INTO ws_contact_exclusion_hits(id,exclusion_id,account_id,group_jid,member_jid,member_phone,action,evidence_json,created_at)
-      VALUES(?,?,?,?,?,?,?,?,?)`).run(
+    db.prepare(`INSERT INTO ws_contact_exclusion_hits(id,exclusion_id,account_id,group_jid,member_jid,member_phone,action,evidence_json,created_at,rule_value_snapshot,rule_name_snapshot,rule_kind_snapshot)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`).run(
       newId('wsx-hit'), rule.id, text(context.accountId, 120) || 'default',
       text(context.groupJid, 180), identity.value, identity.phone || '', action,
       JSON.stringify({ source: text(context.source, 80) || 'exclusion-engine', kind: identity.kind, ruleKind: rule.kind }), nowIso(clock),
+      rule.value, rule.displayName, rule.kind,
     );
   }
 
   function upsertRule(input = {}) {
     const identity = normalizeExclusionIdentity(input.identity || input.phone || input.memberJid || input.value);
-    if (!identity) throw new Error('排除规则需要可用的 WhatsApp 身份（规范化号码、JID 或业务作用域 ID）；昵称和头像不能用于排除。');
+    if (!identity) {
+      const error = new Error('排除规则需要可用的 WhatsApp 身份（规范化号码、JID 或明确的业务作用域 ID）；昵称和头像不能用于排除。');
+      error.code = 'CONTACT_EXCLUSION_INVALID_IDENTITY';
+      throw error;
+    }
     const source = SOURCES.has(text(input.source, 32)) ? text(input.source, 32) : 'manual';
     const at = nowIso(clock);
     const existing = db.prepare('SELECT * FROM ws_contact_exclusions WHERE identity_kind=? AND identity_value=?').get(identity.kind, identity.value);
@@ -177,9 +200,9 @@ function createExclusionEngine({ db, clock } = {}) {
   }
 
   function listHits({ limit = 50 } = {}) {
-    const size = Math.min(500, Math.max(1, Number(limit) || 50));
-    return db.prepare(`SELECT h.*, e.identity_value AS rule_value, e.display_name AS rule_name
-      FROM ws_contact_exclusion_hits h LEFT JOIN ws_contact_exclusions e ON e.id = h.exclusion_id
+    const size = Math.min(500, Math.max(1, Math.floor(Number(limit) || 50)));
+    return db.prepare(`SELECT h.*, h.rule_value_snapshot AS rule_value, h.rule_name_snapshot AS rule_name
+      FROM ws_contact_exclusion_hits h
       ORDER BY h.created_at DESC, h.id LIMIT ?`).all(size).map(row => ({
       id: text(row.id, 128),
       exclusionId: text(row.exclusion_id, 128),
@@ -200,7 +223,7 @@ function createExclusionEngine({ db, clock } = {}) {
     return { total: Number(row?.total || 0), enabled: Number(row?.enabled || 0), hits: Number(hits?.count || 0) };
   }
 
-  return { listRules, findRule, checkIdentity, recordHit, upsertRule, setEnabled, removeRule, listHits, summary, normalizeExclusionIdentity };
+  return { listRules, findRule, checkIdentity, checkIdentities, recordHit, upsertRule, setEnabled, removeRule, listHits, summary, normalizeExclusionIdentity };
 }
 
 module.exports = Object.freeze({

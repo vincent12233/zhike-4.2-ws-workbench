@@ -36,6 +36,7 @@ function applySchema(db) {
   // Mirror the migration exactly so the test fails if the production SQL drifts.
   const sql = fs.readFileSync(path.join(app, 'migrations', '026-ws-contact-exclusion.sql'), 'utf8');
   db.exec(sql);
+  db.exec(fs.readFileSync(path.join(app, 'migrations', '027-ws-exclusion-hit-retention.sql'), 'utf8'));
 }
 
 const results = [];
@@ -160,10 +161,10 @@ ok('server.mjs consults the exclusion engine inside the auto-create path', () =>
   const autoEnd = source.indexOf('\nfunction ', autoStart + 10);
   const body = source.slice(autoStart, autoEnd);
   assert.ok(autoStart > 0, 'wsGroupMonitorAutoCustomer must exist');
-  assert.match(body, /wsContactExclusionEngine\(\)\?\.checkIdentity\(/, 'auto-create must call the exclusion gate');
-  assert.match(body, /if \(exclusion\?\.excluded\) return null;/, 'a listed identity must abort creation');
+  assert.match(body, /wsContactExclusionEngine\(\)\.checkIdentities\(/, 'auto-create must check every observed alias with a required exclusion engine');
+  assert.match(body, /if \(!exclusion\.allowed\) return null;/, 'listed, conflicting and unreliable identities must abort creation');
   // The gate must precede identity normalization/customer construction.
-  const gateAt = body.indexOf('checkIdentity');
+  const gateAt = body.indexOf('checkIdentities');
   const memberAt = body.indexOf('const member = wsGroupMonitor.normalizeMemberIdentity');
   assert.ok(gateAt > 0 && memberAt > gateAt, 'exclusion must run before customer construction');
 });
