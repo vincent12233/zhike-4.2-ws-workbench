@@ -300,7 +300,9 @@
     fill('name', profile.name);
     if (!isLocked('rawPhone') && !text(customer.rawPhone) && text(profile.phone)) { customer.rawPhone = text(profile.phone); changedFields.push('rawPhone'); }
     if (!isLocked('phone') && !normalizePhone(customer.phone) && normalizePhone(profile.phone)) { customer.phone = normalizePhone(profile.phone); changedFields.push('phone'); }
-    for (const key of ['country', 'language', 'origin', 'age', 'occupation', 'productInterest', 'budget', 'source', 'channel', 'assistant']) fill(key, profile[key]);
+    // Channel and owner come from group configuration and assignment rules.
+    // An AI chat analysis is never evidence for either (V5.0 §12/§16).
+    for (const key of ['country', 'language', 'origin', 'age', 'occupation', 'productInterest', 'budget']) fill(key, profile[key]);
     if (!text(customer.phase) || customer.phase === '新客户') fill('phase', profile.customerStage);
     const aiFields = { intent: profile.intent, intentScore: profile.intentScore, emotion: profile.emotion, aiSummary: profile.aiSummary };
     for (const [key, value] of Object.entries(aiFields)) {

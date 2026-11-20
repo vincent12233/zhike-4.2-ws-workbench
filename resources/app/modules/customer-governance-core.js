@@ -172,7 +172,11 @@
       return !current || (field === 'name' && /^(未命名客户|未命名|未知客户|未知|—|-)$/.test(current));
     };
     const evidenceKeys = new Set(Array.isArray(customer.aiFieldEvidenceKeys) ? customer.aiFieldEvidenceKeys.map(text) : []);
-    const protectedFields = ['name', 'phone', 'rawPhone', 'country', 'language', 'origin', 'age', 'occupation', 'productInterest', 'budget', 'source', 'channel', 'assistant', 'preferred_name', 'gender', 'work_context', 'is_investor', 'investment_years', 'holdings', 'investment_habits', 'investment_preferences', 'family_context', 'life_interests', 'future_plans'];
+    // source/channel/assistant are deliberately absent: they are set by group
+    // configuration and assignment, and an AI value must neither fill nor
+    // contest them. Otherwise every configured customer would be blocked as a
+    // conflict, and unconfigured ones would get the label "WhatsApp".
+    const protectedFields = ['name', 'phone', 'rawPhone', 'country', 'language', 'origin', 'age', 'occupation', 'productInterest', 'budget', 'preferred_name', 'gender', 'work_context', 'is_investor', 'investment_years', 'holdings', 'investment_habits', 'investment_preferences', 'family_context', 'life_interests', 'future_plans'];
     for (const field of protectedFields) {
       let value = profile[field];
       if (field === 'age') value = normalizeAge(value);
