@@ -18,7 +18,7 @@
 ## 测试
 
 - `node scripts/run-tests.cjs ws`：252/252 通过（含本轮新增的 5 个测试文件：AI 状态条 12 项、WS 导航与工具栏 11 项、客户空状态 5 项、进退群证据 11 项、运营态势 7 项、次级页面 7 项）。
-- 全量回归：`node scripts/run-tests.cjs all`，结果见下文“验证等级”。
+- 全量回归：`node scripts/run-tests.cjs all`，405 项检查 401 通过、4 项因环境缺失失败，均与代码无关：两项 PowerShell 资源套件需要 `pwsh.exe`（本机只有 Windows PowerShell 5.1，且机器执行策略拒绝运行脚本；未绕过该策略），GitHub 预发布守卫需要 `gh` 登录，安装包升级校验需要 Inno Setup。
 - `dotnet build desktop/src/Zhike.Desktop/Zhike.Desktop.csproj -c Release -p:Platform=x64 -p:RuntimeIdentifier=win-x64`：0 警告 0 错误（使用仓库内 `.tools/dotnet10/dotnet.exe`，10.0.404）。
 
 ## 验证等级（按 V6.0 §42）
@@ -27,9 +27,9 @@
 | --- | --- | --- |
 | UNIT_TESTED | 已做 | 所有新增纯模块都有独立测试，覆盖正常、边界、空值、非法输入和转义 |
 | INTEGRATION_TESTED | 已做 | sidecar + SQLite + 临时数据目录，合成数据 |
-| WINDOWS_BUILD_VERIFIED | 已做 | x64 Release 编译通过，0 错误 0 警告 |
+| WINDOWS_BUILD_VERIFIED | 已做 | x64 Release 编译通过，0 错误 0 警告；隔离渲染宿主 `tests/native/IsolatedWebViewHost` 也已发布 |
 | WINDOWS_RUNTIME_VERIFIED | **未做** | 打包后的 WinUI 应用没有启动验证 |
-| VISUAL_VERIFIED | **未做（明确标记）** | 本机 headless Edge 以 `--dump-dom`、`--version` 两种方式都立即退出且零字节输出；隔离测试配置残留了进程。按 §35 不结束用户浏览器进程、不绕过拒绝，因此没有截图，界面结论只来自 CSS 与源码断言，不冒充视觉验收 |
+| VISUAL_VERIFIED | 主窗口已做，WS 布局已做 | 真实 WebView2 隔离宿主渲染真实 `index.html` 与全部 CSS：主窗口 8 种视口 × 20 条路由截图（`.tools/visual-usability/main-visual/*.png`，例如 `home-atelier-dawn.png`）；WS 工作台 6 种日光视口 + 夜间配色 × 24 条路由的计算样式与 44px 控件断言通过。截图来自真实运行界面，没有使用任何生成式效果图。旧的 headless Edge 直连方式在本机仍然立即退出且零输出，已不再作为视觉验证路径 |
 | WHATSAPP_VERIFIED | **未做** | 没有真实 WhatsApp 账号；群组发现、进退群、群发、@、已读和开关群只验证到合成采集端数据 |
 
 ## 已知问题与遗留
