@@ -1075,7 +1075,7 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
       if(Number.isInteger(index)&&!state.parsed?.[index]?.registered)input.value='';
     });
   }
-  function renderIntake(){
+  function renderIntake(){void loadManagedGroupIndex();
     setTimeout(clearImportedDatePlaceholders,0);
     const setIntakeSubmitState=()=>{const submit=$('.intake-submit');if(!submit)return;const good=state.parsed.filter(row=>!row.issues.length&&row.phone.length===10).length;submit.disabled=good===0;submit.title=good===0?'请先粘贴或导入有效客户资料':`将写入 ${good} 位新客户`;};
     const rows=state.parsed,good=rows.filter(row=>!row.issues.length&&row.phone.length===10).length,existing=rows.filter(row=>row.issues.some(issue=>issue.startsWith('已存在'))).length,errors=rows.filter(row=>row.issues.length&&!row.issues.some(issue=>issue.startsWith('已存在'))).length;
@@ -1900,7 +1900,27 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
        if(refreshAfter)try{await refreshSharedState();}catch{}
      }
   }
-  function saveIntake(){if(!state.parsed.length){toast('请先粘贴客户资料');return;}let added=0;const keep=[],newCustomers=[],knownPhones=knownIntakePhones(),knownVipNumbers=new Set(knownIntakeVipNumbers().keys()),batchTime=Date.now(),manualDate=$('#manualRegistered')?.checked,defaultDate=manualDate?($('#defaultRegistered')?.value||today):today,defaults=currentIntakeDefaults();for(const row of state.parsed){if(row.phone.length!==10||row.issues.length){keep.push(row.raw);continue;}if(knownPhones.has(row.phone)){keep.push(row.raw);continue;}const vipNumber=String(row.vipNumber||defaults.vipNumber||'').trim().slice(0,64),vipKeyValue=vipKey(vipNumber);if(vipKeyValue&&knownVipNumbers.has(vipKeyValue)){keep.push(row.raw);continue;}const page=row.pageExplicit?row.page:($('#defaultPage')?.value||''),source=normalizeBusinessSource(row.sourceExplicit?row.source:'',page,defaults.source);const item={id:`C${batchTime}-${added}-${Math.random().toString(36).slice(2,6)}`,name:row.name||'未命名客户',rawPhone:row.rawPhone,phone:row.phone,source,page,channel:source,assistant:row.assistant==='未分配'?($('#defaultAssistant')?.value||'未分配'):row.assistant,status:row.statusExplicit?row.status:($('#defaultStatus')?.value||(isGroupFanSource(source)?'在群':'未进群')),phase:row.phase||$('#defaultPhase')?.value||'新客户',hot:row.hotExplicit?row.hot:Boolean(defaults.hot),investor:row.investorExplicit?row.investor:Boolean(defaults.investor),group:row.group||$('#defaultGroup')?.value||'—',vipNumber,ticket:false,deposit:false,amount:0,registered:row.registered||defaultDate,lastFollow:'',due:row.due||(state.settings.autoInitialFollow===false?'—':localDateOffset(1)),note:row.note||$('#defaultNote')?.value||'',deleted:false,touched:false};item.status=recordCustomerStatus(item,item.status,{initial:true});newCustomers.push(item);knownPhones.set(row.phone,item);if(vipKeyValue)knownVipNumbers.add(vipKeyValue);added++;}if(state.customers.length+newCustomers.length>250000){toast('客户库已达到 250,000 条上限，本次录入未写入。','x');return;}if(added){state.settings.intakeBatches=[{id:'IB'+batchTime,createdAt:new Date().toISOString(),added,remaining:keep.length,customerIds:newCustomers.map(c=>c.id)},...(state.settings.intakeBatches||[])].slice(0,200);}state.customers=newCustomers.concat(state.customers);state.intakeText=keep.join('\n');state.settings.intakeDefaults=defaults;state.settings.intakeDraft={text:state.intakeText,defaults};persist();activity(`快速录入新增 ${added} 位客户`);parseIntake();return {added,remaining:keep.length};
+  // V9.2: group aliases resolve to a local group id and its configured channel.
+  // The index is filled from the managed group API; a missed load never blocks
+  // intake and never invents a group.
+  let managedGroupIndex = new Map();
+  let managedGroupIndexLoaded = false;
+  async function loadManagedGroupIndex() {
+    if (managedGroupIndexLoaded) return;
+    try {
+      const response = await fetch('/api/ws/managed-groups?includeDisabled=1', { cache: 'no-store' });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) return;
+      const next = new Map();
+      for (const group of Array.isArray(body.groups) ? body.groups : []) {
+        if (!group?.groupAlias) continue;
+        next.set(String(group.groupAlias).trim().toLowerCase(), { id: group.id, groupAlias: group.groupAlias, channel: group.channel || '', enabled: group.enabled !== false });
+      }
+      managedGroupIndex = next;
+      managedGroupIndexLoaded = true;
+    } catch { /* keep the previous index; intake stays usable offline */ }
+  }
+  function saveIntake(){if(!state.parsed.length){toast('请先粘贴客户资料');return;}let added=0;const keep=[],newCustomers=[],knownPhones=knownIntakePhones(),knownVipNumbers=new Set(knownIntakeVipNumbers().keys()),batchTime=Date.now(),manualDate=$('#manualRegistered')?.checked,defaultDate=manualDate?($('#defaultRegistered')?.value||today):today,defaults=currentIntakeDefaults();for(const row of state.parsed){if(row.phone.length!==10||row.issues.length){keep.push(row.raw);continue;}if(knownPhones.has(row.phone)){keep.push(row.raw);continue;}const vipNumber=String(row.vipNumber||defaults.vipNumber||'').trim().slice(0,64),vipKeyValue=vipKey(vipNumber);if(vipKeyValue&&knownVipNumbers.has(vipKeyValue)){keep.push(row.raw);continue;}const page=row.pageExplicit?row.page:($('#defaultPage')?.value||''),source=normalizeBusinessSource(row.sourceExplicit?row.source:'',page,defaults.source);const item={id:`C${batchTime}-${added}-${Math.random().toString(36).slice(2,6)}`,name:row.name||'未命名客户',rawPhone:row.rawPhone,phone:row.phone,source,page,channel:source,assistant:row.assistant==='未分配'?($('#defaultAssistant')?.value||'未分配'):row.assistant,status:row.statusExplicit?row.status:($('#defaultStatus')?.value||(isGroupFanSource(source)?'在群':'未进群')),phase:row.phase||$('#defaultPhase')?.value||'新客户',hot:row.hotExplicit?row.hot:Boolean(defaults.hot),investor:row.investorExplicit?row.investor:Boolean(defaults.investor),group:row.group||$('#defaultGroup')?.value||'—',vipNumber,ticket:false,deposit:false,amount:0,registered:row.registered||defaultDate,lastFollow:'',due:row.due||(state.settings.autoInitialFollow===false?'—':localDateOffset(1)),note:row.note||$('#defaultNote')?.value||'',deleted:false,touched:false};const aliasKey=String(item.group||'').trim().toLowerCase(),managed=aliasKey==='—'?null:managedGroupIndex.get(aliasKey);if(managed){item.groupId=managed.id;item.groupAlias=managed.groupAlias;item.groupChannel=managed.channel;if(!row.sourceExplicit&&managed.channel)item.channel=managed.channel;}else if(item.group&&item.group!=='—'){item.groupAlias=item.group;}item.status=recordCustomerStatus(item,item.status,{initial:true});newCustomers.push(item);knownPhones.set(row.phone,item);if(vipKeyValue)knownVipNumbers.add(vipKeyValue);added++;}if(state.customers.length+newCustomers.length>250000){toast('客户库已达到 250,000 条上限，本次录入未写入。','x');return;}if(added){state.settings.intakeBatches=[{id:'IB'+batchTime,createdAt:new Date().toISOString(),added,remaining:keep.length,customerIds:newCustomers.map(c=>c.id)},...(state.settings.intakeBatches||[])].slice(0,200);}state.customers=newCustomers.concat(state.customers);state.intakeText=keep.join('\n');state.settings.intakeDefaults=defaults;state.settings.intakeDraft={text:state.intakeText,defaults};persist();activity(`快速录入新增 ${added} 位客户`);parseIntake();return {added,remaining:keep.length};
   }
   async function applyBatch(type){
     const pending=state.pendingBatch;
