@@ -1,3 +1,7 @@
+// Loaded by the sidecar and tests (require) and by index.html as a classic
+// script. The function scope keeps its helpers out of the page's global
+// scope; only ZhikeOperationsCore (and module.exports in Node) is exposed.
+(function () {
 'use strict';
 
 function validDate(value) {
@@ -137,3 +141,4 @@ function stageColumns(customers = [], stages = []) {
 const api = { validDate, createTask, taskDismissed, taskCompleted, taskDone, taskBucket, compareTasks, selectTasks, applyFollowupAction, stageColumns };
 if (typeof module !== 'undefined') module.exports = api;
 if (typeof globalThis !== 'undefined') globalThis.ZhikeOperationsCore = api;
+})();

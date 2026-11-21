@@ -81,6 +81,7 @@ jobs:
             'tests/intake-group-alias.test.cjs',
             'tests/customer-merge-undo-scope.test.cjs',
             'tests/ai-job-pipeline-browser-load.test.cjs',
+            'tests/browser-script-globals.test.cjs',
             'tests/release-gate-contract.test.cjs',
             'tests/previous-installer-upgrade.test.cjs',
             'tests/legacy-install-retirement.test.cjs',
