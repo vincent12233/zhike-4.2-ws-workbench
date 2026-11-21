@@ -813,6 +813,12 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
       mount(view.renderGovernancePanel({error:String(error&&error.message||'读取字段来源与变更记录失败。')}));
     }
   }
+  // V5.0 §12/§19 渠道归属与在群证据：只显示已存储的值，缺失显示“未记录”。
+  function customerAttributionRows(customer){
+    const engine=window.ZhikeCustomerAttribution;
+    if(!engine||typeof engine.attributionFields!=='function')return [['渠道归属','模块未加载，请重新打开应用']];
+    return engine.attributionFields(customer);
+  }
   function customerIdentityHtml(customer,drawer=false){
     const name=esc(customerName(customer));
     const phone=esc(customer.rawPhone||customer.phone||'未登记号码');
@@ -1452,6 +1458,7 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
       ${customerDetailCard('热聊资料','message',`<div class="detail-grid">${customerDetailFields(customerHotFields(customer),'drawer')}</div>`,'',true)}
       ${customerDetailCard('业务概览','wallet',`<div class="detail-grid">${customerDetailFields(customerBusinessFields(customer),'drawer')}</div>`,'',true)}
       ${customerDetailCard('群组关系','users-group',groupMembershipRows(customer),'',true)}
+      ${customerDetailCard('渠道与在群','users-group',`<div class="detail-grid">${customerDetailFields(customerAttributionRows(customer),'drawer')}</div>`,'',true)}
       ${customerDetailCard('资料完整度','layers',customerCompletenessHtml(customer),'',true)}
       ${customerDetailCard('CRM 指挥信息','chart',`<div class="crm-command"><div><span>CRM 评分</span><strong>${crm.score}</strong><small>${crm.grade} 级客户</small><div class="crm-score-track"><i style="width:${crm.score}%"></i></div></div><div><span>生命周期</span><strong>${esc(crm.stage)}</strong><small>累计跟进 ${crm.followCount} 次</small></div><div class="crm-next"><span>下一步建议</span><strong>${esc(crm.nextAction)}</strong><small>按客户状态与业务记录计算</small></div></div>`,`<span>${esc(crm.grade)} 级 · ${esc(crm.sla)}</span>`,true)}
       ${customerDetailCard('跟进时间线','history',`<div class="detail-grid">${customerDetailFields(customerFollowFields(customer,crm),'drawer')}</div><div class="timeline customer-360-timeline">${customerTimeline(customer)}</div>`,'<span>最近 12 条</span>',true)}
