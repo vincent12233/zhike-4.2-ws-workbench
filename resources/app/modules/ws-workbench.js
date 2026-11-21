@@ -20,7 +20,7 @@
   function workspaceLabel(mode = state.workspaceMode) { return mode === 'dedicated' ? '专用 WS' : '普通 WS'; }
   const WS_MODE_VIEW_IDS = Object.freeze({
     ordinary: new Set(['overview', 'accounts', 'chat', 'collection', 'ai', 'crm', 'tasks', 'logs', 'settings']),
-    dedicated: new Set(['overview', 'accounts', 'chat', 'groups', 'group-channels', 'members', 'contacts', 'exclusions', 'collection', 'crm', 'logs', 'settings', 'group-broadcast', 'group-mentions', 'group-reading', 'group-permissions']),
+    dedicated: new Set(['overview', 'accounts', 'chat', 'groups', 'group-channels', 'managed-groups', 'members', 'contacts', 'exclusions', 'collection', 'crm', 'logs', 'settings', 'group-broadcast', 'group-mentions', 'group-reading', 'group-permissions']),
   });
   const WS_BLOCKED_VIEWS = new Set(['group-mentions']);
   function workspaceViewAllowed(view, mode = state.workspaceMode) { return Boolean(WS_MODE_VIEW_IDS[mode]?.has(view)); }
@@ -31,6 +31,7 @@
     { id: 'accounts', label: '账号管理', icon: 'phone', hint: '多账号与连接状态' },
     { id: 'chat', label: '前台聊天', icon: 'chat-stack', hint: '原生 WS 聊天与客户档案' },
     { id: 'groups', label: '群组管理', icon: 'layers', hint: '群组目录与监测端口' },
+    { id: 'managed-groups', label: '群组管理', icon: 'users-group', hint: '渠道、群名、群别名与客户登记匹配' },
     { id: 'group-channels', label: '群组渠道配置', icon: 'filter', hint: '群组编号、渠道、助理与批量导入' },
     { id: 'members', label: '群成员管理', icon: 'users-group', hint: '成员事件与 CRM 关系' },
     { id: 'collection', label: '数据采集', icon: 'database', hint: '采集任务、断点与跳过规则' },
@@ -3946,6 +3947,14 @@
       render({ skipNativeResize: true }); return refreshWorkspacePage();
     },
   });
+  const managedGroups = window.ZhikeWsManagedGroups?.create({
+    getScope: () => state.active && state.workspaceMode === 'dedicated' && modeAccount(state.activeAccountId) &&
+      state.wsWorkspaceView === 'managed-groups' && getHost()?.state?.view === 'ws-workbench'
+      ? { ...captureContext(''), workspaceMode: state.workspaceMode, view: state.wsWorkspaceView } : null,
+    request: (pathname, init, scope) => api(pathname, init, scope),
+    redraw: () => render({ skipNativeResize: true }),
+    toast: (message, icon) => toast(message, icon),
+  });
   const groupChannels = window.ZhikeWsGroupChannels?.create({
     getScope: () => state.active && state.workspaceMode === 'dedicated' && modeAccount(state.activeAccountId) &&
       state.wsWorkspaceView === 'group-channels' && getHost()?.state?.view === 'ws-workbench'
@@ -4250,6 +4259,8 @@
         if (state.error) throw new Error(state.error);
       } else if (view === 'members') {
         await Promise.all([loadGroupMonitor(), loadGroupMembers(context)]);
+      } else if (view === 'managed-groups') {
+        if (!await managedGroups?.load()) throw new Error('群组管理读取失败，请查看页面中的具体原因。');
       } else if (view === 'group-channels') {
         if (!await groupChannels?.load()) throw new Error('群组渠道配置读取失败，请查看页面中的具体原因。');
       } else if (view === 'group-permissions') {
@@ -4508,6 +4519,7 @@
     else if (activeView === 'accounts') body = `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>账号与连接</strong><span>账号作用域独立，切换保留各账号隔离会话。</span></div><button class="btn small" data-ws-action="create-account">＋ 添加账号</button></div>${state.workspaceMode === 'dedicated' ? '<button type="button" class="btn primary" data-ws-workspace-view="chat">打开当前专用账号登录</button>' : ''}${renderAccountForm()}${renderAccountMetrics()}${renderCollectorControls()}${renderWorkspaceList('accounts', state.accounts, rows => renderAccountList(rows))}</section>`;
     else if (activeView === 'groups') body = `<section class="ws-workspace-card zk-surface ws-group-verify" id="wsGroupVerification">${renderGroupVerification('groups')}</section>` + renderGroupDirectory() + (groupReading?.render() || '');
     else if (activeView === 'group-reading') body = renderWorkspaceGroupReading() + renderGroupWhatsAppLink('可在对应群聊里打开本人发送的消息，查看平台提供的消息信息。');
+    else if (activeView === 'managed-groups') body = managedGroups?.render() || '<section class="ws-workspace-card"><p class="ws-error-line" role="alert">群组管理模块未加载。</p></section>';
     else if (activeView === 'group-channels') body = groupChannels?.render() || '<section class="ws-workspace-card"><p class="ws-error-line" role="alert">群组渠道配置模块未加载，请重新打开应用。</p></section>';
     else if (activeView === 'group-permissions') body = (groupPermissions?.render() || '<section class="ws-workspace-card"><p>权限模块未加载；管理员资格与发言权限 UNKNOWN，实际开关群 BLOCKED。</p></section>') + renderGroupWhatsAppLink('群管理员可在 WhatsApp 群组设置中核对和调整发言权限。');
     else if (activeView === 'members') body = renderWorkspaceMembers();

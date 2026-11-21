@@ -1165,3 +1165,17 @@ html[data-view="ws-workbench"] .ws-ops-cell[data-tone="ok"]{border-left-color:#3
 html[data-view="ws-workbench"] .ws-ops-cell[data-tone="warn"]{border-left-color:#e8b04a}
 html[data-view="ws-workbench"] .ws-ops-cell[data-tone="error"]{border-left-color:#ff7a86}
 html[data-view="ws-workbench"] .ws-ops-cell[data-tone="unknown"]{border-left-color:#6a7f9c}
+
+/* V9.2 群组管理：三字段表单与导入预览。 */
+html[data-view="ws-workbench"] #managedGroupsPage{padding:16px}
+html[data-view="ws-workbench"] .mg-form{display:grid;grid-template-columns:minmax(140px,180px) minmax(180px,1fr) minmax(140px,200px) auto auto;gap:10px;align-items:end;margin:0 0 12px}
+html[data-view="ws-workbench"] .mg-form label{display:grid;gap:4px;font-size:13px;color:#5c6a80}
+html[data-view="ws-workbench"] .mg-form :is(input,select){height:40px;padding:0 10px;border:1px solid #cdd8e8;border-radius:9px;font-size:14px;background:#fff}
+html[data-view="ws-workbench"] .mg-search{display:flex;gap:8px;margin-bottom:12px}
+html[data-view="ws-workbench"] .mg-search input{height:40px;min-width:240px;padding:0 10px;border:1px solid #cdd8e8;border-radius:9px;font-size:14px}
+html[data-view="ws-workbench"] .mg-import{margin-top:12px;border:1px solid #dbe3ee;border-radius:12px;padding:10px 12px}
+html[data-view="ws-workbench"] .mg-import textarea{width:100%;margin:8px 0;padding:8px;border:1px solid #cdd8e8;border-radius:8px;font-size:14px}
+html[data-view="ws-workbench"] .mg-import-actions{display:flex;gap:8px}
+html[data-view="ws-workbench"] .mg-rejected{margin:8px 0 0;padding-left:18px;color:#a32936;font-size:13px}
+html[data-view="ws-workbench"] .mg-candidates{margin-top:12px}
+html[data-view="ws-workbench"] .mg-candidates ul{margin:6px 0 0;padding-left:18px;font-size:13px}

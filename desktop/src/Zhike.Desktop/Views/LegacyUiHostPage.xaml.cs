@@ -1208,7 +1208,7 @@ public sealed partial class LegacyUiHostPage : Page
             {
                 var page = StringValue(root, "page");
                 var phase = StringValue(root, "phase");
-                if (page is "overview" or "accounts" or "chat" or "groups" or "group-channels" or "members" or "collection" or "contacts" or "exclusions" or "group-broadcast" or "group-mentions" or "group-reading" or "group-permissions" or "ai" or "crm" or "tasks" or "logs" or "settings"
+                if (page is "overview" or "accounts" or "chat" or "groups" or "group-channels" or "managed-groups" or "members" or "collection" or "contacts" or "exclusions" or "group-broadcast" or "group-mentions" or "group-reading" or "group-permissions" or "ai" or "crm" or "tasks" or "logs" or "settings"
                     && phase is "enter" or "exit") Stage51Isolation.Record("workspace-page", new { page, phase });
                 return;
             }
@@ -2412,7 +2412,7 @@ public sealed partial class LegacyUiHostPage : Page
             || activeValue.ValueKind is not (JsonValueKind.True or JsonValueKind.False)) return false;
         var routeActive = activeValue.GetBoolean();
         var workspacePage = StringValue(payload, "workspacePage");
-        if (routeActive && workspacePage is not ("overview" or "accounts" or "chat" or "groups" or "group-channels" or "members"
+        if (routeActive && workspacePage is not ("overview" or "accounts" or "chat" or "groups" or "group-channels" or "managed-groups" or "members"
             or "collection" or "contacts" or "exclusions" or "group-broadcast" or "group-mentions" or "group-reading" or "group-permissions" or "ai" or "crm" or "tasks" or "logs" or "settings")) return false;
         var presentationAccountId = StringValue(payload, "accountId");
         if (presentationAccountId.Length > 200) return false;
