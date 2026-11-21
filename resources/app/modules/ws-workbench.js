@@ -3954,6 +3954,7 @@
     request: (pathname, init, scope) => api(pathname, init, scope),
     redraw: () => render({ skipNativeResize: true }),
     toast: (message, icon) => toast(message, icon),
+    getCustomers: () => (Array.isArray(getHost()?.state?.customers) ? getHost().state.customers : []),
   });
   const groupChannels = window.ZhikeWsGroupChannels?.create({
     getScope: () => state.active && state.workspaceMode === 'dedicated' && modeAccount(state.activeAccountId) &&

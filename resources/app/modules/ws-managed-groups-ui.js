@@ -10,7 +10,7 @@
   const timeText = value => { const ms = Date.parse(text(value)); return Number.isFinite(ms) ? new Date(ms).toLocaleString('zh-CN', { hour12: false }) : '—'; };
   const DEFAULT_CHANNELS = ['FB群粉', 'API群粉', '短信群粉', '单导K', '单导B'];
 
-  function create({ getScope, request, redraw, toast }) {
+  function create({ getScope, request, redraw, toast, getCustomers }) {
     let page = null;
     const owns = () => page && getScope();
     function ensure() {
@@ -98,6 +98,26 @@
     function render() {
       const state = ensure();
       if (!state) return '<section class="ws-workspace-card zk-surface"><p class="ws-muted">请先打开专用 WS 并选择账号。</p></section>';
+      // V9.2: channel statistics come from each group's configured channel,
+      // never from the alias prefix or the customer source text.
+      const registered = (typeof getCustomers === 'function' ? getCustomers() : []).filter(customer => customer && !customer.deleted && customer.groupId);
+      const perGroup = new Map();
+      for (const customer of registered) {
+        if (!perGroup.has(customer.groupId)) perGroup.set(customer.groupId, new Set());
+        perGroup.get(customer.groupId).add(String(customer.id));
+      }
+      const channelStats = new Map();
+      for (const row of state.rows) {
+        const ids = perGroup.get(row.id) || new Set();
+        const stat = channelStats.get(row.channel) || { groups: 0, enabled: 0, registrations: 0, customers: new Set() };
+        stat.groups += 1;
+        if (row.enabled) stat.enabled += 1;
+        stat.registrations += ids.size;
+        for (const id of ids) stat.customers.add(id);
+        channelStats.set(row.channel, stat);
+      }
+      const statsRows = [...channelStats.entries()].map(([channel, stat]) => `<tr><td>${esc(channel)}</td><td>${stat.enabled} / ${stat.groups}</td><td>${stat.registrations}</td><td>${stat.customers.size}</td></tr>`).join('');
+      const statsHtml = `<details class="mg-stats" open><summary>群组渠道统计</summary><p class="ws-muted">登记关系按客户与群组的登记计算；去重客户按客户 ID 去重。这里不是 WhatsApp 实际在群人数。</p><div class="table-scroll"><table class="data-table"><thead><tr><th>渠道</th><th>启用 / 群组</th><th>登记关系</th><th>去重客户</th></tr></thead><tbody>${statsRows || '<tr><td colspan="4">暂无登记群组。</td></tr>'}</tbody></table></div></details>`;
       const editing = state.rows.find(row => row.id === state.editing);
       const channelOptions = [...new Set([...state.channels, editing?.channel].filter(Boolean))].map(channel => `<option value="${esc(channel)}" ${editing?.channel === channel ? 'selected' : ''}>${esc(channel)}</option>`).join('');
       const rows = state.rows.map(row => `<tr>
@@ -123,6 +143,7 @@
         </form>
         <div class="mg-search"><input data-mg-query type="search" maxlength="120" value="${esc(state.query)}" placeholder="搜索群别名、群名或渠道"><button type="button" class="btn small" data-mg="search">搜索</button><button type="button" class="btn small" data-mg="candidates">AI 候选</button></div>
         <div class="table-scroll"><table class="data-table"><thead><tr><th>渠道</th><th>群名</th><th>群别名</th><th>匹配状态</th><th>最后采集</th><th>操作</th></tr></thead><tbody>${rows || '<tr><td colspan="6"><div class="empty-state"><strong>还没有登记群组</strong><p>填写渠道、群名和群别名即可新增，不需要 WhatsApp JID。</p></div></td></tr>'}</tbody></table></div>
+        ${statsHtml}
         <details class="mg-import"><summary>批量导入（先预览，再提交）</summary>
           <textarea data-mg-import rows="6" placeholder="每行：渠道,群名,群别名"></textarea>
           <div class="mg-import-actions"><button type="button" class="btn small" data-mg="preview">预览导入</button><button type="button" class="btn small primary" data-mg="commit" ${state.preview ? '' : 'disabled'}>确认提交</button></div>

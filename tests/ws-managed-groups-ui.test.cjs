@@ -61,6 +61,16 @@ check('the page keeps the existing visual language', () => {
   assert.ok(ui.includes('data-table'));
 });
 
+check('statistics use the configured group channel and separate registrations from unique customers', () => {
+  assert.match(ui, /channelStats\.get\(row\.channel\)/, 'channel comes from the row');
+  assert.doesNotMatch(ui, /groupAlias\.startsWith/, 'no prefix inference');
+  assert.match(ui, /stat\.registrations \+= ids\.size/);
+  assert.match(ui, /stat\.customers\.size/);
+  assert.match(ui, /不是 WhatsApp 实际在群人数/);
+});
+check('the page receives customers read-only for statistics', () => {
+  assert.ok(workbench.includes('getCustomers: () =>'), 'page receives customers read-only');
+});
 const failed = results.filter(ok => !ok).length;
 console.log(`Managed groups UI contract: ${results.length - failed}/${results.length}`);
 if (failed) process.exit(1);
