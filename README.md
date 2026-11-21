@@ -19,11 +19,12 @@
 
 集成分支 `feature/zhike61-ws-completion` 已有更新的候选构建，**尚未发布为 GitHub Release**，只作为 Windows CI 的构建产物提供，供验收使用。
 
-- 下载：[Actions 构建产物 `zhike-6.1.0-win-x64-ci-44937522721-1`](https://github.com/vincent12233/zhike-4.2-ws-workbench/actions/runs/44937522721/artifacts/14720063185)（保留至 2026-12-05，需登录有权限的 GitHub 账号）。压缩包内为 `zhike-6.1.0-win-x64-setup.exe` 与同次 `release-output-manifest.json`。
-- 安装器 `114508464` bytes，SHA-256 `E8BED3499A96ABCFC3AEE802AD7FE31E3CBA7066D6A26C9EB738D08FD92B7707`，unsigned；源码 `2b8817e02402839d34cb7a047ac1a2f2df7dd045`。文件名与 rc.3 相同，请以 SHA-256 和清单的 `sourceCommit` 区分。
+- 下载：[Actions 构建产物 `zhike-6.1.0-win-x64-ci-44942020941-1`](https://github.com/vincent12233/zhike-4.2-ws-workbench/actions/runs/44942020941/artifacts/14721829292)（保留至 2026-12-05 19:45 UTC，需登录有权限的 GitHub 账号）。压缩包内为 `zhike-6.1.0-win-x64-setup.exe` 与同次 `release-output-manifest.json`。
+- 安装器 `114509854` bytes，SHA-256 `9C8D7BD9B40E3F3B9BE359C7960EC532E2EB08749ED5FDC98E9407C0D6AA36B1`，unsigned；源码 `727c222bf2152411060cf0c241b0089ed821e6b5`。文件名与 rc.3 相同，请以 SHA-256 和清单的 `sourceCommit` 区分。
 - 相对 rc.3 新增专用 WS 群组渠道配置与群组管理（渠道、群名、群别名）、客户字段锁定、身份冲突提示、资料完整度、渠道与群组统计等，数据库从 schema 25 升到 **35**。变更摘要见 [6.1.0 候选发布说明](docs/release/release-notes-6.1.0.md#v92-未发布候选)，验证记录见 [V9.2 集成报告](docs/audit/2026-11-21-v92-integration-report.md)。
 - **不能回退**：数据被该候选升级到 schema 35 后，rc.3（schema 25）以及更早的 rc4–rc8 构建会以 `SCHEMA_VERSION_UNSUPPORTED` 拒绝打开同一数据目录，表现为启动后白屏。试装前请先在“数据中心”导出备份；需要回到旧版本时，只能用对应版本及升级前的备份恢复。
 - Windows CI 机已完成构建、干净安装、rc.3 覆盖升级、卸载和打包页面冒烟（合成数据）。真实目标 Windows 安装、用户数据升级、真实 WhatsApp 和付费 AI **尚未验收**。
+- 该构建已**冻结**为实机验收候选：除实机验收发现的明确缺陷外不再改动程序。验收步骤（含先备份、在副本上升级）见 [V9.2 RC Windows 实机验收清单](docs/release/v92-rc-windows-acceptance-checklist.md)。
 
 ## rc.3 的使用范围
 
@@ -50,6 +51,7 @@ rc.3 的[构建验证](https://github.com/vincent12233/zhike-4.2-ws-workbench/ac
 - [rc.2 安装就绪状态与限制](docs/release/installation-readiness.md)
 - [6.1.0 候选发布说明](docs/release/release-notes-6.1.0.md)
 - [V9.2 集成与候选构建报告](docs/audit/2026-11-21-v92-integration-report.md)
+- [V9.2 RC Windows 实机验收清单](docs/release/v92-rc-windows-acceptance-checklist.md)
 - [发布与升级风险登记](docs/release/risk-register.md)
 - [本轮源码验证与未完成项](docs/release/independent-collector-followup.md)
 - [历史运行验收记录](docs/release/runtime-release-acceptance.md)

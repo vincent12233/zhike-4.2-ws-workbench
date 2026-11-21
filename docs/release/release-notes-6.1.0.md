@@ -31,7 +31,7 @@ S3 保持 Blocked。历史隔离 Edge 退出故障及 rc.2 安装就绪记录仍
 
 ## V9.2 未发布候选
 
-以下变更位于集成分支 `feature/zhike61-ws-completion`，**尚未作为 GitHub Release 发布**，不属于 `v6.1.0-rc.3`。当前候选构建为源码 `2b8817e`，安装器 SHA-256 `E8BED3499A96ABCFC3AEE802AD7FE31E3CBA7066D6A26C9EB738D08FD92B7707`，详见 [V9.2 集成报告](../audit/2026-11-21-v92-integration-report.md)。
+以下变更位于集成分支 `feature/zhike61-ws-completion`，**尚未作为 GitHub Release 发布**，不属于 `v6.1.0-rc.3`。当前候选构建为源码 `727c222`，安装器 SHA-256 `9C8D7BD9B40E3F3B9BE359C7960EC532E2EB08749ED5FDC98E9407C0D6AA36B1`，详见 [V9.2 集成报告](../audit/2026-11-21-v92-integration-report.md)。该构建已冻结为实机验收候选，验收步骤见 [实机验收清单](v92-rc-windows-acceptance-checklist.md)。
 
 ### 专用 WS 与群组
 

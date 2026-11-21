@@ -27,12 +27,13 @@ WS 前台聊天由用户本人在官方页面扫码或登录。后台采集使�
 
 | 项目 | 记录 |
 |---|---|
-| 源码 | `sourceCommit` 为 `2b8817e02402839d34cb7a047ac1a2f2df7dd045` |
-| 构建 | [Windows CI 44937522721](https://github.com/vincent12233/zhike-4.2-ws-workbench/actions/runs/44937522721)，17 步全部通过 |
-| 安装资产 | [构建产物 `zhike-6.1.0-win-x64-ci-44937522721-1`](https://github.com/vincent12233/zhike-4.2-ws-workbench/actions/runs/44937522721/artifacts/14720063185) 内的 `zhike-6.1.0-win-x64-setup.exe`，`114508464` bytes，SHA-256 `E8BED3499A96ABCFC3AEE802AD7FE31E3CBA7066D6A26C9EB738D08FD92B7707`，unsigned；保留至 2026-12-05 |
+| 源码 | `sourceCommit` 为 `727c222bf2152411060cf0c241b0089ed821e6b5` |
+| 构建 | [Windows CI 44942020941](https://github.com/vincent12233/zhike-4.2-ws-workbench/actions/runs/44942020941)，17 步全部通过 |
+| 安装资产 | [构建产物 `zhike-6.1.0-win-x64-ci-44942020941-1`](https://github.com/vincent12233/zhike-4.2-ws-workbench/actions/runs/44942020941/artifacts/14721829292) 内的 `zhike-6.1.0-win-x64-setup.exe`，`114509854` bytes，SHA-256 `9C8D7BD9B40E3F3B9BE359C7960EC532E2EB08749ED5FDC98E9407C0D6AA36B1`，unsigned；保留至 2026-12-05 19:45 UTC |
 | 数据库 | schema 35（rc.3 为 25）；升级后旧构建拒绝打开同一数据目录 |
 | 已验证 | CI 机构建、干净安装、rc.3 覆盖升级、卸载、打包 Sidecar 与群组管理页加载、打包 WebView2 普通/专用工作台冒烟（合成数据） |
 | 未验收 | 真实目标 Windows 安装、用户数据升级、真实 WhatsApp、独立扫码双会话、付费 AI |
+| 状态 | 已冻结为实机验收候选；只修复实机验收发现的明确缺陷，修复后以新的 commit 与 SHA-256 替换。验收步骤见 [实机验收清单](release/v92-rc-windows-acceptance-checklist.md) |
 | 说明 | [6.1.0 候选发布说明 · V9.2](release/release-notes-6.1.0.md#v92-未发布候选)、[V9.2 集成报告](audit/2026-11-21-v92-integration-report.md)、[风险登记](release/risk-register.md) |
 
 ## 已发布 rc.2 历史记录
