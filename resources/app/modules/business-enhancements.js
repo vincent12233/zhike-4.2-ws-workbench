@@ -108,7 +108,10 @@
   async function applyMerge() {
     const groups = duplicateGroups(), index = Number(document.querySelector('#mergeDuplicateGroup')?.value), group = groups[index]?.[1] || [], survivorId = document.querySelector('#mergeSurvivor')?.value, survivor = group.find(row => String(row.id) === String(survivorId)), duplicates = group.filter(row => String(row.id) !== String(survivorId));
     if (!survivor || !duplicates.length) return;
-    const h = host(), state = h.state, affectedIds = new Set([survivor.id, ...duplicates.map(row => row.id)]), backup = { customers: clone(state.customers), tickets: clone(state.tickets), deposits: clone(state.deposits), followups: clone(state.followups), registrations: clone(state.registrations), phoneRegistry: clone(state.phoneRegistry), settings: clone(state.settings), activities: clone(state.activities || []), batchOperations: clone(state.batchOperations || []) };
+    const h = host(), state = h.state, affectedIds = new Set([survivor.id, ...duplicates.map(row => row.id)]), backup = { customers: clone(state.customers), tickets: clone(state.tickets), deposits: clone(state.deposits), followups: clone(state.followups), registrations: clone(state.registrations), phoneRegistry: clone(state.phoneRegistry), settings: clone({ ...state.settings, lastCustomerMerge: null }), activities: clone(state.activities || []), batchOperations: clone(state.batchOperations || []) }, previousMerge = state.settings.lastCustomerMerge ?? null;
+    // Undo always clears lastCustomerMerge, so the previous merge's own
+    // full-state backup is never restorable from here. Leaving it inside this
+    // backup nested every earlier merge and grew the saved settings each time.
     if (!await h.snapshotBeforeWrite('合并重复客户前自动快照')) return;
     try {
       for (const duplicate of duplicates) {
@@ -121,7 +124,7 @@
       state.settings.lastCustomerMerge = { createdAt: new Date().toISOString(), survivorId: survivor.id, duplicateIds: duplicates.map(row => row.id), backup };
       state.batchOperations.unshift({ id: `MERGE-${Date.now()}`, type: '合并重复客户', value: survivor.name, count: duplicates.length, createdAt: new Date().toISOString(), status: '已执行' });
       h.persist(); h.activity(`合并重复客户：保留 ${survivor.name}，合并 ${duplicates.length} 位`); await h.flushStateWrites(); h.closeModal(); h.render(); h.toast(`已合并 ${duplicates.length} 位重复客户，业务记录已转移`);
-    } catch (error) { Object.assign(state, backup); h.persist(); h.render(); h.toast(`合并失败，已恢复原资料：${error.message || '保存失败'}`, 'x'); }
+    } catch (error) { Object.assign(state, backup); state.settings.lastCustomerMerge = previousMerge; h.persist(); h.render(); h.toast(`合并失败，已恢复原资料：${error.message || '保存失败'}`, 'x'); }
   }
   async function undoMerge() {
     const h = host(), merge = h.state.settings.lastCustomerMerge;

@@ -18,7 +18,7 @@
 | P1 | app.js:1710、runtime-customizer同改主题；标题文本/DOM selector驱动多模块注入 | 新route/renderer显式挂载生命周期，避免更名/换骨架后按钮/监听丢失或重复；先为原有增强能力建立可追溯清单 |
 | P1验证 | 全局selected跨分页/筛选；批量撤销存在主app与business-enhancements/productivity多套入口；批量客户扩展撤销与较新字段并发关系需保护 | 预览时显示全部已选范围、隐藏选择数量；预览后字段变更不得被撤销无声覆盖；不增加第二套业务权威 |
 | P2 | securitySettingsModal:1015仍有“工作区随应用文件夹迁移”旧说明，runtime-customizer另有JSON迁移指导 | 与实际动态AppData/重新授权规则统一说明；不能用搬安装目录当完整数据迁移 |
-| P2验证 | business-enhancements:111–121将含settings的全工作区备份存入settings.lastCustomerMerge；前次备份可能层层嵌入 | 多次合并/撤销的状态体积与快照保留需实测并设有界策略；不要在S0擅删历史 |
+| P2已处理 | business-enhancements:111–121将含settings的全工作区备份存入settings.lastCustomerMerge；前次备份可能层层嵌入 | 多次合并/撤销的状态体积与快照保留需实测并设有界策略；不要在S0擅删历史。已处理：合并备份的 settings 不再携带上一次 lastCustomerMerge（撤销本就会清空它），合并保存失败时恢复上一次撤销点；`tests/customer-merge-backup-bounds.test.cjs` 运行真实模块验证多次合并为单层备份、失败与撤销保留数据。撤销仍整体恢复合并前 settings，合并后修改的设置会被覆盖，此项仍 Open |
 | P2 | 操作记录只30条、主要依赖文案时间；增强模块有另外500条批量记录，客户治理审计另表 | 做真实审计来源清单/统一只读查询，不以状态快照冒充完整历史 |
 
 ## 滚动、焦点、缩放机制与待测风险
