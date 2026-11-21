@@ -2981,7 +2981,7 @@ public sealed partial class LegacyUiHostPage : Page
   if (open.row && !rows.some(row => row.conversationKey === open.row.conversationKey)) rows.unshift(open.row);
   return JSON.stringify({supported:true, conversationListVisible, rows, unresolvedRowCount, contactsVisible, contacts, unresolvedContactCount, coverage:'foreground-visible-only',
     openIdentityStatus:open.status, openConfirmation, activeGroup:open.row?.isGroup ? { groupJid:open.row.conversationKey, displayName:open.row.displayName } : null,
-    directoryDiagnostics:{listPresent:Boolean(list),renderedRows,stableRows,unresolvedRows:unresolvedRowCount,confirmedOpen:Boolean(open.row),rowStructureSample:latestWindow?.rowStructureSample || null}});
+    directoryDiagnostics:{listPresent:Boolean(list),renderedRows,stableRows,unresolvedRows:unresolvedRowCount,confirmedOpen:Boolean(open.row),rowStructureSample:globalThis.__zhikeRowStructureSample || null}});
 })
 """;
 
@@ -4951,7 +4951,7 @@ public sealed partial class LegacyUiHostPage : Page
       if (notice === 1 || notice === 2) latestWindow.groupNoticeRows++;
       if (notice === 2) latestWindow.verifiedNoticeRows++;
       const typeEvidence = conversationTypeFromNode(row, identity, displayName, notice);
-      if (!externalId && !latestWindow.rowStructureSample) {
+      if (!externalId && !globalThis.__zhikeRowStructureSample) {
         // Attribute names only: no message text, names or aria labels leave the page.
         const shape = node => node ? {
           tag: String(node.tagName || '').toLowerCase(),
@@ -4962,7 +4962,7 @@ public sealed partial class LegacyUiHostPage : Page
         const chain = [shape(row)];
         let parent = row.parentElement;
         for (let depth = 0; parent && depth < 3; depth += 1, parent = parent.parentElement) chain.push(shape(parent));
-        latestWindow.rowStructureSample = chain;
+        globalThis.__zhikeRowStructureSample = chain;
       }
       if (typeEvidence.conversationType === 'unknown' || (!externalId && (directHistoryAllowed ? !typeEvidence.isGroup : typeEvidence.isGroup))
           || (groupMonitoringAllowed && typeEvidence.isGroup && !/@g\.us$/i.test(externalId))) unresolvedWindowRows++;
