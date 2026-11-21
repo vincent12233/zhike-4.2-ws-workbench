@@ -3265,6 +3265,17 @@
       return false;
     }
   }
+  // V5.0 §15 incremental analysis: remember the analysed content per
+  // conversation so an unchanged chat is not analysed again.
+  async function persistAnalysedFingerprint(conversation, fingerprint, context) {
+    if (!conversation?.externalId || !fingerprint) return;
+    const analysedAt = new Date().toISOString();
+    try {
+      await api('/api/ws/conversations', { method: 'POST', body: JSON.stringify({ externalId: conversation.externalId, data: { lastAnalyzedFingerprint: fingerprint, lastAnalyzedAt: analysedAt } }) }, context);
+    } catch { return; }
+    const local = state.conversations.find(item => String(item.id) === String(conversation.id));
+    if (local) local.data = { ...(local.data || {}), lastAnalyzedFingerprint: fingerprint, lastAnalyzedAt: analysedAt };
+  }
   async function analyzeStoredConversation(conversation, context, options = {}) {
     const signal = options.signal;
     throwIfAiCancelled(signal);
@@ -3291,12 +3302,24 @@
     // Ordinary WS analyses private chats only. A group is never analysed or
     // written to a customer here (there is no VIP group exception).
     if (isExplicitGroupConversation(currentConversation)) return { ok: false, reason: ordinaryGroupExclusionMessage('AI 分析') };
-    const chunks = core.splitHistoryTranscript(messages, { maxChars: 16000 });
+    // V5.0 §15 incremental analysis: an explicit range narrows the transcript,
+    // and an unchanged automatic conversation is skipped instead of paying for
+    // a repeat run that would also churn CRM fields and reminders.
+    const incremental = window.ZhikeAnalysisIncremental;
+    const scope = incremental?.selectMessagesForAnalysis?.(messages, { rangeStart: options.rangeStart, rangeEnd: options.rangeEnd }) || { messages, ranged: false, dropped: 0, unknownTime: 0, total: messages.length };
+    const analysisMessages = scope.messages;
+    if (!analysisMessages.length) return { ok: false, reason: '所选时间范围内没有可分析消息。' };
+    if (options.automatic === true && options.force !== true && scope.ranged !== true) {
+      const unchanged = incremental?.shouldSkipAnalysis?.({ currentFingerprint: sourceFingerprint, lastFingerprint: text(currentConversation?.data?.lastAnalyzedFingerprint) });
+      if (unchanged?.skip && unchanged.reason === 'unchanged') return { ok: true, skipped: true, reason: '聊天没有新增内容，已跳过重复分析。', analysis: null };
+    }
+    const chunks = core.splitHistoryTranscript(analysisMessages, { maxChars: 16000 });
     if (!chunks.length) return { ok: false, reason: '聊天没有可分析的文本，媒体消息原记录已保留。' };
-    const transcript = { text: chunks.map(item => item.text).join('\n'), included: messages.length, total: messages.length, truncated: false, chunkCount: chunks.length };
+    const transcript = { text: chunks.map(item => item.text).join('\n'), included: analysisMessages.length, total: analysisMessages.length, truncated: false, chunkCount: chunks.length };
     transcript.historyComplete = messageHistory.complete;
     transcript.historyLoaded = messageHistory.loaded;
     transcript.historyTotal = messageHistory.total;
+    transcript.analysisScope = { ranged: scope.ranged === true, rangeStart: scope.rangeStart || '', rangeEnd: scope.rangeEnd || '', dropped: Number(scope.dropped || 0), unknownTime: Number(scope.unknownTime || 0), total: Number(scope.total || messages.length) };
     transcript.sourceFingerprint = sourceFingerprint;
     transcript.directionVersion = transcriptDirectionVersion(currentConversation, sourceFingerprint);
     let aiJob;
@@ -3350,6 +3373,9 @@
         lastError: '',
        }) }, context);
       state.analysisRefreshPending.add(String(conversation.id));
+      // V5.0 §15: record what was analysed so the next poll of an unchanged
+      // conversation is skipped rather than re-billed.
+      if (scope.ranged !== true) await persistAnalysedFingerprint(currentConversation, sourceFingerprint, context);
       return { ok: true, analysis, analysisMeta: saved };
     } catch (error) {
       if (isAiCancellation(error, signal)) {
@@ -5227,6 +5253,7 @@
               <div class="ws-card-heading"><div><strong>AI 分析</strong><span>${state.historyCoverage.complete ? `当前客户完整聊天 ${state.historyCoverage.loaded} 条` : '完整历史采集完成后分析全部客户聊天'} · 队列 ${Number(state.aiQueueStats.queued || 0)} 待处理 / ${Number(state.aiQueueStats.retryable || 0)} 待重试 / ${Number(state.aiQueueStats.deadLetter || 0)} 死信</span></div><label class="ws-switch"><input id="wsAiEnabled" type="checkbox" ${state.aiEnabled ? 'checked' : ''}><span>AI 开关</span></label></div>
               <div id="wsAiBackgroundError" class="ws-error-line" ${state.aiBackgroundError ? '' : 'hidden'}><span data-ws-ai-error-text>${esc(state.aiBackgroundError || '')}</span><button class="btn small" data-ws-action="resume-ai-queue" ${state.aiRetryScope ? '' : 'hidden'}>立即重试</button></div>
               <button class="btn small primary ws-full-button" data-ws-action="analyze" ${!current || !state.messages.length || !state.aiEnabled || state.aiBusy ? 'disabled' : ''}>${state.aiBusy ? '分析中…' : state.analysis ? '重新分析当前聊天' : '分析当前聊天'}</button>
+              <button class="btn small ws-full-button" data-ws-action="analyze-recent" ${!current || !state.messages.length || !state.aiEnabled || state.aiBusy ? 'disabled' : ''}>重新分析最近 7 天</button>
               ${renderAiAuthorization()}
               <div class="ws-analysis-content">${renderAnalysis()}</div>
             </section>
@@ -5562,6 +5589,18 @@
     }
   }
 
+  // Re-analyse only the last `days` of the current private chat (V5.0 §15).
+  // Messages without a known send time cannot be proven to be in range, so
+  // they are excluded; the result says how many were left out.
+  function recentRangeStart(days = 7) {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    start.setDate(start.getDate() - Math.max(1, Math.floor(days)) + 1);
+    return start.toISOString();
+  }
+  async function analyzeRecentConversation(context = captureContext()) {
+    return analyzeConversation({ ...context, rangeStart: recentRangeStart(7), force: true });
+  }
   async function analyzeConversation(context = captureContext()) {
     const current = activeConversation();
     if (context.conversationId && context.conversationId !== String(current?.id || '')) return { ok: false, reason: 'WS 会话已切换。' };
@@ -6615,6 +6654,7 @@
     }
     if (action.startsWith('ai-authorization-')) return aiAuthorizationAction(action.slice('ai-authorization-'.length), element);
     if (action === 'analyze') return analyzeConversation();
+    if (action === 'analyze-recent') return analyzeRecentConversation();
     if (action === 'use-ai-reply') return useAiReply();
     if (action === 'retry-draft-persist') { flushDraftPersist(); updateDraftPersistenceStatus(); return; }
     if (action === 'save-customer') return saveCustomerTo();
