@@ -30,6 +30,15 @@ check('the view is registered, routed and rendered', () => {
   assert.match(workbench, /activeView === 'managed-groups'\) body = managedGroups\?\.render\(\)/);
   assert.ok(host.includes('"managed-groups"'), 'native allowlists');
 });
+check('workspace navigation labels are unique; the directory and the registry are distinct pages', () => {
+  const meta = workbench.slice(workbench.indexOf('const WS_WORKSPACE_VIEW_META'), workbench.indexOf('const WS_WORKSPACE_VIEW_IDS'));
+  const labels = [...meta.matchAll(/\{ id: '([^']+)', label: '([^']+)'/g)].map(match => ({ id: match[1], label: match[2] }));
+  assert.ok(labels.length > 10, 'navigation metadata parsed');
+  const seen = new Map();
+  for (const { id, label } of labels) { assert.ok(!seen.has(label), `label ${label} used by ${seen.get(label)} and ${id}`); seen.set(label, id); }
+  assert.equal(labels.find(item => item.id === 'groups')?.label, '群组目录');
+  assert.equal(labels.find(item => item.id === 'managed-groups')?.label, '群组管理');
+});
 check('the form asks for exactly the three business fields', () => {
   const form = ui.slice(ui.indexOf('data-mg-form'), ui.indexOf('</form>'));
   for (const field of ['name="channel"', 'name="groupName"', 'name="groupAlias"']) assert.ok(form.includes(field), field);

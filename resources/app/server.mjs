@@ -4840,7 +4840,7 @@ const server = createServer(async (req, res) => {
         // Groups belong to the dedicated WS group directory. This endpoint never
         // creates or promotes a group conversation, including legacy vip flags.
         if (requestedType === 'group') {
-          throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '请在专用 WS 的群组管理中选择该群。');
+          throw wsConversationPolicyError('WS_GROUP_EXCLUDED', '请在专用 WS 的群组目录中选择该群。');
         }
         const effectiveType = requestedType === 'unknown' && existing ? wsCore.conversationType(existing) : requestedType;
         if (existing) {

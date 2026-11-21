@@ -30,7 +30,7 @@
     { id: 'overview', label: '工作台首页', icon: 'home', hint: '账号、采集与工作入口' },
     { id: 'accounts', label: '账号管理', icon: 'phone', hint: '多账号与连接状态' },
     { id: 'chat', label: '前台聊天', icon: 'chat-stack', hint: '原生 WS 聊天与客户档案' },
-    { id: 'groups', label: '群组管理', icon: 'layers', hint: '群组目录与监测端口' },
+    { id: 'groups', label: '群组目录', icon: 'layers', hint: '群组目录与监测端口' },
     { id: 'managed-groups', label: '群组管理', icon: 'users-group', hint: '渠道、群名、群别名与客户登记匹配' },
     { id: 'group-channels', label: '群组渠道配置', icon: 'filter', hint: '群组编号、渠道、助理与批量导入' },
     { id: 'members', label: '群成员管理', icon: 'users-group', hint: '成员事件与 CRM 关系' },
@@ -1379,7 +1379,7 @@
     return isAutomaticCollectibleConversation(conversation) || !isNativeManagedConversation(conversation);
   }
   function ordinaryGroupExclusionMessage(action = '采集、AI 分析或跟进提醒') {
-    return `此群聊不适用于${action}。请在专用 WS 的群组管理中选择该群。`;
+    return `此群聊不适用于${action}。请在专用 WS 的群组目录中选择该群。`;
   }
   function personalConversationRows(rows) {
     return (Array.isArray(rows) ? rows : []).filter(row => !isExplicitGroupConversation(row));
@@ -4721,7 +4721,7 @@
     const externalId = text($('#wsConversationExternalId')?.value || state.createExternalId);
     const title = text($('#wsConversationTitle')?.value || state.createTitle);
     if (!externalId) { toast('请输入 WS 会话标识；不读取平台账号或 Cookie。', 'x'); return; }
-    if (/@g\.us$/i.test(externalId)) { toast('请在专用 WS 的群组管理中选择该群。', 'x'); return; }
+    if (/@g\.us$/i.test(externalId)) { toast('请在专用 WS 的群组目录中选择该群。', 'x'); return; }
     const context = captureContext();
     state.busy.customer = true;
     render();
