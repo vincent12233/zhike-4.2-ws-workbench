@@ -6,6 +6,7 @@ using Microsoft.Web.WebView2.Core;
 using Windows.ApplicationModel.DataTransfer;
 using System.Diagnostics;
 using System.Net.Http;
+using System.Reflection;
 using System.Text.Json;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Collections.Concurrent;
@@ -18,6 +19,8 @@ public sealed partial class LegacyUiHostPage : Page
     private const int MaxBridgeMessageChars = 50 * 1024 * 1024;
     private const int MaxBridgePayloadChars = 48 * 1024 * 1024;
     private readonly WebViewProfileService _profiles = new();
+    private string _lastFailureStage = string.Empty;
+    private string _lastFailureDetail = string.Empty;
     private readonly WebViewProfileService _wsProfiles = new();
     private readonly WsAccountStore _wsAccountStore = new();
     private readonly LocalQueue _wsQueue = new();
@@ -210,9 +213,10 @@ public sealed partial class LegacyUiHostPage : Page
             _webView?.CoreWebView2?.Reload();
             return true;
         }
-        catch
+        catch (Exception error)
         {
-            ShowHostLoadError("知客页面加载失败，请检查本机服务后重试。");
+            RememberHostFailure("打开知客页面", error);
+            ShowHostLoadError($"知客页面加载失败：{error.GetBaseException().Message}");
             return false;
         }
     }
@@ -223,9 +227,10 @@ public sealed partial class LegacyUiHostPage : Page
         Stage51Isolation.Record("host-loaded", new { route = _currentRoute });
 #endif
         try { await EnsureInitializedAsync(); }
-        catch
+        catch (Exception error)
         {
-            ShowHostLoadError("知客页面资源暂时不可用，请点击重试；本机数据不会受影响。");
+            RememberHostFailure("启动工作台", error);
+            ShowHostLoadError($"知客页面资源暂时不可用：{error.GetBaseException().Message}");
         }
     }
 
@@ -6393,8 +6398,46 @@ public sealed partial class LegacyUiHostPage : Page
     private async void RetryHost(object sender, RoutedEventArgs args)
         => await TryReloadAsync();
 
-    private void ShowHostDiagnostics(object sender, RoutedEventArgs args)
-        => ShowStatus($"资源根目录：{ResolveResourcesRoot()}；WebView2：{(_webView?.CoreWebView2 is null ? "未初始化" : "已初始化")}。", InfoBarSeverity.Informational);
+    private void RememberHostFailure(string stage, Exception error)
+    {
+        _lastFailureStage = stage;
+        _lastFailureDetail = error.GetBaseException().Message;
+    }
+
+    private async void ShowHostDiagnostics(object sender, RoutedEventArgs args)
+    {
+        var service = App.LocalService;
+        var assembly = typeof(LegacyUiHostPage).Assembly;
+        var version = assembly.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()?.InformationalVersion
+            ?? assembly.GetName().Version?.ToString() ?? "未知";
+        string runtime;
+        try { runtime = CoreWebView2Environment.GetAvailableBrowserVersionString(); }
+        catch (Exception error) { runtime = $"不可用：{error.GetBaseException().Message}"; }
+        var health = "未检查";
+        if (service is not null)
+        {
+            try { health = await service.HealthAsync() ? "通过" : "失败"; }
+            catch (Exception error) { health = $"失败：{error.GetBaseException().Message}"; }
+        }
+        var tail = service?.OutputTail.Trim() ?? "";
+        var tailLines = tail.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        var lastOutput = tailLines.Length == 0 ? "无" : tailLines[^1];
+        var lines = new[]
+        {
+            $"应用版本：{version}",
+            $"EXE 路径：{Environment.ProcessPath ?? "未知"}",
+            $"资源根目录：{ResolveResourcesRoot()}",
+            $"WebView2 运行时：{runtime}",
+            $"WebView2 状态：{(_webView?.CoreWebView2 is null ? "未初始化" : "已初始化")}",
+            $"本机服务：{(service?.IsRunning == true ? "运行中" : "未运行")}{(service?.Info is { } info ? $" · {info.BaseAddress}" : "")}",
+            $"健康检查：{health}",
+            $"数据目录：{service?.DataRoot ?? "未知"}",
+            $"最近失败阶段：{(_lastFailureStage.Length == 0 ? "无" : _lastFailureStage)}",
+            $"最近失败原因：{(_lastFailureDetail.Length == 0 ? (service?.LastFailure ?? "无") : _lastFailureDetail)}",
+            $"本机服务最后输出：{lastOutput}",
+        };
+        ShowStatus(string.Join("\n", lines), InfoBarSeverity.Informational);
+    }
 
     internal static string BuildWsBoundsObserverScript() => """
 (() => {

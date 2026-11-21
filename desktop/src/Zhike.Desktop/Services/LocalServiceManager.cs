@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 
 namespace Zhike.Desktop.Services;
@@ -24,6 +25,7 @@ public sealed class LocalServiceManager : IAsyncDisposable
     private readonly string _dataRoot;
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(2) };
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly StringBuilder _outputTail = new();
     private Process? _process;
     private LocalServiceInfo? _info;
     // Host-memory capability. Never include it in LocalServiceInfo, connection files or logs.
@@ -43,6 +45,12 @@ public sealed class LocalServiceManager : IAsyncDisposable
 
     public LocalServiceInfo? Info => _ready ? _info : null;
     public bool IsRunning => _ready && _process is { HasExited: false } && _info is not null;
+    /// <summary>Data directory the sidecar was pointed at, for diagnostics only.</summary>
+    public string DataRoot => _dataRoot;
+    /// <summary>Last sidecar failure with its own stderr excerpt, never a token.</summary>
+    public string? LastFailure { get; private set; }
+    /// <summary>Bounded tail of sidecar stdout/stderr, used to explain a failed start.</summary>
+    public string OutputTail { get { lock (_outputTail) return _outputTail.ToString(); } }
 
     public async Task<LocalServiceInfo> StartAsync(CancellationToken cancellationToken = default)
     {
@@ -71,6 +79,7 @@ public sealed class LocalServiceManager : IAsyncDisposable
                 catch (Exception error) when (error is not OperationCanceledException)
                 {
                     lastError = error;
+                    LastFailure = error.Message;
                     await StopCoreAsync(CancellationToken.None).ConfigureAwait(false);
                     if (attempt == maxAttempts) throw;
                     await Task.Delay(TimeSpan.FromMilliseconds(150 * attempt), cancellationToken).ConfigureAwait(false);
@@ -195,19 +204,39 @@ public sealed class LocalServiceManager : IAsyncDisposable
         cancellationToken.ThrowIfCancellationRequested();
     }
 
+    private void AppendTail(string line)
+    {
+        lock (_outputTail)
+        {
+            if (_outputTail.Length > 0) _outputTail.Append('\n');
+            _outputTail.Append(line.Length > 500 ? line[..500] : line);
+            // Keep the most recent ~3 KB so a long-running sidecar cannot grow it.
+            if (_outputTail.Length > 3072) _outputTail.Remove(0, _outputTail.Length - 3072);
+        }
+    }
+
+    private string WithTail(string message)
+    {
+        var tail = OutputTail.Trim();
+        if (tail.Length == 0) return message;
+        var lines = tail.Split('\n');
+        var last = lines[^1].Trim();
+        return $"{message}（本机服务最后输出：{last}）";
+    }
+
     private async Task WaitForHealthAsync(LocalServiceInfo info, CancellationToken cancellationToken)
     {
         var deadline = DateTimeOffset.UtcNow.AddSeconds(15);
         while (DateTimeOffset.UtcNow < deadline)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (_process?.HasExited == true) throw new InvalidOperationException("本机数据服务启动后立即退出，请检查安装资源或数据目录权限。");
+            if (_process?.HasExited == true) throw new InvalidOperationException(WithTail("本机数据服务启动后立即退出，请检查安装资源或数据目录权限。"));
             if (await HealthAsync(cancellationToken).ConfigureAwait(false)) return;
             if (!string.IsNullOrWhiteSpace(_healthVersionMismatch))
                 throw new InvalidOperationException($"检测到知客安装文件混装：{_healthVersionMismatch}。请使用同一版本的安装包修复安装，程序不会回退到旧资源。");
             await Task.Delay(150, cancellationToken).ConfigureAwait(false);
         }
-        throw new TimeoutException("本机数据服务启动超时，请重试或检查本机数据目录。");
+        throw new TimeoutException(WithTail("本机数据服务启动超时，请重试或检查本机数据目录。"));
     }
 
     private void EnsureResources()
@@ -256,8 +285,8 @@ public sealed class LocalServiceManager : IAsyncDisposable
         _healthVersionMismatch = null;
         try
         {
-            process.OutputDataReceived += (_, e) => { if (!string.IsNullOrWhiteSpace(e.Data)) Debug.WriteLine($"[ZhikeLocal] {e.Data}"); };
-            process.ErrorDataReceived += (_, e) => { if (!string.IsNullOrWhiteSpace(e.Data)) Debug.WriteLine($"[ZhikeLocal:error] {e.Data}"); };
+            process.OutputDataReceived += (_, e) => { if (!string.IsNullOrWhiteSpace(e.Data)) { Debug.WriteLine($"[ZhikeLocal] {e.Data}"); AppendTail(e.Data); } };
+            process.ErrorDataReceived += (_, e) => { if (!string.IsNullOrWhiteSpace(e.Data)) { Debug.WriteLine($"[ZhikeLocal:error] {e.Data}"); AppendTail(e.Data); } };
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 #if STAGE51_ISOLATED_UI
