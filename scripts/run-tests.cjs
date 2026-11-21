@@ -116,6 +116,7 @@ function runStage3(options = {}) {
   run('Ordinary WS AI status strip', [path.join(repo, 'tests', 'ws-ai-status-core.test.cjs')]);
   run('WS workspace rail and toolbar', [path.join(repo, 'tests', 'ws-shell-chrome.test.cjs')]);
   run('CRM customer list empty state', [path.join(repo, 'tests', 'crm-empty-state.test.cjs')]);
+  run('WS membership timeline evidence', [path.join(repo, 'tests', 'ws-membership-timeline-core.test.cjs')]);
   run('WS reply draft persistence', [path.join(repo, 'tests', 'ws-reply-draft-persistence.test.cjs')]);
   run('Stage 3 WS workspace navigation', [path.join(repo, 'scripts', 'stage3', 'ws-workbench-navigation.test.cjs')]);
 }
