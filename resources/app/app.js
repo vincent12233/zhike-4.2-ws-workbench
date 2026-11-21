@@ -819,6 +819,14 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
     if(!engine||typeof engine.attributionFields!=='function')return [['渠道归属','模块未加载，请重新打开应用']];
     return engine.attributionFields(customer);
   }
+  // V5.0 §16/§19 字段锁定：锁定后 AI、导入和自动补全都不会改写这些字段。
+  function customerFieldLockHtml(customer){
+    const engine=window.ZhikeFieldLocks;
+    if(!engine||!Array.isArray(engine.LOCKABLE_FIELDS))return '<p class="panel-note">字段锁定模块未加载，请重新打开应用。</p>';
+    const summary=engine.lockSummary(customer);
+    const chips=engine.LOCKABLE_FIELDS.map(item=>{const on=summary.fields.includes(item.key);return `<button type="button" class="lock-chip ${on?'active':''}" data-action="toggle-field-lock" data-id="${esc(customer.id)}" data-field="${esc(item.key)}" aria-pressed="${on}">${on?'🔒 ':''}${esc(item.label)}</button>`;}).join('');
+    return `<div class="lock-chips">${chips}</div><p class="panel-note">已锁定 ${summary.count} 个字段。锁定后 AI 分析、导入和自动补全都不会改写这些字段；再次点击即可解锁。</p>`;
+  }
   function customerIdentityHtml(customer,drawer=false){
     const name=esc(customerName(customer));
     const phone=esc(customer.rawPhone||customer.phone||'未登记号码');
@@ -1102,6 +1110,25 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
   function hotCustomerModal(){const available=activeCustomers().filter(customer=>!customer.hot);openModal('标记热聊客户',available.length?`搜索并选择客户 · ${available.length} 位尚未标记`:'当前没有可标记的客户',available.length?`${customerPickerHtml('hotCustomer',available)}<p class="input-hint">已是热聊的客户不会重复加入。标记后会保留客户原有渠道、状态和跟进资料。</p>`:'<div class="empty-state"><div class="empty-icon">'+icons('message')+'</div><h2>没有待标记客户</h2><p>客户库中的客户都已标记为热聊，或尚未录入客户。</p></div>',`<button class="btn" data-action="close-modal">取消</button><button class="btn primary" data-action="confirm-new-hot" ${available.length?'':'disabled'}>标记为热聊</button>`);}
   async function setCustomerHot(id,hot){const customer=state.customers.find(item=>String(item.id)===String(id)&&!item.deleted);if(!customer){toast('找不到这位客户，请刷新后重试','x');return;}if(Boolean(customer.hot)===hot){toast(hot?'该客户已标记为热聊':'该客户已不是热聊客户');return;}const previous=customer.hot,previousTouched=customer.touched,previousActivities=state.activities.slice();customer.hot=hot;customer.touched=true;persist();activity(`${hot?'将':'取消'} ${customer.name} 的热聊标记`);try{await flushStateWrites();}catch(error){customer.hot=previous;customer.touched=previousTouched;state.activities=previousActivities;persist();toast(`保存失败，热聊状态已恢复：${error.message||'本机数据暂不可写'}`,'x');render();return;}closeModal();render();toast(`${hot?'已标记':'已取消'} ${customer.name}${hot?'为热聊':''}`);}
   async function setCustomerFavorite(id,favorite){const customer=state.customers.find(item=>String(item.id)===String(id)&&!item.deleted);if(!customer)return;const previous=Boolean(customer.favorite),previousTouched=customer.touched,previousActivities=state.activities.slice();customer.favorite=Boolean(favorite);customer.touched=true;persist();activity(`${customer.favorite?'标记':'取消'}重点关注客户：${customer.name}`);try{await flushStateWrites();}catch(error){customer.favorite=previous;customer.touched=previousTouched;state.activities=previousActivities;persist();render();toast('重点关注状态保存失败，已恢复','x');return;}render();if($('#customerDrawer')?.classList.contains('open'))showCustomer(customer);toast(customer.favorite?'已加入重点关注':'已取消重点关注');}
+  // V5.0 §16/§19 字段锁定：写入失败时恢复原状态，不显示虚假的成功提示。
+  async function setCustomerFieldLock(id,field){
+    const customer=state.customers.find(item=>String(item.id)===String(id)&&!item.deleted);
+    if(!customer)return;
+    const engine=window.ZhikeFieldLocks;
+    if(!engine||typeof engine.toggleLock!=='function'){toast('字段锁定模块未加载，请重新打开应用。','x');return;}
+    const previous=Array.isArray(customer.manualLockedFields)?customer.manualLockedFields.slice():undefined;
+    const previousTouched=customer.touched,previousActivities=state.activities.slice();
+    const result=engine.toggleLock(customer,field);
+    if(!result.changed){toast('该字段不支持锁定。','x');return;}
+    customer.touched=true;
+    persist();
+    activity(`${result.locked?'锁定':'解锁'}客户字段：${customer.name||customer.id}`);
+    try{await flushStateWrites();}
+    catch(error){customer.manualLockedFields=previous;customer.touched=previousTouched;state.activities=previousActivities;persist();render();toast('字段锁定保存失败，已恢复原状态','x');return;}
+    render();
+    if($('#customerDrawer')?.classList.contains('open'))showCustomer(customer);
+    toast(result.locked?'已锁定该字段，AI 与导入不会再改写':'已解锁该字段');
+  }
   async function saveCustomerQualification(id){const customer=state.customers.find(item=>sameId(item.id,id)&&!item.deleted),value=$('#drawerQualification')?.value;if(!customer||!qualifications.includes(value)){toast('请选择有效的资质评级','x');return;}if((customer.qualification||'待评估')===value){toast('资质评级没有变化');return;}if(!await snapshotBeforeWrite('修改客户资质评级前自动快照'))return;const previous=customer.qualification||'待评估',beforeHistory=cloneStateData(customer.qualificationHistory||[]),previousUpdatedAt=customer.qualificationUpdatedAt,previousTouched=customer.touched,previousActivities=state.activities.slice();customer.qualification=value;customer.qualificationUpdatedAt=new Date().toISOString();customer.qualificationHistory=[...beforeHistory,{id:`Q${Date.now()}-${Math.random().toString(36).slice(2,7)}`,from:previous,to:value,at:customer.qualificationUpdatedAt,date:today}].slice(-50);customer.touched=true;persist();activity(`更新 ${customer.name} 的资质评级：${previous} → ${value}`);try{await flushStateWrites();}catch{customer.qualification=previous;customer.qualificationHistory=beforeHistory;if(previousUpdatedAt===undefined)delete customer.qualificationUpdatedAt;else customer.qualificationUpdatedAt=previousUpdatedAt;customer.touched=previousTouched;state.activities=previousActivities;persist();showCustomer(customer);toast('资质评级保存失败，已恢复原值','x');return;}showCustomer(customer);render();toast(`资质评级已更新为：${value}`);}
   const ticketRecords=window.ZhikeTicketRecords||{};
   const normalizeTicketRecord=record=>ticketRecords.normalizeTicketRecord?ticketRecords.normalizeTicketRecord(record):record;
@@ -1460,6 +1487,7 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
       ${customerDetailCard('群组关系','users-group',groupMembershipRows(customer),'',true)}
       ${customerDetailCard('渠道与在群','users-group',`<div class="detail-grid">${customerDetailFields(customerAttributionRows(customer),'drawer')}</div>`,'',true)}
       ${customerDetailCard('资料完整度','layers',customerCompletenessHtml(customer),'',true)}
+      ${customerDetailCard('字段锁定','shield',customerFieldLockHtml(customer),'',true)}
       ${customerDetailCard('CRM 指挥信息','chart',`<div class="crm-command"><div><span>CRM 评分</span><strong>${crm.score}</strong><small>${crm.grade} 级客户</small><div class="crm-score-track"><i style="width:${crm.score}%"></i></div></div><div><span>生命周期</span><strong>${esc(crm.stage)}</strong><small>累计跟进 ${crm.followCount} 次</small></div><div class="crm-next"><span>下一步建议</span><strong>${esc(crm.nextAction)}</strong><small>按客户状态与业务记录计算</small></div></div>`,`<span>${esc(crm.grade)} 级 · ${esc(crm.sla)}</span>`,true)}
       ${customerDetailCard('跟进时间线','history',`<div class="detail-grid">${customerDetailFields(customerFollowFields(customer,crm),'drawer')}</div><div class="timeline customer-360-timeline">${customerTimeline(customer)}</div>`,'<span>最近 12 条</span>',true)}
       ${customerDetailCard('阅读统计','check',customerReadingSummary(),'',true)}
@@ -2231,6 +2259,7 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
     else if(action==='confirm-new-hot')await setCustomerHot($('#hotCustomer')?.value,true);
     else if(action==='toggle-hot')await setCustomerHot(id,!customer?.hot);
     else if(action==='toggle-favorite')await setCustomerFavorite(id,!customer?.favorite);
+    else if(action==='toggle-field-lock')await setCustomerFieldLock(id,el.dataset.field);
     else if(action==='save-customer-qualification')await saveCustomerQualification(id);
     else if(action==='favorite-customers'){state.extraFilters={favorite:'true'};state.customerSearch='';setView('customers');}
     else if(action==='toast-settings')securitySettingsModal();

@@ -109,6 +109,7 @@ function runStage3(options = {}) {
   run('CRM channel, assistant and group statistics', [path.join(repo, 'tests', 'crm-statistics-core.test.cjs')]);
   run('Customer 360 governance view', [path.join(repo, 'tests', 'customer-governance-view.test.cjs')]);
   run('Customer 360 channel attribution', [path.join(repo, 'tests', 'customer-attribution-core.test.cjs')]);
+  run('Customer manual field locks', [path.join(repo, 'tests', 'customer-field-locks-core.test.cjs')]);
   run('WS reply draft persistence', [path.join(repo, 'tests', 'ws-reply-draft-persistence.test.cjs')]);
   run('Stage 3 WS workspace navigation', [path.join(repo, 'scripts', 'stage3', 'ws-workbench-navigation.test.cjs')]);
 }
