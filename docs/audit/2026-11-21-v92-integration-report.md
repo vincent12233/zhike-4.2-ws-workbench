@@ -137,4 +137,4 @@ C# 两处视图白名单原本已包含 `managed-groups`。Windows CI 自 `8b40f
 ## 6. 其他
 
 - 另一个会话的分支 `claude/fervent-goldberg-cps40b` 含相同的白名单修复（同一行，文本一致）与 `upgrade-http-smoke` 扩展，不含响应约定与事件绑定修复。仓库所有者在 `685b726` 推送后经 PR #3 合入集成分支（`d9902e9`）；相对 `685b726` 只新增 `upgrade-http-smoke` 中对全部 `index.html` 资源的逐字节检查，本轮代码未被改动。本报告提交以普通合并（`64f499a`）纳入该变更，未强推；合并后 `upgrade-http-smoke`、群组管理页加载、客户合并撤销与静态资源测试均通过。RC 安装包仍以 `685b726` 为准，此后提交只增加测试与文档。
-- `ai-job-pipeline-core.js` 在浏览器中以裸 `module.exports` 结尾，页面控制台报 `module is not defined`；`main` 上即存在，浏览器端无使用方，本轮未改。
+- `ai-job-pipeline-core.js` 在浏览器中以裸 `module.exports` 结尾，页面报 `module is not defined`，且顶层声明泄漏到页面全局作用域（`main` 上即存在）。后续已改为与 `customer-field-locks-core.js` 相同的 UMD 包装：Node `require` 得到相同的 24 个导出，浏览器得到 `window.ZhikeAiJobPipeline`，不再抛错或泄漏全局；由 `tests/ai-job-pipeline-browser-load.test.cjs` 覆盖。

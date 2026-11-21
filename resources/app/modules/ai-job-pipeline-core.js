@@ -1,3 +1,12 @@
+// Loaded both by the sidecar (require) and as a classic browser script from
+// index.html. The wrapper keeps every declaration private in the browser,
+// exposes the same API as window.ZhikeAiJobPipeline, and never touches the
+// CommonJS `module` global where it does not exist.
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module && module.exports) module.exports = api;
+  else if (root) root.ZhikeAiJobPipeline = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
 'use strict';
 
 /**
@@ -501,7 +510,7 @@ function validateResult(result) {
   return clone(result);
 }
 
-module.exports = {
+return {
   STATES,
   status,
   legacyStatus,
@@ -527,3 +536,4 @@ module.exports = {
   createMemoryStore,
   createAiJobPipeline,
 };
+});

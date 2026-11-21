@@ -134,6 +134,7 @@ function runStage3(options = {}) {
 function runStage4(options = {}) {
   if (options.includeSyntax) runSyntax();
   run('Stage 4 AI job pipeline core', [path.join(repo, 'scripts', 'stage4', 'ai-job-pipeline-core.test.cjs')]);
+  run('Stage 4 AI job pipeline core loads as a browser script', [path.join(repo, 'tests', 'ai-job-pipeline-browser-load.test.cjs')]);
   run('Stage 4 CRM suggestion core', [path.join(repo, 'scripts', 'stage4', 'ai-crm-suggestion-core.test.cjs')]);
   run('Stage 4 migration and schema', [path.join(repo, 'scripts', 'stage4', 'ai-pipeline-migration.test.cjs')]);
   run('Stage 4 Worker AI flags', [path.join(repo, 'scripts', 'stage4', 'worker-ai-flags.test.cjs')]);
