@@ -2402,7 +2402,7 @@ function refreshWsCollectionRunCounters(accountId, runId) {
     .run(total, total, Number(counts?.completed || 0), Number(counts?.analyzing || 0), Number(counts?.analyzed || 0), Number(counts?.failed || 0), Number(counts?.skipped || 0), Number(counts?.retryable || 0), now, runId, accountId);
   return wsCollectionRunPayload(db.prepare('SELECT * FROM ws_collection_runs WHERE id=? AND account_id=?').get(runId, accountId));
 }
-function wsFollowupAlertPayload(row) { return { id: row.id, accountId: row.account_id || 'default', conversationId: row.conversation_id, analysisId: row.analysis_id, alertKey: row.alert_key, priority: row.priority, reason: row.reason, followupTime: row.followup_time || '', status: row.status || 'open', snoozedUntil: row.snoozed_until || '', data: wsJson(row.data_json, {}), createdAt: row.created_at, updatedAt: row.updated_at }; }
+function wsFollowupAlertPayload(row) { return { id: row.id, accountId: row.account_id || 'default', conversationId: row.conversation_id, analysisId: row.analysis_id, alertKey: row.alert_key, priority: row.priority, reason: row.reason, followupTime: row.followup_time || '', status: row.status || 'open', displayStatus: wsCrmSync.followupAlertStatus({ status: row.status || 'open', followupTime: row.followup_time || '', data: wsJson(row.data_json, {}) }), snoozedUntil: row.snoozed_until || '', data: wsJson(row.data_json, {}), createdAt: row.created_at, updatedAt: row.updated_at }; }
 const AI_JOB_STATUSES = new Set(['queued', 'running', 'retryable', 'completed', 'failed', 'cancelled']);
 function aiJobPayload(row, options = {}) {
   const attempts = Number(row.attempts || 0);
@@ -6133,7 +6133,10 @@ const server = createServer(async (req, res) => {
       wsRequireConversation(existing.conversation_id, accountId);
       if (conversationId && conversationId !== existing.conversation_id) return json(res, 409, { error: '跟进提醒会话不匹配。' });
       const allowed = new Set(['open','snoozed','done','dismissed']);
-      const status = allowed.has(wsText(body.status, 20)) ? wsText(body.status, 20) : existing.status;
+      // 待处理/已完成/已取消/逾期/待确认 are display states (wsCrmSync.followupAlertStatus).
+      // 已取消 is stored as dismissed.
+      const requestedStatus = wsText(body.status, 20);
+      const status = requestedStatus === 'cancelled' ? 'dismissed' : allowed.has(requestedStatus) ? requestedStatus : existing.status;
       const snoozedUntil = wsText(body.snoozedUntil ?? existing.snoozed_until, 80);
       const now = new Date().toISOString();
       const state = governanceState();
@@ -6245,6 +6248,7 @@ const server = createServer(async (req, res) => {
       const currentCrm = governanceState();
       const currentTasks = currentCrm.settings.operatingTasks;
       const activeCustomerIds = new Set(currentCrm.customers.filter(customer => !customer.deleted).map(customer => String(customer.id)));
+      const customerById = new Map(currentCrm.customers.map(customer => [String(customer.id), customer]));
       const taskByAnalysis = new Map(), taskByConversation = new Map();
       for (const item of currentTasks) {
         if (!item?.aiGenerated) continue;
@@ -6350,6 +6354,13 @@ const server = createServer(async (req, res) => {
           urgency: result.urgency || '',
           intent: result.intent || '',
           confidence,
+          // V5.0 §18: the reminder carries its owner and the source message, and
+          // records whether the suggested date was stated in chat or is only our
+          // cadence suggestion (which must never look like an agreed date).
+          assistant: wsText(customerById.get(String(task.customerId))?.assistant, 60),
+          sourceMessage: wsText(strategy.reason || result.summary, 500),
+          timeSource: alertPlan.timeSource || '',
+          timeConfirmed: alertPlan.timeConfirmed === true,
           needsConfirmation: true,
         };
         const now = new Date().toISOString();
@@ -6409,7 +6420,10 @@ const server = createServer(async (req, res) => {
           priority,
           reason,
           status: savedAlert.status,
+          displayStatus: wsCrmSync.followupAlertStatus({ status: savedAlert.status, followupTime: due, data: alertData }),
           snoozedUntil: savedAlert.snoozed_until || '',
+          assistant: alertData.assistant || '',
+          timeConfirmed: alertData.timeConfirmed === true,
           needsConfirmation: true,
         });
       }

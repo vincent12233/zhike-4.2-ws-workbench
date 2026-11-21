@@ -214,6 +214,9 @@
     const noReply = result.noReply && typeof result.noReply === 'object' ? result.noReply : (result.noReplyAssessment && typeof result.noReplyAssessment === 'object' ? result.noReplyAssessment : null);
     const strategy = result.followupStrategy && typeof result.followupStrategy === 'object' ? result.followupStrategy : {};
     let nextDate = normalizeDate(strategy.bestTime || result.followupTime || noReply?.suggestedAt || noReply?.nextAt);
+    // V5.0 §18: only a time the chat actually states is a confirmed time. The
+    // cadence default filled in below is a suggestion, never an agreed date.
+    const explicitDate = Boolean(nextDate);
     const urgency = text(result.urgency);
     const intentScore = Number(result.intentScore || 0);
     const evidenceItems = [strategy.qualificationReason, strategy.engagementReason, strategy.reason, strategy.objective, result.nextStep, noReply?.reason].map(text).filter(Boolean);
@@ -245,6 +248,9 @@
     return {
       shouldCreate,
       nextDate,
+      // 'ai-explicit' = the chat stated a time; 'suggested-cadence' = our default.
+      timeSource: explicitDate ? 'ai-explicit' : (nextDate ? 'suggested-cadence' : ''),
+      timeConfirmed: explicitDate,
       note: note || '根据 AI 分析安排下一次跟进',
       priority: urgent ? 'high' : 'normal',
       priorityScore,
@@ -389,5 +395,20 @@
     return { customer, changedFields };
   }
 
-  return { shouldAutoSync, deriveCustomerProfile, deriveFollowupPlan, matchCustomerForAutoSync, mergeCustomerProfileSafely, normalizeDate, normalizePhone, AUTO_SYNC_CONFIDENCE_THRESHOLD };
+  // V5.0 §18 display state of a reminder. 逾期 is derived from the date and is
+  // never stored; a cadence suggestion that the chat did not confirm is 待确认.
+  function followupAlertStatus(row = {}, today = dateKey(new Date())) {
+    const status = text(row?.status || 'open');
+    const data = row?.data && typeof row.data === 'object' && !Array.isArray(row.data) ? row.data : {};
+    const due = normalizeDate(row?.followupTime || row?.followup_time || data.followupTime || '');
+    const confirmed = data.timeConfirmed !== false;
+    if (status === 'done') return { key: 'done', label: '已完成', overdue: false, confirmed };
+    if (status === 'dismissed' || status === 'cancelled') return { key: 'cancelled', label: '已取消', overdue: false, confirmed };
+    if (status === 'review') return { key: 'review', label: '待确认', overdue: false, confirmed: false };
+    if (!confirmed) return { key: 'review', label: '待确认', overdue: false, confirmed: false };
+    if (due && due < today) return { key: 'overdue', label: '逾期', overdue: true, confirmed };
+    return { key: 'pending', label: '待处理', overdue: false, confirmed };
+  }
+
+  return { shouldAutoSync, deriveCustomerProfile, deriveFollowupPlan, followupAlertStatus, matchCustomerForAutoSync, mergeCustomerProfileSafely, normalizeDate, normalizePhone, AUTO_SYNC_CONFIDENCE_THRESHOLD };
 });

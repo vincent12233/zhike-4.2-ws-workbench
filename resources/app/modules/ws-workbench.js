@@ -3743,13 +3743,17 @@
     if (!alerts.length) return '<p class="ws-muted">当前没有自动识别出的待跟进客户。</p>';
     return `<div class="ws-followup-alerts">${alerts.map(item => {
       const confidence = Math.round(Number(item.confidence || 0) * 100);
-      return `<article class="ws-followup-alert ${esc(item.priority || 'today')}">
-        <div class="ws-followup-alert-head"><strong>${esc(item.title || item.externalId || '未命名客户')}</strong><span>${esc(item.reason || item.intent || '建议跟进')}</span></div>
+      // V5.0 §18: show the reminder state, its owner, and whether the date was
+      // stated in chat. A cadence suggestion is labelled 建议时间（待确认）.
+      const alertState = item.displayStatus || { key: item.status === 'done' ? 'done' : item.status === 'dismissed' ? 'cancelled' : 'pending', label: item.status === 'done' ? '已完成' : item.status === 'dismissed' ? '已取消' : '待处理' };
+      const timeLabel = item.followupTime ? `${item.timeConfirmed === false ? '建议时间（待确认）' : '计划'} ${esc(String(item.followupTime).slice(0, 16))}` : '未设置时间';
+      return `<article class="ws-followup-alert ${esc(item.priority || 'today')}" data-alert-status="${esc(alertState.key || 'pending')}">
+        <div class="ws-followup-alert-head"><strong>${esc(item.title || item.externalId || '未命名客户')}</strong><span class="ws-alert-status">${esc(alertState.label || '待处理')}</span><span>${esc(item.reason || item.intent || '建议跟进')}</span></div>
         <p>${esc(item.objective || item.nextStep || item.summary || '请人工查看会话并确认下一步')}</p>
         ${item.opener ? `<p class="ws-followup-opener"><strong>建议开场：</strong>${esc(item.opener)}</p>` : ''}
         ${Array.isArray(item.talkingPoints) && item.talkingPoints.length ? `<p class="ws-muted">话题：${item.talkingPoints.map(esc).join(' → ')}</p>` : ''}
         ${Array.isArray(item.avoidTopics) && item.avoidTopics.length ? `<p class="ws-error-line">避免：${item.avoidTopics.map(esc).join('；')}</p>` : ''}
-        <div class="ws-followup-alert-meta"><span>${item.followupTime ? `计划 ${esc(String(item.followupTime).slice(0, 16))}` : '未设置时间'}</span><span>优先级 ${Number(item.priorityScore || 0)}/100</span><span>置信度 ${confidence}%</span></div>
+        <div class="ws-followup-alert-meta"><span>${timeLabel}</span><span>负责人 ${esc(item.assistant || '未分配')}</span><span>优先级 ${Number(item.priorityScore || 0)}/100</span><span>置信度 ${confidence}%</span></div>
         <div class="ws-followup-alert-actions"><button class="btn small" data-ws-action="open-followup-alert" data-id="${esc(item.conversationId)}">查看会话</button><button class="btn small" data-ws-action="done-followup-alert" data-alert-id="${esc(item.id || '')}" data-alert-key="${esc(item.alertKey || '')}">已处理</button><button class="btn small" data-ws-action="snooze-followup-alert" data-alert-id="${esc(item.id || '')}" data-alert-key="${esc(item.alertKey || '')}">明日提醒</button><button class="btn small" data-ws-action="dismiss-followup-alert" data-alert-id="${esc(item.id || '')}" data-alert-key="${esc(item.alertKey || '')}">忽略</button></div>
       </article>`;
     }).join('')}</div>`;
