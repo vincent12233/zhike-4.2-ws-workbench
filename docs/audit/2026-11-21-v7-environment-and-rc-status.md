@@ -1,75 +1,74 @@
-# 2026-11-21 · V7.0 环境核实与发布候选状态
+# 2026-11-21 · V7.0 环境补齐与发布候选状态
 
-## 1. 仓库核实
+## 1. 仓库状态
 
 | 项 | 实际值 |
 | --- | --- |
 | 分支 | `feature/zhike61-ws-completion` |
-| 最新提交 | `fd7ec72`（本轮截图与工具核实后另有提交） |
-| 工作区 | 干净 |
-| 与远程 | 0/0，无分叉 |
-| 数据库 schema | 34（manifest `supportedSchemaVersion: 34`，31 个迁移脚本） |
-| PR #2 | `open`、未合并、head 为 `codex/fix-ws-login-surface`（与本分支无关，按要求保持打开） |
-| ws 测试 | 252/252 |
-| 全量测试 | 405 项，401 通过，4 项环境缺失 |
-| x64 Release | 0 警告 0 错误（本轮已在 `fd7ec72` 上重新构建） |
+| 工具链修复提交 | `7d38540` |
+| 工作区 | 本轮截图与 `.iss` 变更将随报告一起提交 |
+| 数据库 schema | 34（31 个迁移脚本） |
+| PR #2 | 仍为 `open`，未合并、未修改；其 head 是 `codex/fix-ws-login-surface` |
 
-## 2. 工具审计（本机实测）
+## 2. 工具核验（本机实测）
 
-| 工具 | 状态 | 版本/路径 |
+| 工具 | 状态 | 版本 / 路径 |
 | --- | --- | --- |
-| .NET SDK | 可用 | 10.0.404（仓库内 `.tools/dotnet10/dotnet.exe`） |
-| WebView2 运行时 | 可用 | 157.0.4341.60 |
-| Windows PowerShell | 可用 | 5.1（`powershell.exe`） |
-| PowerShell 7（`pwsh.exe`） | **缺失** | PATH 中不存在 |
-| GitHub CLI（`gh`） | **缺失** | PATH 中不存在；PR 状态改用 GitHub 公共 API 读取 |
-| Inno Setup（`iscc.exe`） | **缺失** | 未安装 |
-| 官方 Node.js 24 `node.exe` | 已就位 | `.tools/node24/node.exe` 为 v24.22.1（93,915,464 字节），已复制到 `resources/app/node.exe`（该路径被 `.gitignore` 忽略，不进入提交） |
-| winget | 可用 | `%LOCALAPPDATA%\Microsoft\WindowsApps\winget.exe` |
-| Git | 可用 | 分支与推送正常 |
+| PowerShell 7 | 可用 | 7.7.0（`pwsh` 在 PATH 中） |
+| GitHub CLI | 可用 | 2.105.0，已登录 `vincent12233`，scope 含 `repo`、`workflow`；可执行文件位于 WinGet 包目录，使用时加入 PATH |
+| Inno Setup | 可用 | 6.7.3，`ISCC.exe` 位于 `%LOCALAPPDATA%\Programs\Inno Setup 6` |
+| Node.js 24（打包运行时） | 可用 | `.tools/node24/node.exe` = v24.22.1，已复制到 `resources/app/node.exe` |
+| .NET SDK | 可用 | 10.0.404（`.tools/dotnet10/dotnet.exe`） |
+| WebView2 | 可用 | 157.0.4341.60 |
 
-## 3. 本轮被权限拦截的操作
+## 3. 本轮修复的真实兼容性缺陷
 
-按 V7.0 §十与 §五的授权边界，以下操作没有绕过：
+`scripts/stage52/resource-continuous.test.ps1` 在 PowerShell 7 下解析 Node 输出失败。根因：Node 以 UTF-8 输出，PowerShell 用本机 ANSI 代码页解码，中文系统名称 `Microsoft Windows 11 专业版` 被破坏并吞掉了 JSON 字符串的收尾引号。
 
-1. **下载官方工具压缩包**（PowerShell 7.7.0、GitHub CLI 2.105.0）。Node 24 已在本机 `.tools/node24` 中存在，直接复用，没有下载。
-2. **用 Windows PowerShell 5.1 代替 `pwsh` 运行资源套件**——需要 `-ExecutionPolicy Bypass`，该操作被拒绝；没有修改机器执行策略。对应两项测试继续按环境缺失记录。
-3. **结束本轮自己启动的 sidecar 冒烟进程**（PID 3900，127.0.0.1:4199）——`taskkill` 被拒绝，进程仍在运行；可由用户手动结束。
+修复（`7d38540`）：
 
-## 3.1 Node 24 运行时冒烟结果
+- 脚本入口固定 `[Console]::OutputEncoding` 与 `$OutputEncoding` 为 UTF-8。
+- 原生 stdout 先按行合并再 `ConvertFrom-Json`（PowerShell 会把原生输出拆成多行字符串，逐行解析必然失败）。
+- 观测上下文改为取“最新的、能解析且带 `status` 的候选”，不再依赖作业流的输出顺序。
 
-使用 `resources/app/node.exe`（v24.22.1）在临时数据目录启动 sidecar：
+没有删除断言，没有降低门槛，没有修改系统执行策略。
 
-- `/api/health` 返回 `ok: true`、`appVersion 6.1.0`、`schemaVersion 34`、`databaseStatus: queryable`。
-- SQLite 写入临时目录 `%TEMP%\zhike-node24-smoke\workspace.sqlite`，没有触碰任何真实客户数据。
-- 结论：打包携带的 Node 24 可以正常启动 sidecar 并完成迁移；安装包缺的只剩 Inno Setup 与构建脚本执行权限。
+## 4. 测试结果
 
-因此 `pwsh.exe`、`gh`、`iscc.exe`、`resources/app/node.exe` 需要用户授权后由用户或授权命令补齐。
+- `node scripts/run-tests.cjs ws`：252/252 通过。
+- `node scripts/run-tests.cjs all`：**405 项，405 通过，0 失败**。上一轮四项环境缺失（两项 pwsh、一项 gh、一项 Inno Setup）全部恢复并通过。
+- x64 Release：0 警告 0 错误。
+- 打包脚本 `build-winui-bundle.ps1 -SelfContained -ReleaseGate`：release gate 通过。
 
-## 4. 本轮已完成
+## 5. 发布产物
 
-- 在 `fd7ec72` 上重新执行 x64 Release 构建：0 警告 0 错误。
-- 真实渲染截图扩展到 V7.0 §28 要求的视口矩阵：4 种尺寸（1920×1080、1366×768、125% 等效 1536×864、150% 等效 1280×720）× 4 个场景（首页浅色、客户中心浅色、任务中心浅色、首页夜间）。截图来自隔离 WebView2 宿主渲染的真实 `index.html` 与全部 CSS，保存在 `docs/audit/evidence-2026-11-21/`。
-- 截图检查结论：导航、工具栏、六张统计卡、AI 跟进流域、客户洞察在 1366×768 与 150% 等效视口下均无重叠、无横向裁切；夜间配色的文字与卡片对比正常。
-- 截图脚本 `captureMainScreenshots` 升级为视口矩阵，并保留每张截图的渲染完成断言与顶栏对比度断言。
-
-## 5. 仍未完成与对应授权
-
-| 未完成项 | 原因 | 需要用户做什么 |
-| --- | --- | --- |
-| 两项 PowerShell 资源套件 | 缺 `pwsh.exe`，且执行策略拒绝 5.1 运行 | 允许下载 PowerShell 7 官方 zip 到 `.tools`，或由用户安装 pwsh 7 |
-| GitHub 预发布守卫 | 缺 `gh`，且未登录 | 允许下载 `gh` 官方 zip，并由用户执行 `gh auth login`（不要在对话中提供 Token） |
-| 安装包构建 | 缺 Inno Setup 与 `resources/app/node.exe` | 允许安装 Inno Setup；提供官方 Node 24 x64 `node.exe`（放入 `resources/app/`） |
-| 首次安装 / 升级 / 卸载测试 | 依赖安装包 | 安装包生成后执行，使用隔离测试数据目录 |
-| 真实 WhatsApp 验收 | 无测试账号与授权 | 用户本人扫码登录，并明确授权测试账号与测试群组 |
-
-## 6. 验证等级
-
-| 项目 | 等级 |
+| 项 | 值 |
 | --- | --- |
-| 单元与集成测试（ws、CRM、AI、渠道、成员、进退群） | INTEGRATION_TESTED |
-| 真实渲染与计算样式（主窗口 + WS 工作台） | VISUAL_VERIFIED（真实 WebView2 宿主，截图见 `docs/audit/evidence-2026-11-21/`） |
-| Windows x64 编译 | WINDOWS_BUILD_VERIFIED |
-| 安装、升级、卸载 | BLOCKED（缺安装包工具链） |
-| 打包后应用启动 | BLOCKED（缺 `node.exe` 与安装包） |
-| 真实 WhatsApp 业务 | BLOCKED（缺账号授权） |
+| 安装包 | `work\winui-installer-output\知客-6.1.0-WinUI桌面版.exe` |
+| 大小 | 114,416,329 字节（109.12 MiB） |
+| SHA-256 | `BA7CD6616707AAEE846B3DE7E85F28ECE9EDC375CD0B14E148E16F203F5CA66E` |
+| 构建时间 | 2026-11-21T10:14:51Z |
+| 源提交 | `7d38540`（构建时工作树含本报告的 `.iss` 语言文件改动） |
+| Bundle 压缩包 | `work\winui-bundle\zhike-winui-6.1.0-win-x64.zip`，SHA-256 `3B8DA1979C59B4155EEA06F9563CD0FEDF967602A9767CFD254EDB5FEC3F5655` |
+| 构建环境 | Inno Setup 6.7.3 + .NET SDK 10.0.404 + Node 24.22.1，Windows 11 x64 |
+
+安装脚本改动：`[Languages]` 原来引用 `compiler:Languages\ChineseSimplified.isl`，本机 Inno Setup 6.7.3 不自带该翻译文件，编译直接失败。现在把官方简体中文翻译内置到 `installer/ChineseSimplified.isl` 并由脚本相对引用，安装包可以重复构建。
+
+## 6. 安装产物完整性检查（未执行安装器）
+
+对 bundle 暂存目录做静态核对：
+
+- `index.html` 引用的 66 个本地资源全部存在，无缺失。
+- 31 个迁移脚本齐全，manifest 声明 schema 34。
+- `node.exe` 与 `server.mjs` 均在包内。
+- 未发现 `.sqlite`、`.db`、`.jsonl`、token、证书等客户数据或凭据文件。
+
+## 7. 阻塞项
+
+| 项 | 原因 | 需要什么 |
+| --- | --- | --- |
+| 首次安装 / 启动 / 升级 / 卸载的实机验证 | 运行安装包（即使静默、即使 `DIR` 指向临时目录）被沙箱分类器拒绝 | 由用户在本机运行安装包，或授权我执行 silent install |
+| 旧版本 rc.3 升级验证 | `gh release download` 拉取 rc.3 安装包被拒绝 | 用户把 `zhike-6.1.0-win-x64-setup.exe`（rc.3）放到 `work/releases/`，或授权下载 |
+| 真实 WhatsApp 验收 | 无测试账号 | 用户本人扫码并授权测试账号与群组 |
+
+安装包已经真实生成并校验；没有执行安装器，因此不宣称安装测试通过。

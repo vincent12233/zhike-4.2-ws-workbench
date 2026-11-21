@@ -35,7 +35,7 @@ SetupLogging=yes
 UninstallDisplayIcon={app}\zhike-horizon-6-1-0.ico
 
 [Languages]
-Name: "chinesesimp"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+Name: "chinesesimp"; MessagesFile: "installer\ChineseSimplified.isl"
 
 [Files]
 Source: "{#StageDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
