@@ -57,7 +57,8 @@ const rowOf = (list, jid) => list.rows.find(row => row.groupJid === jid);
 (async () => {
   try {
     const diagnostics = await (await request('/api/diagnostics')).json();
-    assert.equal(Number(diagnostics.schemaVersion), 34, 'schema 34 applied');
+    const expectedSchemaVersion = Number(require('../resources/app/migrations/manifest.json').supportedSchemaVersion);
+    assert.equal(Number(diagnostics.schemaVersion), expectedSchemaVersion, `schema ${expectedSchemaVersion} applied`);
 
     await check('API requires the session token', async () => {
       const response = await fetch(base + '/api/ws/group-channel-configs');

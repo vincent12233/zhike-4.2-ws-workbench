@@ -58,4 +58,5 @@ const report = {
   channelConfigTable: channelTable === 1,
 };
 console.log(JSON.stringify(report, null, 2));
-if (!(report.afterVersion === 34 && report.customerPreserved && report.appliedByUpgrade.length > 0 && report.channelConfigTable)) process.exit(1);
+const expectedVersion = Number(require(path.join(path.resolve(newApp), 'migrations/manifest.json')).supportedSchemaVersion);
+if (!(report.afterVersion === expectedVersion && report.customerPreserved && report.appliedByUpgrade.length > 0 && report.channelConfigTable)) process.exit(1);

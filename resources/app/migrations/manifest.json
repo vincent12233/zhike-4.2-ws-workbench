@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "supportedSchemaVersion": 34,
+  "supportedSchemaVersion": 35,
   "migrations": [
     {
       "version": 4,
@@ -187,6 +187,12 @@
       "file": "034-ws-group-channel-config.sql",
       "description": "Dedicated WS group channel configuration, change history and confirmed group-code rules",
       "checksum": "e9a4f49ae4ab2b7b5ec625200e52c5c005a69660e0b39bc6ac8a438c2e16507e"
+    },
+    {
+      "version": 35,
+      "file": "035-ws-managed-groups.sql",
+      "description": "Locally managed groups with alias-key uniqueness, optional verified JID and change audit",
+      "checksum": "a5e0d2df0a531a1c8c45d1aa15bf32642e6b4a0423c5b77533b0380ef89a937e"
     }
   ]
 }
