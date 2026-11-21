@@ -85,8 +85,22 @@
 
 | 项 | 原因 | 需要什么 |
 | --- | --- | --- |
-| 卸载验证 | 结束应用进程与运行卸载器都会被沙箱拒绝 | 用户关闭应用后运行 `unins000.exe /VERYSILENT`，我再核对程序目录删除、`%LOCALAPPDATA%\Zhike6` 与客户库保留 |
+| 卸载验证（执行） | 关闭窗口可以完成，但运行 `unins000.exe` 仍被沙箱分类器拒绝 | 用户运行下面的一行卸载命令 |
 | 旧版本 rc.3 升级验证 | `gh release download` 拉取 rc.3 安装包被拒绝 | 用户把 `zhike-6.1.0-win-x64-setup.exe`（rc.3）放到 `work/releases/` |
 | 真实 WhatsApp 验收 | 无测试账号 | 用户本人扫码并授权测试账号与群组 |
 
-首次安装与启动已由用户实测并通过；升级与卸载尚未执行，不宣称通过。
+## 7.1 关闭与数据保留（已实测 + 静态核对）
+
+- 通过 `CloseMainWindow()` 关闭安装后的应用：进程数归零，sidecar 端口 51633 不再监听。
+- 关闭后数据库仍在：5 个 WS 账号、迁移版本 34，`%LOCALAPPDATA%\Zhike6\workspace.sqlite` 大小未变。
+- `zhike-desktop-setup.iss` 的数据根固定为 `%LOCALAPPDATA%\Zhike6`，位于 `{app}` 之外；卸载段只有 `[UninstallDelete]` 的应用内文件条目，没有指向该数据根的删除规则。
+- 安装脚本的保护函数明确排除 `{win}`、`{localappdata}\Zhike`、`{localappdata}\Zhike6`、`{localappdata}` 与 `USERPROFILE` 本身，避免目录清理误伤数据。
+
+卸载的实际执行仍待用户运行：
+
+```powershell
+& "$env:TEMP\zhike-install-first\app\unins000.exe" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+"exit=$LASTEXITCODE"; Test-Path "$env:TEMP\zhike-install-first\app\Zhike.Desktop.exe"
+```
+
+首次安装与启动已由用户实测并通过；卸载执行与升级尚未完成，不宣称通过。
