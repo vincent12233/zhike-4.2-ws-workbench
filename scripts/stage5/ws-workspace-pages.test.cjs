@@ -7,7 +7,7 @@ const repo = path.resolve(__dirname, '..', '..');
 const source = fs.readFileSync(path.join(repo, 'resources/app/modules/ws-workbench.js'), 'utf8');
 const modeViews = {
   ordinary: ['overview', 'accounts', 'chat', 'collection', 'ai', 'crm', 'tasks', 'logs', 'settings'],
-  dedicated: ['overview', 'accounts', 'chat', 'groups', 'members', 'collection', 'contacts', 'exclusions', 'crm', 'logs', 'group-broadcast', 'group-mentions', 'group-reading', 'group-permissions', 'settings'],
+  dedicated: ['overview', 'accounts', 'chat', 'groups', 'group-channels', 'members', 'collection', 'contacts', 'exclusions', 'crm', 'logs', 'group-broadcast', 'group-mentions', 'group-reading', 'group-permissions', 'settings'],
 };
 const metadataStart = source.indexOf('  function normalizeWorkspaceMode(');
 const metadataEnd = source.indexOf('  function readWsWorkspaceView(', metadataStart);

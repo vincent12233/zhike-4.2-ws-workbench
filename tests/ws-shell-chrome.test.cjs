@@ -50,7 +50,7 @@ check('collapsed rail keeps only icons', () => {
   assert.ok(rule(/html\[data-view="ws-workbench"\] #sidebar\.collapsed #mainNav :is\(\.nav-item span,\.nav-count,\.live-dot,\.nav-group-label\)\{display:none!important\}/));
 });
 check('the toolbar is compact but keeps 44px controls', () => {
-  assert.ok(rule(/html\[data-view="ws-workbench"\] \.topbar\{min-height:64px!important/));
+  assert.ok(rule(/html\[data-view="ws-workbench"\] \.topbar\{min-height:56px!important/));
   assert.ok(rule(/html\[data-view="ws-workbench"\] \.global-search\{height:44px!important/));
   assert.ok(rule(/html\[data-view="ws-workbench"\] \.top-actions\{gap:8px!important/));
 });

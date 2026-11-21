@@ -1128,7 +1128,7 @@ html[data-view="ws-workbench"] #sidebar.collapsed #mainNav .nav-item{grid-templa
 html[data-view="ws-workbench"] #sidebar.collapsed #mainNav :is(.nav-item span,.nav-count,.live-dot,.nav-group-label){display:none!important}
 
 /* V5.0 §25 WS toolbar: compact height, grouped actions and no clipped status. */
-html[data-view="ws-workbench"] .topbar{min-height:64px!important;height:auto!important;padding:8px 22px!important;gap:14px!important;flex-wrap:nowrap;box-shadow:none!important}
+html[data-view="ws-workbench"] .topbar{min-height:56px!important;height:auto!important;padding:6px 22px!important;gap:14px!important;flex-wrap:nowrap;box-shadow:none!important}
 html[data-view="ws-workbench"] .topbar .workspace-tab{height:40px;padding:0 14px;border-radius:11px;font-size:14px}
 html[data-view="ws-workbench"] .top-actions{gap:8px!important;min-width:0;margin-left:auto;flex-wrap:nowrap}
 html[data-view="ws-workbench"] .global-search{height:44px!important;padding:0 14px!important;border-radius:12px!important;min-width:0;width:clamp(200px,24vw,340px)!important}

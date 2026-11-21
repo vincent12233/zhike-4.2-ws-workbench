@@ -595,6 +595,7 @@ public sealed partial class LegacyUiHostPage : Page
                 if (collector.Parent is Panel collectorParent) collectorParent.Children.Remove(collector);
                 try { collector.Close(); } catch { }
                 _wsCollectorMonitor.Remove(accountId);
+                _wsCollectorMonitorPolicies.Remove(accountId);
                 _wsCollectorMonitorRunning.Remove(accountId);
                 if (string.Equals(_wsCollectorVisibleAccountId, accountId, StringComparison.OrdinalIgnoreCase)) _wsCollectorVisibleAccountId = string.Empty;
                 if (released.Parent is Panel parent) parent.Children.Remove(released);

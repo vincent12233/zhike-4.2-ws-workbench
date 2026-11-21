@@ -26,7 +26,7 @@ assert.ok(start >= 0 && end > start, 'Use production incremental mount helpers')
 const mounts = source.slice(start, end);
 const modeViews = {
  ordinary: ['overview','accounts','chat','collection','ai','crm','tasks','logs','settings'],
- dedicated: ['overview','accounts','chat','groups','members','collection','contacts','exclusions','crm','logs','group-broadcast','group-mentions','group-reading','group-permissions','settings'],
+ dedicated: ['overview','accounts','chat','groups','group-channels','members','collection','contacts','exclusions','crm','logs','group-broadcast','group-mentions','group-reading','group-permissions','settings'],
 };
 const views = Object.entries(modeViews).flatMap(([mode,ids])=>ids.map(view=>({mode,view,key:mode+':'+view})));
 const groupCatalog = Array.from({ length:30 }, (_, index) => ({ accountId:'dedicated-layout',groupJid:'s1-layout-'+index+'@g.us',groupName:'隔离布局群 '+(index+1),participantCount:42,permissions:'所有成员',collectionStatus:'已同步',lastSyncAt:'2026-11-17T10:00:00Z' }));

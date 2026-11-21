@@ -33,7 +33,7 @@ const factory = host.slice(factoryStart, factoryEnd);
 for (const field of ['_wsCollectorGates', '_wsCollectorStarted', '_wsCollectorCleanup']) {
   assert.ok(factory.includes(field + '.Remove(collector'), 'session retirement must clear collector-owned state: ' + field);
 }
-for (const field of ['_wsCollectorGroups', '_wsCollectorMonitor', '_wsCollectorMonitorRunning']) {
+for (const field of ['_wsCollectorMonitorPolicies', '_wsCollectorMonitor', '_wsCollectorMonitorRunning']) {
   assert.ok(factory.includes(field + '.Remove(accountId'), 'session retirement must clear account-owned collection state: ' + field);
 }
 assert.match(factory, /collector\.Close\(\)/, 'retiring an account must close its independent collector control');

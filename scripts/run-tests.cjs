@@ -15,6 +15,10 @@ const testNode = fs.statSync(bundledNode, { throwIfNoEntry: false })?.isFile() ?
 // the SDK at .tools/dotnet10 (see CONTRIBUTING.md), so inject it when present.
 const bundledDotnet = path.join(repo, '.tools', 'dotnet10', 'dotnet.exe');
 const testDotnet = fs.statSync(bundledDotnet, { throwIfNoEntry: false })?.isFile() ? bundledDotnet : 'dotnet';
+// The PowerShell resource suites need pwsh 7. Windows PowerShell 5.1 refuses to
+// run them under the machine execution policy, so this runner does not silently
+// substitute it; install pwsh or run those two suites on a prepared host.
+const testPowerShell = 'pwsh.exe';
 const mode = String(process.argv[2] || 'ws').toLowerCase();
 const supported = new Set(['ws', 'all', 'installer', 'stage3', 'stage4', 'stage5', 'stage51', 'stage52', 'stage55a', 'stage55b', 'stage55c1a', 'delivery-s1', 'delivery-s2', 'delivery-s3', 'delivery-rd02']);
 if (!supported.has(mode)) throw new Error(`unknown test mode: ${mode}; use ws, all, stage3, stage4, stage5, stage51, stage52, stage55a, stage55b, stage55c1a, delivery-s1, delivery-s2, delivery-s3, delivery-rd02 or installer`);
@@ -157,13 +161,13 @@ function runStage51() {
   run('Stage 5.1 real member API and account-scoped UI binding', [path.join(repo, 'scripts/stage51/members-binding.test.cjs')], { timeout: 180000 });
   run('Stage 5.1 review actions through real isolated service', [path.join(repo, 'scripts/stage51/ai-review-service-ui.test.cjs')], { timeout: 180000 });
   run('Stage 5.1 workspace wheel ownership and navigation restoration', [path.join(repo, 'tests/scroll-coordinator-runtime.test.cjs')]);
-  run('Stage 5.1 resource observer process identity safety', ['-NoProfile', '-File', path.join(repo, 'scripts/stage51/resource-observer-safety.test.ps1')], { command: 'pwsh.exe', timeout: 120000 });
+  run('Stage 5.1 resource observer process identity safety', ['-NoProfile', '-File', path.join(repo, 'scripts/stage51/resource-observer-safety.test.ps1')], { command: testPowerShell, timeout: 120000 });
   run('Stage 5.1 sidecar readiness without UI pump and bounded shutdown', [path.join(repo, 'scripts/stage51/native-readiness.test.cjs')], { timeout: 120000 });
 }
 
 function runStage52() {
   run('S3 isolated readiness probe startup and trusted-input timing', [path.join(repo, 'scripts/stage52/resource-readiness-probe.test.cjs')]);
-  run('S3 continuous resources and observed child exit tail', ['-NoProfile', '-File', path.join(repo, 'scripts/stage52/resource-continuous.test.ps1'), '-NodePath', testNode], { command: 'pwsh.exe', timeout: 120000 });
+  run('S3 continuous resources and observed child exit tail', ['-NoProfile', '-File', path.join(repo, 'scripts/stage52/resource-continuous.test.ps1'), '-NodePath', testNode], { command: testPowerShell, timeout: 120000 });
   run('Stage 5.2 Worker real pipe IO deadlines and recovery', [path.join(repo, 'scripts', 'stage52', 'worker-io-boundaries.test.cjs')]);
   run('Stage 5.2 navigation cancellation and bounded session recovery', [path.join(repo, 'scripts/stage52/navigation-lifecycle.test.cjs')], { timeout: 120000 });
 }
