@@ -19,13 +19,31 @@ const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
     if(!healthy) throw new Error('isolated server did not become healthy');
     const paths=['/assets/atelier-dawn.svg','/modules/customer-avatar.js', '/modules/workspace-shell.js', '/modules/metrics-charts.js','/modules/smart-import.js','/modules/ticket-record-core.js','/modules/ui-refresh.css','/modules/performance-enhancements.js','/modules/business-enhancements.js','/modules/business-enhancements.css','/modules/accessibility-enhancements.js','/modules/operations-upgrade.js','/modules/operations-upgrade.css','/modules/ws-workbench-core.js','/modules/ws-crm-sync-core.js','/modules/hot-chat-profile-core.js','/modules/ws-business-pages.js', '/modules/ws-workbench.js','/modules/ws-workbench.css','/modules/design-system.css','/modules/customer-governance-ui.js'];
     for(const route of paths){const response=await fetch(`http://127.0.0.1:${port}${route}`);if(!response.ok)throw new Error(`${route} HTTP ${response.status}`);const body=await response.text();if(!body.trim())throw new Error(`${route} empty body`);}
+    // The fixed list above predates many pages. Also fetch every local asset
+    // the shipped index.html actually loads, so a new module that is missing
+    // from the sidecar allowlist fails here instead of 404ing in the app.
+    const html=readFileSync(path.join(app,'index.html'),'utf8');
+    const htmlAssets=[...new Set([...html.matchAll(/(?:src|href)="\.\/?([^"]+)"/g)].map(match=>`/${match[1].replace(/^\//,'')}`))];
+    assert.ok(htmlAssets.includes('/modules/ws-managed-groups-ui.js'),'index.html asset discovery must find the managed group page module');
+    for(const route of htmlAssets){
+      const response=await fetch(`http://127.0.0.1:${port}${route}`);
+      assert.equal(response.status,200,`index.html asset ${route} must be served by the sidecar`);
+      const body=Buffer.from(await response.arrayBuffer());
+      assert.ok(body.equals(readFileSync(path.join(app,route.slice(1)))),`index.html asset ${route} must be served byte-for-byte`);
+    }
     const readingAsset = await fetch(`http://127.0.0.1:${port}/modules/ws-group-reading-ui.js`);
     assert.equal(readingAsset.status, 200);
     assert.match(readingAsset.headers.get('content-type') || '', /^text\/javascript\b/);
     const readingScript = await readingAsset.text();
     assert.equal(readingScript, readFileSync(path.join(app, 'modules', 'ws-group-reading-ui.js'), 'utf8'));
     assert.match(readingScript, /window\.ZhikeWsGroupReading\s*=\s*api/);
-    console.log('upgrade HTTP smoke: isolated server served all new module assets');
+    // V9.2 dedicated-WS managed group page: index.html loads it, so the
+    // installed sidecar must serve it byte-for-byte as JavaScript.
+    const managedAsset = await fetch(`http://127.0.0.1:${port}/modules/ws-managed-groups-ui.js`);
+    assert.equal(managedAsset.status, 200, '/modules/ws-managed-groups-ui.js must be served by the sidecar allowlist');
+    assert.match(managedAsset.headers.get('content-type') || '', /^text\/javascript\b/);
+    assert.equal(await managedAsset.text(), readFileSync(path.join(app, 'modules', 'ws-managed-groups-ui.js'), 'utf8'));
+    console.log('upgrade HTTP smoke: isolated server served all new module assets and '+htmlAssets.length+' index.html assets');
     await fetch(`http://127.0.0.1:${port}/api/shutdown`,{method:'POST',headers:{'X-Zhike-Api-Token':token,'X-Zhike-Shutdown-Token':token}});
   } finally {
     if(child.exitCode===null) child.kill();
