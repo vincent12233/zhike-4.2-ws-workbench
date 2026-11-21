@@ -25,6 +25,12 @@ const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
     const readingScript = await readingAsset.text();
     assert.equal(readingScript, readFileSync(path.join(app, 'modules', 'ws-group-reading-ui.js'), 'utf8'));
     assert.match(readingScript, /window\.ZhikeWsGroupReading\s*=\s*api/);
+    // V9.2 dedicated-WS managed group page: index.html loads it, so the
+    // installed sidecar must serve it byte-for-byte as JavaScript.
+    const managedAsset = await fetch(`http://127.0.0.1:${port}/modules/ws-managed-groups-ui.js`);
+    assert.equal(managedAsset.status, 200, '/modules/ws-managed-groups-ui.js must be served by the sidecar allowlist');
+    assert.match(managedAsset.headers.get('content-type') || '', /^text\/javascript\b/);
+    assert.equal(await managedAsset.text(), readFileSync(path.join(app, 'modules', 'ws-managed-groups-ui.js'), 'utf8'));
     console.log('upgrade HTTP smoke: isolated server served all new module assets');
     await fetch(`http://127.0.0.1:${port}/api/shutdown`,{method:'POST',headers:{'X-Zhike-Api-Token':token,'X-Zhike-Shutdown-Token':token}});
   } finally {
