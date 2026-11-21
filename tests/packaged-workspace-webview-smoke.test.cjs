@@ -155,7 +155,7 @@ function assertSmokeResult(result, stylesheetCount) {
   assert.deepEqual(result.interactions.pages.slice().sort(), ['overview', 'accounts', 'chat', 'groups', 'members', 'contacts', 'exclusions',
     'collection', 'crm', 'logs', 'settings', 'group-broadcast', 'group-mentions', 'group-reading', 'group-permissions', 'group-channels', 'managed-groups'].sort());
   assert.deepEqual(result.interactions.managedGroups, { fields: ['channel', 'groupAlias', 'groupName'], noAssistant: true, noJid: true,
-    listed: true, created: true, createdChannel: 'FB群粉', errorShown: true },
+    listed: true, created: true, createdChannel: 'FB群粉', errorShown: true, edited: true, toggled: true, importPreviewedFirst: true, candidatesAdvisory: true },
     'The packaged managed-group page must load, list, create through its form and show API failures in place');
   assert.equal(result.interactions.shortcuts.length, 4);
   assert.equal(result.interactions.accountScoped, true, 'Every open must target the new dedicated account');

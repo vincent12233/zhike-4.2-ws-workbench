@@ -102,6 +102,40 @@ async function exerciseDedicatedWorkspace(scripts) {
         managedRows.unshift(group);
         return reply(200, { group, submittedFields: Object.keys(body).sort() });
       }
+      const idMatch = /^\/api\/ws\/managed-groups\/(G-[^/]+)$/.exec(url.pathname);
+      if (idMatch && (method === 'PATCH' || method === 'DELETE')) {
+        const row = managedRows.find(item => item.id === decodeURIComponent(idMatch[1]));
+        if (!row) return reply(404, { error: 'missing group' });
+        const body = JSON.parse(String(init.body || '{}'));
+        if (method === 'DELETE') row.enabled = false;
+        else if (body.enabled === true && body.groupName === undefined) row.enabled = true;
+        else Object.assign(row, { channel: body.channel, groupName: body.groupName, groupAlias: body.groupAlias });
+        return reply(200, { group: row });
+      }
+      if (url.pathname === '/api/ws/managed-groups/import' && method === 'POST') {
+        const body = JSON.parse(String(init.body || '{}'));
+        const accepted = [], rejected = [];
+        body.rows.forEach((row, index) => {
+          if (!row.channel || !row.groupName || !row.groupAlias) rejected.push({ row: index + 1, errors: [{ message: '渠道、群名、群别名都必须填写' }], skipped: true });
+          else if (managedRows.some(item => item.groupAlias.toLowerCase() === row.groupAlias.toLowerCase())) rejected.push({ row: index + 1, errors: [{ message: '群别名已存在' }], skipped: true });
+          else accepted.push(row);
+        });
+        if (body.dryRun !== false) return reply(200, { dryRun: true, accepted, rejected });
+        for (const row of accepted) managedRows.unshift({ id: 'G-synthetic-' + (managedRows.length + 1), ...row, enabled: true, matchStatus: 'unmatched', lastCollectedAt: null });
+        return reply(200, { dryRun: false, created: accepted.length, rejected });
+      }
+      if (url.pathname === '/api/ws/managed-groups/match/candidates' && method === 'GET') {
+        return reply(200, { suggestions: [
+          { groupId: 'G-synthetic-1', group: { groupAlias: 'A-501', jid: '120300000009@g.us' }, status: 'confirmed' },
+          { groupId: 'G-synthetic-2', group: { groupAlias: 'C-1' }, status: 'ambiguous' },
+        ] });
+      }
+      if (url.pathname === '/api/ws/managed-groups/match/unbind' && method === 'POST') {
+        const body = JSON.parse(String(init.body || '{}'));
+        const row = managedRows.find(item => item.id === body.id);
+        if (row) { row.jid = null; row.matchStatus = 'unmatched'; }
+        return reply(200, { group: row });
+      }
       return reply(404, { error: 'unexpected managed-group route' });
     }
     const groups = /^\/api\/ws\/accounts\/([^/]+)\/groups$/.exec(url.pathname);
@@ -168,6 +202,41 @@ async function exerciseDedicatedWorkspace(scripts) {
   await click(managedPage + ' [data-mg-form] button[type="submit"]');
   await until('managed group created through the form', () => find(managedPage + ' [data-managed-groups] tbody')?.textContent.includes('B-777'));
   const created = managedRows.find(row => row.groupAlias === 'B-777');
+  const rowButton = (alias, action) => [...document.querySelectorAll(managedPage + ' [data-managed-groups] tbody tr')]
+    .find(row => row.textContent.includes(alias))?.querySelector('[data-mg="' + action + '"]');
+  const rowText = alias => [...document.querySelectorAll(managedPage + ' [data-managed-groups] tbody tr')].find(row => row.textContent.includes(alias))?.textContent || '';
+  // Edit keeps the record and changes the name.
+  rowButton('B-777', 'edit').click();
+  await until('edit form prefilled', () => find(managedPage + ' [data-mg-form] [name="groupName"]')?.value === '新增登记群');
+  const editForm = find(managedPage + ' [data-mg-form]');
+  const editName = editForm.querySelector('[name="groupName"]'); editName.value = '改名登记群'; editName.dispatchEvent(new Event('input', { bubbles: true }));
+  await click(managedPage + ' [data-mg-form] button[type="submit"]');
+  await until('edited group listed', () => rowText('B-777').includes('改名登记群'));
+  const edited = managedRows.find(row => row.groupAlias === 'B-777');
+  // Disable, then enable again.
+  rowButton('B-777', 'toggle').click();
+  await until('disabled group marked', () => rowText('B-777').includes('已停用'));
+  rowButton('B-777', 'toggle').click();
+  await until('enabled group restored', () => !rowText('B-777').includes('已停用') && rowButton('B-777', 'toggle')?.textContent.includes('停用'));
+  // Import previews first, then commits only the accepted rows.
+  const importBox = find(managedPage + ' [data-mg-import]');
+  importBox.value = 'API群粉,导入登记群,D-9\nFB群粉,重复别名群,A-501\n,缺渠道群,E-1';
+  importBox.dispatchEvent(new Event('input', { bubbles: true }));
+  await click(managedPage + ' [data-mg="preview"]');
+  await until('import preview lists rejected rows', () => find(managedPage + ' .mg-rejected')?.textContent.includes('第 2 行') && find(managedPage + ' .mg-rejected').textContent.includes('第 3 行'));
+  const previewDidNotWrite = !managedRows.some(row => row.groupAlias === 'D-9');
+  await click(managedPage + ' [data-mg="commit"]');
+  await until('import committed', () => rowText('D-9').includes('导入登记群'));
+  // AI candidates are suggestions; a bound group can be unbound.
+  const candidatesButton = find(managedPage + ' [data-mg="candidates"]');
+  if (candidatesButton) {
+    candidatesButton.click();
+    await until('candidates listed as suggestions', () => find(managedPage + ' .mg-candidates')?.textContent.includes('多个同名候选'));
+    managedRows.find(row => row.groupAlias === 'A-501').jid = '120300000009@g.us';
+    find(managedPage + ' .mg-candidates [data-mg="unbind"]')?.click();
+    await until('unbind sent', () => managedRequests.includes('POST /api/ws/managed-groups/match/unbind'));
+  }
+  const unbound = managedRows.find(row => row.groupAlias === 'A-501').jid === null;
   managedFailure = true;
   await click(managedPage + ' [data-mg="search"]');
   const failureText = await until('managed group API failure shown in place', () => {
@@ -183,6 +252,10 @@ async function exerciseDedicatedWorkspace(scripts) {
     created: Boolean(created) && managedRequests.includes('POST /api/ws/managed-groups'),
     createdChannel: created?.channel || '',
     errorShown: Boolean(failureText),
+    edited: edited?.id === created?.id && edited?.groupName === '改名登记群' && managedRequests.includes('PATCH /api/ws/managed-groups/' + created?.id),
+    toggled: managedRequests.includes('DELETE /api/ws/managed-groups/' + created?.id) && edited?.enabled === true,
+    importPreviewedFirst: previewDidNotWrite && managedRows.filter(row => row.groupAlias === 'D-9').length === 1 && !managedRows.some(row => row.groupAlias === 'E-1'),
+    candidatesAdvisory: Boolean(candidatesButton) && unbound,
   };
   const accountScoped = opens.every(open => open.accountId === dedicated.id);
   const visibleOpens = opens.every(({ bounds }) => bounds && !bounds.hidden && bounds.width > 200 && bounds.height > 100);
