@@ -827,6 +827,12 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
     const chips=engine.LOCKABLE_FIELDS.map(item=>{const on=summary.fields.includes(item.key);return `<button type="button" class="lock-chip ${on?'active':''}" data-action="toggle-field-lock" data-id="${esc(customer.id)}" data-field="${esc(item.key)}" aria-pressed="${on}">${on?'🔒 ':''}${esc(item.label)}</button>`;}).join('');
     return `<div class="lock-chips">${chips}</div><p class="panel-note">已锁定 ${summary.count} 个字段。锁定后 AI 分析、导入和自动补全都不会改写这些字段；再次点击即可解锁。</p>`;
   }
+  // V5.0 §14/§19 投资资料：只显示已存储的值，缺失显示“未记录”。
+  function customerInvestmentRows(customer){
+    const engine=window.ZhikeInvestmentProfile;
+    if(!engine||typeof engine.investmentFields!=='function')return [['投资资料','模块未加载，请重新打开应用']];
+    return engine.investmentFields(customer);
+  }
   function customerIdentityHtml(customer,drawer=false){
     const name=esc(customerName(customer));
     const phone=esc(customer.rawPhone||customer.phone||'未登记号码');
@@ -1482,6 +1488,7 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
       </div>
       ${customerIdentityHtml(customer,true)}
       ${customerDetailCard('基础资料','user',`<div class="detail-grid">${customerDetailFields(fields,'drawer')}${qualification}</div>${note}`,edit,true)}
+      ${customerDetailCard('投资资料','chart',`<div class="detail-grid">${customerDetailFields(customerInvestmentRows(customer),'drawer')}</div>`,'',true)}
       ${customerDetailCard('热聊资料','message',`<div class="detail-grid">${customerDetailFields(customerHotFields(customer),'drawer')}</div>`,'',true)}
       ${customerDetailCard('业务概览','wallet',`<div class="detail-grid">${customerDetailFields(customerBusinessFields(customer),'drawer')}</div>`,'',true)}
       ${customerDetailCard('群组关系','users-group',groupMembershipRows(customer),'',true)}

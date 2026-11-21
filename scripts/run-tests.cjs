@@ -111,6 +111,7 @@ function runStage3(options = {}) {
   run('Customer 360 channel attribution', [path.join(repo, 'tests', 'customer-attribution-core.test.cjs')]);
   run('Customer manual field locks', [path.join(repo, 'tests', 'customer-field-locks-core.test.cjs')]);
   run('Customer identity conflicts and duplicate hints', [path.join(repo, 'tests', 'customer-identity-conflicts-core.test.cjs')]);
+  run('Customer investment profile view', [path.join(repo, 'tests', 'customer-investment-profile-core.test.cjs')]);
   run('WS reply draft persistence', [path.join(repo, 'tests', 'ws-reply-draft-persistence.test.cjs')]);
   run('Stage 3 WS workspace navigation', [path.join(repo, 'scripts', 'stage3', 'ws-workbench-navigation.test.cjs')]);
 }
