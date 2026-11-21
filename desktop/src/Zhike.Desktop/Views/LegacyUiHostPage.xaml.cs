@@ -4576,6 +4576,12 @@ public sealed partial class LegacyUiHostPage : Page
      // identifiers nested inside the row.  Some WhatsApp builds put the
      // conversation identity only on a child cell, so inspect those as well.
      add(row, true);
+     // Some WhatsApp builds move the conversation id to a wrapper container
+     // instead of the row cell itself. Walk a few ancestors before giving up.
+     try {
+       let ancestor = row.parentElement;
+       for (let depth = 0; ancestor && depth < 3; depth += 1, ancestor = ancestor.parentElement) add(ancestor, true);
+     } catch {}
      try {
        for (const node of row.querySelectorAll?.('[data-group-id], [data-jid], [data-chat-id], [data-contact-id], [data-id]') || []) add(node, false);
      } catch {}
