@@ -107,6 +107,11 @@ async function observe(groupJid, memberIds, capturedAt) {
       assert.equal(customer.firstSourceGroupJid, G1);
       assert.equal(customer.sourceAccountId, ACCOUNT);
       assert.equal(customer.phone, '7100000001', 'Indian +91 number normalized by the existing identity rules');
+      // V5.0 §17: the score is computed from real fields at creation time.
+      assert.equal(typeof customer.profileCompleteness, 'number');
+      assert.ok(customer.profileCompleteness > 0 && customer.profileCompleteness < 100, 'a new in-group customer is partial, not complete: ' + customer.profileCompleteness);
+      assert.ok(customer.profileMissingFields.includes('职业'), 'missing fields are listed');
+      assert.ok(!customer.profileMissingFields.includes('来源渠道'), 'the configured channel counts');
     });
 
     await check('joining a second group keeps first channel and owner, adds current channel', async () => {

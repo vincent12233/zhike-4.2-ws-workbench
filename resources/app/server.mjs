@@ -20,6 +20,7 @@ const wsContactExclusion = require('./modules/ws-contact-exclusion-core.cjs');
 const wsGroupChannel = require('./modules/ws-group-channel-config-core.cjs');
 const wsGroupMemberQuery = require('./modules/ws-group-member-query.cjs');
 const customerGovernance = require('./modules/customer-governance-core.js');
+const customerCompleteness = require('./modules/customer-completeness-core.js');
 const hotChatProfile = require('./modules/hot-chat-profile-core.js');
 const wsMediaCore = require('./modules/ws-media-core.js');
 const aiJobPipeline = require('./modules/ai-job-pipeline-core.js');
@@ -1583,6 +1584,17 @@ function wsGroupMonitorTargetRow(profileId, targetId = '', groupJid = '') {
   return db.prepare('SELECT * FROM ws_group_monitor_targets WHERE profile_id=? AND group_jid=?').get(profileId, observed.value);
 }
 
+// V5.0 §17: completeness is recomputed from real data, never stored and reused
+// from an earlier, larger profile.
+function wsApplyCustomerCompleteness(customer) {
+  if (!customer || typeof customer !== 'object') return customer;
+  const result = customerCompleteness.computeProfileCompleteness(customer);
+  customer.profileCompleteness = result.score;
+  customer.profileCompletenessBand = result.band;
+  customer.profileMissingFields = result.missing;
+  customer.profileCompletenessAt = new Date().toISOString();
+  return customer;
+}
 function wsGroupMonitorAutoCustomerId(accountId, memberKey, phone = '') {
   // A verified phone is the CRM-wide identity.  Only phone-less WhatsApp
   // participant IDs are scoped to the login account because LID values can be
@@ -1686,7 +1698,7 @@ function wsGroupMonitorAutoCustomer(accountId, target, event, now, state = null)
   const legacySource = wsGroupMonitorSource(target, state);
   const sourceInfo = groupConfig?.channel ? { id: groupConfig.channel, label: groupConfig.channel, groupFanType: legacySource.groupFanType || '' } : legacySource;
   const source = sourceInfo.label;
-  return {
+  const candidate = {
     id: wsGroupMonitorAutoCustomerId(accountId, memberKey, phone),
     name,
     phone,
@@ -1738,6 +1750,7 @@ function wsGroupMonitorAutoCustomer(accountId, target, event, now, state = null)
     createdAt: now,
     updatedAt: now,
   };
+  return wsApplyCustomerCompleteness(candidate);
 }
 
 // A customer can belong to more than one monitored group (and more than one
@@ -5504,6 +5517,8 @@ const server = createServer(async (req, res) => {
       if (profile.origin && !customer.origin) customer.origin = profile.origin;
       if (profile.age !== '' && (customer.age === '' || customer.age == null)) customer.age = profile.age;
       if (profile.occupation && !customer.occupation) customer.occupation = profile.occupation;
+      // V5.0 §17: the score follows the fields actually written above.
+      wsApplyCustomerCompleteness(customer);
       // WS analysis may supplement an existing customer and may suppress a
       // follow-up recommendation, but it must never delete that customer.
       // Deletion remains an explicit data-governance operation with its own

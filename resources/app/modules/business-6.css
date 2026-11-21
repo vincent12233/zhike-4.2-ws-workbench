@@ -267,3 +267,14 @@ html .data-table .customer-name-open:focus-visible{outline:2px solid var(--ds-pr
 @media(prefers-reduced-motion:reduce){.business6-rule summary:after,#viewContainer[data-business6] .data-table tbody tr{transition:none}}
 html[data-motion="off"] .business6-rule summary::after,
 html[data-motion="off"] #viewContainer[data-business6] .data-table tbody tr{transition:none}
+/* V5.0 §17 客户资料完整度（客户 360 抽屉）。 */
+.completeness-head { display:flex; align-items:baseline; gap:10px; margin-bottom:6px; }
+.completeness-head strong { font-size:26px; line-height:1.1; color:var(--ds-text); font-variant-numeric:tabular-nums; }
+.completeness-meter { height:6px; border-radius:999px; background:var(--ds-surface-soft); overflow:hidden; }
+.completeness-meter span { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,var(--ds-primary),var(--ds-secondary)); transition:width .18s ease; }
+.completeness-missing { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:8px; }
+.completeness-missing>span { font-size:13px; color:var(--ds-muted); }
+.completeness-missing i { font-style:normal; padding:2px 8px; border-radius:8px; background:var(--ds-warning-bg); color:var(--ds-warning); font-size:13px; }
+.completeness-done { margin:8px 0 0; }
+.completeness-note { margin:8px 0 0; font-size:13px; }
+@media (prefers-reduced-motion:reduce) { .completeness-meter span { transition:none; } }

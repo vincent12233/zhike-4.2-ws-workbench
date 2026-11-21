@@ -783,6 +783,16 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
   function renderCustomerFilters(){const f=state.extraFilters,pageOptions=[...new Set([...pages,...activeCustomers().map(customer=>customer.page).filter(Boolean)])];return `<div id="customerAdvancedFilters" class="quick-filters"><div class="quick-filter-head"><strong>高级筛选</strong><button class="link-button" data-action="clear-extra">清空</button></div><div class="filter-grid">${filterSelect('source','渠道',sources,f.source)}${f.source?filterSelect('page','页面',pageOptions,f.page):''}${filterSelect('assistant','跟进助理',assistants,f.assistant)}${filterSelect('status','进群状态',statuses,f.status)}${filterSelect('phase','客户阶段',phases,f.phase)}${filterSelect('qualification','资质评级',qualifications,f.qualification)}${filterSelect('hot','热聊状态',['true','false'],f.hot,'是,否')}${filterSelect('vip','VIP 状态',['true','false'],f.vip,'是,否')}</div></div>`;}
   function filterSelect(key,label,options,value,display){return `<label class="filter-field"><span>${label}</span><select data-extra-filter="${key}"><option value="">全部</option>${options.map((v,i)=>`<option value="${esc(v)}" ${String(value||'')===String(v)?'selected':''}>${display?display.split(',')[i]:esc(v)}</option>`).join('')}</select></label>`;}
   function renderSegments(){const list=filteredCustomers();$('#viewContainer').innerHTML=heading('分类视图','按照参考工作台的单导、群粉、页面和助理逻辑，快速组合查看客户',btn('导出分类','download','export-filtered'))+renderSavedViews('segment')+`<div class="segment-top"><div class="segment-count">当前数据视图</div><span class="offline-pill"><span class="status-dot"></span>分类与统计实时联动</span></div>${renderSegmentTabs()}${renderSegmentSummary(list)}<div class="table-toolbar panel" style="margin-bottom:9px"><div class="table-context"><strong>组合筛选</strong><span>不同维度可叠加，点击统计卡片可快速筛选</span></div><div class="toolbar-controls"><label class="input-search">${icons('search')}<input data-search="segment" value="${esc(state.search)}" placeholder="搜索姓名、号码、群编号"></label></div></div>${tableBlock(list,'segment')}`;}
+  // V5.0 §17 客户资料完整度：按真实已存在的字段实时计算，人工编辑与 AI 补齐后立即反映。
+  // 占位值、"WhatsApp" 这类通用标签和"待确认"状态不计分（规则在 customer-completeness-core.js）。
+  function customerCompletenessHtml(customer){
+    const engine=window.ZhikeCustomerCompleteness;
+    if(!engine||typeof engine.computeProfileCompleteness!=='function')return '<p class="panel-note">资料完整度模块未加载，请重新打开应用。</p>';
+    const result=engine.computeProfileCompleteness(customer);
+    const tag={complete:'tag-green',good:'tag-blue',partial:'tag-amber',sparse:'tag-red'}[result.band]||'tag-gray';
+    const missing=result.missing.length?`<div class="completeness-missing"><span>待补齐</span>${result.missing.map(item=>`<i>${esc(item)}</i>`).join('')}</div>`:'<p class="panel-note completeness-done">资料已完整，未发现缺失项。</p>';
+    return `<div class="completeness-head"><strong>${result.score}%</strong><span class="status-tag ${tag}">${esc(result.bandLabel)}</span></div><div class="completeness-meter" role="img" aria-label="客户资料完整度 ${result.score}%"><span style="width:${result.score}%"></span></div>${missing}<p class="panel-note completeness-note">评分只依据真实已存在的字段；占位值、待确认状态和通用标签不计分。</p>`;
+  }
   function customerIdentityHtml(customer,drawer=false){
     const name=esc(customerName(customer));
     const phone=esc(customer.rawPhone||customer.phone||'未登记号码');
@@ -1411,6 +1421,7 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
       ${customerDetailCard('热聊资料','message',`<div class="detail-grid">${customerDetailFields(customerHotFields(customer),'drawer')}</div>`,'',true)}
       ${customerDetailCard('业务概览','wallet',`<div class="detail-grid">${customerDetailFields(customerBusinessFields(customer),'drawer')}</div>`,'',true)}
       ${customerDetailCard('群组关系','users-group',groupMembershipRows(customer),'',true)}
+      ${customerDetailCard('资料完整度','layers',customerCompletenessHtml(customer),'',true)}
       ${customerDetailCard('CRM 指挥信息','chart',`<div class="crm-command"><div><span>CRM 评分</span><strong>${crm.score}</strong><small>${crm.grade} 级客户</small><div class="crm-score-track"><i style="width:${crm.score}%"></i></div></div><div><span>生命周期</span><strong>${esc(crm.stage)}</strong><small>累计跟进 ${crm.followCount} 次</small></div><div class="crm-next"><span>下一步建议</span><strong>${esc(crm.nextAction)}</strong><small>按客户状态与业务记录计算</small></div></div>`,`<span>${esc(crm.grade)} 级 · ${esc(crm.sla)}</span>`,true)}
       ${customerDetailCard('跟进时间线','history',`<div class="detail-grid">${customerDetailFields(customerFollowFields(customer,crm),'drawer')}</div><div class="timeline customer-360-timeline">${customerTimeline(customer)}</div>`,'<span>最近 12 条</span>',true)}
       ${customerDetailCard('阅读统计','check',customerReadingSummary(),'',true)}
