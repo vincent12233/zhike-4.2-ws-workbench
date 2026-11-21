@@ -500,6 +500,7 @@ function runAll() {
   run('CSS cleanup contract', [path.join(repo, 'tests', 'css-cleanup-contract.test.cjs')]);
   run('sidebar scroll contract', [path.join(repo, 'tests', 'sidebar-scroll-contract.test.cjs')]);
   run('host diagnostics and real failure surfacing', [path.join(repo, 'tests', 'host-diagnostics-contract.test.cjs')]);
+  run('Managed group registry rules',[path.join(repo,'tests','ws-managed-groups-core.test.cjs')]);
   run('WS row identity from wrapper containers', [path.join(repo, 'tests', 'ws-row-identity.test.cjs')]);
   run('release 6.0 consistency', [path.join(repo, 'tests', 'release-6.0-consistency.test.cjs')]);
   run('current docs consistency', [path.join(repo, 'tests', 'current-docs-consistency.test.cjs')]);
