@@ -118,6 +118,7 @@ function runStage3(options = {}) {
   run('CRM customer list empty state', [path.join(repo, 'tests', 'crm-empty-state.test.cjs')]);
   run('WS membership timeline evidence', [path.join(repo, 'tests', 'ws-membership-timeline-core.test.cjs')]);
   run('WS operations console strip', [path.join(repo, 'tests', 'ws-ops-console-core.test.cjs')]);
+  run('Secondary page contract', [path.join(repo, 'tests', 'pages-6-contract.test.cjs')]);
   run('WS reply draft persistence', [path.join(repo, 'tests', 'ws-reply-draft-persistence.test.cjs')]);
   run('Stage 3 WS workspace navigation', [path.join(repo, 'scripts', 'stage3', 'ws-workbench-navigation.test.cjs')]);
 }
