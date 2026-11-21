@@ -106,6 +106,7 @@ function runStage3(options = {}) {
   run('Customer profile completeness rules', [path.join(repo, 'tests', 'customer-completeness-core.test.cjs')]);
   run('Follow-up reminder states and time confirmation', [path.join(repo, 'tests', 'followup-alert-status.test.cjs')]);
   run('Incremental analysis skip and range rules', [path.join(repo, 'tests', 'analysis-incremental-core.test.cjs')]);
+  run('CRM channel, assistant and group statistics', [path.join(repo, 'tests', 'crm-statistics-core.test.cjs')]);
   run('WS reply draft persistence', [path.join(repo, 'tests', 'ws-reply-draft-persistence.test.cjs')]);
   run('Stage 3 WS workspace navigation', [path.join(repo, 'scripts', 'stage3', 'ws-workbench-navigation.test.cjs')]);
 }
