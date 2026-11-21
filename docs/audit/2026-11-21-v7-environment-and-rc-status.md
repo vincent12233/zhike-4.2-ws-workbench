@@ -63,12 +63,30 @@
 - `node.exe` 与 `server.mjs` 均在包内。
 - 未发现 `.sqlite`、`.db`、`.jsonl`、token、证书等客户数据或凭据文件。
 
+## 6.1 首次安装实测（用户在隔离目录执行）
+
+用户在 `%TEMP%\zhike-install-first` 运行静默安装并启动应用后，实测结果：
+
+| 检查项 | 结果 |
+| --- | --- |
+| 安装日志 | `Installation process succeeded.`，无需重启，写入开始菜单与桌面快捷方式 |
+| 安装目录 | `Zhike.Desktop.exe`、`unins000.exe`、`resources\app` 完整；79 个前端模块、31 个迁移脚本 |
+| 包内运行时 | `resources\app\node.exe` = v24.22.1 |
+| 进程 | `Zhike.Desktop.exe` 运行中，sidecar 监听 `127.0.0.1:51633` |
+| 健康检查 | `/api/health` 返回 `ok:true`、`appVersion 6.1.0`、`schemaVersion 34`、`databaseStatus: queryable` |
+| 静态资源 | `/index.html` 200，`/modules/ws-workbench.js` 200 |
+| 数据库 | `%LOCALAPPDATA%\Zhike6\workspace.sqlite`：55 张表，`schema_migrations` 最高 34，5 个 WS 账号 |
+| 版本标记 | 安装的 `Zhike.Desktop.exe` 产品版本 `6.1.0+7d38540c50748cbec930c3421d10aa7ddd3b6af6` |
+| 卸载入口 | `HKCU\...\Uninstall\..._is1`：显示名「知客工作台 版本 6.1.0」，`UninstallString` 指向安装目录的 `unins000.exe` |
+
+说明：安装复用同一 Windows 用户的既有工作区（`%LOCALAPPDATA%\Zhike6`），客户表为空、有 5 个历史 WS 账号，因此这次验证证明的是“安装后应用可启动、sidecar 可用、schema 为 34、旧工作区被正确打开”，不是全新用户的首启空库体验。空库初始化已由 Node 24 冒烟（临时目录）单独验证。
+
 ## 7. 阻塞项
 
 | 项 | 原因 | 需要什么 |
 | --- | --- | --- |
-| 首次安装 / 启动 / 升级 / 卸载的实机验证 | 运行安装包（即使静默、即使 `DIR` 指向临时目录）被沙箱分类器拒绝 | 由用户在本机运行安装包，或授权我执行 silent install |
-| 旧版本 rc.3 升级验证 | `gh release download` 拉取 rc.3 安装包被拒绝 | 用户把 `zhike-6.1.0-win-x64-setup.exe`（rc.3）放到 `work/releases/`，或授权下载 |
+| 卸载验证 | 结束应用进程与运行卸载器都会被沙箱拒绝 | 用户关闭应用后运行 `unins000.exe /VERYSILENT`，我再核对程序目录删除、`%LOCALAPPDATA%\Zhike6` 与客户库保留 |
+| 旧版本 rc.3 升级验证 | `gh release download` 拉取 rc.3 安装包被拒绝 | 用户把 `zhike-6.1.0-win-x64-setup.exe`（rc.3）放到 `work/releases/` |
 | 真实 WhatsApp 验收 | 无测试账号 | 用户本人扫码并授权测试账号与群组 |
 
-安装包已经真实生成并校验；没有执行安装器，因此不宣称安装测试通过。
+首次安装与启动已由用户实测并通过；升级与卸载尚未执行，不宣称通过。
