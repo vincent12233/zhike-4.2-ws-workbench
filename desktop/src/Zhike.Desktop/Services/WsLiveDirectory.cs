@@ -73,7 +73,9 @@ public static class WsLiveDirectory
                 skippedUnread = Number(diag, "skippedUnread"), skippedReadUnknown = Number(diag, "skippedReadUnknown"), skippedTypeUnknown = Number(diag, "skippedTypeUnknown"),
                 noticeAdjacentSvgRows = Number(diag, "noticeAdjacentSvgRows"), noticeUnlabelledSvgRows = Number(diag, "noticeUnlabelledSvgRows"),
                 groupNoticeRows = Number(diag, "groupNoticeRows"), verifiedNoticeRows = Number(diag, "verifiedNoticeRows"),
-                groupFilterStatus = Text(diag, "groupFilterStatus", 24), menuProbeStatus = Text(diag, "menuProbeStatus", 24) };
+                groupFilterStatus = Text(diag, "groupFilterStatus", 24), menuProbeStatus = Text(diag, "menuProbeStatus", 24),
+                rowStructureSample = diag.TryGetProperty("rowStructureSample", out var shape) && shape.ValueKind == JsonValueKind.Array
+                    ? shape.Clone() : (JsonElement?)null };
         List<string>? pendingGroupNames = null;
         if (dedicated && source == "collector" && epoch > 0 && Number(packet, "scanId") > 0
             && packet.TryGetProperty("pendingGroupWindow", out var window) && window.ValueKind == JsonValueKind.Object
