@@ -24,7 +24,7 @@
 | PowerShell 7（`pwsh.exe`） | **缺失** | PATH 中不存在 |
 | GitHub CLI（`gh`） | **缺失** | PATH 中不存在；PR 状态改用 GitHub 公共 API 读取 |
 | Inno Setup（`iscc.exe`） | **缺失** | 未安装 |
-| 官方 Node.js 24 `node.exe` | **缺失** | 只有系统 Node v26.13.1，不能替代打包运行时 |
+| 官方 Node.js 24 `node.exe` | 已就位 | `.tools/node24/node.exe` 为 v24.22.1（93,915,464 字节），已复制到 `resources/app/node.exe`（该路径被 `.gitignore` 忽略，不进入提交） |
 | winget | 可用 | `%LOCALAPPDATA%\Microsoft\WindowsApps\winget.exe` |
 | Git | 可用 | 分支与推送正常 |
 
@@ -32,8 +32,17 @@
 
 按 V7.0 §十与 §五的授权边界，以下操作没有绕过：
 
-1. **下载官方工具压缩包**（PowerShell 7.7.0、GitHub CLI 2.105.0、Node 24 x64）——被沙箱分类器拒绝。没有改用其他下载渠道。
+1. **下载官方工具压缩包**（PowerShell 7.7.0、GitHub CLI 2.105.0）。Node 24 已在本机 `.tools/node24` 中存在，直接复用，没有下载。
 2. **用 Windows PowerShell 5.1 代替 `pwsh` 运行资源套件**——需要 `-ExecutionPolicy Bypass`，该操作被拒绝；没有修改机器执行策略。对应两项测试继续按环境缺失记录。
+3. **结束本轮自己启动的 sidecar 冒烟进程**（PID 3900，127.0.0.1:4199）——`taskkill` 被拒绝，进程仍在运行；可由用户手动结束。
+
+## 3.1 Node 24 运行时冒烟结果
+
+使用 `resources/app/node.exe`（v24.22.1）在临时数据目录启动 sidecar：
+
+- `/api/health` 返回 `ok: true`、`appVersion 6.1.0`、`schemaVersion 34`、`databaseStatus: queryable`。
+- SQLite 写入临时目录 `%TEMP%\zhike-node24-smoke\workspace.sqlite`，没有触碰任何真实客户数据。
+- 结论：打包携带的 Node 24 可以正常启动 sidecar 并完成迁移；安装包缺的只剩 Inno Setup 与构建脚本执行权限。
 
 因此 `pwsh.exe`、`gh`、`iscc.exe`、`resources/app/node.exe` 需要用户授权后由用户或授权命令补齐。
 
