@@ -119,11 +119,15 @@
   const sameData = (left, right) => stableJson(left) === stableJson(right);
   const replaceObject = (target, source) => { for (const key of Object.keys(target)) delete target[key]; Object.assign(target, clone(source)); };
   const byId = (list, id) => (list || []).filter(row => row && String(row.id) === String(id));
-  function mergeCustomerFields(survivor, duplicates, deletedAt) {
+  // Fields the user locked on the survivor (V5.0 §16/§19) are never rewritten
+  // by the merge; the duplicate keeps its own values in the recycle bin.
+  const lockedFields = customer => new Set([...(Array.isArray(customer?.manualLockedFields) ? customer.manualLockedFields : []), ...(Array.isArray(customer?.aiLockedFields) ? customer.aiLockedFields : [])].map(field => String(field ?? '').trim()));
+  function mergeCustomerFields(survivor, duplicates, deletedAt, { honorLocks = true } = {}) {
+    const locked = honorLocks ? lockedFields(survivor) : new Set();
     for (const duplicate of duplicates) {
       const duplicatePhone = duplicate.phone || duplicate.rawPhone; if (duplicatePhone) survivor.legacyPhones = [...new Set([...(survivor.legacyPhones || []), duplicatePhone])];
-      for (const key of ['tags']) survivor[key] = [...new Set([...(survivor[key] || []), ...(duplicate[key] || [])])];
-      if (!survivor.note && duplicate.note) survivor.note = duplicate.note; else if (survivor.note && duplicate.note && !survivor.note.includes(duplicate.note)) survivor.note = `${survivor.note}\n${duplicate.note}`.slice(0, 2000);
+      for (const key of ['tags']) if (!locked.has(key)) survivor[key] = [...new Set([...(survivor[key] || []), ...(duplicate[key] || [])])];
+      if (!locked.has('note')) { if (!survivor.note && duplicate.note) survivor.note = duplicate.note; else if (survivor.note && duplicate.note && !survivor.note.includes(duplicate.note)) survivor.note = `${survivor.note}\n${duplicate.note}`.slice(0, 2000); }
       survivor.hot = Boolean(survivor.hot || duplicate.hot); survivor.favorite = Boolean(survivor.favorite || duplicate.favorite); survivor.investor = Boolean(survivor.investor || duplicate.investor); duplicate.deleted = true; duplicate.deletedAt = deletedAt(duplicate); duplicate.duplicateOf = survivor.id;
     }
   }
@@ -136,7 +140,9 @@
     if (before.some(rows => rows.length !== 1)) return { conflicts: ['合并前备份中缺少或重复了相关客户'] };
     const customersBefore = before.map(rows => clone(rows[0]));
     const customersAfter = clone(customersBefore), survivorAfter = customersAfter[0];
-    mergeCustomerFields(survivorAfter, customersAfter.slice(1), duplicate => byId(state.customers, duplicate.id)[0]?.deletedAt ?? duplicate.deletedAt);
+    // Earlier versions merged without consulting field locks; replay that rule
+    // so the conflict check compares against what was actually written.
+    mergeCustomerFields(survivorAfter, customersAfter.slice(1), duplicate => byId(state.customers, duplicate.id)[0]?.deletedAt ?? duplicate.deletedAt, { honorLocks: false });
     const duplicateIds = new Set(ids.slice(1)), movedRecords = [];
     for (const key of MERGE_RECORD_KEYS) (backup[key] || []).forEach((record, index) => {
       if (!record || !duplicateIds.has(String(record.customerId))) return;

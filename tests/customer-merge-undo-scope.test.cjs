@@ -234,6 +234,30 @@ test('10: undo only affects the most recent merge', async () => {
   assert.equal(h.find('customers', 'B').deleted, true);
 });
 
+test('V9.2 field locks: merge keeps locked survivor fields and undo respects later lock changes', async () => {
+  const initial = baseline();
+  Object.assign(initial.customers[0], { manualLockedFields: ['note'], aiLockedFields: ['tags'] });
+  const h = createHarness(initial);
+  const before = clone(h.find('customers', 'A'));
+  await h.merge('A');
+  const A = h.find('customers', 'A');
+  assert.equal(A.note, 'A备注', 'a locked note is not rewritten by the merge');
+  same(A.tags, ['A标签'], 'locked tags are not rewritten by the merge');
+  assert.equal(A.hot, true, 'unlocked merge fields still merge');
+  same(A.manualLockedFields, ['note'], 'the merge keeps the lock list');
+  assert.equal(h.find('customers', 'B').note, 'B备注', 'the duplicate keeps its own values');
+  await h.undo();
+  same(h.find('customers', 'A'), before, 'undo restores the survivor with its locks');
+
+  const h2 = createHarness(baseline());
+  await h2.merge('A');
+  h2.find('customers', 'A').manualLockedFields = ['phone'];
+  const snapshot = clone(h2.state);
+  await h2.undo();
+  assert.match(h2.lastToast().message, /无法安全撤销/, 'a lock set after the merge is a later edit');
+  same(h2.state, snapshot, 'the newer lock is not silently overwritten');
+});
+
 test('legacy full-backup undo points are applied with the same scope', async () => {
   const initial = baseline();
   const backup = clone({ ...initial, settings: { theme: 'light' }, phoneRegistry: [], followups: [], registrations: [], activities: [], batchOperations: [] });
