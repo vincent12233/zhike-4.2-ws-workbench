@@ -4387,6 +4387,7 @@
         for (const [label, key] of [['前台列表行','renderedRows'], ['带可靠标识的列表行','stableRows'], ['未核实列表行','unresolvedRows']]) {
           if (Number.isSafeInteger(diag[key]) && diag[key] >= 0) diagnosticLines.push(label + ' · ' + diag[key]);
         }
+        if (Array.isArray(diag.rowStructureSample) && diag.rowStructureSample.length) diagnosticLines.push('行结构样本 · ' + JSON.stringify(diag.rowStructureSample));
       }
       const filterReasons = {
         'not-checked':'尚未检查', 'not-offered':'没有可确认的群组筛选控件', ambiguous:'筛选控件有歧义',
