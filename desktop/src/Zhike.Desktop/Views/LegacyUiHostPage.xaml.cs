@@ -5016,7 +5016,7 @@ public sealed partial class LegacyUiHostPage : Page
      const rows = readRows(), open = openDirectoryEvidence();
      const {conversations,excludedConversations,groupConversations} = partitionConversations(open.row ? [...rows,open.row] : rows);
      return {
-       supported: true, openIdentityStatus:open.status, directoryDiagnostics:{...latestWindow,confirmedOpen:Boolean(open.row)},
+       supported: true, openIdentityStatus:open.status, directoryDiagnostics:{...latestWindow,confirmedOpen:Boolean(open.row),rowStructureSample:globalThis.__zhikeRowStructureSample || null},
        unresolvedRowCount:unresolvedWindowRows,
        conversations,
        excludedConversations,
@@ -6209,7 +6209,7 @@ public sealed partial class LegacyUiHostPage : Page
     if (open.row && !rows.some(row => row.conversationKey === open.row.conversationKey)) rows.push(open.row);
     return { supported:result.supported, scanId:run?.directory?.id || 0, scanned:result.scanned, scanning:result.scanning, coverage:result.coverage,
       unresolvedRowCount:run?.directory?.unresolved ?? unresolvedWindowRows, openIdentityStatus:open.status,
-      directoryDiagnostics:{...latestWindow,...run?.directory?.diagnostics,confirmedOpen:Boolean(open.row)}, rows };
+      directoryDiagnostics:{...latestWindow,...run?.directory?.diagnostics,confirmedOpen:Boolean(open.row),rowStructureSample:globalThis.__zhikeRowStructureSample || null}, rows };
   };
   window.__zhikeWsCapture = capture;
   let lastFingerprint = '';
