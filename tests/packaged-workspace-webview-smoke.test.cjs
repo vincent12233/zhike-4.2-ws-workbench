@@ -149,7 +149,7 @@ function fixtureDocument(bundle, fixtures) {
 function assertSmokeResult(result, stylesheetCount) {
   assert.deepEqual(result.errors, []);
   assert.deepEqual(result.interactions.pages.slice().sort(), ['overview', 'accounts', 'chat', 'groups', 'members', 'contacts', 'exclusions',
-    'collection', 'crm', 'logs', 'settings', 'group-broadcast', 'group-mentions', 'group-reading', 'group-permissions', 'group-channels'].sort());
+    'collection', 'crm', 'logs', 'settings', 'group-broadcast', 'group-mentions', 'group-reading', 'group-permissions', 'group-channels', 'managed-groups'].sort());
   assert.equal(result.interactions.shortcuts.length, 4);
   assert.equal(result.interactions.accountScoped, true, 'Every open must target the new dedicated account');
   assert.equal(result.interactions.visibleOpens, true, 'Every open must receive visible chat bounds');
