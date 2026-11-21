@@ -1488,6 +1488,7 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
       </div>
       ${customerIdentityHtml(customer,true)}
       ${customerDetailCard('基础资料','user',`<div class="detail-grid">${customerDetailFields(fields,'drawer')}${qualification}</div>${note}`,edit,true)}
+      ${customerDetailCard('群组登记','users-group',`<div class="detail-grid">${customerDetailFields([['群别名',customer.groupAlias||customer.group||'未登记'],['渠道（群组配置）',customer.groupChannel||'—'],['本地群组',customer.groupId||'未关联']],'drawer')}</div>`,'',true)}
       ${customerDetailCard('投资资料','chart',`<div class="detail-grid">${customerDetailFields((typeof customerInvestmentRows==='function'?customerInvestmentRows(customer):[]),'drawer')}</div>`,'',true)}
       ${customerDetailCard('热聊资料','message',`<div class="detail-grid">${customerDetailFields(customerHotFields(customer),'drawer')}</div>`,'',true)}
       ${customerDetailCard('业务概览','wallet',`<div class="detail-grid">${customerDetailFields(customerBusinessFields(customer),'drawer')}</div>`,'',true)}
