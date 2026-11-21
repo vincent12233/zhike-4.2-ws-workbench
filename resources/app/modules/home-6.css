@@ -53,6 +53,10 @@ html[data-palette][data-view="home"] {
  .horizon-process-step:nth-child(3) {--step-bg:var(--ds-kpi-teal-bg);--step-accent:var(--ds-kpi-teal-ink)}
  .horizon-process-icon {display:grid;place-items:center;width:36px;height:36px;border:1px solid color-mix(in srgb,var(--step-accent) 14%,var(--ds-border));border-radius:50%;background:var(--ds-material-2),var(--step-bg);color:var(--step-accent);box-shadow:var(--ds-shadow)}
  .horizon-process-icon svg {width:19px;height:19px}
+ /* Light connector between steps: decorative only, hidden when the flow wraps. */
+ .horizon-process-step:not(:nth-child(5n)):after {content:"";position:absolute;top:23px;left:calc(50% + 26px);right:calc(-50% + 26px);height:1px;background:linear-gradient(90deg,color-mix(in srgb,var(--step-accent) 30%,transparent),color-mix(in srgb,var(--ds-border) 55%,transparent));pointer-events:none;z-index:0}
+ .horizon-process-step {z-index:0}
+ .horizon-process-icon,.horizon-process-step strong,.horizon-process-step small {position:relative;z-index:1}
  .horizon-process-step strong {font-size:var(--ds-font-card);font-weight:650;color:var(--ds-text)}
  .horizon-process-step small {font-size:var(--ds-font-detail);line-height:1.45;color:var(--ds-muted)}
  .horizon-flow-empty {font-size:var(--ds-font-reading);line-height:1.5;color:var(--ds-muted)}
@@ -69,7 +73,7 @@ html[data-palette][data-view="home"] {
  .horizon-spotlight-head>div span,.horizon-spotlight-head>.horizon-spotlight-badge {font-size:14px;color:var(--ds-muted)}
  .horizon-spotlight-badge {font-size:var(--ds-font-detail);background:var(--ds-ai-bg);color:var(--ds-ai);border-radius:10px;padding:4px 8px}
  .horizon-insight-list {display:grid;gap:8px;margin-top:10px}
- .horizon-insight {padding:0 0 8px;border:0;border-bottom:1px solid var(--ds-border);background:transparent}
+ .horizon-insight {padding:0 0 8px;border:0;border-bottom:1px solid var(--ds-border);background:transparent;transition:background-color .18s ease}
  .horizon-insight span {display:block;margin-bottom:5px;font-size:14px;color:var(--ds-muted)}
  .horizon-insight strong,.horizon-insight p {margin:0;font-size:var(--ds-font-reading);line-height:1.7;color:var(--ds-text);font-weight:400}
  .horizon-spotlight-actions {display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
@@ -86,6 +90,10 @@ html[data-palette][data-view="home"] {
  .horizon-kpis {grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:0}
  .horizon-kpi {--kpi-bg:var(--ds-kpi-blue-bg);--kpi-accent:var(--ds-kpi-blue-ink);--kpi-icon:var(--ds-icon-blue);position:relative;overflow:hidden;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px;min-width:0;min-height:80px;padding:9px 11px;border:1px solid color-mix(in srgb,var(--kpi-accent) 18%,var(--ds-border));border-radius:15px;background:var(--ds-material-2),var(--kpi-bg);color:var(--kpi-accent);box-shadow:var(--ds-material-edge),var(--ds-shadow);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
  .horizon-kpi:after {content:"";position:absolute;inset:auto 0 0;z-index:0;height:30px;background:radial-gradient(130% 118% at 50% 132%,color-mix(in srgb,var(--kpi-accent) 20%,transparent),transparent 72%);opacity:.68;pointer-events:none}
+ /* A hairline highlight along the top edge: it adds depth without washing out
+  * the card colour or lowering text contrast in either palette. */
+ .horizon-kpi:before {content:"";position:absolute;inset:0 0 auto;z-index:0;height:2px;border-radius:15px 15px 0 0;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--ds-light-edge) 68%,transparent),transparent);opacity:.75;pointer-events:none}
+ .horizon-kpi-copy,.horizon-kpi-icon {position:relative;z-index:1}
  .horizon-kpi:nth-child(2) {--kpi-bg:var(--ds-kpi-teal-bg);--kpi-accent:var(--ds-kpi-teal-ink);--kpi-icon:var(--ds-icon-teal)}
  .horizon-kpi:nth-child(3) {--kpi-bg:var(--ds-kpi-violet-bg);--kpi-accent:var(--ds-kpi-violet-ink);--kpi-icon:var(--ds-icon-violet)}
  .horizon-kpi:nth-child(4) {--kpi-bg:var(--ds-kpi-amber-bg);--kpi-accent:var(--ds-kpi-amber-ink);--kpi-icon:var(--ds-icon-amber)}
@@ -180,6 +188,7 @@ html[data-palette][data-view="home"] {
   .horizon-hero-heading {flex-wrap:wrap;gap:12px}
   .horizon-flow-source {text-align:left;max-width:100%}
   .horizon-process {grid-template-columns:repeat(3,minmax(0,1fr))}
+  .horizon-process-step:after {display:none}
   .home-dashboard-grid {grid-template-columns:1fr;grid-template-areas:"trend" "activity" "health"}
   .activity-list {grid-template-columns:1fr}
   .home-health-list {display:block}
@@ -188,6 +197,7 @@ html[data-palette][data-view="home"] {
 @media(max-width:560px) {
  html[data-palette][data-view="home"] {
   .horizon-process {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .horizon-process-step:after {display:none}
   .horizon-spotlight-capabilities {grid-template-columns:1fr}
  }
 }
