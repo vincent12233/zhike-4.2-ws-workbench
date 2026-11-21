@@ -18,7 +18,7 @@
 | P1 | app.js:1710、runtime-customizer同改主题；标题文本/DOM selector驱动多模块注入 | 新route/renderer显式挂载生命周期，避免更名/换骨架后按钮/监听丢失或重复；先为原有增强能力建立可追溯清单 |
 | P1验证 | 全局selected跨分页/筛选；批量撤销存在主app与business-enhancements/productivity多套入口；批量客户扩展撤销与较新字段并发关系需保护 | 预览时显示全部已选范围、隐藏选择数量；预览后字段变更不得被撤销无声覆盖；不增加第二套业务权威 |
 | P2 | securitySettingsModal:1015仍有“工作区随应用文件夹迁移”旧说明，runtime-customizer另有JSON迁移指导 | 与实际动态AppData/重新授权规则统一说明；不能用搬安装目录当完整数据迁移 |
-| P2已处理 | business-enhancements:111–121将含settings的全工作区备份存入settings.lastCustomerMerge；前次备份可能层层嵌入 | 多次合并/撤销的状态体积与快照保留需实测并设有界策略；不要在S0擅删历史。已处理：合并备份的 settings 不再携带上一次 lastCustomerMerge（撤销本就会清空它），合并保存失败时恢复上一次撤销点；`tests/customer-merge-backup-bounds.test.cjs` 运行真实模块验证多次合并为单层备份、失败与撤销保留数据。撤销仍整体恢复合并前 settings，合并后修改的设置会被覆盖，此项仍 Open |
+| P2已处理 | business-enhancements 客户合并曾将含 settings 的全工作区备份存入 settings.lastCustomerMerge：前次备份层层嵌入，撤销整体覆盖合并后的设置与其他记录 | 已处理。撤销点改为第 2 版范围化记录：仅保存参与合并客户的合并前/后副本与被转移业务记录的引用，不含 settings 和全工作区备份，不嵌套。撤销只恢复这些客户与记录归属，合并后新增或修改的无关设置、客户和记录保持不变；合并操作在操作记录中标为“已撤销”。参与客户在合并后被修改、被转移记录改归属或被删除、客户/记录编号重复、撤销记录版本未知时拒绝撤销并保留撤销点，提示人工处理或使用合并前自动快照。合并或撤销保存失败只回滚本次涉及的对象并保留撤销点。仍为单次撤销。旧版完整备份撤销点按同一范围解释，不再整体恢复 settings。验证：`tests/customer-merge-undo-scope.test.cjs` 运行真实模块 10 个场景，修复前 7a4b47a 与 main 均有 7 项失败。真实 SQLite 重载后的字段规范化差异可能使撤销被保守拒绝，尚未在 Windows 实机验证 |
 | P2 | 操作记录只30条、主要依赖文案时间；增强模块有另外500条批量记录，客户治理审计另表 | 做真实审计来源清单/统一只读查询，不以状态快照冒充完整历史 |
 
 ## 滚动、焦点、缩放机制与待测风险

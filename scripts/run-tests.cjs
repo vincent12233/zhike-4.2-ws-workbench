@@ -448,7 +448,7 @@ function runAll() {
   run('business P1 batching, source subtype, ledger rollback and import rollback', [path.join(repo, 'tests', 'business-p1-regression.test.cjs')]);
   run('customer governance API', [path.join(repo, 'tests', 'customer-governance-api.test.cjs')]);
   run('customer purge completeness', [path.join(repo, 'tests', 'customer-purge-completeness.test.cjs')]);
-  run('customer merge undo backup stays bounded', [path.join(repo, 'tests', 'customer-merge-backup-bounds.test.cjs')]);
+  run('customer merge undo is scoped, conflict-safe and single-level', [path.join(repo, 'tests', 'customer-merge-undo-scope.test.cjs')]);
   run('customer governance UI', [path.join(repo, 'tests', 'customer-governance-ui.test.cjs')]);
   run('settings option synchronization', [path.join(repo, 'tests', 'settings-option-sync.test.cjs')]);
   run('cross-workspace business chain', [path.join(repo, 'tests', 'cross-workspace-chain-contract.test.cjs')]);
