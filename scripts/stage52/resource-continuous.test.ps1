@@ -2,6 +2,11 @@
 param([Parameter(Mandatory = $true)][string]$NodePath)
 
 $ErrorActionPreference = 'Stop'
+# Node writes UTF-8. On a non-English Windows the console code page decodes it
+# as the local ANSI code page, which corrupts non-ASCII captions and can swallow
+# the closing quote of a JSON string. Pin both directions to UTF-8.
+[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
+$OutputEncoding = [Text.UTF8Encoding]::new($false)
 $testRoot = Join-Path ([IO.Path]::GetTempPath()) ('zhike-stage51-native-' + [Guid]::NewGuid().ToString('N'))
 [void](New-Item -ItemType Directory -Path $testRoot)
 $fixturePath = Join-Path $testRoot 'Zhike.Stage51.Acceptance.exe'
@@ -38,9 +43,24 @@ try {
     $operation.Phase = 'before-close'; $operation.OperationId = 'close-01'
     $null = & $marker @operation -Boundary begin
     if (-not (Wait-Job $job -Timeout 35)) { throw 'Continuous sampler did not finish after observed process exit.' }
-    $context = Receive-Job $job | ConvertFrom-Json
+    # The thread job can surface collector output before the final context line
+    # under PowerShell 7, and a truncated deep object can make an earlier
+    # candidate invalid JSON. Take the newest candidate that parses and carries
+    # the observation status instead of trusting stream ordering.
+    $observed = @(Receive-Job $job)
+    $candidates = @($observed | Where-Object { $_ -is [string] } | ForEach-Object { $_.Trim() } | Where-Object { $_.StartsWith('{') })
+    [array]::Reverse($candidates)
+    $context = $null
+    foreach ($candidate in $candidates) {
+        try { $parsed = $candidate | ConvertFrom-Json -ErrorAction Stop } catch { continue }
+        if ($parsed -and $parsed.PSObject.Properties.Name -contains 'status') { $context = $parsed; break }
+    }
+    if (-not $context) { throw 'Continuous sampler emitted no parsable observation context.' }
     if ($context.status -ne 'Observed' -or $context.actualSamples -lt 3) { throw 'Missing observation context.' }
-    $report = & $NodePath (Join-Path $PSScriptRoot 'resource-summary.cjs') $testRoot $sourceName $fixture.Id --stdout | ConvertFrom-Json
+    # PowerShell returns native stdout as one string per line; joining them is
+    # required before ConvertFrom-Json, which parses each input object whole.
+    $reportText = (& $NodePath (Join-Path $PSScriptRoot 'resource-summary.cjs') $testRoot $sourceName $fixture.Id --stdout) -join [Environment]::NewLine
+    $report = $reportText | ConvertFrom-Json
     if ($LASTEXITCODE -ne 0) { throw 'Resource summary failed.' }
     if ($report.operations[0].outcome -ne 'no-change' -or $report.operations[0].durationMs -lt 50) { throw 'Operation duration or outcome was lost.' }
     if ($report.exit.status -ne 'observed-identities-released' -or $report.exit.closeToRootExitUpperBoundMs -le 0) { throw 'Observed exit or timing bounds were lost.' }
