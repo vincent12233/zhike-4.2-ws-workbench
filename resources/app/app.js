@@ -706,7 +706,7 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
   function customerRows(list,mode='segment') {
     const start=(state.page-1)*state.perPage,visible=list.slice(start,start+state.perPage);
     const columns=visibleCustomerColumns(mode);
-    if(!visible.length)return `<tr><td colspan="${columns.size}" class="muted-cell" style="text-align:center;padding:34px">没有找到符合条件的客户</td></tr>`;
+    if(!visible.length){const scopeFiltered=mode==='customer'&&(Boolean(state.customerSearch.trim())||Object.values(state.extraFilters||{}).some(Boolean)||Boolean(state.homeCustomerScope));const actions=scopeFiltered?'<button class="btn small" data-action="clear-search">清空搜索与范围</button><button class="btn small" data-action="clear-extra">清除高级筛选</button>':'<button class="btn small primary" data-action="new-customer">新增客户</button><button class="btn small" data-action="go-data">导入或采集</button>';return `<tr><td colspan="${columns.size}" class="empty-cell"><div class="empty-state customer-empty-state" role="status"><strong>${scopeFiltered?'当前条件下没有匹配的客户':'还没有客户资料'}</strong><p>${scopeFiltered?'筛选与搜索只影响当前列表；导出、跟票和群组数据仍按全部记录保留。':'客户主档来自快速录入、CSV 导入或 WS 采集，同一号码只保留一条主档。'}</p><div class="empty-state-actions">${actions}</div></div></td></tr>`;}
     const businessIndex=businessSummaryIndex(),eventFilter=mode==='segment'?state.segment.eventFilter:'';
     const [eventDate,eventType]=eventFilter?eventFilter.split(':'):[];
     return visible.map(c=>{
@@ -2075,6 +2075,7 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
     else if(action==='toggle-filters'){state.showFilters=!state.showFilters;render();}
     else if(action==='clear-filters'){state.homeCustomerScope='';state.segment=segmentFilterDefaults();state.segmentCard='';state.search='';state.extraFilters={};render();}
     else if(action==='clear-extra'){state.extraFilters={};render();}
+    else if(action==='clear-search'){state.customerSearch='';state.homeCustomerScope='';render();}
     else if(action==='clear-selection'){state.selected.clear();render();}
     else if(action==='save-view')await saveCurrentView(el.dataset.mode||(state.view==='segments'?'segment':'customer'));
     else if(action==='rename-view')await renameSavedView(id);
