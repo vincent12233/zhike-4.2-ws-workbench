@@ -278,3 +278,17 @@ html[data-motion="off"] #viewContainer[data-business6] .data-table tbody tr{tran
 .completeness-done { margin:8px 0 0; }
 .completeness-note { margin:8px 0 0; font-size:13px; }
 @media (prefers-reduced-motion:reduce) { .completeness-meter span { transition:none; } }
+/* V5.0 §19 客户 360：字段来源、待确认冲突与资料变更记录。 */
+.governance-block-title { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; margin:12px 0 6px; }
+.governance-block-title strong { font-size:14px; color:var(--ds-text); }
+.governance-block-title span { font-size:13px; color:var(--ds-muted); }
+.governance-conflicts { padding:10px 12px; border:1px solid color-mix(in srgb,var(--ds-warning) 40%,var(--ds-border)); border-radius:12px; background:color-mix(in srgb,var(--ds-warning-bg) 70%,var(--ds-surface)); }
+.governance-conflicts ul { margin:6px 0 0; padding-left:18px; display:grid; gap:6px; }
+.governance-conflicts li { color:var(--ds-text); font-size:14px; }
+.governance-conflicts li b { margin-right:6px; }
+.governance-conflicts li span { margin-right:6px; }
+.governance-conflicts li small { display:block; color:var(--ds-muted); font-size:13px; }
+.governance-source-table td { max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.governance-history { margin:0; padding-left:20px; display:grid; gap:6px; color:var(--ds-text); font-size:14px; }
+.governance-history li span { display:block; color:var(--ds-text); }
+.governance-history li small { display:block; color:var(--ds-muted); font-size:13px; }

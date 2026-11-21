@@ -793,6 +793,26 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
     const missing=result.missing.length?`<div class="completeness-missing"><span>待补齐</span>${result.missing.map(item=>`<i>${esc(item)}</i>`).join('')}</div>`:'<p class="panel-note completeness-done">资料已完整，未发现缺失项。</p>';
     return `<div class="completeness-head"><strong>${result.score}%</strong><span class="status-tag ${tag}">${esc(result.bandLabel)}</span></div><div class="completeness-meter" role="img" aria-label="客户资料完整度 ${result.score}%"><span style="width:${result.score}%"></span></div>${missing}<p class="panel-note completeness-note">评分只依据真实已存在的字段；占位值、待确认状态和通用标签不计分。</p>`;
   }
+  // V5.0 §19 客户 360：字段来源、待确认冲突和资料变更记录。只读取本机治理数据，
+  // 渲染为抽屉中的只读区块；读取失败时显示真实原因，不显示旧数据冒充新结果。
+  async function loadCustomerGovernancePanel(customerId){
+    const view=window.ZhikeCustomerGovernanceView;
+    const drawer=document.querySelector('#customerDrawer');
+    if(!drawer)return;
+    const isCurrent=()=>{const current=document.querySelector('#customerDrawer');return Boolean(current&&current.classList.contains('open')&&String(current.dataset.customerId||'')===String(customerId));};
+    const mount=html=>{const current=document.querySelector('#customerDrawer');if(!current||!isCurrent())return;const old=current.querySelector('[data-governance-panel]');if(old)old.remove();const holder=document.createElement('div');holder.dataset.governancePanel='';holder.innerHTML=html;const actions=current.querySelector('.customer-360-actions')||current.querySelector('.drawer-actions');if(actions)actions.insertAdjacentElement('beforebegin',holder);else current.appendChild(holder);};
+    if(!view){mount('<section class="customer-360-section zk-surface"><p class="panel-note">治理视图模块未加载，请重新打开应用。</p></section>');return;}
+    mount(view.renderGovernancePanel({loading:true}));
+    try{
+      const response=await fetch(`/api/data-governance/customers/${encodeURIComponent(customerId)}/profile`,{cache:'no-store'});
+      const body=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(body&&body.error?body.error:`读取失败（${response.status}）`);
+      if(!isCurrent())return;
+      mount(view.renderGovernancePanel({evidence:body.evidence,actions:body.actions,conflicts:body.conflicts}));
+    }catch(error){
+      mount(view.renderGovernancePanel({error:String(error&&error.message||'读取字段来源与变更记录失败。')}));
+    }
+  }
   function customerIdentityHtml(customer,drawer=false){
     const name=esc(customerName(customer));
     const phone=esc(customer.rawPhone||customer.phone||'未登记号码');
@@ -1444,6 +1464,7 @@ async function enqueueStateWrite(data){queuedWriteCount++;dbWritePromise=dbWrite
         <button class="btn primary" data-action="edit-customer" data-id="${id}">编辑资料</button>
       </div>`;
     drawer.classList.add('open');
+    void loadCustomerGovernancePanel(customerId);
     document.dispatchEvent(new CustomEvent('zhike:customer-drawer-opened',{detail:{customerId}}));
   }
   function editCustomerModal(customer){const field=(id,label,items,value)=>{const choices=[...new Set([...(items||[]),...(value&&!items.includes(value)?[value]:[])])];return `<label class="filter-field"><span>${label}</span><select id="${id}">${choices.map(x=>`<option ${x===value?'selected':''}>${esc(x)}</option>`).join('')}</select></label>`;};const pagesForEdit=[...new Set([...pages,...(customer.page?[customer.page]:[])])];openModal('编辑客户资料','人工修改字段会在后续导入时受到保护',`<div class="filter-grid" style="grid-template-columns:repeat(2,1fr)"><label class="filter-field"><span>客户姓名</span><input id="editName" value="${esc(customer.name)}"></label><label class="filter-field"><span>原始号码</span><input id="editPhone" value="${esc(customer.rawPhone)}"></label>${field('editSource','渠道',sources,customer.source)}${field('editPage','页面（可不选）',pagesForEdit,customer.page)}${field('editAssistant','跟进助理',assistants,customer.assistant)}${field('editStatus','进群状态',statuses,customer.status)}${field('editPhase','客户阶段',phases,customer.phase)}${field('editQualification','资质评级',qualifications,customer.qualification||'待评估')}<label class="filter-field"><span>群编号</span><input id="editGroup" value="${esc(customer.group==='—'?'':customer.group)}"></label><label class="filter-field"><span>VIP 编号（可选）</span><input id="editVipNumber" maxlength="64" value="${esc(customer.vipNumber||'')}"></label><label class="filter-field" style="grid-column:1/-1"><span>备注</span><input id="editNote" value="${esc(customer.note)}"></label></div>`,`<button class="btn" data-action="close-modal">取消</button><button class="btn primary" data-action="save-customer" data-id="${customer.id}">保存修改</button>`);}
