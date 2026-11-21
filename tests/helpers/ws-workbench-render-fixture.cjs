@@ -32,7 +32,7 @@ function renderWsWorkbenchFixture(options = {}) {
     URL, URLSearchParams, AbortController,
   };
   vm.createContext(sandbox);
-  for (const file of ['customer-avatar.js', 'ws-business-pages.js', 'ws-group-drafts-ui.js', 'ws-group-reading-ui.js', 'ws-group-permissions-ui.js', 'ws-group-channels-ui.js']) {
+  for (const file of ['customer-avatar.js', 'ws-business-pages.js', 'ws-group-drafts-ui.js', 'ws-group-reading-ui.js', 'ws-group-permissions-ui.js', 'ws-group-channels-ui.js', 'ws-managed-groups-ui.js']) {
     const script = fs.readFileSync(path.join(resourceRoot, 'modules', file), 'utf8');
     vm.runInContext(script, sandbox, { filename: file });
   }

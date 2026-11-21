@@ -105,6 +105,8 @@ function runStage3(options = {}) {
   run('WS group channel config rules', [path.join(repo, 'tests', 'ws-group-channel-config-core.test.cjs')]);
   run('Intake group alias linkage', [path.join(repo, 'tests', 'intake-group-alias.test.cjs')]);
   run('Managed group registry API', [path.join(repo, 'tests', 'ws-managed-groups-api.test.cjs')], { timeout: 180000 });
+  run('Managed group page contract', [path.join(repo, 'tests', 'ws-managed-groups-ui.test.cjs')]);
+  run('Managed group page served, loaded and rendered through a real sidecar', [path.join(repo, 'tests', 'ws-managed-groups-page-load.test.cjs')], { timeout: 180000 });
   run('WS group channel config API, rename safety and CSV', [path.join(repo, 'tests', 'ws-group-channel-config-api.test.cjs')], { timeout: 180000 });
   run('WS group config drives auto-provisioning and channel attribution', [path.join(repo, 'tests', 'ws-group-config-provisioning.test.cjs')], { timeout: 180000 });
   run('WS group channel configuration page', [path.join(repo, 'tests', 'ws-group-channels-ui.test.cjs')]);
@@ -448,6 +450,7 @@ function runAll() {
   run('business P1 batching, source subtype, ledger rollback and import rollback', [path.join(repo, 'tests', 'business-p1-regression.test.cjs')]);
   run('customer governance API', [path.join(repo, 'tests', 'customer-governance-api.test.cjs')]);
   run('customer purge completeness', [path.join(repo, 'tests', 'customer-purge-completeness.test.cjs')]);
+  run('customer merge undo is scoped, conflict-safe and single-level', [path.join(repo, 'tests', 'customer-merge-undo-scope.test.cjs')]);
   run('customer governance UI', [path.join(repo, 'tests', 'customer-governance-ui.test.cjs')]);
   run('settings option synchronization', [path.join(repo, 'tests', 'settings-option-sync.test.cjs')]);
   run('cross-workspace business chain', [path.join(repo, 'tests', 'cross-workspace-chain-contract.test.cjs')]);

@@ -73,6 +73,13 @@ jobs:
             'tests/ws-workbench-security.test.cjs',
             'tests/desktop-packaging-contract.test.cjs',
             'tests/packaged-workspace-webview-contract.test.cjs',
+            'tests/static-assets-contract.test.cjs',
+            'tests/ws-managed-groups-core.test.cjs',
+            'tests/ws-managed-groups-api.test.cjs',
+            'tests/ws-managed-groups-ui.test.cjs',
+            'tests/ws-managed-groups-page-load.test.cjs',
+            'tests/intake-group-alias.test.cjs',
+            'tests/customer-merge-undo-scope.test.cjs',
             'tests/release-gate-contract.test.cjs',
             'tests/previous-installer-upgrade.test.cjs',
             'tests/legacy-install-retirement.test.cjs',
@@ -119,6 +126,11 @@ jobs:
         shell: pwsh
         run: |
           dotnet run --project scripts/stage51/NativeReadinessProbe/NativeReadinessProbe.csproj -c Release -- (Join-Path $PWD 'work/winui-bundle/zhike-winui-6.1.0-win-x64/resources/app') | Tee-Object -FilePath work/candidate-installer/sidecar-readiness.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Serve and load the packaged managed-group page through the packaged sidecar
+        shell: pwsh
+        run: |
+          node tests/ws-managed-groups-page-load.test.cjs (Join-Path $PWD 'work/winui-bundle/zhike-winui-6.1.0-win-x64/resources/app') | Tee-Object -FilePath work/candidate-installer/managed-groups-page-load.txt
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify clean install, rc.3 upgrade and uninstall on the CI machine
         shell: pwsh

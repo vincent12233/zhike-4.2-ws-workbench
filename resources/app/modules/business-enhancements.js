@@ -105,30 +105,148 @@
     const update = () => { const rows = groups[Number(select.value)]?.[1] || []; document.querySelector('#mergeDuplicateMembers').innerHTML = `<label class="filter-field"><span>保留客户</span><select id="mergeSurvivor">${rows.map(row => `<option value="${esc(row.id)}">${esc(row.name)} · ${esc(row.rawPhone || row.phone)} · ${row.touched ? '已修改' : '原始资料'}</option>`).join('')}</select></label>${rows.map(row => `<div class="merge-member"><strong>${esc(row.name)}</strong><span>${esc(row.rawPhone || row.phone)} · ${esc(row.source || '未分类')} · ${esc(row.status || '未记录')}</span></div>`).join('')}`; document.querySelector('[data-be-action="merge-apply"]').disabled = rows.length < 2; };
     select?.addEventListener('change', update); update();
   }
+  // Duplicate-customer merge and its single-step undo.
+  //
+  // A merge changes only (1) the survivor's merged fields, (2) the duplicates'
+  // deleted/duplicateOf marks and (3) the customerId of business records that
+  // pointed at a duplicate. The undo point therefore stores just those
+  // customers (before and after) and references to the moved records. Undo
+  // restores exactly that scope, leaves every unrelated workspace setting and
+  // record as it is now, and refuses when any involved item changed since.
+  const MERGE_UNDO_VERSION = 2;
+  const MERGE_RECORD_KEYS = ['tickets', 'deposits', 'followups', 'registrations', 'phoneRegistry'];
+  const stableJson = value => JSON.stringify(value, (key, item) => item && typeof item === 'object' && !Array.isArray(item) ? Object.fromEntries(Object.keys(item).sort().map(name => [name, item[name]])) : item);
+  const sameData = (left, right) => stableJson(left) === stableJson(right);
+  const replaceObject = (target, source) => { for (const key of Object.keys(target)) delete target[key]; Object.assign(target, clone(source)); };
+  const byId = (list, id) => (list || []).filter(row => row && String(row.id) === String(id));
+  // Fields the user locked on the survivor (V5.0 §16/§19) are never rewritten
+  // by the merge; the duplicate keeps its own values in the recycle bin.
+  const lockedFields = customer => new Set([...(Array.isArray(customer?.manualLockedFields) ? customer.manualLockedFields : []), ...(Array.isArray(customer?.aiLockedFields) ? customer.aiLockedFields : [])].map(field => String(field ?? '').trim()));
+  function mergeCustomerFields(survivor, duplicates, deletedAt, { honorLocks = true } = {}) {
+    const locked = honorLocks ? lockedFields(survivor) : new Set();
+    for (const duplicate of duplicates) {
+      const duplicatePhone = duplicate.phone || duplicate.rawPhone; if (duplicatePhone) survivor.legacyPhones = [...new Set([...(survivor.legacyPhones || []), duplicatePhone])];
+      for (const key of ['tags']) if (!locked.has(key)) survivor[key] = [...new Set([...(survivor[key] || []), ...(duplicate[key] || [])])];
+      if (!locked.has('note')) { if (!survivor.note && duplicate.note) survivor.note = duplicate.note; else if (survivor.note && duplicate.note && !survivor.note.includes(duplicate.note)) survivor.note = `${survivor.note}\n${duplicate.note}`.slice(0, 2000); }
+      survivor.hot = Boolean(survivor.hot || duplicate.hot); survivor.favorite = Boolean(survivor.favorite || duplicate.favorite); survivor.investor = Boolean(survivor.investor || duplicate.investor); duplicate.deleted = true; duplicate.deletedAt = deletedAt(duplicate); duplicate.duplicateOf = survivor.id;
+    }
+  }
+  // Converts an undo point written by an earlier version (a full workspace
+  // backup) into the same scoped plan, so legacy undo cannot overwrite
+  // settings or unrelated records either.
+  function legacyMergePlan(merge, state) {
+    const backup = merge.backup || {}, ids = [String(merge.survivorId), ...(merge.duplicateIds || []).map(String)];
+    const before = ids.map(id => byId(backup.customers, id));
+    if (before.some(rows => rows.length !== 1)) return { conflicts: ['合并前备份中缺少或重复了相关客户'] };
+    const customersBefore = before.map(rows => clone(rows[0]));
+    const customersAfter = clone(customersBefore), survivorAfter = customersAfter[0];
+    // Earlier versions merged without consulting field locks; replay that rule
+    // so the conflict check compares against what was actually written.
+    mergeCustomerFields(survivorAfter, customersAfter.slice(1), duplicate => byId(state.customers, duplicate.id)[0]?.deletedAt ?? duplicate.deletedAt, { honorLocks: false });
+    const duplicateIds = new Set(ids.slice(1)), movedRecords = [];
+    for (const key of MERGE_RECORD_KEYS) (backup[key] || []).forEach((record, index) => {
+      if (!record || !duplicateIds.has(String(record.customerId))) return;
+      const ref = { key, from: record.customerId, to: survivorAfter.id };
+      if (record.id !== undefined && record.id !== null && record.id !== '') ref.id = record.id; else { ref.index = index; ref.after = { ...clone(record), customerId: survivorAfter.id }; }
+      movedRecords.push(ref);
+    });
+    const createdAt = Date.parse(merge.createdAt || 0), operation = (state.batchOperations || []).find(op => op?.type === '合并重复客户' && Math.abs(Date.parse(op.createdAt || 0) - createdAt) < 5000);
+    return { version: MERGE_UNDO_VERSION, survivorId: survivorAfter.id, duplicateIds: ids.slice(1), customersBefore, customersAfter, movedRecords, batchOperationId: operation?.id ?? null };
+  }
+  function resolveMergePlan(merge, state) {
+    if (!merge || typeof merge !== 'object') return { conflicts: ['没有可撤销的客户合并'] };
+    if (merge.version === MERGE_UNDO_VERSION) return merge;
+    if (merge.version === undefined && merge.backup) return legacyMergePlan(merge, state);
+    return { conflicts: [`撤销记录版本 ${merge.version} 不受支持`] };
+  }
+  function locateMovedRecord(state, ref) {
+    const list = state[ref.key] || [];
+    if (ref.id !== undefined) { const rows = byId(list, ref.id); return rows.length === 1 ? { record: rows[0] } : { conflict: rows.length ? `${ref.key} 记录 ${ref.id} 的编号重复` : `${ref.key} 记录 ${ref.id} 已不存在` }; }
+    const record = list[ref.index];
+    return record && sameData(record, ref.after) ? { record } : { conflict: `${ref.key} 中一条无编号记录已变化` };
+  }
+  // Every involved customer and record must be exactly as the merge left it;
+  // anything else is a later edit, a deletion or an ID collision.
+  function mergeUndoConflicts(plan, state) {
+    if (plan.conflicts) return { conflicts: plan.conflicts };
+    const conflicts = [], customers = [], records = [];
+    plan.customersAfter.forEach(after => {
+      const rows = byId(state.customers, after.id);
+      if (rows.length !== 1) conflicts.push(rows.length ? `客户编号 ${after.id} 重复` : `客户 ${after.name || after.id} 已不存在`);
+      else if (!sameData(rows[0], after)) conflicts.push(`客户 ${after.name || after.id} 在合并后已被修改`);
+      else customers.push(rows[0]);
+    });
+    for (const ref of plan.movedRecords) {
+      const found = locateMovedRecord(state, ref);
+      if (found.conflict) conflicts.push(found.conflict);
+      else if (String(found.record.customerId) !== String(ref.to)) conflicts.push(`${ref.key} 记录 ${ref.id ?? ref.index} 已转给其他客户`);
+      else records.push({ record: found.record, ref });
+    }
+    return { conflicts, customers, records };
+  }
   async function applyMerge() {
     const groups = duplicateGroups(), index = Number(document.querySelector('#mergeDuplicateGroup')?.value), group = groups[index]?.[1] || [], survivorId = document.querySelector('#mergeSurvivor')?.value, survivor = group.find(row => String(row.id) === String(survivorId)), duplicates = group.filter(row => String(row.id) !== String(survivorId));
     if (!survivor || !duplicates.length) return;
-    const h = host(), state = h.state, affectedIds = new Set([survivor.id, ...duplicates.map(row => row.id)]), backup = { customers: clone(state.customers), tickets: clone(state.tickets), deposits: clone(state.deposits), followups: clone(state.followups), registrations: clone(state.registrations), phoneRegistry: clone(state.phoneRegistry), settings: clone(state.settings), activities: clone(state.activities || []), batchOperations: clone(state.batchOperations || []) };
+    const h = host(), state = h.state, involved = [survivor, ...duplicates];
+    if (involved.some(row => byId(state.customers, row.id).length !== 1)) { h.toast('相关客户编号重复，无法安全合并，请先人工处理', 'x'); return; }
     if (!await h.snapshotBeforeWrite('合并重复客户前自动快照')) return;
+    if (involved.some(row => { const rows = byId(h.state.customers, row.id); return rows.length !== 1 || rows[0] !== row; })) { h.toast('客户资料在合并确认期间已变化，请重新打开合并向导', 'x'); return; }
+    const customersBefore = involved.map(row => clone(row)), previousMerge = state.settings.lastCustomerMerge ?? null, duplicateIds = new Set(duplicates.map(row => String(row.id)));
+    const movedRecords = [], moved = [];
+    for (const key of MERGE_RECORD_KEYS) (state[key] || []).forEach((record, recordIndex) => {
+      if (!record || !duplicateIds.has(String(record.customerId))) return;
+      const ref = { key, from: record.customerId, to: survivor.id };
+      if (record.id !== undefined && record.id !== null && record.id !== '') ref.id = record.id; else ref.index = recordIndex;
+      movedRecords.push(ref); moved.push({ record, ref });
+    });
+    const now = new Date().toISOString(), operationId = `MERGE-${Date.now()}`;
+    let activityId = null;
     try {
-      for (const duplicate of duplicates) {
-        for (const key of ['tickets', 'deposits', 'followups', 'registrations', 'phoneRegistry']) for (const record of state[key] || []) if (String(record.customerId) === String(duplicate.id)) record.customerId = survivor.id;
-        const duplicatePhone = duplicate.phone || duplicate.rawPhone; if (duplicatePhone) survivor.legacyPhones = [...new Set([...(survivor.legacyPhones || []), duplicatePhone])];
-        for (const key of ['tags']) survivor[key] = [...new Set([...(survivor[key] || []), ...(duplicate[key] || [])])];
-        if (!survivor.note && duplicate.note) survivor.note = duplicate.note; else if (survivor.note && duplicate.note && !survivor.note.includes(duplicate.note)) survivor.note = `${survivor.note}\n${duplicate.note}`.slice(0, 2000);
-        survivor.hot = Boolean(survivor.hot || duplicate.hot); survivor.favorite = Boolean(survivor.favorite || duplicate.favorite); survivor.investor = Boolean(survivor.investor || duplicate.investor); duplicate.deleted = true; duplicate.deletedAt = new Date().toISOString(); duplicate.duplicateOf = survivor.id;
-      }
-      state.settings.lastCustomerMerge = { createdAt: new Date().toISOString(), survivorId: survivor.id, duplicateIds: duplicates.map(row => row.id), backup };
-      state.batchOperations.unshift({ id: `MERGE-${Date.now()}`, type: '合并重复客户', value: survivor.name, count: duplicates.length, createdAt: new Date().toISOString(), status: '已执行' });
-      h.persist(); h.activity(`合并重复客户：保留 ${survivor.name}，合并 ${duplicates.length} 位`); await h.flushStateWrites(); h.closeModal(); h.render(); h.toast(`已合并 ${duplicates.length} 位重复客户，业务记录已转移`);
-    } catch (error) { Object.assign(state, backup); h.persist(); h.render(); h.toast(`合并失败，已恢复原资料：${error.message || '保存失败'}`, 'x'); }
+      for (const { record } of moved) record.customerId = survivor.id;
+      for (const { record, ref } of moved) if (ref.index !== undefined) ref.after = clone(record);
+      mergeCustomerFields(survivor, duplicates, () => now);
+      state.settings.lastCustomerMerge = { version: MERGE_UNDO_VERSION, createdAt: now, survivorId: survivor.id, duplicateIds: duplicates.map(row => row.id), customersBefore, customersAfter: involved.map(row => clone(row)), movedRecords, batchOperationId: operationId };
+      state.batchOperations.unshift({ id: operationId, type: '合并重复客户', value: survivor.name, count: duplicates.length, createdAt: now, status: '已执行' });
+      h.persist(); h.activity(`合并重复客户：保留 ${survivor.name}，合并 ${duplicates.length} 位`); activityId = state.activities?.[0]?.id ?? null; await h.flushStateWrites(); h.closeModal(); h.render(); h.toast(`已合并 ${duplicates.length} 位重复客户，业务记录已转移`);
+    } catch (error) {
+      // Roll back only what this merge touched and keep the previous undo point.
+      involved.forEach((row, rowIndex) => replaceObject(row, customersBefore[rowIndex]));
+      for (const { record, ref } of moved) record.customerId = ref.from;
+      state.settings.lastCustomerMerge = previousMerge;
+      state.batchOperations = (state.batchOperations || []).filter(op => op?.id !== operationId);
+      if (activityId) state.activities = (state.activities || []).filter(item => item?.id !== activityId);
+      h.persist(); h.render(); h.toast(`合并失败，已恢复原资料：${error.message || '保存失败'}`, 'x');
+    }
   }
   async function undoMerge() {
     const h = host(), merge = h.state.settings.lastCustomerMerge;
-    if (!merge?.backup) { h.toast('没有可撤销的客户合并'); return; }
-    if (!confirm('撤销上次客户合并？将恢复重复客户和已转移的业务记录。')) return;
+    if (!merge) { h.toast('没有可撤销的客户合并'); return; }
+    const refuse = conflicts => h.toast(`无法安全撤销上次合并：${conflicts.slice(0, 3).join('；')}${conflicts.length > 3 ? ` 等 ${conflicts.length} 项` : ''}。撤销点已保留，请核对后人工处理，或使用“合并重复客户前自动快照”恢复。`, 'x');
+    const plan = resolveMergePlan(merge, h.state);
+    let check = mergeUndoConflicts(plan, h.state);
+    if (check.conflicts.length) { refuse(check.conflicts); return; }
+    if (!confirm('撤销上次客户合并？将恢复参与合并的客户和已转移的业务记录，其他资料和设置保持不变。')) return;
     if (!await h.snapshotBeforeWrite('撤销客户合并前自动快照')) return;
-    const beforeUndo = { customers: clone(h.state.customers), tickets: clone(h.state.tickets), deposits: clone(h.state.deposits), followups: clone(h.state.followups), registrations: clone(h.state.registrations), phoneRegistry: clone(h.state.phoneRegistry), settings: clone(h.state.settings), activities: clone(h.state.activities || []), batchOperations: clone(h.state.batchOperations || []) }; Object.assign(h.state, clone(merge.backup)); h.state.settings.lastCustomerMerge = null; h.persist(); h.activity('撤销上次客户合并'); try { await h.flushStateWrites(); h.render(); h.toast('已撤销客户合并'); } catch (error) { Object.assign(h.state, beforeUndo); h.persist(); h.render(); h.toast(`撤销失败：${error.message || '保存失败'}`, 'x'); }
+    // The snapshot is asynchronous; re-check against the state as it is now.
+    if (!sameData(h.state.settings.lastCustomerMerge, merge)) { h.toast('撤销点已变化，请重新操作', 'x'); return; }
+    check = mergeUndoConflicts(plan, h.state);
+    if (check.conflicts.length) { refuse(check.conflicts); return; }
+    const state = h.state, customersNow = check.customers.map(row => clone(row)), operation = plan.batchOperationId == null ? null : byId(state.batchOperations, plan.batchOperationId)[0] || null, operationNow = operation ? clone(operation) : null;
+    let activityId = null;
+    try {
+      check.customers.forEach((row, rowIndex) => replaceObject(row, plan.customersBefore[rowIndex]));
+      for (const { record, ref } of check.records) record.customerId = ref.from;
+      if (operation) { operation.status = '已撤销'; operation.undoneAt = new Date().toISOString(); }
+      state.settings.lastCustomerMerge = null;
+      h.persist(); h.activity('撤销上次客户合并'); activityId = state.activities?.[0]?.id ?? null; await h.flushStateWrites(); h.render(); h.toast('已撤销客户合并');
+    } catch (error) {
+      check.customers.forEach((row, rowIndex) => replaceObject(row, customersNow[rowIndex]));
+      for (const { record, ref } of check.records) record.customerId = ref.to;
+      if (operation) replaceObject(operation, operationNow);
+      state.settings.lastCustomerMerge = merge;
+      if (activityId) state.activities = (state.activities || []).filter(item => item?.id !== activityId);
+      h.persist(); h.render(); h.toast(`撤销失败：${error.message || '保存失败'}`, 'x');
+    }
   }
   function mount() {
     const h = host(); if (!h) return;

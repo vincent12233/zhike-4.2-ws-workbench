@@ -19,7 +19,7 @@ const scenes = Object.freeze([
   { mode: 'dedicated', view: 'accounts' }, { mode: 'dedicated', view: 'groups' },
   { mode: 'dedicated', view: 'exclusions' }, { mode: 'dedicated', view: 'group-broadcast' },
   { mode: 'dedicated', view: 'group-reading' }, { mode: 'dedicated', view: 'group-permissions' },
-  { mode: 'dedicated', view: 'group-mentions' },
+  { mode: 'dedicated', view: 'group-mentions' }, { mode: 'dedicated', view: 'managed-groups' },
 ]);
 
 function loadBundle(stage) {
@@ -84,8 +84,10 @@ function loadBundle(stage) {
   assert.ok(stylesheetCount > 0);
   assert.doesNotMatch(html, /<link[^>]+rel="stylesheet"/i, 'Every packaged stylesheet must be validated');
   html = html.replace(/(<img\b[^>]*\bsrc=")([^"]+)(")/gi, (_, before, reference, after) => before + dataUrl(reference) + after);
+  // Every page module index.html loads for the dedicated workspace, in the
+  // same order, so a missing packaged module fails here.
   const scripts = ['ws-workbench-core', 'ws-business-pages', 'customer-avatar', 'ws-group-reading-ui',
-    'ws-group-permissions-ui', 'ws-group-drafts-ui', 'ws-workbench'].map(name => resource('modules/' + name + '.js').toString('utf8'));
+    'ws-group-permissions-ui', 'ws-group-drafts-ui', 'ws-group-channels-ui', 'ws-managed-groups-ui', 'ws-workbench'].map(name => resource('modules/' + name + '.js').toString('utf8'));
   return { manifest, manifestSha256: sha256(manifestBytes), consumed, stylesheetCount, html, scripts,
     resourceRoot: path.join(stage, 'resources/app') };
 }
@@ -131,6 +133,8 @@ async function browserSmoke(fixtures, scripts) {
       documentOverflow: document.documentElement.scrollWidth > innerWidth + 1,
       hostVisible: visible(shell?.querySelector('#wsBrowserHost')),
       blocked: /BLOCKED/.test(content?.textContent || ''),
+      managedGroupFields: [...(content?.querySelectorAll('[data-mg-form] [name]') || [])].map(node => node.name),
+      moduleMissing: /模块未加载/.test(content?.textContent || ''),
     });
   }
   let interactions;
@@ -150,6 +154,9 @@ function assertSmokeResult(result, stylesheetCount) {
   assert.deepEqual(result.errors, []);
   assert.deepEqual(result.interactions.pages.slice().sort(), ['overview', 'accounts', 'chat', 'groups', 'members', 'contacts', 'exclusions',
     'collection', 'crm', 'logs', 'settings', 'group-broadcast', 'group-mentions', 'group-reading', 'group-permissions', 'group-channels', 'managed-groups'].sort());
+  assert.deepEqual(result.interactions.managedGroups, { fields: ['channel', 'groupAlias', 'groupName'], noAssistant: true, noJid: true,
+    listed: true, created: true, createdChannel: 'FB群粉', errorShown: true, edited: true, toggled: true, importPreviewedFirst: true, candidatesAdvisory: true },
+    'The packaged managed-group page must load, list, create through its form and show API failures in place');
   assert.equal(result.interactions.shortcuts.length, 4);
   assert.equal(result.interactions.accountScoped, true, 'Every open must target the new dedicated account');
   assert.equal(result.interactions.visibleOpens, true, 'Every open must receive visible chat bounds');
@@ -172,6 +179,8 @@ function assertSmokeResult(result, stylesheetCount) {
     for (const button of row.modeButtons) assert.ok(button.contrast >= 4.5, 'Workspace purpose button contrast: ' + button.mode + ' = ' + button.contrast);
     if (expected.view === 'chat') assert.equal(row.hostVisible, true);
     if (expected.view.startsWith('group-')) assert.equal(row.blocked, true);
+    assert.equal(row.moduleMissing, false, expected.view + ' page module must be loaded');
+    if (expected.view === 'managed-groups') assert.deepEqual(row.managedGroupFields.slice().sort(), ['channel', 'groupAlias', 'groupName']);
   }
 }
 
@@ -208,7 +217,7 @@ async function main() {
       }
     }
     report.status = 'passed';
-    console.log('Packaged WS WebView2 smoke passed at both sizes: 9 scenes, 15 pages, 4 WhatsApp shortcuts and account-isolated live directories over an empty local index');
+    console.log('Packaged WS WebView2 smoke passed at both sizes: ' + scenes.length + ' scenes, 17 pages, managed-group create/error, 4 WhatsApp shortcuts and account-isolated live directories over an empty local index');
   } catch (error) { report.error = { code: error.code || error.name, message: error.message }; throw error; }
   finally { report.resources = [...bundle.consumed.values()]; fs.writeFileSync(path.join(output, 'packaged-workspace-result.json'), JSON.stringify(report, null, 2)); }
 }

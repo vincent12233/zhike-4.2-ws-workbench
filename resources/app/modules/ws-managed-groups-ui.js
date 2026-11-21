@@ -22,24 +22,21 @@
       const state = ensure(); if (!state) return false;
       state.busy = true; state.error = '';
       try {
-        const response = await request('/api/ws/managed-groups?includeDisabled=1&query=' + encodeURIComponent(state.query));
-        const body = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(body.error || `读取群组失败（${response.status}）`);
+        // request() is the workbench api(): it resolves with the parsed JSON
+        // body and rejects with the sidecar's error message on a non-2xx reply.
+        const body = await request('/api/ws/managed-groups?includeDisabled=1&query=' + encodeURIComponent(state.query)) || {};
         state.rows = Array.isArray(body.groups) ? body.groups : [];
         if (Array.isArray(body.channels) && body.channels.length) state.channels = [...new Set([...DEFAULT_CHANNELS, ...body.channels])];
         return true;
-      } catch (error) { state.error = error.message || '本机服务不可用。'; return false; }
+      } catch (error) { state.error = error.message || '读取群组失败，本机服务不可用。'; return false; }
       finally { state.busy = false; if (owns()) redraw(); }
     }
     async function send(pathname, init) {
       const state = ensure(); if (!state) return null;
       state.busy = true; state.error = ''; state.message = '';
       try {
-        const response = await request(pathname, init);
-        const body = await response.json().catch(() => ({}));
-        if (!response.ok) { state.error = body.error || `操作失败（${response.status}）`; return null; }
-        return body;
-      } catch (error) { state.error = error.message || '本机服务不可用。'; return null; }
+        return await request(pathname, init) || {};
+      } catch (error) { state.error = error.message || '操作失败，本机服务不可用。'; return null; }
       finally { state.busy = false; }
     }
     async function save(form) {
@@ -130,6 +127,7 @@
       const rejected = (state.preview?.rejected || []).map(item => `<li>第 ${item.row} 行：${esc(item.errors?.[0]?.message || '需人工确认')}${item.skipped ? '（跳过）' : ''}</li>`).join('');
       const candidates = state.candidates.map(item => `<li>${esc(item.group?.groupAlias || '')} · ${esc(STATUS[item.status] || item.status)}${item.status === 'ambiguous' ? ' · 多个同名候选' : ''}${item.group?.jid ? ` · 已绑定 ${esc(item.group.jid)}` : ' · 待核验'}
         ${item.group?.jid ? `<button type="button" class="btn small" data-mg="unbind" data-id="${esc(item.groupId)}">解除绑定</button>` : ''}</li>`).join('');
+      bind();
       return `<section class="ws-workspace-card zk-surface" id="managedGroupsPage" data-managed-groups>
         <div class="ws-card-heading"><div><strong>群组管理</strong><span>渠道、群名、群别名由人工维护；群别名用于客户登记匹配，不冒充 WhatsApp 身份。</span></div></div>
         ${state.error ? `<p class="ws-error-line" role="alert">${esc(state.error)}</p>` : ''}
@@ -152,34 +150,47 @@
         ${candidates ? `<div class="mg-candidates"><strong>AI 候选（仅建议）</strong><ul>${candidates}</ul></div>` : ''}
       </section>`;
     }
+    // The workbench re-renders this page by replacing or patching its markup.
+    // Handlers are therefore delegated once from the document, scoped to the
+    // page root, and read the page state at event time, so there is no window
+    // after a redraw in which a click or submit reaches an unbound form.
+    let delegated = false;
     function bind() {
-      setTimeout(() => {
-        const root = document.querySelector('[data-managed-groups]');
-        if (!root || root.dataset.bound === '1') return;
-        root.dataset.bound = '1';
+      if (delegated || typeof document === 'undefined' || typeof document.addEventListener !== 'function') return;
+      delegated = true;
+      const rootOf = event => event.target?.closest?.('[data-managed-groups]') || null;
+      document.addEventListener('submit', event => {
+        const root = rootOf(event), formNode = event.target.closest?.('[data-mg-form]');
+        if (!root || !formNode) return;
+        event.preventDefault();
+        if (!ensure()) return;
+        const form = new FormData(formNode);
+        void save({ channel: form.get('channel'), groupName: form.get('groupName'), groupAlias: form.get('groupAlias') });
+      });
+      document.addEventListener('input', event => {
+        const state = rootOf(event) && ensure();
+        if (state && event.target.matches?.('[data-mg-import]')) state.importText = event.target.value;
+      });
+      document.addEventListener('change', event => {
+        const state = rootOf(event) && ensure();
+        if (state && event.target.matches?.('[data-mg-query]')) { state.query = event.target.value; void load(); }
+      });
+      document.addEventListener('click', event => {
+        const root = rootOf(event), trigger = root && event.target.closest('[data-mg]');
+        const action = trigger?.dataset.mg;
+        if (!action) return;
         const state = ensure();
-        root.querySelector('[data-mg-form]')?.addEventListener('submit', event => {
-          event.preventDefault();
-          const form = new FormData(event.currentTarget);
-          void save({ channel: form.get('channel'), groupName: form.get('groupName'), groupAlias: form.get('groupAlias') });
-        });
-        root.querySelector('[data-mg-import]')?.addEventListener('input', event => { if (state) state.importText = event.currentTarget.value; });
-        root.querySelector('[data-mg-query]')?.addEventListener('change', event => { if (state) { state.query = event.currentTarget.value; void load(); } });
-        root.addEventListener('click', event => {
-          const trigger = event.target.closest('[data-mg]');
-          const action = trigger?.dataset.mg;
-          if (!action) return;
-          if (action === 'search') { if (state) { state.query = root.querySelector('[data-mg-query]')?.value || ''; void load(); } }
-          else if (action === 'edit') { if (state) { state.editing = trigger.dataset.id; state.error = ''; redraw(); } }
-          else if (action === 'cancel') { if (state) { state.editing = ''; redraw(); } }
-          else if (action === 'toggle') { void toggle(trigger.dataset.id, trigger.dataset.enabled === 'true'); }
-          else if (action === 'preview') { if (state) state.importText = root.querySelector('[data-mg-import]')?.value || state.importText; void previewImport(); }
-          else if (action === 'commit') { void commitImport(); }
-          else if (action === 'candidates') { void loadCandidates(); }
-          else if (action === 'unbind') { void unbind(trigger.dataset.id); }
-          else if (action === 'confirm' && trigger.dataset.jid) { void confirmMatch(trigger.dataset.id, trigger.dataset.jid); }
-        });
-      }, 0);
+        if (!state) return;
+        if (action === 'search') { state.query = root.querySelector('[data-mg-query]')?.value || ''; void load(); }
+        else if (action === 'edit') { state.editing = trigger.dataset.id; state.error = ''; redraw(); }
+        else if (action === 'cancel') { state.editing = ''; redraw(); }
+        else if (action === 'toggle') { void toggle(trigger.dataset.id, trigger.dataset.enabled === 'true'); }
+        else if (action === 'preview') { state.importText = root.querySelector('[data-mg-import]')?.value || state.importText; void previewImport(); }
+        else if (action === 'commit') { void commitImport(); }
+        else if (action === 'candidates') { void loadCandidates(); }
+        else if (action === 'unbind') { void unbind(trigger.dataset.id); }
+        else if (action === 'confirm' && trigger.dataset.jid) { void confirmMatch(trigger.dataset.id, trigger.dataset.jid); }
+      });
     }
     return { load, render, bind, reset: () => { page = null; } };
   }
