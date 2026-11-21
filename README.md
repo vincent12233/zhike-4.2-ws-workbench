@@ -6,7 +6,7 @@
 
 ## 下载与首次使用
 
-- 当前候选的应用与安装器版本保持 **6.1.0**，预发行标签为 **`v6.1.0-rc.3`**。[打开 rc.3 下载页](https://github.com/vincent12233/zhike-4.2-ws-workbench/releases/tag/v6.1.0-rc.3)，同时取得 `zhike-6.1.0-win-x64-setup.exe` 和 `release-output-manifest.json`。Release ID 为 `451230083`；安装包源码为 `bddb8ae33604110cdd191d7b7589fc8fe9d692bf`。完整记录见[当前版本索引](docs/current-release-index.md)。
+- 最新**已发布**的预发行为 **`v6.1.0-rc.3`**，应用与安装器版本保持 **6.1.0**。[打开 rc.3 下载页](https://github.com/vincent12233/zhike-4.2-ws-workbench/releases/tag/v6.1.0-rc.3)，同时取得 `zhike-6.1.0-win-x64-setup.exe` 和 `release-output-manifest.json`。Release ID 为 `451230083`；安装包源码为 `bddb8ae33604110cdd191d7b7589fc8fe9d692bf`。完整记录见[当前版本索引](docs/current-release-index.md)。
 - rc.3 安装器为 `114177547` bytes，SHA-256 为 `F8D7CA52106BA9A7CE824DF4AE79A217C36D5860F499B9B6775138919498988B`，当前未签名（unsigned）。同次清单为 `442` bytes，SHA-256 为 `b3932186cde2c8b42a1e924c382b40c51a5bcad80a431d6a4a3082a6f1343b83`。下载后核对两项资产，不能沿用 rc.2 数值。
 - [已发布的历史 rc.2](https://github.com/vincent12233/zhike-4.2-ws-workbench/releases/tag/v6.1.0-rc.2)仍可供追溯，但不包含本轮独立采集和群组查询改动。其源码与校验值单列在当前版本索引中。下载需要登录已有该私有仓库访问权限的 GitHub 账号。
 - 安装器要求 Windows x64、系统内部版本 22621 或以上，并要求先安装 WebView2 Evergreen Runtime。缺少此依赖时安装器会中止。随包提供 .NET、Windows App SDK 和 Node，无须另装这些运行时。
@@ -14,6 +14,16 @@
 - 安装新候选时，对照同次清单校验安装器 SHA-256 和实际签名状态，保留 Windows 安全保护。安装后从桌面或开始菜单打开“知客工作台”。首次使用会在 `%LOCALAPPDATA%\Zhike6` 创建空 SQLite 库。安装和备份步骤见[本机部署说明](docs/local-desktop-deployment.md)。
 - 有已有资料时，升级前在“数据中心”导出备份。新旧版本的外置数据目录保持分离。程序不自动迁移旧 `%LOCALAPPDATA%\Zhike`。
 - rc.2 与 rc.3 的应用版本号和安装器文件名相同；请用 Release 标签、清单的源码提交及 SHA-256 区分，避免误装旧候选。
+
+## V9.2 未发布候选（CI 构建）
+
+集成分支 `feature/zhike61-ws-completion` 已有更新的候选构建，**尚未发布为 GitHub Release**，只作为 Windows CI 的构建产物提供，供验收使用。
+
+- 下载：[Actions 构建产物 `zhike-6.1.0-win-x64-ci-44937522721-1`](https://github.com/vincent12233/zhike-4.2-ws-workbench/actions/runs/44937522721/artifacts/14720063185)（保留至 2026-12-05，需登录有权限的 GitHub 账号）。压缩包内为 `zhike-6.1.0-win-x64-setup.exe` 与同次 `release-output-manifest.json`。
+- 安装器 `114508464` bytes，SHA-256 `E8BED3499A96ABCFC3AEE802AD7FE31E3CBA7066D6A26C9EB738D08FD92B7707`，unsigned；源码 `2b8817e02402839d34cb7a047ac1a2f2df7dd045`。文件名与 rc.3 相同，请以 SHA-256 和清单的 `sourceCommit` 区分。
+- 相对 rc.3 新增专用 WS 群组渠道配置与群组管理（渠道、群名、群别名）、客户字段锁定、身份冲突提示、资料完整度、渠道与群组统计等，数据库从 schema 25 升到 **35**。变更摘要见 [6.1.0 候选发布说明](docs/release/release-notes-6.1.0.md#v92-未发布候选)，验证记录见 [V9.2 集成报告](docs/audit/2026-11-21-v92-integration-report.md)。
+- **不能回退**：数据被该候选升级到 schema 35 后，rc.3（schema 25）以及更早的 rc4–rc8 构建会以 `SCHEMA_VERSION_UNSUPPORTED` 拒绝打开同一数据目录，表现为启动后白屏。试装前请先在“数据中心”导出备份；需要回到旧版本时，只能用对应版本及升级前的备份恢复。
+- Windows CI 机已完成构建、干净安装、rc.3 覆盖升级、卸载和打包页面冒烟（合成数据）。真实目标 Windows 安装、用户数据升级、真实 WhatsApp 和付费 AI **尚未验收**。
 
 ## rc.3 的使用范围
 
@@ -39,6 +49,8 @@ rc.3 的[构建验证](https://github.com/vincent12233/zhike-4.2-ws-workbench/ac
 - [故障排查](docs/local-desktop-troubleshooting.md)
 - [rc.2 安装就绪状态与限制](docs/release/installation-readiness.md)
 - [6.1.0 候选发布说明](docs/release/release-notes-6.1.0.md)
+- [V9.2 集成与候选构建报告](docs/audit/2026-11-21-v92-integration-report.md)
+- [发布与升级风险登记](docs/release/risk-register.md)
 - [本轮源码验证与未完成项](docs/release/independent-collector-followup.md)
 - [历史运行验收记录](docs/release/runtime-release-acceptance.md)
 - [开发、测试与交付约定](CONTRIBUTING.md)

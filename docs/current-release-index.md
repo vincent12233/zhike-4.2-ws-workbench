@@ -21,6 +21,20 @@ WS 前台聊天由用户本人在官方页面扫码或登录。后台采集使�
 
 生产 Worker 和自动 AI 消费者保持关闭，认证 profile 复制保持禁用。采集不会自动触发付费 AI；显式调用外部 AI 的入口保留。真实 WS、独立扫码、双会话实际采集和付费 AI 仍待验收，S3 保持 **Blocked**。rc.3 的 Windows 构建和发布流程已完成；隔离回归与合成安装检查的边界见独立采集会话说明，历史通过数量不能作为新候选结论。
 
+## V9.2 未发布候选（CI 构建）
+
+集成分支 `feature/zhike61-ws-completion` 的候选构建，**未发布为 GitHub Release**，不替代上方已发布的 rc.3。
+
+| 项目 | 记录 |
+|---|---|
+| 源码 | `sourceCommit` 为 `2b8817e02402839d34cb7a047ac1a2f2df7dd045` |
+| 构建 | [Windows CI 44937522721](https://github.com/vincent12233/zhike-4.2-ws-workbench/actions/runs/44937522721)，17 步全部通过 |
+| 安装资产 | [构建产物 `zhike-6.1.0-win-x64-ci-44937522721-1`](https://github.com/vincent12233/zhike-4.2-ws-workbench/actions/runs/44937522721/artifacts/14720063185) 内的 `zhike-6.1.0-win-x64-setup.exe`，`114508464` bytes，SHA-256 `E8BED3499A96ABCFC3AEE802AD7FE31E3CBA7066D6A26C9EB738D08FD92B7707`，unsigned；保留至 2026-12-05 |
+| 数据库 | schema 35（rc.3 为 25）；升级后旧构建拒绝打开同一数据目录 |
+| 已验证 | CI 机构建、干净安装、rc.3 覆盖升级、卸载、打包 Sidecar 与群组管理页加载、打包 WebView2 普通/专用工作台冒烟（合成数据） |
+| 未验收 | 真实目标 Windows 安装、用户数据升级、真实 WhatsApp、独立扫码双会话、付费 AI |
+| 说明 | [6.1.0 候选发布说明 · V9.2](release/release-notes-6.1.0.md#v92-未发布候选)、[V9.2 集成报告](audit/2026-11-21-v92-integration-report.md)、[风险登记](release/risk-register.md) |
+
 ## 已发布 rc.2 历史记录
 
 | 项目 | 历史记录 |
