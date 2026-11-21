@@ -1096,3 +1096,42 @@ body.ws-workspace-active .ws-workbench-shell .ws-ai-status-cell[data-tone="warn"
 body.ws-workspace-active .ws-workbench-shell .ws-ai-status-cell[data-tone="error"]{border-left-color:#c33f4a}
 body.ws-workspace-active .ws-workbench-shell .ws-ai-status-cell[data-tone="unknown"]{border-left-color:#aab4c6}
 body.ws-workspace-active .ws-workbench-shell .ws-ai-status-error{grid-column:1/-1;margin:2px 0 0;font-size:13px;color:#a32936}
+
+/* V5.0 §24 WS workspace rail: one 44px row per destination, aligned icons,
+ * honest badges and a quiet scrollbar. The legacy aurora animation on the
+ * active row is removed here — the rail is a navigation surface, not motion. */
+html[data-view="ws-workbench"] #mainNav{display:flex;flex-direction:column;gap:1px;padding:0 10px 14px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(150,198,255,.28) transparent}
+html[data-view="ws-workbench"] #mainNav::-webkit-scrollbar{width:8px}
+html[data-view="ws-workbench"] #mainNav::-webkit-scrollbar-thumb{background:rgba(150,198,255,.24);border-radius:4px}
+html[data-view="ws-workbench"] #mainNav::-webkit-scrollbar-track{background:transparent}
+html[data-view="ws-workbench"] #mainNav .nav-group-label{margin:12px 4px 4px;padding:0 8px;font-size:12px;font-weight:600;letter-spacing:.12em;color:#7f9cc4}
+html[data-view="ws-workbench"] #mainNav .nav-item{display:grid;grid-template-columns:20px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:44px;height:auto;margin:1px 0;padding:0 12px;border:1px solid transparent;border-radius:11px;font-size:14px;line-height:1.4;color:#d7e3f4;background:transparent;transform:none;transition:background-color .15s ease,color .15s ease,border-color .15s ease;animation:none!important}
+html[data-view="ws-workbench"] #mainNav .nav-item svg{width:19px;height:19px;justify-self:center;flex-shrink:0;color:inherit;transform:none;opacity:.92}
+html[data-view="ws-workbench"] #mainNav .nav-item>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+html[data-view="ws-workbench"] #mainNav .nav-item:hover:not(.active){background:rgba(114,215,226,.10);border-color:rgba(124,226,214,.16);color:#f2fbff}
+html[data-view="ws-workbench"] #mainNav .nav-item.active{background:linear-gradient(100deg,rgba(0,169,146,.92),rgba(22,122,193,.9) 62%,rgba(116,96,215,.86));border-color:rgba(129,255,233,.34);color:#fff;font-weight:650;box-shadow:inset 3px 0 #7dffe6,0 6px 18px rgba(0,142,174,.22);animation:none!important}
+html[data-view="ws-workbench"] #mainNav .nav-item.active:after{display:none}
+html[data-view="ws-workbench"] #mainNav .nav-item:focus-visible{outline:2px solid #8fe6ff;outline-offset:-2px}
+html[data-view="ws-workbench"] #mainNav .nav-count{min-width:22px;height:20px;padding:0 7px;margin-left:auto;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;font-size:11px;font-weight:650;font-variant-numeric:tabular-nums;background:rgba(150,198,255,.14);color:#c7e0ff}
+html[data-view="ws-workbench"] #mainNav .nav-count.coral{background:rgba(255,128,150,.18);color:#ffc0cb}
+html[data-view="ws-workbench"] #mainNav .nav-count.amber{background:rgba(255,196,110,.18);color:#ffd9a0}
+html[data-view="ws-workbench"] #mainNav .nav-count.muted{background:rgba(150,198,255,.10);color:#a8c3e2}
+html[data-view="ws-workbench"] #mainNav .nav-item .live-dot{justify-self:end;width:7px;height:7px;border-radius:50%;background:#3ad6a4;box-shadow:0 0 0 3px rgba(58,214,164,.16)}
+html[data-view="ws-workbench"] #sidebar .sidebar-bottom{display:grid;gap:8px;padding:10px 12px 12px;border-top:1px solid rgba(126,180,240,.16)}
+html[data-view="ws-workbench"] #sidebar .storage-card{height:46px;margin:0;border-radius:12px;background:rgba(150,198,255,.08);color:#a8c3e2}
+html[data-view="ws-workbench"] #sidebar .profile-button{display:grid;grid-template-columns:32px minmax(0,1fr) 16px;align-items:center;gap:10px;min-height:44px;border-radius:12px;color:#d7e3f4}
+html[data-view="ws-workbench"] #sidebar :is(.storage-copy,.profile-button>div:nth-child(2)){min-width:0}
+html[data-view="ws-workbench"] #sidebar :is(.storage-copy strong,.profile-button strong){display:block;font-size:13px;color:#eaf3ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html[data-view="ws-workbench"] #sidebar :is(.storage-copy span,.profile-button span){display:block;font-size:12px;color:#9fb8d6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html[data-view="ws-workbench"] #sidebar.collapsed #mainNav{padding-inline:8px}
+html[data-view="ws-workbench"] #sidebar.collapsed #mainNav .nav-item{grid-template-columns:1fr;justify-items:center;padding:0}
+html[data-view="ws-workbench"] #sidebar.collapsed #mainNav :is(.nav-item span,.nav-count,.live-dot,.nav-group-label){display:none!important}
+
+/* V5.0 §25 WS toolbar: compact height, grouped actions and no clipped status. */
+html[data-view="ws-workbench"] .topbar{min-height:64px!important;height:auto!important;padding:8px 22px!important;gap:14px!important;flex-wrap:nowrap;box-shadow:none!important}
+html[data-view="ws-workbench"] .topbar .workspace-tab{height:40px;padding:0 14px;border-radius:11px;font-size:14px}
+html[data-view="ws-workbench"] .top-actions{gap:8px!important;min-width:0;margin-left:auto;flex-wrap:nowrap}
+html[data-view="ws-workbench"] .global-search{height:44px!important;padding:0 14px!important;border-radius:12px!important;min-width:0;width:clamp(200px,24vw,340px)!important}
+html[data-view="ws-workbench"] .topbar .sync-status{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html[data-view="ws-workbench"] .topbar .breadcrumbs{min-width:0}
+html[data-view="ws-workbench"] .topbar .breadcrumbs strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

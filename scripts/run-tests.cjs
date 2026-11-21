@@ -114,6 +114,7 @@ function runStage3(options = {}) {
   run('Customer investment profile view', [path.join(repo, 'tests', 'customer-investment-profile-core.test.cjs')]);
   run('Dedicated WS in-group customer table', [path.join(repo, 'tests', 'ws-in-group-table.test.cjs')]);
   run('Ordinary WS AI status strip', [path.join(repo, 'tests', 'ws-ai-status-core.test.cjs')]);
+  run('WS workspace rail and toolbar', [path.join(repo, 'tests', 'ws-shell-chrome.test.cjs')]);
   run('WS reply draft persistence', [path.join(repo, 'tests', 'ws-reply-draft-persistence.test.cjs')]);
   run('Stage 3 WS workspace navigation', [path.join(repo, 'scripts', 'stage3', 'ws-workbench-navigation.test.cjs')]);
 }
