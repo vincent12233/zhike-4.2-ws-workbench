@@ -85,8 +85,26 @@
 
 | 项 | 原因 | 需要什么 |
 | --- | --- | --- |
-| 旧版本 rc.3 升级验证 | `gh release download` 拉取 rc.3 安装包被拒绝 | 用户把 `zhike-6.1.0-win-x64-setup.exe`（rc.3）放到 `work/releases/` |
 | 真实 WhatsApp 验收 | 无测试账号 | 用户本人扫码并授权测试账号与群组 |
+| rc.3 安装器实机覆盖 | 安装包执行被沙箱分类器拒绝 | 如需要，由用户先装 `work\releases\zhike-6.1.0-win-x64-setup.exe` 再装新版；迁移层已验证，见 7.3 |
+
+## 7.3 升级迁移验证（rc.3 → 当前）
+
+rc.3 安装包已由用户放到 `work\releases\zhike-6.1.0-win-x64-setup.exe`（114,177,547 字节，SHA-256 `F8D7CA52106BA9A7CE824DF4AE79A217C36D5860F499B9B6775138919498988B`）。安装器执行被拒，因此用 rc.3 的 tag 代码（`v6.1.0-rc.3` = `bddb8ae`）在隔离目录做了真实的迁移升级验证：
+
+| 步骤 | 结果 |
+| --- | --- |
+| 用 rc.3 的 `migration-runner.cjs` 建立工作区 | 成功，schema 25，初始 24 张表 |
+| 写入合成数据 | 客户 `UPGRADE-C1`（9800000123，单导K，在群，意向客户）与账号 `upgrade-acc` |
+| 用当前 `migration-runner.cjs` 升级同一数据库 | 应用迁移 26–34，`user_version` = 34 |
+| 升级后表数量 | 55 |
+| 客户数据 | 完整保留，`data_json` 原样（`{"note":"upgrade-fixture"}`） |
+| 账号数据 | 保留 |
+| 新增能力表 | `ws_group_channel_configs` 存在 |
+
+结论：数据库从 rc.3 的 schema 25 升级到 34 的迁移链路、数据保留和新表创建均通过。未经过 rc.3 图形界面，也未在 rc.3 安装态上直接覆盖安装，因此 Windows 安装器层面的覆盖升级仍标记为未执行。
+
+## 7.4 数据安全静态核对
 
 ## 7.1 关闭、卸载与数据保留（已实测）
 
