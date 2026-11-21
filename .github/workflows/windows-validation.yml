@@ -35,6 +35,7 @@ jobs:
             'tests/ws-group-manager-production.test.cjs',
             'tests/ws-background-isolation.test.cjs',
             'tests/ws-workbench-security.test.cjs',
+            'tests/ws-live-refresh-contract.test.cjs',
             'tests/desktop-packaging-contract.test.cjs',
             'tests/release-gate-contract.test.cjs',
             'tests/legacy-install-retirement.test.cjs',

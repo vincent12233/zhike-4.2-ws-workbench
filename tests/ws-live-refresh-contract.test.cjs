@@ -31,8 +31,13 @@ assert.match(workbench, /function deactivate\(\)[\s\S]*?state\.active = false;[\
   'route deactivation must hide the WebView without stopping the background session');
 assert.match(workbench, /async function refreshCollectionSummary\(options = \{\}\)/,
   'refresh path must use the collection/list-sync/AI pipeline');
-assert.match(workbench, /if \(state\.backgroundActive && payload\.status === '已连接'\)[\s\S]*?refreshCollectionSummary\(\s*(?:\{[^)]*\})?\s*\)/,
-  'native WS status events must refresh the background pipeline off-route');
+// Background collection runs in the independently authenticated collector
+// session, so readiness is gated on that collector rather than on the
+// foreground chat reporting '已连接'.
+assert.match(workbench, /if \(state\.backgroundActive && collectionReady\(\)\)[\s\S]*?refreshCollectionSummary\(\s*(?:\{[^)]*\})?\s*\)/,
+  'native WS status events must refresh the background pipeline off-route once the independent collector is ready');
+assert.doesNotMatch(workbench, /if \(state\.backgroundActive && payload\.status === '已连接'\)/,
+  'a connected foreground chat must not by itself start background collection');
 assert.match(workbench, /addEventListener\('beforeunload',[\s\S]*?stopBackgroundRuntime\(\)/,
   'application shutdown must cancel the background runtime explicitly');
 
