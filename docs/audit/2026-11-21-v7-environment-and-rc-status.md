@@ -85,22 +85,31 @@
 
 | 项 | 原因 | 需要什么 |
 | --- | --- | --- |
-| 卸载验证（执行） | 关闭窗口可以完成，但运行 `unins000.exe` 仍被沙箱分类器拒绝 | 用户运行下面的一行卸载命令 |
 | 旧版本 rc.3 升级验证 | `gh release download` 拉取 rc.3 安装包被拒绝 | 用户把 `zhike-6.1.0-win-x64-setup.exe`（rc.3）放到 `work/releases/` |
 | 真实 WhatsApp 验收 | 无测试账号 | 用户本人扫码并授权测试账号与群组 |
 
-## 7.1 关闭与数据保留（已实测 + 静态核对）
+## 7.1 关闭、卸载与数据保留（已实测）
 
-- 通过 `CloseMainWindow()` 关闭安装后的应用：进程数归零，sidecar 端口 51633 不再监听。
-- 关闭后数据库仍在：5 个 WS 账号、迁移版本 34，`%LOCALAPPDATA%\Zhike6\workspace.sqlite` 大小未变。
-- `zhike-desktop-setup.iss` 的数据根固定为 `%LOCALAPPDATA%\Zhike6`，位于 `{app}` 之外；卸载段只有 `[UninstallDelete]` 的应用内文件条目，没有指向该数据根的删除规则。
-- 安装脚本的保护函数明确排除 `{win}`、`{localappdata}\Zhike`、`{localappdata}\Zhike6`、`{localappdata}` 与 `USERPROFILE` 本身，避免目录清理误伤数据。
+关闭：通过 `CloseMainWindow()` 关闭安装后的应用，进程归零，sidecar 端口 51633 不再监听。
 
-卸载的实际执行仍待用户运行：
+卸载：用户在资源管理器中运行 `unins000.exe` 并确认后，Inno 在 `%TEMP%\is-*-uninstall.tmp` 中解出 `_unins.tmp` 并完成删除，结果：
 
-```powershell
-& "$env:TEMP\zhike-install-first\app\unins000.exe" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
-"exit=$LASTEXITCODE"; Test-Path "$env:TEMP\zhike-install-first\app\Zhike.Desktop.exe"
-```
+| 检查项 | 结果 |
+| --- | --- |
+| 安装目录 `%TEMP%\zhike-install-first\app` | 已删除 |
+| 桌面快捷方式 | 已移除 |
+| 开始菜单「知客工作台」 | 已移除 |
+| 注册表卸载项「知客工作台 版本 6.1.0」 | 已移除（仅剩与本产品无关的旧 4.1.0 条目） |
+| `%LOCALAPPDATA%\Zhike6` | 保留，10 个条目 |
+| `workspace.sqlite` | 2,080,768 字节不变；5 个 WS 账号；`schema_migrations` 最高 34 |
+| `ai-credentials-winui.json` 等工作区文件 | 保留 |
 
-首次安装与启动已由用户实测并通过；卸载执行与升级尚未完成，不宣称通过。
+说明：前两次核对时卸载器仍在删除文件（目录仍有 443 个文件、无进程可见），第三次核对才完成。卸载过程未删除任何客户数据，符合脚本设计。
+
+## 7.2 数据安全静态核对
+
+- 数据根固定为 `%LOCALAPPDATA%\Zhike6`，位于 `{app}` 之外。
+- `[UninstallDelete]` 只有应用内文件条目，没有指向该数据根的删除规则。
+- 安装脚本保护函数明确排除 `{win}`、`{localappdata}\Zhike`、`{localappdata}\Zhike6`、`{localappdata}` 与 `USERPROFILE`。
+
+首次安装、启动与卸载均已实测通过；升级尚未验证，不宣称通过。
