@@ -6,7 +6,7 @@
 | --- | --- |
 | 唯一集成分支 | `feature/zhike61-ws-completion` |
 | 集成前远程 HEAD | `041b9bc`（执行前重新读取，未变化） |
-| RC 安装包源码 | `685b72608f28f1a3411114f22a90c26e2f00c9a4` |
+| RC 安装包源码 | `2b8817e02402839d34cb7a047ac1a2f2df7dd045`（上一构建 `685b726` 已被取代） |
 | 推送方式 | 普通快进推送；未强推、未重置；未改 `main`，未操作 PR #2 |
 
 | 提交 | 内容 |
@@ -112,17 +112,27 @@ C# 两处视图白名单原本已包含 `managed-groups`。Windows CI 自 `8b40f
 
 ## 4. V9.2 RC 安装包
 
+当前 RC 为 `2b8817e` 的构建（[运行 44937522721](https://github.com/vincent12233/zhike-4.2-ws-workbench/actions/runs/44937522721)，17 步全部 PASS），包含本报告第 6 节的 `ai-job-pipeline-core.js` 修复。
+
 | 项 | 值 |
 | --- | --- |
-| 下载 | [Artifact `zhike-6.1.0-win-x64-ci-44935667657-1`](https://github.com/vincent12233/zhike-4.2-ws-workbench/actions/runs/44935667657/artifacts/14719103302)（保留至 2026-12-05） |
+| 下载 | [Artifact `zhike-6.1.0-win-x64-ci-44937522721-1`](https://github.com/vincent12233/zhike-4.2-ws-workbench/actions/runs/44937522721/artifacts/14720063185)（保留至 2026-12-05） |
 | 构建内文件 | `work\candidate-installer\知客-6.1.0-WinUI桌面版.exe`，按清单 `releaseAsset` 复制入 artifact |
-| 大小 | 114,508,389 字节 |
-| SHA-256 | `2A840DBCF0D22F00018C20656375EA60D6FDBF88302D993C211AAFE4ECF34D54` |
+| 大小 | 114,508,464 字节 |
+| SHA-256 | `E8BED3499A96ABCFC3AEE802AD7FE31E3CBA7066D6A26C9EB738D08FD92B7707` |
 | 签名 | unsigned |
-| Git commit | `685b72608f28f1a3411114f22a90c26e2f00c9a4`（CI 核对清单 `sourceCommit` 与 HEAD 一致） |
-| Artifact zip SHA-256 | `b4f438b400294261cd1e86a4f2ffff26851c4e8a68910fd7e3ac610dd6fe582c` |
+| Git commit | `2b8817e02402839d34cb7a047ac1a2f2df7dd045`（CI 核对清单 `sourceCommit` 与 HEAD 一致） |
+| Artifact zip SHA-256 | `7a43b87dabedc70f6c93a74326e9b201862545cba37042af659271cee66b9cb1` |
 
-不覆盖旧 RC：artifact 按运行号命名，`work\releases` 下 rc4–rc8 与 rc.3 基线未触碰，未创建或修改 GitHub Release。打包门禁要求 `035-ws-managed-groups.sql`、`ws-managed-groups-ui.js`、`ws-managed-groups-core.cjs` 以及白名单条目，安装包因此包含 Schema 35、群组管理 UI 与 Sidecar API。本报告提交晚于 `685b726`，只改文档。
+已被取代的上一构建（不含 `ai-job-pipeline-core.js` 修复，仅供追溯）：
+
+| 项 | 值 |
+| --- | --- |
+| 运行 / Artifact | [44935667657](https://github.com/vincent12233/zhike-4.2-ws-workbench/actions/runs/44935667657) / [`zhike-6.1.0-win-x64-ci-44935667657-1`](https://github.com/vincent12233/zhike-4.2-ws-workbench/actions/runs/44935667657/artifacts/14719103302) |
+| 大小 / SHA-256 | 114,508,389 字节 / `2A840DBCF0D22F00018C20656375EA60D6FDBF88302D993C211AAFE4ECF34D54` |
+| Git commit | `685b72608f28f1a3411114f22a90c26e2f00c9a4` |
+
+两个构建应用版本号与安装器文件名相同，须以 commit 与 SHA-256 区分。不覆盖旧 RC：artifact 按运行号命名，`work\releases` 下 rc4–rc8 与 rc.3 基线未触碰，未创建或修改 GitHub Release。打包门禁要求 `035-ws-managed-groups.sql`、`ws-managed-groups-ui.js`、`ws-managed-groups-core.cjs` 以及白名单条目，安装包因此包含 Schema 35、群组管理 UI 与 Sidecar API。
 
 ## 5. 未完成的实机验收
 
@@ -136,5 +146,5 @@ C# 两处视图白名单原本已包含 `managed-groups`。Windows CI 自 `8b40f
 
 ## 6. 其他
 
-- 另一个会话的分支 `claude/fervent-goldberg-cps40b` 含相同的白名单修复（同一行，文本一致）与 `upgrade-http-smoke` 扩展，不含响应约定与事件绑定修复。仓库所有者在 `685b726` 推送后经 PR #3 合入集成分支（`d9902e9`）；相对 `685b726` 只新增 `upgrade-http-smoke` 中对全部 `index.html` 资源的逐字节检查，本轮代码未被改动。本报告提交以普通合并（`64f499a`）纳入该变更，未强推；合并后 `upgrade-http-smoke`、群组管理页加载、客户合并撤销与静态资源测试均通过。RC 安装包仍以 `685b726` 为准，此后提交只增加测试与文档。
+- 另一个会话的分支 `claude/fervent-goldberg-cps40b` 含相同的白名单修复（同一行，文本一致）与 `upgrade-http-smoke` 扩展，不含响应约定与事件绑定修复。仓库所有者在 `685b726` 推送后经 PR #3 合入集成分支（`d9902e9`）；相对 `685b726` 只新增 `upgrade-http-smoke` 中对全部 `index.html` 资源的逐字节检查，本轮代码未被改动。本报告提交以普通合并（`64f499a`）纳入该变更，未强推；合并后 `upgrade-http-smoke`、群组管理页加载、客户合并撤销与静态资源测试均通过。当前 RC 以 `2b8817e` 构建为准（见第 4 节）。
 - `ai-job-pipeline-core.js` 在浏览器中以裸 `module.exports` 结尾，页面报 `module is not defined`，且顶层声明泄漏到页面全局作用域（`main` 上即存在）。后续已改为与 `customer-field-locks-core.js` 相同的 UMD 包装：Node `require` 得到相同的 24 个导出，浏览器得到 `window.ZhikeAiJobPipeline`，不再抛错或泄漏全局；由 `tests/ai-job-pipeline-browser-load.test.cjs` 覆盖。
