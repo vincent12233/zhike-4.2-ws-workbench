@@ -141,11 +141,33 @@
       const id = string(row.customerId);
       links.set(id, [...(links.get(id) || []), string(row.id)]);
     }
-    return (customers || []).filter(row => !row.deleted && links.has(string(row.id))).map(row => ({ id: row.id, accountId, name: row.name, phone: row.phone || row.rawPhone, source: row.source, assistant: row.assistant, status: row.status, phase: row.phase, display: { vip: Boolean(string(row.vipNumber).trim()) }, createdAt: row.createdAt, updatedAt: row.updatedAt, registeredAt: row.registered || row.registeredAt || row.registrationDate, conversations: links.get(string(row.id)) }));
+    return (customers || []).filter(row => !row.deleted && links.has(string(row.id))).map(row => {
+      // V5.0 §28 在群客户：首次渠道、当前渠道、所在群组、在群状态、资质评级、
+      // 资料完整度、最近聊天与下次跟进只取已存储值；缺失由渲染层显示为“—”。
+      const relations = Array.isArray(row.groupMemberships) ? row.groupMemberships.filter(item => item && typeof item === 'object') : [];
+      const activeGroups = relations.filter(item => ['在群', '已进群'].includes(string(item.status)))
+        .map(item => string(item.groupName) || string(item.groupJid)).filter(Boolean);
+      return {
+        id: row.id, accountId, name: row.name, phone: row.phone || row.rawPhone,
+        source: row.source, assistant: row.assistant, status: row.status, phase: row.phase,
+        firstChannel: string(row.firstSourceChannel) || string(row.channel) || string(row.source),
+        currentChannels: (Array.isArray(row.currentChannels) ? row.currentChannels : []).map(string).filter(Boolean).slice(0, 2),
+        groups: activeGroups.slice(0, 2),
+        groupStatus: string(row.groupStatus) || string(row.status),
+        qualification: string(row.qualification),
+        completeness: Number.isFinite(Number(row.profileCompleteness)) ? Number(row.profileCompleteness) : null,
+        lastChat: string(row.lastFollow) || string(row.updatedAt).slice(0, 10),
+        nextFollow: string(row.due),
+        display: { vip: Boolean(string(row.vipNumber).trim()) },
+        createdAt: row.createdAt, updatedAt: row.updatedAt,
+        registeredAt: row.registered || row.registeredAt || row.registrationDate,
+        conversations: links.get(string(row.id)),
+      };
+    });
   }
   function renderCustomers(rows, page) {
     const windowed = localWindow(rows, page), selected = rows.find(row => string(row.id) === string(page.detailId));
-    return `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>已关联 CRM 客户</strong><span>唯一客户主档 × 当前账号明确的会话关联；不按姓名猜测或自动建档。</span></div></div><div class="ws-workspace-table-wrap"><table class="ws-group-table ws-business-table"><thead><tr>${['客户', '号码', '渠道', '客户阶段', '状态', '负责人', '详情'].map(title => `<th>${title}</th>`).join('')}</tr></thead><tbody>${windowed.rows.map(row => `<tr${selected === row ? ' class="is-selected"' : ''}><td>${renderPersonIdentity({ name: row.name, secondary: row.id, selected: selected === row, vip: row.display?.vip })}</td><td>${esc(missing(row.phone))}</td><td>${esc(missing(row.source))}</td><td>${esc(missing(row.phase))}</td><td>${esc(label(row.status))}</td><td>${esc(missing(row.assistant))}</td><td>${button('business-detail', '查看档案', 'crm', row.id)}</td></tr>`).join('') || '<tr><td colspan="7">当前账号没有明确关联的匹配客户。</td></tr>'}</tbody></table></div>${pagination('crm', page.page, windowed.total, windowed.pageCount)}${selected ? `<aside class="ws-business-inline-detail zk-surface" data-ws-business-selected-detail><div class="ws-card-heading"><strong>客户主档 · 只读</strong>${button('business-detail-close', '收起详情', 'crm')}</div>${renderPersonIdentity({ name: selected.name, fallbackName: '未命名客户', size: 'detail', selected: true, vip: selected.display?.vip })}${renderAvatarAvailability()}<dl>${field('客户 ID', selected.id) + field('号码', selected.phone) + field('渠道', selected.source) + field('阶段', selected.phase) + field('负责人', selected.assistant) + field('登记日期', selected.registeredAt || selected.createdAt) + field('关联会话', selected.conversations.join('、'))}</dl><p class="ws-muted">人工维护字段不在本列表覆盖；AI 候选、冲突与最终差异在下方原审核中心处理。</p></aside>` : ''}</section>`;
+    return `<section class="ws-workspace-card zk-surface"><div class="ws-card-heading"><div><strong>已关联 CRM 客户</strong><span>唯一客户主档 × 当前账号明确的会话关联；不按姓名猜测或自动建档。</span></div></div><div class="ws-workspace-table-wrap"><table class="ws-group-table ws-business-table ws-in-group-table"><thead><tr>${['客户', '手机号', '首次渠道', '当前渠道', '所在群组', '在群状态', '负责助理', '客户阶段', '资质评级', '资料完整度', '最近聊天', '下次跟进', '操作'].map(title => `<th>${title}</th>`).join('')}</tr></thead><tbody>${windowed.rows.map(row => `<tr${selected === row ? ' class="is-selected"' : ''}><td>${renderPersonIdentity({ name: row.name, secondary: row.id, selected: selected === row, vip: row.display?.vip })}</td><td class="ws-col-nowrap">${esc(missing(row.phone))}</td><td class="ws-col-nowrap">${esc(missing(row.firstChannel))}</td><td>${esc(missing(row.currentChannels.join('、')))}</td><td>${esc(missing(row.groups.join('、')))}</td><td class="ws-col-nowrap">${esc(label(row.groupStatus))}</td><td class="ws-col-nowrap">${esc(missing(row.assistant))}</td><td class="ws-col-nowrap">${esc(missing(row.phase))}</td><td class="ws-col-nowrap">${esc(missing(row.qualification))}</td><td class="ws-col-nowrap">${row.completeness === null ? '—' : `${row.completeness}%`}</td><td class="ws-col-nowrap">${esc(missing(row.lastChat))}</td><td class="ws-col-nowrap">${esc(missing(row.nextFollow))}</td><td>${button('business-detail', '查看档案', 'crm', row.id)}</td></tr>`).join('') || '<tr><td colspan="13">当前账号没有明确关联的匹配客户。</td></tr>'}</tbody></table></div>${pagination('crm', page.page, windowed.total, windowed.pageCount)}${selected ? `<aside class="ws-business-inline-detail zk-surface" data-ws-business-selected-detail><div class="ws-card-heading"><strong>客户主档 · 只读</strong>${button('business-detail-close', '收起详情', 'crm')}</div>${renderPersonIdentity({ name: selected.name, fallbackName: '未命名客户', size: 'detail', selected: true, vip: selected.display?.vip })}${renderAvatarAvailability()}<dl>${field('客户 ID', selected.id) + field('手机号', selected.phone) + field('首次渠道', selected.firstChannel) + field('当前渠道', selected.currentChannels.join('、')) + field('所在群组', selected.groups.join('、')) + field('在群状态', selected.groupStatus) + field('阶段', selected.phase) + field('资质评级', selected.qualification) + field('资料完整度', selected.completeness === null ? '' : `${selected.completeness}%`) + field('负责人', selected.assistant) + field('下次跟进', selected.nextFollow) + field('登记日期', selected.registeredAt || selected.createdAt) + field('关联会话', selected.conversations.join('、'))}</dl><p class="ws-muted">人工维护字段不在本列表覆盖；AI 候选、冲突与最终差异在下方原审核中心处理。</p></aside>` : ''}</section>`;
   }
   function renderLocalFilters(view, rows, page) {
     const statuses = [...new Set(rows.map(row => string(row.status)).filter(Boolean))];
