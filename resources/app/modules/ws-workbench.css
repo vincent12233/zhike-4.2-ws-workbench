@@ -1085,3 +1085,14 @@ html[data-motion="off"] body.ws-workspace-active .ws-workbench-shell *::after{sc
 body.ws-workspace-active .ws-workbench-shell .ws-in-group-table {min-width:1480px}
 body.ws-workspace-active .ws-workbench-shell .ws-in-group-table .ws-col-nowrap {white-space:nowrap}
 body.ws-workspace-active .ws-workbench-shell .ws-in-group-table td {max-width:220px;overflow:hidden;text-overflow:ellipsis}
+
+/* V5.0 §27 ordinary-WS AI status strip: real account/authorisation/collection/queue readings. */
+body.ws-workspace-active .ws-workbench-shell .ws-ai-status{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin:2px 0 10px;padding:10px 12px;border:1px solid var(--ds-line,#dbe3ee);border-radius:12px;background:var(--ds-surface-2,#f7f9fc)}
+body.ws-workspace-active .ws-workbench-shell .ws-ai-status-cell{display:flex;flex-direction:column;gap:3px;min-width:0;padding-left:8px;border-left:2px solid var(--ds-line,#dbe3ee)}
+body.ws-workspace-active .ws-workbench-shell .ws-ai-status-cell>span{font-size:13px;color:var(--ds-text-2,#55627a);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.ws-workspace-active .ws-workbench-shell .ws-ai-status-cell>strong{font-size:14px;font-weight:650;color:var(--ds-text,#16203a);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.ws-workspace-active .ws-workbench-shell .ws-ai-status-cell[data-tone="ok"]{border-left-color:#1f9d63}
+body.ws-workspace-active .ws-workbench-shell .ws-ai-status-cell[data-tone="warn"]{border-left-color:#c8871a}
+body.ws-workspace-active .ws-workbench-shell .ws-ai-status-cell[data-tone="error"]{border-left-color:#c33f4a}
+body.ws-workspace-active .ws-workbench-shell .ws-ai-status-cell[data-tone="unknown"]{border-left-color:#aab4c6}
+body.ws-workspace-active .ws-workbench-shell .ws-ai-status-error{grid-column:1/-1;margin:2px 0 0;font-size:13px;color:#a32936}

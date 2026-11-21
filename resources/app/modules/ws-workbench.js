@@ -200,6 +200,20 @@
     if (['awaiting-login', 'login-visible'].includes(capability.collectorState) && capability.collectorLoginStatus === '等待登录') return '采集会话等待扫码';
     return ({ 'not-started': '采集会话未启动', 'awaiting-login': '正在检查采集会话', 'login-visible': '正在显示采集窗口', running: '独立采集会话已就绪', paused: '后台采集已暂停', error: '采集会话异常' })[capability.collectorState];
   }
+  function renderAiStatus() {
+    const statusCore = typeof window !== 'undefined' ? window.ZhikeWsAiStatus : null;
+    if (!statusCore?.renderAiStatusStrip) return '';
+    const account = activeAccount();
+    return statusCore.renderAiStatusStrip({
+      accountId: account?.title || account?.name || state.activeAccountId,
+      wsStatus: state.wsStatus,
+      collectorLabel: collectorStatusLabel(),
+      collectionRun: state.collectionRun,
+      aiQueueStats: state.aiQueueStats,
+      aiBackgroundError: state.aiBackgroundError,
+    });
+  }
+
   function renderCollectorControls() {
     const capability = collectionCapability();
     if (capability.state !== 'available') return '';
@@ -5251,6 +5265,7 @@
             </section>
              <section class="ws-card ws-ai-card" data-assist-section="ai">
               <div class="ws-card-heading"><div><strong>AI 分析</strong><span>${state.historyCoverage.complete ? `当前客户完整聊天 ${state.historyCoverage.loaded} 条` : '完整历史采集完成后分析全部客户聊天'} · 队列 ${Number(state.aiQueueStats.queued || 0)} 待处理 / ${Number(state.aiQueueStats.retryable || 0)} 待重试 / ${Number(state.aiQueueStats.deadLetter || 0)} 死信</span></div><label class="ws-switch"><input id="wsAiEnabled" type="checkbox" ${state.aiEnabled ? 'checked' : ''}><span>AI 开关</span></label></div>
+              ${renderAiStatus()}
               <div id="wsAiBackgroundError" class="ws-error-line" ${state.aiBackgroundError ? '' : 'hidden'}><span data-ws-ai-error-text>${esc(state.aiBackgroundError || '')}</span><button class="btn small" data-ws-action="resume-ai-queue" ${state.aiRetryScope ? '' : 'hidden'}>立即重试</button></div>
               <button class="btn small primary ws-full-button" data-ws-action="analyze" ${!current || !state.messages.length || !state.aiEnabled || state.aiBusy ? 'disabled' : ''}>${state.aiBusy ? '分析中…' : state.analysis ? '重新分析当前聊天' : '分析当前聊天'}</button>
               <button class="btn small ws-full-button" data-ws-action="analyze-recent" ${!current || !state.messages.length || !state.aiEnabled || state.aiBusy ? 'disabled' : ''}>重新分析最近 7 天</button>
