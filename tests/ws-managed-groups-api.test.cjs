@@ -109,6 +109,22 @@ async function check(name, fn) {
       const actions = audit.value.rows.map(row => row.action);
       for (const action of ['create', 'match-confirm', 'match-unbind', 'update', 'disable']) assert.ok(actions.includes(action), action);
     });
+    await check('renaming the alias keeps the stable id and stops resolving the old one', async () => {
+      const id = created.value.group.id;
+      await api('/api/ws/managed-groups/' + id, 'PATCH', { groupAlias: 'A-777', enabled: true });
+      const oldAlias = await api('/api/ws/managed-groups/resolve?alias=A-501X');
+      assert.equal(oldAlias.value.status, 'missing');
+      const newAlias = await api('/api/ws/managed-groups/resolve?alias=a-777');
+      assert.equal(newAlias.value.group.id, id);
+    });
+    await check('disabling keeps the same record for historical customer links', async () => {
+      const id = created.value.group.id;
+      const disabled = await api('/api/ws/managed-groups/' + id, 'DELETE');
+      assert.equal(disabled.value.group.id, id);
+      assert.equal(disabled.value.group.enabled, false);
+      const all = await api('/api/ws/managed-groups?includeDisabled=1');
+      assert.equal(all.value.groups.find(row => row.id === id).id, id);
+    });
   } finally {
     child.kill();
     await wait(300);
