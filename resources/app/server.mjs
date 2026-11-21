@@ -18,6 +18,7 @@ const wsGroupManager = require('./modules/ws-group-manager-core.js');
 const wsGroupDrafts = require('./modules/ws-group-drafts.cjs');
 const wsContactExclusion = require('./modules/ws-contact-exclusion-core.cjs');
 const wsGroupChannel = require('./modules/ws-group-channel-config-core.cjs');
+const wsManagedGroups = require('./modules/ws-managed-groups-core.cjs');
 const wsGroupMemberQuery = require('./modules/ws-group-member-query.cjs');
 const customerGovernance = require('./modules/customer-governance-core.js');
 const customerCompleteness = require('./modules/customer-completeness-core.js');
@@ -1321,6 +1322,145 @@ function wsGroupChannelApply(entries, { origin = 'manual', actor = 'user', dryRu
     throw error;
   }
   return { ...preview, applied, dryRun: false };
+}
+function wsManagedGroupRow(row) {
+  return row ? {
+    id: row.id, channel: row.channel, groupName: row.group_name, groupAlias: row.group_alias,
+    jid: row.jid || null, matchStatus: row.match_status, enabled: row.enabled === 1,
+    lastCollectedAt: row.last_collected_at || null, createdAt: row.created_at, updatedAt: row.updated_at,
+  } : null;
+}
+function wsManagedGroupList({ includeDisabled = false, query = '' } = {}) {
+  const rows = db.prepare(`SELECT * FROM ws_managed_groups ${includeDisabled ? '' : 'WHERE enabled=1'} ORDER BY updated_at DESC`).all();
+  const needle = String(query || '').trim().toLowerCase();
+  return rows.map(wsManagedGroupRow).filter(row => !needle
+    || row.groupAlias.toLowerCase().includes(needle) || row.groupName.toLowerCase().includes(needle) || row.channel.toLowerCase().includes(needle));
+}
+function wsManagedGroupAudit(groupId, action, before, after) {
+  db.prepare('INSERT INTO ws_managed_group_audit(id,group_id,action,before_json,after_json,created_at) VALUES(?,?,?,?,?,?)')
+    .run(randomBytes(16).toString('hex'), groupId, action, JSON.stringify(before || {}), JSON.stringify(after || {}), new Date().toISOString());
+}
+async function handleWsManagedGroupRequest(req, res, url) {
+  const base = '/api/ws/managed-groups';
+  if (!url.pathname.startsWith(base)) return json(res, 404, { error: '未知的群组管理接口。' });
+  const rest = url.pathname.slice(base.length) || '/';
+  if (rest === '/' || rest === '') {
+    if (req.method === 'GET') {
+      const groups = wsManagedGroupList({ includeDisabled: url.searchParams.get('includeDisabled') === '1', query: wsText(url.searchParams.get('query'), 120) });
+      const channels = [...new Set([...wsGroupChannelList({}).rows.map(row => row.channel).filter(Boolean), ...groups.map(row => row.channel)])];
+      return json(res, 200, { groups, channels });
+    }
+    if (req.method === 'POST') {
+      const body = JSON.parse((await readBody(req, 1024 * 1024)).toString('utf8'));
+      const check = wsManagedGroups.validateGroup(body, { allowCustomChannel: true });
+      if (!check.ok) return json(res, 400, { error: check.errors[0].message, errors: check.errors });
+      const existing = wsManagedGroupList({ includeDisabled: true });
+      if (wsManagedGroups.findAliasConflict(existing, check.value.aliasKey)) return json(res, 409, { error: `群别名 ${check.value.groupAlias} 已存在。` });
+      const now = new Date().toISOString();
+      const id = `G-${randomBytes(8).toString('hex')}`;
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        db.prepare(`INSERT INTO ws_managed_groups(id,workspace_mode,channel,group_name,group_alias,alias_key,match_status,enabled,created_at,updated_at)
+          VALUES(?,?,?,?,?,?,?,?,?,?)`).run(id, 'dedicated', check.value.channel, check.value.groupName, check.value.groupAlias, check.value.aliasKey, 'unmatched', 1, now, now);
+        wsManagedGroupAudit(id, 'create', {}, check.value);
+        db.exec('COMMIT');
+      } catch (error) {
+        try { db.exec('ROLLBACK'); } catch {}
+        if (/UNIQUE/i.test(String(error.message))) return json(res, 409, { error: '群别名已存在。' });
+        throw error;
+      }
+      return json(res, 200, { group: wsManagedGroupRow(db.prepare('SELECT * FROM ws_managed_groups WHERE id=?').get(id)) });
+    }
+    return json(res, 405, { error: '群组管理只支持 GET/POST。' });
+  }
+  if (rest === '/import') {
+    if (req.method !== 'POST') return json(res, 405, { error: '导入只支持 POST。' });
+    const body = JSON.parse((await readBody(req, 8 * 1024 * 1024)).toString('utf8'));
+    const rows = Array.isArray(body.rows) ? body.rows : [];
+    if (!rows.length || rows.length > 5000) return json(res, 400, { error: '一次可导入 1–5000 行。' });
+    const existing = wsManagedGroupList({ includeDisabled: true });
+    const preview = wsManagedGroups.importRows(rows, existing, { allowCustomChannel: true });
+    if (body.dryRun !== false) return json(res, 200, { dryRun: true, ...preview });
+    const now = new Date().toISOString();
+    const created = [];
+    db.exec('BEGIN IMMEDIATE');
+    try {
+      for (const entry of preview.accepted) {
+        const id = `G-${randomBytes(8).toString('hex')}`;
+        db.prepare(`INSERT INTO ws_managed_groups(id,workspace_mode,channel,group_name,group_alias,alias_key,match_status,enabled,created_at,updated_at)
+          VALUES(?,?,?,?,?,?,?,?,?,?)`).run(id, 'dedicated', entry.channel, entry.groupName, entry.groupAlias, entry.aliasKey, 'unmatched', 1, now, now);
+        wsManagedGroupAudit(id, 'import', {}, entry);
+        created.push(id);
+      }
+      db.exec('COMMIT');
+    } catch (error) { try { db.exec('ROLLBACK'); } catch {} throw error; }
+    return json(res, 200, { dryRun: false, created: created.length, rejected: preview.rejected });
+  }
+  if (rest === '/resolve') {
+    if (req.method !== 'GET') return json(res, 405, { error: '解析只支持 GET。' });
+    const result = wsManagedGroups.resolveAlias(wsManagedGroupList({ includeDisabled: true }), url.searchParams.get('alias'));
+    return json(res, result.status === 'ambiguous' ? 409 : 200, { status: result.status, group: result.group ? wsManagedGroupRow({ id: result.group.id, channel: result.group.channel, group_name: result.group.groupName, group_alias: result.group.groupAlias, jid: result.group.jid, match_status: result.group.matchStatus || 'unmatched', enabled: result.group.enabled === false ? 0 : 1, last_collected_at: result.group.lastCollectedAt, created_at: result.group.createdAt, updated_at: result.group.updatedAt }) : null });
+  }
+  if (rest === '/audit') {
+    if (req.method !== 'GET') return json(res, 405, { error: '审计只支持 GET。' });
+    const groupId = wsText(url.searchParams.get('groupId'), 120);
+    const rows = groupId
+      ? db.prepare('SELECT * FROM ws_managed_group_audit WHERE group_id=? ORDER BY created_at DESC LIMIT 200').all(groupId)
+      : db.prepare('SELECT * FROM ws_managed_group_audit ORDER BY created_at DESC LIMIT 200').all();
+    return json(res, 200, { rows });
+  }
+  if (rest === '/match/candidates') {
+    if (req.method !== 'GET') return json(res, 405, { error: '候选只支持 GET。' });
+    const groups = wsManagedGroupList({ includeDisabled: false });
+    let candidates = [];
+    try {
+      const accountId = wsText(url.searchParams.get('accountId'), 120);
+      const cols = db.prepare('SELECT group_jid,group_name FROM ws_group_catalog' + (accountId ? ' WHERE account_id=?' : '') + ' LIMIT 2000').all(...(accountId ? [accountId] : []));
+      candidates = cols.map(row => ({ groupName: row.group_name || '', jid: row.group_jid || '' }));
+    } catch { candidates = []; }
+    const suggestions = wsManagedGroups.suggestMatches(groups, candidates);
+    return json(res, 200, { suggestions: suggestions.map((item, index) => ({ ...item, group: groups[index] })) });
+  }
+  if (rest === '/match/confirm' || rest === '/match/unbind') {
+    if (req.method !== 'POST') return json(res, 405, { error: '匹配操作只支持 POST。' });
+    const body = JSON.parse((await readBody(req, 256 * 1024)).toString('utf8'));
+    const id = wsText(body.id, 120);
+    const row = db.prepare('SELECT * FROM ws_managed_groups WHERE id=?').get(id);
+    if (!row) return json(res, 404, { error: '群组不存在。' });
+    if (rest === '/match/confirm') {
+      const jid = wsText(body.jid, 200);
+      if (!wsManagedGroups.canConfirmMatch({ jid })) return json(res, 400, { error: '人工确认必须提供真实的 @g.us 群标识。' });
+      db.prepare('UPDATE ws_managed_groups SET jid=?,match_status=?,updated_at=? WHERE id=?').run(jid, 'confirmed', new Date().toISOString(), id);
+      wsManagedGroupAudit(id, 'match-confirm', { jid: row.jid, matchStatus: row.match_status }, { jid, matchStatus: 'confirmed' });
+    } else {
+      db.prepare('UPDATE ws_managed_groups SET jid=NULL,match_status=?,updated_at=? WHERE id=?').run('unmatched', new Date().toISOString(), id);
+      wsManagedGroupAudit(id, 'match-unbind', { jid: row.jid, matchStatus: row.match_status }, { jid: null, matchStatus: 'unmatched' });
+    }
+    return json(res, 200, { group: wsManagedGroupRow(db.prepare('SELECT * FROM ws_managed_groups WHERE id=?').get(id)) });
+  }
+  const id = wsText(rest.replace(/^\//, ''), 120);
+  const row = id ? db.prepare('SELECT * FROM ws_managed_groups WHERE id=?').get(id) : null;
+  if (!row) return json(res, 404, { error: '群组不存在。' });
+  if (req.method === 'GET') return json(res, 200, { group: wsManagedGroupRow(row) });
+  if (req.method !== 'PATCH' && req.method !== 'DELETE') return json(res, 405, { error: '群组只支持 GET/PATCH/DELETE。' });
+  if (req.method === 'DELETE') {
+    db.prepare('UPDATE ws_managed_groups SET enabled=0,updated_at=? WHERE id=?').run(new Date().toISOString(), id);
+    wsManagedGroupAudit(id, 'disable', wsManagedGroupRow(row), { enabled: false });
+    return json(res, 200, { group: wsManagedGroupRow(db.prepare('SELECT * FROM ws_managed_groups WHERE id=?').get(id)) });
+  }
+  const body = JSON.parse((await readBody(req, 1024 * 1024)).toString('utf8'));
+  const check = wsManagedGroups.validateGroup({
+    channel: body.channel ?? row.channel,
+    groupName: body.groupName ?? row.group_name,
+    groupAlias: body.groupAlias ?? row.group_alias,
+  }, { allowCustomChannel: true });
+  if (!check.ok) return json(res, 400, { error: check.errors[0].message, errors: check.errors });
+  if (wsManagedGroups.findAliasConflict(wsManagedGroupList({ includeDisabled: true }), check.value.aliasKey, id)) return json(res, 409, { error: `群别名 ${check.value.groupAlias} 已存在。` });
+  const enabled = body.enabled === undefined ? (row.enabled === 1 ? 1 : 0) : (body.enabled ? 1 : 0);
+  db.prepare('UPDATE ws_managed_groups SET channel=?,group_name=?,group_alias=?,alias_key=?,enabled=?,updated_at=? WHERE id=?')
+    .run(check.value.channel, check.value.groupName, check.value.groupAlias, check.value.aliasKey, enabled, new Date().toISOString(), id);
+  wsManagedGroupAudit(id, 'update', wsManagedGroupRow(row), { ...check.value, enabled: enabled === 1 });
+  return json(res, 200, { group: wsManagedGroupRow(db.prepare('SELECT * FROM ws_managed_groups WHERE id=?').get(id)) });
 }
 async function handleWsGroupChannelRequest(req, res, url) {
   if (url.pathname === '/api/ws/group-channel-configs') {
@@ -3698,6 +3838,7 @@ const server = createServer(async (req, res) => {
       const targets = new Map(db.prepare('SELECT group_jid,enabled,id FROM ws_group_monitor_targets WHERE account_id=? ORDER BY enabled,updated_at,id').all(accountId).map(row => [row.group_jid, row]));
       return json(res, 200, { accountId, groups: rows.map(row => ({ ...wsGroupCatalogPayload(row), monitorTarget: targets.get(row.group_jid) ? { id: targets.get(row.group_jid).id, enabled: Boolean(targets.get(row.group_jid).enabled) } : null })) });
     }
+    if (url.pathname.startsWith('/api/ws/managed-groups')) return handleWsManagedGroupRequest(req, res, url);
     if (url.pathname.startsWith('/api/ws/group-channel-configs') || url.pathname === '/api/ws/group-code-rules') return handleWsGroupChannelRequest(req, res, url);
     if (url.pathname === '/api/ws/group-membership-events') {
       if (req.method !== 'GET') return json(res, 405, { error: '群组进退事件只支持 GET。' });

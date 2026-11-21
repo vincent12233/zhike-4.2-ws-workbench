@@ -103,6 +103,7 @@ function runStage3(options = {}) {
   run('WS contact exclusion API and production gate', [path.join(repo, 'tests', 'ws-contact-exclusion-api.test.cjs')], { timeout: 180000 });
   run('WS contact exclusion page contract', [path.join(repo, 'tests', 'ws-contact-exclusion-ui.test.cjs')]);
   run('WS group channel config rules', [path.join(repo, 'tests', 'ws-group-channel-config-core.test.cjs')]);
+  run('Managed group registry API', [path.join(repo, 'tests', 'ws-managed-groups-api.test.cjs')], { timeout: 180000 });
   run('WS group channel config API, rename safety and CSV', [path.join(repo, 'tests', 'ws-group-channel-config-api.test.cjs')], { timeout: 180000 });
   run('WS group config drives auto-provisioning and channel attribution', [path.join(repo, 'tests', 'ws-group-config-provisioning.test.cjs')], { timeout: 180000 });
   run('WS group channel configuration page', [path.join(repo, 'tests', 'ws-group-channels-ui.test.cjs')]);
