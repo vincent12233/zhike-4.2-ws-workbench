@@ -22,24 +22,21 @@
       const state = ensure(); if (!state) return false;
       state.busy = true; state.error = '';
       try {
-        const response = await request('/api/ws/managed-groups?includeDisabled=1&query=' + encodeURIComponent(state.query));
-        const body = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(body.error || `读取群组失败（${response.status}）`);
+        // request() is the workbench api(): it resolves with the parsed JSON
+        // body and rejects with the sidecar's error message on a non-2xx reply.
+        const body = await request('/api/ws/managed-groups?includeDisabled=1&query=' + encodeURIComponent(state.query)) || {};
         state.rows = Array.isArray(body.groups) ? body.groups : [];
         if (Array.isArray(body.channels) && body.channels.length) state.channels = [...new Set([...DEFAULT_CHANNELS, ...body.channels])];
         return true;
-      } catch (error) { state.error = error.message || '本机服务不可用。'; return false; }
+      } catch (error) { state.error = error.message || '读取群组失败，本机服务不可用。'; return false; }
       finally { state.busy = false; if (owns()) redraw(); }
     }
     async function send(pathname, init) {
       const state = ensure(); if (!state) return null;
       state.busy = true; state.error = ''; state.message = '';
       try {
-        const response = await request(pathname, init);
-        const body = await response.json().catch(() => ({}));
-        if (!response.ok) { state.error = body.error || `操作失败（${response.status}）`; return null; }
-        return body;
-      } catch (error) { state.error = error.message || '本机服务不可用。'; return null; }
+        return await request(pathname, init) || {};
+      } catch (error) { state.error = error.message || '操作失败，本机服务不可用。'; return null; }
       finally { state.busy = false; }
     }
     async function save(form) {
@@ -130,6 +127,7 @@
       const rejected = (state.preview?.rejected || []).map(item => `<li>第 ${item.row} 行：${esc(item.errors?.[0]?.message || '需人工确认')}${item.skipped ? '（跳过）' : ''}</li>`).join('');
       const candidates = state.candidates.map(item => `<li>${esc(item.group?.groupAlias || '')} · ${esc(STATUS[item.status] || item.status)}${item.status === 'ambiguous' ? ' · 多个同名候选' : ''}${item.group?.jid ? ` · 已绑定 ${esc(item.group.jid)}` : ' · 待核验'}
         ${item.group?.jid ? `<button type="button" class="btn small" data-mg="unbind" data-id="${esc(item.groupId)}">解除绑定</button>` : ''}</li>`).join('');
+      bind();
       return `<section class="ws-workspace-card zk-surface" id="managedGroupsPage" data-managed-groups>
         <div class="ws-card-heading"><div><strong>群组管理</strong><span>渠道、群名、群别名由人工维护；群别名用于客户登记匹配，不冒充 WhatsApp 身份。</span></div></div>
         ${state.error ? `<p class="ws-error-line" role="alert">${esc(state.error)}</p>` : ''}
@@ -152,23 +150,34 @@
         ${candidates ? `<div class="mg-candidates"><strong>AI 候选（仅建议）</strong><ul>${candidates}</ul></div>` : ''}
       </section>`;
     }
+    // The workbench re-renders this page by replacing or patching its markup,
+    // so handlers are delegated from the page root and read the page state at
+    // event time. render() schedules this; a root is only bound once.
     function bind() {
       setTimeout(() => {
         const root = document.querySelector('[data-managed-groups]');
         if (!root || root.dataset.bound === '1') return;
         root.dataset.bound = '1';
-        const state = ensure();
-        root.querySelector('[data-mg-form]')?.addEventListener('submit', event => {
+        root.addEventListener('submit', event => {
+          const formNode = event.target.closest?.('[data-mg-form]');
+          if (!formNode) return;
           event.preventDefault();
-          const form = new FormData(event.currentTarget);
+          const form = new FormData(formNode);
           void save({ channel: form.get('channel'), groupName: form.get('groupName'), groupAlias: form.get('groupAlias') });
         });
-        root.querySelector('[data-mg-import]')?.addEventListener('input', event => { if (state) state.importText = event.currentTarget.value; });
-        root.querySelector('[data-mg-query]')?.addEventListener('change', event => { if (state) { state.query = event.currentTarget.value; void load(); } });
+        root.addEventListener('input', event => {
+          const state = ensure();
+          if (state && event.target.matches?.('[data-mg-import]')) state.importText = event.target.value;
+        });
+        root.addEventListener('change', event => {
+          const state = ensure();
+          if (state && event.target.matches?.('[data-mg-query]')) { state.query = event.target.value; void load(); }
+        });
         root.addEventListener('click', event => {
           const trigger = event.target.closest('[data-mg]');
           const action = trigger?.dataset.mg;
           if (!action) return;
+          const state = ensure();
           if (action === 'search') { if (state) { state.query = root.querySelector('[data-mg-query]')?.value || ''; void load(); } }
           else if (action === 'edit') { if (state) { state.editing = trigger.dataset.id; state.error = ''; redraw(); } }
           else if (action === 'cancel') { if (state) { state.editing = ''; redraw(); } }

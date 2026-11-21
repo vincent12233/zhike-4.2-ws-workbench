@@ -19,6 +19,10 @@ async function exerciseDedicatedWorkspace(scripts) {
   let selectedGroup = false;
   let collectorState = 'not-started';
   let onStatus;
+  // Local managed-group registry double (V9.2): only channel, name and alias.
+  const managedRows = [{ id: 'G-synthetic-1', channel: 'FB群粉', groupName: '隔离登记群', groupAlias: 'A-501', enabled: true, matchStatus: 'unmatched', lastCollectedAt: null }];
+  const managedRequests = [];
+  let managedFailure = false;
   const capability = id => ({
     state: 'available', code: 'COLLECTION_INDEPENDENT_SESSION', provider: 'native-independent-session', protocolVersion: 1,
     backgroundCollection: true, automaticHistory: true, groupMonitoring: true, automaticAi: false,
@@ -84,8 +88,22 @@ async function exerciseDedicatedWorkspace(scripts) {
       return { ok: true, accountId, status: foregroundLogins.has(accountId) ? '已连接' : '等待登录', collectionCapability: capability(accountId) };
     },
   };
-  window.fetch = async input => {
+  window.fetch = async (input, init = {}) => {
     const url = new URL(String(input), 'https://workbench.test');
+    if (url.pathname.startsWith('/api/ws/managed-groups')) {
+      const method = String(init.method || 'GET').toUpperCase();
+      managedRequests.push(method + ' ' + url.pathname);
+      const reply = (status, value) => new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
+      if (managedFailure) return reply(500, { error: '合成群组读取失败' });
+      if (url.pathname === '/api/ws/managed-groups' && method === 'GET') return reply(200, { groups: managedRows.slice(), channels: ['FB群粉', 'API群粉'] });
+      if (url.pathname === '/api/ws/managed-groups' && method === 'POST') {
+        const body = JSON.parse(String(init.body || '{}'));
+        const group = { id: 'G-synthetic-' + (managedRows.length + 1), channel: body.channel, groupName: body.groupName, groupAlias: body.groupAlias, enabled: true, matchStatus: 'unmatched', lastCollectedAt: null };
+        managedRows.unshift(group);
+        return reply(200, { group, submittedFields: Object.keys(body).sort() });
+      }
+      return reply(404, { error: 'unexpected managed-group route' });
+    }
     const groups = /^\/api\/ws\/accounts\/([^/]+)\/groups$/.exec(url.pathname);
     if (groups) directoryReads++;
     // The simulated local index remains empty for the entire test, including after pairing.
@@ -136,6 +154,36 @@ async function exerciseDedicatedWorkspace(scripts) {
       shortcuts.push(view);
     }
   }
+  // V9.2 managed-group page: the packaged module must load, list, create and
+  // show an API failure in place instead of a blank page.
+  const managedPage = '[data-ws-workspace-page="managed-groups"]';
+  await click(nav + '[data-ws-workspace-view="managed-groups"]');
+  await until('managed groups listed from the local registry', () => find(managedPage + ' [data-managed-groups] tbody')?.textContent.includes('A-501'));
+  const managedFields = [...document.querySelectorAll(managedPage + ' [data-mg-form] [name]')].map(node => node.name);
+  const managedForm = find(managedPage + ' [data-mg-form]');
+  const managedFormText = managedForm?.textContent || '';
+  const setField = (name, value) => { const node = managedForm.querySelector('[name="' + name + '"]'); node.value = value; node.dispatchEvent(new Event('input', { bubbles: true })); };
+  setField('groupName', '新增登记群');
+  setField('groupAlias', 'B-777');
+  await click(managedPage + ' [data-mg-form] button[type="submit"]');
+  await until('managed group created through the form', () => find(managedPage + ' [data-managed-groups] tbody')?.textContent.includes('B-777'));
+  const created = managedRows.find(row => row.groupAlias === 'B-777');
+  managedFailure = true;
+  await click(managedPage + ' [data-mg="search"]');
+  const failureText = await until('managed group API failure shown in place', () => {
+    const alert = find(managedPage + ' [data-managed-groups] [role="alert"]');
+    return alert?.textContent.includes('合成群组读取失败') && find(managedPage + ' [data-mg-form]') && alert.textContent;
+  });
+  managedFailure = false;
+  const managedGroups = {
+    fields: managedFields.slice().sort(),
+    noAssistant: !/assistant|助理/i.test(managedFormText) && !managedFields.some(name => /assistant/i.test(name)),
+    noJid: !managedFields.some(name => /jid/i.test(name)) && !/@g\.us/.test(managedFormText),
+    listed: true,
+    created: Boolean(created) && managedRequests.includes('POST /api/ws/managed-groups'),
+    createdChannel: created?.channel || '',
+    errorShown: Boolean(failureText),
+  };
   const accountScoped = opens.every(open => open.accountId === dedicated.id);
   const visibleOpens = opens.every(({ bounds }) => bounds && !bounds.hidden && bounds.width > 200 && bounds.height > 100);
   loginForeground(dedicated.id, 'dedicated');
@@ -202,7 +250,7 @@ async function exerciseDedicatedWorkspace(scripts) {
     return value?.includes(foregroundGroup) && value;
   });
   const isolated = ordinaryIsolated && !dedicatedList.includes(foregroundContact);
-  return { pages, shortcuts, accountScoped, visibleOpens, collector: {
+  return { pages, shortcuts, accountScoped, visibleOpens, managedGroups, collector: {
     scoped: collectorCalls.every(call => call.accountId === dedicated.id),
     loginVisible: !login.bounds.hidden && login.bounds.width > 200 && login.bounds.height > 100,
     discoveredBeforePairing, directoryVisible: true, bothForegroundDirectories: foregroundReads.includes('default') && foregroundReads.includes(dedicated.id),

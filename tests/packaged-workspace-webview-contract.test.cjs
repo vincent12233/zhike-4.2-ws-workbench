@@ -33,7 +33,7 @@ function fixture(run) {
 test('isolated document uses manifest-verified packaged markup, styles, images and both workspace renderers', () => fixture(root => {
   const bundle = loadBundle(root);
   const fixtures = buildFixtures(bundle, { width: 1366, height: 768 });
-  assert.equal(fixtures.length, 9);
+  assert.equal(fixtures.length, 10);
   assert.deepEqual(fixtures.map(row => ({ mode: row.mode, view: row.view })), scenes);
   assert.match(fixtures[0].html, /包内普通 WS/);
   assert.match(fixtures[2].html, /包内专用 WS/);
@@ -42,6 +42,11 @@ test('isolated document uses manifest-verified packaged markup, styles, images a
   assert.match(fixtures[6].html, /真实回执|平台回执/);
   assert.match(fixtures[7].html, /UNKNOWN/);
   assert.match(fixtures[8].html, /B_MODE_BLOCKED_UNSUPPORTED/);
+  // V9.2 managed groups render from the packaged module with exactly the three business fields.
+  assert.equal(fixtures[9].view, 'managed-groups');
+  assert.doesNotMatch(fixtures[9].html, /模块未加载/);
+  for (const field of ['channel', 'groupName', 'groupAlias']) assert.match(fixtures[9].html, new RegExp('name="' + field + '"'));
+  assert.doesNotMatch(fixtures[9].html, /name="(?:jid|assistant)"/);
   const html = fixtureDocument(bundle, fixtures);
   assert.doesNotMatch(html, /<script[^>]+src=/i, 'Product boot/API scripts never run in the fixture');
   assert.match(html, /data-packaged-stylesheet="modules\/ws-workbench.css"/);
@@ -58,6 +63,11 @@ test('missing and tampered packaged CSS cannot fall back to checkout styles', ()
   manifest.files = manifest.files.filter(row => row.path !== 'resources/app/modules/ws-workbench.css');
   fs.writeFileSync(path.join(root, 'bundle-manifest.json'), JSON.stringify(manifest));
   assert.throws(() => loadBundle(root), /missing from bundle manifest/);
+}));
+test('a bundle without the packaged managed-group module is rejected', () => fixture((root, app, manifest) => {
+  manifest.files = manifest.files.filter(row => row.path !== 'resources/app/modules/ws-managed-groups-ui.js');
+  fs.writeFileSync(path.join(root, 'bundle-manifest.json'), JSON.stringify(manifest));
+  assert.throws(() => loadBundle(root), /missing from bundle manifest: resources\/app\/modules\/ws-managed-groups-ui\.js/);
 }));
 test('ambiguous manifests and paths outside the stage are rejected before reading resources', () => fixture((root, app, manifest) => {
   manifest.files.push({ ...manifest.files[0] });

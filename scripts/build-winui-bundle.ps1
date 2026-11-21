@@ -106,6 +106,7 @@ function Assert-SourceReleaseContract {
   if (-not $serverText.Contains("'/modules/horizon-atelier.css'")) { throw 'Horizon Atelier is not present in the local static-resource allowlist.' }
   if (-not $serverText.Contains("'/modules/design-system.css'")) { throw 'The shared palette stylesheet is not served by the local service.' }
   if (-not $serverText.Contains("'/modules/home-6.css'")) { throw 'The compact Horizon home stylesheet is not present in the local static-resource allowlist.' }
+  if (-not $serverText.Contains("'/modules/ws-managed-groups-ui.js'")) { throw 'The V9.2 managed-group page module is not present in the local static-resource allowlist.' }
   foreach ($artwork in $homeArtwork) {
     if (-not $serverText.Contains("'/assets/$artwork'")) { throw "Horizon home artwork is not present in the local static-resource allowlist: $artwork" }
   }
@@ -212,6 +213,7 @@ $requiredRuntimeFiles = @(
   'node.exe', 'server.mjs', 'migration-runner.cjs', 'test-diagnostics.cjs', 'sidecar-write-coordinator.cjs',
   'state-delta.cjs', 'migrations\manifest.json',
   'modules\horizon-atelier.css', 'modules\home-6.css', 'modules\design-system.css',
+  'modules\ws-managed-groups-ui.js', 'modules\ws-managed-groups-core.cjs', 'migrations\035-ws-managed-groups.sql',
   'assets\atelier-dawn.svg', 'assets\horizon-ridge-6.png', 'assets\horizon-flow-6.png',
   'assets\horizon-topline-6.png', 'assets\horizon-rock-6.png'
 )
