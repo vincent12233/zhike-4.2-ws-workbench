@@ -28,6 +28,7 @@
 ```
 
 在非 Windows 环境（如 Linux 容器）只能运行纯 Node 与 Sidecar 部分：`resources/app/node.exe` 可临时链接到本机 Node（该路径已被忽略，不要提交），视觉套件需设 `ZHIKE_VISUAL_BACKEND=edge`。依赖 .NET 10 SDK、WebView2/Edge、PowerShell 或 Node 24 专有 API（如 `RegExp.escape`、`DatabaseSync.enableDefensive`）的检查会失败，应记为环境阻塞，以 Windows CI（`.github/workflows/windows-validation.yml`）的结果为准，不能计为通过。
+有 Playwright 与 Chromium 时，可运行 `node scripts/diagnostics/browser-page-sweep.cjs`：在临时数据目录启动隔离 Sidecar，写入合成数据，逐页打开主导航、客户 360° 与普通/专用 WS 全部子页，报告页面错误、控制台错误、失败请求、空白页、数据往返与转义问题。它是诊断工具，不在正式套件内，也不替代 WebView2 验收。
 
 默认视觉测试使用真实 WebView2 的隔离宿主。CSS 视口测试不等于原生物理滚轮、多 DPI 或真实 WhatsApp 验收。`ZHIKE_VISUAL_BACKEND=edge` 是显式的独立 Edge 复查入口；失败不会自动换后端重试。正式套件拒绝仅截图、单例视口等缩减范围的诊断开关。
 
